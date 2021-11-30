@@ -3363,7 +3363,7 @@ __metadata:
     "@testing-library/jest-dom": 5.15.1
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
-    "@testing-library/user-event": 13.3.0
+    "@testing-library/user-event": 13.5.0
     "@types/braintree__sanitize-url": 4.1.0
     "@types/d3-interpolate": ^1.4.0
     "@types/jest": 27.0.2
@@ -3717,7 +3717,7 @@ __metadata:
     "@testing-library/jest-dom": 5.15.1
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
-    "@testing-library/user-event": 13.3.0
+    "@testing-library/user-event": 13.5.0
     "@types/classnames": 2.2.7
     "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
@@ -7907,18 +7907,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/user-event@npm:13.3.0":
-  version: 13.3.0
-  resolution: "@testing-library/user-event@npm:13.3.0"
-  dependencies:
-    "@babel/runtime": ^7.12.5
-  peerDependencies:
-    "@testing-library/dom": ">=7.21.4"
-  checksum: 0d17c47728aec71343fc4a8d8b594224c3031513ab59d5797695c53fdfcebef87797a7935ede68c0af896127b2a995e2feb20e64cbd0cd2b2af3f5240241af91
-  languageName: node
-  linkType: hard
-
-"@testing-library/user-event@npm:^13.5.0":
+"@testing-library/user-event@npm:13.5.0, @testing-library/user-event@npm:^13.5.0":
   version: 13.5.0
   resolution: "@testing-library/user-event@npm:13.5.0"
   dependencies:
@@ -18873,7 +18862,7 @@ __metadata:
     "@testing-library/jest-dom": 5.15.1
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
-    "@testing-library/user-event": 13.3.0
+    "@testing-library/user-event": 13.5.0
     "@types/angular": 1.6.56
     "@types/angular-route": 1.7.0
     "@types/classnames": 2.2.9

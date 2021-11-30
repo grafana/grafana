@@ -158,7 +158,7 @@ gen-ts:
 # you modify starlark files.
 drone: $(DRONE)
 	$(DRONE) starlark --format
-	$(DRONE) lint .drone.yml
+	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
 
 help: ## Display this help.
