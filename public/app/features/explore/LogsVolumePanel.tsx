@@ -27,8 +27,8 @@ export function LogsVolumePanel(props: Props) {
     return null;
   } else if (logsVolumeData?.error) {
     return (
-      <Alert title="Failed to load log volume for this query">
-        {logsVolumeData.error.data?.message || logsVolumeData.error.statusText || logsVolumeData.error.message}
+      <Alert title="Failed to load log volume for this query" severity="warning">
+        Please check console logs for more details.
       </Alert>
     );
   } else if (logsVolumeData?.state === LoadingState.Loading) {
