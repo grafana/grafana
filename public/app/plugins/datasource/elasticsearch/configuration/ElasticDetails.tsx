@@ -3,7 +3,8 @@ import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui'
 const { Switch, Select, Input, FormField } = LegacyForms;
 import { ElasticsearchOptions, Interval } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { gte, lt } from 'semver';
+import { gte, lt, valid } from 'semver';
+import { isTruthy } from './utils';
 
 const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'No pattern', value: 'none' },
@@ -14,7 +15,7 @@ const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
 ];
 
-const esVersions = [
+const esVersions: SelectableValue[] = [
   { label: '2.x', value: '2.0.0' },
   { label: '5.x', value: '5.0.0' },
   { label: '5.6+', value: '5.6.0' },
@@ -22,6 +23,11 @@ const esVersions = [
   { label: '7.0+', value: '7.0.0' },
   { label: '7.7+', value: '7.7.0' },
   { label: '7.10+', value: '7.10.0' },
+  {
+    label: '8.0+',
+    value: '8.0.0',
+    description: 'support for Elasticsearch 8 is currently experimental',
+  },
 ];
 
 type Props = {
@@ -29,6 +35,14 @@ type Props = {
   onChange: (value: DataSourceSettings<ElasticsearchOptions>) => void;
 };
 export const ElasticDetails = ({ value, onChange }: Props) => {
+  const currentVersion = esVersions.find((version) => version.value === value.jsonData.esVersion);
+  const customOption =
+    !currentVersion && valid(value.jsonData.esVersion)
+      ? {
+          label: value.jsonData.esVersion,
+          value: value.jsonData.esVersion,
+        }
+      : undefined;
   return (
     <>
       <h3 className="page-heading">Elasticsearch details</h3>
@@ -84,7 +98,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             inputEl={
               <Select
                 menuShouldPortal
-                options={esVersions}
+                options={[customOption, ...esVersions].filter(isTruthy)}
                 onChange={(option) => {
                   const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
                     value.jsonData.maxConcurrentShardRequests,
@@ -99,7 +113,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
                     },
                   });
                 }}
-                value={esVersions.find((version) => version.value === value.jsonData.esVersion)}
+                value={currentVersion || customOption}
               />
             }
           />

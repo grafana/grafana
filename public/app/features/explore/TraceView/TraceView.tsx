@@ -39,6 +39,9 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
+  // At this point we only show single trace
+  const frame = props.dataFrames[0];
+
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
   const {
     detailStates,
@@ -50,7 +53,8 @@ export function TraceView(props: Props) {
     detailTagsToggle,
     detailWarningsToggle,
     detailStackTracesToggle,
-  } = useDetailState();
+  } = useDetailState(frame);
+
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
 
@@ -63,8 +67,6 @@ export function TraceView(props: Props) {
    */
   const [slim, setSlim] = useState(false);
 
-  // At this point we only show single trace.
-  const frame = props.dataFrames[0];
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);

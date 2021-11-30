@@ -33,7 +33,6 @@ import {
   setDataSourceSrv,
   setEchoSrv,
   setLocationSrv,
-  setPanelRenderer,
   setQueryRunnerFactory,
 } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
@@ -60,8 +59,12 @@ import { ApplicationInsightsBackend } from './core/services/echo/backends/analyt
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { getAllOptionEditors } from './core/components/editors/registry';
 import { backendSrv } from './core/services/backend_srv';
+import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
+import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
+import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { AngularApp } from './angular';
+import { ModalManager } from './core/services/ModalManager';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -92,11 +95,13 @@ export class GrafanaApp {
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
+      setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
-      // Important that extensions are initialized before store
-      initExtensions();
+      // Important that extension reducers are initialized before store
+      addExtensionReducers();
       configureStore();
+      initExtensions();
 
       standardEditorsRegistry.setInit(getAllOptionEditors);
       standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
@@ -121,6 +126,10 @@ export class GrafanaApp {
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
 
+      // init modal manager
+      const modalManager = new ModalManager();
+      modalManager.init();
+
       // Init angular
       this.angularApp.init();
 
@@ -137,6 +146,12 @@ export class GrafanaApp {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
     }
+  }
+}
+
+function addExtensionReducers() {
+  if (extensionsExports.length > 0) {
+    extensionsExports[0].addExtensionReducers();
   }
 }
 

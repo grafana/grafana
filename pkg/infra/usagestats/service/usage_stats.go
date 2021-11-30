@@ -122,7 +122,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	// as sending that name could be sensitive information
 	dsOtherCount := 0
 	for _, dsStat := range dsStats.Result {
-		if uss.ShouldBeReported(dsStat.Type) {
+		if uss.ShouldBeReported(ctx, dsStat.Type) {
 			metrics["stats.ds."+dsStat.Type+".count"] = dsStat.Count
 		} else {
 			dsOtherCount += dsStat.Count
@@ -131,7 +131,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.ds.other.count"] = dsOtherCount
 
 	esDataSourcesQuery := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
-	if err := uss.Bus.Dispatch(&esDataSourcesQuery); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &esDataSourcesQuery); err != nil {
 		uss.log.Error("Failed to get elasticsearch json data", "error", err)
 		return report, err
 	}
@@ -170,7 +170,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 
 		access := strings.ToLower(dsAccessStat.Access)
 
-		if uss.ShouldBeReported(dsAccessStat.Type) {
+		if uss.ShouldBeReported(ctx, dsAccessStat.Type) {
 			metrics["stats.ds_access."+dsAccessStat.Type+"."+access+".count"] = dsAccessStat.Count
 		} else {
 			old := dsAccessOtherCount[access]
@@ -329,9 +329,9 @@ func (uss *UsageStats) updateTotalStats(ctx context.Context) {
 	}
 }
 
-func (uss *UsageStats) ShouldBeReported(dsType string) bool {
-	ds := uss.pluginStore.Plugin(dsType)
-	if ds == nil {
+func (uss *UsageStats) ShouldBeReported(ctx context.Context, dsType string) bool {
+	ds, exists := uss.pluginStore.Plugin(ctx, dsType)
+	if !exists {
 		return false
 	}
 
@@ -367,13 +367,13 @@ func (uss *UsageStats) GetUsageStatsId(ctx context.Context) string {
 }
 
 func (uss *UsageStats) appCount() int {
-	return len(uss.pluginStore.Plugins(plugins.App))
+	return len(uss.pluginStore.Plugins(context.TODO(), plugins.App))
 }
 
 func (uss *UsageStats) panelCount() int {
-	return len(uss.pluginStore.Plugins(plugins.Panel))
+	return len(uss.pluginStore.Plugins(context.TODO(), plugins.Panel))
 }
 
 func (uss *UsageStats) dataSourceCount() int {
-	return len(uss.pluginStore.Plugins(plugins.DataSource))
+	return len(uss.pluginStore.Plugins(context.TODO(), plugins.DataSource))
 }

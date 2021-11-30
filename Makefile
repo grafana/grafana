@@ -32,7 +32,7 @@ node_modules: package.json yarn.lock ## Install node modules.
 
 gen-go: $(WIRE)
 	@echo "generate go files"
-	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
+	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
 build-go: gen-go ## Build all Go binaries.
 	@echo "build go files"
@@ -158,7 +158,7 @@ gen-ts:
 # you modify starlark files.
 drone: $(DRONE)
 	$(DRONE) starlark --format
-	$(DRONE) lint .drone.yml
+	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
 
 help: ## Display this help.

@@ -1,4 +1,4 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SuggestionName } from 'app/types/suggestions';
 import { prepareCandlestickFields } from './fields';
@@ -19,7 +19,7 @@ export class CandlestickSuggestionsSupplier {
     }
 
     const info = prepareCandlestickFields(builder.data.series, defaultPanelOptions, config.theme2);
-    if (!info.open || info.warn || info.noTimeField) {
+    if (!info) {
       return;
     }
 
@@ -38,7 +38,6 @@ export class CandlestickSuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: (s) => {},
     });
 
     list.append({
@@ -48,6 +47,7 @@ export class CandlestickSuggestionsSupplier {
         defaults: {},
         overrides: [],
       },
+      score: info.autoOpenClose ? VisualizationSuggestionScore.Good : VisualizationSuggestionScore.Best,
     });
   }
 }

@@ -9,47 +9,79 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	grafana "github.com/grafana/grafana/pkg/services/secrets/defaultprovider"
 	"github.com/grafana/grafana/pkg/setting"
 	"xorm.io/xorm"
 )
 
-const (
-	defaultProvider                 = "secretKey"
-	envelopeEncryptionFeatureToggle = "envelopeEncryption"
-)
-
 type SecretsService struct {
-	store    secrets.Store
-	bus      bus.Bus
-	enc      encryption.Internal
-	settings setting.Provider
+	store      secrets.Store
+	enc        encryption.Internal
+	settings   setting.Provider
+	usageStats usagestats.Service
 
 	currentProvider string
 	providers       map[string]secrets.Provider
 	dataKeyCache    map[string]dataKeyCacheItem
+	log             log.Logger
 }
 
-func ProvideSecretsService(store secrets.Store, bus bus.Bus, enc encryption.Internal, settings setting.Provider) *SecretsService {
-	providers := map[string]secrets.Provider{
-		defaultProvider: grafana.New(settings, enc),
+func ProvideSecretsService(
+	store secrets.Store,
+	kmsProvidersService kmsproviders.Service,
+	enc encryption.Internal,
+	settings setting.Provider,
+	usageStats usagestats.Service,
+) (*SecretsService, error) {
+	providers, err := kmsProvidersService.Provide()
+	if err != nil {
+		return nil, err
 	}
-	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(defaultProvider)
+
+	logger := log.New("secrets")
+	enabled := settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle)
+	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
+
+	if _, ok := providers[currentProvider]; enabled && !ok {
+		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProvider)
+	}
+
+	if !enabled && currentProvider != kmsproviders.Default {
+		logger.Warn("Changing encryption provider requires enabling envelope encryption feature")
+	}
+
+	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProvider)
 
 	s := &SecretsService{
 		store:           store,
-		bus:             bus,
 		enc:             enc,
 		settings:        settings,
+		usageStats:      usageStats,
 		providers:       providers,
 		currentProvider: currentProvider,
 		dataKeyCache:    make(map[string]dataKeyCacheItem),
+		log:             logger,
 	}
 
-	return s
+	s.registerUsageMetrics()
+
+	return s, nil
+}
+
+func (s *SecretsService) registerUsageMetrics() {
+	s.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
+		enabled := 0
+		if s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+			enabled = 1
+		}
+		return map[string]interface{}{
+			"stats.encryption.envelope_encryption_enabled.count": enabled,
+		}, nil
+	})
 }
 
 type dataKeyCacheItem struct {
@@ -65,11 +97,11 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 
 func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
 	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(envelopeEncryptionFeatureToggle) {
+	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
 	}
 
-	// If encryption envelopeEncryptionFeatureToggle toggle is on, use envelope encryption
+	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
 	scope := opt()
 	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.currentProvider)
 
@@ -103,12 +135,12 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
-	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(envelopeEncryptionFeatureToggle) {
+	// Use legacy encryption service if secrets.EnvelopeEncryptionFeatureToggle toggle is off
+	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
 		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
 	}
 
-	// If encryption envelopeEncryptionFeatureToggle toggle is on, use envelope encryption
+	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
 	if len(payload) == 0 {
 		return nil, fmt.Errorf("unable to decrypt empty payload")
 	}
@@ -134,6 +166,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 
 		dataKey, err = s.dataKey(ctx, string(key))
 		if err != nil {
+			s.log.Error("Failed to lookup data key", "name", string(key), "error", err)
 			return nil, err
 		}
 	}
@@ -273,14 +306,6 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	}
 
 	return decrypted, nil
-}
-
-func (s *SecretsService) RegisterProvider(providerID string, provider secrets.Provider) {
-	s.providers[providerID] = provider
-}
-
-func (s *SecretsService) CurrentProviderID() string {
-	return s.currentProvider
 }
 
 func (s *SecretsService) GetProviders() map[string]secrets.Provider {

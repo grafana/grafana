@@ -11,11 +11,13 @@ import * as redux from 'app/store/store';
 import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import {
+  MetricEditorMode,
   CloudWatchJsonData,
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchMetricsQuery,
   LogAction,
+  MetricQueryType,
 } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -164,7 +166,7 @@ describe('CloudWatchDatasource', () => {
         'container-insights-prometheus-demo',
       ];
 
-      const logGroups = await ds.describeLogGroups({});
+      const logGroups = await ds.describeLogGroups({ region: 'default' });
 
       expect(logGroups).toEqual(expectedLogGroups);
     });
@@ -298,6 +300,8 @@ describe('CloudWatchDatasource', () => {
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          metricQueryType: MetricQueryType.Search,
+          metricEditorMode: MetricEditorMode.Builder,
           type: 'Metrics',
           expression: '',
           refId: 'A',
@@ -378,6 +382,8 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
             type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
@@ -411,6 +417,8 @@ describe('CloudWatchDatasource', () => {
 
     describe('and throttling exception is thrown', () => {
       const partialQuery = {
+        metricQueryType: MetricQueryType.Search,
+        metricEditorMode: MetricEditorMode.Builder,
         type: 'Metrics',
         namespace: 'AWS/EC2',
         metricName: 'CPUUtilization',
@@ -542,6 +550,8 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
             type: 'Metrics',
             refId: 'A',
             region: 'default',
@@ -566,14 +576,14 @@ describe('CloudWatchDatasource', () => {
 
   describe('When interpolating variables', () => {
     it('should return an empty array if no queries are provided', () => {
-      const templateSrv: any = { replace: jest.fn() };
+      const templateSrv: any = { replace: jest.fn(), getVariables: () => [] };
       const { ds } = getTestContext({ templateSrv });
 
       expect(ds.interpolateVariablesInQueries([], {})).toHaveLength(0);
     });
 
     it('should replace correct variables in CloudWatchLogsQuery', () => {
-      const templateSrv: any = { replace: jest.fn() };
+      const templateSrv: any = { replace: jest.fn(), getVariables: () => [] };
       const { ds } = getTestContext({ templateSrv });
       const variableName = 'someVar';
       const logQuery: CloudWatchLogsQuery = {
@@ -592,7 +602,7 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should replace correct variables in CloudWatchMetricsQuery', () => {
-      const templateSrv: any = { replace: jest.fn() };
+      const templateSrv: any = { replace: jest.fn(), getVariables: () => [] };
       const { ds } = getTestContext({ templateSrv });
       const variableName = 'someVar';
       const logQuery: CloudWatchMetricsQuery = {
@@ -610,13 +620,14 @@ describe('CloudWatchDatasource', () => {
         },
         matchExact: false,
         statistic: '',
+        sqlExpression: `$${variableName}`,
       };
 
       ds.interpolateVariablesInQueries([logQuery], {});
 
       // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, `nameSpace` and `dimensions` in CloudWatchMetricsQuery
       expect(templateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateSrv.replace).toHaveBeenCalledTimes(8);
+      expect(templateSrv.replace).toHaveBeenCalledTimes(9);
     });
   });
 
@@ -626,6 +637,8 @@ describe('CloudWatchDatasource', () => {
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          metricQueryType: MetricQueryType.Search,
+          metricEditorMode: MetricEditorMode.Builder,
           type: 'Metrics',
           refId: 'A',
           region: 'us-east-1',
@@ -753,6 +766,8 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
             type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
@@ -779,6 +794,8 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
             type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
@@ -813,6 +830,8 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
             type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
@@ -843,6 +862,8 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
             type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',

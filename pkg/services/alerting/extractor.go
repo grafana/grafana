@@ -30,7 +30,7 @@ func NewDashAlertExtractor(dash *models.Dashboard, orgID int64, user *models.Sig
 	}
 }
 
-func (e *DashAlertExtractor) lookupQueryDataSource(panel *simplejson.Json, panelQuery *simplejson.Json) (*models.DataSource, error) {
+func (e *DashAlertExtractor) lookupQueryDataSource(ctx context.Context, panel *simplejson.Json, panelQuery *simplejson.Json) (*models.DataSource, error) {
 	dsName := ""
 	dsUid := ""
 
@@ -48,14 +48,14 @@ func (e *DashAlertExtractor) lookupQueryDataSource(panel *simplejson.Json, panel
 
 	if dsName == "" && dsUid == "" {
 		query := &models.GetDefaultDataSourceQuery{OrgId: e.OrgID}
-		if err := bus.DispatchCtx(context.TODO(), query); err != nil {
+		if err := bus.DispatchCtx(ctx, query); err != nil {
 			return nil, err
 		}
 		return query.Result, nil
 	}
 
 	query := &models.GetDataSourceQuery{Name: dsName, Uid: dsUid, OrgId: e.OrgID}
-	if err := bus.DispatchCtx(context.TODO(), query); err != nil {
+	if err := bus.DispatchCtx(ctx, query); err != nil {
 		return nil, err
 	}
 
@@ -174,7 +174,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPan
 				return nil, ValidationError{Reason: reason}
 			}
 
-			datasource, err := e.lookupQueryDataSource(panel, panelQuery)
+			datasource, err := e.lookupQueryDataSource(ctx, panel, panelQuery)
 			if err != nil {
 				return nil, err
 			}
@@ -184,7 +184,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPan
 				Datasources: []*models.DataSource{datasource},
 			}
 
-			if err := bus.Dispatch(&dsFilterQuery); err != nil {
+			if err := bus.DispatchCtx(ctx, &dsFilterQuery); err != nil {
 				if !errors.Is(err, bus.ErrHandlerNotFound) {
 					return nil, err
 				}
