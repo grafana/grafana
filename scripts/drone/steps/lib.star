@@ -289,7 +289,12 @@ def publish_storybook_step(edition, ver_mode):
     }
 
 
-def upload_cdn_step(edition):
+def upload_cdn_step(edition, ver_mode):
+    if ver_mode == "main":
+        bucket = "grafana-static-assets"
+    else:
+        bucket = "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+
     return {
         'name': 'upload-cdn-assets' + enterprise2_suffix(edition),
         'image': publish_image,
@@ -301,7 +306,7 @@ def upload_cdn_step(edition):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {} --bucket "$${{PRERELEASE_BUCKET}}/artifacts/static-assets"'.format(edition),
+            './bin/grabpl upload-cdn --edition {} --bucket "{}"'.format(edition, bucket),
         ],
     }
 
