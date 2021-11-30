@@ -9,9 +9,10 @@ type LayerDragDropListProps = {
   layers: any[];
   onDragEnd: (result: DropResult) => void;
   selection?: Number[];
+  excludeBaseLayer?: boolean;
 };
 
-export const LayerDragDropList = ({ layers, onDragEnd, selection }: LayerDragDropListProps) => {
+export const LayerDragDropList = ({ layers, onDragEnd, selection, excludeBaseLayer }: LayerDragDropListProps) => {
   const style = styles(config.theme);
 
   const getRowStyle = (isSelected: boolean) => {
@@ -26,13 +27,14 @@ export const LayerDragDropList = ({ layers, onDragEnd, selection }: LayerDragDro
             {(() => {
               // reverse order
               const rows: any = [];
-              for (let i = layers.length - 1; i > 0; i--) {
+              const lastLayerIndex = excludeBaseLayer ? 1 : 0;
+              for (let i = layers.length - 1; i >= lastLayerIndex; i--) {
                 const element = layers[i];
                 let uid;
                 if (element.options.name) {
                   uid = element.options.name;
                 } else if (element.UID) {
-                  uid = `${element.item.name} ${element.UID}`;
+                  uid = `${element.UID}`;
                 }
 
                 rows.push(
@@ -68,6 +70,7 @@ export const LayerDragDropList = ({ layers, onDragEnd, selection }: LayerDragDro
                   </Draggable>
                 );
               }
+
               return rows;
             })()}
 

@@ -45,7 +45,7 @@ export const LayersEditor = (props: LayersEditorProps) => {
       <br />
 
       <LayerList layers={layers} onDragEnd={onDragEnd} selected={selected} actions={actions} />
-      <LayerDragDropList layers={layers} onDragEnd={onDragEnd} selection={selection} />
+      <LayerDragDropList layers={layers} onDragEnd={onDragEnd} selection={selection} excludeBaseLayer />
     </>
   );
 };
