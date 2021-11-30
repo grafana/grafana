@@ -29,8 +29,7 @@ Each panel needs at least one query to display a visualization. You write querie
 
 ![](/static/img/docs/panel-editor/select-visualization-8-0.png)
 
-When you choose a visualization, Grafana will offer visualization suggestions based on your query. You can select from the avaialble suggestions or you pick a visualization from the complete list of visualizations. Whether you pick one of the suggested visualizations or select one from the complete list of visualizations, Grafana will display a preview of your query results with that visualization applied.
-
+When you choose a visualization, Grafana will offer visualization suggestions based on your query. You can select from the available suggestions or you can pick a visualization from the complete list of supported visualizations. When you select a visualization, Grafana will show a preview of your query results with that visualization applied.
 For more information about individual visualizations, refer to [Visualizations options]({{< relref "../visualizations/_index.md" >}}).
 
 ## 4. (Optional) Edit panel settings
