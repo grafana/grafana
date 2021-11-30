@@ -3,6 +3,7 @@ load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', '
 grabpl_version = '2.7.4'
 build_image = 'grafana/build-container:1.4.8'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
+grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.14.3'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
@@ -726,7 +727,7 @@ def copy_packages_for_docker_step():
     }
 
 
-def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
+def package_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
     if ver_mode == 'test-release':
         publish = False
 
@@ -739,9 +740,6 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     if archs:
         cmd += ' -archs {}'.format(','.join(archs))
 
-#    if publish:
-#        settings['username'] = from_secret('docker_user')
-#        settings['password'] = from_secret('docker_password')
     return {
         'name': 'build-docker-images' + ubuntu_sfx,
         'image': 'google/cloud-sdk',
@@ -758,6 +756,32 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
         },
+    }
+
+def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
+    if ver_mode == 'test-release':
+        publish = False
+
+    ubuntu_sfx = ''
+    if ubuntu:
+        ubuntu_sfx = '-ubuntu'
+
+    settings = {
+        'dry_run': not publish,
+        'edition': edition,
+        'ubuntu': ubuntu,
+    }
+
+    if publish:
+        settings['username'] = from_secret('docker_user')
+        settings['password'] = from_secret('docker_password')
+    if archs:
+        settings['archs'] = ','.join(archs)
+    return {
+        'name': 'build-docker-images' + ubuntu_sfx,
+        'image': grafana_docker_image,
+        'depends_on': ['copy-packages-for-docker'],
+        'settings': settings,
     }
 
 
