@@ -18,8 +18,6 @@ export const LayerDragDropList = ({ layers, onDragEnd, selection }: LayerDragDro
     return isSelected ? `${style.row} ${style.sel}` : style.row;
   };
 
-  console.log(layers.length, layers, 'hmm');
-
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="droppable">
@@ -30,7 +28,13 @@ export const LayerDragDropList = ({ layers, onDragEnd, selection }: LayerDragDro
               const rows: any = [];
               for (let i = layers.length - 1; i > 0; i--) {
                 const element = layers[i];
-                const uid = element.options.name;
+                let uid;
+                if (element.options.name) {
+                  uid = element.options.name;
+                } else if (element.UID) {
+                  uid = `${element.item.name} ${element.UID}`;
+                }
+
                 rows.push(
                   <Draggable key={uid} draggableId={uid} index={rows.length}>
                     {(provided, snapshot) => (
