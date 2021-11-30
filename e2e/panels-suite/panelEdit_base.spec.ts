@@ -7,7 +7,7 @@ e2e.scenario({
   itName: 'Tests various Panel edit scenarios',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
-  skipScenario: false,
+  skipScenario: true,
   scenario: () => {
     e2e().intercept('/api/ds/query').as('query');
     e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
