@@ -44,13 +44,17 @@ Role names must be unique within an organization.
 
 Roles with names prefixed by `fixed:` are fixed roles created by Grafana and cannot be created or modified by users.
 
+### Role display name
+
+A role’s display name is human friendly text that is displayed in the UI. When you create a display name for a role, use up to 190 ASCII-based characters. For fixed roles, the display name is shown as specified. If the display name has not been set the display name replace any `:` (a colon) with ` ` (a space).
+
 ### Display name
 
-A role's display name is intended as a human friendly identifier for the role, helping users understand the purpose of a role. The display name of the role is displayed in the role picker in the UI.
+A role’s display name is a human-friendly identifier for the role, so that users more easily understand the purpose of a role. You can see the display name in the role picker in the UI.
 
 ### Group
 
-A role's group is used to organize roles in the role picker in the UI.
+A role’s group organizes roles in the role picker in the UI.
 
 ### Role version
 
