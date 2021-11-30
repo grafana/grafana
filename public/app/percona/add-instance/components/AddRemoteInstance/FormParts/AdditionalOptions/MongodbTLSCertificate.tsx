@@ -16,9 +16,16 @@ export const MongodbTLSCertificate: FC<FormPartProps> = ({ form }) => {
           />
           <TextareaInputField
             name="tls_certificate_key"
+            tooltipIcon="info-circle"
             label={Messages.form.labels.additionalOptions.tlsCertificateKey}
+            tooltipText={Messages.form.labels.tooltips.tlsCertificateKey}
           />
-          <TextareaInputField name="tls_ca" label={Messages.form.labels.additionalOptions.tlsCA} />
+          <TextareaInputField
+            name="tls_ca"
+            label={Messages.form.labels.additionalOptions.tlsCA}
+            tooltipIcon="info-circle"
+            tooltipText={Messages.form.labels.tooltips.tlsCA}
+          />
         </>
       ) : null}
     </>

@@ -10,9 +10,24 @@ export const MysqlTLSCertificate: FC<FormPartProps> = ({ form }) => {
     <>
       {tlsFlag ? (
         <>
-          <TextareaInputField name="tls_ca" label={Messages.form.labels.additionalOptions.tlsCA} />
-          <TextareaInputField name="tls_key" label={Messages.form.labels.additionalOptions.tlsCertificateKey} />
-          <TextareaInputField name="tls_cert" label={Messages.form.labels.additionalOptions.tlsCertificate} />
+          <TextareaInputField
+            name="tls_ca"
+            label={Messages.form.labels.additionalOptions.tlsCA}
+            tooltipIcon="info-circle"
+            tooltipText={Messages.form.labels.tooltips.tlsCA}
+          />
+          <TextareaInputField
+            name="tls_key"
+            label={Messages.form.labels.additionalOptions.tlsCertificateKey}
+            tooltipIcon="info-circle"
+            tooltipText={Messages.form.labels.tooltips.tlsCertificateKey}
+          />
+          <TextareaInputField
+            name="tls_cert"
+            label={Messages.form.labels.additionalOptions.tlsCertificate}
+            tooltipIcon="info-circle"
+            tooltipText={Messages.form.labels.tooltips.tlsCertificate}
+          />
         </>
       ) : null}
     </>
