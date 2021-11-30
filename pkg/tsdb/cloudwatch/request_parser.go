@@ -143,6 +143,7 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 		id = fmt.Sprintf("query%s", refId)
 	}
 	expression := model.Get("expression").MustString("")
+	sqlExpression := model.Get("sqlExpression").MustString("")
 	alias := model.Get("alias").MustString()
 	returnData := !model.Get("hide").MustBool(false)
 	queryType := model.Get("type").MustString()
@@ -154,21 +155,34 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	}
 
 	matchExact := model.Get("matchExact").MustBool(true)
+	metricQueryType := metricQueryType(model.Get("metricQueryType").MustInt(0))
+
+	var metricEditorModeValue metricEditorMode
+	memv, err := model.Get("metricEditorMode").Int()
+	if err != nil && len(expression) > 0 {
+		// this should only ever happen if this is an alerting query that has not yet been migrated in the frontend
+		metricEditorModeValue = MetricEditorModeRaw
+	} else {
+		metricEditorModeValue = metricEditorMode(memv)
+	}
 
 	return &cloudWatchQuery{
-		RefId:          refId,
-		Region:         region,
-		Id:             id,
-		Namespace:      namespace,
-		MetricName:     metricName,
-		Statistic:      statistic,
-		Expression:     expression,
-		ReturnData:     returnData,
-		Dimensions:     dimensions,
-		Period:         period,
-		Alias:          alias,
-		MatchExact:     matchExact,
-		UsedExpression: "",
+		RefId:            refId,
+		Region:           region,
+		Id:               id,
+		Namespace:        namespace,
+		MetricName:       metricName,
+		Statistic:        statistic,
+		Expression:       expression,
+		ReturnData:       returnData,
+		Dimensions:       dimensions,
+		Period:           period,
+		Alias:            alias,
+		MatchExact:       matchExact,
+		UsedExpression:   "",
+		MetricQueryType:  metricQueryType,
+		MetricEditorMode: metricEditorModeValue,
+		SqlExpression:    sqlExpression,
 	}, nil
 }
 

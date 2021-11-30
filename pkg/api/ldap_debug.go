@@ -100,7 +100,7 @@ func (user *LDAPUserDTO) FetchOrgs(ctx context.Context) error {
 }
 
 // ReloadLDAPCfg reloads the LDAP configuration
-func (hs *HTTPServer) ReloadLDAPCfg() response.Response {
+func (hs *HTTPServer) ReloadLDAPCfg(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}

@@ -1,6 +1,7 @@
 package frontendlogging
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -92,4 +93,17 @@ func (event *FrontendSentryEvent) ToLogContext(store *SourceMapStore) log15.Ctx 
 	}
 
 	return ctx
+}
+
+func (event *FrontendSentryEvent) MarshalJSON() ([]byte, error) {
+	eventJSON, err := json.Marshal(event.Event)
+	if err != nil {
+		return nil, err
+	}
+	exceptionJSON, err := json.Marshal(map[string]interface{}{"exception": event.Exception})
+	if err != nil {
+		return nil, err
+	}
+	exceptionJSON[0] = ','
+	return append(eventJSON[:len(eventJSON)-1], exceptionJSON...), nil
 }
