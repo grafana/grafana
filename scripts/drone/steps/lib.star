@@ -380,6 +380,9 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         'depends_on': [
             'initialize',
         ],
+        'environment': {
+            'NODE_OPTIONS': '--max_old_space_size=8192',
+        },
         'commands': cmds,
     }
 
