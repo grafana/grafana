@@ -80,10 +80,13 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		return AddDataSource(c, models.AddDataSourceCommand{
-			Name: "Test",
-			Url:  "invalid:url",
+		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+			Name:   "Test",
+			Url:    "invalid:url",
+			Access: "direct",
+			Type:   "test",
 		})
+		return AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -110,10 +113,13 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		return AddDataSource(c, models.AddDataSourceCommand{
-			Name: name,
-			Url:  url,
+		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+			Name:   name,
+			Url:    url,
+			Access: "direct",
+			Type:   "test",
 		})
+		return AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -128,10 +134,13 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		return AddDataSource(c, models.AddDataSourceCommand{
-			Name: "Test",
-			Url:  "invalid:url",
+		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+			Name:   "Test",
+			Url:    "invalid:url",
+			Access: "direct",
+			Type:   "test",
 		})
+		return AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
@@ -158,10 +167,13 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		return AddDataSource(c, models.AddDataSourceCommand{
-			Name: name,
-			Url:  url,
+		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+			Name:   name,
+			Url:    url,
+			Access: "direct",
+			Type:   "test",
 		})
+		return AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()

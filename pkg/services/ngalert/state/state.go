@@ -57,15 +57,18 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]Evalua
 }
 
 func (a *State) resultNormal(alertRule *ngModels.AlertRule, result eval.Result) {
+	a.Error = result.Error // should be nil since state is not error
+
 	if a.State != eval.Normal {
 		a.EndsAt = result.EvaluatedAt
 		a.StartsAt = result.EvaluatedAt
 	}
-	a.Error = result.Error // should be nil since state is not error
 	a.State = eval.Normal
 }
 
 func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result) {
+	a.Error = result.Error // should be nil since the state is not an error
+
 	switch a.State {
 	case eval.Alerting:
 		a.setEndsAt(alertRule, result)
@@ -118,6 +121,8 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 }
 
 func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) {
+	a.Error = result.Error
+
 	if a.StartsAt.IsZero() {
 		a.StartsAt = result.EvaluatedAt
 	}

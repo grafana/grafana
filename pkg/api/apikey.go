@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -9,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // GetAPIKeys returns a list of API keys
@@ -58,7 +60,11 @@ func DeleteAPIKey(c *models.ReqContext) response.Response {
 }
 
 // AddAPIKey adds an API key
-func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyCommand) response.Response {
+func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
+	cmd := models.AddApiKeyCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
@@ -129,7 +135,11 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 }
 
 // AddAPIKey adds an additional API key to a service account
-func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext, cmd models.AddApiKeyCommand) response.Response {
+func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext) response.Response {
+	cmd := models.AddApiKeyCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if !hs.Cfg.FeatureToggles["service-accounts"] {
 		return response.Error(500, "Requires services-accounts feature", errors.New("feature missing"))
 	}
@@ -137,5 +147,5 @@ func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext, cmd models.AddApiKe
 		return response.Error(500, "Can't create service account while adding additional API key", nil)
 	}
 
-	return hs.AddAPIKey(c, cmd)
+	return hs.AddAPIKey(c)
 }

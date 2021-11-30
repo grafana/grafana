@@ -31,3 +31,26 @@ type metricStatMeta struct {
 	Stat   string `json:"stat"`
 	Period int    `json:"period"`
 }
+
+type metricQueryType uint32
+
+const (
+	MetricQueryTypeSearch metricQueryType = iota
+	MetricQueryTypeQuery
+)
+
+type metricEditorMode uint32
+
+const (
+	MetricEditorModeBuilder metricEditorMode = iota
+	MetricEditorModeRaw
+)
+
+type gmdApiMode uint32
+
+const (
+	GMDApiModeMetricStat gmdApiMode = iota
+	GMDApiModeInferredSearchExpression
+	GMDApiModeMathExpression
+	GMDApiModeSQLExpression
+)

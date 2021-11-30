@@ -487,15 +487,22 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			SignedInUser: &models.SignedInUser{UserId: 1},
 			Context:      &web.Context{Req: req},
 		}
+
+		token := &oauth2.Token{
+			AccessToken:  "testtoken",
+			RefreshToken: "testrefreshtoken",
+			TokenType:    "Bearer",
+			Expiry:       time.Now().AddDate(0, 0, 1),
+		}
+		extra := map[string]interface{}{
+			"id_token": "testidtoken",
+		}
+		token = token.WithExtra(extra)
 		mockAuthToken := mockOAuthTokenService{
-			token: &oauth2.Token{
-				AccessToken:  "testtoken",
-				RefreshToken: "testrefreshtoken",
-				TokenType:    "Bearer",
-				Expiry:       time.Now().AddDate(0, 0, 1),
-			},
+			token:        token,
 			oAuthEnabled: true,
 		}
+
 		var routes []*plugins.Route
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
@@ -507,6 +514,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		proxy.director(req)
 
 		assert.Equal(t, "Bearer testtoken", req.Header.Get("Authorization"))
+		assert.Equal(t, "testidtoken", req.Header.Get("X-ID-Token"))
 	})
 
 	t.Run("When SendUserHeader config is enabled", func(t *testing.T) {
