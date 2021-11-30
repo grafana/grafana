@@ -43,15 +43,23 @@ func Test_parseResourcePath(t *testing.T) {
 	}
 }
 
-func fakeResponseFn(input []byte) ([]byte, error) {
-	return input, nil
-}
-
 func Test_doRequest(t *testing.T) {
-	// test that it forwards the header and body
+	// test that it forwards the header and body over multiple calls
+	elements := []string{"1", "2", "3"}
+	index := 0
+
+	fakeResponseFn := func(input []byte, results []json.RawMessage) ([]json.RawMessage, string, error) {
+		results = append(results, input)
+		if index < len(elements) {
+			return results, "token", nil
+		}
+		return results, "", nil
+	}
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("foo", "bar")
-		_, err := w.Write([]byte("result"))
+		_, err := w.Write([]byte(elements[index]))
+		index++
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -76,7 +84,7 @@ func Test_doRequest(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if string(body) != "result" {
+	if string(body) != "[1,2,3]" {
 		t.Errorf("Unexpected body: %v", string(body))
 	}
 }
@@ -135,6 +143,7 @@ func Test_processData_functions(t *testing.T) {
 				Description:      "baz",
 			},
 		},
+		Token: "foo",
 	}
 	marshaledMDResponse, _ := json.Marshal(metricDescriptorResp)
 	metricDescriptorResult := []metricDescriptor{
@@ -227,35 +236,48 @@ func Test_processData_functions(t *testing.T) {
 		responseFn processResponse
 		input      []byte
 		result     []byte
+		token      string
 	}{
 		{
 			"metricDescriptor",
 			processMetricDescriptors,
 			marshaledMDResponse,
 			marshaledMDResult,
+			"foo",
 		},
 		{
 			"services",
 			processServices,
 			marshaledServiceResponse,
 			marshaledServiceResult,
+			"",
 		},
 		{
 			"slos",
 			processSLOs,
 			marshaledSLOResponse,
 			marshaledSLOResult,
+			"",
 		},
 		{
 			"cloudresourcemanager",
 			processProjects,
 			marshaledCRResponse,
 			marshaledServiceResult,
+			"",
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			res, err := test.responseFn(test.input)
+			results := []json.RawMessage{}
+			results, token, err := test.responseFn(test.input, results)
+			if err != nil {
+				t.Errorf("Unexpected error %v", err)
+			}
+			if token != test.token {
+				t.Errorf("Unexpected token. Got %s, expecting %s", token, test.token)
+			}
+			res, err := json.Marshal(results)
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
