@@ -26,13 +26,13 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 	pluginRequestValidator models.PluginRequestValidator, SecretsService secrets.Service,
 	pluginClient plugins.Client, OAuthTokenService oauthtoken.OAuthTokenService) *Service {
 	g := &Service{
-		Cfg:                    cfg,
-		DataSourceCache:        dataSourceCache,
+		cfg:                    cfg,
+		dataSourceCache:        dataSourceCache,
 		expressionService:      expressionService,
-		PluginRequestValidator: pluginRequestValidator,
-		SecretsService:         SecretsService,
+		pluginRequestValidator: pluginRequestValidator,
+		secretsService:         SecretsService,
 		pluginClient:           pluginClient,
-		OAuthTokenService:      OAuthTokenService,
+		oAuthTokenService:      OAuthTokenService,
 		log:                    log.New("query_data"),
 	}
 	g.log.Info("Query Service initialization")
@@ -41,13 +41,13 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 
 // Gateway receives data and translates it to Grafana Live publications.
 type Service struct {
-	Cfg                    *setting.Cfg
-	DataSourceCache        datasources.CacheService
+	cfg                    *setting.Cfg
+	dataSourceCache        datasources.CacheService
 	expressionService      *expr.Service
-	PluginRequestValidator models.PluginRequestValidator
-	SecretsService         secrets.Service
+	pluginRequestValidator models.PluginRequestValidator
+	secretsService         secrets.Service
 	pluginClient           plugins.Client
-	OAuthTokenService      oauthtoken.OAuthTokenService
+	oAuthTokenService      oauthtoken.OAuthTokenService
 	log                    log.Logger
 }
 
@@ -107,7 +107,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUs
 
 func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	ds := parsedReq.parsedQueries[0].datasource
-	if err := s.PluginRequestValidator.Validate(ds.Url, nil); err != nil {
+	if err := s.pluginRequestValidator.Validate(ds.Url, nil); err != nil {
 		return nil, models.ErrDataSourceAccessDenied
 	}
 
@@ -127,8 +127,8 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 		Queries: []backend.DataQuery{},
 	}
 
-	if s.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
-		if token := s.OAuthTokenService.GetCurrentOAuthToken(ctx, user); token != nil {
+	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
+		if token := s.oAuthTokenService.GetCurrentOAuthToken(ctx, user); token != nil {
 			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
 		}
 	}
@@ -236,7 +236,7 @@ func (s *Service) getDataSourceFromQuery(user *models.SignedInUser, skipCache bo
 	// use datasourceId if it exists
 	id := query.Get("datasourceId").MustInt64(0)
 	if id > 0 {
-		ds, err = s.DataSourceCache.GetDatasource(id, user, skipCache)
+		ds, err = s.dataSourceCache.GetDatasource(id, user, skipCache)
 		if err != nil {
 			return nil, err
 		}
@@ -244,7 +244,7 @@ func (s *Service) getDataSourceFromQuery(user *models.SignedInUser, skipCache bo
 	}
 
 	if uid != "" {
-		ds, err = s.DataSourceCache.GetDatasourceByUID(uid, user, skipCache)
+		ds, err = s.dataSourceCache.GetDatasourceByUID(uid, user, skipCache)
 		if err != nil {
 			return nil, err
 		}
@@ -256,7 +256,7 @@ func (s *Service) getDataSourceFromQuery(user *models.SignedInUser, skipCache bo
 
 func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(map[string][]byte) map[string]string {
 	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, err := s.SecretsService.DecryptJsonData(ctx, m)
+		decryptedJsonData, err := s.secretsService.DecryptJsonData(ctx, m)
 		if err != nil {
 			s.log.Error("Failed to decrypt secure json data", "error", err)
 		}
