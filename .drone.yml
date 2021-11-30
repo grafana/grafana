@@ -1328,9 +1328,6 @@ steps:
   - ./scripts/build/build-npm-packages.sh ${DRONE_TAG}
   depends_on:
   - publish-storybook
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
   image: grafana/build-container:1.4.8
   name: build-npm-packages
 - commands:
@@ -4305,6 +4302,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: cefc2bfa8e55625de3ccacc9ad7d7e0ca00fba56216c859877799aaaadc065a5
+hmac: 9ad9988b102790652afdf8e76325c6c57367c4eaa0d6590ff7a4701fa5840b8b
 
 ...

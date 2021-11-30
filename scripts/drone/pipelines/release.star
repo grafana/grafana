@@ -64,9 +64,6 @@ def build_npm_packages_step(edition, ver_mode):
             # Has to run after publish-storybook since this step cleans the files publish-storybook depends on
             'publish-storybook',
         ],
-        'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-        },
         'commands': ['./scripts/build/build-npm-packages.sh ${DRONE_TAG}'],
     }
 
@@ -112,19 +109,12 @@ def release_npm_packages_step(edition, ver_mode):
     return {
         'name': 'release-npm-packages',
         'image': build_image,
+        'depends_on': [
+            'retrieve-npm-packages',
+        ],
         'environment': {
-            'NPM_TOKEN': {
-                'from_secret': 'npm_token',
-            },
-            'depends_on': [
-                'retrieve-npm-packages',
-            ],
-            'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-            },
-            'GITHUB_PACKAGE_TOKEN': {
-                'from_secret': 'github_package_token',
-            },
+            'NPM_TOKEN': from_secret('npm_token'),
+            'GITHUB_PACKAGE_TOKEN': from_secret('github_package_token'),
         },
         'commands': ['./scripts/build/release-npm-packages.sh ${DRONE_TAG}'],
     }
