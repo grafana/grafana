@@ -8,21 +8,18 @@ import (
 	"path"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	"github.com/stretchr/testify/assert"
-
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 type getDescriptionTestCase struct {
@@ -118,19 +115,25 @@ func TestSystem_getDescription(t *testing.T) {
 	}
 }
 
-func TestSystem_getPermissions(t *testing.T) {
-
+type getPermissionsTestCase struct {
+	desc           string
+	options        Options
+	resourceID     int
+	permissions    []*accesscontrol.Permission
+	expected       []resourcePermissionDTO
+	expectedStatus int
 }
-func TestSystem_setBuiltinRolePermission(t *testing.T) {
 
+func TestSystem_getPermissions(t *testing.T) {
+}
+
+func TestSystem_setBuiltinRolePermission(t *testing.T) {
 }
 
 func TestSystem_setTeamPermission(t *testing.T) {
-
 }
 
 func TestSystem_setUserPermission(t *testing.T) {
-
 }
 
 func setupTestEnvironment(t *testing.T, user *models.SignedInUser, permissions []*accesscontrol.Permission, ops Options) (*System, *web.Mux) {

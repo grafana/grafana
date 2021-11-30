@@ -45,12 +45,12 @@ func (s *System) registerEndpoints() {
 	disable := middleware.Disable(s.ac.IsDisabled())
 	s.router.Group(fmt.Sprintf("/api/access-control/system/%s", s.options.Resource), func(r routing.RouteRegister) {
 		idScope := accesscontrol.Scope(s.options.Resource, "id", accesscontrol.Parameter(":resourceID"))
-		actionSet, actionRead := fmt.Sprintf("%s.permissions:set", s.options.Resource), fmt.Sprintf("%s.permissions:read", s.options.Resource)
+		actionWrite, actionRead := fmt.Sprintf("%s.permissions:write", s.options.Resource), fmt.Sprintf("%s.permissions:read", s.options.Resource)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(s.getDescription))
 		r.Get("/:resourceID", auth(disable, accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(s.getPermissions))
-		r.Post("/:resourceID/users/:userID", auth(disable, accesscontrol.EvalPermission(actionSet, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setUserPermission))
-		r.Post("/:resourceID/teams/:teamID", auth(disable, accesscontrol.EvalPermission(actionSet, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setTeamPermission))
-		r.Post("/:resourceID/builtInRoles/:builtInRole", auth(disable, accesscontrol.EvalPermission(actionSet, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setBuiltinRolePermission))
+		r.Post("/:resourceID/users/:userID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setUserPermission))
+		r.Post("/:resourceID/teams/:teamID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setTeamPermission))
+		r.Post("/:resourceID/builtInRoles/:builtInRole", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setBuiltinRolePermission))
 	})
 }
 
@@ -198,10 +198,9 @@ func (s *System) setBuiltinRolePermission(c *models.ReqContext, cmd setPermissio
 
 func (s *System) declareFixedRoles() error {
 	scopeAll := accesscontrol.Scope(s.options.Resource, "*")
-	// TODO: desc, display name, group
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version: 4,
+			Version: 5,
 			Name:    fmt.Sprintf("fixed:%s.permissions:reader", s.options.Resource),
 			Permissions: []accesscontrol.Permission{
 				{Action: fmt.Sprintf("%s.permissions:read", s.options.Resource), Scope: scopeAll},
@@ -212,10 +211,10 @@ func (s *System) declareFixedRoles() error {
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version: 4,
+			Version: 5,
 			Name:    fmt.Sprintf("fixed:%s.permissions:writer", s.options.Resource),
 			Permissions: accesscontrol.ConcatPermissions(readerRole.Role.Permissions, []accesscontrol.Permission{
-				{Action: fmt.Sprintf("%s.permissions:set", s.options.Resource), Scope: scopeAll},
+				{Action: fmt.Sprintf("%s.permissions:write", s.options.Resource), Scope: scopeAll},
 			}),
 		},
 		Grants: []string{string(models.ROLE_ADMIN)},
