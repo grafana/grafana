@@ -9,7 +9,7 @@ import {
   TransformerUIProps,
 } from '@grafana/data';
 
-import { InlineField, InlineFieldRow, InlineSwitch, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { ExtractFieldsOptions, extractFieldsTransformer } from './extractFields';
 import { FieldExtractorID, fieldExtractors } from './fieldExtractors';
@@ -50,6 +50,36 @@ export const extractFieldsTransformerEditor: React.FC<TransformerUIProps<Extract
     });
   };
 
+  const onToggleSingleField = () => {
+    onChange({
+      ...options,
+      singleField: {
+        ...options.singleField,
+        enabled: !options.singleField.enabled,
+      },
+    });
+  };
+
+  const onToggleSingleFieldReplace = () => {
+    onChange({
+      ...options,
+      singleField: {
+        ...options.singleField,
+        replace: !options.singleField.replace,
+      },
+    });
+  };
+
+  const onSingleFieldOutputChange = (e: React.FormEvent<HTMLInputElement>) => {
+    onChange({
+      ...options,
+      singleField: {
+        ...options.singleField,
+        output: e.currentTarget.value,
+      },
+    });
+  };
+
   const format = fieldExtractors.selectOptions(options.format ? [options.format] : undefined);
 
   return (
@@ -79,6 +109,27 @@ export const extractFieldsTransformerEditor: React.FC<TransformerUIProps<Extract
         <InlineField label={'Replace all fields'} labelWidth={16}>
           <InlineSwitch value={options.replace ?? false} onChange={onToggleReplace} />
         </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label={'Extract to single field'} labelWidth={24}>
+          <InlineSwitch value={options.singleField.enabled ?? false} onChange={onToggleSingleField} />
+        </InlineField>
+        {options.singleField.enabled ? (
+          <>
+            <InlineField label={'Replace existing field'} labelWidth={24}>
+              <InlineSwitch value={options.singleField.replace ?? false} onChange={onToggleSingleFieldReplace} />
+            </InlineField>
+            {options.singleField.replace ? null : (
+              <InlineField label={'Output field name'} labelWidth={24}>
+                <Input
+                  value={options.singleField.output}
+                  placeholder={options.source}
+                  onChange={onSingleFieldOutputChange}
+                />
+              </InlineField>
+            )}
+          </>
+        ) : null}
       </InlineFieldRow>
     </div>
   );

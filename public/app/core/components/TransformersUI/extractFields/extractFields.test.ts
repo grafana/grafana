@@ -6,6 +6,9 @@ describe('Fields from JSON', () => {
     const cfg: ExtractFieldsOptions = {
       source: 'line',
       replace: true,
+      singleField: {
+        enabled: false,
+      },
     };
     const data = toDataFrame({
       columns: ['ts', 'line'],

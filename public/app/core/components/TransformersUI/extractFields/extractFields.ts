@@ -12,17 +12,28 @@ import { isString } from 'lodash';
 import { map } from 'rxjs/operators';
 import { FieldExtractorID, fieldExtractors } from './fieldExtractors';
 
+export interface ExtractSingleFieldOptions {
+  enabled?: boolean;
+  replace?: boolean;
+  output?: string;
+}
+
 export interface ExtractFieldsOptions {
   source?: string;
   format?: FieldExtractorID;
   replace?: boolean;
+  singleField: ExtractSingleFieldOptions;
 }
 
 export const extractFieldsTransformer: SynchronousDataTransformerInfo<ExtractFieldsOptions> = {
   id: DataTransformerID.extractFields,
   name: 'Extract fields',
   description: 'Parse fields from the contends of another',
-  defaultOptions: {},
+  defaultOptions: {
+    singleField: {
+      enabled: false,
+    },
+  },
 
   operator: (options) => (source) => source.pipe(map((data) => extractFieldsTransformer.transformer(options)(data))),
 
@@ -60,18 +71,29 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
         obj = {}; // empty
       }
     }
-    for (const [key, val] of Object.entries(obj)) {
+    if (options.singleField.enabled) {
+      let key = options.singleField.output || options.source;
       let buffer = values.get(key);
       if (buffer == null) {
         buffer = new Array(count);
         values.set(key, buffer);
         names.push(key);
       }
-      buffer[i] = val;
+      buffer[i] = obj;
+    } else {
+      for (const [key, val] of Object.entries(obj)) {
+        let buffer = values.get(key);
+        if (buffer == null) {
+          buffer = new Array(count);
+          values.set(key, buffer);
+          names.push(key);
+        }
+        buffer[i] = val;
+      }
     }
   }
 
-  const fields = names.map((name) => {
+  let fields = names.map((name) => {
     const buffer = values.get(name);
     return {
       name,
@@ -82,7 +104,11 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
   });
 
   if (!options.replace) {
-    fields.unshift(...frame.fields);
+    if (options.singleField.enabled && options.singleField.replace) {
+      fields = frame.fields.map((field) => (field.name === source.name ? fields[0] : field));
+    } else {
+      fields.unshift(...frame.fields);
+    }
   }
   return {
     ...frame,
