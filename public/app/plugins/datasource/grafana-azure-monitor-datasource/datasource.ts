@@ -73,6 +73,14 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     }
   }
 
+  filterQuery(item: AzureMonitorQuery): boolean {
+    if (!item.queryType) {
+      return true;
+    }
+    const ds = this.pseudoDatasource[item.queryType];
+    return ds?.filterQuery?.(item) ?? true;
+  }
+
   query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
     const byType = new Map<AzureQueryType, DataQueryRequest<AzureMonitorQuery>>();
 
