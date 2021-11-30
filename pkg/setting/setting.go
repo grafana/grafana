@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -490,10 +491,11 @@ func RedactedValue(key, value string) string {
 		"SECRET_KEY",
 		"CERTIFICATE",
 		"ACCOUNT_KEY",
-		"TOKEN",
 		"ENCRYPTION_KEY",
+		"VAULT_TOKEN",
+		"AWSKMS_.*_TOKEN",
 	} {
-		if strings.Contains(uppercased, pattern) {
+		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
 		}
 	}
