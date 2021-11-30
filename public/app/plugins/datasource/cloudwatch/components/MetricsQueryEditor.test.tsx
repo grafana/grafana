@@ -8,7 +8,6 @@ import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor'
 import { CloudWatchDatasource } from '../datasource';
 import { CustomVariableModel, initialVariableModelState } from '../../../../features/variables/types';
 import { CloudWatchJsonData, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
-import { getSelectParent } from '@grafana/ui/src/components/Select/test-utils';
 
 const setup = () => {
   const instanceSettings = {
@@ -114,18 +113,6 @@ describe('QueryEditor', () => {
   });
 
   describe('should use correct default values', () => {
-    it('when region is null is display default in the label', async () => {
-      const props = setup();
-      props.query.region = undefined;
-
-      await act(async () => {
-        render(<MetricsQueryEditor {...props} />);
-      });
-
-      const selectParent = getSelectParent(screen.getByLabelText('Region:'));
-      expect(selectParent).toHaveTextContent('default');
-    });
-
     it('should normalize query with default values', () => {
       expect(normalizeQuery({ refId: '42' } as any)).toEqual({
         namespace: '',
