@@ -3382,7 +3382,7 @@ __metadata:
     date-fns: 2.21.3
     eventemitter3: 4.0.7
     lodash: 4.17.21
-    marked: 4.0.0
+    marked: 4.0.5
     moment: 2.29.1
     moment-timezone: 0.5.33
     ol: 6.7.0
@@ -19317,6 +19317,7 @@ __metadata:
     moveable: 0.26.0
     mutationobserver-shim: 0.3.3
     ngtemplate-loader: 2.1.0
+    node-notifier: ^10.0.0
     nodemon: 2.0.2
     ol: 6.7.0
     papaparse: 5.3.0
@@ -24124,12 +24125,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:4.0.0":
-  version: 4.0.0
-  resolution: "marked@npm:4.0.0"
+"marked@npm:4.0.5":
+  version: 4.0.5
+  resolution: "marked@npm:4.0.5"
   bin:
     marked: bin/marked.js
-  checksum: 1889c1b58cba6ea764435ef2fefef037733899dcb1d54300453b355ac70ada0109132631b0a2c3ee0ce633b930a1bc6d6ee1bd1dea38cf901dd30099fa68e143
+  checksum: c9ab69cf846f4deaaf984cc596923c3251243701f005cee999ee55b704ceb46dd5c9ff454ae774d03eaf725654aed593a3461211076e6a412f1352a2df426d4d
   languageName: node
   linkType: hard
 
@@ -25297,6 +25298,20 @@ __metadata:
   version: 1.0.0
   resolution: "node-modules-regexp@npm:1.0.0"
   checksum: 99541903536c5ce552786f0fca7f06b88df595e62e423c21fa86a1674ee2363dad1f7482d1bec20b4bd9fa5f262f88e6e5cb788fc56411113f2fe2e97783a3a7
+  languageName: node
+  linkType: hard
+
+"node-notifier@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "node-notifier@npm:10.0.0"
+  dependencies:
+    growly: ^1.3.0
+    is-wsl: ^2.2.0
+    semver: ^7.3.5
+    shellwords: ^0.1.1
+    uuid: ^8.3.2
+    which: ^2.0.2
+  checksum: a9c648ed2d9e0716ad9142ba08247f1461a754f7dc67d5f6dba9f9fbc8a773d1b6a7433718b4fc1623839813ac8b24b57b9f5ce0943a94555e5ae33b3833c34f
   languageName: node
   linkType: hard
 
