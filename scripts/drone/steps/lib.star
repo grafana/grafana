@@ -289,7 +289,12 @@ def publish_storybook_step(edition, ver_mode):
     }
 
 
-def upload_cdn_step(edition):
+def upload_cdn_step(edition, ver_mode):
+    if ver_mode == "main":
+        bucket = "grafana-static-assets"
+    else:
+        bucket = "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+
     return {
         'name': 'upload-cdn-assets' + enterprise2_suffix(edition),
         'image': publish_image,
@@ -301,7 +306,7 @@ def upload_cdn_step(edition):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {} --bucket "$${{PRERELEASE_BUCKET}}/artifacts/static-assets"'.format(edition),
+            './bin/grabpl upload-cdn --edition {} --bucket "{}"'.format(edition, bucket),
         ],
     }
 
@@ -911,12 +916,13 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'main' and edition in ('enterprise', 'enterprise2') and not is_downstream:
         return None
 
-    packages_bucket = ' --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads' + enterprise2_suffix(edition)
-
     if ver_mode == 'test-release':
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
               '--packages-bucket grafana-downloads-test'
+    elif ver_mode == 'main':
+        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
     else:
+        packages_bucket = ' --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads' + enterprise2_suffix(edition)
         cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
 
     dependencies = [

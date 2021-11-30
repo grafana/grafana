@@ -770,7 +770,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: release-canary-npm-packages
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -784,7 +784,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -4302,6 +4302,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 9ad9988b102790652afdf8e76325c6c57367c4eaa0d6590ff7a4701fa5840b8b
+hmac: 63011a7e74dab6811078cf83929581cc25cc8a2133c388a93b8284b98de1d379
 
 ...
