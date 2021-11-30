@@ -1,7 +1,7 @@
-// Grafana 8 Alerts API.
+// Grafana Alerting API.
 //
 // Package definitions includes the types required for generating or consuming an OpenAPI
-// spec for the Grafana 8 Alerts API.
+// spec for the Grafana Alerting API.
 //
 //
 //     Schemes: http, https
