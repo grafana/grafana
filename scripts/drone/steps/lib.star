@@ -911,12 +911,13 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'main' and edition in ('enterprise', 'enterprise2') and not is_downstream:
         return None
 
-    packages_bucket = ' --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads' + enterprise2_suffix(edition)
-
     if ver_mode == 'test-release':
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
               '--packages-bucket grafana-downloads-test'
+    elif ver_mode == 'main':
+        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
     else:
+        packages_bucket = ' --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads' + enterprise2_suffix(edition)
         cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
 
     dependencies = [

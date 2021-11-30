@@ -770,7 +770,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: release-canary-npm-packages
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -4302,6 +4302,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 9ad9988b102790652afdf8e76325c6c57367c4eaa0d6590ff7a4701fa5840b8b
+hmac: b317cdb286ce7683f0e191387eca33d68ee56e1147105bdf147c42a708085ae1
 
 ...
