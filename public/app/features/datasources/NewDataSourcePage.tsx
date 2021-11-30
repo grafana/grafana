@@ -211,8 +211,6 @@ function getStyles(theme: GrafanaTheme2) {
       "Figure Description Actions"
       "Figure    Meta     Actions"
       "Figure     -       Actions"`,
-      backgroundColor: theme.colors.background.canvas,
-      border: '1px solid transparent',
     }),
     logo: css({
       marginRight: theme.v1.spacing.lg,
