@@ -122,7 +122,7 @@ type AlertExecCtx struct {
 	Ctx context.Context
 }
 
-// GetExprRequest validates the condition and creates a expr.Request from it.
+// GetExprRequest validates the condition, gets the datasource information and creates an expr.Request from it.
 func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dsCacheService datasources.CacheService) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId: ctx.OrgID,
@@ -156,7 +156,6 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 			if expr.IsDataSource(q.DatasourceUID) {
 				ds = expr.DataSourceModel()
 			} else {
-				// TODO: actually lookup here?
 				ds, err = dsCacheService.GetDatasourceByUID(q.DatasourceUID, &m.SignedInUser{OrgId: ctx.OrgID}, true)
 				if err != nil {
 					return nil, err
