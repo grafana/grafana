@@ -13,6 +13,7 @@ import { OrgSwitcher } from '../OrgSwitcher';
 import NavBarItem from './NavBarItem';
 import { NavBarSection } from './NavBarSection';
 import { NavBarMenu } from './NavBarMenu';
+import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 
 const homeUrl = config.appSubUrl || '/';
 
@@ -59,17 +60,10 @@ export const NavBar: FC = React.memo(() => {
       </div>
 
       <NavBarSection>
-        <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false} id="home">
+        <NavBarItemWithoutMenu label="Home" className={styles.grafanaLogo} url={homeUrl}>
           <Branding.MenuLogo />
-        </NavBarItem>
-        <NavBarItem
-          className={styles.search}
-          isActive={activeItem === searchItem}
-          label={searchItem.text}
-          onClick={searchItem.onClick}
-          id="search"
-          link={searchItem}
-        >
+        </NavBarItemWithoutMenu>
+        <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
           <Icon name="search" size="xl" />
         </NavBarItem>
       </NavBarSection>
@@ -79,13 +73,7 @@ export const NavBar: FC = React.memo(() => {
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
-            label={link.text}
-            menuItems={link.children}
-            target={link.target}
-            url={link.url}
-            link={link}
-            id={link.id}
-            index={index}
+            link={{ ...link, subTitle: undefined, onClick: undefined }}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -100,16 +88,8 @@ export const NavBar: FC = React.memo(() => {
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
-            label={link.text}
-            menuItems={link.children}
-            menuSubTitle={link.subTitle}
-            onClick={link.onClick}
             reverseMenuDirection
-            target={link.target}
-            url={link.url}
             link={link}
-            id={link.id}
-            index={index}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}

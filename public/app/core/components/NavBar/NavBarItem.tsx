@@ -1,24 +1,22 @@
 import React, { ReactNode } from 'react';
-import { css, cx } from '@emotion/css';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { IconName, Link, useTheme2 } from '@grafana/ui';
-import { MenuButton } from './NavBarItemButton';
 import { Item } from '@react-stately/collections';
+import { css, cx } from '@emotion/css';
+import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
+import { IconName, useTheme2 } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+
 import { NavBarMenuItem } from './NavBarMenuItem';
+import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
+import { NavBarItemMenu } from './NavBarItemMenu';
+import { getNavModelItemKey } from './utils';
 
 export interface Props {
   isActive?: boolean;
   children: ReactNode;
   className?: string;
-  label: string;
-  menuItems?: NavModelItem[];
-  menuSubTitle?: string;
-  onClick?: () => void;
   reverseMenuDirection?: boolean;
   showMenu?: boolean;
-  target?: HTMLAnchorElement['target'];
-  url?: string;
-  id: string;
   link: NavModelItem;
 }
 
@@ -26,97 +24,92 @@ const NavBarItem = ({
   isActive = false,
   children,
   className,
-  label,
-  menuItems = [],
-  menuSubTitle,
-  onClick,
   reverseMenuDirection = false,
   showMenu = true,
-  target,
-  url,
-  id,
   link,
 }: Props) => {
   const theme = useTheme2();
+  const menuItems = link.children ?? [];
+  const menuItemsSorted = reverseMenuDirection ? menuItems.reverse() : menuItems;
+  const filteredItems = menuItemsSorted
+    .filter((item) => !item.hideFromMenu)
+    .map((i) => ({ ...i, menuItemType: NavMenuItemType.Item }));
+  const adjustHeightForBorder = filteredItems.length === 0;
+  const styles = getStyles(theme, adjustHeightForBorder, isActive, reverseMenuDirection);
+  const section: NavModelItem = {
+    ...link,
+    children: filteredItems,
+    menuItemType: NavMenuItemType.Section,
+  };
+  const items: NavModelItem[] = [section].concat(filteredItems);
+  const onNavigate = (item: NavModelItem) => {
+    const { url, target, onClick } = item;
+    if (!url) {
+      onClick?.();
+      return;
+    }
 
-  let menuItemsSorted;
-  if (menuItems) {
-    menuItemsSorted = reverseMenuDirection ? menuItems?.reverse() : menuItems;
-  }
-  const filteredItems = menuItemsSorted?.filter((item) => !item.hideFromMenu);
-  const adjustHeightForBorder = filteredItems!.length === 0;
-  const styles = getStyles(theme, isActive, adjustHeightForBorder, reverseMenuDirection);
-
-  let element = (
-    <button className={styles.element} onClick={onClick} aria-label={label}>
-      <span className={styles.icon}>{children}</span>
-    </button>
-  );
-
-  if (url) {
-    element =
-      !target && url.startsWith('/') ? (
-        <Link
-          className={styles.element}
-          href={url}
-          target={target}
-          aria-label={label}
-          onClick={onClick}
-          aria-haspopup="true"
-        >
-          <span className={styles.icon}>{children}</span>
-        </Link>
-      ) : (
-        <a href={url} target={target} className={styles.element} onClick={onClick} aria-label={label}>
-          <span className={styles.icon}>{children}</span>
-        </a>
-      );
-  }
+    if (!target && url.startsWith('/')) {
+      locationService.push(url);
+    } else {
+      window.open(url, target);
+    }
+  };
 
   return showMenu ? (
     <div className={cx(styles.container, className)}>
-      <MenuButton link={link} isActive={isActive} reverseDirection={reverseMenuDirection} menuItems={menuItems}>
-        {!reverseMenuDirection && (
-          <Item key={id} textValue={link.text}>
-            <NavBarMenuItem target={target} text={label} url={url} onClick={onClick} styleOverrides={styles.header} />
-          </Item>
-        )}
-        {menuSubTitle && reverseMenuDirection && (
-          <Item key="subtitle" textValue={menuSubTitle}>
-            <div className={styles.subtitle}>{menuSubTitle}</div>
-          </Item>
-        )}
+      <NavBarItemMenuTrigger item={section} isActive={isActive}>
+        <NavBarItemMenu
+          items={items}
+          reverseMenuDirection={reverseMenuDirection}
+          adjustHeightForBorder={adjustHeightForBorder}
+          disabledKeys={['divider', 'subtitle']}
+          aria-label={section.text}
+          onNavigate={onNavigate}
+        >
+          {(item: NavModelItem) => {
+            if (item.menuItemType === NavMenuItemType.Section) {
+              return (
+                <Item key={getNavModelItemKey(item)} textValue={item.text}>
+                  <NavBarMenuItem
+                    target={item.target}
+                    text={item.text}
+                    url={item.url}
+                    onClick={item.onClick}
+                    styleOverrides={styles.header}
+                  />
+                </Item>
+              );
+            }
 
-        {filteredItems?.map((item, index) => {
-          return (
-            <Item key={`${item.id}-${index}`} textValue={item.text}>
-              <NavBarMenuItem
-                key={`${item.url}-${index}`}
-                isDivider={item.divider}
-                icon={item.icon as IconName}
-                onClick={item.onClick}
-                target={item.target}
-                text={item.text}
-                url={item.url}
-                styleOverrides={styles.item}
-              />
-            </Item>
-          );
-        })}
-        {reverseMenuDirection && (
-          <Item key={id} textValue={link.text}>
-            <NavBarMenuItem target={target} text={label} url={url} onClick={onClick} styleOverrides={styles.header} />
-          </Item>
-        )}
-        {menuSubTitle && !reverseMenuDirection && (
-          <Item key="subtitle" textValue={menuSubTitle}>
-            <div className={styles.subtitle}>{menuSubTitle}</div>
-          </Item>
-        )}
-      </MenuButton>
+            return (
+              <Item key={getNavModelItemKey(item)} textValue={item.text}>
+                <NavBarMenuItem
+                  isDivider={item.divider}
+                  icon={item.icon as IconName}
+                  onClick={item.onClick}
+                  target={item.target}
+                  text={item.text}
+                  url={item.url}
+                  styleOverrides={styles.item}
+                />
+              </Item>
+            );
+          }}
+        </NavBarItemMenu>
+      </NavBarItemMenuTrigger>
     </div>
   ) : (
-    <div className={cx(styles.container, className)}>{element}</div>
+    <NavBarItemWithoutMenu
+      label={link.text}
+      className={className}
+      isActive={isActive}
+      url={link.url}
+      onClick={link.onClick}
+      target={link.target}
+    >
+      {children}
+    </NavBarItemWithoutMenu>
   );
 };
 
@@ -124,66 +117,11 @@ export default NavBarItem;
 
 const getStyles = (
   theme: GrafanaTheme2,
-  isActive: Props['isActive'],
   adjustHeightForBorder: boolean,
-  reverseMenuDirection: Props['reverseMenuDirection']
+  isActive?: boolean,
+  reverseMenuDirection?: boolean
 ) => ({
-  container: css`
-    position: relative;
-    color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
-
-    &:hover {
-      background-color: ${theme.colors.action.hover};
-      color: ${theme.colors.text.primary};
-
-      // TODO don't use a hardcoded class here, use isVisible in NavBarDropdown
-      .navbar-dropdown {
-        opacity: 1;
-        visibility: visible;
-      }
-    }
-  `,
-  element: css`
-    background-color: transparent;
-    border: none;
-    color: inherit;
-    display: block;
-    line-height: ${theme.components.sidemenu.width}px;
-    padding: 0;
-    text-align: center;
-    width: ${theme.components.sidemenu.width}px;
-
-    &::before {
-      display: ${isActive ? 'block' : 'none'};
-      content: ' ';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      border-radius: 2px;
-      background-image: ${theme.colors.gradients.brandVertical};
-    }
-
-    &:focus-visible {
-      background-color: ${theme.colors.action.hover};
-      box-shadow: none;
-      color: ${theme.colors.text.primary};
-      outline: 2px solid ${theme.colors.primary.main};
-      outline-offset: 2px;
-      transition: none;
-    }
-  `,
-  icon: css`
-    height: 100%;
-    width: 100%;
-
-    img {
-      border-radius: 50%;
-      height: ${theme.spacing(3)};
-      width: ${theme.spacing(3)};
-    }
-  `,
+  ...getNavBarItemWithoutMenuStyles(theme, isActive),
   header: css`
     background-color: ${theme.colors.background.secondary};
     color: ${theme.colors.text.primary};
@@ -197,7 +135,6 @@ const getStyles = (
   item: css`
     color: ${theme.colors.text.primary};
   `,
-
   subtitle: css`
       border-${reverseMenuDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
       color: ${theme.colors.text.secondary};

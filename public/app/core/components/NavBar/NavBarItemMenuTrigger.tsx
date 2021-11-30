@@ -1,20 +1,27 @@
-import React, { useState } from 'react';
+import React, { ReactElement, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { useMenuTriggerState } from '@react-stately/menu';
-
-import { useFocusVisible, useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
-import { useMenuTrigger } from '@react-aria/menu';
-import { useButton } from '@react-aria/button';
-
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { MenuTriggerProps } from '@react-types/menu';
+import { useMenuTriggerState } from '@react-stately/menu';
+import { useMenuTrigger } from '@react-aria/menu';
+import { useFocusVisible, useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
+import { useButton } from '@react-aria/button';
+import { DismissButton, useOverlay } from '@react-aria/overlays';
+import { FocusScope } from '@react-aria/focus';
 
-import NavBarDropdown from './NavBarDropdown';
+import { NavBarItemMenuContext } from './context';
 
-export function MenuButton(props: any) {
+export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
+  children: ReactElement;
+  item: NavModelItem;
+  isActive?: boolean;
+}
+
+export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactElement {
+  const { item, isActive, children: menu, ...rest } = props;
+  const [menuHasFocus, setMenuHasFocus] = useState(false);
   const theme = useTheme2();
-
-  const { link, isActive, reverseDirection, menuItems, id, ...rest } = props;
   const styles = getStyles(theme, isActive);
 
   // Create state based on the incoming props
@@ -27,9 +34,8 @@ export function MenuButton(props: any) {
   // style to the focused menu item
   let { isFocusVisible } = useFocusVisible({ isTextInput: false });
 
-  const { hoverProps, isHovered } = useHover({
+  const { hoverProps } = useHover({
     onHoverChange: (isHovering) => {
-      console.log({ stateHover: state.isOpen });
       if (isHovering) {
         state.open();
       }
@@ -46,12 +52,10 @@ export function MenuButton(props: any) {
       }
       if (!isFocused) {
         state.close();
-        setEnableAllItems(false);
+        setMenuHasFocus(false);
       }
     },
   });
-
-  const [enableAllItems, setEnableAllItems] = useState(false);
 
   const { keyboardProps } = useKeyboard({
     onKeyDown: (e) => {
@@ -60,7 +64,7 @@ export function MenuButton(props: any) {
           if (!state.isOpen) {
             state.open();
           }
-          setEnableAllItems(true);
+          setMenuHasFocus(true);
           break;
         default:
           break;
@@ -72,66 +76,79 @@ export function MenuButton(props: any) {
   const { buttonProps } = useButton(menuTriggerProps, ref);
 
   let element = (
-    <button
-      className={styles.element}
-      {...buttonProps}
-      {...keyboardProps}
-      ref={ref}
-      onClick={link?.onClick}
-      aria-label={link?.label}
-    >
+    <button className={styles.element} {...buttonProps} {...keyboardProps} ref={ref} onClick={item?.onClick}>
       <span className={styles.icon}>
-        {link?.icon && <Icon name={link.icon as IconName} size="xl" />}
-        {link?.img && <img src={link.img} alt={`${link.text} logo`} />}
+        {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
+        {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
       </span>
     </button>
   );
 
-  if (link?.url) {
+  if (item?.url) {
     element =
-      !link.target && link.url.startsWith('/') ? (
+      !item.target && item.url.startsWith('/') ? (
         <Link
           {...buttonProps}
           {...keyboardProps}
           ref={ref}
-          href={link.url}
-          target={link.target}
-          onClick={link?.onClick}
+          href={item.url}
+          target={item.target}
+          onClick={item?.onClick}
           className={styles.element}
         >
           <span className={styles.icon}>
-            {link?.icon && <Icon name={link.icon as IconName} size="xl" />}
-            {link?.img && <img src={link.img} alt={`${link.text} logo`} />}
+            {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
+            {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
           </span>
         </Link>
       ) : (
-        <a href={link.url} target={link.target} onClick={link?.onClick} {...buttonProps} {...keyboardProps} ref={ref}>
+        <a
+          href={item.url}
+          target={item.target}
+          onClick={item?.onClick}
+          {...buttonProps}
+          {...keyboardProps}
+          ref={ref}
+          className={styles.element}
+        >
           <span className={styles.icon}>
-            {link?.icon && <Icon name={link.icon as IconName} size="xl" />}
-            {link?.img && <img src={link.img} alt={`${link.text} logo`} />}
+            {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
+            {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
           </span>
         </a>
       );
   }
+
+  const overlayRef = React.useRef(null);
+  const { overlayProps } = useOverlay(
+    {
+      onClose: () => state.close(),
+      shouldCloseOnBlur: true,
+      isOpen: state.isOpen,
+      isDismissable: true,
+    },
+    overlayRef
+  );
+
   return (
     <li className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
       {element}
       {state.isOpen && (
-        <NavBarDropdown
-          {...rest}
-          items={menuItems}
-          enableAllItems={enableAllItems}
-          domProps={menuProps}
-          autoFocus={state.focusStrategy}
-          onClose={() => state.close()}
-          reverseDirection={reverseDirection}
-        />
+        <NavBarItemMenuContext.Provider value={{ menuProps, menuHasFocus, onClose: () => state.close() }}>
+          <FocusScope restoreFocus>
+            <div {...overlayProps} ref={overlayRef}>
+              <DismissButton onDismiss={() => state.close()} />
+              {menu}
+              <DismissButton onDismiss={() => state.close()} />
+            </div>
+          </FocusScope>
+        </NavBarItemMenuContext.Provider>
       )}
     </li>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
+const getStyles = (theme: GrafanaTheme2, isActive?: boolean) => ({
   container: css`
     position: relative;
     color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
