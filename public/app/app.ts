@@ -170,21 +170,13 @@ function initEchoSrv() {
     const jsLoadMetricName = 'frontend_boot_js_done_time_seconds';
     const cssLoadMetricName = 'frontend_boot_css_time_seconds';
 
-    if (performance && performance.getEntriesByType) {
+    if (performance) {
       performance.mark(loadMetricName);
-
-      const paintMetrics = performance.getEntriesByType('paint');
-
-      for (const metric of paintMetrics) {
-        reportPerformance(
-          `frontend_boot_${metric.name}_time_seconds`,
-          Math.round(metric.startTime + metric.duration) / 1000
-        );
-      }
-
-      reportMetricPerformance(loadMetricName);
-      reportMetricPerformance(jsLoadMetricName);
-      reportMetricPerformance(cssLoadMetricName);
+      reportMetricPerformanceMark('first-paint', 'frontend_boot_', '_time_seconds');
+      reportMetricPerformanceMark('first-contentful-paint', 'frontend_boot_', '_time_seconds');
+      reportMetricPerformanceMark(loadMetricName);
+      reportMetricPerformanceMark(jsLoadMetricName);
+      reportMetricPerformanceMark(cssLoadMetricName);
     }
   });
 
@@ -236,10 +228,15 @@ function addClassIfNoOverlayScrollbar() {
   }
 }
 
-function reportMetricPerformance(metricName: string): void {
+/**
+ * Report when a metric of a given name was marked during the document lifecycle. Works for markers with no duration,
+ * like PerformanceMark or PerformancePaintTiming (e.g. created with performance.mark, or first-contentful-paint)
+ */
+function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = ''): void {
   const metric = _.first(performance.getEntriesByName(metricName));
   if (metric) {
-    reportPerformance(metric.name, Math.round(metric.startTime + metric.duration) / 1000);
+    const metricName = metric.name.replace(/-/g, '_');
+    reportPerformance(`${prefix}${metricName}${suffix}`, Math.round(metric.startTime) / 1000);
   }
 }
 
