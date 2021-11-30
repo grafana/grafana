@@ -49,7 +49,7 @@
     "@types/rollup-plugin-visualizer": "4.2.1",
     "@types/systemjs": "^0.20.6",
     "lodash": "4.17.21",
-    "pretty-format": "25.1.0",
+    "pretty-format": "27.4.2",
     "rimraf": "3.0.1",
     "rollup": "2.58.3",
     "rollup-plugin-sourcemaps": "0.6.3",
