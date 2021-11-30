@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"testing"
 	"time"
 
@@ -1512,7 +1511,7 @@ func TestProcessEvalResults(t *testing.T) {
 	for _, tc := range testCases {
 		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &schedule.FakeInstanceStore{})
 		t.Run(tc.desc, func(t *testing.T) {
-			fakeAnnoRepo := NewFakeAnnotationsRepo()
+			fakeAnnoRepo := schedule.NewFakeAnnotationsRepo()
 			annotations.SetRepository(fakeAnnoRepo)
 
 			for _, res := range tc.evalResults {
@@ -1636,48 +1635,4 @@ func TestStaleResultsHandler(t *testing.T) {
 		// The expected number of state entries remains after results are processed
 		assert.Equal(t, tc.finalStateCount, len(existingStatesForRule))
 	}
-}
-
-type fakeAnnotationsRepo struct {
-	mtx   sync.Mutex
-	items []*annotations.Item
-}
-
-func NewFakeAnnotationsRepo() *fakeAnnotationsRepo {
-	return &fakeAnnotationsRepo{
-		items: make([]*annotations.Item, 0, 0),
-	}
-}
-
-func (repo *fakeAnnotationsRepo) Len() int {
-	repo.mtx.Lock()
-	defer repo.mtx.Unlock()
-	return len(repo.items)
-}
-
-func (repo *fakeAnnotationsRepo) Delete(params *annotations.DeleteParams) error {
-	return nil
-}
-
-func (repo *fakeAnnotationsRepo) Save(item *annotations.Item) error {
-	repo.mtx.Lock()
-	defer repo.mtx.Unlock()
-	repo.items = append(repo.items, item)
-
-	return nil
-}
-func (repo *fakeAnnotationsRepo) Update(item *annotations.Item) error {
-	return nil
-}
-
-func (repo *fakeAnnotationsRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
-	annotations := []*annotations.ItemDTO{{Id: 1}}
-	return annotations, nil
-}
-
-func (repo *fakeAnnotationsRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	result := annotations.FindTagsResult{
-		Tags: []*annotations.TagsDTO{},
-	}
-	return result, nil
 }
