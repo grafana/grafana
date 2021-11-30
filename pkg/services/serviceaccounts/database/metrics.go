@@ -34,6 +34,7 @@ func (sa *ServiceAccountsStoreImpl) InitMetrics() {
 	once.Do(func() {
 		prometheus.MustRegister(
 			sa.makeMetric("serviceaccounts_count", "Gauge for total number of serviceaccount."),
+			// TODO: apikeys
 		)
 	})
 }
@@ -50,8 +51,8 @@ func (sa *ServiceAccountsStoreImpl) CacheMetrics() {
 	defer updateMutex.Unlock()
 	if LastUpdateTime.UTC().Add(MetricCacheInterval).Before(time.Now()) {
 		LastUpdateTime = time.Now()
-		//If you add a line here, you also have to add a line to InitMetrics
-		cache.Store("serviceaccount_count", sa.CountTable("user"))
+		cache.Store("serviceaccounts_count", sa.CountTable("user"))
+		// TODO: apikeys
 	}
 }
 
@@ -59,6 +60,7 @@ func (sa *ServiceAccountsStoreImpl) CacheMetrics() {
 func (sa *ServiceAccountsStoreImpl) CountTable(table string) int {
 	var result int = -1
 	_ = sa.sqlStore.WithDbSession(context.TODO(), func(sess *sqlstore.DBSession) error {
+		// TODO: sanitize plz
 		_, err := sess.SQL("SELECT count(1) FROM " + table + " where is_service_account = true").Get(&result)
 		return err
 	})
