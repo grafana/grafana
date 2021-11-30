@@ -402,11 +402,12 @@ func updateFolderPermissionScenario(t *testing.T, ctx updatePermissionContext, h
 		sc := setupScenarioContext(t, ctx.url)
 
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(ctx.cmd)
 			sc.context = c
 			sc.context.OrgId = testOrgID
 			sc.context.UserId = testUserID
 
-			return hs.UpdateFolderPermissions(c, ctx.cmd)
+			return hs.UpdateFolderPermissions(c)
 		})
 
 		sc.m.Post(ctx.routePattern, sc.defaultHandler)

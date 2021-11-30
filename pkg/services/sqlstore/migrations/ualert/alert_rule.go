@@ -131,6 +131,10 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		m.mg.Logger.Error("alert migration error: failed to create silence", "rule_name", ar.Title, "err", err)
 	}
 
+	if err := m.addErrorSilence(da, ar); err != nil {
+		m.mg.Logger.Error("alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
+	}
+
 	if err := m.addNoDataSilence(da, ar); err != nil {
 		m.mg.Logger.Error("alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
 	}
@@ -215,7 +219,9 @@ func transExecErr(s string) (string, error) {
 	case "", "alerting":
 		return "Alerting", nil
 	case "keep_state":
-		return "Alerting", nil
+		// Keep last state is translated to error as we now emit a
+		// DatasourceError alert when the state is error
+		return "Error", nil
 	}
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
 }

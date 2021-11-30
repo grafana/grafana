@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -24,18 +25,26 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 	if c.OrgId != 0 {
 		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
-		err := bus.Dispatch(&query)
+		err := bus.DispatchCtx(c.Req.Context(), &query)
 
 		if err != nil {
 			return nil, err
 		}
 
-		filtered, err := filterDatasourcesByPermissions(c.Req.Context(), c.SignedInUser, query.Result)
-		if err != nil {
-			return nil, err
+		dsFilterQuery := models.DatasourcesPermissionFilterQuery{
+			User:        c.SignedInUser,
+			Datasources: query.Result,
 		}
 
-		orgDataSources = filtered
+		if err := bus.DispatchCtx(c.Req.Context(), &dsFilterQuery); err != nil {
+			if !errors.Is(err, bus.ErrHandlerNotFound) {
+				return nil, err
+			}
+
+			orgDataSources = query.Result
+		} else {
+			orgDataSources = dsFilterQuery.Result
+		}
 	}
 
 	dataSources := make(map[string]interface{})
@@ -146,7 +155,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		return nil, err
 	}
 
-	pluginsToPreload := []*PreloadPlugin{}
+	pluginsToPreload := make([]*PreloadPlugin, 0)
 	for _, app := range enabledPlugins[plugins.App] {
 		if app.Preload {
 			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
@@ -167,27 +176,12 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		if isDefault, _ := dsM["isDefault"].(bool); isDefault {
 			defaultDS = n
 		}
-
-		module, _ := dsM["module"].(string)
-		if preload, _ := dsM["preload"].(bool); preload && module != "" {
-			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
-				Path:    module,
-				Version: dsM["info"].(map[string]interface{})["version"].(string),
-			})
-		}
 	}
 
 	panels := map[string]interface{}{}
 	for _, panel := range enabledPlugins[plugins.Panel] {
 		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
 			continue
-		}
-
-		if panel.Preload {
-			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
-				Path:    panel.Module,
-				Version: panel.Info.Version,
-			})
 		}
 
 		panels[panel.ID] = map[string]interface{}{

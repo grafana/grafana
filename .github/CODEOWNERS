@@ -143,4 +143,4 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/alertmanager @grafana/alerting-squad
 
 # Cloud middleware
-/grafana-mixin/ @grafana/cloud-middleware
+/grafana-mixin/ @grafana/hosted-grafana-team

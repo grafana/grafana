@@ -6,8 +6,8 @@ describe('SharedQueryRunner', () => {
     expect(isSharedDashboardQuery('-- Dashboard --')).toBe(true);
 
     expect(isSharedDashboardQuery('')).toBe(false);
-    expect(isSharedDashboardQuery((undefined as unknown) as string | DataSourceApi)).toBe(false);
-    expect(isSharedDashboardQuery((null as unknown) as string | DataSourceApi)).toBe(false);
+    expect(isSharedDashboardQuery((undefined as unknown) as null)).toBe(false);
+    expect(isSharedDashboardQuery(null)).toBe(false);
 
     const ds = {
       meta: {

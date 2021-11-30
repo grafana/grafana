@@ -433,11 +433,12 @@ func updateDashboardPermissionScenario(t *testing.T, ctx updatePermissionContext
 		sc := setupScenarioContext(t, ctx.url)
 
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(ctx.cmd)
 			sc.context = c
 			sc.context.OrgId = testOrgID
 			sc.context.UserId = testUserID
 
-			return hs.UpdateDashboardPermissions(c, ctx.cmd)
+			return hs.UpdateDashboardPermissions(c)
 		})
 
 		sc.m.Post(ctx.routePattern, sc.defaultHandler)

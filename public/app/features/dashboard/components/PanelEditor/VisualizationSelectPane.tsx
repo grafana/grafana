@@ -14,6 +14,8 @@ import { getPanelPluginWithFallback } from '../../state/selectors';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { useLocalStorage } from 'react-use';
+import { VisualizationSelectPaneTab } from './types';
+import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 
 interface Props {
   panel: PanelModel;
@@ -23,7 +25,11 @@ interface Props {
 export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
   const plugin = useSelector(getPanelPluginWithFallback(panel.type));
   const [searchQuery, setSearchQuery] = useState('');
-  const [listMode, setListMode] = useLocalStorage(`VisualizationSelectPane.ListMode`, ListMode.Visualizations);
+  const [listMode, setListMode] = useLocalStorage(
+    LS_VISUALIZATION_SELECT_TAB_KEY,
+    VisualizationSelectPaneTab.Visualizations
+  );
+
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -51,31 +57,16 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
     dispatch(toggleVizPicker(false));
   };
 
-  // const onKeyPress = useCallback(
-  //   (e: React.KeyboardEvent<HTMLInputElement>) => {
-  //     if (e.key === 'Enter') {
-  //       const query = e.currentTarget.value;
-  //       const plugins = getAllPanelPluginMeta();
-  //       const match = filterPluginList(plugins, query, plugin.meta);
-
-  //       if (match && match.length) {
-  //         onPluginTypeChange(match[0], false);
-  //       }
-  //     }
-  //   },
-  //   [onPluginTypeChange, plugin.meta]
-  // );
-
   if (!plugin) {
     return null;
   }
 
-  const radioOptions: Array<SelectableValue<ListMode>> = [
-    { label: 'Visualizations', value: ListMode.Visualizations },
-    { label: 'Suggestions', value: ListMode.Suggestions },
+  const radioOptions: Array<SelectableValue<VisualizationSelectPaneTab>> = [
+    { label: 'Visualizations', value: VisualizationSelectPaneTab.Visualizations },
+    { label: 'Suggestions', value: VisualizationSelectPaneTab.Suggestions },
     {
       label: 'Library panels',
-      value: ListMode.LibraryPanels,
+      value: VisualizationSelectPaneTab.LibraryPanels,
       description: 'Reusable panels you can share between multiple dashboards.',
     },
   ];
@@ -107,7 +98,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
           <div className={styles.scrollContent}>
-            {listMode === ListMode.Visualizations && (
+            {listMode === VisualizationSelectPaneTab.Visualizations && (
               <VizTypePicker
                 current={plugin.meta}
                 onChange={onVizChange}
@@ -116,7 +107,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
                 onClose={() => {}}
               />
             )}
-            {listMode === ListMode.Suggestions && (
+            {listMode === VisualizationSelectPaneTab.Suggestions && (
               <VisualizationSuggestions
                 current={plugin.meta}
                 onChange={onVizChange}
@@ -126,7 +117,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
                 onClose={() => {}}
               />
             )}
-            {listMode === ListMode.LibraryPanels && (
+            {listMode === VisualizationSelectPaneTab.LibraryPanels && (
               <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
             )}
           </div>
@@ -135,12 +126,6 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
     </div>
   );
 };
-
-enum ListMode {
-  Visualizations,
-  LibraryPanels,
-  Suggestions,
-}
 
 VisualizationSelectPane.displayName = 'VisualizationSelectPane';
 
