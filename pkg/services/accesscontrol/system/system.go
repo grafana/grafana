@@ -120,9 +120,14 @@ type setPermissionCommand struct {
 	Permission string `json:"permission"`
 }
 
-func (s *System) setUserPermission(c *models.ReqContext, cmd setPermissionCommand) response.Response {
+func (s *System) setUserPermission(c *models.ReqContext) response.Response {
 	userID := c.ParamsInt64(":userID")
 	resourceID := web.Params(c.Req)[":resourceID"]
+
+	var cmd setPermissionCommand
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 
 	if !s.options.Assignments.Users {
 		return response.Error(http.StatusNotImplemented, "", nil)
@@ -146,9 +151,14 @@ func (s *System) setUserPermission(c *models.ReqContext, cmd setPermissionComman
 	})
 }
 
-func (s *System) setTeamPermission(c *models.ReqContext, cmd setPermissionCommand) response.Response {
+func (s *System) setTeamPermission(c *models.ReqContext) response.Response {
 	teamID := c.ParamsInt64(":teamID")
 	resourceID := web.Params(c.Req)[":resourceID"]
+
+	var cmd setPermissionCommand
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 
 	if !s.options.Assignments.Teams {
 		return response.Error(http.StatusNotImplemented, "", nil)
@@ -172,9 +182,14 @@ func (s *System) setTeamPermission(c *models.ReqContext, cmd setPermissionComman
 	})
 }
 
-func (s *System) setBuiltinRolePermission(c *models.ReqContext, cmd setPermissionCommand) response.Response {
+func (s *System) setBuiltinRolePermission(c *models.ReqContext) response.Response {
 	builtInRole := web.Params(c.Req)[":builtInRole"]
 	resourceID := web.Params(c.Req)[":resourceID"]
+
+	var cmd setPermissionCommand
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 
 	if !s.options.Assignments.BuiltInRoles {
 		return response.Error(http.StatusNotImplemented, "", nil)
