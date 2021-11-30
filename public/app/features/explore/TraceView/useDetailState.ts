@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
+import { DataFrame } from '@grafana/data';
 import { DetailState } from '@jaegertracing/jaeger-ui-components';
 import { TraceLog } from '@jaegertracing/jaeger-ui-components/src/types/trace';
 
@@ -6,10 +7,13 @@ import { TraceLog } from '@jaegertracing/jaeger-ui-components/src/types/trace';
  * Keeps state of the span detail. This means whether span details are open but also state of each detail subitem
  * like logs or tags.
  */
-export function useDetailState() {
+export function useDetailState(frame: DataFrame) {
   const [detailStates, setDetailStates] = useState(new Map<string, DetailState>());
 
-  const clearDetailStates = useCallback(() => setDetailStates(new Map<string, DetailState>()), [setDetailStates]);
+  // Clear detail state when new trace arrives
+  useEffect(() => {
+    setDetailStates(new Map<string, DetailState>());
+  }, [frame, setDetailStates]);
 
   const toggleDetail = useCallback(
     function toggleDetail(spanID: string) {
@@ -40,7 +44,6 @@ export function useDetailState() {
 
   return {
     detailStates,
-    clearDetailStates,
     toggleDetail,
     detailLogItemToggle,
     detailLogsToggle: useCallback(

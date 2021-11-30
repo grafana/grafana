@@ -83,7 +83,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedI
 			AuthId:     authInfoQuery.Result.AuthId,
 			OAuthToken: token,
 		}
-		if err := bus.Dispatch(updateAuthCommand); err != nil {
+		if err := bus.DispatchCtx(ctx, updateAuthCommand); err != nil {
 			logger.Error("failed to update auth info during token refresh", "userId", user.UserId, "username", user.Login, "error", err)
 			return nil
 		}

@@ -1,27 +1,72 @@
 import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 import { AwsAuthDataSourceSecureJsonData, AwsAuthDataSourceJsonData } from '@grafana/aws-sdk';
+
 export interface Dimensions {
   [key: string]: string | string[];
 }
 
+import {
+  QueryEditorArrayExpression,
+  QueryEditorFunctionExpression,
+  QueryEditorPropertyExpression,
+} from './expressions';
+
+export type CloudWatchQueryMode = 'Metrics' | 'Logs';
+
+export enum MetricQueryType {
+  'Search',
+  'Query',
+}
+
+export enum MetricEditorMode {
+  'Builder',
+  'Code',
+}
+
+export type Direction = 'ASC' | 'DESC';
+
+export interface SQLExpression {
+  select?: QueryEditorFunctionExpression;
+  from?: QueryEditorPropertyExpression | QueryEditorFunctionExpression;
+  where?: QueryEditorArrayExpression;
+  groupBy?: QueryEditorArrayExpression;
+  orderBy?: QueryEditorFunctionExpression;
+  orderByDirection?: string;
+  limit?: number;
+}
+
 export interface CloudWatchMetricsQuery extends DataQuery {
   queryMode?: 'Metrics';
+  metricQueryType?: MetricQueryType;
+  metricEditorMode?: MetricEditorMode;
 
+  //common props
   id: string;
   region: string;
   namespace: string;
-  expression: string;
+  period?: string;
+  alias?: string;
 
-  metricName: string;
-  dimensions: { [key: string]: string | string[] };
-  statistic: string;
+  //Basic editor builder props
+  metricName?: string;
+  dimensions?: Dimensions;
+  matchExact?: boolean;
+  statistic?: string;
   /**
    * @deprecated use statistic
    */
   statistics?: string[];
-  period: string;
-  alias: string;
-  matchExact: boolean;
+
+  // Math expression query
+  expression?: string;
+
+  sqlExpression?: string;
+
+  sql?: SQLExpression;
+}
+
+export interface CloudWatchMathExpressionQuery extends DataQuery {
+  expression: string;
 }
 
 export type LogAction =
@@ -65,9 +110,7 @@ interface AnnotationProperties {
   alarmNamePrefix: string;
 }
 
-export type CloudWatchLogsAnnotationQuery = CloudWatchLogsQuery & AnnotationProperties;
-export type CloudWatchMetricsAnnotationQuery = CloudWatchMetricsQuery & AnnotationProperties;
-export type CloudWatchAnnotationQuery = CloudWatchLogsAnnotationQuery | CloudWatchMetricsAnnotationQuery;
+export type CloudWatchAnnotationQuery = CloudWatchMetricsQuery & AnnotationProperties;
 
 export type SelectableStrings = Array<SelectableValue<string>>;
 
@@ -121,6 +164,12 @@ export interface QueryStatistics {
 }
 
 export type QueryStatus = 'Scheduled' | 'Running' | 'Complete' | 'Failed' | 'Cancelled' | string;
+
+export type CloudWatchLogsRequest =
+  | GetLogEventsRequest
+  | StartQueryRequest
+  | DescribeLogGroupsRequest
+  | GetLogGroupFieldsRequest;
 
 export interface GetLogEventsRequest {
   /**
@@ -182,7 +231,7 @@ export interface DescribeLogGroupsRequest {
    */
   limit?: number;
   refId?: string;
-  region?: string;
+  region: string;
 }
 
 export interface TSDBResponse<T = any> {
@@ -256,6 +305,7 @@ export interface GetLogGroupFieldsRequest {
    * The time to set as the center of the query. If you specify time, the 8 minutes before and 8 minutes after this time are searched. If you omit time, the past 15 minutes are queried. The time value is specified as epoch time, the number of seconds since January 1, 1970, 00:00:00 UTC.
    */
   time?: number;
+  region: string;
 }
 
 export interface LogGroupField {
@@ -316,12 +366,6 @@ export interface MetricQuery {
   refId?: string;
   maxDataPoints?: number;
   intervalMs?: number;
-}
-
-export interface ExecutedQueryPreview {
-  id: string;
-  executedQuery: string;
-  period: string;
 }
 
 export interface MetricFindSuggestData {

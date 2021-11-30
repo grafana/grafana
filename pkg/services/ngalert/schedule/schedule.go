@@ -23,12 +23,21 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// ScheduleService handles scheduling
+// ScheduleService is an interface for a service that schedules the evaluation
+// of alert rules.
 type ScheduleService interface {
+	// Run the scheduler until the context is canceled or the scheduler returns
+	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
 	Pause() error
 	Unpause() error
+
+	// AlertmanagersFor returns all the discovered Alertmanager URLs for the
+	// organization.
 	AlertmanagersFor(orgID int64) []*url.URL
+
+	// DroppedAlertmanagersFor returns all the dropped Alertmanager URLs for the
+	// organization.
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
 
 	// the following are used by tests only used for tests
