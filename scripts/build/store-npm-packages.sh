@@ -16,4 +16,4 @@ tar -czf "$ZIPFILE" packages/*/dist packages/*/compiled
 echo "${GCP_KEY}" | base64 -d > credentials.json
 gcloud auth activate-service-account --key-file=credentials.json
 gsutil cp "$ZIPFILE" "gs://${PRERELEASE_BUCKET}/artifacts/npm/$ZIPFILE"
-echo "Done."
+echo "NPM artifacts successfully pushed to GCS."
