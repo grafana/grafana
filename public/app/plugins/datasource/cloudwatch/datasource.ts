@@ -32,6 +32,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
 import memoizedDebounce from './memoizedDebounce';
 import {
+  MetricEditorMode,
   CloudWatchJsonData,
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
@@ -43,6 +44,7 @@ import {
   GetLogGroupFieldsResponse,
   isCloudWatchLogsQuery,
   LogAction,
+  MetricQueryType,
   MetricQuery,
   MetricRequest,
   StartQueryRequest,
@@ -57,6 +59,7 @@ import { increasingInterval } from './utils/rxjs/increasingInterval';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import { addDataLinksToLogsResponse } from './utils/datalinks';
 import { runWithRetry } from './utils/logsRetry';
+import { CompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -87,11 +90,13 @@ export class CloudWatchDatasource
   defaultRegion: any;
   datasourceName: string;
   languageProvider: CloudWatchLanguageProvider;
+  sqlCompletionItemProvider: CompletionItemProvider;
   tracingDataSourceUid?: string;
   logsTimeout: string;
 
   type = 'cloudwatch';
   standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
+
   debouncedAlert: (datasourceName: string, region: string) => void = memoizedDebounce(
     displayAlert,
     AppNotificationTimeout.Error
@@ -114,6 +119,7 @@ export class CloudWatchDatasource
     this.languageProvider = new CloudWatchLanguageProvider(this);
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
     this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
+    this.sqlCompletionItemProvider = new CompletionItemProvider(this);
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
@@ -220,35 +226,64 @@ export class CloudWatchDatasource
     );
   };
 
+  filterMetricQuery({
+    region,
+    metricQueryType,
+    metricEditorMode,
+    expression,
+    metricName,
+    namespace,
+    sqlExpression,
+    statistic,
+    dimensions,
+    ...rest
+  }: CloudWatchMetricsQuery): boolean {
+    if (!region) {
+      return false;
+    }
+
+    if (metricQueryType === MetricQueryType.Search && metricEditorMode === MetricEditorMode.Builder) {
+      return (
+        !!namespace &&
+        !!metricName &&
+        !!statistic &&
+        (('matchExact' in rest && !rest.matchExact) || !isEmpty(dimensions))
+      );
+    } else if (metricQueryType === MetricQueryType.Search && metricEditorMode === MetricEditorMode.Code) {
+      return !!expression;
+    } else if (metricQueryType === MetricQueryType.Query) {
+      // still TBD how to validate the visual query builder for SQL
+      return !!sqlExpression;
+    }
+
+    throw new Error('invalid metric editor mode');
+  }
+
   handleMetricQueries = (
     metricQueries: CloudWatchMetricsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const validMetricsQueries = metricQueries
-      .filter(
-        (item) =>
-          (!!item.region && !!item.namespace && !!item.metricName && !!item.statistic) || item.expression?.length > 0
-      )
-      .map(
-        (item: CloudWatchMetricsQuery): MetricQuery => {
-          item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
-          item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
-          item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
-          item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
-          item.statistic = this.templateSrv.replace(item.statistic, options.scopedVars);
-          item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
-          item.id = this.templateSrv.replace(item.id, options.scopedVars);
-          item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
+    const validMetricsQueries = metricQueries.filter(this.filterMetricQuery).map(
+      (item: CloudWatchMetricsQuery): MetricQuery => {
+        item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
+        item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
+        item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
+        item.dimensions = this.convertDimensionFormat(item.dimensions ?? {}, options.scopedVars);
+        item.statistic = this.templateSrv.replace(item.statistic, options.scopedVars);
+        item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
+        item.id = this.templateSrv.replace(item.id, options.scopedVars);
+        item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
+        item.sqlExpression = this.templateSrv.replace(item.sqlExpression, options.scopedVars, 'raw');
 
-          return {
-            intervalMs: options.intervalMs,
-            maxDataPoints: options.maxDataPoints,
-            type: 'timeSeriesQuery',
-            ...item,
-            datasource: this.getRef(),
-          };
-        }
-      );
+        return {
+          intervalMs: options.intervalMs,
+          maxDataPoints: options.maxDataPoints,
+          ...item,
+          type: 'timeSeriesQuery',
+          datasource: this.getRef(),
+        };
+      }
+    );
 
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(validMetricsQueries)) {
@@ -1001,13 +1036,14 @@ export class CloudWatchDatasource
   interpolateMetricsQueryVariables(
     query: CloudWatchMetricsQuery,
     scopedVars: ScopedVars
-  ): Pick<CloudWatchMetricsQuery, 'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions'> {
+  ): Pick<CloudWatchMetricsQuery, 'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions' | 'sqlExpression'> {
     return {
       alias: this.replace(query.alias, scopedVars),
       metricName: this.replace(query.metricName, scopedVars),
       namespace: this.replace(query.namespace, scopedVars),
       period: this.replace(query.period, scopedVars),
-      dimensions: Object.entries(query.dimensions).reduce((prev, [key, value]) => {
+      sqlExpression: this.replace(query.sqlExpression, scopedVars),
+      dimensions: Object.entries(query.dimensions ?? {}).reduce((prev, [key, value]) => {
         if (Array.isArray(value)) {
           return { ...prev, [key]: value };
         }
