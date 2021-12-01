@@ -1,4 +1,5 @@
 import { SelectableValue, toOption } from '@grafana/data';
+import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 import React, { useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
@@ -8,9 +9,6 @@ import { QueryEditorExpressionType, QueryEditorOperatorExpression, QueryEditorPr
 import { useDimensionKeys } from '../../hooks';
 import { CloudWatchMetricsQuery } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
-import AccessoryButton from '../ui/AccessoryButton';
-import EditorList from '../ui/EditorList';
-import InputGroup from '../ui/InputGroup';
 import {
   getFlattenedFilters,
   getMetricNameFromExpression,
