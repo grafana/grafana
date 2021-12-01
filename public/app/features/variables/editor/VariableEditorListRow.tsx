@@ -107,7 +107,11 @@ export function VariableEditorListRow({
 function getDefinition(model: VariableModel): string {
   let definition = '';
   if (isQuery(model)) {
-    definition = model.definition ? model.definition : typeof model.query === 'string' ? model.query : '';
+    if (model.definition) {
+      definition = model.definition;
+    } else if (typeof model.query === 'string') {
+      definition = model.query;
+    }
   } else if (hasOptions(model)) {
     definition = model.query;
   }
