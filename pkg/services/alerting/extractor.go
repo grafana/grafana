@@ -82,9 +82,23 @@ func copyJSON(in json.Marshaler) (*simplejson.Json, error) {
 	return simplejson.NewJson(rawJSON)
 }
 
-// CtxCfg is used as a key to get configuration from the context
-type CtxCfg struct {
-	Enabled bool
+// UAEnabled takes a context and returns true if Unified Alerting is enabled
+// and false if it is disabled or the setting is not present in the context
+type uaEnabledKeyType string
+
+const uaEnabledKey uaEnabledKeyType = "unified_alerting_enabled"
+
+func WithUAEnabled(ctx context.Context, enabled bool) context.Context {
+	retCtx := context.WithValue(ctx, uaEnabledKey, enabled)
+	return retCtx
+}
+
+func UAEnabled(ctx context.Context) bool {
+	enabled, ok := ctx.Value(uaEnabledKey).(bool)
+	if !ok {
+		return false
+	}
+	return enabled
 }
 
 func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) bool, logTranslationFailures bool) ([]*models.Alert, error) {
@@ -175,12 +189,8 @@ func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPan
 			panelQuery := findPanelQueryByRefID(panel, queryRefID)
 
 			if panelQuery == nil {
-				config, ok := ctx.Value(CtxCfg{}).(*CtxCfg)
-				if !ok {
-					return nil, fmt.Errorf("unable to determine if unified alerting is enabled")
-				}
 				var reason string
-				if config.Enabled {
+				if UAEnabled(ctx) {
 					reason = fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found. Legacy alerting queries are not able to be removed at this time in order to preserve the ability to rollback to previous versions of Grafana", alert.PanelId, queryRefID)
 				} else {
 					reason = fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefID)
