@@ -265,7 +265,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		logger.Debug("Client connected", "user", client.UserID(), "client", client.ID())
 		connectedAt := time.Now()
 
-		// Called when client subscribes to the channel.
+		// Called when client issues RPC (async request over Live connection).
 		client.OnRPC(func(e centrifuge.RPCEvent, cb centrifuge.RPCCallback) {
 			err := runConcurrentlyIfNeeded(client.Context(), semaphore, func() {
 				cb(g.handleOnRPC(client, e))
