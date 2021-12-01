@@ -35,6 +35,10 @@ export const LayersEditor = (props: LayersEditorProps) => {
     actions.reorder(src, dst);
   };
 
+  const onSelect = (element: any) => {
+    actions.selectLayer(element.options.name);
+  };
+
   const selection = selected ? [selected] : [];
 
   return (
@@ -48,6 +52,7 @@ export const LayersEditor = (props: LayersEditorProps) => {
       <LayerDragDropList
         layers={layers}
         onDragEnd={onDragEnd}
+        onSelect={onSelect}
         selection={selection}
         excludeBaseLayer
         verifyLayerNameUniqueness={actions.canRename}

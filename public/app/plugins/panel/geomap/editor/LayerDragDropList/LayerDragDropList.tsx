@@ -10,6 +10,7 @@ import { LayerName } from './LayerName';
 type LayerDragDropListProps = {
   layers: any[];
   onDragEnd: (result: DropResult) => void;
+  onSelect: (element: any) => any;
   selection?: Number[];
   excludeBaseLayer?: boolean;
   verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
@@ -18,6 +19,7 @@ type LayerDragDropListProps = {
 export const LayerDragDropList = ({
   layers,
   onDragEnd,
+  onSelect,
   selection,
   excludeBaseLayer,
   verifyLayerNameUniqueness,
@@ -39,11 +41,9 @@ export const LayerDragDropList = ({
               const lastLayerIndex = excludeBaseLayer ? 1 : 0;
               for (let i = layers.length - 1; i >= lastLayerIndex; i--) {
                 const element = layers[i];
-                let uid;
+                let uid = element.UID;
                 if (element.options.name) {
                   uid = element.options.name;
-                } else if (element.UID) {
-                  uid = `${element.UID}`;
                 }
 
                 rows.push(
@@ -54,7 +54,7 @@ export const LayerDragDropList = ({
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        // onMouseDown={() => actions!.selectLayer(uid)}
+                        onMouseDown={() => onSelect(element)}
                       >
                         <LayerName layer={element} verifyLayerNameUniqueness={verifyLayerNameUniqueness ?? undefined} />
                         <div className={style.textWrapper}>&nbsp; {element.options.type}</div>

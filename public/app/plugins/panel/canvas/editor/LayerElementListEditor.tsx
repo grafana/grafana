@@ -222,7 +222,12 @@ export class LayerElementListEditor extends PureComponent<Props> {
             </Button>
           </>
         )}
-        <LayerDragDropList onDragEnd={this.onDragEnd} layers={layer.elements} selection={selection} />
+        <LayerDragDropList
+          onDragEnd={this.onDragEnd}
+          onSelect={this.onSelect}
+          layers={layer.elements}
+          selection={selection}
+        />
         <DragDropContext onDragEnd={this.onDragEnd}>
           <Droppable droppableId="droppable">
             {(provided, snapshot) => (
