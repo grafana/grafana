@@ -5,11 +5,10 @@ import { GrafanaTheme } from '@grafana/data';
 
 export interface LayerNameProps {
   layer: any;
-  onChange: (layer: any) => void;
-  canRename?: (v: string) => boolean;
+  verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
 }
 
-export const LayerName = ({ layer, onChange }: LayerNameProps) => {
+export const LayerName = ({ layer, verifyLayerNameUniqueness }: LayerNameProps) => {
   const styles = useStyles(getStyles);
   const { options } = layer;
 
@@ -44,10 +43,10 @@ export const LayerName = ({ layer, onChange }: LayerNameProps) => {
       return;
     }
 
-    // if (!canRename(newName)) {
-    //   setValidationError('Layer name already exists');
-    //   return;
-    // }
+    if (verifyLayerNameUniqueness && !verifyLayerNameUniqueness(newName)) {
+      setValidationError('Layer name already exists');
+      return;
+    }
 
     if (validationError) {
       setValidationError(null);

@@ -12,10 +12,16 @@ type LayerDragDropListProps = {
   onDragEnd: (result: DropResult) => void;
   selection?: Number[];
   excludeBaseLayer?: boolean;
-  enforceUniqueLayerName?: boolean;
+  verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
 };
 
-export const LayerDragDropList = ({ layers, onDragEnd, selection, excludeBaseLayer }: LayerDragDropListProps) => {
+export const LayerDragDropList = ({
+  layers,
+  onDragEnd,
+  selection,
+  excludeBaseLayer,
+  verifyLayerNameUniqueness,
+}: LayerDragDropListProps) => {
   const style = styles(config.theme);
 
   const getRowStyle = (isSelected: boolean) => {
@@ -50,7 +56,7 @@ export const LayerDragDropList = ({ layers, onDragEnd, selection, excludeBaseLay
                         {...provided.dragHandleProps}
                         // onMouseDown={() => actions!.selectLayer(uid)}
                       >
-                        <LayerName layer={element} onChange={element.onChange} />
+                        <LayerName layer={element} verifyLayerNameUniqueness={verifyLayerNameUniqueness ?? undefined} />
                         <div className={style.textWrapper}>&nbsp; {element.options.type}</div>
 
                         <IconButton
