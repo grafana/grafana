@@ -2,36 +2,19 @@ package system
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 type ResourceValidator func(ctx context.Context, orgID int64, resourceID string) error
 
-// TODO: Add hooks for set Team / User / Builtin
 type Options struct {
-	Resource          string
+	// Resource is the action and scope prefix that is generated
+	Resource string
+	// ResourceValidator is a validator function that will be called before each assignment.
+	// If set to nil the validator will be skipped
 	ResourceValidator ResourceValidator
-
-	Actions       []string
-	ActionsMapper func(permission accesscontrol.ResourcePermission) (string, bool)
-
+	// Assignments decides what we can assign permissions to (users/teams/builtInRoles)
 	Assignments Assignments
-
-	Permissions      []string
-	PermissionMapper func(permission string) []string
-}
-
-func (s Options) mapActions(permission accesscontrol.ResourcePermission) (string, bool) {
-	if s.ActionsMapper != nil {
-		return s.ActionsMapper(permission)
-	}
-	return "", false
-}
-
-func (s Options) mapPermission(permission string) []string {
-	if s.PermissionMapper != nil {
-		return s.PermissionMapper(permission)
-	}
-	return nil
+	// PermissionsToAction is a map of friend named permissions and what access control actions they should generate.
+	// E.g. Edit permissions should generate dashboards:read, dashboards:write and dashboards:delete
+	PermissionsToActions map[string][]string
 }
