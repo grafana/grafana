@@ -16,11 +16,25 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 var datasourcesLogger = log.New("datasources")
+
+func (hs *HTTPServer) getDataSourcesAccessControlMetadata(c *models.ReqContext, dataSources []*models.DataSource) (map[string]accesscontrol.Metadata, error) {
+	if !hs.Cfg.FeatureToggles["accesscontrol"] || !c.QueryBool("metadata") || len(dataSources) == 0 {
+		return nil, nil
+	}
+
+	dsIDs := make([]string, 0)
+	for _, ds := range dataSources {
+		dsIDs = append(dsIDs, fmt.Sprintf("%d", ds.Id))
+	}
+
+	return hs.AccessControl.GetResourcesMetadata(c.Req.Context(), c.SignedInUser, "datasources", dsIDs)
+}
 
 func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 	query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
@@ -29,8 +43,17 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
+	dataSourcesMetadata, err := hs.getDataSourcesAccessControlMetadata(c, query.Result)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to query metadata", err)
+	}
+
 	result := make(dtos.DataSourceList, 0)
 	for _, ds := range query.Result {
+		var dsMetadata accesscontrol.Metadata
+		if dataSourcesMetadata != nil {
+			dsMetadata = dataSourcesMetadata[fmt.Sprintf("%d", ds.Id)]
+		}
 		dsItem := dtos.DataSourceListItemDTO{
 			OrgId:     ds.OrgId,
 			Id:        ds.Id,
@@ -47,6 +70,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 			IsDefault: ds.IsDefault,
 			JsonData:  ds.JsonData,
 			ReadOnly:  ds.ReadOnly,
+			Metadata:  dsMetadata,
 		}
 
 		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type); exists {

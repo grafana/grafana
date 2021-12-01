@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 type DataSource struct {
@@ -31,22 +32,23 @@ type DataSource struct {
 }
 
 type DataSourceListItemDTO struct {
-	Id          int64            `json:"id"`
-	UID         string           `json:"uid"`
-	OrgId       int64            `json:"orgId"`
-	Name        string           `json:"name"`
-	Type        string           `json:"type"`
-	TypeName    string           `json:"typeName"`
-	TypeLogoUrl string           `json:"typeLogoUrl"`
-	Access      models.DsAccess  `json:"access"`
-	Url         string           `json:"url"`
-	Password    string           `json:"password"`
-	User        string           `json:"user"`
-	Database    string           `json:"database"`
-	BasicAuth   bool             `json:"basicAuth"`
-	IsDefault   bool             `json:"isDefault"`
-	JsonData    *simplejson.Json `json:"jsonData,omitempty"`
-	ReadOnly    bool             `json:"readOnly"`
+	Id          int64                  `json:"id"`
+	UID         string                 `json:"uid"`
+	OrgId       int64                  `json:"orgId"`
+	Name        string                 `json:"name"`
+	Type        string                 `json:"type"`
+	TypeName    string                 `json:"typeName"`
+	TypeLogoUrl string                 `json:"typeLogoUrl"`
+	Access      models.DsAccess        `json:"access"`
+	Url         string                 `json:"url"`
+	Password    string                 `json:"password"`
+	User        string                 `json:"user"`
+	Database    string                 `json:"database"`
+	BasicAuth   bool                   `json:"basicAuth"`
+	IsDefault   bool                   `json:"isDefault"`
+	JsonData    *simplejson.Json       `json:"jsonData,omitempty"`
+	ReadOnly    bool                   `json:"readOnly"`
+	Metadata    accesscontrol.Metadata `json:"metadata"`
 }
 
 type DataSourceList []DataSourceListItemDTO
