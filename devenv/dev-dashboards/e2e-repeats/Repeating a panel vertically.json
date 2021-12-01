@@ -58,7 +58,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": "${DS_GDEV-TESTDATA}",
+      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {

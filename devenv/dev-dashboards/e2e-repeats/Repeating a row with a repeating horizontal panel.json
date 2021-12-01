@@ -53,7 +53,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1638354119182,
+  "iteration": 1638354357847,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -73,7 +73,7 @@
       "type": "row"
     },
     {
-      "datasource": "${DS_GDEV-TESTDATA}",
+      "datasource": null,
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -142,8 +142,9 @@
           "mode": "single"
         }
       },
-      "repeat": null,
-      "title": "Panel Title",
+      "repeat": "horizontal",
+      "repeatDirection": "h",
+      "title": "Panel Title $horizontal",
       "type": "timeseries"
     }
   ],
@@ -155,7 +156,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
+          "selected": false,
           "text": [
             "All"
           ],
@@ -200,7 +201,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
+          "selected": false,
           "text": [
             "All"
           ],
@@ -295,7 +296,7 @@
   },
   "timepicker": {},
   "timezone": "utc",
-  "title": "Repeating a row with a non-repeating panel",
-  "uid": "ZzyTojpnz",
+  "title": "Repeating a row with a repeating horizontal panel",
+  "uid": "0OmtTCtnk",
   "version": 3
 }
