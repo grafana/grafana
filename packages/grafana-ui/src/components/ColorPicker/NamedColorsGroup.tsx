@@ -19,6 +19,16 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
 }) => {
   const primaryShade = hue.shades.find((shade) => shade.primary)!;
 
+  const keyDownColorSelect = (event: React.KeyboardEvent<HTMLDivElement>, shade: string) => {
+    switch (event.key) {
+      case 'Tab':
+        onColorSelect(shade);
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <div {...otherProps} style={{ display: 'flex', flexDirection: 'column' }}>
       {primaryShade && (
@@ -29,7 +39,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
           color={primaryShade.color}
           label={upperFirst(hue.name)}
           onClick={() => onColorSelect(primaryShade.name)}
-          onKeyDown={() => onColorSelect(primaryShade.name)}
+          onKeyDown={(event) => keyDownColorSelect(event, primaryShade.name)}
         />
       )}
       <div
@@ -47,7 +57,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
                   isSelected={shade.name === selectedColor}
                   color={shade.color}
                   onClick={() => onColorSelect(shade.name)}
-                  onKeyDown={() => onColorSelect(primaryShade.name)}
+                  onKeyDown={(event) => keyDownColorSelect(event, shade.name)}
                 />
               </div>
             )
