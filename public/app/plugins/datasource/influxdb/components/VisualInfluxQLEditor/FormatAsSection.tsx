@@ -16,6 +16,7 @@ const className = cx('width-8', paddingRightClass);
 export const FormatAsSection = ({ format, onChange }: Props): JSX.Element => {
   return (
     <Select<ResultFormat>
+      aria-label="Format as"
       className={className}
       onChange={(v) => {
         onChange(unwrap(v.value));

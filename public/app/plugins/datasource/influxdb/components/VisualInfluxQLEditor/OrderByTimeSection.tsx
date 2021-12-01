@@ -23,6 +23,7 @@ export const OrderByTimeSection = ({ value, onChange }: Props): JSX.Element => {
   return (
     <>
       <Select<Mode>
+        aria-label="Order by"
         className={className}
         onChange={(v) => {
           onChange(unwrap(v.value));
