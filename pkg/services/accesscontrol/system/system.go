@@ -3,6 +3,7 @@ package system
 import (
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 
@@ -17,27 +18,52 @@ import (
 )
 
 func NewSystem(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourceStore) (*System, error) {
+	var permissions []string
+	actionSet := make(map[string]struct{})
+	for permission, actions := range options.PermissionsToActions {
+		permissions = append(permissions, permission)
+		for _, a := range actions {
+			actionSet[a] = struct{}{}
+		}
+	}
+
+	// Sort all permissions based on action length. Will be used when mapping between actions to permission
+	sort.Slice(permissions, func(i, j int) bool {
+		if len(options.PermissionsToActions[permissions[i]]) > len(options.PermissionsToActions[permissions[j]]) {
+			return true
+		}
+		return false
+	})
+
+	actions := make([]string, 0, len(actionSet))
+	for action := range actionSet {
+		actions = append(actions, action)
+	}
+
 	s := &System{
-		ac:      ac,
-		options: options,
-		router:  router,
-		manager: newManager(options.Resource, options.Actions, options.ResourceValidator, store),
+		ac:          ac,
+		router:      router,
+		options:     options,
+		permissions: permissions,
+		manager:     newManager(options.Resource, actions, options.ResourceValidator, store),
 	}
 
 	if err := s.declareFixedRoles(); err != nil {
 		return nil, err
 	}
-	s.registerEndpoints()
 
+	s.registerEndpoints()
 	return s, nil
 }
 
 // System is used to create access control sub system including api / and service for managed resource permission
 type System struct {
-	options Options
-	manager *Manager
-	router  routing.RouteRegister
-	ac      accesscontrol.AccessControl
+	ac     accesscontrol.AccessControl
+	router routing.RouteRegister
+
+	options     Options
+	permissions []string
+	manager     *Manager
 }
 
 func (s *System) registerEndpoints() {
@@ -66,9 +92,15 @@ type Description struct {
 }
 
 func (s *System) getDescription(c *models.ReqContext) response.Response {
+
+	permissions := make([]string, 0, len(s.options.PermissionsToActions))
+	for k := range s.options.PermissionsToActions {
+		permissions = append(permissions, k)
+	}
+
 	return response.JSON(http.StatusOK, &Description{
+		Permissions: s.permissions,
 		Assignments: s.options.Assignments,
-		Permissions: s.options.Permissions,
 	})
 }
 
@@ -96,7 +128,7 @@ func (s *System) getPermissions(c *models.ReqContext) response.Response {
 
 	dto := make([]resourcePermissionDTO, 0, len(permissions))
 	for _, p := range permissions {
-		if permission, ok := s.options.mapActions(p); ok {
+		if permission, ok := s.mapActions(p); ok {
 			dto = append(dto, resourcePermissionDTO{
 				ResourceID:    p.ResourceID,
 				Managed:       p.Managed(),
@@ -133,13 +165,13 @@ func (s *System) setUserPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusNotImplemented, "", nil)
 	}
 
-	permission, err := s.manager.SetUserPermission(c.Req.Context(), c.OrgId, userID, resourceID, s.options.mapPermission(cmd.Permission))
+	permission, err := s.manager.SetUserPermission(c.Req.Context(), c.OrgId, userID, resourceID, s.mapPermission(cmd.Permission))
 
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set user permission", err)
 	}
 
-	translated, _ := s.options.mapActions(*permission)
+	translated, _ := s.mapActions(*permission)
 	return response.JSON(http.StatusOK, resourcePermissionDTO{
 		ResourceID:    permission.ResourceID,
 		Managed:       permission.Managed(),
@@ -164,13 +196,13 @@ func (s *System) setTeamPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusNotImplemented, "", nil)
 	}
 
-	permission, err := s.manager.SetTeamPermission(c.Req.Context(), c.OrgId, teamID, resourceID, s.options.mapPermission(cmd.Permission))
+	permission, err := s.manager.SetTeamPermission(c.Req.Context(), c.OrgId, teamID, resourceID, s.mapPermission(cmd.Permission))
 
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set team permission", err)
 	}
 
-	translated, _ := s.options.mapActions(*permission)
+	translated, _ := s.mapActions(*permission)
 	return response.JSON(http.StatusOK, resourcePermissionDTO{
 		ResourceID:    permission.ResourceID,
 		Managed:       permission.Managed(),
@@ -195,13 +227,13 @@ func (s *System) setBuiltinRolePermission(c *models.ReqContext) response.Respons
 		return response.Error(http.StatusNotImplemented, "", nil)
 	}
 
-	permission, err := s.manager.SetBuiltinRolePermission(c.Req.Context(), c.OrgId, builtInRole, resourceID, s.options.mapPermission(cmd.Permission))
+	permission, err := s.manager.SetBuiltinRolePermission(c.Req.Context(), c.OrgId, builtInRole, resourceID, s.mapPermission(cmd.Permission))
 
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set role permission", err)
 	}
 
-	translated, _ := s.options.mapActions(*permission)
+	translated, _ := s.mapActions(*permission)
 	return response.JSON(http.StatusOK, resourcePermissionDTO{
 		ResourceID:  permission.ResourceID,
 		Managed:     permission.Managed(),
@@ -209,6 +241,24 @@ func (s *System) setBuiltinRolePermission(c *models.ReqContext) response.Respons
 		Actions:     permission.Actions,
 		Permission:  translated,
 	})
+}
+
+func (s *System) mapActions(permission accesscontrol.ResourcePermission) (string, bool) {
+	for _, p := range s.permissions {
+		if permission.Contains(s.options.PermissionsToActions[p]) {
+			return p, true
+		}
+	}
+	return "", false
+}
+
+func (s *System) mapPermission(permission string) []string {
+	for k, v := range s.options.PermissionsToActions {
+		if permission == k {
+			return v
+		}
+	}
+	return []string{}
 }
 
 func (s *System) declareFixedRoles() error {
