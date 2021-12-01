@@ -1,11 +1,15 @@
 import { useCallback, useMemo, useReducer } from 'react';
 import { FolderDTO } from 'app/types';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardQuery, OnDeleteItems, OnMoveItems, OnToggleChecked } from '../types';
+import { DashboardQuery, DashboardSection, OnDeleteItems, OnMoveItems, OnToggleChecked } from '../types';
 import { DELETE_ITEMS, MOVE_ITEMS, TOGGLE_ALL_CHECKED, TOGGLE_CHECKED } from '../reducers/actionTypes';
 import { manageDashboardsReducer, manageDashboardsState, ManageDashboardsState } from '../reducers/manageDashboards';
 import { useSearch } from './useSearch';
 import { GENERAL_FOLDER_ID } from '../constants';
+
+const hasChecked = (section: DashboardSection) => {
+  return section.checked || section.items.some((item) => item.checked);
+};
 
 export const useManageDashboards = (
   query: DashboardQuery,
@@ -42,14 +46,13 @@ export const useManageDashboards = (
     dispatch({ type: MOVE_ITEMS, payload: { dashboards: selectedDashboards, folder } });
   };
 
-  const canMove = useMemo(() => results.some((result) => result.items && result.items.some((item) => item.checked)), [
-    results,
-  ]);
+  const canMove = useMemo(() => results.some((result) => result.items.some((item) => item.checked)), [results]);
 
   const canDelete = useMemo(() => {
+    const somethingChecked = results.some(hasChecked);
     const includesGeneralFolder = results.find((result) => result.checked && result.id === GENERAL_FOLDER_ID);
-    return canMove && !includesGeneralFolder;
-  }, [canMove, results]);
+    return somethingChecked && !includesGeneralFolder;
+  }, [results]);
 
   const canSave = folder?.canSave;
   const hasEditPermissionInFolders = folder ? canSave : contextSrv.hasEditPermissionInFolders;

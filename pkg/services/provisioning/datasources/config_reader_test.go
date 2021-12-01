@@ -32,11 +32,11 @@ func TestDatasourceAsConfig(t *testing.T) {
 	setup := func() {
 		fakeRepo = &fakeRepository{}
 		bus.ClearBusHandlers()
-		bus.AddHandler("test", mockDelete)
-		bus.AddHandler("test", mockInsert)
-		bus.AddHandler("test", mockUpdate)
-		bus.AddHandler("test", mockGet)
-		bus.AddHandler("test", mockGetOrg)
+		bus.AddHandlerCtx("test", mockDelete)
+		bus.AddHandlerCtx("test", mockInsert)
+		bus.AddHandlerCtx("test", mockUpdate)
+		bus.AddHandlerCtx("test", mockGet)
+		bus.AddHandlerCtx("test", mockGetOrg)
 	}
 
 	t.Run("apply default values when missing", func(t *testing.T) {
@@ -280,22 +280,22 @@ type fakeRepository struct {
 	loadAll []*models.DataSource
 }
 
-func mockDelete(cmd *models.DeleteDataSourceCommand) error {
+func mockDelete(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
 	fakeRepo.deleted = append(fakeRepo.deleted, cmd)
 	return nil
 }
 
-func mockUpdate(cmd *models.UpdateDataSourceCommand) error {
+func mockUpdate(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	fakeRepo.updated = append(fakeRepo.updated, cmd)
 	return nil
 }
 
-func mockInsert(cmd *models.AddDataSourceCommand) error {
+func mockInsert(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	fakeRepo.inserted = append(fakeRepo.inserted, cmd)
 	return nil
 }
 
-func mockGet(cmd *models.GetDataSourceQuery) error {
+func mockGet(ctx context.Context, cmd *models.GetDataSourceQuery) error {
 	for _, v := range fakeRepo.loadAll {
 		if cmd.Name == v.Name && cmd.OrgId == v.OrgId {
 			cmd.Result = v
@@ -306,6 +306,6 @@ func mockGet(cmd *models.GetDataSourceQuery) error {
 	return models.ErrDataSourceNotFound
 }
 
-func mockGetOrg(_ *models.GetOrgByIdQuery) error {
+func mockGetOrg(ctx context.Context, _ *models.GetOrgByIdQuery) error {
 	return nil
 }

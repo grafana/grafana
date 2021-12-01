@@ -110,7 +110,7 @@ func (o OSSImpl) Current() SettingsBag {
 	for _, section := range o.Cfg.Raw.Sections() {
 		settingsCopy[section.Name()] = make(map[string]string)
 		for _, key := range section.Keys() {
-			settingsCopy[section.Name()][key.Name()] = RedactedValue(key.Name(), key.Value())
+			settingsCopy[section.Name()][key.Name()] = RedactedValue(EnvKey(section.Name(), key.Name()), key.Value())
 		}
 	}
 

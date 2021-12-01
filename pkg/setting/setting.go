@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -490,30 +491,70 @@ func RedactedValue(key, value string) string {
 		"SECRET_KEY",
 		"CERTIFICATE",
 		"ACCOUNT_KEY",
+		"ENCRYPTION_KEY",
+		"VAULT_TOKEN",
+		"AWSKMS_.*_TOKEN",
 	} {
-		if strings.Contains(uppercased, pattern) {
+		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
 		}
 	}
-	// Sensitive URLs that might contain username and password
-	for _, pattern := range []string{
-		"DATABASE_URL",
+
+	for _, exception := range []string{
+		"RUDDERSTACK",
+		"APPLICATION_INSIGHTS",
+		"SENTRY",
 	} {
-		if strings.Contains(uppercased, pattern) {
-			if u, err := url.Parse(value); err == nil {
-				return u.Redacted()
-			}
+		if strings.Contains(uppercased, exception) {
+			return value
 		}
 	}
-	// Otherwise return unmodified value
+
+	if u, err := RedactedURL(value); err == nil {
+		return u
+	}
+
 	return value
+}
+
+func RedactedURL(value string) (string, error) {
+	// Value could be a list of URLs
+	chunks := util.SplitString(value)
+
+	for i, chunk := range chunks {
+		var hasTmpPrefix bool
+		const tmpPrefix = "http://"
+
+		if !strings.Contains(chunk, "://") {
+			chunk = tmpPrefix + chunk
+			hasTmpPrefix = true
+		}
+
+		u, err := url.Parse(chunk)
+		if err != nil {
+			return "", err
+		}
+
+		redacted := u.Redacted()
+		if hasTmpPrefix {
+			redacted = strings.Replace(redacted, tmpPrefix, "", 1)
+		}
+
+		chunks[i] = redacted
+	}
+
+	if strings.Contains(value, ",") {
+		return strings.Join(chunks, ","), nil
+	}
+
+	return strings.Join(chunks, " "), nil
 }
 
 func applyEnvVariableOverrides(file *ini.File) error {
 	appliedEnvOverrides = make([]string, 0)
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
-			envKey := envKey(section.Name(), key.Name())
+			envKey := EnvKey(section.Name(), key.Name())
 			envValue := os.Getenv(envKey)
 
 			if len(envValue) > 0 {
@@ -584,7 +625,7 @@ type AnnotationCleanupSettings struct {
 	MaxCount int64
 }
 
-func envKey(sectionName string, keyName string) string {
+func EnvKey(sectionName string, keyName string) string {
 	sN := strings.ToUpper(strings.ReplaceAll(sectionName, ".", "_"))
 	sN = strings.ReplaceAll(sN, "-", "_")
 	kN := strings.ToUpper(strings.ReplaceAll(keyName, ".", "_"))
@@ -1107,7 +1148,7 @@ type DynamicSection struct {
 // Key dynamically overrides keys with environment variables.
 // As a side effect, the value of the setting key will be updated if an environment variable is present.
 func (s *DynamicSection) Key(k string) *ini.Key {
-	envKey := envKey(s.section.Name(), k)
+	envKey := EnvKey(s.section.Name(), k)
 	envValue := os.Getenv(envKey)
 	key := s.section.Key(k)
 
