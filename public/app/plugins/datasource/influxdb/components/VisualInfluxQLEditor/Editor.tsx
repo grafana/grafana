@@ -1,5 +1,4 @@
-import React, { useMemo, useRef } from 'react';
-import { uniqueId } from 'lodash';
+import React, { useMemo } from 'react';
 import { InfluxQuery, InfluxQueryTag } from '../../types';
 import { getTemplateSrv } from '@grafana/runtime';
 import InfluxDatasource from '../../datasource';
@@ -30,6 +29,7 @@ import { getNewSelectPartOptions, getNewGroupByPartOptions, makePartList } from 
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { useUniqueId } from '../useUniqueId';
 
 type Props = {
   query: InfluxQuery;
@@ -54,7 +54,10 @@ function withTemplateVariableOptions(optionsPromise: Promise<string[]>): Promise
 }
 
 export const Editor = (props: Props): JSX.Element => {
-  const htmlPrefixRef = useRef(uniqueId('influxdb-qe-'));
+  const uniqueId = useUniqueId();
+  const formatAsId = `influxdb-qe-format-as-${uniqueId}`;
+  const orderByTimeId = `influxdb-qe-order-by${uniqueId}`;
+
   const styles = useStyles2(getStyles);
   const query = normalizeQuery(props.query);
   const { datasource } = props;
@@ -105,8 +108,6 @@ export const Editor = (props: Props): JSX.Element => {
       tags: tags.length === 0 ? undefined : tags,
     });
   };
-
-  const htmlPrefix = htmlPrefixRef.current;
 
   return (
     <div>
@@ -176,11 +177,11 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, tz });
           }}
         />
-        <InlineLabel htmlFor={`${htmlPrefix}-order-by`} width="auto" className={styles.inlineLabel}>
+        <InlineLabel htmlFor={orderByTimeId} width="auto" className={styles.inlineLabel}>
           ORDER BY TIME
         </InlineLabel>
         <OrderByTimeSection
-          inputId={`${htmlPrefix}-order-by`}
+          inputId={orderByTimeId}
           value={query.orderByTime === 'DESC' ? 'DESC' : 'ASC' /* FIXME: make this shared with influx_query_model */}
           onChange={(v) => {
             onAppliedChange({ ...query, orderByTime: v });
@@ -211,9 +212,9 @@ export const Editor = (props: Props): JSX.Element => {
           }}
         />
       </SegmentSection>
-      <SegmentSection htmlFor={`${htmlPrefix}-format-as`} label="FORMAT AS" fill={true}>
+      <SegmentSection htmlFor={formatAsId} label="FORMAT AS" fill={true}>
         <FormatAsSection
-          inputId={`${htmlPrefix}-format-as`}
+          inputId={formatAsId}
           format={query.resultFormat ?? DEFAULT_RESULT_FORMAT}
           onChange={(format) => {
             onAppliedChange({ ...query, resultFormat: format });
