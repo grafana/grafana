@@ -65,4 +65,14 @@ describe('VisualQueryEngine', () => {
       })
     ).toBe('sum by(server, job) (metric)');
   });
+
+  it('Can handle render rate', () => {
+    expect(
+      engine.renderQuery({
+        metric: 'metric',
+        labels: [{ label: 'pod', op: '=', value: 'A' }],
+        operations: [{ type: 'rate', params: ['auto'] }],
+      })
+    ).toBe('rate(metric{pod="A"}[$__rate_interval])');
+  });
 });

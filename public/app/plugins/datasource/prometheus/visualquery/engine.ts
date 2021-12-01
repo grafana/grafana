@@ -39,6 +39,13 @@ export class VisualQueryEngine {
       defaultParams: ['sum'],
       renderer: groupByRenderer,
     });
+
+    this.addOperationDef({
+      type: 'rate',
+      params: [{ name: 'range-vector', type: 'string' }],
+      defaultParams: ['auto'],
+      renderer: rateRenderer,
+    });
   }
 
   private addOperationDef(op: PromVisualQueryOperationDef) {
@@ -127,4 +134,14 @@ function groupByRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOp
   }
 
   return `${expr}) (${innerExpr})`;
+}
+
+function rateRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+  let rangeVector = (model.params ?? [])[0] ?? 'auto';
+
+  if (rangeVector === 'auto') {
+    rangeVector = '$__rate_interval';
+  }
+
+  return `rate(${innerExpr}[${rangeVector}])`;
 }
