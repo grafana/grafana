@@ -116,7 +116,10 @@ func (p *AlertingProxy) withReq(
 			var m map[string]interface{}
 			if err := json.Unmarshal(resp.Body(), &m); err == nil {
 				if message, ok := m["message"]; ok {
-					errMessage = message.(string)
+					errMessageStr, isString := message.(string)
+					if isString {
+						errMessage = errMessageStr
+					}
 				}
 			}
 		} else if strings.HasPrefix(resp.Header().Get("Content-Type"), "text/html") {
