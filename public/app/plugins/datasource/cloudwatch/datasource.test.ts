@@ -3,8 +3,15 @@ import { setDataSourceSrv } from '@grafana/runtime';
 import { ArrayVector, DataFrame, dataFrameToJSON, dateTime, Field, MutableDataFrame } from '@grafana/data';
 
 import { toArray } from 'rxjs/operators';
-import { setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
-import { CloudWatchLogsQueryStatus } from './types';
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, CloudWatchLogsQueryStatus } from './types';
+import {
+  setupMockedDataSource,
+  namespaceVariable,
+  metricVariable,
+  labelsVariable,
+  limitVariable,
+} from './__mocks__/CloudWatchDataSource';
+import { CloudWatchDatasource } from './datasource';
 
 describe('datasource', () => {
   describe('query', () => {
@@ -87,6 +94,107 @@ describe('datasource', () => {
     });
   });
 
+  describe('filterMetricQuery', () => {
+    let baseQuery: CloudWatchMetricsQuery;
+    let datasource: CloudWatchDatasource;
+
+    beforeEach(() => {
+      datasource = setupMockedDataSource().datasource;
+      baseQuery = {
+        id: '',
+        region: 'us-east-2',
+        namespace: '',
+        period: '',
+        alias: '',
+        metricName: '',
+        dimensions: {},
+        matchExact: true,
+        statistic: '',
+        expression: '',
+        refId: '',
+      };
+    });
+
+    it('should error if invalid mode', async () => {
+      expect(() => datasource.filterMetricQuery(baseQuery)).toThrowError('invalid metric editor mode');
+    });
+
+    describe('metric search queries', () => {
+      beforeEach(() => {
+        datasource = setupMockedDataSource().datasource;
+        baseQuery = {
+          ...baseQuery,
+          namespace: 'AWS/EC2',
+          metricName: 'CPUUtilization',
+          statistic: 'Average',
+          metricQueryType: MetricQueryType.Search,
+          metricEditorMode: MetricEditorMode.Builder,
+        };
+      });
+
+      it('should not allow queries that dont have `matchExact` or dimensions', async () => {
+        const valid = datasource.filterMetricQuery(baseQuery);
+        expect(valid).toBeFalsy();
+      });
+
+      it('should allow queries that have `matchExact`', async () => {
+        baseQuery.matchExact = false;
+        const valid = datasource.filterMetricQuery(baseQuery);
+        expect(valid).toBeTruthy();
+      });
+
+      it('should allow queries that have dimensions', async () => {
+        baseQuery.dimensions = { instanceId: ['xyz'] };
+        const valid = datasource.filterMetricQuery(baseQuery);
+        expect(valid).toBeTruthy();
+      });
+    });
+
+    describe('metric search expression queries', () => {
+      beforeEach(() => {
+        datasource = setupMockedDataSource().datasource;
+        baseQuery = {
+          ...baseQuery,
+          metricQueryType: MetricQueryType.Search,
+          metricEditorMode: MetricEditorMode.Code,
+        };
+      });
+
+      it('should not allow queries that dont have an expresssion', async () => {
+        const valid = datasource.filterMetricQuery(baseQuery);
+        expect(valid).toBeFalsy();
+      });
+
+      it('should allow queries that have an expresssion', async () => {
+        baseQuery.expression = 'SUM([a,x])';
+        const valid = datasource.filterMetricQuery(baseQuery);
+        expect(valid).toBeTruthy();
+      });
+    });
+
+    describe('metric query queries', () => {
+      beforeEach(() => {
+        datasource = setupMockedDataSource().datasource;
+        baseQuery = {
+          ...baseQuery,
+          metricQueryType: MetricQueryType.Query,
+          metricEditorMode: MetricEditorMode.Code,
+        };
+      });
+
+      it('should not allow queries that dont have a sql expresssion', async () => {
+        const valid = datasource.filterMetricQuery(baseQuery);
+        expect(valid).toBeFalsy();
+      });
+
+      it('should allow queries that have a sql expresssion', async () => {
+        baseQuery.sqlExpression = 'select SUM(CPUUtilization) from "AWS/EC2"';
+        const valid = datasource.filterMetricQuery(baseQuery);
+        expect(valid).toBeTruthy();
+      });
+    });
+  });
+
   describe('performTimeSeriesQuery', () => {
     it('should return the same length of data as result', async () => {
       const { datasource } = setupMockedDataSource({
@@ -123,6 +231,46 @@ describe('datasource', () => {
 
       await datasource.describeLogGroups({ region: 'eu-east' });
       expect(fetchMock.mock.calls[1][0].data.queries[0].region).toBe('eu-east');
+    });
+  });
+
+  describe('template variable interpolation', () => {
+    it('interpolates variables correctly', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource({
+        variables: [namespaceVariable, metricVariable, labelsVariable, limitVariable],
+      });
+      datasource.handleMetricQueries(
+        [
+          {
+            id: '',
+            refId: 'a',
+            region: 'us-east-2',
+            namespace: '',
+            period: '',
+            alias: '',
+            metricName: '',
+            dimensions: {},
+            matchExact: true,
+            statistic: '',
+            expression: '',
+            metricQueryType: MetricQueryType.Query,
+            metricEditorMode: MetricEditorMode.Code,
+            sqlExpression: 'SELECT SUM($metric) FROM "$namespace" GROUP BY ${labels:raw} LIMIT $limit',
+          },
+        ],
+        { range: { from: dateTime(), to: dateTime() } } as any
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            queries: expect.arrayContaining([
+              expect.objectContaining({
+                sqlExpression: `SELECT SUM(CPUUtilization) FROM "AWS/EC2" GROUP BY InstanceId,InstanceType LIMIT 100`,
+              }),
+            ]),
+          }),
+        })
+      );
     });
   });
 

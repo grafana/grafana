@@ -74,7 +74,11 @@ export class ContextSrv {
   }
 
   hasRole(role: string) {
-    return this.user.orgRole === role;
+    if (role === 'ServerAdmin') {
+      return this.isGrafanaAdmin;
+    } else {
+      return this.user.orgRole === role;
+    }
   }
 
   accessControlEnabled(): boolean {

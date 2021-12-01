@@ -46,7 +46,7 @@ type Alertmanager interface {
 	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 
 	// Testing
-	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigParams) (*notifier.TestReceiversResult, error)
+	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
 }
 
 // API handlers.
