@@ -90,7 +90,7 @@ describe('TableContainer', () => {
       { time: '2021-01-01 02:00:00', text: 'test_string_4' },
     ]);
 
-    rerender(<TableContainer {...defaultProps} timeZone="CEST" />);
+    rerender(<TableContainer {...defaultProps} timeZone="cest" />);
     const rowsAfterChange = within(getTable()).getAllByRole('row');
     expect(getRowsData(rowsAfterChange)).toEqual([
       { time: '2020-12-31 19:00:00', text: 'test_string_1' },
