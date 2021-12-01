@@ -33,7 +33,7 @@ import {
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
+import { addLabelToQuery } from './add_label_to_query';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import {
@@ -707,14 +707,21 @@ export class LokiDatasource
         value = lokiRegularEscape(value);
       }
 
-      return this.addLabelToQuery(acc, key, value, operator);
+      return this.addLabelToQuery(acc, key, value, operator, true);
     }, expr);
 
     return expr;
   }
 
-  addLabelToQuery(queryExpr: string, key: string, value: string | number, operator: string) {
-    if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr)) {
+  addLabelToQuery(
+    queryExpr: string,
+    key: string,
+    value: string | number,
+    operator: string,
+    // Override to make sure that we use label as actual label and not parsed label
+    notParsedLabelOverride?: boolean
+  ) {
+    if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr) && !notParsedLabelOverride) {
       // If query has parser, we treat all labels as parsed and use | key="value" syntax
       return addParsedLabelToQuery(queryExpr, key, value, operator);
     } else {
