@@ -29,8 +29,10 @@ The mode options allow you to toggle which dimensions are used for the visualiza
 
 ## Color strategy
 
-- **Since Open** is the default behavior. This mode will utilize the _Up_ color (below) if the intra-period price movement is positive. In other words, if the value on close is greater than the value on open, the _Up_ color is used.
+
+- **Since Open** is the default behavior. This mode will utilize the _Up_ color (below) if the intra-period price movement is positive. In other words, if the value on close is greater or equal to the value on open, the _Up_ color is used.
 - **Since Prior Close** is an alternative display method based where the color of the candle is based the inter-period price movement or change in value. In other words, if the value on open is greater than the previous value on close, the _Up_ color is used. If the value on open is lower than the previous value on close, the _Down_ color is used. _This option also tiggers the hollow candlestick visualization mode_. Hollow candlesticks indicate that the intra-period movement is positive (value is higher on close than on open), filled candlesticks indicate the intra-period change is negative (value is lower on close than on open). [See here](https://thetradingbible.com/how-to-read-hollow-candlesticks) for a great explanation of the differences. 
+
 
 ## Up & Down Colors
 
@@ -44,6 +46,7 @@ The candlestick panel will attempt to map fields to the appropriate dimension. T
 - **High** corresponds to the highest value of the given period.
 - **Low** corresponds to the lowest value of the given period.
 - **Close** corresponds to the final (end) value of the given period.
+- **Volume** corresponds to the sample count in the given period. (e.g. number of trades)
 
 ## Additional fields
 
