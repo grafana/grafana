@@ -1,7 +1,7 @@
 import React from 'react';
 import { screen, render, within } from '@testing-library/react';
 import { TableContainer } from './TableContainer';
-import { DataFrame, toDataFrame, FieldType } from '@grafana/data';
+import { DataFrame, toDataFrame, FieldType, InternalTimeZones } from '@grafana/data';
 import { ExploreId } from 'app/types/explore';
 
 function getTable(): HTMLElement {
@@ -53,7 +53,7 @@ const defaultProps = {
   tableResult: dataFrame,
   splitOpen: (() => {}) as any,
   range: {} as any,
-  timeZone: 'UTC',
+  timeZone: InternalTimeZones.utc,
 };
 
 describe('TableContainer', () => {
