@@ -3,12 +3,12 @@ import { Container } from '@grafana/ui';
 import { StandardEditorProps } from '@grafana/data';
 import { DropResult } from 'react-beautiful-dnd';
 
-import { GeomapPanelOptions } from '../../types';
-import { GeomapInstanceState } from '../../GeomapPanel';
-import { AddLayerButton } from '../LayerDragDropList/AddLayerButton';
-import { LayerDragDropList } from '../LayerDragDropList/LayerDragDropList';
-import { geomapLayerRegistry } from '../../layers/registry';
-import { dataLayerFilter } from '../layerEditor';
+import { GeomapPanelOptions } from '../types';
+import { GeomapInstanceState } from '../GeomapPanel';
+import { AddLayerButton } from './LayerDragDropList/AddLayerButton';
+import { LayerDragDropList } from './LayerDragDropList/LayerDragDropList';
+import { geomapLayerRegistry } from '../layers/registry';
+import { dataLayerFilter } from './layerEditor';
 
 type LayersEditorProps = StandardEditorProps<any, any, GeomapPanelOptions, GeomapInstanceState>;
 
