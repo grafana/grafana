@@ -40,7 +40,7 @@ func ProvideServiceAccountsService(
 	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister)
 	serviceaccountsAPI.RegisterAPIEndpoints(cfg)
 
-	basicKeys := store.GetBasicAPIKeys(context.Background())
+	basicKeys := store.GetNonServiceAccountAPIKeys(context.Background())
 	s.log.Warn("Upgrading API keys to service accounts", "numberKeys", len(basicKeys))
 	for _, key := range basicKeys {
 		sa, err := store.CreateServiceAccountForApikey(context.Background(), key.OrgId, key.Name, key.Role)
