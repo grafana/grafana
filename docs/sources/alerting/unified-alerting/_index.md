@@ -10,8 +10,8 @@ Grafana 8.0 has new and improved alerting that centralizes alerting information 
 
 When Grafana alerting is enabled, you can:
 
-- [Create a Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
-- [Create a Cortex or Loki managed alerting rules]({{< relref "alerting-rules/create-cortex-loki-managed-rule.md" >}})
+- [Create Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
+- [Create Cortex or Loki managed alerting rules]({{< relref "alerting-rules/create-cortex-loki-managed-rule.md" >}})
 - [View existing alerting rules and manage their current state]({{< relref "alerting-rules/rule-list.md" >}})
 - [View the state and health of alerting rules]({{< relref "./fundamentals/state-and-health.md" >}})
 - [Add or edit an alert contact point]({{< relref "./contact-points.md" >}})
