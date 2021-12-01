@@ -1,13 +1,19 @@
-import { PromVisualQuery, PromVisualQueryOperation, PromVisualQueryOperationDef } from './types';
+import {
+  PromVisualQuery,
+  PromVisualQueryOperation,
+  PromVisualQueryOperationCategory,
+  PromVisualQueryOperationDef,
+} from './types';
 
 export class VisualQueryEngine {
-  operations: Record<string, PromVisualQueryOperationDef> = {};
+  private operations: Record<string, PromVisualQueryOperationDef> = {};
 
   constructor() {
     this.addOperationDef({
       type: 'sum',
       params: [],
       defaultParams: [],
+      category: PromVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
     });
 
@@ -15,6 +21,7 @@ export class VisualQueryEngine {
       type: 'avg',
       params: [],
       defaultParams: [],
+      category: PromVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
     });
 
@@ -22,6 +29,7 @@ export class VisualQueryEngine {
       type: 'histogram_quantile',
       params: [{ name: 'quantile', type: 'number', options: [0.99, 0.95, 0.9, 0.75, 0.5, 0.25] }],
       defaultParams: [0.9],
+      category: PromVisualQueryOperationCategory.Functions,
       renderer: functionRendererLeft,
     });
 
@@ -33,6 +41,7 @@ export class VisualQueryEngine {
         { name: 'src_label', type: 'string' },
         { name: 'regex', type: 'string' },
       ],
+      category: PromVisualQueryOperationCategory.Functions,
       defaultParams: [],
       renderer: functionRendererRight,
     });
@@ -44,6 +53,7 @@ export class VisualQueryEngine {
         { name: 'label', type: 'string', multiple: true },
       ],
       defaultParams: ['sum'],
+      category: PromVisualQueryOperationCategory.GroupBy,
       renderer: groupByRenderer,
     });
 
@@ -51,12 +61,17 @@ export class VisualQueryEngine {
       type: 'rate',
       params: [{ name: 'range-vector', type: 'string' }],
       defaultParams: ['auto'],
+      category: PromVisualQueryOperationCategory.RateAndDeltas,
       renderer: rateRenderer,
     });
   }
 
   private addOperationDef(op: PromVisualQueryOperationDef) {
     this.operations[op.type] = op;
+  }
+
+  getOperationsForCategory(category: PromVisualQueryOperationCategory) {
+    return Object.values(this.operations).filter((op) => op.category === category);
   }
 
   renderQuery(query: PromVisualQuery) {
@@ -152,3 +167,5 @@ function rateRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOpera
 
   return `rate(${innerExpr}[${rangeVector}])`;
 }
+
+export const visualQueryEngine = new VisualQueryEngine();

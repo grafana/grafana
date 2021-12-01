@@ -31,6 +31,7 @@ export interface PromVisualQueryOperationDef {
   type: string;
   params: PromVisualQueryOperationParamDef[];
   defaultParams: string[] | number[];
+  category: string;
   renderer: PromVisualQueryOperationRenderer;
 }
 
@@ -47,3 +48,19 @@ interface PromVisualQueryOperationParamDef {
   multiple?: boolean;
   optional?: boolean;
 }
+
+export enum PromVisualQueryOperationCategory {
+  Aggregations = 'Aggregations',
+  GroupBy = 'Group by',
+  RateAndDeltas = 'Rate & deltas',
+  Functions = 'Functions',
+  Math = 'Math',
+}
+
+export const operationTopLevelCategories = [
+  PromVisualQueryOperationCategory.Aggregations,
+  PromVisualQueryOperationCategory.GroupBy,
+  PromVisualQueryOperationCategory.Functions,
+  PromVisualQueryOperationCategory.RateAndDeltas,
+  PromVisualQueryOperationCategory.Math,
+];

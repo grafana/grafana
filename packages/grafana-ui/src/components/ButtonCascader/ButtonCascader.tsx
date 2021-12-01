@@ -12,7 +12,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 export interface ButtonCascaderProps {
   options: CascaderOption[];
-  children: string;
+  children?: string;
   icon?: IconName;
   disabled?: boolean;
   value?: string[];
