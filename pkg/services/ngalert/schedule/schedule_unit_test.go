@@ -554,13 +554,13 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 func TestSchedule_alertRuleInfo(t *testing.T) {
 	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
-		t.Run("Eval should send to evalCh", func(t *testing.T) {
+		t.Run("eval should send to evalCh", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			expected := time.Now()
 			resultCh := make(chan bool)
 			version := rand.Int63()
 			go func() {
-				resultCh <- r.Eval(expected, version)
+				resultCh <- r.eval(expected, version)
 			}()
 			select {
 			case ctx := <-r.evalCh:
@@ -571,14 +571,14 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 				t.Fatal("No message was received on eval channel")
 			}
 		})
-		t.Run("Eval should exit when context is cancelled", func(t *testing.T) {
+		t.Run("eval should exit when context is cancelled", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			resultCh := make(chan bool)
 			go func() {
-				resultCh <- r.Eval(time.Now(), rand.Int63())
+				resultCh <- r.eval(time.Now(), rand.Int63())
 			}()
 			runtime.Gosched()
-			r.Stop()
+			r.stop()
 			select {
 			case result := <-resultCh:
 				require.False(t, result)
@@ -588,15 +588,15 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 		})
 	})
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
-		t.Run("Eval should do nothing", func(t *testing.T) {
+		t.Run("eval should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
-			r.Stop()
-			require.False(t, r.Eval(time.Now(), rand.Int63()))
+			r.stop()
+			require.False(t, r.eval(time.Now(), rand.Int63()))
 		})
-		t.Run("Stop should do nothing", func(t *testing.T) {
+		t.Run("stop should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
-			r.Stop()
-			r.Stop()
+			r.stop()
+			r.stop()
 		})
 	})
 	t.Run("should be thread-safe", func(t *testing.T) {
@@ -623,9 +623,9 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.Eval(time.Now(), rand.Int63())
+						r.eval(time.Now(), rand.Int63())
 					case 2:
-						r.Stop()
+						r.stop()
 					}
 				}
 				wg.Done()

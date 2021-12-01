@@ -400,7 +400,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 				item := readyToRun[i]
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					success := item.ruleInfo.Eval(tick, item.version)
+					success := item.ruleInfo.eval(tick, item.version)
 					if !success {
 						sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
 					}
@@ -414,7 +414,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 					sch.log.Error("unable to delete alert rule routine information because it did not exist", "uid", key.UID, "org_id", key.OrgID)
 					continue
 				}
-				ruleInfo.Stop()
+				ruleInfo.stop()
 			}
 		case <-ctx.Done():
 			waitErr := dispatcherGroup.Wait()
@@ -650,16 +650,16 @@ func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 type alertRuleInfo struct {
 	evalCh chan *evalContext
 	ctx    context.Context
-	Stop   context.CancelFunc
+	stop   context.CancelFunc
 }
 
 func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 	ctx, cancel := context.WithCancel(parent)
-	return &alertRuleInfo{evalCh: make(chan *evalContext), ctx: ctx, Stop: cancel}
+	return &alertRuleInfo{evalCh: make(chan *evalContext), ctx: ctx, stop: cancel}
 }
 
-// Eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
-func (a *alertRuleInfo) Eval(t time.Time, version int64) bool {
+// eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
+func (a *alertRuleInfo) eval(t time.Time, version int64) bool {
 	select {
 	case a.evalCh <- &evalContext{
 		now:     t,
