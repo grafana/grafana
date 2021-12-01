@@ -45,7 +45,7 @@ The Geomap panel has been updated to support multiple data layers. The panel can
 
 {{< figure src="/static/img/docs/geomap-panel/geomap_8_3.png" max-width="1200px" caption="Geomap panel updates" >}}
 
-### Grafana Alerting
+## Grafana Alerting
 
 Grafana Alerting is now the default alerting experience for all new Open Source installations of Grafana 8.3. Grafana Alerting in 8.3 includes the ability to test contact points and notification routing. Grafana 8.3 also adds the ability to configure and use external, prometheus-style alert managers from within the Grafana Alerting workflow. 
 
