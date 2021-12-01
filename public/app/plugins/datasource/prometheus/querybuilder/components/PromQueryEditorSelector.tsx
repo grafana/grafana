@@ -1,12 +1,12 @@
 import { RadioButtonGroup } from '@grafana/ui';
 import React, { useCallback } from 'react';
-import EditorHeader from '../../cloudwatch/components/ui/EditorHeader';
-import FlexItem from '../../cloudwatch/components/ui/FlexItem';
-import InlineSelect from '../../cloudwatch/components/ui/InlineSelect';
-import { Space } from '../../cloudwatch/components/ui/Space';
-import { PromQueryEditor } from '../components/PromQueryEditor';
-import { PromQueryEditorProps } from '../components/types';
-import { PromEditorMode } from '../types';
+import EditorHeader from '../../../cloudwatch/components/ui/EditorHeader';
+import FlexItem from '../../../cloudwatch/components/ui/FlexItem';
+import InlineSelect from '../../../cloudwatch/components/ui/InlineSelect';
+import { Space } from '../../../cloudwatch/components/ui/Space';
+import { PromQueryEditor } from '../../components/PromQueryEditor';
+import { PromQueryEditorProps } from '../../components/types';
+import { PromEditorMode } from '../../types';
 import { PromQueryBuilder } from './PromQueryBuilder';
 
 const editorModes = [
@@ -32,7 +32,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         <FlexItem grow={1} />
         <InlineSelect
           value={undefined}
-          placeholder="Templates"
+          placeholder="Query patterns"
           allowCustomValue
           onChange={({ value }) => {}}
           options={[]}

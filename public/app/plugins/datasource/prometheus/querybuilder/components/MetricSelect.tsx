@@ -1,7 +1,7 @@
 import { SegmentAsync } from '@grafana/ui';
 import React, { useCallback, useMemo } from 'react';
 import { debounce } from 'lodash';
-import { PromVisualQuery } from './types';
+import { PromVisualQuery } from '../types';
 
 export interface Props {
   query: PromVisualQuery;

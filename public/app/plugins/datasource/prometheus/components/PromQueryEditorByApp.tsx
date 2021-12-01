@@ -4,7 +4,7 @@ import { PromQueryEditorProps } from './types';
 import { PromQueryEditor } from './PromQueryEditor';
 import { PromQueryEditorForAlerting } from './PromQueryEditorForAlerting';
 import { config } from '@grafana/runtime';
-import { PromQueryEditorSelector } from '../visualquery/PromQueryEditorSelector';
+import { PromQueryEditorSelector } from '../querybuilder/components/PromQueryEditorSelector';
 
 export function PromQueryEditorByApp(props: PromQueryEditorProps) {
   const { app } = props;
