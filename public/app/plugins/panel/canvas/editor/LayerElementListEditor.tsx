@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { Button, HorizontalGroup, stylesFactory, ValuePicker } from '@grafana/ui';
+import { Button, HorizontalGroup, stylesFactory } from '@grafana/ui';
 import { AppEvents, GrafanaTheme, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DropResult } from 'react-beautiful-dnd';
@@ -16,6 +16,7 @@ import { LayerEditorProps } from './layerEditor';
 import { SelectionParams } from 'app/features/canvas/runtime/scene';
 import { ShowConfirmModalEvent } from 'app/types/events';
 import { LayerDragDropList } from '../../geomap/editor/LayerDragDropList/LayerDragDropList';
+import { AddLayerButton } from '../../geomap/editor/LayerDragDropList/AddLayerButton';
 
 type Props = StandardEditorProps<any, LayerEditorProps, PanelOptions>;
 
@@ -240,13 +241,10 @@ export class LayerElementListEditor extends PureComponent<Props> {
         <br />
 
         <HorizontalGroup>
-          <ValuePicker
-            icon="plus"
-            label="Add item"
-            variant="secondary"
-            options={canvasElementRegistry.selectOptions().options}
+          <AddLayerButton
             onChange={this.onAddItem}
-            isFullWidth={false}
+            options={canvasElementRegistry.selectOptions().options}
+            label={'Add item'}
           />
           {selection.length > 0 && (
             <Button size="sm" variant="secondary" onClick={this.onClearSelection}>
