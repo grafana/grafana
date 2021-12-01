@@ -44,6 +44,10 @@ export const LayersEditor = (props: LayersEditorProps) => {
     actions.deleteLayer(element.options.name);
   };
 
+  const getLayerType = (element: MapLayerState<any>) => {
+    return element.options.type;
+  };
+
   const selection = selected ? [selected] : [];
 
   return (
@@ -59,6 +63,7 @@ export const LayersEditor = (props: LayersEditorProps) => {
 
       <LayerDragDropList
         layers={layers}
+        getLayerType={getLayerType}
         onDragEnd={onDragEnd}
         onSelect={onSelect}
         onDelete={onDelete}

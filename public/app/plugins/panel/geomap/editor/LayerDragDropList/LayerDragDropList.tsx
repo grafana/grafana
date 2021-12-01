@@ -9,6 +9,7 @@ import { LayerName } from './LayerName';
 
 type LayerDragDropListProps<T> = {
   layers: T[];
+  getLayerType: (element: T) => string;
   onDragEnd: (result: DropResult) => void;
   onSelect: (element: T) => any;
   onDelete: (element: T) => any;
@@ -21,6 +22,7 @@ type LayerDragDropListProps<T> = {
 
 export const LayerDragDropList = ({
   layers,
+  getLayerType,
   onDragEnd,
   onSelect,
   onDelete,
@@ -68,7 +70,7 @@ export const LayerDragDropList = ({
                         onMouseDown={() => onSelect(element)}
                       >
                         <LayerName layer={element} verifyLayerNameUniqueness={verifyLayerNameUniqueness ?? undefined} />
-                        <div className={style.textWrapper}>&nbsp; {element.options.type}</div>
+                        <div className={style.textWrapper}>&nbsp; {getLayerType(element)}</div>
 
                         {onDuplicate && !isGroup ? (
                           <IconButton

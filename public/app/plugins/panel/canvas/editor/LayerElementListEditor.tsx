@@ -203,6 +203,10 @@ export class LayerElementListEditor extends PureComponent<Props> {
       layer.doAction(LayerActionID.Duplicate, element);
     };
 
+    const getElementType = (element: ElementState) => {
+      return element.options.type;
+    };
+
     const selection: number[] = settings.selected ? settings.selected.map((v) => v.UID) : [];
     return (
       <>
@@ -227,6 +231,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
           onSelect={this.onSelect}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
+          getLayerType={getElementType}
           layers={layer.elements}
           selection={selection}
         />
