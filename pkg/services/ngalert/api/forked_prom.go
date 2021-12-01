@@ -23,33 +23,33 @@ func NewForkedProm(datasourceCache datasources.CacheService, proxy, grafana Prom
 	}
 }
 
-func (p *ForkedPrometheusApi) forkRouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
-	t, err := backendType(ctx, p.DatasourceCache)
+func (f *ForkedPrometheusApi) forkRouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
+	t, err := backendType(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
 
 	switch t {
 	case apimodels.GrafanaBackend:
-		return p.GrafanaSvc.RouteGetAlertStatuses(ctx)
+		return f.GrafanaSvc.RouteGetAlertStatuses(ctx)
 	case apimodels.LoTexRulerBackend:
-		return p.ProxySvc.RouteGetAlertStatuses(ctx)
+		return f.ProxySvc.RouteGetAlertStatuses(ctx)
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
 	}
 }
 
-func (p *ForkedPrometheusApi) forkRouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
-	t, err := backendType(ctx, p.DatasourceCache)
+func (f *ForkedPrometheusApi) forkRouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
+	t, err := backendType(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
 
 	switch t {
 	case apimodels.GrafanaBackend:
-		return p.GrafanaSvc.RouteGetRuleStatuses(ctx)
+		return f.GrafanaSvc.RouteGetRuleStatuses(ctx)
 	case apimodels.LoTexRulerBackend:
-		return p.ProxySvc.RouteGetRuleStatuses(ctx)
+		return f.ProxySvc.RouteGetRuleStatuses(ctx)
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
 	}

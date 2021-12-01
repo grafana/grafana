@@ -27,12 +27,12 @@ type PrometheusApiService interface {
 	RouteGetRuleStatuses(*models.ReqContext) response.Response
 }
 
-func (r *ForkedPrometheusApi) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetAlertStatuses(ctx)
+func (f *ForkedPrometheusApi) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetAlertStatuses(ctx)
 }
 
-func (r *ForkedPrometheusApi) RouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetRuleStatuses(ctx)
+func (f *ForkedPrometheusApi) RouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetRuleStatuses(ctx)
 }
 
 func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiForkingService, m *metrics.API) {

@@ -18,18 +18,18 @@ func NewForkedConfiguration(grafana ConfigurationApiService) *ForkedConfiguratio
 	}
 }
 
-func (r *ForkedConfigurationApi) forkRouteGetAlertmanagers(c *models.ReqContext) response.Response {
-	return r.grafana.RouteGetAlertmanagers(c)
+func (f *ForkedConfigurationApi) forkRouteGetAlertmanagers(c *models.ReqContext) response.Response {
+	return f.grafana.RouteGetAlertmanagers(c)
 }
 
-func (r *ForkedConfigurationApi) forkRouteGetNGalertConfig(c *models.ReqContext) response.Response {
-	return r.grafana.RouteGetNGalertConfig(c)
+func (f *ForkedConfigurationApi) forkRouteGetNGalertConfig(c *models.ReqContext) response.Response {
+	return f.grafana.RouteGetNGalertConfig(c)
 }
 
-func (r *ForkedConfigurationApi) forkRoutePostNGalertConfig(c *models.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
-	return r.grafana.RoutePostNGalertConfig(c, body)
+func (f *ForkedConfigurationApi) forkRoutePostNGalertConfig(c *models.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
+	return f.grafana.RoutePostNGalertConfig(c, body)
 }
 
-func (r *ForkedConfigurationApi) forkRouteDeleteNGalertConfig(c *models.ReqContext) response.Response {
-	return r.grafana.RouteDeleteNGalertConfig(c)
+func (f *ForkedConfigurationApi) forkRouteDeleteNGalertConfig(c *models.ReqContext) response.Response {
+	return f.grafana.RouteDeleteNGalertConfig(c)
 }

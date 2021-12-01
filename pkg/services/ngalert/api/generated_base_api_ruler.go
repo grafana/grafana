@@ -37,32 +37,32 @@ type RulerApiService interface {
 	RoutePostNameRulesConfig(*models.ReqContext, apimodels.PostableRuleGroupConfig) response.Response
 }
 
-func (r *ForkedRulerApi) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	return r.forkRouteDeleteNamespaceRulesConfig(ctx)
+func (f *ForkedRulerApi) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteDeleteNamespaceRulesConfig(ctx)
 }
 
-func (r *ForkedRulerApi) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	return r.forkRouteDeleteRuleGroupConfig(ctx)
+func (f *ForkedRulerApi) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteDeleteRuleGroupConfig(ctx)
 }
 
-func (r *ForkedRulerApi) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetNamespaceRulesConfig(ctx)
+func (f *ForkedRulerApi) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetNamespaceRulesConfig(ctx)
 }
 
-func (r *ForkedRulerApi) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetRulegGroupConfig(ctx)
+func (f *ForkedRulerApi) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetRulegGroupConfig(ctx)
 }
 
-func (r *ForkedRulerApi) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetRulesConfig(ctx)
+func (f *ForkedRulerApi) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetRulesConfig(ctx)
 }
 
-func (r *ForkedRulerApi) RoutePostNameRulesConfig(ctx *models.ReqContext) response.Response {
+func (f *ForkedRulerApi) RoutePostNameRulesConfig(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableRuleGroupConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return r.forkRoutePostNameRulesConfig(ctx, conf)
+	return f.forkRoutePostNameRulesConfig(ctx, conf)
 }
 
 func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics.API) {

@@ -33,24 +33,24 @@ type ConfigurationApiService interface {
 	RoutePostNGalertConfig(*models.ReqContext, apimodels.PostableNGalertConfig) response.Response
 }
 
-func (r *ForkedConfigurationApi) RouteDeleteNGalertConfig(ctx *models.ReqContext) response.Response {
-	return r.forkRouteDeleteNGalertConfig(ctx)
+func (f *ForkedConfigurationApi) RouteDeleteNGalertConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteDeleteNGalertConfig(ctx)
 }
 
-func (r *ForkedConfigurationApi) RouteGetAlertmanagers(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetAlertmanagers(ctx)
+func (f *ForkedConfigurationApi) RouteGetAlertmanagers(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetAlertmanagers(ctx)
 }
 
-func (r *ForkedConfigurationApi) RouteGetNGalertConfig(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetNGalertConfig(ctx)
+func (f *ForkedConfigurationApi) RouteGetNGalertConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetNGalertConfig(ctx)
 }
 
-func (r *ForkedConfigurationApi) RoutePostNGalertConfig(ctx *models.ReqContext) response.Response {
+func (f *ForkedConfigurationApi) RoutePostNGalertConfig(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableNGalertConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return r.forkRoutePostNGalertConfig(ctx, conf)
+	return f.forkRoutePostNGalertConfig(ctx, conf)
 }
 
 func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiForkingService, m *metrics.API) {

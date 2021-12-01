@@ -22,16 +22,16 @@ type {{classname}}Service interface { {{#operation}}
 }
 
 {{#operations}}{{#operation}}
-func (r *Forked{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Response {
+func (f *Forked{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Response {
 	{{#bodyParams}}
 	conf := apimodels.{{dataType}}{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return  r.fork{{nickname}}(ctx, conf)
+	return  f.fork{{nickname}}(ctx, conf)
 	{{/bodyParams}}
 	{{^bodyParams}}
-	return  r.fork{{nickname}}(ctx)
+	return  f.fork{{nickname}}(ctx)
 	{{/bodyParams}}
 }
 {{/operation}}{{/operations}}

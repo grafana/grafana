@@ -18,10 +18,10 @@ func NewForkedTestingApi(grafana TestingApiService) *ForkedTestingApi {
 	}
 }
 
-func (srv *ForkedTestingApi) forkRouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
-	return srv.grafana.RouteTestRuleConfig(c, body)
+func (f *ForkedTestingApi) forkRouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
+	return f.grafana.RouteTestRuleConfig(c, body)
 }
 
-func (srv *ForkedTestingApi) forkRouteEvalQueries(c *models.ReqContext, body apimodels.EvalQueriesPayload) response.Response {
-	return srv.grafana.RouteEvalQueries(c, body)
+func (f *ForkedTestingApi) forkRouteEvalQueries(c *models.ReqContext, body apimodels.EvalQueriesPayload) response.Response {
+	return f.grafana.RouteEvalQueries(c, body)
 }

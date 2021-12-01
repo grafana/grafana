@@ -29,20 +29,20 @@ type TestingApiService interface {
 	RouteTestRuleConfig(*models.ReqContext, apimodels.TestRulePayload) response.Response
 }
 
-func (r *ForkedTestingApi) RouteEvalQueries(ctx *models.ReqContext) response.Response {
+func (f *ForkedTestingApi) RouteEvalQueries(ctx *models.ReqContext) response.Response {
 	conf := apimodels.EvalQueriesPayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return r.forkRouteEvalQueries(ctx, conf)
+	return f.forkRouteEvalQueries(ctx, conf)
 }
 
-func (r *ForkedTestingApi) RouteTestRuleConfig(ctx *models.ReqContext) response.Response {
+func (f *ForkedTestingApi) RouteTestRuleConfig(ctx *models.ReqContext) response.Response {
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return r.forkRouteTestRuleConfig(ctx, conf)
+	return f.forkRouteTestRuleConfig(ctx, conf)
 }
 
 func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *metrics.API) {

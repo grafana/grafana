@@ -49,68 +49,68 @@ type AlertmanagerApiService interface {
 	RoutePostTestReceivers(*models.ReqContext, apimodels.TestReceiversConfigBodyParams) response.Response
 }
 
-func (r *ForkedAlertmanagerApi) RouteCreateSilence(ctx *models.ReqContext) response.Response {
+func (f *ForkedAlertmanagerApi) RouteCreateSilence(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableSilence{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return r.forkRouteCreateSilence(ctx, conf)
+	return f.forkRouteCreateSilence(ctx, conf)
 }
 
-func (r *ForkedAlertmanagerApi) RouteDeleteAlertingConfig(ctx *models.ReqContext) response.Response {
-	return r.forkRouteDeleteAlertingConfig(ctx)
+func (f *ForkedAlertmanagerApi) RouteDeleteAlertingConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteDeleteAlertingConfig(ctx)
 }
 
-func (r *ForkedAlertmanagerApi) RouteDeleteSilence(ctx *models.ReqContext) response.Response {
-	return r.forkRouteDeleteSilence(ctx)
+func (f *ForkedAlertmanagerApi) RouteDeleteSilence(ctx *models.ReqContext) response.Response {
+	return f.forkRouteDeleteSilence(ctx)
 }
 
-func (r *ForkedAlertmanagerApi) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetAMAlertGroups(ctx)
+func (f *ForkedAlertmanagerApi) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetAMAlertGroups(ctx)
 }
 
-func (r *ForkedAlertmanagerApi) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetAMAlerts(ctx)
+func (f *ForkedAlertmanagerApi) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetAMAlerts(ctx)
 }
 
-func (r *ForkedAlertmanagerApi) RouteGetAMStatus(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetAMStatus(ctx)
+func (f *ForkedAlertmanagerApi) RouteGetAMStatus(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetAMStatus(ctx)
 }
 
-func (r *ForkedAlertmanagerApi) RouteGetAlertingConfig(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetAlertingConfig(ctx)
+func (f *ForkedAlertmanagerApi) RouteGetAlertingConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetAlertingConfig(ctx)
 }
 
-func (r *ForkedAlertmanagerApi) RouteGetSilence(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetSilence(ctx)
+func (f *ForkedAlertmanagerApi) RouteGetSilence(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetSilence(ctx)
 }
 
-func (r *ForkedAlertmanagerApi) RouteGetSilences(ctx *models.ReqContext) response.Response {
-	return r.forkRouteGetSilences(ctx)
+func (f *ForkedAlertmanagerApi) RouteGetSilences(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetSilences(ctx)
 }
 
-func (r *ForkedAlertmanagerApi) RoutePostAMAlerts(ctx *models.ReqContext) response.Response {
+func (f *ForkedAlertmanagerApi) RoutePostAMAlerts(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableAlerts{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return r.forkRoutePostAMAlerts(ctx, conf)
+	return f.forkRoutePostAMAlerts(ctx, conf)
 }
 
-func (r *ForkedAlertmanagerApi) RoutePostAlertingConfig(ctx *models.ReqContext) response.Response {
+func (f *ForkedAlertmanagerApi) RoutePostAlertingConfig(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableUserConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return r.forkRoutePostAlertingConfig(ctx, conf)
+	return f.forkRoutePostAlertingConfig(ctx, conf)
 }
 
-func (r *ForkedAlertmanagerApi) RoutePostTestReceivers(ctx *models.ReqContext) response.Response {
+func (f *ForkedAlertmanagerApi) RoutePostTestReceivers(ctx *models.ReqContext) response.Response {
 	conf := apimodels.TestReceiversConfigBodyParams{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return r.forkRoutePostTestReceivers(ctx, conf)
+	return f.forkRoutePostTestReceivers(ctx, conf)
 }
 
 func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingService, m *metrics.API) {
