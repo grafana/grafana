@@ -1201,7 +1201,7 @@ For more information about the legacy dashboard alerting feature in Grafana, ref
 
 ### enabled
 
-Set to `false` to [enable Grafana alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. Default is `true`.
+Set to `false` to [enable Grafana alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. to disable Grafana alerting, set to `true`.
 
 ### execute_alerts
 
