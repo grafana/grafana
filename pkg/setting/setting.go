@@ -418,11 +418,6 @@ func ToAbsUrl(relativeUrl string) string {
 	return AppUrl + relativeUrl
 }
 
-func shouldRedactKey(s string) bool {
-	uppercased := strings.ToUpper(s)
-	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET") || strings.Contains(uppercased, "PROVIDER_CONFIG")
-}
-
 func RedactedValue(key, value string) string {
 	uppercased := strings.ToUpper(key)
 	// Sensitive information: password, secrets etc
