@@ -9,8 +9,8 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { Alert, DataSourceHttpSettings, InfoBox, InlineField, InlineFormLabel, LegacyForms } from '@grafana/ui';
-const { Select, Input, SecretFormField } = LegacyForms;
+import { Alert, DataSourceHttpSettings, InfoBox, InlineField, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
+const { Input, SecretFormField } = LegacyForms;
 import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
 
 const httpModes = [
@@ -91,6 +91,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <InlineFormLabel className="width-10">Organization</InlineFormLabel>
             <div className="width-10">
               <Input
+                aria-label="Organization"
                 className="width-20"
                 value={options.jsonData.organization || ''}
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'organization')}
@@ -104,6 +105,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               isConfigured={(secureJsonFields && secureJsonFields.token) as boolean}
               value={secureJsonData.token || ''}
               label="Token"
+              aria-label="Token"
               labelWidth={10}
               inputWidth={20}
               onReset={this.onResetToken}
@@ -172,6 +174,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <InlineFormLabel className="width-10">Database</InlineFormLabel>
             <div className="width-20">
               <Input
+                aria-label="Database"
                 className="width-20"
                 value={options.database || ''}
                 onChange={onUpdateDatasourceOption(this.props, 'database')}
@@ -184,6 +187,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <InlineFormLabel className="width-10">User</InlineFormLabel>
             <div className="width-10">
               <Input
+                aria-label="User"
                 className="width-20"
                 value={options.user || ''}
                 onChange={onUpdateDatasourceOption(this.props, 'user')}
@@ -215,6 +219,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               HTTP Method
             </InlineFormLabel>
             <Select
+              aria-label="HTTP method"
               menuShouldPortal
               className="width-10"
               value={httpModes.find((httpMode) => httpMode.value === options.jsonData.httpMode)}
@@ -258,6 +263,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           <div className="gf-form-inline">
             <div className="gf-form">
               <Select
+                aria-label="Query language"
                 menuShouldPortal
                 className="width-30"
                 value={options.jsonData.version === InfluxVersion.Flux ? versions[1] : versions[0]}
