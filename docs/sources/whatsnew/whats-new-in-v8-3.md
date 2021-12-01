@@ -52,6 +52,16 @@ Grafana Alerting is now the default alerting experience for all new Open Source 
 
 {{< figure src="/static/img/docs/alerting/alerting_8_0.png" max-width="1200px" caption="Grafana Alerting" >}}
 
+## Support for AWS CloudWatch Metrics Insights
+
+Grafana and Amazon Managed Grafana now support AWS Metrics Insights – a fast, flexible, SQL-based query engine that enables you to identify trends and patterns across millions of operational metrics in real time.
+
+You can use Metrics Insights in the AWS CloudWatch plugin. Using this new feature is as simple as selecting the Metric Query type. The Metric Query type has two different modes: a Builder mode and a Code editor mode.
+
+The example below demonstrates using the new Metrics Insight capability to view the top 5 instances with the highest average CPU Utilization, ordered by maximum, in descending order. The code editor has built-in autocompletion support that gives suggestions throughout the composition of the query.
+
+{{< figure src="/static/img/docs/cloudwatch/metric-insights.gif" max-width="1200px" caption="Grafana Alerting" >}}
+
 # Grafana Enterprise
 
 ## Recorded Queries
