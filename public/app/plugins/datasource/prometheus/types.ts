@@ -1,6 +1,7 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 
 export interface PromQuery extends DataQuery {
+  editorMode?: PromEditorMode;
   expr: string;
   format?: string;
   instant?: boolean;
@@ -146,4 +147,9 @@ export interface PromLabelQueryResponse {
     data: string[];
   };
   cancelled?: boolean;
+}
+
+export enum PromEditorMode {
+  Builder,
+  Code,
 }
