@@ -50,6 +50,8 @@ export const LayerDragDropList = ({
                   uid = element.options.name;
                 }
 
+                const isGroup = element?.item?.id === 'group';
+
                 const isSelected = Boolean(selection?.find((id) => id === element.UID || id === i));
                 rows.push(
                   <Draggable key={uid} draggableId={uid} index={rows.length}>
@@ -64,7 +66,7 @@ export const LayerDragDropList = ({
                         <LayerName layer={element} verifyLayerNameUniqueness={verifyLayerNameUniqueness ?? undefined} />
                         <div className={style.textWrapper}>&nbsp; {element.options.type}</div>
 
-                        {onDuplicate ? (
+                        {onDuplicate && !isGroup ? (
                           <IconButton
                             name="copy"
                             title={'Duplicate'}
@@ -73,14 +75,16 @@ export const LayerDragDropList = ({
                             surface="header"
                           />
                         ) : null}
-                        <IconButton
-                          name="trash-alt"
-                          title={'remove'}
-                          className={cx(style.actionIcon, style.dragIcon)}
-                          onClick={() => onDelete(element)}
-                          surface="header"
-                        />
-                        {layers.length > 2 && (
+                        {!isGroup && (
+                          <IconButton
+                            name="trash-alt"
+                            title={'remove'}
+                            className={cx(style.actionIcon, style.dragIcon)}
+                            onClick={() => onDelete(element)}
+                            surface="header"
+                          />
+                        )}
+                        {layers.length > 2 && !isGroup && (
                           <Icon
                             title="Drag and drop to reorder"
                             name="draggabledots"
