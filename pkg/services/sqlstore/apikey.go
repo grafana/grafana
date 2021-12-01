@@ -128,8 +128,6 @@ func (ss *SQLStore) UpdateApikeyServiceAccount(ctx context.Context, apikeyId int
 		}
 		key.ServiceAccountId = saccountId
 
-		fmt.Printf("Update struct: %v\n", key)
-
 		if _, err := sess.ID(key.Id).Update(&key); err != nil {
 			ss.log.Warn("Could not update api key", "err", err)
 			return err
