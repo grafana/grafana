@@ -75,4 +75,14 @@ describe('VisualQueryEngine', () => {
       })
     ).toBe('rate(metric{pod="A"}[$__rate_interval])');
   });
+
+  it('Can handle render rate with custom range-vector', () => {
+    expect(
+      engine.renderQuery({
+        metric: 'metric',
+        labels: [{ label: 'pod', op: '=', value: 'A' }],
+        operations: [{ type: 'rate', params: ['10m'] }],
+      })
+    ).toBe('rate(metric{pod="A"}[10m])');
+  });
 });
