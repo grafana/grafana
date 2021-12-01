@@ -193,7 +193,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     description: css({
       margin: '0px',
-      fontSize: '12px',
+      fontSize: theme.typography.size.sm,
     }),
     actions: css({
       position: 'relative',
@@ -215,8 +215,8 @@ function getStyles(theme: GrafanaTheme2) {
     logo: css({
       marginRight: theme.v1.spacing.lg,
       marginLeft: theme.v1.spacing.sm,
-      width: '55px',
-      maxHeight: '55px',
+      width: theme.spacing(7),
+      maxHeight: theme.spacing(7),
     }),
   };
 }
