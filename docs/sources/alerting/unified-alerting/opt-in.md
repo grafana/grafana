@@ -6,13 +6,13 @@ weight = 115
 
 # Opt-in to Grafana alerting
 
-Grafana alerting is enabled by default for new OSS installations. For older installations, it is still an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature. This topic describes how to opt-in to Grafana alerting if you have an existing Grafana installation and the rules and restrictions that govern the migration of existing dashboard alerts to the new alerting system. You can [disable Grafana 8 alerts]({{< relref "./opt-in.md#disable-grafana-8-alerts" >}}) and use the legacy dashboard alerting if needed.
+Grafana alerting is enabled by default for new OSS installations. For older installations that use legacy dashboard alerts, it is still an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature. This topic describes how to opt-in to Grafana alerting if you have an existing Grafana installation and the rules and restrictions that govern the migration of existing dashboard alerts to the new alerting system. You can [disable Grafana alerts]({{< relref "./opt-in.md#disable-grafana-8-alerts" >}}) and use the legacy dashboard alerting if needed.
 
 Before you begin, we recommend that you backup Grafana's database. If you are using PostgreSQL as the backend database, then the minimum required version is 9.5.
 
-## Enable Grafana 8 alerting
+## Enable Grafana alerting
 
-To enable Grafana 8 alerts:
+To enable Grafana alerts:
 
 1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the [unified alerts]({{< relref "../../administration/configuration.md#unified_alerting" >}}) section.
 1. Set the `enabled` property to `true`.
@@ -33,7 +33,7 @@ Read and write access to legacy dashboard alerts and Grafana alerts are governed
 - If there are no dashboard permissions and the dashboard is under a folder, then the rule is linked to this folder and inherits its permissions.
 - If there are no dashboard permissions and the dashboard is under the General folder, then the rule is linked to the `General Alerting` folder, and the rule inherits the default permissions.
 
-> **Note:** Since there is no `Keep Last State` option for [`No Data`]({{< relref "./alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) in Grafana 8 alerting, this option becomes `NoData` during the legacy rules migration. Option "Keep Last State" for [`Error handling`]({{< relref "./alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) is migrated to a new option `Error`. To match the behavior of the `Keep Last State`, in both cases, during the migration Grafana automatically creates a [silence]({{< relref "./silences.md" >}}) for each alert rule with a duration of 1 year.
+> **Note:** Since there is no `Keep Last State` option for [`No Data`]({{< relref "./alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) in Grafana alerting, this option becomes `NoData` during the legacy rules migration. Option "Keep Last State" for [`Error handling`]({{< relref "./alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) is migrated to a new option `Error`. To match the behavior of the `Keep Last State`, in both cases, during the migration Grafana automatically creates a [silence]({{< relref "./silences.md" >}}) for each alert rule with a duration of 1 year.
 
 Notification channels are migrated to an Alertmanager configuration with the appropriate routes and receivers. Default notification channels are added as contact points to the default route. Notification channels not associated with any Dashboard alert go to the `autogen-unlinked-channel-recv` route.
 
@@ -53,4 +53,4 @@ To disable Grafana alerts and enable legacy dashboard alerts:
 1. For [legacy dashboard alerting]({{< relref "../../administration/configuration.md#alerting" >}}), set the `enabled` flag to `true`.
 1. Restart Grafana for the configuration changes to take effect.
 
-> **Note:** If you choose to migrate from Grafana alerting to legacy dashboard alerting, you will lose any new alerts created in the Grafana alerting system.
+> **Note:** Switching from one flavor of alerting to another can result in data loss. This is applicable to the fresh installation as well as upgraded setups.
