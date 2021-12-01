@@ -29,7 +29,7 @@ The mode options allow you to toggle which dimensions are used for the visualiza
 
 ## Color strategy
 
-- **Since Open** is the default behavior. This mode will utilize the _Up_ color (below) if the intra-period price movement is positive. In other words, if the value on close is greater than the value on open, the _Up_ color is used.
+- **Since Open** is the default behavior. This mode will utilize the _Up_ color (below) if the intra-period price movement is positive. In other words, if the value on close is greater or equal than the value on open, the _Up_ color is used.
 - **Since Prior Close** is an alternative display method which will utilize the _Up_ color (below) if the inter-period price movement is positive. In other words, if the value on open is greater than the previous value on close, the _Up_ color is used.
 
 ## Up & Down Colors
