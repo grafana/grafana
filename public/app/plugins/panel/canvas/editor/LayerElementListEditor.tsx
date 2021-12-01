@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from '@emotion/css';
-import { Button, HorizontalGroup, Icon, IconButton, stylesFactory, ValuePicker } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { Button, HorizontalGroup, stylesFactory, ValuePicker } from '@grafana/ui';
 import { AppEvents, GrafanaTheme, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DropResult } from 'react-beautiful-dnd';
 
 import { PanelOptions } from '../models.gen';
 import { LayerActionID } from '../types';
@@ -210,7 +210,6 @@ export class LayerElementListEditor extends PureComponent<Props> {
       layer.doAction(LayerActionID.Duplicate, element);
     };
 
-    const styles = this.style;
     const selection: number[] = settings.selected ? settings.selected.map((v) => v.UID) : [];
     return (
       <>
@@ -238,68 +237,6 @@ export class LayerElementListEditor extends PureComponent<Props> {
           layers={layer.elements}
           selection={selection}
         />
-        <DragDropContext onDragEnd={this.onDragEnd}>
-          <Droppable droppableId="droppable">
-            {(provided, snapshot) => (
-              <div {...provided.droppableProps} ref={provided.innerRef}>
-                {(() => {
-                  // reverse order
-                  const rows: any = [];
-                  for (let i = layer.elements.length - 1; i >= 0; i--) {
-                    const element = layer.elements[i];
-                    rows.push(
-                      <Draggable key={element.UID} draggableId={`${element.UID}`} index={rows.length}>
-                        {(provided, snapshot) => (
-                          <div
-                            className={this.getRowStyle(selection.includes(element.UID))}
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            onMouseDown={() => this.onSelect(element)}
-                          >
-                            <span className={styles.typeWrapper}>{element.item.name}</span>
-                            <div className={styles.textWrapper}>
-                              &nbsp; {element.UID} ({i})
-                            </div>
-
-                            {element.item.id !== 'group' && (
-                              <>
-                                <IconButton
-                                  name="copy"
-                                  title={'Duplicate'}
-                                  className={styles.actionIcon}
-                                  onClick={() => layer.doAction(LayerActionID.Duplicate, element)}
-                                  surface="header"
-                                />
-
-                                <IconButton
-                                  name="trash-alt"
-                                  title={'Remove'}
-                                  className={cx(styles.actionIcon, styles.dragIcon)}
-                                  onClick={() => layer.doAction(LayerActionID.Delete, element)}
-                                  surface="header"
-                                />
-                                <Icon
-                                  title="Drag and drop to reorder"
-                                  name="draggabledots"
-                                  size="lg"
-                                  className={styles.dragIcon}
-                                />
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </Draggable>
-                    );
-                  }
-                  return rows;
-                })()}
-
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
         <br />
 
         <HorizontalGroup>

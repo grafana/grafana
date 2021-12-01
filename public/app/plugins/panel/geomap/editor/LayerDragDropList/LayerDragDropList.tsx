@@ -50,11 +50,12 @@ export const LayerDragDropList = ({
                   uid = element.options.name;
                 }
 
+                const isSelected = Boolean(selection?.find((id) => id === element.UID || id === i));
                 rows.push(
                   <Draggable key={uid} draggableId={uid} index={rows.length}>
                     {(provided, snapshot) => (
                       <div
-                        className={getRowStyle(selection ? selection.includes(i) : false)}
+                        className={getRowStyle(isSelected)}
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
