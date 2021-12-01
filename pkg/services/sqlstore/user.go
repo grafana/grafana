@@ -199,7 +199,7 @@ func (ss *SQLStore) CloneUserToServiceAccount(ctx context.Context, siUser *model
 	newuser, err := ss.CreateUser(ctx, cmd)
 	if err != nil {
 		ss.log.Warn("user not cloned", "err", err)
-		return nil, errors.Errorf("Failed to create user: %v", err)
+		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
 
 	return newuser, err
