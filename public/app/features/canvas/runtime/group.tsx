@@ -128,6 +128,7 @@ export class GroupState extends ElementState {
         const copy = new ElementState(element.item, opts, this);
         copy.updateSize(element.width, element.height);
         copy.updateData(this.scene.context);
+        copy.options.name = `Element ${copy.UID} (duplicate)`;
         this.elements.push(copy);
         this.scene.save();
         this.reinitializeMoveable();
