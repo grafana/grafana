@@ -81,7 +81,23 @@ When you log in for the first time, Grafana asks you to change your password.
 
 The Grafana backend includes SQLite which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
 
-You can simply build the back-end as follows: `go run build.go build`. The Grafana binaries will be in bin\\windows-amd64.
+You can build the back-end as follows:
+
+1. Follow the [instructions](https://github.com/google/wire#installing) to install the Wire tool.
+2. Generate code using Wire:
+
+```
+# Normally Wire tool installed at $GOPATH/bin/wire.exe
+<Wire tool install path> gen -tags oss ./pkg/server ./pkg/cmd/grafana-cli/runner
+```
+
+3. Build the Grafana binaries:
+
+```
+go run build.go build
+```
+
+The Grafana binaries will be in bin\\windows-amd64.
 Alternately, if you wish to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a Unix shell (f.ex. Git Bash).
 
 ## Test Grafana

@@ -1,6 +1,7 @@
 import { TimeSrv } from './TimeSrv';
 import { ContextSrvStub } from 'test/specs/helpers';
 import { dateTime, isDateTime } from '@grafana/data';
+import * as H from 'history';
 import { HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
 import { beforeEach } from '../../../../test/lib/common';
 
@@ -13,7 +14,7 @@ jest.mock('app/core/core', () => ({
 describe('timeSrv', () => {
   let timeSrv: TimeSrv;
   let _dashboard: any;
-  const pushSpy = jest.fn();
+  let locationUpdates: H.Location[] = [];
 
   beforeEach(() => {
     _dashboard = {
@@ -22,18 +23,15 @@ describe('timeSrv', () => {
       refresh: false,
       timeRangeUpdated: jest.fn(() => {}),
     };
+
     timeSrv = new TimeSrv(new ContextSrvStub() as any);
     timeSrv.init(_dashboard);
 
     beforeEach(() => {
-      pushSpy.mockClear();
-
-      setLocationService(new HistoryWrapper());
-      const origPush = locationService.push;
-      locationService.push = (args: any) => {
-        pushSpy();
-        origPush(args);
-      };
+      locationUpdates = [];
+      const history = new HistoryWrapper();
+      history.getHistory().listen((x) => locationUpdates.push(x));
+      setLocationService(history);
     });
   });
 
@@ -237,7 +235,16 @@ describe('timeSrv', () => {
       timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
       timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
 
-      expect(pushSpy).toHaveBeenCalledTimes(1);
+      expect(locationUpdates.length).toBe(1);
+    });
+
+    it('should update location so that bool params are preserved', () => {
+      locationService.partial({ kiosk: true });
+
+      timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
+      timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
+
+      expect(locationUpdates[1].search).toEqual('?kiosk&from=now-1h&to=now-10s');
     });
   });
 
