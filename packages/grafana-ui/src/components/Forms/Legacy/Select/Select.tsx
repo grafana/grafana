@@ -123,6 +123,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
         {(onOpenMenuInternal, onCloseMenuInternal) => {
           return (
             <SelectComponent
+              aria-label={this.props['aria-label']}
               captureMenuScroll={false}
               classNamePrefix="gf-form-select-box"
               className={selectClassNames}
