@@ -39,7 +39,7 @@ func TestPluginManager_init(t *testing.T) {
 			pm.cfg.PluginsPath = testDir
 		})
 
-		err = pm.init()
+		err = pm.Init()
 		require.NoError(t, err)
 
 		exists, err = fs.Exists(testDir)
@@ -64,7 +64,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
-		err := pm.loadPlugins(context.Background(), "test/path")
+		err := pm.loadPlugins(context.Background(), plugins.External, "test/path")
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, pc.startCount)
@@ -90,7 +90,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
-		err := pm.loadPlugins(context.Background(), "test/path")
+		err := pm.loadPlugins(context.Background(), plugins.External, "test/path")
 		require.NoError(t, err)
 
 		assert.Equal(t, 0, pc.startCount)
@@ -116,7 +116,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
-		err := pm.loadPlugins(context.Background(), "test/path")
+		err := pm.loadPlugins(context.Background(), plugins.External, "test/path")
 		require.NoError(t, err)
 
 		assert.Equal(t, 0, pc.startCount)
@@ -142,7 +142,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
-		err := pm.loadPlugins(context.Background(), "test/path")
+		err := pm.loadPlugins(context.Background(), plugins.External, "test/path")
 		require.NoError(t, err)
 
 		assert.Equal(t, 0, pc.startCount)
@@ -257,7 +257,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
-		err := pm.loadPlugins(context.Background(), "test/path")
+		err := pm.loadPlugins(context.Background(), plugins.Core, "test/path")
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, pc.startCount)
@@ -291,7 +291,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
-		err := pm.loadPlugins(context.Background(), "test/path")
+		err := pm.loadPlugins(context.Background(), plugins.Bundled, "test/path")
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, pc.startCount)

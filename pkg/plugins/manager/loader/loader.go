@@ -61,17 +61,17 @@ func New(license models.Licensing, cfg *setting.Cfg, authorizer plugins.PluginLo
 	}
 }
 
-func (l *Loader) Load(ctx context.Context, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
+func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find(paths)
 	if err != nil {
 		l.log.Error("plugin finder encountered an error", "err", err)
 	}
 
-	return l.loadPlugins(ctx, pluginJSONPaths, ignore)
+	return l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
 }
 
-func (l *Loader) LoadWithFactory(ctx context.Context, path string, factory backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
-	p, err := l.load(ctx, path, map[string]struct{}{})
+func (l *Loader) LoadWithFactory(ctx context.Context, class plugins.Class, path string, factory backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
+	p, err := l.load(ctx, class, path, map[string]struct{}{})
 	if err != nil {
 		l.log.Error("failed to load core plugin", "err", err)
 		return nil, err
@@ -82,14 +82,14 @@ func (l *Loader) LoadWithFactory(ctx context.Context, path string, factory backe
 	return p, err
 }
 
-func (l *Loader) load(ctx context.Context, path string, ignore map[string]struct{}) (*plugins.Plugin, error) {
+func (l *Loader) load(ctx context.Context, class plugins.Class, path string, ignore map[string]struct{}) (*plugins.Plugin, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find([]string{path})
 	if err != nil {
 		l.log.Error("failed to find plugin", "err", err)
 		return nil, err
 	}
 
-	loadedPlugins, err := l.loadPlugins(ctx, pluginJSONPaths, ignore)
+	loadedPlugins, err := l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (l *Loader) load(ctx context.Context, path string, ignore map[string]struct
 	return loadedPlugins[0], nil
 }
 
-func (l *Loader) loadPlugins(ctx context.Context, pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.Plugin, error) {
+func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.Plugin, error) {
 	var foundPlugins = foundPlugins{}
 
 	// load plugin.json files and map directory to JSON data
@@ -133,7 +133,7 @@ func (l *Loader) loadPlugins(ctx context.Context, pluginJSONPaths []string, exis
 		plugin := &plugins.Plugin{
 			JSONData:  pluginJSON,
 			PluginDir: pluginDir,
-			Class:     l.pluginClass(pluginDir),
+			Class:     class,
 		}
 		l.setDefaults(plugin)
 		plugin.SetLogger(l.log.New("pluginID", plugin.ID))

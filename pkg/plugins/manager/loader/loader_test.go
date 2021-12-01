@@ -339,7 +339,7 @@ func TestLoader_Load(t *testing.T) {
 	for _, tt := range tests {
 		l := newLoader(tt.cfg)
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := l.Load(context.Background(), tt.pluginPaths, tt.existingPlugins)
+			got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths, tt.existingPlugins)
 			require.NoError(t, err)
 			if !cmp.Equal(got, tt.want, compareOpts) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
@@ -436,7 +436,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				})
 				setting.AppUrl = tt.appURL
 
-				got, err := l.Load(context.Background(), tt.pluginPaths, tt.existingPlugins)
+				got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths, tt.existingPlugins)
 				require.NoError(t, err)
 				sort.SliceStable(got, func(i, j int) bool {
 					return got[i].ID < got[j].ID
@@ -500,7 +500,7 @@ func TestLoader_Signature_RootURL(t *testing.T) {
 		}
 
 		l := newLoader(&setting.Cfg{PluginsPath: filepath.Join(parentDir)})
-		got, err := l.Load(context.Background(), paths, map[string]struct{}{})
+		got, err := l.Load(context.Background(), plugins.External, paths, map[string]struct{}{})
 		assert.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts) {
@@ -572,7 +572,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 			PluginsPath: filepath.Dir(pluginDir),
 		})
 
-		got, err := l.Load(context.Background(), []string{pluginDir, pluginDir}, map[string]struct{}{})
+		got, err := l.Load(context.Background(), plugins.External, []string{pluginDir, pluginDir}, map[string]struct{}{})
 		assert.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts) {
@@ -661,7 +661,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			PluginsPath: parentDir,
 		})
 
-		got, err := l.Load(context.Background(), []string{"../testdata/nested-plugins"}, map[string]struct{}{})
+		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"}, map[string]struct{}{})
 		assert.NoError(t, err)
 
 		// to ensure we can compare with expected
@@ -683,7 +683,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			PluginsPath: parentDir,
 		})
 
-		got, err := l.Load(context.Background(), []string{"../testdata/nested-plugins"}, map[string]struct{}{
+		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"}, map[string]struct{}{
 			"test-panel": {},
 		})
 		assert.NoError(t, err)
@@ -844,66 +844,6 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 		assert.Equal(t, "testdata", child.IncludedInAppID)
 		assert.Equal(t, "public/app/plugins/app/testdata", child.BaseURL)
 	})
-}
-
-func Test_pluginClass(t *testing.T) {
-	type args struct {
-		pluginDir string
-		cfg       *setting.Cfg
-	}
-	tests := []struct {
-		name     string
-		args     args
-		expected plugins.Class
-	}{
-		{
-			name: "Core plugin class",
-			args: args{
-				pluginDir: "/root/app/plugins/test-app",
-				cfg: &setting.Cfg{
-					StaticRootPath: "/root",
-				},
-			},
-			expected: plugins.Core,
-		},
-		{
-			name: "Bundled plugin class",
-			args: args{
-				pluginDir: "/test-app",
-				cfg: &setting.Cfg{
-					BundledPluginsPath: "/test-app",
-				},
-			},
-			expected: plugins.Bundled,
-		},
-		{
-			name: "External plugin class",
-			args: args{
-				pluginDir: "/test-app",
-				cfg: &setting.Cfg{
-					PluginsPath: "/test-app",
-				},
-			},
-			expected: plugins.External,
-		},
-		{
-			name: "External plugin class",
-			args: args{
-				pluginDir: "/test-app",
-				cfg: &setting.Cfg{
-					PluginsPath: "/root",
-				},
-			},
-			expected: plugins.External,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			l := newLoader(tt.args.cfg)
-			got := l.pluginClass(tt.args.pluginDir)
-			assert.Equal(t, tt.expected, got)
-		})
-	}
 }
 
 func newLoader(cfg *setting.Cfg) *Loader {

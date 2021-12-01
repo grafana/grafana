@@ -87,7 +87,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 		return err
 	}
 
-	err = m.loadPlugins(context.Background(), opts.PluginInstallDir)
+	err = m.loadPlugins(context.Background(), plugins.External, opts.PluginInstallDir)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (m *PluginManager) AddWithFactory(ctx context.Context, pluginID string, fac
 		return err
 	}
 
-	p, err := m.pluginLoader.LoadWithFactory(ctx, path, factory)
+	p, err := m.pluginLoader.LoadWithFactory(ctx, plugins.Core, path, factory)
 	if err != nil {
 		return err
 	}

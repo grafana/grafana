@@ -34,10 +34,10 @@ type PluginPathResolver func() (string, error)
 // Loader is responsible for loading plugins from the file system.
 type Loader interface {
 	// Load will return a list of plugins found in the provided file system paths.
-	Load(ctx context.Context, paths []string, ignore map[string]struct{}) ([]*Plugin, error)
+	Load(ctx context.Context, class Class, paths []string, ignore map[string]struct{}) ([]*Plugin, error)
 	// LoadWithFactory will return a plugin found in the provided file system path and use the provided factory to
 	// construct the plugin backend client.
-	LoadWithFactory(ctx context.Context, path string, factory backendplugin.PluginFactoryFunc) (*Plugin, error)
+	LoadWithFactory(ctx context.Context, class Class, path string, factory backendplugin.PluginFactoryFunc) (*Plugin, error)
 }
 
 // Installer is responsible for managing plugins (add / remove) on the file system.
