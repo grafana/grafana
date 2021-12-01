@@ -42,7 +42,7 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 
 // GetAPIKeys queries the database based
 // on input on GetApiKeysQuery
-func (ss *SQLStore) GetBasicAPIKeys(ctx context.Context) []*models.ApiKey {
+func (ss *SQLStore) GetNonServiceAccountAPIKeys(ctx context.Context) []*models.ApiKey {
 	result := make([]*models.ApiKey, 0)
 	ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		var sess *xorm.Session
