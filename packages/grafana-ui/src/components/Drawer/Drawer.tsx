@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
 import { stylesFactory, useTheme2 } from '../../themes';
+import { FocusScope } from '@react-aria/focus';
 
 export interface Props {
   children: ReactNode;
@@ -122,46 +123,48 @@ export const Drawer: FC<Props> = ({
           : selectors.components.Drawer.General.title('no title')
       }
     >
-      {typeof title === 'string' && (
-        <div className={drawerStyles.header}>
-          <div className={drawerStyles.actions}>
-            {expandable && !isExpanded && (
+      <FocusScope contain restoreFocus autoFocus>
+        {typeof title === 'string' && (
+          <div className={drawerStyles.header}>
+            <div className={drawerStyles.actions}>
+              {expandable && !isExpanded && (
+                <IconButton
+                  name="angle-left"
+                  size="xl"
+                  onClick={() => setIsExpanded(true)}
+                  surface="header"
+                  aria-label={selectors.components.Drawer.General.expand}
+                />
+              )}
+              {expandable && isExpanded && (
+                <IconButton
+                  name="angle-right"
+                  size="xl"
+                  onClick={() => setIsExpanded(false)}
+                  surface="header"
+                  aria-label={selectors.components.Drawer.General.contract}
+                />
+              )}
               <IconButton
-                name="angle-left"
+                name="times"
                 size="xl"
-                onClick={() => setIsExpanded(true)}
+                onClick={onClose}
                 surface="header"
-                aria-label={selectors.components.Drawer.General.expand}
+                aria-label={selectors.components.Drawer.General.close}
               />
-            )}
-            {expandable && isExpanded && (
-              <IconButton
-                name="angle-right"
-                size="xl"
-                onClick={() => setIsExpanded(false)}
-                surface="header"
-                aria-label={selectors.components.Drawer.General.contract}
-              />
-            )}
-            <IconButton
-              name="times"
-              size="xl"
-              onClick={onClose}
-              surface="header"
-              aria-label={selectors.components.Drawer.General.close}
-            />
+            </div>
+            <div className={drawerStyles.titleWrapper}>
+              <h3>{title}</h3>
+              {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
+              {typeof subtitle !== 'string' && subtitle}
+            </div>
           </div>
-          <div className={drawerStyles.titleWrapper}>
-            <h3>{title}</h3>
-            {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
-            {typeof subtitle !== 'string' && subtitle}
-          </div>
+        )}
+        {typeof title !== 'string' && title}
+        <div className={drawerStyles.content}>
+          {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
         </div>
-      )}
-      {typeof title !== 'string' && title}
-      <div className={drawerStyles.content}>
-        {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
-      </div>
+      </FocusScope>
     </RcDrawer>
   );
 };
