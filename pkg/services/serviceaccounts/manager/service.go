@@ -2,7 +2,6 @@ package manager
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -44,7 +43,6 @@ func ProvideServiceAccountsService(
 	basicKeys := store.GetBasicAPIKeys(context.Background())
 	s.log.Warn("Upgrading API keys to service accounts", "numberKeys", len(basicKeys))
 	for _, key := range basicKeys {
-
 		sa, err := store.CreateServiceAccountForApikey(context.Background(), key.OrgId, key.Name, key.Role)
 		if err != nil {
 			s.log.Warn("Failed to create service account for API key", "err", err, "keyId", key.Id)
