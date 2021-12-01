@@ -156,7 +156,10 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 			if expr.IsDataSource(q.DatasourceUID) {
 				ds = expr.DataSourceModel()
 			} else {
-				ds, err = dsCacheService.GetDatasourceByUID(q.DatasourceUID, &m.SignedInUser{OrgId: ctx.OrgID}, true)
+				ds, err = dsCacheService.GetDatasourceByUID(q.DatasourceUID, &m.SignedInUser{
+					OrgId: ctx.OrgID,
+					OrgRole: m.ROLE_ADMIN,
+				}, true)
 				if err != nil {
 					return nil, err
 				}
