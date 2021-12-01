@@ -176,12 +176,13 @@ describe('sharedReducer', () => {
 
   describe('when duplicateVariable is dispatched', () => {
     it('then state should be correct', () => {
-      const initialState: VariablesState = getVariableState(3);
+      const initialState: VariablesState = getVariableState(3, -1, false, true);
       const payload = toVariablePayload({ id: '1', type: 'query' }, { newId: '11' });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, initialState)
         .whenActionIsDispatched(duplicateVariable(payload))
         .thenStateShouldEqual({
+          ...initialState,
           '0': {
             id: '0',
             type: 'query',

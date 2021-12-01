@@ -6,6 +6,7 @@ import { AddVariable, getInstanceState, initialVariablesState, VariablePayload, 
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { ensureStringValues } from '../utils';
+import { getNextVariableIndex } from './selectors';
 
 const sharedReducerSlice = createSlice({
   name: 'templating/shared',
@@ -71,7 +72,7 @@ const sharedReducerSlice = createSlice({
       const original = cloneDeep<VariableModel>(state[action.payload.id]);
       const name = `copy_of_${original.name}`;
       const newId = action.payload.data?.newId ?? name;
-      const index = Object.keys(state).length;
+      const index = getNextVariableIndex(Object.values(state));
       state[newId] = {
         ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
         ...original,
