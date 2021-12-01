@@ -130,3 +130,91 @@ func setupTestEnv(t testing.TB) (*AccessControlStore, *sqlstore.SQLStore) {
 	store := sqlstore.InitTestDB(t)
 	return ProvideService(store), store
 }
+
+type getUserResourcesPermissionsTestCase struct {
+	desc             string
+	orgID            int64
+	role             models.RoleType
+	userPermissions  accesscontrol.SetResourcePermissionsCommand
+	teamPermissions  accesscontrol.SetResourcePermissionsCommand
+	adminPermissions accesscontrol.SetResourcePermissionsCommand
+	queryIds         []string
+	expected         []*accesscontrol.Permission
+}
+
+func TestResourceStore_GetUserResourcePermissions(t *testing.T) {
+	tests := []getUserResourcesPermissionsTestCase{
+		{
+			desc:             "Get resources metadata when user has no right",
+			orgID:            2,
+			role:             "Admin",
+			userPermissions:  accesscontrol.SetResourcePermissionsCommand{},
+			teamPermissions:  accesscontrol.SetResourcePermissionsCommand{},
+			adminPermissions: accesscontrol.SetResourcePermissionsCommand{},
+			queryIds:         []string{"1"},
+			expected:         []*accesscontrol.Permission{},
+		},
+		{
+			desc:  "Get resources metadata through team, user, builtin assignments",
+			orgID: 2,
+			role:  "Admin",
+			userPermissions: accesscontrol.SetResourcePermissionsCommand{
+				Actions:    []string{"resources:action1", "resources:action2"},
+				Resource:   "resources",
+				ResourceID: "1",
+			},
+			teamPermissions: accesscontrol.SetResourcePermissionsCommand{
+				Actions:    []string{"resources:action1", "resources:action3"},
+				Resource:   "resources",
+				ResourceID: "2",
+			},
+			adminPermissions: accesscontrol.SetResourcePermissionsCommand{
+				Actions:    []string{"resources:action1"},
+				Resource:   "resources",
+				ResourceID: "3",
+			},
+			queryIds: []string{"1", "2", "3"},
+			expected: []*accesscontrol.Permission{
+				{Action: "resources:action1", Scope: "resources:id:1"},
+				{Action: "resources:action2", Scope: "resources:id:1"},
+				{Action: "resources:action1", Scope: "resources:id:2"},
+				{Action: "resources:action3", Scope: "resources:id:2"},
+				{Action: "resources:action1", Scope: "resources:id:3"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			store, sql := setupTestEnv(t)
+
+			user, team := createUserAndTeam(t, sql, tt.orgID)
+
+			_, err := store.SetUserResourcePermissions(context.Background(), tt.orgID, user.Id, tt.userPermissions)
+			require.NoError(t, err)
+
+			_, err = store.SetTeamResourcePermissions(context.Background(), tt.orgID, team.Id, tt.teamPermissions)
+			require.NoError(t, err)
+
+			_, err = store.SetBuiltinResourcePermissions(context.Background(), tt.orgID, "Admin", tt.adminPermissions)
+			require.NoError(t, err)
+
+			var roles []string
+			role := models.RoleType(tt.role)
+
+			if role.IsValid() {
+				roles = append(roles, string(role))
+				for _, c := range role.Children() {
+					roles = append(roles, string(c))
+				}
+			}
+
+			permissions, err := store.GetUserResourcePermissions(context.Background(), tt.orgID, user.Id, accesscontrol.GetUserResourcesPermissionsQuery{
+				BuiltInRoles: roles,
+				Resource:     "resources",
+				ResourceIDs:  tt.queryIds,
+			})
+			assert.NoError(t, err)
+			assert.EqualValues(t, tt.expected, permissions)
+		})
+	}
+}

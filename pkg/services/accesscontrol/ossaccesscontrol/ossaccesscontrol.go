@@ -9,16 +9,21 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessControlService {
+var _ accesscontrol.AccessControl = &OSSAccessControlService{}
+
+func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service, sql *sqlstore.SQLStore) *OSSAccessControlService {
 	s := &OSSAccessControlService{
 		Cfg:           cfg,
 		UsageStats:    usageStats,
 		Log:           log.New("accesscontrol"),
 		scopeResolver: accesscontrol.NewScopeResolver(),
+		store:         database.ProvideService(sql),
 	}
 	s.registerUsageMetrics()
 	return s
@@ -31,6 +36,7 @@ type OSSAccessControlService struct {
 	Log           log.Logger
 	registrations accesscontrol.RegistrationList
 	scopeResolver accesscontrol.ScopeResolver
+	store         accesscontrol.ResourceStore
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -89,7 +95,21 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	builtinRoles := ac.GetUserBuiltInRoles(user)
+	permissions := ac.getFixedPermissions(ctx, ac.GetUserBuiltInRoles(user))
+	resolved := make([]*accesscontrol.Permission, 0, len(permissions))
+	for _, p := range permissions {
+		// if the permission has a keyword in its scope it will be resolved
+		permission, err := ac.scopeResolver.ResolveKeyword(user, *p)
+		if err != nil {
+			return nil, err
+		}
+		resolved = append(resolved, permission)
+	}
+
+	return resolved, nil
+}
+
+func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, builtinRoles []string) []*accesscontrol.Permission {
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, builtin := range builtinRoles {
 		if roleNames, ok := accesscontrol.FixedRoleGrants[builtin]; ok {
@@ -98,19 +118,14 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 				if !exists {
 					continue
 				}
-				for _, p := range role.Permissions {
-					// if the permission has a keyword in its scope it will be resolved
-					permission, err := ac.scopeResolver.ResolveKeyword(user, p)
-					if err != nil {
-						return nil, err
-					}
-					permissions = append(permissions, permission)
+				for i := range role.Permissions {
+					permissions = append(permissions, &role.Permissions[i])
 				}
 			}
 		}
 	}
 
-	return permissions, nil
+	return permissions
 }
 
 func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser) []string {
@@ -202,4 +217,42 @@ func (ac *OSSAccessControlService) DeclareFixedRoles(registrations ...accesscont
 	}
 
 	return nil
+}
+
+// GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
+func (ac *OSSAccessControlService) GetResourcesMetadata(ctx context.Context, user *models.SignedInUser, resource string, resourceIDs []string) (map[string]accesscontrol.Metadata, error) {
+	builtInRoles := ac.GetUserBuiltInRoles(user)
+
+	fixedPermissions := ac.getFixedPermissions(ctx, builtInRoles)
+
+	storedPermissions, err := ac.store.GetUserResourcePermissions(ctx, user.OrgId, user.UserId, accesscontrol.GetUserResourcesPermissionsQuery{
+		BuiltInRoles: builtInRoles,
+		Resource:     resource,
+		ResourceIDs:  resourceIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	userPermissions := append(fixedPermissions, storedPermissions...)
+
+	allScope := accesscontrol.GetResourceAllScope(resource)
+	allIDScope := accesscontrol.GetResourceAllIDScope(resource)
+
+	result := map[string]accesscontrol.Metadata{}
+	for _, r := range resourceIDs {
+		scope := accesscontrol.GetResourceScope(resource, r)
+		for _, p := range userPermissions {
+			if p.Scope == "*" || p.Scope == allScope || p.Scope == allIDScope || p.Scope == scope {
+				metadata, initialized := result[r]
+				if !initialized {
+					metadata = accesscontrol.Metadata{}
+				}
+				metadata[p.Action] = true
+				result[r] = metadata
+			}
+		}
+	}
+
+	return result, nil
 }

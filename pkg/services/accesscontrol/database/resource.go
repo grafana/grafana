@@ -101,7 +101,7 @@ func (s *AccessControlStore) setResourcePermissions(
 	`
 
 	var current []accesscontrol.Permission
-	if err := sess.SQL(rawSQL, role.ID, getResourceScope(cmd.Resource, cmd.ResourceID)).Find(&current); err != nil {
+	if err := sess.SQL(rawSQL, role.ID, accesscontrol.GetResourceScope(cmd.Resource, cmd.ResourceID)).Find(&current); err != nil {
 		return nil, err
 	}
 
@@ -162,7 +162,7 @@ func (s *AccessControlStore) RemoveResourcePermission(ctx context.Context, orgID
 		args := []interface{}{
 			orgID,
 			cmd.PermissionID,
-			getResourceScope(cmd.Resource, cmd.ResourceID),
+			accesscontrol.GetResourceScope(cmd.Resource, cmd.ResourceID),
 		}
 
 		for _, a := range cmd.Actions {
@@ -307,12 +307,12 @@ func getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query access
 
 	args := []interface{}{
 		orgID,
-		getResourceAllScope(query.Resource),
-		getResourceAllIDScope(query.Resource),
+		accesscontrol.GetResourceAllScope(query.Resource),
+		accesscontrol.GetResourceAllIDScope(query.Resource),
 	}
 
 	for _, id := range query.ResourceIDs {
-		args = append(args, getResourceScope(query.Resource, id))
+		args = append(args, accesscontrol.GetResourceScope(query.Resource, id))
 	}
 
 	for _, a := range query.Actions {
@@ -333,14 +333,14 @@ func getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query access
 		return nil, err
 	}
 
-	scopeAll := getResourceAllScope(query.Resource)
-	scopeAllIDs := getResourceAllIDScope(query.Resource)
+	scopeAll := accesscontrol.GetResourceAllScope(query.Resource)
+	scopeAllIDs := accesscontrol.GetResourceAllIDScope(query.Resource)
 	out := make([]accesscontrol.ResourcePermission, 0, len(result))
 
 	// Add resourceIds and generate permissions for `*`, `resource:*` and `resource:id:*`
 	// TODO: handle scope with other key prefixes e.g. `resource:name:*` and `resource:name:name`
 	for _, id := range query.ResourceIDs {
-		scope := getResourceScope(query.Resource, id)
+		scope := accesscontrol.GetResourceScope(query.Resource, id)
 		for _, p := range result {
 			if p.Scope == scope || p.Scope == scopeAll || p.Scope == scopeAllIDs || p.Scope == "*" {
 				p.ResourceID = id
@@ -487,10 +487,58 @@ func getManagedPermissions(sess *sqlstore.DBSession, resourceID string, ids []in
 	return result, nil
 }
 
+// getUserResourcePermissions returns the list of permissions a user has been granted in regards to a list of resources
+func getUserResourcePermissions(sess *sqlstore.DBSession, orgID, userID int64, query accesscontrol.GetUserResourcesPermissionsQuery) ([]*accesscontrol.Permission, error) {
+	result := make([]*accesscontrol.Permission, 0)
+
+	if len(query.ResourceIDs) == 0 {
+		return nil, nil
+	}
+
+	rawSelect := `
+	SELECT p.action, p.scope
+	`
+	rawFrom := `
+	FROM permission p INNER JOIN role ON p.role_id = role.id
+    `
+
+	userFilter, args := userRolesFilter(orgID, userID, query.BuiltInRoles)
+
+	resourceFilter := `
+		AND (p.scope = '*' OR p.scope = ? OR p.scope = ? OR p.scope IN (?` + strings.Repeat(",?", len(query.ResourceIDs)-1) + `))
+	`
+
+	args = append(args, accesscontrol.GetResourceAllScope(query.Resource), accesscontrol.GetResourceAllIDScope(query.Resource))
+
+	for _, id := range query.ResourceIDs {
+		args = append(args, accesscontrol.GetResourceScope(query.Resource, id))
+	}
+
+	sql := rawSelect + rawFrom + userFilter + resourceFilter
+	if err := sess.SQL(sql, args...).Find(&result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// GetUserResourcePermissions returns the list of permissions a user has been granted in regards to a list of resources
+func (s *AccessControlStore) GetUserResourcePermissions(ctx context.Context, orgID, userID int64, query accesscontrol.GetUserResourcesPermissionsQuery) ([]*accesscontrol.Permission, error) {
+	var result []*accesscontrol.Permission
+
+	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		result, err = getUserResourcePermissions(sess, orgID, userID, query)
+		return err
+	})
+
+	return result, err
+}
+
 func managedPermission(action, resource string, resourceID string) accesscontrol.Permission {
 	return accesscontrol.Permission{
 		Action: action,
-		Scope:  getResourceScope(resource, resourceID),
+		Scope:  accesscontrol.GetResourceScope(resource, resourceID),
 	}
 }
 
@@ -504,16 +552,4 @@ func managedTeamRoleName(teamID int64) string {
 
 func managedBuiltInRoleName(builtinRole string) string {
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtinRole))
-}
-
-func getResourceScope(resource string, resourceID string) string {
-	return fmt.Sprintf("%s:id:%s", resource, resourceID)
-}
-
-func getResourceAllScope(resource string) string {
-	return fmt.Sprintf("%s:*", resource)
-}
-
-func getResourceAllIDScope(resource string) string {
-	return fmt.Sprintf("%s:id:*", resource)
 }

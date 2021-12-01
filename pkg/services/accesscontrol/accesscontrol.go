@@ -23,6 +23,9 @@ type AccessControl interface {
 	// DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(...RoleRegistration) error
+
+	// GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
+	GetResourcesMetadata(ctx context.Context, user *models.SignedInUser, resource string, resourceIDs []string) (map[string]Metadata, error)
 }
 
 type PermissionsProvider interface {
@@ -40,6 +43,19 @@ type ResourceStore interface {
 	RemoveResourcePermission(ctx context.Context, orgID int64, cmd RemoveResourcePermissionCommand) error
 	// GetResourcesPermissions will return all permission for all supplied resource ids
 	GetResourcesPermissions(ctx context.Context, orgID int64, query GetResourcesPermissionsQuery) ([]ResourcePermission, error)
+	// GetUserResourcePermissions returns the list of permissions a user has been granted in regards to a list of resources
+	GetUserResourcePermissions(ctx context.Context, orgID, userID int64, query GetUserResourcesPermissionsQuery) ([]*Permission, error)
+}
+
+// Metadata contains user accesses for a given resource
+// Ex: map[string]bool{"create":true, "delete": true}
+type Metadata map[string]bool
+
+// GetUserResourcesPermissionsQuery is used to query the accesscontrol permissions a user has been granted for a given set of resources
+type GetUserResourcesPermissionsQuery struct {
+	BuiltInRoles []string
+	Resource     string
+	ResourceIDs  []string
 }
 
 // HasGlobalAccess checks user access with globally assigned permissions only

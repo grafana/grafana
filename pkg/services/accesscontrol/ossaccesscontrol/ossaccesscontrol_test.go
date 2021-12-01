@@ -5,18 +5,20 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func setupTestEnv(t testing.TB) *OSSAccessControlService {
+func setupTestEnv(t testing.TB) (*OSSAccessControlService, *sqlstore.SQLStore) {
 	t.Helper()
+	db := sqlstore.InitTestDB(t)
 
 	cfg := setting.NewCfg()
 	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
@@ -27,8 +29,9 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 		Log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
 		scopeResolver: accesscontrol.NewScopeResolver(),
+		store:         database.ProvideService(db),
 	}
-	return ac
+	return ac, db
 }
 
 func removeRoleHelper(role string) {
@@ -109,7 +112,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			ac := setupTestEnv(t)
+			ac, _ := setupTestEnv(t)
 
 			user := &models.SignedInUser{
 				UserId:         1,
@@ -153,7 +156,7 @@ func TestUsageMetrics(t *testing.T) {
 				cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 			}
 
-			s := ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
+			s := ProvideService(cfg, &usagestats.UsageStatsMock{T: t}, nil)
 			report, err := s.UsageStats.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 
@@ -551,7 +554,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 			})
 
 			// Setup
-			ac := setupTestEnv(t)
+			ac, _ := setupTestEnv(t)
 			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
 			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
@@ -573,6 +576,142 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 			assert.Contains(t, rawUserPerms, &tt.wantPerm, "Expected resolution of raw permission")
 			assert.NotContains(t, rawUserPerms, &tt.rawPerm, "Expected raw permission to have been resolved")
+		})
+	}
+}
+
+func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, orgID int64) (*models.User, models.Team) {
+	t.Helper()
+
+	user, err := sql.CreateUser(context.Background(), models.CreateUserCommand{
+		Login: "user",
+		OrgId: orgID,
+	})
+	require.NoError(t, err)
+
+	team, err := sql.CreateTeam("team", "", orgID)
+	require.NoError(t, err)
+
+	err = sql.AddTeamMember(user.Id, orgID, team.Id, false, models.PERMISSION_VIEW)
+	require.NoError(t, err)
+
+	return user, team
+}
+
+func TestOSSAccessControlService_GetResourcesMetadata(t *testing.T) {
+	var err error
+	tests := []struct {
+		desc             string
+		orgID            int64
+		role             string
+		resource         string
+		resourcesIDs     []string
+		registration     *accesscontrol.RoleRegistration
+		userPermissions  accesscontrol.SetResourcePermissionsCommand
+		teamPermissions  accesscontrol.SetResourcePermissionsCommand
+		adminPermissions accesscontrol.SetResourcePermissionsCommand
+		expected         map[string]accesscontrol.Metadata
+	}{
+		{
+			desc:         "Should return no permission for resources 1,2,3 given the user has no permission",
+			orgID:        2,
+			role:         "Viewer",
+			resource:     "resources",
+			resourcesIDs: []string{"1", "2", "3"},
+			expected:     map[string]accesscontrol.Metadata{},
+		},
+		{
+			desc:             "Should return no permission for resources 1,2,3 given the user has permissions for 4 only",
+			orgID:            2,
+			role:             "Admin",
+			resource:         "resources",
+			userPermissions:  accesscontrol.SetResourcePermissionsCommand{Actions: []string{"resources:action1"}, Resource: "resources", ResourceID: "4"},
+			teamPermissions:  accesscontrol.SetResourcePermissionsCommand{Actions: []string{"resources:action2"}, Resource: "resources", ResourceID: "4"},
+			adminPermissions: accesscontrol.SetResourcePermissionsCommand{Actions: []string{"resources:action3"}, Resource: "resources", ResourceID: "4"},
+			resourcesIDs:     []string{"1", "2", "3"},
+			expected:         map[string]accesscontrol.Metadata{},
+		},
+		{
+			desc:             "Should only return permissions for resources 1 and 2, given the user has no permissions for 3",
+			orgID:            2,
+			role:             "Admin",
+			resource:         "resources",
+			userPermissions:  accesscontrol.SetResourcePermissionsCommand{Actions: []string{"resources:action1"}, Resource: "resources", ResourceID: "1"},
+			teamPermissions:  accesscontrol.SetResourcePermissionsCommand{Actions: []string{"resources:action2"}, Resource: "resources", ResourceID: "2"},
+			adminPermissions: accesscontrol.SetResourcePermissionsCommand{Actions: []string{"resources:action3"}, Resource: "resources", ResourceID: "2"},
+			resourcesIDs:     []string{"1", "2", "3"},
+			expected: map[string]accesscontrol.Metadata{
+				"1": {"resources:action1": true},
+				"2": {"resources:action2": true, "resources:action3": true},
+			},
+		},
+		{
+			desc:     "Should return permissions in both database and ram for resources 1,2,3",
+			orgID:    2,
+			role:     "Admin",
+			resource: "resources",
+			registration: &accesscontrol.RoleRegistration{
+				Role: accesscontrol.RoleDTO{
+					Version:     1,
+					Name:        "fixed:resources:test",
+					Description: "A test role to test GetResourcesMetadata",
+					Permissions: []accesscontrol.Permission{
+						{Action: "resources:action4", Scope: accesscontrol.Scope("resources", "id", "*")},
+						{Action: "resources:action5", Scope: accesscontrol.Scope("resources", "*")},
+					},
+					OrgID: 0,
+				},
+				Grants: []string{"Admin"},
+			},
+			userPermissions:  accesscontrol.SetResourcePermissionsCommand{Actions: []string{"resources:action1"}, Resource: "resources", ResourceID: "1"},
+			teamPermissions:  accesscontrol.SetResourcePermissionsCommand{Actions: []string{"resources:action2"}, Resource: "resources", ResourceID: "2"},
+			adminPermissions: accesscontrol.SetResourcePermissionsCommand{Actions: []string{"resources:action3"}, Resource: "resources", ResourceID: "2"},
+			resourcesIDs:     []string{"1", "2", "3"},
+			expected: map[string]accesscontrol.Metadata{
+				"1": {"resources:action1": true, "resources:action4": true, "resources:action5": true},
+				"2": {"resources:action2": true, "resources:action3": true, "resources:action4": true, "resources:action5": true},
+				"3": {"resources:action4": true, "resources:action5": true},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			t.Cleanup(func() {
+				if tt.registration != nil {
+					removeRoleHelper(tt.registration.Role.Name)
+				}
+			})
+			ac, sql := setupTestEnv(t)
+
+			user, team := createUserAndTeam(t, sql, tt.orgID)
+
+			if tt.registration != nil {
+				err = ac.DeclareFixedRoles(*tt.registration)
+				require.NoError(t, err)
+			}
+
+			err = ac.RegisterFixedRoles()
+			require.NoError(t, err)
+
+			_, err = ac.store.SetUserResourcePermissions(context.Background(), tt.orgID, user.Id, tt.userPermissions)
+			require.NoError(t, err)
+
+			_, err = ac.store.SetTeamResourcePermissions(context.Background(), tt.orgID, team.Id, tt.teamPermissions)
+			require.NoError(t, err)
+
+			_, err = ac.store.SetBuiltinResourcePermissions(context.Background(), tt.orgID, "Admin", tt.adminPermissions)
+			require.NoError(t, err)
+
+			signedInUser := models.SignedInUser{
+				UserId:  user.Id,
+				OrgId:   tt.orgID,
+				OrgRole: models.RoleType(tt.role),
+			}
+
+			metadata, err := ac.GetResourcesMetadata(context.Background(), &signedInUser, tt.resource, tt.resourcesIDs)
+			require.NoError(t, err)
+
+			assert.EqualValues(t, tt.expected, metadata)
 		})
 	}
 }
