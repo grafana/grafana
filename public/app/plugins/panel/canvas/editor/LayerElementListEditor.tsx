@@ -88,10 +88,6 @@ export class LayerElementListEditor extends PureComponent<Props> {
     layer.scene.clearCurrentSelection();
   };
 
-  getRowStyle = (sel: boolean) => {
-    return sel ? `${this.style.row} ${this.style.sel}` : this.style.row;
-  };
-
   onDragEnd = (result: DropResult) => {
     if (!result.destination) {
       return;
@@ -203,11 +199,11 @@ export class LayerElementListEditor extends PureComponent<Props> {
       return <div>Missing layer?</div>;
     }
 
-    const onDelete = (element: any) => {
+    const onDelete = (element: ElementState) => {
       layer.doAction(LayerActionID.Delete, element);
     };
 
-    const onDuplicate = (element: any) => {
+    const onDuplicate = (element: ElementState) => {
       layer.doAction(LayerActionID.Duplicate, element);
     };
 
