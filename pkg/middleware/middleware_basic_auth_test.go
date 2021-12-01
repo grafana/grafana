@@ -28,7 +28,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
 			query.Result = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
 			return nil
 		})
@@ -47,7 +47,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		const salt = "Salt"
 		const orgID int64 = 2
 
-		bus.AddHandler("grafana-auth", func(query *models.LoginUserQuery) error {
+		bus.AddHandlerCtx("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
 			t.Log("Handling LoginUserQuery")
 			encoded, err := util.EncodePassword(password, salt)
 			if err != nil {
@@ -80,7 +80,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 
 		login.Init()
 
-		bus.AddHandler("user-query", func(query *models.GetUserByLoginQuery) error {
+		bus.AddHandlerCtx("user-query", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
 			encoded, err := util.EncodePassword(password, salt)
 			if err != nil {
 				return err
@@ -119,7 +119,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user & password do not match", func(t *testing.T, sc *scenarioContext) {
-		bus.AddHandler("user-query", func(loginUserQuery *models.GetUserByLoginQuery) error {
+		bus.AddHandlerCtx("user-query", func(ctx context.Context, loginUserQuery *models.GetUserByLoginQuery) error {
 			return nil
 		})
 

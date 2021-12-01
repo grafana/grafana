@@ -26,7 +26,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 		t.Run("Given dashboard not exists", func(t *testing.T) {
 			setUp := func() {
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					return models.ErrDashboardNotFound
 				})
 			}
