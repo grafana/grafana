@@ -44,6 +44,7 @@ The candlestick panel will attempt to map fields to the appropriate dimension. T
 - **High** corresponds to the highest value of the given period.
 - **Low** corresponds to the lowest value of the given period.
 - **Close** corresponds to the final (end) value of the given period.
+- **Volume** corresponds to the sample count in the given period. (e.g. number of trades)
 
 ## Additional fields
 
