@@ -25,7 +25,6 @@ type Tracer interface {
 type Span interface {
 	End()
 	SetAttributes(kv ...attribute.KeyValue)
-	// AddEvent(name string, options ...trace.EventOption)
 }
 
 var (
@@ -68,9 +67,7 @@ func (ots *OpentelemetryTracingService) initTracerProvider() (*tracesdk.TracerPr
 	}
 
 	tp := tracesdk.NewTracerProvider(
-		// Always be sure to batch in production.
 		tracesdk.WithBatcher(exp),
-		// Record information about this application in an Resource.
 		tracesdk.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String("grafana"),
