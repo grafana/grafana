@@ -127,7 +127,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
     const { layer } = settings;
 
     layer.elements.forEach((element: ElementState) => {
-      layer.parent?.doAction(LayerActionID.Duplicate, element);
+      layer.parent?.doAction(LayerActionID.Duplicate, element, false);
     });
     this.deleteGroup();
   };

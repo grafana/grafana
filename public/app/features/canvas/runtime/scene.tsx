@@ -110,7 +110,7 @@ export class Scene {
       );
 
       currentSelectedElements.forEach((element: ElementState) => {
-        newLayer.doAction(LayerActionID.Duplicate, element);
+        newLayer.doAction(LayerActionID.Duplicate, element, false);
         currentLayer.doAction(LayerActionID.Delete, element);
       });
 
