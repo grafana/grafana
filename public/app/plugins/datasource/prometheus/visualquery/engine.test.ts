@@ -66,6 +66,16 @@ describe('VisualQueryEngine', () => {
     ).toBe('sum by(server, job) (metric)');
   });
 
+  it('Can handle avg around a group by', () => {
+    expect(
+      engine.renderQuery({
+        metric: 'metric',
+        labels: [],
+        operations: [{ type: 'group by', params: ['sum', 'server', 'job'] }, { type: 'avg' }],
+      })
+    ).toBe('avg(sum by(server, job) (metric))');
+  });
+
   it('Can handle render rate', () => {
     expect(
       engine.renderQuery({

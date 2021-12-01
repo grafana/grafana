@@ -12,6 +12,13 @@ export class VisualQueryEngine {
     });
 
     this.addOperationDef({
+      type: 'avg',
+      params: [],
+      defaultParams: [],
+      renderer: functionRendererLeft,
+    });
+
+    this.addOperationDef({
       type: 'histogram_quantile',
       params: [{ name: 'quantile', type: 'number', options: [0.99, 0.95, 0.9, 0.75, 0.5, 0.25] }],
       defaultParams: [0.9],
