@@ -318,6 +318,10 @@ type testLicensingService struct {
 	tokenRaw string
 }
 
+func (t *testLicensingService) Expiry() int64 {
+	return 0
+}
+
 func (t *testLicensingService) Edition() string {
 	return t.edition
 }

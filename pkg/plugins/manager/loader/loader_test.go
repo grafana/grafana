@@ -898,6 +898,10 @@ type fakeLicensingService struct {
 	tokenRaw string
 }
 
+func (t *fakeLicensingService) Expiry() int64 {
+	return 0
+}
+
 func (t *fakeLicensingService) Edition() string {
 	return t.edition
 }
