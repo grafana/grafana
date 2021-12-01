@@ -1215,8 +1215,6 @@ github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0U
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gosimple/slug v1.9.0 h1:r5vDcYrFz9BmfIAMC829un9hq7hKM4cHUrsv36LbEqs=
 github.com/gosimple/slug v1.9.0/go.mod h1:AMZ+sOVe65uByN3kgEyf9WEBKBCSS+dJjMX9x4vDJbg=
-github.com/grafana/cuetsy v0.0.0-20210928021233-5ddfb47f9a7d h1:vYCNM25g5aEactkMiILJvm2jW2BVGYB1QzLx7lAhMLw=
-github.com/grafana/cuetsy v0.0.0-20210928021233-5ddfb47f9a7d/go.mod h1:H9Ei+Q808FCWyeEzpaW5GMfBvXCuFOfQa4x/vzKY+Fg=
 github.com/grafana/cuetsy v0.0.0-20211119211437-8c25464cc9bf h1:RY69RBqlr3yWNgpAqrSRiUvqa/Jw6uqVqiHNHLzifhU=
 github.com/grafana/cuetsy v0.0.0-20211119211437-8c25464cc9bf/go.mod h1:H9Ei+Q808FCWyeEzpaW5GMfBvXCuFOfQa4x/vzKY+Fg=
 github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f h1:FvvSVEbnGeM2bUivGmsiXTi8URJyBU7TcFEEoRe5wWI=
@@ -1969,8 +1967,6 @@ github.com/prometheus/alertmanager v0.21.1-0.20210422101724-8176f78a70e1/go.mod 
 github.com/prometheus/alertmanager v0.22.2/go.mod h1:rYinOWxFuCnNssc3iOjn2oMTlhLaPcUuqV5yk5JKUAE=
 github.com/prometheus/alertmanager v0.23.0/go.mod h1:0MLTrjQI8EuVmvykEhcfr/7X0xmaDAZrqMgxIq3OXHk=
 github.com/prometheus/alertmanager v0.23.1-0.20210914172521-e35efbddb66a/go.mod h1:U7pGu+z7A9ZKhK8lq1MvIOp5GdVlZjwOYk+S0h3LSbA=
-github.com/prometheus/alertmanager v0.23.1-0.20211021072955-1b8afe7cb5aa h1:KKgVswVOfDYOn9GNtO7bR3r4vyM77WXuJsyGxMl1Zgs=
-github.com/prometheus/alertmanager v0.23.1-0.20211021072955-1b8afe7cb5aa/go.mod h1:pRqzxS2B4tciJfx2JUvR67udJrQeSUZ603OQQFFUrIQ=
 github.com/prometheus/alertmanager v0.23.1-0.20211116083607-e2a10119aaf7 h1:OMwDo53awRp+UzaBrwmVC7HJiAMYP/niBJfKcGpPiac=
 github.com/prometheus/alertmanager v0.23.1-0.20211116083607-e2a10119aaf7/go.mod h1:1UH4XA4DAXzsvofKVzcXmC0mqt6Y8BZP9JcQWKDmbFc=
 github.com/prometheus/client_golang v0.0.0-20180209125602-c332b6f63c06/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
@@ -2034,7 +2030,6 @@ github.com/prometheus/common/sigv4 v0.1.0 h1:qoVebwtwwEhS85Czm2dSROY5fTo2PAPEVdD
 github.com/prometheus/common/sigv4 v0.1.0/go.mod h1:2Jkxxk9yYvCkE5G1sQT7GuEXm57JrvHu9k5YwTjsNtI=
 github.com/prometheus/exporter-toolkit v0.5.0/go.mod h1:OCkM4805mmisBhLmVFw858QYi3v0wKdY6/UxrT0pZVg=
 github.com/prometheus/exporter-toolkit v0.5.1/go.mod h1:OCkM4805mmisBhLmVFw858QYi3v0wKdY6/UxrT0pZVg=
-github.com/prometheus/exporter-toolkit v0.6.1 h1:Aqk75wQD92N9CqmTlZwjKwq6272nOGrWIbc8Z7+xQO0=
 github.com/prometheus/exporter-toolkit v0.6.1/go.mod h1:ZUBIj498ePooX9t/2xtDjeQYwvRpiPP2lh5u4iblj2g=
 github.com/prometheus/exporter-toolkit v0.7.0 h1:XtYeVeeC5daG4txbc9+mieKq+/AK4gtIBLl9Mulrjnk=
 github.com/prometheus/exporter-toolkit v0.7.0/go.mod h1:ZUBIj498ePooX9t/2xtDjeQYwvRpiPP2lh5u4iblj2g=
