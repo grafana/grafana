@@ -25,7 +25,7 @@ Each panel needs at least one query to display a visualization. You write querie
 1. Choose a data source. In the first line of the Query tab, click the drop-down list to see all available data sources. This list includes all data sources you added. Refer to [Add a data source]({{< relref "../datasources/add-a-data-source.md" >}}) if you need instructions.
 1. Write or construct a query in the query language of your data source. Options will vary. Refer to your specific [data source documentation]({{< relref "../datasources/_index.md" >}}) for specific guidelines.
 
-## 3. Choose a visualization 
+## 3. Choose a visualization
 
 ![](/static/img/docs/panel-editor/select-visualization-8-0.png)
 
