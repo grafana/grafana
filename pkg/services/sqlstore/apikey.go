@@ -44,13 +44,14 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 // on input on GetApiKeysQuery
 func (ss *SQLStore) GetNonServiceAccountAPIKeys(ctx context.Context) []*models.ApiKey {
 	result := make([]*models.ApiKey, 0)
-	ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var sess *xorm.Session
-
-		sess = dbSession. //CHECK how many API keys do our clients have?  Can we load them all?
+	err := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		sess := dbSession. //CHECK how many API keys do our clients have?  Can we load them all?
 					Where("(expires IS NULL OR expires >= ?) AND service_account_id < 1 ", timeNow().Unix()).Asc("name")
 		return sess.Find(&result)
 	})
+	if err != nil {
+		ss.log.Warn("API key not loaded", "err", err)
+	}
 	return result
 }
 
@@ -115,7 +116,6 @@ func (ss *SQLStore) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand)
 // UpdateApikeyServiceAccount sets a service account for an existing API key
 func (ss *SQLStore) UpdateApikeyServiceAccount(ctx context.Context, apikeyId int64, saccountId int64) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-
 		key := models.ApiKey{Id: apikeyId}
 		exists, err := sess.Get(&key)
 		if err != nil {

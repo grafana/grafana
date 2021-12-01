@@ -49,7 +49,7 @@ func ProvideServiceAccountsService(
 			return nil, err
 		}
 
-		store.UpdateApikeyServiceAccount(context.Background(), key.Id, sa.Id)
+		err = store.UpdateApikeyServiceAccount(context.Background(), key.Id, sa.Id)
 		if err != nil {
 			s.log.Warn("Failed to attach new service account to API key", "err", err, "keyId", key.Id, "newServiceAccountId", sa.Id)
 			return nil, err
