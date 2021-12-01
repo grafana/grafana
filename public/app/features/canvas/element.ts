@@ -13,11 +13,12 @@ import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
  */
 export interface CanvasElementOptions<TConfig = any> {
   type: string;
+  name?: string; // configured unique display name
 
   // Custom options depending on the type
   config?: TConfig;
 
-  // Standard options avaliable for all elements
+  // Standard options available for all elements
   anchor?: Anchor; // defaults top, left, width and height
   placement?: Placement;
   background?: BackgroundConfig;

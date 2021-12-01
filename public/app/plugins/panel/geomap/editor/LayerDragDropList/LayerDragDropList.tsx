@@ -5,11 +5,14 @@ import { Icon, IconButton, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { LayerName } from './LayerName';
+
 type LayerDragDropListProps = {
   layers: any[];
   onDragEnd: (result: DropResult) => void;
   selection?: Number[];
   excludeBaseLayer?: boolean;
+  enforceUniqueLayerName?: boolean;
 };
 
 export const LayerDragDropList = ({ layers, onDragEnd, selection, excludeBaseLayer }: LayerDragDropListProps) => {
@@ -47,7 +50,7 @@ export const LayerDragDropList = ({ layers, onDragEnd, selection, excludeBaseLay
                         {...provided.dragHandleProps}
                         // onMouseDown={() => actions!.selectLayer(uid)}
                       >
-                        {/* <LayerHeader layer={element.options} canRename={true} onChange={element.onChange} /> */}
+                        <LayerName layer={element} onChange={element.onChange} />
                         <div className={style.textWrapper}>&nbsp; {element.options.type}</div>
 
                         <IconButton

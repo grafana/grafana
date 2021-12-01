@@ -42,6 +42,10 @@ export class ElementState {
     this.placement = options.placement ?? {};
     options.anchor = this.anchor;
     options.placement = this.placement;
+
+    if (!options.name) {
+      options.name = `Element ${this.UID}`;
+    }
   }
 
   validatePlacement() {
