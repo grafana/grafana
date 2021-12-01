@@ -5,14 +5,11 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-
-	"github.com/go-macaron/binding"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -74,9 +71,9 @@ func (s *System) registerEndpoints() {
 		actionWrite, actionRead := fmt.Sprintf("%s.permissions:write", s.options.Resource), fmt.Sprintf("%s.permissions:read", s.options.Resource)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(s.getDescription))
 		r.Get("/:resourceID", auth(disable, accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(s.getPermissions))
-		r.Post("/:resourceID/users/:userID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setUserPermission))
-		r.Post("/:resourceID/teams/:teamID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setTeamPermission))
-		r.Post("/:resourceID/builtInRoles/:builtInRole", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), binding.Bind(setPermissionCommand{}), routing.Wrap(s.setBuiltinRolePermission))
+		r.Post("/:resourceID/users/:userID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(s.setUserPermission))
+		r.Post("/:resourceID/teams/:teamID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(s.setTeamPermission))
+		r.Post("/:resourceID/builtInRoles/:builtInRole", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(s.setBuiltinRolePermission))
 	})
 }
 
@@ -218,7 +215,7 @@ func (s *System) setBuiltinRolePermission(c *models.ReqContext) response.Respons
 	builtInRole := web.Params(c.Req)[":builtInRole"]
 	resourceID := web.Params(c.Req)[":resourceID"]
 
-	var cmd setPermissionCommand
+	cmd := setPermissionCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
