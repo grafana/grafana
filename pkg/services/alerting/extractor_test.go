@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -157,8 +156,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		require.Nil(t, err)
 		dash := models.NewDashboardFromJson(dashJSON)
 		extractor := NewDashAlertExtractor(dash, 1, nil)
-
-		config := &setting.Cfg{UnifiedAlerting: setting.UnifiedAlertingSettings{Enabled: true}}
+		config := &CtxCfg{Enabled: true}
 
 		_, err = extractor.GetAlerts(context.WithValue(context.Background(), CtxCfg{}, config))
 		require.Equal(t, "alert validation error: Alert on PanelId: 2 refers to query(B) that cannot be found. Legacy alerting queries are not able to be removed at this time in order to preserve the ability to rollback to previous versions of Grafana", err.Error())

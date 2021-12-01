@@ -332,7 +332,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	dashSvc := dashboards.NewService(hs.SQLStore)
-	dashboard, err := dashSvc.SaveDashboard(context.WithValue(ctx, alerting.CtxCfg{}, hs.Cfg), dashItem, allowUiUpdate)
+	dashboard, err := dashSvc.SaveDashboard(context.WithValue(ctx, alerting.CtxCfg{}, alerting.CtxCfg{Enabled: hs.Cfg.UnifiedAlerting.Enabled}), dashItem, allowUiUpdate)
 
 	if hs.Live != nil {
 		// Tell everyone listening that the dashboard changed
