@@ -471,23 +471,27 @@ adjusted if they are less than this value. Higher values can help with resource 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g.
 30s or 1m.
 
-### remote_write_datasource_uid
+### max_queries
+
+The maximum number of recorded queries that can exist.
+
+### default_remote_write_datasource_uid
 
 The UID of the datasource where the query data will be written.
 
-If all `remote_write_*` properties are set, this information will be populated at startup. If a remote write target has
+If all `default_remote_write_*` properties are set, this information will be populated at startup. If a remote write target has
 already been configured, nothing will happen.
 
-### remote_write_path
+### default_remote_write_path
 
 The api path where metrics will be written
 
-If all `remote_write_*` properties are set, this information will be populated at startup. If a remote write target has
+If all `default_remote_write_*` properties are set, this information will be populated at startup. If a remote write target has
 already been configured, nothing will happen.
 
-### remote_write_datasource_org_id
+### default_remote_write_datasource_org_id
 
 The org id of the datasource where the query data will be written.
 
-If all `remote_write_*` properties are set, this information will be populated at startup. If a remote write target has
+If all `default_remote_write_*` properties are set, this information will be populated at startup. If a remote write target has
 already been configured, nothing will happen.
