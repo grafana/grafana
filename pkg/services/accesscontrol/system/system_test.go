@@ -1,6 +1,7 @@
 package system
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -41,7 +42,11 @@ func TestSystem_getDescription(t *testing.T) {
 					Teams:        true,
 					BuiltInRoles: true,
 				},
-				Permissions: []string{"View", "Edit", "Admin"},
+				PermissionsToActions: map[string][]string{
+					"View":  {"dashboards:read"},
+					"Edit":  {"dashboards:read", "dashboards:write", "dashboards:delete"},
+					"Admin": {"dashboards:read", "dashboards:write", "dashboards:delete", "dashboards.permissions:read", "dashboards:permissions:write"},
+				},
 			},
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read"},
@@ -52,7 +57,7 @@ func TestSystem_getDescription(t *testing.T) {
 					Teams:        true,
 					BuiltInRoles: true,
 				},
-				Permissions: []string{"View", "Edit", "Admin"},
+				Permissions: []string{"Admin", "Edit", "View"},
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -65,7 +70,9 @@ func TestSystem_getDescription(t *testing.T) {
 					Teams:        false,
 					BuiltInRoles: false,
 				},
-				Permissions: []string{"View"},
+				PermissionsToActions: map[string][]string{
+					"View": {"dashboards:read"},
+				},
 			},
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read"},
@@ -89,7 +96,9 @@ func TestSystem_getDescription(t *testing.T) {
 					Teams:        false,
 					BuiltInRoles: false,
 				},
-				Permissions: []string{"View"},
+				PermissionsToActions: map[string][]string{
+					"View": {"dashboards:read"},
+				},
 			},
 			permissions:    []*accesscontrol.Permission{},
 			expected:       Description{},
@@ -99,7 +108,7 @@ func TestSystem_getDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			_, server := setupTestEnvironment(t, &models.SignedInUser{}, tt.permissions, tt.options)
+			_, server, _ := setupTestEnvironment(t, &models.SignedInUser{}, tt.permissions, tt.options)
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/system/%s/description", tt.options.Resource), nil)
 			require.NoError(t, err)
 			recorder := httptest.NewRecorder()
@@ -117,14 +126,83 @@ func TestSystem_getDescription(t *testing.T) {
 
 type getPermissionsTestCase struct {
 	desc           string
-	options        Options
-	resourceID     int
+	resourceID     string
 	permissions    []*accesscontrol.Permission
-	expected       []resourcePermissionDTO
 	expectedStatus int
 }
 
 func TestSystem_getPermissions(t *testing.T) {
+	tests := []getPermissionsTestCase{
+		{
+			desc:           "expect permissions for resource with id 1",
+			resourceID:     "1",
+			permissions:    []*accesscontrol.Permission{{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"}},
+			expectedStatus: 200,
+		},
+		{
+			desc:           "expect http status 403 when missing permission",
+			resourceID:     "1",
+			permissions:    []*accesscontrol.Permission{},
+			expectedStatus: 403,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+
+			options := Options{
+				Resource: "dashboards",
+				Assignments: Assignments{
+					Users:        true,
+					Teams:        true,
+					BuiltInRoles: true,
+				},
+				PermissionsToActions: map[string][]string{
+					"View": {"dashboards:read"},
+					"Edit": {"dashboards:read", "dashboards:write", "dashboards:delete"},
+				},
+			}
+
+			system, server, sql := setupTestEnvironment(t, &models.SignedInUser{OrgId: 1}, tt.permissions, options)
+
+			// seed team 1 with "Edit" permission on dashboard 1
+			team, err := sql.CreateTeam("test", "test@test.com", 1)
+			require.NoError(t, err)
+			_, err = system.manager.SetTeamPermission(context.Background(), team.OrgId, team.Id, tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
+			require.NoError(t, err)
+			// seed user 1 with "View" permission on dashboard 1
+			u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
+			_, err = system.manager.SetUserPermission(context.Background(), u.OrgId, u.Id, tt.resourceID, []string{"dashboards:read"})
+			require.NoError(t, err)
+
+			// seed built in role Admin with "View" permission on dashboard 1
+			_, err = system.manager.SetBuiltinRolePermission(context.Background(), 1, "Admin", tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
+			require.NoError(t, err)
+
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/system/%s/%s", options.Resource, tt.resourceID), nil)
+			require.NoError(t, err)
+			recorder := httptest.NewRecorder()
+			server.ServeHTTP(recorder, req)
+
+			assert.Equal(t, tt.expectedStatus, recorder.Code)
+			if tt.expectedStatus == http.StatusOK {
+				var permissions []resourcePermissionDTO
+				require.NoError(t, json.NewDecoder(recorder.Body).Decode(&permissions))
+				assert.Len(t, permissions, 3)
+				for _, p := range permissions {
+					if p.UserId != 0 {
+						assert.Equal(t, "View", p.Permission)
+					} else if p.TeamId != 0 {
+						assert.Equal(t, "Edit", p.Permission)
+					} else {
+						assert.Equal(t, "Edit", p.Permission)
+					}
+				}
+
+			}
+
+		})
+	}
 }
 
 func TestSystem_setBuiltinRolePermission(t *testing.T) {
@@ -136,8 +214,9 @@ func TestSystem_setTeamPermission(t *testing.T) {
 func TestSystem_setUserPermission(t *testing.T) {
 }
 
-func setupTestEnvironment(t *testing.T, user *models.SignedInUser, permissions []*accesscontrol.Permission, ops Options) (*System, *web.Mux) {
-	store := database.ProvideService(sqlstore.InitTestDB(t))
+func setupTestEnvironment(t *testing.T, user *models.SignedInUser, permissions []*accesscontrol.Permission, ops Options) (*System, *web.Mux, *sqlstore.SQLStore) {
+	sql := sqlstore.InitTestDB(t)
+	store := database.ProvideService(sql)
 
 	system, err := NewSystem(ops, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store)
 	require.NoError(t, err)
@@ -147,7 +226,7 @@ func setupTestEnvironment(t *testing.T, user *models.SignedInUser, permissions [
 	server.Use(contextProvider(&testContext{user}))
 	system.router.Register(server)
 
-	return system, server
+	return system, server, sql
 }
 
 type testContext struct {
