@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -27,13 +29,17 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-	"github.com/opentracing/opentracing-go"
 )
 
 type Service struct {
 	logger log.Logger
 	im     instancemgmt.InstanceManager
 }
+
+const (
+	TargetFullModelField = "targetFull"
+	TargetModelField     = "target"
+)
 
 func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
 	s := &Service{
@@ -126,10 +132,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 		s.logger.Debug("graphite", "query", model)
 		currTarget := ""
-		if fullTarget, err := model.Get("targetFull").String(); err == nil {
+		if fullTarget, err := model.Get(TargetFullModelField).String(); err == nil {
 			currTarget = fullTarget
 		} else {
-			currTarget = model.Get("target").MustString()
+			currTarget = model.Get(TargetModelField).MustString()
 		}
 		if currTarget == "" {
 			s.logger.Debug("graphite", "empty query target", model)
