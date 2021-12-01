@@ -149,10 +149,11 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	return ar, nil
 }
 
-// migrateAlertRuleQueries migrates alert rule queries to work in unified alerting. Queries of some  data sources are not compatible with the unified alerting. This method fixes that incompatibility.
+// migrateAlertRuleQueries attempts to fix alert rule queries so they can work in unified alerting. Queries of some data sources are not compatible with unified alerting.
 func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 	result := make([]alertQuery, 0, len(data))
 	for _, d := range data {
+		// queries that are expression are not relevant, skip them.
 		if d.DatasourceUID == expr.OldDatasourceUID {
 			result = append(result, d)
 			continue
@@ -162,21 +163,27 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 		if err != nil {
 			return nil, err
 		}
-		// targetFull of Graphite data source contains the expanded version of field 'target'. The alert rule does not contain enough information to continue using the 'target'.
-		// Instead, it should use the expanded version. So, copy targetFull to target.
-		fullQuery, ok := fixedData[graphite.TargetFullModelField]
-		if ok {
-			delete(fixedData, graphite.TargetFullModelField)
-			fixedData[graphite.TargetModelField] = fullQuery
-			updatedModel, err := json.Marshal(fixedData)
-			if err != nil {
-				return nil, err
-			}
-			d.Model = updatedModel
+		fixedData = fixGraphiteReferencedSubQueries(fixedData)
+		updatedModel, err := json.Marshal(fixedData)
+		if err != nil {
+			return nil, err
 		}
+		d.Model = updatedModel
 		result = append(result, d)
 	}
 	return result, nil
+}
+
+// fixGraphiteReferencedSubQueries attempts to fix graphite referenced sub queries, given unified alerting does not support this.
+// targetFull of Graphite data source contains the expanded version of field 'target', so let's copy that.
+func fixGraphiteReferencedSubQueries(queryData map[string]json.RawMessage) map[string]json.RawMessage {
+	fullQuery, ok := queryData[graphite.TargetFullModelField]
+	if ok {
+		delete(queryData, graphite.TargetFullModelField)
+		queryData[graphite.TargetModelField] = fullQuery
+	}
+
+	return queryData
 }
 
 type alertQuery struct {
