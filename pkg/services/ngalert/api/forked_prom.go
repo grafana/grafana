@@ -9,21 +9,21 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-type ForkedPromSvc struct {
+type ForkedPrometheusApi struct {
 	ProxySvc, GrafanaSvc PrometheusApiService
 	DatasourceCache      datasources.CacheService
 }
 
 // NewForkedProm implements a set of routes that proxy to various Prometheus-compatible backends.
-func NewForkedProm(datasourceCache datasources.CacheService, proxy, grafana PrometheusApiService) *ForkedPromSvc {
-	return &ForkedPromSvc{
+func NewForkedProm(datasourceCache datasources.CacheService, proxy, grafana PrometheusApiService) *ForkedPrometheusApi {
+	return &ForkedPrometheusApi{
 		ProxySvc:        proxy,
 		GrafanaSvc:      grafana,
 		DatasourceCache: datasourceCache,
 	}
 }
 
-func (p *ForkedPromSvc) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
+func (p *ForkedPrometheusApi) forkRouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, p.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -39,7 +39,7 @@ func (p *ForkedPromSvc) RouteGetAlertStatuses(ctx *models.ReqContext) response.R
 	}
 }
 
-func (p *ForkedPromSvc) RouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
+func (p *ForkedPrometheusApi) forkRouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, p.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")

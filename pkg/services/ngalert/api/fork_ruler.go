@@ -9,22 +9,22 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-// ForkedRuler will validate and proxy requests to the correct backend type depending on the datasource.
-type ForkedRuler struct {
+// ForkedRulerApi will validate and proxy requests to the correct backend type depending on the datasource.
+type ForkedRulerApi struct {
 	LotexRuler, GrafanaRuler RulerApiService
 	DatasourceCache          datasources.CacheService
 }
 
 // NewForkedRuler implements a set of routes that proxy to various Cortex Ruler-compatible backends.
-func NewForkedRuler(datasourceCache datasources.CacheService, lotex, grafana RulerApiService) *ForkedRuler {
-	return &ForkedRuler{
+func NewForkedRuler(datasourceCache datasources.CacheService, lotex, grafana RulerApiService) *ForkedRulerApi {
+	return &ForkedRulerApi{
 		LotexRuler:      lotex,
 		GrafanaRuler:    grafana,
 		DatasourceCache: datasourceCache,
 	}
 }
 
-func (r *ForkedRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
+func (r *ForkedRulerApi) forkRouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, r.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -39,7 +39,7 @@ func (r *ForkedRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) re
 	}
 }
 
-func (r *ForkedRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
+func (r *ForkedRulerApi) forkRouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, r.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -54,7 +54,7 @@ func (r *ForkedRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) respons
 	}
 }
 
-func (r *ForkedRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
+func (r *ForkedRulerApi) forkRouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, r.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -69,7 +69,7 @@ func (r *ForkedRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respo
 	}
 }
 
-func (r *ForkedRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
+func (r *ForkedRulerApi) forkRouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, r.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -84,7 +84,7 @@ func (r *ForkedRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.
 	}
 }
 
-func (r *ForkedRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
+func (r *ForkedRulerApi) forkRouteGetRulesConfig(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, r.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -99,7 +99,7 @@ func (r *ForkedRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respo
 	}
 }
 
-func (r *ForkedRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
+func (r *ForkedRulerApi) forkRoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
 	backendType, err := backendType(ctx, r.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")

@@ -4,12 +4,11 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
+
 package api
 
 import (
 	"net/http"
-
-	"github.com/go-macaron/binding"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -17,7 +16,23 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/web"
 )
+
+type AlertmanagerApiForkingService interface {
+	RouteCreateSilence(*models.ReqContext) response.Response
+	RouteDeleteAlertingConfig(*models.ReqContext) response.Response
+	RouteDeleteSilence(*models.ReqContext) response.Response
+	RouteGetAMAlertGroups(*models.ReqContext) response.Response
+	RouteGetAMAlerts(*models.ReqContext) response.Response
+	RouteGetAMStatus(*models.ReqContext) response.Response
+	RouteGetAlertingConfig(*models.ReqContext) response.Response
+	RouteGetSilence(*models.ReqContext) response.Response
+	RouteGetSilences(*models.ReqContext) response.Response
+	RoutePostAMAlerts(*models.ReqContext) response.Response
+	RoutePostAlertingConfig(*models.ReqContext) response.Response
+	RoutePostTestReceivers(*models.ReqContext) response.Response
+}
 
 type AlertmanagerApiService interface {
 	RouteCreateSilence(*models.ReqContext, apimodels.PostableSilence) response.Response
@@ -34,11 +49,74 @@ type AlertmanagerApiService interface {
 	RoutePostTestReceivers(*models.ReqContext, apimodels.TestReceiversConfigBodyParams) response.Response
 }
 
-func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *metrics.API) {
+func (r *ForkedAlertmanagerApi) RouteCreateSilence(ctx *models.ReqContext) response.Response {
+	conf := apimodels.PostableSilence{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return r.forkRouteCreateSilence(ctx, conf)
+}
+
+func (r *ForkedAlertmanagerApi) RouteDeleteAlertingConfig(ctx *models.ReqContext) response.Response {
+	return r.forkRouteDeleteAlertingConfig(ctx)
+}
+
+func (r *ForkedAlertmanagerApi) RouteDeleteSilence(ctx *models.ReqContext) response.Response {
+	return r.forkRouteDeleteSilence(ctx)
+}
+
+func (r *ForkedAlertmanagerApi) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
+	return r.forkRouteGetAMAlertGroups(ctx)
+}
+
+func (r *ForkedAlertmanagerApi) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
+	return r.forkRouteGetAMAlerts(ctx)
+}
+
+func (r *ForkedAlertmanagerApi) RouteGetAMStatus(ctx *models.ReqContext) response.Response {
+	return r.forkRouteGetAMStatus(ctx)
+}
+
+func (r *ForkedAlertmanagerApi) RouteGetAlertingConfig(ctx *models.ReqContext) response.Response {
+	return r.forkRouteGetAlertingConfig(ctx)
+}
+
+func (r *ForkedAlertmanagerApi) RouteGetSilence(ctx *models.ReqContext) response.Response {
+	return r.forkRouteGetSilence(ctx)
+}
+
+func (r *ForkedAlertmanagerApi) RouteGetSilences(ctx *models.ReqContext) response.Response {
+	return r.forkRouteGetSilences(ctx)
+}
+
+func (r *ForkedAlertmanagerApi) RoutePostAMAlerts(ctx *models.ReqContext) response.Response {
+	conf := apimodels.PostableAlerts{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return r.forkRoutePostAMAlerts(ctx, conf)
+}
+
+func (r *ForkedAlertmanagerApi) RoutePostAlertingConfig(ctx *models.ReqContext) response.Response {
+	conf := apimodels.PostableUserConfig{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return r.forkRoutePostAlertingConfig(ctx, conf)
+}
+
+func (r *ForkedAlertmanagerApi) RoutePostTestReceivers(ctx *models.ReqContext) response.Response {
+	conf := apimodels.TestReceiversConfigBodyParams{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return r.forkRoutePostTestReceivers(ctx, conf)
+}
+
+func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silences"),
-			binding.Bind(apimodels.PostableSilence{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/api/v2/silences",
@@ -120,7 +198,6 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts"),
-			binding.Bind(apimodels.PostableAlerts{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/api/v2/alerts",
@@ -130,7 +207,6 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"),
-			binding.Bind(apimodels.PostableUserConfig{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/config/api/v1/alerts",
@@ -140,7 +216,6 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/receivers/test"),
-			binding.Bind(apimodels.TestReceiversConfigBodyParams{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/config/api/v1/receivers/test",
