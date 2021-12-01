@@ -26,10 +26,7 @@ func NewSystem(options Options, router routing.RouteRegister, ac accesscontrol.A
 
 	// Sort all permissions based on action length. Will be used when mapping between actions to permission
 	sort.Slice(permissions, func(i, j int) bool {
-		if len(options.PermissionsToActions[permissions[i]]) > len(options.PermissionsToActions[permissions[j]]) {
-			return true
-		}
-		return false
+		return len(options.PermissionsToActions[permissions[i]]) > len(options.PermissionsToActions[permissions[j]])
 	})
 
 	actions := make([]string, 0, len(actionSet))
@@ -89,12 +86,6 @@ type Description struct {
 }
 
 func (s *System) getDescription(c *models.ReqContext) response.Response {
-
-	permissions := make([]string, 0, len(s.options.PermissionsToActions))
-	for k := range s.options.PermissionsToActions {
-		permissions = append(permissions, k)
-	}
-
 	return response.JSON(http.StatusOK, &Description{
 		Permissions: s.permissions,
 		Assignments: s.options.Assignments,

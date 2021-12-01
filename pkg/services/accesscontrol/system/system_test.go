@@ -160,6 +160,7 @@ func TestSystem_getPermissions(t *testing.T) {
 			require.NoError(t, err)
 			// seed user 1 with "View" permission on dashboard 1
 			u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
+			require.NoError(t, err)
 			_, err = system.manager.SetUserPermission(context.Background(), u.OrgId, u.Id, tt.resourceID, []string{"dashboards:read"})
 			require.NoError(t, err)
 
@@ -180,9 +181,7 @@ func TestSystem_getPermissions(t *testing.T) {
 						assert.Equal(t, "Edit", p.Permission)
 					}
 				}
-
 			}
-
 		})
 	}
 }
