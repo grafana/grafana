@@ -15,6 +15,7 @@ type LayerDragDropListProps = {
   onDuplicate?: (element: any) => any;
   selection?: Number[];
   excludeBaseLayer?: boolean;
+  selectByIndex?: boolean;
   verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
 };
 
@@ -26,6 +27,7 @@ export const LayerDragDropList = ({
   onDuplicate,
   selection,
   excludeBaseLayer,
+  selectByIndex,
   verifyLayerNameUniqueness,
 }: LayerDragDropListProps) => {
   const style = styles(config.theme);
@@ -52,7 +54,9 @@ export const LayerDragDropList = ({
 
                 const isGroup = element?.item?.id === 'group';
 
-                const isSelected = Boolean(selection?.find((id) => id === element.UID || id === i));
+                const isSelected = selectByIndex
+                  ? Boolean(selection?.find((id) => id === i))
+                  : Boolean(selection?.includes(element.UID));
                 rows.push(
                   <Draggable key={uid} draggableId={uid} index={rows.length}>
                     {(provided, snapshot) => (

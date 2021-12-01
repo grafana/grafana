@@ -64,6 +64,7 @@ export const LayersEditor = (props: LayersEditorProps) => {
         onDelete={onDelete}
         selection={selection}
         excludeBaseLayer
+        selectByIndex
         verifyLayerNameUniqueness={actions.canRename}
       />
     </>
