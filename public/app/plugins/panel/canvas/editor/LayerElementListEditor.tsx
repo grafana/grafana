@@ -1,8 +1,6 @@
 import React, { PureComponent } from 'react';
-import { css } from '@emotion/css';
-import { Button, HorizontalGroup, stylesFactory } from '@grafana/ui';
-import { AppEvents, GrafanaTheme, SelectableValue, StandardEditorProps } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { Button, HorizontalGroup } from '@grafana/ui';
+import { AppEvents, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { DropResult } from 'react-beautiful-dnd';
 
 import { PanelOptions } from '../models.gen';
@@ -21,8 +19,6 @@ import { AddLayerButton } from '../../geomap/editor/LayerDragDropList/AddLayerBu
 type Props = StandardEditorProps<any, LayerEditorProps, PanelOptions>;
 
 export class LayerElementListEditor extends PureComponent<Props> {
-  style = getLayerDragStyles(config.theme);
-
   getScene = () => {
     const { settings } = this.props.item;
     if (!settings?.layer) {
@@ -257,51 +253,3 @@ export class LayerElementListEditor extends PureComponent<Props> {
     );
   }
 }
-
-export const getLayerDragStyles = stylesFactory((theme: GrafanaTheme) => ({
-  wrapper: css`
-    margin-bottom: ${theme.spacing.md};
-  `,
-  row: css`
-    padding: ${theme.spacing.xs} ${theme.spacing.sm};
-    border-radius: ${theme.border.radius.sm};
-    background: ${theme.colors.bg2};
-    min-height: ${theme.spacing.formInputHeight}px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 3px;
-    cursor: pointer;
-
-    border: 1px solid ${theme.colors.formInputBorder};
-    &:hover {
-      border: 1px solid ${theme.colors.formInputBorderHover};
-    }
-  `,
-  sel: css`
-    border: 1px solid ${theme.colors.formInputBorderActive};
-    &:hover {
-      border: 1px solid ${theme.colors.formInputBorderActive};
-    }
-  `,
-  dragIcon: css`
-    cursor: drag;
-  `,
-  actionIcon: css`
-    color: ${theme.colors.textWeak};
-    &:hover {
-      color: ${theme.colors.text};
-    }
-  `,
-  typeWrapper: css`
-    color: ${theme.colors.textBlue};
-    margin-right: 5px;
-  `,
-  textWrapper: css`
-    display: flex;
-    align-items: center;
-    flex-grow: 1;
-    overflow: hidden;
-    margin-right: ${theme.spacing.sm};
-  `,
-}));
