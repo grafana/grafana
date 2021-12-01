@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -26,7 +27,7 @@ func TestNotificationService(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("When sending reset email password", func(t *testing.T) {
-		err := ns.sendResetPasswordEmail(&models.SendResetPasswordEmailCommand{User: &models.User{Email: "asd@asd.com"}})
+		err := ns.sendResetPasswordEmail(context.Background(), &models.SendResetPasswordEmailCommand{User: &models.User{Email: "asd@asd.com"}})
 		require.NoError(t, err)
 
 		sentMsg := <-ns.mailQueue
