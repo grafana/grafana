@@ -5,8 +5,10 @@ import { DropResult } from 'react-beautiful-dnd';
 
 import { GeomapPanelOptions } from '../../types';
 import { GeomapInstanceState } from '../../GeomapPanel';
-import { AddLayerButton } from './AddLayerButton';
+import { AddLayerButton } from '../LayerDragDropList/AddLayerButton';
 import { LayerDragDropList } from '../LayerDragDropList/LayerDragDropList';
+import { geomapLayerRegistry } from '../../layers/registry';
+import { dataLayerFilter } from '../layerEditor';
 
 type LayersEditorProps = StandardEditorProps<any, any, GeomapPanelOptions, GeomapInstanceState>;
 
@@ -47,7 +49,11 @@ export const LayersEditor = (props: LayersEditorProps) => {
   return (
     <>
       <Container>
-        <AddLayerButton actions={actions} />
+        <AddLayerButton
+          onChange={(v: any) => actions.addlayer(v.value!)}
+          options={geomapLayerRegistry.selectOptions(undefined, dataLayerFilter).options}
+          label={'Add layer'}
+        />
       </Container>
       <br />
 
