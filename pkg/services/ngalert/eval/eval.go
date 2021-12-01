@@ -157,8 +157,8 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 				ds = expr.DataSourceModel()
 			} else {
 				ds, err = dsCacheService.GetDatasourceByUID(q.DatasourceUID, &m.SignedInUser{
-					OrgId: ctx.OrgID,
-					OrgRole: m.ROLE_ADMIN,
+					OrgId:   ctx.OrgID,
+					OrgRole: m.ROLE_ADMIN, // Get DS as admin for service, API calls (test/post) must check permissions based on user.
 				}, true)
 				if err != nil {
 					return nil, err
