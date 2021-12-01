@@ -50,19 +50,25 @@ func (s *Service) resourceHandler(subDataSource string, responseFn processRespon
 			writeResponse(rw, code, fmt.Sprintf("unexpected error %v", err))
 			return
 		}
-		s.doRequest(rw, req, client, responseFn)
+		doRequest(rw, req, client, responseFn)
 	}
 }
 
-func (s *Service) doRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client, responseFn processResponse) http.ResponseWriter {
+func doRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client, responseFn processResponse) http.ResponseWriter {
 	if responseFn == nil {
 		writeResponse(rw, http.StatusInternalServerError, "responseFn should not be nil")
 		return rw
 	}
 
-	body, headers, code, err := processData(req, cli, responseFn)
+	responses, headers, encoding, code, err := loopRequest(req, cli, responseFn)
 	if err != nil {
 		writeResponse(rw, code, fmt.Sprintf("unexpected error %v", err))
+		return rw
+	}
+
+	body, errcode, err := buildResponse(responses, encoding)
+	if err != nil {
+		writeResponse(rw, errcode, fmt.Sprintf("error formatting responose %v", err))
 		return rw
 	}
 	writeResponseBytes(rw, code, body)
@@ -238,7 +244,20 @@ func encode(encoding string, body []byte) ([]byte, int, error) {
 	return buf.Bytes(), 0, nil
 }
 
-func processData(req *http.Request, cli *http.Client, responseFn processResponse) ([]byte, http.Header, int, error) {
+func processData(data io.ReadCloser, encoding string, response []json.RawMessage, responseFn processResponse) ([]json.RawMessage, string, int, error) {
+	body, errcode, err := decode(encoding, data)
+	if err != nil {
+		return nil, "", errcode, fmt.Errorf("unable to decode response %v", err)
+	}
+
+	response, token, err := responseFn(body, response)
+	if err != nil {
+		return nil, "", http.StatusInternalServerError, fmt.Errorf("data processing error %v", err)
+	}
+	return response, token, 0, nil
+}
+
+func loopRequest(req *http.Request, cli *http.Client, responseFn processResponse) ([]json.RawMessage, http.Header, string, int, error) {
 	responses := []json.RawMessage{}
 	var originalHeader http.Header
 	var originalCode int
@@ -247,7 +266,7 @@ func processData(req *http.Request, cli *http.Client, responseFn processResponse
 	for {
 		res, err := cli.Do(req)
 		if err != nil {
-			return nil, nil, http.StatusBadRequest, err
+			return nil, nil, "", http.StatusBadRequest, err
 		}
 		defer func() {
 			if err := res.Body.Close(); err != nil {
@@ -258,15 +277,12 @@ func processData(req *http.Request, cli *http.Client, responseFn processResponse
 		originalHeader = res.Header
 		originalCode = res.StatusCode
 
-		body, errcode, err := decode(encoding, res.Body)
+		var errcode int
+		responses, token, errcode, err = processData(res.Body, encoding, responses, responseFn)
 		if err != nil {
-			return nil, nil, errcode, fmt.Errorf("unable to decode response %v", err)
+			return nil, nil, "", errcode, err
 		}
 
-		responses, token, err = responseFn(body, responses)
-		if err != nil {
-			return nil, nil, http.StatusInternalServerError, fmt.Errorf("data processing error %v", err)
-		}
 		if token == "" {
 			break
 		}
@@ -274,16 +290,16 @@ func processData(req *http.Request, cli *http.Client, responseFn processResponse
 		query.Set("pageToken", token)
 		req.URL.RawQuery = query.Encode()
 	}
+	return responses, originalHeader, encoding, originalCode, nil
+}
+
+func buildResponse(responses []json.RawMessage, encoding string) ([]byte, int, error) {
 	body, err := json.Marshal(responses)
 	if err != nil {
-		return nil, nil, http.StatusInternalServerError, fmt.Errorf("response marshaling error %v", err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("response marshaling error %v", err)
 	}
 
-	body, errcode, err := encode(encoding, body)
-	if err != nil {
-		return nil, nil, errcode, fmt.Errorf("unable to encode response %v", err)
-	}
-	return body, originalHeader, originalCode, nil
+	return encode(encoding, body)
 }
 
 func (s *Service) setRequestVariables(req *http.Request, subDataSource string) (*http.Client, int, error) {

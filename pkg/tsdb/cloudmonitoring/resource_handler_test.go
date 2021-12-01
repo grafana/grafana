@@ -68,10 +68,9 @@ func Test_doRequest(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	s := Service{}
 
 	rw := httptest.NewRecorder()
-	res := s.doRequest(rw, req, srv.Client(), fakeResponseFn)
+	res := doRequest(rw, req, srv.Client(), fakeResponseFn)
 	if res.Header().Get("foo") != "bar" {
 		t.Errorf("Unexpected headers: %v", res.Header())
 	}
