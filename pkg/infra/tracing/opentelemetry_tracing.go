@@ -2,12 +2,10 @@ package tracing
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	opentracing "github.com/opentracing/opentracing-go"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
@@ -45,16 +43,16 @@ type OpentelemetrySpan struct {
 	span trace.Span
 }
 
-type OpentracingSpan struct {
-	span opentracing.Span
-}
-
 func (ots *OpentelemetryTracingService) parseSettingsOpentelemetry() error {
 	section, err := ots.Cfg.Raw.GetSection("tracing.opentelemetry.jaeger")
 	if err != nil {
 		return err
 	}
-	ots.enabled = section.Key("enabled").MustBool(false)
+
+	ots.address = section.Key("address").MustString("")
+	if ots.address != "" {
+		ots.enabled = true
+	}
 
 	return nil
 }
@@ -122,22 +120,4 @@ func (s OpentelemetrySpan) End() {
 
 func (s OpentelemetrySpan) SetAttributes(kv ...attribute.KeyValue) {
 	s.span.SetAttributes(kv...)
-}
-
-func (ts *TracingService) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, spanName)
-	oSpan := OpentracingSpan{
-		span: span,
-	}
-	return ctx, oSpan
-}
-
-func (s OpentracingSpan) End() {
-	s.span.Finish()
-}
-
-func (s OpentracingSpan) SetAttributes(kv ...attribute.KeyValue) {
-	for k, v := range kv {
-		s.span.SetTag(fmt.Sprint(k), v)
-	}
 }

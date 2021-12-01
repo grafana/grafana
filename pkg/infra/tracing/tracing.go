@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"go.opentelemetry.io/otel/attribute"
+	trace "go.opentelemetry.io/otel/trace"
 
 	opentracing "github.com/opentracing/opentracing-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
@@ -59,6 +61,10 @@ type TracingService struct {
 	disableSharedZipkinSpans bool
 
 	Cfg *setting.Cfg
+}
+
+type OpentracingSpan struct {
+	span opentracing.Span
 }
 
 func (ts *TracingService) parseSettings() error {
@@ -158,6 +164,24 @@ func (ts *TracingService) Run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (ts *TracingService) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, spanName)
+	oSpan := OpentracingSpan{
+		span: span,
+	}
+	return ctx, oSpan
+}
+
+func (s OpentracingSpan) End() {
+	s.span.Finish()
+}
+
+func (s OpentracingSpan) SetAttributes(kv ...attribute.KeyValue) {
+	for k, v := range kv {
+		s.span.SetTag(fmt.Sprint(k), v)
+	}
 }
 
 func splitTagSettings(input string) map[string]string {
