@@ -175,7 +175,10 @@ func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPan
 			panelQuery := findPanelQueryByRefID(panel, queryRefID)
 
 			if panelQuery == nil {
-				config := ctx.Value(CtxCfg{}).(*CtxCfg)
+				config, ok := ctx.Value(CtxCfg{}).(*CtxCfg)
+				if !ok {
+					return nil, fmt.Errorf("unable to determine if unified alerting is enabled")
+				}
 				var reason string
 				if config.Enabled {
 					reason = fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found. Legacy alerting queries are not able to be removed at this time in order to preserve the ability to rollback to previous versions of Grafana", alert.PanelId, queryRefID)
