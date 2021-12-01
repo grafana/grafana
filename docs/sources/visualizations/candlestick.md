@@ -25,7 +25,7 @@ The mode options allow you to toggle which dimensions are used for the visualiza
 ## Candle style
 
 - **Candles** is the default display style and creates candle-style visualizations between the open and close dimensions.
-- **OHLC Bars** displays the four core dimensions open, high, low and close values.
+- **OHLC Bars** displays the four core dimensions open, high, low, and close values.
 
 ## Color strategy
 
