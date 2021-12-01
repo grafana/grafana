@@ -36,8 +36,8 @@ describe('LayerName', () => {
     expect(alert.textContent).toBe('Layer name already exists');
   });
 
-  function renderScenario(overrides: Partial<LayerNameProps>) {
-    const props: LayerNameProps = {
+  function renderScenario(overrides: Partial<LayerNameProps<any>>) {
+    const props: LayerNameProps<any> = {
       layer: { options: { name: 'Layer 1', type: '?' }, onChange: jest.fn() },
       verifyLayerNameUniqueness: (nameToCheck: string) => {
         const names = new Set(['Layer 1', 'Layer 2']);

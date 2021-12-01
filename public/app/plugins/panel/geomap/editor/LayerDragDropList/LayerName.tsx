@@ -3,12 +3,12 @@ import { css, cx } from '@emotion/css';
 import { Icon, Input, FieldValidationMessage, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
-export interface LayerNameProps {
-  layer: any;
+export interface LayerNameProps<T> {
+  layer: T;
   verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
 }
 
-export const LayerName = ({ layer, verifyLayerNameUniqueness }: LayerNameProps) => {
+export const LayerName = ({ layer, verifyLayerNameUniqueness }: LayerNameProps<any>) => {
   const styles = useStyles(getStyles);
   const { options } = layer;
 

@@ -7,12 +7,12 @@ import { config } from '@grafana/runtime';
 
 import { LayerName } from './LayerName';
 
-type LayerDragDropListProps = {
-  layers: any[];
+type LayerDragDropListProps<T> = {
+  layers: T[];
   onDragEnd: (result: DropResult) => void;
-  onSelect: (element: any) => any;
-  onDelete: (element: any) => any;
-  onDuplicate?: (element: any) => any;
+  onSelect: (element: T) => any;
+  onDelete: (element: T) => any;
+  onDuplicate?: (element: T) => any;
   selection?: Number[];
   excludeBaseLayer?: boolean;
   selectByIndex?: boolean;
@@ -29,7 +29,7 @@ export const LayerDragDropList = ({
   excludeBaseLayer,
   selectByIndex,
   verifyLayerNameUniqueness,
-}: LayerDragDropListProps) => {
+}: LayerDragDropListProps<any>) => {
   const style = styles(config.theme);
 
   const getRowStyle = (isSelected: boolean) => {
