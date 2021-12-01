@@ -64,6 +64,8 @@ This new feature is especially helpful for Enterprise customers using plugins be
 
 Sometimes the Viewer, Editor, and Admin roles just don’t fit what a certain user needs to do in Grafana. Now you can assign fine-grained roles directly to users, so they can create reports, use Explore mode, create data sources, and perform other specific actions in Grafana. The role picker can be access from the Grafana Admin user management page.
 
+{{< figure src="/static/img/docs/enterprise/enterprise_role_picker_8_3.png" max-width="1200px" caption="Grafana Enterprise Role Picker" >}}
+
 ## Use fine-grained access control for Organizations and Licensing (beta)
 
 We’ve added new permissions to fine-grained access control to help you specify actions that users can perform. Now you can assign permissions to manage Organizations and License functions in Grafana, in addition to Users, Data Sources, Reports, and other resources. Fine-grained access control remains in beta and we will continue to add new permissions until all of Grafana’s endpoints are covered. For a complete list of the actions you can permit using fine-grained access control, see the [reference](https://grafana.com/docs/grafana/next/enterprise/access-control/fine-grained-access-control-references/).
@@ -78,6 +80,7 @@ In order to support this, we’ve upgraded Grafana Enterprise to use envelope en
 
 Are you tired of managing user permissions because your license only allows a certain number of Viewers and Editors or Admins? So were we. We’ve added support for combined user pricing, where all users cost the same and fall into the same license bucket in Grafana Enterprise. This is a specific license option and must be updated in your contract. To learn more, refer to our [licensing docs](https://grafana.com/docs/grafana/latest/enterprise/license/license-restrictions/). To switch to combined user pricing, contact your Grafana Labs account team.
 
+{{< figure src="/static/img/docs/enterprise/enterprise_users_8_3.png" max-width="1200px" caption="Grafana Enterprise User Pricing" >}}
 ## Author dashboards faster with resource caching
 
 Your query editor just became faster. [Query caching](https://grafana.com/docs/grafana/latest/enterprise/query-caching/) improves query performance and sometimes reduces cost, by reducing the number of repetitive queries performed against data sources. Resource caching does the same thing but for resource calls, like retrieving the list of applications in the AppDynamics editor, the list of metrics from Datadog, or the list of values in a template variable dropdown. This makes for a zippier user experience for everyone writing queries in Grafana.
