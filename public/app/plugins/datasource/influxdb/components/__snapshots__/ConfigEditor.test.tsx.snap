@@ -17,19 +17,8 @@ exports[`Render should disable basic auth password input 1`] = `
         className="gf-form"
       >
         <Select
-          allowCustomValue={false}
-          autoFocus={false}
-          backspaceRemovesValue={true}
+          aria-label="Query language"
           className="width-30"
-          components={
-            Object {
-              "Group": [Function],
-              "IndicatorsContainer": [Function],
-              "MenuList": [Function],
-              "Option": [Function],
-              "SingleValue": [Function],
-            }
-          }
           defaultValue={
             Object {
               "description": "The InfluxDB SQL-like query language.",
@@ -37,15 +26,8 @@ exports[`Render should disable basic auth password input 1`] = `
               "value": "InfluxQL",
             }
           }
-          isClearable={false}
-          isDisabled={false}
-          isLoading={false}
-          isMulti={false}
-          isSearchable={true}
-          maxMenuHeight={300}
           menuShouldPortal={true}
           onChange={[Function]}
-          openMenuOnFocus={false}
           options={
             Array [
               Object {
@@ -60,7 +42,6 @@ exports[`Render should disable basic auth password input 1`] = `
               },
             ]
           }
-          tabSelectsValue={true}
           value={
             Object {
               "description": "The InfluxDB SQL-like query language.",
@@ -148,6 +129,7 @@ exports[`Render should disable basic auth password input 1`] = `
           className="width-20"
         >
           <Input
+            aria-label="Database"
             className="width-20"
             onChange={[Function]}
             value=""
@@ -170,6 +152,7 @@ exports[`Render should disable basic auth password input 1`] = `
           className="width-10"
         >
           <Input
+            aria-label="User"
             className="width-20"
             onChange={[Function]}
             value=""
@@ -208,29 +191,11 @@ exports[`Render should disable basic auth password input 1`] = `
           HTTP Method
         </FormLabel>
         <Select
-          allowCustomValue={false}
-          autoFocus={false}
-          backspaceRemovesValue={true}
+          aria-label="HTTP method"
           className="width-10"
-          components={
-            Object {
-              "Group": [Function],
-              "IndicatorsContainer": [Function],
-              "MenuList": [Function],
-              "Option": [Function],
-              "SingleValue": [Function],
-            }
-          }
           defaultValue="POST"
-          isClearable={false}
-          isDisabled={false}
-          isLoading={false}
-          isMulti={false}
-          isSearchable={true}
-          maxMenuHeight={300}
           menuShouldPortal={true}
           onChange={[Function]}
-          openMenuOnFocus={false}
           options={
             Array [
               Object {
@@ -243,7 +208,6 @@ exports[`Render should disable basic auth password input 1`] = `
               },
             ]
           }
-          tabSelectsValue={true}
           value={
             Object {
               "label": "POST",
@@ -316,19 +280,8 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
         className="gf-form"
       >
         <Select
-          allowCustomValue={false}
-          autoFocus={false}
-          backspaceRemovesValue={true}
+          aria-label="Query language"
           className="width-30"
-          components={
-            Object {
-              "Group": [Function],
-              "IndicatorsContainer": [Function],
-              "MenuList": [Function],
-              "Option": [Function],
-              "SingleValue": [Function],
-            }
-          }
           defaultValue={
             Object {
               "description": "The InfluxDB SQL-like query language.",
@@ -336,15 +289,8 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
               "value": "InfluxQL",
             }
           }
-          isClearable={false}
-          isDisabled={false}
-          isLoading={false}
-          isMulti={false}
-          isSearchable={true}
-          maxMenuHeight={300}
           menuShouldPortal={true}
           onChange={[Function]}
-          openMenuOnFocus={false}
           options={
             Array [
               Object {
@@ -359,7 +305,6 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
               },
             ]
           }
-          tabSelectsValue={true}
           value={
             Object {
               "description": "The InfluxDB SQL-like query language.",
@@ -447,6 +392,7 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
           className="width-20"
         >
           <Input
+            aria-label="Database"
             className="width-20"
             onChange={[Function]}
             value=""
@@ -469,6 +415,7 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
           className="width-10"
         >
           <Input
+            aria-label="User"
             className="width-20"
             onChange={[Function]}
             value=""
@@ -507,29 +454,11 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
           HTTP Method
         </FormLabel>
         <Select
-          allowCustomValue={false}
-          autoFocus={false}
-          backspaceRemovesValue={true}
+          aria-label="HTTP method"
           className="width-10"
-          components={
-            Object {
-              "Group": [Function],
-              "IndicatorsContainer": [Function],
-              "MenuList": [Function],
-              "Option": [Function],
-              "SingleValue": [Function],
-            }
-          }
           defaultValue="POST"
-          isClearable={false}
-          isDisabled={false}
-          isLoading={false}
-          isMulti={false}
-          isSearchable={true}
-          maxMenuHeight={300}
           menuShouldPortal={true}
           onChange={[Function]}
-          openMenuOnFocus={false}
           options={
             Array [
               Object {
@@ -542,7 +471,6 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
               },
             ]
           }
-          tabSelectsValue={true}
           value={
             Object {
               "label": "POST",
@@ -615,19 +543,8 @@ exports[`Render should hide white listed cookies input when browser access chose
         className="gf-form"
       >
         <Select
-          allowCustomValue={false}
-          autoFocus={false}
-          backspaceRemovesValue={true}
+          aria-label="Query language"
           className="width-30"
-          components={
-            Object {
-              "Group": [Function],
-              "IndicatorsContainer": [Function],
-              "MenuList": [Function],
-              "Option": [Function],
-              "SingleValue": [Function],
-            }
-          }
           defaultValue={
             Object {
               "description": "The InfluxDB SQL-like query language.",
@@ -635,15 +552,8 @@ exports[`Render should hide white listed cookies input when browser access chose
               "value": "InfluxQL",
             }
           }
-          isClearable={false}
-          isDisabled={false}
-          isLoading={false}
-          isMulti={false}
-          isSearchable={true}
-          maxMenuHeight={300}
           menuShouldPortal={true}
           onChange={[Function]}
-          openMenuOnFocus={false}
           options={
             Array [
               Object {
@@ -658,7 +568,6 @@ exports[`Render should hide white listed cookies input when browser access chose
               },
             ]
           }
-          tabSelectsValue={true}
           value={
             Object {
               "description": "The InfluxDB SQL-like query language.",
@@ -746,6 +655,7 @@ exports[`Render should hide white listed cookies input when browser access chose
           className="width-20"
         >
           <Input
+            aria-label="Database"
             className="width-20"
             onChange={[Function]}
             value=""
@@ -768,6 +678,7 @@ exports[`Render should hide white listed cookies input when browser access chose
           className="width-10"
         >
           <Input
+            aria-label="User"
             className="width-20"
             onChange={[Function]}
             value=""
@@ -806,29 +717,11 @@ exports[`Render should hide white listed cookies input when browser access chose
           HTTP Method
         </FormLabel>
         <Select
-          allowCustomValue={false}
-          autoFocus={false}
-          backspaceRemovesValue={true}
+          aria-label="HTTP method"
           className="width-10"
-          components={
-            Object {
-              "Group": [Function],
-              "IndicatorsContainer": [Function],
-              "MenuList": [Function],
-              "Option": [Function],
-              "SingleValue": [Function],
-            }
-          }
           defaultValue="POST"
-          isClearable={false}
-          isDisabled={false}
-          isLoading={false}
-          isMulti={false}
-          isSearchable={true}
-          maxMenuHeight={300}
           menuShouldPortal={true}
           onChange={[Function]}
-          openMenuOnFocus={false}
           options={
             Array [
               Object {
@@ -841,7 +734,6 @@ exports[`Render should hide white listed cookies input when browser access chose
               },
             ]
           }
-          tabSelectsValue={true}
           value={
             Object {
               "label": "POST",
@@ -914,19 +806,8 @@ exports[`Render should render component 1`] = `
         className="gf-form"
       >
         <Select
-          allowCustomValue={false}
-          autoFocus={false}
-          backspaceRemovesValue={true}
+          aria-label="Query language"
           className="width-30"
-          components={
-            Object {
-              "Group": [Function],
-              "IndicatorsContainer": [Function],
-              "MenuList": [Function],
-              "Option": [Function],
-              "SingleValue": [Function],
-            }
-          }
           defaultValue={
             Object {
               "description": "The InfluxDB SQL-like query language.",
@@ -934,15 +815,8 @@ exports[`Render should render component 1`] = `
               "value": "InfluxQL",
             }
           }
-          isClearable={false}
-          isDisabled={false}
-          isLoading={false}
-          isMulti={false}
-          isSearchable={true}
-          maxMenuHeight={300}
           menuShouldPortal={true}
           onChange={[Function]}
-          openMenuOnFocus={false}
           options={
             Array [
               Object {
@@ -957,7 +831,6 @@ exports[`Render should render component 1`] = `
               },
             ]
           }
-          tabSelectsValue={true}
           value={
             Object {
               "description": "The InfluxDB SQL-like query language.",
@@ -1045,6 +918,7 @@ exports[`Render should render component 1`] = `
           className="width-20"
         >
           <Input
+            aria-label="Database"
             className="width-20"
             onChange={[Function]}
             value=""
@@ -1067,6 +941,7 @@ exports[`Render should render component 1`] = `
           className="width-10"
         >
           <Input
+            aria-label="User"
             className="width-20"
             onChange={[Function]}
             value=""
@@ -1105,29 +980,11 @@ exports[`Render should render component 1`] = `
           HTTP Method
         </FormLabel>
         <Select
-          allowCustomValue={false}
-          autoFocus={false}
-          backspaceRemovesValue={true}
+          aria-label="HTTP method"
           className="width-10"
-          components={
-            Object {
-              "Group": [Function],
-              "IndicatorsContainer": [Function],
-              "MenuList": [Function],
-              "Option": [Function],
-              "SingleValue": [Function],
-            }
-          }
           defaultValue="POST"
-          isClearable={false}
-          isDisabled={false}
-          isLoading={false}
-          isMulti={false}
-          isSearchable={true}
-          maxMenuHeight={300}
           menuShouldPortal={true}
           onChange={[Function]}
-          openMenuOnFocus={false}
           options={
             Array [
               Object {
@@ -1140,7 +997,6 @@ exports[`Render should render component 1`] = `
               },
             ]
           }
-          tabSelectsValue={true}
           value={
             Object {
               "label": "POST",
