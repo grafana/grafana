@@ -18,6 +18,7 @@ Grafana offers a variety of visualizations to support different use cases. This 
   - [Histogram]({{< relref "./histogram.md" >}}) calculates and shows value distribution in a bar chart.
   - [Heatmap]({{< relref "./heatmap.md" >}}).
   - [Pie chart]({{< relref "./pie-chart-panel.md" >}}).
+  - [Candlestick]({{< relref "./candlestick.md" >}}).
 - Stats & numbers
   - [Stat]({{< relref "./stat-panel.md" >}}) for big stats and optional sparkline.
   - [Gauge]({{< relref "./gauge-panel.md" >}}) is a normal radial gauge.
