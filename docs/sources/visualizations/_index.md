@@ -16,7 +16,7 @@ Grafana offers a variety of visualizations to support different use cases. This 
   - [Status history]({{< relref "./status-history.md" >}}) for periodic state over time.
   - [Bar chart]({{< relref "./bar-chart.md" >}}) shows any categorical data.
   - [Histogram]({{< relref "./histogram.md" >}}) calculates and shows value distribution in a bar chart.
-  - [Heatmap]({{< relref "./heatmap.md" >}}) visualizes data in two dimentions, used typically for the magnitude of a phenomenon.
+  - [Heatmap]({{< relref "./heatmap.md" >}}) visualizes data in two dimensions, used typically for the magnitude of a phenomenon.
   - [Pie chart]({{< relref "./pie-chart-panel.md" >}}) is typically used where proportionality is important.
   - [Candlestick]({{< relref "./candlestick.md" >}}) is typically for financial data where the focus is price/data movement.
 - Stats & numbers
