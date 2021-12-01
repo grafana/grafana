@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { uniqueId } from 'lodash';
 import {
   DataSourcePluginOptionsEditorProps,
   SelectableValue,
@@ -41,9 +42,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
     maxSeries: '',
   };
 
+  htmlPrefix: string;
+
   constructor(props: Props) {
     super(props);
     this.state.maxSeries = props.options.jsonData.maxSeries?.toString() || '';
+    this.htmlPrefix = uniqueId('influxdb-config');
   }
 
   // 1x
@@ -83,15 +87,18 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { options } = this.props;
     const { secureJsonFields } = options;
     const secureJsonData = (options.secureJsonData || {}) as InfluxSecureJsonData;
+    const { htmlPrefix } = this;
 
     return (
       <>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <InlineFormLabel className="width-10">Organization</InlineFormLabel>
+            <InlineFormLabel htmlFor={`${htmlPrefix}-org`} className="width-10">
+              Organization
+            </InlineFormLabel>
             <div className="width-10">
               <Input
-                aria-label="Organization"
+                id={`${htmlPrefix}-org`}
                 className="width-20"
                 value={options.jsonData.organization || ''}
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'organization')}
@@ -154,6 +161,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { options } = this.props;
     const { secureJsonFields } = options;
     const secureJsonData = (options.secureJsonData || {}) as InfluxSecureJsonData;
+    const { htmlPrefix } = this;
 
     return (
       <>
@@ -171,10 +179,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
         </InfoBox>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <InlineFormLabel className="width-10">Database</InlineFormLabel>
+            <InlineFormLabel htmlFor={`${htmlPrefix}-db`} className="width-10">
+              Database
+            </InlineFormLabel>
             <div className="width-20">
               <Input
-                aria-label="Database"
+                id={`${htmlPrefix}-db`}
                 className="width-20"
                 value={options.database || ''}
                 onChange={onUpdateDatasourceOption(this.props, 'database')}
@@ -184,10 +194,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
         </div>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <InlineFormLabel className="width-10">User</InlineFormLabel>
+            <InlineFormLabel htmlFor={`${htmlPrefix}-user`} className="width-10">
+              User
+            </InlineFormLabel>
             <div className="width-10">
               <Input
-                aria-label="User"
+                id={`${htmlPrefix}-user`}
                 className="width-20"
                 value={options.user || ''}
                 onChange={onUpdateDatasourceOption(this.props, 'user')}
@@ -211,6 +223,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <InlineFormLabel
+              htmlFor={`${htmlPrefix}-http-method`}
               className="width-10"
               tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
           method allows you to perform heavy requests (with a lots of WHERE clause) while the GET method
@@ -219,7 +232,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               HTTP Method
             </InlineFormLabel>
             <Select
-              aria-label="HTTP method"
+              inputId={`${htmlPrefix}-http-method`}
               menuShouldPortal
               className="width-10"
               value={httpModes.find((httpMode) => httpMode.value === options.jsonData.httpMode)}
