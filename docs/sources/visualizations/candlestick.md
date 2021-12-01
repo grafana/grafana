@@ -8,11 +8,11 @@ weight = 600
 
 # Candlestick
 
-The Candlestick panel allows you to visualize data which includes a number of consistent dimensions focused around price movement. The Candlestick panel also includes an Open-High-Low-Close (OHLC) mode, as well as support for simple moving averages and upper/lower Bollinger bands. 
+The Candlestick panel allows you to visualize data which includes a number of consistent dimensions focused around price movement. The Candlestick panel also includes an Open-High-Low-Close (OHLC) mode, as well as support for additional dimensions based on time series data.
 
 {{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8-3.png" max-width="1200px" caption="Candlestick panel" >}}
 
-The Candlestick panel builds upon the foundation of the [time series]({{< relref "./time-series/_index.md" >}}) panel and includes many common configuration settings.
+The Candlestick panel builds upon the foundation of the [time series]({{< relref "./time-series/_index.md" >}}) panel and includes many common configuration settings. 
 
 ## Mode
 
