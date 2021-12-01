@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -24,7 +25,7 @@ var datasourcesLogger = log.New("datasources")
 func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 	query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
@@ -48,7 +49,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		if plugin := hs.pluginStore.Plugin(ds.Type); plugin != nil {
+		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type); exists {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
 			dsItem.TypeName = plugin.Name
 		} else {
@@ -160,7 +161,10 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 
 	hs.Live.HandleDatasourceDelete(c.OrgId, ds.Uid)
 
-	return response.Success("Data source deleted")
+	return response.JSON(200, util.DynMap{
+		"message": "Data source deleted",
+		"id":      ds.Id,
+	})
 }
 
 func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Response {
@@ -208,7 +212,11 @@ func validateURL(tp string, u string) response.Response {
 	return nil
 }
 
-func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) response.Response {
+func AddDataSource(c *models.ReqContext) response.Response {
+	cmd := models.AddDataSourceCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	datasourcesLogger.Debug("Received command to add data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
@@ -232,7 +240,11 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) respon
 	})
 }
 
-func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) response.Response {
+func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
+	cmd := models.UpdateDataSourceCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
@@ -291,14 +303,13 @@ func (hs *HTTPServer) fillWithSecureJSONData(ctx context.Context, cmd *models.Up
 		return models.ErrDatasourceIsReadOnly
 	}
 
-	secureJSONData, err := hs.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
-	if err != nil {
-		return err
-	}
-
-	for k, v := range secureJSONData {
+	for k, v := range ds.SecureJsonData {
 		if _, ok := cmd.SecureJsonData[k]; !ok {
-			cmd.SecureJsonData[k] = v
+			decrypted, err := hs.SecretsService.Decrypt(ctx, v)
+			if err != nil {
+				return err
+			}
+			cmd.SecureJsonData[k] = string(decrypted)
 		}
 	}
 
@@ -378,8 +389,8 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		return
 	}
 
-	plugin := hs.pluginStore.Plugin(ds.Type)
-	if plugin == nil {
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
+	if !exists {
 		c.JsonApiErr(500, "Unable to find datasource plugin", err)
 		return
 	}
@@ -443,8 +454,8 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		return response.Error(500, "Unable to load datasource metadata", err)
 	}
 
-	plugin := hs.pluginStore.Plugin(ds.Type)
-	if plugin == nil {
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
+	if !exists {
 		return response.Error(500, "Unable to find datasource plugin", err)
 	}
 

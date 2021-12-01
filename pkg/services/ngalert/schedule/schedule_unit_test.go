@@ -19,7 +19,9 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -637,6 +639,8 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore, registry *prometheus.Registry) (*schedule, *clock.Mock) {
 	t.Helper()
 
+	fakeAnnoRepo := NewFakeAnnotationsRepo()
+	annotations.SetRepository(fakeAnnoRepo)
 	mockedClock := clock.NewMock()
 	logger := log.New("ngalert schedule test")
 	if registry == nil {
@@ -666,7 +670,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	return NewScheduler(schedCfg, nil, appUrl, st), mockedClock
+	return NewScheduler(schedCfg, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), appUrl, st), mockedClock
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.

@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -43,6 +44,7 @@ type RenderingService struct {
 	domain          string
 	inProgressCount int32
 	version         string
+	versionMutex    sync.RWMutex
 
 	Cfg                   *setting.Cfg
 	RemoteCacheService    *remotecache.RemoteCache
@@ -93,13 +95,18 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	if rs.remoteAvailable() {
 		rs.log = rs.log.New("renderer", "http")
 
-		version, err := rs.getRemotePluginVersion()
-		if err != nil {
-			rs.log.Info("Couldn't get remote renderer version", "err", err)
-		}
+		rs.getRemotePluginVersionWithRetry(func(version string, err error) {
+			if err != nil {
+				rs.log.Info("Couldn't get remote renderer version", "err", err)
+			}
 
-		rs.log.Info("Backend rendering via external http server", "version", version)
-		rs.version = version
+			rs.log.Info("Backend rendering via external http server", "version", version)
+
+			rs.versionMutex.Lock()
+			defer rs.versionMutex.Unlock()
+
+			rs.version = version
+		})
 		rs.renderAction = rs.renderViaHTTP
 		rs.renderCSVAction = rs.renderCSVViaHTTP
 		<-ctx.Done()
@@ -153,12 +160,24 @@ func (rs *RenderingService) IsAvailable() bool {
 }
 
 func (rs *RenderingService) Version() string {
+	rs.versionMutex.RLock()
+	defer rs.versionMutex.RUnlock()
+
 	return rs.version
 }
 
-func (rs *RenderingService) RenderErrorImage(_ error) (*RenderResult, error) {
-	imgUrl := "public/img/rendering_error.png"
-	imgPath := filepath.Join(setting.HomePath, imgUrl)
+func (rs *RenderingService) RenderErrorImage(theme Theme, err error) (*RenderResult, error) {
+	if theme == "" {
+		theme = ThemeDark
+	}
+	imgUrl := "public/img/rendering_%s_%s.png"
+	if errors.Is(err, ErrTimeout) {
+		imgUrl = fmt.Sprintf(imgUrl, "timeout", theme)
+	} else {
+		imgUrl = fmt.Sprintf(imgUrl, "error", theme)
+	}
+
+	imgPath := filepath.Join(rs.Cfg.HomePath, imgUrl)
 	if _, err := os.Stat(imgPath); errors.Is(err, os.ErrNotExist) {
 		return nil, err
 	}
@@ -188,8 +207,13 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 
 func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+		theme := ThemeDark
+		if opts.Theme != "" {
+			theme = opts.Theme
+		}
+		filePath := fmt.Sprintf("public/img/rendering_limit_%s.png", theme)
 		return &RenderResult{
-			FilePath: filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
+			FilePath: filepath.Join(rs.Cfg.HomePath, filePath),
 		}, nil
 	}
 

@@ -49,8 +49,8 @@ type Provider struct {
 // returned context.
 func (p *Provider) Get(ctx context.Context, pluginID string, datasourceUID string, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
 	pc := backend.PluginContext{}
-	plugin := p.pluginStore.Plugin(pluginID)
-	if plugin == nil {
+	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
+	if !exists {
 		return pc, false, nil
 	}
 

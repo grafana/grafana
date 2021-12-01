@@ -48,6 +48,7 @@ import { mergeTransformer } from '../../../../../packages/grafana-data/src/trans
 import {
   migrateMultipleStatsMetricsQuery,
   migrateMultipleStatsAnnotationQuery,
+  migrateCloudWatchQuery,
 } from 'app/plugins/datasource/cloudwatch/migrations';
 import { CloudWatchMetricsQuery, CloudWatchAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
 
@@ -708,12 +709,11 @@ export class DashboardMigrator {
         variable.datasource = migrateDatasourceNameToRef(variable.datasource);
       }
 
-      // Mutate panel models
-      for (const panel of this.dashboard.panels) {
+      panelUpgrades.push((panel) => {
         panel.datasource = migrateDatasourceNameToRef(panel.datasource);
 
         if (!panel.targets) {
-          continue;
+          return panel;
         }
 
         for (const target of panel.targets) {
@@ -722,7 +722,9 @@ export class DashboardMigrator {
             target.datasource = targetRef;
           }
         }
-      }
+
+        return panel;
+      });
     }
 
     if (panelUpgrades.length === 0) {
@@ -746,10 +748,14 @@ export class DashboardMigrator {
   // New queries, that were created during migration, are put at the end of the array.
   migrateCloudWatchQueries(panel: PanelModel) {
     for (const target of panel.targets || []) {
-      if (isLegacyCloudWatchQuery(target)) {
-        const newQueries = migrateMultipleStatsMetricsQuery(target, [...panel.targets]);
-        for (const newQuery of newQueries) {
-          panel.targets.push(newQuery);
+      if (isCloudWatchQuery(target)) {
+        migrateCloudWatchQuery(target);
+        if (target.hasOwnProperty('statistics')) {
+          // New queries, that were created during migration, are put at the end of the array.
+          const newQueries = migrateMultipleStatsMetricsQuery(target, [...panel.targets]);
+          for (const newQuery of newQueries) {
+            panel.targets.push(newQuery);
+          }
         }
       }
     }
@@ -1098,12 +1104,13 @@ function upgradeValueMappingsForPanel(panel: PanelModel) {
   return panel;
 }
 
-function isLegacyCloudWatchQuery(target: DataQuery): target is CloudWatchMetricsQuery {
+function isCloudWatchQuery(target: DataQuery): target is CloudWatchMetricsQuery {
   return (
     target.hasOwnProperty('dimensions') &&
     target.hasOwnProperty('namespace') &&
     target.hasOwnProperty('region') &&
-    target.hasOwnProperty('statistics')
+    target.hasOwnProperty('period') &&
+    target.hasOwnProperty('metricName')
   );
 }
 

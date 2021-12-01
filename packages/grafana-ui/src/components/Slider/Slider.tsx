@@ -26,7 +26,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
 }) => {
   const isHorizontal = orientation === 'horizontal';
   const theme = useTheme2();
-  const styles = getStyles(theme, isHorizontal);
+  const styles = getStyles(theme, isHorizontal, Boolean(marks));
   const SliderWithTooltip = SliderComponent;
   const [sliderValue, setSliderValue] = useState<number>(value ?? min);
 

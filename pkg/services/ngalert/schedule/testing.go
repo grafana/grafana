@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/annotations"
+
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -378,4 +380,48 @@ func (am *FakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *htt
 
 func (am *FakeExternalAlertmanager) Close() {
 	am.server.Close()
+}
+
+type FakeAnnotationsRepo struct {
+	mtx   sync.Mutex
+	items []*annotations.Item
+}
+
+func NewFakeAnnotationsRepo() *FakeAnnotationsRepo {
+	return &FakeAnnotationsRepo{
+		items: make([]*annotations.Item, 0),
+	}
+}
+
+func (repo *FakeAnnotationsRepo) Len() int {
+	repo.mtx.Lock()
+	defer repo.mtx.Unlock()
+	return len(repo.items)
+}
+
+func (repo *FakeAnnotationsRepo) Delete(params *annotations.DeleteParams) error {
+	return nil
+}
+
+func (repo *FakeAnnotationsRepo) Save(item *annotations.Item) error {
+	repo.mtx.Lock()
+	defer repo.mtx.Unlock()
+	repo.items = append(repo.items, item)
+
+	return nil
+}
+func (repo *FakeAnnotationsRepo) Update(item *annotations.Item) error {
+	return nil
+}
+
+func (repo *FakeAnnotationsRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	annotations := []*annotations.ItemDTO{{Id: 1}}
+	return annotations, nil
+}
+
+func (repo *FakeAnnotationsRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	result := annotations.FindTagsResult{
+		Tags: []*annotations.TagsDTO{},
+	}
+	return result, nil
 }

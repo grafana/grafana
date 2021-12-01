@@ -4,7 +4,7 @@ import config from 'app/core/config';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { RawTimeRange, PanelPluginMeta, dateMath } from '@grafana/data';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 
 export function ControllerTestContext(this: any) {
   const self = this;
@@ -150,6 +150,9 @@ export class ContextSrvStub {
 
 export function TemplateSrvStub(this: any) {
   this.variables = [];
+  this.getVariables = function () {
+    return this.variables;
+  };
   this.templateSettings = { interpolate: /\[\[([\s\S]+?)\]\]/g };
   this.data = {};
   this.replace = (text: string) => {

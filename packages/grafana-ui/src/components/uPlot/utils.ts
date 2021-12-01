@@ -1,7 +1,7 @@
 import { DataFrame, ensureTimeField, Field, FieldType } from '@grafana/data';
 import { StackingMode, VizLegendOptions } from '@grafana/schema';
 import { orderBy } from 'lodash';
-import { AlignedData, Options, PaddingSide } from 'uplot';
+import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
 
@@ -179,6 +179,11 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
   } else {
     // snap tooltip to min OR max point, one of those is not null :)
     y = u.valToPos((min || max)!, u.series[(sMaxIdx || sMinIdx)!].scale!);
+  }
+
+  // if y is out of canvas bounds, snap it to the bottom
+  if (y !== undefined && y < 0) {
+    y = u.bbox.height / devicePixelRatio;
   }
 
   return y;

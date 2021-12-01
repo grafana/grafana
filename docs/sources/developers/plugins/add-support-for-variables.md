@@ -24,7 +24,7 @@ Grafana provides a couple of helper functions to interpolate variables in a stri
 
 ## Interpolate variables in panel plugins
 
-For panels, the [replaceVariables]({{< relref "../../packages_api/data/panelprops.md#replacevariables-property" >}}) function is available in the [PanelProps]({{< relref "../../packages_api/data/panelprops.md" >}}).
+For panels, the `replaceVariables` function is available in the PanelProps.
 
 Add `replaceVariables` to the argument list, and pass it a user-defined template string.
 
@@ -38,7 +38,7 @@ export const SimplePanel: React.FC<Props> = ({ options, data, width, height, rep
 
 ## Interpolate variables in data source plugins
 
-For data sources, you need to use the [getTemplateSrv]({{< relref "../../packages_api/runtime/gettemplatesrv.md" >}}), which returns an instance of [TemplateSrv]({{< relref "../../packages_api/runtime/templatesrv.md" >}}).
+For data sources, you need to use the getTemplateSrv, which returns an instance of TemplateSrv.
 
 1. Import `getTemplateSrv` from the `runtime` package.
 
@@ -80,7 +80,7 @@ For more information on the available variable formats, refer to [Advanced varia
 
 ## Set a variable from your plugin
 
-Not only can you read the value of a variable, you can also update the variable from your plugin. Use [LocationSrv.update()]({{< relref "../../packages_api/runtime/locationsrv.md/#update-method" >}}) to update a variable using query parameters.
+Not only can you read the value of a variable, you can also update the variable from your plugin. Use LocationSrv.update()
 
 The following example shows how to update a variable called `service`.
 
@@ -117,7 +117,7 @@ export interface MyVariableQuery {
 }
 ```
 
-For a data source to support query variables, you must override the [`metricFindQuery`]({{< relref "../../packages_api/data/datasourceapi.md#metricfindquery-method" >}}) in your `DataSourceApi` class. `metricFindQuery` returns an array of [`MetricFindValue`]({{< relref "../../packages_api/data/metricfindvalue.md" >}}) which has a single property, `text`:
+For a data source to support query variables, you must override the `metricFindQuery` in your `DataSourceApi` class. `metricFindQuery` returns an array of `MetricFindValue` which has a single property, `text`:
 
 ```ts
 async metricFindQuery(query: MyVariableQuery, options?: any) {

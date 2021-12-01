@@ -170,7 +170,7 @@ type CreateLibraryElementCommand struct {
 type patchLibraryElementCommand struct {
 	FolderID int64           `json:"folderId" binding:"Default(-1)"`
 	Name     string          `json:"name"`
-	Model    json.RawMessage `json:"model"`
+	Model    json.RawMessage `json:"model,omitempty"`
 	Kind     int64           `json:"kind" binding:"Required"`
 	Version  int64           `json:"version" binding:"Required"`
 	UID      string          `json:"uid"`
@@ -206,4 +206,10 @@ type LibraryElementArrayResponse struct {
 // LibraryElementConnectionsResponse is a response struct for an array of LibraryElementConnectionDTO.
 type LibraryElementConnectionsResponse struct {
 	Result []LibraryElementConnectionDTO `json:"result"`
+}
+
+// DeleteLibraryElementResponse is the response struct for deleting a library element.
+type DeleteLibraryElementResponse struct {
+	ID      int64  `json:"id"`
+	Message string `json:"message"`
 }

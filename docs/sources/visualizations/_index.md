@@ -8,6 +8,8 @@ aliases = ["/docs/grafana/latest/panels/visualizations/"]
 
 Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in panels, their options and typical usage.
 
+> **Note:** If you are unsure which visualization to pick, Grafana can provide visualization suggestions based on the panel query. When you select a visualization, Grafana will show a preview with that visualization applied. For more information, see the [add a panel]({{< relref "../pnaels/add-a-panel.md" >}}) documentation.
+
 - Graphs & charts
   - [Time series]({{< relref "./time-series/_index.md" >}}) is the default and main Graph visualization.
   - [State timeline]({{< relref "./state-timeline.md" >}}) for state changes over time.
@@ -16,6 +18,7 @@ Grafana offers a variety of visualizations to support different use cases. This 
   - [Histogram]({{< relref "./histogram.md" >}}) calculates and shows value distribution in a bar chart.
   - [Heatmap]({{< relref "./heatmap.md" >}}).
   - [Pie chart]({{< relref "./pie-chart-panel.md" >}}).
+  - [Candlestick]({{< relref "./candlestick.md" >}}).
 - Stats & numbers
   - [Stat]({{< relref "./stat-panel.md" >}}) for big stats and optional sparkline.
   - [Gauge]({{< relref "./gauge-panel.md" >}}) is a normal radial gauge.

@@ -109,12 +109,10 @@ export const switchToListMode = (): ThunkResult<void> => (dispatch, getState) =>
   const state = getState();
   const variables = getEditorVariables(state);
   const dashboard = state.dashboard.getModel();
-  const { unknown, usages } = createUsagesNetwork(variables, dashboard);
-  const unknownsNetwork = transformUsagesToNetwork(unknown);
-  const unknownExits = Object.keys(unknown).length > 0;
+  const { usages } = createUsagesNetwork(variables, dashboard);
   const usagesNetwork = transformUsagesToNetwork(usages);
 
-  dispatch(initInspect({ unknown, usages, usagesNetwork, unknownsNetwork, unknownExits }));
+  dispatch(initInspect({ usages, usagesNetwork }));
 };
 
 export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {

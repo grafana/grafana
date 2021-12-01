@@ -1332,6 +1332,86 @@ func TestGenerateConnectionString(t *testing.T) {
 			expConnStr: "server=localhost;database=database;user id=user;password=;",
 		},
 		{
+			desc: "With instance name",
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "localhost\\instance",
+				Database: "database",
+				User:     "user",
+				JsonData: sqleng.JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;database=database;user id=user;password=;",
+		},
+		{
+			desc: "With instance name and port",
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "localhost\\instance:333",
+				Database: "database",
+				User:     "user",
+				JsonData: sqleng.JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;database=database;user id=user;password=;port=333;",
+		},
+		{
+			desc: "With instance name and ApplicationIntent",
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "localhost\\instance;ApplicationIntent=ReadOnly",
+				Database: "database",
+				User:     "user",
+				JsonData: sqleng.JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;ApplicationIntent=ReadOnly;database=database;user id=user;password=;",
+		},
+		{
+			desc: "With ApplicationIntent instance name and port",
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "localhost\\instance:333;ApplicationIntent=ReadOnly",
+				Database: "database",
+				User:     "user",
+				JsonData: sqleng.JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;database=database;user id=user;password=;port=333;ApplicationIntent=ReadOnly;",
+		},
+		{
+			desc: "With instance name",
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "localhost\\instance",
+				Database: "database",
+				User:     "user",
+				JsonData: sqleng.JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;database=database;user id=user;password=;",
+		},
+		{
+			desc: "With instance name and port",
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "localhost\\instance:333",
+				Database: "database",
+				User:     "user",
+				JsonData: sqleng.JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;database=database;user id=user;password=;port=333;",
+		},
+		{
+			desc: "With instance name and ApplicationIntent",
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "localhost\\instance;ApplicationIntent=ReadOnly",
+				Database: "database",
+				User:     "user",
+				JsonData: sqleng.JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;ApplicationIntent=ReadOnly;database=database;user id=user;password=;",
+		},
+		{
+			desc: "With ApplicationIntent instance name and port",
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "localhost\\instance:333;ApplicationIntent=ReadOnly",
+				Database: "database",
+				User:     "user",
+				JsonData: sqleng.JsonData{},
+			},
+			expConnStr: "server=localhost\\instance;database=database;user id=user;password=;port=333;ApplicationIntent=ReadOnly;",
+		},
+		{
 			desc: "Defaults",
 			dataSource: sqleng.DataSourceInfo{
 				Database: "database",

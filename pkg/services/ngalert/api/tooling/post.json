@@ -319,6 +319,13 @@
      "type": "array",
      "x-go-name": "InhibitRules"
     },
+    "mute_time_intervals": {
+     "items": {
+      "$ref": "#/definitions/MuteTimeInterval"
+     },
+     "type": "array",
+     "x-go-name": "MuteTimeIntervals"
+    },
     "route": {
      "$ref": "#/definitions/Route"
     },
@@ -339,6 +346,21 @@
    "format": "date-time",
    "type": "string",
    "x-go-package": "github.com/go-openapi/strfmt"
+  },
+  "DayOfMonthRange": {
+   "properties": {
+    "Begin": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "End": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "A DayOfMonthRange is an inclusive range that may have negative Beginning/End values that represent distance from the End of the month Beginning at -1.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
   },
   "DiscoveryBase": {
    "properties": {
@@ -535,6 +557,13 @@
      },
      "type": "array",
      "x-go-name": "InhibitRules"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "$ref": "#/definitions/MuteTimeInterval"
+     },
+     "type": "array",
+     "x-go-name": "MuteTimeIntervals"
     },
     "receivers": {
      "description": "Override with our superset receiver type",
@@ -886,6 +915,10 @@
     "opsgenie_api_key": {
      "$ref": "#/definitions/Secret"
     },
+    "opsgenie_api_key_file": {
+     "type": "string",
+     "x-go-name": "OpsGenieAPIKeyFile"
+    },
     "opsgenie_api_url": {
      "$ref": "#/definitions/URL"
     },
@@ -998,6 +1031,21 @@
    "title": "HostPort represents a \"host:port\" network address.",
    "type": "object",
    "x-go-package": "github.com/prometheus/alertmanager/config"
+  },
+  "InclusiveRange": {
+   "properties": {
+    "Begin": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "End": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "InclusiveRange is used to hold the Beginning and End values of many time interval components.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
   },
   "InhibitRule": {
    "description": "InhibitRule defines an inhibition rule that mutes alerts that match the\ntarget labels if an alert matching the source labels exists.\nBoth alerts have to have a set of labels being equal.",
@@ -1123,9 +1171,42 @@
    },
    "type": "array"
   },
+  "MonthRange": {
+   "properties": {
+    "Begin": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "End": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "A MonthRange is an inclusive range between [1, 12] where 1 = January.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+  },
   "MultiStatus": {
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "MuteTimeInterval": {
+   "properties": {
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array",
+     "x-go-name": "TimeIntervals"
+    }
+   },
+   "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/config"
   },
   "NamespaceConfigResponse": {
    "additionalProperties": {
@@ -1150,6 +1231,9 @@
   },
   "OAuth2": {
    "properties": {
+    "TLSConfig": {
+     "$ref": "#/definitions/TLSConfig"
+    },
     "client_id": {
      "type": "string",
      "x-go-name": "ClientID"
@@ -1190,8 +1274,16 @@
   },
   "OpsGenieConfig": {
    "properties": {
+    "actions": {
+     "type": "string",
+     "x-go-name": "Actions"
+    },
     "api_key": {
      "$ref": "#/definitions/Secret"
+    },
+    "api_key_file": {
+     "type": "string",
+     "x-go-name": "APIKeyFile"
     },
     "api_url": {
      "$ref": "#/definitions/URL"
@@ -1206,6 +1298,10 @@
      },
      "type": "object",
      "x-go-name": "Details"
+    },
+    "entity": {
+     "type": "string",
+     "x-go-name": "Entity"
     },
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
@@ -1410,6 +1506,13 @@
      },
      "type": "array",
      "x-go-name": "InhibitRules"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "$ref": "#/definitions/MuteTimeInterval"
+     },
+     "type": "array",
+     "x-go-name": "MuteTimeIntervals"
     },
     "receivers": {
      "description": "Override with our superset receiver type",
@@ -2428,6 +2531,22 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "TestReceiversConfigBodyParams": {
+   "properties": {
+    "alert": {
+     "$ref": "#/definitions/TestReceiversConfigAlertParams"
+    },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/PostableApiReceiver"
+     },
+     "type": "array",
+     "x-go-name": "Receivers"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "TestReceiversResult": {
    "properties": {
     "alert": {
@@ -2474,6 +2593,64 @@
    },
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "TimeInterval": {
+   "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
+   "properties": {
+    "days_of_month": {
+     "items": {
+      "$ref": "#/definitions/DayOfMonthRange"
+     },
+     "type": "array",
+     "x-go-name": "DaysOfMonth"
+    },
+    "months": {
+     "items": {
+      "$ref": "#/definitions/MonthRange"
+     },
+     "type": "array",
+     "x-go-name": "Months"
+    },
+    "times": {
+     "items": {
+      "$ref": "#/definitions/TimeRange"
+     },
+     "type": "array",
+     "x-go-name": "Times"
+    },
+    "weekdays": {
+     "items": {
+      "$ref": "#/definitions/WeekdayRange"
+     },
+     "type": "array",
+     "x-go-name": "Weekdays"
+    },
+    "years": {
+     "items": {
+      "$ref": "#/definitions/YearRange"
+     },
+     "type": "array",
+     "x-go-name": "Years"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+  },
+  "TimeRange": {
+   "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
+   "properties": {
+    "EndMinute": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "StartMinute": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
   },
   "URL": {
    "properties": {
@@ -2656,6 +2833,36 @@
    "type": "object",
    "x-go-package": "github.com/prometheus/alertmanager/config"
   },
+  "WeekdayRange": {
+   "properties": {
+    "Begin": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "End": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "A WeekdayRange is an inclusive range between [0, 6] where 0 = Sunday.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+  },
+  "YearRange": {
+   "properties": {
+    "Begin": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "End": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "A YearRange is a positive inclusive range.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+  },
   "alert": {
    "description": "Alert alert",
    "properties": {
@@ -2677,7 +2884,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -2699,15 +2905,16 @@
     "labels",
     "receiver"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "AlertGroup",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array",
-   "x-go-name": "AlertGroups",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -2952,12 +3159,11 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array",
-   "x-go-name": "GettableSilences",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3086,6 +3292,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3125,9 +3332,7 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object",
-   "x-go-name": "PostableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "receiver": {
    "properties": {
@@ -3251,8 +3456,8 @@
   }
  },
  "info": {
-  "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Unified Alerting API.\nDocumentation of the API.",
-  "title": "Unified Alerting API",
+  "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Grafana 8 Alerts API.",
+  "title": "Grafana 8 Alerts API.",
   "version": "1.1.0"
  },
  "paths": {
@@ -3731,22 +3936,10 @@
     "parameters": [
      {
       "in": "body",
-      "name": "alert",
+      "name": "Body",
       "schema": {
-       "$ref": "#/definitions/TestReceiversConfigAlertParams"
-      },
-      "x-go-name": "Alert"
-     },
-     {
-      "in": "body",
-      "name": "receivers",
-      "schema": {
-       "items": {
-        "$ref": "#/definitions/PostableApiReceiver"
-       },
-       "type": "array"
-      },
-      "x-go-name": "Receivers"
+       "$ref": "#/definitions/TestReceiversConfigBodyParams"
+      }
      },
      {
       "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",

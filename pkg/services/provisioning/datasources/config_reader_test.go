@@ -32,11 +32,11 @@ func TestDatasourceAsConfig(t *testing.T) {
 	setup := func() {
 		fakeRepo = &fakeRepository{}
 		bus.ClearBusHandlers()
-		bus.AddHandler("test", mockDelete)
-		bus.AddHandler("test", mockInsert)
-		bus.AddHandler("test", mockUpdate)
-		bus.AddHandler("test", mockGet)
-		bus.AddHandler("test", mockGetOrg)
+		bus.AddHandlerCtx("test", mockDelete)
+		bus.AddHandlerCtx("test", mockInsert)
+		bus.AddHandlerCtx("test", mockUpdate)
+		bus.AddHandlerCtx("test", mockGet)
+		bus.AddHandlerCtx("test", mockGetOrg)
 	}
 
 	t.Run("apply default values when missing", func(t *testing.T) {
@@ -50,6 +50,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 		require.Equal(t, len(fakeRepo.inserted), 1)
 		require.Equal(t, fakeRepo.inserted[0].OrgId, int64(1))
 		require.Equal(t, fakeRepo.inserted[0].Access, models.DsAccess("proxy"))
+		require.Equal(t, fakeRepo.inserted[0].Name, "My datasource name")
+		require.Equal(t, fakeRepo.inserted[0].Uid, "P2AD1F727255C56BA")
 	})
 
 	t.Run("no datasource in database", func(t *testing.T) {
@@ -220,6 +222,14 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 }
 
+func TestUIDFromNames(t *testing.T) {
+	t.Run("generate safe uid from name", func(t *testing.T) {
+		require.Equal(t, safeUIDFromName("Hello world"), "P64EC88CA00B268E5")
+		require.Equal(t, safeUIDFromName("Hello World"), "PA591A6D40BF42040")
+		require.Equal(t, safeUIDFromName("AAA"), "PCB1AD2119D8FAFB6")
+	})
+}
+
 func validateDeleteDatasources(t *testing.T, dsCfg *configs) {
 	require.Equal(t, len(dsCfg.DeleteDatasources), 1)
 	deleteDs := dsCfg.DeleteDatasources[0]
@@ -270,22 +280,22 @@ type fakeRepository struct {
 	loadAll []*models.DataSource
 }
 
-func mockDelete(cmd *models.DeleteDataSourceCommand) error {
+func mockDelete(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
 	fakeRepo.deleted = append(fakeRepo.deleted, cmd)
 	return nil
 }
 
-func mockUpdate(cmd *models.UpdateDataSourceCommand) error {
+func mockUpdate(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	fakeRepo.updated = append(fakeRepo.updated, cmd)
 	return nil
 }
 
-func mockInsert(cmd *models.AddDataSourceCommand) error {
+func mockInsert(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	fakeRepo.inserted = append(fakeRepo.inserted, cmd)
 	return nil
 }
 
-func mockGet(cmd *models.GetDataSourceQuery) error {
+func mockGet(ctx context.Context, cmd *models.GetDataSourceQuery) error {
 	for _, v := range fakeRepo.loadAll {
 		if cmd.Name == v.Name && cmd.OrgId == v.OrgId {
 			cmd.Result = v
@@ -296,6 +306,6 @@ func mockGet(cmd *models.GetDataSourceQuery) error {
 	return models.ErrDataSourceNotFound
 }
 
-func mockGetOrg(_ *models.GetOrgByIdQuery) error {
+func mockGetOrg(ctx context.Context, _ *models.GetOrgByIdQuery) error {
 	return nil
 }

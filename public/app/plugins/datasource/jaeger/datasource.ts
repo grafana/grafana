@@ -12,7 +12,7 @@ import {
   FieldType,
   MutableDataFrame,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -46,7 +46,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
-    const target = options.targets[0];
+    const target: JaegerQuery = options.targets[0];
     if (!target) {
       return of({ data: [emptyTraceDataFrame] });
     }
@@ -90,7 +90,10 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     // remove empty properties
     jaegerQuery = pickBy(jaegerQuery, identity);
     if (jaegerQuery.tags) {
-      jaegerQuery = { ...jaegerQuery, tags: convertTagsLogfmt(jaegerQuery.tags) };
+      jaegerQuery = {
+        ...jaegerQuery,
+        tags: convertTagsLogfmt(getTemplateSrv().replace(jaegerQuery.tags, options.scopedVars)),
+      };
     }
 
     if (jaegerQuery.operation === ALL_OPERATIONS_KEY) {

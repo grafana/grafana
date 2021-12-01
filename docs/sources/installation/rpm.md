@@ -8,13 +8,13 @@ weight = 300
 
 # Install on RPM-based Linux (CentOS, Fedora, OpenSuse, Red Hat)
 
-This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your RPM-based Linux system, and the installation package details.
+This topic explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your RPM-based Linux system, and the installation package details.
 
-**Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
+## Note on upgrading
 
-## Hosted Grafana
+While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
-You can run Grafana on your own hardware or use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-dashboards-grafana) and get Grafana without the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
+> **Note:** You can use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-logs) to avoid the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs, and more.[Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
 
 ## 1. Download and install
 
@@ -171,6 +171,30 @@ sudo systemctl enable grafana-server
 #### Serving Grafana on a port < 1024
 
 {{< docs/shared "systemd/bind-net-capabilities.md" >}}
+
+#### Serving Grafana behind a proxy
+
+When serving Grafana behind a proxy, you need to configure the `http_proxy` and `https_proxy` environment variables.
+
+##### Centos 6
+
+If you are on Centos 6, add the following lines to the `/etc/sysconfig/grafana-server` file.
+
+```
+export no_proxy=internal.domain,127.0.0.1
+export http_proxy=http://proxy.domain:3128/
+export https_proxy=http://proxy.domain:3128/
+```
+
+##### Centos 7
+
+If you are on Centos 7, add the following lines to the `/etc/sysconfig/grafana-server` file.
+
+```
+http_proxy=http://proxy.domain:3128/
+https_proxy=http://proxy.domain:3128/
+no_proxy=internal.domain,127.0.0.1
+```
 
 ### Start the server with init.d
 

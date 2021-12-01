@@ -38,7 +38,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedI
 	}
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: user.UserId}
-	if err := bus.Dispatch(authInfoQuery); err != nil {
+	if err := bus.DispatchCtx(ctx, authInfoQuery); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
 			logger.Debug("no OAuth token for user found", "userId", user.UserId, "username", user.Login)
@@ -83,7 +83,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedI
 			AuthId:     authInfoQuery.Result.AuthId,
 			OAuthToken: token,
 		}
-		if err := bus.Dispatch(updateAuthCommand); err != nil {
+		if err := bus.DispatchCtx(ctx, updateAuthCommand); err != nil {
 			logger.Error("failed to update auth info during token refresh", "userId", user.UserId, "username", user.Login, "error", err)
 			return nil
 		}

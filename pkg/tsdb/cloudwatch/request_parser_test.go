@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,7 +48,7 @@ func TestRequestParser(t *testing.T) {
 		})
 	})
 
-	timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
+	timeRange := legacydata.NewDataTimeRange("now-1h", "now-2h")
 	from, err := timeRange.ParseFrom()
 	require.NoError(t, err)
 	to, err := timeRange.ParseTo()
@@ -138,7 +138,7 @@ func TestRequestParser(t *testing.T) {
 			"hide":      false,
 		})
 		query.Set("period", "900")
-		timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
+		timeRange := legacydata.NewDataTimeRange("now-1h", "now-2h")
 		from, err := timeRange.ParseFrom()
 		require.NoError(t, err)
 		to, err := timeRange.ParseTo()
@@ -271,5 +271,55 @@ func TestRequestParser(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 21600, res.Period)
 		})
+	})
+
+	t.Run("Metric query type, metric editor mode and query api mode", func(t *testing.T) {
+		timeRange := legacydata.NewDataTimeRange("now-1h", "now-2h")
+		from, err := timeRange.ParseFrom()
+		require.NoError(t, err)
+		to, err := timeRange.ParseTo()
+		require.NoError(t, err)
+
+		t.Run("when metric query type and metric editor mode is not specified", func(t *testing.T) {
+			t.Run("it should be metric search builder", func(t *testing.T) {
+				query := getBaseJsonQuery()
+				res, err := parseRequestQuery(query, "ref1", from, to)
+				require.NoError(t, err)
+				assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
+				assert.Equal(t, MetricEditorModeBuilder, res.MetricEditorMode)
+				assert.Equal(t, GMDApiModeMetricStat, res.getGMDAPIMode())
+			})
+
+			t.Run("and an expression is specified it should be metric search builder", func(t *testing.T) {
+				query := getBaseJsonQuery()
+				query.Set("expression", "SUM(a)")
+				res, err := parseRequestQuery(query, "ref1", from, to)
+				require.NoError(t, err)
+				assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
+				assert.Equal(t, MetricEditorModeRaw, res.MetricEditorMode)
+				assert.Equal(t, GMDApiModeMathExpression, res.getGMDAPIMode())
+			})
+		})
+
+		t.Run("and an expression is specified it should be metric search builder", func(t *testing.T) {
+			query := getBaseJsonQuery()
+			query.Set("expression", "SUM(a)")
+			res, err := parseRequestQuery(query, "ref1", from, to)
+			require.NoError(t, err)
+			assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
+			assert.Equal(t, MetricEditorModeRaw, res.MetricEditorMode)
+			assert.Equal(t, GMDApiModeMathExpression, res.getGMDAPIMode())
+		})
+	})
+}
+
+func getBaseJsonQuery() *simplejson.Json {
+	return simplejson.NewFromAny(map[string]interface{}{
+		"refId":      "ref1",
+		"region":     "us-east-1",
+		"namespace":  "ec2",
+		"metricName": "CPUUtilization",
+		"statistic":  "Average",
+		"period":     "900",
 	})
 }

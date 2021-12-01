@@ -71,9 +71,9 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 			if err != nil {
 				plog.Error("Range query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-			} else {
-				response[RangeQueryType] = rangeResponse
+				continue
 			}
+			response[RangeQueryType] = rangeResponse
 		}
 
 		if query.InstantQuery {
@@ -81,16 +81,17 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 			if err != nil {
 				plog.Error("Instant query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-			} else {
-				response[InstantQueryType] = instantResponse
+				continue
 			}
+			response[InstantQueryType] = instantResponse
 		}
 
+		// This is a special case
+		// If exemplar query returns error, we want to only log it and continue with other results processing
 		if query.ExemplarQuery {
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
 				plog.Error("Exemplar query failed", "query", query.Expr, "err", err)
-				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 			} else {
 				response[ExemplarQueryType] = exemplarResponse
 			}
@@ -176,22 +177,20 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 			interval = time.Duration(int64(adjustedInterval) * intervalFactor)
 		}
 
-		intervalMs := int64(interval / time.Millisecond)
-		rangeS := query.TimeRange.To.Unix() - query.TimeRange.From.Unix()
-
 		// Interpolate variables in expr
-		expr := model.Expr
-		expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(intervalMs, 10))
-		expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(interval))
-		expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeS*1000, 10))
-		expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeS, 10))
-		expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeS, 10)+"s")
-		expr = strings.ReplaceAll(expr, varRateInterval, intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
+		timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
+		expr := interpolateVariables(model.Expr, interval, timeRange, s.intervalCalculator, dsInfo.TimeInterval)
 
 		rangeQuery := model.RangeQuery
 		if !model.InstantQuery && !model.RangeQuery {
 			// In older dashboards, we were not setting range query param and !range && !instant was run as range query
 			rangeQuery = true
+		}
+
+		// We never want to run exemplar query for alerting
+		exemplarQuery := model.ExemplarQuery
+		if queryContext.Headers["FromAlert"] == "true" {
+			exemplarQuery = false
 		}
 
 		qs = append(qs, &PrometheusQuery{
@@ -203,7 +202,7 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 			RefId:         query.RefID,
 			InstantQuery:  model.InstantQuery,
 			RangeQuery:    rangeQuery,
-			ExemplarQuery: model.ExemplarQuery,
+			ExemplarQuery: exemplarQuery,
 			UtcOffsetSec:  model.UtcOffsetSec,
 		})
 	}
@@ -253,6 +252,19 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 
 	rateInterval := time.Duration(int(math.Max(float64(interval+scrapeIntervalDuration), float64(4)*float64(scrapeIntervalDuration))))
 	return rateInterval
+}
+
+func interpolateVariables(expr string, interval time.Duration, timeRange time.Duration, intervalCalculator intervalv2.Calculator, timeInterval string) string {
+	rangeMs := timeRange.Milliseconds()
+	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
+
+	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(interval/time.Millisecond), 10))
+	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(interval))
+	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
+	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
+	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
+	expr = strings.ReplaceAll(expr, varRateInterval, intervalv2.FormatDuration(calculateRateInterval(interval, timeInterval, intervalCalculator)))
+	return expr
 }
 
 func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {

@@ -17,6 +17,7 @@ import (
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -54,7 +55,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
@@ -97,7 +97,6 @@ type HTTPServer struct {
 	LivePushGateway           *pushhttp.Gateway
 	ContextHandler            *contexthandler.ContextHandler
 	SQLStore                  *sqlstore.SQLStore
-	DataService               *tsdb.Service
 	AlertEngine               *alerting.AlertEngine
 	LoadSchemaService         *schemaloader.SchemaLoaderService
 	AlertNG                   *ngalert.AlertNG
@@ -107,14 +106,15 @@ type HTTPServer struct {
 	SocialService             social.Service
 	OAuthTokenService         oauthtoken.OAuthTokenService
 	Listener                  net.Listener
-	EncryptionService         encryption.Service
+	EncryptionService         encryption.Internal
 	SecretsService            secrets.Service
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
-	tracingService            *tracing.TracingService
+	tracingService            tracing.Tracer
 	internalMetricsSvc        *metrics.InternalMetricsService
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
+	expressionService         *expr.Service
 }
 
 type ServerOptions struct {
@@ -123,8 +123,7 @@ type ServerOptions struct {
 
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
-	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
-	dataService *tsdb.Service, alertEngine *alerting.AlertEngine,
+	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardManager plugins.PluginDashboardManager, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider,
@@ -137,11 +136,11 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	contextHandler *contexthandler.ContextHandler,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
+	notificationService *notifications.NotificationService, tracingService tracing.Tracer,
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	encryptionService encryption.Service, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
-	dataSourcesService *datasources.Service, secretsService secrets.Service) (*HTTPServer, error) {
+	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
+	dataSourcesService *datasources.Service, secretsService secrets.Service, expressionService *expr.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -154,7 +153,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		HooksService:              hooksService,
 		CacheService:              cacheService,
 		SQLStore:                  sqlStore,
-		DataService:               dataService,
 		AlertEngine:               alertEngine,
 		PluginRequestValidator:    pluginRequestValidator,
 		pluginClient:              pluginClient,
@@ -195,6 +193,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SecretsService:            secretsService,
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
+		expressionService:         expressionService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

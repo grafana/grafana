@@ -2,6 +2,7 @@ import { GrafanaTheme2, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
 import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '@grafana/schema';
 import { getGradientRange, GradientDirection, scaleGradient } from './gradientFills';
 import tinycolor from 'tinycolor2';
+import uPlot from 'uplot';
 
 export interface UPlotThresholdOptions {
   scaleKey: string;

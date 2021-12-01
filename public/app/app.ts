@@ -25,12 +25,19 @@ import {
   standardTransformersRegistry,
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
-import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import { registerEchoBackend, setEchoSrv, setPanelRenderer, setQueryRunnerFactory } from '@grafana/runtime';
+import { preloadPlugins } from './features/plugins/pluginPreloader';
+import {
+  locationService,
+  registerEchoBackend,
+  setBackendSrv,
+  setDataSourceSrv,
+  setEchoSrv,
+  setLocationSrv,
+  setQueryRunnerFactory,
+} from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
-import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
 import { getScrollbarWidth, getStandardFieldConfigs } from '@grafana/ui';
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
@@ -41,7 +48,6 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { configureStore } from './store/configureStore';
 import { AppWrapper } from './AppWrapper';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
-import { AngularApp } from './angular/AngularApp';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -52,6 +58,13 @@ import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { getAllOptionEditors } from './core/components/editors/registry';
+import { backendSrv } from './core/services/backend_srv';
+import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
+import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
+import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
+import { DatasourceSrv } from './features/plugins/datasource_srv';
+import { AngularApp } from './angular';
+import { ModalManager } from './core/services/ModalManager';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -74,54 +87,71 @@ export class GrafanaApp {
     this.angularApp = new AngularApp();
   }
 
-  init() {
-    initEchoSrv();
-    addClassIfNoOverlayScrollbar();
-    setLocale(config.bootData.user.locale);
-    setWeekStart(config.bootData.user.weekStart);
-    setPanelRenderer(PanelRenderer);
-    setTimeZoneResolver(() => config.bootData.user.timezone);
-    // Important that extensions are initialized before store
-    initExtensions();
-    configureStore();
+  async init() {
+    try {
+      setBackendSrv(backendSrv);
+      initEchoSrv();
+      addClassIfNoOverlayScrollbar();
+      setLocale(config.bootData.user.locale);
+      setWeekStart(config.bootData.user.weekStart);
+      setPanelRenderer(PanelRenderer);
+      setPanelDataErrorView(PanelDataErrorView);
+      setLocationSrv(locationService);
+      setTimeZoneResolver(() => config.bootData.user.timezone);
+      // Important that extension reducers are initialized before store
+      addExtensionReducers();
+      configureStore();
+      initExtensions();
 
-    standardEditorsRegistry.setInit(getAllOptionEditors);
-    standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
-    standardTransformersRegistry.setInit(getStandardTransformers);
-    variableAdapters.setInit(getDefaultVariableAdapters);
-    monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
+      standardEditorsRegistry.setInit(getAllOptionEditors);
+      standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+      standardTransformersRegistry.setInit(getStandardTransformers);
+      variableAdapters.setInit(getDefaultVariableAdapters);
+      monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
 
-    setQueryRunnerFactory(() => new QueryRunner());
-    setVariableQueryRunner(new VariableQueryRunner());
+      setQueryRunnerFactory(() => new QueryRunner());
+      setVariableQueryRunner(new VariableQueryRunner());
 
-    locationUtil.initialize({
-      config,
-      getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
-      getVariablesUrlParams: getVariablesUrlParams,
-    });
+      locationUtil.initialize({
+        config,
+        getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
+        getVariablesUrlParams: getVariablesUrlParams,
+      });
 
-    // intercept anchor clicks and forward it to custom history instead of relying on browser's history
-    document.addEventListener('click', interceptLinkClicks);
+      // intercept anchor clicks and forward it to custom history instead of relying on browser's history
+      document.addEventListener('click', interceptLinkClicks);
 
-    // disable tool tip animation
-    $.fn.tooltip.defaults.animation = false;
+      // Init DataSourceSrv
+      const dataSourceSrv = new DatasourceSrv();
+      dataSourceSrv.init(config.datasources, config.defaultDatasource);
+      setDataSourceSrv(dataSourceSrv);
 
-    this.angularApp.init();
+      // init modal manager
+      const modalManager = new ModalManager();
+      modalManager.init();
 
-    // Preload selected app plugins
-    const promises = [];
-    for (const modulePath of config.pluginsToPreload) {
-      promises.push(importPluginModule(modulePath));
-    }
+      // Init angular
+      this.angularApp.init();
 
-    Promise.all(promises).then(() => {
+      // Preload selected app plugins
+      await preloadPlugins(config.pluginsToPreload);
+
       ReactDOM.render(
         React.createElement(AppWrapper, {
           app: this,
         }),
         document.getElementById('reactRoot')
       );
-    });
+    } catch (error: any) {
+      console.error('Failed to start Grafana', error);
+      window.__grafana_load_failed();
+    }
+  }
+}
+
+function addExtensionReducers() {
+  if (extensionsExports.length > 0) {
+    extensionsExports[0].addExtensionReducers();
   }
 }
 

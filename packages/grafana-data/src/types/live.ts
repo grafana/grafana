@@ -25,31 +25,6 @@ export enum LiveChannelType {
   JSON = 'json', // arbitray json message
 }
 
-/**
- * @alpha -- experimental
- */
-export interface LiveChannelConfig {
-  /**
-   * An optional description for the channel
-   */
-  description?: string;
-
-  /**
-   * What kind of data do you expect
-   */
-  type?: LiveChannelType;
-
-  /**
-   * The channel keeps track of who else is connected to the same channel
-   */
-  hasPresence?: boolean;
-
-  /**
-   * Allow users to write to the connection
-   */
-  canPublish?: boolean;
-}
-
 export enum LiveChannelConnectionState {
   /** The connection is not yet established */
   Pending = 'pending',
@@ -205,14 +180,4 @@ export function toLiveChannelId(addr: LiveChannelAddress): string {
     return id;
   }
   return id + '/' + addr.path;
-}
-
-/**
- * @alpha -- experimental
- */
-export interface LiveChannelSupport {
-  /**
-   * Get the channel handler for the path, or throw an error if invalid
-   */
-  getChannelConfig(path: string): LiveChannelConfig | undefined;
 }

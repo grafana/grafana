@@ -24,7 +24,10 @@ export interface DataSourceSrv {
   /**
    * Get settings and plugin metadata by name or uid
    */
-  getInstanceSettings(ref?: DataSourceRef | string | null): DataSourceInstanceSettings | undefined;
+  getInstanceSettings(
+    ref?: DataSourceRef | string | null,
+    scopedVars?: ScopedVars
+  ): DataSourceInstanceSettings | undefined;
 }
 
 /** @public */

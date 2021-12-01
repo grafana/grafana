@@ -63,17 +63,34 @@ function getNodeText(node: SyntaxNode, text: string): string {
 }
 
 function parsePromQLStringLiteral(text: string): string {
+  // if it is a string-literal, it is inside quotes of some kind
+  const inside = text.slice(1, text.length - 1);
+
   // FIXME: support https://prometheus.io/docs/prometheus/latest/querying/basics/#string-literals
   // FIXME: maybe check other promql code, if all is supported or not
+
+  // for now we do only some very simple un-escaping
+
   // we start with double-quotes
   if (text.startsWith('"') && text.endsWith('"')) {
-    if (text.indexOf('\\') !== -1) {
-      throw new Error('FIXME: escape-sequences not supported in label-values');
-    }
-    return text.slice(1, text.length - 1);
-  } else {
-    throw new Error('FIXME: invalid string literal');
+    // NOTE: this is not 100% perfect, we only unescape the double-quote,
+    // there might be other characters too
+    return inside.replace(/\\"/, '"');
   }
+
+  // then single-quote
+  if (text.startsWith("'") && text.endsWith("'")) {
+    // NOTE: this is not 100% perfect, we only unescape the single-quote,
+    // there might be other characters too
+    return inside.replace(/\\'/, "'");
+  }
+
+  // then backticks
+  if (text.startsWith('`') && text.endsWith('`')) {
+    return inside;
+  }
+
+  throw new Error('FIXME: invalid string literal');
 }
 
 type LabelOperator = '=' | '!=' | '=~' | '!~';
@@ -111,6 +128,7 @@ export type Situation =
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME';
       metricName?: string;
       labelName: string;
+      betweenQuotes: boolean;
       otherLabels: Label[];
     };
 
@@ -139,8 +157,12 @@ const RESOLVERS: Resolver[] = [
     fun: resolveInFunction,
   },
   {
+    path: ['StringLiteral', 'LabelMatcher'],
+    fun: resolveLabelMatcher,
+  },
+  {
     path: [ERROR_NODE_NAME, 'LabelMatcher'],
-    fun: resolveLabelMatcherError,
+    fun: resolveLabelMatcher,
   },
   {
     path: [ERROR_NODE_NAME, 'MatrixSelector'],
@@ -290,9 +312,12 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
   };
 }
 
-function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): Situation | null {
-  // we are probably in the scenario where the user is before entering the
-  // label-value, like `{job=^}` (^ marks the cursor)
+function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situation | null {
+  // we can arrive here in two situation. `node` is either:
+  // - a StringNode (like in `{job="^"}`)
+  // - or an error node (like in `{job=^}`)
+  const inStringNode = !node.type.isError;
+
   const parent = walk(node, [['parent', 'LabelMatcher']]);
   if (parent === null) {
     return null;
@@ -344,7 +369,10 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
   }
 
   // now we need to find the other names
-  const otherLabels = getLabels(labelMatchersNode, text);
+  const allLabels = getLabels(labelMatchersNode, text);
+
+  // we need to remove "our" label from all-labels, if it is in there
+  const otherLabels = allLabels.filter((label) => label.name !== labelName);
 
   const metricNameNode = walk(labelMatchersNode, [
     ['parent', 'VectorSelector'],
@@ -357,6 +385,7 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
     return {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       labelName,
+      betweenQuotes: inStringNode,
       otherLabels,
     };
   }
@@ -367,6 +396,7 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
     metricName,
     labelName,
+    betweenQuotes: inStringNode,
     otherLabels,
   };
 }
@@ -397,10 +427,27 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
   // for example `something{^}`
 
   // there are some false positives that can end up in this situation, that we want
-  // to eliminate, for example: `something{a~^}`
-  // basically, if this subtree contains any error-node, we stop
+  // to eliminate:
+  // `something{a~^}` (if this subtree contains any error-node, we stop)
   if (subTreeHasError(node)) {
     return null;
+  }
+
+  // next false positive:
+  // `something{a="1"^}`
+  const child = walk(node, [['firstChild', 'LabelMatchList']]);
+  if (child !== null) {
+    // means the label-matching part contains at least one label already.
+    //
+    // in this case, we will need to have a `,` character at the end,
+    // to be able to suggest adding the next label.
+    // the area between the end-of-the-child-node and the cursor-pos
+    // must contain a `,` in this case.
+    const textToCheck = text.slice(child.to, pos);
+
+    if (!textToCheck.includes(',')) {
+      return null;
+    }
   }
 
   const metricNameNode = walk(node, [

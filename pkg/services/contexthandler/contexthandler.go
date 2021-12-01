@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -105,6 +106,19 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 		}
 	}
 
+	queryParameters, err := url.ParseQuery(reqContext.Req.URL.RawQuery)
+	if err != nil {
+		reqContext.Logger.Error("Failed to parse query parameters", "error", err)
+	}
+	if queryParameters.Has("targetOrgId") {
+		targetOrg, err := strconv.ParseInt(queryParameters.Get("targetOrgId"), 10, 64)
+		if err == nil {
+			orgID = targetOrg
+		} else {
+			reqContext.Logger.Error("Invalid target organization ID", "error", err)
+		}
+	}
+
 	// the order in which these are tested are important
 	// look for api key in Authorization header first
 	// then init session and look for userId in session
@@ -148,7 +162,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 
 	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
 	if err != nil {
-		log.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
+		reqContext.Logger.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
 	}
 
@@ -272,7 +286,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		Password: password,
 		Cfg:      h.Cfg,
 	}
-	if err := bus.Dispatch(&authQuery); err != nil {
+	if err := bus.DispatchCtx(reqContext.Req.Context(), &authQuery); err != nil {
 		reqContext.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,

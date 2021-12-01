@@ -1,13 +1,13 @@
 package manager
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/hashicorp/go-version"
 )
 
@@ -27,32 +27,32 @@ func (m *PluginManager) checkForUpdates() {
 
 	m.log.Debug("Checking for updates")
 
-	pluginSlugs := m.externalPluginIDsAsCSV()
-	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + m.cfg.BuildVersion)
+	pluginIDs := m.pluginsEligibleForVersionCheck()
+	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + strings.Join(pluginIDs, ",") + "&grafanaVersion=" + m.cfg.BuildVersion)
 	if err != nil {
-		log.Debug("Failed to get plugins repo from grafana.com", "error", err.Error())
+		m.log.Debug("Failed to get plugins repo from grafana.com", "error", err.Error())
 		return
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Warn("Failed to close response body", "err", err)
+			m.log.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Debug("Update check failed, reading response from grafana.com", "error", err.Error())
+		m.log.Debug("Update check failed, reading response from grafana.com", "error", err.Error())
 		return
 	}
 
 	var gcomPlugins []gcomPlugin
 	err = json.Unmarshal(body, &gcomPlugins)
 	if err != nil {
-		log.Debug("Failed to unmarshal plugin repo, reading response from grafana.com", "error", err.Error())
+		m.log.Debug("Failed to unmarshal plugin repo, reading response from grafana.com", "error", err.Error())
 		return
 	}
 
-	for _, localP := range m.Plugins() {
+	for _, localP := range m.Plugins(context.TODO()) {
 		for _, gcomP := range gcomPlugins {
 			if gcomP.Slug == localP.ID {
 				localP.GrafanaComVersion = gcomP.Version
@@ -70,9 +70,9 @@ func (m *PluginManager) checkForUpdates() {
 	}
 }
 
-func (m *PluginManager) externalPluginIDsAsCSV() string {
+func (m *PluginManager) pluginsEligibleForVersionCheck() []string {
 	var result []string
-	for _, p := range m.plugins {
+	for _, p := range m.plugins() {
 		if p.IsCorePlugin() {
 			continue
 		}
@@ -80,5 +80,5 @@ func (m *PluginManager) externalPluginIDsAsCSV() string {
 		result = append(result, p.ID)
 	}
 
-	return strings.Join(result, ",")
+	return result
 }

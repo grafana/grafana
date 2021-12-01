@@ -32,7 +32,7 @@ exports[`Render should disable basic auth password input 1`] = `
           }
           defaultValue={
             Object {
-              "description": "The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x",
+              "description": "The InfluxDB SQL-like query language.",
               "label": "InfluxQL",
               "value": "InfluxQL",
             }
@@ -49,12 +49,12 @@ exports[`Render should disable basic auth password input 1`] = `
           options={
             Array [
               Object {
-                "description": "The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x",
+                "description": "The InfluxDB SQL-like query language.",
                 "label": "InfluxQL",
                 "value": "InfluxQL",
               },
               Object {
-                "description": "Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+ (beta)",
+                "description": "Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+",
                 "label": "Flux",
                 "value": "Flux",
               },
@@ -63,7 +63,7 @@ exports[`Render should disable basic auth password input 1`] = `
           tabSelectsValue={true}
           value={
             Object {
-              "description": "The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x",
+              "description": "The InfluxDB SQL-like query language.",
               "label": "InfluxQL",
               "value": "InfluxQL",
             }
@@ -331,7 +331,7 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
           }
           defaultValue={
             Object {
-              "description": "The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x",
+              "description": "The InfluxDB SQL-like query language.",
               "label": "InfluxQL",
               "value": "InfluxQL",
             }
@@ -348,12 +348,12 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
           options={
             Array [
               Object {
-                "description": "The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x",
+                "description": "The InfluxDB SQL-like query language.",
                 "label": "InfluxQL",
                 "value": "InfluxQL",
               },
               Object {
-                "description": "Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+ (beta)",
+                "description": "Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+",
                 "label": "Flux",
                 "value": "Flux",
               },
@@ -362,7 +362,7 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
           tabSelectsValue={true}
           value={
             Object {
-              "description": "The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x",
+              "description": "The InfluxDB SQL-like query language.",
               "label": "InfluxQL",
               "value": "InfluxQL",
             }
@@ -630,7 +630,7 @@ exports[`Render should hide white listed cookies input when browser access chose
           }
           defaultValue={
             Object {
-              "description": "The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x",
+              "description": "The InfluxDB SQL-like query language.",
               "label": "InfluxQL",
               "value": "InfluxQL",
             }
@@ -647,12 +647,12 @@ exports[`Render should hide white listed cookies input when browser access chose
           options={
             Array [
               Object {
-                "description": "The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x",
+                "description": "The InfluxDB SQL-like query language.",
                 "label": "InfluxQL",
                 "value": "InfluxQL",
               },
               Object {
-                "description": "Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+ (beta)",
+                "description": "Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+",
                 "label": "Flux",
                 "value": "Flux",
               },
@@ -661,7 +661,7 @@ exports[`Render should hide white listed cookies input when browser access chose
           tabSelectsValue={true}
           value={
             Object {
-              "description": "The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x",
+              "description": "The InfluxDB SQL-like query language.",
               "label": "InfluxQL",
               "value": "InfluxQL",
             }
@@ -929,7 +929,7 @@ exports[`Render should render component 1`] = `
           }
           defaultValue={
             Object {
-              "description": "The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x",
+              "description": "The InfluxDB SQL-like query language.",
               "label": "InfluxQL",
               "value": "InfluxQL",
             }
@@ -946,12 +946,12 @@ exports[`Render should render component 1`] = `
           options={
             Array [
               Object {
-                "description": "The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x",
+                "description": "The InfluxDB SQL-like query language.",
                 "label": "InfluxQL",
                 "value": "InfluxQL",
               },
               Object {
-                "description": "Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+ (beta)",
+                "description": "Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+",
                 "label": "Flux",
                 "value": "Flux",
               },
@@ -960,7 +960,7 @@ exports[`Render should render component 1`] = `
           tabSelectsValue={true}
           value={
             Object {
-              "description": "The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x",
+              "description": "The InfluxDB SQL-like query language.",
               "label": "InfluxQL",
               "value": "InfluxQL",
             }

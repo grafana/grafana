@@ -2,6 +2,7 @@ import type { Situation, Label } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
 import { FUNCTIONS } from '../../../promql';
+import { escapeLabelValueInExactSelector } from '../../../language_utils';
 
 export type CompletionType = 'HISTORY' | 'FUNCTION' | 'METRIC_NAME' | 'DURATION' | 'LABEL_NAME' | 'LABEL_VALUE';
 
@@ -90,7 +91,9 @@ function makeSelector(metricName: string | undefined, labels: Label[]): string {
     allLabels.push({ name: '__name__', value: metricName, op: '=' });
   }
 
-  const allLabelTexts = allLabels.map((label) => `${label.name}${label.op}"${label.value}"`);
+  const allLabelTexts = allLabels.map(
+    (label) => `${label.name}${label.op}"${escapeLabelValueInExactSelector(label.value)}"`
+  );
 
   return `{${allLabelTexts.join(',')}}`;
 }
@@ -162,6 +165,7 @@ async function getLabelValues(
 async function getLabelValuesForMetricCompletions(
   metric: string | undefined,
   labelName: string,
+  betweenQuotes: boolean,
   otherLabels: Label[],
   dataProvider: DataProvider
 ): Promise<Completion[]> {
@@ -169,7 +173,7 @@ async function getLabelValuesForMetricCompletions(
   return values.map((text) => ({
     type: 'LABEL_VALUE',
     label: text,
-    insertText: `"${text}"`, // FIXME: escaping strange characters?
+    insertText: betweenQuotes ? text : `"${text}"`, // FIXME: escaping strange characters?
   }));
 }
 
@@ -195,6 +199,7 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
       return getLabelValuesForMetricCompletions(
         situation.metricName,
         situation.labelName,
+        situation.betweenQuotes,
         situation.otherLabels,
         dataProvider
       );

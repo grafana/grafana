@@ -56,10 +56,10 @@ func TestExpandTemplate(t *testing.T) {
 		labels:   data.Labels{"instance": "foo"},
 		expected: "foo is down",
 	}, {
-		name:          "missing label in $labels returns error",
-		text:          "{{ $labels.instance }} is down",
-		labels:        data.Labels{},
-		expectedError: errors.New("error executing template __alert_test: template: __alert_test:1:86: executing \"__alert_test\" at <$labels.instance>: map has no entry for key \"instance\""),
+		name:     "missing label in $labels returns <no value>",
+		text:     "{{ $labels.instance }} is down",
+		labels:   data.Labels{},
+		expected: "<no value> is down",
 	}, {
 		name: "values are expanded into $values",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
@@ -87,7 +87,7 @@ func TestExpandTemplate(t *testing.T) {
 		},
 		expected: "foo has value 1.1",
 	}, {
-		name: "missing label in $values returns error",
+		name: "missing label in $values returns <no value>",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
@@ -98,7 +98,7 @@ func TestExpandTemplate(t *testing.T) {
 				},
 			},
 		},
-		expectedError: errors.New("error executing template __alert_test: template: __alert_test:1:86: executing \"__alert_test\" at <$values.A.Labels.instance>: map has no entry for key \"instance\""),
+		expected: "<no value> has value 1",
 	}, {
 		name: "missing value in $values is returned as NaN",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
@@ -355,11 +355,27 @@ func TestExpandTemplate(t *testing.T) {
 		text:     "{{ query \"metric{instance='a'}\" | first | label \"instance\" }}",
 		expected: "",
 	}, {
-		name:     "check that graphLink returns an empty string",
+		name:     "graphLink",
+		text:     `{{ graphLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}`,
+		expected: `/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":false,"range":true}]`,
+	}, {
+		name:     "graphLink should escape both the expression and the datasource",
+		text:     `{{ graphLink "{\"expr\": \"process_open_fds > 0\", \"datasource\": \"gdev prometheus\"}" }}`,
+		expected: `/explore?left=["now-1h","now","gdev+prometheus",{"datasource":"gdev+prometheus","expr":"process_open_fds+%3E+0","instant":false,"range":true}]`,
+	}, {
+		name:     "check that graphLink returns an empty string when the query is not formatted correctly",
 		text:     "{{ graphLink \"up\" }}",
 		expected: "",
 	}, {
-		name:     "check that tableLink returns an empty string",
+		name:     "tableLink",
+		text:     `{{ tableLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}`,
+		expected: `/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":true,"range":false}]`,
+	}, {
+		name:     "tableLink should escape both the expression and the datasource",
+		text:     `{{ tableLink "{\"expr\": \"process_open_fds > 0\", \"datasource\": \"gdev prometheus\"}" }}`,
+		expected: `/explore?left=["now-1h","now","gdev+prometheus",{"datasource":"gdev+prometheus","expr":"process_open_fds+%3E+0","instant":true,"range":false}]`,
+	}, {
+		name:     "check that tableLink returns an empty string  when the query is not formatted correctly",
 		text:     "{{ tableLink \"up\" }}",
 		expected: "",
 	}, {

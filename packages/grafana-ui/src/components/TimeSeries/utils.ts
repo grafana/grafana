@@ -14,7 +14,6 @@ import {
 } from '@grafana/data';
 
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
-import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -27,6 +26,7 @@ import {
 } from '@grafana/schema';
 import { collectStackingGroups, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
+import { buildScaleKey } from '../GraphNG/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -44,7 +44,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   eventBus,
   sync,
   allFrames,
+  renderers,
   legend,
+  tweakScale = (opts) => opts,
+  tweakAxis = (opts) => opts,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
@@ -105,56 +108,77 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     });
   }
 
+  let customRenderedFields =
+    renderers?.flatMap((r) => Object.values(r.fieldMap).filter((name) => r.indicesOnly.indexOf(name) === -1)) ?? [];
+
   const stackingGroups: Map<string, number[]> = new Map();
 
   let indexByName: Map<string, number> | undefined;
 
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
-    const config = field.config as FieldConfig<GraphFieldConfig>;
-    const customConfig: GraphFieldConfig = {
-      ...defaultConfig,
-      ...config.custom,
-    };
+
+    const config = {
+      ...field.config,
+      custom: {
+        ...defaultConfig,
+        ...field.config.custom,
+      },
+    } as FieldConfig<GraphFieldConfig>;
+
+    const customConfig: GraphFieldConfig = config.custom!;
 
     if (field === xField || field.type !== FieldType.number) {
       continue;
     }
+
+    // TODO: skip this for fields with custom renderers?
     field.state!.seriesIndex = seriesIndex++;
 
     const fmt = field.display ?? defaultFormatter;
-    const scaleKey = config.unit || FIXED_UNIT;
+
+    const scaleKey = buildScaleKey(config);
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
 
     // The builder will manage unique scaleKeys and combine where appropriate
-    builder.addScale({
-      scaleKey,
-      orientation: ScaleOrientation.Vertical,
-      direction: ScaleDirection.Up,
-      distribution: customConfig.scaleDistribution?.type,
-      log: customConfig.scaleDistribution?.log,
-      min: field.config.min,
-      max: field.config.max,
-      softMin: customConfig.axisSoftMin,
-      softMax: customConfig.axisSoftMax,
-    });
+    builder.addScale(
+      tweakScale(
+        {
+          scaleKey,
+          orientation: ScaleOrientation.Vertical,
+          direction: ScaleDirection.Up,
+          distribution: customConfig.scaleDistribution?.type,
+          log: customConfig.scaleDistribution?.log,
+          min: field.config.min,
+          max: field.config.max,
+          softMin: customConfig.axisSoftMin,
+          softMax: customConfig.axisSoftMax,
+        },
+        field
+      )
+    );
 
     if (!yScaleKey) {
       yScaleKey = scaleKey;
     }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
-      builder.addAxis({
-        scaleKey,
-        label: customConfig.axisLabel,
-        size: customConfig.axisWidth,
-        placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-        formatValue: (v) => formattedValueToString(fmt(v)),
-        theme,
-        grid: { show: customConfig.axisGridShow },
-      });
+      builder.addAxis(
+        tweakAxis(
+          {
+            scaleKey,
+            label: customConfig.axisLabel,
+            size: customConfig.axisWidth,
+            placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
+            formatValue: (v) => formattedValueToString(fmt(v)),
+            theme,
+            grid: { show: customConfig.axisGridShow },
+          },
+          field
+        )
+      );
     }
 
     const showPoints =
@@ -199,28 +223,43 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     let { fillOpacity } = customConfig;
 
-    if (customConfig.fillBelowTo && field.state?.origin) {
+    let pathBuilder: uPlot.Series.PathBuilder | null = null;
+    let pointsBuilder: uPlot.Series.Points.Show | null = null;
+
+    if (field.state?.origin) {
       if (!indexByName) {
         indexByName = getNamesToFieldIndex(frame, allFrames);
       }
 
       const originFrame = allFrames[field.state.origin.frameIndex];
-      const originField = originFrame.fields[field.state.origin.fieldIndex];
+      const originField = originFrame?.fields[field.state.origin.fieldIndex];
 
-      const t = indexByName.get(getFieldDisplayName(originField, originFrame, allFrames));
-      const b = indexByName.get(customConfig.fillBelowTo);
-      if (isNumber(b) && isNumber(t)) {
-        builder.addBand({
-          series: [t, b],
-          fill: null as any, // using null will have the band use fill options from `t`
-        });
+      const dispName = getFieldDisplayName(originField ?? field, originFrame, allFrames);
+
+      // disable default renderers
+      if (customRenderedFields.indexOf(dispName) >= 0) {
+        pathBuilder = () => null;
+        pointsBuilder = () => undefined;
       }
-      if (!fillOpacity) {
-        fillOpacity = 35; // default from flot
+
+      if (customConfig.fillBelowTo) {
+        const t = indexByName.get(dispName);
+        const b = indexByName.get(customConfig.fillBelowTo);
+        if (isNumber(b) && isNumber(t)) {
+          builder.addBand({
+            series: [t, b],
+            fill: undefined, // using null will have the band use fill options from `t`
+          });
+        }
+        if (!fillOpacity) {
+          fillOpacity = 35; // default from flot
+        }
       }
     }
 
     builder.addSeries({
+      pathBuilder,
+      pointsBuilder,
       scaleKey,
       showPoints,
       pointsFilter,
@@ -278,6 +317,21 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       }
     }
   }
+
+  // hook up custom/composite renderers
+  renderers?.forEach((r) => {
+    if (!indexByName) {
+      indexByName = getNamesToFieldIndex(frame, allFrames);
+    }
+    let fieldIndices: Record<string, number> = {};
+
+    for (let key in r.fieldMap) {
+      let dispName = r.fieldMap[key];
+      fieldIndices[key] = indexByName.get(dispName)!;
+    }
+
+    r.init(builder, fieldIndices);
+  });
 
   builder.scaleKeys = [xScaleKey, yScaleKey];
 
@@ -363,7 +417,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
         },
       },
       // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
-      scales: builder.scaleKeys,
+      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
+      scales: [xScaleKey, null as any],
       match: [() => true, () => true],
     };
   }
@@ -376,18 +431,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
 export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
   const originNames = new Map<string, number>();
-  for (let i = 0; i < frame.fields.length; i++) {
-    const origin = frame.fields[i].state?.origin;
+  frame.fields.forEach((field, i) => {
+    const origin = field.state?.origin;
     if (origin) {
-      originNames.set(
-        getFieldDisplayName(
-          allFrames[origin.frameIndex].fields[origin.fieldIndex],
-          allFrames[origin.frameIndex],
-          allFrames
-        ),
-        i
-      );
+      const origField = allFrames[origin.frameIndex]?.fields[origin.fieldIndex];
+      if (origField) {
+        originNames.set(getFieldDisplayName(origField, allFrames[origin.frameIndex], allFrames), i);
+      }
     }
-  }
+  });
   return originNames;
 }

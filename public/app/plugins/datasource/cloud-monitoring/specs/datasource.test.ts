@@ -2,7 +2,6 @@ import { of, throwError } from 'rxjs';
 import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
 
 import CloudMonitoringDataSource from '../datasource';
-import { metricDescriptors } from './testData';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CloudMonitoringOptions } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
@@ -41,47 +40,6 @@ function getTestcontext({ response = {}, throws = false, templateSrv = new Templ
 }
 
 describe('CloudMonitoringDataSource', () => {
-  describe('when performing testDataSource', () => {
-    describe('and call to cloud monitoring api succeeds', () => {
-      it('should return successfully', async () => {
-        const { ds } = getTestcontext();
-
-        const result = await ds.testDatasource();
-
-        expect(result.status).toBe('success');
-      });
-    });
-
-    describe('and a list of metricDescriptors are returned', () => {
-      it('should return status success', async () => {
-        const { ds } = getTestcontext({ response: metricDescriptors });
-
-        const result = await ds.testDatasource();
-
-        expect(result.status).toBe('success');
-      });
-    });
-
-    describe('and call to cloud monitoring api fails with 400 error', () => {
-      it('should return error status and a detailed error message', async () => {
-        const response = {
-          statusText: 'Bad Request',
-          data: {
-            error: { code: 400, message: 'Field interval.endTime had an invalid value' },
-          },
-        };
-        const { ds } = getTestcontext({ response, throws: true });
-
-        const result = await ds.testDatasource();
-
-        expect(result.status).toEqual('error');
-        expect(result.message).toBe(
-          'Google Cloud Monitoring: Bad Request: 400. Field interval.endTime had an invalid value'
-        );
-      });
-    });
-  });
-
   describe('When performing query', () => {
     describe('and no time series data is returned', () => {
       it('should return a list of datapoints', async () => {
@@ -124,37 +82,6 @@ describe('CloudMonitoringDataSource', () => {
     });
   });
 
-  describe('when performing getMetricTypes', () => {
-    describe('and call to cloud monitoring api succeeds', () => {
-      it('should return successfully', async () => {
-        const response = {
-          metricDescriptors: [
-            {
-              displayName: 'test metric name 1',
-              type: 'compute.googleapis.com/instance/cpu/test-metric-type-1',
-              description: 'A description',
-            },
-            {
-              type: 'logging.googleapis.com/user/logbased-metric-with-no-display-name',
-            },
-          ],
-        };
-        const { ds } = getTestcontext({ response });
-
-        const result = await ds.getMetricTypes('proj');
-
-        expect(result.length).toBe(2);
-        expect(result[0].service).toBe('compute.googleapis.com');
-        expect(result[0].serviceShortName).toBe('compute');
-        expect(result[0].type).toBe('compute.googleapis.com/instance/cpu/test-metric-type-1');
-        expect(result[0].displayName).toBe('test metric name 1');
-        expect(result[0].description).toBe('A description');
-        expect(result[1].type).toBe('logging.googleapis.com/user/logbased-metric-with-no-display-name');
-        expect(result[1].displayName).toBe('logging.googleapis.com/user/logbased-metric-with-no-display-name');
-      });
-    });
-  });
-
   describe('when interpolating a template variable for the filter', () => {
     describe('and is single value variable', () => {
       it('should replace the variable with the value', () => {
@@ -185,6 +112,22 @@ describe('CloudMonitoringDataSource', () => {
         const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
 
         expect(interpolated[2]).toBe('(filtervalue1|filtervalue2)');
+      });
+
+      it('should not escape a regex', () => {
+        const templateSrv = initTemplateSrv('/[a-Z]*.html', true);
+        const { ds } = getTestcontext({ templateSrv });
+        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
+
+        expect(interpolated[2]).toBe('/[a-Z]*.html');
+      });
+
+      it('should not escape an array of regexes but join them as a regex', () => {
+        const templateSrv = initTemplateSrv(['/[a-Z]*.html', '/foo.html'], true);
+        const { ds } = getTestcontext({ templateSrv });
+        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
+
+        expect(interpolated[2]).toBe('(/[a-Z]*.html|/foo.html)');
       });
     });
   });

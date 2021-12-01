@@ -120,17 +120,46 @@ type SubscribeAuthChecker interface {
 	CanSubscribe(ctx context.Context, u *models.SignedInUser) (bool, error)
 }
 
-// LiveChannelRule is an in-memory representation of each specific rule, with Converter, FrameProcessor
-// and FrameOutputter to be executed by Pipeline.
+// LiveChannelRule is an in-memory representation of each specific rule to be executed by Pipeline.
 type LiveChannelRule struct {
-	OrgId           int64
-	Pattern         string
-	PublishAuth     PublishAuthChecker
-	SubscribeAuth   SubscribeAuthChecker
-	Subscribers     []Subscriber
-	DataOutputters  []DataOutputter
-	Converter       Converter
+	// OrgId this rule belongs to.
+	OrgId int64
+	// Pattern is a pattern for a channel which when matched results in the rule execution
+	// during Subscribe or Publish operations. This is very similar to HTTP router functionality but
+	// adapted for Grafana Live channels.
+	// We use a modified version of github.com/julienschmidt/httprouter for pattern matching logic
+	// (see tree package's README for more information).
+	Pattern string
+
+	// SubscribeAuth allows providing authorization logic for subscribing to a channel.
+	// If SubscribeAuth is not set then all authenticated users can subscribe to a channel.
+	SubscribeAuth SubscribeAuthChecker
+	// Subscribers allow modifying subscription properties and optionally call additional logic
+	// like opening a single stream to a plugin to consume channel events. If not set then
+	// subscription will have all options disabled, no initial data.
+	Subscribers []Subscriber
+
+	// PublishAuth allows providing authorization logic for publishing into a channel.
+	// If PublishAuth is not set then ROLE_ADMIN is required to publish.
+	PublishAuth PublishAuthChecker
+	// DataOutputters if set allows doing something useful with raw input data. If not set then
+	// we step further to the converter. Each DataOutputter can optionally return a slice
+	// of ChannelData to pass the control to a rule defined by ChannelData.Channel - i.e.
+	// DataOutputters for the returned ChannelData.Channel will be executed. Note that in
+	// this case input processing will skip PublishAuth of ChannelData.Channel. I.e. authorization
+	// rules defined by the first channel in a pipeline chain.
+	DataOutputters []DataOutputter
+	// Converter allows transforming raw input data to frames. The Converter can split raw data to
+	// slice of ChannelFrame. Each ChannelFrame is then processed according to ChannelFrame.Channel
+	// rules - i.e. FrameProcessors for the returned ChannelFrame.Channel will be executed.
+	// If ChannelFrame.Channel is empty then we proceed with the current rule towards
+	// applying its FrameProcessors.
+	Converter Converter
+	// FrameProcessors can have logic to modify data.Frame before applying FrameOutputters.
 	FrameProcessors []FrameProcessor
+	// FrameOutputters if set allow doing something useful with data.Frame. Each FrameOutputter
+	// can optionally return a slice of ChannelFrame to pass the control to a rule defined
+	// by ChannelFrame.Channel.
 	FrameOutputters []FrameOutputter
 }
 
@@ -138,15 +167,6 @@ type LiveChannelRule struct {
 type Label struct {
 	Name  string `json:"name"`
 	Value string `json:"value"` // Can be JSONPath or Goja script.
-}
-
-// Field description.
-type Field struct {
-	Name   string            `json:"name"`
-	Type   data.FieldType    `json:"type"`
-	Value  string            `json:"value"` // Can be JSONPath or Goja script.
-	Labels []Label           `json:"labels,omitempty"`
-	Config *data.FieldConfig `json:"config,omitempty"`
 }
 
 type ChannelRuleGetter interface {

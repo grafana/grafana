@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
@@ -370,6 +371,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 			{
 				name: "Load multiple plugins (broken, valid, unsigned)",
 				cfg: &setting.Cfg{
+					Env:         "production",
 					PluginsPath: filepath.Join(parentDir),
 				},
 				appURL: "http://localhost:3000",
@@ -884,8 +886,9 @@ func newLoader(cfg *setting.Cfg) *Loader {
 		cfg:                cfg,
 		pluginFinder:       finder.New(cfg),
 		pluginInitializer:  initializer.New(cfg, &fakeLicensingService{}),
-		signatureValidator: signature.NewValidator(cfg, &signature.UnsignedPluginAuthorizer{Cfg: cfg}),
+		signatureValidator: signature.NewValidator(&signature.UnsignedPluginAuthorizer{Cfg: cfg}),
 		errs:               make(map[string]*plugins.SignatureError),
+		log:                &fakeLogger{},
 	}
 }
 
@@ -915,7 +918,7 @@ func (t *fakeLicensingService) ContentDeliveryPrefix() string {
 	return ""
 }
 
-func (t *fakeLicensingService) LicenseURL(showAdminLicensingPage bool) string {
+func (t *fakeLicensingService) LicenseURL(_ bool) string {
 	return ""
 }
 
@@ -925,4 +928,20 @@ func (t *fakeLicensingService) HasValidLicense() bool {
 
 func (t *fakeLicensingService) Environment() map[string]string {
 	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
+}
+
+type fakeLogger struct {
+	log.Logger
+}
+
+func (fl fakeLogger) Info(_ string, _ ...interface{}) {
+
+}
+
+func (fl fakeLogger) Debug(_ string, _ ...interface{}) {
+
+}
+
+func (fl fakeLogger) Warn(_ string, _ ...interface{}) {
+
 }

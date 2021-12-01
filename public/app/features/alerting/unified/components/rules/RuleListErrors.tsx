@@ -52,7 +52,7 @@ export function RuleListErrors(): ReactElement {
     rulerRequestErrors.forEach(({ dataSource, error }) =>
       result.push(
         <>
-          Failed to load rules config from <a href={'datasources/edit/${dataSource.uid}'}>{dataSource.name}</a>:{' '}
+          Failed to load rules config from <a href={`datasources/edit/${dataSource.uid}`}>{dataSource.name}</a>:{' '}
           {error.message || 'Unknown error.'}
         </>
       )
@@ -77,7 +77,7 @@ export function RuleListErrors(): ReactElement {
               {errors.length >= 2 && (
                 <Button
                   className={styles.moreButton}
-                  variant="link"
+                  fill="text"
                   icon="angle-right"
                   size="sm"
                   onClick={() => setExpanded(true)}
