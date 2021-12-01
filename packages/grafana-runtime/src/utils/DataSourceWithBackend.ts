@@ -13,6 +13,7 @@ import {
   StreamingFrameAction,
   getDataSourceRef,
   DataSourceRef,
+  dataFrameToJSON,
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -275,7 +276,7 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
         live.getDataStream({
           addr,
           buffer: getter(req, frame),
-          frame,
+          frame: dataFrameToJSON(f),
         })
       );
     } else {

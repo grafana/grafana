@@ -1,5 +1,5 @@
 import {
-  DataFrame,
+  DataFrameJSON,
   DataQueryRequest,
   DataQueryResponse,
   LiveChannelAddress,
@@ -21,7 +21,7 @@ export interface LiveDataFilter {
  */
 export interface LiveDataStreamOptions {
   addr: LiveChannelAddress;
-  frame?: DataFrame; // initial results
+  frame?: DataFrameJSON; // initial results
   key?: string;
   buffer?: StreamingFrameOptions;
   filter?: LiveDataFilter;

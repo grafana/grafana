@@ -7,7 +7,6 @@ import { asyncScheduler, Observable, observeOn } from 'rxjs';
 import { LiveChannelAddress, LiveChannelEvent } from '@grafana/data';
 import { promiseWithRemoteObservableAsObservable } from './remoteObservable';
 import { createWorker } from './createCentrifugeServiceWorker';
-import { LiveQueryDataOptions } from '@grafana/runtime';
 
 export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
   private centrifugeWorker;
@@ -32,8 +31,9 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
   /**
    * Query over websocket
    */
-  getQueryData: CentrifugeSrv['getQueryData'] = (options: LiveQueryDataOptions) => {
-    return promiseWithRemoteObservableAsObservable(this.centrifugeWorker.getQueryData(options));
+  getQueryData: CentrifugeSrv['getQueryData'] = async (options) => {
+    const optionsAsPlainSerializableObject = JSON.parse(JSON.stringify(options));
+    return this.centrifugeWorker.getQueryData(optionsAsPlainSerializableObject);
   };
 
   getPresence: CentrifugeSrv['getPresence'] = (address) => {

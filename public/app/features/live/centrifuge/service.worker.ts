@@ -27,8 +27,8 @@ const getDataStream = (options: LiveDataStreamOptions) => {
   return comlink.proxy(centrifuge.getDataStream(options));
 };
 
-const getQueryData = (options: LiveQueryDataOptions) => {
-  return comlink.proxy(centrifuge.getQueryData(options));
+const getQueryData = async (options: LiveQueryDataOptions) => {
+  return await centrifuge.getQueryData(options);
 };
 
 const getStream = (address: LiveChannelAddress) => {

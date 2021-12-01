@@ -1,11 +1,16 @@
 import Centrifuge from 'centrifuge/dist/centrifuge';
-import { LiveDataStreamOptions, LiveQueryDataOptions, toDataQueryResponse } from '@grafana/runtime';
+import {
+  BackendDataSourceResponse,
+  FetchResponse,
+  LiveDataStreamOptions,
+  LiveQueryDataOptions,
+} from '@grafana/runtime';
 import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
   DataFrame,
   DataFrameJSON,
-  dataFrameToJSON,
+  DataQueryError,
   DataQueryResponse,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
@@ -18,10 +23,6 @@ import {
   toDataFrameDTO,
 } from '@grafana/data';
 import { CentrifugeLiveChannel } from './channel';
-import {
-  standardStreamOptionsProvider,
-  toStreamingDataResponse,
-} from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 export type CentrifugeSrvDeps = {
   appUrl: string;
@@ -53,7 +54,13 @@ export interface CentrifugeSrv {
    *
    * Since the initial request and subscription are on the same socket, this will support HA setups
    */
-  getQueryData(options: LiveQueryDataOptions): Observable<DataQueryResponse>;
+  getQueryData(
+    options: LiveQueryDataOptions
+  ): Promise<
+    | { data: BackendDataSourceResponse | undefined }
+    | FetchResponse<BackendDataSourceResponse | undefined>
+    | DataQueryError
+  >;
 
   /**
    * For channels that support presence, this will request the current state from the server.
@@ -230,7 +237,7 @@ export class CentrifugeService implements CentrifugeSrv {
       };
 
       if (options.frame) {
-        process(dataFrameToJSON(options.frame));
+        process(options.frame);
       } else if (channel.lastMessageWithSchema) {
         process(channel.lastMessageWithSchema);
       }
@@ -284,37 +291,13 @@ export class CentrifugeService implements CentrifugeSrv {
   }
 
   /**
-   * Execute a query over the live websocket and potentiall subscribe to a live channel.
+   * Executes a query over the live websocket. Query response can contain live channels we can subscribe to for further updates
    *
    * Since the initial request and subscription are on the same socket, this will support HA setups
    */
-  getQueryData(options: LiveQueryDataOptions): Observable<DataQueryResponse> {
-    return new Observable((subscriber) => {
-      let sub: Observable<DataQueryResponse> | undefined = undefined;
-      this.centrifuge
-        .namedRPC('grafana.query', options.body)
-        .then((raw) => {
-          const rsp = toDataQueryResponse(raw, options.request.targets);
-          // Check if any response should subscribe to a live stream
-          if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
-            sub = toStreamingDataResponse(rsp, options.request, standardStreamOptionsProvider);
-            sub.subscribe(subscriber);
-            return;
-          }
-          subscriber.next(rsp);
-        })
-        .catch((v) => {
-          subscriber.error(v);
-        });
-      return {
-        unsubscribe: () => {
-          if (sub) {
-            console.log('??? cancel?');
-          }
-        },
-      };
-    });
-  }
+  getQueryData: CentrifugeSrv['getQueryData'] = async (options) => {
+    return this.centrifuge.namedRPC('grafana.query', options.body);
+  };
 
   /**
    * For channels that support presence, this will request the current state from the server.
