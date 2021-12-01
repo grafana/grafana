@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -10,10 +11,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // POST /api/teams
-func (hs *HTTPServer) CreateTeam(c *models.ReqContext, cmd models.CreateTeamCommand) response.Response {
+func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
+	cmd := models.CreateTeamCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if c.OrgRole == models.ROLE_VIEWER {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
@@ -47,7 +53,11 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext, cmd models.CreateTeamComm
 }
 
 // PUT /api/teams/:teamId
-func (hs *HTTPServer) UpdateTeam(c *models.ReqContext, cmd models.UpdateTeamCommand) response.Response {
+func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
+	cmd := models.UpdateTeamCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":teamId")
 
@@ -159,7 +169,11 @@ func (hs *HTTPServer) GetTeamPreferences(c *models.ReqContext) response.Response
 }
 
 // PUT /api/teams/:teamId/preferences
-func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext, dtoCmd dtos.UpdatePrefsCmd) response.Response {
+func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext) response.Response {
+	dtoCmd := dtos.UpdatePrefsCmd{}
+	if err := web.Bind(c.Req, &dtoCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 

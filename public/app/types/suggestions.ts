@@ -24,7 +24,7 @@ export enum SuggestionName {
   Table = 'Table',
   StateTimeline = 'State timeline',
   StatusHistory = 'Status history',
-  TextPanel = 'Text panel',
+  TextPanel = 'Text',
   DashboardList = 'Dashboard list',
   Logs = 'Logs',
 }

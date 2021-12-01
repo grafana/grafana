@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/prometheus/alertmanager/cluster"
@@ -63,26 +64,68 @@ type UnifiedAlertingSettings struct {
 	EvaluationTimeout              time.Duration
 	ExecuteAlerts                  bool
 	DefaultConfiguration           string
-	Enabled                        bool
+	Enabled                        *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
 	DisabledOrgs                   map[int64]struct{}
+}
+
+// IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
+// It hides the implementation details of the Enabled and simplifies its usage.
+func (u *UnifiedAlertingSettings) IsEnabled() bool {
+	return u.Enabled == nil || *u.Enabled
+}
+
+func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, error) {
+	enabled, err := section.Key("enabled").Bool()
+	// the unified alerting is not enabled by default. First, check the feature flag
+	if err != nil {
+		// TODO: Remove in Grafana v9
+		if cfg.FeatureToggles["ngalert"] {
+			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
+			enabled = true
+			// feature flag overrides the legacy alerting setting.
+			legacyAlerting := false
+			AlertingEnabled = &legacyAlerting
+			return &enabled, nil
+		}
+		if IsEnterprise {
+			enabled = false
+			if AlertingEnabled == nil {
+				legacyEnabled := true
+				AlertingEnabled = &legacyEnabled
+			}
+			return &enabled, nil
+		}
+		// next, check whether legacy flag is set
+		if AlertingEnabled != nil && !*AlertingEnabled {
+			enabled = true
+			return &enabled, nil // if legacy alerting is explicitly disabled, enable the unified alerting by default.
+		}
+		// NOTE: If the enabled flag is still not defined, the final decision is made during migration (see sqlstore.migrations.ualert.CheckUnifiedAlertingEnabledByDefault).
+		cfg.Logger.Info("The state of unified alerting is still not defined. The decision will be made during as we run the database migrations")
+		return nil, nil // the flag is not defined
+	}
+
+	// If unified alerting is defined explicitly as well as legacy alerting and both are enabled, return error.
+	if enabled && AlertingEnabled != nil && *AlertingEnabled {
+		return nil, errors.New("both legacy and Grafana 8 Alerts are enabled. Disable one of them and restart")
+	}
+	// if legacy alerting is not defined but unified is determined then update the legacy with inverted value
+	if AlertingEnabled == nil {
+		legacyEnabled := !enabled
+		AlertingEnabled = &legacyEnabled
+	}
+	return &enabled, nil
 }
 
 // ReadUnifiedAlertingSettings reads both the `unified_alerting` and `alerting` sections of the configuration while preferring configuration the `alerting` section.
 // It first reads the `unified_alerting` section, then looks for non-defaults on the `alerting` section and prefers those.
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
+	var err error
 	uaCfg := UnifiedAlertingSettings{}
 	ua := iniFile.Section("unified_alerting")
-	uaCfg.Enabled = ua.Key("enabled").MustBool(false)
-
-	// TODO: Deprecate this in v8.4, if the old feature toggle ngalert is set, enable Grafana 8 Unified Alerting anyway.
-	if !uaCfg.Enabled && cfg.FeatureToggles["ngalert"] {
-		cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
-		uaCfg.Enabled = true
-		AlertingEnabled = false
-	}
-
-	if uaCfg.Enabled && AlertingEnabled {
-		return errors.New("both legacy and Grafana 8 Alerts are enabled")
+	uaCfg.Enabled, err = cfg.readUnifiedAlertingEnabledSetting(ua)
+	if err != nil {
+		return err
 	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
@@ -95,7 +138,6 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		uaCfg.DisabledOrgs[orgID] = struct{}{}
 	}
 
-	var err error
 	uaCfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (schedulerDefaultAdminConfigPollInterval).String()))
 	if err != nil {
 		return err

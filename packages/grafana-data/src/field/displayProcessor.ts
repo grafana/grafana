@@ -1,5 +1,5 @@
 // Libraries
-import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
+import { toString, toNumber as _toNumber, isEmpty, isBoolean, isArray, join } from 'lodash';
 
 // Types
 import { Field, FieldType } from '../types/dataFrame';
@@ -114,6 +114,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         color = scaleResult.color;
         percent = scaleResult.percent;
       }
+    }
+
+    if (text == null && isArray(value)) {
+      text = join(value, ', ');
     }
 
     if (text == null) {

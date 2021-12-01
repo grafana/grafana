@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -133,12 +134,12 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		}
 
 		setUp := func() {
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = aclMockResp
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
 				query.Result = []*models.TeamDTO{}
 				return nil
 			})
@@ -275,12 +276,13 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return PostAnnotation(c, cmd)
+			return PostAnnotation(c)
 		})
 
 		fakeAnnoRepo = &fakeAnnotationsRepo{}
@@ -299,12 +301,13 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return UpdateAnnotation(c, cmd)
+			return UpdateAnnotation(c)
 		})
 
 		fakeAnnoRepo = &fakeAnnotationsRepo{}
@@ -322,12 +325,13 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return PatchAnnotation(c, cmd)
+			return PatchAnnotation(c)
 		})
 
 		fakeAnnoRepo = &fakeAnnotationsRepo{}
@@ -346,12 +350,13 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return DeleteAnnotations(c, cmd)
+			return DeleteAnnotations(c)
 		})
 
 		fakeAnnoRepo = &fakeAnnotationsRepo{}
