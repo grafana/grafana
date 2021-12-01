@@ -12,6 +12,7 @@ type LayerDragDropListProps = {
   onDragEnd: (result: DropResult) => void;
   onSelect: (element: any) => any;
   onDelete: (element: any) => any;
+  onDuplicate?: (element: any) => any;
   selection?: Number[];
   excludeBaseLayer?: boolean;
   verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
@@ -22,6 +23,7 @@ export const LayerDragDropList = ({
   onDragEnd,
   onSelect,
   onDelete,
+  onDuplicate,
   selection,
   excludeBaseLayer,
   verifyLayerNameUniqueness,
@@ -61,6 +63,15 @@ export const LayerDragDropList = ({
                         <LayerName layer={element} verifyLayerNameUniqueness={verifyLayerNameUniqueness ?? undefined} />
                         <div className={style.textWrapper}>&nbsp; {element.options.type}</div>
 
+                        {onDuplicate ? (
+                          <IconButton
+                            name="copy"
+                            title={'Duplicate'}
+                            className={style.actionIcon}
+                            onClick={() => onDuplicate(element)}
+                            surface="header"
+                          />
+                        ) : null}
                         <IconButton
                           name="trash-alt"
                           title={'remove'}
