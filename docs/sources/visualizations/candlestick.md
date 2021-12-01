@@ -18,7 +18,7 @@ The Candlestick panel builds upon the foundation of the [time series]({{< relref
 
 The mode options allow you to toggle which dimensions are used for the visualization.
 
-- **Candles** limits the panel dimensions to the open, high, low and close dimensions used by candlestick visualizations.
+- **Candles** limits the panel dimensions to the open, high, low, and close dimensions used by candlestick visualizations.
 - **Volume** limits the panel dimension to the volume dimension.
 - **Both** is the default behavior for the candlestick panel. It includes both candlestick and volume visualizations.
 
