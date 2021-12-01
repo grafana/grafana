@@ -104,11 +104,11 @@ func (s *System) getDescription(c *models.ReqContext) response.Response {
 type resourcePermissionDTO struct {
 	ResourceID    string   `json:"resourceId"`
 	Managed       bool     `json:"managed"`
-	UserId        int64    `json:"userId,omitempty"`
+	UserID        int64    `json:"userId,omitempty"`
 	UserLogin     string   `json:"userLogin,omitempty"`
 	UserAvatarUrl string   `json:"userAvatarUrl,omitempty"`
 	Team          string   `json:"team,omitempty"`
-	TeamId        int64    `json:"teamId,omitempty"`
+	TeamID        int64    `json:"teamId,omitempty"`
 	TeamAvatarUrl string   `json:"teamAvatarUrl,omitempty"`
 	BuiltInRole   string   `json:"builtInRole,omitempty"`
 	Actions       []string `json:"actions"`
@@ -129,11 +129,11 @@ func (s *System) getPermissions(c *models.ReqContext) response.Response {
 			dto = append(dto, resourcePermissionDTO{
 				ResourceID:    p.ResourceID,
 				Managed:       p.Managed(),
-				UserId:        p.UserId,
+				UserID:        p.UserId,
 				UserLogin:     p.UserLogin,
 				UserAvatarUrl: dtos.GetGravatarUrl(p.UserEmail),
 				Team:          p.Team,
-				TeamId:        p.TeamId,
+				TeamID:        p.TeamId,
 				TeamAvatarUrl: dtos.GetGravatarUrlWithDefault(p.TeamEmail, p.Team),
 				BuiltInRole:   p.BuiltInRole,
 				Actions:       p.Actions,
@@ -172,7 +172,7 @@ func (s *System) setUserPermission(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, resourcePermissionDTO{
 		ResourceID:    permission.ResourceID,
 		Managed:       permission.Managed(),
-		UserId:        permission.UserId,
+		UserID:        permission.UserId,
 		UserLogin:     permission.UserLogin,
 		UserAvatarUrl: dtos.GetGravatarUrl(permission.UserEmail),
 		Actions:       permission.Actions,
@@ -204,7 +204,7 @@ func (s *System) setTeamPermission(c *models.ReqContext) response.Response {
 		ResourceID:    permission.ResourceID,
 		Managed:       permission.Managed(),
 		Team:          permission.Team,
-		TeamId:        permission.TeamId,
+		TeamID:        permission.TeamId,
 		TeamAvatarUrl: dtos.GetGravatarUrlWithDefault(permission.TeamEmail, permission.Team),
 		Actions:       permission.Actions,
 		Permission:    translated,
