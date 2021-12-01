@@ -180,6 +180,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                   labelWidth={13}
                   inputWidth={20}
                   tooltip="HTTP request timeout in seconds"
+                  placeholder="Timeout in seconds"
+                  aria-label="Timeout in seconds"
                   value={dataSourceConfig.jsonData.timeout}
                   onChange={(event) => {
                     onSettingsChange({
