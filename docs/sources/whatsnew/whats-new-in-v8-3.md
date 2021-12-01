@@ -42,7 +42,7 @@ Grafana 8.3 includes a new Candlestick panel that is so much more. Beyond candle
 
 ### Geomap updates
 
-The Geomap panel has been updated to support multiple data layers. The panel can now be configured with multiple marker, heatmap & GeoJSON layers. The layers can be individually configured, named and re-ordered to create rich, multidimensional visualizations. Please see the documentation for details on how you can set up and configure these new configuration options.
+The Geomap panel has been updated to support multiple data layers. The panel can now be configured with multiple markers, heatmaps & GeoJSON layers. The layers can be individually configured, named, and re-ordered to create rich, multidimensional visualizations. Please see the documentation for details on how you can set up and configure these new configuration options.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap_8_3.png" max-width="1200px" caption="Geomap panel updates" >}}
 
