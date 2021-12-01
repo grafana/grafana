@@ -3,7 +3,7 @@ import { Container } from '@grafana/ui';
 import { StandardEditorProps } from '@grafana/data';
 import { DropResult } from 'react-beautiful-dnd';
 
-import { GeomapPanelOptions } from '../types';
+import { GeomapPanelOptions, MapLayerState } from '../types';
 import { GeomapInstanceState } from '../GeomapPanel';
 import { AddLayerButton } from './LayerDragDropList/AddLayerButton';
 import { LayerDragDropList } from './LayerDragDropList/LayerDragDropList';
@@ -36,11 +36,11 @@ export const LayersEditor = (props: LayersEditorProps) => {
     actions.reorder(src, dst);
   };
 
-  const onSelect = (element: any) => {
+  const onSelect = (element: MapLayerState<any>) => {
     actions.selectLayer(element.options.name);
   };
 
-  const onDelete = (element: any) => {
+  const onDelete = (element: MapLayerState<any>) => {
     actions.deleteLayer(element.options.name);
   };
 
@@ -50,7 +50,7 @@ export const LayersEditor = (props: LayersEditorProps) => {
     <>
       <Container>
         <AddLayerButton
-          onChange={(v: any) => actions.addlayer(v.value!)}
+          onChange={(v) => actions.addlayer(v.value!)}
           options={geomapLayerRegistry.selectOptions(undefined, dataLayerFilter).options}
           label={'Add layer'}
         />
