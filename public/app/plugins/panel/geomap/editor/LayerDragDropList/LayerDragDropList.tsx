@@ -11,6 +11,7 @@ type LayerDragDropListProps = {
   layers: any[];
   onDragEnd: (result: DropResult) => void;
   onSelect: (element: any) => any;
+  onDelete: (element: any) => any;
   selection?: Number[];
   excludeBaseLayer?: boolean;
   verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
@@ -20,6 +21,7 @@ export const LayerDragDropList = ({
   layers,
   onDragEnd,
   onSelect,
+  onDelete,
   selection,
   excludeBaseLayer,
   verifyLayerNameUniqueness,
@@ -63,7 +65,7 @@ export const LayerDragDropList = ({
                           name="trash-alt"
                           title={'remove'}
                           className={cx(style.actionIcon, style.dragIcon)}
-                          // onClick={() => actions.deleteLayer(uid)}
+                          onClick={() => onDelete(element)}
                           surface="header"
                         />
                         {layers.length > 2 && (

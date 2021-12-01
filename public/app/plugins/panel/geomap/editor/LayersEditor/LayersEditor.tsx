@@ -39,6 +39,10 @@ export const LayersEditor = (props: LayersEditorProps) => {
     actions.selectLayer(element.options.name);
   };
 
+  const onDelete = (element: any) => {
+    actions.deleteLayer(element.options.name);
+  };
+
   const selection = selected ? [selected] : [];
 
   return (
@@ -53,6 +57,7 @@ export const LayersEditor = (props: LayersEditorProps) => {
         layers={layers}
         onDragEnd={onDragEnd}
         onSelect={onSelect}
+        onDelete={onDelete}
         selection={selection}
         excludeBaseLayer
         verifyLayerNameUniqueness={actions.canRename}

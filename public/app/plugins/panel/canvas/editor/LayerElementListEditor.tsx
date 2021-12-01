@@ -202,6 +202,10 @@ export class LayerElementListEditor extends PureComponent<Props> {
       return <div>Missing layer?</div>;
     }
 
+    const onDelete = (element: any) => {
+      layer.doAction(LayerActionID.Delete, element);
+    };
+
     const styles = this.style;
     const selection: number[] = settings.selected ? settings.selected.map((v) => v.UID) : [];
     return (
@@ -225,6 +229,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
         <LayerDragDropList
           onDragEnd={this.onDragEnd}
           onSelect={this.onSelect}
+          onDelete={onDelete}
           layers={layer.elements}
           selection={selection}
         />
