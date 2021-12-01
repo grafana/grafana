@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
+import { uniqueId } from 'lodash';
 import { InfluxQuery, InfluxQueryTag } from '../../types';
 import { getTemplateSrv } from '@grafana/runtime';
 import InfluxDatasource from '../../datasource';
@@ -53,6 +54,7 @@ function withTemplateVariableOptions(optionsPromise: Promise<string[]>): Promise
 }
 
 export const Editor = (props: Props): JSX.Element => {
+  const htmlPrefixRef = useRef(uniqueId('influxdb-qe-'));
   const styles = useStyles2(getStyles);
   const query = normalizeQuery(props.query);
   const { datasource } = props;
@@ -103,6 +105,8 @@ export const Editor = (props: Props): JSX.Element => {
       tags: tags.length === 0 ? undefined : tags,
     });
   };
+
+  const htmlPrefix = htmlPrefixRef.current;
 
   return (
     <div>
@@ -172,10 +176,11 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, tz });
           }}
         />
-        <InlineLabel width="auto" className={styles.inlineLabel}>
+        <InlineLabel htmlFor={`${htmlPrefix}-order-by`} width="auto" className={styles.inlineLabel}>
           ORDER BY TIME
         </InlineLabel>
         <OrderByTimeSection
+          inputId={`${htmlPrefix}-order-by`}
           value={query.orderByTime === 'DESC' ? 'DESC' : 'ASC' /* FIXME: make this shared with influx_query_model */}
           onChange={(v) => {
             onAppliedChange({ ...query, orderByTime: v });
@@ -206,8 +211,9 @@ export const Editor = (props: Props): JSX.Element => {
           }}
         />
       </SegmentSection>
-      <SegmentSection label="FORMAT AS" fill={true}>
+      <SegmentSection htmlFor={`${htmlPrefix}-format-as`} label="FORMAT AS" fill={true}>
         <FormatAsSection
+          inputId={`${htmlPrefix}-format-as`}
           format={query.resultFormat ?? DEFAULT_RESULT_FORMAT}
           onChange={(format) => {
             onAppliedChange({ ...query, resultFormat: format });
