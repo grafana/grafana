@@ -31,15 +31,13 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
 
   const alerts = useMemo(
     (): Alert[] =>
-      filterAlerts(
-        queryString,
-        alertState,
-        sortAlerts(SortOrder.Importance, isAlertingRule(promRule) ? promRule.alerts : [])
-      ),
+      isAlertingRule(promRule) && promRule.alerts?.length
+        ? filterAlerts(queryString, alertState, sortAlerts(SortOrder.Importance, promRule.alerts))
+        : [],
     [promRule, alertState, queryString]
   );
 
-  if (!alerts.length) {
+  if (!isAlertingRule(promRule)) {
     return null;
   }
 
