@@ -6,10 +6,12 @@ import { AlertInstancesTable } from './AlertInstancesTable';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
+import { MatcherFilter } from 'app/features/alerting/unified/components/alert-groups/MatcherFilter';
+import { AlertInstanceStateFilter } from 'app/features/alerting/unified/components/rules/AlertInstanceStateFilter';
 
 type Props = {
   promRule?: Rule;
@@ -41,54 +43,21 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
     return null;
   }
 
-  const stateOptions = Object.entries(GrafanaAlertState).map(([_, value]) => ({
-    label: value,
-    value,
-  }));
-
-  const searchIcon = <Icon name={'search'} />;
   return (
     <DetailsField label="Matching instances" horizontal={true}>
       <div className={cx(styles.flexRow, styles.spaceBetween)}>
         <div className={styles.flexRow}>
-          <div className={styles.rowChild}>
-            <Label>
-              <Tooltip
-                content={
-                  <div>
-                    Filter rules and alerts using label querying, ex:
-                    <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
-                  </div>
-                }
-              >
-                <Icon name="info-circle" className={styles.tooltip} />
-              </Tooltip>
-              Search by label
-            </Label>
-            <Input
-              key={queryStringKey}
-              className={styles.inputWidth}
-              prefix={searchIcon}
-              value={queryString}
-              defaultValue={queryString}
-              onChange={(e) => setQueryString(e.currentTarget.value)}
-              placeholder="Search"
-              data-testid="search-query-input"
-            />
-          </div>
-          <div className={styles.rowChild}>
-            <Label>State</Label>
-            <RadioButtonGroup
-              value={alertState}
-              options={stateOptions}
-              onChange={setAlertState}
-              onClick={(v) => {
-                if (v === alertState) {
-                  setAlertState(undefined);
-                }
-              }}
-            />
-          </div>
+          <MatcherFilter
+            className={styles.rowChild}
+            key={queryStringKey}
+            queryString={queryString}
+            onFilterChange={(value) => setQueryString(value)}
+          />
+          <AlertInstanceStateFilter
+            className={styles.rowChild}
+            stateFilter={alertState}
+            onStateFilterChange={setAlertState}
+          />
         </div>
       </div>
 
@@ -118,10 +87,6 @@ function filterAlerts(
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
-    inputWidth: css`
-      width: 340px;
-      flex-grow: 0;
-    `,
     flexRow: css`
       display: flex;
       flex-direction: row;
@@ -135,9 +100,6 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     rowChild: css`
       margin-right: ${theme.spacing.sm};
-    `,
-    tooltip: css`
-      margin: 0 ${theme.spacing.xs};
     `,
   };
 };
