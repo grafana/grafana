@@ -79,6 +79,15 @@ export class VisualQueryEngine {
       category: PromVisualQueryOperationCategory.Math,
       renderer: multiplyRenderer,
     });
+
+    this.addOperationDef({
+      id: '__divide_by_sub_query',
+      displayName: 'Divide by sub query',
+      params: [],
+      defaultParams: [],
+      category: PromVisualQueryOperationCategory.Math,
+      renderer: multiplyRenderer,
+    });
   }
 
   private addOperationDef(op: PromVisualQueryOperationDef) {

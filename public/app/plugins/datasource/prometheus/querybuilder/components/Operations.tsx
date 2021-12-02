@@ -4,7 +4,7 @@ import { ButtonCascader, CascaderOption, useStyles2 } from '@grafana/ui';
 import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React from 'react';
 import { visualQueryEngine } from '../engine';
-import { operationTopLevelCategories, PromVisualQuery, PromVisualQueryOperation } from '../types';
+import { getDefaultTestQuery, operationTopLevelCategories, PromVisualQuery, PromVisualQueryOperation } from '../types';
 import { OperationEditor } from './OperationEditor';
 
 export interface Props {
@@ -40,6 +40,21 @@ export function Operations({ query, onChange }: Props) {
   });
 
   const onAddOperation = (value: string[]) => {
+    // Temporary hacky way to add sub queries
+    if (value[1] === '__divide_by_sub_query') {
+      onChange({
+        ...query,
+        nestedQueries: [
+          ...(query.nestedQueries ?? []),
+          {
+            operator: '/',
+            query: getDefaultTestQuery(),
+          },
+        ],
+      });
+      return;
+    }
+
     const operation = visualQueryEngine.getOperationDef(value[1]);
     const newOperation: PromVisualQueryOperation = {
       id: operation.id,

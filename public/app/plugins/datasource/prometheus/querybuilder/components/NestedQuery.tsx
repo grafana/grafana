@@ -1,47 +1,38 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { IconButton, useStyles2 } from '@grafana/ui';
 import FlexItem from 'app/plugins/datasource/cloudwatch/components/ui/FlexItem';
 import React from 'react';
-import { visualQueryEngine } from '../engine';
-import { PromVisualQueryOperation } from '../types';
-import { OperationParamEditor } from './OperationParamEditor';
+import { PrometheusDatasource } from '../../datasource';
+import { PromVisualQueryNested } from '../types';
+import { PromQueryBuilderInner } from './PromQueryBuilderInner';
 
 export interface Props {
-  operation: PromVisualQueryOperation;
+  nestedQuery: PromVisualQueryNested;
+  datasource: PrometheusDatasource;
   index: number;
-  onChange: (index: number, update: PromVisualQueryOperation) => void;
+  onChange: (index: number, update: PromVisualQueryNested) => void;
   onRemove: (index: number) => void;
 }
 
-export function OperationEditor({ operation, index, onRemove }: Props) {
+export function NestedQuery({ nestedQuery, index, datasource, onChange, onRemove }: Props) {
   const styles = useStyles2(getStyles);
-  const def = visualQueryEngine.getOperationDef(operation.id);
 
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <div className={styles.name}>{def.displayName ?? def.id}</div>
-        <Icon className={styles.infoIcon} name="info-circle" size="sm" onClick={() => {}} />
-
+        <div className={styles.name}>Divide by query</div>
         <FlexItem grow={1} />
-
         <IconButton name="times" size="sm" onClick={() => onRemove(index)} />
       </div>
       <div className={styles.body}>
-        {operation.params.map((paramValue, index) => {
-          const paramDef = def.params[Math.min(def.params.length - 1, index)];
-
-          return (
-            <OperationParamEditor
-              index={index}
-              key={index.toString()}
-              paramDef={paramDef}
-              value={paramValue}
-              operation={operation}
-            />
-          );
-        })}
+        <PromQueryBuilderInner
+          query={nestedQuery.query}
+          datasource={datasource}
+          onChange={(update) => {
+            onChange(index, { ...nestedQuery, query: update });
+          }}
+        />
       </div>
     </div>
   );
@@ -66,9 +57,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     name: css({
       // fontSize: theme.typography.bodySmall.fontSize,
-    }),
-    infoIcon: css({
-      color: theme.colors.text.secondary,
     }),
     body: css({
       margin: theme.spacing(1, 1, 0.5, 1),

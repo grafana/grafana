@@ -5,7 +5,7 @@ export interface PromVisualQuery {
   metric: string;
   labels: PromLabelFilter[];
   operations: PromVisualQueryOperation[];
-  binary?: PromVisualQueryBinary;
+  nestedQueries?: PromVisualQueryNested[];
 }
 
 export interface PromLabelFilter {
@@ -22,9 +22,9 @@ export interface PromVisualQueryOperation {
   params: string[] | number[];
 }
 
-export interface PromVisualQueryBinary {
+export interface PromVisualQueryNested {
   operator: string;
-  expression: number | PromVisualQuery;
+  query: PromVisualQuery;
 }
 
 export interface PromVisualQueryOperationDef {
@@ -65,3 +65,19 @@ export const operationTopLevelCategories = [
   PromVisualQueryOperationCategory.RateAndDeltas,
   PromVisualQueryOperationCategory.Math,
 ];
+
+export function getDefaultTestQuery() {
+  const model: PromVisualQuery = {
+    metric: 'cortex_query_scheduler_queue_duration_seconds_bucket',
+    labels: [
+      { label: 'cluster', op: '=~', value: '$cluster' },
+      { label: 'job', op: '=~', value: '($namespace)/query-scheduler.*' },
+    ],
+    operations: [
+      { id: 'rate', params: ['auto'] },
+      { id: '__group_by', params: ['sum', 'job', 'cluster'] },
+    ],
+  };
+
+  return model;
+}
