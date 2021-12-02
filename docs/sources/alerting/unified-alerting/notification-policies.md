@@ -11,6 +11,23 @@ Notification policies determine how alerts are routed to contact points. Policie
 
 You can configure Grafana managed notification policies as well as notification policies for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./fundamentals/alertmanager.md" >}}).
 
+## Grouping
+
+{{< figure max-width="40%" src="/static/img/docs/alerting/unified/notification-policies-grouping.png" max-width="650px" caption="Notification policies grouping" >}}
+
+Grouping is a new and key concept of Grafana 8 Alerts. It is used to categorize alert notifications of similar nature into a single funnel. This is essential for properly routing alert notifications during larger outages when many parts of a system fail at once causing a high number of alerts to fire at once.
+
+As an example:
+
+> You have 100 services connected to a database on different environments. These services are differentiated by a label `env=environmentname`. An alert rule is in place to monitor whether your services can reach the database named `alertname=DatabaseUnreachable`. </br></br>
+> When a network partition occurs, half of your services can no longer reach the database and as a result 50 different alerts (assuming half of your services) are fired.
+
+When the above scenario occurs, typically you only want to receive a single page (as opposed to 50) with a list of the environments that are affected.
+
+You can configure grouping to be `group_by: [alertname]`, take note that the `env` label is omitted. With this configuration in place, Grafana sends a single compact notification that has all the affected environments for this alert rule.
+
+> **Note:** There is a special label named `...` used to group all alerts by all labels (effectively disabling grouping) thus each alert will go into its own group. This is different from the default of `group_by: null` where **all** alerts go into a single group.
+
 ## Edit root notification policy
 
 > **Note:** Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organisations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 Alerts only if they have one organisation. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
