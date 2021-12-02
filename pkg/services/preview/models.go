@@ -60,3 +60,13 @@ type previewRequest struct {
 	Size  PreviewSize `json:"size"`
 	Theme string      `json:"theme"`
 }
+
+type previewResponse struct {
+	Code int    `json:"code"` // 200 | 202
+	Path string `json:"path"` // local file path to serve
+	URL  string `json:"url"`  // redirect to this URL
+}
+
+type dashRenderer interface {
+	GetPreview(req *previewRequest) *previewResponse
+}

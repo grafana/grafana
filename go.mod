@@ -256,9 +256,13 @@ require (
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 )
 
+require github.com/fogleman/gg v1.3.0
+
 require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.15 // indirect
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
+	golang.org/x/image v0.0.0-20210216034530-4410531fe030 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
