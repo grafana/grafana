@@ -179,7 +179,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(33);
+      expect(model.schemaVersion).toBe(34);
     });
 
     it('graph thresholds should be migrated', () => {
