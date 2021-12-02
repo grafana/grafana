@@ -10,7 +10,6 @@ import {
   DBCluster,
   DBClusterExpectedResources,
   DBClusterStatus,
-  DBClusterStatusMap,
   ResourcesUnits,
   ResourcesWithUnits,
 } from './DBCluster.types';
@@ -19,12 +18,6 @@ export const isClusterChanging = ({ status }: DBCluster) => {
   const isChanging = status === DBClusterStatus.changing || status === DBClusterStatus.deleting;
 
   return isChanging;
-};
-
-export const getClusterStatus = (status: string | undefined, statusMap: DBClusterStatusMap): DBClusterStatus => {
-  const key = Object.keys(statusMap).find((key: DBClusterStatus) => statusMap[key] === status) as DBClusterStatus;
-
-  return key || DBClusterStatus.changing;
 };
 
 export const buildWarningMessage = (className: string) => (

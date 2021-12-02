@@ -11,6 +11,11 @@ export type GetDBClustersAction = () => void;
 export type SetDBClustersLoadingAction = (loading: boolean) => void;
 export type ManageDBClusters = [DBCluster[], GetDBClustersAction, SetDBClustersLoadingAction, boolean];
 
+export enum DBClusterType {
+  pxc = 'DB_CLUSTER_TYPE_PXC',
+  psmdb = 'DB_CLUSTER_TYPE_PSMDB',
+}
+
 export interface DBClusterProps {
   kubernetes: Kubernetes[];
 }
@@ -148,6 +153,7 @@ export interface DBClusterPayload {
 export interface DBClusterActionAPI {
   kubernetes_cluster_name: string;
   name: string;
+  cluster_type: DBClusterType;
 }
 
 interface DBClusterParamsAPI {
@@ -257,4 +263,23 @@ export interface DBClusterChangeComponentVersionAPI {
   version: string;
   disable?: boolean;
   enable?: boolean;
+}
+
+export interface DBClusterListResponse {
+  pxc_clusters: DBClusterPayload[];
+  psmdb_clusters: DBClusterPayload[];
+}
+
+export interface DBClusterSuspendResumeRequest {
+  kubernetes_cluster_name: string;
+  name: string;
+  params: DBClusterSuspendParamsRequest | DBClusterResumeParamsRequest;
+}
+
+export interface DBClusterSuspendParamsRequest {
+  suspend: boolean;
+}
+
+export interface DBClusterResumeParamsRequest {
+  resume: boolean;
 }

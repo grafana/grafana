@@ -14,7 +14,7 @@ export const Messages = {
   save: 'Save',
   success: 'Components versions updated successfully',
   operatorLabel: {
-    [Operators.xtradb]: (version: string) => `PXC ${version}`,
+    [Operators.pxc]: (version: string) => `PXC ${version}`,
     [Operators.psmdb]: (version: string) => `PSMDB ${version}`,
   },
   componentLabel: {

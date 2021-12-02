@@ -1,6 +1,8 @@
 import { FormApi } from 'final-form';
-import { Kubernetes } from '../../../Kubernetes/Kubernetes.types';
+
 import { Databases } from 'app/percona/shared/core';
+
+import { Kubernetes } from '../../../Kubernetes/Kubernetes.types';
 
 export interface DBClusterBasicOptionsProps {
   kubernetes: Kubernetes[];
@@ -8,7 +10,7 @@ export interface DBClusterBasicOptionsProps {
 }
 
 export enum Operators {
-  xtradb = 'xtradb',
+  pxc = 'pxc',
   psmdb = 'psmdb',
 }
 

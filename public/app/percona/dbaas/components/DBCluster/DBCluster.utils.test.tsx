@@ -1,7 +1,6 @@
 import { DBClusterExpectedResources, DBClusterStatus, ResourcesUnits, ResourcesWithUnits } from './DBCluster.types';
 import {
   isClusterChanging,
-  getClusterStatus,
   formatResources,
   isOptionEmpty,
   getResourcesDifference,
@@ -10,7 +9,6 @@ import {
   formatDBClusterVersion,
   formatDBClusterVersionWithBuild,
 } from './DBCluster.utils';
-import { DBCLUSTER_STATUS_MAP } from './XtraDB.service';
 import { dbClustersStub, resourcesA, resourcesB, resourcesC } from './__mocks__/dbClustersStubs';
 
 describe('DBCluster.utils::', () => {
@@ -52,26 +50,6 @@ describe('DBCluster.utils::', () => {
     });
 
     expect(result).toBeFalsy();
-  });
-  it('returns invalid status when receives XTRA_DB_CLUSTER_STATE_INVALID', () => {
-    const result = getClusterStatus('XTRA_DB_CLUSTER_STATE_INVALID', DBCLUSTER_STATUS_MAP);
-
-    expect(result).toBe(DBClusterStatus.invalid);
-  });
-  it('returns ready status when receives XTRA_DB_CLUSTER_STATE_READY', () => {
-    const result = getClusterStatus('XTRA_DB_CLUSTER_STATE_READY', DBCLUSTER_STATUS_MAP);
-
-    expect(result).toBe(DBClusterStatus.ready);
-  });
-  it('returns changing status when receives undefined', () => {
-    const result = getClusterStatus(undefined, DBCLUSTER_STATUS_MAP);
-
-    expect(result).toBe(DBClusterStatus.changing);
-  });
-  it('returns failed status when status doesnt exist', () => {
-    const result = getClusterStatus('XTRA_DB_CLUSTER_STATE_UNKNOWN', DBCLUSTER_STATUS_MAP);
-
-    expect(result).toBe(DBClusterStatus.unknown);
   });
   it('formats resources correctly', () => {
     expect(formatResources(1000, 2)).toEqual({ value: 1, units: ResourcesUnits.KB, original: 1000 });

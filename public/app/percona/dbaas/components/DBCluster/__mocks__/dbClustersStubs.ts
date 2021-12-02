@@ -172,7 +172,7 @@ export const versionsStub = {
 export const xtradbComponentsVersionsStubs = {
   versions: [
     {
-      product: Operators.xtradb,
+      product: Operators.pxc,
       operator: '1',
       matrix: {
         pxc: versionsStub,
