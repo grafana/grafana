@@ -5,20 +5,18 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func setupTestEnv(t testing.TB) (*OSSAccessControlService, *sqlstore.SQLStore) {
+func setupTestEnv(t testing.TB) *OSSAccessControlService {
 	t.Helper()
-	db := sqlstore.InitTestDB(t)
 
 	cfg := setting.NewCfg()
 	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
@@ -29,9 +27,8 @@ func setupTestEnv(t testing.TB) (*OSSAccessControlService, *sqlstore.SQLStore) {
 		Log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
 		scopeResolver: accesscontrol.NewScopeResolver(),
-		store:         database.ProvideService(db),
 	}
-	return ac, db
+	return ac
 }
 
 func removeRoleHelper(role string) {
@@ -112,7 +109,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			ac, _ := setupTestEnv(t)
+			ac := setupTestEnv(t)
 
 			user := &models.SignedInUser{
 				UserId:         1,
@@ -156,7 +153,7 @@ func TestUsageMetrics(t *testing.T) {
 				cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 			}
 
-			s := ProvideService(cfg, &usagestats.UsageStatsMock{T: t}, nil)
+			s := ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
 			report, err := s.UsageStats.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 
@@ -554,7 +551,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 			})
 
 			// Setup
-			ac, _ := setupTestEnv(t)
+			ac := setupTestEnv(t)
 			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
 			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
@@ -578,22 +575,4 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 			assert.NotContains(t, rawUserPerms, &tt.rawPerm, "Expected raw permission to have been resolved")
 		})
 	}
-}
-
-func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, orgID int64) (*models.User, models.Team) {
-	t.Helper()
-
-	user, err := sql.CreateUser(context.Background(), models.CreateUserCommand{
-		Login: "user",
-		OrgId: orgID,
-	})
-	require.NoError(t, err)
-
-	team, err := sql.CreateTeam("team", "", orgID)
-	require.NoError(t, err)
-
-	err = sql.AddTeamMember(user.Id, orgID, team.Id, false, models.PERMISSION_VIEW)
-	require.NoError(t, err)
-
-	return user, team
 }

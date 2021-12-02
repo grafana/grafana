@@ -9,21 +9,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var _ accesscontrol.AccessControl = &OSSAccessControlService{}
-
-func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service, sql *sqlstore.SQLStore) *OSSAccessControlService {
+func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessControlService {
 	s := &OSSAccessControlService{
 		Cfg:           cfg,
 		UsageStats:    usageStats,
 		Log:           log.New("accesscontrol"),
 		scopeResolver: accesscontrol.NewScopeResolver(),
-		store:         database.ProvideService(sql),
 	}
 	s.registerUsageMetrics()
 	return s
@@ -36,7 +31,6 @@ type OSSAccessControlService struct {
 	Log           log.Logger
 	registrations accesscontrol.RegistrationList
 	scopeResolver accesscontrol.ScopeResolver
-	store         accesscontrol.ResourceStore
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -95,21 +89,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	permissions := ac.getFixedPermissions(ctx, ac.GetUserBuiltInRoles(user))
-	resolved := make([]*accesscontrol.Permission, 0, len(permissions))
-	for _, p := range permissions {
-		// if the permission has a keyword in its scope it will be resolved
-		permission, err := ac.scopeResolver.ResolveKeyword(user, *p)
-		if err != nil {
-			return nil, err
-		}
-		resolved = append(resolved, permission)
-	}
-
-	return resolved, nil
-}
-
-func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, builtinRoles []string) []*accesscontrol.Permission {
+	builtinRoles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, builtin := range builtinRoles {
 		if roleNames, ok := accesscontrol.FixedRoleGrants[builtin]; ok {
@@ -118,14 +98,19 @@ func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, buil
 				if !exists {
 					continue
 				}
-				for i := range role.Permissions {
-					permissions = append(permissions, &role.Permissions[i])
+				for _, p := range role.Permissions {
+					// if the permission has a keyword in its scope it will be resolved
+					permission, err := ac.scopeResolver.ResolveKeyword(user, p)
+					if err != nil {
+						return nil, err
+					}
+					permissions = append(permissions, permission)
 				}
 			}
 		}
 	}
 
-	return permissions
+	return permissions, nil
 }
 
 func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser) []string {
