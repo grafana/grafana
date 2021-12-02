@@ -4,6 +4,7 @@ drone_token = 'drone_token'
 tf_google_credentials = 'tf_google_credentials'
 access_key = 'access_key'
 secret = 'secret'
+prerelease_bucket = 'prerelease_bucket'
 
 def from_secret(secret):
     return {
@@ -28,4 +29,5 @@ def secrets():
         vault_secret(tf_google_credentials, 'infra/data/ci/terraform/google', 'credentials.json'),
         vault_secret(access_key, 'infra/data/ci/test-drone-caching', 'access-key'),
         vault_secret(secret, 'infra/data/ci/test-drone-caching', 'secret'),
+        vault_secret(prerelease_bucket, 'infra/data/ci/grafana/prerelease', 'bucket'),
     ]
