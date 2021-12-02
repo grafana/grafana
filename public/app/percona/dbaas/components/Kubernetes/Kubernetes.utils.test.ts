@@ -22,14 +22,14 @@ describe('Kubernetes.utils:: ', () => {
         ...kubernetesStub[0],
         operators: {
           psmdb: { status: KubernetesOperatorStatus.invalid },
-          xtradb: { status: KubernetesOperatorStatus.unavailable },
+          pxc: { status: KubernetesOperatorStatus.unavailable },
         },
       },
       {
         ...kubernetesStub[1],
         operators: {
           psmdb: { status: KubernetesOperatorStatus.unsupported },
-          xtradb: { status: KubernetesOperatorStatus.unavailable },
+          pxc: { status: KubernetesOperatorStatus.unavailable },
         },
       },
     ];
@@ -39,13 +39,13 @@ describe('Kubernetes.utils:: ', () => {
     const kubernetes = [
       {
         ...kubernetesStub[0],
-        operators: { psmdb: { status: KubernetesOperatorStatus.ok }, xtradb: { status: KubernetesOperatorStatus.ok } },
+        operators: { psmdb: { status: KubernetesOperatorStatus.ok }, pxc: { status: KubernetesOperatorStatus.ok } },
       },
       {
         ...kubernetesStub[1],
         operators: {
           psmdb: { status: KubernetesOperatorStatus.ok },
-          xtradb: { status: KubernetesOperatorStatus.unavailable },
+          pxc: { status: KubernetesOperatorStatus.unavailable },
         },
       },
     ];
@@ -57,14 +57,14 @@ describe('Kubernetes.utils:: ', () => {
         ...kubernetesStub[0],
         operators: {
           psmdb: { status: KubernetesOperatorStatus.ok },
-          xtradb: { status: KubernetesOperatorStatus.unavailable },
+          pxc: { status: KubernetesOperatorStatus.unavailable },
         },
       },
       {
         ...kubernetesStub[1],
         operators: {
           psmdb: { status: KubernetesOperatorStatus.unsupported },
-          xtradb: { status: KubernetesOperatorStatus.unavailable },
+          pxc: { status: KubernetesOperatorStatus.unavailable },
         },
       },
     ];
@@ -74,7 +74,7 @@ describe('Kubernetes.utils:: ', () => {
     expect(activeOperators[0]).toEqual(Operators.psmdb);
   });
   it('returns correct database option from operator', () => {
-    expect(getDatabaseOptionFromOperator(Operators.xtradb)).toEqual(DATABASE_OPTIONS[0]);
+    expect(getDatabaseOptionFromOperator(Operators.pxc)).toEqual(DATABASE_OPTIONS[0]);
     expect(getDatabaseOptionFromOperator(Operators.psmdb)).toEqual(DATABASE_OPTIONS[1]);
   });
 });

@@ -1,20 +1,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import { logger } from '@percona/platform-core';
-import { FulfilledPromiseResult, processPromiseResults } from 'app/percona/shared/helpers/promises';
+import { processPromiseResults } from 'app/percona/shared/helpers/promises';
 import { Databases } from 'app/percona/shared/core';
 import { Kubernetes } from '../Kubernetes/Kubernetes.types';
-import { DBCluster, DBClusterPayload, OperatorDatabasesMap, ManageDBClusters } from './DBCluster.types';
-import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
-import { KubernetesOperatorStatus } from '../Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
+import { DBCluster, DBClusterPayload, ManageDBClusters } from './DBCluster.types';
 import { newDBClusterService } from './DBCluster.utils';
+import { DBClusterService } from './DBCluster.service';
 
 const RECHECK_INTERVAL = 10000;
-const DATABASES = [Databases.mysql, Databases.mongodb];
-
-const OPERATORS: Partial<OperatorDatabasesMap> = {
-  [Databases.mysql]: Operators.xtradb,
-  [Databases.mongodb]: Operators.psmdb,
-};
 
 export const useDBClusters = (kubernetes: Kubernetes[]): ManageDBClusters => {
   const [dbClusters, setDBClusters] = useState<DBCluster[]>([]);
@@ -27,9 +20,20 @@ export const useDBClusters = (kubernetes: Kubernetes[]): ManageDBClusters => {
       }
 
       try {
-        const requests = DATABASES.map((database) => getClusters(kubernetes, database));
-        const results = await Promise.all(requests);
-        const clustersList = results.reduce((acc, r) => acc.concat(r), []);
+        const requests = kubernetes.map(DBClusterService.getDBClusters);
+        const results = await processPromiseResults(requests);
+        const clustersList: DBCluster[] = results.reduce((acc: DBCluster[], r, index) => {
+          if (r.status !== 'fulfilled') {
+            return acc;
+          }
+
+          const pxcClusters: DBClusterPayload[] = r.value?.pxc_clusters ?? [];
+          const psmdbClusters: DBClusterPayload[] = r.value?.psmdb_clusters ?? [];
+          const pxcClustersModel = clustersToModel(Databases.mysql, pxcClusters, kubernetes, index);
+          const psmdbClustersModel = clustersToModel(Databases.mongodb, psmdbClusters, kubernetes, index);
+
+          return acc.concat([...pxcClustersModel, ...psmdbClustersModel]);
+        }, []);
 
         setDBClusters(clustersList);
       } catch (e) {
@@ -57,31 +61,7 @@ export const useDBClusters = (kubernetes: Kubernetes[]): ManageDBClusters => {
   return [dbClusters, getDBClusters, setLoading, loading];
 };
 
-const getClusters = async (kubernetes: Kubernetes[], databaseType: Databases): Promise<DBCluster[]> => {
-  const dbClusterService = newDBClusterService(databaseType);
-  const kubernetesByOperator = kubernetes.filter((kubernetesCluster) => {
-    const operator = OPERATORS[databaseType] as Operators;
-    const operatorStatus = kubernetesCluster.operators[operator].status;
-
-    return operatorStatus === KubernetesOperatorStatus.ok || operatorStatus === KubernetesOperatorStatus.unsupported;
+const clustersToModel = (database: Databases, clusters: DBClusterPayload[], kubernetes: Kubernetes[], index: number) =>
+  clusters.map((cluster) => {
+    return newDBClusterService(database).toModel(cluster, kubernetes[index].kubernetesClusterName, database);
   });
-  const requests = kubernetesByOperator.map(dbClusterService.getDBClusters);
-  const results = await processPromiseResults(requests);
-
-  const clustersList: DBCluster[] = results.reduce((acc: DBCluster[], r, index) => {
-    if (r.status !== 'fulfilled') {
-      return acc;
-    }
-
-    const clusters: DBClusterPayload[] = (r as FulfilledPromiseResult).value?.clusters ?? [];
-
-    // eslint-disable-next-line arrow-body-style
-    const resultClusters = clusters.map((cluster) => {
-      return dbClusterService.toModel(cluster, kubernetesByOperator[index].kubernetesClusterName, databaseType);
-    });
-
-    return acc.concat(resultClusters);
-  }, []);
-
-  return clustersList;
-};

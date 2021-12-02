@@ -59,7 +59,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
         <div>
           <OperatorStatusItem
             databaseType={Databases.mysql}
-            operator={element.operators.xtradb}
+            operator={element.operators.pxc}
             kubernetes={element}
             setSelectedCluster={setSelectedCluster}
             setOperatorToUpdate={setOperatorToUpdate}

@@ -3,7 +3,7 @@ import { Operators } from '../DBCluster/AddDBClusterModal/DBClusterBasicOptions/
 import { ComponentToUpdate, DatabaseComponentToUpdateMap } from './Kubernetes.types';
 
 export const OPERATOR_COMPONENT_TO_UPDATE_MAP = {
-  [Operators.xtradb]: ComponentToUpdate.pxc,
+  [Operators.pxc]: ComponentToUpdate.pxc,
   [Operators.psmdb]: ComponentToUpdate.psmdb,
 };
 

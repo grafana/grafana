@@ -17,7 +17,7 @@ export interface ManageComponentsVersionsRenderProps {
 }
 
 export interface PossibleComponentOptions {
-  [Operators.xtradb]?: SelectableValue[];
+  [Operators.pxc]?: SelectableValue[];
   [Operators.psmdb]?: SelectableValue[];
 }
 

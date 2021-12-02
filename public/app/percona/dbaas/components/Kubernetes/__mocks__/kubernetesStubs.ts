@@ -8,7 +8,7 @@ export const kubernetesStub = [
       psmdb: {
         status: KubernetesOperatorStatus.ok,
       },
-      xtradb: {
+      pxc: {
         status: KubernetesOperatorStatus.ok,
       },
     },
@@ -20,7 +20,7 @@ export const kubernetesStub = [
       psmdb: {
         status: KubernetesOperatorStatus.ok,
       },
-      xtradb: {
+      pxc: {
         status: KubernetesOperatorStatus.ok,
       },
     },
@@ -36,7 +36,7 @@ export const addActionStub = jest.fn(() => {
       psmdb: {
         status: KubernetesOperatorStatus.ok,
       },
-      xtradb: {
+      pxc: {
         status: KubernetesOperatorStatus.ok,
       },
     },

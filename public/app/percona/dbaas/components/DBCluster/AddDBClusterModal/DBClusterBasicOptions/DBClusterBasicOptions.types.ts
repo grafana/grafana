@@ -8,7 +8,7 @@ export interface DBClusterBasicOptionsProps {
 }
 
 export enum Operators {
-  xtradb = 'xtradb',
+  pxc = 'pxc',
   psmdb = 'psmdb',
 }
 

@@ -27,6 +27,6 @@ export const BILLION = 10 ** 9;
 export const RESOURCES_PRECISION = 2;
 
 export const DATABASE_OPERATORS: Partial<DatabaseOperatorsMap> = {
-  [Operators.xtradb]: Databases.mysql,
+  [Operators.pxc]: Databases.mysql,
   [Operators.psmdb]: Databases.mongodb,
 };

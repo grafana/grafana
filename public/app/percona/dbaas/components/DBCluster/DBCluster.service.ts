@@ -15,12 +15,11 @@ import {
   DBClusterExpectedResources,
   ResourcesUnits,
   CpuUnits,
+  DBClusterListResponse,
 } from './DBCluster.types';
 import { formatResources } from './DBCluster.utils';
 
 export abstract class DBClusterService {
-  abstract getDBClusters(kubernetes: Kubernetes): Promise<DBClusterPayload>;
-
   abstract addDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload>;
 
   abstract updateDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload>;
@@ -47,6 +46,10 @@ export abstract class DBClusterService {
   abstract getExpectedResources(dbCluster: DBCluster): Promise<DBClusterExpectedResources>;
 
   abstract toModel(dbCluster: DBClusterPayload, kubernetesClusterName: string, databaseType: Databases): DBCluster;
+
+  static async getDBClusters(kubernetes: Kubernetes): Promise<DBClusterListResponse> {
+    return apiManagement.post<any, Kubernetes>('/DBaaS/DBClusters/List', kubernetes, true);
+  }
 
   static async getLogs({ kubernetesClusterName, clusterName }: DBCluster): Promise<DBClusterLogsAPI> {
     return apiManagement.post<DBClusterLogsAPI, any>(

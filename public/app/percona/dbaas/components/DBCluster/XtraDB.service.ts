@@ -1,7 +1,6 @@
 import { omit, pick } from 'lodash';
 import { Databases } from 'app/percona/shared/core';
 import { apiManagement } from 'app/percona/shared/helpers/api';
-import { Kubernetes } from '../Kubernetes/Kubernetes.types';
 import {
   DatabaseVersion,
   CpuUnits,
@@ -12,13 +11,14 @@ import {
   DBClusterExpectedResources,
   DBClusterExpectedResourcesAPI,
   DBClusterPayload,
-  DBClusterStatus,
   ResourcesUnits,
   DBClusterComponent,
   DBClusterChangeComponentsAPI,
+  DBClusterType,
+  DBClusterStatus,
+  DBClusterSuspendResumeRequest,
 } from './DBCluster.types';
 import { DBClusterService } from './DBCluster.service';
-import { getClusterStatus } from './DBCluster.utils';
 import { BILLION, THOUSAND } from './DBCluster.constants';
 import {
   ManageComponentsVersionsRenderProps,
@@ -27,59 +27,54 @@ import {
 import { getComponentChange } from './DBCluster.service.utils';
 import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
-export const DBCLUSTER_STATUS_MAP = {
-  [DBClusterStatus.invalid]: 'XTRA_DB_CLUSTER_STATE_INVALID',
-  [DBClusterStatus.changing]: 'XTRA_DB_CLUSTER_STATE_CHANGING',
-  [DBClusterStatus.ready]: 'XTRA_DB_CLUSTER_STATE_READY',
-  [DBClusterStatus.failed]: 'XTRA_DB_CLUSTER_STATE_FAILED',
-  [DBClusterStatus.deleting]: 'XTRA_DB_CLUSTER_STATE_DELETING',
-  [DBClusterStatus.suspended]: 'XTRA_DB_CLUSTER_STATE_PAUSED',
-  [DBClusterStatus.upgrading]: 'XTRA_DB_CLUSTER_STATE_UPGRADING',
-  [DBClusterStatus.unknown]: 'XTRA_DB_CLUSTER_STATE_UNKNOWN',
-};
-
 export class XtraDBService extends DBClusterService {
-  getDBClusters(kubernetes: Kubernetes): Promise<DBClusterPayload> {
-    return apiManagement.post<any, Kubernetes>('/DBaaS/XtraDBClusters/List', kubernetes, true);
-  }
-
   addDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
-    return apiManagement.post<DBClusterPayload, any>('/DBaaS/XtraDBCluster/Create', toAPI(dbCluster));
+    return apiManagement.post<DBClusterPayload, any>('/DBaaS/PXCCluster/Create', toAPI(dbCluster));
   }
 
   updateDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
-    return apiManagement.post<DBClusterPayload, any>('/DBaaS/XtraDBCluster/Update', toAPI(dbCluster));
+    return apiManagement.post<DBClusterPayload, any>('/DBaaS/PXCCluster/Update', toAPI(dbCluster));
   }
 
   resumeDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
-    return apiManagement.post<DBClusterPayload, any>('/DBaaS/XtraDBCluster/Update', toResumeAPI(dbCluster));
+    return apiManagement.post<DBClusterPayload, DBClusterSuspendResumeRequest>(
+      '/DBaaS/PXCCluster/Update',
+      toResumeAPI(dbCluster)
+    );
   }
 
   suspendDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
-    return apiManagement.post<DBClusterPayload, any>('/DBaaS/XtraDBCluster/Update', toSuspendAPI(dbCluster));
+    return apiManagement.post<DBClusterPayload, DBClusterSuspendResumeRequest>(
+      '/DBaaS/PXCCluster/Update',
+      toSuspendAPI(dbCluster)
+    );
   }
 
   deleteDBClusters(dbCluster: DBCluster): Promise<void> {
-    const toAPI = (cluster: DBCluster): DBClusterActionAPI => ({
-      name: cluster.clusterName,
+    const body = {
+      name: dbCluster.clusterName,
       kubernetes_cluster_name: dbCluster.kubernetesClusterName,
-    });
+      cluster_type: DBClusterType.pxc,
+    };
 
-    return apiManagement.post<any, DBClusterActionAPI>('/DBaaS/XtraDBCluster/Delete', toAPI(dbCluster));
+    return apiManagement.post<void, DBClusterActionAPI>('/DBaaS/DBClusters/Delete', body);
   }
 
   getDBClusterCredentials(dbCluster: DBCluster): Promise<void | DBClusterConnectionAPI> {
     return apiManagement.post<DBClusterConnectionAPI, any>(
-      '/DBaaS/XtraDBClusters/GetCredentials',
+      '/DBaaS/PXCClusters/GetCredentials',
       omit(toAPI(dbCluster), ['params'])
     );
   }
 
   restartDBCluster(dbCluster: DBCluster): Promise<void> {
-    return apiManagement.post<any, DBClusterActionAPI>(
-      '/DBaaS/XtraDBCluster/Restart',
-      omit(toAPI(dbCluster), ['params'])
-    );
+    const body = {
+      name: dbCluster.clusterName,
+      kubernetes_cluster_name: dbCluster.kubernetesClusterName,
+      cluster_type: DBClusterType.pxc,
+    };
+
+    return apiManagement.post<any, DBClusterActionAPI>('/DBaaS/DBClusters/Restart', body);
   }
 
   getComponents(kubernetesClusterName: string): Promise<DBClusterComponents> {
@@ -91,8 +86,8 @@ export class XtraDBService extends DBClusterService {
   setComponents(kubernetesClusterName: string, componentsVersions: ManageComponentsVersionsRenderProps): Promise<void> {
     return apiManagement.post<any, DBClusterChangeComponentsAPI>('/DBaaS/Components/ChangePXC', {
       kubernetes_cluster_name: kubernetesClusterName,
-      pxc: getComponentChange(Operators.xtradb, SupportedComponents.pxc, componentsVersions),
-      haproxy: getComponentChange(Operators.xtradb, SupportedComponents.haproxy, componentsVersions),
+      pxc: getComponentChange(Operators.pxc, SupportedComponents.pxc, componentsVersions),
+      haproxy: getComponentChange(Operators.pxc, SupportedComponents.haproxy, componentsVersions),
     });
   }
 
@@ -109,7 +104,10 @@ export class XtraDBService extends DBClusterService {
 
   getExpectedResources(dbCluster: DBCluster): Promise<DBClusterExpectedResources> {
     return apiManagement
-      .post<any, Partial<DBClusterPayload>>('/DBaaS/XtraDBCluster/Resources/Get', pick(toAPI(dbCluster), ['params']))
+      .post<DBClusterExpectedResourcesAPI, Partial<DBClusterPayload>>(
+        '/DBaaS/PXCCluster/Resources/Get',
+        pick(toAPI(dbCluster), ['params'])
+      )
       .then(({ expected }: DBClusterExpectedResourcesAPI) => ({
         expected: {
           cpu: { value: expected.cpu_m / THOUSAND, units: CpuUnits.MILLI, original: +expected.cpu_m },
@@ -132,7 +130,7 @@ export class XtraDBService extends DBClusterService {
       memory: (dbCluster.params.pxc?.compute_resources?.memory_bytes || 0) / BILLION,
       cpu: (dbCluster.params.pxc?.compute_resources?.cpu_m || 0) / THOUSAND,
       disk: (dbCluster.params.pxc?.disk_size || 0) / BILLION,
-      status: getClusterStatus(dbCluster.state, DBCLUSTER_STATUS_MAP),
+      status: dbCluster.state || DBClusterStatus.changing,
       message: dbCluster.operation?.message,
       finishedSteps: dbCluster.operation?.finished_steps || 0,
       totalSteps: dbCluster.operation?.total_steps || 0,

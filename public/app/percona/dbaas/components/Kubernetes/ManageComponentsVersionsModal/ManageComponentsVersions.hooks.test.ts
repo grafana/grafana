@@ -39,7 +39,7 @@ describe('ManageComponentsVersions.hooks::', () => {
     expect(versionsFieldName).toEqual(versionsFieldNameStub);
   });
   it('returns operator components options, versions and initial values with one operator', async () => {
-    const wrapper = renderHook(() => useOperatorsComponentsVersions(_.omit(kubernetesStub[0], 'operators.xtradb')));
+    const wrapper = renderHook(() => useOperatorsComponentsVersions(_.omit(kubernetesStub[0], 'operators.pxc')));
 
     await wrapper.waitForNextUpdate();
 
@@ -55,10 +55,10 @@ describe('ManageComponentsVersions.hooks::', () => {
     expect(_.omit(initialValues, omitDefaultLabels)).toEqual(
       _.omit(
         initialValuesStubs,
-        ['xtradbpxc', 'xtradbhaproxy', 'xtradbpxcdefault', 'xtradbhaproxydefault'].concat(omitDefaultLabels)
+        ['pxcpxc', 'pxchaproxy', 'pxcpxcdefault', 'pxchaproxydefault'].concat(omitDefaultLabels)
       )
     );
-    expect(possibleComponentOptions).toEqual(_.omit(possibleComponentOptionsStubs, 'xtradb'));
+    expect(possibleComponentOptions).toEqual(_.omit(possibleComponentOptionsStubs, 'pxc'));
     expect(operatorsOptions).toEqual([operatorsOptionsStubs[0]]);
     expect(componentOptions).toEqual(psmdbComponentOptionsStubs);
     expect(versionsOptions).toEqual(versionsStubs);

@@ -1,7 +1,6 @@
 import { omit, pick } from 'lodash';
 import { Databases } from 'app/percona/shared/core';
 import { apiManagement } from 'app/percona/shared/helpers/api';
-import { Kubernetes } from '../Kubernetes/Kubernetes.types';
 import {
   DatabaseVersion,
   CpuUnits,
@@ -12,13 +11,14 @@ import {
   DBClusterExpectedResources,
   DBClusterExpectedResourcesAPI,
   DBClusterPayload,
-  DBClusterStatus,
   ResourcesUnits,
   DBClusterComponent,
   DBClusterChangeComponentsAPI,
+  DBClusterType,
+  DBClusterStatus,
+  DBClusterSuspendResumeRequest,
 } from './DBCluster.types';
 import { DBClusterService } from './DBCluster.service';
-import { getClusterStatus } from './DBCluster.utils';
 import { BILLION, THOUSAND } from './DBCluster.constants';
 import {
   ManageComponentsVersionsRenderProps,
@@ -27,22 +27,7 @@ import {
 import { getComponentChange } from './DBCluster.service.utils';
 import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
-export const DBCLUSTER_STATUS_MAP = {
-  [DBClusterStatus.invalid]: 'PSMDB_CLUSTER_STATE_INVALID',
-  [DBClusterStatus.changing]: 'PSMDB_CLUSTER_STATE_CHANGING',
-  [DBClusterStatus.ready]: 'PSMDB_CLUSTER_STATE_READY',
-  [DBClusterStatus.failed]: 'PSMDB_CLUSTER_STATE_FAILED',
-  [DBClusterStatus.deleting]: 'PSMDB_CLUSTER_STATE_DELETING',
-  [DBClusterStatus.suspended]: 'PSMDB_CLUSTER_STATE_PAUSED',
-  [DBClusterStatus.upgrading]: 'PSMDB_CLUSTER_STATE_UPGRADING',
-  [DBClusterStatus.unknown]: 'PSMDB_CLUSTER_STATE_UNKNOWN',
-};
-
 export class PSMDBService extends DBClusterService {
-  getDBClusters(kubernetes: Kubernetes): Promise<DBClusterPayload> {
-    return apiManagement.post<any, Kubernetes>('/DBaaS/PSMDBClusters/List', kubernetes, true);
-  }
-
   addDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
     return apiManagement.post<DBClusterPayload, any>('/DBaaS/PSMDBCluster/Create', toAPI(dbCluster));
   }
@@ -52,20 +37,27 @@ export class PSMDBService extends DBClusterService {
   }
 
   resumeDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
-    return apiManagement.post<DBClusterPayload, any>('/DBaaS/PSMDBCluster/Update', toResumeAPI(dbCluster));
+    return apiManagement.post<DBClusterPayload, DBClusterSuspendResumeRequest>(
+      '/DBaaS/PSMDBCluster/Update',
+      toResumeAPI(dbCluster)
+    );
   }
 
   suspendDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
-    return apiManagement.post<DBClusterPayload, any>('/DBaaS/PSMDBCluster/Update', toSuspendAPI(dbCluster));
+    return apiManagement.post<DBClusterPayload, DBClusterSuspendResumeRequest>(
+      '/DBaaS/PSMDBCluster/Update',
+      toSuspendAPI(dbCluster)
+    );
   }
 
   deleteDBClusters(dbCluster: DBCluster): Promise<void> {
-    const toAPI = (cluster: DBCluster): DBClusterActionAPI => ({
-      name: cluster.clusterName,
+    const body = {
+      name: dbCluster.clusterName,
       kubernetes_cluster_name: dbCluster.kubernetesClusterName,
-    });
+      cluster_type: DBClusterType.psmdb,
+    };
 
-    return apiManagement.post<any, DBClusterActionAPI>('/DBaaS/PSMDBCluster/Delete', toAPI(dbCluster));
+    return apiManagement.post<void, DBClusterActionAPI>('/DBaaS/DBClusters/Delete', body);
   }
 
   getDBClusterCredentials(dbCluster: DBCluster): Promise<void | DBClusterConnectionAPI> {
@@ -76,10 +68,13 @@ export class PSMDBService extends DBClusterService {
   }
 
   restartDBCluster(dbCluster: DBCluster): Promise<void> {
-    return apiManagement.post<any, DBClusterActionAPI>(
-      '/DBaaS/PSMDBCluster/Restart',
-      omit(toAPI(dbCluster), ['params'])
-    );
+    const body = {
+      name: dbCluster.clusterName,
+      kubernetes_cluster_name: dbCluster.kubernetesClusterName,
+      cluster_type: DBClusterType.psmdb,
+    };
+
+    return apiManagement.post<any, DBClusterActionAPI>('/DBaaS/DBClusters/Restart', body);
   }
 
   getComponents(kubernetesClusterName: string): Promise<DBClusterComponents> {
@@ -108,7 +103,10 @@ export class PSMDBService extends DBClusterService {
 
   getExpectedResources(dbCluster: DBCluster): Promise<DBClusterExpectedResources> {
     return apiManagement
-      .post<any, Partial<DBClusterPayload>>('/DBaaS/PSMDBCluster/Resources/Get', pick(toAPI(dbCluster), ['params']))
+      .post<DBClusterExpectedResourcesAPI, Partial<DBClusterPayload>>(
+        '/DBaaS/PSMDBCluster/Resources/Get',
+        pick(toAPI(dbCluster), ['params'])
+      )
       .then(({ expected }: DBClusterExpectedResourcesAPI) => ({
         expected: {
           cpu: { value: expected.cpu_m / THOUSAND, units: CpuUnits.MILLI, original: +expected.cpu_m },
@@ -131,7 +129,7 @@ export class PSMDBService extends DBClusterService {
       memory: (dbCluster.params.replicaset?.compute_resources?.memory_bytes || 0) / BILLION,
       cpu: (dbCluster.params.replicaset?.compute_resources?.cpu_m || 0) / THOUSAND,
       disk: (dbCluster.params.replicaset?.disk_size || 0) / BILLION,
-      status: getClusterStatus(dbCluster.state, DBCLUSTER_STATUS_MAP),
+      status: dbCluster.state || DBClusterStatus.changing,
       message: dbCluster.operation?.message,
       finishedSteps: dbCluster.operation?.finished_steps || 0,
       totalSteps: dbCluster.operation?.total_steps || 0,
