@@ -584,7 +584,7 @@ describe('AmRoutes', () => {
     userEvent.click(ui.editRouteButton.get(rows[0]));
 
     const muteTimingSelect = ui.muteTimingSelect.get();
-    await userEvent.type(byRole('textbox').get(muteTimingSelect), 'default-mute{enter}');
+    await clickSelectOption(muteTimingSelect, 'default-mute');
     expect(muteTimingSelect).toHaveTextContent('default-mute');
 
     const savePolicyButton = ui.savePolicyButton.get();

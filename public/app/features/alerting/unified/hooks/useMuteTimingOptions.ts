@@ -12,7 +12,7 @@ export function useMuteTimingOptions(): Array<SelectableValue<string>> {
 
   return useMemo(() => {
     const { result } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
-    const config: AlertmanagerConfig = result?.alertmanager_config;
+    const config: AlertmanagerConfig = result?.alertmanager_config ?? {};
 
     const muteTimingsOptions: Array<SelectableValue<string>> =
       config?.mute_time_intervals?.map((value) => ({

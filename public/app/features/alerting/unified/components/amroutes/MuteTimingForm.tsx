@@ -5,7 +5,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
-import { AlertmanagerConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertmanagerConfig,
+  AlertManagerCortexConfig,
+  MuteTimeInterval,
+} from 'app/plugins/datasource/alertmanager/types';
 import { AlertManagerPicker } from '../AlertManagerPicker';
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
 import { updateAlertManagerConfigAction } from '../../state/actions';
@@ -53,10 +57,12 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const styles = useStyles2(getStyles);
 
+  const defaultAmCortexConfig = { alertmanager_config: {}, template_files: {} };
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
-  const { result, loading } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
+  const { result = defaultAmCortexConfig, loading } =
+    (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
-  const config: AlertmanagerConfig = result?.alertmanager_config;
+  const config: AlertmanagerConfig = result?.alertmanager_config ?? {};
   const defaultValues = useDefaultValues(muteTiming);
   const formApi = useForm({ defaultValues });
 
@@ -67,7 +73,7 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
       ? config?.mute_time_intervals?.filter(({ name }) => name !== muteTiming.name)
       : config.mute_time_intervals;
 
-    const newConfig = {
+    const newConfig: AlertManagerCortexConfig = {
       ...result,
       alertmanager_config: {
         ...config,
