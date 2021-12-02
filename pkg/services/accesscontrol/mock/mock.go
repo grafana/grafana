@@ -14,14 +14,13 @@ type fullAccessControl interface {
 }
 
 type Calls struct {
-	Evaluate             []interface{}
-	GetUserPermissions   []interface{}
-	GetUserRoles         []interface{}
-	IsDisabled           []interface{}
-	DeclareFixedRoles    []interface{}
-	GetUserBuiltInRoles  []interface{}
-	RegisterFixedRoles   []interface{}
-	GetResourcesMetadata []interface{}
+	Evaluate            []interface{}
+	GetUserPermissions  []interface{}
+	GetUserRoles        []interface{}
+	IsDisabled          []interface{}
+	DeclareFixedRoles   []interface{}
+	GetUserBuiltInRoles []interface{}
+	RegisterFixedRoles  []interface{}
 }
 
 type Mock struct {
@@ -38,14 +37,13 @@ type Mock struct {
 	Calls Calls
 
 	// Override functions
-	EvaluateFunc             func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
-	GetUserPermissionsFunc   func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
-	GetUserRolesFunc         func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
-	IsDisabledFunc           func() bool
-	DeclareFixedRolesFunc    func(...accesscontrol.RoleRegistration) error
-	GetUserBuiltInRolesFunc  func(user *models.SignedInUser) []string
-	RegisterFixedRolesFunc   func() error
-	GetResourcesMetadataFunc func(context.Context, *models.SignedInUser, string, []string) (map[string]accesscontrol.Metadata, error)
+	EvaluateFunc            func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
+	GetUserPermissionsFunc  func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
+	GetUserRolesFunc        func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
+	IsDisabledFunc          func() bool
+	DeclareFixedRolesFunc   func(...accesscontrol.RoleRegistration) error
+	GetUserBuiltInRolesFunc func(user *models.SignedInUser) []string
+	RegisterFixedRolesFunc  func() error
 }
 
 // Ensure the mock stays in line with the interface
@@ -163,15 +161,4 @@ func (m *Mock) RegisterFixedRoles() error {
 		return m.RegisterFixedRolesFunc()
 	}
 	return nil
-}
-
-// GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-// This mock returns no error and no metadata unless an override is provided.
-func (m *Mock) GetResourcesMetadata(ctx context.Context, user *models.SignedInUser, resource string, resourceIDs []string) (map[string]accesscontrol.Metadata, error) {
-	m.Calls.GetResourcesMetadata = append(m.Calls.GetResourcesMetadata, []interface{}{user, resource, resourceIDs})
-	// Use override if provided
-	if m.GetResourcesMetadataFunc != nil {
-		return m.GetResourcesMetadataFunc(ctx, user, resource, resourceIDs)
-	}
-	return nil, nil
 }

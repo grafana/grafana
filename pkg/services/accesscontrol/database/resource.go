@@ -487,54 +487,6 @@ func getManagedPermissions(sess *sqlstore.DBSession, resourceID string, ids []in
 	return result, nil
 }
 
-// getUserResourcePermissions returns the list of permissions a user has been granted in regards to a list of resources
-func getUserResourcePermissions(sess *sqlstore.DBSession, orgID, userID int64, query accesscontrol.GetUserResourcesPermissionsQuery) ([]*accesscontrol.Permission, error) {
-	result := make([]*accesscontrol.Permission, 0)
-
-	if len(query.ResourceIDs) == 0 {
-		return nil, nil
-	}
-
-	rawSelect := `
-	SELECT p.action, p.scope
-	`
-	rawFrom := `
-	FROM permission p INNER JOIN role ON p.role_id = role.id
-    `
-
-	userFilter, args := userRolesFilter(orgID, userID, query.BuiltInRoles)
-
-	resourceFilter := `
-		AND (p.scope = '*' OR p.scope = ? OR p.scope = ? OR p.scope IN (?` + strings.Repeat(",?", len(query.ResourceIDs)-1) + `))
-	`
-
-	args = append(args, accesscontrol.GetResourceAllScope(query.Resource), accesscontrol.GetResourceAllIDScope(query.Resource))
-
-	for _, id := range query.ResourceIDs {
-		args = append(args, accesscontrol.GetResourceScope(query.Resource, id))
-	}
-
-	sql := rawSelect + rawFrom + userFilter + resourceFilter
-	if err := sess.SQL(sql, args...).Find(&result); err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-// GetUserResourcePermissions returns the list of permissions a user has been granted in regards to a list of resources
-func (s *AccessControlStore) GetUserResourcePermissions(ctx context.Context, orgID, userID int64, query accesscontrol.GetUserResourcesPermissionsQuery) ([]*accesscontrol.Permission, error) {
-	var result []*accesscontrol.Permission
-
-	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var err error
-		result, err = getUserResourcePermissions(sess, orgID, userID, query)
-		return err
-	})
-
-	return result, err
-}
-
 func managedPermission(action, resource string, resourceID string) accesscontrol.Permission {
 	return accesscontrol.Permission{
 		Action: action,

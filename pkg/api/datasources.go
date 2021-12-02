@@ -72,7 +72,12 @@ func (hs *HTTPServer) getDataSourceAccessControlMetadata(c *models.ReqContext, d
 
 	dsIDs := []string{fmt.Sprintf("%d", dsID)}
 
-	metadata, err := hs.AccessControl.GetResourcesMetadata(c.Req.Context(), c.SignedInUser, "datasources", dsIDs)
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	if err != nil || len(userPermissions) == 0 {
+		return nil, err
+	}
+
+	metadata, err := accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "datasources", dsIDs)
 	if err != nil || len(metadata) == 0 {
 		return nil, err
 	}
