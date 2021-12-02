@@ -19,7 +19,14 @@ export function Operations({ query, onChange }: Props) {
   let segments: React.ReactNode[] = [];
 
   for (let index = 0; index < query.operations.length; index++) {
-    segments.push(<OperationEditor index={index} operation={query.operations[index]} onChange={onOperationChange} />);
+    segments.push(
+      <OperationEditor
+        key={index.toString()}
+        index={index}
+        operation={query.operations[index]}
+        onChange={onOperationChange}
+      />
+    );
   }
 
   const addOptions: CascaderOption[] = operationTopLevelCategories.map((category) => {
@@ -34,7 +41,20 @@ export function Operations({ query, onChange }: Props) {
     };
   });
 
-  segments.push(<ButtonCascader icon="plus" options={addOptions} />);
+  const onAddOperation = (value: string[]) => {
+    const operation = visualQueryEngine.getOperationDef(value[1]);
+    const newOperation: PromVisualQueryOperation = {
+      type: operation.type,
+      params: operation.defaultParams,
+    };
+
+    onChange({
+      ...query,
+      operations: [...query.operations, newOperation],
+    });
+  };
+
+  segments.push(<ButtonCascader key="cascader" icon="plus" options={addOptions} onChange={onAddOperation} />);
 
   return <>{segments}</>;
 }

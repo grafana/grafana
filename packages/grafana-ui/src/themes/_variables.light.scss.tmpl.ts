@@ -11,6 +11,9 @@ export const lightThemeVarsTemplate = (theme: GrafanaTheme2) =>
 
 $theme-name: light;
 
+$colors-action-hover: ${theme.colors.action.hover};
+$colors-action-selected: ${theme.colors.action.selected};
+
 // New Colors
 // -------------------------
 $blue-light: ${theme.colors.primary.text};

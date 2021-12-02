@@ -74,6 +74,14 @@ export class VisualQueryEngine {
     return Object.values(this.operations).filter((op) => op.category === category);
   }
 
+  getOperationDef(id: string) {
+    const operation = this.operations[id];
+    if (!operation) {
+      throw new Error(`Operation ${id} not found`);
+    }
+    return operation;
+  }
+
   renderQuery(query: PromVisualQuery) {
     let queryString = `${query.metric}${this.renderLabels(query)}`;
 
