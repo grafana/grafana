@@ -72,6 +72,7 @@ export const BucketScriptSettingsEditor = ({ value, previousMetrics }: Props) =>
                 `}
               >
                 <Input
+                  aria-label="Variable name"
                   defaultValue={pipelineVar.name}
                   placeholder="Variable Name"
                   onBlur={(e) => dispatch(renamePipelineVariable({ newName: e.target.value, index }))}
