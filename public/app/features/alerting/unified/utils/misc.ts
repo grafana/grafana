@@ -7,7 +7,7 @@ import * as ruleId from './rule-id';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
 import { sortBy } from 'lodash';
-import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string {
   const sourceName = getRulesSourceName(ruleSource);
@@ -88,10 +88,13 @@ export function retryWhile<T, E = Error>(
   return makeAttempt();
 }
 
-const grafanaAlertStateSortScore = {
+const alertStateSortScore = {
   [GrafanaAlertState.Alerting]: 1,
+  [PromAlertingRuleState.Firing]: 1,
   [GrafanaAlertState.Error]: 1,
   [GrafanaAlertState.Pending]: 2,
+  [PromAlertingRuleState.Pending]: 2,
+  [PromAlertingRuleState.Inactive]: 2,
   [GrafanaAlertState.NoData]: 3,
   [GrafanaAlertState.Normal]: 4,
 };
@@ -99,11 +102,7 @@ const grafanaAlertStateSortScore = {
 export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
   // Make sure to handle tie-breaks because API returns alert instances in random order every time
   if (sortOrder === SortOrder.Importance) {
-    return sortBy(alerts, (alert) => [
-      // @ts-ignore
-      grafanaAlertStateSortScore[alert.state],
-      alertInstanceKey(alert).toLocaleLowerCase(),
-    ]);
+    return sortBy(alerts, (alert) => [alertStateSortScore[alert.state], alertInstanceKey(alert).toLocaleLowerCase()]);
   } else if (sortOrder === SortOrder.TimeAsc) {
     return sortBy(alerts, (alert) => [
       new Date(alert.activeAt) || new Date(),
