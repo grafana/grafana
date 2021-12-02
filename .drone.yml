@@ -142,58 +142,6 @@ steps:
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
-- commands:
-  - yarn storybook:build
-  - ./bin/grabpl verify-storybook
-  depends_on:
-  - build-frontend
-  environment:
-    NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.4.8
-  name: build-storybook
-- commands:
-  - yarn wait-on http://$HOST:$PORT
-  - pa11y-ci --config .pa11yci-pr.conf.js
-  depends_on:
-  - end-to-end-tests-server
-  environment:
-    GRAFANA_MISC_STATS_API_KEY:
-      from_secret: grafana_misc_stats_api_key
-    HOST: end-to-end-tests-server
-    PORT: 3001
-  failure: always
-  image: hugohaggmark/docker-puppeteer
-  name: test-a11y-frontend
-- commands:
-  - ./scripts/ci-reference-docs-lint.sh ci
-  depends_on:
-  - build-frontend
-  image: grafana/build-container:1.4.8
-  name: build-frontend-docs
-- commands:
-  - mkdir -p /hugo/content/docs/grafana
-  - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
-  - cd /hugo && make prod
-  depends_on:
-  - build-frontend-docs
-  image: grafana/docs-base:latest
-  name: build-docs-website
-- commands:
-  - ls dist/*.tar.gz*
-  - cp dist/*.tar.gz* packaging/docker/
-  depends_on:
-  - package
-  image: grafana/build-container:1.4.8
-  name: copy-packages-for-docker
-- depends_on:
-  - copy-packages-for-docker
-  image: grafana/drone-grafana-docker:0.3.2
-  name: build-docker-images
-  settings:
-    archs: amd64
-    dry_run: true
-    edition: oss
-    ubuntu: false
 trigger:
   event:
   - pull_request
@@ -248,6 +196,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 2723619b68a0eecd8dcfe43a85dfb33365a361155111e16da269c96181b239df
+hmac: 98458c3fefe7658c11bd4ce464630a3f3bb88f9267a096dfb0e52806cd915f69
 
 ...
