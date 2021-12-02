@@ -1042,6 +1042,8 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             bucket_part = ' --packages-bucket {}'.format(bucket)
         else:
             dir = 'main'
+            bucket = 'grafana-downloads'
+            bucket_part = ' --packages-bucket {}'.format(bucket)
             if not is_downstream:
                 build_no = 'DRONE_BUILD_NUMBER'
             else:

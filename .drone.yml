@@ -834,10 +834,11 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
+  - .\grabpl.exe windows-installer --edition oss --packages-bucket grafana-downloads
+    --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/main/
-  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/main/
+  - gsutil cp $$fname gs://grafana-downloads/oss/main/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
   depends_on:
   - initialize
   environment:
@@ -4119,6 +4120,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 173e39ecf08a1c29f188e30e65c362e9ccb47776411c6e7cd2365b2fe18dfeb4
+hmac: bf24337f39c20d31dfef9c8d6ce66df1a5eda88a46f24d548d85c2f0db97641a
 
 ...
