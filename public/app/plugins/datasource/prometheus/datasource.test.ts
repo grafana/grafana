@@ -591,6 +591,19 @@ describe('PrometheusDatasource', () => {
       expect(interpolatedQuery.legendFormat).toBe(legend);
     });
 
+    it('should call replace function for interval', () => {
+      const query = {
+        expr: 'test{job="bar"}',
+        interval: '$step',
+        refId: 'A',
+      };
+      const step = '5s';
+      templateSrvStub.replace.mockReturnValue(step);
+
+      const interpolatedQuery = ds.applyTemplateVariables(query, { step: { text: step, value: step } });
+      expect(interpolatedQuery.interval).toBe(step);
+    });
+
     it('should call replace function for expr', () => {
       const query = {
         expr: 'test{job="$job"}',
