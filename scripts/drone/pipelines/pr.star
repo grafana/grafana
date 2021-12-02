@@ -30,6 +30,7 @@ load(
     'validate_scuemata_step',
     'ensure_cuetsified_step',
     'test_a11y_frontend_step',
+    'get_windows_steps',
 )
 
 load(
@@ -117,6 +118,12 @@ def pr_pipelines(edition):
         'event': ['pull_request',],
     }
 
+    windows_pipeline = pipeline(
+            name='windows-main', edition=edition, trigger=trigger,
+            steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) +
+                get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=False),
+            depends_on=[], platform='windows',
+        )
     return [
         pipeline(
             name='pr-test', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
@@ -127,4 +134,5 @@ def pr_pipelines(edition):
         ), pipeline(
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services, steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps,
         ),
+        windows_pipeline,
     ]

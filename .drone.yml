@@ -394,6 +394,36 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
+name: windows-main
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - echo $env:DRONE_RUNNER_NAME
+  image: mcr.microsoft.com/windows:1809
+  name: identify-runner
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+    -OutFile grabpl.exe
+  image: grafana/ci-wix:0.1.1
+  name: initialize
+trigger:
+  event:
+  - pull_request
+type: docker
+volumes:
+- name: cypress_cache
+  temp: {}
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on: []
+kind: pipeline
 name: build-main
 node:
   type: no-parallel
@@ -4119,6 +4149,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 173e39ecf08a1c29f188e30e65c362e9ccb47776411c6e7cd2365b2fe18dfeb4
+hmac: 0a04ceda8f7d5260d564e48fc55d6a2f1de73d9064391bd8af569292a6b6922a
 
 ...
