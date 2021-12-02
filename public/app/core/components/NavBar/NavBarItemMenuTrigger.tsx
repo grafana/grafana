@@ -16,10 +16,11 @@ export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   children: ReactElement;
   item: NavModelItem;
   isActive?: boolean;
+  label: string;
 }
 
 export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactElement {
-  const { item, isActive, children: menu, ...rest } = props;
+  const { item, isActive, label, children: menu, ...rest } = props;
   const [menuHasFocus, setMenuHasFocus] = useState(false);
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
@@ -76,7 +77,14 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   const { buttonProps } = useButton(menuTriggerProps, ref);
 
   let element = (
-    <button className={styles.element} {...buttonProps} {...keyboardProps} ref={ref} onClick={item?.onClick}>
+    <button
+      className={styles.element}
+      {...buttonProps}
+      {...keyboardProps}
+      ref={ref}
+      onClick={item?.onClick}
+      aria-label={label}
+    >
       <span className={styles.icon}>
         {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
         {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
@@ -95,6 +103,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           target={item.target}
           onClick={item?.onClick}
           className={styles.element}
+          aria-label={label}
         >
           <span className={styles.icon}>
             {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
@@ -110,6 +119,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           {...keyboardProps}
           ref={ref}
           className={styles.element}
+          aria-label={label}
         >
           <span className={styles.icon}>
             {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
