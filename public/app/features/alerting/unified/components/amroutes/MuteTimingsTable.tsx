@@ -9,6 +9,13 @@ import { deleteMuteTimingAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
 import { AsyncRequestState, initialAsyncRequestState } from '../../utils/redux';
 import { DynamicTable, DynamicTableItemProps, DynamicTableColumnProps } from '../DynamicTable';
+import {
+  getTimeString,
+  getWeekdayString,
+  getDaysOfMonthString,
+  getMonthsString,
+  getYearsString,
+} from '../../utils/alertmanager';
 
 interface Props {
   alertManagerSourceName: string;
@@ -85,7 +92,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
       {
         id: 'timeRange',
         label: 'Time range',
-        renderCell: ({ data }) => parseTimings(data.time_intervals),
+        renderCell: ({ data }) => renderTimeIntervals(data.time_intervals),
       },
     ];
     if (!hideActions) {
@@ -111,33 +118,14 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
   }, [alertManagerSourceName, hideActions, setMuteTimingName]);
 }
 
-function parseTimings(timeIntervals: TimeInterval[]) {
+function renderTimeIntervals(timeIntervals: TimeInterval[]) {
   return timeIntervals.map((interval, index) => {
     const { times, weekdays, days_of_month, months, years } = interval;
-    const timeString = times
-      ? times?.map(({ start_time, end_time }) => `${start_time} - ${end_time}`).join(' and ')
-      : 'All hours';
-    const weekdayString =
-      weekdays
-        ?.map((day) => {
-          if (day.includes(':')) {
-            return day
-              .split(':')
-              .map((d) => {
-                const abbreviated = d.slice(0, 3);
-                return abbreviated[0].toLocaleUpperCase() + abbreviated.substr(1);
-              })
-              .join('-');
-          } else {
-            const abbreviated = day.slice(0, 3);
-            return abbreviated[0].toLocaleUpperCase() + abbreviated.substr(1);
-          }
-        })
-        .join(', ') ?? 'Every day';
-
-    const daysString = 'Days of the month: ' + (days_of_month?.join(', ') ?? 'All');
-    const monthsString = 'Months: ' + (months?.join(', ') ?? 'All');
-    const yearsString = 'Years: ' + (years?.join(', ') ?? 'All');
+    const timeString = getTimeString(times);
+    const weekdayString = getWeekdayString(weekdays);
+    const daysString = getDaysOfMonthString(days_of_month);
+    const monthsString = getMonthsString(months);
+    const yearsString = getYearsString(years);
 
     return (
       <React.Fragment key={JSON.stringify(interval) + index}>
