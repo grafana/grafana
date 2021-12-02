@@ -1,7 +1,6 @@
 import React from 'react';
-import { css, cx } from '@emotion/css';
-import { AsyncSelect, stylesFactory, useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2, toOption } from '@grafana/data';
+import { AsyncSelect, Select } from '@grafana/ui';
+import { toOption } from '@grafana/data';
 import { PromLabelFilter, PromVisualQuery } from '../types';
 import { PrometheusDatasource } from '../../datasource';
 import AccessoryButton from 'app/plugins/datasource/cloudwatch/components/ui/AccessoryButton';
@@ -16,12 +15,11 @@ export interface Props {
 }
 
 export function LabelFilterItem({ item, onChange, onDelete }: Props) {
-  const theme = useTheme2();
-  const styles = getOperatorStyles(theme);
-
   const loadLabelKeys = async () => {
     return Promise.resolve([{ label: 'Aasd', value: 'asd' }]);
   };
+
+  const operators = [{ label: '=~', value: '=~' }];
 
   return (
     <div data-testid="prometheus-dimensions-filter-item">
@@ -39,7 +37,16 @@ export function LabelFilterItem({ item, onChange, onDelete }: Props) {
           }}
         />
 
-        <span className={cx(styles.root)}>{item.op}</span>
+        <Select
+          value={toOption(item.op ?? '=')}
+          options={operators}
+          width="auto"
+          onChange={(change) => {
+            if (change.value != null) {
+              onChange(({ ...item, op: change.value } as any) as PromLabelFilter);
+            }
+          }}
+        />
 
         <AsyncSelect
           inputId="prometheus-dimensions-filter-item-value"
@@ -58,10 +65,3 @@ export function LabelFilterItem({ item, onChange, onDelete }: Props) {
     </div>
   );
 }
-
-const getOperatorStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  root: css({
-    padding: theme.spacing(0, 1),
-    alignSelf: 'center',
-  }),
-}));
