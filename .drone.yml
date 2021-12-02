@@ -394,7 +394,7 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
-name: pr-windows-main
+name: pr-windows
 platform:
   arch: amd64
   os: windows
@@ -4149,6 +4149,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 5774e33c03f8d5a22a47bab89e374445251bb84259d4ca8a4610a44b148b7d22
+hmac: 3486c53ab092a9e07791b533648f851f999d2816e86d04486931e70746f8db43
 
 ...

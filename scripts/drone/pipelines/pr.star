@@ -119,7 +119,7 @@ def pr_pipelines(edition):
     }
 
     windows_pipeline = pipeline(
-            name='pr-windows-main', edition=edition, trigger=trigger,
+            name='pr-windows', edition=edition, trigger=trigger,
             steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) +
                 get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=False),
             depends_on=[], platform='windows',
