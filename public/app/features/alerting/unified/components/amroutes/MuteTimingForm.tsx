@@ -149,19 +149,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   input: css`
     width: 400px;
   `,
-  timeIntervalLegend: css`
-    legend {
-      font-size: 1.25rem;
-    }
-  `,
-  timeIntervalSection: css`
-    background-color: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(1)};
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  removeTimeIntervalButton: css`
-    margin-top: ${theme.spacing(1)};
-  `,
   submitButton: css`
     margin-left: ${theme.spacing(1)};
   `,

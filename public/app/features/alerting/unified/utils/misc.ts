@@ -57,26 +57,12 @@ export function recordToArray(record: Record<string, string>): Array<{ key: stri
   return Object.entries(record).map(([key, value]) => ({ key, value }));
 }
 
-export function makeAMLink(path: string, alertManagerName?: string, options?: UrlQueryMap): string {
-  const search = options
-    ? Object.entries(options)
-        .map(([key, value]) => {
-          if (Array.isArray(value)) {
-            return `${key}=${value.map((v) => encodeURIComponent(v)).join(',')}`;
-          }
-          if (!value) {
-            return '';
-          }
-          return `${key}=${encodeURIComponent(value)}`;
-        }, '')
-        .join('&')
-    : '';
-
-  return (
-    `${path}${alertManagerName || search ? '?' : ''}${
-      alertManagerName ? `${ALERTMANAGER_NAME_QUERY_KEY}=${encodeURIComponent(alertManagerName)}` : ''
-    }` + `${search ? `&${search}` : ''}`
-  );
+export function makeAMLink(path: string, alertManagerName?: string, options?: Record<string, string>): string {
+  const search = new URLSearchParams(options);
+  if (alertManagerName) {
+    search.append(ALERTMANAGER_NAME_QUERY_KEY, alertManagerName);
+  }
+  return `${path}?${search.toString()}`;
 }
 
 export function makeSilenceLink(alertmanagerSourceName: string, rule: CombinedRule) {
