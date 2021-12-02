@@ -86,11 +86,6 @@ func TestGetResourcesMetadata(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.EqualValues(t, tt.expected, metadata)
-
-			metadata, err = GetResourcesMetadataV2(context.Background(), tt.permissions, tt.resource, tt.resourcesIDs)
-			require.NoError(t, err)
-
-			assert.EqualValues(t, tt.expected, metadata)
 		})
 	}
 }

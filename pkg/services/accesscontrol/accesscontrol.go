@@ -123,8 +123,9 @@ func ValidateScope(scope string) bool {
 	return !strings.ContainsAny(prefix, "*?")
 }
 
-// GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs []string) (map[string]Metadata, error) {
+// TODO remove this implementation in favor of the other one
+// GetResourcesMetadataV1 returns a map of accesscontrol metadata, listing for each resource, users available actions
+func GetResourcesMetadataV1(ctx context.Context, permissions []*Permission, resource string, resourceIDs []string) (map[string]Metadata, error) {
 	allScope := GetResourceAllScope(resource)
 	allIDScope := GetResourceAllIDScope(resource)
 
@@ -168,9 +169,8 @@ func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map
 	return allMetadata
 }
 
-// TODO test the limits to see if a divide and conquer approach is necessary
-// GetResourcesMetadataV2 returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadataV2(ctx context.Context, permissions []*Permission, resource string, resourceIDs []string) (map[string]Metadata, error) {
+// GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
+func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs []string) (map[string]Metadata, error) {
 	allScope := getResourceAllScopeRegex(resource)
 	allIDScope := getResourceAllIDScopeRegex(resource)
 
