@@ -36,3 +36,5 @@ A sample Grafana workflow might look as follows:
 1. Enter queries. <link to a query editor concept>
 1. Add users. <link to a user-management concept, which links to a task>
 1. Create playlists. <link to a playlist concept or task>
+
+Try and link a concept to related information, such as a _task_ or _reference_.
