@@ -206,8 +206,8 @@ describe('field convert types transformer', () => {
           type: FieldType.string,
           values: [
             '{ "neg": -100, "zero": 0, "pos": 1, "null": null, "array": [0, 1, 2], "nested": { "number": 1 } }',
-            '{ "neg": -10, "zero": 0, "pos": 2, "null": null, "array": [2, 3, 4], "nested": { "number": 2 } }',
-            '{ "neg": -1, "zero": 0, "pos": 3, "null": null, "array": [3, 4, 5], "nested": { "number": 3 } }',
+            '{ "string": "abcd" }',
+            '{}',
           ],
         },
         {
@@ -247,8 +247,8 @@ describe('field convert types transformer', () => {
         type: FieldType.other,
         values: [
           { neg: -100, zero: 0, pos: 1, null: null, array: [0, 1, 2], nested: { number: 1 } },
-          { neg: -10, zero: 0, pos: 2, null: null, array: [2, 3, 4], nested: { number: 2 } },
-          { neg: -1, zero: 0, pos: 3, null: null, array: [3, 4, 5], nested: { number: 3 } },
+          { string: 'abcd' },
+          {},
         ],
       },
       { type: FieldType.other, values: [[true], [99], ['2021-08-02 00:00:00.000']] },
