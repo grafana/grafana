@@ -117,12 +117,13 @@ Here is an example JSON:
 
 ## Service Graph
 
-Service Graph in Grafana enables customers to view the graph of their application's architecture. Each node on the graph represents a service such as an API or database. With this graph, customers can easily detect performance issues, increases in error, fault, or throttle rates in any of their services, and dive deep into corresponding traces and root cause.
+A service graph is a visual representation of the relationships between services. Each node on the graph represents a service such as an API or database. With this graph, customers can easily detect performance issues, increases in error, fault, or throttle rates in any of their services, and dive deep into corresponding traces and root causes.
 
 ![Node graph panel](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
 
 To display the service graph:
 
+- [Configure the Grafana Agent](https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/#quickstart) to generate service graph data
 - Link a Prometheus datasource in the Tempo datasource settings.
 - Navigate to [Explore]({{< relref "../explore/_index.md" >}})
 - Select the Tempo datasource
