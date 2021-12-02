@@ -63,12 +63,12 @@ def pr_pipelines(edition):
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
-        rebuild_cache_step(),
     ]
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=False),
+        rebuild_cache_step(),
     ]
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),

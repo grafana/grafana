@@ -70,6 +70,23 @@ steps:
   environment: null
   image: grafana/build-container:1.4.8
   name: build-plugins
+- depends_on:
+  - initialize
+  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest
+  name: rebuild-cache
+  pull: always
+  settings:
+    backend: gcs
+    bucket: test-julien
+    cache_key: test123
+    json_key:
+      from_secret: tf_google_credentials
+    mount:
+    - yarncache
+    - node_modules
+    rebuild: "true"
+  when:
+    event: pull_request
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
     --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64,armv6
@@ -196,6 +213,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 98458c3fefe7658c11bd4ce464630a3f3bb88f9267a096dfb0e52806cd915f69
+hmac: 51956ddcbb27215e433ceff480af9f7ae5d17b8ca3603537f5351ca61263f0a9
 
 ...
