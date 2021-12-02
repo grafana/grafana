@@ -1,19 +1,28 @@
 import React, { FC } from 'react';
 
-import { dateTimeFormat, GrafanaTheme } from '@grafana/data';
+import { AlertState, dateTimeFormat, GrafanaTheme } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { StateHistoryItem } from 'app/types/unified-alerting';
+import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { AlertStateTag } from './AlertStateTag';
 import { useManagedAlertStateHistory } from '../../hooks/useManagedAlertStateHistory';
 import { AlertLabel } from '../AlertLabel';
+import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+
+type StateHistoryRowItem = {
+  id: number;
+  state: PromAlertingRuleState | GrafanaAlertState | AlertState;
+  text?: string;
+  data?: StateHistoryItemData;
+  timestamp?: number;
+};
+
+type StateHistoryRow = DynamicTableItemProps<StateHistoryRowItem>;
 
 interface RuleStateHistoryProps {
   alertId: string;
 }
-
-type StateHistoryRow = DynamicTableItemProps<StateHistoryItem>;
 
 const RuleStateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
   const { loading, error, result = [] } = useManagedAlertStateHistory(alertId);
@@ -26,24 +35,33 @@ const RuleStateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
     return <Alert title={'Failed to fetch alert state history'}>{error.message}</Alert>;
   }
 
-  const columns: Array<DynamicTableColumnProps<StateHistoryItem>> = [
-    {
-      id: 'state',
-      label: 'State',
-      renderCell: renderStateCell,
-    },
-    {
-      id: 'value',
-      label: '',
-      renderCell: renderValueCell,
-    },
-    { id: 'timestamp', label: 'Time', renderCell: renderTimestampCell },
+  const columns: Array<DynamicTableColumnProps<StateHistoryRowItem>> = [
+    { id: 'state', label: 'State', size: 'max-content', renderCell: renderStateCell },
+    { id: 'value', label: '', size: 'auto', renderCell: renderValueCell },
+    { id: 'timestamp', label: 'Time', size: 'max-content', renderCell: renderTimestampCell },
   ];
 
-  const items: StateHistoryRow[] = result.map((historyItem) => ({
-    id: historyItem.id,
-    data: historyItem,
-  }));
+  const items: StateHistoryRow[] = result
+    .reduce((acc: StateHistoryRowItem[], item, index) => {
+      acc.push({
+        id: item.id,
+        state: item.newState,
+        text: item.text,
+        data: item.data,
+        timestamp: item.updated,
+      });
+
+      // if the preceding state is not the same, create a separate state entry – this likely means the state was reset
+      if (!hasMatchingPrecedingState(index, result)) {
+        acc.push({ id: 0, state: item.prevState });
+      }
+
+      return acc;
+    }, [])
+    .map((historyItem) => ({
+      id: historyItem.id,
+      data: historyItem,
+    }));
 
   return <DynamicTable cols={columns} items={items} />;
 };
@@ -64,19 +82,12 @@ function renderValueCell(item: StateHistoryRow) {
 }
 
 function renderStateCell(item: StateHistoryRow) {
-  return (
-    <>
-      <AlertStateTag state={item.data.prevState} />
-      <AlertStateTag state={item.data.newState} />
-    </>
-  );
+  return <AlertStateTag state={item.data.state} />;
 }
 
 function renderTimestampCell(item: StateHistoryRow) {
   return (
-    <div className={TimestampStyle}>
-      <span>{dateTimeFormat(item.data.updated)}</span>
-    </div>
+    <div className={TimestampStyle}>{item.data.timestamp && <span>{dateTimeFormat(item.data.timestamp)}</span>}</div>
   );
 }
 
@@ -98,5 +109,18 @@ const getStyles = (theme: GrafanaTheme) => ({
     }
   `,
 });
+
+// this function will figure out if a given historyItem has a preceding historyItem where the states match - in other words
+// the newState of the previous historyItem is the same as the prevState of the current historyItem
+function hasMatchingPrecedingState(index: number, items: StateHistoryItem[]): boolean {
+  const currentHistoryItem = items[index];
+  const previousHistoryItem = items[index + 1];
+
+  if (!previousHistoryItem) {
+    return false;
+  }
+
+  return previousHistoryItem.newState === currentHistoryItem.prevState;
+}
 
 export { RuleStateHistory };

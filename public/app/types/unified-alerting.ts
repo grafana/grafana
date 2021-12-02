@@ -147,7 +147,7 @@ interface EvalMatch {
   value: number;
 }
 
-interface Data {
+export interface StateHistoryItemData {
   noData: boolean;
   evalMatches?: EvalMatch[];
 }
@@ -170,5 +170,5 @@ export interface StateHistoryItem {
   login: string;
   email: string;
   avatarUrl: string;
-  data: Data;
+  data: StateHistoryItemData;
 }
