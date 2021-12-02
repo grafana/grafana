@@ -17,14 +17,13 @@ You can configure Grafana managed notification policies as well as notification 
 
 Grouping is a new and key concept of Grafana alerting that categorizes alert notifications of similar nature into a single funnel. This allows you to properly route alert notifications during larger outages when many parts of a system fail at once causing a high number of alerts to fire simultaneously.
 
-For example, suppose you have 100 services connected to a database in different environments. These services are differentiated by the label `env=environmentname`. An alert rule is in place to monitor whether your services can reach the database named `alertname=DatabaseUnreachable`. 
+For example, suppose you have 100 services connected to a database in different environments. These services are differentiated by the label `env=environmentname`. An alert rule is in place to monitor whether your services can reach the database named `alertname=DatabaseUnreachable`.
 
 When a network partition occurs, half of your services can no longer reach the database. As a result, 50 different alerts (assuming half of your services) are fired. For this situation, you want to receive a single-page notification (as opposed to 50) with a list of the environments that are affected.
-When the above scenario occurs, you typically only want to receive a single page (as opposed to 50) with a list of the environments that are affected.
 
 You can configure grouping to be `group_by: [alertname]` (take note that the `env` label is omitted). With this configuration in place, Grafana sends a single compact notification that has all the affected environments for this alert rule.
 
-> **Note:** There is a special label named `...` used to group all alerts by all labels (effectively disabling grouping) thus each alert will go into its own group. This is different from the default of `group_by: null` where **all** alerts go into a single group.
+> **Note:** Grafana also has a special label named `...` that you can use to group all alerts by all labels (effectively disabling grouping), therefore each alert will go into its own group. It is different from the default of `group_by: null` where **all** alerts go into a single group.
 
 ## Edit root notification policy
 
