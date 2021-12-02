@@ -103,7 +103,6 @@ steps:
   depends_on:
   - cypress
   environment:
-    CYPRESS_RECORD_KEY: b4c5b453-078a-40f5-936c-993d6d8037eb
     HOST: end-to-end-tests-server
   image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-dashboards-suite
@@ -115,7 +114,6 @@ steps:
   depends_on:
   - cypress
   environment:
-    CYPRESS_RECORD_KEY: b4c5b453-078a-40f5-936c-993d6d8037eb
     HOST: end-to-end-tests-server
   image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-smoke-tests-suite
@@ -127,7 +125,6 @@ steps:
   depends_on:
   - cypress
   environment:
-    CYPRESS_RECORD_KEY: b4c5b453-078a-40f5-936c-993d6d8037eb
     HOST: end-to-end-tests-server
   image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-panels-suite
@@ -139,7 +136,6 @@ steps:
   depends_on:
   - cypress
   environment:
-    CYPRESS_RECORD_KEY: b4c5b453-078a-40f5-936c-993d6d8037eb
     HOST: end-to-end-tests-server
   image: grafana/ci-e2e:12.19.0-1
   name: end-to-end-tests-various-suite
