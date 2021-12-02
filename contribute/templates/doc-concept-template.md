@@ -3,7 +3,7 @@ DELETE THIS LINE: If draft = false, then the document will not be built in the d
 draft = "false"
 date = "yyyy-mm-dd"
 title = "Title in sentence case"
-description = "Description in title case"
+description = "Description in sentence case"
 keywords = ["grafana", "enter", "keywords", "here"]
 type = "docs"
 [menu.docs]
@@ -15,28 +15,24 @@ weight = 100
 
 # Concept
 
-The title of the concept topic will generally be a noun or a gerund. Examples include Templates, Templating, Dashboards, and panels.
+The title of the concept topic will generally be a noun or a gerund. Examples include _Templates_, _Templating_, _Dashboards_, and _Panels_.
 
-Concepts are topic types for any information that doesn't involve task lists or reference information. Ideally you use concept elements to explain concepts, ideas, overviews, workflows, and the like. In the intro section, this first paragraph or two, you should explain to the user what to expect in this topic or section.
+A concepts is an information type that explains a concept, idea, or provides an overview or workflow. In the introduction, such as this first paragraph or two, explain what the reader can expect to read.
 
 [Permissions overview](https://grafana.com/docs/grafana/latest/permissions/overview/) is an example of a concept topic.
 
 ## Idea
 
-Concept topics or sections explain _what_ and _why_. They do not explain _how_. If you are a new user, you might look for concept information to learn about what Grafana is, why it might be useful to you, and what the general workflow is.
+A concept explains _what_ and _why_, but not _how_. If you are a new user, you might look for concept information to learn about what Grafana is, why it might be useful to you, and what the general workflow is.
 
 ## Workflow
 
-Continuing the example in the previous section, here is a sample Grafana workflow.
+A sample Grafana workflow might look as follows:
 
-1. Install Grafana. <link to task for installing Grafana>
-1. Set up data sources. <link to data sources concept topic, which links to data source task topics>
-1. Create panels. <link to panel concept topic, which links to tasks>
-1. Create dashboards. <link to panel concept topic, which links to tasks>
-1. Enter queries. <link to query editor concept topic>
-1. Add users. <link to user management concept topic, which links to tasks>
-1. Create playlists. <link to Playlist topic that contains concept information and tasks>
-
-## Next steps
-
-Concept tasks often link to related information, including _tasks_ related to the concept and _reference_ topics related to the concept.
+1. Install Grafana. <link to a task for installing Grafana>
+1. Set up a data source. <link to a data source concept, which links to a data source task>
+1. Create panels. <link to a panel concept, which links to a task>
+1. Create dashboards. <link to a panel concept, which links to a task>
+1. Enter queries. <link to a query editor concept>
+1. Add users. <link to a user-management concept, which links to a task>
+1. Create playlists. <link to a playlist concept or task>
