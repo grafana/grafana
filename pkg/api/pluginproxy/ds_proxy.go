@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -23,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
-	"github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
@@ -148,34 +149,29 @@ func (proxy *DataSourceProxy) HandleRequest() {
 
 	proxy.logRequest()
 
-	span, ctx := opentracing.StartSpanFromContext(proxy.ctx.Req.Context(), "datasource reverse proxy")
-	defer span.Finish()
+	ctx, span := tracing.GlobalTracer.Start(proxy.ctx.Req.Context(), "datasource reverse proxy")
+	defer span.End()
 
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
 
-	span.SetTag("datasource_name", proxy.ds.Name)
-	span.SetTag("datasource_type", proxy.ds.Type)
-	span.SetTag("user", proxy.ctx.SignedInUser.Login)
-	span.SetTag("org_id", proxy.ctx.SignedInUser.OrgId)
+	span.SetAttributes(attribute.Key("datasource_name").String(proxy.ds.Name))
+	span.SetAttributes(attribute.Key("datasource_type").String(proxy.ds.Type))
+	span.SetAttributes(attribute.Key("user").String(proxy.ds.Type))
+	span.SetAttributes(attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgId))
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
 	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
 
-	if err := opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Header)); err != nil {
-		logger.Error("Failed to inject span context instance", "err", err)
-	}
+	tracing.GlobalTracer.Inject(ctx, proxy.ctx.Req.Header, span)
 
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req)
 }
 
-func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {
+func (proxy *DataSourceProxy) addTraceFromHeaderValue(span tracing.Span, headerName string, tagName string) {
 	panelId := proxy.ctx.Req.Header.Get(headerName)
 	dashId, err := strconv.Atoi(panelId)
 	if err == nil {
-		span.SetTag(tagName, dashId)
+		span.SetAttributes(attribute.Key(tagName).Int(dashId))
 	}
 }
 

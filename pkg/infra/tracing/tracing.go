@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
@@ -22,8 +24,8 @@ const (
 	envJaegerAgentPort = "JAEGER_AGENT_PORT"
 )
 
-func ProvideService(cfg *setting.Cfg) (Tracer, error) {
-	ts := &TracingService{
+func ProvideService(cfg *setting.Cfg) (TracerService, error) {
+	ts := &Opentracing{
 		Cfg: cfg,
 		log: log.New("tracing"),
 	}
@@ -36,7 +38,7 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 		return ts, ts.initGlobalTracer()
 	}
 
-	ots := &OpentelemetryTracingService{
+	ots := &Opentelemetry{
 		Cfg: cfg,
 		log: log.New("tracing"),
 	}
@@ -45,10 +47,13 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 		return nil, err
 	}
 
-	return ots, ots.initOpentelemetryTracer()
+	if ts.enabled {
+		return ots, ots.initOpentelemetryTracer()
+	}
+	return ots, nil
 }
 
-type TracingService struct {
+type Opentracing struct {
 	enabled                  bool
 	address                  string
 	customTags               map[string]string
@@ -67,7 +72,7 @@ type OpentracingSpan struct {
 	span opentracing.Span
 }
 
-func (ts *TracingService) parseSettings() error {
+func (ts *Opentracing) parseSettings() error {
 	var section, err = ts.Cfg.Raw.GetSection("tracing.jaeger")
 	if err != nil {
 		return err
@@ -94,7 +99,7 @@ func (ts *TracingService) parseSettings() error {
 	return nil
 }
 
-func (ts *TracingService) initJaegerCfg() (jaegercfg.Configuration, error) {
+func (ts *Opentracing) initJaegerCfg() (jaegercfg.Configuration, error) {
 	cfg := jaegercfg.Configuration{
 		ServiceName: "grafana",
 		Disabled:    !ts.enabled,
@@ -116,7 +121,7 @@ func (ts *TracingService) initJaegerCfg() (jaegercfg.Configuration, error) {
 	return cfg, nil
 }
 
-func (ts *TracingService) initGlobalTracer() error {
+func (ts *Opentracing) initGlobalTracer() error {
 	cfg, err := ts.initJaegerCfg()
 	if err != nil {
 		return err
@@ -155,7 +160,7 @@ func (ts *TracingService) initGlobalTracer() error {
 	return nil
 }
 
-func (ts *TracingService) Run(ctx context.Context) error {
+func (ts *Opentracing) Run(ctx context.Context) error {
 	<-ctx.Done()
 
 	if ts.closer != nil {
@@ -166,12 +171,21 @@ func (ts *TracingService) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ts *TracingService) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+func (ts *Opentracing) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, spanName)
-	oSpan := OpentracingSpan{
-		span: span,
+	opentracingSpan := OpentracingSpan{span: span}
+	return ctx, opentracingSpan
+}
+
+func (ts *Opentracing) Inject(ctx context.Context, header http.Header, span Span) {
+	err := opentracing.GlobalTracer().Inject(
+		span.(opentracing.Span).Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(header))
+
+	if err != nil {
+		logger.Error("Failed to inject span context instance", "err", err)
 	}
-	return ctx, oSpan
 }
 
 func (s OpentracingSpan) End() {

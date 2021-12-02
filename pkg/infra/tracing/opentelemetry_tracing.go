@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -9,15 +10,20 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	trace "go.opentelemetry.io/otel/trace"
 )
 
-type Tracer interface {
-	Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span)
+type TracerService interface {
 	Run(context.Context) error
+}
+
+type Tracer interface {
+	Start(context.Context, string, ...trace.SpanStartOption) (context.Context, Span)
+	Inject(context.Context, http.Header, Span)
 }
 
 type Span interface {
@@ -26,10 +32,10 @@ type Span interface {
 }
 
 var (
-	GlobalTracer trace.Tracer
+	GlobalTracer Tracer
 )
 
-type OpentelemetryTracingService struct {
+type Opentelemetry struct {
 	enabled bool
 	address string
 	log     log.Logger
@@ -43,7 +49,7 @@ type OpentelemetrySpan struct {
 	span trace.Span
 }
 
-func (ots *OpentelemetryTracingService) parseSettingsOpentelemetry() error {
+func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 	section, err := ots.Cfg.Raw.GetSection("tracing.opentelemetry.jaeger")
 	if err != nil {
 		return err
@@ -57,7 +63,7 @@ func (ots *OpentelemetryTracingService) parseSettingsOpentelemetry() error {
 	return nil
 }
 
-func (ots *OpentelemetryTracingService) initTracerProvider() (*tracesdk.TracerProvider, error) {
+func (ots *Opentelemetry) initTracerProvider() (*tracesdk.TracerProvider, error) {
 	// Create the Jaeger exporter
 	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.address)))
 	if err != nil {
@@ -76,7 +82,7 @@ func (ots *OpentelemetryTracingService) initTracerProvider() (*tracesdk.TracerPr
 	return tp, nil
 }
 
-func (ots *OpentelemetryTracingService) initOpentelemetryTracer() error {
+func (ots *Opentelemetry) initOpentelemetryTracer() error {
 	tp, err := ots.initTracerProvider()
 	if err != nil {
 		return err
@@ -89,12 +95,12 @@ func (ots *OpentelemetryTracingService) initOpentelemetryTracer() error {
 	}
 
 	ots.tracerProvider = tp
-	GlobalTracer = otel.GetTracerProvider().Tracer("component-main")
+	GlobalTracer = otel.GetTracerProvider().Tracer("component-main").(Tracer)
 
 	return nil
 }
 
-func (ots *OpentelemetryTracingService) Run(ctx context.Context) error {
+func (ots *Opentelemetry) Run(ctx context.Context) error {
 	<-ctx.Done()
 
 	ots.log.Info("Closing tracing")
@@ -108,10 +114,13 @@ func (ots *OpentelemetryTracingService) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ots *OpentelemetryTracingService) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
 	ctx, span := GlobalTracer.Start(ctx, spanName)
-	oSpan := OpentelemetrySpan{span: span}
-	return ctx, oSpan
+	return ctx, span
+}
+
+func (ots *Opentelemetry) Inject(ctx context.Context, header http.Header, _ Span) {
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(header))
 }
 
 func (s OpentelemetrySpan) End() {

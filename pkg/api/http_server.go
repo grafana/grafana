@@ -111,7 +111,7 @@ type HTTPServer struct {
 	SecretsService            secrets.Service
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
-	tracingService            tracing.Tracer
+	tracingService            tracing.TracerService
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
 	teamGuardian              teamguardian.TeamGuardian
@@ -138,7 +138,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	contextHandler *contexthandler.ContextHandler,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	quotaService *quota.QuotaService, socialService social.Service, tracingService tracing.Tracer,
+	quotaService *quota.QuotaService, socialService social.Service, tracingService tracing.TracerService,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
 	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service) (*HTTPServer, error) {
