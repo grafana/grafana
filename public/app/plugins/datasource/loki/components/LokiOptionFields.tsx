@@ -154,7 +154,7 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             onChange={onResolutionChange}
             options={RESOLUTION_OPTIONS}
             value={resolution}
-            aria-label="Pick resolution"
+            aria-label="Select resolution"
           />
         </InlineField>
       </div>
