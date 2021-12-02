@@ -10,7 +10,11 @@ import {
   TransformerUIProps,
 } from '@grafana/data';
 
-import { ConvertFieldTypeTransformerOptions } from '@grafana/data/src/transformations/transformers/convertFieldType';
+import {
+  ComplexFieldParserID,
+  complexFieldParsers,
+  ConvertFieldTypeTransformerOptions,
+} from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 import { ConvertFieldTypeOptions } from '../../../../../packages/grafana-data/src/transformations/transformers/convertFieldType';
@@ -29,8 +33,10 @@ export const ConvertFieldTypeTransformerEditor: React.FC<TransformerUIProps<Conv
     { value: FieldType.string, label: 'String' },
     { value: FieldType.time, label: 'Time' },
     { value: FieldType.boolean, label: 'Boolean' },
-    { value: FieldType.other, label: 'JSON' },
+    { value: FieldType.other, label: 'Complex' },
   ];
+
+  const complexFormat = complexFieldParsers.selectOptions();
 
   const onSelectField = useCallback(
     (idx) => (value: string | undefined) => {
@@ -60,6 +66,18 @@ export const ConvertFieldTypeTransformerEditor: React.FC<TransformerUIProps<Conv
     (idx) => (e: ChangeEvent<HTMLInputElement>) => {
       const conversions = options.conversions;
       conversions[idx] = { ...conversions[idx], dateFormat: e.currentTarget.value };
+      onChange({
+        ...options,
+        conversions: conversions,
+      });
+    },
+    [onChange, options]
+  );
+
+  const onComplexInputFormat = useCallback(
+    (idx) => (value: SelectableValue<ComplexFieldParserID>) => {
+      const conversions = options.conversions;
+      conversions[idx] = { ...conversions[idx], inputFormat: value.value };
       onChange({
         ...options,
         conversions: conversions,
@@ -119,6 +137,22 @@ export const ConvertFieldTypeTransformerEditor: React.FC<TransformerUIProps<Conv
                 tooltip="Specify the format of the input field so Grafana can parse the date string correctly."
               >
                 <Input value={c.dateFormat} placeholder={'e.g. YYYY-MM-DD'} onChange={onInputFormat(idx)} width={24} />
+              </InlineField>
+            )}
+            {c.destinationType === FieldType.other && (
+              <InlineField
+                label="Input format"
+                tooltip="Specify the format of the input field so Grafana can parse the field correctly."
+              >
+                <Select
+                  menuShouldPortal
+                  options={complexFormat.options as Array<SelectableValue<ComplexFieldParserID>>}
+                  value={c.inputFormat}
+                  defaultValue={complexFormat.options[0]}
+                  placeholder={'JSON'}
+                  onChange={onComplexInputFormat(idx)}
+                  width={24}
+                />
               </InlineField>
             )}
             <Button
