@@ -23,19 +23,6 @@ import (
 
 var datasourcesLogger = log.New("datasources")
 
-func (hs *HTTPServer) getDataSourcesAccessControlMetadata(c *models.ReqContext, dataSources []*models.DataSource) (map[string]accesscontrol.Metadata, error) {
-	if !hs.Cfg.FeatureToggles["accesscontrol"] || !c.QueryBool("metadata") || len(dataSources) == 0 {
-		return nil, nil
-	}
-
-	dsIDs := make([]string, 0)
-	for _, ds := range dataSources {
-		dsIDs = append(dsIDs, fmt.Sprintf("%d", ds.Id))
-	}
-
-	return hs.AccessControl.GetResourcesMetadata(c.Req.Context(), c.SignedInUser, "datasources", dsIDs)
-}
-
 func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 	query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
 
@@ -43,17 +30,8 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	dataSourcesMetadata, err := hs.getDataSourcesAccessControlMetadata(c, query.Result)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to query metadata", err)
-	}
-
 	result := make(dtos.DataSourceList, 0)
 	for _, ds := range query.Result {
-		var dsMetadata accesscontrol.Metadata
-		if dataSourcesMetadata != nil {
-			dsMetadata = dataSourcesMetadata[fmt.Sprintf("%d", ds.Id)]
-		}
 		dsItem := dtos.DataSourceListItemDTO{
 			OrgId:     ds.OrgId,
 			Id:        ds.Id,
@@ -70,7 +48,6 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 			IsDefault: ds.IsDefault,
 			JsonData:  ds.JsonData,
 			ReadOnly:  ds.ReadOnly,
-			Metadata:  dsMetadata,
 		}
 
 		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type); exists {
@@ -88,7 +65,22 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 	return response.JSON(200, &result)
 }
 
-func GetDataSourceById(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) getDataSourceAccessControlMetadata(c *models.ReqContext, dsID int64) (accesscontrol.Metadata, error) {
+	if !hs.Cfg.FeatureToggles["accesscontrol"] || !c.QueryBool("metadata") {
+		return nil, nil
+	}
+
+	dsIDs := []string{fmt.Sprintf("%d", dsID)}
+
+	metadata, err := hs.AccessControl.GetResourcesMetadata(c.Req.Context(), c.SignedInUser, "datasources", dsIDs)
+	if err != nil || len(metadata) == 0 {
+		return nil, err
+	}
+
+	return metadata[dsIDs[0]], err
+}
+
+func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response {
 	query := models.GetDataSourceQuery{
 		Id:    c.ParamsInt64(":id"),
 		OrgId: c.OrgId,
@@ -106,6 +98,13 @@ func GetDataSourceById(c *models.ReqContext) response.Response {
 
 	ds := query.Result
 	dtos := convertModelToDtos(ds)
+
+	// Add accesscontrol metadata
+	metadata, err := hs.getDataSourceAccessControlMetadata(c, ds.Id)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to query metadata", err)
+	}
+	dtos.AccessControl = metadata
 
 	return response.JSON(200, &dtos)
 }
@@ -142,17 +141,25 @@ func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Respon
 }
 
 // GET /api/datasources/uid/:uid
-func GetDataSourceByUID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response {
 	ds, err := getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.OrgId)
 
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
-			return response.Error(404, "Data source not found", nil)
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
-		return response.Error(500, "Failed to query datasources", err)
+		return response.Error(http.StatusInternalServerError, "Failed to query datasource", err)
 	}
 
 	dtos := convertModelToDtos(ds)
+
+	// Add accesscontrol metadata
+	metadata, err := hs.getDataSourceAccessControlMetadata(c, ds.Id)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to query metadata", err)
+	}
+	dtos.AccessControl = metadata
+
 	return response.JSON(200, &dtos)
 }
 

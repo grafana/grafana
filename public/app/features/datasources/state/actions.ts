@@ -151,10 +151,15 @@ export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<
 export async function getDataSourceUsingUidOrId(uid: string | number): Promise<DataSourceSettings> {
   // Try first with uid api
   try {
+    let byUidUri = `/api/datasources/uid/${uid}`;
+    if (config.featureToggles['accesscontrol']) {
+      byUidUri += '?metadata=true';
+    }
+
     const byUid = await lastValueFrom(
       getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
-        url: `/api/datasources/uid/${uid}`,
+        url: byUidUri,
         showErrorAlert: false,
       })
     );
@@ -169,10 +174,15 @@ export async function getDataSourceUsingUidOrId(uid: string | number): Promise<D
   // try lookup by old db id
   const id = typeof uid === 'string' ? parseInt(uid, 10) : uid;
   if (!Number.isNaN(id)) {
+    let byIdUri = `/api/datasources/${id}`;
+    if (config.featureToggles['accesscontrol']) {
+      byIdUri += '?metadata=true';
+    }
+
     const response = await lastValueFrom(
       getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
-        url: `/api/datasources/${id}`,
+        url: byIdUri,
         showErrorAlert: false,
       })
     );
