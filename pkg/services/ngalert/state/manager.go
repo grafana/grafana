@@ -234,45 +234,46 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 }
 
 func (st *Manager) createAlertAnnotation(ctx context.Context, new eval.State, alertRule *ngModels.AlertRule, result eval.Result, oldState eval.State) {
-	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", new.String())
-	dashUid, ok := alertRule.Annotations[ngModels.DashboardUIDAnnotation]
-	if !ok {
-		return
-	}
-
-	panelUid := alertRule.Annotations[ngModels.PanelIDAnnotation]
-
-	panelId, err := strconv.ParseInt(panelUid, 10, 64)
-	if err != nil {
-		st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "error", err.Error())
-		return
-	}
-
-	query := &models.GetDashboardQuery{
-		Uid:   dashUid,
-		OrgId: alertRule.OrgID,
-	}
-
-	err = sqlstore.GetDashboard(ctx, query)
-	if err != nil {
-		st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
-		return
-	}
+	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", new.String(), "oldState", oldState.String())
 
 	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, result.Instance.String(), new.String())
 
 	item := &annotations.Item{
-		OrgId:       alertRule.OrgID,
-		DashboardId: query.Result.Id,
-		PanelId:     panelId,
-		PrevState:   oldState.String(),
-		NewState:    new.String(),
-		Text:        annotationText,
-		Epoch:       result.EvaluatedAt.UnixNano() / int64(time.Millisecond),
+		AlertId:   alertRule.ID,
+		OrgId:     alertRule.OrgID,
+		PrevState: oldState.String(),
+		NewState:  new.String(),
+		Text:      annotationText,
+		Epoch:     result.EvaluatedAt.UnixNano() / int64(time.Millisecond),
+	}
+
+	dashUid, ok := alertRule.Annotations[ngModels.DashboardUIDAnnotation]
+	if ok {
+		panelUid := alertRule.Annotations[ngModels.PanelIDAnnotation]
+
+		panelId, err := strconv.ParseInt(panelUid, 10, 64)
+		if err != nil {
+			st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "error", err.Error())
+			return
+		}
+
+		query := &models.GetDashboardQuery{
+			Uid:   dashUid,
+			OrgId: alertRule.OrgID,
+		}
+
+		err = sqlstore.GetDashboard(ctx, query)
+		if err != nil {
+			st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
+			return
+		}
+
+		item.PanelId = panelId
+		item.DashboardId = query.Result.Id
 	}
 
 	annotationRepo := annotations.GetRepository()
-	if err = annotationRepo.Save(item); err != nil {
+	if err := annotationRepo.Save(item); err != nil {
 		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "error", err.Error())
 		return
 	}

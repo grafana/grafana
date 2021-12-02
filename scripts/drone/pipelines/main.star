@@ -111,7 +111,7 @@ def get_steps(edition, is_downstream=False):
     steps.extend([
         release_canary_npm_packages_step(edition),
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
-        upload_cdn_step(edition=edition)
+        upload_cdn_step(edition=edition, ver_mode=ver_mode)
     ])
 
     if include_enterprise2:
@@ -125,7 +125,7 @@ def get_steps(edition, is_downstream=False):
             e2e_tests_step('panels-suite', edition=edition2, port=3002),
             e2e_tests_step('various-suite', edition=edition2, port=3002),
             upload_packages_step(edition=edition2, ver_mode=ver_mode, is_downstream=is_downstream),
-            upload_cdn_step(edition=edition2)
+            upload_cdn_step(edition=edition2, ver_mode=ver_mode)
         ])
 
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)

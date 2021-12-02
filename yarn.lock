@@ -3363,7 +3363,7 @@ __metadata:
     "@testing-library/jest-dom": 5.15.1
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
-    "@testing-library/user-event": 13.3.0
+    "@testing-library/user-event": 13.5.0
     "@types/braintree__sanitize-url": 4.1.0
     "@types/d3-interpolate": ^1.4.0
     "@types/jest": 27.0.2
@@ -3507,7 +3507,7 @@ __metadata:
     "@sentry/browser": 6.15.0
     "@testing-library/react": ^12.1.2
     "@testing-library/user-event": ^13.5.0
-    "@types/angular": 1.6.56
+    "@types/angular": 1.8.3
     "@types/history": ^4.7.8
     "@types/jest": 27.0.2
     "@types/lodash": 4.14.149
@@ -3717,7 +3717,7 @@ __metadata:
     "@testing-library/jest-dom": 5.15.1
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
-    "@testing-library/user-event": 13.3.0
+    "@testing-library/user-event": 13.5.0
     "@types/classnames": 2.2.7
     "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
@@ -6123,9 +6123,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rushstack/node-core-library@npm:3.42.3":
-  version: 3.42.3
-  resolution: "@rushstack/node-core-library@npm:3.42.3"
+"@rushstack/node-core-library@npm:3.43.2":
+  version: 3.43.2
+  resolution: "@rushstack/node-core-library@npm:3.43.2"
   dependencies:
     "@types/node": 12.20.24
     colors: ~1.2.1
@@ -6136,7 +6136,7 @@ __metadata:
     semver: ~7.3.0
     timsort: ~0.3.0
     z-schema: ~3.18.3
-  checksum: a178903dd0970d87a5eced02e1cc45925d61af6831f60c6290300070b40798e55beb4de679af81752a6060ed7c7c3f764dc20585d232a4aa7739d91808c04a96
+  checksum: a3aa5bf7ce07a547469827c14cf53057dcb6bdff47461a991a4e52076d1f36287814a46045cae1597bbc878061ac6d2e5097157c4d281fcbc5a8a769481511b6
   languageName: node
   linkType: hard
 
@@ -7907,18 +7907,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/user-event@npm:13.3.0":
-  version: 13.3.0
-  resolution: "@testing-library/user-event@npm:13.3.0"
-  dependencies:
-    "@babel/runtime": ^7.12.5
-  peerDependencies:
-    "@testing-library/dom": ">=7.21.4"
-  checksum: 0d17c47728aec71343fc4a8d8b594224c3031513ab59d5797695c53fdfcebef87797a7935ede68c0af896127b2a995e2feb20e64cbd0cd2b2af3f5240241af91
-  languageName: node
-  linkType: hard
-
-"@testing-library/user-event@npm:^13.5.0":
+"@testing-library/user-event@npm:13.5.0, @testing-library/user-event@npm:^13.5.0":
   version: 13.5.0
   resolution: "@testing-library/user-event@npm:13.5.0"
   dependencies:
@@ -7980,17 +7969,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/angular@npm:*":
+"@types/angular@npm:*, @types/angular@npm:1.8.3":
   version: 1.8.3
   resolution: "@types/angular@npm:1.8.3"
   checksum: 2d133bb7e5da750cfeef298cac70d1cbeb53037b133bde14ca2c80f93dd6145b7c9e5bf82425b3f35c6812bb6cf38d1dbbdba1554b622f83b409ccf8ff8f192f
-  languageName: node
-  linkType: hard
-
-"@types/angular@npm:1.6.56":
-  version: 1.6.56
-  resolution: "@types/angular@npm:1.6.56"
-  checksum: 009b9fc78c00a0348d0b9737563b67d750214e9c997b819ee39dd6682a93969db6caefd80aa1a70ba24294bfe94f64ea8c81f5b2010254f3fb02a8dd7add6c32
   languageName: node
   linkType: hard
 
@@ -18873,8 +18855,8 @@ __metadata:
     "@testing-library/jest-dom": 5.15.1
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
-    "@testing-library/user-event": 13.3.0
-    "@types/angular": 1.6.56
+    "@testing-library/user-event": 13.5.0
+    "@types/angular": 1.8.3
     "@types/angular-route": 1.7.0
     "@types/classnames": 2.2.9
     "@types/clipboard": 2.0.1

@@ -86,7 +86,7 @@ func AddOrgInvite(c *models.ReqContext) response.Response {
 			},
 		}
 
-		if err := bus.Dispatch(&emailCmd); err != nil {
+		if err := bus.DispatchCtx(c.Req.Context(), &emailCmd); err != nil {
 			if errors.Is(err, models.ErrSmtpNotEnabled) {
 				return response.Error(412, err.Error(), err)
 			}
@@ -95,7 +95,7 @@ func AddOrgInvite(c *models.ReqContext) response.Response {
 		}
 
 		emailSentCmd := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
-		if err := bus.Dispatch(&emailSentCmd); err != nil {
+		if err := bus.DispatchCtx(c.Req.Context(), &emailSentCmd); err != nil {
 			return response.Error(500, "Failed to update invite with email sent info", err)
 		}
 
@@ -126,7 +126,7 @@ func inviteExistingUserToOrg(c *models.ReqContext, user *models.User, inviteDto 
 			},
 		}
 
-		if err := bus.Dispatch(&emailCmd); err != nil {
+		if err := bus.DispatchCtx(c.Req.Context(), &emailCmd); err != nil {
 			return response.Error(500, "Failed to send email invited_to_org", err)
 		}
 	}

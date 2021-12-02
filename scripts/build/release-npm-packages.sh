@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 PACKAGES=("@grafana/ui" "@grafana/data" "@grafana/toolkit" "@grafana/runtime" "@grafana/e2e" "@grafana/e2e-selectors" "@grafana/schema")
+
 GRAFANA_TAG=${1:-}
 RELEASE_CHANNEL="latest"
 
@@ -38,9 +39,6 @@ fi
 
 # Publish to NPM registry
 echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
-
-echo $'\nBuilding packages'
-yarn packages:build
 
 echo $'\nPublishing packages to NPM registry'
 yarn packages:${SCRIPT}

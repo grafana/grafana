@@ -692,9 +692,15 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		if err != nil {
 			return err
 		}
+
+		if len(folderUIDs) == 0 {
+			return models.ErrFolderNotFound
+		}
+
 		if len(folderUIDs) != 1 {
 			return fmt.Errorf("found %d folders, while expecting at most one", len(folderUIDs))
 		}
+
 		folderID := folderUIDs[0].ID
 
 		if err := l.requirePermissionsOnFolder(c, signedInUser, folderID); err != nil {
