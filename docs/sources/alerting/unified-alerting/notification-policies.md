@@ -15,7 +15,7 @@ You can configure Grafana managed notification policies as well as notification 
 
 {{< figure max-width="40%" src="/static/img/docs/alerting/unified/notification-policies-grouping.png" max-width="650px" caption="Notification policies grouping" >}}
 
-Grouping is a new and key concept of Grafana 8 Alerts. It is used to categorize alert notifications of similar nature into a single funnel. This is essential for properly routing alert notifications during larger outages when many parts of a system fail at once causing a high number of alerts to fire at once.
+Grouping is a new and key concept of Grafana 8 Alerts. It is used to categorize alert notifications of similar nature into a single funnel. This allows you to properly route alert notifications during larger outages when many parts of a system fail at once causing a high number of alerts to fire at once.
 
 As an example:
 
