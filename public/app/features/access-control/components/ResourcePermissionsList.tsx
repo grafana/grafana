@@ -84,7 +84,7 @@ const TableRow = ({ item, permissions, canRemove, onRemove, onChange }: TableRow
         </div>
       </td>
       <td>
-        <Tooltip content={formatActions(item.actions)}>
+        <Tooltip content={getPermissionInfo(item)}>
           <Icon name="info-circle" />
         </Tooltip>
       </td>
@@ -95,7 +95,7 @@ const TableRow = ({ item, permissions, canRemove, onRemove, onChange }: TableRow
           </button>
         ) : (
           <button className="btn btn-inverse btn-small">
-            <Tooltip content="None managed permission">
+            <Tooltip content="Provisioned permission">
               <Icon name="lock" size="sm" />
             </Tooltip>
           </button>
@@ -105,9 +105,14 @@ const TableRow = ({ item, permissions, canRemove, onRemove, onChange }: TableRow
   );
 };
 
-const formatActions = (actions: string[]): string => {
-  return actions
+const getPermissionInfo = (p: ResourcePermission): string => {
+  const actions = p.actions
     .filter((a, i, arr) => arr.indexOf(a) === i)
     .sort()
     .join(' ');
+
+  if (p.managed) {
+    return `Actions: ${actions}`;
+  }
+  return `Role name: ${p.roleName} Actions: ${actions}`;
 };

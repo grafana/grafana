@@ -11,6 +11,7 @@ export type Assignments = {
 
 export type ResourcePermission = {
   resourceId: string;
+  roleName: string;
   managed: boolean;
   userId?: number;
   userLogin?: string;
