@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"sync"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -298,11 +299,15 @@ func TestSendSlackRequest(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
+			var mtx sync.Mutex
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				mtx.Lock()
 				w.WriteHeader(test.statusCode)
 				_, err := w.Write([]byte(test.slackResponse))
 				require.NoError(tt, err)
+				mtx.Unlock()
 			}))
+			defer server.Close()
 			req, err := http.NewRequest(http.MethodGet, server.URL, nil)
 			require.NoError(tt, err)
 
