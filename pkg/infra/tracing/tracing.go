@@ -50,6 +50,7 @@ func ProvideService(cfg *setting.Cfg) (TracerService, error) {
 	if ts.enabled {
 		return ots, ots.initOpentelemetryTracer()
 	}
+
 	return ots, nil
 }
 
@@ -171,7 +172,7 @@ func (ts *Opentracing) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ts *Opentracing) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+func (ts *Opentracing) StartSpan(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, spanName)
 	opentracingSpan := OpentracingSpan{span: span}
 	return ctx, opentracingSpan

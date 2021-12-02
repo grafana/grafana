@@ -22,7 +22,7 @@ type TracerService interface {
 }
 
 type Tracer interface {
-	Start(context.Context, string, ...trace.SpanStartOption) (context.Context, Span)
+	StartSpan(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span)
 	Inject(context.Context, http.Header, Span)
 }
 
@@ -106,7 +106,9 @@ func (ots *Opentelemetry) Run(ctx context.Context) error {
 	ots.log.Info("Closing tracing")
 	ctxShutdown, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
-
+	if ots.tracerProvider == nil {
+		return nil
+	}
 	if err := ots.tracerProvider.Shutdown(ctxShutdown); err != nil {
 		return err
 	}
@@ -114,8 +116,8 @@ func (ots *Opentelemetry) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
-	ctx, span := GlobalTracer.Start(ctx, spanName)
+func (ots *Opentelemetry) StartSpan(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+	ctx, span := GlobalTracer.StartSpan(ctx, spanName)
 	return ctx, span
 }
 
