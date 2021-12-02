@@ -70,7 +70,7 @@ export const LayerDragDropList = <T extends LayerElement>({
                           onChange={(v) => onNameChange(element, v)}
                           verifyLayerNameUniqueness={verifyLayerNameUniqueness ?? undefined}
                         />
-                        <div className={style.textWrapper}>&nbsp; {getLayerInfo(element)}XXXX</div>
+                        <div className={style.textWrapper}>&nbsp; {getLayerInfo(element)}</div>
 
                         {!isGroup!(element) && (
                           <>

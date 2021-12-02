@@ -103,6 +103,7 @@ export class Scene {
       const newLayer = new GroupState(
         {
           type: 'group',
+          name: `Group ${Date.now()}.${Math.floor(Math.random() * 100)}`,
           elements: [],
         },
         this,

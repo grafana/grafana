@@ -13,8 +13,8 @@ import { GroupState } from 'app/features/canvas/runtime/group';
 import { LayerEditorProps } from './layerEditor';
 import { SelectionParams } from 'app/features/canvas/runtime/scene';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import { LayerDragDropList } from '../../geomap/editor/LayerDragDropList/LayerDragDropList';
-import { AddLayerButton } from '../../geomap/editor/LayerDragDropList/AddLayerButton';
+import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
+import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 
 type Props = StandardEditorProps<any, LayerEditorProps, PanelOptions>;
 
@@ -203,11 +203,19 @@ export class LayerElementListEditor extends PureComponent<Props> {
       layer.doAction(LayerActionID.Duplicate, element);
     };
 
-    const getElementType = (element: ElementState) => {
+    const getLayerInfo = (element: ElementState) => {
       return element.options.type;
     };
 
-    const selection: number[] = settings.selected ? settings.selected.map((v) => v.UID) : [];
+    const onNameChange = (element: ElementState, name: string) => {
+      element.onChange({ ...element.options, name });
+    };
+
+    const isGroup = (element: ElementState) => {
+      return element instanceof GroupState;
+    };
+
+    const selection: string[] = settings.selected ? settings.selected.map((v) => v.getName()) : [];
     return (
       <>
         {!layer.isRoot() && (
@@ -231,7 +239,9 @@ export class LayerElementListEditor extends PureComponent<Props> {
           onSelect={this.onSelect}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
-          getLayerType={getElementType}
+          getLayerInfo={getLayerInfo}
+          onNameChange={onNameChange}
+          isGroup={isGroup}
           layers={layer.elements}
           selection={selection}
         />
