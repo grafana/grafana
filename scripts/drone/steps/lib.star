@@ -691,7 +691,6 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         ],
         'environment': {
             'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
-            'CYPRESS_RECORD_KEY': 'b4c5b453-078a-40f5-936c-993d6d8037eb',
         },
         'volumes': [{
             'name': 'cypress_cache',
