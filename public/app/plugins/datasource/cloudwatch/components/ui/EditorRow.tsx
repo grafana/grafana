@@ -12,7 +12,7 @@ const EditorRow: React.FC<EditorRowProps> = ({ children }) => {
 
   return (
     <div className={styles.root}>
-      <Stack gap={4}>{children}</Stack>
+      <Stack gap={2}>{children}</Stack>
     </div>
   );
 };

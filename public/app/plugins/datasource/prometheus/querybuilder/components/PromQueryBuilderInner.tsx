@@ -26,12 +26,10 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
       </EditorRow>
       <EditorRow>
         <Operations query={query} onChange={onChange} />
-      </EditorRow>
-      {query.nestedQueries && query.nestedQueries.length > 0 && (
-        <EditorRow>
+        {query.nestedQueries && query.nestedQueries.length > 0 && (
           <NestedQueries query={query} datasource={datasource} onChange={onChange} />
-        </EditorRow>
-      )}
+        )}
+      </EditorRow>
     </EditorRows>
   );
 });
