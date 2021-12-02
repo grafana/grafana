@@ -29,6 +29,7 @@ export const ConvertFieldTypeTransformerEditor: React.FC<TransformerUIProps<Conv
     { value: FieldType.string, label: 'String' },
     { value: FieldType.time, label: 'Time' },
     { value: FieldType.boolean, label: 'Boolean' },
+    { value: FieldType.other, label: 'JSON' },
   ];
 
   const onSelectField = useCallback(
