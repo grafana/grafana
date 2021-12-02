@@ -106,7 +106,7 @@ func TestDashboardFileReader(t *testing.T) {
 	setup := func() {
 		bus.ClearBusHandlers()
 		fakeService = mockDashboardProvisioningService()
-		bus.AddHandler("test", mockGetDashboardQuery)
+		bus.AddHandlerCtx("test", mockGetDashboardQuery)
 		cfg = &config{
 			Name:    "Default",
 			Type:    "file",
@@ -637,7 +637,7 @@ func (s *fakeDashboardProvisioningService) GetProvisionedDashboardDataByDashboar
 	return nil, nil
 }
 
-func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
+func mockGetDashboardQuery(ctx context.Context, cmd *models.GetDashboardQuery) error {
 	for _, d := range fakeService.getDashboard {
 		if d.Slug == cmd.Slug {
 			cmd.Result = d
