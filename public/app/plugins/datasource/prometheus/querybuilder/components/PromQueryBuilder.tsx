@@ -5,12 +5,14 @@ import { MetricSelect } from './MetricSelect';
 import { PromVisualQuery } from '../types';
 import { LabelFilters } from './LabelFilters';
 import { Operations } from './Operations';
+import EditorRows from 'app/plugins/datasource/cloudwatch/components/ui/EditorRows';
+import EditorRow from 'app/plugins/datasource/cloudwatch/components/ui/EditorRow';
 
 export interface State {
   viewModel: PromVisualQuery;
 }
 
-export const PromQueryBuilder = React.memo<PromQueryEditorProps>((props) => {
+export const PromQueryBuilder = React.memo<PromQueryEditorProps>(({ datasource }) => {
   const [state, setState] = useState<State>({
     viewModel: getDefaultTestQuery(),
   });
@@ -20,17 +22,17 @@ export const PromQueryBuilder = React.memo<PromQueryEditorProps>((props) => {
   };
 
   return (
-    <div>
-      <SegmentSection label="Metric" fill={true}>
-        <MetricSelect query={state.viewModel} />
-      </SegmentSection>
-      <SegmentSection label="Labels" fill={true}>
-        <LabelFilters query={state.viewModel} />
-      </SegmentSection>
-      <SegmentSection label="Operations" fill={true}>
+    <EditorRows>
+      <EditorRow>
+        <MetricSelect query={state.viewModel} onChange={onChange} />
+      </EditorRow>
+      <EditorRow>
+        <LabelFilters query={state.viewModel} datasource={datasource} onChange={onChange} />
+      </EditorRow>
+      <EditorRow>
         <Operations query={state.viewModel} onChange={onChange} />
-      </SegmentSection>
-    </div>
+      </EditorRow>
+    </EditorRows>
   );
 });
 

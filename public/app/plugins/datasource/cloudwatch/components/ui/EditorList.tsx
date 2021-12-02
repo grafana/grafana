@@ -3,8 +3,12 @@ import React, { Fragment } from 'react';
 import Stack from './Stack';
 
 interface EditorListProps<T> {
-  items: T[];
-  renderItem: (item: Partial<T>, onChangeItem: (item: T) => void, onDeleteItem: () => void) => React.ReactElement;
+  items: Array<Partial<T>>;
+  renderItem: (
+    item: Partial<T>,
+    onChangeItem: (item: Partial<T>) => void,
+    onDeleteItem: () => void
+  ) => React.ReactElement;
   onChange: (items: Array<Partial<T>>) => void;
 }
 
@@ -15,7 +19,7 @@ function EditorList<T>({ items, renderItem, onChange }: EditorListProps<T>) {
     onChange(newItems);
   };
 
-  const onChangeItem = (itemIndex: number, newItem: T) => {
+  const onChangeItem = (itemIndex: number, newItem: Partial<T>) => {
     const newItems = [...items];
     newItems[itemIndex] = newItem;
     onChange(newItems);
