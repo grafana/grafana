@@ -14,6 +14,8 @@ import { NewsItem } from './types';
 import { PanelOptions } from './models.gen';
 import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
 import { css, cx } from '@emotion/css';
+import { RefreshEvent } from '@grafana/runtime';
+import { Unsubscribable } from 'rxjs';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -23,14 +25,20 @@ interface State {
 }
 
 export class NewsPanel extends PureComponent<Props, State> {
+  private refreshSubscription: Unsubscribable;
+
   constructor(props: Props) {
     super(props);
-
+    this.refreshSubscription = this.props.eventBus.subscribe(RefreshEvent, this.loadChannel.bind(this));
     this.state = {};
   }
 
   componentDidMount(): void {
     this.loadChannel();
+  }
+
+  componentWillUnmount(): void {
+    this.refreshSubscription.unsubscribe();
   }
 
   componentDidUpdate(prevProps: Props): void {

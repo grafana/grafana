@@ -48,6 +48,7 @@ import { mergeTransformer } from '../../../../../packages/grafana-data/src/trans
 import {
   migrateMultipleStatsMetricsQuery,
   migrateMultipleStatsAnnotationQuery,
+  migrateCloudWatchQuery,
 } from 'app/plugins/datasource/cloudwatch/migrations';
 import { CloudWatchMetricsQuery, CloudWatchAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
 
@@ -747,10 +748,14 @@ export class DashboardMigrator {
   // New queries, that were created during migration, are put at the end of the array.
   migrateCloudWatchQueries(panel: PanelModel) {
     for (const target of panel.targets || []) {
-      if (isLegacyCloudWatchQuery(target)) {
-        const newQueries = migrateMultipleStatsMetricsQuery(target, [...panel.targets]);
-        for (const newQuery of newQueries) {
-          panel.targets.push(newQuery);
+      if (isCloudWatchQuery(target)) {
+        migrateCloudWatchQuery(target);
+        if (target.hasOwnProperty('statistics')) {
+          // New queries, that were created during migration, are put at the end of the array.
+          const newQueries = migrateMultipleStatsMetricsQuery(target, [...panel.targets]);
+          for (const newQuery of newQueries) {
+            panel.targets.push(newQuery);
+          }
         }
       }
     }
@@ -1099,12 +1104,13 @@ function upgradeValueMappingsForPanel(panel: PanelModel) {
   return panel;
 }
 
-function isLegacyCloudWatchQuery(target: DataQuery): target is CloudWatchMetricsQuery {
+function isCloudWatchQuery(target: DataQuery): target is CloudWatchMetricsQuery {
   return (
     target.hasOwnProperty('dimensions') &&
     target.hasOwnProperty('namespace') &&
     target.hasOwnProperty('region') &&
-    target.hasOwnProperty('statistics')
+    target.hasOwnProperty('period') &&
+    target.hasOwnProperty('metricName')
   );
 }
 

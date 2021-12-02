@@ -65,8 +65,7 @@ describe('ElasticQueryBuilder', () => {
             metrics: [{ type: 'avg', field: '@value', id: '1' }],
             bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
           },
-          100,
-          '1000'
+          100
         );
 
         const aggs = query.aggs['2'].aggs;
@@ -91,7 +90,7 @@ describe('ElasticQueryBuilder', () => {
           ],
         };
 
-        const query = builder.build(target, 100, '1000');
+        const query = builder.build(target, 100);
         const firstLevel = query.aggs['2'];
 
         if (gte(builder.esVersion, '6.0.0')) {
@@ -119,8 +118,7 @@ describe('ElasticQueryBuilder', () => {
               { type: 'date_histogram', field: '@timestamp', id: '3' },
             ],
           },
-          100,
-          '1000'
+          100
         );
 
         const firstLevel = query.aggs['2'];
@@ -148,8 +146,7 @@ describe('ElasticQueryBuilder', () => {
               { type: 'date_histogram', field: '@timestamp', id: '3' },
             ],
           },
-          100,
-          '1000'
+          100
         );
 
         expect(query.aggs['2'].terms.order._count).toEqual('asc');
@@ -171,8 +168,7 @@ describe('ElasticQueryBuilder', () => {
               { type: 'date_histogram', field: '@timestamp', id: '3' },
             ],
           },
-          100,
-          '1000'
+          100
         );
 
         const firstLevel = query.aggs['2'];
@@ -197,8 +193,7 @@ describe('ElasticQueryBuilder', () => {
               { type: 'date_histogram', field: '@timestamp', id: '3' },
             ],
           },
-          100,
-          '1000'
+          100
         );
 
         const firstLevel = query.aggs['2'];
@@ -223,8 +218,7 @@ describe('ElasticQueryBuilder', () => {
               { type: 'date_histogram', field: '@timestamp', id: '3' },
             ],
           },
-          100,
-          '1000'
+          100
         );
 
         const firstLevel = query.aggs['2'];
@@ -246,8 +240,7 @@ describe('ElasticQueryBuilder', () => {
               { type: 'date_histogram', field: '@timestamp', id: '3' },
             ],
           },
-          100,
-          '1000'
+          100
         );
 
         const firstLevel = query.aggs['2'];
@@ -273,8 +266,7 @@ describe('ElasticQueryBuilder', () => {
             ],
             bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
           },
-          100,
-          '1000'
+          100
         );
 
         const firstLevel = query.aggs['3'];
@@ -329,12 +321,6 @@ describe('ElasticQueryBuilder', () => {
                       gte: '$timeFrom',
                       lte: '$timeTo',
                     },
-                  },
-                },
-                {
-                  query_string: {
-                    analyze_wildcard: true,
-                    query: undefined,
                   },
                 },
               ],
@@ -662,10 +648,10 @@ describe('ElasticQueryBuilder', () => {
         expect(query.query.bool.must[0].match_phrase['key1'].query).toBe('value1');
         expect(query.query.bool.must[1].match_phrase['key2'].query).toBe('value2');
         expect(query.query.bool.must_not[0].match_phrase['key2'].query).toBe('value2');
-        expect(query.query.bool.filter[2].range['key3'].lt).toBe('value3');
-        expect(query.query.bool.filter[3].range['key4'].gt).toBe('value4');
-        expect(query.query.bool.filter[4].regexp['key5']).toBe('value5');
-        expect(query.query.bool.filter[5].bool.must_not.regexp['key6']).toBe('value6');
+        expect(query.query.bool.filter[1].range['key3'].lt).toBe('value3');
+        expect(query.query.bool.filter[2].range['key4'].gt).toBe('value4');
+        expect(query.query.bool.filter[3].regexp['key5']).toBe('value5');
+        expect(query.query.bool.filter[4].bool.must_not.regexp['key6']).toBe('value6');
       });
 
       describe('getTermsQuery', () => {
@@ -709,11 +695,49 @@ describe('ElasticQueryBuilder', () => {
           expect(query.aggs['1'].terms.order._key).toBeUndefined();
           expect(query.aggs['1'].terms.order._count).toBe('asc');
         });
+
+        describe('lucene query', () => {
+          it('should add query_string filter when query is not empty', () => {
+            const luceneQuery = 'foo';
+            const query = builder.getTermsQuery({ orderBy: 'doc_count', order: 'asc', query: luceneQuery });
+
+            expect(query.query.bool.filter).toContainEqual({
+              query_string: { analyze_wildcard: true, query: luceneQuery },
+            });
+          });
+
+          it('should not add query_string filter when query is empty', () => {
+            const query = builder.getTermsQuery({ orderBy: 'doc_count', order: 'asc' });
+
+            expect(
+              query.query.bool.filter.find((filter: any) => Object.keys(filter).includes('query_string'))
+            ).toBeFalsy();
+          });
+        });
+      });
+
+      describe('lucene query', () => {
+        it('should add query_string filter when query is not empty', () => {
+          const luceneQuery = 'foo';
+          const query = builder.build({ refId: 'A', query: luceneQuery });
+
+          expect(query.query.bool.filter).toContainEqual({
+            query_string: { analyze_wildcard: true, query: luceneQuery },
+          });
+        });
+
+        it('should not add query_string filter when query is empty', () => {
+          const query = builder.build({ refId: 'A' });
+
+          expect(
+            query.query.bool.filter.find((filter: any) => Object.keys(filter).includes('query_string'))
+          ).toBeFalsy();
+        });
       });
 
       describe('getLogsQuery', () => {
         it('should return query with defaults', () => {
-          const query = builder.getLogsQuery({ refId: 'A' }, 500, null, '*');
+          const query = builder.getLogsQuery({ refId: 'A' }, 500, null);
 
           expect(query.size).toEqual(500);
 
@@ -751,18 +775,23 @@ describe('ElasticQueryBuilder', () => {
           expect(query.aggs).toMatchObject(expectedAggs);
         });
 
-        it('with querystring', () => {
-          const query = builder.getLogsQuery({ refId: 'A', query: 'foo' }, 500, null, 'foo');
+        describe('lucene query', () => {
+          it('should add query_string filter when query is not empty', () => {
+            const luceneQuery = 'foo';
+            const query = builder.getLogsQuery({ refId: 'A', query: luceneQuery }, 500, null);
 
-          const expectedQuery = {
-            bool: {
-              filter: [
-                { range: { '@timestamp': { gte: '$timeFrom', lte: '$timeTo', format: 'epoch_millis' } } },
-                { query_string: { analyze_wildcard: true, query: 'foo' } },
-              ],
-            },
-          };
-          expect(query.query).toEqual(expectedQuery);
+            expect(query.query.bool.filter).toContainEqual({
+              query_string: { analyze_wildcard: true, query: luceneQuery },
+            });
+          });
+
+          it('should not add query_string filter when query is empty', () => {
+            const query = builder.getLogsQuery({ refId: 'A' }, 500, null);
+
+            expect(
+              query.query.bool.filter.find((filter: any) => Object.keys(filter).includes('query_string'))
+            ).toBeFalsy();
+          });
         });
 
         it('with adhoc filters', () => {
@@ -775,7 +804,7 @@ describe('ElasticQueryBuilder', () => {
             { key: 'key5', operator: '=~', value: 'value5' },
             { key: 'key6', operator: '!~', value: 'value6' },
           ];
-          const query = builder.getLogsQuery({ refId: 'A' }, 500, adhocFilters, '*');
+          const query = builder.getLogsQuery({ refId: 'A' }, 500, adhocFilters);
 
           expect(query.query.bool.must[0].match_phrase['key1'].query).toBe('value1');
           expect(query.query.bool.must_not[0].match_phrase['key2'].query).toBe('value2');
