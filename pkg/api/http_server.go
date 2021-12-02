@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -108,7 +107,6 @@ type HTTPServer struct {
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
 	tracingService            tracing.Tracer
-	internalMetricsSvc        *metrics.InternalMetricsService
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
 	queryDataService          *query.Service
