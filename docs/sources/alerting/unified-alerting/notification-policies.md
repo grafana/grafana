@@ -24,7 +24,7 @@ As an example:
 
 When the above scenario occurs, typically you only want to receive a single page (as opposed to 50) with a list of the environments that are affected.
 
-You can configure grouping to be `group_by: [alertname]`, take note that the `env` label is omitted. With this configuration in place, Grafana sends a single compact notification that has all the affected environments for this alert rule.
+You can configure grouping to be `group_by: [alertname]` (take note that the `env` label is omitted). With this configuration in place, Grafana sends a single compact notification that has all the affected environments for this alert rule.
 
 > **Note:** There is a special label named `...` used to group all alerts by all labels (effectively disabling grouping) thus each alert will go into its own group. This is different from the default of `group_by: null` where **all** alerts go into a single group.
 
