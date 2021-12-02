@@ -6,32 +6,35 @@ import { GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { LayerName } from './LayerName';
+import { LayerElement } from './types';
 
-type LayerDragDropListProps<T> = {
+type LayerDragDropListProps<T extends LayerElement> = {
   layers: T[];
-  getLayerType: (element: T) => string;
+  getLayerInfo: (element: T) => string;
   onDragEnd: (result: DropResult) => void;
   onSelect: (element: T) => any;
   onDelete: (element: T) => any;
   onDuplicate?: (element: T) => any;
-  selection?: Number[];
+  isGroup?: (element: T) => boolean;
+  selection?: string[]; // list of unique ids (names)
   excludeBaseLayer?: boolean;
-  selectByIndex?: boolean;
+  onNameChange: (element: T, newName: string) => any;
   verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
 };
 
-export const LayerDragDropList = ({
+export const LayerDragDropList = <T extends LayerElement>({
   layers,
-  getLayerType,
+  getLayerInfo,
   onDragEnd,
   onSelect,
   onDelete,
   onDuplicate,
+  isGroup,
   selection,
   excludeBaseLayer,
-  selectByIndex,
+  onNameChange,
   verifyLayerNameUniqueness,
-}: LayerDragDropListProps<any>) => {
+}: LayerDragDropListProps<T>) => {
   const style = styles(config.theme);
 
   const getRowStyle = (isSelected: boolean) => {
@@ -49,16 +52,9 @@ export const LayerDragDropList = ({
               const lastLayerIndex = excludeBaseLayer ? 1 : 0;
               for (let i = layers.length - 1; i >= lastLayerIndex; i--) {
                 const element = layers[i];
-                let uid = element.UID;
-                if (element.options.name) {
-                  uid = element.options.name;
-                }
+                const uid = element.getName();
 
-                const isGroup = element?.item?.id === 'group';
-
-                const isSelected = selectByIndex
-                  ? Boolean(selection?.find((id) => id === i))
-                  : Boolean(selection?.includes(element.UID));
+                const isSelected = Boolean(selection?.includes(uid));
                 rows.push(
                   <Draggable key={uid} draggableId={uid} index={rows.length}>
                     {(provided, snapshot) => (
@@ -69,34 +65,41 @@ export const LayerDragDropList = ({
                         {...provided.dragHandleProps}
                         onMouseDown={() => onSelect(element)}
                       >
-                        <LayerName layer={element} verifyLayerNameUniqueness={verifyLayerNameUniqueness ?? undefined} />
-                        <div className={style.textWrapper}>&nbsp; {getLayerType(element)}</div>
+                        <LayerName
+                          name={uid}
+                          onChange={(v) => onNameChange(element, v)}
+                          verifyLayerNameUniqueness={verifyLayerNameUniqueness ?? undefined}
+                        />
+                        <div className={style.textWrapper}>&nbsp; {getLayerInfo(element)}XXXX</div>
 
-                        {onDuplicate && !isGroup ? (
-                          <IconButton
-                            name="copy"
-                            title={'Duplicate'}
-                            className={style.actionIcon}
-                            onClick={() => onDuplicate(element)}
-                            surface="header"
-                          />
-                        ) : null}
-                        {!isGroup && (
-                          <IconButton
-                            name="trash-alt"
-                            title={'remove'}
-                            className={cx(style.actionIcon, style.dragIcon)}
-                            onClick={() => onDelete(element)}
-                            surface="header"
-                          />
-                        )}
-                        {layers.length > 2 && !isGroup && (
-                          <Icon
-                            title="Drag and drop to reorder"
-                            name="draggabledots"
-                            size="lg"
-                            className={style.dragIcon}
-                          />
+                        {!isGroup!(element) && (
+                          <>
+                            {onDuplicate ? (
+                              <IconButton
+                                name="copy"
+                                title={'Duplicate'}
+                                className={style.actionIcon}
+                                onClick={() => onDuplicate(element)}
+                                surface="header"
+                              />
+                            ) : null}
+
+                            <IconButton
+                              name="trash-alt"
+                              title={'remove'}
+                              className={cx(style.actionIcon, style.dragIcon)}
+                              onClick={() => onDelete(element)}
+                              surface="header"
+                            />
+                            {layers.length > 2 && (
+                              <Icon
+                                title="Drag and drop to reorder"
+                                name="draggabledots"
+                                size="lg"
+                                className={style.dragIcon}
+                              />
+                            )}
+                          </>
                         )}
                       </div>
                     )}
@@ -113,6 +116,10 @@ export const LayerDragDropList = ({
       </Droppable>
     </DragDropContext>
   );
+};
+
+LayerDragDropList.defaultProps = {
+  isGroup: () => false,
 };
 
 const styles = stylesFactory((theme: GrafanaTheme) => ({

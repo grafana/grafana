@@ -3,14 +3,14 @@ import { css, cx } from '@emotion/css';
 import { Icon, Input, FieldValidationMessage, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
-export interface LayerNameProps<T> {
-  layer: T;
+export interface LayerNameProps {
+  name: string;
+  onChange: (v: string) => void;
   verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
 }
 
-export const LayerName = ({ layer, verifyLayerNameUniqueness }: LayerNameProps<any>) => {
+export const LayerName = ({ name, onChange, verifyLayerNameUniqueness }: LayerNameProps) => {
   const styles = useStyles(getStyles);
-  const { options } = layer;
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -27,11 +27,8 @@ export const LayerName = ({ layer, verifyLayerNameUniqueness }: LayerNameProps<a
       return;
     }
 
-    if (options.name !== newName) {
-      layer.onChange({
-        ...options,
-        name: newName,
-      });
+    if (name !== newName) {
+      onChange(newName);
     }
   };
 
@@ -77,7 +74,7 @@ export const LayerName = ({ layer, verifyLayerNameUniqueness }: LayerNameProps<a
             onClick={onEditLayer}
             data-testid="layer-name-div"
           >
-            <span className={styles.layerName}>{options.name}</span>
+            <span className={styles.layerName}>{name}</span>
             <Icon name="pen" className={styles.layerEditIcon} size="sm" />
           </button>
         )}
@@ -86,7 +83,7 @@ export const LayerName = ({ layer, verifyLayerNameUniqueness }: LayerNameProps<a
           <>
             <Input
               type="text"
-              defaultValue={options.name}
+              defaultValue={name}
               onBlur={onEditLayerBlur}
               autoFocus
               onKeyDown={onKeyDown}

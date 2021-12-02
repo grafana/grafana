@@ -5,10 +5,10 @@ import { DropResult } from 'react-beautiful-dnd';
 
 import { GeomapPanelOptions, MapLayerState } from '../types';
 import { GeomapInstanceState } from '../GeomapPanel';
-import { AddLayerButton } from './LayerDragDropList/AddLayerButton';
-import { LayerDragDropList } from './LayerDragDropList/LayerDragDropList';
 import { geomapLayerRegistry } from '../layers/registry';
 import { dataLayerFilter } from './layerEditor';
+import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
+import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
 
 type LayersEditorProps = StandardEditorProps<any, any, GeomapPanelOptions, GeomapInstanceState>;
 
@@ -44,11 +44,15 @@ export const LayersEditor = (props: LayersEditorProps) => {
     actions.deleteLayer(element.options.name);
   };
 
-  const getLayerType = (element: MapLayerState<any>) => {
+  const getLayerInfo = (element: MapLayerState<any>) => {
     return element.options.type;
   };
 
-  const selection = selected ? [selected] : [];
+  const onNameChange = (element: MapLayerState<any>, name: string) => {
+    element.onChange({ ...element.options, name });
+  };
+
+  const selection = selected ? [layers[selected]?.getName()] : [];
 
   return (
     <>
@@ -63,13 +67,13 @@ export const LayersEditor = (props: LayersEditorProps) => {
 
       <LayerDragDropList
         layers={layers}
-        getLayerType={getLayerType}
+        getLayerInfo={getLayerInfo}
         onDragEnd={onDragEnd}
         onSelect={onSelect}
         onDelete={onDelete}
         selection={selection}
         excludeBaseLayer
-        selectByIndex
+        onNameChange={onNameChange}
         verifyLayerNameUniqueness={actions.canRename}
       />
     </>
