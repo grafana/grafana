@@ -44,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/preview"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -95,6 +96,7 @@ type HTTPServer struct {
 	ShortURLService           shorturls.Service
 	Live                      *live.GrafanaLive
 	LivePushGateway           *pushhttp.Gateway
+	PreviewService            *preview.Service
 	ContextHandler            *contexthandler.ContextHandler
 	SQLStore                  *sqlstore.SQLStore
 	AlertEngine               *alerting.AlertEngine
