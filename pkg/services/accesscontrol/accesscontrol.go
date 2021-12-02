@@ -168,18 +168,19 @@ func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map
 	return allMetadata
 }
 
+// TODO test the limits to see if a divide and conquer approach is necessary
 // GetResourcesMetadataV2 returns a map of accesscontrol metadata, listing for each resource, users available actions
 func GetResourcesMetadataV2(ctx context.Context, permissions []*Permission, resource string, resourceIDs []string) (map[string]Metadata, error) {
 	allScope := getResourceAllScopeRegex(resource)
 	allIDScope := getResourceAllIDScopeRegex(resource)
 
-	// Regex to match all scopes
-	allFilter, err := regexp.Compile(fmt.Sprintf("^([*]|%s|%s)$", allScope, allIDScope))
+	// Regex to match global scopes
+	globalsFilter, err := regexp.Compile(fmt.Sprintf("^([*]|%s|%s)$", allScope, allIDScope))
 	if err != nil {
 		return nil, err
 	}
 
-	// Regex to match all resources
+	// Regex to match all resource scopes
 	allIds := strings.Join(resourceIDs, "|")
 	resourcesFilter, err := regexp.Compile(getResourceScopeRegex(resource, allIds))
 	if err != nil {
@@ -191,7 +192,7 @@ func GetResourcesMetadataV2(ctx context.Context, permissions []*Permission, reso
 	globalAction := map[string]bool{}
 	for _, p := range permissions {
 		scope := []byte(p.Scope)
-		if allFilter.Match(scope) {
+		if globalsFilter.Match(scope) {
 			globalAction[p.Action] = true
 		} else if match := resourcesFilter.FindStringSubmatch(p.Scope); match != nil {
 			result = addActionToMetadata(result, p.Action, match[2])
