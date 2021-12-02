@@ -21,7 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
@@ -105,6 +107,8 @@ type HTTPServer struct {
 	SecretsService            secrets.Service
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
+	tracingService            tracing.Tracer
+	internalMetricsSvc        *metrics.InternalMetricsService
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
 	queryDataService          *query.Service
@@ -129,7 +133,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	contextHandler *contexthandler.ContextHandler,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	quotaService *quota.QuotaService, socialService social.Service,
+	quotaService *quota.QuotaService, socialService social.Service, tracingService tracing.Tracer,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service,
 	queryDataService *query.Service) (*HTTPServer, error) {
@@ -173,6 +177,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		LibraryPanelService:       libraryPanelService,
 		LibraryElementService:     libraryElementService,
 		QuotaService:              quotaService,
+		tracingService:            tracingService,
 		log:                       log.New("http.server"),
 		web:                       m,
 		Listener:                  opts.Listener,

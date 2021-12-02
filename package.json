@@ -91,7 +91,7 @@
     "@testing-library/react": "12.1.2",
     "@testing-library/react-hooks": "7.0.2",
     "@testing-library/user-event": "13.5.0",
-    "@types/angular": "1.6.56",
+    "@types/angular": "1.8.3",
     "@types/angular-route": "1.7.0",
     "@types/classnames": "2.2.9",
     "@types/clipboard": "2.0.1",
@@ -362,7 +362,7 @@
     "underscore": "1.12.1",
     "@types/slate": "0.47.2",
     "@microsoft/api-extractor-model": "7.13.13",
-    "@rushstack/node-core-library": "3.42.3",
+    "@rushstack/node-core-library": "3.43.2",
     "@rushstack/rig-package": "0.3.3",
     "@rushstack/ts-command-line": "4.10.2",
     "@storybook/react/webpack": "5.58.1"
