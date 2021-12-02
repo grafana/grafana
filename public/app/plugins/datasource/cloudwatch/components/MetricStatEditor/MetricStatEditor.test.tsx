@@ -95,8 +95,7 @@ describe('MetricStatEditor', () => {
     });
 
     it('should be unchecked when value is false', () => {
-      props.query.matchExact = false;
-      render(<MetricStatEditor {...props} disableExpressions={false} />);
+      render(<MetricStatEditor {...props} query={{ ...props.query, matchExact: false }} disableExpressions={false} />);
       expect(screen.getByLabelText('Match exact - optional')).not.toBeChecked();
     });
   });
