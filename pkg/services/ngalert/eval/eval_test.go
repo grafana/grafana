@@ -317,7 +317,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 			},
 		}
 		v := evaluateExecutionResult(results, time.Time{})
-		require.Len(t, v, 3)
+		require.Len(t, v, 2)
 
 		datasourceUIDs := make([]string, 0, len(v))
 		refIDs := make([]string, 0, len(v))
@@ -336,7 +336,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 			refIDs = append(refIDs, refID)
 		}
 
-		require.ElementsMatch(t, []string{"1", "1", "2"}, datasourceUIDs)
-		require.ElementsMatch(t, []string{"A", "B", "C"}, refIDs)
+		require.ElementsMatch(t, []string{"1", "2"}, datasourceUIDs)
+		require.ElementsMatch(t, []string{"A,B", "C"}, refIDs)
 	})
 }
