@@ -66,6 +66,11 @@ export const operationTopLevelCategories = [
   PromVisualQueryOperationCategory.Math,
 ];
 
+export interface PromQueryPattern {
+  name: string;
+  operations: PromVisualQueryOperation[];
+}
+
 export function getDefaultTestQuery() {
   const model: PromVisualQuery = {
     metric: 'cortex_query_scheduler_queue_duration_seconds_bucket',
@@ -75,7 +80,7 @@ export function getDefaultTestQuery() {
     ],
     operations: [
       { id: 'rate', params: ['auto'] },
-      { id: '__group_by', params: ['sum', 'job', 'cluster'] },
+      { id: '__group_by', params: ['sum', 'job'] },
     ],
   };
 

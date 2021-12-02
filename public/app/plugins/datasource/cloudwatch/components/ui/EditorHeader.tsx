@@ -23,6 +23,6 @@ export default EditorHeader;
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   root: css({
-    padding: theme.spacing(0, 1),
+    //padding: theme.spacing(0, 1),
   }),
 }));

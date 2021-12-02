@@ -1,4 +1,7 @@
-import { RadioButtonGroup } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { RadioButtonGroup, Switch, useStyles2 } from '@grafana/ui';
+import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React, { useCallback } from 'react';
 import EditorHeader from '../../../cloudwatch/components/ui/EditorHeader';
 import FlexItem from '../../../cloudwatch/components/ui/FlexItem';
@@ -16,6 +19,7 @@ const editorModes = [
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { query, onChange } = props;
+  const styles = useStyles2(getStyles);
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: PromEditorMode) => {
@@ -30,6 +34,10 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     <>
       <EditorHeader>
         <FlexItem grow={1} />
+        <Stack gap={1}>
+          <label className={styles.switchLabel}>Instant</label>
+          <Switch />
+        </Stack>
         <InlineSelect
           value={undefined}
           placeholder="Query patterns"
@@ -48,3 +56,12 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 });
 
 PromQueryEditorSelector.displayName = 'PromQueryEditorSelector';
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    switchLabel: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+  };
+};
