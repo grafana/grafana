@@ -1,4 +1,4 @@
-/** An interface that has both a name and type */
+/** An interface that has a getName method */
 export interface LayerElement {
   getName: () => string;
 }
