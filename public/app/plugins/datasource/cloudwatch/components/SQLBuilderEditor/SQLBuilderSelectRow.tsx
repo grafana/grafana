@@ -1,7 +1,7 @@
+import React, { useEffect, useMemo } from 'react';
 import { toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { Select, Switch } from '@grafana/ui';
-import React, { useEffect, useMemo } from 'react';
 import { STATISTICS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';

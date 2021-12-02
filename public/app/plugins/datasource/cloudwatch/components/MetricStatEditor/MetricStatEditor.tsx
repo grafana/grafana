@@ -1,6 +1,6 @@
+import React from 'react';
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Select, Switch } from '@grafana/ui';
-import React from 'react';
 import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';

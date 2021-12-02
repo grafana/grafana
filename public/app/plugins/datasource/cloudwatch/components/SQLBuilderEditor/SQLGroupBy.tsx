@@ -1,7 +1,7 @@
+import React, { useMemo, useState } from 'react';
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
-import React, { useMemo, useState } from 'react';
 import { CloudWatchDatasource } from '../../datasource';
 import { QueryEditorExpressionType, QueryEditorGroupByExpression, QueryEditorPropertyType } from '../../expressions';
 import { useDimensionKeys } from '../../hooks';
