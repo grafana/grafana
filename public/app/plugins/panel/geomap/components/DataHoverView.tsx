@@ -17,45 +17,71 @@ export class DataHoverView extends PureComponent<Props> {
 
   render() {
     const { data, feature, rowIndex, columnIndex } = this.props;
-
-    if (feature) {
-      return (
-        <table className={this.style.infoWrap}>
-          <tbody>
-            {Object.entries(feature.getProperties()).map(
-              (e, i) =>
-                e[0] === 'geometry' || ( //don't include geojson feature geometry
-                  <tr key={`${e}-${i}`}>
-                    <th>{`${e[0]}: `}</th>
-                    <td>{`${e[1]}`}</td>
-                  </tr>
-                )
-            )}
-          </tbody>
-        </table>
-      );
-    }
-
-    if (!data || rowIndex == null) {
-      return null;
-    }
-
+    const excludeFields = ['geometry']; //TODO: add custom fields
+    const details = getDetails({ data, feature, rowIndex, columnIndex, excludeFields });
     return (
       <table className={this.style.infoWrap}>
         <tbody>
-          {data.fields.map((f, i) => (
-            <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? this.style.highlight : ''}>
-              <th>{getFieldDisplayName(f, data)}:</th>
-              <td>{fmt(f, rowIndex)}</td>
-            </tr>
-          ))}
+          {details &&
+            details.map((d, i) => {
+              return (
+                <tr key={`${i}-${d}`} className={i === columnIndex ? this.style.highlight : ''}>
+                  <th>{`${d.header}`}</th>
+                  <td>{`${d.data}`}</td>
+                </tr>
+              );
+            })}
         </tbody>
       </table>
     );
   }
 }
 
-function fmt(field: Field, row: number): string {
+const getDetails = (
+  props: Partial<Props> & { excludeFields: string[] }
+): Array<{ header: string; data: string }> | null => {
+  const { data, feature, rowIndex, excludeFields } = props;
+  if (feature) {
+    const features = feature.get('features');
+    if (features) {
+      if (features.length > 1) {
+        return [{ header: 'Clustered:', data: features.length }];
+      } else {
+        const soloFeat = features[0].getProperties();
+        if (soloFeat?.frame) {
+          return fmtFrame(soloFeat.frame, soloFeat.rowIndex, excludeFields);
+        }
+        return null;
+      }
+    } else {
+      return Object.entries(feature.getProperties())
+        .filter((f) => !excludeFields.includes(f[0]))
+        .map((e, i) => ({ header: `${e[0]}:`, data: `${e[1]}` }));
+    }
+  } else {
+    if (!data || rowIndex == null) {
+      return null;
+    }
+    return fmtFrame(data, rowIndex, excludeFields);
+  }
+};
+
+function fmtFrame(
+  frame: DataFrame,
+  rowIndex: number,
+  excludeFields: string[]
+): Array<{ header: string; data: string }> {
+  return frame.fields
+    .filter((f) => {
+      return !excludeFields.includes(getFieldDisplayName(f, frame));
+    })
+    .map((f: Field, i: number) => ({
+      header: `${getFieldDisplayName(f, frame)}:`,
+      data: `${fmtField(f, rowIndex)}`,
+    }));
+}
+
+function fmtField(field: Field, row: number): string {
   const v = field.values.get(row);
   if (field.display) {
     return formattedValueToString(field.display(v));
