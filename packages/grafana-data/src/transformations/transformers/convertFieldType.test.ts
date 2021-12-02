@@ -8,7 +8,6 @@ import {
   convertFieldTypes,
   convertFieldTypeTransformer,
   fieldToTimeField,
-  ComplexFieldParserID,
 } from './convertFieldType';
 
 describe('field convert type', () => {
@@ -184,14 +183,14 @@ describe('field convert types transformer', () => {
     ]);
   });
 
-  it('will convert JSON fields to complex objects', () => {
+  it('will convert field to complex objects', () => {
     const options = {
       conversions: [
-        { targetField: 'numbers', destinationType: FieldType.other, inputFormat: ComplexFieldParserID.JSON },
-        { targetField: 'objects', destinationType: FieldType.other, inputFormat: ComplexFieldParserID.JSON },
-        { targetField: 'arrays', destinationType: FieldType.other, inputFormat: ComplexFieldParserID.JSON },
-        { targetField: 'invalids', destinationType: FieldType.other, inputFormat: ComplexFieldParserID.JSON },
-        { targetField: 'mixed', destinationType: FieldType.other, inputFormat: ComplexFieldParserID.JSON },
+        { targetField: 'numbers', destinationType: FieldType.other },
+        { targetField: 'objects', destinationType: FieldType.other },
+        { targetField: 'arrays', destinationType: FieldType.other },
+        { targetField: 'invalids', destinationType: FieldType.other },
+        { targetField: 'mixed', destinationType: FieldType.other },
       ],
     };
 

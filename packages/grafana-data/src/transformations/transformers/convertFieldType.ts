@@ -7,7 +7,6 @@ import { dateTimeParse } from '../../datetime';
 import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
-import { Registry, RegistryItem } from '../../utils/Registry';
 
 export interface ConvertFieldTypeTransformerOptions {
   conversions: ConvertFieldTypeOptions[];
@@ -26,10 +25,6 @@ export interface ConvertFieldTypeOptions {
    * Date format to parse a string datetime
    */
   dateFormat?: string;
-  /**
-   * Format to parse a complex field as
-   */
-  inputFormat?: ComplexFieldParserID;
 }
 
 export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<ConvertFieldTypeTransformerOptions> = {
@@ -105,8 +100,7 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
     case FieldType.boolean:
       return fieldToBooleanField(field);
     case FieldType.other:
-      const parser = complexFieldParsers.get(opts.inputFormat ?? ComplexFieldParserID.JSON);
-      return fieldToComplexField(field, parser);
+      return fieldToComplexField(field);
     default:
       return field;
   }
@@ -186,11 +180,15 @@ function fieldToStringField(field: Field): Field {
   };
 }
 
-function fieldToComplexField(field: Field, parser: ComplexFieldParser): Field {
+function fieldToComplexField(field: Field): Field {
   const complexValues = field.values.toArray().slice();
 
   for (let s = 0; s < complexValues.length; s++) {
-    complexValues[s] = parser.parse(complexValues[s]);
+    try {
+      complexValues[s] = JSON.parse(complexValues[s]);
+    } catch {
+      complexValues[s] = null;
+    }
   }
 
   return {
@@ -221,32 +219,3 @@ export function ensureTimeField(field: Field, dateFormat?: string): Field {
   }
   return fieldToTimeField(field, dateFormat);
 }
-
-/// Complex field parsing. Currently only JSON is supported, but more formats can be added
-/// by extending the ComplexFieldParserID enum and ComplexFieldParser interface.
-
-export enum ComplexFieldParserID {
-  JSON = 'json',
-}
-
-export interface ComplexFieldParser extends RegistryItem {
-  parse: (v: any) => any | null;
-}
-
-const jsonFieldParser: ComplexFieldParser = {
-  id: ComplexFieldParserID.JSON,
-  name: 'JSON',
-  description: 'Parse field as JSON',
-  parse: (v: any) => {
-    try {
-      return JSON.parse(v);
-    } catch {
-      return null;
-    }
-  },
-};
-
-/**
- * Registry of complex field parsers, used with the ConvertFieldTypeTransformer.
- */
-export const complexFieldParsers = new Registry<ComplexFieldParser>(() => [jsonFieldParser]);
