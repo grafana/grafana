@@ -52,6 +52,7 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
         <>
           <InlineField label="Interval" {...inlineFieldProps}>
             <Input
+              id={`${baseId}-histogram-interval`}
               onBlur={(e) =>
                 dispatch(
                   changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue: e.target.value })
@@ -65,6 +66,7 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
 
           <InlineField label="Min Doc Count" {...inlineFieldProps}>
             <Input
+              id={`${baseId}-histogram-min_doc_count`}
               onBlur={(e) =>
                 dispatch(
                   changeBucketAggregationSetting({ bucketAgg, settingName: 'min_doc_count', newValue: e.target.value })
