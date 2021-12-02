@@ -10,7 +10,7 @@ export class VisualQueryEngine {
 
   constructor() {
     this.addOperationDef({
-      type: 'sum',
+      id: 'sum',
       params: [],
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Aggregations,
@@ -18,7 +18,7 @@ export class VisualQueryEngine {
     });
 
     this.addOperationDef({
-      type: 'avg',
+      id: 'avg',
       params: [],
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Aggregations,
@@ -26,7 +26,7 @@ export class VisualQueryEngine {
     });
 
     this.addOperationDef({
-      type: 'histogram_quantile',
+      id: 'histogram_quantile',
       params: [{ name: 'quantile', type: 'number', options: [0.99, 0.95, 0.9, 0.75, 0.5, 0.25] }],
       defaultParams: [0.9],
       category: PromVisualQueryOperationCategory.Functions,
@@ -34,12 +34,12 @@ export class VisualQueryEngine {
     });
 
     this.addOperationDef({
-      type: 'label_replace',
+      id: 'label_replace',
       params: [
-        { name: 'dst_label', type: 'string' },
-        { name: 'replacement', type: 'string' },
-        { name: 'src_label', type: 'string' },
-        { name: 'regex', type: 'string' },
+        { name: 'Destination label', type: 'string' },
+        { name: 'Replacement', type: 'string' },
+        { name: 'Source label', type: 'string' },
+        { name: 'Regex', type: 'string' },
       ],
       category: PromVisualQueryOperationCategory.Functions,
       defaultParams: [],
@@ -47,10 +47,12 @@ export class VisualQueryEngine {
     });
 
     this.addOperationDef({
-      type: 'group by',
+      // Because this is not a real function I prefix it with __ so it wont conflict if Prometheus ever adds a function named group_by
+      id: '__group_by',
+      displayName: 'Group by',
       params: [
-        { name: 'aggregation', type: 'string' },
-        { name: 'label', type: 'string', multiple: true },
+        { name: 'Aggregation', type: 'string' },
+        { name: 'Label', type: 'string', restParam: true },
       ],
       defaultParams: ['sum'],
       category: PromVisualQueryOperationCategory.GroupBy,
@@ -58,8 +60,9 @@ export class VisualQueryEngine {
     });
 
     this.addOperationDef({
-      type: 'rate',
-      params: [{ name: 'range-vector', type: 'string' }],
+      id: 'rate',
+      displayName: 'Rate',
+      params: [{ name: 'Range vector', type: 'string' }],
       defaultParams: ['auto'],
       category: PromVisualQueryOperationCategory.RateAndDeltas,
       renderer: rateRenderer,
@@ -67,7 +70,7 @@ export class VisualQueryEngine {
   }
 
   private addOperationDef(op: PromVisualQueryOperationDef) {
-    this.operations[op.type] = op;
+    this.operations[op.id] = op;
   }
 
   getOperationsForCategory(category: PromVisualQueryOperationCategory) {
@@ -86,9 +89,9 @@ export class VisualQueryEngine {
     let queryString = `${query.metric}${this.renderLabels(query)}`;
 
     for (const operation of query.operations) {
-      const def = this.operations[operation.type];
+      const def = this.operations[operation.id];
       if (!def) {
-        throw new Error(`Operation ${operation.type} not found`);
+        throw new Error(`Operation ${operation.id} not found`);
       }
       queryString = def.renderer(operation, def, queryString);
     }
@@ -116,7 +119,7 @@ export class VisualQueryEngine {
 
 function functionRendererLeft(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);
-  const str = model.type + '(';
+  const str = model.id + '(';
 
   if (innerExpr) {
     params.push(innerExpr);
@@ -127,7 +130,7 @@ function functionRendererLeft(model: PromVisualQueryOperation, def: PromVisualQu
 
 function functionRendererRight(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);
-  const str = model.type + '(';
+  const str = model.id + '(';
 
   if (innerExpr) {
     params.unshift(innerExpr);

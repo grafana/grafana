@@ -1,7 +1,6 @@
 import React from 'react';
-import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 
 // @ts-ignore
 import RCCascader from 'rc-cascader';
@@ -9,6 +8,7 @@ import { CascaderOption } from '../Cascader/Cascader';
 import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
+import { Button } from '../Button';
 
 export interface ButtonCascaderProps {
   options: CascaderOption[];
@@ -53,11 +53,10 @@ export const ButtonCascader: React.FC<ButtonCascaderProps> = (props) => {
       {...rest}
       expandIcon={null}
     >
-      <button className={cx('gf-form-label', className)} disabled={props.disabled}>
-        {icon && <Icon name={icon} className={styles.icons.left} />}
+      <Button icon={icon} disabled={props.disabled} variant="secondary">
         {props.children}
-        <Icon name="angle-down" className={styles.icons.right} />
-      </button>
+        {/* <Icon name="angle-down" className={styles.icons.right} /> */}
+      </Button>
     </RCCascader>
   );
 };

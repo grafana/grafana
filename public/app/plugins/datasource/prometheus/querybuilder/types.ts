@@ -18,8 +18,8 @@ export interface PromLabelFilter {
  * Functions, group by and other elements
  */
 export interface PromVisualQueryOperation {
-  type: string;
-  params?: string[] | number[];
+  id: string;
+  params: string[] | number[];
 }
 
 export interface PromVisualQueryBinary {
@@ -28,7 +28,8 @@ export interface PromVisualQueryBinary {
 }
 
 export interface PromVisualQueryOperationDef {
-  type: string;
+  id: string;
+  displayName?: string;
   params: PromVisualQueryOperationParamDef[];
   defaultParams: string[] | number[];
   category: string;
@@ -41,11 +42,11 @@ export type PromVisualQueryOperationRenderer = (
   innerExpr: string
 ) => string;
 
-interface PromVisualQueryOperationParamDef {
+export interface PromVisualQueryOperationParamDef {
   name: string;
   type: string;
   options?: string[] | number[];
-  multiple?: boolean;
+  restParam?: boolean;
   optional?: boolean;
 }
 

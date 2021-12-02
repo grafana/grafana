@@ -1,4 +1,3 @@
-import { SegmentSection } from '@grafana/ui';
 import React, { useState } from 'react';
 import { PromQueryEditorProps } from '../../components/types';
 import { MetricSelect } from './MetricSelect';
@@ -43,7 +42,10 @@ function getDefaultTestQuery() {
       { label: 'cluster', op: '=~', value: '$cluster' },
       { label: 'job', op: '=~', value: '($namespace)/query-scheduler.*' },
     ],
-    operations: [{ type: 'rate', params: ['auto'] }],
+    operations: [
+      { id: 'rate', params: ['auto'] },
+      { id: '__group_by', params: ['sum', 'job', 'cluster'] },
+    ],
   };
 
   return model;

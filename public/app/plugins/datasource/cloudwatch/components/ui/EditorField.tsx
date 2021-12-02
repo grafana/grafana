@@ -52,6 +52,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, props: EditorFieldProps) 
     }),
     label: css({
       fontSize: 12,
+      fontWeight: theme.typography.fontWeightMedium,
     }),
     optional: css({
       fontStyle: 'italic',

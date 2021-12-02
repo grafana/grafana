@@ -31,7 +31,7 @@ describe('VisualQueryEngine', () => {
       engine.renderQuery({
         metric: 'my_totals',
         labels: [],
-        operations: [{ type: 'sum' }],
+        operations: [{ id: 'sum', params: [] }],
       })
     ).toBe('sum(my_totals)');
   });
@@ -41,7 +41,7 @@ describe('VisualQueryEngine', () => {
       engine.renderQuery({
         metric: 'metric',
         labels: [],
-        operations: [{ type: 'histogram_quantile', params: [0.86] }],
+        operations: [{ id: 'histogram_quantile', params: [0.86] }],
       })
     ).toBe('histogram_quantile(0.86, metric)');
   });
@@ -51,7 +51,7 @@ describe('VisualQueryEngine', () => {
       engine.renderQuery({
         metric: 'metric',
         labels: [],
-        operations: [{ type: 'label_replace', params: ['server', '$1', 'instance', 'as(.*)d'] }],
+        operations: [{ id: 'label_replace', params: ['server', '$1', 'instance', 'as(.*)d'] }],
       })
     ).toBe('label_replace(metric, "server", "$1", "instance", "as(.*)d")');
   });
@@ -61,7 +61,7 @@ describe('VisualQueryEngine', () => {
       engine.renderQuery({
         metric: 'metric',
         labels: [],
-        operations: [{ type: 'group by', params: ['sum', 'server', 'job'] }],
+        operations: [{ id: '__group_by', params: ['sum', 'server', 'job'] }],
       })
     ).toBe('sum by(server, job) (metric)');
   });
@@ -71,7 +71,10 @@ describe('VisualQueryEngine', () => {
       engine.renderQuery({
         metric: 'metric',
         labels: [],
-        operations: [{ type: 'group by', params: ['sum', 'server', 'job'] }, { type: 'avg' }],
+        operations: [
+          { id: '__group_by', params: ['sum', 'server', 'job'] },
+          { id: 'avg', params: [] },
+        ],
       })
     ).toBe('avg(sum by(server, job) (metric))');
   });
@@ -81,7 +84,7 @@ describe('VisualQueryEngine', () => {
       engine.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
-        operations: [{ type: 'rate', params: ['auto'] }],
+        operations: [{ id: 'rate', params: ['auto'] }],
       })
     ).toBe('rate(metric{pod="A"}[$__rate_interval])');
   });
@@ -91,7 +94,7 @@ describe('VisualQueryEngine', () => {
       engine.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
-        operations: [{ type: 'rate', params: ['10m'] }],
+        operations: [{ id: 'rate', params: ['10m'] }],
       })
     ).toBe('rate(metric{pod="A"}[10m])');
   });
