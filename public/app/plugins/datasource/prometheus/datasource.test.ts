@@ -616,19 +616,6 @@ describe('PrometheusDatasource', () => {
       expect(interpolatedQuery.expr).toBe(job);
     });
 
-    it('should not call replace function for interval', () => {
-      const query = {
-        expr: 'test{job="bar"}',
-        interval: '$interval',
-        refId: 'A',
-      };
-      const interval = '10s';
-      templateSrvStub.replace.mockReturnValue(interval);
-
-      const interpolatedQuery = ds.applyTemplateVariables(query, { interval: { text: interval, value: interval } });
-      expect(interpolatedQuery.interval).not.toBe(interval);
-    });
-
     it('should add ad-hoc filters to expr', () => {
       templateSrvStub.replace = jest.fn((a: string) => a);
       templateSrvStub.getAdhocFilters.mockReturnValue([
