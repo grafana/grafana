@@ -295,12 +295,20 @@ def upload_cdn_step(edition, ver_mode):
     else:
         bucket = "$${PRERELEASE_BUCKET}/artifacts/static-assets"
 
+    deps = []
+    if edition in 'enterprise2':
+        deps.extend([
+            'package' + enterprise2_suffix(edition),
+        ])
+    else:
+        deps.extend([
+            'end-to-end-tests-server',
+        ])
+
     return {
         'name': 'upload-cdn-assets' + enterprise2_suffix(edition),
         'image': publish_image,
-        'depends_on': [
-            'end-to-end-tests-server' + enterprise2_suffix(edition),
-        ],
+        'depends_on': deps,
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
@@ -925,21 +933,27 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         packages_bucket = ' --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads' + enterprise2_suffix(edition)
         cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
 
-    dependencies = [
-        'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
-    ]
+    deps = []
+    if edition in 'enterprise2':
+        deps.extend([
+            'package' + enterprise2_suffix(edition),
+            ])
+    else:
+        deps.extend([
+            'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
+            'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
+            'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
+            'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
+            ])
 
     if edition in ('enterprise', 'enterprise2'):
-        dependencies.append('redis-integration-tests')
-        dependencies.append('memcached-integration-tests')
+        deps.append('redis-integration-tests')
+        deps.append('memcached-integration-tests')
 
     return {
         'name': 'upload-packages' + enterprise2_suffix(edition),
         'image': publish_image,
-        'depends_on': dependencies,
+        'depends_on': deps,
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
