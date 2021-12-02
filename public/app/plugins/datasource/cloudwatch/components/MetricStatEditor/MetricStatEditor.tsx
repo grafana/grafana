@@ -109,7 +109,8 @@ export function MetricStatEditor({
             tooltip="Only show metrics that exactly match all defined dimension names."
           >
             <Switch
-              checked={!!query.matchExact}
+              id="cloudwatch-match-exact"
+              value={!!query.matchExact}
               onChange={(e) => {
                 onQueryChange({
                   ...query,
