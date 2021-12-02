@@ -103,8 +103,6 @@ export const Drawer: FC<Props> = ({
   const overlayRef = React.useRef(null);
   const { overlayProps } = useOverlay(
     {
-      onClose: () => onClose(),
-      isOpen: isOpen,
       isDismissable: true,
     },
     overlayRef
@@ -134,47 +132,45 @@ export const Drawer: FC<Props> = ({
       }
     >
       <FocusScope restoreFocus contain autoFocus>
-        <div {...overlayProps} ref={overlayRef}>
-          {typeof title === 'string' && (
-            <div className={drawerStyles.header}>
-              <div className={drawerStyles.actions}>
-                {expandable && !isExpanded && (
-                  <IconButton
-                    name="angle-left"
-                    size="xl"
-                    onClick={() => setIsExpanded(true)}
-                    surface="header"
-                    aria-label={selectors.components.Drawer.General.expand}
-                  />
-                )}
-                {expandable && isExpanded && (
-                  <IconButton
-                    name="angle-right"
-                    size="xl"
-                    onClick={() => setIsExpanded(false)}
-                    surface="header"
-                    aria-label={selectors.components.Drawer.General.contract}
-                  />
-                )}
+        {typeof title === 'string' && (
+          <div className={drawerStyles.header} {...overlayProps} ref={overlayRef}>
+            <div className={drawerStyles.actions}>
+              {expandable && !isExpanded && (
                 <IconButton
-                  name="times"
+                  name="angle-left"
                   size="xl"
-                  onClick={onClose}
+                  onClick={() => setIsExpanded(true)}
                   surface="header"
-                  aria-label={selectors.components.Drawer.General.close}
+                  aria-label={selectors.components.Drawer.General.expand}
                 />
-              </div>
-              <div className={drawerStyles.titleWrapper}>
-                <h3>{title}</h3>
-                {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
-                {typeof subtitle !== 'string' && subtitle}
-              </div>
+              )}
+              {expandable && isExpanded && (
+                <IconButton
+                  name="angle-right"
+                  size="xl"
+                  onClick={() => setIsExpanded(false)}
+                  surface="header"
+                  aria-label={selectors.components.Drawer.General.contract}
+                />
+              )}
+              <IconButton
+                name="times"
+                size="xl"
+                onClick={onClose}
+                surface="header"
+                aria-label={selectors.components.Drawer.General.close}
+              />
             </div>
-          )}
-          {typeof title !== 'string' && title}
-          <div className={drawerStyles.content}>
-            {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
+            <div className={drawerStyles.titleWrapper}>
+              <h3>{title}</h3>
+              {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
+              {typeof subtitle !== 'string' && subtitle}
+            </div>
           </div>
+        )}
+        {typeof title !== 'string' && title}
+        <div className={drawerStyles.content} {...overlayProps} ref={overlayRef}>
+          {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
         </div>
       </FocusScope>
     </RcDrawer>
