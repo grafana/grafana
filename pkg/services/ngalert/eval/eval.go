@@ -317,12 +317,11 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 	}
 
 	if len(execResults.NoData) > 0 {
-		m := make(map[string]struct{})
-		for _, datasourceUID := range execResults.NoData {
-			if _, ok := m[datasourceUID]; !ok {
-				appendNoData(data.Labels{"datasource_uid": datasourceUID})
-				m[datasourceUID] = struct{}{}
-			}
+		for refID, datasourceUID := range execResults.NoData {
+			appendNoData(data.Labels{
+				"datasource_uid": datasourceUID,
+				"ref_id":         refID,
+			})
 		}
 		return evalResults
 	}
