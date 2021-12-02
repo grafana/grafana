@@ -23,7 +23,7 @@ var nameExp = regexp.MustCompile(`([^\/]*)\/*$`)
 
 const resourceManagerPath = "/v1/projects"
 
-type processResponse func(body []byte, results []json.RawMessage) ([]json.RawMessage, string, error)
+type processResponse func(body []byte) ([]json.RawMessage, string, error)
 
 func (s *Service) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/gceDefaultProject", getGCEDefaultProject)
@@ -50,25 +50,25 @@ func (s *Service) resourceHandler(subDataSource string, responseFn processRespon
 			writeResponse(rw, code, fmt.Sprintf("unexpected error %v", err))
 			return
 		}
-		doRequest(rw, req, client, responseFn)
+		getResources(rw, req, client, responseFn)
 	}
 }
 
-func doRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client, responseFn processResponse) http.ResponseWriter {
+func getResources(rw http.ResponseWriter, req *http.Request, cli *http.Client, responseFn processResponse) http.ResponseWriter {
 	if responseFn == nil {
 		writeResponse(rw, http.StatusInternalServerError, "responseFn should not be nil")
 		return rw
 	}
 
-	responses, headers, encoding, code, err := loopRequest(req, cli, responseFn)
+	responses, headers, encoding, code, err := getResponses(req, cli, responseFn)
 	if err != nil {
 		writeResponse(rw, code, fmt.Sprintf("unexpected error %v", err))
 		return rw
 	}
 
-	body, errcode, err := buildResponse(responses, encoding)
+	body, err := buildResponse(responses, encoding)
 	if err != nil {
-		writeResponse(rw, errcode, fmt.Sprintf("error formatting responose %v", err))
+		writeResponse(rw, http.StatusInternalServerError, fmt.Sprintf("error formatting responose %v", err))
 		return rw
 	}
 	writeResponseBytes(rw, code, body)
@@ -82,13 +82,14 @@ func doRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client, resp
 	return rw
 }
 
-func processMetricDescriptors(body []byte, results []json.RawMessage) ([]json.RawMessage, string, error) {
+func processMetricDescriptors(body []byte) ([]json.RawMessage, string, error) {
 	resp := metricDescriptorResponse{}
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
 		return nil, "", err
 	}
 
+	results := []json.RawMessage{}
 	for i := range resp.Descriptors {
 		resp.Descriptors[i].Service = strings.SplitN(resp.Descriptors[i].Type, "/", 2)[0]
 		resp.Descriptors[i].ServiceShortName = strings.SplitN(resp.Descriptors[i].Service, ".", 2)[0]
@@ -104,13 +105,14 @@ func processMetricDescriptors(body []byte, results []json.RawMessage) ([]json.Ra
 	return results, resp.Token, nil
 }
 
-func processServices(body []byte, results []json.RawMessage) ([]json.RawMessage, string, error) {
+func processServices(body []byte) ([]json.RawMessage, string, error) {
 	resp := serviceResponse{}
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
 		return nil, "", err
 	}
 
+	results := []json.RawMessage{}
 	for _, service := range resp.Services {
 		name := nameExp.FindString(service.Name)
 		if name == "" {
@@ -132,13 +134,14 @@ func processServices(body []byte, results []json.RawMessage) ([]json.RawMessage,
 	return results, resp.Token, nil
 }
 
-func processSLOs(body []byte, results []json.RawMessage) ([]json.RawMessage, string, error) {
+func processSLOs(body []byte) ([]json.RawMessage, string, error) {
 	resp := sloResponse{}
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
 		return nil, "", err
 	}
 
+	results := []json.RawMessage{}
 	for _, slo := range resp.SLOs {
 		name := nameExp.FindString(slo.Name)
 		if name == "" {
@@ -157,13 +160,14 @@ func processSLOs(body []byte, results []json.RawMessage) ([]json.RawMessage, str
 	return results, resp.Token, nil
 }
 
-func processProjects(body []byte, results []json.RawMessage) ([]json.RawMessage, string, error) {
+func processProjects(body []byte) ([]json.RawMessage, string, error) {
 	resp := projectResponse{}
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
 		return nil, "", err
 	}
 
+	results := []json.RawMessage{}
 	for _, project := range resp.Projects {
 		marshaledValue, err := json.Marshal(selectableValue{
 			Value: project.ProjectID,
@@ -177,14 +181,14 @@ func processProjects(body []byte, results []json.RawMessage) ([]json.RawMessage,
 	return results, resp.Token, nil
 }
 
-func decode(encoding string, original io.ReadCloser) ([]byte, int, error) {
+func decode(encoding string, original io.ReadCloser) ([]byte, error) {
 	var reader io.Reader
 	var err error
 	switch encoding {
 	case "gzip":
 		reader, err = gzip.NewReader(original)
 		if err != nil {
-			return nil, http.StatusBadRequest, err
+			return nil, err
 		}
 		defer func() {
 			if err := reader.(io.ReadCloser).Close(); err != nil {
@@ -203,17 +207,17 @@ func decode(encoding string, original io.ReadCloser) ([]byte, int, error) {
 	case "":
 		reader = original
 	default:
-		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected encoding type %v", err)
+		return nil, fmt.Errorf("unexpected encoding type %v", err)
 	}
 
 	body, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return nil, http.StatusBadRequest, err
+		return nil, err
 	}
-	return body, 0, nil
+	return body, nil
 }
 
-func encode(encoding string, body []byte) ([]byte, int, error) {
+func encode(encoding string, body []byte) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	var writer io.Writer = buf
 	var err error
@@ -223,13 +227,13 @@ func encode(encoding string, body []byte) ([]byte, int, error) {
 	case "deflate":
 		writer, err = flate.NewWriter(writer, -1)
 		if err != nil {
-			return nil, http.StatusInternalServerError, err
+			return nil, err
 		}
 	case "br":
 		writer = brotli.NewWriter(writer)
 	case "":
 	default:
-		return nil, http.StatusInternalServerError, fmt.Errorf("unexpected encoding type %v", encoding)
+		return nil, fmt.Errorf("unexpected encoding type %v", encoding)
 	}
 
 	_, err = writer.Write(body)
@@ -239,64 +243,71 @@ func encode(encoding string, body []byte) ([]byte, int, error) {
 		}
 	}
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("unable to encode response %v", err)
+		return nil, fmt.Errorf("unable to encode response %v", err)
 	}
-	return buf.Bytes(), 0, nil
+	return buf.Bytes(), nil
 }
 
-func processData(data io.ReadCloser, encoding string, response []json.RawMessage, responseFn processResponse) ([]json.RawMessage, string, int, error) {
-	body, errcode, err := decode(encoding, data)
+func processData(data io.ReadCloser, encoding string, responseFn processResponse) ([]json.RawMessage, string, int, error) {
+	body, err := decode(encoding, data)
 	if err != nil {
-		return nil, "", errcode, fmt.Errorf("unable to decode response %v", err)
+		return nil, "", http.StatusBadRequest, fmt.Errorf("unable to decode response %v", err)
 	}
 
-	response, token, err := responseFn(body, response)
+	response, token, err := responseFn(body)
 	if err != nil {
 		return nil, "", http.StatusInternalServerError, fmt.Errorf("data processing error %v", err)
 	}
 	return response, token, 0, nil
 }
 
-func loopRequest(req *http.Request, cli *http.Client, responseFn processResponse) ([]json.RawMessage, http.Header, string, int, error) {
-	responses := []json.RawMessage{}
-	var originalHeader http.Header
-	var originalCode int
-	var encoding, token string
-
-	for {
-		res, err := cli.Do(req)
-		if err != nil {
-			return nil, nil, "", http.StatusBadRequest, err
+func doRequest(req *http.Request, cli *http.Client, responseFn processResponse) (string, http.Header, []json.RawMessage, string, int, error) {
+	res, err := cli.Do(req)
+	if err != nil {
+		return "", nil, nil, "", http.StatusBadRequest, err
+	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			slog.Warn("Failed to close response body", "err", err)
 		}
-		defer func() {
-			if err := res.Body.Close(); err != nil {
-				slog.Warn("Failed to close response body", "err", err)
-			}
-		}()
-		encoding = res.Header.Get("Content-Encoding")
-		originalHeader = res.Header
-		originalCode = res.StatusCode
+	}()
+	encoding := res.Header.Get("Content-Encoding")
+	originalHeader := res.Header
+	code := res.StatusCode
 
-		var errcode int
-		responses, token, errcode, err = processData(res.Body, encoding, responses, responseFn)
-		if err != nil {
-			return nil, nil, "", errcode, err
-		}
+	responses, token, errcode, err := processData(res.Body, encoding, responseFn)
+	if err != nil {
+		code = errcode
+	}
+	return encoding, originalHeader, responses, token, code, err
+}
 
-		if token == "" {
-			break
-		}
+func getResponses(req *http.Request, cli *http.Client, responseFn processResponse) ([]json.RawMessage, http.Header, string, int, error) {
+	encoding, originalHeader, responses, token, originalCode, err := doRequest(req, cli, responseFn)
+	if err != nil {
+		return nil, nil, "", originalCode, err
+	}
+
+	for token != "" {
 		query := req.URL.Query()
 		query.Set("pageToken", token)
 		req.URL.RawQuery = query.Encode()
+
+		var loopResult []json.RawMessage
+		var errcode int
+		_, _, loopResult, token, errcode, err = doRequest(req, cli, responseFn)
+		if err != nil {
+			return nil, nil, "", errcode, err
+		}
+		responses = append(responses, loopResult...)
 	}
 	return responses, originalHeader, encoding, originalCode, nil
 }
 
-func buildResponse(responses []json.RawMessage, encoding string) ([]byte, int, error) {
+func buildResponse(responses []json.RawMessage, encoding string) ([]byte, error) {
 	body, err := json.Marshal(responses)
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("response marshaling error %v", err)
+		return nil, fmt.Errorf("response marshaling error %v", err)
 	}
 
 	return encode(encoding, body)

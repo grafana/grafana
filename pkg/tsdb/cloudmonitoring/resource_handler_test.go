@@ -48,8 +48,8 @@ func Test_doRequest(t *testing.T) {
 	elements := []string{"1", "2", "3"}
 	index := 0
 
-	fakeResponseFn := func(input []byte, results []json.RawMessage) ([]json.RawMessage, string, error) {
-		results = append(results, input)
+	fakeResponseFn := func(input []byte) ([]json.RawMessage, string, error) {
+		results := []json.RawMessage{input}
 		if index < len(elements) {
 			return results, "token", nil
 		}
@@ -70,7 +70,7 @@ func Test_doRequest(t *testing.T) {
 	}
 
 	rw := httptest.NewRecorder()
-	res := doRequest(rw, req, srv.Client(), fakeResponseFn)
+	res := getResources(rw, req, srv.Client(), fakeResponseFn)
 	if res.Header().Get("foo") != "bar" {
 		t.Errorf("Unexpected headers: %v", res.Header())
 	}
@@ -268,8 +268,7 @@ func Test_processData_functions(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			results := []json.RawMessage{}
-			results, token, err := test.responseFn(test.input, results)
+			results, token, err := test.responseFn(test.input)
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
