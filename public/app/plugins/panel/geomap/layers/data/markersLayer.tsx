@@ -17,18 +17,21 @@ import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper'
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReplaySubject } from 'rxjs';
 import { getFeatures } from '../../utils/getFeatures';
-import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
+import { ClusterConfig, defaultClusterConfig, defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
 import { StyleEditor } from './StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
+import { ClusterEditor } from '../../editor/ClusterEditor';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
   style: StyleConfig;
+  cluster?: ClusterConfig;
   showLegend?: boolean;
 }
 
 const defaultOptions: MarkersConfig = {
   style: defaultStyleConfig,
+  cluster: defaultClusterConfig,
   showLegend: true,
 };
 
@@ -131,7 +134,15 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
         // Source reads the data and provides a set of features to visualize
         const vectorSource = new source.Vector({ features });
-        vectorLayer.setSource(vectorSource);
+        if (config?.cluster?.enabled) {
+          const clusterSource = new source.Cluster({
+            distance: config.cluster?.distance ?? defaultClusterConfig.distance,
+            source: vectorSource,
+          });
+          vectorLayer.setSource(clusterSource);
+        } else {
+          vectorLayer.setSource(vectorSource);
+        }
       },
 
       // Marker overlay options
@@ -146,6 +157,13 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               displayRotation: true,
             },
             defaultValue: defaultOptions.style,
+          })
+          .addCustomEditor({
+            id: 'config.cluster',
+            path: 'config.cluster',
+            name: 'Clustering',
+            editor: ClusterEditor,
+            defaultValue: defaultOptions.cluster,
           })
           .addBooleanSwitch({
             path: 'config.showLegend',

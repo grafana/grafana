@@ -35,7 +35,19 @@ export interface StyleConfig {
 
   // Allow for rotation of markers
   rotation?: ScalarDimensionConfig;
+
+  cluster?: ClusterConfig;
 }
+
+export interface ClusterConfig {
+  enabled: boolean;
+  distance?: number;
+}
+
+export const defaultClusterConfig: ClusterConfig = {
+  enabled: true,
+  distance: 40,
+};
 
 export const DEFAULT_SIZE = 5;
 
@@ -103,6 +115,7 @@ export interface StyleConfigValues {
 
   // Pass though (not value dependant)
   textConfig?: TextStyleConfig;
+  clusterConfig?: ClusterConfig;
 }
 
 /** When the style depends on a field */
