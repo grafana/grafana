@@ -14,6 +14,7 @@ const setup = (propOverrides: Partial<Props>) => {
   const loadApiKeysMock = jest.fn();
   const deleteApiKeyMock = jest.fn();
   const addApiKeyMock = jest.fn();
+  const toggleIncludeExpiredMock = jest.fn();
   const setSearchQueryMock = mockToolkitActionCreator(setSearchQuery);
   const props: Props = {
     navModel: {
@@ -33,21 +34,31 @@ const setup = (propOverrides: Partial<Props>) => {
     addApiKey: addApiKeyMock,
     apiKeysCount: 0,
     timeZone: 'utc',
+    includeExpired: false,
+    includeExpiredDisabled: false,
+    toggleIncludeExpired: toggleIncludeExpiredMock,
   };
 
   Object.assign(props, propOverrides);
 
   const { rerender } = render(<ApiKeysPageUnconnected {...props} />);
-  return { rerender, props, loadApiKeysMock, setSearchQueryMock, deleteApiKeyMock, addApiKeyMock };
+  return {
+    rerender,
+    props,
+    loadApiKeysMock,
+    setSearchQueryMock,
+    deleteApiKeyMock,
+    addApiKeyMock,
+    toggleIncludeExpiredMock,
+  };
 };
 
 describe('ApiKeysPage', () => {
   silenceConsoleOutput();
   describe('when mounted', () => {
-    it('then it should call loadApiKeys with expired', () => {
+    it('then it should call loadApiKeys', () => {
       const { loadApiKeysMock } = setup({});
       expect(loadApiKeysMock).toHaveBeenCalledTimes(1);
-      expect(loadApiKeysMock).toHaveBeenCalledWith(true);
     });
   });
 
@@ -81,6 +92,16 @@ describe('ApiKeysPage', () => {
     });
   });
 
+  describe('when a user toggles the Show expired toggle', () => {
+    it('then it should dispatch toggleIncludeExpired', async () => {
+      const apiKeys = getMultipleMockKeys(3);
+      const { toggleIncludeExpiredMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
+
+      toggleShowExpired();
+      expect(toggleIncludeExpiredMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('when a user searches for an API key', () => {
     it('then it should dispatch setSearchQuery with correct parameters', async () => {
       const apiKeys = getMultipleMockKeys(3);
@@ -102,6 +123,7 @@ describe('ApiKeysPage', () => {
       ];
       const { deleteApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
       const firstRow = screen.getByRole('row', { name: /first admin 2021-01-01 00:00:00/i });
+      const secondRow = screen.getByRole('row', { name: /second editor 2021-01-02 00:00:00/i });
 
       deleteApiKeyMock.mockClear();
       expect(within(firstRow).getByLabelText('Delete API key')).toBeInTheDocument();
@@ -110,7 +132,19 @@ describe('ApiKeysPage', () => {
       expect(within(firstRow).getByRole('button', { name: /delete$/i })).toBeInTheDocument();
       userEvent.click(within(firstRow).getByRole('button', { name: /delete$/i }));
       expect(deleteApiKeyMock).toHaveBeenCalledTimes(1);
-      expect(deleteApiKeyMock).toHaveBeenCalledWith(1, true);
+      expect(deleteApiKeyMock).toHaveBeenCalledWith(1);
+
+      toggleShowExpired();
+
+      deleteApiKeyMock.mockClear();
+      expect(within(secondRow).getByLabelText('Delete API key')).toBeInTheDocument();
+      userEvent.click(within(secondRow).getByLabelText('Delete API key'));
+      expect(within(secondRow).getByRole('button', { name: /delete$/i })).toBeInTheDocument();
+      userEvent.click(within(secondRow).getByRole('button', { name: /delete$/i }), undefined, {
+        skipPointerEventsCheck: true,
+      });
+      expect(deleteApiKeyMock).toHaveBeenCalledTimes(1);
+      expect(deleteApiKeyMock).toHaveBeenCalledWith(2);
     });
   });
 
@@ -121,7 +155,7 @@ describe('ApiKeysPage', () => {
 
       addApiKeyMock.mockClear();
       userEvent.click(screen.getByTestId(selectors.components.CallToActionCard.buttonV2('New API key')));
-      await addAndVerifyApiKey(addApiKeyMock, false);
+      await addAndVerifyApiKey(addApiKeyMock);
     });
   });
 
@@ -132,7 +166,13 @@ describe('ApiKeysPage', () => {
 
       addApiKeyMock.mockClear();
       userEvent.click(screen.getByRole('button', { name: /add api key/i }));
-      await addAndVerifyApiKey(addApiKeyMock, true);
+      await addAndVerifyApiKey(addApiKeyMock);
+
+      toggleShowExpired();
+
+      addApiKeyMock.mockClear();
+      userEvent.click(screen.getByRole('button', { name: /add api key/i }));
+      await addAndVerifyApiKey(addApiKeyMock);
     });
   });
 
@@ -153,7 +193,12 @@ describe('ApiKeysPage', () => {
   });
 });
 
-async function addAndVerifyApiKey(addApiKeyMock: jest.Mock, includeExpired: boolean) {
+function toggleShowExpired() {
+  expect(screen.queryByLabelText(/include expired keys/i)).toBeInTheDocument();
+  userEvent.click(screen.getByLabelText(/include expired keys/i));
+}
+
+async function addAndVerifyApiKey(addApiKeyMock: jest.Mock) {
   expect(screen.getByRole('heading', { name: /add api key/i })).toBeInTheDocument();
   expect(screen.getByPlaceholderText(/name/i)).toBeInTheDocument();
   expect(screen.getByPlaceholderText(/1d/i)).toBeInTheDocument();
@@ -163,9 +208,5 @@ async function addAndVerifyApiKey(addApiKeyMock: jest.Mock, includeExpired: bool
   userEvent.type(screen.getByPlaceholderText(/1d/i), '60s');
   userEvent.click(screen.getByRole('button', { name: /^add$/i }));
   expect(addApiKeyMock).toHaveBeenCalledTimes(1);
-  expect(addApiKeyMock).toHaveBeenCalledWith(
-    { name: 'Test', role: 'Viewer', secondsToLive: 60 },
-    expect.anything(),
-    true
-  );
+  expect(addApiKeyMock).toHaveBeenCalledWith({ name: 'Test', role: 'Viewer', secondsToLive: 60 }, expect.anything());
 }

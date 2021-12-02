@@ -3,9 +3,11 @@
 import { ApiKeysState } from 'app/types';
 
 export const initialApiKeysState: ApiKeysState = {
-  keys: [],
-  searchQuery: '',
   hasFetched: false,
+  includeExpired: false,
+  keys: [],
+  keysIncludingExpired: [],
+  searchQuery: '',
 };
 
 const apiKeysSlice = createSlice({
@@ -13,15 +15,26 @@ const apiKeysSlice = createSlice({
   initialState: initialApiKeysState,
   reducers: {
     apiKeysLoaded: (state, action): ApiKeysState => {
-      return { ...state, hasFetched: true, keys: action.payload };
+      const { keys, keysIncludingExpired } = action.payload;
+      const includeExpired =
+        action.payload.keys.length === 0 && action.payload.keysIncludingExpired.length > 0
+          ? true
+          : state.includeExpired;
+      return { ...state, hasFetched: true, keys, keysIncludingExpired, includeExpired };
     },
     setSearchQuery: (state, action): ApiKeysState => {
       return { ...state, searchQuery: action.payload };
     },
+    includeExpiredToggled: (state): ApiKeysState => {
+      return { ...state, includeExpired: !state.includeExpired };
+    },
+    isFetching: (state): ApiKeysState => {
+      return { ...state, hasFetched: false };
+    },
   },
 });
 
-export const { setSearchQuery, apiKeysLoaded } = apiKeysSlice.actions;
+export const { apiKeysLoaded, includeExpiredToggled, isFetching, setSearchQuery } = apiKeysSlice.actions;
 
 export const apiKeysReducer = apiKeysSlice.reducer;
 
