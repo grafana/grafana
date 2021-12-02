@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-
+import { uniqueId } from 'lodash';
 import { AlertState, dateTimeFormat, GrafanaTheme } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -11,7 +11,7 @@ import { AlertLabel } from '../AlertLabel';
 import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 type StateHistoryRowItem = {
-  id: number;
+  id: string;
   state: PromAlertingRuleState | GrafanaAlertState | AlertState;
   text?: string;
   data?: StateHistoryItemData;
@@ -44,7 +44,7 @@ const RuleStateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
   const items: StateHistoryRow[] = result
     .reduce((acc: StateHistoryRowItem[], item, index) => {
       acc.push({
-        id: item.id,
+        id: String(item.id),
         state: item.newState,
         text: item.text,
         data: item.data,
@@ -53,7 +53,7 @@ const RuleStateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
 
       // if the preceding state is not the same, create a separate state entry – this likely means the state was reset
       if (!hasMatchingPrecedingState(index, result)) {
-        acc.push({ id: 0, state: item.prevState });
+        acc.push({ id: uniqueId(), state: item.prevState });
       }
 
       return acc;
