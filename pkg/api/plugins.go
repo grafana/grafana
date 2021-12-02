@@ -172,7 +172,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Respons
 func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	list, err := hs.pluginDashboardManager.GetPluginDashboards(c.OrgId, pluginID)
+	list, err := hs.pluginDashboardManager.GetPluginDashboards(c.Req.Context(), c.OrgId, pluginID)
 	if err != nil {
 		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
