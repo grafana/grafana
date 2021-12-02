@@ -197,6 +197,34 @@ var (
 			},
 		}),
 	}
+
+	apikeyAdminReadRole = RoleDTO{
+		Version:     1,
+		Name:        apikeyAdminRead,
+		Description: "Gives access to list apikeys.",
+		Permissions: []Permission{
+			{
+				Action: ActionApikeyList,
+				Scope:  ScopeUsersAll,
+			},
+		},
+	}
+
+	apikeyAdminEditRole = RoleDTO{
+		Version:     1,
+		Name:        apikeyAdminEdit,
+		Description: "Gives access to add and delete api keys.",
+		Permissions: ConcatPermissions(apikeyAdminReadRole.Permissions, []Permission{
+			{
+				Action: ActionApikeyAdd,
+				Scope:  ScopeUsersAll,
+			},
+			{
+				Action: ActionApikeyRemove,
+				Scope:  ScopeUsersAll,
+			},
+		}),
+	}
 )
 
 // Role names definitions
@@ -210,6 +238,8 @@ const (
 	statsReader         = "fixed:stats:reader"
 	usersReader         = "fixed:users:reader"
 	usersWriter         = "fixed:users:writer"
+	apikeyAdminEdit     = "fixed:apikey:admin:edit"
+	apikeyAdminRead     = "fixed:apikey:admin:read"
 )
 
 var (
@@ -245,6 +275,8 @@ var (
 			usersWriter,
 		},
 		string(models.ROLE_ADMIN): {
+			apikeyAdminEdit,
+			apikeyAdminRead,
 			orgUsersReader,
 			orgUsersWriter,
 		},
