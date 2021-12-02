@@ -94,6 +94,7 @@ func (s *System) getDescription(c *models.ReqContext) response.Response {
 
 type resourcePermissionDTO struct {
 	ResourceID    string   `json:"resourceId"`
+	RoleName      string   `json:"roleName"`
 	Managed       bool     `json:"managed"`
 	UserID        int64    `json:"userId,omitempty"`
 	UserLogin     string   `json:"userLogin,omitempty"`
@@ -117,15 +118,21 @@ func (s *System) getPermissions(c *models.ReqContext) response.Response {
 	dto := make([]resourcePermissionDTO, 0, len(permissions))
 	for _, p := range permissions {
 		if permission, ok := s.mapActions(p); ok {
+			teamAvatarUrl := ""
+			if p.TeamId != 0 {
+				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(p.TeamEmail, p.Team)
+			}
+
 			dto = append(dto, resourcePermissionDTO{
 				ResourceID:    p.ResourceID,
+				RoleName:      p.RoleName,
 				Managed:       p.Managed(),
 				UserID:        p.UserId,
 				UserLogin:     p.UserLogin,
 				UserAvatarUrl: dtos.GetGravatarUrl(p.UserEmail),
 				Team:          p.Team,
 				TeamID:        p.TeamId,
-				TeamAvatarUrl: dtos.GetGravatarUrlWithDefault(p.TeamEmail, p.Team),
+				TeamAvatarUrl: teamAvatarUrl,
 				BuiltInRole:   p.BuiltInRole,
 				Actions:       p.Actions,
 				Permission:    permission,
@@ -162,6 +169,7 @@ func (s *System) setUserPermission(c *models.ReqContext) response.Response {
 	translated, _ := s.mapActions(*permission)
 	return response.JSON(http.StatusOK, resourcePermissionDTO{
 		ResourceID:    permission.ResourceID,
+		RoleName:      permission.RoleName,
 		Managed:       permission.Managed(),
 		UserID:        permission.UserId,
 		UserLogin:     permission.UserLogin,
@@ -194,6 +202,7 @@ func (s *System) setTeamPermission(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, resourcePermissionDTO{
 		ResourceID:    permission.ResourceID,
 		Managed:       permission.Managed(),
+		RoleName:      permission.RoleName,
 		Team:          permission.Team,
 		TeamID:        permission.TeamId,
 		TeamAvatarUrl: dtos.GetGravatarUrlWithDefault(permission.TeamEmail, permission.Team),
@@ -224,6 +233,7 @@ func (s *System) setBuiltinRolePermission(c *models.ReqContext) response.Respons
 	translated, _ := s.mapActions(*permission)
 	return response.JSON(http.StatusOK, resourcePermissionDTO{
 		ResourceID:  permission.ResourceID,
+		RoleName:    permission.RoleName,
 		Managed:     permission.Managed(),
 		BuiltInRole: permission.BuiltInRole,
 		Actions:     permission.Actions,
