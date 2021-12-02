@@ -5,11 +5,17 @@ weight = 1
 
 # Add a field override
 
-You can override as many fields and add as many field options to each override as you want to.
+You can override a field when you want to change the display of the value in the visualization.
 
-1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
-1. In the side pane, click **Overrides**.
-1. Click **Add field override**.
+Before you begin:
+
+- Add a panel
+
+To add a field override:
+
+1. Edit the panel to which you want to add an override.
+1. In the panel display options, in the **Overrides** section, click **Add field override**.
+
 1. Select which fields an override rule will be applied to:
    - **Fields with name -** Select a field from the list of all available fields. Properties you add to a rule with this selector are only applied to this single field.
    - **Fields with name matching regex -** Specify fields to override with a regular expression. Properties you add to a rule with this selector are applied to all fields where the field name match the regex.

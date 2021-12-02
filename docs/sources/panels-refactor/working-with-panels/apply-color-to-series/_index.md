@@ -4,25 +4,22 @@ aliases = []
 weight = 10
 +++
 
-# Apply color to series and fields
+In addition to specifying color based on thresholds, you can configure the color of series and field data. The color options and their effect on the visualization depends on the visualization you are working with. Some visualizations have different color options.
 
-{{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" class="pull-right" >}}
+You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
+Continuous color interpolates a color using the percentage of a value relative to min and max.
 
-The color scheme option defines how Grafana colors series or fields. There are multiple modes here that work very differently and their utility depends largely on what visualization you currently have selected.
+Before you begin:
 
-Some visualizations have different color options.
+- Add a panel
 
-### Color by value
+To apply color to series and fields:
 
-In addition to deriving color from thresholds there are also continuous (gradient) color schemes. These are useful for visualizations that color individual values. For example, stat panels and the table panel.
+1. In panel display options, scroll to the **Standard options** or **override** section.
 
-Continuous color modes use the percentage of a value relative to min and max to interpolate a color.
+1. Click the **Standard options Color scheme** drop-down, and select one of the following palettes:
 
 <div class="clearfix"></div>
-
-### Palettes
-
-Select a palette from the **Color scheme** list.
 
 | Color mode                      | Description                                                                                                                                              |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
@@ -35,3 +32,5 @@ Select a palette from the **Color scheme** list.
 | **Reds (by value)**             | Continuous color scheme (panel background color to blue)                                                                                                 |
 | **Greens (by value)**           | Continuous color scheme (panel background color to blue)                                                                                                 |
 | **Purple (by value)**           | Continuous color scheme (panel background color to blue)                                                                                                 | .   |
+
+{{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" class="pull-right" >}}

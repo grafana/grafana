@@ -5,7 +5,17 @@ weight = 1
 
 # Delete a field override
 
-Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
+Delete a field override when you no longer need it.
 
-1. In the side pane, click **Overrides**.
-1. Click the trash can icon next to the override that you want to delete.
+When you delete an override, the appearance of value defaults to its original format. This change impacts dashboards and dashboard users that rely on an affected panel.
+
+Before you begin:
+
+- Add a panel
+- Add a field override
+
+To delete a field override:
+
+1. Edit the panel that contains the override you want to delete.
+1. In panel display options, click the **Overrides** tab.
+1. Click the override you want to delete and then click the associated trash icon.

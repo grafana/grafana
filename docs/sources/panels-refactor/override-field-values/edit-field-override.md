@@ -5,10 +5,19 @@ weight = 1
 
 # Edit a field override
 
-Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
+Edit a field override when you want to make changes to an override setting.
 
-1. In the side pane, click **Overrides**.
-1. Locate the override that you want to change. You can:
+Before you begin:
+
+- Add a panel
+- add a field override
+
+To edit a field override:
+
+1. Edit the panel that contains the overrides you want to edit.
+1. In the panel display options, click the **Overrides** tab.
+1. Locate the override that you want to change.
+1. Perform any of the following:
    - Edit settings on existing overrides or field selection parameters.
    - Delete existing override properties by clicking the **X** next to the property.
-   - Add additional override properties by clicking **Add override property**.
+   - Add an override properties by clicking **Add override property**.

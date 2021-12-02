@@ -8,8 +8,18 @@ weight = 1
 As seen above with the panels you can also repeat rows if you have variables set with `Multi-value` or
 `Include all value` selection option.
 
-To enable this feature you need to first add a new _Row_ using the _Add Panel_ menu. Then by hovering the row title and
-clicking on the cog button, you will access the `Row Options` configuration panel. You can then select the variable
-you want to repeat the row for.
+Before you begin:
 
-It may be a good idea to use a variable in the row title as well.
+- Ensure that the query includes a multi-value variable.
+
+To configure repeating rows, complete the following steps:
+
+1. On the dashboard home page, click **Add panel**.
+
+1. On the **Add a panel** dialog box, click **Add a new row**.
+
+1. Hover over the row title and click the cog icon.
+
+1. On the `Row Options` configuration panel, select the variable for which you want to add repeating rows.
+
+> To help provide context to dashboard users, add the variable to the row title.

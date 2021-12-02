@@ -5,12 +5,18 @@ weight = 10
 
 # Add a threshold to a graph (old) panel
 
-In the Graph panel visualization, thresholds allow you to add arbitrary lines or sections to the graph to make it easier to see when the graph crosses a particular threshold.
+In the Graph panel visualization, thresholds enable you to add lines or sections to a graph to make it easier to recognize when the graph crosses a threshold.
 
-1. Navigate to the graph panel you want to add a threshold to.
-1. On the Panel tab, click **Thresholds**.
+Before you begin:
+
+- Add a panel
+
+To add a threshold to a graph panel, complete the following steps:
+
+1. Navigate to the graph panel to which you want to add a threshold.
+1. On the **Panel** tab, click **Thresholds**.
 1. Click **Add threshold**.
-1. Fill in as many fields as you want. Only the **T1** fields are required.
+1. Complete the following fields:
    - **T1 -** Both values are required to display a threshold.
      - **lt** or **gt** - Select **lt** for less than or **gt** for greater than to indicate what the threshold applies to.
      - **Value -** Enter a threshold value. Grafana draws a threshold line along the Y-axis at that value.
