@@ -208,9 +208,7 @@ func (ss *SQLStore) CloneUserToServiceAccount(ctx context.Context, siUser *model
 func (ss *SQLStore) CreateServiceAccountForApikey(ctx context.Context, orgId int64, keyname string, role models.RoleType) (*models.User, error) {
 	prefix := "Service-Account-Autogen-"
 	cmd := models.CreateUserCommand{
-		Login:            prefix + keyname,
-		Email:            prefix + uuid.New().String(),
-		Password:         prefix + "-Password-" + uuid.New().String(),
+		Login:            fmt.Sprintf("%v-%v-%v", prefix, orgId, keyname),
 		Name:             prefix + keyname,
 		OrgId:            orgId,
 		DefaultOrgRole:   string(role),
