@@ -2,6 +2,8 @@ package accesscontrol
 
 import (
 	"context"
+	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -138,6 +140,68 @@ func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resour
 				metadata[p.Action] = true
 				result[r] = metadata
 			}
+		}
+	}
+
+	return result, nil
+}
+
+func getResourceAllScopeRegex(resource string) string {
+	return fmt.Sprintf("(%s[:][*])", resource)
+}
+
+func getResourceAllIDScopeRegex(resource string) string {
+	return fmt.Sprintf("(%s[:]id[:][*])", resource)
+}
+
+func getResourceScopeRegex(resource, target string) string {
+	return fmt.Sprintf("^(%s[:]id[:](%s))$", resource, target)
+}
+
+func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map[string]Metadata {
+	metadata, initialized := allMetadata[id]
+	if !initialized {
+		metadata = Metadata{}
+	}
+	metadata[action] = true
+	allMetadata[id] = metadata
+	return allMetadata
+}
+
+// GetResourcesMetadataV2 returns a map of accesscontrol metadata, listing for each resource, users available actions
+func GetResourcesMetadataV2(ctx context.Context, permissions []*Permission, resource string, resourceIDs []string) (map[string]Metadata, error) {
+	allScope := getResourceAllScopeRegex(resource)
+	allIDScope := getResourceAllIDScopeRegex(resource)
+
+	// Regex to match all scopes
+	allFilter, err := regexp.Compile(fmt.Sprintf("^([*]|%s|%s)$", allScope, allIDScope))
+	if err != nil {
+		return nil, err
+	}
+
+	// Regex to match all resources
+	allIds := strings.Join(resourceIDs, "|")
+	resourcesFilter, err := regexp.Compile(getResourceScopeRegex(resource, allIds))
+	if err != nil {
+		return nil, err
+	}
+
+	// Loop through permissions once adding id specific actions and saving global actions for later
+	result := map[string]Metadata{}
+	globalAction := map[string]bool{}
+	for _, p := range permissions {
+		scope := []byte(p.Scope)
+		if allFilter.Match(scope) {
+			globalAction[p.Action] = true
+		} else if match := resourcesFilter.FindStringSubmatch(p.Scope); match != nil {
+			result = addActionToMetadata(result, p.Action, match[2])
+		}
+	}
+
+	// Add global permissions to all resources
+	for _, id := range resourceIDs {
+		for action := range globalAction {
+			result = addActionToMetadata(result, action, id)
 		}
 	}
 
