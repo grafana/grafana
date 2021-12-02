@@ -121,18 +121,18 @@ def pr_pipelines(edition):
     windows_pipeline = pipeline(
             name='pr-windows', edition=edition, trigger=trigger,
             steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) +
-                get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=False),
+                get_windows_steps(edition=edition, ver_mode='main', is_downstream=False),
             depends_on=[], platform='windows',
         )
     return [
-        pipeline(
-            name='pr-test', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
-                + test_steps,
-        ), pipeline(
-            name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
-                + build_steps,
-        ), pipeline(
-            name='pr-integration-tests', edition=edition, trigger=trigger, services=services, steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps,
-        ),
+        #pipeline(
+        #    name='pr-test', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
+        #        + test_steps,
+        #), pipeline(
+        #    name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
+        #        + build_steps,
+        #), pipeline(
+        #    name='pr-integration-tests', edition=edition, trigger=trigger, services=services, steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps,
+        #),
         windows_pipeline,
     ]
