@@ -53,7 +53,7 @@ func TestEngineProcessJob(t *testing.T) {
 	job := &Job{running: true, Rule: &Rule{}}
 
 	t.Run("Should register usage metrics func", func(t *testing.T) {
-		bus.AddHandler(func(q *models.GetAllAlertsQuery) error {
+		bus.AddHandlerCtx(func(ctx context.Context, q *models.GetAllAlertsQuery) error {
 			settings, err := simplejson.NewJson([]byte(`{"conditions": [{"query": { "datasourceId": 1}}]}`))
 			if err != nil {
 				return err
@@ -62,7 +62,7 @@ func TestEngineProcessJob(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler(func(q *models.GetDataSourceQuery) error {
+		bus.AddHandlerCtx(func(ctx context.Context, q *models.GetDataSourceQuery) error {
 			q.Result = &models.DataSource{Id: 1, Type: models.DS_PROMETHEUS}
 			return nil
 		})

@@ -1113,7 +1113,7 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 ## [unified_alerting]
 
-For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+For more information about the Grafana alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
 
 ### enabled
 
@@ -1197,15 +1197,15 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ## [alerting]
 
-For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
+For more information about the legacy dashboard alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
 ### enabled
 
-Set to `false` to [enable Grafana 8 alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. Default is `true`.
+Set to `false` to [enable Grafana alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. to disable Grafana alerting, set to `true`.
 
 ### execute_alerts
 
-Turns off alert rule execution, but Alerting is still visible in the Grafana UI.
+Turns off alert rule execution, but alerting is still visible in the Grafana UI.
 
 ### error_or_timeout
 
