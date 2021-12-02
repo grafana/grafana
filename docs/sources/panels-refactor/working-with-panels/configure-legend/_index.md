@@ -6,10 +6,33 @@ weight = 10
 
 # Configure a legend
 
-# Legend options
+A panel includes a legend that you can use to interpret data displayed in a visualization. Each legend option adds context and clarity to the data illustrated in a visualization.
 
-Use the legend to adjust how a visualization displays series. This legend functionality only applies to a few panels now, but it will eventually be common to all visualizations.
+## Isolate series data in a visualization
 
+Visualizations can often be visually complex, and include many data series. You can simplify the view by removing series data from the visualization, which isolates the data you want to see. Grafana automatically creates a new override in the **Override** tab.
+
+When you apply your changes, the visualization changes appear to all users of the panel.
+
+Before you begin:
+
+- Add a panel
+
+To isolate series data in a visualization, complete the following steps:
+
+1. Open the panel.
+
+1. In the legend, click the label of the series you want to isolate.
+
+   The system removes from view all other series data.
+
+1. To incrementally add series data to an isolated series, press the **Ctrl** or **Command** key and click the label of the series you want to add.
+
+1. To revert back to the default view that includes all data, click any series label twice.
+
+1. To save your changes so that they appear to all viewers of the panel, click **Apply**.
+
+++++++Check this+++++
 This topic currently applies to the following visualizations:
 
 - [Bar chart panel]({{< relref "../visualizations/bar-chart.md">}})
@@ -19,32 +42,52 @@ This topic currently applies to the following visualizations:
 - [Status history panel]({{< relref "../visualizations/status-history.md">}})
 - [Time series panel]({{< relref "../visualizations/time-series/_index.md" >}})
 - XY chart panel
+  ++++++++++++++++++++++
 
-## Toggle series
+## Add values to a legend
 
-To toggle a series:
-Click on the series label in the legend to isolate the series in the visualization.
-All other series are hidden in the visualization. The data of the hidden series is still accessible.
+As way to add more context to a visualization, you can add series data values to a legend. You can add as many values as you'd like; after you apply your changes, you can horizontally scroll the legend to see all values.
 
-Use Cmd/Ctrl+click on the series label to hide the isolated series and remove the toggle.
+Before you begin:
 
-> **Note:** This option is persistent when you save the dashboard.
+- Add a panel
+
+To add values to a legend, complete the following steps:
+
+1. Open a panel.
+
+1. In the panel display options pane, locate the **Legend** section.
+
+1. In the **Legend values** field, select the values you want to appear in the legend.
+
+1. Click **Apply** to save your changes are navigate back to the dashboard.
 
 ![Toggle series visibility](/static/img/docs/legend/legend-series-toggle-7-5.png)
 
-This creates a system override that hides the other series. You can view this override in the Overrides tab. If you delete the override, then it removes the toggle.
+## Change a series color
 
-![Series toggle override example](/static/img/docs/legend/legend-series-override-7-5.png)
+By default, Grafana specifies the color of your series data, which you can change.
 
-## Change series color
+Before you begin:
 
-Click on the series icon (colored line beside the series label) in the legend to change selected series color.
+- Add a panel
+
+To change a series color, perform the following steps:
+
+1. Open the panel.
+
+1. In the legend, click the color bar associated with the series.
+
+1. Select a pre-set color or a custom color from the color palette.
+
+1. Click **Apply** to save your changes are navigate back to the dashboard.
 
 ![Change legend series color](/static/img/docs/legend/legend-series-color-7-5.png)
 
 ## Sort series
 
 Change legend mode to **Table** and choose [calculations]({{< relref "./calculations-list.md" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
+
 The sort order affects the positions of the bars in the Bar chart panel as well as the order of stacked series in the Time series and Bar chart panels.
 
 > **Note:** This feature is only supported in these panels: Bar chart, Histogram, Time series, XY Chart.

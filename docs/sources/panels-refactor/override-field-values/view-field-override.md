@@ -5,9 +5,18 @@ weight = 1
 
 # View field overrides
 
-1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
-1. In the side pane, click **Overrides**.
+You can view field overrides in the panel display options.
 
-Grafana displays a list of field overrides, if any have been created for this panel.
+Before you begin:
+
+- Add a panel
+- Add a field override
+
+To view field overrides:
+
+1. Open for edit the panel that contains the overrides you want to view.
+1. In the panel display options, click the **Overrides** tab.
+
+> The override settings that appear on the **All** tab are the same as the settings that appear on the **Overrides** tab.
 
 ![View overrides](/static/img/docs/time-series-panel/panel-editor-8-0.png)

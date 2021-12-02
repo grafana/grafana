@@ -7,12 +7,22 @@ weight = 10
 
 You can add as many thresholds to a panel as you want. Grafana automatically sorts thresholds from highest value to lowest.
 
-1. Navigate to the panel you want to add a threshold to.
-1. Open the category **Thresholds** in the right side options pane.
-1. Click **Add threshold**.
-1. Grafana adds a threshold with suggested numerical and color values.
-1. Accept the recommendations or edit the new threshold.
-   - **Edit color:** Click the color dot you wish to change and then select a new color.
-   - **Edit number:** Click the number you wish to change and then enter a new number.
-   - **Thresholds mode -** Click the mode to change it for all thresholds on this panel.
-1. Click **Save** to save the changes in the dashboard.
+Before you begin:
+
+- Add a panel
+
+To add a threshold, complete the following steps:
+
+1. Edit the panel to which you want to add a threshold.
+1. On the panel display options, locate the **Thresholds** section.
+1. Click **+ Add threshold**.
+
+   Grafana adds a threshold value and color.
+
+1. Accept the recommendations or edit the threshold.
+   - **Edit color:** To select a color, click the color dot.
+   - **Edit number:** To change the threshold value, click in the field and enter a number.
+1. Select a **Threshold mode**.
+   Threshold mode applies to all thresholds on this panel.
+1. In the **Show thresholds** drop-down, select a threshold display option.
+1. Click **Save**.

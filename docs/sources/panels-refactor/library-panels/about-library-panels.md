@@ -5,4 +5,6 @@ weight = 1
 
 # About Grafana panel libraries
 
-Library panels allow users to create reusable panels where any changes made to one instance of the library panel is reflected on every dashboard affecting all other instances where the panel is used. These panels can be saved in folders alongside Dashboards and streamline reuse of panels across multiple dashboards.
+A library panel is a reusable panel that you can use in any dashboard. When you make a change to a library panel, that change propegates to all instances of where the panel is used. Library panels streamline reuse of panels across multiple dashboards.
+
+You can save a library panel in a folder alongside saved dashboards.

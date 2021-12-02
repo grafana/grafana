@@ -5,9 +5,13 @@ weight = 10
 
 # Map a special value
 
-Create a mapping for a special value.
+Map a special value when you want to format uncommon, boolean, or empty values.
 
-![Map a value](/static/img/docs/value-mappings/map-special-value-8-0.png)
+Before you begin:
+
+- Add a panel
+
+To map a special value:
 
 1. [Open the panel editor]({{< relref "./panel-editor.md#open-the-panel-editor" >}}).
 1. In the Value mappings section of the side pane, click **Add value mappings**.
@@ -22,3 +26,5 @@ Create a mapping for a special value.
 1. (Optional) Enter display text.
 1. (Optional) Set the color.
 1. Click **Update** to save the value mapping.
+
+![Map a value](/static/img/docs/value-mappings/map-special-value-8-0.png)

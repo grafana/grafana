@@ -6,7 +6,18 @@ weight = 10
 
 # Organize a dashboard
 
-You can drag and drop panels by clicking and holding the panel title, then dragging it to its new location. You can also easily resize panels by clicking the (-) and (+) icons.
+You can place any panel in any location you want and controls its size. The changes you make impact other users of the dashboard.
+
+Before you begin:
+
+- Add two or more panels
+- Ensure that you sign in with Editor permissions
+
+To organize a dashboard, complete the following steps:
+
+1. Hover your cursor over the panel, and click-and-drag the panel to its new location.
+
+1. To resize a penal, click the zoom in (+) and zoom out (-) icons.
 
 ![](/static/img/docs/animated_gifs/drag_drop.gif)
 

@@ -3,12 +3,9 @@ title = "About repeating panels or rows"
 weight = 10
 +++
 
-# About repeating panels or rows
+# About repeating panels and rows
 
-{{< docs/shared "panels/repeat-panels-intro.md" >}}
-
-Template variables can be very useful to dynamically change your queries across a whole dashboard. If you want
-Grafana to dynamically create new panels or rows based on what values you have selected, you can use the _Repeat_ feature.
+You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel (or row) is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard.
 
 ## Grafana Play examples
 
