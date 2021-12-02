@@ -1,6 +1,5 @@
 import { GraphCtrl } from '../module';
 import { dateTime } from '@grafana/data';
-import TimeSeries from 'app/core/time_series2';
 
 jest.mock('../graph', () => ({}));
 
