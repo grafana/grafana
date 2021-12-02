@@ -46,7 +46,7 @@ describe('Cascader', () => {
 
   describe('options from state change', () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      jest.useFakeTimers('modern');
     });
 
     it('displays updated options', () => {

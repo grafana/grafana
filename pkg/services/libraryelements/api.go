@@ -2,8 +2,8 @@ package libraryelements
 
 import (
 	"errors"
+	"net/http"
 
-	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -13,18 +13,23 @@ import (
 
 func (l *LibraryElementService) registerAPIEndpoints() {
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
-		entities.Post("/", middleware.ReqSignedIn, binding.Bind(CreateLibraryElementCommand{}), routing.Wrap(l.createHandler))
+		entities.Post("/", middleware.ReqSignedIn, routing.Wrap(l.createHandler))
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))
 		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
 		entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
 		entities.Get("/:uid/connections/", middleware.ReqSignedIn, routing.Wrap(l.getConnectionsHandler))
 		entities.Get("/name/:name", middleware.ReqSignedIn, routing.Wrap(l.getByNameHandler))
-		entities.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryElementCommand{}), routing.Wrap(l.patchHandler))
+		entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(l.patchHandler))
 	})
 }
 
 // createHandler handles POST /api/library-elements.
-func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLibraryElementCommand) response.Response {
+func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Response {
+	cmd := CreateLibraryElementCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
 	element, err := l.createLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to create library element")
@@ -35,12 +40,15 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLi
 
 // deleteHandler handles DELETE /api/library-elements/:uid.
 func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Response {
-	err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
+	id, err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to delete library element")
 	}
 
-	return response.Success("Library element deleted")
+	return response.JSON(200, DeleteLibraryElementResponse{
+		Message: "Library element deleted",
+		ID:      id,
+	})
 }
 
 // getHandler handles GET  /api/library-elements/:uid.
@@ -74,7 +82,12 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 }
 
 // patchHandler handles PATCH /api/library-elements/:uid
-func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibraryElementCommand) response.Response {
+func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Response {
+	cmd := patchLibraryElementCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
 	element, err := l.patchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to update library element")

@@ -29,7 +29,7 @@ describe('LogRows', () => {
 
   it('renders rows only limited number of rows first', () => {
     const rows: LogRowModel[] = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
-    jest.useFakeTimers();
+    jest.useFakeTimers('modern');
     const wrapper = mount(
       <LogRows
         logRows={rows}

@@ -13,9 +13,18 @@ import {
 } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
-import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
-import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
-import { collectStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
+import { Padding } from 'uplot';
+import {
+  AxisPlacement,
+  ScaleDirection,
+  ScaleDistribution,
+  ScaleOrientation,
+  StackingMode,
+  VizLegendOptions,
+} from '@grafana/schema';
+import { collectStackingGroups, orderIdsByCalcs } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { orderBy } from 'lodash';
 
 /** @alpha */
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -47,10 +56,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   text,
   rawValue,
   allFrames,
+  xTickLabelRotation,
+  xTickLabelMaxLength,
+  legend,
 }) => {
   const builder = new UPlotConfigBuilder();
-  const defaultValueFormatter = (seriesIdx: number, value: any) =>
-    formattedValueToString(frame.fields[seriesIdx].display!(value));
+  const defaultValueFormatter = (seriesIdx: number, value: any) => {
+    return shortenValue(formattedValueToString(frame.fields[seriesIdx].display!(value)), xTickLabelMaxLength);
+  };
 
   // bar orientation -> x scale orientation & direction
   const vizOrientation = getBarCharScaleOrientation(orientation);
@@ -73,6 +86,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     formatValue,
     text,
     showValue,
+    legend,
   };
 
   const config = getConfig(opts, theme);
@@ -84,6 +98,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   builder.addHook('draw', config.draw);
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
+
+  if (vizOrientation.xOri === ScaleOrientation.Horizontal && xTickLabelRotation !== 0) {
+    builder.setPadding(getRotationPadding(frame, xTickLabelRotation, xTickLabelMaxLength));
+  }
 
   builder.setPrepData(config.prepData);
 
@@ -99,23 +117,25 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     scaleKey: 'x',
     isTime: false,
     placement: vizOrientation.xOri === 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
+    label: frame.fields[0].config.custom?.axisLabel,
     splits: config.xSplits,
     values: config.xValues,
     grid: { show: false },
-    ticks: false,
+    ticks: { show: false },
     gap: 15,
+    tickLabelRotation: xTickLabelRotation * -1,
     theme,
   });
 
   let seriesIndex = 0;
-
+  const legendOrdered = isLegendOrdered(legend);
   const stackingGroups: Map<string, number[]> = new Map();
 
   // iterate the y values
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
-    field.state!.seriesIndex = seriesIndex++;
+    seriesIndex++;
 
     const customConfig: BarChartFieldConfig = { ...defaultBarChartFieldConfig, ...field.config.custom };
 
@@ -144,9 +164,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here
       dataFrameFieldIndex: {
-        fieldIndex: allFrames[0].fields.findIndex(
-          (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
-        ),
+        fieldIndex: legendOrdered
+          ? i
+          : allFrames[0].fields.findIndex(
+              (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
+            ),
         frameIndex: 0,
       },
     });
@@ -192,7 +214,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   if (stackingGroups.size !== 0) {
     builder.setStacking(true);
-    for (const [_, seriesIdxs] of stackingGroups.entries()) {
+    for (const [_, seriesIds] of stackingGroups.entries()) {
+      const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
       for (let j = seriesIdxs.length - 1; j > 0; j--) {
         builder.addBand({
           series: [seriesIdxs[j], seriesIdxs[j - 1]],
@@ -203,6 +226,51 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   return builder;
 };
+
+function shortenValue(value: string, length: number) {
+  if (value.length > length) {
+    return value.substring(0, length).concat('...');
+  } else {
+    return value;
+  }
+}
+
+function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLength: number): Padding {
+  const values = frame.fields[0].values;
+  const fontSize = UPLOT_AXIS_FONT_SIZE;
+  const displayProcessor = frame.fields[0].display ?? ((v) => v);
+  let maxLength = 0;
+  for (let i = 0; i < values.length; i++) {
+    let size = measureText(
+      shortenValue(formattedValueToString(displayProcessor(values.get(i))), valueMaxLength),
+      fontSize
+    );
+    maxLength = size.width > maxLength ? size.width : maxLength;
+  }
+
+  // Add padding to the right if the labels are rotated in a way that makes the last label extend outside the graph.
+  const paddingRight =
+    rotateLabel > 0
+      ? Math.cos((rotateLabel * Math.PI) / 180) *
+        measureText(
+          shortenValue(formattedValueToString(displayProcessor(values.get(values.length - 1))), valueMaxLength),
+          fontSize
+        ).width
+      : 0;
+
+  // Add padding to the left if the labels are rotated in a way that makes the first label extend outside the graph.
+  const paddingLeft =
+    rotateLabel < 0
+      ? Math.cos((rotateLabel * -1 * Math.PI) / 180) *
+        measureText(shortenValue(formattedValueToString(displayProcessor(values.get(0))), valueMaxLength), fontSize)
+          .width
+      : 0;
+
+  // Add padding to the bottom to avoid clipping the rotated labels.
+  const paddingBottom = Math.sin(((rotateLabel >= 0 ? rotateLabel : rotateLabel * -1) * Math.PI) / 180) * maxLength;
+
+  return [0, paddingRight, paddingBottom, paddingLeft];
+}
 
 /** @internal */
 export function preparePlotFrame(data: DataFrame[]) {
@@ -229,7 +297,7 @@ export function preparePlotFrame(data: DataFrame[]) {
 export function prepareGraphableFrames(
   series: DataFrame[],
   theme: GrafanaTheme2,
-  stacking: StackingMode
+  options: BarChartOptions
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
     return { warn: 'No data in response' };
@@ -250,6 +318,7 @@ export function prepareGraphableFrames(
     };
   }
 
+  const legendOrdered = isLegendOrdered(options.legend);
   let seriesIndex = 0;
 
   for (let frame of series) {
@@ -268,7 +337,7 @@ export function prepareGraphableFrames(
               ...field.config.custom,
               stacking: {
                 group: '_',
-                mode: stacking,
+                mode: options.stacking,
               },
             },
           },
@@ -282,7 +351,7 @@ export function prepareGraphableFrames(
           ),
         };
 
-        if (stacking === StackingMode.Percent) {
+        if (options.stacking === StackingMode.Percent) {
           copy.config.unit = 'percentunit';
           copy.display = getDisplayProcessor({ field: copy, theme });
         }
@@ -293,11 +362,29 @@ export function prepareGraphableFrames(
       }
     }
 
+    let orderedFields: Field[] | undefined;
+
+    if (legendOrdered) {
+      orderedFields = orderBy(
+        fields,
+        ({ state }) => {
+          return state?.calcs?.[options.legend.sortBy!.toLowerCase()];
+        },
+        options.legend.sortDesc ? 'desc' : 'asc'
+      );
+      // The string field needs to be the first one
+      if (orderedFields[orderedFields.length - 1].type === FieldType.string) {
+        orderedFields.unshift(orderedFields.pop()!);
+      }
+    }
+
     frames.push({
       ...frame,
-      fields,
+      fields: orderedFields || fields,
     });
   }
 
   return { frames };
 }
+
+export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);

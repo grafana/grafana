@@ -8,11 +8,10 @@ import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipb
 import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles } from './styles';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
-import { config } from '@grafana/runtime';
+import { config, RefreshEvent } from '@grafana/runtime';
 import { css } from '@emotion/css';
 import { Subscription } from 'rxjs';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { RefreshEvent } from 'app/types/events';
 
 interface DsQuery {
   isLoading: boolean;

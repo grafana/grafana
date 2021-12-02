@@ -14,6 +14,7 @@ import {
   EventBusExtended,
   DataQueryResponse,
 } from '@grafana/data';
+import { ExploreGraphStyle } from 'app/core/utils/explore';
 
 export enum ExploreId {
   left = 'left',
@@ -56,11 +57,6 @@ export interface ExploreState {
    * True if a warning message of hitting the exceeded number of items has been shown already.
    */
   richHistoryLimitExceededWarningShown: boolean;
-
-  /**
-   * Auto-loading logs volume after running the query
-   */
-  autoLoadLogsVolume: boolean;
 }
 
 export interface ExploreItemState {
@@ -172,6 +168,9 @@ export interface ExploreItemState {
   logsVolumeDataProvider?: Observable<DataQueryResponse>;
   logsVolumeDataSubscription?: SubscriptionLike;
   logsVolumeData?: DataQueryResponse;
+
+  /* explore graph style */
+  graphStyle: ExploreGraphStyle;
 }
 
 export interface ExploreUpdateState {

@@ -56,6 +56,11 @@ interface ScenarioContext {
 }
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
+const defaultPanelConfig: grafanaData.DataConfigSource = {
+  getFieldOverrideOptions: () => undefined,
+  getTransformations: () => undefined,
+  getDataSupport: () => ({ annotations: false, alertStates: false }),
+};
 
 function describeQueryRunnerScenario(
   description: string,
@@ -64,11 +69,6 @@ function describeQueryRunnerScenario(
 ) {
   describe(description, () => {
     let setupFn = () => {};
-    const defaultPanelConfig: grafanaData.DataConfigSource = {
-      getFieldOverrideOptions: () => undefined,
-      getTransformations: () => undefined,
-      getDataSupport: () => ({ annotations: false, alertStates: false }),
-    };
     const ctx: ScenarioContext = {
       maxDataPoints: 200,
       scopedVars: {
@@ -108,11 +108,13 @@ function describeQueryRunnerScenario(
 
       const datasource: any = {
         name: 'TestDB',
+        uid: 'TestDB-uid',
         interval: ctx.dsInterval,
         query: (options: grafanaData.DataQueryRequest) => {
           ctx.queryCalledWith = options;
           return Promise.resolve(response);
         },
+        getRef: () => ({ type: 'test', uid: 'TestDB-uid' }),
         testDatasource: jest.fn(),
       };
 
@@ -156,8 +158,8 @@ describe('PanelQueryRunner', () => {
       expect(ctx.queryCalledWith?.requestId).toBe('Q100');
     });
 
-    it('should set datasource name on request', async () => {
-      expect(ctx.queryCalledWith?.targets[0].datasource).toBe('TestDB');
+    it('should set datasource uid on request', async () => {
+      expect(ctx.queryCalledWith?.targets[0].datasource?.uid).toBe('TestDB-uid');
     });
 
     it('should pass scopedVars to datasource with interval props', async () => {
@@ -362,6 +364,35 @@ describe('PanelQueryRunner', () => {
       }),
       // @ts-ignore
       getTransformations: () => [{}],
+      getDataSupport: () => ({ annotations: false, alertStates: false }),
+    }
+  );
+
+  const snapshotData: grafanaData.DataFrameDTO[] = [
+    {
+      fields: [
+        { name: 'time', type: grafanaData.FieldType.time, values: [1000] },
+        { name: 'value', type: grafanaData.FieldType.number, values: [1] },
+      ],
+    },
+  ];
+  describeQueryRunnerScenario(
+    'getData with snapshot data',
+    (ctx) => {
+      it('should return snapshotted data', async () => {
+        ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
+          next: (data: grafanaData.PanelData) => {
+            expect(data.state).toBe(grafanaData.LoadingState.Done);
+            expect(data.series).toEqual(snapshotData);
+            expect(data.timeRange).toEqual(grafanaData.getDefaultTimeRange());
+            return data;
+          },
+        });
+      });
+    },
+    {
+      ...defaultPanelConfig,
+      snapshotData,
     }
   );
 });

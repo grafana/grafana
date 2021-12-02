@@ -204,7 +204,7 @@ func OrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) {
 	}
 
 	isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
-	if err := sqlstore.IsAdminOfTeams(&isAdminOfTeamsQuery); err != nil {
+	if err := sqlstore.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery); err != nil {
 		c.JsonApiErr(500, "Failed to check if user is a team admin", err)
 	}
 

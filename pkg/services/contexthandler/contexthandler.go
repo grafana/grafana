@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -24,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	ol "github.com/opentracing/opentracing-go/log"
-	cw "github.com/weaveworks/common/middleware"
+	cw "github.com/weaveworks/common/tracing"
 )
 
 const (
@@ -105,6 +106,19 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 		}
 	}
 
+	queryParameters, err := url.ParseQuery(reqContext.Req.URL.RawQuery)
+	if err != nil {
+		reqContext.Logger.Error("Failed to parse query parameters", "error", err)
+	}
+	if queryParameters.Has("targetOrgId") {
+		targetOrg, err := strconv.ParseInt(queryParameters.Get("targetOrgId"), 10, 64)
+		if err == nil {
+			orgID = targetOrg
+		} else {
+			reqContext.Logger.Error("Invalid target organization ID", "error", err)
+		}
+	}
+
 	// the order in which these are tested are important
 	// look for api key in Authorization header first
 	// then init session and look for userId in session
@@ -148,7 +162,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 
 	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
 	if err != nil {
-		log.Errorf(3, "Anonymous access organization error: '%s': %s", h.Cfg.AnonymousOrgName, err)
+		reqContext.Logger.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
 	}
 
@@ -218,11 +232,33 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
+	if apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
+		//Use the old APIkey method.  This provides backwards compatibility.
+		reqContext.SignedInUser = &models.SignedInUser{}
+		reqContext.OrgRole = apikey.Role
+		reqContext.ApiKeyId = apikey.Id
+		reqContext.OrgId = apikey.OrgId
+		reqContext.IsSignedIn = true
+		return true
+	}
+
+	//There is a service account attached to the API key
+
+	//Use service account linked to API key as the signed in user
+	query := models.GetSignedInUserQuery{UserId: apikey.ServiceAccountId, OrgId: apikey.OrgId}
+	if err := bus.Dispatch(&query); err != nil {
+		reqContext.Logger.Error(
+			"Failed to link API key to service account in",
+			"id", query.UserId,
+			"org", query.OrgId,
+			"err", err,
+		)
+		reqContext.JsonApiErr(500, "Unable to link API key to service account", err)
+		return true
+	}
+
 	reqContext.IsSignedIn = true
-	reqContext.SignedInUser = &models.SignedInUser{}
-	reqContext.OrgRole = apikey.Role
-	reqContext.ApiKeyId = apikey.Id
-	reqContext.OrgId = apikey.OrgId
+	reqContext.SignedInUser = query.Result
 	return true
 }
 
@@ -250,7 +286,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		Password: password,
 		Cfg:      h.Cfg,
 	}
-	if err := bus.Dispatch(&authQuery); err != nil {
+	if err := bus.DispatchCtx(reqContext.Req.Context(), &authQuery); err != nil {
 		reqContext.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,

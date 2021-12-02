@@ -4,7 +4,7 @@ import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { GraphNG, GraphNGProps, PlotLegend, UPlotConfigBuilder, usePanelContext, useTheme2 } from '@grafana/ui';
 import { LegendDisplayMode } from '@grafana/schema';
 import { BarChartOptions } from './types';
-import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { isLegendOrdered, preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
 
 /**
@@ -17,9 +17,12 @@ export interface BarChartProps
 const propsToDiff: Array<string | PropDiffFn> = [
   'orientation',
   'barWidth',
+  'xTickLabelRotation',
+  'xTickLabelMaxLength',
   'groupWidth',
   'stacking',
   'showValue',
+  'legend',
   (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
 ];
 
@@ -39,6 +42,11 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {
+    // When sorted by legend state.seriesIndex is not changed and is not equal to the sorted index of the field
+    if (isLegendOrdered(props.legend)) {
+      return frame0Ref.current!.fields[seriesIdx].values.get(valueIdx);
+    }
+
     let field = frame0Ref.current!.fields.find(
       (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIdx - 1
     );
@@ -46,7 +54,19 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
   };
 
   const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
-    const { timeZone, orientation, barWidth, showValue, groupWidth, stacking, legend, tooltip, text } = props;
+    const {
+      timeZone,
+      orientation,
+      barWidth,
+      showValue,
+      groupWidth,
+      stacking,
+      legend,
+      tooltip,
+      text,
+      xTickLabelRotation,
+      xTickLabelMaxLength,
+    } = props;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
@@ -58,6 +78,8 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       barWidth,
       showValue,
       groupWidth,
+      xTickLabelRotation,
+      xTickLabelMaxLength,
       stacking,
       legend,
       tooltip,

@@ -1,6 +1,7 @@
 package state
 
 import (
+	"math/rand"
 	"testing"
 	"time"
 
@@ -97,6 +98,46 @@ func TestNeedsSending(t *testing.T) {
 				Resolved:           false,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+			},
+		},
+		{
+			name:        "state: no-data, needs to be re-sent",
+			expected:    true,
+			resendDelay: 1 * time.Minute,
+			testState: &State{
+				State:              eval.NoData,
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+			},
+		},
+		{
+			name:        "state: no-data, should not be re-sent",
+			expected:    false,
+			resendDelay: 1 * time.Minute,
+			testState: &State{
+				State:              eval.NoData,
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second),
+			},
+		},
+		{
+			name:        "state: error, needs to be re-sent",
+			expected:    true,
+			resendDelay: 1 * time.Minute,
+			testState: &State{
+				State:              eval.Error,
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+			},
+		},
+		{
+			name:        "state: error, should not be re-sent",
+			expected:    false,
+			resendDelay: 1 * time.Minute,
+			testState: &State{
+				State:              eval.Error,
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second),
 			},
 		},
 	}

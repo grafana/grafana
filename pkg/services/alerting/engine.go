@@ -7,18 +7,19 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/encryption"
-	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	tlog "github.com/opentracing/opentracing-go/log"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // AlertEngine is the background process that
@@ -28,7 +29,7 @@ type AlertEngine struct {
 	RenderService    rendering.Service
 	Bus              bus.Bus
 	RequestValidator models.PluginRequestValidator
-	DataService      plugins.DataRequestHandler
+	DataService      legacydata.RequestHandler
 	Cfg              *setting.Cfg
 
 	execQueue         chan *Job
@@ -41,14 +42,14 @@ type AlertEngine struct {
 	usageStatsService usagestats.Service
 }
 
-// IsDisabled returns true if the alerting service is disable for this instance.
+// IsDisabled returns true if the alerting service is disabled for this instance.
 func (e *AlertEngine) IsDisabled() bool {
-	return !setting.AlertingEnabled || !setting.ExecuteAlerts || e.Cfg.UnifiedAlerting.Enabled
+	return setting.AlertingEnabled == nil || !*setting.AlertingEnabled || !setting.ExecuteAlerts || e.Cfg.UnifiedAlerting.IsEnabled()
 }
 
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
-	dataService plugins.DataRequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Service,
+	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
 	cfg *setting.Cfg) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:               cfg,
@@ -97,7 +98,7 @@ func (e *AlertEngine) alertingTicker(grafanaCtx context.Context) error {
 		case tick := <-e.ticker.C:
 			// TEMP SOLUTION update rules ever tenth tick
 			if tickIndex%10 == 0 {
-				e.scheduler.Update(e.ruleReader.fetch())
+				e.scheduler.Update(e.ruleReader.fetch(grafanaCtx))
 			}
 
 			e.scheduler.Tick(tick, e.execQueue)
@@ -246,8 +247,8 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 }
 
 func (e *AlertEngine) registerUsageMetrics() {
-	e.usageStatsService.RegisterMetricsFunc(func() (map[string]interface{}, error) {
-		alertingUsageStats, err := e.QueryUsageStats()
+	e.usageStatsService.RegisterMetricsFunc(func(ctx context.Context) (map[string]interface{}, error) {
+		alertingUsageStats, err := e.QueryUsageStats(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -256,7 +257,7 @@ func (e *AlertEngine) registerUsageMetrics() {
 		metrics := map[string]interface{}{}
 
 		for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
-			if e.usageStatsService.ShouldBeReported(dsType) {
+			if e.usageStatsService.ShouldBeReported(ctx, dsType) {
 				metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
 			} else {
 				alertingOtherCount += usageCount

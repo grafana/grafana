@@ -1,5 +1,6 @@
+import { mocked } from 'ts-jest/utils';
 import { setBackendSrv } from '@grafana/runtime';
-import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
+import { API_ROOT, GCOM_API_ROOT } from '../constants';
 import {
   CatalogPlugin,
   LocalPlugin,
@@ -9,6 +10,7 @@ import {
   RequestStatus,
   PluginListDisplayMode,
 } from '../types';
+import * as permissions from '../permissions';
 import remotePluginMock from './remotePlugin.mock';
 import localPluginMock from './localPlugin.mock';
 import catalogPluginMock from './catalogPlugin.mock';
@@ -69,17 +71,17 @@ export const mockPluginApis = ({
     ...originalBackendSrv,
     get: (path: string) => {
       // Mock GCOM plugins (remote) if necessary
-      if (remote && path === `${GRAFANA_API_ROOT}/plugins`) {
+      if (remote && path === `${GCOM_API_ROOT}/plugins`) {
         return Promise.resolve({ items: [remote] });
       }
 
       // Mock GCOM single plugin page (remote) if necessary
-      if (remote && path === `${GRAFANA_API_ROOT}/plugins/${remote.slug}`) {
+      if (remote && path === `${GCOM_API_ROOT}/plugins/${remote.slug}`) {
         return Promise.resolve(remote);
       }
 
       // Mock versions
-      if (versions && path === `${GRAFANA_API_ROOT}/plugins/${remote.slug}/versions`) {
+      if (versions && path === `${GCOM_API_ROOT}/plugins/${remote.slug}/versions`) {
         return Promise.resolve({ items: versions });
       }
 
@@ -98,3 +100,18 @@ export const mockPluginApis = ({
     },
   });
 };
+
+type UserAccessTestContext = {
+  isAdmin: boolean;
+  isOrgAdmin: boolean;
+  isDataSourceEditor: boolean;
+};
+
+jest.mock('../permissions');
+
+export function mockUserPermissions(options: UserAccessTestContext): void {
+  const mock = mocked(permissions);
+  mock.isDataSourceEditor.mockReturnValue(options.isDataSourceEditor);
+  mock.isOrgAdmin.mockReturnValue(options.isOrgAdmin);
+  mock.isGrafanaAdmin.mockReturnValue(options.isAdmin);
+}

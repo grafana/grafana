@@ -17,12 +17,13 @@ export {
   StreamOptionsProvider,
 } from './utils/DataSourceWithBackend';
 export {
-  toDataQueryError,
   toDataQueryResponse,
   frameToMetricFindValue,
   BackendDataSourceResponse,
   DataResponse,
 } from './utils/queryResponse';
-export { PanelRenderer, PanelRendererProps, PanelRendererType, setPanelRenderer } from './components/PanelRenderer';
+export { PanelRenderer, PanelRendererProps } from './components/PanelRenderer';
+export { PanelDataErrorView, PanelDataErrorViewProps } from './components/PanelDataErrorView';
+export { toDataQueryError } from './utils/toDataQueryError';
 export { setQueryRunnerFactory, createQueryRunner, QueryRunnerFactory } from './services/QueryRunner';
 export { DataSourcePicker, DataSourcePickerProps, DataSourcePickerState } from './components/DataSourcePicker';

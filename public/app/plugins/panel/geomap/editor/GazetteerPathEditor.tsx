@@ -3,11 +3,12 @@ import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/da
 import { Alert, Select, stylesFactory, useTheme2 } from '@grafana/ui';
 import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
 import { css } from '@emotion/css';
+import { GazetteerPathEditorConfigSettings } from '../types';
 
-const paths: Array<SelectableValue<string>> = [
+const defaultPaths: Array<SelectableValue<string>> = [
   {
     label: 'Countries',
-    description: 'Lookup countries by name, two letter code, or three leter code',
+    description: 'Lookup countries by name, two letter code, or three letter code',
     value: COUNTRIES_GAZETTEER_PATH,
   },
   {
@@ -15,11 +16,22 @@ const paths: Array<SelectableValue<string>> = [
     description: 'Lookup states by name or 2 ',
     value: 'public/gazetteer/usa-states.json',
   },
+  {
+    label: 'Airports',
+    description: 'Lookup airports by id or code',
+    value: 'public/gazetteer/airports.geojson',
+  },
 ];
 
-export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({ value, onChange, context }) => {
+export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any, GazetteerPathEditorConfigSettings>> = ({
+  value,
+  onChange,
+  context,
+  item,
+}) => {
   const styles = getStyles(useTheme2());
   const [gaz, setGaz] = useState<Gazetteer>();
+  const settings = item.settings as any;
 
   useEffect(() => {
     async function fetchData() {
@@ -30,8 +42,8 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({
   }, [value, setGaz]);
 
   const { current, options } = useMemo(() => {
-    let options = [...paths];
-    let current = options.find((f) => f.value === gaz?.path);
+    let options = settings?.options ? [...settings.options] : [...defaultPaths];
+    let current = options?.find((f) => f.value === gaz?.path);
     if (!current && gaz) {
       current = {
         label: gaz.path,
@@ -40,7 +52,7 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({
       options.push(current);
     }
     return { options, current };
-  }, [gaz]);
+  }, [gaz, settings?.options]);
 
   return (
     <>
@@ -60,8 +72,8 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({
               <b>({gaz.count})</b>
               {gaz.examples(10).map((k) => (
                 <span key={k}>{k},</span>
-              ))}{' '}
-              &ellipsis;
+              ))}
+              {gaz.count > 10 && ' ...'}
             </div>
           )}
         </>

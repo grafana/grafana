@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Subscription } from 'rxjs';
-import { locationService } from '@grafana/runtime';
+import { locationService, RefreshEvent } from '@grafana/runtime';
 import {
   AbsoluteTimeRange,
   AnnotationChangeEvent,
@@ -20,6 +20,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
+import { VizLegendOptions } from '@grafana/schema';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
@@ -30,15 +31,13 @@ import config from 'app/core/config';
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
-import { RefreshEvent, RenderEvent } from 'app/types/events';
+import { RenderEvent } from 'app/types/events';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { liveTimer } from './liveTimer';
 import { isSoloRoute } from '../../../routes/utils';
-import { setPanelInstanceState } from '../../panel/state/reducers';
-import { store } from 'app/store/store';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -51,6 +50,7 @@ export interface Props {
   isInView: boolean;
   width: number;
   height: number;
+  onInstanceStateChange: (value: any) => void;
 }
 
 export interface State {
@@ -89,21 +89,21 @@ export class PanelChrome extends PureComponent<Props, State> {
         onAnnotationDelete: this.onAnnotationDelete,
         canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
         onInstanceStateChange: this.onInstanceStateChange,
+        onToggleLegendSort: this.onToggleLegendSort,
       },
       data: this.getInitialPanelDataState(),
     };
   }
 
   onInstanceStateChange = (value: any) => {
+    this.props.onInstanceStateChange(value);
+
     this.setState({
       context: {
         ...this.state.context,
         instanceState: value,
       },
     });
-
-    // Set redux panel state so panel options can get notified
-    store.dispatch(setPanelInstanceState({ key: this.props.panel.key, value }));
   };
 
   getPanelContextApp() {
@@ -125,6 +125,35 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.onFieldConfigChange(
       seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
     );
+  };
+
+  onToggleLegendSort = (sortKey: string) => {
+    const legendOptions: VizLegendOptions = this.props.panel.options.legend;
+
+    // We don't want to do anything when legend options are not available
+    if (!legendOptions) {
+      return;
+    }
+
+    let sortDesc = legendOptions.sortDesc;
+    let sortBy = legendOptions.sortBy;
+    if (sortKey !== sortBy) {
+      sortDesc = undefined;
+    }
+
+    // if already sort ascending, disable sorting
+    if (sortDesc === false) {
+      sortBy = undefined;
+      sortDesc = undefined;
+    } else {
+      sortDesc = !sortDesc;
+      sortBy = sortKey;
+    }
+
+    this.onOptionsChange({
+      ...this.props.panel.options,
+      legend: { ...legendOptions, sortBy, sortDesc },
+    });
   };
 
   getInitialPanelDataState(): PanelData {
@@ -309,10 +338,15 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.props.panel.updateFieldConfig(config);
   };
 
-  onPanelError = (message: string) => {
-    if (this.state.errorMessage !== message) {
-      this.setState({ errorMessage: message });
+  onPanelError = (error: Error) => {
+    const errorMessage = error.message || DEFAULT_PLUGIN_ERROR;
+    if (this.state.errorMessage !== errorMessage) {
+      this.setState({ errorMessage });
     }
+  };
+
+  onPanelErrorRecover = () => {
+    this.setState({ errorMessage: undefined });
   };
 
   onAnnotationCreate = async (event: AnnotationEventUIModel) => {
@@ -458,7 +492,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isViewing, isEditing, width, height } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -489,10 +523,13 @@ export class PanelChrome extends PureComponent<Props, State> {
           alertState={alertState}
           data={data}
         />
-        <ErrorBoundary>
+        <ErrorBoundary
+          dependencies={[data, plugin, panel.getOptions()]}
+          onError={this.onPanelError}
+          onRecover={this.onPanelErrorRecover}
+        >
           {({ error }) => {
             if (error) {
-              this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
               return null;
             }
             return this.renderPanel(width, height);

@@ -39,6 +39,9 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
+  // At this point we only show single trace
+  const frame = props.dataFrames[0];
+
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
   const {
     detailStates,
@@ -50,7 +53,8 @@ export function TraceView(props: Props) {
     detailTagsToggle,
     detailWarningsToggle,
     detailStackTracesToggle,
-  } = useDetailState();
+  } = useDetailState(frame);
+
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
 
@@ -63,7 +67,7 @@ export function TraceView(props: Props) {
    */
   const [slim, setSlim] = useState(false);
 
-  const traceProp = useMemo(() => transformDataFrames(props.dataFrames), [props.dataFrames]);
+  const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
@@ -97,10 +101,10 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
 
-  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn, traceToLogsOptions), [
-    props.splitOpenFn,
-    traceToLogsOptions,
-  ]);
+  const createSpanLink = useMemo(
+    () => createSpanLinkFactory({ splitOpenFn: props.splitOpenFn, traceToLogsOptions, dataFrame: frame }),
+    [props.splitOpenFn, traceToLogsOptions, frame]
+  );
   const scrollElement = document.getElementsByClassName('scrollbar-view')[0];
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
 
@@ -173,9 +177,7 @@ export function TraceView(props: Props) {
   );
 }
 
-function transformDataFrames(frames: DataFrame[]): Trace | null {
-  // At this point we only show single trace.
-  const frame = frames[0];
+function transformDataFrames(frame?: DataFrame): Trace | null {
   if (!frame) {
     return null;
   }
@@ -192,8 +194,8 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
   const processes: Record<string, TraceProcess> = {};
   for (let i = 0; i < view.length; i++) {
     const span = view.get(i);
-    if (!processes[span.serviceName]) {
-      processes[span.serviceName] = {
+    if (!processes[span.spanID]) {
+      processes[span.spanID] = {
         serviceName: span.serviceName,
         tags: span.serviceTags,
       };
@@ -203,15 +205,16 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
   return {
     traceID: view.get(0).traceID,
     processes,
-    spans: view.toArray().map((s) => {
+    spans: view.toArray().map((s, index) => {
       return {
         ...s,
         duration: s.duration * 1000,
         startTime: s.startTime * 1000,
-        processID: s.serviceName,
+        processID: s.spanID,
         flags: 0,
         references: s.parentSpanID ? [{ refType: 'CHILD_OF', spanID: s.parentSpanID, traceID: s.traceID }] : undefined,
         logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
+        dataFrameRowIndex: index,
       };
     }),
   };

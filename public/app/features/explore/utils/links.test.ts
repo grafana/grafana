@@ -9,7 +9,7 @@ import {
   LinkModel,
   TimeRange,
 } from '@grafana/data';
-import { setLinkSrv } from '../../../angular/panel/panellinks/link_srv';
+import { setLinkSrv } from '../../panel/panellinks/link_srv';
 import { setContextSrv } from '../../../core/services/context_srv';
 
 describe('getFieldLinksForExplore', () => {

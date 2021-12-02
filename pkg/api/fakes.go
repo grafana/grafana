@@ -1,25 +1,50 @@
 package api
 
-import "github.com/grafana/grafana/pkg/plugins"
+import (
+	"context"
 
-type fakePluginManager struct {
-	plugins.Manager
+	"github.com/grafana/grafana/pkg/plugins"
+)
 
-	staticRoutes []*plugins.PluginStaticRoute
+type fakePluginStore struct {
+	plugins.Store
+
+	plugins map[string]plugins.PluginDTO
 }
 
-func (pm *fakePluginManager) GetPlugin(id string) *plugins.PluginBase {
+func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	p, exists := pr.plugins[pluginID]
+
+	return p, exists
+}
+
+func (pr fakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
+	var result []plugins.PluginDTO
+	for _, v := range pr.plugins {
+		for _, t := range pluginTypes {
+			if v.Type == t {
+				result = append(result, v)
+			}
+		}
+	}
+
+	return result
+}
+
+type fakeRendererManager struct {
+	plugins.RendererManager
+}
+
+func (ps *fakeRendererManager) Renderer() *plugins.Plugin {
 	return nil
 }
 
-func (pm *fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
-	return nil
+type fakePluginStaticRouteResolver struct {
+	plugins.StaticRouteResolver
+
+	routes []*plugins.StaticRoute
 }
 
-func (pm *fakePluginManager) Renderer() *plugins.RendererPlugin {
-	return nil
-}
-
-func (pm *fakePluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
-	return pm.staticRoutes
+func (psrr *fakePluginStaticRouteResolver) Routes() []*plugins.StaticRoute {
+	return psrr.routes
 }

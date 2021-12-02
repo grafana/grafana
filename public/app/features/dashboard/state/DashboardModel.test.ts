@@ -56,11 +56,13 @@ describe('DashboardModel', () => {
   describe('getSaveModelClone', () => {
     it('should sort keys', () => {
       const model = new DashboardModel({});
+      model.autoUpdate = null;
+
       const saveModel = model.getSaveModelClone();
       const keys = _keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
-      expect(keys[1]).toBe('autoUpdate');
+      expect(keys[1]).toBe('editable');
     });
 
     it('should remove add panel panels', () => {
@@ -572,6 +574,61 @@ describe('DashboardModel', () => {
       const savedModelWithCollapsedRows: any = model.getSaveModelClone();
       expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(1);
     });
+
+    it('getSaveModelClone should not remove repeated panels and scopedVars during snapshot', () => {
+      const dashboardJSON = {
+        panels: [
+          { id: 1, type: 'row', repeat: 'dc', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+          { id: 2, repeat: 'app', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
+        ],
+        templating: {
+          list: [
+            {
+              name: 'dc',
+              type: 'custom',
+              current: {
+                text: 'dc1 + dc2',
+                value: ['dc1', 'dc2'],
+              },
+              options: [
+                { text: 'dc1', value: 'dc1', selected: true },
+                { text: 'dc2', value: 'dc2', selected: true },
+              ],
+            },
+            {
+              name: 'app',
+              type: 'custom',
+              current: {
+                text: 'se1 + se2',
+                value: ['se1', 'se2'],
+              },
+              options: [
+                { text: 'se1', value: 'se1', selected: true },
+                { text: 'se2', value: 'se2', selected: true },
+              ],
+            },
+          ],
+        },
+      };
+
+      const model = getDashboardModel(dashboardJSON);
+      model.processRepeats();
+      expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      model.snapshot = { timestamp: new Date() };
+      const saveModel = model.getSaveModelClone();
+      expect(saveModel.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(saveModel.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      model.collapseRows();
+      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(2);
+    });
   });
 
   describe('Given model with template variable of type query', () => {
@@ -860,17 +917,6 @@ describe('exitViewPanel', () => {
 
       expect(dashboard.startRefresh).not.toHaveBeenCalled();
     });
-
-    describe('and there is a change that affects all panels', () => {
-      it('then startRefresh is not called', () => {
-        const { dashboard, panel } = getTestContext();
-        dashboard.setChangeAffectsAllPanels();
-
-        dashboard.exitViewPanel(panel);
-
-        expect(dashboard.startRefresh).toHaveBeenCalled();
-      });
-    });
   });
 });
 
@@ -922,42 +968,7 @@ describe('exitPanelEditor', () => {
       dashboard.exitPanelEditor();
       expect(timeSrvMock.resumeAutoRefresh).toHaveBeenCalled();
     });
-
-    describe('and there is a change that affects all panels', () => {
-      it('then startRefresh is called', () => {
-        const { dashboard } = getTestContext();
-        dashboard.setChangeAffectsAllPanels();
-
-        dashboard.exitPanelEditor();
-
-        expect(dashboard.startRefresh).toHaveBeenCalled();
-      });
-    });
   });
-});
-
-describe('setChangeAffectsAllPanels', () => {
-  it.each`
-    panelInEdit  | panelInView  | expected
-    ${null}      | ${null}      | ${false}
-    ${undefined} | ${undefined} | ${false}
-    ${null}      | ${{}}        | ${true}
-    ${undefined} | ${{}}        | ${true}
-    ${{}}        | ${null}      | ${true}
-    ${{}}        | ${undefined} | ${true}
-    ${{}}        | ${{}}        | ${true}
-  `(
-    'when called and panelInEdit:{$panelInEdit} and panelInView:{$panelInView}',
-    ({ panelInEdit, panelInView, expected }) => {
-      const dashboard = new DashboardModel({});
-      dashboard.panelInEdit = panelInEdit;
-      dashboard.panelInView = panelInView;
-
-      dashboard.setChangeAffectsAllPanels();
-
-      expect(dashboard['hasChangesThatAffectsAllPanels']).toEqual(expected);
-    }
-  );
 });
 
 describe('initEditPanel', () => {

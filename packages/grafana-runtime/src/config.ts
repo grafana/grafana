@@ -10,6 +10,7 @@ import {
   LicenseInfo,
   MapLayerOptions,
   PanelPluginMeta,
+  PreloadPlugin,
   systemDateFormats,
   SystemDateFormatSettings,
 } from '@grafana/data';
@@ -34,7 +35,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   externalUserMngInfo = '';
   allowOrgCreate = false;
   disableLoginForm = false;
-  defaultDatasource = '';
+  defaultDatasource = ''; // UID
   alertingEnabled = false;
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';
@@ -59,14 +60,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
   liveEnabled = true;
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: string[] = [];
+  pluginsToPreload: PreloadPlugin[] = [];
   featureToggles: FeatureToggles = {
     accesscontrol: false,
     trimDefaults: false,
     tempoServiceGraph: false,
     tempoSearch: false,
     recordedQueries: false,
-    prometheusMonaco: false,
     newNavigation: false,
     fullRangeLogsVolume: false,
   };
@@ -84,6 +84,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
+  pluginCatalogHiddenPlugins: string[] = [];
   expressionsEnabled = false;
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
@@ -99,6 +100,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   unifiedAlertingEnabled = false;
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
+  recordedQueries = {
+    enabled: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

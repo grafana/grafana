@@ -1,5 +1,5 @@
 import { DataFrame, FieldType, DataQueryRequest, DataQueryResponse, MutableDataFrame } from '@grafana/data';
-import { transform, transformV2, transformDFoTable } from './result_transformer';
+import { transform, transformV2, transformDFToTable } from './result_transformer';
 import { PromQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -34,7 +34,7 @@ const matrixResponse = {
 describe('Prometheus Result Transformer', () => {
   describe('transformV2', () => {
     it('results with time_series format should be enriched with preferredVisualisationType', () => {
-      const options = ({
+      const request = ({
         targets: [
           {
             format: 'time_series',
@@ -53,7 +53,7 @@ describe('Prometheus Result Transformer', () => {
           },
         ],
       } as unknown) as DataQueryResponse;
-      const series = transformV2(response, options, {});
+      const series = transformV2(response, request, {});
       expect(series).toEqual({
         data: [{ fields: [], length: 2, meta: { preferredVisualisationType: 'graph' }, name: 'ALERTS', refId: 'A' }],
         state: 'Done',
@@ -61,7 +61,7 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('results with table format should be transformed to table dataFrames', () => {
-      const options = ({
+      const request = ({
         targets: [
           {
             format: 'table',
@@ -86,12 +86,62 @@ describe('Prometheus Result Transformer', () => {
           }),
         ],
       } as unknown) as DataQueryResponse;
-      const series = transformV2(response, options, {});
-      // expect(series.data[0]).toBe({});
-      expect(series.data[0].fields[0].name).toEqual('time');
+      const series = transformV2(response, request, {});
+
+      expect(series.data[0].fields[0].name).toEqual('Time');
       expect(series.data[0].fields[1].name).toEqual('label1');
       expect(series.data[0].fields[2].name).toEqual('label2');
       expect(series.data[0].fields[3].name).toEqual('Value');
+      expect(series.data[0].meta?.preferredVisualisationType).toEqual('table');
+    });
+
+    it('results with table format and multiple data frames should be transformed to 1 table dataFrame', () => {
+      const request = ({
+        targets: [
+          {
+            format: 'table',
+            refId: 'A',
+          },
+        ],
+      } as unknown) as DataQueryRequest<PromQuery>;
+      const response = ({
+        state: 'Done',
+        data: [
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'value',
+                type: FieldType.number,
+                values: [6, 5, 4],
+                labels: { label1: 'value1', label2: 'value2' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'time', type: FieldType.time, values: [2, 3, 7] },
+              {
+                name: 'value',
+                type: FieldType.number,
+                values: [2, 3, 7],
+                labels: { label3: 'value3', label4: 'value4' },
+              },
+            ],
+          }),
+        ],
+      } as unknown) as DataQueryResponse;
+      const series = transformV2(response, request, {});
+
+      expect(series.data.length).toEqual(1);
+      expect(series.data[0].fields[0].name).toEqual('Time');
+      expect(series.data[0].fields[1].name).toEqual('label1');
+      expect(series.data[0].fields[2].name).toEqual('label2');
+      expect(series.data[0].fields[3].name).toEqual('label3');
+      expect(series.data[0].fields[4].name).toEqual('label4');
+      expect(series.data[0].fields[5].name).toEqual('Value #A');
       expect(series.data[0].meta?.preferredVisualisationType).toEqual('table');
     });
 
@@ -143,8 +193,66 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[1].fields.length).toEqual(4);
       expect(series.data[1].meta?.preferredVisualisationType).toEqual('table');
     });
+
+    it('results with heatmap format should be correctly transformed', () => {
+      const options = ({
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown) as DataQueryRequest<PromQuery>;
+      const response = ({
+        state: 'Done',
+        data: [
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '3' },
+              },
+            ],
+          }),
+        ],
+      } as unknown) as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      expect(series.data[0].fields.length).toEqual(2);
+      expect(series.data[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
+      expect(series.data[1].fields[1].values.toArray()).toEqual([10, 0, 30]);
+      expect(series.data[2].fields[1].values.toArray()).toEqual([10, 0, 10]);
+    });
   });
-  describe('transformDFoTable', () => {
+  describe('transformDFToTable', () => {
     it('transforms dataFrame with response length 1 to table dataFrame', () => {
       const df = new MutableDataFrame({
         refId: 'A',
@@ -159,9 +267,9 @@ describe('Prometheus Result Transformer', () => {
         ],
       });
 
-      const tableDf = transformDFoTable(df, 1);
+      const tableDf = transformDFToTable([df])[0];
       expect(tableDf.fields.length).toBe(4);
-      expect(tableDf.fields[0].name).toBe('time');
+      expect(tableDf.fields[0].name).toBe('Time');
       expect(tableDf.fields[1].name).toBe('label1');
       expect(tableDf.fields[1].values.get(0)).toBe('value1');
       expect(tableDf.fields[2].name).toBe('label2');
@@ -183,14 +291,14 @@ describe('Prometheus Result Transformer', () => {
         ],
       });
 
-      const tableDf = transformDFoTable(df, 3);
+      const tableDf = transformDFToTable([df])[0];
       expect(tableDf.fields.length).toBe(4);
-      expect(tableDf.fields[0].name).toBe('time');
+      expect(tableDf.fields[0].name).toBe('Time');
       expect(tableDf.fields[1].name).toBe('label1');
       expect(tableDf.fields[1].values.get(0)).toBe('value1');
       expect(tableDf.fields[2].name).toBe('label2');
       expect(tableDf.fields[2].values.get(0)).toBe('value2');
-      expect(tableDf.fields[3].name).toBe('Value #A');
+      expect(tableDf.fields[3].name).toBe('Value');
     });
   });
 

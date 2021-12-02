@@ -13,6 +13,7 @@ import {
   stylesFactory,
   TimeZonePicker,
   Tooltip,
+  WeekStartPicker,
 } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -23,12 +24,14 @@ import { PreferencesService } from 'app/core/services/PreferencesService';
 
 export interface Props {
   resourceUri: string;
+  disabled?: boolean;
 }
 
 export interface State {
   homeDashboardId: number;
   theme: string;
   timezone: string;
+  weekStart: string;
   dashboards: DashboardSearchHit[];
 }
 
@@ -49,6 +52,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       homeDashboardId: 0,
       theme: '',
       timezone: '',
+      weekStart: '',
       dashboards: [],
     };
   }
@@ -84,13 +88,14 @@ export class SharedPreferences extends PureComponent<Props, State> {
       homeDashboardId: prefs.homeDashboardId,
       theme: prefs.theme,
       timezone: prefs.timezone,
+      weekStart: prefs.weekStart,
       dashboards: [defaultDashboardHit, ...dashboards],
     });
   }
 
   onSubmitForm = async () => {
-    const { homeDashboardId, theme, timezone } = this.state;
-    await this.service.update({ homeDashboardId, theme, timezone });
+    const { homeDashboardId, theme, timezone, weekStart } = this.state;
+    await this.service.update({ homeDashboardId, theme, timezone, weekStart });
     window.location.reload();
   };
 
@@ -105,6 +110,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ timezone: timezone });
   };
 
+  onWeekStartChanged = (weekStart: string) => {
+    this.setState({ weekStart: weekStart });
+  };
+
   onHomeDashboardChanged = (dashboardId: number) => {
     this.setState({ homeDashboardId: dashboardId });
   };
@@ -117,14 +126,15 @@ export class SharedPreferences extends PureComponent<Props, State> {
   };
 
   render() {
-    const { theme, timezone, homeDashboardId, dashboards } = this.state;
+    const { theme, timezone, weekStart, homeDashboardId, dashboards } = this.state;
+    const { disabled } = this.props;
     const styles = getStyles();
 
     return (
       <Form onSubmit={this.onSubmitForm}>
         {() => {
           return (
-            <FieldSet label="Preferences">
+            <FieldSet label="Preferences" disabled={disabled}>
               <Field label="UI Theme">
                 <RadioButtonGroup
                   options={themes}
@@ -142,7 +152,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                     </Tooltip>
                   </Label>
                 }
-                aria-label="User preferences home dashboard drop down"
+                data-testid="User preferences home dashboard drop down"
               >
                 <Select
                   menuShouldPortal
@@ -158,8 +168,21 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 />
               </Field>
 
-              <Field label="Timezone" aria-label={selectors.components.TimeZonePicker.container}>
-                <TimeZonePicker includeInternal={true} value={timezone} onChange={this.onTimeZoneChanged} />
+              <Field label="Timezone" data-testid={selectors.components.TimeZonePicker.containerV2}>
+                <TimeZonePicker
+                  includeInternal={true}
+                  value={timezone}
+                  onChange={this.onTimeZoneChanged}
+                  inputId={'shared-preferences-timezone-picker'}
+                />
+              </Field>
+
+              <Field label="Week start" data-testid={selectors.components.WeekStartPicker.containerV2}>
+                <WeekStartPicker
+                  value={weekStart}
+                  onChange={this.onWeekStartChanged}
+                  inputId={'shared-preferences-week-start-picker'}
+                />
               </Field>
               <div className="gf-form-button-row">
                 <Button variant="primary" aria-label="User preferences save button">

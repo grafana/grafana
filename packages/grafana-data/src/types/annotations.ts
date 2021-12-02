@@ -3,13 +3,13 @@ import { ComponentType } from 'react';
 
 import { QueryEditorProps } from './datasource';
 import { DataFrame } from './dataFrame';
-import { DataQuery, DatasourceRef } from './query';
+import { DataQuery, DataSourceRef } from './query';
 
 /**
  * This JSON object is stored in the dashboard json model.
  */
 export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
-  datasource?: DatasourceRef | string | null;
+  datasource?: DataSourceRef | string | null;
 
   enable: boolean;
   name: string;
@@ -25,7 +25,7 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
   // Convert a dataframe to an AnnotationEvent
   mappings?: AnnotationEventMappings;
 
-  // Sadly plugins can set any propery directly on the main object
+  // Sadly plugins can set any property directly on the main object
   [key: string]: any;
 }
 

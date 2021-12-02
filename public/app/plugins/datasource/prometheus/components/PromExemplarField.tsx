@@ -10,9 +10,10 @@ interface Props {
   onChange: (exemplar: boolean) => void;
   datasource: PrometheusDatasource;
   query: PromQuery;
+  'data-testid'?: string;
 }
 
-export function PromExemplarField({ datasource, onChange, query }: Props) {
+export function PromExemplarField({ datasource, onChange, query, ...rest }: Props) {
   const [error, setError] = useState<string | null>(null);
   const styles = useStyles2(getStyles);
   const prevError = usePrevious(error);
@@ -26,7 +27,8 @@ export function PromExemplarField({ datasource, onChange, query }: Props) {
       onChange(false);
     } else {
       setError(null);
-      if (prevError !== error) {
+      // If error is cleared, we want to change exemplar to true
+      if (prevError && !error) {
         onChange(true);
       }
     }
@@ -40,7 +42,7 @@ export function PromExemplarField({ datasource, onChange, query }: Props) {
   );
 
   return (
-    <InlineLabel width="auto">
+    <InlineLabel width="auto" data-testid={rest['data-testid']}>
       <Tooltip content={error ?? ''}>
         <div className={styles.iconWrapper}>
           Exemplars

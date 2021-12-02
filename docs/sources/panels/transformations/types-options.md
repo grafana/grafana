@@ -192,19 +192,32 @@ In the example below, I added two fields together and named them Sum.
 
 ## Labels to fields
 
-This transformation changes time series results that include labels or tags into to a table structure where each label becomes its own field.
+This transformation changes time series results that include labels or tags into to a table structure where each label keys and values
+are included in the table result. The labels can be displayed either as columns or as row values.
 
 Given a query result of two time series:
 
 - Series 1: labels Server=Server A, Datacenter=EU
 - Series 2: labels Server=Server B, Datacenter=EU
 
-This would result in a table like this:
+In "Columns" mode, the result looks like this:
 
 | Time                | Server   | Datacenter | Value |
 | ------------------- | -------- | ---------- | ----- |
 | 2020-07-07 11:34:20 | Server A | EU         | 1     |
 | 2020-07-07 11:34:20 | Server B | EU         | 2     |
+
+In "Rows" mode, the result has a table for each series and show each label value like this:
+
+| label      | value    |
+| ---------- | -------- |
+| Server     | Server A |
+| Datacenter | EU       |
+
+| label      | value    |
+| ---------- | -------- |
+| Server     | Server B |
+| Datacenter | EU       |
 
 ### Value field name
 
@@ -334,10 +347,10 @@ This transformation changes the field type of the specified field.
   - **Numeric -** attempts to make the values numbers
   - **String -** will make the values strings
   - **Time -** attempts to parse the values as time
-    - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
+    - Will show an option to specify a DateFormat for the input field like yyyy-mm-dd or DD MM YYYY hh:mm:ss
   - **Boolean -** will make the values booleans
 
-For example the following query could be modified by selecting the time field, as Time, and Date Format as YYYY.
+For example the following query could be modified by selecting the time field, as Time, and Input format as YYYY.
 
 | Time       | Mark  | Value |
 | ---------- | ----- | ----- |

@@ -3,7 +3,7 @@ title = "Authentication"
 description = "AWS authentication"
 keywords = ["grafana", "aws", "authentication"]
 aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
-weight = 205
+weight = 05
 +++
 
 # AWS authentication
@@ -11,6 +11,14 @@ weight = 205
 Requests from a Grafana plugin to AWS are made on behalf of an IAM role or an IAM user. The IAM user or IAM role must have the associated policies to perform certain API actions. Since these policies are specific to each data source, refer to the data source documentation for details.
 
 All requests to AWS APIs are performed on the server side by the Grafana backend using the official AWS SDK.
+
+This topic has the following sections:
+
+- [Authentication methods](#authentication-methods)
+- [Assuming a role](#assuming-a-role)
+- [Endpoint](#endpoint)
+- [AWS credentials file](#aws-credentials-file)
+- [EKS IAM roles for service accounts](#eks-iam-roles-for-service-accounts)
 
 ## Authentication methods
 
@@ -36,18 +44,7 @@ If you are assuming a role in another account that was created with an external 
 
 ## Endpoint
 
-The `Endpoint` field allows you to specify a custom endpoint URL that overrides the default generated endpoint for the CloudWatch API. Leave this field blank if you want to use the default generated endpoint. For more information on why and how to use Service endpoints, refer to the [AWS service endpoints documentation](https://docs.aws.amazon.com/general/latest/gr/rande.html).
-
-## EKS IAM roles for service accounts
-
-The Grafana process in the container runs as user 472 (called "grafana"). When Kubernetes mounts your projected credentials, they will by default only be available to the root user. To allow user 472 to access the credentials (and avoid falling back to the IAM role attached to the EC2 instance), you need to provide a [security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for your pod.
-
-```yaml
-securityContext:
-  fsGroup: 472
-  runAsUser: 472
-  runAsGroup: 472
-```
+The `Endpoint` field allows you to specify a custom endpoint URL that overrides the default generated endpoint for the AWS service API. Leave this field blank if you want to use the default generated endpoint. For more information on why and how to use Service endpoints, refer to the [AWS service endpoints documentation](https://docs.aws.amazon.com/general/latest/gr/rande.html).
 
 ## AWS credentials file
 
@@ -62,4 +59,15 @@ Example content:
 aws_access_key_id = asdsadasdasdasd
 aws_secret_access_key = dasdasdsadasdasdasdsa
 region = us-west-2
+```
+
+## EKS IAM roles for service accounts
+
+The Grafana process in the container runs as user 472 (called "grafana"). When Kubernetes mounts your projected credentials, they will by default only be available to the root user. To allow user 472 to access the credentials (and avoid falling back to the IAM role attached to the EC2 instance), you need to provide a [security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for your pod.
+
+```yaml
+securityContext:
+  fsGroup: 472
+  runAsUser: 472
+  runAsGroup: 472
 ```

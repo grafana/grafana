@@ -174,11 +174,10 @@ export class FolderPicker extends PureComponent<Props, State> {
     const { enableCreateNew, inputId } = this.props;
 
     return (
-      <div aria-label={selectors.components.FolderPicker.container}>
+      <div data-testid={selectors.components.FolderPicker.containerV2}>
         <AsyncSelect
           inputId={inputId}
           aria-label={selectors.components.FolderPicker.input}
-          menuShouldPortal
           loadingMessage="Loading folders..."
           defaultOptions
           defaultValue={folder}
@@ -187,6 +186,7 @@ export class FolderPicker extends PureComponent<Props, State> {
           loadOptions={this.debouncedSearch}
           onChange={this.onFolderChange}
           onCreateOption={this.createNewFolder}
+          menuShouldPortal
         />
       </div>
     );

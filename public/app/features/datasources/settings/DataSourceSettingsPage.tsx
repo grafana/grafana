@@ -22,9 +22,9 @@ import { getNavModel } from 'app/core/selectors/navModel';
 // Types
 import { StoreState, AccessControlAction } from 'app/types/';
 import { DataSourceSettings, urlUtil } from '@grafana/data';
-import { Alert, Button, LinkButton } from '@grafana/ui';
+import { Alert, Button } from '@grafana/ui';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from '../state/navModel';
-import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
+import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
 import { CloudInfoBox } from './CloudInfoBox';
@@ -190,9 +190,9 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
                 Delete
               </Button>
             )}
-            <LinkButton variant="secondary" href="datasources" fill="outline">
+            <Button variant="secondary" fill="outline" type="button" onClick={() => history.back()}>
               Back
-            </LinkButton>
+            </Button>
           </div>
         </Page.Contents>
       </Page>

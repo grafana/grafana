@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
@@ -29,7 +29,7 @@ import { DashboardLoading } from '../components/DashboardLoading/DashboardLoadin
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import classnames from 'classnames';
-import { PanelEditExitedEvent } from 'app/types/events';
+import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { liveTimer } from '../dashgrid/liveTimer';
 
 export interface DashboardPageRouteParams {
@@ -178,6 +178,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     // entering edit mode
     if (this.state.editPanel && !prevState.editPanel) {
       dashboardWatcher.setEditingState(true);
+
+      // Some panels need to be notified when entering edit mode
+      this.props.dashboard?.events.publish(new PanelEditEnteredEvent(this.state.editPanel.id));
     }
 
     // leaving edit mode
@@ -340,7 +343,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return (
       <div className={containerClassNames}>
         {kioskMode !== KioskMode.Full && (
-          <header aria-label={selectors.pages.Dashboard.DashNav.nav}>
+          <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
             <DashNav
               dashboard={dashboard}
               title={dashboard.title}

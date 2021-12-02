@@ -206,6 +206,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		OrgID:           evalCtx.Rule.OrgID,
 		OrgRole:         models.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
+		Theme:           rendering.ThemeDark,
 	}
 
 	ref, err := evalCtx.GetDashboardUID()
@@ -246,7 +247,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
 	query := &models.GetAlertNotificationsWithUidToSendQuery{OrgId: orgID, Uids: notificationUids}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(evalContext.Ctx, query); err != nil {
 		return nil, err
 	}
 

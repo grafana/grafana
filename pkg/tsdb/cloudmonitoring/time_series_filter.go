@@ -29,7 +29,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
-	r, err := s.createRequest(ctx, req.PluginContext, &dsInfo, path.Join("cloudmonitoringv3/projects", projectName, "timeSeries"), nil)
+	r, err := s.createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries"), nil)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
@@ -73,7 +73,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	}
 
 	r = r.WithContext(ctx)
-	res, err := dsInfo.client.Do(r)
+	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
@@ -293,7 +293,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(dr *backend.DataResponse,
-	response cloudMonitoringResponse, title, text, tags string) error {
+	response cloudMonitoringResponse, title, text string) error {
 	frames := data.Frames{}
 	for _, series := range response.TimeSeries {
 		if len(series.Points) == 0 {
@@ -309,7 +309,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(dr *
 			annotation["time"] = append(annotation["time"], point.Interval.EndTime.UTC().Format(time.RFC3339))
 			annotation["title"] = append(annotation["title"], formatAnnotationText(title, value, series.Metric.Type,
 				series.Metric.Labels, series.Resource.Labels))
-			annotation["tags"] = append(annotation["tags"], tags)
+			annotation["tags"] = append(annotation["tags"], "")
 			annotation["text"] = append(annotation["text"], formatAnnotationText(text, value, series.Metric.Type,
 				series.Metric.Labels, series.Resource.Labels))
 		}

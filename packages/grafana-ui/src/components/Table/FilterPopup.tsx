@@ -3,8 +3,8 @@ import { Field, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 
 import { TableStyles } from './styles';
-import { stylesFactory, useStyles } from '../../themes';
-import { Button, ClickOutsideWrapper, HorizontalGroup, Label, VerticalGroup } from '..';
+import { stylesFactory, useStyles, useTheme2 } from '../../themes';
+import { Button, ClickOutsideWrapper, HorizontalGroup, IconButton, Label, VerticalGroup } from '..';
 import { FilterList } from './FilterList';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
 
@@ -16,10 +16,12 @@ interface Props {
 }
 
 export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue, setFilter }, onClose, field }) => {
+  const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
+  const [matchCase, setMatchCase] = useState(false);
 
   const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
 
@@ -49,9 +51,19 @@ export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue,
       <div className={cx(styles.filterContainer)} onClick={stopPropagation}>
         <VerticalGroup spacing="lg">
           <VerticalGroup spacing="xs">
-            <Label>Filter by values:</Label>
+            <HorizontalGroup justify="space-between" align="center">
+              <Label className={styles.label}>Filter by values:</Label>
+              <IconButton
+                name="text-fields"
+                tooltip="Match case"
+                style={{ color: matchCase ? theme.colors.text.link : theme.colors.text.disabled }}
+                onClick={() => {
+                  setMatchCase((s) => !s);
+                }}
+              />
+            </HorizontalGroup>
             <div className={cx(styles.listDivider)} />
-            <FilterList onChange={setValues} values={values} options={options} />
+            <FilterList onChange={setValues} values={values} options={options} caseSensitive={matchCase} />
           </VerticalGroup>
           <HorizontalGroup spacing="lg">
             <HorizontalGroup>
@@ -95,6 +107,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     width: 100%;
     border-top: ${theme.border.width.sm} solid ${theme.colors.border2};
     padding: ${theme.spacing.xs} ${theme.spacing.md};
+  `,
+  label: css`
+    margin-bottom: 0;
   `,
 }));
 

@@ -9,11 +9,9 @@ import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveD
 import { locationService } from '@grafana/runtime';
 import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
 import {
-  HideModalEvent,
   RemovePanelEvent,
   ShiftTimeEvent,
   ShiftTimeEventPayload,
-  ShowModalEvent,
   ShowModalReactEvent,
   ZoomOutEvent,
 } from '../../types/events';
@@ -25,12 +23,6 @@ import { withFocusedPanel } from './withFocusedPanelId';
 import { HelpModal } from '../components/help/HelpModal';
 
 export class KeybindingSrv {
-  modalOpen = false;
-
-  constructor() {
-    appEvents.subscribe(ShowModalEvent, () => (this.modalOpen = true));
-  }
-
   reset() {
     Mousetrap.reset();
   }
@@ -102,13 +94,6 @@ export class KeybindingSrv {
   }
 
   private exit() {
-    appEvents.publish(new HideModalEvent());
-
-    if (this.modalOpen) {
-      this.modalOpen = false;
-      return;
-    }
-
     const search = locationService.getSearchObject();
 
     if (search.editview) {
@@ -188,14 +173,16 @@ export class KeybindingSrv {
     });
 
     this.bind('mod+s', () => {
-      appEvents.publish(
-        new ShowModalReactEvent({
-          component: SaveDashboardModalProxy,
-          props: {
-            dashboard,
-          },
-        })
-      );
+      if (dashboard.meta.canSave) {
+        appEvents.publish(
+          new ShowModalReactEvent({
+            component: SaveDashboardModalProxy,
+            props: {
+              dashboard,
+            },
+          })
+        );
+      }
     });
 
     this.bind('t z', () => {
@@ -236,11 +223,8 @@ export class KeybindingSrv {
     if (contextSrv.hasAccessToExplore()) {
       this.bindWithPanelId('x', async (panelId) => {
         const panel = dashboard.getPanelById(panelId)!;
-        const datasource = await getDatasourceSrv().get(panel.datasource);
         const url = await getExploreUrl({
           panel,
-          panelTargets: panel.targets,
-          panelDatasource: datasource,
           datasourceSrv: getDatasourceSrv(),
           timeSrv: getTimeSrv(),
         });

@@ -8,6 +8,7 @@ import {
   QueryRunnerOptions,
   QueryRunner as QueryRunnerSrv,
   LoadingState,
+  DataSourceRef,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -69,7 +70,7 @@ export class QueryRunner implements QueryRunnerSrv {
     };
 
     // Add deprecated property
-    (request as any).rangeRaw = timeRange.raw;
+    request.rangeRaw = timeRange.raw;
 
     from(getDataSource(datasource, request.scopedVars))
       .pipe(first())
@@ -78,7 +79,7 @@ export class QueryRunner implements QueryRunnerSrv {
           // Attach the datasource name to each query
           request.targets = request.targets.map((query) => {
             if (!query.datasource) {
-              query.datasource = ds.name;
+              query.datasource = ds.getRef();
             }
             return query;
           });
@@ -140,11 +141,12 @@ export class QueryRunner implements QueryRunnerSrv {
 }
 
 async function getDataSource(
-  datasource: string | DataSourceApi | null,
+  datasource: DataSourceRef | DataSourceApi | null,
   scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
-  if (datasource && (datasource as any).query) {
-    return datasource as DataSourceApi;
+  if (datasource && 'query' in datasource) {
+    return datasource;
   }
-  return await getDatasourceSrv().get(datasource as string, scopedVars);
+
+  return getDatasourceSrv().get(datasource, scopedVars);
 }

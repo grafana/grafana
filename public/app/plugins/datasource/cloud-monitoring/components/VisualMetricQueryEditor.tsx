@@ -1,14 +1,14 @@
 import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Metrics, LabelFilter, GroupBy, Preprocessor, Alignment } from '.';
-import { MetricQuery, MetricDescriptor, CustomMetaData } from '../types';
+import { MetricQuery, MetricDescriptor, CustomMetaData, SLOQuery } from '../types';
 import CloudMonitoringDatasource from '../datasource';
 
 export interface Props {
   customMetaData: CustomMetaData;
   variableOptionGroup: SelectableValue<string>;
   onMetricTypeChange: (query: MetricDescriptor) => void;
-  onChange: (query: MetricQuery) => void;
+  onChange: (query: MetricQuery | SLOQuery) => void;
   query: MetricQuery;
   datasource: CloudMonitoringDatasource;
   labels: any;

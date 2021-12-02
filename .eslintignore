@@ -8,3 +8,4 @@ dist
 e2e/tmp
 yarn
 public/lib/monaco
+deployment_tools_config.json

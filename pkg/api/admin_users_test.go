@@ -117,11 +117,11 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			"/api/admin/users/42/enable", "/api/admin/users/:id/enable", func(sc *scenarioContext) {
 				var userID int64
 				isDisabled := false
-				bus.AddHandler("test", func(cmd *models.GetAuthInfoQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetAuthInfoQuery) error {
 					return models.ErrUserNotFound
 				})
 
-				bus.AddHandler("test", func(cmd *models.DisableUserCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.DisableUserCommand) error {
 					userID = cmd.UserId
 					isDisabled = cmd.IsDisabled
 					return models.ErrUserNotFound
@@ -143,11 +143,11 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			"/api/admin/users/42/disable", "/api/admin/users/:id/disable", func(sc *scenarioContext) {
 				var userID int64
 				isDisabled := false
-				bus.AddHandler("test", func(cmd *models.GetAuthInfoQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetAuthInfoQuery) error {
 					return models.ErrUserNotFound
 				})
 
-				bus.AddHandler("test", func(cmd *models.DisableUserCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.DisableUserCommand) error {
 					userID = cmd.UserId
 					isDisabled = cmd.IsDisabled
 					return models.ErrUserNotFound
@@ -170,7 +170,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		adminDisableUserScenario(t, "Should return Could not disable external user error", "disable",
 			"/api/admin/users/42/disable", "/api/admin/users/:id/disable", func(sc *scenarioContext) {
 				var userID int64
-				bus.AddHandler("test", func(cmd *models.GetAuthInfoQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetAuthInfoQuery) error {
 					userID = cmd.UserId
 					return nil
 				})
@@ -188,7 +188,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		adminDisableUserScenario(t, "Should return Could not enable external user error", "enable",
 			"/api/admin/users/42/enable", "/api/admin/users/:id/enable", func(sc *scenarioContext) {
 				var userID int64
-				bus.AddHandler("test", func(cmd *models.GetAuthInfoQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetAuthInfoQuery) error {
 					userID = cmd.UserId
 					return nil
 				})
@@ -208,7 +208,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		adminDeleteUserScenario(t, "Should return user not found error", "/api/admin/users/42",
 			"/api/admin/users/:id", func(sc *scenarioContext) {
 				var userID int64
-				bus.AddHandler("test", func(cmd *models.DeleteUserCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.DeleteUserCommand) error {
 					userID = cmd.UserId
 					return models.ErrUserNotFound
 				})
@@ -315,12 +315,13 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return hs.AdminUpdateUserPermissions(c, cmd)
+			return hs.AdminUpdateUserPermissions(c)
 		})
 
 		sc.m.Put(routePattern, sc.defaultHandler)
@@ -370,12 +371,13 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = models.ROLE_ADMIN
 
-			return hs.AdminRevokeUserAuthToken(c, cmd)
+			return hs.AdminRevokeUserAuthToken(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
@@ -470,10 +472,11 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserId = testUserID
 
-			return hs.AdminCreateUser(c, cmd)
+			return hs.AdminCreateUser(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
