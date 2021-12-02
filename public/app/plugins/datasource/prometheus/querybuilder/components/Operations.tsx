@@ -33,7 +33,7 @@ export function Operations({ query, onChange }: Props) {
       label: category,
       children: visualQueryEngine.getOperationsForCategory(category).map((operation) => ({
         value: operation.id,
-        label: operation.id,
+        label: operation.displayName ?? operation.id,
         isLeaf: true,
       })),
     };

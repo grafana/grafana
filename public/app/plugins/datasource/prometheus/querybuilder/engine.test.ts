@@ -56,7 +56,7 @@ describe('VisualQueryEngine', () => {
     ).toBe('label_replace(metric, "server", "$1", "instance", "as(.*)d")');
   });
 
-  it('Can handle group by expressions', () => {
+  it('Can group by expressions', () => {
     expect(
       engine.renderQuery({
         metric: 'metric',
@@ -66,7 +66,7 @@ describe('VisualQueryEngine', () => {
     ).toBe('sum by(server, job) (metric)');
   });
 
-  it('Can handle avg around a group by', () => {
+  it('Can render avg around a group by', () => {
     expect(
       engine.renderQuery({
         metric: 'metric',
@@ -79,7 +79,7 @@ describe('VisualQueryEngine', () => {
     ).toBe('avg(sum by(server, job) (metric))');
   });
 
-  it('Can handle render rate', () => {
+  it('Can render rate', () => {
     expect(
       engine.renderQuery({
         metric: 'metric',
@@ -89,7 +89,7 @@ describe('VisualQueryEngine', () => {
     ).toBe('rate(metric{pod="A"}[$__rate_interval])');
   });
 
-  it('Can handle render rate with custom range-vector', () => {
+  it('Can render rate with custom range-vector', () => {
     expect(
       engine.renderQuery({
         metric: 'metric',
@@ -97,5 +97,15 @@ describe('VisualQueryEngine', () => {
         operations: [{ id: 'rate', params: ['10m'] }],
       })
     ).toBe('rate(metric{pod="A"}[10m])');
+  });
+
+  it('Can render multiply operation', () => {
+    expect(
+      engine.renderQuery({
+        metric: 'metric',
+        labels: [],
+        operations: [{ id: '__multiply_by', params: [1000] }],
+      })
+    ).toBe('metric * 1000');
   });
 });

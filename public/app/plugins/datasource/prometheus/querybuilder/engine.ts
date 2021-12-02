@@ -27,7 +27,8 @@ export class VisualQueryEngine {
 
     this.addOperationDef({
       id: 'histogram_quantile',
-      params: [{ name: 'quantile', type: 'number', options: [0.99, 0.95, 0.9, 0.75, 0.5, 0.25] }],
+      displayName: 'Histogram quantile',
+      params: [{ name: 'Quantile', type: 'number', options: [0.99, 0.95, 0.9, 0.75, 0.5, 0.25] }],
       defaultParams: [0.9],
       category: PromVisualQueryOperationCategory.Functions,
       renderer: functionRendererLeft,
@@ -66,6 +67,17 @@ export class VisualQueryEngine {
       defaultParams: ['auto'],
       category: PromVisualQueryOperationCategory.RateAndDeltas,
       renderer: rateRenderer,
+    });
+
+    // Not sure about this one. It could also be a more generic "Simple math operation" where user specifies
+    // both the operator and the operand in a single input
+    this.addOperationDef({
+      id: '__multiply_by',
+      displayName: 'Multiply by',
+      params: [{ name: 'Factor', type: 'number' }],
+      defaultParams: [2],
+      category: PromVisualQueryOperationCategory.Math,
+      renderer: multiplyRenderer,
     });
   }
 
@@ -177,6 +189,10 @@ function rateRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOpera
   }
 
   return `rate(${innerExpr}[${rangeVector}])`;
+}
+
+function multiplyRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+  return `${innerExpr} * ${model.params[0]}`;
 }
 
 export const visualQueryEngine = new VisualQueryEngine();
