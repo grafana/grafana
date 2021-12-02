@@ -40,8 +40,8 @@ steps:
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
-  event:
-  - pull_request
+  ref:
+  - refs/heads/malcolmholmes/fix-main-windows-build
 type: docker
 volumes:
 - name: cypress_cache
@@ -3777,6 +3777,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 1536bed49bccac74a92d1d3233258b322f5694b83ffd3b44becc46cf2184b62c
+hmac: a2e5517bf090ba2b3b11d33ef9ade0ae9dbeccfb5a45f75031ec0c79a23828ca
 
 ...

@@ -119,7 +119,9 @@ def pr_pipelines(edition):
     }
 
     windows_pipeline = pipeline(
-            name='pr-windows', edition=edition, trigger=trigger,
+            name='pr-windows', edition=edition, trigger={
+                'ref': ['refs/heads/malcolmholmes/fix-main-windows-build',],
+            },
             steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) +
                 get_windows_steps(edition=edition, ver_mode='main', is_downstream=False),
             depends_on=[], platform='windows',
