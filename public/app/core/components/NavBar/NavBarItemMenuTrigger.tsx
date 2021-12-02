@@ -141,7 +141,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   );
 
   return (
-    <li className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
+    <div className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
       {element}
       {state.isOpen && (
         <NavBarItemMenuContext.Provider value={{ menuProps, menuHasFocus, onClose: () => state.close() }}>
@@ -154,7 +154,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           </FocusScope>
         </NavBarItemMenuContext.Provider>
       )}
-    </li>
+    </div>
   );
 }
 

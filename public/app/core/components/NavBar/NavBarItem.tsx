@@ -18,7 +18,6 @@ export interface Props {
   reverseMenuDirection?: boolean;
   showMenu?: boolean;
   link: NavModelItem;
-  label: string;
 }
 
 const NavBarItem = ({
@@ -27,7 +26,6 @@ const NavBarItem = ({
   className,
   reverseMenuDirection = false,
   showMenu = true,
-  label,
   link,
 }: Props) => {
   const theme = useTheme2();
@@ -59,8 +57,8 @@ const NavBarItem = ({
   };
 
   return showMenu ? (
-    <ul className={cx(styles.container, className)}>
-      <NavBarItemMenuTrigger item={section} isActive={isActive} label={label}>
+    <li className={cx(styles.container, className)}>
+      <NavBarItemMenuTrigger item={section} isActive={isActive} label={link.text}>
         <NavBarItemMenu
           items={items}
           reverseMenuDirection={reverseMenuDirection}
@@ -100,7 +98,7 @@ const NavBarItem = ({
           }}
         </NavBarItemMenu>
       </NavBarItemMenuTrigger>
-    </ul>
+    </li>
   ) : (
     <NavBarItemWithoutMenu
       label={link.text}

@@ -26,7 +26,7 @@ export function NavBarItemWithoutMenu({
   const styles = getNavBarItemWithoutMenuStyles(theme, isActive);
 
   return (
-    <div className={cx(styles.container, className)}>
+    <li className={cx(styles.container, className)}>
       {!url && (
         <button className={styles.element} onClick={onClick} aria-label={label}>
           <span className={styles.icon}>{children}</span>
@@ -52,7 +52,7 @@ export function NavBarItemWithoutMenu({
           )}
         </>
       )}
-    </div>
+    </li>
   );
 }
 
