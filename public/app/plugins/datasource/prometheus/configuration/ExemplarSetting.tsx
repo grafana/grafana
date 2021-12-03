@@ -74,12 +74,37 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
                 datasourceUid: undefined,
                 name: value.name,
                 url: event.currentTarget.value,
+                urlDisplayLabel: value.urlDisplayLabel,
               })
             }
           />
         </InlineField>
       )}
 
+      {isInternalLink ? (
+        ''
+      ) : (
+        <InlineField
+          label="URL Label"
+          labelWidth={24}
+          tooltip="Use to override the label of the URL button for the externel link."
+        >
+          <Input
+            placeholder="Go to example.com"
+            spellCheck={false}
+            width={40}
+            value={value.urlDisplayLabel}
+            onChange={(event) =>
+              onChange({
+                datasourceUid: undefined,
+                name: value.name,
+                url: value.url,
+                urlDisplayLabel: event.currentTarget.value,
+              })
+            }
+          />
+        </InlineField>
+      )}
       <InlineField
         label="Label name"
         labelWidth={24}
