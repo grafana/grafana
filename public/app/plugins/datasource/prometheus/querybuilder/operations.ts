@@ -191,7 +191,7 @@ function getRangeVectorParamDef(): PromVisualQueryOperationParamDef {
   return {
     name: 'Range vector',
     type: 'string',
-    options: ['auto', '$__rate_interval', '$__interval', '1m', '5m', '10m', '1h', '24h'],
+    options: ['auto', '$__rate_interval', '$__interval', '$__range', '1m', '5m', '10m', '1h', '24h'],
   };
 }
 

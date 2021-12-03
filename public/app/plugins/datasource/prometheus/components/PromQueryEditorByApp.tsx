@@ -9,14 +9,13 @@ import { PromQueryEditorSelector } from '../querybuilder/components/PromQueryEdi
 export function PromQueryEditorByApp(props: PromQueryEditorProps) {
   const { app } = props;
 
-  if (config.featureToggles.promQueryBuilder) {
-    return <PromQueryEditorSelector {...props} />;
-  }
-
   switch (app) {
     case CoreApp.CloudAlerting:
       return <PromQueryEditorForAlerting {...props} />;
     default:
+      if (config.featureToggles.promQueryBuilder) {
+        return <PromQueryEditorSelector {...props} />;
+      }
       return <PromQueryEditor {...props} />;
   }
 }
