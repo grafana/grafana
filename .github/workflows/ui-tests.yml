@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         node-version: [14.x]
-    timeout-minutes: 30
+    timeout-minutes: 50
 
     steps:
       - name: Checkout Grafana code
