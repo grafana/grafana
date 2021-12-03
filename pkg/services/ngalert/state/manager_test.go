@@ -1247,6 +1247,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 						"datasource_uid":               "datasource_uid_1",
+						"ref_id":                       "A",
 					},
 					State: eval.Error,
 					Error: expr.QueryError{
