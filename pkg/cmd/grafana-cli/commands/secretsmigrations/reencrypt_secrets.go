@@ -123,7 +123,7 @@ type alertingSecret struct{}
 func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
 	var results []struct {
 		Id                        int
-		AlertmanagerConfiguration []byte
+		AlertmanagerConfiguration string
 	}
 
 	selectSQL := "SELECT id, alertmanager_configuration FROM alert_configuration"
@@ -133,7 +133,7 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 
 	for _, result := range results {
 		result := result
-		postableUserConfig, err := notifier.Load(result.AlertmanagerConfiguration)
+		postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
 		if err != nil {
 			return err
 		}
@@ -161,11 +161,12 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 			}
 		}
 
-		result.AlertmanagerConfiguration, err = json.Marshal(postableUserConfig)
+		marshalled, err := json.Marshal(postableUserConfig)
 		if err != nil {
 			return err
 		}
 
+		result.AlertmanagerConfiguration = string(marshalled)
 		if _, err := sess.Table("alert_configuration").Where("id = ?", result.Id).Update(&result); err != nil {
 			return err
 		}

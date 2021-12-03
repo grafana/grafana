@@ -67,6 +67,12 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 			require.EqualError(t, err, ErrFolderHasConnectedLibraryElements.Error())
 		})
 
+	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.Uid+"xxxx")
+			require.EqualError(t, err, models.ErrFolderNotFound.Error())
+		})
+
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateVariableCommand(sc.folder.Id, "query0")

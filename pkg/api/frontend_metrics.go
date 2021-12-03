@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -16,11 +15,10 @@ func (hs *HTTPServer) PostFrontendMetrics(c *models.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	for _, event := range cmd.Events {
-		name := strings.Replace(event.Name, "-", "_", -1)
-		if recorder, ok := metrics.FrontendMetrics[name]; ok {
+		if recorder, ok := metrics.FrontendMetrics[event.Name]; ok {
 			recorder(event)
 		} else {
-			c.Logger.Debug("Received unknown frontend metric", "metric", name)
+			c.Logger.Debug("Received unknown frontend metric", "metric", event.Name)
 		}
 	}
 	return response.Empty(200)
