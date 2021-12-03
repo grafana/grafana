@@ -4,6 +4,8 @@ import { defaultStyleConfig, DEFAULT_SIZE, StyleConfigValues, StyleMaker } from 
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import tinycolor from 'tinycolor2';
 import { config } from '@grafana/runtime';
+import { FeatureLike } from 'ol/Feature';
+import { createEmpty, extend, getHeight, getWidth } from 'ol/extent';
 
 interface SymbolMaker extends RegistryItem {
   aliasIds: string[];
@@ -307,3 +309,35 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
   // default to showing a circle
   return errorMarker;
 }
+
+export const getClusterStyle = (origStyle: Style) => (feature: FeatureLike, resolution: number): Style | Style[] => {
+  const features = feature.get('features');
+  if (origStyle) {
+    const origImage = origStyle.getImage();
+    if (features && features.length > 1) {
+      // const scaledRadius = scaleRadius(features, resolution);
+      // const origSize = origImage.getSize();
+      // const scaled = origSize[0] / (scaledRadius * 2);
+      // origImage.setScale(scaled);
+      return new Style({
+        image: origImage,
+        text: new Text({
+          text: features.length.toString(),
+        }),
+      });
+    }
+  }
+  return origStyle;
+};
+
+const scaleRadius = (features: FeatureLike[], resolution: number): number => {
+  const extent = createEmpty();
+  for (let i = 0; i < features.length; i++) {
+    const feature = features[i];
+    const geometry = feature.getGeometry();
+    if (geometry) {
+      extend(extent, geometry.getExtent());
+    }
+  }
+  return (getWidth(extent) + getHeight(extent)) / resolution / 4;
+};
