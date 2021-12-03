@@ -123,6 +123,8 @@ func ValidateScope(scope string) bool {
 	return !strings.ContainsAny(prefix, "*?")
 }
 
+//  Action: "datasources:read", Scope: "datasources:id:*"
+
 // TODO remove this implementation in favor of the other one
 // GetResourcesMetadataV1 returns a map of accesscontrol metadata, listing for each resource, users available actions
 func GetResourcesMetadataV1(ctx context.Context, permissions []*Permission, resource string, resourceIDs []string) (map[string]Metadata, error) {
@@ -187,22 +189,18 @@ func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resour
 		return nil, err
 	}
 
-	// Loop through permissions once adding id specific actions and saving global actions for later
+	// Loop through permissions once
 	result := map[string]Metadata{}
-	globalAction := map[string]bool{}
 	for _, p := range permissions {
 		scope := []byte(p.Scope)
 		if globalsFilter.Match(scope) {
-			globalAction[p.Action] = true
+			// Add global action to all resources
+			for _, id := range resourceIDs {
+				result = addActionToMetadata(result, p.Action, id)
+			}
 		} else if match := resourcesFilter.FindStringSubmatch(p.Scope); match != nil {
+			// Add action to a specific resource
 			result = addActionToMetadata(result, p.Action, match[2])
-		}
-	}
-
-	// Add global permissions to all resources
-	for _, id := range resourceIDs {
-		for action := range globalAction {
-			result = addActionToMetadata(result, action, id)
 		}
 	}
 
