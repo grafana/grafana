@@ -1,7 +1,6 @@
 package prometheus
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -50,8 +49,6 @@ func customQueryParametersMiddleware(logger log.Logger) sdkhttpclient.Middleware
 				}
 			}
 			req.URL.RawQuery = q.Encode()
-			fmt.Println("HEREEEEE2")
-			fmt.Println(req.URL.RawQuery)
 
 			return next.RoundTrip(req)
 		})
