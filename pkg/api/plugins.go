@@ -265,9 +265,21 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	requestedFile := filepath.Clean(c.Params("*"))
-	pluginFilePath := filepath.Join(plugin.PluginDir, requestedFile)
+	requestedFile := filepath.Clean(filepath.Join("/", c.Params("*")))
+	rel, err := filepath.Rel("/", requestedFile)
+	if err != nil {
+		// this should not never fail
+		c.Handle(hs.Cfg, 500, "Relative path found", err)
+		return
+	}
 
+	absPluginDir, err := filepath.Abs(plugin.PluginDir)
+	if err != nil {
+		c.Handle(hs.Cfg, 500, "Failed to get plugin absolute path", nil)
+		return
+	}
+
+	pluginFilePath := filepath.Join(absPluginDir, rel)
 	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
 	// nolint:gosec
