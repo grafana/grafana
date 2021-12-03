@@ -39,6 +39,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       <InlineFieldRow>
         <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
           <DataSourcePicker
+            inputId="trace-to-logs-data-source-picker"
             pluginId="loki"
             current={options.jsonData.tracesToLogs?.datasourceUid}
             noDefault={true}
