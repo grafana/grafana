@@ -201,7 +201,7 @@ function rateRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOpera
 }
 
 function multiplyRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
-  return `${innerExpr} * ${model.params[0]}`;
+  return `(${innerExpr}) * ${model.params[0]}`;
 }
 
 export const visualQueryEngine = new VisualQueryEngine();

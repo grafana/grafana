@@ -106,6 +106,6 @@ describe('VisualQueryEngine', () => {
         labels: [],
         operations: [{ id: '__multiply_by', params: [1000] }],
       })
-    ).toBe('metric * 1000');
+    ).toBe('(metric) * 1000');
   });
 });

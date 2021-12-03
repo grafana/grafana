@@ -41,6 +41,10 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
           <label className={styles.switchLabel}>Instant</label>
           <Switch />
         </Stack>
+        <Stack gap={1}>
+          <label className={styles.switchLabel}>Exemplars</label>
+          <Switch />
+        </Stack>
         <InlineSelect
           value={undefined}
           placeholder="Query patterns"
