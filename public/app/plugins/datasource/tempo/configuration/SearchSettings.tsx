@@ -15,7 +15,7 @@ export function SearchSettings({ options, onOptionsChange }: Props) {
       <InlineFieldRow className={styles.row}>
         <InlineField tooltip="Removes the Search tab from the Tempo query editor." label="Hide search" labelWidth={26}>
           <InlineSwitch
-            aria-label="Hide search"
+            id="hideSearch"
             value={options.jsonData.search?.hide}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'search', {

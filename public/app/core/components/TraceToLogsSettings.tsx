@@ -125,7 +125,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           tooltip="Filters logs by Trace ID. Appends '|=<trace id>' to the query."
         >
           <InlineSwitch
-            aria-label="Filter by Trace ID"
+            id="filterByTraceID"
             value={options.jsonData.tracesToLogs?.filterByTraceID}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
@@ -145,7 +145,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           tooltip="Filters logs by Span ID. Appends '|=<span id>' to the query."
         >
           <InlineSwitch
-            aria-label="Filter by Span ID"
+            id="filterBySpanID"
             value={options.jsonData.tracesToLogs?.filterBySpanID}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
@@ -159,7 +159,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       <InlineFieldRow>
         <InlineField label="Loki Search" labelWidth={26} grow tooltip="Use this logs data source to search for traces.">
           <InlineSwitch
-            aria-label="Loki Search"
+            id="lokiSearch"
             defaultChecked={true}
             value={options.jsonData.tracesToLogs?.lokiSearch}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>

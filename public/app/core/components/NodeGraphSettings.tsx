@@ -31,7 +31,7 @@ export function NodeGraphSettings({ options, onOptionsChange }: Props) {
           labelWidth={26}
         >
           <InlineSwitch
-            aria-label="Enable Node Graph"
+            id="enableNodeGraph"
             value={options.jsonData.nodeGraph?.enabled}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'nodeGraph', {
