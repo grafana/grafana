@@ -139,6 +139,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           const clusterSource = new source.Cluster({
             distance: config.cluster?.distance ?? defaultClusterConfig.distance,
+            minDistance: config.cluster?.minDistance ?? defaultClusterConfig.minDistance,
             source: vectorSource,
           });
           vectorLayer.setSource(clusterSource);

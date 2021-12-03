@@ -42,11 +42,13 @@ export interface StyleConfig {
 export interface ClusterConfig {
   enabled: boolean;
   distance?: number;
+  minDistance?: number;
 }
 
 export const defaultClusterConfig: ClusterConfig = {
   enabled: true,
   distance: 40,
+  minDistance: 20,
 };
 
 export const DEFAULT_SIZE = 5;
