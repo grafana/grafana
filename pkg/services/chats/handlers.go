@@ -11,7 +11,6 @@ type SendMessageCmd struct {
 	ContentTypeId int    `json:"content_type_id"`
 	ObjectId      string `json:"object_id"`
 	Content       string `json:"content"`
-	System        bool   `json:"system"`
 }
 
 func (s *Service) SendMessage(ctx context.Context, orgId int64, userId int64, cmd SendMessageCmd) (*Message, error) {
