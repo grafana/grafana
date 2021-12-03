@@ -42,22 +42,23 @@ func ProvideServiceAccountsService(
 
 	basicKeys := store.GetNonServiceAccountAPIKeys(context.Background())
 	if len(basicKeys) > 0 {
-		s.log.Debug("Upgrading API keys to service accounts", "numberKeys", len(basicKeys))
+		s.log.Debug("Launching background thread to upgrade API keys to service accounts", "numberKeys", len(basicKeys))
+		go func() {
+			for _, key := range basicKeys {
+				sa, err := store.CreateServiceAccountForApikey(context.Background(), key.OrgId, key.Name, key.Role)
+				if err != nil {
+					s.log.Error("Failed to create service account for API key", "err", err, "keyId", key.Id)
+					continue
+				}
 
-		for _, key := range basicKeys {
-			sa, err := store.CreateServiceAccountForApikey(context.Background(), key.OrgId, key.Name, key.Role)
-			if err != nil {
-				s.log.Error("Failed to create service account for API key", "err", err, "keyId", key.Id)
-				return nil, err
+				err = store.UpdateApikeyServiceAccount(context.Background(), key.Id, sa.Id)
+				if err != nil {
+					s.log.Error("Failed to attach new service account to API key", "err", err, "keyId", key.Id, "newServiceAccountId", sa.Id)
+					continue
+				}
+				s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", sa.Id)
 			}
-
-			err = store.UpdateApikeyServiceAccount(context.Background(), key.Id, sa.Id)
-			if err != nil {
-				s.log.Error("Failed to attach new service account to API key", "err", err, "keyId", key.Id, "newServiceAccountId", sa.Id)
-				return nil, err
-			}
-			s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", sa.Id)
-		}
+		}()
 	}
 
 	return s, nil
