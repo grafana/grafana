@@ -7,6 +7,7 @@ export default class SupportedNamespaces {
       'Microsoft.Automation/automationAccounts',
       'Microsoft.Batch/batchAccounts',
       'Microsoft.Cache/redis',
+      'Microsoft.Cdn/profiles',
       'Microsoft.ClassicCompute/virtualMachines',
       'Microsoft.ClassicCompute/domainNames/slots/roles',
       'Microsoft.CognitiveServices/accounts',
