@@ -28,7 +28,8 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     [onChange, query]
   );
 
-  const editorMode = query.editorMode ?? PromEditorMode.Code;
+  // If no expr (ie new query) then default to builder
+  const editorMode = query.editorMode ?? (query.expr ? PromEditorMode.Code : PromEditorMode.Builder);
 
   return (
     <>
@@ -59,7 +60,6 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
           onChange={({ value }) => {}}
           options={[]}
         />
-
         <RadioButtonGroup options={editorModes} size="sm" value={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />

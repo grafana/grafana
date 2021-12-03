@@ -78,7 +78,6 @@ export function getOperationDefintions(): PromVisualQueryOperationDef[] {
       displayName: 'Rate',
       params: [getRangeVectorParamDef()],
       defaultParams: ['auto'],
-      hasRangeVector: true,
       category: PromVisualQueryOperationCategory.RateAndDeltas,
       renderer: operationWithRangeVectorRenderer,
       addHandler: addOperationWithRangeVector,
@@ -88,7 +87,6 @@ export function getOperationDefintions(): PromVisualQueryOperationDef[] {
       displayName: 'Increase',
       params: [getRangeVectorParamDef()],
       defaultParams: ['auto'],
-      hasRangeVector: true,
       category: PromVisualQueryOperationCategory.RateAndDeltas,
       renderer: operationWithRangeVectorRenderer,
       addHandler: addOperationWithRangeVector,
@@ -215,7 +213,7 @@ function addOperationWithRangeVector(def: PromVisualQueryOperationDef, query: Pr
   if (query.operations.length > 0) {
     const firstOp = visualQueryEngine.getOperationDef(query.operations[0].id);
 
-    if (firstOp.hasRangeVector) {
+    if (firstOp.addHandler === addOperationWithRangeVector) {
       return {
         ...query,
         operations: [

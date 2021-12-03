@@ -33,7 +33,6 @@ export interface PromVisualQueryOperationDef {
   params: PromVisualQueryOperationParamDef[];
   defaultParams: string[] | number[];
   category: string;
-  hasRangeVector?: boolean;
   renderer: PromVisualQueryOperationRenderer;
   addHandler: (operation: PromVisualQueryOperationDef, query: PromVisualQuery) => PromVisualQuery;
 }
