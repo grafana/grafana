@@ -24,8 +24,12 @@ func Test_GetPluginAssets(t *testing.T) {
 	pluginDir := "."
 	tmpFile, err := ioutil.TempFile(pluginDir, "")
 	require.NoError(t, err)
+	tmpFileInParentDir, err := ioutil.TempFile("..", "")
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(tmpFile.Name())
+		assert.NoError(t, err)
+		err = os.RemoveAll(tmpFileInParentDir.Name())
 		assert.NoError(t, err)
 	})
 	expectedBody := "Plugin test"
@@ -57,6 +61,30 @@ func Test_GetPluginAssets(t *testing.T) {
 				require.Equal(t, 200, sc.resp.Code)
 				assert.Equal(t, expectedBody, sc.resp.Body.String())
 				assert.Empty(t, l.warnings)
+			})
+	})
+
+	t.Run("Given a request for a relative path", func(t *testing.T) {
+		p := &plugins.PluginBase{
+			Id:        pluginID,
+			PluginDir: pluginDir,
+			SignedFiles: map[string]struct{}{
+				requestedFile: {},
+			},
+		}
+		service := &pluginManager{
+			plugins: map[string]*plugins.PluginBase{
+				pluginID: p,
+			},
+		}
+		l := &logger{}
+
+		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, tmpFileInParentDir.Name())
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
+			func(sc *scenarioContext) {
+				callGetPluginAsset(sc)
+
+				require.Equal(t, 404, sc.resp.Code)
 			})
 	})
 
