@@ -5,7 +5,7 @@ weight = 1
 
 # About field overrides
 
-Overrides allow you to change the settings for one or more fields. Field options for overrides are exactly the same as the field options available in a particular visualization. The only difference is that you choose which fields to apply them to.
+Overrides allow you to change the settings for one or more fields. Field options for overrides are the same as the field options available in a particular visualization. The only difference is that you choose which fields to apply them to.
 
 For example, you could change the number of decimal places shown in all numeric fields or columns by changing the **Decimals** option for **Fields with type** that matches **Numeric**.
 

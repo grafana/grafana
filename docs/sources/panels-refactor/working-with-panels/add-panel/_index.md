@@ -15,7 +15,7 @@ Before you begin:
 - Understand the query language of the target data source.
 - Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source]({{< relref "../datasources/add-a-data-source.md" >}}) if you need instructions.
 
-To add a panel to a dashboard, complete the following steps:
+To add a panel to a dashboard:
 
 1. Navigate to the dashboard to which you want to add a panel.
 1. Click the **Add panel** icon.

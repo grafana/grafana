@@ -5,9 +5,7 @@ weight = 1
 
 # Manage queries
 
-### Query editor list
-
-In the UI, queries are organized in collapsible query rows. Each query row contains a query editor and is identified with a letter (A, B, C, and so on).
+Queries are organized in collapsible query rows. Each query row contains a query editor and is identified with a letter (A, B, C, and so on).
 
 You can:
 
