@@ -123,8 +123,6 @@ func ValidateScope(scope string) bool {
 	return !strings.ContainsAny(prefix, "*?")
 }
 
-//  Action: "datasources:read", Scope: "datasources:id:*"
-
 // TODO remove this implementation in favor of the other one
 // GetResourcesMetadataV1 returns a map of accesscontrol metadata, listing for each resource, users available actions
 func GetResourcesMetadataV1(ctx context.Context, permissions []*Permission, resource string, resourceIDs []string) (map[string]Metadata, error) {
