@@ -447,6 +447,11 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
+
+		apiRoute.Group("/chat", func(chatRoute routing.RouteRegister) {
+			chatRoute.Get("/get-messages", routing.Wrap(GetMessages))
+			chatRoute.Post("/send-message", routing.Wrap(SendMessage))
+		})
 	}, reqSignedIn)
 
 	// admin api
