@@ -448,9 +448,9 @@ func (hs *HTTPServer) registerRoutes() {
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
 
-		apiRoute.Group("/chat", func(chatRoute routing.RouteRegister) {
-			chatRoute.Get("/get-messages", routing.Wrap(GetMessages))
-			chatRoute.Post("/send-message", routing.Wrap(SendMessage))
+		apiRoute.Group("/chats", func(chatRoute routing.RouteRegister) {
+			chatRoute.Post("/get-messages", routing.Wrap(hs.chatGetMessages))
+			chatRoute.Post("/send-message", routing.Wrap(hs.chatSendMessage))
 		})
 	}, reqSignedIn)
 

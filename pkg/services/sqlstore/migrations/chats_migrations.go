@@ -30,7 +30,7 @@ func addChatMessageMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, Nullable: false, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "chat_id", Type: DB_BigInt, Nullable: false},
-			{Name: "user_id", Type: DB_BigInt, Nullable: true},
+			{Name: "user_id", Type: DB_BigInt, Nullable: false},
 			{Name: "content", Type: DB_MediumText, Nullable: false},
 			{Name: "created", Type: DB_Int, Nullable: false},
 			{Name: "updated", Type: DB_Int, Nullable: false},

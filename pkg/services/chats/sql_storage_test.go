@@ -24,7 +24,7 @@ func TestSqlStorage(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, messages, 0)
 
-	message, err := s.CreateMessage(ctx, 1, ContentTypeUser, "2", nil, "test")
+	message, err := s.CreateMessage(ctx, 1, ContentTypeUser, "2", 1, "test")
 	require.NoError(t, err)
 	require.NotNil(t, message)
 	require.True(t, message.Id > 0)
@@ -33,7 +33,7 @@ func TestSqlStorage(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, messages, 1)
 	require.Equal(t, messages[0].Content, "test")
-	require.Nil(t, messages[0].UserId)
+	require.Equal(t, int64(1), messages[0].UserId)
 	require.NotZero(t, messages[0].Created)
 	require.NotZero(t, messages[0].Updated)
 

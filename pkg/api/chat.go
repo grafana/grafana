@@ -1,33 +1,48 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/chats"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-var helloMessage = util.DynMap{
-	"chat_id":      1,
-	"user_id":      1,
-	"message_type": 0,
-	"text":         "Hello cha-cha-chat",
-}
-
-var byeMessage = util.DynMap{
-	"chat_id":      1,
-	"user_id":      2,
-	"message_type": 0,
-	"text":         "Bye cha-cha-chat",
-}
-
-func GetMessages(c *models.ReqContext) response.Response {
-	messages := [2]util.DynMap{helloMessage, byeMessage}
-	r := util.DynMap{
-		"messages": messages,
+func (hs *HTTPServer) chatGetMessages(c *models.ReqContext) response.Response {
+	cmd := chats.GetMessagesCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return response.JSON(200, r)
+	messages, err := hs.chatsService.GetMessages(c.Req.Context(), c.OrgId, c.UserId, cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "internal error", err)
+	}
+
+	result := make([]chats.MessageDto, 0, len(messages))
+	for _, m := range messages {
+		result = append(result, m.ToDTO())
+	}
+
+	return response.JSON(200, util.DynMap{
+		"messages": result,
+	})
 }
 
-func SendMessage(c *models.ReqContext) response.Response {
-	return response.JSON(200, helloMessage)
+func (hs *HTTPServer) chatSendMessage(c *models.ReqContext) response.Response {
+	cmd := chats.SendMessageCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	if c.SignedInUser.UserId == 0 && !c.SignedInUser.HasRole(models.ROLE_ADMIN) {
+		return response.Error(http.StatusForbidden, "admin role required", nil)
+	}
+	message, err := hs.chatsService.SendMessage(c.Req.Context(), c.OrgId, c.SignedInUser.UserId, cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "internal error", err)
+	}
+	return response.JSON(200, util.DynMap{
+		"message": message.ToDTO(),
+	})
 }

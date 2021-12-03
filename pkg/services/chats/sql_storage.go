@@ -16,9 +16,19 @@ func checkContentType(contentTypeId int) bool {
 	return ok
 }
 
-func (s *sqlStorage) CreateMessage(ctx context.Context, orgId int64, ctId int, objectId string, userId *int64, content string) (*Message, error) {
+func checkObjectId(objectId string) bool {
+	return objectId != ""
+}
+
+func (s *sqlStorage) CreateMessage(ctx context.Context, orgId int64, ctId int, objectId string, userId int64, content string) (*Message, error) {
 	if !checkContentType(ctId) {
 		return nil, errUnknownContentType
+	}
+	if !checkObjectId(objectId) {
+		return nil, errEmptyObjectId
+	}
+	if content == "" {
+		return nil, errEmptyContent
 	}
 
 	var result *Message
@@ -36,11 +46,11 @@ func (s *sqlStorage) CreateMessage(ctx context.Context, orgId int64, ctId int, o
 
 		nowUnix := time.Now().Unix()
 
-		var chatId int64
+		chatId := chat.Id
 		if !has {
 			chat.Created = nowUnix
 			chat.Updated = nowUnix
-			chatId, err = dbSession.Insert(chat)
+			chatId, err = dbSession.Insert(&chat)
 			if err != nil {
 				return err
 			}
@@ -52,11 +62,10 @@ func (s *sqlStorage) CreateMessage(ctx context.Context, orgId int64, ctId int, o
 			Created: nowUnix,
 			Updated: nowUnix,
 		}
-		messageId, err := dbSession.Insert(message)
+		_, err = dbSession.Insert(&message)
 		if err != nil {
 			return err
 		}
-		message.Id = messageId
 		result = &message
 		return nil
 	})
@@ -65,6 +74,9 @@ func (s *sqlStorage) CreateMessage(ctx context.Context, orgId int64, ctId int, o
 func (s *sqlStorage) GetMessages(ctx context.Context, orgId int64, ctId int, objectId string, _ GetMessagesFilter) ([]*Message, error) {
 	if !checkContentType(ctId) {
 		return nil, errUnknownContentType
+	}
+	if !checkObjectId(objectId) {
+		return nil, errEmptyObjectId
 	}
 
 	var result []*Message
