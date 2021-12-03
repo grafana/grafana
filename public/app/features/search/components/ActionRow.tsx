@@ -6,11 +6,20 @@ import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { DashboardQuery, SearchLayout } from '../types';
+import { config } from '@grafana/runtime';
 
 export const layoutOptions = [
   { value: SearchLayout.Folders, icon: 'folder', ariaLabel: 'View by folders' },
   { value: SearchLayout.List, icon: 'list-ul', ariaLabel: 'View as list' },
 ];
+
+if (config.featureToggles.dashboardPreviews) {
+  layoutOptions.push({
+    value: SearchLayout.Grid,
+    icon: 'microsoft', // looks like a grid ¯\_(ツ)_/¯
+    ariaLabel: 'View as Grid',
+  });
+}
 
 const searchSrv = new SearchSrv();
 

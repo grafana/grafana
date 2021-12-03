@@ -86,6 +86,26 @@ export const SearchResults: FC<Props> = memo(
       return <div className={styles.noResults}>No dashboards matching your query were found.</div>;
     }
 
+    // Quick hack to show preview images
+    if (layout === SearchLayout.Grid) {
+      const tid = theme.isDark ? 'dark' : 'light';
+      return (
+        <div className={styles.resultsContainer}>
+          {results.map((section, idx) => (
+            <div key={idx}>
+              {section.items.map((v) => (
+                <span key={v.uid}>
+                  <a href="">
+                    <img src={`/preview/dash/${v.uid}/square/${tid}`} />
+                  </a>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
     return (
       <div className={styles.resultsContainer}>
         {layout === SearchLayout.Folders ? renderFolders() : renderDashboards()}

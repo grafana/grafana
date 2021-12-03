@@ -67,7 +67,7 @@ export class SearchSrv {
 
     query.folderIds = query.folderIds || [];
 
-    if (query.layout === SearchLayout.List) {
+    if (query.layout === SearchLayout.List || query.layout === SearchLayout.Grid) {
       return backendSrv
         .search({ ...query, type: DashboardSearchItemType.DashDB })
         .then((results) => (results.length ? [{ title: '', items: results }] : []));
