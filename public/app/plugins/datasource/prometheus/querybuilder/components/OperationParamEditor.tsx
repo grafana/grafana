@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Input, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, toOption } from '@grafana/data';
+import { Button, Input, Select, useStyles2 } from '@grafana/ui';
 import React from 'react';
 import { PromVisualQueryOperation, PromVisualQueryOperationParamDef } from '../types';
 
@@ -11,16 +11,15 @@ export interface Props {
   operation: PromVisualQueryOperation;
 }
 
-export function OperationParamEditor({ paramDef, value, index, operation }: Props) {
+export function OperationParamEditor(props: Props) {
+  const { paramDef, index, operation } = props;
   const styles = useStyles2(getStyles);
 
   return (
     <>
       <div className={styles.param}>
         <div className={styles.name}>{paramDef.name}</div>
-        <div className={styles.value}>
-          <Input value={value ?? ''} />
-        </div>
+        <div className={styles.value}>{renderParamInput(props)}</div>
       </div>
       {paramDef.restParam && index === operation.params.length - 1 && (
         <div className={styles.param}>
@@ -32,6 +31,21 @@ export function OperationParamEditor({ paramDef, value, index, operation }: Prop
       )}
     </>
   );
+}
+
+function renderParamInput({ paramDef, value }: Props) {
+  const { options } = paramDef;
+
+  if (options && options?.length > 0) {
+    const selectOptions = paramDef.options!.map((option) => ({
+      label: option as string,
+      value: option as string,
+    }));
+
+    return <Select value={toOption(value as string)} options={selectOptions} onChange={() => {}} />;
+  }
+
+  return <Input value={value ?? ''} />;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

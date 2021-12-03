@@ -63,7 +63,13 @@ export class VisualQueryEngine {
     this.addOperationDef({
       id: 'rate',
       displayName: 'Rate',
-      params: [{ name: 'Range vector', type: 'string' }],
+      params: [
+        {
+          name: 'Range vector',
+          type: 'string',
+          options: ['auto', '$__rate_interval', '$__interval', '1m', '5m', '10m', '1h', '24h'],
+        },
+      ],
       defaultParams: ['auto'],
       category: PromVisualQueryOperationCategory.RateAndDeltas,
       renderer: rateRenderer,
@@ -201,7 +207,7 @@ function rateRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOpera
 }
 
 function multiplyRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
-  return `(${innerExpr}) * ${model.params[0]}`;
+  return `${innerExpr} * ${model.params[0]}`;
 }
 
 export const visualQueryEngine = new VisualQueryEngine();
