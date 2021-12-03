@@ -217,7 +217,7 @@ func (ss *SQLStore) CreateServiceAccountForApikey(ctx context.Context, orgId int
 
 	newuser, err := ss.CreateUser(ctx, cmd)
 	if err != nil {
-		return nil, errors.Errorf("Failed to create user: %v", err)
+		return nil, errors.Errorf("failed to create user: %w", err)
 	}
 
 	return newuser, err
