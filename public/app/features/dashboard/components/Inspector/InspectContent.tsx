@@ -82,6 +82,7 @@ export const InspectContent: React.FC<Props> = ({
           isLoading={isDataLoading}
           options={dataOptions}
           onOptionsChange={onDataOptionsChange}
+          timeZone={dashboard.timezone}
         />
       )}
       <CustomScrollbar autoHeightMin="100%">

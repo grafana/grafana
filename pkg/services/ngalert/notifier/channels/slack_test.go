@@ -303,6 +303,7 @@ func TestSendSlackRequest(t *testing.T) {
 				_, err := w.Write([]byte(test.slackResponse))
 				require.NoError(tt, err)
 			}))
+			defer server.Close()
 			req, err := http.NewRequest(http.MethodGet, server.URL, nil)
 			require.NoError(tt, err)
 

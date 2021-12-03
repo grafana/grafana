@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { Icon, Input, FieldValidationMessage, useStyles } from '@grafana/ui';
-import { GrafanaTheme, MapLayerOptions } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 
-export interface LayerHeaderProps {
-  layer: MapLayerOptions<any>;
-  canRename: (v: string) => boolean;
-  onChange: (layer: MapLayerOptions<any>) => void;
+export interface LayerNameProps {
+  name: string;
+  onChange: (v: string) => void;
+  verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
 }
 
-export const LayerHeader = ({ layer, canRename, onChange }: LayerHeaderProps) => {
+export const LayerName = ({ name, onChange, verifyLayerNameUniqueness }: LayerNameProps) => {
   const styles = useStyles(getStyles);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -27,11 +27,8 @@ export const LayerHeader = ({ layer, canRename, onChange }: LayerHeaderProps) =>
       return;
     }
 
-    if (layer.name !== newName) {
-      onChange({
-        ...layer,
-        name: newName,
-      });
+    if (name !== newName) {
+      onChange(newName);
     }
   };
 
@@ -43,7 +40,7 @@ export const LayerHeader = ({ layer, canRename, onChange }: LayerHeaderProps) =>
       return;
     }
 
-    if (!canRename(newName)) {
+    if (verifyLayerNameUniqueness && !verifyLayerNameUniqueness(newName)) {
       setValidationError('Layer name already exists');
       return;
     }
@@ -77,7 +74,7 @@ export const LayerHeader = ({ layer, canRename, onChange }: LayerHeaderProps) =>
             onClick={onEditLayer}
             data-testid="layer-name-div"
           >
-            <span className={styles.layerName}>{layer.name}</span>
+            <span className={styles.layerName}>{name}</span>
             <Icon name="pen" className={styles.layerEditIcon} size="sm" />
           </button>
         )}
@@ -86,7 +83,7 @@ export const LayerHeader = ({ layer, canRename, onChange }: LayerHeaderProps) =>
           <>
             <Input
               type="text"
-              defaultValue={layer.name}
+              defaultValue={name}
               onBlur={onEditLayerBlur}
               autoFocus
               onKeyDown={onKeyDown}

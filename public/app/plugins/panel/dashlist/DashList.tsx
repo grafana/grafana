@@ -194,7 +194,7 @@ function IconToggle({
     <label className={styles.wrapper}>
       <input
         type="checkbox"
-        checked={checked}
+        defaultChecked={checked}
         onClick={toggleCheckbox}
         className={styles.checkBox}
         aria-label={ariaLabel}

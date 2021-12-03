@@ -66,7 +66,7 @@ export function MetricStatEditor({
 
           <EditorField label="Statistic" width={16}>
             <Select
-              inputId="metric-stat-editor-select-statistic"
+              inputId={`${query.refId}-metric-stat-editor-select-statistic`}
               allowCustomValue
               value={toOption(query.statistic ?? datasource.standardStatistics[0])}
               options={appendTemplateVariables(
@@ -109,7 +109,8 @@ export function MetricStatEditor({
             tooltip="Only show metrics that exactly match all defined dimension names."
           >
             <Switch
-              checked={!!query.matchExact}
+              id={`${query.refId}-cloudwatch-match-exact`}
+              value={!!query.matchExact}
               onChange={(e) => {
                 onQueryChange({
                   ...query,
