@@ -27,6 +27,7 @@ import {
   LoadingState,
   LogLevel,
   LogRowModel,
+  MutableDataFrame,
   QueryResultMeta,
   ScopedVars,
   TimeRange,
@@ -58,7 +59,7 @@ import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
-import { queryLogsVolume } from 'app/core/logs_model';
+import { queryLogVolume } from 'app/core/logs_model';
 import config from 'app/core/config';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
@@ -128,24 +129,42 @@ export class LokiDatasource
       return undefined;
     }
 
-    const logsVolumeRequest = cloneDeep(request);
-    logsVolumeRequest.targets = logsVolumeRequest.targets
-      .filter((target) => target.expr && !isMetricsQuery(target.expr))
-      .map((target) => {
-        return {
-          ...target,
-          instant: false,
-          volumeQuery: true,
-          expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
-        };
-      });
+    return queryLogVolume(
+      this,
+      request,
+      (logsVolumeRequest: DataQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> => {
+        const shift =
+          logsVolumeRequest.intervalMs - (logsVolumeRequest.range.from.valueOf() % logsVolumeRequest.intervalMs);
 
-    return queryLogsVolume(this, logsVolumeRequest, {
-      timeout: LOGS_VOLUME_TIMEOUT,
-      extractLevel,
-      range: request.range,
-      targets: request.targets,
-    });
+        logsVolumeRequest.range.from.add(shift, 'ms');
+        logsVolumeRequest.range.to.add(shift, 'ms');
+
+        logsVolumeRequest.targets = logsVolumeRequest.targets
+          .filter((target) => target.expr && !isMetricsQuery(target.expr))
+          .map((target) => {
+            return {
+              ...target,
+              instant: false,
+              volumeQuery: true,
+              expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
+            };
+          });
+        return logsVolumeRequest;
+      },
+      { extractLevel, timeout: LOGS_VOLUME_TIMEOUT }
+    ).pipe(
+      map((response) => {
+        response.data = response.data.map((frame: MutableDataFrame) => {
+          for (let i = 0; i < frame.length; i++) {
+            const item = frame.get(i);
+            item.Time = item.Time - frame.meta?.custom?.bucketSize || 0;
+            frame.set(i, item);
+          }
+          return frame;
+        });
+        return response;
+      })
+    );
   }
 
   query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {

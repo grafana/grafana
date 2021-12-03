@@ -1,4 +1,4 @@
-import { size } from 'lodash';
+import { cloneDeep, size } from 'lodash';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 
@@ -34,7 +34,6 @@ import {
   ScopedVars,
   sortInAscendingOrder,
   textUtil,
-  TimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
@@ -622,26 +621,31 @@ const LOGS_VOLUME_QUERY_DEFAULT_TIMEOUT = 60000;
 type LogsVolumeQueryOptions<T extends DataQuery> = {
   timeout?: number;
   extractLevel: (dataFrame: DataFrame) => LogLevel;
-  targets: T[];
-  range: TimeRange;
 };
 
-/**
- * Creates an observable, which makes requests to get logs volume and aggregates results.
- */
-export function queryLogsVolume<T extends DataQuery>(
+export function queryLogVolume<T extends DataQuery>(
   datasource: DataSourceApi<T, any, any>,
-  logsVolumeRequest: DataQueryRequest<T>,
+  originalQuery: DataQueryRequest<T>,
+  logVolumeFactory: (query: DataQueryRequest<T>) => DataQueryRequest<T>,
   options: LogsVolumeQueryOptions<T>
 ): Observable<DataQueryResponse> {
-  const timespan = options.range.to.valueOf() - options.range.from.valueOf();
-  const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
-  logsVolumeRequest.interval = intervalInfo.interval;
-  logsVolumeRequest.scopedVars.__interval = { value: intervalInfo.interval, text: intervalInfo.interval };
+  const initialLogVolumeRequest = cloneDeep(originalQuery);
+
+  const timespan = originalQuery.range.to.valueOf() - originalQuery.range.from.valueOf();
+  const intervalInfo = getIntervalInfo(initialLogVolumeRequest.scopedVars, timespan);
+  let bucketSize = 0;
+  initialLogVolumeRequest.interval = intervalInfo.interval;
+  initialLogVolumeRequest.scopedVars.__interval = { value: intervalInfo.interval, text: intervalInfo.interval };
   if (intervalInfo.intervalMs !== undefined) {
-    logsVolumeRequest.intervalMs = intervalInfo.intervalMs;
-    logsVolumeRequest.scopedVars.__interval_ms = { value: intervalInfo.intervalMs, text: intervalInfo.intervalMs };
+    initialLogVolumeRequest.intervalMs = intervalInfo.intervalMs;
+    initialLogVolumeRequest.scopedVars.__interval_ms = {
+      value: intervalInfo.intervalMs,
+      text: intervalInfo.intervalMs,
+    };
+    bucketSize = intervalInfo.intervalMs;
   }
+
+  const logsVolumeRequest = logVolumeFactory(initialLogVolumeRequest);
 
   return new Observable((observer) => {
     let rawLogsVolume: DataFrame[] = [];
@@ -664,8 +668,15 @@ export function queryLogsVolume<T extends DataQuery>(
           if (aggregatedLogsVolume[0]) {
             aggregatedLogsVolume[0].meta = {
               custom: {
-                targets: options.targets,
-                absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+                cacheInfo: {
+                  targets: originalQuery.targets,
+                  absoluteRange: { from: originalQuery.range.from.valueOf(), to: originalQuery.range.to.valueOf() },
+                },
+                displayRange: {
+                  from: originalQuery.range.from.valueOf() - bucketSize,
+                  to: originalQuery.range.to.valueOf(),
+                },
+                bucketSize,
               },
             };
           }

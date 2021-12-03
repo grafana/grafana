@@ -508,10 +508,11 @@ function canReuseLogsVolumeData(
 ): boolean {
   if (logsVolumeData && logsVolumeData.data[0]) {
     // check if queries are the same
-    if (!deepEqual(logsVolumeData.data[0].meta?.custom?.targets, queries)) {
+    if (!deepEqual(logsVolumeData.data[0].meta?.custom?.cacheInfo?.targets, queries)) {
       return false;
     }
-    const dataRange = logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom?.absoluteRange;
+    const dataRange =
+      logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom?.cacheInfo?.absoluteRange;
     // if selected range is within loaded logs volume
     if (dataRange && dataRange.from <= selectedTimeRange.from && selectedTimeRange.to <= dataRange.to) {
       return true;

@@ -4,7 +4,6 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  dateTimeParse,
   FieldType,
   LoadingState,
   LogLevel,
@@ -22,7 +21,7 @@ import {
   getSeriesProperties,
   LIMIT_LABEL,
   logSeriesToLogsModel,
-  queryLogsVolume,
+  queryLogVolume,
 } from './logs_model';
 import { Observable } from 'rxjs';
 import { MockObservableDataSourceApi } from '../../test/mocks/datasource_srv';
@@ -989,16 +988,10 @@ describe('logs volume', () => {
       targets: [{ target: 'volume query 1' }, { target: 'volume query 2' }],
       scopedVars: {},
     } as unknown) as DataQueryRequest<TestDataQuery>;
-    volumeProvider = queryLogsVolume(datasource, request, {
+    volumeProvider = queryLogVolume(datasource, request, (r) => r, {
       extractLevel: (dataFrame: DataFrame) => {
         return dataFrame.fields[1]!.labels!.level === 'error' ? LogLevel.error : LogLevel.unknown;
       },
-      range: {
-        from: dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' }),
-        to: dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' }),
-        raw: { from: '0', to: '1' },
-      },
-      targets: request.targets,
     });
   }
 

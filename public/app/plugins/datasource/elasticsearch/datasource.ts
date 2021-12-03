@@ -45,7 +45,7 @@ import {
   isBucketAggregationWithField,
 } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { coerceESVersion, getScriptValue } from './utils';
-import { queryLogsVolume } from 'app/core/logs_model';
+import { queryLogVolume } from 'app/core/logs_model';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -569,51 +569,54 @@ export class ElasticDatasource
     if (!isLogsVolumeAvailable) {
       return undefined;
     }
-    const logsVolumeRequest = cloneDeep(request);
-    logsVolumeRequest.targets = logsVolumeRequest.targets.map((target) => {
-      const bucketAggs: BucketAggregation[] = [];
-      const timeField = this.timeField ?? '@timestamp';
+    return queryLogVolume(
+      this,
+      request,
+      (logsVolumeRequest: DataQueryRequest<ElasticsearchQuery>): DataQueryRequest<ElasticsearchQuery> => {
+        logsVolumeRequest.targets = logsVolumeRequest.targets.map((target) => {
+          const bucketAggs: BucketAggregation[] = [];
+          const timeField = this.timeField ?? '@timestamp';
 
-      if (this.logLevelField) {
-        bucketAggs.push({
-          id: '2',
-          type: 'terms',
-          settings: {
-            min_doc_count: '0',
-            size: '0',
-            order: 'desc',
-            orderBy: '_count',
-            missing: LogLevel.unknown,
-          },
-          field: this.logLevelField,
+          if (this.logLevelField) {
+            bucketAggs.push({
+              id: '2',
+              type: 'terms',
+              settings: {
+                min_doc_count: '0',
+                size: '0',
+                order: 'desc',
+                orderBy: '_count',
+                missing: LogLevel.unknown,
+              },
+              field: this.logLevelField,
+            });
+          }
+          bucketAggs.push({
+            id: '3',
+            type: 'date_histogram',
+            settings: {
+              interval: 'auto',
+              min_doc_count: '0',
+              trimEdges: '0',
+            },
+            field: timeField,
+          });
+
+          const logsVolumeQuery: ElasticsearchQuery = {
+            refId: target.refId,
+            query: target.query,
+            metrics: [{ type: 'count', id: '1' }],
+            timeField,
+            bucketAggs,
+          };
+          return logsVolumeQuery;
         });
+        return logsVolumeRequest;
+      },
+      {
+        extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
       }
-      bucketAggs.push({
-        id: '3',
-        type: 'date_histogram',
-        settings: {
-          interval: 'auto',
-          min_doc_count: '0',
-          trimEdges: '0',
-        },
-        field: timeField,
-      });
-
-      const logsVolumeQuery: ElasticsearchQuery = {
-        refId: target.refId,
-        query: target.query,
-        metrics: [{ type: 'count', id: '1' }],
-        timeField,
-        bucketAggs,
-      };
-      return logsVolumeQuery;
-    });
-
-    return queryLogsVolume(this, logsVolumeRequest, {
-      range: request.range,
-      targets: request.targets,
-      extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
-    });
+    );
   }
 
   query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {

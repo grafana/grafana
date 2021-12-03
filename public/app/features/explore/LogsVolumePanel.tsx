@@ -42,7 +42,7 @@ export function LogsVolumePanel(props: Props) {
           data={logsVolumeData.data}
           height={height}
           width={width - spacing}
-          absoluteRange={absoluteRange}
+          absoluteRange={logsVolumeData.data.length ? logsVolumeData.data[0].meta.custom.displayRange : absoluteRange}
           onChangeTime={onUpdateTimeRange}
           timeZone={timeZone}
           splitOpenFn={splitOpen}
