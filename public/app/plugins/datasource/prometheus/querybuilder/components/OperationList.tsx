@@ -12,7 +12,7 @@ export interface Props {
   onChange: (query: PromVisualQuery) => void;
 }
 
-export function Operations({ query, onChange }: Props) {
+export function OperationList({ query, onChange }: Props) {
   const styles = useStyles2(getStyles);
   const { operations } = query;
 
@@ -80,7 +80,12 @@ export function Operations({ query, onChange }: Props) {
               onChange={onOperationChange}
               onRemove={onRemove}
             />
-            {index < operations.length - 1 && <div className={styles.connectingLine} />}
+            {index < operations.length - 1 && (
+              <>
+                <div className={styles.line} />
+                <div className={styles.lineArrow} />
+              </>
+            )}
           </>
         ))}
         <div className={styles.addOperation}>
@@ -97,10 +102,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: 12,
       fontWeight: theme.typography.fontWeightMedium,
     }),
-    connectingLine: css({
+    line: css({
       height: '2px',
-      width: '16px',
-      backgroundColor: theme.colors.border.strong,
+      width: '8px',
+      backgroundColor: theme.colors.text.disabled,
+      alignSelf: 'center',
+    }),
+    lineArrow: css({
+      width: 0,
+      height: 0,
+      borderTop: `5px solid transparent`,
+      borderBottom: `5px solid transparent`,
+      borderLeft: `7px solid ${theme.colors.text.disabled}`,
       alignSelf: 'center',
     }),
     addOperation: css({

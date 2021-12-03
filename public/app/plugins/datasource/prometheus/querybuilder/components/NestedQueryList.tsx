@@ -13,7 +13,7 @@ export interface Props {
   onChange: (query: PromVisualQuery) => void;
 }
 
-export function NestedQueries({ query, datasource, onChange }: Props) {
+export function NestedQueryList({ query, datasource, onChange }: Props) {
   const styles = useStyles2(getStyles);
   const nestedQueries = query.nestedQueries ?? [];
 
