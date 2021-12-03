@@ -284,7 +284,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
     const dsSettings = dataSourceSrv.getInstanceSettings(options.datasourceUid);
 
     dataLinks.push({
-      title: `Query with ${dsSettings?.name}`,
+      title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
       url: '',
       internal: {
         query: { query: '${__value.raw}', queryType: 'traceId' },

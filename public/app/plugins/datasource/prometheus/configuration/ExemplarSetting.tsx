@@ -51,8 +51,8 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
             width={40}
             onChange={(ds) =>
               onChange({
+                ...value,
                 datasourceUid: ds.uid,
-                name: value.name,
                 url: undefined,
               })
             }
@@ -71,40 +71,33 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
             value={value.url}
             onChange={(event) =>
               onChange({
+                ...value,
                 datasourceUid: undefined,
-                name: value.name,
                 url: event.currentTarget.value,
-                urlDisplayLabel: value.urlDisplayLabel,
               })
             }
           />
         </InlineField>
       )}
 
-      {isInternalLink ? (
-        ''
-      ) : (
-        <InlineField
-          label="URL Label"
-          labelWidth={24}
-          tooltip="Use to override the label of the URL button for the externel link."
-        >
-          <Input
-            placeholder="Go to example.com"
-            spellCheck={false}
-            width={40}
-            value={value.urlDisplayLabel}
-            onChange={(event) =>
-              onChange({
-                datasourceUid: undefined,
-                name: value.name,
-                url: value.url,
-                urlDisplayLabel: event.currentTarget.value,
-              })
-            }
-          />
-        </InlineField>
-      )}
+      <InlineField
+        label="URL Label"
+        labelWidth={24}
+        tooltip="Use to override the button label on the exemplar traceID field."
+      >
+        <Input
+          placeholder="Go to example.com"
+          spellCheck={false}
+          width={40}
+          value={value.urlDisplayLabel}
+          onChange={(event) =>
+            onChange({
+              ...value,
+              urlDisplayLabel: event.currentTarget.value,
+            })
+          }
+        />
+      </InlineField>
       <InlineField
         label="Label name"
         labelWidth={24}
