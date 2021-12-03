@@ -101,6 +101,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
       onOpenMenu,
       allowCustomValue,
       formatCreateLabel,
+      'aria-label': ariaLabel,
     } = this.props;
 
     let widthClass = '';
@@ -151,6 +152,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onMenuOpen={onOpenMenuInternal}
               onMenuClose={onCloseMenuInternal}
               tabSelectsValue={tabSelectsValue}
+              aria-label={ariaLabel}
               {...creatableOptions}
             />
           );
