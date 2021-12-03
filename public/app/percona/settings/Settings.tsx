@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useMemo, useState, useCallback } from 'react';
 import { Spinner, useTheme } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
-import { Advanced, AlertManager, Diagnostics, MetricsResolution, PlatformLogin, SSHKey } from './components';
+import { Advanced, AlertManager, Diagnostics, MetricsResolution, Platform, SSHKey } from './components';
 import { LoadingCallback, SettingsService } from './Settings.service';
 import { Settings, TabKeys, SettingsAPIChangePayload } from './Settings.types';
 import { Messages } from './Settings.messages';
@@ -111,7 +111,7 @@ export const SettingsPanel: FC = () => {
             {
               label: perconaPlatform,
               key: TabKeys.perconaPlatform,
-              component: <PlatformLogin userEmail={settings.platformEmail} getSettings={getSettings} />,
+              component: <Platform isConnected={settings.isConnectedToPortal} getSettings={getSettings} />,
             },
             {
               label: communication,
