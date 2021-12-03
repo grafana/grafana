@@ -8,7 +8,7 @@ import {
   PostgreSQLInstanceResponse,
   MySQLInstanceResponse,
   AddHaProxyResponse,
-  AddMongoDbReponse,
+  AddMongoDbResponse,
   AddRDSResponse,
   AddExternalResponse,
   ErrorResponse,
@@ -61,7 +61,7 @@ class AddRemoteInstanceService {
   }
 
   static async addMongodb(body: MongoDBPayload, token?: CancelToken) {
-    return apiManagement.post<AddMongoDbReponse | ErrorResponse, RemoteInstancePayload>(
+    return apiManagement.post<AddMongoDbResponse | ErrorResponse, RemoteInstancePayload>(
       '/MongoDB/Add',
       body,
       false,
@@ -180,7 +180,7 @@ export const toPayload = (values: any, discoverName?: string, type?: InstanceAva
       data.disable_collectors = values.disable_collectors.replace(/\s/g, '').split(',');
     }
     if (values.stats_collections) {
-      data.stats_collections = values.stats_collections.replace(/\s/g, '');
+      data.stats_collections = values.stats_collections.replace(/\s/g, '').split(',');
     }
   }
 
