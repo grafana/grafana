@@ -1,6 +1,6 @@
 import { Fill, RegularShape, Stroke, Circle, Style, Icon, Text } from 'ol/style';
 import { Registry, RegistryItem } from '@grafana/data';
-import { defaultStyleConfig, DEFAULT_SIZE, StyleConfigValues, StyleMaker } from './types';
+import { defaultStyleConfig, DEFAULT_SIZE, StyleConfigState, StyleConfigValues, StyleMaker } from './types';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import tinycolor from 'tinycolor2';
 import { config } from '@grafana/runtime';
@@ -310,20 +310,22 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
   return errorMarker;
 }
 
-export const getClusterStyle = (origStyle: Style) => (feature: FeatureLike, resolution: number): Style | Style[] => {
+export const getClusterStyle = (origStyle: Style, cfg: StyleConfigState) => (
+  feature: FeatureLike,
+  resolution: number
+): Style | Style[] => {
   const features = feature.get('features');
-  const origImage = origStyle.getImage();
-  if (features && features.length > 1) {
+
+  if (features) {
     const scaledRadius = scaleRadius(features, resolution);
-    const origSize = origImage.getSize();
-    const scaled = (scaledRadius * 2) / origSize[0];
-    origImage.setScale(scaled);
-    return new Style({
-      image: origImage,
-      text: new Text({
-        text: features.length.toString(),
-      }),
-    });
+
+    //TODO: handle dimensions "summary" style
+    const base = { ...cfg.base };
+    base.size = scaledRadius;
+    if (features.length > 1) {
+      base.text = features.length.toString();
+    }
+    return cfg.maker(base);
   }
   return origStyle;
 };

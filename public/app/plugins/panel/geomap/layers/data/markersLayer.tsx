@@ -145,7 +145,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           vectorLayer.setSource(clusterSource);
           const origStyle = vectorLayer.getStyle();
           if (origStyle && 'getImage' in origStyle) {
-            vectorLayer.setStyle(getClusterStyle(origStyle));
+            vectorLayer.setStyle(getClusterStyle(origStyle, style));
           }
 
         } else {
