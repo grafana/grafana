@@ -4,17 +4,18 @@ import React, { FC, useEffect, useMemo, useState, useCallback } from 'react';
 import { Spinner, useTheme } from '@grafana/ui';
 
 import { EmptyBlock } from '../shared/components/Elements/EmptyBlock';
-import { ContentTab, TabbedContent, TabOrientation } from '../shared/components/Elements/TabbedContent';
+import { ContentTab, TabbedContent } from '../shared/components/Elements/TabbedContent';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 
-import { GET_SETTINGS_CANCEL_TOKEN, SET_SETTINGS_CANCEL_TOKEN, PAGE_MODEL } from './Settings.constants';
+import { PAGE_MODEL } from './Settings.constants';
 import { Messages } from './Settings.messages';
 import { LoadingCallback, SettingsService } from './Settings.service';
 import { getSettingsStyles } from './Settings.styles';
 import { Settings, SettingsAPIChangePayload, TabKeys } from './Settings.types';
-import { Advanced, AlertManager, Diagnostics, MetricsResolution, PlatformLogin, SSHKey } from './components';
+import { Advanced, AlertManager, Diagnostics, MetricsResolution, SSHKey } from './components';
 import { Communication } from './components/Communication/Communication';
+import { Platform } from './components/Platform/Platform';
 
 export const SettingsPanel: FC = () => {
   const { path: basePath } = PAGE_MODEL;
@@ -114,7 +115,7 @@ export const SettingsPanel: FC = () => {
             {
               label: perconaPlatform,
               key: TabKeys.perconaPlatform,
-              component: <PlatformLogin userEmail={settings.platformEmail} getSettings={getSettings} />,
+              component: <Platform isConnected={settings.isConnectedToPortal} getSettings={getSettings} />,
             },
             {
               label: communication,
