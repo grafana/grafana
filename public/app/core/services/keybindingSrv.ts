@@ -173,14 +173,16 @@ export class KeybindingSrv {
     });
 
     this.bind('mod+s', () => {
-      appEvents.publish(
-        new ShowModalReactEvent({
-          component: SaveDashboardModalProxy,
-          props: {
-            dashboard,
-          },
-        })
-      );
+      if (dashboard.meta.canSave) {
+        appEvents.publish(
+          new ShowModalReactEvent({
+            component: SaveDashboardModalProxy,
+            props: {
+              dashboard,
+            },
+          })
+        );
+      }
     });
 
     this.bind('t z', () => {

@@ -134,7 +134,7 @@ func (g *dashboardGuardianImpl) checkAcl(permission models.PermissionType, acl [
 	}
 
 	// load teams
-	teams, err := g.getTeams()
+	teams, err := g.getTeams(g.ctx)
 	if err != nil {
 		return false, err
 	}
@@ -248,14 +248,14 @@ func (g *dashboardGuardianImpl) GetACLWithoutDuplicates() ([]*models.DashboardAc
 	return result, nil
 }
 
-func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
+func (g *dashboardGuardianImpl) getTeams(ctx context.Context) ([]*models.TeamDTO, error) {
 	if g.teams != nil {
 		return g.teams, nil
 	}
 
 	query := models.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserId}
 	// TODO: Use bus.DispatchCtx(g.Ctx, &query) when GetTeamsByUserQuery supports context.
-	err := bus.Dispatch(&query)
+	err := bus.DispatchCtx(ctx, &query)
 
 	g.teams = query.Result
 	return query.Result, err

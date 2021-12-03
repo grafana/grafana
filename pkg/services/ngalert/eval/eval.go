@@ -8,6 +8,7 @@ import (
 	"runtime/debug"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
@@ -273,6 +274,48 @@ func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, no
 	return exprService.TransformData(ctx.Ctx, queryDataReq)
 }
 
+// datasourceUIDsToRefIDs returns a sorted slice of Ref IDs for each Datasource UID.
+//
+// If refIDsToDatasourceUIDs is nil then this function also returns nil. Likewise,
+// if it is an empty map then it too returns an empty map.
+//
+// For example, given the following:
+//
+//		map[string]string{
+//			"ref1": "datasource1",
+//			"ref2": "datasource1",
+//			"ref3": "datasource2",
+//		}
+//
+// we would expect:
+//
+//  	map[string][]string{
+// 			"datasource1": []string{"ref1", "ref2"},
+//			"datasource2": []string{"ref3"},
+//		}
+func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string][]string {
+	if refIDsToDatasourceUIDs == nil {
+		return nil
+	}
+
+	// The ref IDs must be sorted. However, instead of sorting them once
+	// for each Datasource UID we can append them all to a slice and then
+	// sort them once
+	refIDs := make([]string, 0, len(refIDsToDatasourceUIDs))
+	for refID := range refIDsToDatasourceUIDs {
+		refIDs = append(refIDs, refID)
+	}
+	sort.Strings(refIDs)
+
+	result := make(map[string][]string)
+	for _, refID := range refIDs {
+		datasourceUID := refIDsToDatasourceUIDs[refID]
+		result[datasourceUID] = append(result[datasourceUID], refID)
+	}
+
+	return result
+}
+
 // evaluateExecutionResult takes the ExecutionResult which includes data.Frames returned
 // from SSE (Server Side Expressions). It will create Results (slice of Result) with a State
 // extracted from each Frame.
@@ -317,12 +360,12 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 	}
 
 	if len(execResults.NoData) > 0 {
-		m := make(map[string]struct{})
-		for _, datasourceUID := range execResults.NoData {
-			if _, ok := m[datasourceUID]; !ok {
-				appendNoData(data.Labels{"datasource_uid": datasourceUID})
-				m[datasourceUID] = struct{}{}
-			}
+		noData := datasourceUIDsToRefIDs(execResults.NoData)
+		for datasourceUID, refIDs := range noData {
+			appendNoData(data.Labels{
+				"datasource_uid": datasourceUID,
+				"ref_id":         strings.Join(refIDs, ","),
+			})
 		}
 		return evalResults
 	}

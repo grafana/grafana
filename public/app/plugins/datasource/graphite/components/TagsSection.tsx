@@ -52,7 +52,7 @@ export function TagsSection({ tags, state }: Props) {
           }}
           loadOptions={debouncedGetTagsAsSegments}
           reloadOptionsOnChange={true}
-          Component={<Button icon="plus" variant="secondary" className={styles.button} />}
+          Component={<Button icon="plus" variant="secondary" className={styles.button} aria-label="Add new tag" />}
         />
       )}
       {state.paused && <PlayButton />}

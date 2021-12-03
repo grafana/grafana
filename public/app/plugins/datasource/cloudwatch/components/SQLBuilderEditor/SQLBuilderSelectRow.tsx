@@ -59,7 +59,7 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
         <EditorField label="Namespace" width={16}>
           <Select
             value={namespace ? toOption(namespace) : null}
-            inputId="cloudwatch-sql-namespace"
+            inputId={`${query.refId}-cloudwatch-sql-namespace`}
             options={namespaceOptions}
             allowCustomValue
             onChange={({ value }) => value && onQueryChange(setNamespace(query, value))}
@@ -69,7 +69,7 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
 
         <EditorField label="With schema">
           <Switch
-            id="cloudwatch-sql-withSchema"
+            id={`${query.refId}-cloudwatch-sql-withSchema`}
             value={withSchemaEnabled}
             onChange={(ev) =>
               ev.target instanceof HTMLInputElement && onQueryChange(setWithSchema(query, ev.target.checked))
@@ -80,7 +80,7 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
         {withSchemaEnabled && (
           <EditorField label="Schema labels">
             <Select
-              id="cloudwatch-sql-schema-label-keys"
+              id={`${query.refId}-cloudwatch-sql-schema-label-keys`}
               width="auto"
               isMulti={true}
               disabled={!namespace}
