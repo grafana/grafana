@@ -164,7 +164,7 @@
     "expose-loader": "3.0.0",
     "mock-raf": "1.0.1",
     "postcss-loader": "6.1.1",
-    "pretty-format": "25.1.0",
+    "pretty-format": "27.4.2",
     "raw-loader": "4.0.2",
     "react-docgen-typescript-loader": "3.7.2",
     "react-test-renderer": "17.0.1",
