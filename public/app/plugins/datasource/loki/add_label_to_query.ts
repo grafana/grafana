@@ -1,14 +1,11 @@
 import { chain, isEqual } from 'lodash';
-import { OPERATORS, LOGICAL_OPERATORS, PROM_KEYWORDS } from './promql';
+import { LOKI_KEYWORDS } from './syntax';
+import { PROM_KEYWORDS, OPERATORS, LOGICAL_OPERATORS } from 'app/plugins/datasource/prometheus/promql';
 
-const builtInWords = [...PROM_KEYWORDS, ...OPERATORS, ...LOGICAL_OPERATORS];
+const builtInWords = [...PROM_KEYWORDS, ...OPERATORS, ...LOGICAL_OPERATORS, ...LOKI_KEYWORDS];
 
 // We want to extract all possible metrics and also keywords
 const metricsAndKeywordsRegexp = /([A-Za-z:][\w:]*)\b(?![\]{=!",])/g;
-// Safari currently doesn't support negative lookbehind. When it does, we should refactor this.
-// We are creating 2 matching groups. (\$) is for the Grafana's variables such as ${__rate_s}. We want to ignore
-// ${__rate_s} and not add variable to it.
-const selectorRegexp = /(\$)?{([^{]*)}/g;
 
 export function addLabelToQuery(
   query: string,
@@ -34,18 +31,30 @@ export function addLabelToQuery(
     return isMetric ? `${word}{}` : word;
   });
 
-  // Adding label to existing selectors
-  let match = selectorRegexp.exec(query);
+  //This is a RegExp for stream selector - e.g. {job="grafana"}
+  const selectorRegexp = /(\$)?{([^{]*)}/g;
   const parts = [];
   let lastIndex = 0;
   let suffix = '';
 
+  let match = selectorRegexp.exec(query);
+  /* 
+    There are 2 possible false positive scenarios: 
+    
+    1. We match Grafana's variables with ${ syntax - such as${__rate_s}. To filter these out we could use negative lookbehind,
+    but Safari browser currently doesn't support it. Therefore we need to hack this by creating 2 matching groups. 
+    (\$) is for the Grafana's variables and if we match it, we know this is not a stream selector and we don't want to add label.
+
+    2. Log queries can include {{.label}} syntax when line_format is used. We need to filter these out by checking
+    if match starts with "{."
+  */
   while (match) {
     const prefix = query.slice(lastIndex, match.index);
     lastIndex = match.index + match[2].length + 2;
     suffix = query.slice(match.index + match[0].length);
-    // If we matched 1st group, we know it is Grafana's variable and we don't want to add labels
-    if (match[1]) {
+
+    // Filtering our false positives
+    if (match[0].startsWith('{.') || match[1]) {
       parts.push(prefix);
       parts.push(match[0]);
     } else {
