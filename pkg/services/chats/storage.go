@@ -11,11 +11,13 @@ type GetMessagesFilter struct {
 const (
 	ContentTypeUser      = 1
 	ContentTypeDashboard = 2
+	ContentTypeIncident  = 3
 )
 
 var registeredContentTypes = map[int]struct{}{
 	ContentTypeUser:      {},
 	ContentTypeDashboard: {},
+	ContentTypeIncident:  {},
 }
 
 var (
