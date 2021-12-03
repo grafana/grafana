@@ -22,12 +22,6 @@ For authentication options and configuration details, see [AWS authentication]({
 
 ### CloudWatch specific data source configuration
 
-### CloudWatch Logs
-
-| Name      | Description                                                                                                                                                                                                                                                                                                   |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Timeout` | Timeout specifically, for CloudWatch Logs queries. Log queries don't recognize standard Grafana query timeout as they don't keep a single request open and instead periodically poll for results. Because of limits on concurrently running queries in CloudWatch they can also take a longer time to finish. |
-
 #### IAM policies
 
 Grafana needs permissions granted via IAM to be able to read CloudWatch metrics and EC2 tags/instances/regions/alarms. You can attach these permissions to the IAM role or IAM user configured in the previous step.
@@ -84,6 +78,12 @@ Here is a minimal policy example:
 #### Namespaces of Custom Metrics
 
 Grafana is not able to load custom namespaces through the GetMetricData API. If you still want your custom metrics to show up in the fields in the query editor, you can specify the names of the namespaces containing the custom metrics in the _Namespaces of Custom Metrics_ field. The field accepts a multiple namespaces, separated by a comma.
+
+#### CloudWatch Logs
+
+##### Timeout
+
+Timeout specifically, for CloudWatch Logs queries. Log queries don't recognize standard Grafana query timeout as they don't keep a single request open and instead periodically poll for results. Because of limits on concurrently running queries in CloudWatch they can also take a longer time to finish.
 
 #### X-Ray trace links
 
