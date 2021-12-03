@@ -89,6 +89,16 @@ describe('VisualQueryEngine', () => {
     ).toBe('rate(metric{pod="A"}[$__rate_interval])');
   });
 
+  it('Can render increase', () => {
+    expect(
+      engine.renderQuery({
+        metric: 'metric',
+        labels: [{ label: 'pod', op: '=', value: 'A' }],
+        operations: [{ id: 'increase', params: ['auto'] }],
+      })
+    ).toBe('increase(metric{pod="A"}[$__rate_interval])');
+  });
+
   it('Can render rate with custom range-vector', () => {
     expect(
       engine.renderQuery({

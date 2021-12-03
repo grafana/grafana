@@ -1,8 +1,10 @@
 import {
+  getDefaultTestQuery,
   PromVisualQuery,
   PromVisualQueryOperation,
   PromVisualQueryOperationCategory,
   PromVisualQueryOperationDef,
+  PromVisualQueryOperationParamDef,
 } from './types';
 
 export class VisualQueryEngine {
@@ -15,6 +17,7 @@ export class VisualQueryEngine {
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
+      addHandler: defaultAddOperationHandler,
     });
 
     this.addOperationDef({
@@ -23,6 +26,7 @@ export class VisualQueryEngine {
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
+      addHandler: defaultAddOperationHandler,
     });
 
     this.addOperationDef({
@@ -32,6 +36,7 @@ export class VisualQueryEngine {
       defaultParams: [0.9],
       category: PromVisualQueryOperationCategory.Functions,
       renderer: functionRendererLeft,
+      addHandler: defaultAddOperationHandler,
     });
 
     this.addOperationDef({
@@ -45,6 +50,7 @@ export class VisualQueryEngine {
       category: PromVisualQueryOperationCategory.Functions,
       defaultParams: [],
       renderer: functionRendererRight,
+      addHandler: defaultAddOperationHandler,
     });
 
     this.addOperationDef({
@@ -58,21 +64,29 @@ export class VisualQueryEngine {
       defaultParams: ['sum'],
       category: PromVisualQueryOperationCategory.GroupBy,
       renderer: groupByRenderer,
+      addHandler: defaultAddOperationHandler,
     });
 
     this.addOperationDef({
       id: 'rate',
       displayName: 'Rate',
-      params: [
-        {
-          name: 'Range vector',
-          type: 'string',
-          options: ['auto', '$__rate_interval', '$__interval', '1m', '5m', '10m', '1h', '24h'],
-        },
-      ],
+      params: [getRangeVectorParamDef()],
       defaultParams: ['auto'],
+      hasRangeVector: true,
       category: PromVisualQueryOperationCategory.RateAndDeltas,
-      renderer: rateRenderer,
+      renderer: operationWithRangeVectorRenderer,
+      addHandler: addOperationWithRangeVector,
+    });
+
+    this.addOperationDef({
+      id: 'increase',
+      displayName: 'Increase',
+      params: [getRangeVectorParamDef()],
+      defaultParams: ['auto'],
+      hasRangeVector: true,
+      category: PromVisualQueryOperationCategory.RateAndDeltas,
+      renderer: operationWithRangeVectorRenderer,
+      addHandler: addOperationWithRangeVector,
     });
 
     // Not sure about this one. It could also be a more generic "Simple math operation" where user specifies
@@ -84,6 +98,7 @@ export class VisualQueryEngine {
       defaultParams: [2],
       category: PromVisualQueryOperationCategory.Math,
       renderer: multiplyRenderer,
+      addHandler: defaultAddOperationHandler,
     });
 
     this.addOperationDef({
@@ -93,6 +108,7 @@ export class VisualQueryEngine {
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Math,
       renderer: multiplyRenderer,
+      addHandler: addNestedQueryHandler,
     });
   }
 
@@ -196,18 +212,87 @@ function groupByRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOp
   return `${expr}) (${innerExpr})`;
 }
 
-function rateRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+function operationWithRangeVectorRenderer(
+  model: PromVisualQueryOperation,
+  def: PromVisualQueryOperationDef,
+  innerExpr: string
+) {
   let rangeVector = (model.params ?? [])[0] ?? 'auto';
 
   if (rangeVector === 'auto') {
     rangeVector = '$__rate_interval';
   }
 
-  return `rate(${innerExpr}[${rangeVector}])`;
+  return `${def.id}(${innerExpr}[${rangeVector}])`;
 }
 
 function multiplyRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
   return `${innerExpr} * ${model.params[0]}`;
+}
+
+function getRangeVectorParamDef(): PromVisualQueryOperationParamDef {
+  return {
+    name: 'Range vector',
+    type: 'string',
+    options: ['auto', '$__rate_interval', '$__interval', '1m', '5m', '10m', '1h', '24h'],
+  };
+}
+
+function defaultAddOperationHandler(def: PromVisualQueryOperationDef, query: PromVisualQuery) {
+  const newOperation: PromVisualQueryOperation = {
+    id: def.id,
+    params: def.defaultParams,
+  };
+
+  return {
+    ...query,
+    operations: [...query.operations, newOperation],
+  };
+}
+
+/**
+ * Since there can only be one operation with range vector this will replace the current one (if one was added )
+ */
+function addOperationWithRangeVector(def: PromVisualQueryOperationDef, query: PromVisualQuery) {
+  if (query.operations.length > 0) {
+    const firstOp = visualQueryEngine.getOperationDef(query.operations[0].id);
+
+    if (firstOp.hasRangeVector) {
+      return {
+        ...query,
+        operations: [
+          {
+            ...query.operations[0],
+            id: def.id,
+          },
+          ...query.operations.slice(1),
+        ],
+      };
+    }
+  }
+
+  const newOperation: PromVisualQueryOperation = {
+    id: def.id,
+    params: def.defaultParams,
+  };
+
+  return {
+    ...query,
+    operations: [newOperation, ...query.operations],
+  };
+}
+
+function addNestedQueryHandler(def: PromVisualQueryOperationDef, query: PromVisualQuery) {
+  return {
+    ...query,
+    nestedQueries: [
+      ...(query.nestedQueries ?? []),
+      {
+        operator: '/',
+        query: getDefaultTestQuery(),
+      },
+    ],
+  };
 }
 
 export const visualQueryEngine = new VisualQueryEngine();
