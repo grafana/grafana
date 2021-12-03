@@ -261,10 +261,19 @@ func processData(data io.ReadCloser, encoding string, responseFn processResponse
 	return response, token, 0, nil
 }
 
-func doRequest(req *http.Request, cli *http.Client, responseFn processResponse) (string, http.Header, []json.RawMessage, string, int, error) {
+type apiResponse struct {
+	encoding  string
+	header    http.Header
+	responses []json.RawMessage
+	token     string
+	code      int
+	err       error
+}
+
+func doRequest(req *http.Request, cli *http.Client, responseFn processResponse) *apiResponse {
 	res, err := cli.Do(req)
 	if err != nil {
-		return "", nil, nil, "", http.StatusBadRequest, err
+		return &apiResponse{code: http.StatusBadRequest, err: err}
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
@@ -279,29 +288,37 @@ func doRequest(req *http.Request, cli *http.Client, responseFn processResponse) 
 	if err != nil {
 		code = errcode
 	}
-	return encoding, originalHeader, responses, token, code, err
+	return &apiResponse{
+		encoding:  encoding,
+		header:    originalHeader,
+		responses: responses,
+		token:     token,
+		code:      code,
+		err:       err,
+	}
 }
 
 func getResponses(req *http.Request, cli *http.Client, responseFn processResponse) ([]json.RawMessage, http.Header, string, int, error) {
-	encoding, originalHeader, responses, token, originalCode, err := doRequest(req, cli, responseFn)
-	if err != nil {
-		return nil, nil, "", originalCode, err
+	result := doRequest(req, cli, responseFn)
+	if result.err != nil {
+		return nil, nil, "", result.code, result.err
 	}
 
+	token := result.token
+	responses := result.responses
 	for token != "" {
 		query := req.URL.Query()
 		query.Set("pageToken", token)
 		req.URL.RawQuery = query.Encode()
 
-		var loopResult []json.RawMessage
-		var errcode int
-		_, _, loopResult, token, errcode, err = doRequest(req, cli, responseFn)
-		if err != nil {
-			return nil, nil, "", errcode, err
+		loopResult := doRequest(req, cli, responseFn)
+		if loopResult.err != nil {
+			return nil, nil, "", loopResult.code, loopResult.err
 		}
-		responses = append(responses, loopResult...)
+		responses = append(responses, loopResult.responses...)
+		token = loopResult.token
 	}
-	return responses, originalHeader, encoding, originalCode, nil
+	return responses, result.header, result.encoding, result.code, nil
 }
 
 func buildResponse(responses []json.RawMessage, encoding string) ([]byte, error) {
