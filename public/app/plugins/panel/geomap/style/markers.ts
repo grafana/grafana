@@ -312,20 +312,18 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
 
 export const getClusterStyle = (origStyle: Style) => (feature: FeatureLike, resolution: number): Style | Style[] => {
   const features = feature.get('features');
-  if (origStyle) {
-    const origImage = origStyle.getImage();
-    if (features && features.length > 1) {
-      // const scaledRadius = scaleRadius(features, resolution);
-      // const origSize = origImage.getSize();
-      // const scaled = origSize[0] / (scaledRadius * 2);
-      // origImage.setScale(scaled);
-      return new Style({
-        image: origImage,
-        text: new Text({
-          text: features.length.toString(),
-        }),
-      });
-    }
+  const origImage = origStyle.getImage();
+  if (features && features.length > 1) {
+    const scaledRadius = scaleRadius(features, resolution);
+    const origSize = origImage.getSize();
+    const scaled = (scaledRadius * 2) / origSize[0];
+    origImage.setScale(scaled);
+    return new Style({
+      image: origImage,
+      text: new Text({
+        text: features.length.toString(),
+      }),
+    });
   }
   return origStyle;
 };

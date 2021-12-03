@@ -22,7 +22,6 @@ import { StyleEditor } from './StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
 import { ClusterEditor } from '../../editor/ClusterEditor';
 import { getClusterStyle } from '../../style/markers';
-import { Style } from 'ol/style';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -143,8 +142,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             source: vectorSource,
           });
           vectorLayer.setSource(clusterSource);
-          const origStyle = vectorLayer.getStyle() as Style;
-          if (origStyle) {
+          const origStyle = vectorLayer.getStyle();
+          if (origStyle && 'getImage' in origStyle) {
             vectorLayer.setStyle(getClusterStyle(origStyle));
           }
 
