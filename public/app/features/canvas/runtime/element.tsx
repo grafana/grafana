@@ -17,8 +17,8 @@ import { LayerElement } from 'app/core/components/Layers/types';
 let counter = 0;
 
 export class ElementState implements LayerElement {
+  // UID necessary for moveable to work (for now)
   readonly UID = counter++;
-
   revId = 0;
   sizeStyle: CSSProperties = {};
   dataStyle: CSSProperties = {};
@@ -36,8 +36,9 @@ export class ElementState implements LayerElement {
   placement: Placement;
 
   constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
+    const fallbackName = `Element ${Date.now()}`;
     if (!options) {
-      this.options = { type: item.id, name: `Element ${this.UID}` };
+      this.options = { type: item.id, name: fallbackName };
     }
     this.anchor = options.anchor ?? {};
     this.placement = options.placement ?? {};
@@ -45,8 +46,11 @@ export class ElementState implements LayerElement {
     options.placement = this.placement;
 
     if (!options.name) {
-      options.name = `Element ${this.UID}`;
+      const newName = parent?.scene.getNextElementName();
+      options.name = newName ?? fallbackName;
     }
+
+    parent?.scene.byName.set(options.name, this);
   }
 
   getName() {
@@ -191,6 +195,10 @@ export class ElementState implements LayerElement {
       this.item = canvasElementRegistry.getIfExists(options.type) ?? notFoundItem;
     }
 
+    // rename handling
+    const oldName = this.options.name;
+    const newName = options.name;
+
     this.revId++;
     this.options = { ...options };
     let trav = this.parent;
@@ -201,6 +209,11 @@ export class ElementState implements LayerElement {
       }
       trav.revId++;
       trav = trav.parent;
+    }
+
+    if (oldName !== newName) {
+      this.parent?.scene.byName.delete(oldName);
+      this.parent?.scene.byName.set(newName, this);
     }
   }
 

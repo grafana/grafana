@@ -156,7 +156,10 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
     const { layer } = settings;
 
+    const scene = this.getScene();
+    scene?.byName.delete(layer.getName());
     layer.parent?.doAction(LayerActionID.Delete, layer);
+
     this.goUpLayer();
   };
 
@@ -215,6 +218,12 @@ export class LayerElementListEditor extends PureComponent<Props> {
       return element instanceof GroupState;
     };
 
+    const verifyLayerNameUniqueness = (nameToVerify: string) => {
+      const scene = this.getScene();
+
+      return Boolean(scene?.canRename(nameToVerify));
+    };
+
     const selection: string[] = settings.selected ? settings.selected.map((v) => v.getName()) : [];
     return (
       <>
@@ -241,6 +250,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
           onDuplicate={onDuplicate}
           getLayerInfo={getLayerInfo}
           onNameChange={onNameChange}
+          verifyLayerNameUniqueness={verifyLayerNameUniqueness}
           isGroup={isGroup}
           layers={layer.elements}
           selection={selection}

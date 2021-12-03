@@ -103,6 +103,7 @@ export class GroupState extends ElementState {
     switch (action) {
       case LayerActionID.Delete:
         this.elements = this.elements.filter((e) => e !== element);
+        this.scene.byName.delete(element.options.name);
         this.scene.save();
         this.reinitializeMoveable();
         break;
@@ -129,9 +130,10 @@ export class GroupState extends ElementState {
         copy.updateSize(element.width, element.height);
         copy.updateData(this.scene.context);
         if (updateName) {
-          copy.options.name = `Element ${copy.UID} (duplicate)`;
+          copy.options.name = `${this.scene.getNextElementName()} (duplicate)`;
         }
         this.elements.push(copy);
+        this.scene.byName.set(copy.options.name, copy);
         this.scene.save();
         this.reinitializeMoveable();
         break;

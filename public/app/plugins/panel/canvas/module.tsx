@@ -28,7 +28,7 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
         if (!(element instanceof GroupState)) {
           builder.addNestedOptions(
             getElementEditor({
-              category: [`Selected element (id: ${element.UID})`], // changing the ID forces reload
+              category: [`Selected element (${element.options.name})`], // changing the ID forces reload
               element,
               scene: state.scene,
             })

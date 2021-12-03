@@ -36,6 +36,7 @@ export class Scene {
   styles = getStyles(config.theme2);
   readonly selection = new ReplaySubject<ElementState[]>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
+  readonly byName = new Map<string, ElementState>();
   root: RootElement;
 
   revId = 0;
@@ -52,6 +53,24 @@ export class Scene {
   constructor(cfg: CanvasGroupOptions, enableEditing: boolean, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = this.load(cfg, enableEditing);
   }
+
+  getNextElementName = (isGroup = false) => {
+    const label = isGroup ? 'Group' : 'Element';
+    let idx = this.byName.size;
+
+    while (true && idx < 100) {
+      const name = `${label} ${idx++}`;
+      if (!this.byName.has(name)) {
+        return name;
+      }
+    }
+
+    return `${label} ${Date.now()}`;
+  };
+
+  canRename = (v: string) => {
+    return !this.byName.has(v);
+  };
 
   load(cfg: CanvasGroupOptions, enableEditing: boolean) {
     this.root = new RootElement(
@@ -103,7 +122,7 @@ export class Scene {
       const newLayer = new GroupState(
         {
           type: 'group',
-          name: `Group ${Date.now()}.${Math.floor(Math.random() * 100)}`,
+          name: this.getNextElementName(true),
           elements: [],
         },
         this,
@@ -116,6 +135,8 @@ export class Scene {
       });
 
       currentLayer.elements.push(newLayer);
+
+      this.byName.set(newLayer.getName(), newLayer);
 
       this.save();
     });
@@ -133,7 +154,6 @@ export class Scene {
   }
 
   toggleAnchor(element: ElementState, k: keyof Anchor) {
-    console.log('TODO, smarter toggle', element.UID, element.anchor, k);
     const { div } = element;
     if (!div) {
       console.log('Not ready');
