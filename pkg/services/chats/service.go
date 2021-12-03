@@ -8,14 +8,16 @@ import (
 )
 
 type Service struct {
-	Cfg      *setting.Cfg
-	SQLStore *sqlstore.SQLStore
+	Cfg     *setting.Cfg
+	storage Storage
 }
 
 func ProvideService(cfg *setting.Cfg, store *sqlstore.SQLStore) *Service {
 	s := &Service{
-		Cfg:      cfg,
-		SQLStore: store,
+		Cfg: cfg,
+		storage: &sqlStorage{
+			sql: store,
+		},
 	}
 	return s
 }
