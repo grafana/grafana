@@ -54,7 +54,7 @@ describe('NavBarItem', () => {
 
         userEvent.hover(screen.getByRole('button'));
 
-        expect(screen.getByText('Parent Node')).toBeInTheDocument();
+        expect(screen.getByRole('menuitem', { name: 'Parent Node' })).toBeInTheDocument();
         expect(screen.getByText('Child Node 1')).toBeInTheDocument();
         expect(screen.getByText('Child Node 2')).toBeInTheDocument();
       });
@@ -78,7 +78,7 @@ describe('NavBarItem', () => {
 
         userEvent.tab();
         expect(screen.getAllByRole('menuitem')).toHaveLength(3);
-        expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '-1');
+        expect(screen.getByRole('menuitem', { name: 'Parent Node' })).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
 
