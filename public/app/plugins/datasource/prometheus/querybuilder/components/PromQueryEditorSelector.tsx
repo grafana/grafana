@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { Button, RadioButtonGroup, Switch, useStyles2 } from '@grafana/ui';
 import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React, { useCallback } from 'react';
@@ -18,7 +18,7 @@ const editorModes = [
 ];
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
-  const { query, onChange } = props;
+  const { query, onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
 
   const onEditorModeChange = useCallback(
@@ -34,7 +34,14 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     <>
       <EditorHeader>
         <FlexItem grow={1} />
-        <Button className={styles.runQuery} variant="secondary" size="sm" fill="outline">
+        <Button
+          className={styles.runQuery}
+          variant="secondary"
+          size="sm"
+          fill="outline"
+          onClick={onRunQuery}
+          disabled={data?.state === LoadingState.Loading}
+        >
           Run query
         </Button>
         <Stack gap={1}>
