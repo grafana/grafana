@@ -39,8 +39,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     onHoverChange: (isHovering) => {
       if (isHovering) {
         state.open();
-      }
-      if (!isHovering) {
+      } else {
         state.close();
       }
     },

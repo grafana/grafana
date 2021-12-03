@@ -71,7 +71,7 @@ export function NavBarMenuItem({
   return isDivider ? (
     <div data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
   ) : (
-    <React.Fragment>{element}</React.Fragment>
+    <>{element}</>
   );
 }
 
