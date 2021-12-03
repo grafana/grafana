@@ -48,6 +48,7 @@ export function getOperationDefintions(): PromVisualQueryOperationDef[] {
     },
     {
       id: 'label_replace',
+      displayName: 'Label replace',
       params: [
         { name: 'Destination label', type: 'string' },
         { name: 'Replacement', type: 'string' },
@@ -55,7 +56,7 @@ export function getOperationDefintions(): PromVisualQueryOperationDef[] {
         { name: 'Regex', type: 'string' },
       ],
       category: PromVisualQueryOperationCategory.Functions,
-      defaultParams: [],
+      defaultParams: ['', '$1', '', '(.*)'],
       renderer: functionRendererRight,
       addHandler: defaultAddOperationHandler,
     },
