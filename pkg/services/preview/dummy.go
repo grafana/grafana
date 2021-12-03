@@ -71,6 +71,7 @@ func renderDummyImage(p string, req *previewRequest) error {
 
 	bg := color.RGBA{0xE0, 0xE0, 0xE0, 0xFF}
 	fg := color.RGBA{0x20, 0x20, 0x20, 0xFF}
+
 	alpha := uint8(0x20)
 
 	if req.Theme == "dark" {
@@ -78,6 +79,14 @@ func renderDummyImage(p string, req *previewRequest) error {
 		fg = bg
 		bg = tmp
 		alpha = 0xD0
+
+		bg.R = uint8(rand.Intn(100))
+		bg.G = uint8(rand.Intn(100))
+		bg.B = uint8(rand.Intn(100))
+	} else {
+		bg.R = uint8(rand.Intn(100) + 100)
+		bg.G = uint8(rand.Intn(100) + 100)
+		bg.B = uint8(rand.Intn(100) + 100)
 	}
 
 	dc := gg.NewContext(width, height) // canvas 1000px by 1000px

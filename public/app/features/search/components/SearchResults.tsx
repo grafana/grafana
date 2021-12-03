@@ -95,7 +95,7 @@ export const SearchResults: FC<Props> = memo(
             <div key={idx}>
               {section.items.map((v) => (
                 <span key={v.uid}>
-                  <a href="">
+                  <a href={v.url}>
                     <img src={`/preview/dash/${v.uid}/square/${tid}`} />
                   </a>
                 </span>
