@@ -6133,28 +6133,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/menu@npm:3.2.3":
-  version: 3.2.3
-  resolution: "@react-aria/menu@npm:3.2.3"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-    "@react-aria/interactions": ^3.5.1
-    "@react-aria/overlays": ^3.7.2
-    "@react-aria/selection": ^3.5.1
-    "@react-aria/utils": ^3.8.2
-    "@react-stately/collections": ^3.3.3
-    "@react-stately/menu": ^3.2.3
-    "@react-stately/tree": ^3.2.0
-    "@react-types/button": ^3.4.1
-    "@react-types/menu": ^3.3.0
-    "@react-types/shared": ^3.8.0
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-    react-dom: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 8316bc0bbf94f6bf5d02b14724f064060e512eda980698f1208e21ea52aefeb843ecb04077c5a73e5135535ed2a8fd33dd212c68da8dc64bfc7a398e76946ffe
-  languageName: node
-  linkType: hard
-
 "@react-aria/menu@npm:3.3.0":
   version: 3.3.0
   resolution: "@react-aria/menu@npm:3.3.0"
@@ -6177,7 +6155,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/overlays@npm:3.7.2, @react-aria/overlays@npm:^3.7.2":
+"@react-aria/overlays@npm:3.7.2":
   version: 3.7.2
   resolution: "@react-aria/overlays@npm:3.7.2"
   dependencies:
@@ -6214,24 +6192,6 @@ __metadata:
     react: ^16.8.0 || ^17.0.0-rc.1
     react-dom: ^16.8.0 || ^17.0.0-rc.1
   checksum: 3fffe82df9dabb71c359928eeb7d2031afc700547bc5ff0b5b87030fbc2ade28bda9b4d2349206e6e1b87ec7bcd3d5b3b230294b114b8d56c0b2248669ba7fe0
-  languageName: node
-  linkType: hard
-
-"@react-aria/selection@npm:^3.5.1":
-  version: 3.6.0
-  resolution: "@react-aria/selection@npm:3.6.0"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-    "@react-aria/focus": ^3.5.0
-    "@react-aria/i18n": ^3.3.2
-    "@react-aria/interactions": ^3.6.0
-    "@react-aria/utils": ^3.9.0
-    "@react-stately/collections": ^3.3.3
-    "@react-stately/selection": ^3.7.0
-    "@react-types/shared": ^3.9.0
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: f6c4efae9418ed83c817149269aeaf3cd32459935fa0df45a3947774b6621ad3fc02566ad42c954f38f2cdc8a92a5221a84f5e735f8fcbce7870904454d7f8b7
   languageName: node
   linkType: hard
 
@@ -19436,7 +19396,7 @@ __metadata:
     "@react-aria/button": 3.3.4
     "@react-aria/focus": 3.5.0
     "@react-aria/interactions": 3.6.0
-    "@react-aria/menu": 3.2.3
+    "@react-aria/menu": 3.3.0
     "@react-aria/overlays": 3.7.2
     "@react-aria/utils": 3.9.0
     "@react-stately/collections": 3.3.4
