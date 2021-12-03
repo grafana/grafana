@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -11,14 +12,25 @@ import (
 const (
 	customQueryParametersMiddlewareName = "prom-custom-query-parameters"
 	customQueryParametersKey            = "customQueryParameters"
+	grafanaDataKey                      = "grafanaData"
 )
 
 func customQueryParametersMiddleware(logger log.Logger) sdkhttpclient.Middleware {
 	return sdkhttpclient.NamedMiddlewareFunc(customQueryParametersMiddlewareName, func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
-		customQueryParamsVal, exists := opts.CustomOptions[customQueryParametersKey]
+		grafanaData, exists := opts.CustomOptions[grafanaDataKey]
 		if !exists {
 			return next
 		}
+
+		data, ok := grafanaData.(map[string]interface{})
+		if !ok {
+			return next
+		}
+		customQueryParamsVal, exists := data[customQueryParametersKey]
+		if !exists {
+			return next
+		}
+
 		customQueryParams, ok := customQueryParamsVal.(string)
 		if !ok || customQueryParams == "" {
 			return next
@@ -38,6 +50,8 @@ func customQueryParametersMiddleware(logger log.Logger) sdkhttpclient.Middleware
 				}
 			}
 			req.URL.RawQuery = q.Encode()
+			fmt.Println("HEREEEEE2")
+			fmt.Println(req.URL.RawQuery)
 
 			return next.RoundTrip(req)
 		})
