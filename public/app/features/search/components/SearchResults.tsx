@@ -90,17 +90,13 @@ export const SearchResults: FC<Props> = memo(
     if (layout === SearchLayout.Grid) {
       const tid = theme.isDark ? 'dark' : 'light';
       return (
-        <div className={styles.resultsContainer}>
-          {results.map((section, idx) => (
-            <div key={idx}>
+        <div className={styles.gridContainer}>
+          {results.map((section) => (
+            <>
               {section.items.map((v) => (
-                <span key={v.uid}>
-                  <a href={v.url}>
-                    <img src={`/preview/dash/${v.uid}/square/${tid}`} />
-                  </a>
-                </span>
+                <a className={styles.gridItem(v.uid!, tid)} key={v.uid} href={v.url}></a>
               ))}
-            </div>
+            </>
           ))}
         </div>
       );
@@ -117,7 +113,7 @@ export const SearchResults: FC<Props> = memo(
 SearchResults.displayName = 'SearchResults';
 
 const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
-  const { md } = theme.spacing;
+  const { sm, md } = theme.spacing;
 
   return {
     wrapper: css`
@@ -138,6 +134,17 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: center;
       align-items: center;
       min-height: 100px;
+    `,
+    gridContainer: css`
+      display: grid;
+      gap: ${sm};
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    `,
+    gridItem: (uId: string, themeId: string) => css`
+      background-image: url(/preview/dash/${uId}/square/${themeId});
+      background-position: center top;
+      background-size: cover;
+      height: 200px;
     `,
     resultsContainer: css`
       position: relative;
