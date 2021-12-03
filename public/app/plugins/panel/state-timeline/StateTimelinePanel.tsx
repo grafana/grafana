@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { DataFrame, PanelProps } from '@grafana/data';
+import { DataFrame, FieldType, PanelProps } from '@grafana/data';
 import { TooltipPlugin, useTheme2, ZoomPlugin, usePanelContext } from '@grafana/ui';
 import { TimelineMode, TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
@@ -39,10 +39,17 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   const renderCustomTooltip = useCallback(
     (alignedData: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
       const data = frames ?? [];
+      // Count vaue fields in the state-timeline-ready frame
+      const valueFieldsCount = data.reduce(
+        (acc, frame) => acc + frame.fields.filter((field) => field.type !== FieldType.time).length,
+        0
+      );
+
       // Not caring about multi mode in StateTimeline
       if (seriesIdx === null || datapointIdx === null) {
         return null;
       }
+      // console.log(seriesIdx, datapointIdx);
 
       /**
        * There could be a case when the tooltip shows a data from one of a multiple query and the other query finishes first
@@ -50,8 +57,9 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
        * Render nothing in this case to prevent error.
        * See https://github.com/grafana/support-escalations/issues/932
        */
+      // console.log('retununi', alignedData.fields.length - 1, data);
       if (
-        (!alignedData.meta?.transformations?.length && alignedData.fields.length - 1 !== data.length) ||
+        (!alignedData.meta?.transformations?.length && alignedData.fields.length - 1 !== valueFieldsCount) ||
         !alignedData.fields[seriesIdx]
       ) {
         return null;
