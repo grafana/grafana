@@ -12,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-func (m *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
-	plugin, exists := m.Plugin(context.TODO(), pluginID)
+func (m *PluginManager) GetPluginDashboards(ctx context.Context, orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
+	plugin, exists := m.Plugin(ctx, pluginID)
 	if !exists {
 		return nil, plugins.NotFoundError{PluginID: pluginID}
 	}
@@ -22,7 +22,7 @@ func (m *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*pl
 
 	// load current dashboards
 	query := models.GetDashboardsByPluginIdQuery{OrgId: orgID, PluginId: pluginID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		return nil, err
 	}
 
@@ -32,7 +32,7 @@ func (m *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*pl
 			continue
 		}
 
-		dashboard, err := m.LoadPluginDashboard(plugin.ID, include.Path)
+		dashboard, err := m.LoadPluginDashboard(ctx, plugin.ID, include.Path)
 		if err != nil {
 			return nil, err
 		}
@@ -72,8 +72,8 @@ func (m *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*pl
 	return result, nil
 }
 
-func (m *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error) {
-	plugin, exists := m.Plugin(context.TODO(), pluginID)
+func (m *PluginManager) LoadPluginDashboard(ctx context.Context, pluginID, path string) (*models.Dashboard, error) {
+	plugin, exists := m.Plugin(ctx, pluginID)
 	if !exists {
 		return nil, plugins.NotFoundError{PluginID: pluginID}
 	}
@@ -108,7 +108,7 @@ func (m *PluginManager) ImportDashboard(ctx context.Context, pluginID, path stri
 	var dashboard *models.Dashboard
 	if pluginID != "" {
 		var err error
-		if dashboard, err = m.LoadPluginDashboard(pluginID, path); err != nil {
+		if dashboard, err = m.LoadPluginDashboard(ctx, pluginID, path); err != nil {
 			return plugins.PluginDashboardInfoDTO{}, &models.Dashboard{}, err
 		}
 	} else {

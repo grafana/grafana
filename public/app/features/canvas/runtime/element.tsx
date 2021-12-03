@@ -12,10 +12,11 @@ import {
 import { DimensionContext } from 'app/features/dimensions';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from './group';
+import { LayerElement } from 'app/core/components/Layers/types';
 
 let counter = 0;
 
-export class ElementState {
+export class ElementState implements LayerElement {
   readonly UID = counter++;
 
   revId = 0;
@@ -36,12 +37,20 @@ export class ElementState {
 
   constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
     if (!options) {
-      this.options = { type: item.id };
+      this.options = { type: item.id, name: `Element ${this.UID}` };
     }
     this.anchor = options.anchor ?? {};
     this.placement = options.placement ?? {};
     options.anchor = this.anchor;
     options.placement = this.placement;
+
+    if (!options.name) {
+      options.name = `Element ${this.UID}`;
+    }
+  }
+
+  getName() {
+    return this.options.name;
   }
 
   validatePlacement() {

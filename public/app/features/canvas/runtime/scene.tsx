@@ -103,6 +103,7 @@ export class Scene {
       const newLayer = new GroupState(
         {
           type: 'group',
+          name: `Group ${Date.now()}.${Math.floor(Math.random() * 100)}`,
           elements: [],
         },
         this,
@@ -110,7 +111,7 @@ export class Scene {
       );
 
       currentSelectedElements.forEach((element: ElementState) => {
-        newLayer.doAction(LayerActionID.Duplicate, element);
+        newLayer.doAction(LayerActionID.Duplicate, element, false);
         currentLayer.doAction(LayerActionID.Delete, element);
       });
 
