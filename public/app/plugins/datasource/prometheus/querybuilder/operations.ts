@@ -12,6 +12,7 @@ export function getOperationDefintions(): PromVisualQueryOperationDef[] {
   const list: PromVisualQueryOperationDef[] = [
     {
       id: 'sum',
+      displayName: 'Sum',
       params: [],
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Aggregations,
@@ -20,10 +21,20 @@ export function getOperationDefintions(): PromVisualQueryOperationDef[] {
     },
     {
       id: 'avg',
+      displayName: 'Average',
       params: [],
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
+      addHandler: defaultAddOperationHandler,
+    },
+    // This is just a test to demo that we could represent Aggregation as a single operation
+    {
+      id: 'Min',
+      params: [{ name: 'Function', type: 'string', options: ['sum', 'min', 'max', 'avg', 'stddev'] }],
+      defaultParams: ['min'],
+      category: PromVisualQueryOperationCategory.Aggregations,
+      renderer: aggregateRenderer,
       addHandler: defaultAddOperationHandler,
     },
     {
@@ -239,4 +250,11 @@ function addNestedQueryHandler(def: PromVisualQueryOperationDef, query: PromVisu
       },
     ],
   };
+}
+
+/**
+ * This is just a test to demo that we could represent aggregation as a single operation
+ */
+function aggregateRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+  return `${model.params[0]}(${innerExpr})`;
 }
