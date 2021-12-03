@@ -7,10 +7,10 @@ weight = 1
 
 The Query tab consists of the following elements:
 
-- Data source selector
-- Query options
-- Query inspector button
-- Query editor list
-- Expressions
+- Data source selector: Use the data source selector to select the source of the data you want to query.
+- Query options: Enables you to set maximum data retrieved parameters and query execution time intervals.
+- Query inspector button: Open the query inspector panel where you can view and optimize your query.
+- Query editor list: Lists the queries you have written.
+- Expressions: Use the expression builder to create alert expressions.
 
 {{< figure src="/static/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}

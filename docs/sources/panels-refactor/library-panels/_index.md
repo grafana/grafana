@@ -6,8 +6,8 @@ weight = 10
 
 # Create reusable Grafana panels
 
-Intro text here and then links to topics:
+Library panels enable you to create reusable panels that you can add to any dashboard in your organization.
 
-...
-...
-...
+This topic area contains the following topics:
+
+{{< section >}}

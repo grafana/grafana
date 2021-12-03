@@ -6,9 +6,7 @@ weight = 10
 
 # Reference: Calculations
 
-This topic lists and defines calculations used in Grafana.
-
-Among other places, these calculations are used in the Transform tab and the bar gauge, gauge, and stat visualizations.
+Refer to the following list of calculations you can perform in Grafana. You can find these calculations in the **Transform** tab and in the bar gauge, gauge, and stat visualizations.
 
 | Calculation        | Description                                               |
 | :----------------- | :-------------------------------------------------------- |

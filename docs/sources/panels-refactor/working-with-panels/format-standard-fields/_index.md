@@ -26,6 +26,6 @@ Complete the following steps to format a standard field:
 
 1. Select the standard options you want to apply.
 
-   For more information about standard options, refer to [Reference](({{< relref "reference-standard-field-definitions/_index.md" >}}))
+   For more information about standard options, refer to [Reference: Standard field definitions](({{< relref "reference-standard-field-definitions/_index.md" >}})).
 
-1. To preview your change, click outside of the field option box you are editing or press Enter.
+1. To preview your change, click outside of the field option box you are editing or press **Enter**.

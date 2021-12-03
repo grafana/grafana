@@ -6,9 +6,8 @@ weight = 10
 
 # Specify thresholds to set the color of visualization text and background
 
-Intro text here and then xrefs to child topics:
+Use thresholds to set the color of a visualization text and background.
 
-...
-...
-...
-...
+This topic area contains the following topics:
+
+{{< section >}}

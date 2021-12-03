@@ -16,9 +16,11 @@ To apply a transformation function to data:
 1. Navigate to the panel where you want to add one or more transformations.
 1. Click the panel title and then click **Edit**.
 1. Click the **Transform** tab.
-1. Select a transformation.
+1. Click a transformation.
 
-   A transformation row appear. You can configure the transformation options here. For more information about how to configure a transformation, refer to [Reference: Transformation functions](../../reference-transformation-functions/_index.md).
+   A transformation row appear where you configure the transformation options. For more information about how to configure a transformation, refer to [Reference: Transformation functions](../../reference-transformation-functions/_index.md).
+
+   For information about available calculations, refer to [Reference: Calculations](../reference-calculations/_index.md).
 
 1. To apply another transformation, click **Add transformation**.
 

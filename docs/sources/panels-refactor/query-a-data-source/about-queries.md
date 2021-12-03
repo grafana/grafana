@@ -5,18 +5,17 @@ weight = 1
 
 # About queries
 
-_Queries_ are how Grafana panels communicate with data sources to get data for the visualization. A query is a question written in the query language used by the data source. Grafana asks, "Hey data source, would you send me this data, organized this way?" If the query is properly formed, then the data source responds. How often the query is sent to the data source and how many data points are collected can be adjusted in the panel data source options.
+_Queries_ are how Grafana panels communicate with data sources to get data for the visualization. A query is a question written in the query language used by the data source. How often the query is sent to the data source and how many data points are collected can be adjusted in the panel data source options.
 
-Grafana supports up to 26 queries per panel.
+Use you a query editor to write a query. Each data source has its own query editor that we have customized to include the features and capabilities of the data source. Grafana supports up to 26 queries per panel.
 
-+++++++++++++++++++
-Each data source has a specific Query Editor that is customized for the features and capabilities that the particular data source exposes. The query language and capabilities of each data source are obviously very different. You can combine data from multiple data sources onto a single Dashboard, but each Panel is tied to a specific data source that belongs to a particular Organization.
+> Important! You must be familiar with the query language of the data source.
 
 ## Query editors
 
-Query editors are forms that help you write queries. Depending on your data source, the query editor might provide auto-completion, metric names, or variable suggestion.
+Depending on your data source, the query editor might provide auto-completion, metric names, or variable suggestions.
 
-Because of the difference between query languages, data sources may have query editors that look different. Here are two examples of query editors:
+Because of the difference between query languages, data sources have query editors that look different. Here are two examples of query editors.
 
 **InfluxDB query editor**
 
@@ -28,7 +27,7 @@ Because of the difference between query languages, data sources may have query e
 
 ## Query syntax
 
-Data sources have different query languages and syntaxes to ask for the data. Here are two query examples:
+Data sources use different query languages to return data. Here are two query examples:
 
 **PostgreSQL**
 
@@ -42,26 +41,14 @@ SELECT hostname FROM host  WHERE region IN($region)
 query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 ```
 
-For more information about writing a query for your data source, refer to the specific [Grafana data source]({{< relref "../datasources/_index.md" >}}) documentation.
+## Data sources used in queries
 
-### Examples:
+In addition to the data sources that you have configured in Grafana, there are three special data sources available:
 
-- **Relative time:**
+- **Grafana -** A built-in data source that generates random walk data, which can be useful for testing visualizations and running experiments.
+- **Mixed -** Select this option to query multiple data sources in the same panel. When you select this data source, Grafana enables you to select a data source for every new query that you add.
+  - The first query uses the data source that was selected before you selected **Mixed**.
+  - You cannot change an existing query to use the Mixed Data Source.
+- **Dashboard -** Select this option to use a result set from another panel in the same dashboard.
 
-| Example          | Relative time field |
-| ---------------- | ------------------- |
-| Last 5 minutes   | `now-5m`            |
-| The day so far   | `now/d`             |
-| Last 5 days      | `now-5d/d`          |
-| This week so far | `now/w`             |
-| Last 2 years     | `now-2y/y`          |
-
-- **Time shift:**
-
-| Example              | Time shift field |
-| -------------------- | ---------------- |
-| Last entire week     | `1w/w`           |
-| Two entire weeks ago | `2w/w`           |
-| Last entire month    | `1M/M`           |
-| This entire year     | `1d/y`           |
-| Last entire year     | `1y/y`           |
+You can combine data from multiple data sources onto a single dashboard, but each panel is tied to a specific data source that belongs to a particular Organization.

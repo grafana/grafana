@@ -6,8 +6,8 @@ weight = 10
 
 # Enable template variables to add panels dynamically
 
-Intro and then links to child topics:
+Harness the power of Grafana by configuring the system to automatically and dynamically add panels based on criteria that you define.
 
-...
-...
-...
+This topic area contains the following topics:
+
+{{< section >}}
