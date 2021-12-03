@@ -281,12 +281,11 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	// prepend slash for cleaning relative paths
 	requestedFile := filepath.Clean(filepath.Join("/", web.Params(c.Req)["*"]))
 	rel, err := filepath.Rel("/", requestedFile)
 	if err != nil {
-		// slash is prepended above therefore this is not expected to fail
-		c.JsonApiErr(500, "Failed to get the relative path", err)
+		// this should not never fail
+		c.JsonApiErr(500, "Relative path found", err)
 		return
 	}
 
@@ -300,7 +299,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		c.JsonApiErr(500, "Failed to get plugin absolute path", nil)
 		return
 	}
-
+	
 	pluginFilePath := filepath.Join(absPluginDir, rel)
 	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
