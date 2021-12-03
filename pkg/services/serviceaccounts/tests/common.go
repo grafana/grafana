@@ -60,10 +60,10 @@ type ServiceAccountsStoreMock struct {
 	Calls Calls
 }
 
-func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, siUser *models.SignedInUser) error {
+func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, cmd *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
 	// now we can test that the mock has these calls when we call the function
-	s.Calls.DeleteServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, siUser})
-	return nil
+	s.Calls.CreateServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, cmd})
+	return nil, nil
 }
 
 func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {

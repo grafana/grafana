@@ -7,7 +7,7 @@ import (
 )
 
 type Service interface {
-	CreateServiceAccount(ctx context.Context, saForm *CreateServiceaccountForm) error
+	CreateServiceAccount(ctx context.Context, saForm *CreateServiceaccountForm) (*models.User, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
 }
 type Store interface {

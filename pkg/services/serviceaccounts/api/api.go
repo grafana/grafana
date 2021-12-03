@@ -42,14 +42,14 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
-		serviceAccountsRoute.Post("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
+		serviceAccountsRoute.Post("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.createServiceAccount))
 	})
 }
 
-// POST /api/access-control/roles
+// POST /api/serviceaccounts
 func (api *ServiceAccountsAPI) createServiceAccount(c *models.ReqContext, cmd serviceaccounts.CreateServiceaccountForm) response.Response {
 
-	err := api.service.CreateServiceAccount(c.Req.Context(), c.SignedInUser)
+	user, err := api.service.CreateServiceAccount(c.Req.Context(), &cmd)
 	switch {
 	case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
 		return response.Error(http.StatusBadRequest, "Failed to create role with the provided name", err)
@@ -57,7 +57,7 @@ func (api *ServiceAccountsAPI) createServiceAccount(c *models.ReqContext, cmd se
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
 
-	return response.JSON(http.StatusCreated, role).SetHeader("Location", fmt.Sprintf("/api/access-control/roles/%s", createRoleCmd.UID))
+	return response.JSON(http.StatusCreated, user).SetHeader("Location", fmt.Sprintf("/api/serviceaccounts/%d", user.Id))
 }
 
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
