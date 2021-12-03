@@ -13,6 +13,7 @@ import { DimensionContext } from 'app/features/dimensions';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from './group';
 import { LayerElement } from 'app/core/components/Layers/types';
+import { Scene } from './scene';
 
 let counter = 0;
 
@@ -45,12 +46,26 @@ export class ElementState implements LayerElement {
     options.anchor = this.anchor;
     options.placement = this.placement;
 
+    const scene = this.getScene();
     if (!options.name) {
-      const newName = parent?.scene.getNextElementName();
+      const newName = scene?.getNextElementName();
       options.name = newName ?? fallbackName;
     }
 
-    parent?.scene.byName.set(options.name, this);
+    scene?.byName.set(options.name, this);
+  }
+
+  private getScene(): Scene | undefined {
+    let trav = this.parent;
+    while (trav) {
+      if (trav.isRoot()) {
+        return trav.scene;
+        break;
+      }
+      trav = trav.parent;
+    }
+
+    return undefined;
   }
 
   getName() {
@@ -110,8 +125,6 @@ export class ElementState implements LayerElement {
 
     this.options.anchor = this.anchor;
     this.options.placement = this.placement;
-
-    // console.log('validate', this.UID, this.item.id, this.placement, this.anchor);
   }
 
   // The parent size, need to set our own size based on offsets
@@ -212,8 +225,9 @@ export class ElementState implements LayerElement {
     }
 
     if (oldName !== newName) {
-      this.parent?.scene.byName.delete(oldName);
-      this.parent?.scene.byName.set(newName, this);
+      const scene = this.getScene();
+      scene?.byName.delete(oldName);
+      scene?.byName.set(newName, this);
     }
   }
 

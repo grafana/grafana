@@ -126,10 +126,10 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
     const { layer } = settings;
 
+    this.deleteGroup();
     layer.elements.forEach((element: ElementState) => {
       layer.parent?.doAction(LayerActionID.Duplicate, element, false);
     });
-    this.deleteGroup();
   };
 
   private onDecoupleGroup = () => {
@@ -158,6 +158,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
     const scene = this.getScene();
     scene?.byName.delete(layer.getName());
+    layer.elements.forEach((element) => scene?.byName.delete(element.getName()));
     layer.parent?.doAction(LayerActionID.Delete, layer);
 
     this.goUpLayer();

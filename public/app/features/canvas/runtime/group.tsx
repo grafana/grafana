@@ -130,7 +130,7 @@ export class GroupState extends ElementState {
         copy.updateSize(element.width, element.height);
         copy.updateData(this.scene.context);
         if (updateName) {
-          copy.options.name = `${this.scene.getNextElementName()} (duplicate)`;
+          copy.options.name = this.scene.getNextElementName();
         }
         this.elements.push(copy);
         this.scene.byName.set(copy.options.name, copy);
