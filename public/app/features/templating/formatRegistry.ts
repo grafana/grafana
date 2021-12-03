@@ -10,6 +10,7 @@ export interface FormatOptions {
   value: any;
   text: string;
   args: string[];
+  isScoped?: boolean;
 }
 
 export interface FormatRegistryItem extends RegistryItem {
@@ -244,7 +245,13 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       description:
         'Format variables as URL parameters. Example in multi-variable scenario A + B + C => var-foo=A&var-foo=B&var-foo=C.',
       formatter: (options, variable) => {
+        const { isScoped, value } = options;
         const { name, type } = variable;
+
+        if (isScoped) {
+          return formatQueryParameter(name, value);
+        }
+
         const adapter = variableAdapters.get(type);
         const valueForUrl = adapter.getValueForUrl(variable as ExtendedVariableModel);
 

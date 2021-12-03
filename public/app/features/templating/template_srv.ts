@@ -115,7 +115,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return filters;
   }
 
-  formatValue(value: any, format: any, variable: any, text?: string) {
+  formatValue(value: any, format: any, variable: any, text?: string, isScoped?: boolean): string {
     // for some scopedVars there is no variable
     variable = variable || {};
 
@@ -156,7 +156,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       formatItem = formatRegistry.get(FormatRegistryID.glob);
     }
 
-    const options: FormatOptions = { value, args, text: text ?? value };
+    const options: FormatOptions = { value, args, text: text ?? value, isScoped };
     return formatItem.formatter(options, variable);
   }
 
@@ -274,7 +274,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         const text = this.getVariableText(variableName, value, scopedVars);
 
         if (value !== null && value !== undefined) {
-          return this.formatValue(value, fmt, variable, text);
+          return this.formatValue(value, fmt, variable, text, true);
         }
       }
 
