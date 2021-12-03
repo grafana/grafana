@@ -36,6 +36,7 @@ type Props = {
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
+  scrollElement?: Element;
 };
 
 export function TraceView(props: Props) {
@@ -105,7 +106,6 @@ export function TraceView(props: Props) {
     () => createSpanLinkFactory({ splitOpenFn: props.splitOpenFn, traceToLogsOptions, dataFrame: frame }),
     [props.splitOpenFn, traceToLogsOptions, frame]
   );
-  const scrollElement = document.getElementsByClassName('scrollbar-view')[0];
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
 
   if (!props.dataFrames?.length || !traceProp) {
@@ -170,7 +170,7 @@ export function TraceView(props: Props) {
           linksGetter={noop as any}
           uiFind={search}
           createSpanLink={createSpanLink}
-          scrollElement={scrollElement}
+          scrollElement={props.scrollElement}
         />
       </UIElementsContext.Provider>
     </ThemeProvider>

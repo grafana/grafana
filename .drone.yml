@@ -770,7 +770,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: release-canary-npm-packages
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -784,7 +784,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -834,10 +834,11 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
+  - .\grabpl.exe windows-installer --edition oss --packages-bucket grafana-downloads
+    --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/main/
-  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/main/
+  - gsutil cp $$fname gs://grafana-downloads/oss/main/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
   depends_on:
   - initialize
   environment:
@@ -1788,7 +1789,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -1799,10 +1800,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
+  - package
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -1835,64 +1833,9 @@ steps:
   image: grafana/build-container:1.4.8
   name: package-enterprise2
 - commands:
-  - ./e2e/start-server
-  depends_on:
-  - package-enterprise2
-  detach: true
-  environment:
-    PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
-    PORT: 3002
-    RUNDIR: e2e/tmp-grafana-enterprise2
-  image: grafana/build-container:1.4.8
-  name: end-to-end-tests-server-enterprise2
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite dashboards-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-dashboards-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-smoke-tests-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite panels-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-panels-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite various-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-various-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - package-enterprise2
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -1903,10 +1846,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2
   depends_on:
-  - end-to-end-tests-dashboards-suite-enterprise2
-  - end-to-end-tests-panels-suite-enterprise2
-  - end-to-end-tests-smoke-tests-suite-enterprise2
-  - end-to-end-tests-various-suite-enterprise2
+  - package-enterprise2
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -2825,7 +2765,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -2836,10 +2776,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads-test
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
+  - package
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -2872,64 +2809,9 @@ steps:
   image: grafana/build-container:1.4.8
   name: package-enterprise2
 - commands:
-  - ./e2e/start-server
-  depends_on:
-  - package-enterprise2
-  detach: true
-  environment:
-    PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
-    PORT: 3002
-    RUNDIR: e2e/tmp-grafana-enterprise2
-  image: grafana/build-container:1.4.8
-  name: end-to-end-tests-server-enterprise2
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite dashboards-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-dashboards-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-smoke-tests-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite panels-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-panels-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite various-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-various-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - package-enterprise2
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -2940,10 +2822,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-test
   depends_on:
-  - end-to-end-tests-dashboards-suite-enterprise2
-  - end-to-end-tests-panels-suite-enterprise2
-  - end-to-end-tests-smoke-tests-suite-enterprise2
-  - end-to-end-tests-various-suite-enterprise2
+  - package-enterprise2
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -3927,7 +3806,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -3938,10 +3817,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
+  - package
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -3974,64 +3850,9 @@ steps:
   image: grafana/build-container:1.4.8
   name: package-enterprise2
 - commands:
-  - ./e2e/start-server
-  depends_on:
-  - package-enterprise2
-  detach: true
-  environment:
-    PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
-    PORT: 3002
-    RUNDIR: e2e/tmp-grafana-enterprise2
-  image: grafana/build-container:1.4.8
-  name: end-to-end-tests-server-enterprise2
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite dashboards-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-dashboards-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-smoke-tests-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite panels-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-panels-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite various-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-various-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - package-enterprise2
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -4042,10 +3863,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2
   depends_on:
-  - end-to-end-tests-dashboards-suite-enterprise2
-  - end-to-end-tests-panels-suite-enterprise2
-  - end-to-end-tests-smoke-tests-suite-enterprise2
-  - end-to-end-tests-various-suite-enterprise2
+  - package-enterprise2
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -4302,6 +4120,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 9ad9988b102790652afdf8e76325c6c57367c4eaa0d6590ff7a4701fa5840b8b
+hmac: bf24337f39c20d31dfef9c8d6ce66df1a5eda88a46f24d548d85c2f0db97641a
 
 ...

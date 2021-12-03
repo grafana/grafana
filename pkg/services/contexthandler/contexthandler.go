@@ -204,7 +204,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	// fetch key
 	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-	if err := bus.Dispatch(&keyQuery); err != nil {
+	if err := bus.DispatchCtx(reqContext.Req.Context(), &keyQuery); err != nil {
 		reqContext.JsonApiErr(401, InvalidAPIKey, err)
 		return true
 	}
@@ -246,7 +246,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	//Use service account linked to API key as the signed in user
 	query := models.GetSignedInUserQuery{UserId: apikey.ServiceAccountId, OrgId: apikey.OrgId}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(reqContext.Req.Context(), &query); err != nil {
 		reqContext.Logger.Error(
 			"Failed to link API key to service account in",
 			"id", query.UserId,
