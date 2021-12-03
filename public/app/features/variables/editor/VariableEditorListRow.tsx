@@ -2,7 +2,7 @@ import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
 import { Draggable } from 'react-beautiful-dnd';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
@@ -30,15 +30,25 @@ export function VariableEditorListRow({
   onDuplicate: propsOnDuplicate,
   onDelete: propsOnDelete,
 }: VariableEditorListRowProps): ReactElement {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const definition = getDefinition(variable);
   const usages = getVariableUsages(variable.id, usageTree);
   const passed = usages > 0 || isAdHoc(variable);
   const identifier = toVariableIdentifier(variable);
+
   return (
     <Draggable draggableId={JSON.stringify(identifier)} index={index}>
-      {(provided) => (
-        <tr ref={provided.innerRef} {...provided.draggableProps}>
+      {(provided, snapshot) => (
+        <tr
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          style={{
+            userSelect: snapshot.isDragging ? 'none' : 'auto',
+            background: snapshot.isDragging ? theme.colors.background.secondary : undefined,
+            ...provided.draggableProps.style,
+          }}
+        >
           <td className={styles.column}>
             <span
               onClick={(event) => {
