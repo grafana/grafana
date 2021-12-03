@@ -45,7 +45,7 @@ function renderParamInput({ paramDef, value }: Props) {
     return <Select value={toOption(value as string)} options={selectOptions} onChange={() => {}} />;
   }
 
-  return <Input value={value ?? ''} />;
+  return <Input value={value ?? ''} onChange={() => {}} />;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
