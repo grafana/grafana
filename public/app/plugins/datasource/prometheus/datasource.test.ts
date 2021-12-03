@@ -1685,7 +1685,7 @@ describe('PrometheusDatasource', () => {
     } as any;
 
     const request = ({
-      targets: [targetA, targetB, targetC],
+      targets: [targetA, targetB],
       interval: '1s',
       panelId: '',
     } as any) as DataQueryRequest<PromQuery>;
