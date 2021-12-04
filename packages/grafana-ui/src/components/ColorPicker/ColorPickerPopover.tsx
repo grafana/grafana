@@ -161,7 +161,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
     `,
     colorPickerPopoverContent: css`
-      width: 336px;
+      width: 266px;
       font-size: ${theme.typography.bodySmall.fontSize};
       min-height: 184px;
       padding: ${theme.spacing(2)};

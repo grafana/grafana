@@ -20,38 +20,40 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
   const primaryShade = hue.shades.find((shade) => shade.primary)!;
 
   return (
-    <div {...otherProps} style={{ display: 'flex', flexDirection: 'column' }}>
-      {primaryShade && (
-        <ColorSwatch
-          key={primaryShade.name}
-          isSelected={primaryShade.name === selectedColor}
-          variant={ColorSwatchVariant.Large}
-          color={primaryShade.color}
-          label={upperFirst(hue.name)}
-          onClick={() => onColorSelect(primaryShade.name)}
-        />
-      )}
-      <div
-        style={{
-          display: 'flex',
-          marginTop: '8px',
-        }}
-      >
-        {hue.shades.map(
-          (shade) =>
-            !shade.primary && (
-              <div key={shade.name} style={{ marginRight: '4px' }}>
-                <ColorSwatch
-                  key={shade.name}
-                  isSelected={shade.name === selectedColor}
-                  color={shade.color}
-                  onClick={() => onColorSelect(shade.name)}
-                />
-              </div>
-            )
+    <>
+      {hue && <div>{upperFirst(hue.name)}</div>}
+      <div {...otherProps} style={{ display: 'flex', flexDirection: 'row' }}>
+        {primaryShade && (
+          <ColorSwatch
+            key={primaryShade.name}
+            isSelected={primaryShade.name === selectedColor}
+            variant={ColorSwatchVariant.Large}
+            color={primaryShade.color}
+            onClick={() => onColorSelect(primaryShade.name)}
+          />
         )}
+        <div
+          style={{
+            display: 'flex',
+            marginTop: '8px',
+          }}
+        >
+          {hue.shades.map(
+            (shade) =>
+              !shade.primary && (
+                <div key={shade.name} style={{ marginRight: '4px' }}>
+                  <ColorSwatch
+                    key={shade.name}
+                    isSelected={shade.name === selectedColor}
+                    color={shade.color}
+                    onClick={() => onColorSelect(shade.name)}
+                  />
+                </div>
+              )
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

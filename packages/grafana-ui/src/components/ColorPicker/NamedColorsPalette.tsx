@@ -22,14 +22,23 @@ export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps)
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: '25% 1fr',
           gridRowGap: theme.spacing(2),
           gridColumnGap: theme.spacing(2),
           flexGrow: 1,
         }}
       >
         {swatches}
-        <div />
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gridRowGap: theme.spacing(2),
+          gridColumnGap: theme.spacing(2),
+          flexGrow: 1,
+        }}
+      >
         <ColorSwatch
           isSelected={color === 'transparent'}
           color={'rgba(0,0,0,0)'}

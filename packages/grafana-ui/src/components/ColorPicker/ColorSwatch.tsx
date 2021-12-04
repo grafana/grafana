@@ -30,7 +30,8 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
       height: swatchSize,
       borderRadius: '50%',
       background: `${color}`,
-      marginRight: hasLabel ? '8px' : '0px',
+      marginLeft: hasLabel ? '8px' : '0px',
+      marginRight: isSmall ? '0px' : '6px',
       boxShadow: isSelected
         ? `inset 0 0 0 2px ${color}, inset 0 0 0 4px ${theme.colors.getContrastText(color)}`
         : 'none',
@@ -50,8 +51,8 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
         }}
         {...otherProps}
       >
-        <div style={swatchStyles} />
         {hasLabel && <span>{label}</span>}
+        <div style={swatchStyles} />
       </div>
     );
   }
