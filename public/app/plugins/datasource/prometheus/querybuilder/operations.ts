@@ -1,15 +1,9 @@
 import { visualQueryEngine } from './engine';
-import {
-  getDefaultTestQuery,
-  PromVisualQuery,
-  PromVisualQueryOperation,
-  PromVisualQueryOperationCategory,
-  PromVisualQueryOperationDef,
-  PromVisualQueryOperationParamDef,
-} from './types';
+import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
+import { getDefaultTestQuery, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
-export function getOperationDefintions(): PromVisualQueryOperationDef[] {
-  const list: PromVisualQueryOperationDef[] = [
+export function getOperationDefintions(): QueryBuilderOperationDef[] {
+  const list: QueryBuilderOperationDef[] = [
     {
       id: 'sum',
       displayName: 'Sum',
@@ -116,7 +110,7 @@ export function getOperationDefintions(): PromVisualQueryOperationDef[] {
   return list;
 }
 
-function functionRendererLeft(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);
   const str = model.id + '(';
 
@@ -127,7 +121,7 @@ function functionRendererLeft(model: PromVisualQueryOperation, def: PromVisualQu
   return str + params.join(', ') + ')';
 }
 
-function functionRendererRight(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+function functionRendererRight(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);
   const str = model.id + '(';
 
@@ -138,7 +132,7 @@ function functionRendererRight(model: PromVisualQueryOperation, def: PromVisualQ
   return str + params.join(', ') + ')';
 }
 
-function renderParams(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+function renderParams(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   return (model.params ?? []).map((value, index) => {
     const paramDef = def.params[index];
     if (paramDef.type === 'string') {
@@ -149,7 +143,7 @@ function renderParams(model: PromVisualQueryOperation, def: PromVisualQueryOpera
   });
 }
 
-function groupByRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+function groupByRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   if (!model.params || model.params.length < 2) {
     throw Error('Params missing on group by');
   }
@@ -169,8 +163,8 @@ function groupByRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOp
 }
 
 function operationWithRangeVectorRenderer(
-  model: PromVisualQueryOperation,
-  def: PromVisualQueryOperationDef,
+  model: QueryBuilderOperation,
+  def: QueryBuilderOperationDef,
   innerExpr: string
 ) {
   let rangeVector = (model.params ?? [])[0] ?? 'auto';
@@ -182,11 +176,11 @@ function operationWithRangeVectorRenderer(
   return `${def.id}(${innerExpr}[${rangeVector}])`;
 }
 
-function multiplyRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+function multiplyRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   return `${innerExpr} * ${model.params[0]}`;
 }
 
-function getRangeVectorParamDef(): PromVisualQueryOperationParamDef {
+function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
   return {
     name: 'Range vector',
     type: 'string',
@@ -194,8 +188,8 @@ function getRangeVectorParamDef(): PromVisualQueryOperationParamDef {
   };
 }
 
-function defaultAddOperationHandler(def: PromVisualQueryOperationDef, query: PromVisualQuery) {
-  const newOperation: PromVisualQueryOperation = {
+function defaultAddOperationHandler(def: QueryBuilderOperationDef, query: PromVisualQuery) {
+  const newOperation: QueryBuilderOperation = {
     id: def.id,
     params: def.defaultParams,
   };
@@ -209,7 +203,7 @@ function defaultAddOperationHandler(def: PromVisualQueryOperationDef, query: Pro
 /**
  * Since there can only be one operation with range vector this will replace the current one (if one was added )
  */
-function addOperationWithRangeVector(def: PromVisualQueryOperationDef, query: PromVisualQuery) {
+function addOperationWithRangeVector(def: QueryBuilderOperationDef, query: PromVisualQuery) {
   if (query.operations.length > 0) {
     const firstOp = visualQueryEngine.getOperationDef(query.operations[0].id);
 
@@ -227,7 +221,7 @@ function addOperationWithRangeVector(def: PromVisualQueryOperationDef, query: Pr
     }
   }
 
-  const newOperation: PromVisualQueryOperation = {
+  const newOperation: QueryBuilderOperation = {
     id: def.id,
     params: def.defaultParams,
   };
@@ -238,11 +232,11 @@ function addOperationWithRangeVector(def: PromVisualQueryOperationDef, query: Pr
   };
 }
 
-function addNestedQueryHandler(def: PromVisualQueryOperationDef, query: PromVisualQuery) {
+function addNestedQueryHandler(def: QueryBuilderOperationDef, query: PromVisualQuery) {
   return {
     ...query,
     nestedQueries: [
-      ...(query.nestedQueries ?? []),
+      ...(query.binaryQueries ?? []),
       {
         operator: '/',
         query: getDefaultTestQuery(),
@@ -254,6 +248,6 @@ function addNestedQueryHandler(def: PromVisualQueryOperationDef, query: PromVisu
 /**
  * This is just a test to demo that we could represent aggregation as a single operation
  */
-function aggregateRenderer(model: PromVisualQueryOperation, def: PromVisualQueryOperationDef, innerExpr: string) {
+function aggregateRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   return `${model.params[0]}(${innerExpr})`;
 }

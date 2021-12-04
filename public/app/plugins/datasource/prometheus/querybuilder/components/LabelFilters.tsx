@@ -4,7 +4,8 @@ import EditorList from 'app/plugins/datasource/cloudwatch/components/ui/EditorLi
 import { isEqual } from 'lodash';
 import React, { useState } from 'react';
 import { PrometheusDatasource } from '../../datasource';
-import { PromLabelFilter, PromVisualQuery } from '../types';
+import { QueryBuilderLabelFilter } from '../shared/types';
+import { PromVisualQuery } from '../types';
 import { LabelFilterItem } from './LabelFilterItem';
 
 export interface Props {
@@ -14,15 +15,15 @@ export interface Props {
 }
 
 export function LabelFilters({ query, onChange, datasource }: Props) {
-  const [items, setItems] = useState<Array<Partial<PromLabelFilter>>>(query.labels);
+  const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>(query.labels);
 
-  const onLabelsChange = (newItems: Array<Partial<PromLabelFilter>>) => {
+  const onLabelsChange = (newItems: Array<Partial<QueryBuilderLabelFilter>>) => {
     setItems(newItems);
 
     // Extract full label filters with both label & value
     const newLabels = newItems.filter((x) => x.label != null && x.value != null);
     if (!isEqual(newLabels, query.labels)) {
-      onChange({ ...query, labels: newLabels as PromLabelFilter[] });
+      onChange({ ...query, labels: newLabels as QueryBuilderLabelFilter[] });
     }
   };
 
@@ -37,8 +38,8 @@ export function LabelFilters({ query, onChange, datasource }: Props) {
 
 function getLabelFilterRenderer(query: PromVisualQuery, datasource: PrometheusDatasource) {
   function renderFilter(
-    item: Partial<PromLabelFilter>,
-    onChange: (item: PromLabelFilter) => void,
+    item: Partial<QueryBuilderLabelFilter>,
+    onChange: (item: QueryBuilderLabelFilter) => void,
     onDelete: () => void
   ) {
     return (

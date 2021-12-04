@@ -4,14 +4,14 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 import FlexItem from 'app/plugins/datasource/cloudwatch/components/ui/FlexItem';
 import React from 'react';
 import { PrometheusDatasource } from '../../datasource';
-import { PromVisualQueryNested } from '../types';
+import { PromVisualQueryBinary } from '../types';
 import { PromQueryBuilderInner } from './PromQueryBuilderInner';
 
 export interface Props {
-  nestedQuery: PromVisualQueryNested;
+  nestedQuery: PromVisualQueryBinary;
   datasource: PrometheusDatasource;
   index: number;
-  onChange: (index: number, update: PromVisualQueryNested) => void;
+  onChange: (index: number, update: PromVisualQueryBinary) => void;
   onRemove: (index: number) => void;
 }
 

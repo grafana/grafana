@@ -1,54 +1,18 @@
+import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
+
 /**
  * Visual query model
  */
 export interface PromVisualQuery {
   metric: string;
-  labels: PromLabelFilter[];
-  operations: PromVisualQueryOperation[];
-  nestedQueries?: PromVisualQueryNested[];
+  labels: QueryBuilderLabelFilter[];
+  operations: QueryBuilderOperation[];
+  binaryQueries?: PromVisualQueryBinary[];
 }
 
-export interface PromLabelFilter {
-  label: string;
-  op: string;
-  value: string;
-}
-
-/**
- * Functions, group by and other elements
- */
-export interface PromVisualQueryOperation {
-  id: string;
-  params: string[] | number[];
-}
-
-export interface PromVisualQueryNested {
+export interface PromVisualQueryBinary {
   operator: string;
   query: PromVisualQuery;
-}
-
-export interface PromVisualQueryOperationDef {
-  id: string;
-  displayName?: string;
-  params: PromVisualQueryOperationParamDef[];
-  defaultParams: string[] | number[];
-  category: string;
-  renderer: PromVisualQueryOperationRenderer;
-  addHandler: (operation: PromVisualQueryOperationDef, query: PromVisualQuery) => PromVisualQuery;
-}
-
-export type PromVisualQueryOperationRenderer = (
-  model: PromVisualQueryOperation,
-  def: PromVisualQueryOperationDef,
-  innerExpr: string
-) => string;
-
-export interface PromVisualQueryOperationParamDef {
-  name: string;
-  type: string;
-  options?: string[] | number[];
-  restParam?: boolean;
-  optional?: boolean;
 }
 
 export enum PromVisualQueryOperationCategory {
@@ -69,7 +33,7 @@ export const operationTopLevelCategories = [
 
 export interface PromQueryPattern {
   name: string;
-  operations: PromVisualQueryOperation[];
+  operations: QueryBuilderOperation[];
 }
 
 export function getDefaultTestQuery() {

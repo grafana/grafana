@@ -4,13 +4,13 @@ import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 import FlexItem from 'app/plugins/datasource/cloudwatch/components/ui/FlexItem';
 import React from 'react';
 import { visualQueryEngine } from '../engine';
-import { PromVisualQueryOperation } from '../types';
+import { QueryBuilderOperation } from '../shared/types';
 import { OperationParamEditor } from './OperationParamEditor';
 
 export interface Props {
-  operation: PromVisualQueryOperation;
+  operation: QueryBuilderOperation;
   index: number;
-  onChange: (index: number, update: PromVisualQueryOperation) => void;
+  onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
 }
 

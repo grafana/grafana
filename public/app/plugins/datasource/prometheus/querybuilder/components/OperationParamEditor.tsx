@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, toOption } from '@grafana/data';
 import { Button, Input, Select, useStyles2 } from '@grafana/ui';
 import React from 'react';
-import { PromVisualQueryOperation, PromVisualQueryOperationParamDef } from '../types';
+import { QueryBuilderOperation, QueryBuilderOperationParamDef } from '../shared/types';
 
 export interface Props {
   value?: string | number;
-  paramDef: PromVisualQueryOperationParamDef;
+  paramDef: QueryBuilderOperationParamDef;
   index: number;
-  operation: PromVisualQueryOperation;
+  operation: QueryBuilderOperation;
 }
 
 export function OperationParamEditor(props: Props) {

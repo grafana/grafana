@@ -4,7 +4,7 @@ import { useStyles2 } from '@grafana/ui';
 import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React from 'react';
 import { PrometheusDatasource } from '../../datasource';
-import { PromVisualQuery, PromVisualQueryNested } from '../types';
+import { PromVisualQuery, PromVisualQueryBinary } from '../types';
 import { NestedQuery } from './NestedQuery';
 
 export interface Props {
@@ -15,17 +15,17 @@ export interface Props {
 
 export function NestedQueryList({ query, datasource, onChange }: Props) {
   const styles = useStyles2(getStyles);
-  const nestedQueries = query.nestedQueries ?? [];
+  const nestedQueries = query.binaryQueries ?? [];
 
-  const onNestedQueryUpdate = (index: number, update: PromVisualQueryNested) => {
+  const onNestedQueryUpdate = (index: number, update: PromVisualQueryBinary) => {
     const updatedList = [...nestedQueries];
     updatedList.splice(index, 1, update);
-    onChange({ ...query, nestedQueries: updatedList });
+    onChange({ ...query, binaryQueries: updatedList });
   };
 
   const onRemove = (index: number) => {
     const updatedList = [...nestedQueries.slice(0, index), ...nestedQueries.slice(index + 1)];
-    onChange({ ...query, nestedQueries: updatedList });
+    onChange({ ...query, binaryQueries: updatedList });
   };
 
   return (

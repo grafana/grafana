@@ -4,7 +4,8 @@ import { ButtonCascader, CascaderOption, useStyles2 } from '@grafana/ui';
 import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React from 'react';
 import { visualQueryEngine } from '../engine';
-import { operationTopLevelCategories, PromVisualQuery, PromVisualQueryOperation } from '../types';
+import { QueryBuilderOperation } from '../shared/types';
+import { operationTopLevelCategories, PromVisualQuery } from '../types';
 import { OperationEditor } from './OperationEditor';
 
 export interface Props {
@@ -16,7 +17,7 @@ export function OperationList({ query, onChange }: Props) {
   const styles = useStyles2(getStyles);
   const { operations } = query;
 
-  const onOperationChange = (index: number, update: PromVisualQueryOperation) => {
+  const onOperationChange = (index: number, update: QueryBuilderOperation) => {
     const updatedList = [...operations];
     updatedList.splice(index, 1, update);
     onChange({ ...query, operations: updatedList });

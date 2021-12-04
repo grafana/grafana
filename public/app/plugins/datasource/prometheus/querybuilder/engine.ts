@@ -1,8 +1,9 @@
 import { getOperationDefintions } from './operations';
-import { PromVisualQuery, PromVisualQueryOperationCategory, PromVisualQueryOperationDef } from './types';
+import { QueryBuilderOperationDef } from './shared/types';
+import { PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
 export class VisualQueryEngine {
-  private operations: Record<string, PromVisualQueryOperationDef> = {};
+  private operations: Record<string, QueryBuilderOperationDef<PromVisualQuery>> = {};
 
   constructor() {
     for (const op of getOperationDefintions()) {

@@ -1,16 +1,17 @@
 import React from 'react';
 import { AsyncSelect, Select } from '@grafana/ui';
 import { toOption } from '@grafana/data';
-import { PromLabelFilter, PromVisualQuery } from '../types';
+import { PromVisualQuery } from '../types';
 import { PrometheusDatasource } from '../../datasource';
 import AccessoryButton from 'app/plugins/datasource/cloudwatch/components/ui/AccessoryButton';
 import InputGroup from 'app/plugins/datasource/cloudwatch/components/ui/InputGroup';
+import { QueryBuilderLabelFilter } from '../shared/types';
 
 export interface Props {
-  item: Partial<PromLabelFilter>;
+  item: Partial<QueryBuilderLabelFilter>;
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
-  onChange: (value: PromLabelFilter) => void;
+  onChange: (value: QueryBuilderLabelFilter) => void;
   onDelete: () => void;
 }
 
@@ -32,7 +33,7 @@ export function LabelFilterItem({ item, onChange, onDelete }: Props) {
           loadOptions={loadLabelKeys}
           onChange={(change) => {
             if (change.label) {
-              onChange(({ ...item, label: change.label, value: undefined } as any) as PromLabelFilter);
+              onChange(({ ...item, label: change.label, value: undefined } as any) as QueryBuilderLabelFilter);
             }
           }}
         />
@@ -43,7 +44,7 @@ export function LabelFilterItem({ item, onChange, onDelete }: Props) {
           width="auto"
           onChange={(change) => {
             if (change.value != null) {
-              onChange(({ ...item, op: change.value } as any) as PromLabelFilter);
+              onChange(({ ...item, op: change.value } as any) as QueryBuilderLabelFilter);
             }
           }}
         />
@@ -56,7 +57,7 @@ export function LabelFilterItem({ item, onChange, onDelete }: Props) {
           loadOptions={loadLabelKeys}
           onChange={(change) => {
             if (change.value != null) {
-              onChange(({ ...item, value: change.value } as any) as PromLabelFilter);
+              onChange(({ ...item, value: change.value } as any) as QueryBuilderLabelFilter);
             }
           }}
         />
