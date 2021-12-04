@@ -74,7 +74,6 @@ func Last(fv *Float64Field) *float64 {
 	if fv.Len() == 0 {
 		f = math.NaN()
 		return &f
-		return &nan
 	}
 	v := fv.GetValue(fv.Len() - 1)
 	f = *v
