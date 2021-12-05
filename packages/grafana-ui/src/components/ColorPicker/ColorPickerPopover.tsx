@@ -152,6 +152,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
         background: ${theme.colors.background.secondary};
         color: ${theme.colors.text.secondary};
         cursor: pointer;
+
+        &:focus-visible {
+          outline: 2px solid ${theme.colors.primary.main};
+          outline-offset: -2px;
+          transition: none;
+        }
       }
 
       .ColorPickerPopover__tab--active {

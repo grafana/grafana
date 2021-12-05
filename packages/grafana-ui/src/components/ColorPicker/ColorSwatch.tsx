@@ -1,3 +1,4 @@
+import { useFocusRing } from '@react-aria/focus';
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 import { useTheme2 } from '../../themes/ThemeContext';
@@ -20,6 +21,7 @@ export interface Props extends React.DOMAttributes<HTMLDivElement> {
 export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
   ({ color, label, variant = ColorSwatchVariant.Small, isSelected, ...otherProps }, ref) => {
     const theme = useTheme2();
+    const { isFocusVisible, focusProps } = useFocusRing();
     const tc = tinycolor(color);
     const isSmall = variant === ColorSwatchVariant.Small;
     const hasLabel = !!label;
@@ -32,6 +34,9 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
       background: `${color}`,
       marginLeft: hasLabel ? '8px' : '0px',
       marginRight: isSmall ? '0px' : '6px',
+      outline: isFocusVisible ? `2px solid  ${theme.colors.primary.main}` : 'none',
+      outlineOffset: '1px',
+      transition: 'none',
       boxShadow: isSelected
         ? `inset 0 0 0 2px ${color}, inset 0 0 0 4px ${theme.colors.getContrastText(color)}`
         : 'none',
@@ -52,7 +57,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
         {...otherProps}
       >
         {hasLabel && <span>{label}</span>}
-        <div style={swatchStyles} tabIndex={0} />
+        <div style={swatchStyles} tabIndex={0} {...focusProps} />
       </div>
     );
   }
