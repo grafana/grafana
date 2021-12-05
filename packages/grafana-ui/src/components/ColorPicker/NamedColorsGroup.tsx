@@ -3,6 +3,7 @@ import { ThemeVizHue } from '@grafana/data';
 import { Property } from 'csstype';
 import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
 import { upperFirst } from 'lodash';
+import { useFocusManager } from '@react-aria/focus';
 
 interface NamedColorsGroupProps {
   hue: ThemeVizHue;
@@ -18,6 +19,26 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
   ...otherProps
 }) => {
   const primaryShade = hue.shades.find((shade) => shade.primary)!;
+  const focusManager = useFocusManager();
+
+  const onKeyDownColorSelect = (e: React.KeyboardEvent, colorName: string) => {
+    if (e.key === 'Tab' || e.altKey || e.ctrlKey || e.metaKey) {
+      return;
+    }
+
+    switch (e.key) {
+      case 'Enter':
+        onColorSelect(colorName);
+        break;
+      case 'ArrowRight':
+        focusManager.focusNext({ wrap: true });
+        break;
+      case 'ArrowLeft':
+        focusManager.focusPrevious({ wrap: true });
+        break;
+    }
+    return;
+  };
 
   return (
     <>
@@ -30,6 +51,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
             variant={ColorSwatchVariant.Large}
             color={primaryShade.color}
             onClick={() => onColorSelect(primaryShade.name)}
+            onKeyDown={(event) => onKeyDownColorSelect(event, primaryShade.name)}
           />
         )}
         <div
@@ -47,6 +69,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
                     isSelected={shade.name === selectedColor}
                     color={shade.color}
                     onClick={() => onColorSelect(shade.name)}
+                    onKeyDown={(event) => onKeyDownColorSelect(event, shade.name)}
                   />
                 </div>
               )
