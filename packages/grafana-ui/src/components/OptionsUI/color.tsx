@@ -24,7 +24,7 @@ export const ColorValueEditor: React.FC<ColorValueEditorProps> = ({ value, onCha
     <ColorPicker color={value ?? ''} onChange={onChange} enableNamedColors={true}>
       {({ ref, showColorPicker, hideColorPicker }) => {
         return (
-          <div className={styles.spot} onBlur={hideColorPicker}>
+          <div className={styles.spot}>
             <div className={styles.colorPicker}>
               <ColorSwatch
                 ref={ref}
