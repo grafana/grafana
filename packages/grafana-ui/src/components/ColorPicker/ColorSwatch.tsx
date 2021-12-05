@@ -52,7 +52,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
         {...otherProps}
       >
         {hasLabel && <span>{label}</span>}
-        <div style={swatchStyles} />
+        <div style={swatchStyles} tabIndex={0} />
       </div>
     );
   }
