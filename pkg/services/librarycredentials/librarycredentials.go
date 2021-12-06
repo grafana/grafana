@@ -19,11 +19,13 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *LibraryCredentialsService {
 	}
 }
 
+var _ Service = (*LibraryCredentialsService)(nil)
+
 type Service interface {
 	GetLibraryCredentials(ctx context.Context, query models.GetLibraryCredentialsQuery) error
-	AddLibraryCredentials(ctx context.Context, cmd *models.AddLibraryCredentialCommand) error
-	UpdateLibraryCredentials(ctx context.Context, cmd *models.AddLibraryCredentialCommand) error
-	//need to add delete
+	AddLibraryCredential(ctx context.Context, cmd *models.AddLibraryCredentialCommand) error
+	UpdateLibraryCredential(ctx context.Context, cmd *models.UpdateLibraryCredentialCommand) error
+	DeleteLibraryCredential(ctx context.Context, cmd *models.DeleteLibraryCredentialCommand) error
 }
 
 type LibraryCredentialsService struct {
@@ -60,7 +62,7 @@ func (s LibraryCredentialsService) AddLibraryCredential(ctx context.Context, cmd
 		if cmd.Uid == "" {
 			uid, err := generateNewDatasourceUid(dbSession, cmd.OrgId)
 			if err != nil {
-				return errutil.Wrapf(err, "Failed to generate UID for libary credential %q", cmd.Name)
+				return errutil.Wrapf(err, "Failed to generate UID for library credential %q", cmd.Name)
 			}
 			cmd.Uid = uid
 		}
@@ -125,6 +127,19 @@ func (s LibraryCredentialsService) UpdateLibraryCredential(ctx context.Context, 
 
 		cmd.Result = ds
 		return err
+	})
+}
+
+func (s LibraryCredentialsService) DeleteLibraryCredential(ctx context.Context, cmd *models.DeleteLibraryCredentialCommand) error {
+	return s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		var rawSql = "DELETE FROM library_credential WHERE uid=? and org_id=?"
+
+		if result, err := session.Exec(rawSql, cmd.Uid, cmd.OrgId); err != nil {
+			return err
+		} else if cmd.NumDeleted, err = result.RowsAffected(); err != nil {
+			return err
+		}
+		return nil
 	})
 }
 

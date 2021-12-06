@@ -53,6 +53,14 @@ type UpdateLibraryCredentialCommand struct {
 	Result *LibraryCredential
 }
 
+type DeleteLibraryCredentialCommand struct {
+	Uid string `json:"uid"`
+
+	OrgId int64 `json:"-"`
+
+	NumDeleted int64
+}
+
 // QUERIES
 type GetLibraryCredentialsQuery struct {
 	OrgId  int64

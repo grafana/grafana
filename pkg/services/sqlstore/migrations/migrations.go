@@ -47,6 +47,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addServerlockMigrations(mg)
 	addUserAuthTokenMigrations(mg)
 	addCacheMigration(mg)
+	addShortURLMigrations(mg)
 	addLibraryCredentialMigrations(mg)
 	// TODO Delete when unified alerting is enabled by default unconditionally (Grafana v9)
 	if err := ualert.CheckUnifiedAlertingEnabledByDefault(mg); err != nil { // this should always go before any other ualert migration
