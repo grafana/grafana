@@ -9015,6 +9015,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/google.analytics@npm:^0.0.42":
+  version: 0.0.42
+  resolution: "@types/google.analytics@npm:0.0.42"
+  checksum: c64b3f7991c4bcb1dfe8db902a2e2ebe821ce53a1ca36e6628b4d08d0c24213aa0d4f49492b3144dd6bfa661f53fb1ecf16e83cca522cddd6d9f8419a4b73fe8
+  languageName: node
+  linkType: hard
+
 "@types/graceful-fs@npm:^4.1.2":
   version: 4.1.5
   resolution: "@types/graceful-fs@npm:4.1.5"
@@ -19263,6 +19270,7 @@ __metadata:
     "@types/enzyme": 3.10.5
     "@types/enzyme-adapter-react-16": 1.0.6
     "@types/file-saver": 2.0.1
+    "@types/google.analytics": ^0.0.42
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/history": ^4.7.8
     "@types/hoist-non-react-statics": 3.3.1
