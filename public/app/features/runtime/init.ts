@@ -1,6 +1,5 @@
-import { UrlQueryMap } from '@grafana/data';
+import { UrlQueryMap, PanelData } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
-import { getConfig } from 'app/core/config';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 
@@ -13,18 +12,6 @@ import { getTimeSrv } from '../dashboard/services/TimeSrv';
  */
 export function initWindowRuntime() {
   (window as any).grafanaRuntime = {
-    /** flag for theme type */
-    getThemeType: () => {
-      const theme = getConfig().theme2;
-      if (theme.isDark) {
-        return 'dark';
-      }
-      if (theme.isLight) {
-        return 'light';
-      }
-      return '?';
-    },
-
     /** Navigate the page within the currently loaded application */
     load: (path: string, query?: UrlQueryMap) => {
       if (query?.theme) {
@@ -53,6 +40,18 @@ export function initWindowRuntime() {
           raw: tr.raw,
         },
       };
+    },
+
+    /** Get the query results for the last loaded data */
+    getPanelData: () => {
+      const d = getDashboardSrv().getCurrent();
+      if (!d) {
+        return undefined;
+      }
+      return d.panels.reduce((acc, panel) => {
+        acc[panel.id] = panel.getQueryRunner().getLastResult();
+        return acc;
+      }, {} as Record<number, PanelData | undefined>);
     },
   };
 }
