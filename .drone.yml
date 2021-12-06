@@ -1317,7 +1317,8 @@ trigger:
   ref:
   - refs/tags/v*
   repo:
-    exclude: grafana/grafana
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - name: cypress_cache
@@ -1371,7 +1372,8 @@ trigger:
   ref:
   - refs/tags/v*
   repo:
-    exclude: grafana/grafana
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - name: cypress_cache
@@ -1896,7 +1898,8 @@ trigger:
   ref:
   - refs/tags/v*
   repo:
-    exclude: grafana/grafana
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - name: cypress_cache
@@ -1971,7 +1974,8 @@ trigger:
   ref:
   - refs/tags/v*
   repo:
-    exclude: grafana/grafana
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - name: cypress_cache
@@ -2005,7 +2009,8 @@ trigger:
   ref:
   - refs/tags/v*
   repo:
-    exclude: grafana/grafana
+    exclude:
+    - grafana/grafana
   status:
   - failure
 type: docker
@@ -4205,6 +4210,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 23dd671fdfab2d7769eb5b4a13a844d4c3e2adcc4aa6a8837158fa085e4dbcce
+hmac: 826fcfa7f06bd01a23ea9ddd81ea23bc1e0fc6d4de59a625fcb0be27a238a110
 
 ...
