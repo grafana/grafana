@@ -1984,37 +1984,6 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
-depends_on:
-- oss-build-release
-- oss-windows-release
-- enterprise-build-release
-- enterprise-windows-release
-kind: pipeline
-name: notify-release
-platform:
-  arch: amd64
-  os: linux
-steps:
-- image: plugins/slack
-  name: slack
-  settings:
-    channel: grafana-ci-notifications
-    template: |-
-      Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}
-      Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
-      Author: {{build.author}}
-    webhook:
-      from_secret: slack_webhook
-trigger:
-  ref:
-  - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
-  status:
-  - failure
-type: docker
----
 depends_on: []
 kind: pipeline
 name: oss-build-test-release
@@ -4122,34 +4091,6 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
-depends_on:
-- oss-build-release-branch
-- oss-windows-release-branch
-- enterprise-build-release-branch
-- enterprise-windows-release-branch
-kind: pipeline
-name: notify-release-branch
-platform:
-  arch: amd64
-  os: linux
-steps:
-- image: plugins/slack
-  name: slack
-  settings:
-    channel: grafana-ci-notifications
-    template: |-
-      Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}
-      Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
-      Author: {{build.author}}
-    webhook:
-      from_secret: slack_webhook
-trigger:
-  ref:
-  - refs/heads/v[0-9]*
-  status:
-  - failure
-type: docker
----
 kind: pipeline
 name: scan-docker-images
 platform:
@@ -4210,6 +4151,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 826fcfa7f06bd01a23ea9ddd81ea23bc1e0fc6d4de59a625fcb0be27a238a110
+hmac: 003c43c53f2992facff7c2bafd676f08102321f86e8f45c01375a5a7c30aa692
 
 ...
