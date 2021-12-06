@@ -43,7 +43,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
 
   return (
     <>
-      {hue && <div>{label}</div>}
+      <div>{label}</div>
       <div {...otherProps} style={{ display: 'flex', flexDirection: 'row' }}>
         {primaryShade && (
           <ColorSwatch
