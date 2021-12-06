@@ -39,7 +39,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   const renderCustomTooltip = useCallback(
     (alignedData: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
       const data = frames ?? [];
-      // Count vaue fields in the state-timeline-ready frame
+      // Count value fields in the state-timeline-ready frame
       const valueFieldsCount = data.reduce(
         (acc, frame) => acc + frame.fields.filter((field) => field.type !== FieldType.time).length,
         0
