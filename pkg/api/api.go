@@ -263,6 +263,10 @@ func (hs *HTTPServer) registerRoutes() {
 			prefRoute.Post("/set-home-dash", routing.Wrap(SetHomeDashboard))
 		})
 
+		apiRoute.Group("/library-credentials", func(annotationsRoute routing.RouteRegister) {
+			annotationsRoute.Get("/", routing.Wrap(hs.GetLibraryCredentials))
+		})
+
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
 			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll)), routing.Wrap(hs.GetDataSources))
