@@ -42,6 +42,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       `${Button.displayName}: Prop variant="link" is deprecated. Please use fill="text".`
     );
 
+    console.log('otherProps', otherProps);
+
     return (
       <button className={cx(styles.button, className)} {...otherProps} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}

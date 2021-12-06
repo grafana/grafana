@@ -1,6 +1,5 @@
 import { SelectableValue, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import { isArray } from 'lodash';
 import React, { useState } from 'react';
 import { PrometheusDatasource } from '../../datasource';
 import { promQueryModeller } from '../PromQueryModeller';
@@ -13,16 +12,11 @@ export function LabelParamEditor({ onChange, index, value, query, datasource }: 
     isLoading?: boolean;
   }>({});
 
-  if (!isArray(value)) {
-    return value;
-  }
-
   return (
     <Select
-      isMulti={true}
-      openMenuOnFocus
-      autoFocus={value.length === 0}
       menuShouldPortal
+      autoFocus={value === '' ? true : undefined}
+      openMenuOnFocus
       onOpenMenu={async () => {
         setState({ isLoading: true });
         const options = await loadGroupByLabels(query as PromVisualQuery, datasource as PrometheusDatasource);
@@ -31,15 +25,9 @@ export function LabelParamEditor({ onChange, index, value, query, datasource }: 
       isLoading={state.isLoading}
       noOptionsMessage="No labels found"
       loadingMessage="Loading labels"
-      allowCustomValue
       options={state.options}
-      value={value.map((x) => toOption(x as string))}
-      onChange={(value) =>
-        onChange(
-          index,
-          value.map((x: SelectableValue<string>) => x.value)
-        )
-      }
+      value={toOption(value as string)}
+      onChange={(value) => onChange(index, value.value!)}
     />
   );
 }

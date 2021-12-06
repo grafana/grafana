@@ -64,7 +64,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: '__avg_by',
-      displayName: 'Avg by',
+      displayName: 'Average by',
       params: [{ name: 'Label', type: 'string', restParam: true }],
       defaultParams: [''],
       category: PromVisualQueryOperationCategory.GroupBy,

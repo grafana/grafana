@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, useStyles2 } from '@grafana/ui';
 import FlexItem from 'app/plugins/datasource/cloudwatch/components/ui/FlexItem';
 import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React from 'react';
@@ -65,7 +65,7 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
               <div className={styles.paramRow} key={`${index}-1`}>
                 <div className={styles.paramName}>{paramDef.name}</div>
                 <div className={styles.paramValue}>
-                  <Stack gap={1} direction="row" alignItems="center" wrap={false}>
+                  <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
                     <Editor
                       index={index}
                       paramDef={paramDef}
@@ -82,6 +82,7 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
                         fill="text"
                         icon="times"
                         variant="secondary"
+                        title={`Remove ${paramDef.name}`}
                         onClick={() => onRemoveRestParam(index)}
                       />
                     )}
@@ -90,8 +91,16 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
               </div>
               {paramDef.restParam && index === operation.params.length - 1 && (
                 <div className={styles.paramRow} key={`${index}-2`}>
+                  <div className={styles.paramName}></div>
                   <div className={styles.paramValue}>
-                    <Button size="sm" fill="text" icon="plus" variant="secondary" onClick={onAddRestParam} />
+                    <Button
+                      size="sm"
+                      fill="text"
+                      icon="plus"
+                      title={`Add ${paramDef.name}`}
+                      variant="secondary"
+                      onClick={onAddRestParam}
+                    />
                   </div>
                 </div>
               )}
