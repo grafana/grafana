@@ -1,5 +1,5 @@
 import { getOperationDefintions } from './operations';
-import { VisualQueryModeller, QueryBuilderOperationDef } from './shared/types';
+import { VisualQueryModeller, QueryBuilderOperationDef, QueryBuilderLabelFilter } from './shared/types';
 import { PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
 export class PromQueryModeller implements VisualQueryModeller {
@@ -34,7 +34,7 @@ export class PromQueryModeller implements VisualQueryModeller {
   }
 
   renderQuery(query: PromVisualQuery) {
-    let queryString = `${query.metric}${this.renderLabels(query)}`;
+    let queryString = `${query.metric}${this.renderLabels(query.labels)}`;
 
     for (const operation of query.operations) {
       const def = this.operations[operation.id];
@@ -47,13 +47,13 @@ export class PromQueryModeller implements VisualQueryModeller {
     return queryString;
   }
 
-  renderLabels(query: PromVisualQuery) {
-    if (query.labels.length === 0) {
+  renderLabels(labels: QueryBuilderLabelFilter[]) {
+    if (labels.length === 0) {
       return '';
     }
 
     let expr = '{';
-    for (const filter of query.labels) {
+    for (const filter of labels) {
       if (expr !== '{') {
         expr += ', ';
       }

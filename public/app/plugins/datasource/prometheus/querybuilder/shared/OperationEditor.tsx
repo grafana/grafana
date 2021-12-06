@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 import FlexItem from 'app/plugins/datasource/cloudwatch/components/ui/FlexItem';
 import React from 'react';
@@ -9,12 +9,14 @@ import { OperationParamEditor } from './OperationParamEditor';
 export interface Props {
   operation: QueryBuilderOperation;
   index: number;
+  query: any;
+  datasource: DataSourceApi;
   queryModeller: VisualQueryModeller;
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
 }
 
-export function OperationEditor({ operation, index, onRemove, onChange, queryModeller }: Props) {
+export function OperationEditor({ operation, index, onRemove, onChange, queryModeller, query, datasource }: Props) {
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
 
@@ -52,6 +54,8 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
               operation={operation}
               onChange={onParamValueChanged}
               onRemove={onRemoveParam}
+              query={query}
+              datasource={datasource}
             />
           );
         })}

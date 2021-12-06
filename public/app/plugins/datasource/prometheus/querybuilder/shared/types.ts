@@ -2,7 +2,7 @@
  * Shared types that can be reused by Loki and other data sources
  */
 
-import { SelectableValue } from '@grafana/data';
+import { DataSourceApi, SelectableValue } from '@grafana/data';
 import { ComponentType } from 'react';
 
 export interface QueryBuilderLabelFilter {
@@ -47,11 +47,20 @@ export interface QueryBuilderOperationParamDef {
   editor?: ComponentType<QueryBuilderOperationParamEditorProps>;
 }
 
+export interface QueryBuilderOperationParamOptionLoadContext<TContextQuery = any, TDataSource = any> {
+  loadQuery?: string;
+  contextQuery: TContextQuery;
+  datasource: TDataSource;
+  operation: QueryBuilderOperation;
+}
+
 export interface QueryBuilderOperationParamEditorProps {
   value?: QueryBuilderOperationParamValue;
   paramDef: QueryBuilderOperationParamDef;
   index: number;
   operation: QueryBuilderOperation;
+  query: any;
+  datasource: DataSourceApi;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
   onRemove: (index: number) => void;
 }

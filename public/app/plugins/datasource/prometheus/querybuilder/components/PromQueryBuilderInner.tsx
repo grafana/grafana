@@ -10,6 +10,7 @@ import { NestedQueryList } from './NestedQueryList';
 import { promQueryModeller } from '../PromQueryModeller';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { QueryPreview } from './QueryPreview';
+import { DataSourceApi } from '@grafana/data';
 
 export interface Props {
   query: PromVisualQuery;
@@ -45,7 +46,12 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
         />
       </EditorRow>
       <EditorRow>
-        <OperationList<PromVisualQuery> queryModeller={promQueryModeller} query={query} onChange={onChange} />
+        <OperationList<PromVisualQuery>
+          queryModeller={promQueryModeller}
+          datasource={datasource as DataSourceApi}
+          query={query}
+          onChange={onChange}
+        />
         {query.binaryQueries && query.binaryQueries.length > 0 && (
           <NestedQueryList query={query} datasource={datasource} onChange={onChange} />
         )}

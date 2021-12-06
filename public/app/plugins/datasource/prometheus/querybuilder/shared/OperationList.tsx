@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { ButtonCascader, CascaderOption, useStyles2 } from '@grafana/ui';
 import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React from 'react';
@@ -8,11 +8,12 @@ import { OperationEditor } from './OperationEditor';
 
 export interface Props<T extends QueryWithOperations> {
   query: T;
+  datasource: DataSourceApi;
   onChange: (query: T) => void;
   queryModeller: VisualQueryModeller;
 }
 
-export function OperationList<T extends QueryWithOperations>({ query, onChange, queryModeller }: Props<T>) {
+export function OperationList<T extends QueryWithOperations>({ query, onChange, datasource, queryModeller }: Props<T>) {
   const styles = useStyles2(getStyles);
   const { operations } = query;
 
@@ -54,6 +55,8 @@ export function OperationList<T extends QueryWithOperations>({ query, onChange, 
               queryModeller={queryModeller}
               index={index}
               operation={op}
+              query={query}
+              datasource={datasource}
               onChange={onOperationChange}
               onRemove={onRemove}
             />

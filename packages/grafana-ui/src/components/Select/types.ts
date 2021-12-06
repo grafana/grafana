@@ -79,6 +79,8 @@ export interface SelectCommonProps<T> {
     value: SelectableValue<T> | null,
     options: OptionsOrGroups<unknown, GroupBase<unknown>>
   ) => boolean;
+  /** Message to display isLoading=true*/
+  loadingMessage?: string;
 }
 
 export interface SelectAsyncProps<T> {

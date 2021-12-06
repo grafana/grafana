@@ -1,18 +1,21 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, toOption } from '@grafana/data';
 import { Button, Input, Select, useStyles2 } from '@grafana/ui';
-import React from 'react';
-import { QueryBuilderOperationParamEditorProps } from '../shared/types';
+import React, { ComponentType } from 'react';
+import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from '../shared/types';
 
 export function OperationParamEditor(props: QueryBuilderOperationParamEditorProps) {
   const { paramDef, index, operation } = props;
   const styles = useStyles2(getStyles);
+  const Editor = getInputEditor(paramDef);
 
   return (
     <>
       <div className={styles.param}>
         <div className={styles.name}>{paramDef.name}</div>
-        <div className={styles.value}>{renderParamInput(props)}</div>
+        <div className={styles.value}>
+          <Editor {...props} />
+        </div>
       </div>
       {paramDef.restParam && index === operation.params.length - 1 && (
         <div className={styles.param}>
@@ -26,35 +29,41 @@ export function OperationParamEditor(props: QueryBuilderOperationParamEditorProp
   );
 }
 
-function renderParamInput(props: QueryBuilderOperationParamEditorProps) {
-  const { paramDef, value, index, onChange } = props;
-  const { options } = paramDef;
-
+function getInputEditor(paramDef: QueryBuilderOperationParamDef): ComponentType<QueryBuilderOperationParamEditorProps> {
   if (paramDef.editor) {
-    return <paramDef.editor {...props} />;
+    return paramDef.editor;
   }
 
-  if (options && options?.length > 0) {
-    const selectOptions = paramDef.options!.map((option) => ({
-      label: option as string,
-      value: option as string,
-    }));
-
-    return (
-      <Select
-        value={toOption(value as string)}
-        options={selectOptions}
-        onChange={(value) => onChange(index, value.value!)}
-      />
-    );
+  if (paramDef.options) {
+    return SelectInputParamEditor;
   }
 
+  return SimpleInputParamEditor;
+}
+
+function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
   return (
     <Input
-      value={value ?? ''}
+      value={props.value ?? ''}
       onBlur={(evt) => {
-        onChange(index, evt.currentTarget.value);
+        props.onChange(props.index, evt.currentTarget.value);
       }}
+    />
+  );
+}
+
+function SelectInputParamEditor({ paramDef, value, index, onChange }: QueryBuilderOperationParamEditorProps) {
+  const selectOptions = paramDef.options!.map((option) => ({
+    label: option as string,
+    value: option as string,
+  }));
+
+  return (
+    <Select
+      menuShouldPortal
+      value={toOption(value as string)}
+      options={selectOptions}
+      onChange={(value) => onChange(index, value.value!)}
     />
   );
 }

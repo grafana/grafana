@@ -30,11 +30,8 @@ export interface PromQueryPattern {
 
 export function getDefaultTestQuery() {
   const model: PromVisualQuery = {
-    metric: 'cortex_query_scheduler_queue_duration_seconds_bucket',
-    labels: [
-      { label: 'cluster', op: '=~', value: '$cluster' },
-      { label: 'job', op: '=~', value: '($namespace)/query-scheduler.*' },
-    ],
+    metric: 'counters_requests',
+    labels: [{ label: 'app', op: '=~', value: 'backend' }],
     operations: [
       { id: 'rate', params: ['auto'] },
       { id: '__sum_by', params: ['job'] },

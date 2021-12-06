@@ -7,6 +7,7 @@ import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/sha
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
 import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 import { lokiQueryModeller } from '../lokiQueryModeller';
+import { DataSourceApi } from '@grafana/data';
 
 export interface Props {
   query: LokiVisualQuery;
@@ -27,7 +28,12 @@ export const LokiQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
       </EditorRow>
       <EditorRow>Simple search</EditorRow>
       <EditorRow>
-        <OperationList queryModeller={lokiQueryModeller} query={query} onChange={onChange} />
+        <OperationList
+          queryModeller={lokiQueryModeller}
+          query={query}
+          onChange={onChange}
+          datasource={datasource as DataSourceApi}
+        />
       </EditorRow>
     </EditorRows>
   );
