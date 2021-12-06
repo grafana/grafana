@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AsyncSelect, Select } from '@grafana/ui';
-import { toOption } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
 import AccessoryButton from 'app/plugins/datasource/cloudwatch/components/ui/AccessoryButton';
 import InputGroup from 'app/plugins/datasource/cloudwatch/components/ui/InputGroup';
 import { QueryBuilderLabelFilter } from './types';
@@ -9,12 +9,24 @@ export interface Props {
   item: Partial<QueryBuilderLabelFilter>;
   onChange: (value: QueryBuilderLabelFilter) => void;
   onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
+  onGetLabelNameValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
   onDelete: () => void;
 }
 
-export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames }: Props) {
+export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onGetLabelNameValues }: Props) {
+  const [labelValues, setLabelValues] = useState<any>();
+
   const loadLabelNames = async () => {
     return (await onGetLabelNames(item)).map((value) => ({ label: value, value }));
+  };
+
+  const loadLabelValues = async (change: SelectableValue<string>) => {
+    await onGetLabelNameValues(change).then((res) => {
+      if (res.length > 0) {
+        onChange(({ ...item, label: change.label, value: res[0] } as any) as QueryBuilderLabelFilter);
+        setLabelValues(res.map((value) => ({ label: value, value })));
+      }
+    });
   };
 
   const operators = [{ label: '=~', value: '=~' }];
@@ -34,8 +46,9 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames }: P
               onChange(({
                 ...item,
                 label: change.label,
-                value: 'Temp label name value',
+                value: undefined,
               } as any) as QueryBuilderLabelFilter);
+              loadLabelValues(change);
             }
           }}
         />
@@ -51,12 +64,12 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames }: P
           }}
         />
 
-        <AsyncSelect
+        <Select
           inputId="prometheus-dimensions-filter-item-value"
           width="auto"
           value={item.value ? toOption(item.value) : null}
           allowCustomValue
-          loadOptions={loadLabelNames}
+          options={labelValues}
           onChange={(change) => {
             if (change.value != null) {
               onChange(({ ...item, value: change.value } as any) as QueryBuilderLabelFilter);
