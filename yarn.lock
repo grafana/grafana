@@ -3760,7 +3760,7 @@ __metadata:
     "@types/react-window": 1.8.1
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/slate": 0.47.2
-    "@types/slate-plain-serializer": 0.6.1
+    "@types/slate-plain-serializer": 0.7.1
     "@types/slate-react": 0.22.5
     "@types/testing-library__jest-dom": 5.9.5
     "@types/testing-library__react-hooks": ^3.2.0
@@ -9874,12 +9874,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/slate-plain-serializer@npm:0.6.1":
-  version: 0.6.1
-  resolution: "@types/slate-plain-serializer@npm:0.6.1"
+"@types/slate-plain-serializer@npm:0.7.1":
+  version: 0.7.1
+  resolution: "@types/slate-plain-serializer@npm:0.7.1"
   dependencies:
     "@types/slate": "*"
-  checksum: 59d0c051147b23829c8d7e46b1e0c366a258b9909543dd6e35983cdbc2fd38fdc33f3fe2ac18b2531484289662dfb83f76aaf6d9f83cfeae5227c96720c84e9e
+  checksum: 23e9b332cbbefb49248a52faba7a2ab28cd389b97b0e2d8a05ac0fb51ee30be935c9cc6e323372265679c2705957e7760c2f63f3e0b675e2a7faae56ae7e1c45
   languageName: node
   linkType: hard
 
@@ -19295,7 +19295,7 @@ __metadata:
     "@types/reselect": 2.2.0
     "@types/semver": 7.3.8
     "@types/slate": 0.47.2
-    "@types/slate-plain-serializer": 0.6.1
+    "@types/slate-plain-serializer": 0.7.1
     "@types/slate-react": 0.22.5
     "@types/testing-library__jest-dom": 5.9.5
     "@types/testing-library__react-hooks": ^3.2.0
