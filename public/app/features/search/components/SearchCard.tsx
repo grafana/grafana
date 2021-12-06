@@ -10,19 +10,19 @@ export interface Props {
   item: DashboardSectionItem;
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
-  themeId: 'dark' | 'light';
 }
 
-export function SearchCard({ editable, item, onTagSelected, onToggleChecked, themeId }: Props) {
+export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const [imageLoaded, setImageLoaded] = useState(true);
+  const [hasPreview, setHasPreview] = useState(true);
+  const themeId = theme.isDark ? 'dark' : 'light';
   const imageSrc = `/preview/dash/${item.uid}/square/${themeId}`;
 
   const retryImage = () => {
-    setImageLoaded(false);
+    setHasPreview(false);
     const img = new Image();
-    img.onload = () => setImageLoaded(true);
+    img.onload = () => setHasPreview(true);
     img.onerror = retryImage;
     setTimeout(() => {
       img.src = imageSrc;
@@ -41,16 +41,16 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked, the
   return (
     <a className={styles.gridItem} key={item.uid} href={item.url}>
       <div className={styles.imageContainer}>
-        {imageLoaded && (
+        {hasPreview && (
           <img
             loading="lazy"
             className={styles.image}
             src={imageSrc}
-            onLoad={() => setImageLoaded(true)}
+            onLoad={() => setHasPreview(true)}
             onError={retryImage}
           />
         )}
-        {!imageLoaded && <div className={styles.placeholder}>No preview available</div>}
+        {!hasPreview && <div className={styles.placeholder}>No preview available</div>}
       </div>
       <div className={styles.info}>
         <SearchCheckbox

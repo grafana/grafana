@@ -89,13 +89,12 @@ export const SearchResults: FC<Props> = memo(
 
     // Quick hack to show preview images
     if (layout === SearchLayout.Grid) {
-      const tid = theme.isDark ? 'dark' : 'light';
       return (
         <div className={styles.gridContainer}>
           {results.map((section) => (
             <>
               {section.items.map((item) => (
-                <SearchCard {...itemProps} key={item.uid} item={item} themeId={tid} />
+                <SearchCard {...itemProps} key={item.uid} item={item} />
               ))}
             </>
           ))}
@@ -114,7 +113,7 @@ export const SearchResults: FC<Props> = memo(
 SearchResults.displayName = 'SearchResults';
 
 const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
-  const { sm, md } = theme.spacing;
+  const { md } = theme.spacing;
 
   return {
     wrapper: css`
