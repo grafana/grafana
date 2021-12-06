@@ -14,6 +14,13 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 import { createTheme } from '@grafana/data';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 
+jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
+  const LazyLoader: React.FC = ({ children }) => {
+    return <>{children}</>;
+  };
+  return { LazyLoader };
+});
+
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => {
   class GeneralSettings extends React.Component<{}, {}> {
     render() {
