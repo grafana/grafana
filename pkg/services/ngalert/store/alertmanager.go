@@ -12,7 +12,8 @@ import (
 
 var (
 	// ErrNoAlertmanagerConfiguration is an error for when no alertmanager configuration is found.
-	ErrNoAlertmanagerConfiguration = fmt.Errorf("could not find an Alertmanager configuration")
+	ErrNoAlertmanagerConfiguration        = fmt.Errorf("could not find an Alertmanager configuration")
+	ErrWrongAlertmanagerConfigurationHash = fmt.Errorf("the passed hash does not match the latest hash")
 )
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
@@ -63,12 +64,14 @@ type SaveCallback func() error
 func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback SaveCallback) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		config := models.AlertConfiguration{
-			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
-			ConfigurationVersion:      cmd.ConfigurationVersion,
-			Default:                   cmd.Default,
-			OrgID:                     cmd.OrgID,
+			AlertmanagerConfiguration:     cmd.AlertmanagerConfiguration,
+			AlertmanagerConfigurationHash: cmd.AlertmanagerConfigurationHash,
+			ConfigurationVersion:          cmd.ConfigurationVersion,
+			Default:                       cmd.Default,
+			OrgID:                         cmd.OrgID,
 		}
-		if _, err := sess.Insert(config); err != nil {
+		_, err := sess.Insert(config)
+		if err != nil {
 			return err
 		}
 
@@ -76,6 +79,33 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			return err
 		}
 
+		return nil
+	})
+}
+
+func (st *DBstore) UpdateAlertManagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		config := models.AlertConfiguration{
+			AlertmanagerConfiguration:     cmd.AlertmanagerConfiguration,
+			AlertmanagerConfigurationHash: cmd.AlertmanagerConfigurationHash,
+			ConfigurationVersion:          cmd.ConfigurationVersion,
+			Default:                       cmd.Default,
+			OrgID:                         cmd.OrgID,
+		}
+		latestHash, err := sess.Table("alert_configuration").Cols("hash").Desc("id").Where("org_id = ?", cmd.OrgID).Limit(1).QueryString()
+		if err != nil {
+			return err
+		}
+		if len(latestHash) == 0 {
+			return fmt.Errorf("couldn't find any hash for this configuration")
+		}
+		if latestHash[0]["hash"] != cmd.FetchedHash {
+			return ErrWrongAlertmanagerConfigurationHash
+		}
+		_, err = sess.Insert(config)
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 }

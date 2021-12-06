@@ -79,6 +79,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		DataProxy: api.DataProxy,
 	}
 
+	api.RegisterTemplateEndpoints(&TemplateServer{
+		store: api.AlertingStore,
+	}, m)
+
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,

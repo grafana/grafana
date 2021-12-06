@@ -10,8 +10,10 @@ package api
 import (
 	"net/http"
 
+	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -415,5 +417,15 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 				m,
 			),
 		)
-	})
+		group.Post(
+			toMacaronPath("/api/ngalert/templates"),
+			binding.Bind(apimodels.PostableTemplate{}),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/ngalert/templates",
+				srv.RoutePostTestReceivers,
+				m,
+			),
+		)
+	}, middleware.ReqSignedIn)
 }

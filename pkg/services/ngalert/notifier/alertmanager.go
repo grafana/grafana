@@ -237,10 +237,11 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	defer am.reloadConfigMtx.Unlock()
 
 	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: am.Settings.UnifiedAlerting.DefaultConfiguration,
-		Default:                   true,
-		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-		OrgID:                     am.orgID,
+		AlertmanagerConfiguration:     am.Settings.UnifiedAlerting.DefaultConfiguration,
+		AlertmanagerConfigurationHash: fmt.Sprintf("%x", md5.Sum([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))),
+		Default:                       true,
+		ConfigurationVersion:          fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+		OrgID:                         am.orgID,
 	}
 
 	cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
@@ -273,9 +274,10 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	defer am.reloadConfigMtx.Unlock()
 
 	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: string(rawConfig),
-		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-		OrgID:                     am.orgID,
+		AlertmanagerConfiguration:     string(rawConfig),
+		AlertmanagerConfigurationHash: fmt.Sprintf("%x", md5.Sum(rawConfig)),
+		ConfigurationVersion:          fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+		OrgID:                         am.orgID,
 	}
 
 	err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
