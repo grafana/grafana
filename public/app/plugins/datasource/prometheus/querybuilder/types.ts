@@ -34,7 +34,7 @@ export function getDefaultTestQuery() {
     labels: [{ label: 'app', op: '=~', value: 'backend' }],
     operations: [
       { id: 'rate', params: ['auto'] },
-      { id: '__sum_by', params: ['job'] },
+      { id: '__sum_by', params: [['job']] },
     ],
   };
 

@@ -36,7 +36,7 @@ export type QueryBuilderOperationRenderer = (
   innerExpr: string
 ) => string;
 
-export type QueryBuilderOperationParamValue = string | number;
+export type QueryBuilderOperationParamValue = string | number | string[] | number[];
 
 export interface QueryBuilderOperationParamDef {
   name: string;
