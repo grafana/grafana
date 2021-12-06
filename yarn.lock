@@ -3371,7 +3371,7 @@ __metadata:
     "@types/lodash": 4.14.123
     "@types/marked": 4.0.0
     "@types/node": 16.11.6
-    "@types/papaparse": 5.2.0
+    "@types/papaparse": 5.3.1
     "@types/react": 17.0.30
     "@types/rollup-plugin-visualizer": 4.2.1
     "@types/sinon": ^10.0.4
@@ -3746,7 +3746,7 @@ __metadata:
     "@types/lodash": 4.14.123
     "@types/mock-raf": 1.0.2
     "@types/node": 16.11.6
-    "@types/papaparse": 5.2.0
+    "@types/papaparse": 5.3.1
     "@types/prismjs": 1.16.0
     "@types/react": 17.0.30
     "@types/react-beautiful-dnd": 13.1.1
@@ -9404,12 +9404,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/papaparse@npm:5.2.0":
-  version: 5.2.0
-  resolution: "@types/papaparse@npm:5.2.0"
+"@types/papaparse@npm:5.3.1":
+  version: 5.3.1
+  resolution: "@types/papaparse@npm:5.3.1"
   dependencies:
     "@types/node": "*"
-  checksum: 74fc75c7325295e3689ed2830b7ff9a60b6577e28bb30b77fa1d0b03e709e6ad99c9547648c3e3089b8653a36153c34940166c22974ed797d43699962f081816
+  checksum: ee788899e697527d91c28d5fcaf890643fc10103ca8702049e73729faf9cb05345bb35d3f844636c0fc4a79fbdf1eb1a5e57532a09fdce6250244d85df79d4ec
   languageName: node
   linkType: hard
 
@@ -19275,7 +19275,7 @@ __metadata:
     "@types/mousetrap": 1.6.3
     "@types/node": 16.11.6
     "@types/ol": ^6.5.1
-    "@types/papaparse": 5.2.0
+    "@types/papaparse": 5.3.1
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.16.0
     "@types/rc-time-picker": ^3

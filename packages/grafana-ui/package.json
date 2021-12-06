@@ -134,7 +134,7 @@
     "@types/lodash": "4.14.123",
     "@types/mock-raf": "1.0.2",
     "@types/node": "16.11.6",
-    "@types/papaparse": "5.2.0",
+    "@types/papaparse": "5.3.1",
     "@types/prismjs": "1.16.0",
     "@types/react": "17.0.30",
     "@types/react-beautiful-dnd": "13.1.1",
