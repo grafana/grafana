@@ -265,11 +265,12 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		return
 	}
 
+	// prepend slash for cleaning relative paths
 	requestedFile := filepath.Clean(filepath.Join("/", c.Params("*")))
 	rel, err := filepath.Rel("/", requestedFile)
 	if err != nil {
-		// this should not never fail
-		c.Handle(hs.Cfg, 500, "Relative path found", err)
+		// slash is prepended above therefore this is not expected to fail
+		c.Handle(hs.Cfg, 500, "Failed to get the relative path", err)
 		return
 	}
 
