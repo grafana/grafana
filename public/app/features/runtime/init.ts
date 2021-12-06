@@ -26,7 +26,7 @@ export function initWindowRuntime() {
     },
 
     /** Get info for the current dashboard.  This will include the migrated dashboard JSON */
-    getDashboardInfo: () => {
+    getDashboardSaveModel: () => {
       const d = getDashboardSrv().getCurrent();
       if (!d) {
         return undefined;
