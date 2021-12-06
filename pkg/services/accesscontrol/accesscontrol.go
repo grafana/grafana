@@ -2,8 +2,6 @@ package accesscontrol
 
 import (
 	"context"
-	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -123,42 +121,6 @@ func ValidateScope(scope string) bool {
 	return !strings.ContainsAny(prefix, "*?")
 }
 
-// TODO remove this implementation in favor of the other one
-// GetResourcesMetadataV1 returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadataV1(ctx context.Context, permissions []*Permission, resource string, resourceIDs []string) (map[string]Metadata, error) {
-	allScope := GetResourceAllScope(resource)
-	allIDScope := GetResourceAllIDScope(resource)
-
-	result := map[string]Metadata{}
-	for _, r := range resourceIDs {
-		scope := GetResourceScope(resource, r)
-		for _, p := range permissions {
-			if p.Scope == "*" || p.Scope == allScope || p.Scope == allIDScope || p.Scope == scope {
-				metadata, initialized := result[r]
-				if !initialized {
-					metadata = Metadata{}
-				}
-				metadata[p.Action] = true
-				result[r] = metadata
-			}
-		}
-	}
-
-	return result, nil
-}
-
-func getResourceAllScopeRegex(resource string) string {
-	return fmt.Sprintf("(%s[:][*])", resource)
-}
-
-func getResourceAllIDScopeRegex(resource string) string {
-	return fmt.Sprintf("(%s[:]id[:][*])", resource)
-}
-
-func getResourceScopeRegex(resource, target string) string {
-	return fmt.Sprintf("^(%s[:]id[:](%s))$", resource, target)
-}
-
 func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map[string]Metadata {
 	metadata, initialized := allMetadata[id]
 	if !initialized {
@@ -170,35 +132,24 @@ func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map
 }
 
 // GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs []string) (map[string]Metadata, error) {
-	allScope := getResourceAllScopeRegex(resource)
-	allIDScope := getResourceAllIDScopeRegex(resource)
-
-	// Regex to match global scopes
-	globalsFilter, err := regexp.Compile(fmt.Sprintf("^([*]|%s|%s)$", allScope, allIDScope))
-	if err != nil {
-		return nil, err
-	}
-
-	// Regex to match all resource scopes
-	allIds := strings.Join(resourceIDs, "|")
-	resourcesFilter, err := regexp.Compile(getResourceScopeRegex(resource, allIds))
-	if err != nil {
-		return nil, err
-	}
+func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs map[string]bool) (map[string]Metadata, error) {
+	allScope := GetResourceAllScope(resource)
+	allIDScope := GetResourceAllIDScope(resource)
 
 	// Loop through permissions once
 	result := map[string]Metadata{}
 	for _, p := range permissions {
-		scope := []byte(p.Scope)
-		if globalsFilter.Match(scope) {
+		if p.Scope == "*" || p.Scope == allScope || p.Scope == allIDScope {
 			// Add global action to all resources
-			for _, id := range resourceIDs {
+			for id := range resourceIDs {
 				result = addActionToMetadata(result, p.Action, id)
 			}
-		} else if match := resourcesFilter.FindStringSubmatch(p.Scope); match != nil {
-			// Add action to a specific resource
-			result = addActionToMetadata(result, p.Action, match[2])
+		} else {
+			parts := strings.Split(p.Scope, ":")
+			if len(parts) == 3 && parts[0] == resource && parts[1] == "id" && resourceIDs[parts[2]] {
+				// Add action to a specific resource
+				result = addActionToMetadata(result, p.Action, parts[2])
+			}
 		}
 	}
 

@@ -12,14 +12,14 @@ func TestGetResourcesMetadata(t *testing.T) {
 	tests := []struct {
 		desc         string
 		resource     string
-		resourcesIDs []string
+		resourcesIDs map[string]bool
 		permissions  []*Permission
 		expected     map[string]Metadata
 	}{
 		{
 			desc:         "Should return no permission for resources 1,2,3 given the user has no permission",
 			resource:     "resources",
-			resourcesIDs: []string{"1", "2", "3"},
+			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
 			expected:     map[string]Metadata{},
 		},
 		{
@@ -30,7 +30,7 @@ func TestGetResourcesMetadata(t *testing.T) {
 				{Action: "resources:action2", Scope: Scope("resources", "id", "4")},
 				{Action: "resources:action3", Scope: Scope("resources", "id", "4")},
 			},
-			resourcesIDs: []string{"1", "2", "3"},
+			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
 			expected:     map[string]Metadata{},
 		},
 		{
@@ -41,7 +41,7 @@ func TestGetResourcesMetadata(t *testing.T) {
 				{Action: "resources:action2", Scope: Scope("resources", "id", "2")},
 				{Action: "resources:action3", Scope: Scope("resources", "id", "2")},
 			},
-			resourcesIDs: []string{"1", "2", "3"},
+			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
 			expected: map[string]Metadata{
 				"1": {"resources:action1": true},
 				"2": {"resources:action2": true, "resources:action3": true},
@@ -58,7 +58,7 @@ func TestGetResourcesMetadata(t *testing.T) {
 				{Action: "resources:action2", Scope: Scope("resources", "id", "2")},
 				{Action: "resources:action3", Scope: Scope("resources", "id", "2")},
 			},
-			resourcesIDs: []string{"1", "2", "3"},
+			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
 			expected: map[string]Metadata{
 				"1": {"resources:action1": true, "resources:action4": true, "resources:action5": true, "resources:action6": true},
 				"2": {"resources:action2": true, "resources:action3": true, "resources:action4": true, "resources:action5": true, "resources:action6": true},
@@ -74,7 +74,7 @@ func TestGetResourcesMetadata(t *testing.T) {
 				{Action: "resources:action2", Scope: Scope("otherresources", "id", "*")},
 				{Action: "otherresources:action1", Scope: Scope("otherresources", "id", "*")},
 			},
-			resourcesIDs: []string{"1", "2", "3"},
+			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
 			expected: map[string]Metadata{
 				"1": {"resources:action1": true, "otherresources:action1": true},
 			},
