@@ -17,7 +17,7 @@ steps:
   name: grabpl
 - depends_on:
   - clone
-  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest
+  image: meltwater/drone-cache:v1.2.2
   name: restore-cache
   pull: always
   settings:
@@ -72,7 +72,7 @@ steps:
   name: build-plugins
 - depends_on:
   - initialize
-  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest
+  image: meltwater/drone-cache:v1.2.2
   name: rebuild-cache
   pull: always
   settings:
@@ -213,6 +213,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 51956ddcbb27215e433ceff480af9f7ae5d17b8ca3603537f5351ca61263f0a9
+hmac: cab080ace6e6f05babd13065c8ec47817fd9e60d6f2d9f1df2e4db88e12152e8
 
 ...

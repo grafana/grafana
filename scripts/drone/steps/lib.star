@@ -9,6 +9,7 @@ alpine_image = 'alpine:3.14.3'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
+drone_cache = 'meltwater/drone-cache:v1.2.2'
 test_release_ver = 'v7.3.0-test'
 
 
@@ -510,7 +511,7 @@ def lint_frontend_step():
 
 def restore_cache_step():
     return {
-        'image': 'jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest',
+        'image': drone_cache,
         'name': 'restore-cache',
         'pull': 'always',
          'settings': {
@@ -531,7 +532,7 @@ def restore_cache_step():
 
 def rebuild_cache_step():
     return {
-        'image': 'jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest',
+        'image': drone_cache,
         'name': 'rebuild-cache',
         'pull': 'always',
          'settings': {
