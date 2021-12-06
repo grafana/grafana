@@ -20,6 +20,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
 }) => {
   const primaryShade = hue.shades.find((shade) => shade.primary)!;
   const focusManager = useFocusManager();
+  const label = upperFirst(hue.name);
 
   const onKeyDownColorSelect = (e: React.KeyboardEvent, colorName: string) => {
     if (e.key === 'Tab' || e.altKey || e.ctrlKey || e.metaKey) {
@@ -42,7 +43,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
 
   return (
     <>
-      {hue && <div>{upperFirst(hue.name)}</div>}
+      {hue && <div>{label}</div>}
       <div {...otherProps} style={{ display: 'flex', flexDirection: 'row' }}>
         {primaryShade && (
           <ColorSwatch
