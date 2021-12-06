@@ -2,6 +2,17 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import ConfigEditor, { Props } from './ConfigEditor';
 
+jest.mock('lodash', () => {
+  const uniqueId = (prefix: string) => `${prefix}42`;
+
+  const orig = jest.requireActual('lodash');
+
+  return {
+    ...orig,
+    uniqueId,
+  };
+});
+
 const setup = (propOverrides?: object) => {
   const props: Props = {
     options: {
