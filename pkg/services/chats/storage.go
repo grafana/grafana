@@ -12,12 +12,14 @@ const (
 	ContentTypeUser      = 1
 	ContentTypeDashboard = 2
 	ContentTypeIncident  = 3
+	ContentTypeTeam      = 4
 )
 
 var registeredContentTypes = map[int]struct{}{
 	ContentTypeUser:      {},
 	ContentTypeDashboard: {},
 	ContentTypeIncident:  {},
+	ContentTypeTeam:      {},
 }
 
 var (
