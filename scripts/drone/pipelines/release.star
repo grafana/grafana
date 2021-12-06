@@ -243,7 +243,7 @@ def release_pipelines(ver_mode='release', trigger=None):
         trigger = {
             'ref': ['refs/tags/v*',],
             'repo': {
-              'exclude': 'grafana/grafana',
+              'exclude': ['grafana/grafana'],
             },
         }
 
