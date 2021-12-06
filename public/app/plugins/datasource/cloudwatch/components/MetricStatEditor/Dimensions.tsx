@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
 import { isEqual } from 'lodash';
+import React, { useMemo, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Dimensions as DimensionsType, CloudWatchMetricsQuery } from '../../types';
-import EditorList from '../ui/EditorList';
+import { EditorList } from '@grafana/experimental';
 import { CloudWatchDatasource } from '../../datasource';
+import { CloudWatchMetricsQuery, Dimensions as DimensionsType } from '../../types';
 import { FilterItem } from './FilterItem';
 
 export interface Props {

@@ -238,6 +238,7 @@
     "@grafana/aws-sdk": "0.0.3",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
+    "@grafana/experimental": "canary",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/slate-react": "0.22.10-grafana",
