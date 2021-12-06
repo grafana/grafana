@@ -3,18 +3,21 @@ package chats
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	Cfg     *setting.Cfg
+	cfg     *setting.Cfg
+	live    *live.GrafanaLive
 	storage Storage
 }
 
-func ProvideService(cfg *setting.Cfg, store *sqlstore.SQLStore) *Service {
+func ProvideService(cfg *setting.Cfg, store *sqlstore.SQLStore, live *live.GrafanaLive) *Service {
 	s := &Service{
-		Cfg: cfg,
+		cfg:  cfg,
+		live: live,
 		storage: &sqlStorage{
 			sql: store,
 		},
