@@ -23,6 +23,16 @@ export class VisualQueryEngine {
     return operation;
   }
 
+  getCategories() {
+    return [
+      PromVisualQueryOperationCategory.Aggregations,
+      PromVisualQueryOperationCategory.RateAndDeltas,
+      PromVisualQueryOperationCategory.GroupBy,
+      PromVisualQueryOperationCategory.Functions,
+      PromVisualQueryOperationCategory.Math,
+    ];
+  }
+
   renderQuery(query: PromVisualQuery) {
     let queryString = `${query.metric}${this.renderLabels(query)}`;
 

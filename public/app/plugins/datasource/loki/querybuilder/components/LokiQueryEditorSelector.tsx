@@ -2,18 +2,18 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
 import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
+import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
+import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 import React, { useCallback } from 'react';
 import EditorHeader from '../../../cloudwatch/components/ui/EditorHeader';
 import FlexItem from '../../../cloudwatch/components/ui/FlexItem';
 import InlineSelect from '../../../cloudwatch/components/ui/InlineSelect';
 import { Space } from '../../../cloudwatch/components/ui/Space';
-import { PromQueryEditor } from '../../components/PromQueryEditor';
-import { PromQueryEditorProps } from '../../components/types';
-import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
-import { QueryEditorMode } from '../shared/types';
-import { PromQueryBuilder } from './PromQueryBuilder';
+import { LokiQueryEditor } from '../../components/LokiQueryEditor';
+import { LokiQueryEditorProps } from '../../components/types';
+import { LokiQueryBuilder } from './LokiQueryBuilder';
 
-export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
+export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
 
@@ -59,13 +59,13 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
-      {editorMode === QueryEditorMode.Code && <PromQueryEditor {...props} />}
-      {editorMode === QueryEditorMode.Builder && <PromQueryBuilder {...props} />}
+      {editorMode === QueryEditorMode.Code && <LokiQueryEditor {...props} />}
+      {editorMode === QueryEditorMode.Builder && <LokiQueryBuilder {...props} />}
     </>
   );
 });
 
-PromQueryEditorSelector.displayName = 'PromQueryEditorSelector';
+LokiQueryEditorSelector.displayName = 'LokiQueryEditorSelector';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

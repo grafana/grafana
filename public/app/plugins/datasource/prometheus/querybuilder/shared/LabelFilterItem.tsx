@@ -1,16 +1,12 @@
 import React from 'react';
 import { AsyncSelect, Select } from '@grafana/ui';
 import { toOption } from '@grafana/data';
-import { PromVisualQuery } from '../types';
-import { PrometheusDatasource } from '../../datasource';
 import AccessoryButton from 'app/plugins/datasource/cloudwatch/components/ui/AccessoryButton';
 import InputGroup from 'app/plugins/datasource/cloudwatch/components/ui/InputGroup';
-import { QueryBuilderLabelFilter } from '../shared/types';
+import { QueryBuilderLabelFilter } from './types';
 
 export interface Props {
   item: Partial<QueryBuilderLabelFilter>;
-  query: PromVisualQuery;
-  datasource: PrometheusDatasource;
   onChange: (value: QueryBuilderLabelFilter) => void;
   onDelete: () => void;
 }

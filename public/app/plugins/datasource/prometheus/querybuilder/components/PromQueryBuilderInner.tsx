@@ -1,12 +1,14 @@
 import React from 'react';
 import { MetricSelect } from './MetricSelect';
 import { PromVisualQuery } from '../types';
-import { LabelFilters } from './LabelFilters';
-import { OperationList } from './OperationList';
+import { LabelFilters } from '../shared/LabelFilters';
+import { OperationList } from '../shared/OperationList';
 import EditorRows from 'app/plugins/datasource/cloudwatch/components/ui/EditorRows';
 import EditorRow from 'app/plugins/datasource/cloudwatch/components/ui/EditorRow';
 import { PrometheusDatasource } from '../../datasource';
 import { NestedQueryList } from './NestedQueryList';
+import { visualQueryEngine } from '../engine';
+import { QueryBuilderLabelFilter } from '../shared/types';
 
 export interface Props {
   query: PromVisualQuery;
@@ -16,16 +18,20 @@ export interface Props {
 }
 
 export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onChange }) => {
+  const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
+    onChange({ ...query, labels });
+  };
+
   return (
     <EditorRows>
       <EditorRow>
         <MetricSelect query={query} onChange={onChange} />
       </EditorRow>
       <EditorRow>
-        <LabelFilters query={query} datasource={datasource} onChange={onChange} />
+        <LabelFilters labelsFilters={query.labels} onChange={onChangeLabels} />
       </EditorRow>
       <EditorRow>
-        <OperationList query={query} onChange={onChange} />
+        <OperationList engine={visualQueryEngine} query={query} onChange={onChange} />
         {query.binaryQueries && query.binaryQueries.length > 0 && (
           <NestedQueryList query={query} datasource={datasource} onChange={onChange} />
         )}

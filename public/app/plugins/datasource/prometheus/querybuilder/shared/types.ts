@@ -40,3 +40,14 @@ export interface QueryBuilderOperationParamDef {
   restParam?: boolean;
   optional?: boolean;
 }
+
+export enum QueryEditorMode {
+  Builder,
+  Code,
+}
+
+export interface VisualQueryEngine<T extends QueryWithOperations> {
+  getOperationsForCategory(category: string): Array<QueryBuilderOperationDef<T>>;
+  getCategories(): string[];
+  getOperationDef(id: string): QueryBuilderOperationDef<T>;
+}

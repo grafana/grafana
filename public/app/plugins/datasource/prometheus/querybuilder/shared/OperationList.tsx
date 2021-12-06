@@ -3,17 +3,16 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { ButtonCascader, CascaderOption, useStyles2 } from '@grafana/ui';
 import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React from 'react';
-import { visualQueryEngine } from '../engine';
-import { QueryBuilderOperation } from '../shared/types';
-import { operationTopLevelCategories, PromVisualQuery } from '../types';
+import { QueryBuilderOperation, QueryWithOperations, VisualQueryEngine } from '../shared/types';
 import { OperationEditor } from './OperationEditor';
 
-export interface Props {
-  query: PromVisualQuery;
-  onChange: (query: PromVisualQuery) => void;
+export interface Props<T extends QueryWithOperations> {
+  query: T;
+  onChange: (query: T) => void;
+  engine: VisualQueryEngine<T>;
 }
 
-export function OperationList({ query, onChange }: Props) {
+export function OperationList<T extends QueryWithOperations>({ query, onChange, engine }: Props<T>) {
   const styles = useStyles2(getStyles);
   const { operations } = query;
 
@@ -28,11 +27,11 @@ export function OperationList({ query, onChange }: Props) {
     onChange({ ...query, operations: updatedList });
   };
 
-  const addOptions: CascaderOption[] = operationTopLevelCategories.map((category) => {
+  const addOptions: CascaderOption[] = engine.getCategories().map((category) => {
     return {
       value: category,
       label: category,
-      children: visualQueryEngine.getOperationsForCategory(category).map((operation) => ({
+      children: engine.getOperationsForCategory(category).map((operation) => ({
         value: operation.id,
         label: operation.displayName ?? operation.id,
         isLeaf: true,
@@ -41,7 +40,7 @@ export function OperationList({ query, onChange }: Props) {
   });
 
   const onAddOperation = (value: string[]) => {
-    const operationDef = visualQueryEngine.getOperationDef(value[1]);
+    const operationDef = engine.getOperationDef(value[1]);
     onChange(operationDef.addHandler(operationDef, query));
   };
 

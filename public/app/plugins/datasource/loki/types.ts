@@ -1,4 +1,5 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
 
 export interface LokiInstantQueryRequest {
   query: string;
@@ -34,6 +35,7 @@ export interface LokiQuery extends DataQuery {
   range?: boolean;
   instant?: boolean;
   volumeQuery?: boolean;
+  editorMode?: QueryEditorMode;
 }
 
 export interface LokiOptions extends DataSourceJsonData {

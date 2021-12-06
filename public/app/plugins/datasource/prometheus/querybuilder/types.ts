@@ -23,14 +23,6 @@ export enum PromVisualQueryOperationCategory {
   Math = 'Math',
 }
 
-export const operationTopLevelCategories = [
-  PromVisualQueryOperationCategory.Aggregations,
-  PromVisualQueryOperationCategory.RateAndDeltas,
-  PromVisualQueryOperationCategory.GroupBy,
-  PromVisualQueryOperationCategory.Functions,
-  PromVisualQueryOperationCategory.Math,
-];
-
 export interface PromQueryPattern {
   name: string;
   operations: QueryBuilderOperation[];
