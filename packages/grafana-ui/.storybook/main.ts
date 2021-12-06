@@ -23,10 +23,14 @@ module.exports = {
     '@storybook/addon-storysource',
     'storybook-dark-mode',
   ],
-  // currently broken in webpack 5 builder support
-  // reactOptions: {
-  //   fastRefresh: true,
-  // },
+  staticDirs: [
+    { from: '../../../public/fonts', to: '/fonts' },
+    { from: '../../../public/img', to: '/public/img' },
+    { from: '../../../public/lib', to: '/public/lib' },
+  ],
+  reactOptions: {
+    fastRefresh: true,
+  },
   core: {
     builder: 'webpack5',
   },
@@ -43,6 +47,11 @@ module.exports = {
   },
   webpackFinal: async (config: any, { configType }: any) => {
     const isProductionBuild = configType === 'PRODUCTION';
+
+    config.resolve.fallback = {
+      ...(config.resolve.fallback || {}),
+      process: false,
+    };
 
     // remove svg from default storybook webpack 5 config so we can use `raw-loader`
     config.module.rules = config.module.rules.map((rule: any) => {

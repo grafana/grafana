@@ -1,5 +1,5 @@
 import { ThunkResult } from '../../../types';
-import { getEditorVariables, getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
+import { getEditorVariables, getNewVariableIndex, getVariable, getVariables } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
@@ -88,7 +88,7 @@ export const switchToNewMode = (type: VariableType = 'query'): ThunkResult<void>
   const id = getNextAvailableId(type, getVariables(getState()));
   const identifier = { type, id };
   const global = false;
-  const index = getNewVariabelIndex(getState());
+  const index = getNewVariableIndex(getState());
   const model = cloneDeep(variableAdapters.get(type).initialState);
   model.id = id;
   model.name = id;
