@@ -6,13 +6,15 @@ export interface RudderstackBackendOptions {
   writeKey: string;
   dataPlaneUrl: string;
   user?: User;
+  sdkUrl?: string;
+  configUrl?: string;
 }
 
 export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, RudderstackBackendOptions> {
   supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction];
 
   constructor(public options: RudderstackBackendOptions) {
-    const url = `https://cdn.rudderlabs.com/v1/rudder-analytics.min.js`;
+    const url = options.sdkUrl || `https://cdn.rudderlabs.com/v1/rudder-analytics.min.js`;
 
     $.ajax({
       url,
@@ -45,7 +47,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
       })(method);
     }
 
-    (rds as any).load(options.writeKey, options.dataPlaneUrl);
+    (rds as any).load(options.writeKey, options.dataPlaneUrl, { configUrl: options.configUrl });
 
     if (options.user) {
       (rds as any).identify(options.user.email, {

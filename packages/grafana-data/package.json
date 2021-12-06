@@ -54,7 +54,7 @@
     "@types/lodash": "4.14.123",
     "@types/marked": "4.0.0",
     "@types/node": "16.11.6",
-    "@types/papaparse": "5.2.0",
+    "@types/papaparse": "5.3.1",
     "@types/react": "17.0.30",
     "@types/rollup-plugin-visualizer": "4.2.1",
     "@types/sinon": "^10.0.4",
