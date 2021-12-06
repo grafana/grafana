@@ -89,7 +89,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     // both the operator and the operand in a single input
     {
       id: '__multiply_by',
-      displayName: 'Multiply by',
+      displayName: 'Multiply by factor',
       params: [{ name: 'Factor', type: 'number' }],
       defaultParams: [2],
       category: PromVisualQueryOperationCategory.Math,
@@ -97,13 +97,13 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       addHandler: defaultAddOperationHandler,
     },
     {
-      id: '__divide_by_sub_query',
-      displayName: 'Divide by sub query',
+      id: '__binary_query',
+      displayName: 'Binary operation with another query',
       params: [],
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Math,
       renderer: multiplyRenderer,
-      addHandler: addNestedQueryHandler,
+      addHandler: addBinaryQuery,
     },
   ];
 
@@ -188,7 +188,7 @@ function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
   };
 }
 
-function defaultAddOperationHandler(def: QueryBuilderOperationDef, query: PromVisualQuery) {
+function defaultAddOperationHandler(def: QueryBuilderOperationDef, query: PromVisualQuery): PromVisualQuery {
   const newOperation: QueryBuilderOperation = {
     id: def.id,
     params: def.defaultParams,
@@ -203,7 +203,7 @@ function defaultAddOperationHandler(def: QueryBuilderOperationDef, query: PromVi
 /**
  * Since there can only be one operation with range vector this will replace the current one (if one was added )
  */
-function addOperationWithRangeVector(def: QueryBuilderOperationDef, query: PromVisualQuery) {
+function addOperationWithRangeVector(def: QueryBuilderOperationDef, query: PromVisualQuery): PromVisualQuery {
   if (query.operations.length > 0) {
     const firstOp = visualQueryEngine.getOperationDef(query.operations[0].id);
 
@@ -232,10 +232,10 @@ function addOperationWithRangeVector(def: QueryBuilderOperationDef, query: PromV
   };
 }
 
-function addNestedQueryHandler(def: QueryBuilderOperationDef, query: PromVisualQuery) {
+function addBinaryQuery(def: QueryBuilderOperationDef, query: PromVisualQuery): PromVisualQuery {
   return {
     ...query,
-    nestedQueries: [
+    binaryQueries: [
       ...(query.binaryQueries ?? []),
       {
         operator: '/',

@@ -6,7 +6,7 @@ import { OperationList } from './OperationList';
 import EditorRows from 'app/plugins/datasource/cloudwatch/components/ui/EditorRows';
 import EditorRow from 'app/plugins/datasource/cloudwatch/components/ui/EditorRow';
 import { PrometheusDatasource } from '../../datasource';
-import { NestedQueryList } from './NestedQueryList';
+import { BinaryQueryList } from './BinaryQueryList';
 
 export interface Props {
   query: PromVisualQuery;
@@ -27,7 +27,7 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
       <EditorRow>
         <OperationList query={query} onChange={onChange} />
         {query.binaryQueries && query.binaryQueries.length > 0 && (
-          <NestedQueryList query={query} datasource={datasource} onChange={onChange} />
+          <BinaryQueryList query={query} datasource={datasource} onChange={onChange} />
         )}
       </EditorRow>
     </EditorRows>

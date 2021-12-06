@@ -5,7 +5,7 @@ import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React from 'react';
 import { PrometheusDatasource } from '../../datasource';
 import { PromVisualQuery, PromVisualQueryBinary } from '../types';
-import { NestedQuery } from './NestedQuery';
+import { BinaryQuery } from './BinaryQuery';
 
 export interface Props {
   query: PromVisualQuery;
@@ -13,32 +13,32 @@ export interface Props {
   onChange: (query: PromVisualQuery) => void;
 }
 
-export function NestedQueryList({ query, datasource, onChange }: Props) {
+export function BinaryQueryList({ query, datasource, onChange }: Props) {
   const styles = useStyles2(getStyles);
-  const nestedQueries = query.binaryQueries ?? [];
+  const binaryQueries = query.binaryQueries ?? [];
 
-  const onNestedQueryUpdate = (index: number, update: PromVisualQueryBinary) => {
-    const updatedList = [...nestedQueries];
+  const onBinaryQueryUpdated = (index: number, update: PromVisualQueryBinary) => {
+    const updatedList = [...binaryQueries];
     updatedList.splice(index, 1, update);
     onChange({ ...query, binaryQueries: updatedList });
   };
 
   const onRemove = (index: number) => {
-    const updatedList = [...nestedQueries.slice(0, index), ...nestedQueries.slice(index + 1)];
+    const updatedList = [...binaryQueries.slice(0, index), ...binaryQueries.slice(index + 1)];
     onChange({ ...query, binaryQueries: updatedList });
   };
 
   return (
     <div className={styles.body}>
       <Stack gap={1} direction="column">
-        <h5 className={styles.heading}>Sub queries</h5>
+        <h5 className={styles.heading}></h5>
         <Stack gap={1} direction="column">
-          {nestedQueries.map((nestedQuery, index) => (
-            <NestedQuery
+          {binaryQueries.map((binaryQuery, index) => (
+            <BinaryQuery
               key={index.toString()}
-              nestedQuery={nestedQuery}
+              nestedQuery={binaryQuery}
               index={index}
-              onChange={onNestedQueryUpdate}
+              onChange={onBinaryQueryUpdated}
               datasource={datasource}
               onRemove={onRemove}
             />

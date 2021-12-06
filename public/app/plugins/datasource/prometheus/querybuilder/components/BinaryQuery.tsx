@@ -15,13 +15,13 @@ export interface Props {
   onRemove: (index: number) => void;
 }
 
-export function NestedQuery({ nestedQuery, index, datasource, onChange, onRemove }: Props) {
+export function BinaryQuery({ nestedQuery, index, datasource, onChange, onRemove }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <div className={styles.name}>Divide by query</div>
+        <div className={styles.name}>Query</div>
         <FlexItem grow={1} />
         <IconButton name="times" size="sm" onClick={() => onRemove(index)} />
       </div>
