@@ -161,7 +161,9 @@ export function ExploreGraph({
         title=""
         width={width}
         height={height}
-        onChangeTimeRange={onChangeTime}
+        onChangeTimeRange={
+          graphStyle === 'auto_breakdowns' ? (timeRange: AbsoluteTimeRange) => console.log(timeRange) : onChangeTime
+        }
         timeZone={timeZone}
         options={
           {

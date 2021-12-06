@@ -367,7 +367,10 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
             responseListLength: queries.length,
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
-          this.exemplarsForAutoBreakdowns = exemplarsForAutoBreakdowns;
+          if (exemplarsForAutoBreakdowns) {
+            this.exemplarsForAutoBreakdowns = exemplarsForAutoBreakdowns;
+          }
+
           return {
             data,
             key: query.requestId,

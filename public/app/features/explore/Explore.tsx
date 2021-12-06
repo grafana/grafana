@@ -196,9 +196,26 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme, graphStyle } = this.props;
+    const {
+      graphResult,
+      absoluteRange,
+      timeZone,
+      splitOpen,
+      queryResponse,
+      loading,
+      theme,
+      graphStyle,
+      datasourceInstance,
+    } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
-    const label = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={this.onChangeGraphStyle} />;
+    const label = (
+      <ExploreGraphLabel
+        graphStyle={graphStyle}
+        onChangeGraphStyle={this.onChangeGraphStyle}
+        //@ts-ignore
+        withAutoBreakdowns={!!datasourceInstance?.exemplarsForAutoBreakdowns && !!queryResponse.annotations.length}
+      />
+    );
     return (
       <Collapse label={label} loading={loading} isOpen>
         <ExploreGraph

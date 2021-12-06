@@ -45,7 +45,7 @@ export const ZoomPlugin: React.FC<ZoomPluginProps> = ({ onZoom, config }) => {
 
       // manually hide selected region (since cursor.drag.setScale = false)
       /* @ts-ignore */
-      u.setSelect({ left: 0, width: 0 }, false);
+      // u.setSelect({ left: 0, width: 0 }, false);
     });
   }, [config]);
 

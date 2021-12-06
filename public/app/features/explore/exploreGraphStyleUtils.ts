@@ -43,6 +43,9 @@ export function applyGraphStyle(config: FieldConfig, style: ExploreGraphStyle): 
         custom.stacking.mode = StackingMode.Normal;
         custom.fillOpacity = 100;
         break;
+      case 'auto_breakdowns':
+        custom.drawStyle = GraphDrawStyle.Line;
+        break;
       default: {
         // should never happen
         // NOTE: casting to `never` will cause typescript

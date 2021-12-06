@@ -25,10 +25,6 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
     }
   }, [onChange, query]);
 
-  useEffect(() => {
-    console.log(datasource.exemplarsForAutoBreakdowns);
-  }, [datasource.exemplarsForAutoBreakdowns]);
-
   return (
     <PromQueryField
       app={CoreApp.Explore}

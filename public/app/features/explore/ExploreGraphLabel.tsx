@@ -18,14 +18,19 @@ const spacing = css({
 type Props = {
   graphStyle: ExploreGraphStyle;
   onChangeGraphStyle: (style: ExploreGraphStyle) => void;
+  withAutoBreakdowns: boolean;
 };
 
 export function ExploreGraphLabel(props: Props) {
-  const { graphStyle, onChangeGraphStyle } = props;
+  const { graphStyle, onChangeGraphStyle, withAutoBreakdowns } = props;
+  let graphStyleOptions = ALL_GRAPH_STYLE_OPTIONS;
+  if (!withAutoBreakdowns) {
+    graphStyleOptions = graphStyleOptions.filter((option) => option.value !== 'auto_breakdowns');
+  }
   return (
     <div className={spacing}>
       Graph
-      <RadioButtonGroup size="sm" options={ALL_GRAPH_STYLE_OPTIONS} value={graphStyle} onChange={onChangeGraphStyle} />
+      <RadioButtonGroup size="sm" options={graphStyleOptions} value={graphStyle} onChange={onChangeGraphStyle} />
     </div>
   );
 }
