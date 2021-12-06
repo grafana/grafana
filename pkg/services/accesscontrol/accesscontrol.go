@@ -124,9 +124,10 @@ func ValidateScope(scope string) bool {
 func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map[string]Metadata {
 	metadata, initialized := allMetadata[id]
 	if !initialized {
-		metadata = Metadata{}
+		metadata = Metadata{action: true}
+	} else {
+		metadata[action] = true
 	}
-	metadata[action] = true
 	allMetadata[id] = metadata
 	return allMetadata
 }

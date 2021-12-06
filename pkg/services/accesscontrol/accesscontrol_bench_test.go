@@ -51,7 +51,7 @@ func BenchmarkGetResourcesMetadata_10_1000000(b *testing.B) {
 		b.Skip("Skipping benchmark in short mode")
 	}
 	benchGetMetadata(b, 10, 1000000)
-} // 5s/op
+} // ~5s/op
 
 // Lots of resources (worst case)
 func BenchmarkGetResourcesMetadata_1000_10(b *testing.B)   { benchGetMetadata(b, 1000, 10) }   // ~0,003s/op
