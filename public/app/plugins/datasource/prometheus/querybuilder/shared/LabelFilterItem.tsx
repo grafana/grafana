@@ -31,7 +31,11 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames }: P
           loadOptions={loadLabelNames}
           onChange={(change) => {
             if (change.label) {
-              onChange(({ ...item, label: change.label, value: undefined } as any) as QueryBuilderLabelFilter);
+              onChange(({
+                ...item,
+                label: change.label,
+                value: 'Temp label name value',
+              } as any) as QueryBuilderLabelFilter);
             }
           }}
         />

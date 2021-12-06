@@ -9,6 +9,7 @@ import { PrometheusDatasource } from '../../datasource';
 import { NestedQueryList } from './NestedQueryList';
 import { visualQueryEngine } from '../engine';
 import { QueryBuilderLabelFilter } from '../shared/types';
+import { QueryPreview } from './QueryPreview';
 
 export interface Props {
   query: PromVisualQuery;
@@ -39,6 +40,9 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
         {query.binaryQueries && query.binaryQueries.length > 0 && (
           <NestedQueryList query={query} datasource={datasource} onChange={onChange} />
         )}
+      </EditorRow>
+      <EditorRow>
+        <QueryPreview query={query} />
       </EditorRow>
     </EditorRows>
   );
