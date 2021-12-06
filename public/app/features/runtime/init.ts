@@ -31,14 +31,16 @@ export function initWindowRuntime() {
       if (!d) {
         return undefined;
       }
+      return d.getSaveModelClone();
+    },
+
+    /** The selected time range */
+    getDashboardTimeRange: () => {
       const tr = getTimeSrv().timeRange();
       return {
-        model: d.getSaveModelClone(),
-        timeRange: {
-          from: tr.from.valueOf(),
-          to: tr.to.valueOf(),
-          raw: tr.raw,
-        },
+        from: tr.from.valueOf(),
+        to: tr.to.valueOf(),
+        raw: tr.raw,
       };
     },
 
