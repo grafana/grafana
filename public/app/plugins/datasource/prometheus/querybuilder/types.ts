@@ -37,7 +37,7 @@ export function getDefaultTestQuery() {
     ],
     operations: [
       { id: 'rate', params: ['auto'] },
-      { id: '__group_by', params: ['sum', 'job'] },
+      { id: '__sum_by', params: ['job'] },
     ],
   };
 

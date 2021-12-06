@@ -2,6 +2,9 @@
  * Shared types that can be reused by Loki and other data sources
  */
 
+import { SelectableValue } from '@grafana/data';
+import { ComponentType } from 'react';
+
 export interface QueryBuilderLabelFilter {
   label: string;
   op: string;
@@ -38,9 +41,19 @@ export type QueryBuilderOperationParamValue = string | number;
 export interface QueryBuilderOperationParamDef {
   name: string;
   type: string;
-  options?: string[] | number[];
+  options?: string[] | number[] | Array<SelectableValue<string>>;
   restParam?: boolean;
   optional?: boolean;
+  editor?: ComponentType<QueryBuilderOperationParamEditorProps>;
+}
+
+export interface QueryBuilderOperationParamEditorProps {
+  value?: QueryBuilderOperationParamValue;
+  paramDef: QueryBuilderOperationParamDef;
+  index: number;
+  operation: QueryBuilderOperation;
+  onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
+  onRemove: (index: number) => void;
 }
 
 export enum QueryEditorMode {

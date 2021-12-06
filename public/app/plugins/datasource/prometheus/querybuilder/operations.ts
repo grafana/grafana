@@ -1,3 +1,4 @@
+import { LabelParamEditor } from './components/LabelParamEditor';
 import { promQueryModeller } from './PromQueryModeller';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { getDefaultTestQuery, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
@@ -20,15 +21,6 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
-      addHandler: defaultAddOperationHandler,
-    },
-    // This is just a test to demo that we could represent Aggregation as a single operation
-    {
-      id: 'Min',
-      params: [{ name: 'Function', type: 'string', options: ['sum', 'min', 'max', 'avg', 'stddev'] }],
-      defaultParams: ['min'],
-      category: PromVisualQueryOperationCategory.Aggregations,
-      renderer: aggregateRenderer,
       addHandler: defaultAddOperationHandler,
     },
     {
@@ -55,16 +47,28 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       addHandler: defaultAddOperationHandler,
     },
     {
-      // Because this is not a real function I prefix it with __ so it wont conflict if Prometheus ever adds a function named group_by
-      id: '__group_by',
-      displayName: 'Group by',
+      id: '__sum_by',
+      displayName: 'Sum by',
       params: [
-        { name: 'Aggregation', type: 'string' },
-        { name: 'Label', type: 'string', restParam: true },
+        {
+          name: 'Label',
+          type: 'string',
+          restParam: true,
+          editor: LabelParamEditor,
+        },
       ],
-      defaultParams: ['sum'],
+      defaultParams: [''],
       category: PromVisualQueryOperationCategory.GroupBy,
-      renderer: groupByRenderer,
+      renderer: getAggregationByRenderer('sum'),
+      addHandler: defaultAddOperationHandler,
+    },
+    {
+      id: '__avg_by',
+      displayName: 'Avg by',
+      params: [{ name: 'Label', type: 'string', restParam: true }],
+      defaultParams: [''],
+      category: PromVisualQueryOperationCategory.GroupBy,
+      renderer: getAggregationByRenderer('avg'),
       addHandler: defaultAddOperationHandler,
     },
     {
@@ -143,23 +147,10 @@ function renderParams(model: QueryBuilderOperation, def: QueryBuilderOperationDe
   });
 }
 
-function groupByRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  if (!model.params || model.params.length < 2) {
-    throw Error('Params missing on group by');
-  }
-
-  // First param is the aggregation, the rest are labels
-  let expr = `${model.params[0]} by(`;
-
-  for (let i = 1; i < model.params.length; i++) {
-    if (i > 1) {
-      expr += ', ';
-    }
-
-    expr += model.params[i];
-  }
-
-  return `${expr}) (${innerExpr})`;
+function getAggregationByRenderer(aggregation: string) {
+  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+    return `${aggregation} by(${model.params.join(', ')}) (${innerExpr})`;
+  };
 }
 
 function operationWithRangeVectorRenderer(
@@ -243,11 +234,4 @@ function addNestedQueryHandler(def: QueryBuilderOperationDef, query: PromVisualQ
       },
     ],
   };
-}
-
-/**
- * This is just a test to demo that we could represent aggregation as a single operation
- */
-function aggregateRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  return `${model.params[0]}(${innerExpr})`;
 }

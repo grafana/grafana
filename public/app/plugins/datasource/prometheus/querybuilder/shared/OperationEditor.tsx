@@ -43,7 +43,6 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
       <div className={styles.body}>
         {operation.params.map((paramValue, index) => {
           const paramDef = def.params[Math.min(def.params.length - 1, index)];
-
           return (
             <OperationParamEditor
               index={index}

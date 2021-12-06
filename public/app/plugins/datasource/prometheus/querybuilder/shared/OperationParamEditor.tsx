@@ -2,18 +2,9 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, toOption } from '@grafana/data';
 import { Button, Input, Select, useStyles2 } from '@grafana/ui';
 import React from 'react';
-import { QueryBuilderOperation, QueryBuilderOperationParamDef, QueryBuilderOperationParamValue } from '../shared/types';
+import { QueryBuilderOperationParamEditorProps } from '../shared/types';
 
-export interface Props {
-  value?: QueryBuilderOperationParamValue;
-  paramDef: QueryBuilderOperationParamDef;
-  index: number;
-  operation: QueryBuilderOperation;
-  onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
-  onRemove: (index: number) => void;
-}
-
-export function OperationParamEditor(props: Props) {
+export function OperationParamEditor(props: QueryBuilderOperationParamEditorProps) {
   const { paramDef, index, operation } = props;
   const styles = useStyles2(getStyles);
 
@@ -35,8 +26,13 @@ export function OperationParamEditor(props: Props) {
   );
 }
 
-function renderParamInput({ paramDef, value, index, onChange }: Props) {
+function renderParamInput(props: QueryBuilderOperationParamEditorProps) {
+  const { paramDef, value, index, onChange } = props;
   const { options } = paramDef;
+
+  if (paramDef.editor) {
+    return <paramDef.editor {...props} />;
+  }
 
   if (options && options?.length > 0) {
     const selectOptions = paramDef.options!.map((option) => ({
@@ -53,7 +49,14 @@ function renderParamInput({ paramDef, value, index, onChange }: Props) {
     );
   }
 
-  return <Input value={value ?? ''} onChange={() => {}} />;
+  return (
+    <Input
+      value={value ?? ''}
+      onBlur={(evt) => {
+        onChange(index, evt.currentTarget.value);
+      }}
+    />
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

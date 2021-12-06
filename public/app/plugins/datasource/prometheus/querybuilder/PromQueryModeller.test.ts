@@ -61,7 +61,7 @@ describe('VisualQueryEngine', () => {
       engine.renderQuery({
         metric: 'metric',
         labels: [],
-        operations: [{ id: '__group_by', params: ['sum', 'server', 'job'] }],
+        operations: [{ id: '__sum_by', params: ['server', 'job'] }],
       })
     ).toBe('sum by(server, job) (metric)');
   });
@@ -72,7 +72,7 @@ describe('VisualQueryEngine', () => {
         metric: 'metric',
         labels: [],
         operations: [
-          { id: '__group_by', params: ['sum', 'server', 'job'] },
+          { id: '__sum_by', params: ['server', 'job'] },
           { id: 'avg', params: [] },
         ],
       })
