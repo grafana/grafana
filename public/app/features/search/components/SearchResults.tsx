@@ -95,7 +95,7 @@ export const SearchResults: FC<Props> = memo(
           {results.map((section) => (
             <>
               {section.items.map((item) => (
-                <SearchCard key={item.uid} item={item} themeId={tid} />
+                <SearchCard {...itemProps} key={item.uid} item={item} themeId={tid} />
               ))}
             </>
           ))}
@@ -138,7 +138,7 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     gridContainer: css`
       display: grid;
-      gap: ${sm};
+      gap: ${md};
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     `,
     resultsContainer: css`
