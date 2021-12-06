@@ -10,6 +10,7 @@ export interface Props {
   index: number;
   operation: QueryBuilderOperation;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
+  onRemove: (index: number) => void;
 }
 
 export function OperationParamEditor(props: Props) {
@@ -34,7 +35,7 @@ export function OperationParamEditor(props: Props) {
   );
 }
 
-function renderParamInput({ paramDef, value }: Props) {
+function renderParamInput({ paramDef, value, index, onChange }: Props) {
   const { options } = paramDef;
 
   if (options && options?.length > 0) {
@@ -43,7 +44,13 @@ function renderParamInput({ paramDef, value }: Props) {
       value: option as string,
     }));
 
-    return <Select value={toOption(value as string)} options={selectOptions} onChange={() => {}} />;
+    return (
+      <Select
+        value={toOption(value as string)}
+        options={selectOptions}
+        onChange={(value) => onChange(index, value.value!)}
+      />
+    );
   }
 
   return <Input value={value ?? ''} onChange={() => {}} />;

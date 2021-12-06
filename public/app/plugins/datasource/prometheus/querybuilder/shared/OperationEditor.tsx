@@ -25,6 +25,13 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
     onChange(index, { ...operation, params: updatedParams });
   };
 
+  const onRemoveParam = (paramIdx: number) => {
+    onChange(index, {
+      ...operation,
+      params: [...operation.params.slice(0, paramIdx), ...operation.params.slice(paramIdx + 1)],
+    });
+  };
+
   return (
     <div className={styles.card}>
       <div className={styles.header}>
@@ -45,6 +52,7 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
               value={paramValue}
               operation={operation}
               onChange={onParamValueChanged}
+              onRemove={onRemoveParam}
             />
           );
         })}
