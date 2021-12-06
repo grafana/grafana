@@ -19,7 +19,12 @@ Further documentation can be found at http://docs.grafana.org/installation/docke
 ### v8.3.0-beta2
 
 - Our Alpine based images have been upgraded to Alpine [3.14.3](https://alpinelinux.org/posts/Alpine-3.14.3-released.html) [#41922](https://github.com/grafana/grafana/pull/41922) [@hairyhenderson](https://github.com/hairyhenderson)
-- Our Go build image has been upgraded to Go [1.17.0](https://golang.org/doc/devel/release#go1.17.minor) [#41922](https://github.com/grafana/grafana/pull/41922) [@hairyhenderson](https://github.com/hairyhenderson)
+- Our Go build image has been upgraded to Go [1.17.2](https://golang.org/doc/devel/release#go1.17.minor) [#41922](https://github.com/grafana/grafana/pull/41922) [@hairyhenderson](https://github.com/hairyhenderson)
+
+### v8.2.6
+
+- **Security:** Upgrade Alpine based images to [3.14.3](https://alpinelinux.org/posts/Alpine-3.14.3-released.html). [#42061](https://github.com/grafana/grafana/pull/42061), [@dsotirakis](https://github.com/dsotirakis)
+- **Security:** Upgrade Go to [1.17.2](https://go.dev/doc/devel/release#go1.17.minor). [#42427](https://github.com/grafana/grafana/pull/42427), [@idafurjes](https://github.com/idafurjes)
 
 ### v7.3.0-beta1
 

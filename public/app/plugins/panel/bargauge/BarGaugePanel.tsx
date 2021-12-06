@@ -28,7 +28,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
 
     let processor: DisplayProcessor | undefined = undefined;
     if (view && isNumber(colIndex)) {
-      processor = view!.getFieldDisplayProcessor(colIndex as number);
+      processor = view.getFieldDisplayProcessor(colIndex);
     }
 
     return (
@@ -57,13 +57,14 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
 
     if (hasLinks && getLinks) {
       return (
-        <DataLinksContextMenu links={getLinks} config={value.field}>
-          {(api) => {
-            return this.renderComponent(valueProps, api);
-          }}
-        </DataLinksContextMenu>
+        <div style={{ width: '100%' }}>
+          <DataLinksContextMenu links={getLinks} config={value.field}>
+            {(api) => this.renderComponent(valueProps, api)}
+          </DataLinksContextMenu>
+        </div>
       );
     }
+
     return this.renderComponent(valueProps, {});
   };
 
