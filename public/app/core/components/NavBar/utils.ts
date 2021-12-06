@@ -136,3 +136,7 @@ export const isSearchActive = (location: Location<unknown>) => {
   const query = new URLSearchParams(location.search);
   return query.get('search') === 'open';
 };
+
+export function getNavModelItemKey(item: NavModelItem) {
+  return item.id ?? item.text;
+}
