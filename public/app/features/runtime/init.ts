@@ -13,7 +13,7 @@ import { getTimeSrv } from '../dashboard/services/TimeSrv';
 export function initWindowRuntime() {
   (window as any).grafanaRuntime = {
     /** Navigate the page within the currently loaded application */
-    load: (path: string, query?: UrlQueryMap) => {
+    updateLocation: (path: string, query?: UrlQueryMap) => {
       if (query?.theme) {
         throw new Error(`chaning theme requires full page refresh`);
       }
