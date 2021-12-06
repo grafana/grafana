@@ -56,9 +56,10 @@ export class Scene {
 
   getNextElementName = (isGroup = false) => {
     const label = isGroup ? 'Group' : 'Element';
-    let idx = this.byName.size;
+    let idx = this.byName.size + 1;
 
-    while (true && idx < 100) {
+    const max = idx + 100;
+    while (true && idx < max) {
       const name = `${label} ${idx++}`;
       if (!this.byName.has(name)) {
         return name;

@@ -224,10 +224,10 @@ export class ElementState implements LayerElement {
       trav = trav.parent;
     }
 
-    if (oldName !== newName) {
-      const scene = this.getScene();
-      scene?.byName.delete(oldName);
-      scene?.byName.set(newName, this);
+    const scene = this.getScene();
+    if (oldName !== newName && scene) {
+      scene.byName.delete(oldName);
+      scene.byName.set(newName, this);
     }
   }
 
