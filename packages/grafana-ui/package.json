@@ -123,7 +123,7 @@
     "@types/classnames": "2.2.7",
     "@types/clipboard": "2.0.1",
     "@types/common-tags": "^1.8.0",
-    "@types/d3": "7.0.0",
+    "@types/d3": "7.1.0",
     "@types/enzyme": "3.10.5",
     "@types/enzyme-adapter-react-16": "1.0.6",
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5",

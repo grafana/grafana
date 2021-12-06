@@ -3735,7 +3735,7 @@ __metadata:
     "@types/classnames": 2.2.7
     "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
-    "@types/d3": 7.0.0
+    "@types/d3": 7.1.0
     "@types/enzyme": 3.10.5
     "@types/enzyme-adapter-react-16": 1.0.6
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
@@ -8825,9 +8825,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3@npm:7.0.0":
-  version: 7.0.0
-  resolution: "@types/d3@npm:7.0.0"
+"@types/d3@npm:7.1.0":
+  version: 7.1.0
+  resolution: "@types/d3@npm:7.1.0"
   dependencies:
     "@types/d3-array": "*"
     "@types/d3-axis": "*"
@@ -8859,7 +8859,7 @@ __metadata:
     "@types/d3-timer": "*"
     "@types/d3-transition": "*"
     "@types/d3-zoom": "*"
-  checksum: 4d07bd9bcde795782976e9f40b818a1eef2ebc3778d8687e09f748831e6088c20b5d8a4455e82c11f99c9dca9e1bdde68576862c525459a76492f17d6c0f3a8b
+  checksum: a3062e95410e0bbe52f2ebddc6ca909050f3ed495c18dfda649d1a5a22d2bd69b54e288d45fb304765cc3c425422b381865f598fdb816989348477c96bb2430e
   languageName: node
   linkType: hard
 
@@ -19263,7 +19263,7 @@ __metadata:
     "@types/classnames": 2.2.9
     "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
-    "@types/d3": 7.0.0
+    "@types/d3": 7.1.0
     "@types/d3-force": ^2.1.0
     "@types/d3-scale-chromatic": 1.3.1
     "@types/debounce-promise": 3.1.3
