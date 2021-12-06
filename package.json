@@ -80,7 +80,7 @@
     "@grafana/eslint-config": "2.5.1",
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.0.0-rc1",
-    "@kusto/monaco-kusto": "4.0.6",
+    "@kusto/monaco-kusto": "4.1.2",
     "@microsoft/api-extractor": "7.18.16",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.1",
     "@react-types/button": "3.4.1",
