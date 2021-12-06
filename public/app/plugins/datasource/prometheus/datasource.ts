@@ -35,7 +35,7 @@ import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { getInitHints, getQueryHints } from './query_hints';
-import { getOriginalMetricName, renderTemplate, transform, transformV2 } from './result_transformer';
+import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
@@ -74,6 +74,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   lookupsDisabled: boolean;
   customQueryParameters: any;
   exemplarsAvailable: boolean;
+  exemplarsForAutoBreakdowns: any[] | undefined;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -102,6 +103,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
+    this.exemplarsForAutoBreakdowns = undefined;
   }
 
   init = async () => {
@@ -328,35 +330,23 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   }
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
-    if (this.access === 'proxy') {
-      const targets = request.targets.map((target) => this.processTargetV2(target, request));
-      return super
-        .query({ ...request, targets })
-        .pipe(
-          map((response) =>
-            transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
-          )
-        );
-      // Run queries trough browser/proxy
-    } else {
-      const start = this.getPrometheusTime(request.range.from, false);
-      const end = this.getPrometheusTime(request.range.to, true);
-      const { queries, activeTargets } = this.prepareTargets(request, start, end);
+    const start = this.getPrometheusTime(request.range.from, false);
+    const end = this.getPrometheusTime(request.range.to, true);
+    const { queries, activeTargets } = this.prepareTargets(request, start, end);
 
-      // No valid targets, return the empty result to save a round trip.
-      if (!queries || !queries.length) {
-        return of({
-          data: [],
-          state: LoadingState.Done,
-        });
-      }
-
-      if (request.app === CoreApp.Explore) {
-        return this.exploreQuery(queries, activeTargets, end);
-      }
-
-      return this.panelsQuery(queries, activeTargets, end, request.requestId, request.scopedVars);
+    // No valid targets, return the empty result to save a round trip.
+    if (!queries || !queries.length) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
     }
+
+    if (request.app === CoreApp.Explore) {
+      return this.exploreQuery(queries, activeTargets, end);
+    }
+
+    return this.panelsQuery(queries, activeTargets, end, request.requestId, request.scopedVars);
   }
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
@@ -371,12 +361,13 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
         tap(() => runningQueriesCount--),
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
-          const data = transform(response, {
+          const { data, exemplarsForAutoBreakdowns } = transform(response, {
             query,
             target,
             responseListLength: queries.length,
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
+          this.exemplarsForAutoBreakdowns = exemplarsForAutoBreakdowns;
           return {
             data,
             key: query.requestId,
@@ -404,13 +395,14 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       const filterAndMapResponse = pipe(
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
-          const data = transform(response, {
+          const { data, exemplarsForAutoBreakdowns } = transform(response, {
             query,
             target,
             responseListLength: queries.length,
             scopedVars,
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
+          this.exemplarsForAutoBreakdowns = exemplarsForAutoBreakdowns;
           return data;
         })
       );

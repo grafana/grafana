@@ -37,7 +37,7 @@ import {
 const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
 const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
 
-interface TimeAndValue {
+export interface TimeAndValue {
   [TIME_SERIES_TIME_FIELD_NAME]: number;
   [TIME_SERIES_VALUE_FIELD_NAME]: number;
 }
@@ -184,7 +184,7 @@ export function transform(
     responseListLength: number;
     scopedVars?: ScopedVars;
   }
-) {
+): { data: DataFrame[]; exemplarsForAutoBreakdowns?: TimeAndValue[] } {
   // Create options object from transformOptions
   const options: TransformOptions = {
     format: transformOptions.target.format,
@@ -236,29 +236,32 @@ export function transform(
         }
       }
     }
-    return [dataFrame];
+
+    return { data: [dataFrame], exemplarsForAutoBreakdowns: events };
   }
 
   if (!prometheusResult?.result) {
-    return [];
+    return { data: [] };
   }
 
   // Return early if result type is scalar
   if (prometheusResult.resultType === 'scalar') {
-    return [
-      {
-        meta: options.meta,
-        refId: options.refId,
-        length: 1,
-        fields: [getTimeField([prometheusResult.result]), getValueField({ data: [prometheusResult.result] })],
-      },
-    ];
+    return {
+      data: [
+        {
+          meta: options.meta,
+          refId: options.refId,
+          length: 1,
+          fields: [getTimeField([prometheusResult.result]), getValueField({ data: [prometheusResult.result] })],
+        },
+      ],
+    };
   }
 
   // Return early again if the format is table, this needs special transformation.
   if (options.format === 'table') {
     const tableData = transformMetricDataToTable(prometheusResult.result, options);
-    return [tableData];
+    return { data: [tableData] };
   }
 
   // Process matrix and vector results to DataFrame
@@ -269,11 +272,11 @@ export function transform(
   if (options.format === 'heatmap') {
     dataFrame.sort(sortSeriesByLabel);
     const seriesList = transformToHistogramOverTime(dataFrame);
-    return seriesList;
+    return { data: seriesList };
   }
 
   // Return matrix or vector result as DataFrame[]
-  return dataFrame;
+  return { data: dataFrame };
 }
 
 function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
