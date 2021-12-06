@@ -8,10 +8,12 @@ import { LabelFilterItem } from './LabelFilterItem';
 
 export interface Props {
   labelsFilters: QueryBuilderLabelFilter[];
+  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
   onChange: (labelFilters: QueryBuilderLabelFilter[]) => void;
 }
 
-export function LabelFilters({ labelsFilters, onChange }: Props) {
+export function LabelFilters(props: Props) {
+  const { labelsFilters, onChange } = props;
   const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>(labelsFilters);
 
   const onLabelsChange = (newItems: Array<Partial<QueryBuilderLabelFilter>>) => {
@@ -27,19 +29,26 @@ export function LabelFilters({ labelsFilters, onChange }: Props) {
   return (
     <EditorFieldGroup>
       <EditorField label="Labels">
-        <EditorList items={items} onChange={onLabelsChange} renderItem={getLabelFilterRenderer()} />
+        <EditorList items={items} onChange={onLabelsChange} renderItem={getLabelFilterRenderer(props)} />
       </EditorField>
     </EditorFieldGroup>
   );
 }
 
-function getLabelFilterRenderer() {
+function getLabelFilterRenderer({ onGetLabelNames }: Props) {
   function renderFilter(
     item: Partial<QueryBuilderLabelFilter>,
     onChange: (item: QueryBuilderLabelFilter) => void,
     onDelete: () => void
   ) {
-    return <LabelFilterItem item={item} onChange={(item) => onChange(item)} onDelete={onDelete} />;
+    return (
+      <LabelFilterItem
+        item={item}
+        onChange={(item) => onChange(item)}
+        onDelete={onDelete}
+        onGetLabelNames={onGetLabelNames}
+      />
+    );
   }
 
   return renderFilter;

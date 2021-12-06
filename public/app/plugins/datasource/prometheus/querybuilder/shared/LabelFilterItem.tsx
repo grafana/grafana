@@ -8,12 +8,13 @@ import { QueryBuilderLabelFilter } from './types';
 export interface Props {
   item: Partial<QueryBuilderLabelFilter>;
   onChange: (value: QueryBuilderLabelFilter) => void;
+  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
   onDelete: () => void;
 }
 
-export function LabelFilterItem({ item, onChange, onDelete }: Props) {
-  const loadLabelKeys = async () => {
-    return Promise.resolve([{ label: 'Aasd', value: 'asd' }]);
+export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames }: Props) {
+  const loadLabelNames = async () => {
+    return (await onGetLabelNames(item)).map((value) => ({ label: value, value }));
   };
 
   const operators = [{ label: '=~', value: '=~' }];
@@ -26,7 +27,8 @@ export function LabelFilterItem({ item, onChange, onDelete }: Props) {
           width="auto"
           value={item.label ? toOption(item.label) : null}
           allowCustomValue
-          loadOptions={loadLabelKeys}
+          defaultOptions={true}
+          loadOptions={loadLabelNames}
           onChange={(change) => {
             if (change.label) {
               onChange(({ ...item, label: change.label, value: undefined } as any) as QueryBuilderLabelFilter);
@@ -50,7 +52,7 @@ export function LabelFilterItem({ item, onChange, onDelete }: Props) {
           width="auto"
           value={item.value ? toOption(item.value) : null}
           allowCustomValue
-          loadOptions={loadLabelKeys}
+          loadOptions={loadLabelNames}
           onChange={(change) => {
             if (change.value != null) {
               onChange(({ ...item, value: change.value } as any) as QueryBuilderLabelFilter);
