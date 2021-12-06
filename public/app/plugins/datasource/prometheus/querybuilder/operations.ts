@@ -97,8 +97,8 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       addHandler: defaultAddOperationHandler,
     },
     {
-      id: '__divide_by_sub_query',
-      displayName: 'Divide by sub query',
+      id: '__nested_query',
+      displayName: 'Nested query',
       params: [],
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Math,
