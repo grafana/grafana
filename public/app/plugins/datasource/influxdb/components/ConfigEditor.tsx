@@ -112,7 +112,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
               isConfigured={(secureJsonFields && secureJsonFields.token) as boolean}
               value={secureJsonData.token || ''}
               label="Token"
-              aria-label="Token"
               labelWidth={10}
               inputWidth={20}
               onReset={this.onResetToken}
