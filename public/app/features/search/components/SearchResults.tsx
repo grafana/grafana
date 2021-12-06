@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
 import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 import { SearchItem } from './SearchItem';
+import { SearchCard } from './SearchCard';
 import { SectionHeader } from './SectionHeader';
 
 export interface Props {
@@ -93,8 +94,8 @@ export const SearchResults: FC<Props> = memo(
         <div className={styles.gridContainer}>
           {results.map((section) => (
             <>
-              {section.items.map((v) => (
-                <a className={styles.gridItem(v.uid!, tid)} key={v.uid} href={v.url}></a>
+              {section.items.map((item) => (
+                <SearchCard key={item.uid} item={item} themeId={tid} />
               ))}
             </>
           ))}
@@ -139,12 +140,6 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
       display: grid;
       gap: ${sm};
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    `,
-    gridItem: (uId: string, themeId: string) => css`
-      background-image: url(/preview/dash/${uId}/square/${themeId});
-      background-position: center top;
-      background-size: cover;
-      height: 200px;
     `,
     resultsContainer: css`
       position: relative;
