@@ -50,21 +50,15 @@ export function OperationList({ query, onChange }: Props) {
       <h5 className={styles.heading}>Operations</h5>
       <Stack gap={0}>
         {operations.map((op, index) => (
-          <>
-            <OperationEditor
-              key={index.toString()}
-              index={index}
-              operation={op}
-              onChange={onOperationChange}
-              onRemove={onRemove}
-            />
+          <div className={styles.operationWrapper} key={index.toString()}>
+            <OperationEditor index={index} operation={op} onChange={onOperationChange} onRemove={onRemove} />
             {index < operations.length - 1 && (
               <>
                 <div className={styles.line} />
                 <div className={styles.lineArrow} />
               </>
             )}
-          </>
+          </div>
         ))}
         <div className={styles.addOperation}>
           <ButtonCascader key="cascader" icon="plus" options={addOptions} onChange={onAddOperation} />
@@ -98,6 +92,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       //alignSelf: 'center',
       position: 'relative',
       top: '10px',
+    }),
+    operationWrapper: css({
+      display: 'flex',
     }),
     addOperation: css({
       paddingLeft: theme.spacing(2),
