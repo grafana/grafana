@@ -162,6 +162,7 @@ export function ExploreGraph({
         width={width}
         height={height}
         onChangeTimeRange={onChangeTime}
+        timeZone={timeZone}
         options={
           {
             tooltip: { mode: tooltipDisplayMode },

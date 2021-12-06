@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -49,7 +50,11 @@ func dashboardGuardianResponse(err error) response.Response {
 	return response.Error(403, "Access denied to this dashboard", nil)
 }
 
-func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboardCommand) response.Response {
+func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
+	cmd := models.TrimDashboardCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	var err error
 	dash := cmd.Dashboard
 	meta := cmd.Meta
@@ -218,7 +223,7 @@ func getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) 
 func (hs *HTTPServer) DeleteDashboardBySlug(c *models.ReqContext) response.Response {
 	query := models.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: web.Params(c.Req)[":slug"]}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to retrieve dashboards by slug", err)
 	}
 
@@ -277,7 +282,15 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	})
 }
 
-func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
+func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
+	cmd := models.SaveDashboardCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return hs.postDashboard(c, cmd)
+}
+
+func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
 	ctx := c.Req.Context()
 	var err error
 	cmd.OrgId = c.OrgId
@@ -332,7 +345,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	dashSvc := dashboards.NewService(hs.SQLStore)
-	dashboard, err := dashSvc.SaveDashboard(ctx, dashItem, allowUiUpdate)
+	dashboard, err := dashSvc.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
 
 	if hs.Live != nil {
 		// Tell everyone listening that the dashboard changed
@@ -585,7 +598,11 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 }
 
 // POST /api/dashboards/calculate-diff performs diffs on two dashboards
-func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffOptions) response.Response {
+func CalculateDashboardDiff(c *models.ReqContext) response.Response {
+	apiOptions := dtos.CalculateDiffOptions{}
+	if err := web.Bind(c.Req, &apiOptions); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	guardianBase := guardian.New(c.Req.Context(), apiOptions.Base.DashboardId, c.OrgId, c.SignedInUser)
 	if canSave, err := guardianBase.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
@@ -629,7 +646,11 @@ func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffO
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.
-func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext, apiCmd dtos.RestoreDashboardVersionCommand) response.Response {
+func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Response {
+	apiCmd := dtos.RestoreDashboardVersionCommand{}
+	if err := web.Bind(c.Req, &apiCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, c.ParamsInt64(":dashboardId"), "")
 	if rsp != nil {
 		return rsp
@@ -657,7 +678,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext, apiCmd dtos.
 	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
 	saveCmd.FolderId = dash.FolderId
 
-	return hs.PostDashboard(c, saveCmd)
+	return hs.postDashboard(c, saveCmd)
 }
 
 func GetDashboardTags(c *models.ReqContext) {

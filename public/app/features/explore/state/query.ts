@@ -110,11 +110,11 @@ export interface StoreLogsVolumeDataProvider {
 /**
  * Stores available logs volume provider after running the query. Used internally by runQueries().
  */
-const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
+export const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
   'explore/storeLogsVolumeDataProviderAction'
 );
 
-const cleanLogsVolumeAction = createAction<{ exploreId: ExploreId }>('explore/cleanLogsVolumeAction');
+export const cleanLogsVolumeAction = createAction<{ exploreId: ExploreId }>('explore/cleanLogsVolumeAction');
 
 export interface StoreLogsVolumeDataSubscriptionPayload {
   exploreId: ExploreId;
@@ -221,9 +221,19 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
  * Cancel running queries
  */
 export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
-  return (dispatch) => {
+  return (dispatch, getState) => {
     dispatch(scanStopAction({ exploreId }));
     dispatch(cancelQueriesAction({ exploreId }));
+    dispatch(
+      storeLogsVolumeDataProviderAction({
+        exploreId,
+        logsVolumeDataProvider: undefined,
+      })
+    );
+    // clear any incomplete data
+    if (getState().explore[exploreId]!.logsVolumeData?.state !== LoadingState.Done) {
+      dispatch(cleanLogsVolumeAction({ exploreId }));
+    }
     dispatch(stateSave());
   };
 }
@@ -381,7 +391,7 @@ export const runQueries = (
       const timeZone = getTimeZone(getState().user);
       const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, scanning, timeZone);
 
-      let firstResponse = true;
+      let querySaved = false;
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
       newQuerySub = runRequest(datasourceInstance, transaction.request)
@@ -403,7 +413,7 @@ export const runQueries = (
         )
         .subscribe(
           (data) => {
-            if (!data.error && firstResponse) {
+            if (data.state !== LoadingState.Loading && !data.error && !querySaved) {
               // Side-effect: Saving history in localstorage
               const nextHistory = updateHistory(history, datasourceId, queries);
               const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(
@@ -428,9 +438,8 @@ export const runQueries = (
 
               // We save queries to the URL here so that only successfully run queries change the URL.
               dispatch(stateSave({ replace: options?.replaceUrl }));
+              querySaved = true;
             }
-
-            firstResponse = false;
 
             dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 

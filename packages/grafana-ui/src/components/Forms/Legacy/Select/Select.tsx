@@ -101,6 +101,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
       onOpenMenu,
       allowCustomValue,
       formatCreateLabel,
+      'aria-label': ariaLabel,
     } = this.props;
 
     let widthClass = '';
@@ -151,6 +152,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onMenuOpen={onOpenMenuInternal}
               onMenuClose={onCloseMenuInternal}
               tabSelectsValue={tabSelectsValue}
+              aria-label={ariaLabel}
               {...creatableOptions}
             />
           );
@@ -216,7 +218,6 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
       <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
         {(onOpenMenuInternal, onCloseMenuInternal) => {
           return (
-            //@ts-expect-error
             <ReactAsyncSelect
               captureMenuScroll={false}
               classNamePrefix="gf-form-select-box"
@@ -229,14 +230,17 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               }}
               defaultValue={defaultValue}
               value={value}
+              //@ts-expect-error
               getOptionLabel={getOptionLabel}
               getOptionValue={getOptionValue}
               menuShouldScrollIntoView={false}
+              //@ts-expect-error
               onChange={onChange}
               loadOptions={loadOptions}
               isLoading={isLoading}
               defaultOptions={defaultOptions}
               placeholder={placeholder || 'Choose'}
+              //@ts-expect-error
               styles={resetSelectStyles()}
               loadingMessage={() => loadingMessage}
               noOptionsMessage={noOptionsMessage}

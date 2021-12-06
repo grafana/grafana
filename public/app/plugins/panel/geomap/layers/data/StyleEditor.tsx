@@ -18,6 +18,7 @@ import {
   ColorDimensionEditor,
   ResourceDimensionEditor,
   ScaleDimensionEditor,
+  ScalarDimensionEditor,
   TextDimensionEditor,
 } from 'app/features/dimensions/editors';
 import {
@@ -27,14 +28,16 @@ import {
   ResourceFolderName,
   TextDimensionConfig,
   defaultTextConfig,
+  ScalarDimensionConfig,
 } from 'app/features/dimensions/types';
-import { defaultStyleConfig, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
+import { defaultStyleConfig, GeometryTypeId, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
 import { styleUsesText } from '../../style/utils';
 import { LayerContentInfo } from '../../utils/getFeatures';
 
 export interface StyleEditorOptions {
   layerInfo?: Observable<LayerContentInfo>;
   simpleFixedValues?: boolean;
+  displayRotation?: boolean;
 }
 
 export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions, any>> = ({
@@ -43,6 +46,8 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
   onChange,
   item,
 }) => {
+  const settings = item.settings;
+
   const onSizeChange = (sizeValue: ScaleDimensionConfig | undefined) => {
     onChange({ ...value, size: sizeValue });
   };
@@ -57,6 +62,10 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
 
   const onOpacityChange = (opacityValue: number | undefined) => {
     onChange({ ...value, opacity: opacityValue });
+  };
+
+  const onRotationChange = (rotationValue: ScalarDimensionConfig | undefined) => {
+    onChange({ ...value, rotation: rotationValue });
   };
 
   const onTextChange = (textValue: TextDimensionConfig | undefined) => {
@@ -84,44 +93,60 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
   };
 
   let featuresHavePoints = false;
-  if (item.settings?.layerInfo) {
-    const propertyOptions = useObservable(item.settings?.layerInfo);
-    featuresHavePoints = propertyOptions?.geometryType === 'point';
+  if (settings?.layerInfo) {
+    const propertyOptions = useObservable(settings?.layerInfo);
+    featuresHavePoints = propertyOptions?.geometryType === GeometryTypeId.Point;
   }
-
   const hasTextLabel = styleUsesText(value);
 
   // Simple fixed value display
-  if (item.settings?.simpleFixedValues) {
+  if (settings?.simpleFixedValues) {
     return (
       <>
         {featuresHavePoints && (
-          <InlineFieldRow>
-            <InlineField label={'Symbol'}>
-              <ResourceDimensionEditor
-                value={value.symbol ?? defaultStyleConfig.symbol}
+          <>
+            <InlineFieldRow>
+              <InlineField label={'Symbol'}>
+                <ResourceDimensionEditor
+                  value={value?.symbol ?? defaultStyleConfig.symbol}
+                  context={context}
+                  onChange={onSymbolChange}
+                  item={
+                    {
+                      settings: {
+                        resourceType: 'icon',
+                        folderName: ResourceFolderName.Marker,
+                        placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
+                        placeholderValue: defaultStyleConfig.symbol.fixed,
+                        showSourceRadio: false,
+                      },
+                    } as any
+                  }
+                />
+              </InlineField>
+            </InlineFieldRow>
+            <Field label={'Rotation angle'}>
+              <ScalarDimensionEditor
+                value={value?.rotation ?? defaultStyleConfig.rotation}
                 context={context}
-                onChange={onSymbolChange}
+                onChange={onRotationChange}
                 item={
                   {
                     settings: {
-                      resourceType: 'icon',
-                      folderName: ResourceFolderName.Marker,
-                      placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
-                      placeholderValue: defaultStyleConfig.symbol.fixed,
-                      showSourceRadio: false,
+                      min: defaultStyleConfig.rotation.min,
+                      max: defaultStyleConfig.rotation.max,
                     },
                   } as any
                 }
               />
-            </InlineField>
-          </InlineFieldRow>
+            </Field>
+          </>
         )}
         <InlineFieldRow>
           <InlineField label="Color" labelWidth={10}>
             <InlineLabel width={4}>
               <ColorPicker
-                color={value.color?.fixed ?? defaultStyleConfig.color.fixed}
+                color={value?.color?.fixed ?? defaultStyleConfig.color.fixed}
                 onChange={(v) => {
                   onColorChange({ fixed: v });
                 }}
@@ -132,7 +157,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
         <InlineFieldRow>
           <InlineField label="Opacity" labelWidth={10} grow>
             <SliderValueEditor
-              value={value.opacity ?? defaultStyleConfig.opacity}
+              value={value?.opacity ?? defaultStyleConfig.opacity}
               context={context}
               onChange={onOpacityChange}
               item={
@@ -155,7 +180,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
     <>
       <Field label={'Size'}>
         <ScaleDimensionEditor
-          value={value.size ?? defaultStyleConfig.size}
+          value={value?.size ?? defaultStyleConfig.size}
           context={context}
           onChange={onSizeChange}
           item={
@@ -170,7 +195,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
       </Field>
       <Field label={'Symbol'}>
         <ResourceDimensionEditor
-          value={value.symbol ?? defaultStyleConfig.symbol}
+          value={value?.symbol ?? defaultStyleConfig.symbol}
           context={context}
           onChange={onSymbolChange}
           item={
@@ -188,7 +213,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
       </Field>
       <Field label={'Color'}>
         <ColorDimensionEditor
-          value={value.color ?? defaultStyleConfig.color}
+          value={value?.color ?? defaultStyleConfig.color}
           context={context}
           onChange={onColorChange}
           item={{} as any}
@@ -196,7 +221,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
       </Field>
       <Field label={'Fill opacity'}>
         <SliderValueEditor
-          value={value.opacity ?? defaultStyleConfig.opacity}
+          value={value?.opacity ?? defaultStyleConfig.opacity}
           context={context}
           onChange={onOpacityChange}
           item={
@@ -210,9 +235,26 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
           }
         />
       </Field>
+      {settings?.displayRotation && (
+        <Field label={'Rotation angle'}>
+          <ScalarDimensionEditor
+            value={value?.rotation ?? defaultStyleConfig.rotation}
+            context={context}
+            onChange={onRotationChange}
+            item={
+              {
+                settings: {
+                  min: defaultStyleConfig.rotation.min,
+                  max: defaultStyleConfig.rotation.max,
+                },
+              } as any
+            }
+          />
+        </Field>
+      )}
       <Field label={'Text label'}>
         <TextDimensionEditor
-          value={value.text ?? defaultTextConfig}
+          value={value?.text ?? defaultTextConfig}
           context={context}
           onChange={onTextChange}
           item={{} as any}
@@ -224,7 +266,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
           <HorizontalGroup>
             <Field label={'Font size'}>
               <NumberValueEditor
-                value={value.textConfig?.fontSize ?? defaultStyleConfig.textConfig.fontSize}
+                value={value?.textConfig?.fontSize ?? defaultStyleConfig.textConfig.fontSize}
                 context={context}
                 onChange={onTextFontSizeChange}
                 item={{} as any}
@@ -232,7 +274,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
             </Field>
             <Field label={'X offset'}>
               <NumberValueEditor
-                value={value.textConfig?.offsetX ?? defaultStyleConfig.textConfig.offsetX}
+                value={value?.textConfig?.offsetX ?? defaultStyleConfig.textConfig.offsetX}
                 context={context}
                 onChange={onTextOffsetXChange}
                 item={{} as any}
@@ -240,7 +282,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
             </Field>
             <Field label={'Y offset'}>
               <NumberValueEditor
-                value={value.textConfig?.offsetY ?? defaultStyleConfig.textConfig.offsetY}
+                value={value?.textConfig?.offsetY ?? defaultStyleConfig.textConfig.offsetY}
                 context={context}
                 onChange={onTextOffsetYChange}
                 item={{} as any}
@@ -249,7 +291,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
           </HorizontalGroup>
           <Field label={'Align'}>
             <RadioButtonGroup
-              value={value.textConfig?.textAlign ?? defaultStyleConfig.textConfig.textAlign}
+              value={value?.textConfig?.textAlign ?? defaultStyleConfig.textConfig.textAlign}
               onChange={onTextAlignChange}
               options={[
                 { value: TextAlignment.Left, label: TextAlignment.Left },
@@ -260,7 +302,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
           </Field>
           <Field label={'Baseline'}>
             <RadioButtonGroup
-              value={value.textConfig?.textBaseline ?? defaultStyleConfig.textConfig.textBaseline}
+              value={value?.textConfig?.textBaseline ?? defaultStyleConfig.textConfig.textBaseline}
               onChange={onTextBaselineChange}
               options={[
                 { value: TextBaseline.Top, label: TextBaseline.Top },

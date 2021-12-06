@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/loki/pkg/loghttp"
 	p "github.com/prometheus/common/model"
@@ -38,31 +37,6 @@ func TestLoki(t *testing.T) {
 		}
 
 		require.Equal(t, `http_request_total{app="backend", device="mobile"}`, formatLegend(metric, query))
-	})
-
-	t.Run("parsing query model", func(t *testing.T) {
-		queryContext := &backend.QueryDataRequest{
-			Queries: []backend.DataQuery{
-				{
-					JSON: []byte(`
-					{
-						"expr": "go_goroutines",
-						"format": "time_series",
-						"refId": "A"
-					}`,
-					),
-					TimeRange: backend.TimeRange{
-						From: time.Now().Add(-30 * time.Second),
-						To:   time.Now(),
-					},
-					Interval: time.Second * 30,
-				},
-			},
-		}
-		dsInfo := &datasourceInfo{}
-		models, err := parseQuery(dsInfo, queryContext)
-		require.NoError(t, err)
-		require.Equal(t, time.Second*30, models[0].Step)
 	})
 }
 
