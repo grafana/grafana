@@ -8,7 +8,7 @@ import (
 )
 
 func GetResourceScope(resource string, resourceID string) string {
-	return fmt.Sprintf("%s:id:%s", resource, resourceID)
+	return Scope(resource, "id", resourceID)
 }
 
 func GetResourceAllScope(resource string) string {
