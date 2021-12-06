@@ -15,3 +15,9 @@ dependencies {
     implementation("software.amazon.smithy:smithy-openapi:[1.0, 2.0[")
     implementation("software.amazon.smithy:smithy-aws-traits:[1.0, 2.0[")
 }
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
