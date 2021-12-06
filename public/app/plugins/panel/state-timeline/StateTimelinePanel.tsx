@@ -49,7 +49,6 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       if (seriesIdx === null || datapointIdx === null) {
         return null;
       }
-      // console.log(seriesIdx, datapointIdx);
 
       /**
        * There could be a case when the tooltip shows a data from one of a multiple query and the other query finishes first
