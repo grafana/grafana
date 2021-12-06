@@ -3371,7 +3371,7 @@ __metadata:
     "@types/lodash": 4.14.123
     "@types/marked": 4.0.0
     "@types/node": 16.11.6
-    "@types/papaparse": 5.2.0
+    "@types/papaparse": 5.3.1
     "@types/react": 17.0.30
     "@types/react-dom": 17.0.10
     "@types/sinon": ^10.0.4
@@ -3713,7 +3713,7 @@ __metadata:
     "@types/classnames": 2.2.7
     "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
-    "@types/d3": 7.0.0
+    "@types/d3": 7.1.0
     "@types/enzyme": 3.10.5
     "@types/enzyme-adapter-react-16": 1.0.6
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
@@ -8778,9 +8778,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3@npm:7.0.0":
-  version: 7.0.0
-  resolution: "@types/d3@npm:7.0.0"
+"@types/d3@npm:7.1.0":
+  version: 7.1.0
+  resolution: "@types/d3@npm:7.1.0"
   dependencies:
     "@types/d3-array": "*"
     "@types/d3-axis": "*"
@@ -8812,7 +8812,7 @@ __metadata:
     "@types/d3-timer": "*"
     "@types/d3-transition": "*"
     "@types/d3-zoom": "*"
-  checksum: 4d07bd9bcde795782976e9f40b818a1eef2ebc3778d8687e09f748831e6088c20b5d8a4455e82c11f99c9dca9e1bdde68576862c525459a76492f17d6c0f3a8b
+  checksum: a3062e95410e0bbe52f2ebddc6ca909050f3ed495c18dfda649d1a5a22d2bd69b54e288d45fb304765cc3c425422b381865f598fdb816989348477c96bb2430e
   languageName: node
   linkType: hard
 
@@ -8965,6 +8965,13 @@ __metadata:
     "@types/minimatch": "*"
     "@types/node": "*"
   checksum: 6ae717fedfdfdad25f3d5a568323926c64f52ef35897bcac8aca8e19bc50c0bd84630bbd063e5d52078b2137d8e7d3c26eabebd1a2f03ff350fff8a91e79fc19
+  languageName: node
+  linkType: hard
+
+"@types/google.analytics@npm:^0.0.42":
+  version: 0.0.42
+  resolution: "@types/google.analytics@npm:0.0.42"
+  checksum: c64b3f7991c4bcb1dfe8db902a2e2ebe821ce53a1ca36e6628b4d08d0c24213aa0d4f49492b3144dd6bfa661f53fb1ecf16e83cca522cddd6d9f8419a4b73fe8
   languageName: node
   linkType: hard
 
@@ -9357,12 +9364,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/papaparse@npm:5.2.0":
-  version: 5.2.0
-  resolution: "@types/papaparse@npm:5.2.0"
+"@types/papaparse@npm:5.3.1":
+  version: 5.3.1
+  resolution: "@types/papaparse@npm:5.3.1"
   dependencies:
     "@types/node": "*"
-  checksum: 74fc75c7325295e3689ed2830b7ff9a60b6577e28bb30b77fa1d0b03e709e6ad99c9547648c3e3089b8653a36153c34940166c22974ed797d43699962f081816
+  checksum: ee788899e697527d91c28d5fcaf890643fc10103ca8702049e73729faf9cb05345bb35d3f844636c0fc4a79fbdf1eb1a5e57532a09fdce6250244d85df79d4ec
   languageName: node
   linkType: hard
 
@@ -19092,13 +19099,14 @@ __metadata:
     "@types/classnames": 2.2.9
     "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
-    "@types/d3": 7.0.0
+    "@types/d3": 7.1.0
     "@types/d3-force": ^2.1.0
     "@types/d3-scale-chromatic": 1.3.1
     "@types/debounce-promise": 3.1.3
     "@types/enzyme": 3.10.5
     "@types/enzyme-adapter-react-16": 1.0.6
     "@types/file-saver": 2.0.1
+    "@types/google.analytics": ^0.0.42
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/history": ^4.7.8
     "@types/hoist-non-react-statics": 3.3.1
@@ -19111,7 +19119,7 @@ __metadata:
     "@types/mousetrap": 1.6.3
     "@types/node": 16.11.6
     "@types/ol": ^6.5.1
-    "@types/papaparse": 5.2.0
+    "@types/papaparse": 5.3.1
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.16.0
     "@types/rc-time-picker": ^3
