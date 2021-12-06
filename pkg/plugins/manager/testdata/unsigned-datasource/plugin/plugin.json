@@ -2,7 +2,7 @@
   "type": "datasource",
   "name": "Test",
   "id": "test",
-  "backend": true,
+  "executable": "test",
   "state": "alpha",
   "info": {
     "description": "Test",

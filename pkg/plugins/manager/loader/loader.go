@@ -68,6 +68,9 @@ func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactor
 		return nil, err
 	}
 
+	// Always true
+	p.Backend = true
+
 	err = l.pluginInitializer.InitializeWithFactory(p, factory)
 
 	return p, err
@@ -136,6 +139,10 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 		plugin.SignatureType = sig.Type
 		plugin.SignatureOrg = sig.SigningOrg
 		plugin.SignedFiles = sig.Files
+
+		if plugin.Executable != "" {
+			plugin.Backend = true
+		}
 
 		loadedPlugins[plugin.PluginDir] = plugin
 	}
