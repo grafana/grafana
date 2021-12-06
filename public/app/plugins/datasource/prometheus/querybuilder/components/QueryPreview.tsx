@@ -4,7 +4,7 @@ import React from 'react';
 import { PromVisualQuery } from '../types';
 import { useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { visualQueryEngine } from '../engine';
+import { promQueryModeller } from '../PromQueryModeller';
 import { css } from '@emotion/css';
 
 export interface Props {
@@ -19,7 +19,7 @@ export function QueryPreview({ query }: Props) {
     <EditorFieldGroup>
       <EditorField label="Query Preview">
         <div className={styles.editorField} aria-label="selector">
-          {visualQueryEngine.renderQuery(query)}
+          {promQueryModeller.renderQuery(query)}
         </div>
       </EditorField>
     </EditorFieldGroup>

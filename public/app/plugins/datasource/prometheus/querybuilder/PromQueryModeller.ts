@@ -1,8 +1,8 @@
 import { getOperationDefintions } from './operations';
-import { QueryBuilderOperationDef } from './shared/types';
+import { VisualQueryModeller, QueryBuilderOperationDef } from './shared/types';
 import { PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
-export class VisualQueryEngine {
+export class PromQueryModeller implements VisualQueryModeller {
   private operations: Record<string, QueryBuilderOperationDef<PromVisualQuery>> = {};
 
   constructor() {
@@ -65,4 +65,4 @@ export class VisualQueryEngine {
   }
 }
 
-export const visualQueryEngine = new VisualQueryEngine();
+export const promQueryModeller = new PromQueryModeller();

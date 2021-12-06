@@ -7,7 +7,7 @@ import EditorRows from 'app/plugins/datasource/cloudwatch/components/ui/EditorRo
 import EditorRow from 'app/plugins/datasource/cloudwatch/components/ui/EditorRow';
 import { PrometheusDatasource } from '../../datasource';
 import { NestedQueryList } from './NestedQueryList';
-import { visualQueryEngine } from '../engine';
+import { promQueryModeller } from '../PromQueryModeller';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { QueryPreview } from './QueryPreview';
 
@@ -36,7 +36,7 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
         <LabelFilters onGetLabelNames={onGetLabelNames} labelsFilters={query.labels} onChange={onChangeLabels} />
       </EditorRow>
       <EditorRow>
-        <OperationList engine={visualQueryEngine} query={query} onChange={onChange} />
+        <OperationList<PromVisualQuery> queryModeller={promQueryModeller} query={query} onChange={onChange} />
         {query.binaryQueries && query.binaryQueries.length > 0 && (
           <NestedQueryList query={query} datasource={datasource} onChange={onChange} />
         )}

@@ -1,7 +1,7 @@
-import { VisualQueryEngine } from './engine';
+import { PromQueryModeller } from './PromQueryModeller';
 
 describe('VisualQueryEngine', () => {
-  const engine = new VisualQueryEngine();
+  const engine = new PromQueryModeller();
 
   it('Can render query with metric only', () => {
     expect(

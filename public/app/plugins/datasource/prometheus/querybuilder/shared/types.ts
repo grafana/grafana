@@ -10,7 +10,7 @@ export interface QueryBuilderLabelFilter {
 
 export interface QueryBuilderOperation {
   id: string;
-  params: string[] | number[];
+  params: QueryBuilderOperationParamValue[];
 }
 
 export interface QueryWithOperations {
@@ -21,17 +21,19 @@ export interface QueryBuilderOperationDef<T = any> {
   id: string;
   displayName?: string;
   params: QueryBuilderOperationParamDef[];
-  defaultParams: string[] | number[];
+  defaultParams: QueryBuilderOperationParamValue[];
   category: string;
   renderer: QueryBuilderOperationRenderer;
   addHandler: (operation: QueryBuilderOperationDef, query: T) => T;
 }
 
-export type QueryBuilderOperationRenderer = <T = any>(
+export type QueryBuilderOperationRenderer = (
   model: QueryBuilderOperation,
-  def: QueryBuilderOperationDef<T>,
+  def: QueryBuilderOperationDef,
   innerExpr: string
 ) => string;
+
+export type QueryBuilderOperationParamValue = string | number;
 
 export interface QueryBuilderOperationParamDef {
   name: string;
@@ -46,8 +48,8 @@ export enum QueryEditorMode {
   Code,
 }
 
-export interface VisualQueryEngine<T extends QueryWithOperations> {
-  getOperationsForCategory(category: string): Array<QueryBuilderOperationDef<T>>;
+export interface VisualQueryModeller {
+  getOperationsForCategory(category: string): QueryBuilderOperationDef[];
   getCategories(): string[];
-  getOperationDef(id: string): QueryBuilderOperationDef<T>;
+  getOperationDef(id: string): QueryBuilderOperationDef;
 }

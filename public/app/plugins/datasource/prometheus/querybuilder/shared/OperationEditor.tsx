@@ -3,29 +3,34 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 import FlexItem from 'app/plugins/datasource/cloudwatch/components/ui/FlexItem';
 import React from 'react';
-import { visualQueryEngine } from '../engine';
-import { QueryBuilderOperation } from '../shared/types';
+import { VisualQueryModeller, QueryBuilderOperation, QueryBuilderOperationParamValue } from '../shared/types';
 import { OperationParamEditor } from './OperationParamEditor';
 
 export interface Props {
   operation: QueryBuilderOperation;
   index: number;
+  queryModeller: VisualQueryModeller;
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
 }
 
-export function OperationEditor({ operation, index, onRemove }: Props) {
+export function OperationEditor({ operation, index, onRemove, onChange, queryModeller }: Props) {
   const styles = useStyles2(getStyles);
-  const def = visualQueryEngine.getOperationDef(operation.id);
+  const def = queryModeller.getOperationDef(operation.id);
+
+  const onParamValueChanged = (paramIdx: number, value: QueryBuilderOperationParamValue) => {
+    const updatedParams = [...operation.params];
+    updatedParams[paramIdx] = value;
+
+    onChange(index, { ...operation, params: updatedParams });
+  };
 
   return (
     <div className={styles.card}>
       <div className={styles.header}>
         <div className={styles.name}>{def.displayName ?? def.id}</div>
         <Icon className={styles.infoIcon} name="info-circle" size="sm" onClick={() => {}} />
-
         <FlexItem grow={1} />
-
         <IconButton name="times" size="sm" onClick={() => onRemove(index)} />
       </div>
       <div className={styles.body}>
@@ -39,6 +44,7 @@ export function OperationEditor({ operation, index, onRemove }: Props) {
               paramDef={paramDef}
               value={paramValue}
               operation={operation}
+              onChange={onParamValueChanged}
             />
           );
         })}

@@ -27,7 +27,7 @@ export const LokiQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
       </EditorRow>
       <EditorRow>Simple search</EditorRow>
       <EditorRow>
-        <OperationList engine={lokiQueryModeller} query={query} onChange={onChange} />
+        <OperationList queryModeller={lokiQueryModeller} query={query} onChange={onChange} />
       </EditorRow>
     </EditorRows>
   );

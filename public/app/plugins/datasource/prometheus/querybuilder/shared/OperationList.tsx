@@ -3,16 +3,16 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { ButtonCascader, CascaderOption, useStyles2 } from '@grafana/ui';
 import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React from 'react';
-import { QueryBuilderOperation, QueryWithOperations, VisualQueryEngine } from '../shared/types';
+import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from '../shared/types';
 import { OperationEditor } from './OperationEditor';
 
 export interface Props<T extends QueryWithOperations> {
   query: T;
   onChange: (query: T) => void;
-  engine: VisualQueryEngine<T>;
+  queryModeller: VisualQueryModeller;
 }
 
-export function OperationList<T extends QueryWithOperations>({ query, onChange, engine }: Props<T>) {
+export function OperationList<T extends QueryWithOperations>({ query, onChange, queryModeller }: Props<T>) {
   const styles = useStyles2(getStyles);
   const { operations } = query;
 
@@ -27,11 +27,11 @@ export function OperationList<T extends QueryWithOperations>({ query, onChange, 
     onChange({ ...query, operations: updatedList });
   };
 
-  const addOptions: CascaderOption[] = engine.getCategories().map((category) => {
+  const addOptions: CascaderOption[] = queryModeller.getCategories().map((category) => {
     return {
       value: category,
       label: category,
-      children: engine.getOperationsForCategory(category).map((operation) => ({
+      children: queryModeller.getOperationsForCategory(category).map((operation) => ({
         value: operation.id,
         label: operation.displayName ?? operation.id,
         isLeaf: true,
@@ -40,7 +40,7 @@ export function OperationList<T extends QueryWithOperations>({ query, onChange, 
   });
 
   const onAddOperation = (value: string[]) => {
-    const operationDef = engine.getOperationDef(value[1]);
+    const operationDef = queryModeller.getOperationDef(value[1]);
     onChange(operationDef.addHandler(operationDef, query));
   };
 
@@ -50,7 +50,13 @@ export function OperationList<T extends QueryWithOperations>({ query, onChange, 
       <Stack gap={0}>
         {operations.map((op, index) => (
           <div className={styles.operationWrapper} key={index.toString()}>
-            <OperationEditor index={index} operation={op} onChange={onOperationChange} onRemove={onRemove} />
+            <OperationEditor
+              queryModeller={queryModeller}
+              index={index}
+              operation={op}
+              onChange={onOperationChange}
+              onRemove={onRemove}
+            />
             {index < operations.length - 1 && (
               <>
                 <div className={styles.line} />

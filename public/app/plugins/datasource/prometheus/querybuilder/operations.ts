@@ -1,4 +1,4 @@
-import { visualQueryEngine } from './engine';
+import { promQueryModeller } from './PromQueryModeller';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { getDefaultTestQuery, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
@@ -205,7 +205,7 @@ function defaultAddOperationHandler(def: QueryBuilderOperationDef, query: PromVi
  */
 function addOperationWithRangeVector(def: QueryBuilderOperationDef, query: PromVisualQuery) {
   if (query.operations.length > 0) {
-    const firstOp = visualQueryEngine.getOperationDef(query.operations[0].id);
+    const firstOp = promQueryModeller.getOperationDef(query.operations[0].id);
 
     if (firstOp.addHandler === addOperationWithRangeVector) {
       return {

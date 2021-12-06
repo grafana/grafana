@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PromQueryEditorProps } from '../../components/types';
-import { visualQueryEngine } from '../engine';
+import { promQueryModeller } from '../PromQueryModeller';
 import { QueryEditorMode } from '../shared/types';
 import { getDefaultTestQuery, PromVisualQuery } from '../types';
 import { PromQueryBuilderInner } from './PromQueryBuilderInner';
@@ -20,7 +20,7 @@ export const PromQueryBuilder = React.memo<PromQueryEditorProps>(({ datasource, 
     // Update text expr
     onChange({
       ...query,
-      expr: visualQueryEngine.renderQuery(updatedQuery),
+      expr: promQueryModeller.renderQuery(updatedQuery),
       editorMode: QueryEditorMode.Builder,
     });
   };
