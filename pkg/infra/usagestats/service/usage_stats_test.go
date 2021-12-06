@@ -41,7 +41,7 @@ func TestMetrics(t *testing.T) {
 		setupSomeDataSourcePlugins(t, uss)
 
 		var getSystemStatsQuery *models.GetSystemStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{
 				Dashboards:                1,
 				Datasources:               2,
@@ -85,7 +85,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getDataSourceStatsQuery *models.GetDataSourceStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetDataSourceStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
 			query.Result = []*models.DataSourceStats{
 				{
 					Type:  models.DS_ES,
@@ -109,7 +109,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getESDatasSourcesQuery *models.GetDataSourcesByTypeQuery
-		uss.Bus.AddHandler(func(query *models.GetDataSourcesByTypeQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
 			query.Result = []*models.DataSource{
 				{
 					JsonData: simplejson.NewFromAny(map[string]interface{}{
@@ -132,7 +132,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getDataSourceAccessStatsQuery *models.GetDataSourceAccessStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetDataSourceAccessStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
 			query.Result = []*models.DataSourceAccessStats{
 				{
 					Type:   models.DS_ES,
@@ -180,7 +180,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getAlertNotifierUsageStatsQuery *models.GetAlertNotifierUsageStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetAlertNotifierUsageStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
 			query.Result = []*models.NotifierUsageStats{
 				{
 					Type:  "slack",
@@ -401,7 +401,7 @@ func TestMetrics(t *testing.T) {
 		uss.Cfg.MetricsEndpointEnabled = true
 		uss.Cfg.MetricsEndpointDisableTotalStats = false
 		getSystemStatsWasCalled := false
-		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{}
 			getSystemStatsWasCalled = true
 			return nil
@@ -462,27 +462,27 @@ func TestMetrics(t *testing.T) {
 		uss := createService(t, setting.Cfg{})
 		metricName := "stats.test_metric.count"
 
-		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{}
 			return nil
 		})
 
-		uss.Bus.AddHandler(func(query *models.GetDataSourceStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
 			query.Result = []*models.DataSourceStats{}
 			return nil
 		})
 
-		uss.Bus.AddHandler(func(query *models.GetDataSourcesByTypeQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
 			query.Result = []*models.DataSource{}
 			return nil
 		})
 
-		uss.Bus.AddHandler(func(query *models.GetDataSourceAccessStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
 			query.Result = []*models.DataSourceAccessStats{}
 			return nil
 		})
 
-		uss.Bus.AddHandler(func(query *models.GetAlertNotifierUsageStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
 			query.Result = []*models.NotifierUsageStats{}
 			return nil
 		})

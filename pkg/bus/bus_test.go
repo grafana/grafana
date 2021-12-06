@@ -18,12 +18,12 @@ func TestDispatch(t *testing.T) {
 
 	var invoked bool
 
-	bus.AddHandler(func(query *testQuery) error {
+	bus.AddHandlerCtx(func(ctx context.Context, query *testQuery) error {
 		invoked = true
 		return nil
 	})
 
-	err := bus.Dispatch(&testQuery{})
+	err := bus.DispatchCtx(context.Background(), &testQuery{})
 	require.NoError(t, err)
 
 	require.True(t, invoked, "expected handler to be called")
@@ -32,7 +32,7 @@ func TestDispatch(t *testing.T) {
 func TestDispatch_NoRegisteredHandler(t *testing.T) {
 	bus := New()
 
-	err := bus.Dispatch(&testQuery{})
+	err := bus.DispatchCtx(context.Background(), &testQuery{})
 	require.Equal(t, err, ErrHandlerNotFound,
 		"expected bus to return HandlerNotFound since no handler is registered")
 }
@@ -47,7 +47,7 @@ func TestDispatch_ContextHandler(t *testing.T) {
 		return nil
 	})
 
-	err := bus.Dispatch(&testQuery{})
+	err := bus.DispatchCtx(context.Background(), &testQuery{})
 	require.NoError(t, err)
 
 	require.True(t, invoked, "expected handler to be called")
@@ -74,7 +74,7 @@ func TestDispatchCtx_NoContextHandler(t *testing.T) {
 
 	var invoked bool
 
-	bus.AddHandler(func(query *testQuery) error {
+	bus.AddHandlerCtx(func(ctx context.Context, query *testQuery) error {
 		invoked = true
 		return nil
 	})
@@ -98,14 +98,14 @@ func TestQuery(t *testing.T) {
 
 	want := "hello from handler"
 
-	bus.AddHandler(func(q *testQuery) error {
+	bus.AddHandlerCtx(func(ctx context.Context, q *testQuery) error {
 		q.Resp = want
 		return nil
 	})
 
 	q := &testQuery{}
 
-	err := bus.Dispatch(q)
+	err := bus.DispatchCtx(context.Background(), q)
 	require.NoError(t, err, "unable to dispatch query")
 
 	require.Equal(t, want, q.Resp)
@@ -114,11 +114,11 @@ func TestQuery(t *testing.T) {
 func TestQuery_HandlerReturnsError(t *testing.T) {
 	bus := New()
 
-	bus.AddHandler(func(query *testQuery) error {
+	bus.AddHandlerCtx(func(ctx context.Context, query *testQuery) error {
 		return errors.New("handler error")
 	})
 
-	err := bus.Dispatch(&testQuery{})
+	err := bus.DispatchCtx(context.Background(), &testQuery{})
 	require.Error(t, err, "expected error but got none")
 }
 

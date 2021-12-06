@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -95,13 +95,6 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 
 ##@ Docker
 
-build-docker-dev: ## Build Docker image for development (fast).
-	@echo "build development container"
-	@echo "\033[92mInfo:\033[0m the frontend code is expected to be built already."
-	$(GO) run build.go -goos linux -pkg-arch amd64 ${OPT} build latest
-	cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
-	cd packaging/docker && docker build --tag grafana/grafana:dev .
-
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
 	docker build --tag grafana/grafana:dev .
@@ -158,7 +151,7 @@ gen-ts:
 # you modify starlark files.
 drone: $(DRONE)
 	$(DRONE) starlark --format
-	$(DRONE) lint .drone.yml
+	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
 
 help: ## Display this help.

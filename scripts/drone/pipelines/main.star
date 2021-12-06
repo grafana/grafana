@@ -49,6 +49,8 @@ load(
     'scripts/drone/utils/utils.star',
     'pipeline',
     'notify_pipeline',
+    'failure_template',
+    'drone_change_template',
 )
 
 ver_mode = 'main'
@@ -109,21 +111,15 @@ def get_steps(edition, is_downstream=False):
     steps.extend([
         release_canary_npm_packages_step(edition),
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
-        upload_cdn_step(edition=edition)
+        upload_cdn_step(edition=edition, ver_mode=ver_mode)
     ])
 
     if include_enterprise2:
         edition2 = 'enterprise2'
         steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64'], is_downstream=is_downstream),
-            e2e_tests_server_step(edition=edition2, port=3002),
-            e2e_tests_step(edition=edition2, port=3002),
-            e2e_tests_step('dashboards-suite', edition=edition2, port=3002),
-            e2e_tests_step('smoke-tests-suite', edition=edition2, port=3002),
-            e2e_tests_step('panels-suite', edition=edition2, port=3002),
-            e2e_tests_step('various-suite', edition=edition2, port=3002),
             upload_packages_step(edition=edition2, ver_mode=ver_mode, is_downstream=is_downstream),
-            upload_cdn_step(edition=edition2)
+            upload_cdn_step(edition=edition2, ver_mode=ver_mode)
         ])
 
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)
@@ -142,6 +138,18 @@ def main_pipelines(edition):
         'event': ['push',],
         'branch': 'main',
     }
+    drone_change_trigger = {
+        'event': ['push',],
+        'branch': 'main',
+        'paths': {
+            'include': [
+                '.drone.yml',
+            ],
+            'exclude': [
+                'exclude',
+            ],
+        },
+    }
     steps, windows_steps, publish_steps = get_steps(edition=edition)
 
     if edition == 'enterprise':
@@ -157,6 +165,8 @@ def main_pipelines(edition):
             name='windows-main', edition=edition, trigger=trigger,
             steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_steps,
             depends_on=['build-main'], platform='windows',
+        ), notify_pipeline(
+            name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger, template=drone_change_template, secret='drone-changes-webhook',
         ),
     ]
     if edition != 'enterprise':
@@ -167,8 +177,8 @@ def main_pipelines(edition):
         ))
 
         pipelines.append(notify_pipeline(
-            name='notify-main', slack_channel='grafana-ci-notifications', trigger=trigger,
-            depends_on=['build-main', 'windows-main', 'publish-main'],
+            name='notify-main', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
+            depends_on=['build-main', 'windows-main', 'publish-main'], template=failure_template, secret='slack_webhook'
         ))
     else:
         # Add downstream enterprise pipelines triggerable from OSS builds
@@ -192,8 +202,8 @@ def main_pipelines(edition):
         ))
 
         pipelines.append(notify_pipeline(
-            name='notify-main-downstream', slack_channel='grafana-enterprise-ci-notifications', trigger=trigger,
-            depends_on=['build-main-downstream', 'windows-main-downstream', 'publish-main-downstream'],
+            name='notify-main-downstream', slack_channel='grafana-enterprise-ci-notifications', trigger=dict(trigger, status = ['failure']),
+            depends_on=['build-main-downstream', 'windows-main-downstream', 'publish-main-downstream'], template=failure_template, secret='slack_webhook',
         ))
 
     return pipelines

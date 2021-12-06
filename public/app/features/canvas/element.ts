@@ -12,12 +12,13 @@ import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
  * @alpha
  */
 export interface CanvasElementOptions<TConfig = any> {
+  name: string; // configured unique display name
   type: string;
 
   // Custom options depending on the type
   config?: TConfig;
 
-  // Standard options avaliable for all elements
+  // Standard options available for all elements
   anchor?: Anchor; // defaults top, left, width and height
   placement?: Placement;
   background?: BackgroundConfig;
@@ -50,7 +51,7 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
   /** Component used to draw */
   display: ComponentType<CanvasElementProps<TConfig, TData>>;
 
-  getNewOptions: (options?: CanvasElementOptions) => Omit<CanvasElementOptions<TConfig>, 'type'>;
+  getNewOptions: (options?: CanvasElementOptions) => Omit<CanvasElementOptions<TConfig>, 'type' | 'name'>;
 
   /** Build the configuraiton UI */
   registerOptionsUI?: PanelOptionsSupplier<CanvasElementOptions<TConfig>>;
