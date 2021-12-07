@@ -489,6 +489,8 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
   selectAutoBreakdownDataBasedOnTimeRange(timeRange: AbsoluteTimeRange) {
     const dictionary: any = {};
+    const highCardinalityLabels: string[] = [];
+    const highCardinalityLimit = 100;
     const [exemplarsWithinTimeRange, exemplarsOutsideTheRange] = partition(
       this.exemplarsForAutoBreakdowns,
       (exemplar) => exemplar['Time'] >= timeRange.from && exemplar['Time'] <= timeRange.to
@@ -498,8 +500,19 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       const { Time, Value, ...labels } = exemplar;
 
       Object.keys(labels).forEach((key) => {
+        // Ignoring high cardinality labels for breakdowns
+        if (highCardinalityLabels.indexOf(key) > -1) {
+          return;
+        }
         if (!dictionary[key]) {
           dictionary[key] = [];
+        }
+
+        // Current key seems to be high cardinality label, will mark as such
+        if (dictionary[key].length >= highCardinalityLimit - 1) {
+          delete dictionary[key];
+          highCardinalityLabels.push(key);
+          return;
         }
 
         const value = labels[key];
