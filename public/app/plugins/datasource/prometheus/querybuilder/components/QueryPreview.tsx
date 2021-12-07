@@ -1,11 +1,10 @@
-import EditorField from 'app/plugins/datasource/cloudwatch/components/ui/EditorField';
-import EditorFieldGroup from 'app/plugins/datasource/cloudwatch/components/ui/EditorFieldGroup';
 import React from 'react';
 import { PromVisualQuery } from '../types';
 import { useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { promQueryModeller } from '../PromQueryModeller';
 import { css } from '@emotion/css';
+import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 
 export interface Props {
   query: PromVisualQuery;

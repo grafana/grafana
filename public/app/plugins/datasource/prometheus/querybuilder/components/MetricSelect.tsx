@@ -2,9 +2,8 @@ import { AsyncSelect } from '@grafana/ui';
 import React, { useCallback, useMemo } from 'react';
 import { debounce } from 'lodash';
 import { PromVisualQuery } from '../types';
-import EditorFieldGroup from 'app/plugins/datasource/cloudwatch/components/ui/EditorFieldGroup';
-import EditorField from 'app/plugins/datasource/cloudwatch/components/ui/EditorField';
 import { toOption } from '@grafana/data';
+import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 
 export interface Props {
   query: PromVisualQuery;

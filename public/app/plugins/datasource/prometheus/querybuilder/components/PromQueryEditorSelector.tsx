@@ -1,12 +1,8 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { EditorHeader, FlexItem, InlineSelect, Space, Stack } from '@grafana/experimental';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
-import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React, { useCallback } from 'react';
-import EditorHeader from '../../../cloudwatch/components/ui/EditorHeader';
-import FlexItem from '../../../cloudwatch/components/ui/FlexItem';
-import InlineSelect from '../../../cloudwatch/components/ui/InlineSelect';
-import { Space } from '../../../cloudwatch/components/ui/Space';
 import { PromQueryEditor } from '../../components/PromQueryEditor';
 import { PromQueryEditorProps } from '../../components/types';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { ButtonCascader, CascaderOption, useStyles2 } from '@grafana/ui';
-import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React from 'react';
 import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from '../shared/types';
 import { OperationEditor } from './OperationEditor';

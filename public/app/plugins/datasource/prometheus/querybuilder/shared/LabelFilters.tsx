@@ -1,6 +1,4 @@
-import EditorField from 'app/plugins/datasource/cloudwatch/components/ui/EditorField';
-import EditorFieldGroup from 'app/plugins/datasource/cloudwatch/components/ui/EditorFieldGroup';
-import EditorList from 'app/plugins/datasource/cloudwatch/components/ui/EditorList';
+import { EditorField, EditorFieldGroup, EditorList } from '@grafana/experimental';
 import { isEqual } from 'lodash';
 import React, { useState } from 'react';
 import { QueryBuilderLabelFilter } from '../shared/types';

@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { AsyncSelect, Select } from '@grafana/ui';
 import { SelectableValue, toOption } from '@grafana/data';
-import AccessoryButton from 'app/plugins/datasource/cloudwatch/components/ui/AccessoryButton';
-import InputGroup from 'app/plugins/datasource/cloudwatch/components/ui/InputGroup';
 import { QueryBuilderLabelFilter } from './types';
+import { AccessoryButton, InputGroup } from '@grafana/experimental';
 
 export interface Props {
   item: Partial<QueryBuilderLabelFilter>;

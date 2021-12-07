@@ -15,9 +15,9 @@ export function NavBarSection({ children, className }: Props) {
   const styles = getStyles(theme, newNavigationEnabled);
 
   return (
-    <div data-testid="navbar-section" className={cx(styles.container, className)}>
+    <ul data-testid="navbar-section" className={cx(styles.container, className)}>
       {children}
-    </div>
+    </ul>
   );
 }
 

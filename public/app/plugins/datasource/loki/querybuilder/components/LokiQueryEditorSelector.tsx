@@ -1,14 +1,10 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { EditorHeader, FlexItem, InlineSelect, Space, Stack } from '@grafana/experimental';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
-import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 import React, { useCallback } from 'react';
-import EditorHeader from '../../../cloudwatch/components/ui/EditorHeader';
-import FlexItem from '../../../cloudwatch/components/ui/FlexItem';
-import InlineSelect from '../../../cloudwatch/components/ui/InlineSelect';
-import { Space } from '../../../cloudwatch/components/ui/Space';
 import { LokiQueryEditor } from '../../components/LokiQueryEditor';
 import { LokiQueryEditorProps } from '../../components/types';
 import { LokiQueryBuilder } from './LokiQueryBuilder';

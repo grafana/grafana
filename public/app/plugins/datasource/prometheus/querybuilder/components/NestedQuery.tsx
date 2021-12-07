@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
+import { FlexItem } from '@grafana/experimental';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import FlexItem from 'app/plugins/datasource/cloudwatch/components/ui/FlexItem';
 import React from 'react';
 import { PrometheusDatasource } from '../../datasource';
 import { PromVisualQueryBinary } from '../types';

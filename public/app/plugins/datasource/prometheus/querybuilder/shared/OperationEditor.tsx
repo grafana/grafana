@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { FlexItem, Stack } from '@grafana/experimental';
 import { Button, IconButton, useStyles2 } from '@grafana/ui';
-import FlexItem from 'app/plugins/datasource/cloudwatch/components/ui/FlexItem';
-import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React from 'react';
 import {
   VisualQueryModeller,

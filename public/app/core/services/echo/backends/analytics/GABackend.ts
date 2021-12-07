@@ -8,6 +8,7 @@ export interface GAEchoBackendOptions {
 
 export class GAEchoBackend implements EchoBackend<PageviewEchoEvent, GAEchoBackendOptions> {
   supportedEvents = [EchoEventType.Pageview];
+  trackedUserId: number | null = null;
 
   constructor(public options: GAEchoBackendOptions) {
     const url = `https://www.google-analytics.com/analytics${options.debug ? '_debug' : ''}.js`;
@@ -18,8 +19,8 @@ export class GAEchoBackend implements EchoBackend<PageviewEchoEvent, GAEchoBacke
       cache: true,
     });
 
-    const ga = ((window as any).ga =
-      (window as any).ga ||
+    const ga = (window.ga =
+      window.ga ||
       // this had the equivalent of `eslint-disable-next-line prefer-arrow/prefer-arrow-functions`
       function () {
         (ga.q = ga.q || []).push(arguments);
@@ -30,12 +31,18 @@ export class GAEchoBackend implements EchoBackend<PageviewEchoEvent, GAEchoBacke
   }
 
   addEvent = (e: PageviewEchoEvent) => {
-    if (!(window as any).ga) {
+    if (!window.ga) {
       return;
     }
 
-    (window as any).ga('set', { page: e.payload.page });
-    (window as any).ga('send', 'pageview');
+    window.ga('set', { page: e.payload.page });
+    window.ga('send', 'pageview');
+
+    const { userSignedIn, userId } = e.meta;
+    if (userSignedIn && userId !== this.trackedUserId) {
+      this.trackedUserId = userId;
+      window.ga('set', 'userId', userId);
+    }
   };
 
   // Not using Echo buffering, addEvent above sends events to GA as soon as they appear
