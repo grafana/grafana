@@ -21,6 +21,7 @@ export function getLiveStreamKey(query: LokiQuery): string {
 
 // This will get both v1 and v2 result formats
 export function doLokiChannelStream(query: LokiQuery, ds: LokiDatasource): Observable<DataQueryResponse> {
+  let counter = 0;
   return getGrafanaLiveSrv()
     .getStream<any>({
       scope: LiveChannelScope.DataSource,
@@ -35,7 +36,8 @@ export function doLokiChannelStream(query: LokiQuery, ds: LokiDatasource): Obser
             toDataFrame({
               fields: [
                 { name: 'time', values: [Date.now()] },
-                { name: 'vvv', values: [1] },
+                { name: 'vvv', values: [counter++] },
+                { name: 'evt', values: [evt], config: { custom: { displayMode: 'json-view' } } },
               ],
             }),
           ],

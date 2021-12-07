@@ -25,7 +25,6 @@ export function LokiExploreQueryEditor(props: Props) {
       range={range}
       ExtraFieldElement={
         <LokiOptionFields
-          queryType={query.instant ? 'instant' : 'range'}
           lineLimitValue={query?.maxLines?.toString() || ''}
           resolution={query.resolution || 1}
           query={query}
