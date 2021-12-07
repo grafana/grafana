@@ -69,14 +69,22 @@ export class PromQueryModeller implements VisualQueryModeller {
   getQueryPatterns(): PromQueryPattern[] {
     return [
       {
-        name: 'Rate + Sum',
+        name: 'Rate then Sum',
         operations: [{ id: 'rate', params: ['auto'] }],
       },
       {
-        name: 'Rate + Sum by(label)',
+        name: 'Rate then Sum by(label)',
         operations: [
           { id: 'rate', params: ['auto'] },
           { id: '__sum_by', params: [''] },
+        ],
+      },
+      {
+        name: 'Histogram quantile on rate',
+        operations: [
+          { id: 'rate', params: ['auto'] },
+          { id: '__sum_by', params: ['le'] },
+          { id: 'histogram_quantile', params: [0.95] },
         ],
       },
     ];
