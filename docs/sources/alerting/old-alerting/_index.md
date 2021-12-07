@@ -5,9 +5,11 @@ weight = 114
 
 # Legacy Grafana alerts
 
-Out of the box, Grafana still supports legacy dashboard alerts. If you are using version 8.0 or later, you can [opt-in]({{< relref "../unified-alerting/opt-in.md" >}}) to use Grafana 8 alerts. See [What's New with Grafana 8 alerting]({{< relref "../unified-alerting/difference-old-new.md" >}}) for more information.
+Grafana alerting is enabled by default for new OSS installations. For older installations, it is still an [opt-in]({{< relref "../unified-alerting/opt-in.md" >}}) feature.
 
-Legacy alerts have two main components:
+> **Note**: Legacy dashboard alerts is deprecated and will be removed in a future release. We encourage you to migrate to [Grafana alerting]({{< relref "../unified-alerting/_index.md" >}}) for all existing installations.
+
+Legacy dashboard alerts have two main components:
 
 - Alert rule - When the alert is triggered. Alert rules are defined by one or more conditions that are regularly evaluated by Grafana.
 - Notification channel - How the alert is delivered. When the conditions of an alert rule are met, the Grafana notifies the channels configured for that alert.

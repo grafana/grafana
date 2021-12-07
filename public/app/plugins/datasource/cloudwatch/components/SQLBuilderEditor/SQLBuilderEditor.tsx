@@ -1,15 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { CloudWatchMetricsQuery } from '../../types';
+import { EditorField, EditorRow, EditorRows } from '@grafana/experimental';
+import { Input } from '@grafana/ui';
+import SQLGenerator from '../../cloudwatch-sql/SQLGenerator';
 import { CloudWatchDatasource } from '../../datasource';
-import EditorRow from '../ui/EditorRow';
-import EditorRows from '../ui/EditorRows';
-import EditorField from '../ui/EditorField';
+import { CloudWatchMetricsQuery } from '../../types';
+import SQLBuilderSelectRow from './SQLBuilderSelectRow';
 import SQLFilter from './SQLFilter';
 import SQLGroupBy from './SQLGroupBy';
-import SQLBuilderSelectRow from './SQLBuilderSelectRow';
-import SQLGenerator from '../../cloudwatch-sql/SQLGenerator';
 import SQLOrderByGroup from './SQLOrderByGroup';
-import { Input } from '@grafana/ui';
 import { setSql } from './utils';
 
 export type Props = {

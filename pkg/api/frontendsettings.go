@@ -233,6 +233,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
 		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
 		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
+		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,
+		"rudderstackConfigUrl":                setting.RudderstackConfigUrl,
 		"applicationInsightsConnectionString": hs.Cfg.ApplicationInsightsConnectionString,
 		"applicationInsightsEndpointUrl":      hs.Cfg.ApplicationInsightsEndpointUrl,
 		"disableLoginForm":                    setting.DisableLoginForm,

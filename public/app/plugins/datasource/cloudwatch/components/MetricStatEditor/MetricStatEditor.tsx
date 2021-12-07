@@ -1,14 +1,11 @@
 import React from 'react';
-import { Switch, Select } from '@grafana/ui';
-import { CloudWatchMetricsQuery } from '../../types';
-import { CloudWatchDatasource } from '../../datasource';
-import EditorRows from '../ui/EditorRows';
-import EditorRow from '../ui/EditorRow';
-import EditorFieldGroup from '../ui/EditorFieldGroup';
-import EditorField from '../ui/EditorField';
-import { appendTemplateVariables, toOption } from '../../utils/utils';
-import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
+import { Select, Switch } from '@grafana/ui';
 import { Dimensions } from '..';
+import { CloudWatchDatasource } from '../../datasource';
+import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
+import { CloudWatchMetricsQuery } from '../../types';
+import { appendTemplateVariables, toOption } from '../../utils/utils';
 
 export type Props = {
   query: CloudWatchMetricsQuery;
@@ -66,7 +63,7 @@ export function MetricStatEditor({
 
           <EditorField label="Statistic" width={16}>
             <Select
-              inputId="metric-stat-editor-select-statistic"
+              inputId={`${query.refId}-metric-stat-editor-select-statistic`}
               allowCustomValue
               value={toOption(query.statistic ?? datasource.standardStatistics[0])}
               options={appendTemplateVariables(
@@ -109,7 +106,8 @@ export function MetricStatEditor({
             tooltip="Only show metrics that exactly match all defined dimension names."
           >
             <Switch
-              checked={!!query.matchExact}
+              id={`${query.refId}-cloudwatch-match-exact`}
+              value={!!query.matchExact}
               onChange={(e) => {
                 onQueryChange({
                   ...query,

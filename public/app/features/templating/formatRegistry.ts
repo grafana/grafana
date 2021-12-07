@@ -3,8 +3,6 @@ import { dateTime, Registry, RegistryItem, textUtil, VariableModel } from '@graf
 import { isArray, map, replace } from 'lodash';
 import { formatVariableLabel } from '../variables/shared/formatVariable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/state/types';
-import { variableAdapters } from '../variables/adapters';
-import { VariableModel as ExtendedVariableModel } from '../variables/types';
 
 export interface FormatOptions {
   value: any;
@@ -244,15 +242,14 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       description:
         'Format variables as URL parameters. Example in multi-variable scenario A + B + C => var-foo=A&var-foo=B&var-foo=C.',
       formatter: (options, variable) => {
-        const { name, type } = variable;
-        const adapter = variableAdapters.get(type);
-        const valueForUrl = adapter.getValueForUrl(variable as ExtendedVariableModel);
+        const { value } = options;
+        const { name } = variable;
 
-        if (Array.isArray(valueForUrl)) {
-          return valueForUrl.map((v) => formatQueryParameter(name, v)).join('&');
+        if (Array.isArray(value)) {
+          return value.map((v) => formatQueryParameter(name, v)).join('&');
         }
 
-        return formatQueryParameter(name, valueForUrl);
+        return formatQueryParameter(name, value);
       },
     },
   ];
