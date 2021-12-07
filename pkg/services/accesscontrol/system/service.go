@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourceStore) (*System, error) {
+func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourceStore) (*Service, error) {
 	var permissions []string
 	validActions := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
@@ -32,7 +32,7 @@ func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessC
 		actions = append(actions, action)
 	}
 
-	s := &System{
+	s := &Service{
 		ac:           ac,
 		store:        store,
 		options:      options,
@@ -52,8 +52,8 @@ func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessC
 	return s, nil
 }
 
-// System is used to create access control sub system including api / and service for managed resource permission
-type System struct {
+// Service is used to create access control sub system including api / and service for managed resource permission
+type Service struct {
 	ac    accesscontrol.AccessControl
 	store accesscontrol.ResourceStore
 	api   *api
@@ -64,7 +64,7 @@ type System struct {
 	validActions map[string]struct{}
 }
 
-func (s *System) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	return s.store.GetResourcesPermissions(ctx, orgID, accesscontrol.GetResourcesPermissionsQuery{
 		Actions:     s.actions,
 		Resource:    s.options.Resource,
@@ -72,7 +72,7 @@ func (s *System) GetPermissions(ctx context.Context, orgID int64, resourceID str
 	})
 }
 
-func (s *System) SetUserPermission(ctx context.Context, orgID, userID int64, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
+func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
 	if !s.options.Assignments.Teams {
 		return nil, ErrInvalidAssignment
 	}
@@ -96,7 +96,7 @@ func (s *System) SetUserPermission(ctx context.Context, orgID, userID int64, res
 	})
 }
 
-func (s *System) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
+func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
 	if !s.options.Assignments.Teams {
 		return nil, ErrInvalidAssignment
 	}
@@ -119,7 +119,7 @@ func (s *System) SetTeamPermission(ctx context.Context, orgID, teamID int64, res
 	})
 }
 
-func (s *System) SetBuiltinRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
+func (s *Service) SetBuiltinRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
 	if !s.options.Assignments.BuiltInRoles {
 		return nil, ErrInvalidAssignment
 	}
@@ -144,7 +144,7 @@ func (s *System) SetBuiltinRolePermission(ctx context.Context, orgID int64, buil
 }
 
 // MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
-func (s *System) MapActions(permission accesscontrol.ResourcePermission) (string, bool) {
+func (s *Service) MapActions(permission accesscontrol.ResourcePermission) (string, bool) {
 	for _, p := range s.permissions {
 		if permission.Contains(s.options.PermissionsToActions[p]) {
 			return p, true
@@ -154,7 +154,7 @@ func (s *System) MapActions(permission accesscontrol.ResourcePermission) (string
 }
 
 // MapPermission will map a friendly named permission to it's corresponding actions configured in PermissionsToAction map.
-func (s *System) MapPermission(permission string) []string {
+func (s *Service) MapPermission(permission string) []string {
 	for k, v := range s.options.PermissionsToActions {
 		if permission == k {
 			return v
@@ -163,14 +163,14 @@ func (s *System) MapPermission(permission string) []string {
 	return []string{}
 }
 
-func (s *System) validateResource(ctx context.Context, orgID int64, resourceID string) error {
+func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID string) error {
 	if s.options.ResourceValidator != nil {
 		return s.options.ResourceValidator(ctx, orgID, resourceID)
 	}
 	return nil
 }
 
-func (s *System) validateActions(actions []string) bool {
+func (s *Service) validateActions(actions []string) bool {
 	for _, a := range actions {
 		if _, ok := s.validActions[a]; !ok {
 			return false
@@ -179,28 +179,28 @@ func (s *System) validateActions(actions []string) bool {
 	return true
 }
 
-func (s *System) validateUser(ctx context.Context, orgID, userID int64) error {
+func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
 	if err := sqlstore.GetSignedInUser(ctx, &models.GetSignedInUserQuery{OrgId: orgID, UserId: userID}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *System) validateTeam(ctx context.Context, orgID, teamID int64) error {
+func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
 	if err := sqlstore.GetTeamById(ctx, &models.GetTeamByIdQuery{OrgId: orgID, Id: teamID}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *System) validateBuiltinRole(ctx context.Context, builtinRole string) error {
+func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) error {
 	if err := accesscontrol.ValidateBuiltInRoles([]string{builtinRole}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *System) declareFixedRoles() error {
+func (s *Service) declareFixedRoles() error {
 	scopeAll := accesscontrol.Scope(s.options.Resource, "*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{

@@ -16,11 +16,11 @@ import (
 type api struct {
 	ac          accesscontrol.AccessControl
 	router      routing.RouteRegister
-	manager     *System
+	service     *Service
 	permissions []string
 }
 
-func newApi(ac accesscontrol.AccessControl, router routing.RouteRegister, manager *System) *api {
+func newApi(ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service) *api {
 	permissions := make([]string, 0, len(manager.permissions))
 	// reverse the permissions order for display
 	for i := len(manager.permissions) - 1; i >= 0; i-- {
@@ -32,9 +32,9 @@ func newApi(ac accesscontrol.AccessControl, router routing.RouteRegister, manage
 func (a *api) registerEndpoints() {
 	auth := middleware.Middleware(a.ac)
 	disable := middleware.Disable(a.ac.IsDisabled())
-	a.router.Group(fmt.Sprintf("/api/access-control/system/%s", a.manager.options.Resource), func(r routing.RouteRegister) {
-		idScope := accesscontrol.Scope(a.manager.options.Resource, "id", accesscontrol.Parameter(":resourceID"))
-		actionWrite, actionRead := fmt.Sprintf("%s.permissions:write", a.manager.options.Resource), fmt.Sprintf("%s.permissions:read", a.manager.options.Resource)
+	a.router.Group(fmt.Sprintf("/api/access-control/system/%s", a.service.options.Resource), func(r routing.RouteRegister) {
+		idScope := accesscontrol.Scope(a.service.options.Resource, "id", accesscontrol.Parameter(":resourceID"))
+		actionWrite, actionRead := fmt.Sprintf("%s.permissions:write", a.service.options.Resource), fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
 		r.Get("/:resourceID", auth(disable, accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(a.getPermissions))
 		r.Post("/:resourceID/users/:userID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setUserPermission))
@@ -57,7 +57,7 @@ type Description struct {
 func (a *api) getDescription(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &Description{
 		Permissions: a.permissions,
-		Assignments: a.manager.options.Assignments,
+		Assignments: a.service.options.Assignments,
 	})
 }
 
@@ -79,14 +79,14 @@ type resourcePermissionDTO struct {
 func (a *api) getPermissions(c *models.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
-	permissions, err := a.manager.GetPermissions(c.Req.Context(), c.OrgId, resourceID)
+	permissions, err := a.service.GetPermissions(c.Req.Context(), c.OrgId, resourceID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to get permissions", err)
 	}
 
 	dto := make([]resourcePermissionDTO, 0, len(permissions))
 	for _, p := range permissions {
-		if permission, ok := a.manager.MapActions(p); ok {
+		if permission, ok := a.service.MapActions(p); ok {
 			teamAvatarUrl := ""
 			if p.TeamId != 0 {
 				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(p.TeamEmail, p.Team)
@@ -125,12 +125,12 @@ func (a *api) setUserPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	permission, err := a.manager.SetUserPermission(c.Req.Context(), c.OrgId, userID, resourceID, a.manager.MapPermission(cmd.Permission))
+	permission, err := a.service.SetUserPermission(c.Req.Context(), c.OrgId, userID, resourceID, a.service.MapPermission(cmd.Permission))
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set user permission", err)
 	}
 
-	translated, _ := a.manager.MapActions(*permission)
+	translated, _ := a.service.MapActions(*permission)
 	return response.JSON(http.StatusOK, resourcePermissionDTO{
 		ResourceID:    permission.ResourceID,
 		RoleName:      permission.RoleName,
@@ -152,12 +152,12 @@ func (a *api) setTeamPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	permission, err := a.manager.SetTeamPermission(c.Req.Context(), c.OrgId, teamID, resourceID, a.manager.MapPermission(cmd.Permission))
+	permission, err := a.service.SetTeamPermission(c.Req.Context(), c.OrgId, teamID, resourceID, a.service.MapPermission(cmd.Permission))
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set team permission", err)
 	}
 
-	translated, _ := a.manager.MapActions(*permission)
+	translated, _ := a.service.MapActions(*permission)
 	return response.JSON(http.StatusOK, resourcePermissionDTO{
 		ResourceID:    permission.ResourceID,
 		Managed:       permission.Managed(),
@@ -179,12 +179,12 @@ func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	permission, err := a.manager.SetBuiltinRolePermission(c.Req.Context(), c.OrgId, builtInRole, resourceID, a.manager.MapPermission(cmd.Permission))
+	permission, err := a.service.SetBuiltinRolePermission(c.Req.Context(), c.OrgId, builtInRole, resourceID, a.service.MapPermission(cmd.Permission))
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set role permission", err)
 	}
 
-	translated, _ := a.manager.MapActions(*permission)
+	translated, _ := a.service.MapActions(*permission)
 	return response.JSON(http.StatusOK, resourcePermissionDTO{
 		ResourceID:  permission.ResourceID,
 		RoleName:    permission.RoleName,
