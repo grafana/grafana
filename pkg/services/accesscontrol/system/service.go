@@ -119,7 +119,7 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 	})
 }
 
-func (s *Service) SetBuiltinRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
+func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
 	if !s.options.Assignments.BuiltInRoles {
 		return nil, ErrInvalidAssignment
 	}
@@ -136,7 +136,7 @@ func (s *Service) SetBuiltinRolePermission(ctx context.Context, orgID int64, bui
 		return nil, err
 	}
 
-	return s.store.SetBuiltinResourcePermission(ctx, orgID, builtInRole, accesscontrol.SetResourcePermissionCommand{
+	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, accesscontrol.SetResourcePermissionCommand{
 		Actions:    actions,
 		ResourceID: resourceID,
 		Resource:   s.options.Resource,

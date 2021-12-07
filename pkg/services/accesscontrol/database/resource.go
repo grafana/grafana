@@ -77,16 +77,16 @@ func (s *AccessControlStore) SetTeamResourcePermission(ctx context.Context, orgI
 	return permission, nil
 }
 
-func (s *AccessControlStore) SetBuiltinResourcePermission(ctx context.Context, orgID int64, builtinRole string, cmd accesscontrol.SetResourcePermissionCommand) (*accesscontrol.ResourcePermission, error) {
-	if !models.RoleType(builtinRole).IsValid() || builtinRole == accesscontrol.RoleGrafanaAdmin {
-		return nil, fmt.Errorf("invalid role: %s", builtinRole)
+func (s *AccessControlStore) SetBuiltInResourcePermission(ctx context.Context, orgID int64, builtInRole string, cmd accesscontrol.SetResourcePermissionCommand) (*accesscontrol.ResourcePermission, error) {
+	if !models.RoleType(builtInRole).IsValid() || builtInRole == accesscontrol.RoleGrafanaAdmin {
+		return nil, fmt.Errorf("invalid role: %s", builtInRole)
 	}
 
 	var err error
 	var permission *accesscontrol.ResourcePermission
 
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		permission, err = s.setResourcePermission(sess, orgID, managedBuiltInRoleName(builtinRole), s.builtinRoleAdder(sess, orgID, builtinRole), cmd)
+		permission, err = s.setResourcePermission(sess, orgID, managedBuiltInRoleName(builtInRole), s.builtInRoleAdder(sess, orgID, builtInRole), cmd)
 		return err
 	})
 
@@ -455,7 +455,7 @@ func (s *AccessControlStore) teamAdder(sess *sqlstore.DBSession, orgID, teamID i
 	}
 }
 
-func (s *AccessControlStore) builtinRoleAdder(sess *sqlstore.DBSession, orgID int64, builtinRole string) roleAdder {
+func (s *AccessControlStore) builtInRoleAdder(sess *sqlstore.DBSession, orgID int64, builtinRole string) roleAdder {
 	return func(roleID int64) error {
 		if res, err := sess.Query("SELECT 1 FROM builtin_role WHERE role_id=? AND role=? AND org_id=?", roleID, builtinRole, orgID); err != nil {
 			return err
@@ -564,8 +564,8 @@ func managedTeamRoleName(teamID int64) string {
 	return fmt.Sprintf("managed:teams:%d:permissions", teamID)
 }
 
-func managedBuiltInRoleName(builtinRole string) string {
-	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtinRole))
+func managedBuiltInRoleName(builtInRole string) string {
+	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtInRole))
 }
 
 func getResourceScope(resource string, resourceID string) string {

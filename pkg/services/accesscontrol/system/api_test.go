@@ -165,7 +165,7 @@ func TestApi_getPermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			// seed built in role Admin with "View" permission on dashboard 1
-			_, err = system.SetBuiltinRolePermission(context.Background(), 1, "Admin", tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
+			_, err = system.SetBuiltInRolePermission(context.Background(), 1, "Admin", tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
 			require.NoError(t, err)
 
 			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
