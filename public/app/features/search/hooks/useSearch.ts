@@ -33,7 +33,7 @@ export const useSearch: UseSearch = (query, reducer, params = {}) => {
     dispatch({ type: SEARCH_START });
   }, [query.tag, query.sort, query.starred, query.layout, dispatch]);
 
-  useDebounce(search, 300, [query, queryParsing]);
+  useDebounce(search, 300, [query.query, query.tag, query.sort, query.starred, query.layout, queryParsing]);
 
   const onToggleSection = useCallback(
     (section: DashboardSection) => {

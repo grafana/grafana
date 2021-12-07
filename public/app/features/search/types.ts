@@ -72,7 +72,6 @@ export interface DashboardQuery {
   // Save sorting data between layouts
   prevSort: SelectableValue | null;
   layout: SearchLayout;
-  previews: boolean;
 }
 
 export type SearchReducer<S> = [S, Dispatch<SearchAction>];

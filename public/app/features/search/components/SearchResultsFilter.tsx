@@ -1,4 +1,4 @@
-import React, { FC, FormEvent } from 'react';
+import React, { FC, ChangeEvent, FormEvent } from 'react';
 import { css } from '@emotion/css';
 import { Button, Checkbox, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
@@ -13,12 +13,13 @@ export interface Props {
   hideLayout?: boolean;
   moveTo: () => void;
   onLayoutChange: (layout: SearchLayout) => void;
-  onPreviewsChange: (event: FormEvent<HTMLInputElement>) => void;
+  onShowPreviewsChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onSortChange: (value: SelectableValue) => void;
   onStarredFilterChange: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   onToggleAllChecked: () => void;
   query: DashboardQuery;
+  showPreviews?: boolean;
   editable?: boolean;
 }
 
@@ -30,12 +31,13 @@ export const SearchResultsFilter: FC<Props> = ({
   hideLayout,
   moveTo,
   onLayoutChange,
-  onPreviewsChange,
+  onShowPreviewsChange,
   onSortChange,
   onStarredFilterChange,
   onTagFilterChange,
   onToggleAllChecked,
   query,
+  showPreviews,
   editable,
 }) => {
   const showActions = canDelete || canMove;
@@ -63,11 +65,12 @@ export const SearchResultsFilter: FC<Props> = ({
           {...{
             hideLayout,
             onLayoutChange,
-            onPreviewsChange,
+            onShowPreviewsChange,
             onSortChange,
             onStarredFilterChange,
             onTagFilterChange,
             query,
+            showPreviews,
           }}
           showStarredFilter
         />

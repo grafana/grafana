@@ -19,7 +19,7 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
   results: DashboardSection[];
-  showPreviews: boolean;
+  showPreviews?: boolean;
   layout?: string;
 }
 

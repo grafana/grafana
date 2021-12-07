@@ -14,7 +14,6 @@ export const DELETE_ITEMS = 'DELETE_ITEMS';
 
 // Search Query
 export const TOGGLE_STARRED = 'TOGGLE_STARRED';
-export const TOGGLE_PREVIEWS = 'TOGGLE_PREVIEWS';
 export const REMOVE_STARRED = 'REMOVE_STARRED';
 export const QUERY_CHANGE = 'QUERY_CHANGE';
 export const REMOVE_TAG = 'REMOVE_TAG';

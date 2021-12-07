@@ -7,7 +7,6 @@ import {
   REMOVE_STARRED,
   REMOVE_TAG,
   SET_TAGS,
-  TOGGLE_PREVIEWS,
   TOGGLE_SORT,
   TOGGLE_STARRED,
 } from './actionTypes';
@@ -48,8 +47,6 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
     }
     case TOGGLE_STARRED:
       return { ...state, starred: action.payload };
-    case TOGGLE_PREVIEWS:
-      return { ...state, previews: action.payload };
     case REMOVE_STARRED:
       return { ...state, starred: false };
     case CLEAR_FILTERS:

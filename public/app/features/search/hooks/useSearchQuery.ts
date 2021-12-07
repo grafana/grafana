@@ -11,7 +11,6 @@ import {
   SET_TAGS,
   TOGGLE_SORT,
   TOGGLE_STARRED,
-  TOGGLE_PREVIEWS,
 } from '../reducers/actionTypes';
 import { DashboardQuery, SearchLayout } from '../types';
 import { hasFilters, parseRouteParams } from '../utils';
@@ -52,12 +51,6 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
     updateLocation({ starred: starred || null });
   };
 
-  const onPreviewsChange = (e: FormEvent<HTMLInputElement>) => {
-    const previews = (e.target as HTMLInputElement).checked;
-    dispatch({ type: TOGGLE_PREVIEWS, payload: previews });
-    updateLocation({ previews: previews || null });
-  };
-
   const onSortChange = (sort: SelectableValue | null) => {
     dispatch({ type: TOGGLE_SORT, payload: sort });
     updateLocation({ sort: sort?.value, layout: SearchLayout.List });
@@ -82,6 +75,5 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
     onTagAdd,
     onSortChange,
     onLayoutChange,
-    onPreviewsChange,
   };
 };

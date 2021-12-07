@@ -1,4 +1,4 @@
-import React, { FC, FormEvent } from 'react';
+import React, { FC, ChangeEvent, FormEvent } from 'react';
 import { css } from '@emotion/css';
 import { HorizontalGroup, RadioButtonGroup, stylesFactory, useTheme, Checkbox, InlineSwitch } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
@@ -17,24 +17,26 @@ const searchSrv = new SearchSrv();
 
 interface Props {
   onLayoutChange: (layout: SearchLayout) => void;
-  onPreviewsChange: (event: FormEvent<HTMLInputElement>) => void;
+  onShowPreviewsChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onSortChange: (value: SelectableValue) => void;
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   query: DashboardQuery;
   showStarredFilter?: boolean;
   hideLayout?: boolean;
+  showPreviews?: boolean;
 }
 
 export const ActionRow: FC<Props> = ({
   onLayoutChange,
-  onPreviewsChange,
+  onShowPreviewsChange,
   onSortChange,
   onStarredFilterChange = () => {},
   onTagFilterChange,
   query,
   showStarredFilter,
   hideLayout,
+  showPreviews,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -53,8 +55,8 @@ export const ActionRow: FC<Props> = ({
               id="search-show-previews"
               label="Show previews"
               showLabel
-              value={query.previews}
-              onChange={onPreviewsChange}
+              value={showPreviews}
+              onChange={onShowPreviewsChange}
             />
           )}
         </HorizontalGroup>
