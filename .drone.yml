@@ -408,7 +408,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - build-storybook
-  - end-to-end-tests
 
 - name: publish-frontend-metrics
   image: grafana/build-container:1.4.3
@@ -500,7 +499,6 @@ steps:
     GITHUB_PACKAGE_TOKEN:
       from_secret: github_package_token
   depends_on:
-  - end-to-end-tests
   - end-to-end-tests-server
 
 - name: upload-packages
@@ -512,7 +510,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - package
-  - end-to-end-tests
   - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
@@ -828,16 +825,6 @@ steps:
   depends_on:
   - package
 
-- name: end-to-end-tests
-  image: grafana/ci-e2e:12.19.0-1
-  commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001 --tries 3
-  environment:
-    HOST: end-to-end-tests-server
-  depends_on:
-  - end-to-end-tests-server
-
 - name: build-storybook
   image: grafana/build-container:1.4.3
   commands:
@@ -931,7 +918,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - package
-  - end-to-end-tests
   - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
@@ -948,7 +934,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - build-storybook
-  - end-to-end-tests
 
 - name: release-npm-packages
   image: grafana/build-container:1.4.3
@@ -1227,16 +1212,6 @@ steps:
   depends_on:
   - package
 
-- name: end-to-end-tests
-  image: grafana/ci-e2e:12.19.0-1
-  commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001 --tries 3
-  environment:
-    HOST: end-to-end-tests-server
-  depends_on:
-  - end-to-end-tests-server
-
 - name: copy-packages-for-docker
   image: grafana/build-container:1.4.3
   commands:
@@ -1342,7 +1317,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - package
-  - end-to-end-tests
   - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
@@ -1389,16 +1363,6 @@ steps:
   depends_on:
   - package-enterprise2
 
-- name: end-to-end-tests-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3002 --tries 3
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  depends_on:
-  - end-to-end-tests-server-enterprise2
-
 - name: upload-packages-enterprise2
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
@@ -1408,7 +1372,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - package-enterprise2
-  - end-to-end-tests-enterprise2
   - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
@@ -1765,16 +1728,6 @@ steps:
   depends_on:
   - package
 
-- name: end-to-end-tests
-  image: grafana/ci-e2e:12.19.0-1
-  commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001 --tries 3
-  environment:
-    HOST: end-to-end-tests-server
-  depends_on:
-  - end-to-end-tests-server
-
 - name: build-storybook
   image: grafana/build-container:1.4.3
   commands:
@@ -1862,7 +1815,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - package
-  - end-to-end-tests
   - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
@@ -1876,7 +1828,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - build-storybook
-  - end-to-end-tests
 
 - name: release-npm-packages
   image: grafana/build-container:1.4.3
@@ -2153,16 +2104,6 @@ steps:
   depends_on:
   - package
 
-- name: end-to-end-tests
-  image: grafana/ci-e2e:12.19.0-1
-  commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001 --tries 3
-  environment:
-    HOST: end-to-end-tests-server
-  depends_on:
-  - end-to-end-tests-server
-
 - name: copy-packages-for-docker
   image: grafana/build-container:1.4.3
   commands:
@@ -2262,7 +2203,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - package
-  - end-to-end-tests
   - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
@@ -2309,16 +2249,6 @@ steps:
   depends_on:
   - package-enterprise2
 
-- name: end-to-end-tests-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3002 --tries 3
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  depends_on:
-  - end-to-end-tests-server-enterprise2
-
 - name: upload-packages-enterprise2
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
@@ -2328,7 +2258,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - package-enterprise2
-  - end-to-end-tests-enterprise2
   - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
@@ -2681,16 +2610,6 @@ steps:
   depends_on:
   - package
 
-- name: end-to-end-tests
-  image: grafana/ci-e2e:12.19.0-1
-  commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001 --tries 3
-  environment:
-    HOST: end-to-end-tests-server
-  depends_on:
-  - end-to-end-tests-server
-
 - name: build-storybook
   image: grafana/build-container:1.4.3
   commands:
@@ -2778,7 +2697,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - package
-  - end-to-end-tests
   - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
@@ -3037,16 +2955,6 @@ steps:
   depends_on:
   - package
 
-- name: end-to-end-tests
-  image: grafana/ci-e2e:12.19.0-1
-  commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001 --tries 3
-  environment:
-    HOST: end-to-end-tests-server
-  depends_on:
-  - end-to-end-tests-server
-
 - name: build-storybook
   image: grafana/build-container:1.4.3
   commands:
@@ -3156,7 +3064,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - package
-  - end-to-end-tests
   - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
@@ -3203,16 +3110,6 @@ steps:
   depends_on:
   - package-enterprise2
 
-- name: end-to-end-tests-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3002 --tries 3
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  depends_on:
-  - end-to-end-tests-server-enterprise2
-
 - name: upload-packages-enterprise2
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
@@ -3222,7 +3119,6 @@ steps:
       from_secret: gcp_key
   depends_on:
   - package-enterprise2
-  - end-to-end-tests-enterprise2
   - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
@@ -3428,6 +3324,6 @@ get:
 
 ---
 kind: signature
-hmac: 2ba86c708134cd67f098f896776b1420bec631fa043a14a9991ee2167f0aff1e
+hmac: b29b2b5d81bf443acb1f61caf900df9cba90b7e1a16fcc88aceeafcf7ad99895
 
 ...

@@ -295,7 +295,6 @@ def publish_storybook_step(edition, ver_mode):
         'image': publish_image,
         'depends_on': [
             'build-storybook',
-            'end-to-end-tests',
         ],
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
@@ -798,7 +797,6 @@ def release_canary_npm_packages_step(edition):
         'name': 'release-canary-npm-packages',
         'image': build_image,
         'depends_on': [
-            'end-to-end-tests',
             'end-to-end-tests-server',
         ],
         'environment': {
@@ -848,7 +846,6 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
 
     dependencies = [
         'package' + enterprise2_sfx(edition),
-        'end-to-end-tests' + enterprise2_sfx(edition),
         'end-to-end-tests-server',
         'mysql-integration-tests',
         'postgres-integration-tests',
