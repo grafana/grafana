@@ -176,7 +176,7 @@ export class LokiDatasource
       if (target.instant || target.queryType === LokiQueryType.Instant) {
         subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
       } else if (target.queryType === LokiQueryType.Stream && options.rangeRaw?.to === 'now') {
-        subQueries.push(this.runStreamingQuery(target, options));
+        subQueries.push(doLokiChannelStream(target, this, options.range));
       } else {
         subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
       }
@@ -308,46 +308,6 @@ export class LokiDatasource
         )
       )
     );
-  };
-
-  runStreamingQuery = (target: LokiQuery, options: RangeQueryOptions): Observable<DataQueryResponse> => {
-    const { range } = options;
-    const body: any = {
-      queries: [
-        {
-          ...target,
-          streamKey: getLiveStreamKey(target), // unique hash per query
-          datasource: this.getRef(),
-        },
-      ],
-    };
-
-    if (range) {
-      body.range = range;
-      body.from = range.from.valueOf().toString();
-      body.to = range.to.valueOf().toString();
-    }
-
-    return getBackendSrv()
-      .fetch<BackendDataSourceResponse>({
-        url: '/api/ds/query',
-        method: 'POST',
-        data: body,
-        requestId: 'loki/' + requestId++,
-      })
-      .pipe(
-        switchMap((raw) => {
-          const rsp = toDataQueryResponse(raw, [target]);
-          const frame = rsp.data?.find((f: DataFrame) => f.meta?.channel);
-          if (frame && frame.meta.channel) {
-            return doLokiChannelStream(target, this);
-          }
-          return of(rsp);
-        }),
-        catchError((err) => {
-          return of(toDataQueryResponse(err));
-        })
-      );
   };
 
   createLiveTarget(target: LokiQuery, maxDataPoints: number): LokiLiveTarget {

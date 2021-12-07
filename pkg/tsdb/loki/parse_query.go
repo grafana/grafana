@@ -1,7 +1,6 @@
 package loki
 
 import (
-	"encoding/json"
 	"math"
 	"strconv"
 	"strings"
@@ -40,8 +39,7 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 func parseQuery(dsInfo *datasourceInfo, queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
-		model := &QueryModel{}
-		err := json.Unmarshal(query.JSON, model)
+		model, err := parseQueryModel(query.JSON)
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +66,6 @@ func parseQuery(dsInfo *datasourceInfo, queryContext *backend.QueryDataRequest) 
 			Start:        start,
 			End:          end,
 			RefID:        query.RefID,
-			StreamKey:    model.StreamKey,
 		})
 	}
 

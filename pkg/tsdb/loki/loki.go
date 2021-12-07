@@ -68,9 +68,6 @@ type datasourceInfo struct {
 	BasicAuthUser     string
 	BasicAuthPassword string
 	TimeInterval      string `json:"timeInterval"`
-
-	uid  string
-	tail tailQueryCache
 }
 
 type QueryModel struct {
@@ -79,7 +76,12 @@ type QueryModel struct {
 	Interval     string `json:"interval"`
 	IntervalMS   int    `json:"intervalMS"`
 	Resolution   int64  `json:"resolution"`
-	StreamKey    string `json:"streamKey"` // for streaming queries
+}
+
+func parseQueryModel(raw json.RawMessage) (*QueryModel, error) {
+	model := &QueryModel{}
+	err := json.Unmarshal(raw, model)
+	return model, err
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -112,10 +114,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			TimeInterval:      jsonData.TimeInterval,
 			BasicAuthUser:     settings.BasicAuthUser,
 			BasicAuthPassword: settings.DecryptedSecureJSONData["basicAuthPassword"],
-			uid:               settings.UID,
-			tail: tailQueryCache{
-				cache: make(map[string]lokiQuery),
-			},
 		}
 		return model, nil
 	}
@@ -155,30 +153,24 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		if query.StreamKey != "" {
-			frame := s.registerTailQuery(dsInfo, query)
-			queryRes.Frames = data.Frames{frame}
-			result.Responses[query.RefID] = queryRes
-		} else {
-			// `limit` only applies to log-producing queries, and we
-			// currently only support metric queries, so this can be set to any value.
-			limit := 1
+		// `limit` only applies to log-producing queries, and we
+		// currently only support metric queries, so this can be set to any value.
+		limit := 1
 
-			// we do not use `interval`, so we set it to zero
-			interval := time.Duration(0)
+		// we do not use `interval`, so we set it to zero
+		interval := time.Duration(0)
 
-			value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
-			if err != nil {
-				return result, err
-			}
-
-			frames, err := parseResponse(value, query)
-			if err != nil {
-				return result, err
-			}
-			queryRes.Frames = frames
-			result.Responses[query.RefID] = queryRes
+		value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
+		if err != nil {
+			return result, err
 		}
+
+		frames, err := parseResponse(value, query)
+		if err != nil {
+			return result, err
+		}
+		queryRes.Frames = frames
+		result.Responses[query.RefID] = queryRes
 	}
 	return result, nil
 }

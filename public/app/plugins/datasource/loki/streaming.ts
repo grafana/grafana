@@ -1,4 +1,4 @@
-import { DataQueryResponse, LiveChannelScope, LoadingState, toDataFrame } from '@grafana/data';
+import { DataQueryResponse, LiveChannelScope, LoadingState, TimeRange, toDataFrame } from '@grafana/data';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 import { map, Observable } from 'rxjs';
 import LokiDatasource from './datasource';
@@ -20,13 +20,24 @@ export function getLiveStreamKey(query: LokiQuery): string {
 }
 
 // This will get both v1 and v2 result formats
-export function doLokiChannelStream(query: LokiQuery, ds: LokiDatasource): Observable<DataQueryResponse> {
+export function doLokiChannelStream(
+  query: LokiQuery,
+  ds: LokiDatasource,
+  range: TimeRange
+): Observable<DataQueryResponse> {
   let counter = 0;
   return getGrafanaLiveSrv()
     .getStream<any>({
       scope: LiveChannelScope.DataSource,
       namespace: ds.uid,
       path: `tail/${getLiveStreamKey(query)}`,
+      data: {
+        ...query,
+        timeRange: {
+          from: range.from.valueOf().toString(),
+          to: range.to.valueOf().toString(),
+        },
+      },
     })
     .pipe(
       map((evt) => {

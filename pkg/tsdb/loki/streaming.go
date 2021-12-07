@@ -6,35 +6,12 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"sync"
 	"time"
 
 	"cuelang.org/go/pkg/strings"
 	"github.com/gorilla/websocket"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
 )
-
-// HACK: temporary -- will break HA until we pass query over subscription
-// We are working to pass the query along with the subscription -- so the query so this cache will not be required
-type tailQueryCache struct {
-	cache map[string]lokiQuery
-	lock  sync.Mutex
-}
-
-// Called from the query method
-func (s *Service) registerTailQuery(dsInfo *datasourceInfo, q *lokiQuery) *data.Frame {
-	dsInfo.tail.lock.Lock()
-	defer dsInfo.tail.lock.Unlock()
-	dsInfo.tail.cache[q.StreamKey] = *q
-
-	frame := newLogsFrame(0).frame
-	frame.SetMeta(&data.FrameMeta{
-		Channel: fmt.Sprintf("%s/%s/tail/%s", live.ScopeDatasource, dsInfo.uid, q.StreamKey),
-	})
-	return frame
-}
 
 func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	dsInfo, err := s.getDSInfo(req.PluginContext)
@@ -44,19 +21,21 @@ func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStrea
 		}, err
 	}
 
-	key := req.Path[strings.LastIndex(req.Path, "/")+1:]
-	dsInfo.tail.lock.Lock()
-	q, ok := dsInfo.tail.cache[key]
-	dsInfo.tail.lock.Unlock()
-
-	if !ok || q.StreamKey == "" {
+	// Expect tail/${key}
+	if !strings.HasPrefix(req.Path, "tail/") {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
-		}, nil
+		}, fmt.Errorf("expected tail in channel path")
 	}
 
-	// TODO: backfill query???
-	// initial, err := backend.NewInitialFrame(newLogsFrame(0).frame, data.IncludeAll)
+	query, err := parseQueryModel(req.Query)
+	if query.Expr == "" {
+		return &backend.SubscribeStreamResponse{
+			Status: backend.SubscribeStreamStatusNotFound,
+		}, fmt.Errorf("missing expr in cuannel")
+	}
+
+	s.plog.Info("TODO: backfill query", "query", query, "ds", dsInfo)
 
 	// nothing yet
 	return &backend.SubscribeStreamResponse{
@@ -71,32 +50,21 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		return err
 	}
 
-	key := req.Path[strings.LastIndex(req.Path, "/")+1:]
-	dsInfo.tail.lock.Lock()
-	q, ok := dsInfo.tail.cache[key]
-	dsInfo.tail.lock.Unlock()
-
-	if !ok || q.StreamKey == "" {
-		return fmt.Errorf("unknown stream: %s", key)
-	}
-
-	count := int64(0)
-
-	// Send the first frame
-	frame := newLogsFrame(1)
-	frame.labels.SetConcrete(0, "a=AAA")
-	frame.time.SetConcrete(0, time.Now())
-	frame.line.SetConcrete(0, fmt.Sprintf("initial data: %s", key))
-	err = sender.SendFrame(frame.frame, data.IncludeAll)
+	query, err := parseQueryModel(req.Query)
 	if err != nil {
 		return err
 	}
+	if query.Expr == "" {
+		return fmt.Errorf("missing expr in cuannel")
+	}
+
+	count := int64(0)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
 	params := url.Values{}
-	params.Add("query", q.Expr)
+	params.Add("query", query.Expr)
 
 	wsurl, _ := url.Parse(dsInfo.URL)
 	if wsurl.Scheme == "https" {
