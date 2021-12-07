@@ -17,6 +17,11 @@ export interface Message {
   userId: number;
 }
 
+export interface MessagePacket {
+  event: string;
+  messageCreated: Message;
+}
+
 export interface ChatState {
   messages: Message[];
   value: string;
@@ -87,7 +92,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
     if (!addr) {
       return undefined;
     }
-    return live.getStream(addr);
+    return live.getStream<MessagePacket>(addr);
   };
 
   updateSubscription = () => {
@@ -103,12 +108,12 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
         next: (msg) => {
           console.log('Got msg', msg);
           if (isLiveChannelMessageEvent(msg)) {
-            // @ts-ignore
-            const d = JSON.stringify(msg);
-            const x = JSON.parse(d);
-            this.setState((prevState) => ({
-              messages: [...prevState.messages, x.message.messageCreated],
-            }));
+            const { messageCreated } = msg.message;
+            if (messageCreated) {
+              this.setState((prevState) => ({
+                messages: [...prevState.messages, messageCreated],
+              }));
+            }
           }
           // } else if (isLiveChannelStatusEvent(msg)) {
           //   const update: Partial<State> = {
