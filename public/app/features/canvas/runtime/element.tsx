@@ -51,7 +51,6 @@ export class ElementState implements LayerElement {
       const newName = scene?.getNextElementName();
       options.name = newName ?? fallbackName;
     }
-
     scene?.byName.set(options.name, this);
   }
 
