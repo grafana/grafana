@@ -32,7 +32,12 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     const expr = promQueryModeller.renderLabels(labelsToConsider);
-    return Object.keys(await datasource.languageProvider.fetchSeriesLabels(expr));
+    const labelsIndex = await datasource.languageProvider.fetchSeriesLabels(expr);
+
+    // filter out already used labels
+    return Object.keys(labelsIndex).filter(
+      (labelName) => !labelsToConsider.find((filter) => filter.label === labelName)
+    );
   };
 
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
