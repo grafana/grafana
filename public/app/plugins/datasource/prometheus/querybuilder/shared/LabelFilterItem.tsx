@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AsyncSelect, Select } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 import { SelectableValue, toOption } from '@grafana/data';
 import AccessoryButton from 'app/plugins/datasource/cloudwatch/components/ui/AccessoryButton';
 import InputGroup from 'app/plugins/datasource/cloudwatch/components/ui/InputGroup';
@@ -7,18 +7,14 @@ import { QueryBuilderLabelFilter } from './types';
 
 export interface Props {
   item: Partial<QueryBuilderLabelFilter>;
+  labelData: any;
   onChange: (value: QueryBuilderLabelFilter) => void;
-  onGetLabelNames: () => Promise<string[]>;
   onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
   onDelete: () => void;
 }
 
-export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onGetLabelValues }: Props) {
+export function LabelFilterItem({ item, labelData, onChange, onDelete, onGetLabelValues }: Props) {
   const [labelValues, setLabelValues] = useState<any>();
-
-  const loadLabelNames = async () => {
-    return (await onGetLabelNames()).map((value) => ({ label: value, value }));
-  };
 
   const loadLabelValues = async (change: SelectableValue<string>) => {
     await onGetLabelValues(change).then((res) => {
@@ -29,18 +25,21 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onG
     });
   };
 
+  const getLabelNames = (labelData: any) => {
+    return labelData ? Object.keys(labelData).map((value) => ({ label: value, value })) : [{ label: '', value: '' }];
+  };
+
   const operators = [{ label: '=~', value: '=~' }];
 
   return (
     <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
-        <AsyncSelect
+        <Select
           inputId="prometheus-dimensions-filter-item-key"
           width="auto"
           value={item.label ? toOption(item.label) : null}
           allowCustomValue
-          defaultOptions={true}
-          loadOptions={loadLabelNames}
+          options={getLabelNames(labelData)}
           onChange={(change) => {
             if (change.label) {
               onChange(({
