@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, toOption } from '@grafana/data';
 import { FlexItem } from '@grafana/experimental';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { IconButton, Input, Select, useStyles2 } from '@grafana/ui';
 import React from 'react';
 import { PrometheusDatasource } from '../../datasource';
 import { PromVisualQueryBinary } from '../types';
@@ -15,13 +15,37 @@ export interface Props {
   onRemove: (index: number) => void;
 }
 
-export function NestedQuery({ nestedQuery, index, datasource, onChange, onRemove }: Props) {
+export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, onChange, onRemove }) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <div className={styles.name}>Divide by query</div>
+        <div className={styles.name}>Operator</div>
+        <Select
+          width="auto"
+          options={operators}
+          value={toOption(nestedQuery.operator)}
+          onChange={(value) => {
+            onChange(index, {
+              ...nestedQuery,
+              operator: value.value!,
+            });
+          }}
+        />
+        <div className={styles.name}>Vector matches</div>
+
+        <Input
+          width={20}
+          defaultValue={nestedQuery.vectorMatches}
+          onBlur={(evt) => {
+            onChange(index, {
+              ...nestedQuery,
+              vectorMatches: evt.currentTarget.value,
+            });
+          }}
+        />
+
         <FlexItem grow={1} />
         <IconButton name="times" size="sm" onClick={() => onRemove(index)} />
       </div>
@@ -36,7 +60,18 @@ export function NestedQuery({ nestedQuery, index, datasource, onChange, onRemove
       </div>
     </div>
   );
-}
+});
+
+const operators = [
+  { label: '/', value: '/' },
+  { label: '*', value: '*' },
+  { label: '+', value: '+' },
+  { label: '==', value: '==' },
+  { label: '>', value: '>' },
+  { label: '<', value: '<' },
+];
+
+NestedQuery.displayName = 'NestedQuery';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -56,7 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
     }),
     name: css({
-      // fontSize: theme.typography.bodySmall.fontSize,
+      whiteSpace: 'nowrap',
     }),
     body: css({
       margin: theme.spacing(1, 1, 0.5, 1),

@@ -128,4 +128,73 @@ describe('VisualQueryEngine', () => {
       })
     ).toBe('metric * 1000');
   });
+
+  it('Can render query with simple binary query', () => {
+    expect(
+      engine.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [],
+            },
+          },
+        ],
+      })
+    ).toBe('metric_a / metric_b');
+  });
+
+  it('Can render query with multiple binary queries and nesting', () => {
+    expect(
+      engine.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '+',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [],
+            },
+          },
+          {
+            operator: '+',
+            query: {
+              metric: 'metric_c',
+              labels: [],
+              operations: [],
+            },
+          },
+        ],
+      })
+    ).toBe('metric_a + metric_b + metric_c');
+  });
+
+  it('Can render with binary queries with vectorMatches expression', () => {
+    expect(
+      engine.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '/',
+            vectorMatches: 'on(le)',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [],
+            },
+          },
+        ],
+      })
+    ).toBe('metric_a / on(le) metric_b');
+  });
 });

@@ -12,6 +12,7 @@ export interface PromVisualQuery {
 
 export interface PromVisualQueryBinary {
   operator: string;
+  vectorMatches?: string;
   query: PromVisualQuery;
 }
 

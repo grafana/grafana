@@ -1,6 +1,6 @@
 import { promQueryModeller } from './PromQueryModeller';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
-import { getDefaultTestQuery, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
+import { PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [
@@ -67,7 +67,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: '__nested_query',
-      displayName: 'Nested query',
+      displayName: 'Binary operation with query',
       params: [],
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Math,
@@ -182,14 +182,14 @@ export function addOperationWithRangeVector(def: QueryBuilderOperationDef, query
   };
 }
 
-function addNestedQueryHandler(def: QueryBuilderOperationDef, query: PromVisualQuery) {
+function addNestedQueryHandler(def: QueryBuilderOperationDef, query: PromVisualQuery): PromVisualQuery {
   return {
     ...query,
-    nestedQueries: [
+    binaryQueries: [
       ...(query.binaryQueries ?? []),
       {
         operator: '/',
-        query: getDefaultTestQuery(),
+        query,
       },
     ],
   };

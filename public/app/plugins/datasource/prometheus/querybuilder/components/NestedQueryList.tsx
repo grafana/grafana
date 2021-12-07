@@ -31,7 +31,7 @@ export function NestedQueryList({ query, datasource, onChange }: Props) {
   return (
     <div className={styles.body}>
       <Stack gap={1} direction="column">
-        <h5 className={styles.heading}>Nested queries</h5>
+        <h5 className={styles.heading}>Binary operations</h5>
         <Stack gap={1} direction="column">
           {nestedQueries.map((nestedQuery, index) => (
             <NestedQuery
