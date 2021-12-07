@@ -8,7 +8,7 @@ import { LabelFilterItem } from './LabelFilterItem';
 
 export interface Props {
   labelsFilters: QueryBuilderLabelFilter[];
-  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
+  onGetLabelNames: () => Promise<string[]>;
   onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
   onChange: (labelFilters: QueryBuilderLabelFilter[]) => void;
 }

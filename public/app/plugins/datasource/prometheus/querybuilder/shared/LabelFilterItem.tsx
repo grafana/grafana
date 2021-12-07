@@ -8,7 +8,7 @@ import { QueryBuilderLabelFilter } from './types';
 export interface Props {
   item: Partial<QueryBuilderLabelFilter>;
   onChange: (value: QueryBuilderLabelFilter) => void;
-  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
+  onGetLabelNames: () => Promise<string[]>;
   onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
   onDelete: () => void;
 }
@@ -17,7 +17,7 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onG
   const [labelValues, setLabelValues] = useState<any>();
 
   const loadLabelNames = async () => {
-    return (await onGetLabelNames(item)).map((value) => ({ label: value, value }));
+    return (await onGetLabelNames()).map((value) => ({ label: value, value }));
   };
 
   const loadLabelValues = async (change: SelectableValue<string>) => {
