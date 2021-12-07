@@ -46,6 +46,7 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
+		StreamHandler:    s,
 	})
 
 	if err := registrar.LoadAndRegister("loki", factory); err != nil {
@@ -78,6 +79,7 @@ type ResponseModel struct {
 	Interval     string `json:"interval"`
 	IntervalMS   int    `json:"intervalMS"`
 	Resolution   int64  `json:"resolution"`
+	StreamKey    string `json:"streamKey"` // for streaming queries
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -153,7 +155,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		if query.TailChannel != "" {
+		if query.StreamKey != "" {
 			frame := s.registerTailQuery(dsInfo, query)
 			queryRes.Frames = data.Frames{frame}
 			result.Responses[query.RefID] = queryRes

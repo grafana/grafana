@@ -29,9 +29,16 @@ import {
   LogRowModel,
   QueryResultMeta,
   ScopedVars,
+  StreamingFrameAction,
   TimeRange,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
+import {
+  BackendDataSourceResponse,
+  BackendSrvRequest,
+  FetchError,
+  getBackendSrv,
+  toDataQueryResponse,
+} from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { addLabelToQuery } from './add_label_to_query';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -42,11 +49,12 @@ import {
   lokiStreamsToDataFrames,
   processRangeQueryResponse,
 } from './result_transformer';
-import { addParsedLabelToQuery, queryHasPipeParser } from './query_utils';
+import { addParsedLabelToQuery, getLiveStreamKey, queryHasPipeParser } from './query_utils';
 
 import {
   LokiOptions,
   LokiQuery,
+  LokiQueryType,
   LokiRangeQueryRequest,
   LokiResultType,
   LokiStreamResponse,
@@ -60,6 +68,7 @@ import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import { queryLogsVolume } from 'app/core/logs_model';
 import config from 'app/core/config';
+import { toStreamingDataResponse } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -165,8 +174,10 @@ export class LokiDatasource
       });
 
     for (const target of filteredTargets) {
-      if (target.instant) {
+      if (target.instant || target.queryType === LokiQueryType.Instant) {
         subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
+      } else if (target.queryType === LokiQueryType.Stream && options.rangeRaw?.to === 'now') {
+        subQueries.push(this.runStreamingQuery(target, options));
       } else {
         subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
       }
@@ -298,6 +309,49 @@ export class LokiDatasource
         )
       )
     );
+  };
+
+  runStreamingQuery = (target: LokiQuery, options: RangeQueryOptions): Observable<DataQueryResponse> => {
+    const { range } = options;
+    const body: any = {
+      queries: [
+        {
+          ...target,
+          streamKey: getLiveStreamKey(target), // unique hash per query
+          datasource: this.getRef(),
+        },
+      ],
+    };
+
+    if (range) {
+      body.range = range;
+      body.from = range.from.valueOf().toString();
+      body.to = range.to.valueOf().toString();
+    }
+
+    return getBackendSrv()
+      .fetch<BackendDataSourceResponse>({
+        url: '/api/ds/query',
+        method: 'POST',
+        data: body,
+        requestId: 'loki/' + requestId++,
+      })
+      .pipe(
+        switchMap((raw) => {
+          const rsp = toDataQueryResponse(raw, [target]);
+          // Check if any response should subscribe to a live stream
+          if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
+            return toStreamingDataResponse(rsp, options as any, (req: DataQueryRequest, frame: DataFrame) => ({
+              action: StreamingFrameAction.Append,
+              maxLength: 2000,
+            }));
+          }
+          return of({ data: [] });
+        }),
+        catchError((err) => {
+          return of(toDataQueryResponse(err));
+        })
+      );
   };
 
   createLiveTarget(target: LokiQuery, maxDataPoints: number): LokiLiveTarget {
@@ -624,6 +678,7 @@ export class LokiDatasource
       maxLines,
       instant,
       stepInterval,
+      queryType: instant ? LokiQueryType.Instant : LokiQueryType.Range,
     };
     const { data } = instant
       ? await lastValueFrom(this.runInstantQuery(query, options as any))
@@ -785,5 +840,7 @@ function getLogLevelFromLabels(labels: Labels): LogLevel {
   }
   return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
 }
+
+let requestId = 0;
 
 export default LokiDatasource;

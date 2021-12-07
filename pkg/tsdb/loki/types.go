@@ -9,5 +9,5 @@ type lokiQuery struct {
 	Start        time.Time
 	End          time.Time
 	RefID        string
-	TailChannel  string // unique channel based on query (calcuated in the frontend)
+	StreamKey    string // unique channel based on query (calcuated in the frontend)
 }

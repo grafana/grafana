@@ -68,6 +68,7 @@ func parseQuery(dsInfo *datasourceInfo, queryContext *backend.QueryDataRequest) 
 			Start:        start,
 			End:          end,
 			RefID:        query.RefID,
+			StreamKey:    model.StreamKey,
 		})
 	}
 
