@@ -156,16 +156,16 @@ func TestSystem_getPermissions(t *testing.T) {
 			// seed team 1 with "Edit" permission on dashboard 1
 			team, err := sql.CreateTeam("test", "test@test.com", 1)
 			require.NoError(t, err)
-			_, err = system.manager.SetTeamPermission(context.Background(), team.OrgId, team.Id, tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
+			_, err = system.SetTeamPermission(context.Background(), team.OrgId, team.Id, tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
 			require.NoError(t, err)
 			// seed user 1 with "View" permission on dashboard 1
 			u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
 			require.NoError(t, err)
-			_, err = system.manager.SetUserPermission(context.Background(), u.OrgId, u.Id, tt.resourceID, []string{"dashboards:read"})
+			_, err = system.SetUserPermission(context.Background(), u.OrgId, u.Id, tt.resourceID, []string{"dashboards:read"})
 			require.NoError(t, err)
 
 			// seed built in role Admin with "View" permission on dashboard 1
-			_, err = system.manager.SetBuiltinRolePermission(context.Background(), 1, "Admin", tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
+			_, err = system.SetBuiltinRolePermission(context.Background(), 1, "Admin", tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
 			require.NoError(t, err)
 
 			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
@@ -419,13 +419,13 @@ func setupTestEnvironment(t *testing.T, user *models.SignedInUser, permissions [
 	sql := sqlstore.InitTestDB(t)
 	store := database.ProvideService(sql)
 
-	system, err := NewSystem(ops, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store)
+	system, err := New(ops, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store)
 	require.NoError(t, err)
 
 	server := web.New()
 	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
-	system.router.Register(server)
+	system.api.router.Register(server)
 
 	return system, server, sql
 }
