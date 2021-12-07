@@ -88,7 +88,7 @@
     "@react-types/shared": "3.10.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@swc/core": "1.2.103",
-    "@swc/helpers": "0.2.13",
+    "@swc/helpers": "0.3.2",
     "@testing-library/dom": "8.11.1",
     "@testing-library/jest-dom": "5.16.1",
     "@testing-library/react": "12.1.2",
