@@ -18,12 +18,12 @@ describe('Duration util', () => {
   describe('parseDuration', () => {
     it('parses a duration string', () => {
       const durationString = '3M 5d 20m';
-      expect(parseDuration(durationString)).toEqual({ months: '3', days: '5', minutes: '20' });
+      expect(parseDuration(durationString)).toEqual({ months: 3, days: 5, minutes: 20 });
     });
 
     it('strips out non valid durations', () => {
       const durationString = '3M 6v 5b 4m';
-      expect(parseDuration(durationString)).toEqual({ months: '3', minutes: '4' });
+      expect(parseDuration(durationString)).toEqual({ months: 3, minutes: 4 });
     });
   });
 
