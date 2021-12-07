@@ -72,7 +72,7 @@ export const SearchResults: FC<Props> = memo(
                   columnCount={numColumns}
                   columnWidth={width / numColumns}
                   rowCount={numRows}
-                  rowHeight={260}
+                  rowHeight={268}
                   className={styles.wrapper}
                   innerElementType="ul"
                   height={height}
@@ -84,7 +84,7 @@ export const SearchResults: FC<Props> = memo(
                     // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
                     // And without this wrapper there is no room for that margin
                     return item ? (
-                      <li style={style}>
+                      <li style={style} className={styles.virtualizedGridItemWrapper}>
                         <SearchCard key={item.id} {...itemProps} item={item} />
                       </li>
                     ) : null;
@@ -137,9 +137,16 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
   const { md } = theme.spacing;
 
   return {
+    virtualizedGridItemWrapper: css`
+      padding: 4px;
+    `,
     wrapper: css`
       display: flex;
       flex-direction: column;
+
+      > ul {
+        list-style: none;
+      }
     `,
     section: css`
       display: flex;
