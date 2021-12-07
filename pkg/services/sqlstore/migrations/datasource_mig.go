@@ -154,4 +154,9 @@ func addDataSourceMigration(mg *Migrator) {
 
 	mg.AddMigration("add unique index datasource_org_id_is_default", NewAddIndexMigration(tableV2, &Index{
 		Cols: []string{"org_id", "is_default"}}))
+
+	// add column library_credential_id
+	mg.AddMigration("Add library credential id column", NewAddColumnMigration(tableV2, &Column{
+		Name: "library_credential_id", Type: DB_BigInt, Nullable: true,
+	}))
 }

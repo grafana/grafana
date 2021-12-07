@@ -65,7 +65,7 @@ func (s LibraryCredentialsService) AddLibraryCredential(ctx context.Context, cmd
 			cmd.Uid = uid
 		}
 
-		ds := &models.LibraryCredential{
+		cred := &models.LibraryCredential{
 			OrgId:          cmd.OrgId,
 			Name:           cmd.Name,
 			Type:           cmd.Type,
@@ -77,11 +77,11 @@ func (s LibraryCredentialsService) AddLibraryCredential(ctx context.Context, cmd
 			Uid:            cmd.Uid,
 		}
 
-		if _, err := dbSession.Insert(ds); err != nil {
+		if _, err := dbSession.Insert(cred); err != nil {
 			return err
 		}
 
-		cmd.Result = ds
+		cmd.Result = cred
 		return nil
 	})
 }
@@ -98,7 +98,7 @@ func (s LibraryCredentialsService) UpdateLibraryCredential(ctx context.Context, 
 			cmd.JsonData = simplejson.New()
 		}
 
-		ds := &models.LibraryCredential{
+		cred := &models.LibraryCredential{
 			Id:             cmd.Id,
 			OrgId:          cmd.OrgId,
 			Name:           cmd.Name,
@@ -113,9 +113,9 @@ func (s LibraryCredentialsService) UpdateLibraryCredential(ctx context.Context, 
 
 		sess.UseBool("read_only")
 
-		updateSession := sess.Where("id=? and org_id=?", ds.Id, ds.OrgId)
+		updateSession := sess.Where("id=? and org_id=?", cred.Id, cred.OrgId)
 
-		affected, err := updateSession.Update(ds)
+		affected, err := updateSession.Update(cred)
 		if err != nil {
 			return err
 		}
@@ -124,7 +124,30 @@ func (s LibraryCredentialsService) UpdateLibraryCredential(ctx context.Context, 
 			return models.ErrDataSourceUpdatingOldVersion
 		}
 
-		cmd.Result = ds
+		datasources := make([]*models.DataSource, 0)
+		if err := sess.Table("data_source").Where("library_credential_id=? and org_id=?", cred.Id, cred.OrgId).Find(&datasources); err != nil {
+			return err
+		}
+
+		for _, ds := range datasources {
+			for key, value := range cred.JsonData.MustMap() {
+				if _, ok := ds.JsonData.CheckGet(key); ok {
+					ds.JsonData.Set(key, value)
+				}
+			}
+
+			for key, value := range cred.SecureJsonData {
+				if _, ok := ds.SecureJsonData[key]; !ok {
+					ds.SecureJsonData[key] = value
+				}
+			}
+
+			if _, err := sess.Table("data_source").Where("id=? and org_id=?", ds.Id, ds.OrgId).Update(ds); err != nil {
+				return err
+			}
+		}
+
+		cmd.Result = cred
 		return err
 	})
 }
