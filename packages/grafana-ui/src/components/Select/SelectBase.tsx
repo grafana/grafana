@@ -151,8 +151,8 @@ export function SelectBase<T>({
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
   // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).
-  // See also: https://github.com/JedWatson/react-select/issues/4936
-  // Note: we use useEffect instead of hooking into onMenuOpen due to a bug: https://github.com/JedWatson/react-select/issues/3375
+  // We can remove this workaround when the bug in react-select is fixed: https://github.com/JedWatson/react-select/issues/4936
+  // Note: we use useEffect instead of hooking into onMenuOpen due to another bug: https://github.com/JedWatson/react-select/issues/3375
   useEffect(() => {
     if (
       loadOptions &&
