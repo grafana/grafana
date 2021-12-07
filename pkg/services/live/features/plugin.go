@@ -2,10 +2,14 @@ package features
 
 import (
 	"context"
+	"encoding/json"
+	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -59,6 +63,12 @@ type PluginPathRunner struct {
 	pluginContextGetter PluginContextGetter
 }
 
+type MetricRequest struct {
+	From  string           `json:"from"`
+	To    string           `json:"to"`
+	Query *simplejson.Json `json:"query"`
+}
+
 // OnSubscribe passes control to a plugin.
 func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	pCtx, found, err := r.pluginContextGetter.GetPluginContext(user, r.pluginID, r.datasourceUID, false)
@@ -70,9 +80,38 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 		logger.Error("Plugin context not found", "path", r.path)
 		return models.SubscribeReply{}, 0, centrifuge.ErrorInternal
 	}
+	var query *backend.DataQuery
+	if e.Data != nil {
+		var mr MetricRequest
+		err := json.Unmarshal(e.Data, &mr)
+		if err != nil {
+			logger.Error("Query extraction error", "error", err, "path", r.path, "data", string(e.Data))
+			// TODO: looks like we need backend.SubscribeStreamStatusBadRequest.
+			return models.SubscribeReply{}, 0, centrifuge.ErrorBadRequest
+		}
+		modelJSON, err := mr.Query.MarshalJSON()
+		if err != nil {
+			logger.Error("Error marshal query to JSON", "path", r.path, "error", err)
+			return models.SubscribeReply{}, 0, centrifuge.ErrorInternal
+		}
+		timeRange := legacydata.NewDataTimeRange(mr.From, mr.To)
+
+		query = &backend.DataQuery{
+			TimeRange: backend.TimeRange{
+				From: timeRange.GetFromAsTimeUTC(),
+				To:   timeRange.GetToAsTimeUTC(),
+			},
+			RefID:         mr.Query.Get("refId").MustString("A"),
+			MaxDataPoints: mr.Query.Get("maxDataPoints").MustInt64(100),
+			Interval:      time.Duration(mr.Query.Get("intervalMs").MustInt64(1000)) * time.Millisecond,
+			QueryType:     mr.Query.Get("queryType").MustString(""),
+			JSON:          modelJSON,
+		}
+	}
 	resp, err := r.handler.SubscribeStream(ctx, &backend.SubscribeStreamRequest{
 		PluginContext: pCtx,
 		Path:          r.path,
+		Query:         query,
 	})
 	if err != nil {
 		logger.Error("Plugin OnSubscribe call error", "error", err, "path", r.path)
@@ -82,7 +121,7 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 		return models.SubscribeReply{}, resp.Status, nil
 	}
 
-	submitResult, err := r.runStreamManager.SubmitStream(ctx, user, orgchannel.PrependOrgID(user.OrgId, e.Channel), r.path, pCtx, r.handler, false)
+	submitResult, err := r.runStreamManager.SubmitStream(ctx, user, orgchannel.PrependOrgID(user.OrgId, e.Channel), r.path, query, pCtx, r.handler, false)
 	if err != nil {
 		logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
 		return models.SubscribeReply{}, 0, centrifuge.ErrorInternal
