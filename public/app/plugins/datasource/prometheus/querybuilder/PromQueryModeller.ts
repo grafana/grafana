@@ -83,12 +83,13 @@ export class PromQueryModeller implements VisualQueryModeller {
   getQueryPatterns(): PromQueryPattern[] {
     return [
       {
-        name: 'Rate then Sum',
+        name: 'Rate then sum',
         operations: [{ id: 'rate', params: ['auto'] }],
       },
       {
-        name: 'Sum by(label) then Avg',
+        name: 'Rate then sum by(label) then avg',
         operations: [
+          { id: 'rate', params: ['auto'] },
           { id: '__sum_by', params: [''] },
           { id: 'avg', params: [] },
         ],
