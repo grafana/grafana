@@ -6,6 +6,7 @@ import { createDependencyEdges, createDependencyNodes, filterNodesWithDependenci
 import { store } from '../../../store/store';
 import { VariableModel } from '../types';
 import { NetworkGraphModal } from './NetworkGraphModal';
+import { reportInteraction } from '../../../../../packages/grafana-runtime';
 
 interface OwnProps {
   variables: VariableModel[];
@@ -34,7 +35,14 @@ export const UnProvidedVariablesDependenciesButton: FC<Props> = ({ variables }) 
     >
       {({ showModal }) => {
         return (
-          <Button onClick={() => showModal()} icon="channel-add" variant="secondary">
+          <Button
+            onClick={() => {
+              reportInteraction('Show variable dependencies');
+              showModal();
+            }}
+            icon="channel-add"
+            variant="secondary"
+          >
             Show dependencies
           </Button>
         );

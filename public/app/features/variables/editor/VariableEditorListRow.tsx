@@ -10,6 +10,7 @@ import { hasOptions, isAdHoc, isQuery } from '../guard';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
 import { VariableModel } from '../types';
+import { reportInteraction } from '../../../../../packages/grafana-runtime';
 
 export interface VariableEditorListRowProps {
   index: number;
@@ -84,6 +85,7 @@ export function VariableEditorListRow({
             <IconButton
               onClick={(event) => {
                 event.preventDefault();
+                reportInteraction('Duplicate variable');
                 propsOnDuplicate(identifier);
               }}
               name="copy"
@@ -96,6 +98,7 @@ export function VariableEditorListRow({
             <IconButton
               onClick={(event) => {
                 event.preventDefault();
+                reportInteraction('Delete variable');
                 propsOnDelete(identifier);
               }}
               name="trash-alt"

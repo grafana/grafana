@@ -3,6 +3,7 @@ import { IconButton } from '@grafana/ui';
 
 import { UsagesToNetwork } from './utils';
 import { NetworkGraphModal } from './NetworkGraphModal';
+import { reportInteraction } from '../../../../../packages/grafana-runtime';
 
 interface Props {
   id: string;
@@ -26,7 +27,16 @@ export const VariableUsagesButton: FC<Props> = ({ id, usages, isAdhoc }) => {
   return (
     <NetworkGraphModal show={false} title={`Showing usages for: $${id}`} nodes={nodes} edges={network.edges}>
       {({ showModal }) => {
-        return <IconButton onClick={() => showModal()} name="code-branch" title="Show usages" />;
+        return (
+          <IconButton
+            onClick={() => {
+              reportInteraction('Show variable usages');
+              showModal();
+            }}
+            name="code-branch"
+            title="Show usages"
+          />
+        );
       }}
     </NetworkGraphModal>
   );

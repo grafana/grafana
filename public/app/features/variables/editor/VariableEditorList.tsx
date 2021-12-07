@@ -7,6 +7,7 @@ import { VariableIdentifier } from '../state/types';
 import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { VariableEditorListRow } from './VariableEditorListRow';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { reportInteraction } from '../../../../../packages/grafana-runtime';
 
 export interface Props {
   variables: VariableModel[];
@@ -33,6 +34,7 @@ export function VariableEditorList({
     if (!result.destination || !result.source) {
       return;
     }
+    reportInteraction('Variable drag and drop');
     const identifier = JSON.parse(result.draggableId);
     onChangeOrder(identifier, result.source.index, result.destination.index);
   };
