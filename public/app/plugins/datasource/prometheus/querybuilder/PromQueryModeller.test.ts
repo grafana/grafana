@@ -79,6 +79,16 @@ describe('VisualQueryEngine', () => {
     ).toBe('avg(sum by(server, job) (metric))');
   });
 
+  it('Can render aggregations with parameters', () => {
+    expect(
+      engine.renderQuery({
+        metric: 'metric',
+        labels: [],
+        operations: [{ id: 'topk', params: [5] }],
+      })
+    ).toBe('topk(5, metric)');
+  });
+
   it('Can render rate', () => {
     expect(
       engine.renderQuery({

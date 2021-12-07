@@ -27,8 +27,12 @@ export interface QueryBuilderOperationDef<T = any> {
   defaultParams: QueryBuilderOperationParamValue[];
   category: string;
   renderer: QueryBuilderOperationRenderer;
-  onAddToQuery: (operation: QueryBuilderOperationDef, query: T) => T;
-  onParamChanged?: (index: number, operation: QueryBuilderOperation) => QueryBuilderOperation;
+  onAddToQuery: (operationDef: QueryBuilderOperationDef, query: T) => T;
+  onParamChanged?: (
+    index: number,
+    operation: QueryBuilderOperation,
+    operationDef: QueryBuilderOperationDef
+  ) => QueryBuilderOperation;
   editorAction?: ComponentType<QueryBuilderOperationEditorProps>;
 }
 

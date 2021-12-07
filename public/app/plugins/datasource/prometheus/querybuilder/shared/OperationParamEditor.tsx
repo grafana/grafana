@@ -20,7 +20,7 @@ export function getOperationParamEditor(
 function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
   return (
     <Input
-      value={props.value ?? ''}
+      defaultValue={props.value ?? ''}
       onBlur={(evt) => {
         props.onChange(props.index, evt.currentTarget.value);
       }}
