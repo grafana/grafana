@@ -17,6 +17,7 @@ func addLibraryCredentialMigrations(mg *Migrator) {
 			{Name: "secure_json_data", Type: DB_Text, Nullable: true},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
+			{Name: "read_only", Type: DB_Bool, Nullable: true},
 		},
 		Indices: []*Index{
 			{Cols: []string{"org_id", "uid"}, Type: UniqueIndex},

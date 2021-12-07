@@ -64,5 +64,5 @@ type DeleteLibraryCredentialCommand struct {
 // QUERIES
 type GetLibraryCredentialsQuery struct {
 	OrgId  int64
-	Result []*DataSource
+	Result []*LibraryCredential
 }

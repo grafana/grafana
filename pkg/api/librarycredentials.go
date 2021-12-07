@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -15,7 +14,7 @@ import (
 func (hs *HTTPServer) GetLibraryCredentials(c *models.ReqContext) response.Response {
 	query := models.GetLibraryCredentialsQuery{OrgId: c.OrgId}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := hs.LibraryCredentialService.GetLibraryCredentials(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to query library credentials", err)
 	}
 
@@ -44,7 +43,7 @@ func (hs *HTTPServer) AddLibraryCredential(c *models.ReqContext) response.Respon
 	}
 	cmd.OrgId = c.OrgId
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := hs.LibraryCredentialService.AddLibraryCredential(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrLibraryCredentialNameExists) || errors.Is(err, models.ErrDataSourceFailedGenerateUniqueUid) {
 			return response.Error(409, err.Error(), err)
 		}
@@ -76,7 +75,7 @@ func (hs *HTTPServer) UpdateLibraryCredential(c *models.ReqContext) response.Res
 	}
 	cmd.OrgId = c.OrgId
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := hs.LibraryCredentialService.UpdateLibraryCredential(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to add library credential", err)
 	}
 

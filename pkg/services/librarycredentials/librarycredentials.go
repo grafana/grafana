@@ -19,10 +19,10 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *LibraryCredentialsService {
 	}
 }
 
-var _ Service = (*LibraryCredentialsService)(nil)
+// var _ Service = (*LibraryCredentialsService)(nil)
 
 type Service interface {
-	GetLibraryCredentials(ctx context.Context, query models.GetLibraryCredentialsQuery) error
+	GetLibraryCredentials(ctx context.Context, query *models.GetLibraryCredentialsQuery) error
 	AddLibraryCredential(ctx context.Context, cmd *models.AddLibraryCredentialCommand) error
 	UpdateLibraryCredential(ctx context.Context, cmd *models.UpdateLibraryCredentialCommand) error
 	DeleteLibraryCredential(ctx context.Context, cmd *models.DeleteLibraryCredentialCommand) error
@@ -33,9 +33,9 @@ type LibraryCredentialsService struct {
 	SecretsService secrets.Service
 }
 
-func (s LibraryCredentialsService) GetLibraryCredentials(ctx context.Context, query models.GetLibraryCredentialsQuery) error {
+func (s LibraryCredentialsService) GetLibraryCredentials(ctx context.Context, query *models.GetLibraryCredentialsQuery) error {
 	return s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		query.Result = make([]*models.DataSource, 0)
+		query.Result = make([]*models.LibraryCredential, 0)
 		return dbSession.Where("org_id=?", query.OrgId).Asc("name").Find(&query.Result)
 	})
 }
