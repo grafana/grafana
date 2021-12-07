@@ -114,7 +114,7 @@
     "@storybook/theming": "6.4.4",
     "@swc/helpers": "0.2.13",
     "@testing-library/dom": "8.11.1",
-    "@testing-library/jest-dom": "5.15.1",
+    "@testing-library/jest-dom": "5.16.1",
     "@testing-library/react": "12.1.2",
     "@testing-library/react-hooks": "7.0.2",
     "@testing-library/user-event": "13.5.0",

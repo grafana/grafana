@@ -243,12 +243,7 @@ export class CloudWatchDatasource
     }
 
     if (metricQueryType === MetricQueryType.Search && metricEditorMode === MetricEditorMode.Builder) {
-      return (
-        !!namespace &&
-        !!metricName &&
-        !!statistic &&
-        (('matchExact' in rest && !rest.matchExact) || !isEmpty(dimensions))
-      );
+      return !!namespace && !!metricName && !!statistic;
     } else if (metricQueryType === MetricQueryType.Search && metricEditorMode === MetricEditorMode.Code) {
       return !!expression;
     } else if (metricQueryType === MetricQueryType.Query) {

@@ -64,27 +64,27 @@ To edit global configuration options for an external Alertmanager, like SMTP ser
 
 ## List of notifiers supported by Grafana
 
-| Name                                          | Type                      |
-| --------------------------------------------- | ------------------------- |
-| [DingDing](#dingdingdingtalk)                 | `dingding`                |
-| [Discord](#discord)                           | `discord`                 |
-| [Email](#email)                               | `email`                   |
-| [Google Hangouts Chat](#google-hangouts-chat) | `googlechat`              |
-| [Kafka](#kafka)                               | `kafka`                   |
-| Line                                          | `line`                    |
-| Microsoft Teams                               | `teams`                   |
-| [Opsgenie](#opsgenie)                         | `opsgenie`                |
-| [Pagerduty](#pagerduty)                       | `pagerduty`               |
-| Prometheus Alertmanager                       | `prometheus-alertmanager` |
-| [Pushover](#pushover)                         | `pushover`                |
-| Sensu                                         | `sensu`                   |
-| [Sensu Go](#sensu-go)                         | `sensugo`                 |
-| [Slack](#slack)                               | `slack`                   |
-| Telegram                                      | `telegram`                |
-| Threema                                       | `threema`                 |
-| VictorOps                                     | `victorops`               |
-| [Webhook](#webhook)                           | `webhook`                 |
-| [Zenduty](#zenduty)                           | `webhook`                 |
+| Name                                          | Type                      | Grafana Alertmanager | Other Alertmanagers                                                                                      |
+| --------------------------------------------- | ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
+| [DingDing](#dingdingdingtalk)                 | `dingding`                | Supported            | N/A                                                                                                      |
+| [Discord](#discord)                           | `discord`                 | Supported            | N/A                                                                                                      |
+| [Email](#email)                               | `email`                   | Supported            | Supported                                                                                                |
+| [Google Hangouts Chat](#google-hangouts-chat) | `googlechat`              | Supported            | N/A                                                                                                      |
+| [Kafka](#kafka)                               | `kafka`                   | Supported            | N/A                                                                                                      |
+| Line                                          | `line`                    | Supported            | N/A                                                                                                      |
+| Microsoft Teams                               | `teams`                   | Supported            | N/A                                                                                                      |
+| [Opsgenie](#opsgenie)                         | `opsgenie`                | Supported            | Supported                                                                                                |
+| [Pagerduty](#pagerduty)                       | `pagerduty`               | Supported            | Supported                                                                                                |
+| Prometheus Alertmanager                       | `prometheus-alertmanager` | Supported            | N/A                                                                                                      |
+| [Pushover](#pushover)                         | `pushover`                | Supported            | Supported                                                                                                |
+| Sensu                                         | `sensu`                   | Supported            | N/A                                                                                                      |
+| [Sensu Go](#sensu-go)                         | `sensugo`                 | Supported            | N/A                                                                                                      |
+| [Slack](#slack)                               | `slack`                   | Supported            | Supported                                                                                                |
+| Telegram                                      | `telegram`                | Supported            | N/A                                                                                                      |
+| Threema                                       | `threema`                 | Supported            | N/A                                                                                                      |
+| VictorOps                                     | `victorops`               | Supported            | Supported                                                                                                |
+| [Webhook](#webhook)                           | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
+| [Zenduty](#zenduty)                           | `webhook`                 | Supported            | N/A                                                                                                      |
 
 ### Webhook
 

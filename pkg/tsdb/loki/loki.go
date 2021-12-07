@@ -73,7 +73,7 @@ type datasourceInfo struct {
 	tail tailQueryCache
 }
 
-type ResponseModel struct {
+type QueryModel struct {
 	Expr         string `json:"expr"`
 	LegendFormat string `json:"legendFormat"`
 	Interval     string `json:"interval"`
