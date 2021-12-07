@@ -1,6 +1,6 @@
 import React, { FC, FormEvent } from 'react';
 import { css } from '@emotion/css';
-import { HorizontalGroup, RadioButtonGroup, stylesFactory, useTheme, Checkbox } from '@grafana/ui';
+import { HorizontalGroup, RadioButtonGroup, stylesFactory, useTheme, Checkbox, InlineSwitch } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
@@ -13,18 +13,11 @@ export const layoutOptions = [
   { value: SearchLayout.List, icon: 'list-ul', ariaLabel: 'View as list' },
 ];
 
-if (config.featureToggles.dashboardPreviews) {
-  layoutOptions.push({
-    value: SearchLayout.Grid,
-    icon: 'microsoft', // looks like a grid ¯\_(ツ)_/¯
-    ariaLabel: 'View as Grid',
-  });
-}
-
 const searchSrv = new SearchSrv();
 
 interface Props {
   onLayoutChange: (layout: SearchLayout) => void;
+  onPreviewsChange: (event: FormEvent<HTMLInputElement>) => void;
   onSortChange: (value: SelectableValue) => void;
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
@@ -35,6 +28,7 @@ interface Props {
 
 export const ActionRow: FC<Props> = ({
   onLayoutChange,
+  onPreviewsChange,
   onSortChange,
   onStarredFilterChange = () => {},
   onTagFilterChange,
@@ -44,6 +38,7 @@ export const ActionRow: FC<Props> = ({
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+  const previewsEnabled = config.featureToggles.dashboardPreviews;
 
   return (
     <div className={styles.actionRow}>
@@ -53,6 +48,15 @@ export const ActionRow: FC<Props> = ({
             <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={query.layout} />
           ) : null}
           <SortPicker onChange={onSortChange} value={query.sort?.value} />
+          {previewsEnabled && (
+            <InlineSwitch
+              id="search-show-previews"
+              label="Show previews"
+              showLabel
+              value={query.previews}
+              onChange={onPreviewsChange}
+            />
+          )}
         </HorizontalGroup>
       </div>
       <HorizontalGroup spacing="md" width="auto">

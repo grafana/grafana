@@ -13,6 +13,7 @@ export interface Props {
   hideLayout?: boolean;
   moveTo: () => void;
   onLayoutChange: (layout: SearchLayout) => void;
+  onPreviewsChange: (event: FormEvent<HTMLInputElement>) => void;
   onSortChange: (value: SelectableValue) => void;
   onStarredFilterChange: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
@@ -29,6 +30,7 @@ export const SearchResultsFilter: FC<Props> = ({
   hideLayout,
   moveTo,
   onLayoutChange,
+  onPreviewsChange,
   onSortChange,
   onStarredFilterChange,
   onTagFilterChange,
@@ -61,6 +63,7 @@ export const SearchResultsFilter: FC<Props> = ({
           {...{
             hideLayout,
             onLayoutChange,
+            onPreviewsChange,
             onSortChange,
             onStarredFilterChange,
             onTagFilterChange,

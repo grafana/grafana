@@ -13,7 +13,15 @@ export interface Props {
 }
 
 export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery({});
+  const {
+    query,
+    onQueryChange,
+    onTagFilterChange,
+    onTagAdd,
+    onSortChange,
+    onLayoutChange,
+    onPreviewsChange,
+  } = useSearchQuery({});
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -31,6 +39,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
           <ActionRow
             {...{
               onLayoutChange,
+              onPreviewsChange,
               onSortChange,
               onTagFilterChange,
               query,
@@ -44,6 +53,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
               editable={false}
               onToggleSection={onToggleSection}
               layout={query.layout}
+              showPreviews={query.previews}
             />
           </CustomScrollbar>
         </div>

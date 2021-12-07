@@ -72,6 +72,7 @@ export interface DashboardQuery {
   // Save sorting data between layouts
   prevSort: SelectableValue | null;
   layout: SearchLayout;
+  previews: boolean;
 }
 
 export type SearchReducer<S> = [S, Dispatch<SearchAction>];
@@ -94,7 +95,6 @@ export type OnMoveItems = (selectedDashboards: DashboardSectionItem[], folder: F
 export enum SearchLayout {
   List = 'list',
   Folders = 'folders',
-  Grid = 'grid',
 }
 
 export interface SearchQueryParams {
@@ -104,4 +104,5 @@ export interface SearchQueryParams {
   tag?: string[] | null;
   layout?: SearchLayout | null;
   folder?: string | null;
+  previews?: boolean | null;
 }

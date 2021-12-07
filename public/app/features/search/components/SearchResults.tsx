@@ -1,5 +1,6 @@
 import React, { FC, memo } from 'react';
 import { css } from '@emotion/css';
+import classNames from 'classnames';
 import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
@@ -18,13 +19,14 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
   results: DashboardSection[];
+  showPreviews: boolean;
   layout?: string;
 }
 
 const { sectionV2: sectionLabel, itemsV2: itemsLabel } = selectors.components.Search;
 
 export const SearchResults: FC<Props> = memo(
-  ({ editable, loading, onTagSelected, onToggleChecked, onToggleSection, results, layout }) => {
+  ({ editable, loading, onTagSelected, onToggleChecked, onToggleSection, results, showPreviews, layout }) => {
     const theme = useTheme();
     const styles = getSectionStyles(theme);
     const itemProps = { editable, onToggleChecked, onTagSelected };
@@ -37,13 +39,20 @@ export const SearchResults: FC<Props> = memo(
                 {section.title && (
                   <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
                 )}
-                {section.expanded && (
-                  <div data-testid={itemsLabel} className={styles.sectionItems}>
-                    {section.items.map((item) => (
-                      <SearchItem key={item.id} {...itemProps} item={item} />
-                    ))}
-                  </div>
-                )}
+                {section.expanded &&
+                  (showPreviews ? (
+                    <div className={classNames(styles.sectionItems, styles.gridContainer)}>
+                      {section.items.map((item) => (
+                        <SearchCard {...itemProps} key={item.uid} item={item} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div data-testid={itemsLabel} className={styles.sectionItems}>
+                      {section.items.map((item) => (
+                        <SearchItem key={item.id} {...itemProps} item={item} />
+                      ))}
+                    </div>
+                  ))}
               </div>
             );
           })}
@@ -87,21 +96,6 @@ export const SearchResults: FC<Props> = memo(
       return <div className={styles.noResults}>No dashboards matching your query were found.</div>;
     }
 
-    // Quick hack to show preview images
-    if (layout === SearchLayout.Grid) {
-      return (
-        <div className={styles.gridContainer}>
-          {results.map((section) => (
-            <>
-              {section.items.map((item) => (
-                <SearchCard {...itemProps} key={item.uid} item={item} />
-              ))}
-            </>
-          ))}
-        </div>
-      );
-    }
-
     return (
       <div className={styles.resultsContainer}>
         {layout === SearchLayout.Folders ? renderFolders() : renderDashboards()}
@@ -139,6 +133,7 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
       display: grid;
       gap: ${md};
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      margin-bottom: ${md};
     `,
     resultsContainer: css`
       position: relative;

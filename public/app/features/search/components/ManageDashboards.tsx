@@ -44,6 +44,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     onTagAdd,
     onSortChange,
     onLayoutChange,
+    onPreviewsChange,
   } = useSearchQuery(queryParamsDefaults);
 
   const {
@@ -106,6 +107,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
           canMove={hasEditPermissionInFolders && canMove}
           deleteItem={onItemDelete}
           moveTo={onMoveTo}
+          onPreviewsChange={onPreviewsChange}
           onToggleAllChecked={onToggleAllChecked}
           onStarredFilterChange={onStarredFilterChange}
           onSortChange={onSortChange}
@@ -123,6 +125,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
           onToggleSection={onToggleSection}
           onToggleChecked={onToggleChecked}
           layout={query.layout}
+          showPreviews={query.previews}
         />
       </div>
       <ConfirmDeleteModal

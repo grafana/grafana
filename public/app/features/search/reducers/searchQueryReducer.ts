@@ -7,6 +7,7 @@ import {
   REMOVE_STARRED,
   REMOVE_TAG,
   SET_TAGS,
+  TOGGLE_PREVIEWS,
   TOGGLE_SORT,
   TOGGLE_STARRED,
 } from './actionTypes';
@@ -21,6 +22,7 @@ export const defaultQuery: DashboardQuery = {
   sort: null,
   layout: SearchLayout.Folders,
   prevSort: null,
+  previews: false,
 };
 
 export const defaultQueryParams: SearchQueryParams = {
@@ -29,6 +31,7 @@ export const defaultQueryParams: SearchQueryParams = {
   query: null,
   tag: null,
   layout: null,
+  previews: null,
 };
 
 export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
@@ -45,6 +48,8 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
     }
     case TOGGLE_STARRED:
       return { ...state, starred: action.payload };
+    case TOGGLE_PREVIEWS:
+      return { ...state, previews: action.payload };
     case REMOVE_STARRED:
       return { ...state, starred: false };
     case CLEAR_FILTERS:
