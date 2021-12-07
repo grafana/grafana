@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { css } from '@emotion/css';
 import { Icon, IconName, Link, useTheme } from '@grafana/ui';
+import { textUtil } from '@grafana/data';
 
 export interface Props {
   child: any;
@@ -21,7 +22,8 @@ const DropDownChild: FC<Props> = (props) => {
     </>
   );
 
-  const anchor = child.url ? <Link href={child.url}>{linkContent}</Link> : <a>{linkContent}</a>;
+  const sanitizedUrl = textUtil.sanitizeAngularInterpolation(child.url ?? '');
+  const anchor = child.url ? <Link href={sanitizedUrl}>{linkContent}</Link> : <a>{linkContent}</a>;
 
   return <li className={listItemClassName}>{anchor}</li>;
 };
