@@ -51,7 +51,7 @@ func benchmarkDSPermissions(b *testing.B, dsNum, usersNum int) {
 	}
 }
 
-func getDSPermissions(b *testing.B, store accesscontrol.ResourceStore, dataSources []int64) {
+func getDSPermissions(b *testing.B, store accesscontrol.ResourcePermissionStore, dataSources []int64) {
 	dsId := dataSources[0]
 
 	permissions, err := store.GetResourcesPermissions(context.Background(), accesscontrol.GlobalOrgID, accesscontrol.GetResourcesPermissionsQuery{

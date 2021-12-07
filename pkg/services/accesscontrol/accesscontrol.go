@@ -29,7 +29,7 @@ type PermissionsProvider interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
-type ResourceManager interface {
+type ResourcePermissionManager interface {
 	// GetPermissions returns all permissions for given resourceID
 	GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
@@ -42,7 +42,7 @@ type ResourceManager interface {
 	MapPermission(permission string) []string
 }
 
-type ResourceStore interface {
+type ResourcePermissionStore interface {
 	// SetUserResourcePermission sets permission for managed user role on a resource
 	SetUserResourcePermission(ctx context.Context, orgID, userID int64, cmd SetResourcePermissionCommand) (*ResourcePermission, error)
 	// SetTeamResourcePermission sets permission for managed team role on a resource

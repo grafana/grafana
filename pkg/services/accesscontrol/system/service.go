@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourceStore) (*Service, error) {
+func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionStore) (*Service, error) {
 	var permissions []string
 	validActions := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
@@ -55,7 +55,7 @@ func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessC
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
 	ac    accesscontrol.AccessControl
-	store accesscontrol.ResourceStore
+	store accesscontrol.ResourcePermissionStore
 	api   *api
 
 	options      Options
