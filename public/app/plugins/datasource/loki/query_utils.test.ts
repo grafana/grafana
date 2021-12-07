@@ -1,4 +1,4 @@
-import { getHighlighterExpressionsFromQuery, getLiveStreamKey } from './query_utils';
+import { getHighlighterExpressionsFromQuery } from './query_utils';
 
 describe('getHighlighterExpressionsFromQuery', () => {
   it('returns no expressions for empty query', () => {
@@ -59,13 +59,5 @@ describe('getHighlighterExpressionsFromQuery', () => {
 
   it('does not remove backslash escaping if regex filter operator and backticks are used', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |~ `\\w+`')).toEqual(['\\w+']);
-  });
-});
-
-describe('loki streaming', () => {
-  it('key only depends on expression', async () => {
-    expect(await getLiveStreamKey({ expr: 'hello', refId: 'X' } as any)).toEqual('151a6aa1417f2b12');
-    expect(await getLiveStreamKey({ expr: 'hello', refId: 'Y' } as any)).toEqual('151a6aa1417f2b12');
-    expect(await getLiveStreamKey({ expr: 'hello', refId: 'Z' } as any)).toEqual('151a6aa1417f2b12');
   });
 });

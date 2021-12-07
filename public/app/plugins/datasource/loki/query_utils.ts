@@ -1,6 +1,5 @@
 import { escapeRegExp } from 'lodash';
 import { PIPE_PARSERS } from './syntax';
-import { LokiQuery } from './types';
 
 export function formatQuery(selector: string | undefined): string {
   return `${selector || ''}`.trim();
@@ -71,19 +70,4 @@ export function queryHasPipeParser(expr: string): boolean {
 
 export function addParsedLabelToQuery(expr: string, key: string, value: string | number, operator: string) {
   return expr + ` | ${key}${operator}"${value.toString()}"`;
-}
-
-// simple hash
-const hashCode = (s: string) => s.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
-
-/**
- * Calculate a unique key for the query.  The key is used to pick a channel and should
- * be unique for each distinct query execution plan.  This key is not secure and is only picked to avoid
- * possible collisions
- */
-export function getLiveStreamKey(query: LokiQuery): string {
-  const txt = JSON.stringify({ expr: query.expr });
-  const a = Math.abs(hashCode(txt)).toString(16);
-  const b = Math.abs(hashCode(a + txt)).toString(16);
-  return a + b;
 }

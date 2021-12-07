@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// TEMPORARY: will remove when this is returned directly from loki
 type logsFrame struct {
 	labels *data.Field
 	time   *data.Field
@@ -11,6 +12,7 @@ type logsFrame struct {
 	frame  *data.Frame
 }
 
+// TEMPORARY: will remove when this is returned directly from loki
 func newLogsFrame(size int) logsFrame {
 	wrap := logsFrame{
 		labels: data.NewFieldFromFieldType(data.FieldTypeString, size),

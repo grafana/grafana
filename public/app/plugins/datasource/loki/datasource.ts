@@ -29,7 +29,6 @@ import {
   LogRowModel,
   QueryResultMeta,
   ScopedVars,
-  StreamingFrameAction,
   TimeRange,
 } from '@grafana/data';
 import {
@@ -49,7 +48,7 @@ import {
   lokiStreamsToDataFrames,
   processRangeQueryResponse,
 } from './result_transformer';
-import { addParsedLabelToQuery, getLiveStreamKey, queryHasPipeParser } from './query_utils';
+import { addParsedLabelToQuery, queryHasPipeParser } from './query_utils';
 
 import {
   LokiOptions,
@@ -68,7 +67,7 @@ import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import { queryLogsVolume } from 'app/core/logs_model';
 import config from 'app/core/config';
-import { toStreamingDataResponse } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { doLokiChannelStream, getLiveStreamKey } from './streaming';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -339,14 +338,11 @@ export class LokiDatasource
       .pipe(
         switchMap((raw) => {
           const rsp = toDataQueryResponse(raw, [target]);
-          // Check if any response should subscribe to a live stream
-          if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
-            return toStreamingDataResponse(rsp, options as any, (req: DataQueryRequest, frame: DataFrame) => ({
-              action: StreamingFrameAction.Append,
-              maxLength: 2000,
-            }));
+          const frame = rsp.data?.find((f: DataFrame) => f.meta?.channel);
+          if (frame && frame.meta.channel) {
+            return doLokiChannelStream(target, this);
           }
-          return of({ data: [] });
+          return of(rsp);
         }),
         catchError((err) => {
           return of(toDataQueryResponse(err));
