@@ -80,6 +80,13 @@ export class PromQueryModeller implements VisualQueryModeller {
         ],
       },
       {
+        name: 'Sum by(label) then Avg',
+        operations: [
+          { id: '__sum_by', params: [''] },
+          { id: 'avg', params: [] },
+        ],
+      },
+      {
         name: 'Histogram quantile on rate',
         operations: [
           { id: 'rate', params: ['auto'] },
