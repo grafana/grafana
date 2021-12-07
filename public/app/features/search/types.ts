@@ -103,5 +103,4 @@ export interface SearchQueryParams {
   tag?: string[] | null;
   layout?: SearchLayout | null;
   folder?: string | null;
-  previews?: boolean | null;
 }

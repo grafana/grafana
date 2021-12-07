@@ -21,7 +21,6 @@ export const defaultQuery: DashboardQuery = {
   sort: null,
   layout: SearchLayout.Folders,
   prevSort: null,
-  previews: false,
 };
 
 export const defaultQueryParams: SearchQueryParams = {
@@ -30,7 +29,6 @@ export const defaultQueryParams: SearchQueryParams = {
   query: null,
   tag: null,
   layout: null,
-  previews: null,
 };
 
 export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
