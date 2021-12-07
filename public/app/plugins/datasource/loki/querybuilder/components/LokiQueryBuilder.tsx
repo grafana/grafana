@@ -8,6 +8,7 @@ import { lokiQueryModeller } from '../LokiQueryModeller';
 import { DataSourceApi } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
+import { QueryPreview } from './QueryPreview';
 
 export interface Props {
   query: LokiVisualQuery;
@@ -16,17 +17,27 @@ export interface Props {
   isNested?: boolean;
 }
 
-export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange }) => {
+export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, isNested, onChange }) => {
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
+  };
+
+  const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<any> => {
+    const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+    const expr = lokiQueryModeller.renderLabels(labelsToConsider);
+    return await datasource.languageProvider.fetchSeriesLabels(expr);
+  };
+
+  const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
+    return (await datasource.metricFindQuery('label_values(' + forLabel.label + ')')).map((x: any) => x.text);
   };
 
   return (
     <EditorRows>
       <EditorRow>
         <LabelFilters
-          onGetLabelNames={() => [] as any}
-          onGetLabelValues={() => [] as any}
+          onGetLabelNames={onGetLabelNames}
+          onGetLabelValues={onGetLabelValues}
           labelsFilters={query.labels}
           onChange={onChangeLabels}
         />
@@ -46,6 +57,11 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           datasource={datasource as DataSourceApi}
         />
       </EditorRow>
+      {!isNested && (
+        <EditorRow>
+          <QueryPreview query={query} />
+        </EditorRow>
+      )}
     </EditorRows>
   );
 });

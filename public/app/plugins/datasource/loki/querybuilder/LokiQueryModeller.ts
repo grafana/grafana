@@ -1,5 +1,9 @@
 import { renderLabels } from '../../prometheus/querybuilder/PromQueryModeller';
-import { QueryBuilderOperationDef, VisualQueryModeller } from '../../prometheus/querybuilder/shared/types';
+import {
+  QueryBuilderLabelFilter,
+  QueryBuilderOperationDef,
+  VisualQueryModeller,
+} from '../../prometheus/querybuilder/shared/types';
 import { LokiVisualQuery } from './types';
 
 export class LokiQueryModeller implements VisualQueryModeller {
@@ -21,6 +25,10 @@ export class LokiQueryModeller implements VisualQueryModeller {
 
   getCategories() {
     return ['Stuff'];
+  }
+
+  renderLabels(labels: QueryBuilderLabelFilter[]) {
+    return renderLabels(labels);
   }
 
   renderQuery(query: LokiVisualQuery) {

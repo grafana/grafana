@@ -30,8 +30,8 @@ export interface PromQueryPattern {
 
 export function getDefaultTestQuery() {
   const model: PromVisualQuery = {
-    metric: 'counters_requests',
-    labels: [{ label: 'app', op: '=~', value: 'backend' }],
+    metric: '',
+    labels: [],
     operations: [
       { id: 'rate', params: ['auto'] },
       { id: '__sum_by', params: ['job'] },

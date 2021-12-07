@@ -170,7 +170,7 @@ export const RANGE_VEC_FUNCTIONS = [
 export const FUNCTIONS = [...AGGREGATION_OPERATORS, ...RANGE_VEC_FUNCTIONS];
 export const LOKI_KEYWORDS = [...FUNCTIONS, ...PIPE_OPERATORS, ...PIPE_PARSERS].map((keyword) => keyword.label);
 
-const tokenizer: Grammar = {
+export const lokiGrammar: Grammar = {
   comment: {
     pattern: /#.*/,
   },
@@ -245,4 +245,4 @@ const tokenizer: Grammar = {
   punctuation: /[{}()`,.]/,
 };
 
-export default tokenizer;
+export default lokiGrammar;

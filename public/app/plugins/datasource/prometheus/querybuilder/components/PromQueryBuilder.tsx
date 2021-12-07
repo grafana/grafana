@@ -23,29 +23,48 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     onChange({ ...query, labels });
   };
 
-  const onChangeMetric = async (query: PromVisualQuery) => {
-    onChange(query);
-  };
-
   const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<any> => {
+    // If no metric we need to use a different method
+    if (!query.metric) {
+      return await (await datasource.metricFindQuery('label_names()')).map((x) => x.text);
+    }
+
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     const expr = promQueryModeller.renderLabels(labelsToConsider);
-    return await datasource.languageProvider.fetchSeriesLabels(expr);
+    return Object.keys(await datasource.languageProvider.fetchSeriesLabels(expr));
   };
 
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
-    return (await datasource.metricFindQuery('label_values(' + forLabel.label + ')')).map((x) => x.text);
+    if (!forLabel.label) {
+      return [];
+    }
+
+    // If no metric we need to use a different method
+    if (!query.metric) {
+      return await datasource.languageProvider.getLabelValues(forLabel.label);
+    }
+
+    const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+    labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
+    const expr = promQueryModeller.renderLabels(labelsToConsider);
+    const result = await datasource.languageProvider.fetchSeriesLabels(expr);
+    return result[forLabel.label] ?? [];
   };
 
   const onGetMetrics = async () => {
-    return await datasource.languageProvider.fetchLabelValues('__name__');
+    if (query.labels.length > 0) {
+      const expr = promQueryModeller.renderLabels(query.labels);
+      return (await datasource.languageProvider.getSeries(expr, true))['__name__'] ?? [];
+    } else {
+      return (await datasource.languageProvider.getLabelValues('__name__')) ?? [];
+    }
   };
 
   return (
     <EditorRows>
       <EditorRow>
-        <MetricSelect query={query} onChange={onChangeMetric} onGetMetrics={onGetMetrics} />
+        <MetricSelect query={query} onChange={onChange} onGetMetrics={onGetMetrics} />
         <LabelFilters
           labelsFilters={query.labels}
           onChange={onChangeLabels}

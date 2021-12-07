@@ -19,23 +19,6 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onG
     isLoading?: boolean;
   }>({});
 
-  const loadLabelNames = async (): Promise<Array<SelectableValue<any>>> => {
-    return await onGetLabelNames(item).then((res) => {
-      return Object.keys(res).map((value) => ({ label: value, value }));
-    });
-  };
-
-  const loadLabelValues = async (change: SelectableValue<string>) => {
-    await onGetLabelValues(change).then((res) => {
-      if (res.length > 0) {
-        onChange(({ ...item, label: change.label, value: res[0] } as any) as QueryBuilderLabelFilter);
-        setState({ ...state, labelValues: res.map((value) => ({ label: value, value })) });
-      }
-    });
-  };
-
-  const operators = [{ label: '=~', value: '=~' }];
-
   return (
     <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
@@ -46,7 +29,7 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onG
           allowCustomValue
           onOpenMenu={async () => {
             setState({ isLoading: true });
-            const labelNames = await loadLabelNames();
+            const labelNames = (await onGetLabelNames(item)).map((x) => ({ label: x, value: x }));
             setState({ labelNames, isLoading: undefined });
           }}
           isLoading={state.isLoading}
@@ -57,7 +40,6 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onG
                 ...item,
                 label: change.label,
               } as any) as QueryBuilderLabelFilter);
-              loadLabelValues(change);
             }
           }}
         />
@@ -79,6 +61,10 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onG
           value={item.value ? toOption(item.value) : null}
           allowCustomValue
           options={state.labelValues}
+          onOpenMenu={async () => {
+            const res = await onGetLabelValues(item);
+            setState({ ...state, labelValues: res.map((value) => ({ label: value, value })) });
+          }}
           onChange={(change) => {
             if (change.value != null) {
               onChange(({ ...item, value: change.value } as any) as QueryBuilderLabelFilter);
@@ -90,3 +76,9 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onG
     </div>
   );
 }
+
+const operators = [
+  { label: '=~', value: '=~' },
+  { label: '=', value: '=' },
+  { label: '!=', value: '!=' },
+];
