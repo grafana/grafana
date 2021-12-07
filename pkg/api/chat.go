@@ -26,7 +26,7 @@ func (hs *HTTPServer) chatGetMessages(c *models.ReqContext) response.Response {
 	}
 
 	return response.JSON(200, util.DynMap{
-		"messages": result,
+		"chatMessages": result,
 	})
 }
 
@@ -43,6 +43,6 @@ func (hs *HTTPServer) chatSendMessage(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "internal error", err)
 	}
 	return response.JSON(200, util.DynMap{
-		"message": message.ToDTO(),
+		"chatMessage": message.ToDTO(),
 	})
 }

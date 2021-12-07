@@ -48,7 +48,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
     });
     console.log(resp);
     this.setState({
-      messages: resp.messages,
+      messages: resp.chatMessages,
     });
     this.updateSubscription();
   }
@@ -58,19 +58,14 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
   };
 
   sendMessage = async () => {
-    console.log('send');
-    const resp = await getBackendSrv().post('/api/chats/send-message/', {
+    await getBackendSrv().post('/api/chats/send-message/', {
       objectId: this.props.objectId,
       contentTypeId: this.props.contentTypeId,
       content: this.state.value,
     });
-    console.log(resp);
-    const newMessage = resp.msg;
-    console.log(newMessage);
-    console.log(this.state.messages);
-    this.setState((prevState) => ({
+    this.setState({
       value: '',
-    }));
+    });
   };
 
   getLiveAddr = () => {
@@ -109,8 +104,10 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
           console.log('Got msg', msg);
           if (isLiveChannelMessageEvent(msg)) {
             // @ts-ignore
+            const d = JSON.stringify(msg);
+            const x = JSON.parse(d);
             this.setState((prevState) => ({
-              messages: [...prevState.messages, msg.message],
+              messages: [...prevState.messages, x.message.messageCreated],
             }));
           }
           // } else if (isLiveChannelStatusEvent(msg)) {
