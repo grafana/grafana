@@ -68,7 +68,7 @@ export function OperationList<T extends QueryWithOperations>({ query, onChange, 
             )}
           </div>
         ))}
-        <div className={styles.addOperation}>
+        <div className={operations.length > 0 ? styles.addOperationPadding : undefined}>
           <ButtonCascader key="cascader" icon="plus" options={addOptions} onChange={onAddOperation} />
         </div>
       </Stack>
@@ -104,7 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     operationWrapper: css({
       display: 'flex',
     }),
-    addOperation: css({
+    addOperationPadding: css({
       paddingLeft: theme.spacing(2),
     }),
   };
