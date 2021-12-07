@@ -51,7 +51,7 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 	cmd.OrgId = c.OrgId
 	cmd.TeamId = c.ParamsInt64(":teamId")
 
-	if err := teamguardian.CanAdmin(hs.Bus, cmd.OrgId, cmd.TeamId, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(c.Req.Context(), hs.Bus, cmd.OrgId, cmd.TeamId, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to add team member", err)
 	}
 
@@ -82,7 +82,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 
-	if err := teamguardian.CanAdmin(hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(c.Req.Context(), hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to update team member", err)
 	}
 
@@ -109,7 +109,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	teamId := c.ParamsInt64(":teamId")
 	userId := c.ParamsInt64(":userId")
 
-	if err := teamguardian.CanAdmin(hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(c.Req.Context(), hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to remove team member", err)
 	}
 

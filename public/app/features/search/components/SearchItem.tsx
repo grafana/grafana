@@ -29,6 +29,8 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
   const styles = useStyles2(getStyles);
   const tagSelected = useCallback(
     (tag: string, event: React.MouseEvent<HTMLElement>) => {
+      event.stopPropagation();
+      event.preventDefault();
       onTagSelected(tag);
     },
     [onTagSelected]

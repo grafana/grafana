@@ -1,18 +1,21 @@
 import { InlineField, Input, QueryField } from '@grafana/ui';
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AddRemove } from '../../../../AddRemove';
 import { useDispatch, useStatelessReducer } from '../../../../../hooks/useStatelessReducer';
 import { Filters } from '../../aggregations';
 import { changeBucketAggregationSetting } from '../../state/actions';
 import { addFilter, changeFilter, removeFilter } from './state/actions';
 import { reducer as filtersReducer } from './state/reducer';
+import { uniqueId } from 'lodash';
 
 interface Props {
   bucketAgg: Filters;
 }
 
 export const FiltersSettingsEditor = ({ bucketAgg }: Props) => {
+  const { current: baseId } = useRef(uniqueId('es-filters-'));
+
   const upperStateDispatch = useDispatch();
 
   const dispatch = useStatelessReducer(
@@ -61,6 +64,7 @@ export const FiltersSettingsEditor = ({ bucketAgg }: Props) => {
             </div>
             <InlineField label="Label" labelWidth={10}>
               <Input
+                id={`${baseId}-label-${index}`}
                 placeholder="Label"
                 onBlur={(e) => dispatch(changeFilter({ index, filter: { ...filter, label: e.target.value } }))}
                 defaultValue={filter.label}

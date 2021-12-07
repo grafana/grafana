@@ -38,7 +38,7 @@ type ProvisioningService interface {
 	registry.BackgroundService
 	RunInitProvisioners(ctx context.Context) error
 	ProvisionDatasources(ctx context.Context) error
-	ProvisionPlugins() error
+	ProvisionPlugins(ctx context.Context) error
 	ProvisionNotifications(ctx context.Context) error
 	ProvisionDashboards(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
@@ -61,7 +61,7 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(context.Context, string, encryption.Internal) error,
 	provisionDatasources func(context.Context, string) error,
-	provisionPlugins func(string, plugifaces.Store) error,
+	provisionPlugins func(context.Context, string, plugifaces.Store) error,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -83,7 +83,7 @@ type ProvisioningServiceImpl struct {
 	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(context.Context, string, encryption.Internal) error
 	provisionDatasources    func(context.Context, string) error
-	provisionPlugins        func(string, plugifaces.Store) error
+	provisionPlugins        func(context.Context, string, plugifaces.Store) error
 	mutex                   sync.Mutex
 }
 
@@ -93,7 +93,7 @@ func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) erro
 		return err
 	}
 
-	err = ps.ProvisionPlugins()
+	err = ps.ProvisionPlugins(ctx)
 	if err != nil {
 		return err
 	}
@@ -141,9 +141,9 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 	return errutil.Wrap("Datasource provisioning error", err)
 }
 
-func (ps *ProvisioningServiceImpl) ProvisionPlugins() error {
+func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
-	err := ps.provisionPlugins(appPath, ps.pluginStore)
+	err := ps.provisionPlugins(ctx, appPath, ps.pluginStore)
 	return errutil.Wrap("app provisioning error", err)
 }
 

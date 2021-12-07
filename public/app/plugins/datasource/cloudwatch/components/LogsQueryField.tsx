@@ -171,25 +171,26 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       loadingLogGroups: true,
     });
 
-    this.fetchLogGroupOptions(query.region).then((logGroups) => {
-      this.setState((state) => {
-        const selectedLogGroups = state.selectedLogGroups;
-        if (onChange) {
-          const nextQuery = {
-            ...query,
-            logGroupNames: selectedLogGroups.map((group) => group.value!),
+    query.region &&
+      this.fetchLogGroupOptions(query.region).then((logGroups) => {
+        this.setState((state) => {
+          const selectedLogGroups = state.selectedLogGroups;
+          if (onChange) {
+            const nextQuery = {
+              ...query,
+              logGroupNames: selectedLogGroups.map((group) => group.value!),
+            };
+
+            onChange(nextQuery);
+          }
+
+          return {
+            loadingLogGroups: false,
+            availableLogGroups: logGroups,
+            selectedLogGroups,
           };
-
-          onChange(nextQuery);
-        }
-
-        return {
-          loadingLogGroups: false,
-          availableLogGroups: logGroups,
-          selectedLogGroups,
-        };
+        });
       });
-    });
 
     datasource.getRegions().then((regions) => {
       this.setState({

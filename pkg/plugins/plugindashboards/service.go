@@ -59,7 +59,7 @@ func (s *Service) syncPluginDashboards(ctx context.Context, plugin plugins.Plugi
 	s.logger.Info("Syncing plugin dashboards to DB", "pluginId", plugin.ID)
 
 	// Get plugin dashboards
-	dashboards, err := s.pluginDashboardManager.GetPluginDashboards(orgID, plugin.ID)
+	dashboards, err := s.pluginDashboardManager.GetPluginDashboards(ctx, orgID, plugin.ID)
 	if err != nil {
 		s.logger.Error("Failed to load app dashboards", "error", err)
 		return
@@ -137,7 +137,7 @@ func (s *Service) handlePluginStateChanged(ctx context.Context, event *models.Pl
 }
 
 func (s *Service) autoUpdateAppDashboard(ctx context.Context, pluginDashInfo *plugins.PluginDashboardInfoDTO, orgID int64) error {
-	dash, err := s.pluginDashboardManager.LoadPluginDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path)
+	dash, err := s.pluginDashboardManager.LoadPluginDashboard(ctx, pluginDashInfo.PluginId, pluginDashInfo.Path)
 	if err != nil {
 		return err
 	}
