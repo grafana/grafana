@@ -6,9 +6,9 @@ import { LabelFilterItem } from './LabelFilterItem';
 
 export interface Props {
   labelsFilters: QueryBuilderLabelFilter[];
-  onGetLabelNames: () => Promise<string[]>;
-  onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
+  labelData: any;
   onChange: (labelFilters: QueryBuilderLabelFilter[]) => void;
+  onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
 }
 
 export function LabelFilters(props: Props) {
@@ -34,7 +34,7 @@ export function LabelFilters(props: Props) {
   );
 }
 
-function getLabelFilterRenderer({ onGetLabelNames, onGetLabelValues }: Props) {
+function getLabelFilterRenderer({ labelData, onGetLabelValues }: Props) {
   function renderFilter(
     item: Partial<QueryBuilderLabelFilter>,
     onChange: (item: QueryBuilderLabelFilter) => void,
@@ -43,9 +43,9 @@ function getLabelFilterRenderer({ onGetLabelNames, onGetLabelValues }: Props) {
     return (
       <LabelFilterItem
         item={item}
+        labelData={labelData}
         onChange={(item) => onChange(item)}
         onDelete={onDelete}
-        onGetLabelNames={onGetLabelNames}
         onGetLabelValues={onGetLabelValues}
       />
     );

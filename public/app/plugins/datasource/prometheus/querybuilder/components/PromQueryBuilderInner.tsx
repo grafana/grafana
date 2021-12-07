@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MetricSelect } from './MetricSelect';
 import { PromVisualQuery } from '../types';
 import { LabelFilters } from '../shared/LabelFilters';
@@ -19,29 +19,48 @@ export interface Props {
 }
 
 export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onChange }) => {
+  async function loadLabelData(query: PromVisualQuery, datasource: PrometheusDatasource): Promise<any> {
+    const labels = [{ label: '__name__', op: '=', value: query.metric }, ...query.labels];
+    const expr = promQueryModeller.renderLabels(labels);
+
+    const result = await datasource.languageProvider.fetchSeriesLabels(expr);
+    setLabelData(result);
+  }
+
+  const [labelData, setLabelData] = useState<any>(() => {
+    loadLabelData(query, datasource);
+  });
+
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
 
-  const onGetLabelNames = async () => {
-    return (await datasource.metricFindQuery('label_names()')).map((x) => x.text);
+  const onChangeMetric = async (query: PromVisualQuery) => {
+    onChange(query);
+    loadLabelData(query, datasource);
   };
 
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
     return (await datasource.metricFindQuery('label_values(' + forLabel.label + ')')).map((x) => x.text);
   };
 
+  const onGetMetrics = async () => {
+    return await datasource.languageProvider.fetchLabelValues('__name__').then((res) => {
+      return res;
+    });
+  };
+
   return (
     <EditorRows>
       <EditorRow>
-        <MetricSelect query={query} onChange={onChange} />
+        <MetricSelect query={query} onChange={onChangeMetric} onGetMetrics={onGetMetrics} />
       </EditorRow>
       <EditorRow>
         <LabelFilters
-          onGetLabelNames={onGetLabelNames}
-          onGetLabelValues={onGetLabelValues}
           labelsFilters={query.labels}
+          labelData={labelData}
           onChange={onChangeLabels}
+          onGetLabelValues={onGetLabelValues}
         />
       </EditorRow>
       <EditorRow>
