@@ -1951,7 +1951,7 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise --github-token %GITHUB_TOKEN% C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
@@ -2970,7 +2970,7 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise --github-token %GITHUB_TOKEN% C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
@@ -4079,7 +4079,7 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise --github-token %GITHUB_TOKEN% C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
@@ -4175,6 +4175,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: e792923df666783e0f620143a695ca0e07dca5208cc9428aafe6b3065ece8601
+hmac: 24874ad5a1577c95fc56023357c8c377a5738082d48a8dc125b4e14d6a6cc9cf
 
 ...
