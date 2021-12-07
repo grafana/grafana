@@ -168,22 +168,22 @@ func TestAccessControlStore_SetTeamResourcePermission(t *testing.T) {
 	}
 }
 
-type setBuiltinResourcePermissionTest struct {
+type setBuiltInResourcePermissionTest struct {
 	desc        string
 	orgID       int64
-	builtinRole string
+	builtInRole string
 	actions     []string
 	resource    string
 	resourceID  string
 	seeds       []accesscontrol.SetResourcePermissionCommand
 }
 
-func TestAccessControlStore_SetBuiltinResourcePermission(t *testing.T) {
-	tests := []setBuiltinResourcePermissionTest{
+func TestAccessControlStore_SetBuiltInResourcePermission(t *testing.T) {
+	tests := []setBuiltInResourcePermissionTest{
 		{
 			desc:        "should add new resource permission for builtin role",
 			orgID:       1,
-			builtinRole: "Viewer",
+			builtInRole: "Viewer",
 			actions:     []string{"datasources:query"},
 			resource:    "datasources",
 			resourceID:  "1",
@@ -191,7 +191,7 @@ func TestAccessControlStore_SetBuiltinResourcePermission(t *testing.T) {
 		{
 			desc:        "should add new resource permission when others exist",
 			orgID:       1,
-			builtinRole: "Viewer",
+			builtInRole: "Viewer",
 			actions:     []string{"datasources:query", "datasources:write"},
 			resource:    "datasources",
 			resourceID:  "1",
@@ -206,7 +206,7 @@ func TestAccessControlStore_SetBuiltinResourcePermission(t *testing.T) {
 		{
 			desc:        "should remove permissions for builtin role",
 			orgID:       1,
-			builtinRole: "Viewer",
+			builtInRole: "Viewer",
 			actions:     []string{},
 			resource:    "datasources",
 			resourceID:  "1",
@@ -225,11 +225,11 @@ func TestAccessControlStore_SetBuiltinResourcePermission(t *testing.T) {
 			store, _ := setupTestEnv(t)
 
 			for _, s := range test.seeds {
-				_, err := store.SetBuiltinResourcePermission(context.Background(), test.orgID, test.builtinRole, s)
+				_, err := store.SetBuiltInResourcePermission(context.Background(), test.orgID, test.builtInRole, s)
 				require.NoError(t, err)
 			}
 
-			added, err := store.SetBuiltinResourcePermission(context.Background(), test.orgID, test.builtinRole, accesscontrol.SetResourcePermissionCommand{
+			added, err := store.SetBuiltInResourcePermission(context.Background(), test.orgID, test.builtInRole, accesscontrol.SetResourcePermissionCommand{
 				Actions:    test.actions,
 				Resource:   test.resource,
 				ResourceID: test.resourceID,
