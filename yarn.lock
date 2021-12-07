@@ -4439,15 +4439,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:4.0.6":
-  version: 4.0.6
-  resolution: "@kusto/monaco-kusto@npm:4.0.6"
+"@kusto/monaco-kusto@npm:4.1.2":
+  version: 4.1.2
+  resolution: "@kusto/monaco-kusto@npm:4.1.2"
   dependencies:
     "@kusto/language-service": 2.0.0-beta.0
     "@kusto/language-service-next": 0.0.51
   peerDependencies:
     monaco-editor: ^0.24.0
-  checksum: 62a775904e65a42d174e402ffffb880b100e6bd2afd355fa6f46a878a6c9471f9b61364e4e528e626bfa3091fe51d023b33f21d6ad904caffe68cd82fb4149e9
+  checksum: 0af8a504327f8d35c19f4bec1b5f0f766ac61fd7ea9a65790d48b05ee57be181ac0eedd2ecb5552f3cbf117fba91dd4f24279035259e66108e0c8edc2b22494f
   languageName: node
   linkType: hard
 
@@ -19042,7 +19042,7 @@ __metadata:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
-    "@kusto/monaco-kusto": 4.0.6
+    "@kusto/monaco-kusto": 4.1.2
     "@microsoft/api-extractor": 7.18.16
     "@opentelemetry/api": 1.0.2
     "@opentelemetry/exporter-collector": 0.25.0
