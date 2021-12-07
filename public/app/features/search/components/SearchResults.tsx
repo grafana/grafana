@@ -1,7 +1,7 @@
 import React, { FC, memo } from 'react';
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import { FixedSizeList } from 'react-window';
+import { FixedSizeList, FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
 import { Spinner, stylesFactory, useTheme } from '@grafana/ui';
@@ -63,28 +63,55 @@ export const SearchResults: FC<Props> = memo(
       const items = results[0]?.items;
       return (
         <div className={styles.listModeWrapper}>
-          <AutoSizer disableWidth>
-            {({ height }) => (
-              <FixedSizeList
-                className={styles.wrapper}
-                innerElementType="ul"
-                itemSize={SEARCH_ITEM_HEIGHT + SEARCH_ITEM_MARGIN}
-                height={height}
-                itemCount={items.length}
-                width="100%"
-              >
-                {({ index, style }) => {
-                  const item = items[index];
-                  // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
-                  // And without this wrapper there is no room for that margin
-                  return (
-                    <li style={style}>
-                      <SearchItem key={item.id} {...itemProps} item={item} />
-                    </li>
-                  );
-                }}
-              </FixedSizeList>
-            )}
+          <AutoSizer>
+            {({ height, width }) => {
+              const numColumns = Math.floor(width / 200);
+              const numRows = Math.ceil(items.length / numColumns);
+              return showPreviews ? (
+                <FixedSizeGrid
+                  columnCount={numColumns}
+                  columnWidth={width / numColumns}
+                  rowCount={numRows}
+                  rowHeight={260}
+                  className={styles.wrapper}
+                  innerElementType="ul"
+                  height={height}
+                  width={width}
+                >
+                  {({ columnIndex, rowIndex, style }) => {
+                    const index = rowIndex * numColumns + columnIndex;
+                    const item = items[index];
+                    // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
+                    // And without this wrapper there is no room for that margin
+                    return item ? (
+                      <li style={style}>
+                        <SearchCard key={item.id} {...itemProps} item={item} />
+                      </li>
+                    ) : null;
+                  }}
+                </FixedSizeGrid>
+              ) : (
+                <FixedSizeList
+                  className={styles.wrapper}
+                  innerElementType="ul"
+                  itemSize={SEARCH_ITEM_HEIGHT + SEARCH_ITEM_MARGIN}
+                  height={height}
+                  itemCount={items.length}
+                  width={width}
+                >
+                  {({ index, style }) => {
+                    const item = items[index];
+                    // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
+                    // And without this wrapper there is no room for that margin
+                    return (
+                      <li style={style}>
+                        <SearchItem key={item.id} {...itemProps} item={item} />
+                      </li>
+                    );
+                  }}
+                </FixedSizeList>
+              );
+            }}
           </AutoSizer>
         </div>
       );

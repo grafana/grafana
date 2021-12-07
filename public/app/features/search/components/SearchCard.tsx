@@ -69,6 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   gridItem: css`
     border: 1px solid ${theme.colors.border.medium};
     border-radius: 4px;
+    display: block;
     overflow: hidden;
   `,
   image: css`
