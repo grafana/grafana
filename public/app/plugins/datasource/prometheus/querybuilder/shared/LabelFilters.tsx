@@ -16,6 +16,9 @@ export function LabelFilters(props: Props) {
   const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>(labelsFilters);
 
   const onLabelsChange = (newItems: Array<Partial<QueryBuilderLabelFilter>>) => {
+    newItems = newItems.map((item) => {
+      return !item.op ? { label: '', op: '=~', value: '' } : item;
+    });
     setItems(newItems);
 
     // Extract full label filters with both label & value
