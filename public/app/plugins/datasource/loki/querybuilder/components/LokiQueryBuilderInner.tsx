@@ -1,13 +1,12 @@
 import React from 'react';
 import { LokiVisualQuery } from '../types';
-import EditorRows from 'app/plugins/datasource/cloudwatch/components/ui/EditorRows';
-import EditorRow from 'app/plugins/datasource/cloudwatch/components/ui/EditorRow';
 import { LokiDatasource } from '../../datasource';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
 import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 import { lokiQueryModeller } from '../lokiQueryModeller';
 import { DataSourceApi } from '@grafana/data';
+import { EditorRow, EditorRows } from '@grafana/experimental';
 
 export interface Props {
   query: LokiVisualQuery;
