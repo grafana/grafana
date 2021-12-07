@@ -9,6 +9,7 @@ import {
   QueryBuilderOperation,
   QueryBuilderOperationParamValue,
   QueryBuilderOperationDef,
+  QueryBuilderOperationParamDef,
 } from '../shared/types';
 import { getOperationParamEditor } from './OperationParamEditor';
 
@@ -45,6 +46,50 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
     callParamChangedThenOnChange(def, update, index, paramIdx, onChange);
   };
 
+  const operationElements: React.ReactNode[] = [];
+
+  for (let paramIndex = 0; paramIndex < operation.params.length; paramIndex++) {
+    const paramDef = def.params[Math.min(def.params.length - 1, paramIndex)];
+    const Editor = getOperationParamEditor(paramDef);
+
+    operationElements.push(
+      <div className={styles.paramRow} key={`${paramIndex}-1`}>
+        <div className={styles.paramName}>{paramDef.name}</div>
+        <div className={styles.paramValue}>
+          <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
+            <Editor
+              index={paramIndex}
+              paramDef={paramDef}
+              value={operation.params[paramIndex]}
+              operation={operation}
+              onChange={onParamValueChanged}
+              query={query}
+              datasource={datasource}
+            />
+            {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
+              <Button
+                size="sm"
+                fill="text"
+                icon="times"
+                variant="secondary"
+                title={`Remove ${paramDef.name}`}
+                onClick={() => onRemoveRestParam(paramIndex)}
+              />
+            )}
+          </Stack>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle adding button for rest params
+  if (def.params.length > 0) {
+    const lastParamDef = def.params[def.params.length - 1];
+    if (lastParamDef.restParam) {
+      operationElements.push(renderAddRestParamButton(lastParamDef, onAddRestParam, operation.params.length, styles));
+    }
+  }
+
   return (
     <div className={styles.card}>
       <div className={styles.header}>
@@ -52,57 +97,21 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
         <FlexItem grow={1} />
         <IconButton name="times" size="sm" onClick={() => onRemove(index)} />
       </div>
-      <div className={styles.body}>
-        {operation.params.map((paramValue, index) => {
-          const paramDef = def.params[Math.min(def.params.length - 1, index)];
-          const Editor = getOperationParamEditor(paramDef);
+      <div className={styles.body}>{operationElements}</div>
+    </div>
+  );
+}
 
-          return (
-            <>
-              <div className={styles.paramRow} key={`${index}-1`}>
-                <div className={styles.paramName}>{paramDef.name}</div>
-                <div className={styles.paramValue}>
-                  <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
-                    <Editor
-                      index={index}
-                      paramDef={paramDef}
-                      value={paramValue}
-                      operation={operation}
-                      onChange={onParamValueChanged}
-                      query={query}
-                      datasource={datasource}
-                    />
-                    {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
-                      <Button
-                        size="sm"
-                        fill="text"
-                        icon="times"
-                        variant="secondary"
-                        title={`Remove ${paramDef.name}`}
-                        onClick={() => onRemoveRestParam(index)}
-                      />
-                    )}
-                  </Stack>
-                </div>
-              </div>
-              {paramDef.restParam && index === operation.params.length - 1 && (
-                <div className={styles.paramRow} key={`${index}-2`}>
-                  <div className={styles.paramName}></div>
-                  <div className={styles.paramValue}>
-                    <Button
-                      size="sm"
-                      fill="text"
-                      icon="plus"
-                      title={`Add ${paramDef.name}`}
-                      variant="secondary"
-                      onClick={onAddRestParam}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          );
-        })}
+function renderAddRestParamButton(
+  paramDef: QueryBuilderOperationParamDef,
+  onAddRestParam: () => void,
+  paramIndex: number,
+  styles: OperationEditorStyles
+) {
+  return (
+    <div className={styles.paramRow} key={`${paramIndex}-2`}>
+      <div className={styles.paramName}>
+        <Button size="sm" icon="plus" title={`Add ${paramDef.name}`} variant="secondary" onClick={onAddRestParam} />
       </div>
     </div>
   );
@@ -159,6 +168,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       verticalAlign: 'middle',
+      height: '32px',
     }),
     paramValue: css({
       display: 'table-cell',
@@ -167,3 +177,5 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+type OperationEditorStyles = ReturnType<typeof getStyles>;

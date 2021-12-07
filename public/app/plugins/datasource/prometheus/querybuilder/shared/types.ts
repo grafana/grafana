@@ -29,6 +29,7 @@ export interface QueryBuilderOperationDef<T = any> {
   renderer: QueryBuilderOperationRenderer;
   onAddToQuery: (operation: QueryBuilderOperationDef, query: T) => T;
   onParamChanged?: (index: number, operation: QueryBuilderOperation) => QueryBuilderOperation;
+  editorAction?: ComponentType<QueryBuilderOperationEditorProps>;
 }
 
 export type QueryBuilderOperationRenderer = (
@@ -48,11 +49,14 @@ export interface QueryBuilderOperationParamDef {
   editor?: ComponentType<QueryBuilderOperationParamEditorProps>;
 }
 
-export interface QueryBuilderOperationParamOptionLoadContext<TContextQuery = any, TDataSource = any> {
-  loadQuery?: string;
-  contextQuery: TContextQuery;
-  datasource: TDataSource;
+export interface QueryBuilderOperationEditorProps {
   operation: QueryBuilderOperation;
+  index: number;
+  query: any;
+  datasource: DataSourceApi;
+  queryModeller: VisualQueryModeller;
+  onChange: (index: number, update: QueryBuilderOperation) => void;
+  onRemove: (index: number) => void;
 }
 
 export interface QueryBuilderOperationParamEditorProps {

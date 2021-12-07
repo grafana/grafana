@@ -23,6 +23,7 @@ export function LabelParamEditor({ onChange, index, value, query, datasource }: 
         setState({ options, isLoading: undefined });
       }}
       isLoading={state.isLoading}
+      allowCustomValue
       noOptionsMessage="No labels found"
       loadingMessage="Loading labels"
       options={state.options}

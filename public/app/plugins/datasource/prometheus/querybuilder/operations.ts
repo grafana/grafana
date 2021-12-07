@@ -8,11 +8,19 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: 'sum',
       displayName: 'Sum',
-      params: [],
+      params: [
+        {
+          name: 'Label',
+          type: 'string',
+          restParam: true,
+          optional: true,
+        },
+      ],
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
       onAddToQuery: defaultAddOperationHandler,
+      onParamChanged: getOnLabelAdddedHandler('__sum_by'),
     },
     {
       id: 'avg',
@@ -205,6 +213,15 @@ function getLastLabelRemovedHandler(changeToOperartionId: string) {
     return {
       ...op,
       id: changeToOperartionId,
+    };
+  };
+}
+
+function getOnLabelAdddedHandler(cahgneToOperationId: string) {
+  return function onParamChanged(index: number, op: QueryBuilderOperation) {
+    return {
+      ...op,
+      id: cahgneToOperationId,
     };
   };
 }
