@@ -36,7 +36,7 @@ export class PromQueryModeller implements VisualQueryModeller {
   }
 
   renderQuery(query: PromVisualQuery) {
-    let queryString = `${query.metric}${this.renderLabels(query.labels)}`;
+    let queryString = `${query.metric}${renderLabels(query.labels)}`;
 
     for (const operation of query.operations) {
       const def = this.operations[operation.id];
@@ -55,29 +55,16 @@ export class PromQueryModeller implements VisualQueryModeller {
     return queryString;
   }
 
+  renderLabels(labels: QueryBuilderLabelFilter[]) {
+    return renderLabels(labels);
+  }
+
   renderBinaryQuery(leftOperand: string, binaryQuery: PromVisualQueryBinary) {
     let result = leftOperand + ` ${binaryQuery.operator} `;
     if (binaryQuery.vectorMatches) {
       result += `${binaryQuery.vectorMatches} `;
     }
     return result + `${this.renderQuery(binaryQuery.query)}`;
-  }
-
-  renderLabels(labels: QueryBuilderLabelFilter[]) {
-    if (labels.length === 0) {
-      return '';
-    }
-
-    let expr = '{';
-    for (const filter of labels) {
-      if (expr !== '{') {
-        expr += ', ';
-      }
-
-      expr += `${filter.label}${filter.op}"${filter.value}"`;
-    }
-
-    return expr + `}`;
   }
 
   getQueryPatterns(): PromQueryPattern[] {
@@ -104,6 +91,23 @@ export class PromQueryModeller implements VisualQueryModeller {
       },
     ];
   }
+}
+
+export function renderLabels(labels: QueryBuilderLabelFilter[]) {
+  if (labels.length === 0) {
+    return '';
+  }
+
+  let expr = '{';
+  for (const filter of labels) {
+    if (expr !== '{') {
+      expr += ', ';
+    }
+
+    expr += `${filter.label}${filter.op}"${filter.value}"`;
+  }
+
+  return expr + `}`;
 }
 
 export const promQueryModeller = new PromQueryModeller();

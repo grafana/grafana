@@ -18,7 +18,7 @@ export interface Props {
   isNested?: boolean;
 }
 
-export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onChange, isNested }) => {
+export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, isNested }) => {
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -73,4 +73,4 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
   );
 });
 
-PromQueryBuilderInner.displayName = 'PromQueryBuilderInner';
+PromQueryBuilder.displayName = 'PromQueryBuilder';

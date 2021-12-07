@@ -5,7 +5,7 @@ import { IconButton, Input, Select, useStyles2 } from '@grafana/ui';
 import React from 'react';
 import { PrometheusDatasource } from '../../datasource';
 import { PromVisualQueryBinary } from '../types';
-import { PromQueryBuilderInner } from './PromQueryBuilderInner';
+import { PromQueryBuilder } from './PromQueryBuilder';
 
 export interface Props {
   nestedQuery: PromVisualQueryBinary;
@@ -50,7 +50,7 @@ export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, 
         <IconButton name="times" size="sm" onClick={() => onRemove(index)} />
       </div>
       <div className={styles.body}>
-        <PromQueryBuilderInner
+        <PromQueryBuilder
           query={nestedQuery.query}
           datasource={datasource}
           isNested={true}

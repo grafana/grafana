@@ -1,3 +1,4 @@
+import { renderLabels } from '../../prometheus/querybuilder/PromQueryModeller';
 import { QueryBuilderOperationDef, VisualQueryModeller } from '../../prometheus/querybuilder/shared/types';
 import { LokiVisualQuery } from './types';
 
@@ -23,24 +24,12 @@ export class LokiQueryModeller implements VisualQueryModeller {
   }
 
   renderQuery(query: LokiVisualQuery) {
-    return '';
-  }
-
-  renderLabels(query: LokiVisualQuery) {
-    if (query.labels.length === 0) {
-      return '';
+    let result = `${renderLabels(query.labels)}`;
+    if (query.search) {
+      result += ` |= "${query.search}"`;
     }
 
-    let expr = '{';
-    for (const filter of query.labels) {
-      if (expr !== '{') {
-        expr += ', ';
-      }
-
-      expr += `${filter.label}${filter.op}"${filter.value}"`;
-    }
-
-    return expr + `}`;
+    return result;
   }
 }
 

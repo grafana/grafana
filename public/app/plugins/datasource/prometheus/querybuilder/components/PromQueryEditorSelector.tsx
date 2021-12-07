@@ -9,7 +9,7 @@ import { promQueryModeller } from '../PromQueryModeller';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryEditorMode } from '../shared/types';
 import { getDefaultTestQuery, PromVisualQuery } from '../types';
-import { PromQueryBuilderInner } from './PromQueryBuilderInner';
+import { PromQueryBuilder } from './PromQueryBuilder';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
@@ -78,7 +78,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
       <Space v={0.5} />
       {editorMode === QueryEditorMode.Code && <PromQueryEditor {...props} />}
       {editorMode === QueryEditorMode.Builder && (
-        <PromQueryBuilderInner query={visualQuery} datasource={props.datasource} onChange={onChangeViewModel} />
+        <PromQueryBuilder query={visualQuery} datasource={props.datasource} onChange={onChangeViewModel} />
       )}
     </>
   );

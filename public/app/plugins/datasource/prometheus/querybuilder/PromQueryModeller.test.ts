@@ -1,6 +1,6 @@
 import { PromQueryModeller } from './PromQueryModeller';
 
-describe('VisualQueryEngine', () => {
+describe('PromQueryModeller', () => {
   const engine = new PromQueryModeller();
 
   it('Can render query with metric only', () => {

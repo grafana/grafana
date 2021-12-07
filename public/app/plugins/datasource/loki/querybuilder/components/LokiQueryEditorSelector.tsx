@@ -4,14 +4,20 @@ import { EditorHeader, FlexItem, InlineSelect, Space, Stack } from '@grafana/exp
 import { Button, Switch, useStyles2 } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { LokiQueryEditor } from '../../components/LokiQueryEditor';
 import { LokiQueryEditorProps } from '../../components/types';
+import { lokiQueryModeller } from '../LokiQueryModeller';
+import { LokiVisualQuery } from '../types';
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
+  const [visualQuery, setVisualQuery] = useState<LokiVisualQuery>({
+    labels: [],
+    operations: [],
+  });
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
@@ -19,6 +25,16 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
     },
     [onChange, query]
   );
+
+  const onChangeViewModel = (updatedQuery: LokiVisualQuery) => {
+    setVisualQuery(updatedQuery);
+
+    onChange({
+      ...query,
+      expr: lokiQueryModeller.renderQuery(updatedQuery),
+      editorMode: QueryEditorMode.Builder,
+    });
+  };
 
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
@@ -46,7 +62,8 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           <Switch />
         </Stack>
         <InlineSelect
-          value={undefined}
+          width={14.5}
+          value={null}
           placeholder="Query patterns"
           allowCustomValue
           onChange={({ value }) => {}}
@@ -56,7 +73,9 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
       </EditorHeader>
       <Space v={0.5} />
       {editorMode === QueryEditorMode.Code && <LokiQueryEditor {...props} />}
-      {editorMode === QueryEditorMode.Builder && <LokiQueryBuilder {...props} />}
+      {editorMode === QueryEditorMode.Builder && (
+        <LokiQueryBuilder datasource={props.datasource} query={visualQuery} onChange={onChangeViewModel} />
+      )}
     </>
   );
 });

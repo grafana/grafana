@@ -3,8 +3,10 @@ import { PromVisualQuery } from '../types';
 import { useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { promQueryModeller } from '../PromQueryModeller';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
+import Prism from 'prismjs';
+import { promqlGrammar } from '../../promql';
 
 export interface Props {
   query: PromVisualQuery;
@@ -13,13 +15,16 @@ export interface Props {
 export function QueryPreview({ query }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
+  const hightlighted = Prism.highlight(promQueryModeller.renderQuery(query), promqlGrammar, 'promql');
 
   return (
     <EditorFieldGroup>
       <EditorField label="Query text">
-        <div className={styles.editorField} aria-label="selector">
-          {promQueryModeller.renderQuery(query)}
-        </div>
+        <div
+          className={cx(styles.editorField, 'prism-syntax-highlight')}
+          aria-label="selector"
+          dangerouslySetInnerHTML={{ __html: hightlighted }}
+        />
       </EditorField>
     </EditorFieldGroup>
   );
