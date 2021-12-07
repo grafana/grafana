@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { MetricSelect } from './MetricSelect';
 import { PromVisualQuery } from '../types';
 import { LabelFilters } from '../shared/LabelFilters';
