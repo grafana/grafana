@@ -17,7 +17,7 @@ export function LabelFilters(props: Props) {
 
   const onLabelsChange = (newItems: Array<Partial<QueryBuilderLabelFilter>>) => {
     newItems = newItems.map((item) => {
-      return !item.op ? { label: '', op: '=~', value: '' } : item;
+      return !item.op ? { op: '=~' } : item;
     });
     setItems(newItems);
 
