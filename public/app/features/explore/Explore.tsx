@@ -67,6 +67,7 @@ enum ExploreDrawer {
 
 interface ExploreState {
   openDrawer?: ExploreDrawer;
+  autoBreakdownRange?: AbsoluteTimeRange;
 }
 
 export type Props = ExploreProps & ConnectedProps<typeof connector>;
@@ -102,6 +103,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     super(props);
     this.state = {
       openDrawer: undefined,
+      autoBreakdownRange: undefined,
     };
   }
 
@@ -212,25 +214,64 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       <ExploreGraphLabel
         graphStyle={graphStyle}
         onChangeGraphStyle={this.onChangeGraphStyle}
-        //@ts-ignore
-        withAutoBreakdowns={!!datasourceInstance?.exemplarsForAutoBreakdowns && !!queryResponse.annotations.length}
+        withAutoBreakdowns={!!queryResponse?.annotations?.length}
       />
     );
+
+    //Show auto breakdowns when we: 1. have selected it in graph styles 2. have exemplars 3. have selected range
+    const showBreakdowns =
+      graphStyle === 'auto_breakdowns' && !!queryResponse?.annotations?.length && this.state.autoBreakdownRange;
+    // This should be done in more plugin-structure style. It is noot going to work for other datasources
+    // But prometheus implements this function.
+    const dataFrames = showBreakdowns && datasourceInstance?.createAutoBreakdowns(this.state.autoBreakdownRange);
     return (
-      <Collapse label={label} loading={loading} isOpen>
-        <ExploreGraph
-          graphStyle={graphStyle}
-          data={graphResult!}
-          height={400}
-          width={width - spacing}
-          absoluteRange={absoluteRange}
-          onChangeTime={this.onUpdateTimeRange}
-          timeZone={timeZone}
-          annotations={queryResponse.annotations}
-          splitOpenFn={splitOpen}
-          loadingState={queryResponse.state}
-        />
-      </Collapse>
+      <>
+        <Collapse label={label} loading={loading} isOpen>
+          <ExploreGraph
+            graphStyle={graphStyle}
+            data={graphResult!}
+            height={400}
+            width={width - spacing}
+            absoluteRange={absoluteRange}
+            onChangeTime={
+              graphStyle === 'auto_breakdowns'
+                ? (timeRange: AbsoluteTimeRange) => {
+                    this.setState({
+                      autoBreakdownRange: timeRange,
+                    });
+                  }
+                : this.onUpdateTimeRange
+            }
+            timeZone={timeZone}
+            annotations={queryResponse.annotations}
+            splitOpenFn={splitOpen}
+            loadingState={queryResponse.state}
+          />
+        </Collapse>
+        {dataFrames && (
+          <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+            {dataFrames.map((df: DataFrame) => {
+              return (
+                <div style={{ margin: '10px' }} key={`${df.name}`}>
+                  <Collapse label={`Auto breakdowns by ${df.name}`} isOpen>
+                    <ExploreGraph
+                      graphStyle={graphStyle}
+                      data={[df]}
+                      height={200}
+                      width={300}
+                      absoluteRange={this.state.autoBreakdownRange!}
+                      timeZone={timeZone}
+                      loadingState={LoadingState.Done}
+                      onChangeTime={() => {}}
+                      pluginId="barchart"
+                    />
+                  </Collapse>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </>
     );
   }
 

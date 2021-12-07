@@ -50,6 +50,7 @@ interface Props {
   splitOpenFn?: SplitOpen;
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
   graphStyle: ExploreGraphStyle;
+  pluginId?: string;
 }
 
 export function ExploreGraph({
@@ -64,6 +65,7 @@ export function ExploreGraph({
   onHiddenSeriesChanged,
   splitOpenFn,
   graphStyle,
+  pluginId = 'timeseries',
   tooltipDisplayMode = TooltipDisplayMode.Single,
 }: Props) {
   const theme = useTheme2();
@@ -157,13 +159,11 @@ export function ExploreGraph({
       )}
       <PanelRenderer
         data={{ series: seriesToShow, timeRange, structureRev, state: loadingState, annotations }}
-        pluginId="timeseries"
+        pluginId={pluginId}
         title=""
         width={width}
         height={height}
-        onChangeTimeRange={
-          graphStyle === 'auto_breakdowns' ? (timeRange: AbsoluteTimeRange) => console.log(timeRange) : onChangeTime
-        }
+        onChangeTimeRange={onChangeTime}
         timeZone={timeZone}
         options={
           {

@@ -17,6 +17,9 @@ import {
   TimeRange,
   DataFrame,
   dateTime,
+  AbsoluteTimeRange,
+  FieldType,
+  ArrayDataFrame,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -35,7 +38,7 @@ import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { getInitHints, getQueryHints } from './query_hints';
-import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
+import { getOriginalMetricName, renderTemplate, transform, TimeAndValue } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
@@ -74,7 +77,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   lookupsDisabled: boolean;
   customQueryParameters: any;
   exemplarsAvailable: boolean;
-  exemplarsForAutoBreakdowns: any[] | undefined;
+  exemplarsForAutoBreakdowns: TimeAndValue[];
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -103,7 +106,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
-    this.exemplarsForAutoBreakdowns = undefined;
+    this.exemplarsForAutoBreakdowns = [];
   }
 
   init = async () => {
@@ -405,7 +408,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
             scopedVars,
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
-          this.exemplarsForAutoBreakdowns = exemplarsForAutoBreakdowns;
+          this.exemplarsForAutoBreakdowns = exemplarsForAutoBreakdowns ?? [];
           return data;
         })
       );
@@ -445,6 +448,72 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     }
 
     return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filter);
+  }
+
+  //This holds all logic to create autobreakdowns
+  createAutoBreakdowns(timeRange?: AbsoluteTimeRange) {
+    // If we didn't select range, retrun undefined
+    if (!timeRange) {
+      return;
+    }
+    // Create list of exemplars and all labels + values in array that exemplars have within timerange
+    const { exemplars, labels } = this.selectAutoBreakdownDataBasedOnTimeRange(timeRange);
+
+    // Loop over label names
+    const dataFrames = Object.keys(labels).map((label) => {
+      // Loop over label values
+      const labelValuesArray = labels[label].map((value: string) => {
+        // Filter out all exemplars that have that label + value
+        const exemplarsByValue = exemplars.filter((exemplar) => exemplar[label] === value);
+
+        // Create sum of all values
+        const sum = exemplarsByValue
+          .map((exemplar) => Number(exemplar['Value']))
+          .filter((value) => !Number.isNaN(value))
+          .reduce((a, b) => {
+            return a + b;
+          }, 0);
+        // Calculate average
+        const avg = sum / exemplarsByValue.length;
+        // Create object that will be used in data frame with label's value and avg
+        return { name: value.toString(), avg };
+      });
+
+      // Create dataFrame from labelValuesArray
+      const dataFrame = labelValuesArray ? new ArrayDataFrame(labelValuesArray) : undefined;
+      if (dataFrame) {
+        //Add name and set field type
+        dataFrame.name = label;
+        dataFrame.setFieldType('name', FieldType.string);
+      }
+      return dataFrame;
+    });
+
+    return dataFrames;
+  }
+
+  selectAutoBreakdownDataBasedOnTimeRange(timeRange: AbsoluteTimeRange) {
+    const dictionary: any = {};
+    const exemplarsWithinTimeRange = this.exemplarsForAutoBreakdowns.filter(
+      (exemplar) => exemplar['Time'] >= timeRange.from && exemplar['Time'] <= timeRange.to
+    );
+
+    exemplarsWithinTimeRange.forEach((exemplar) => {
+      const { Time, Value, ...labels } = exemplar;
+
+      Object.keys(labels).forEach((key) => {
+        if (!dictionary[key]) {
+          dictionary[key] = [];
+        }
+
+        const value = labels[key];
+        if (!dictionary[key].includes(value)) {
+          dictionary[key].push(value);
+        }
+      });
+    });
+    const { le, __name__, ...rest } = dictionary;
+    return { exemplars: exemplarsWithinTimeRange, labels: rest };
   }
 
   createQuery(target: PromQuery, options: DataQueryRequest<PromQuery>, start: number, end: number) {
