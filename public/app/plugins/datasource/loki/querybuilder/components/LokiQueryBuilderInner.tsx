@@ -4,9 +4,10 @@ import { LokiDatasource } from '../../datasource';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
 import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
-import { lokiQueryModeller } from '../lokiQueryModeller';
+import { lokiQueryModeller } from '../LokiQueryModeller';
 import { DataSourceApi } from '@grafana/data';
-import { EditorRow, EditorRows } from '@grafana/experimental';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
+import { Input } from '@grafana/ui';
 
 export interface Props {
   query: LokiVisualQuery;
@@ -23,9 +24,20 @@ export const LokiQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
   return (
     <EditorRows>
       <EditorRow>
-        <LabelFilters labelsFilters={query.labels} onChange={onChangeLabels} />
+        <LabelFilters
+          onGetLabelNames={() => [] as any}
+          onGetLabelValues={() => [] as any}
+          labelsFilters={query.labels}
+          onChange={onChangeLabels}
+        />
       </EditorRow>
-      <EditorRow>Simple search</EditorRow>
+      <EditorRow>
+        <EditorFieldGroup>
+          <EditorField label="Search">
+            <Input width={50} />
+          </EditorField>
+        </EditorFieldGroup>
+      </EditorRow>
       <EditorRow>
         <OperationList
           queryModeller={lokiQueryModeller}

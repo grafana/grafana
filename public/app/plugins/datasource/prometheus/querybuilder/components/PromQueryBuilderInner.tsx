@@ -28,8 +28,9 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
   };
 
   const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<any> => {
-    const labels = [{ label: '__name__', op: '=', value: query.metric }, ...query.labels];
-    const expr = promQueryModeller.renderLabels(labels);
+    const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+    labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
+    const expr = promQueryModeller.renderLabels(labelsToConsider);
     return await datasource.languageProvider.fetchSeriesLabels(expr);
   };
 

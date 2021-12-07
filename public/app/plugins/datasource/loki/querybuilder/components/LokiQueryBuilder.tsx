@@ -1,7 +1,7 @@
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 import React, { useState } from 'react';
 import { LokiQueryEditorProps } from '../../components/types';
-import { lokiQueryModeller } from '../lokiQueryModeller';
+import { lokiQueryModeller } from '../LokiQueryModeller';
 import { getDefaultTestQuery, LokiVisualQuery } from '../types';
 import { LokiQueryBuilderInner } from './LokiQueryBuilderInner';
 

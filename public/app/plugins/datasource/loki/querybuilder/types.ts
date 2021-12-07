@@ -5,6 +5,7 @@ import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus
  */
 export interface LokiVisualQuery {
   labels: QueryBuilderLabelFilter[];
+  search?: string;
   operations: QueryBuilderOperation[];
 }
 
@@ -14,10 +15,7 @@ export function getDefaultTestQuery() {
       { label: 'cluster', op: '=~', value: '$cluster' },
       { label: 'job', op: '=~', value: '($namespace)/query-scheduler.*' },
     ],
-    operations: [
-      { id: 'rate', params: ['auto'] },
-      { id: '__group_by', params: ['sum', 'job'] },
-    ],
+    operations: [],
   };
 
   return model;

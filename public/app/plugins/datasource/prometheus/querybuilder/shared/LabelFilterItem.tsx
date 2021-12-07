@@ -20,7 +20,7 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onG
   }>({});
 
   const loadLabelNames = async (): Promise<Array<SelectableValue<any>>> => {
-    return await onGetLabelNames({}).then((res) => {
+    return await onGetLabelNames(item).then((res) => {
       return Object.keys(res).map((value) => ({ label: value, value }));
     });
   };

@@ -1,7 +1,7 @@
-import { QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
+import { QueryBuilderOperationDef, VisualQueryModeller } from '../../prometheus/querybuilder/shared/types';
 import { LokiVisualQuery } from './types';
 
-export class LokiQueryModeller {
+export class LokiQueryModeller implements VisualQueryModeller {
   private operations: Record<string, QueryBuilderOperationDef<LokiVisualQuery>> = {};
 
   constructor() {}
