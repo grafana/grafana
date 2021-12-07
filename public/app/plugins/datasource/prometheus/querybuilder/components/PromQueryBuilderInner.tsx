@@ -18,7 +18,7 @@ export interface Props {
   isNested?: boolean;
 }
 
-export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onChange }) => {
+export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onChange, isNested }) => {
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -45,8 +45,6 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
     <EditorRows>
       <EditorRow>
         <MetricSelect query={query} onChange={onChangeMetric} onGetMetrics={onGetMetrics} />
-      </EditorRow>
-      <EditorRow>
         <LabelFilters
           labelsFilters={query.labels}
           onChange={onChangeLabels}
@@ -65,9 +63,11 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
           <NestedQueryList query={query} datasource={datasource} onChange={onChange} />
         )}
       </EditorRow>
-      <EditorRow>
-        <QueryPreview query={query} />
-      </EditorRow>
+      {!isNested && (
+        <EditorRow>
+          <QueryPreview query={query} />
+        </EditorRow>
+      )}
     </EditorRows>
   );
 });

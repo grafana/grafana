@@ -53,6 +53,7 @@ export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, 
         <PromQueryBuilderInner
           query={nestedQuery.query}
           datasource={datasource}
+          isNested={true}
           onChange={(update) => {
             onChange(index, { ...nestedQuery, query: update });
           }}
