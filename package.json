@@ -233,7 +233,7 @@
     "@grafana/slate-react": "0.22.10-grafana",
     "@grafana/ui": "workspace:*",
     "@jaegertracing/jaeger-ui-components": "workspace:*",
-    "@kusto/monaco-kusto": "4.0.6",
+    "@kusto/monaco-kusto": "4.1.2",
     "@opentelemetry/api": "1.0.2",
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.0.0",
