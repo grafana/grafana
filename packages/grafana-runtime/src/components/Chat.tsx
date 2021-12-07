@@ -1,6 +1,9 @@
 import React, { PureComponent } from 'react';
 import { getBackendSrv } from '../services/backendSrv';
+import { getGrafanaLiveSrv } from '../services/live';
 import { Button } from '../../../grafana-ui';
+import { isLiveChannelMessageEvent, LiveChannelScope } from '../../../grafana-data';
+import { Unsubscribable } from 'rxjs';
 
 export interface ChatProps {
   contentTypeId: number;
@@ -27,6 +30,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
   //   openMenuOnFocus: false,
   //   placeholder: 'Select data source',
   // };
+  subscription?: Unsubscribable;
 
   state: ChatState = {
     messages: [],
@@ -46,6 +50,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
     this.setState({
       messages: resp.messages,
     });
+    this.updateSubscription();
   }
 
   handleChange = (e: { target: { value: any } }) => {
@@ -60,13 +65,66 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
       content: this.state.value,
     });
     console.log(resp);
-    const newMessage = resp.message;
+    const newMessage = resp.msg;
     console.log(newMessage);
     console.log(this.state.messages);
     this.setState((prevState) => ({
-      messages: [...prevState.messages, newMessage],
       value: '',
     }));
+  };
+
+  getLiveAddr = () => {
+    return {
+      scope: LiveChannelScope.Grafana,
+      namespace: 'chat', // holds on to the last value
+      path: `${this.props.contentTypeId}/${this.props.objectId}`,
+    };
+  };
+
+  getLiveChannel = () => {
+    const live = getGrafanaLiveSrv();
+    if (!live) {
+      console.error('Grafana live not running, enable "live" feature toggle');
+      return undefined;
+    }
+
+    const addr = this.getLiveAddr();
+    if (!addr) {
+      return undefined;
+    }
+    return live.getStream(addr);
+  };
+
+  updateSubscription = () => {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+      this.subscription = undefined;
+    }
+
+    const c = this.getLiveChannel();
+    if (c) {
+      console.log('SUBSCRIBE', c);
+      this.subscription = c.subscribe({
+        next: (msg) => {
+          console.log('Got msg', msg);
+          if (isLiveChannelMessageEvent(msg)) {
+            // @ts-ignore
+            this.setState((prevState) => ({
+              messages: [...prevState.messages, msg.message],
+            }));
+          }
+          // } else if (isLiveChannelStatusEvent(msg)) {
+          //   const update: Partial<State> = {
+          //     status: msg,
+          //   };
+          //   if (msg.message) {
+          //     update.boardData = msg.message;
+          //   }
+          //   this.setState(update);
+          // }
+        },
+      });
+    }
   };
 
   render() {
