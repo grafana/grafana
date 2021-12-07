@@ -56,7 +56,6 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onG
               onChange(({
                 ...item,
                 label: change.label,
-                value: undefined,
               } as any) as QueryBuilderLabelFilter);
               loadLabelValues(change);
             }
