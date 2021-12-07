@@ -242,33 +242,34 @@ async function prepareSVG(url: string): Promise<string> {
 
 // Really just a cache for the various symbol styles
 const markerMakers = new Registry<SymbolMaker>(() => makers);
+// const icons = ReplaySubject<>(); //need to cache?
 
-const prepareImage = (url: string, size: number): string => {
-  const canvas = document.createElement('canvas');
+const prepareImage = async (url: string, size: number): Promise<string> => {
   const img = new Image();
-  img.onload = () => {
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(img, 0, 0, size, size); //crop to circle
-      // ctx.globalCompositeOperation = 'destination-in';
-      // ctx.fillStyle = '#000';
-      // ctx.beginPath();
-      // ctx.arc(
-      //   size * 0.5, // x
-      //   size * 0.5, // y
-      //   size * 0.5, // radius
-      //   0, // start angle
-      //   2 * Math.PI // end angle
-      // );
-      // ctx.fill();
-      // ctx.globalCompositeOperation = 'source-over';
-      canvas.hidden = false;
-    }
-    img.src = URL.createObjectURL(url);
-  };
-  return canvas.toDataURL();
+  img.crossOrigin = 'anonymous'; //questionable
+  return new Promise((resolve, reject) => {
+    img.onload = async () => {
+      const canvas = document.createElement('canvas');
+      //TODO: check on resolution after scaling, and also check on dimensions
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.arc(
+          size * 0.5, // x
+          size * 0.5, // y
+          size * 0.5, // radius
+          0, // start angle
+          2 * Math.PI // end angle
+        );
+        ctx.clip();
+        ctx.drawImage(img, 0, 0, size, size);
+      }
+      resolve(canvas.toDataURL());
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
 };
 
 export function getMarkerAsPath(shape?: string): string | undefined {
@@ -330,8 +331,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
   }
 
   if (symbol.endsWith('.png') || symbol.endsWith('.jpg')) {
-    const src = prepareImage(symbol, DEFAULT_SIZE);
-    console.log('source', src);
+    const src = await prepareImage(symbol, 200);
     maker = {
       id: symbol,
       name: symbol,
@@ -340,11 +340,10 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
         ? (cfg: StyleConfigValues) => {
             const radius = cfg.size ?? DEFAULT_SIZE;
             const rotation = cfg.rotation ?? 0;
-            const image = src;
             return [
               new Style({
                 image: new Icon({
-                  src: image,
+                  src,
                   scale: (DEFAULT_SIZE + radius) / 100,
                   rotation: (rotation * Math.PI) / 180,
                 }),
