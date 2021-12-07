@@ -3,7 +3,6 @@ package features
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
@@ -58,12 +57,6 @@ type PluginPathRunner struct {
 	runStreamManager    *runstream.Manager
 	handler             backend.StreamHandler
 	pluginContextGetter PluginContextGetter
-}
-
-type MetricRequest struct {
-	From  string           `json:"from"`
-	To    string           `json:"to"`
-	Query *simplejson.Json `json:"query"`
 }
 
 // OnSubscribe passes control to a plugin.
