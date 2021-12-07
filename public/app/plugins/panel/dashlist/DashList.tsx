@@ -10,8 +10,8 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { DashListOptions } from './types';
 import { getStyles } from './styles';
+import { PanelOptions } from './models.gen';
 
 type Dashboard = DashboardSearchHit & { isSearchResult?: boolean; isRecent?: boolean };
 
@@ -21,7 +21,7 @@ interface DashboardGroup {
   dashboards: Dashboard[];
 }
 
-async function fetchDashboards(options: DashListOptions, replaceVars: InterpolateFunction) {
+async function fetchDashboards(options: PanelOptions, replaceVars: InterpolateFunction) {
   let starredDashboards: Promise<Dashboard[]> = Promise.resolve([]);
   if (options.showStarred) {
     const params = { limit: options.maxItems, starred: 'true' };
@@ -78,7 +78,7 @@ async function fetchDashboards(options: DashListOptions, replaceVars: Interpolat
   return dashMap;
 }
 
-export function DashList(props: PanelProps<DashListOptions>) {
+export function DashList(props: PanelProps<PanelOptions>) {
   const [dashboards, setDashboards] = useState(new Map<number, Dashboard>());
   useEffect(() => {
     fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
@@ -126,6 +126,32 @@ export function DashList(props: PanelProps<DashListOptions>) {
   ];
 
   const css = useStyles2(getStyles);
+
+  const renderList = (dashboards: Dashboard[]) => (
+    <ul>
+      {dashboards.map((dash) => (
+        <li className={css.dashlistItem} key={`dash-${dash.id}`}>
+          <div className={css.dashlistLink}>
+            <div className={css.dashlistLinkBody}>
+              <a className={css.dashlistTitle} href={dash.url}>
+                {dash.title}
+              </a>
+              {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
+            </div>
+            <IconToggle
+              aria-label={`Star dashboard "${dash.title}".`}
+              className={css.dashlistStar}
+              enabled={{ name: 'favorite', type: 'mono' }}
+              disabled={{ name: 'star', type: 'default' }}
+              checked={dash.isStarred}
+              onClick={(e) => toggleDashboardStar(e, dash)}
+            />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       {dashboardGroups.map(
@@ -133,28 +159,7 @@ export function DashList(props: PanelProps<DashListOptions>) {
           show && (
             <div className={css.dashlistSection} key={`dash-group-${i}`}>
               {showHeadings && <h6 className={css.dashlistSectionHeader}>{header}</h6>}
-              <ul>
-                {dashboards.map((dash) => (
-                  <li className={css.dashlistItem} key={`dash-${dash.id}`}>
-                    <div className={css.dashlistLink}>
-                      <div className={css.dashlistLinkBody}>
-                        <a className={css.dashlistTitle} href={dash.url}>
-                          {dash.title}
-                        </a>
-                        {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
-                      </div>
-                      <IconToggle
-                        aria-label={`Star dashboard "${dash.title}".`}
-                        className={css.dashlistStar}
-                        enabled={{ name: 'favorite', type: 'mono' }}
-                        disabled={{ name: 'star', type: 'default' }}
-                        checked={dash.isStarred}
-                        onClick={(e) => toggleDashboardStar(e, dash)}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              {renderList(dashboards)}
             </div>
           )
       )}
