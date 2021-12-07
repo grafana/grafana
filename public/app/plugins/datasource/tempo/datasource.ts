@@ -15,7 +15,6 @@ import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafan
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
-import Prism from 'prismjs';
 import { LokiOptions, LokiQuery } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
@@ -26,7 +25,6 @@ import {
   transformFromOTLP as transformFromOTEL,
   createTableFrameFromSearch,
 } from './resultTransformer';
-import { tokenizer } from './syntax';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
@@ -209,38 +207,17 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   buildSearchQuery(query: TempoQuery) {
-    const tokens = query.search ? Prism.tokenize(query.search, tokenizer) : [];
-
-    // Build key value pairs
-    let tagsQuery: Array<{ [key: string]: string }> = [];
-    for (let i = 0; i < tokens.length - 1; i++) {
-      const token = tokens[i];
-      const lookupToken = tokens[i + 2];
-
-      // Ensure there is a valid key value pair with accurate types
-      if (
-        token &&
-        lookupToken &&
-        typeof token !== 'string' &&
-        token.type === 'key' &&
-        typeof token.content === 'string' &&
-        typeof lookupToken !== 'string' &&
-        lookupToken.type === 'value' &&
-        typeof lookupToken.content === 'string'
-      ) {
-        tagsQuery.push({ [token.content]: lookupToken.content });
-      }
-    }
+    let tags = query.search ?? '';
 
     let tempoQuery = pick(query, ['minDuration', 'maxDuration', 'limit']);
     // Remove empty properties
     tempoQuery = pickBy(tempoQuery, identity);
 
     if (query.serviceName) {
-      tagsQuery.push({ ['service.name']: query.serviceName });
+      tags += ` service.name="${query.serviceName}"`;
     }
     if (query.spanName) {
-      tagsQuery.push({ ['name']: query.spanName });
+      tags += ` name="${query.spanName}"`;
     }
 
     // Set default limit
@@ -266,8 +243,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       throw new Error('Please enter a valid limit.');
     }
 
-    const tagsQueryObject = tagsQuery.reduce((tagQuery, item) => ({ ...tagQuery, ...item }), {});
-    return { ...tagsQueryObject, ...tempoQuery };
+    return { tags, ...tempoQuery };
   }
 
   async getServiceGraphLabels() {
