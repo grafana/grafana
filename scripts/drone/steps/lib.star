@@ -84,11 +84,14 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'depends_on': [
                     'clone-enterprise',
                 ],
+                'environment': {
+                  'GITHUB_TOKEN': from_secret(github_token),
+                },
                 'commands': [
                                 'mv bin/grabpl /tmp/',
                                 'rmdir bin',
                                 'mv grafana-enterprise /tmp/',
-                                '/tmp/grabpl init-enterprise /tmp/grafana-enterprise{}'.format(source_commit),
+                                '/tmp/grabpl init-enterprise /tmp/grafana-enterprise{} --github-token $${{GITHUB_TOKEN}}'.format(source_commit),
                                 'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
                                 'mkdir bin',
                                 'mv /tmp/grabpl bin/'

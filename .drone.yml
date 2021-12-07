@@ -1438,7 +1438,8 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise ${DRONE_TAG}
+  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise ${DRONE_TAG} --github-token
+    $${GITHUB_TOKEN}
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
@@ -1448,6 +1449,9 @@ steps:
   - yarn install --immutable
   depends_on:
   - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.4.8
   name: initialize
 - commands:
@@ -2453,7 +2457,7 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise --github-token $${GITHUB_TOKEN}
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
@@ -2463,6 +2467,9 @@ steps:
   - yarn install --immutable
   depends_on:
   - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.4.8
   name: initialize
 - commands:
@@ -3551,7 +3558,7 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise --github-token $${GITHUB_TOKEN}
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
@@ -3560,6 +3567,9 @@ steps:
   - yarn install --immutable
   depends_on:
   - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.4.8
   name: initialize
 - commands:
@@ -4151,6 +4161,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: eab94ab436f3c728ca1d88b8ec352fc0bf3f9ef4b260d54797dabc5a41b24e1f
+hmac: 68f8a056d2561b5ca190ca0cb0d07af79aa4f93cbe7063618cb594d4b838977b
 
 ...
