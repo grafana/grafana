@@ -376,7 +376,7 @@ type streamRequest struct {
 	user          *models.SignedInUser
 	PluginContext backend.PluginContext
 	StreamRunner  StreamRunner
-	Query         *backend.DataQuery
+	Query         []byte
 }
 
 type submitRequest struct {
@@ -400,7 +400,7 @@ var errDatasourceNotFound = errors.New("datasource not found")
 
 // SubmitStream submits stream handler in Manager to manage.
 // The stream will be opened and kept till channel has active subscribers.
-func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, channel string, path string, query *backend.DataQuery, pCtx backend.PluginContext, streamRunner StreamRunner, isResubmit bool) (*submitResult, error) {
+func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, channel string, path string, query []byte, pCtx backend.PluginContext, streamRunner StreamRunner, isResubmit bool) (*submitResult, error) {
 	if isResubmit {
 		// Resolve new plugin context as it could be modified since last call.
 		var datasourceUID string
