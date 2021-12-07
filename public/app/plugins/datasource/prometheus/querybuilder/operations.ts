@@ -1,36 +1,9 @@
-import { LabelParamEditor } from './components/LabelParamEditor';
 import { promQueryModeller } from './PromQueryModeller';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { getDefaultTestQuery, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [
-    {
-      id: 'sum',
-      displayName: 'Sum',
-      params: [
-        {
-          name: 'Label',
-          type: 'string',
-          restParam: true,
-          optional: true,
-        },
-      ],
-      defaultParams: [],
-      category: PromVisualQueryOperationCategory.Aggregations,
-      renderer: functionRendererLeft,
-      onAddToQuery: defaultAddOperationHandler,
-      onParamChanged: getOnLabelAdddedHandler('__sum_by'),
-    },
-    {
-      id: 'avg',
-      displayName: 'Average',
-      params: [],
-      defaultParams: [],
-      category: PromVisualQueryOperationCategory.Aggregations,
-      renderer: functionRendererLeft,
-      onAddToQuery: defaultAddOperationHandler,
-    },
     {
       id: 'histogram_quantile',
       displayName: 'Histogram quantile',
@@ -52,33 +25,6 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       category: PromVisualQueryOperationCategory.Functions,
       defaultParams: ['', '$1', '', '(.*)'],
       renderer: functionRendererRight,
-      onAddToQuery: defaultAddOperationHandler,
-    },
-    {
-      id: '__sum_by',
-      displayName: 'Sum by',
-      params: [
-        {
-          name: 'Label',
-          type: 'string',
-          restParam: true,
-          optional: true,
-          editor: LabelParamEditor,
-        },
-      ],
-      defaultParams: [''],
-      category: PromVisualQueryOperationCategory.GroupBy,
-      renderer: getAggregationByRenderer('sum'),
-      onAddToQuery: defaultAddOperationHandler,
-      onParamChanged: getLastLabelRemovedHandler('sum'),
-    },
-    {
-      id: '__avg_by',
-      displayName: 'Average by',
-      params: [{ name: 'Label', type: 'string', restParam: true }],
-      defaultParams: [''],
-      category: PromVisualQueryOperationCategory.GroupBy,
-      renderer: getAggregationByRenderer('avg'),
       onAddToQuery: defaultAddOperationHandler,
     },
     {
@@ -124,7 +70,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
   return list;
 }
 
-function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+export function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);
   const str = model.id + '(';
 
@@ -135,7 +81,7 @@ function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOpe
   return str + params.join(', ') + ')';
 }
 
-function functionRendererRight(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+export function functionRendererRight(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);
   const str = model.id + '(';
 
@@ -155,12 +101,6 @@ function renderParams(model: QueryBuilderOperation, def: QueryBuilderOperationDe
 
     return value;
   });
-}
-
-function getAggregationByRenderer(aggregation: string) {
-  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${aggregation} by(${model.params.join(', ')}) (${innerExpr})`;
-  };
 }
 
 function operationWithRangeVectorRenderer(
@@ -189,7 +129,7 @@ function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
   };
 }
 
-function defaultAddOperationHandler(def: QueryBuilderOperationDef, query: PromVisualQuery) {
+export function defaultAddOperationHandler(def: QueryBuilderOperationDef, query: PromVisualQuery) {
   const newOperation: QueryBuilderOperation = {
     id: def.id,
     params: def.defaultParams,
@@ -198,31 +138,6 @@ function defaultAddOperationHandler(def: QueryBuilderOperationDef, query: PromVi
   return {
     ...query,
     operations: [...query.operations, newOperation],
-  };
-}
-
-/**
- * This function will transform operations without labels to their plan aggregation operation
- */
-function getLastLabelRemovedHandler(changeToOperartionId: string) {
-  return function onParamChanged(index: number, op: QueryBuilderOperation) {
-    if (op.params.length > 0) {
-      return op;
-    }
-
-    return {
-      ...op,
-      id: changeToOperartionId,
-    };
-  };
-}
-
-function getOnLabelAdddedHandler(cahgneToOperationId: string) {
-  return function onParamChanged(index: number, op: QueryBuilderOperation) {
-    return {
-      ...op,
-      id: cahgneToOperationId,
-    };
   };
 }
 

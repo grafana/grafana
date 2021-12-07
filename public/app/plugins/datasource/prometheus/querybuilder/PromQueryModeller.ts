@@ -1,3 +1,4 @@
+import { getAggregationOperations } from './aggregations';
 import { getOperationDefintions } from './operations';
 import { VisualQueryModeller, QueryBuilderOperationDef, QueryBuilderLabelFilter } from './shared/types';
 import { PromVisualQuery, PromVisualQueryOperationCategory } from './types';
@@ -6,7 +7,9 @@ export class PromQueryModeller implements VisualQueryModeller {
   private operations: Record<string, QueryBuilderOperationDef<PromVisualQuery>> = {};
 
   constructor() {
-    for (const op of getOperationDefintions()) {
+    const allOperations = getOperationDefintions().concat(getAggregationOperations());
+
+    for (const op of allOperations) {
       this.operations[op.id] = op;
     }
   }
