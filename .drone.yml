@@ -28,6 +28,7 @@ steps:
       from_secret: tf_google_credentials
     mount:
     - yarncache
+    - node_modules
     restore: "true"
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -82,6 +83,7 @@ steps:
       from_secret: tf_google_credentials
     mount:
     - yarncache
+    - node_modules
     rebuild: "true"
   when:
     event: pull_request
@@ -211,6 +213,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 98c340b5ee76c710d94c8458fdb176bfea3c37c6a44b60f387646e3706abac28
+hmac: cab080ace6e6f05babd13065c8ec47817fd9e60d6f2d9f1df2e4db88e12152e8
 
 ...
