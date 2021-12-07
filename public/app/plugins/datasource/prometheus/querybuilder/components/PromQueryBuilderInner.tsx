@@ -19,25 +19,18 @@ export interface Props {
 }
 
 export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onChange }) => {
-  async function loadLabelData(query: PromVisualQuery, datasource: PrometheusDatasource): Promise<any> {
-    const labels = [{ label: '__name__', op: '=', value: query.metric }, ...query.labels];
-    const expr = promQueryModeller.renderLabels(labels);
-
-    const result = await datasource.languageProvider.fetchSeriesLabels(expr);
-    setLabelData(result);
-  }
-
-  const [labelData, setLabelData] = useState<any>(() => {
-    loadLabelData(query, datasource);
-  });
-
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
 
   const onChangeMetric = async (query: PromVisualQuery) => {
     onChange(query);
-    loadLabelData(query, datasource);
+  };
+
+  const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<any> => {
+    const labels = [{ label: '__name__', op: '=', value: query.metric }, ...query.labels];
+    const expr = promQueryModeller.renderLabels(labels);
+    return await datasource.languageProvider.fetchSeriesLabels(expr);
   };
 
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
@@ -45,9 +38,7 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
   };
 
   const onGetMetrics = async () => {
-    return await datasource.languageProvider.fetchLabelValues('__name__').then((res) => {
-      return res;
-    });
+    return await datasource.languageProvider.fetchLabelValues('__name__');
   };
 
   return (
@@ -58,8 +49,8 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
       <EditorRow>
         <LabelFilters
           labelsFilters={query.labels}
-          labelData={labelData}
           onChange={onChangeLabels}
+          onGetLabelNames={onGetLabelNames}
           onGetLabelValues={onGetLabelValues}
         />
       </EditorRow>
