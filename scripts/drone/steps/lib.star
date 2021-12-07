@@ -1105,6 +1105,10 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise{}'.format(source_commit),
             'cp C:\\App\\grabpl.exe grabpl.exe',
         ])
+        if 'environment' in steps[1]:
+            steps[1]['environment'] + {'GITHUB_TOKEN': from_secret(github_token)}
+        else:
+            steps[1]['environment'] = {'GITHUB_TOKEN': from_secret(github_token)}
 
     return steps
 

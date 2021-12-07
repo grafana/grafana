@@ -1955,6 +1955,9 @@ steps:
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/ci-wix:0.1.1
   name: initialize
 - commands:
@@ -2974,6 +2977,9 @@ steps:
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/ci-wix:0.1.1
   name: initialize
 - commands:
@@ -4083,6 +4089,9 @@ steps:
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/ci-wix:0.1.1
   name: initialize
 - commands:
@@ -4175,6 +4184,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 24874ad5a1577c95fc56023357c8c377a5738082d48a8dc125b4e14d6a6cc9cf
+hmac: 1f99ba5e72cb86a739c7f0b09055b3c058f4408dba1c2c97704624fa61133c2a
 
 ...
