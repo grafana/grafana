@@ -9,7 +9,11 @@ import (
 )
 
 func getFilePath(root string, req *previewRequest) string {
-	return filepath.Join(root, fmt.Sprintf("%s-%s-%s.png", req.UID, req.Size, req.Theme))
+	ext := "webp"
+	if req.Size != PreviewSizeThumb {
+		ext = "png"
+	}
+	return filepath.Join(root, fmt.Sprintf("%s-%s-%s.%s", req.UID, req.Size, req.Theme, ext))
 }
 
 func SavePNG(img image.Image, filename string) error {

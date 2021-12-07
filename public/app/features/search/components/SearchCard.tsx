@@ -17,7 +17,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   const styles = getStyles(theme);
   const [hasPreview, setHasPreview] = useState(true);
   const themeId = theme.isDark ? 'dark' : 'light';
-  const imageSrc = `/preview/dash/${item.uid}/square/${themeId}`;
+  const imageSrc = `/preview/dash/${item.uid}/thumb/${themeId}`;
 
   const retryImage = () => {
     setHasPreview(false);

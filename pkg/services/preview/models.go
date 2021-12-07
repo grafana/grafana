@@ -3,13 +3,13 @@ package preview
 type PreviewSize string
 
 const (
-	// PreviewSizeSquare is a small 200x200px preview
-	PreviewSizeSquare PreviewSize = "square"
+	// PreviewSizeThumb is a small 320x240 preview
+	PreviewSizeThumb PreviewSize = "thumb"
 
-	// PreviewSizeLarge is a large preivew image 512x512
+	// PreviewSizeLarge is a large image 2000x1500
 	PreviewSizeLarge PreviewSize = "large"
 
-	// PreviewSizeLarge is a large preivew image 512x?
+	// PreviewSizeLarge is a large image 512x????
 	PreviewSizeTall PreviewSize = "tall"
 )
 
@@ -17,7 +17,7 @@ const (
 func (p PreviewSize) IsKnownSize() bool {
 	switch p {
 	case
-		PreviewSizeSquare,
+		PreviewSizeThumb,
 		PreviewSizeLarge,
 		PreviewSizeTall:
 		return true
@@ -27,14 +27,14 @@ func (p PreviewSize) IsKnownSize() bool {
 
 func getPreviewSize(str string) (PreviewSize, bool) {
 	switch str {
-	case string(PreviewSizeSquare):
-		return PreviewSizeSquare, true
+	case string(PreviewSizeThumb):
+		return PreviewSizeThumb, true
 	case string(PreviewSizeLarge):
 		return PreviewSizeLarge, true
 	case string(PreviewSizeTall):
 		return PreviewSizeTall, true
 	}
-	return PreviewSizeSquare, false
+	return PreviewSizeThumb, false
 }
 
 func getTheme(str string) (string, bool) {
