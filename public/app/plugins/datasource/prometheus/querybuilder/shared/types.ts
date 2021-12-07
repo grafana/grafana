@@ -27,7 +27,8 @@ export interface QueryBuilderOperationDef<T = any> {
   defaultParams: QueryBuilderOperationParamValue[];
   category: string;
   renderer: QueryBuilderOperationRenderer;
-  addHandler: (operation: QueryBuilderOperationDef, query: T) => T;
+  onAddToQuery: (operation: QueryBuilderOperationDef, query: T) => T;
+  onParamChanged?: (index: number, operation: QueryBuilderOperation) => QueryBuilderOperation;
 }
 
 export type QueryBuilderOperationRenderer = (
@@ -62,7 +63,6 @@ export interface QueryBuilderOperationParamEditorProps {
   query: any;
   datasource: DataSourceApi;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
-  onRemove: (index: number) => void;
 }
 
 export enum QueryEditorMode {

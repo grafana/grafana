@@ -12,7 +12,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
-      addHandler: defaultAddOperationHandler,
+      onAddToQuery: defaultAddOperationHandler,
     },
     {
       id: 'avg',
@@ -21,7 +21,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
-      addHandler: defaultAddOperationHandler,
+      onAddToQuery: defaultAddOperationHandler,
     },
     {
       id: 'histogram_quantile',
@@ -30,7 +30,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [0.9],
       category: PromVisualQueryOperationCategory.Functions,
       renderer: functionRendererLeft,
-      addHandler: defaultAddOperationHandler,
+      onAddToQuery: defaultAddOperationHandler,
     },
     {
       id: 'label_replace',
@@ -44,7 +44,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       category: PromVisualQueryOperationCategory.Functions,
       defaultParams: ['', '$1', '', '(.*)'],
       renderer: functionRendererRight,
-      addHandler: defaultAddOperationHandler,
+      onAddToQuery: defaultAddOperationHandler,
     },
     {
       id: '__sum_by',
@@ -54,13 +54,15 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
           name: 'Label',
           type: 'string',
           restParam: true,
+          optional: true,
           editor: LabelParamEditor,
         },
       ],
       defaultParams: [''],
       category: PromVisualQueryOperationCategory.GroupBy,
       renderer: getAggregationByRenderer('sum'),
-      addHandler: defaultAddOperationHandler,
+      onAddToQuery: defaultAddOperationHandler,
+      onParamChanged: getLastLabelRemovedHandler('sum'),
     },
     {
       id: '__avg_by',
@@ -69,7 +71,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [''],
       category: PromVisualQueryOperationCategory.GroupBy,
       renderer: getAggregationByRenderer('avg'),
-      addHandler: defaultAddOperationHandler,
+      onAddToQuery: defaultAddOperationHandler,
     },
     {
       id: 'rate',
@@ -78,7 +80,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: ['auto'],
       category: PromVisualQueryOperationCategory.RateAndDeltas,
       renderer: operationWithRangeVectorRenderer,
-      addHandler: addOperationWithRangeVector,
+      onAddToQuery: addOperationWithRangeVector,
     },
     {
       id: 'increase',
@@ -87,7 +89,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: ['auto'],
       category: PromVisualQueryOperationCategory.RateAndDeltas,
       renderer: operationWithRangeVectorRenderer,
-      addHandler: addOperationWithRangeVector,
+      onAddToQuery: addOperationWithRangeVector,
     },
     // Not sure about this one. It could also be a more generic "Simple math operation" where user specifies
     // both the operator and the operand in a single input
@@ -98,7 +100,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [2],
       category: PromVisualQueryOperationCategory.Math,
       renderer: multiplyRenderer,
-      addHandler: defaultAddOperationHandler,
+      onAddToQuery: defaultAddOperationHandler,
     },
     {
       id: '__nested_query',
@@ -107,7 +109,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Math,
       renderer: multiplyRenderer,
-      addHandler: addNestedQueryHandler,
+      onAddToQuery: addNestedQueryHandler,
     },
   ];
 
@@ -192,13 +194,29 @@ function defaultAddOperationHandler(def: QueryBuilderOperationDef, query: PromVi
 }
 
 /**
+ * This function will transform operations without labels to their plan aggregation operation
+ */
+function getLastLabelRemovedHandler(changeToOperartionId: string) {
+  return function onParamChanged(index: number, op: QueryBuilderOperation) {
+    if (op.params.length > 0) {
+      return op;
+    }
+
+    return {
+      ...op,
+      id: changeToOperartionId,
+    };
+  };
+}
+
+/**
  * Since there can only be one operation with range vector this will replace the current one (if one was added )
  */
 function addOperationWithRangeVector(def: QueryBuilderOperationDef, query: PromVisualQuery) {
   if (query.operations.length > 0) {
     const firstOp = promQueryModeller.getOperationDef(query.operations[0].id);
 
-    if (firstOp.addHandler === addOperationWithRangeVector) {
+    if (firstOp.onAddToQuery === addOperationWithRangeVector) {
       return {
         ...query,
         operations: [

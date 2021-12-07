@@ -4,7 +4,12 @@ import { Button, IconButton, useStyles2 } from '@grafana/ui';
 import FlexItem from 'app/plugins/datasource/cloudwatch/components/ui/FlexItem';
 import Stack from 'app/plugins/datasource/cloudwatch/components/ui/Stack';
 import React from 'react';
-import { VisualQueryModeller, QueryBuilderOperation, QueryBuilderOperationParamValue } from '../shared/types';
+import {
+  VisualQueryModeller,
+  QueryBuilderOperation,
+  QueryBuilderOperationParamValue,
+  QueryBuilderOperationDef,
+} from '../shared/types';
 import { getOperationParamEditor } from './OperationParamEditor';
 
 export interface Props {
@@ -22,30 +27,22 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
   const def = queryModeller.getOperationDef(operation.id);
 
   const onParamValueChanged = (paramIdx: number, value: QueryBuilderOperationParamValue) => {
-    const updatedParams = [...operation.params];
-    updatedParams[paramIdx] = value;
-    onChange(index, { ...operation, params: updatedParams });
-  };
-
-  const onRemoveParam = (paramIdx: number) => {
-    onChange(index, {
-      ...operation,
-      params: [...operation.params.slice(0, paramIdx), ...operation.params.slice(paramIdx + 1)],
-    });
+    const update: QueryBuilderOperation = { ...operation, params: [...operation.params] };
+    update.params[paramIdx] = value;
+    callParamChangedThenOnChange(def, update, index, paramIdx, onChange);
   };
 
   const onAddRestParam = () => {
-    onChange(index, {
-      ...operation,
-      params: [...operation.params, ''],
-    });
+    const update: QueryBuilderOperation = { ...operation, params: [...operation.params, ''] };
+    callParamChangedThenOnChange(def, update, index, operation.params.length, onChange);
   };
 
   const onRemoveRestParam = (paramIdx: number) => {
-    onChange(index, {
+    const update: QueryBuilderOperation = {
       ...operation,
       params: [...operation.params.slice(0, paramIdx), ...operation.params.slice(paramIdx + 1)],
-    });
+    };
+    callParamChangedThenOnChange(def, update, index, paramIdx, onChange);
   };
 
   return (
@@ -72,11 +69,10 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
                       value={paramValue}
                       operation={operation}
                       onChange={onParamValueChanged}
-                      onRemove={onRemoveParam}
                       query={query}
                       datasource={datasource}
                     />
-                    {paramDef.restParam && operation.params.length > def.params.length && (
+                    {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
                       <Button
                         size="sm"
                         fill="text"
@@ -110,6 +106,20 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
       </div>
     </div>
   );
+}
+
+function callParamChangedThenOnChange(
+  def: QueryBuilderOperationDef,
+  operation: QueryBuilderOperation,
+  operationIndex: number,
+  paramIndex: number,
+  onChange: (index: number, update: QueryBuilderOperation) => void
+) {
+  if (def.onParamChanged) {
+    onChange(operationIndex, def.onParamChanged(paramIndex, operation));
+  } else {
+    onChange(operationIndex, operation);
+  }
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

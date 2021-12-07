@@ -17,7 +17,7 @@ export function QueryPreview({ query }: Props) {
 
   return (
     <EditorFieldGroup>
-      <EditorField label="Query Preview">
+      <EditorField label="Query text">
         <div className={styles.editorField} aria-label="selector">
           {promQueryModeller.renderQuery(query)}
         </div>
@@ -28,8 +28,10 @@ export function QueryPreview({ query }: Props) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    editorField: css`
-      padding: '2px 8px';
-    `,
+    editorField: css({
+      padding: theme.spacing(0.25, 1),
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
   };
 };
