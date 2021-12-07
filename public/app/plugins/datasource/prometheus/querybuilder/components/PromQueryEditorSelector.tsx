@@ -46,6 +46,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
           <Switch />
         </Stack>
         <InlineSelect
+          width={14.5}
           value={undefined}
           placeholder="Query patterns"
           allowCustomValue
