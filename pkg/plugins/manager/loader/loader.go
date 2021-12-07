@@ -44,12 +44,12 @@ type Loader struct {
 	errs map[string]*plugins.SignatureError
 }
 
-func ProvideService(license models.Licensing, cfg *setting.Cfg, authorizer plugins.PluginLoaderAuthorizer,
+func ProvideService(cfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	backendProvider plugins.BackendFactoryProvider) (*Loader, error) {
-	return New(license, cfg, authorizer, backendProvider), nil
+	return New(cfg, license, authorizer, backendProvider), nil
 }
 
-func New(license models.Licensing, cfg *setting.Cfg, authorizer plugins.PluginLoaderAuthorizer,
+func New(cfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	backendProvider plugins.BackendFactoryProvider) *Loader {
 	return &Loader{
 		cfg:                cfg,
