@@ -1,7 +1,7 @@
 import { getAggregationOperations } from './aggregations';
 import { getOperationDefintions } from './operations';
 import { VisualQueryModeller, QueryBuilderOperationDef, QueryBuilderLabelFilter } from './shared/types';
-import { PromVisualQuery, PromVisualQueryOperationCategory } from './types';
+import { PromQueryPattern, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
 export class PromQueryModeller implements VisualQueryModeller {
   private operations: Record<string, QueryBuilderOperationDef<PromVisualQuery>> = {};
@@ -64,6 +64,22 @@ export class PromQueryModeller implements VisualQueryModeller {
     }
 
     return expr + `}`;
+  }
+
+  getQueryPatterns(): PromQueryPattern[] {
+    return [
+      {
+        name: 'Rate + Sum',
+        operations: [{ id: 'rate', params: ['auto'] }],
+      },
+      {
+        name: 'Rate + Sum by(label)',
+        operations: [
+          { id: 'rate', params: ['auto'] },
+          { id: '__sum_by', params: [''] },
+        ],
+      },
+    ];
   }
 }
 
