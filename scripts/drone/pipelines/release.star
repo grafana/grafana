@@ -239,6 +239,9 @@ def release_pipelines(ver_mode='release', trigger=None):
     if not trigger:
         trigger = {
             'ref': ['refs/tags/v*',],
+            'repo': {
+              'exclude': ['grafana/grafana'],
+            },
         }
 
     should_publish = ver_mode in ('release', 'test-release',)
