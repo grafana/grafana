@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/librarycredentials"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -143,6 +144,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
 	libraryelements.ProvideService,
 	wire.Bind(new(libraryelements.Service), new(*libraryelements.LibraryElementService)),
+	librarycredentials.ProvideService,
+	wire.Bind(new(librarycredentials.Service), new(*librarycredentials.LibraryCredentialsService)),
 	notifications.ProvideService,
 	tracing.ProvideService,
 	metrics.ProvideService,
