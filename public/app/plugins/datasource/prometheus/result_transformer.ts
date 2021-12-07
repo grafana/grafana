@@ -37,9 +37,10 @@ import {
 const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
 const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
 
-export interface TimeAndValue {
+export interface ExemplarEvent {
   [TIME_SERIES_TIME_FIELD_NAME]: number;
   [TIME_SERIES_VALUE_FIELD_NAME]: number;
+  [key: string]: boolean | number | string;
 }
 
 const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
@@ -184,7 +185,7 @@ export function transform(
     responseListLength: number;
     scopedVars?: ScopedVars;
   }
-): { data: DataFrame[]; exemplarsForAutoBreakdowns?: TimeAndValue[] } {
+): { data: DataFrame[]; exemplarsForAutoBreakdowns?: ExemplarEvent[] } {
   // Create options object from transformOptions
   const options: TransformOptions = {
     format: transformOptions.target.format,
@@ -205,7 +206,7 @@ export function transform(
   const prometheusResult = response.data.data;
 
   if (isExemplarData(prometheusResult)) {
-    const events: TimeAndValue[] = [];
+    const events: ExemplarEvent[] = [];
     prometheusResult.forEach((exemplarData) => {
       const data = exemplarData.exemplars.map((exemplar) => {
         return {
@@ -312,9 +313,9 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
  * and then only the ones that are 2 times the standard deviation of the all the values.
  * This makes sure not to show too many dots near each other.
  */
-function sampleExemplars(events: TimeAndValue[], options: TransformOptions) {
+function sampleExemplars(events: ExemplarEvent[], options: TransformOptions) {
   const step = options.step || 15;
-  const bucketedExemplars: { [ts: string]: TimeAndValue[] } = {};
+  const bucketedExemplars: { [ts: string]: ExemplarEvent[] } = {};
   const values: number[] = [];
   for (const exemplar of events) {
     // Align exemplar timestamp to nearest step second

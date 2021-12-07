@@ -88,7 +88,7 @@ export function ExploreGraph({
       },
       custom: {
         drawStyle: GraphDrawStyle.Line,
-        fillOpacity: 0,
+        fillOpacity: pluginId === 'timeseries' ? 0 : 100,
         pointSize: 5,
       },
     },

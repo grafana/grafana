@@ -1,4 +1,4 @@
-import { cloneDeep, defaults } from 'lodash';
+import { cloneDeep, defaults, partition } from 'lodash';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import LRU from 'lru-cache';
@@ -38,7 +38,7 @@ import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { getInitHints, getQueryHints } from './query_hints';
-import { getOriginalMetricName, renderTemplate, transform, TimeAndValue } from './result_transformer';
+import { getOriginalMetricName, renderTemplate, transform, ExemplarEvent } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
@@ -77,7 +77,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   lookupsDisabled: boolean;
   customQueryParameters: any;
   exemplarsAvailable: boolean;
-  exemplarsForAutoBreakdowns: TimeAndValue[];
+  exemplarsForAutoBreakdowns: ExemplarEvent[];
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -450,33 +450,28 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filter);
   }
 
-  //This holds all logic to create autobreakdowns
+  //This holds all logic to create autobreakdown
   createAutoBreakdowns(timeRange?: AbsoluteTimeRange) {
     // If we didn't select range, retrun undefined
     if (!timeRange) {
       return;
     }
     // Create list of exemplars and all labels + values in array that exemplars have within timerange
-    const { exemplars, labels } = this.selectAutoBreakdownDataBasedOnTimeRange(timeRange);
+    const { exemplarsWithin, exemplarsOutside, labels } = this.selectAutoBreakdownDataBasedOnTimeRange(timeRange);
 
     // Loop over label names
     const dataFrames = Object.keys(labels).map((label) => {
       // Loop over label values
       const labelValuesArray = labels[label].map((value: string) => {
         // Filter out all exemplars that have that label + value
-        const exemplarsByValue = exemplars.filter((exemplar) => exemplar[label] === value);
+        const exemplarsWithinByValue = exemplarsWithin.filter((exemplar) => exemplar[label] === value);
+        const exemplarsOutsideByValue = exemplarsOutside.filter((exemplar) => exemplar[label] === value);
 
-        // Create sum of all values
-        const sum = exemplarsByValue
-          .map((exemplar) => Number(exemplar['Value']))
-          .filter((value) => !Number.isNaN(value))
-          .reduce((a, b) => {
-            return a + b;
-          }, 0);
-        // Calculate average
-        const avg = sum / exemplarsByValue.length;
+        // Calculate medians
+        const medianWithin = calculateMedianFromExemplarEvents(exemplarsWithinByValue);
+        const medianOutside = calculateMedianFromExemplarEvents(exemplarsOutsideByValue);
         // Create object that will be used in data frame with label's value and avg
-        return { name: value.toString(), avg };
+        return { name: value.toString(), median_selected: medianWithin, median_baseline: medianOutside };
       });
 
       // Create dataFrame from labelValuesArray
@@ -494,7 +489,8 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
   selectAutoBreakdownDataBasedOnTimeRange(timeRange: AbsoluteTimeRange) {
     const dictionary: any = {};
-    const exemplarsWithinTimeRange = this.exemplarsForAutoBreakdowns.filter(
+    const [exemplarsWithinTimeRange, exemplarsOutsideTheRange] = partition(
+      this.exemplarsForAutoBreakdowns,
       (exemplar) => exemplar['Time'] >= timeRange.from && exemplar['Time'] <= timeRange.to
     );
 
@@ -513,7 +509,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       });
     });
     const { le, __name__, ...rest } = dictionary;
-    return { exemplars: exemplarsWithinTimeRange, labels: rest };
+    return { exemplarsWithin: exemplarsWithinTimeRange, exemplarsOutside: exemplarsOutsideTheRange, labels: rest };
   }
 
   createQuery(target: PromQuery, options: DataQueryRequest<PromQuery>, start: number, end: number) {
@@ -1074,4 +1070,17 @@ export function prometheusRegularEscape(value: any) {
 
 export function prometheusSpecialRegexEscape(value: any) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+}
+
+function calculateMedianFromExemplarEvents(arrayWithExemplars: ExemplarEvent[]) {
+  const orderedValues = arrayWithExemplars
+    .map((exemplar) => Number(exemplar['Value']))
+    .filter((value) => !Number.isNaN(value))
+    .sort((a, b) => a - b);
+
+  const half = Math.floor(orderedValues.length / 2);
+  if (orderedValues.length % 2) {
+    return orderedValues[half];
+  }
+  return (orderedValues[half - 1] + orderedValues[half]) / 2;
 }
