@@ -1,6 +1,5 @@
 import { PanelModel, PanelPlugin } from '@grafana/data';
 import { DashList } from './DashList';
-import { DashListOptions } from './types';
 import React from 'react';
 import { TagsInput } from '@grafana/ui';
 import {
@@ -8,9 +7,25 @@ import {
   GENERAL_FOLDER,
   ReadonlyFolderPicker,
 } from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
+import { config } from '@grafana/runtime';
+import { PanelLayout, PanelOptions } from './models.gen';
 
-export const plugin = new PanelPlugin<DashListOptions>(DashList)
+export const plugin = new PanelPlugin<PanelOptions>(DashList)
   .setPanelOptions((builder) => {
+    if (config.featureToggles.dashboardPreviews) {
+      builder.addRadio({
+        path: 'layout',
+        name: 'Layout',
+        defaultValue: PanelLayout.List,
+        settings: {
+          options: [
+            { value: PanelLayout.List, label: 'List' },
+            { value: PanelLayout.Previews, label: 'Preview' },
+          ],
+        },
+      });
+    }
+
     builder
       .addBooleanSwitch({
         path: 'showStarred',
@@ -68,7 +83,7 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
         },
       });
   })
-  .setMigrationHandler((panel: PanelModel<DashListOptions> & Record<string, any>) => {
+  .setMigrationHandler((panel: PanelModel<PanelOptions> & Record<string, any>) => {
     const newOptions = {
       showStarred: panel.options.showStarred ?? panel.starred,
       showRecentlyViewed: panel.options.showRecentlyViewed ?? panel.recent,

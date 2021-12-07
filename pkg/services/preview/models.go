@@ -27,16 +27,10 @@ func (p PreviewSize) IsKnownSize() bool {
 
 func getPreviewSize(str string) (PreviewSize, bool) {
 	switch str {
-	case "s":
-		fallthrough
 	case string(PreviewSizeSquare):
 		return PreviewSizeSquare, true
-	case "l":
-		fallthrough
 	case string(PreviewSizeLarge):
 		return PreviewSizeLarge, true
-	case "t":
-		fallthrough
 	case string(PreviewSizeTall):
 		return PreviewSizeTall, true
 	}
