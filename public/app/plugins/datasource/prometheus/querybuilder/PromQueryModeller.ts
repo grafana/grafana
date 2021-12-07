@@ -15,7 +15,7 @@ export class PromQueryModeller implements VisualQueryModeller {
   }
 
   getOperationsForCategory(category: PromVisualQueryOperationCategory) {
-    return Object.values(this.operations).filter((op) => op.category === category);
+    return Object.values(this.operations).filter((op) => op.category === category && !op.hideFromList);
   }
 
   getOperationDef(id: string) {
@@ -30,7 +30,6 @@ export class PromQueryModeller implements VisualQueryModeller {
     return [
       PromVisualQueryOperationCategory.Aggregations,
       PromVisualQueryOperationCategory.RateAndDeltas,
-      PromVisualQueryOperationCategory.GroupBy,
       PromVisualQueryOperationCategory.Functions,
       PromVisualQueryOperationCategory.Math,
     ];

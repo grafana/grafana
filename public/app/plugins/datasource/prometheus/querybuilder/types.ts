@@ -17,9 +17,8 @@ export interface PromVisualQueryBinary {
 
 export enum PromVisualQueryOperationCategory {
   Aggregations = 'Aggregations',
-  GroupBy = 'Group by',
-  RateAndDeltas = 'Rates & counters',
-  Functions = 'Misc functions',
+  RateAndDeltas = 'Rate and counters',
+  Functions = 'Functions',
   Math = 'Math',
 }
 

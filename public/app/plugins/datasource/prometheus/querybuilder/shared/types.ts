@@ -26,6 +26,7 @@ export interface QueryBuilderOperationDef<T = any> {
   params: QueryBuilderOperationParamDef[];
   defaultParams: QueryBuilderOperationParamValue[];
   category: string;
+  hideFromList?: boolean;
   renderer: QueryBuilderOperationRenderer;
   onAddToQuery: (operationDef: QueryBuilderOperationDef, query: T) => T;
   onParamChanged?: (

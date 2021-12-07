@@ -45,6 +45,15 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       renderer: operationWithRangeVectorRenderer,
       onAddToQuery: addOperationWithRangeVector,
     },
+    {
+      id: 'increase',
+      displayName: 'Increase',
+      params: [getRangeVectorParamDef()],
+      defaultParams: ['auto'],
+      category: PromVisualQueryOperationCategory.RateAndDeltas,
+      renderer: operationWithRangeVectorRenderer,
+      onAddToQuery: addOperationWithRangeVector,
+    },
     // Not sure about this one. It could also be a more generic "Simple math operation" where user specifies
     // both the operator and the operand in a single input
     {
@@ -144,7 +153,7 @@ export function defaultAddOperationHandler(def: QueryBuilderOperationDef, query:
 /**
  * Since there can only be one operation with range vector this will replace the current one (if one was added )
  */
-function addOperationWithRangeVector(def: QueryBuilderOperationDef, query: PromVisualQuery) {
+export function addOperationWithRangeVector(def: QueryBuilderOperationDef, query: PromVisualQuery) {
   if (query.operations.length > 0) {
     const firstOp = promQueryModeller.getOperationDef(query.operations[0].id);
 

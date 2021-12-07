@@ -1,6 +1,6 @@
 import { capitalize } from 'lodash';
 import { LabelParamEditor } from './components/LabelParamEditor';
-import { defaultAddOperationHandler, functionRendererLeft } from './operations';
+import { addOperationWithRangeVector, defaultAddOperationHandler, functionRendererLeft } from './operations';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { PromVisualQueryOperationCategory } from './types';
 
@@ -12,6 +12,15 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
     ...createAggregationOperation('max'),
     ...createAggregationOperation('count'),
     ...createAggregationOperation('topk'),
+    createAggregationOverTime('sum'),
+    createAggregationOverTime('avg'),
+    createAggregationOverTime('min'),
+    createAggregationOverTime('max'),
+    createAggregationOverTime('count'),
+    createAggregationOverTime('last'),
+    createAggregationOverTime('present'),
+    createAggregationOverTime('stddev'),
+    createAggregationOverTime('stdvar'),
   ];
 }
 
@@ -47,10 +56,11 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
         },
       ],
       defaultParams: [''],
-      category: PromVisualQueryOperationCategory.GroupBy,
+      category: PromVisualQueryOperationCategory.Aggregations,
       renderer: getAggregationByRenderer(name),
       onAddToQuery: defaultAddOperationHandler,
       onParamChanged: getLastLabelRemovedHandler(name),
+      hideFromList: true,
     },
   ];
 
@@ -109,4 +119,39 @@ function getOnLabelAdddedHandler(cahgneToOperationId: string) {
       id: cahgneToOperationId,
     };
   };
+}
+
+function createAggregationOverTime(name: string): QueryBuilderOperationDef {
+  const functionName = `${name}_over_time`;
+  return {
+    id: functionName,
+    displayName: capitalize(functionName.replace(/_/g, ' ')),
+    params: [getAggregationOverTimeRangeVector()],
+    defaultParams: ['auto'],
+    category: PromVisualQueryOperationCategory.Functions,
+    renderer: operationWithRangeVectorRenderer,
+    onAddToQuery: addOperationWithRangeVector,
+  };
+}
+
+function getAggregationOverTimeRangeVector(): QueryBuilderOperationParamDef {
+  return {
+    name: 'Range vector',
+    type: 'string',
+    options: ['auto', '$__interval', '$__range', '1m', '5m', '10m', '1h', '24h'],
+  };
+}
+
+function operationWithRangeVectorRenderer(
+  model: QueryBuilderOperation,
+  def: QueryBuilderOperationDef,
+  innerExpr: string
+) {
+  let rangeVector = (model.params ?? [])[0] ?? 'auto';
+
+  if (rangeVector === 'auto') {
+    rangeVector = '$__interval';
+  }
+
+  return `${def.id}(${innerExpr}[${rangeVector}])`;
 }
