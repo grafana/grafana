@@ -27,6 +27,8 @@ import { ResponseQueue } from './ResponseQueue';
 import { FetchQueueWorker } from './FetchQueueWorker';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { ShowModalReactEvent } from '../../types/events';
+import { getRequestResponseRecorder } from './RequestResponseRecorder';
+import { getRecordedResponsePlayer } from './RecordedResponsePlayer';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
@@ -183,6 +185,11 @@ export class BackendSrv implements BackendService {
     const url = parseUrlFromOptions(options);
     const init = parseInitFromOptions(options);
 
+    const recorded = getRecordedResponsePlayer().find<T>(options);
+    if (recorded) {
+      return of(recorded).pipe(share()); // sharing this, so we can split into success and failure and then merge back
+    }
+
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async (response) => {
         const { status, statusText, ok, headers, url, type, redirected } = response;
@@ -199,9 +206,14 @@ export class BackendSrv implements BackendService {
           redirected,
           config: options,
         };
+
+        if (getRequestResponseRecorder().isRecording()) {
+          getRequestResponseRecorder().record({ options, fetchResponse });
+        }
+
         return fetchResponse;
       }),
-      share() // sharing this so we can split into success and failure and then merge back
+      share() // sharing this, so we can split into success and failure and then merge back
     );
   }
 
