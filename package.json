@@ -235,7 +235,7 @@
     "@jaegertracing/jaeger-ui-components": "workspace:*",
     "@kusto/monaco-kusto": "4.0.6",
     "@opentelemetry/api": "1.0.2",
-    "@opentelemetry/exporter-collector": "0.23.0",
+    "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.0.0",
     "@popperjs/core": "2.5.4",
     "@react-aria/button": "3.3.4",
