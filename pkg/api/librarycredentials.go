@@ -19,18 +19,9 @@ func (hs *HTTPServer) GetLibraryCredentials(c *models.ReqContext) response.Respo
 	}
 
 	result := []dtos.LibraryCredentialDto{}
-	for _, ds := range query.Result {
-		dsItem := dtos.LibraryCredentialDto{
-			OrgId:    ds.OrgId,
-			Id:       ds.Id,
-			UID:      ds.Uid,
-			Name:     ds.Name,
-			Type:     ds.Type,
-			JsonData: ds.JsonData,
-			ReadOnly: ds.ReadOnly,
-		}
-
-		result = append(result, dsItem)
+	for _, lc := range query.Result {
+		lcItem := convertLibraryCredentialModelToDto(lc)
+		result = append(result, lcItem)
 	}
 
 	return response.JSON(200, &result)
@@ -51,15 +42,7 @@ func (hs *HTTPServer) AddLibraryCredential(c *models.ReqContext) response.Respon
 		return response.Error(500, "Failed to add library credential", err)
 	}
 
-	credential := dtos.LibraryCredentialDto{
-		OrgId:    cmd.Result.OrgId,
-		Id:       cmd.Result.Id,
-		UID:      cmd.Result.Uid,
-		Name:     cmd.Result.Name,
-		Type:     cmd.Result.Type,
-		JsonData: cmd.Result.JsonData,
-		ReadOnly: cmd.Result.ReadOnly,
-	}
+	credential := convertLibraryCredentialModelToDto(cmd.Result)
 	return response.JSON(200, util.DynMap{
 		"message":    "Library Credential added",
 		"id":         cmd.Result.Id,
@@ -74,24 +57,56 @@ func (hs *HTTPServer) UpdateLibraryCredential(c *models.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgId
+	cmd.Id = c.ParamsInt64(":id")
 
 	if err := hs.LibraryCredentialService.UpdateLibraryCredential(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to add library credential", err)
 	}
 
-	credential := dtos.LibraryCredentialDto{
-		OrgId:    cmd.Result.OrgId,
-		Id:       cmd.Result.Id,
-		UID:      cmd.Result.Uid,
-		Name:     cmd.Result.Name,
-		Type:     cmd.Result.Type,
-		JsonData: cmd.Result.JsonData,
-		ReadOnly: cmd.Result.ReadOnly,
-	}
+	credential := convertLibraryCredentialModelToDto(cmd.Result)
 	return response.JSON(200, util.DynMap{
 		"message":    "Library Credential added",
 		"id":         cmd.Result.Id,
 		"name":       cmd.Result.Name,
 		"credential": credential,
 	})
+}
+
+func (hs *HTTPServer) DeleteLibraryCredentialById(c *models.ReqContext) response.Response {
+	id := c.ParamsInt64(":id")
+
+	if id <= 0 {
+		return response.Error(400, "Missing valid library credentials id", nil)
+	}
+
+	// TODO: should load lib cred by id and check that it's not readonly before deleting it
+
+	cmd := &models.DeleteLibraryCredentialCommand{Id: id, OrgId: c.OrgId}
+
+	if err := hs.LibraryCredentialService.DeleteLibraryCredential(c.Req.Context(), cmd); err != nil {
+		return response.Error(500, "Failed to delete library credential", err)
+	}
+
+	return response.Success("Library credential deleted")
+}
+
+func convertLibraryCredentialModelToDto(ds *models.LibraryCredential) dtos.LibraryCredentialDto {
+	dto := dtos.LibraryCredentialDto{
+		OrgId:            ds.OrgId,
+		Id:               ds.Id,
+		UID:              ds.Uid,
+		Name:             ds.Name,
+		Type:             ds.Type,
+		JsonData:         ds.JsonData,
+		ReadOnly:         ds.ReadOnly,
+		SecureJsonFields: map[string]bool{},
+	}
+
+	for k, v := range ds.SecureJsonData {
+		if len(v) > 0 {
+			dto.SecureJsonFields[k] = true
+		}
+	}
+
+	return dto
 }

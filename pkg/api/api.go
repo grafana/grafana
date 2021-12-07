@@ -266,6 +266,8 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/library-credentials", func(libraryCredentials routing.RouteRegister) {
 			libraryCredentials.Get("/", routing.Wrap(hs.GetLibraryCredentials))
 			libraryCredentials.Post("/", routing.Wrap(hs.AddLibraryCredential))
+			libraryCredentials.Put("/:id", routing.Wrap(hs.UpdateLibraryCredential))
+			libraryCredentials.Delete("/:id", routing.Wrap(hs.DeleteLibraryCredentialById))
 		})
 
 		// Data sources

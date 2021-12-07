@@ -10,16 +10,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"xorm.io/xorm"
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore) *LibraryCredentialsService {
+func ProvideService(sqlStore *sqlstore.SQLStore, secretsService secrets.Service) *LibraryCredentialsService {
 	return &LibraryCredentialsService{
-		SQLStore: sqlStore,
+		SQLStore:       sqlStore,
+		SecretsService: secretsService,
 	}
 }
-
-// var _ Service = (*LibraryCredentialsService)(nil)
 
 type Service interface {
 	GetLibraryCredentials(ctx context.Context, query *models.GetLibraryCredentialsQuery) error
@@ -101,6 +99,7 @@ func (s LibraryCredentialsService) UpdateLibraryCredential(ctx context.Context, 
 		}
 
 		ds := &models.LibraryCredential{
+			Id:             cmd.Id,
 			OrgId:          cmd.OrgId,
 			Name:           cmd.Name,
 			Type:           cmd.Type,
@@ -114,7 +113,7 @@ func (s LibraryCredentialsService) UpdateLibraryCredential(ctx context.Context, 
 
 		sess.UseBool("read_only")
 
-		var updateSession *xorm.Session
+		updateSession := sess.Where("id=? and org_id=?", ds.Id, ds.OrgId)
 
 		affected, err := updateSession.Update(ds)
 		if err != nil {
@@ -132,9 +131,9 @@ func (s LibraryCredentialsService) UpdateLibraryCredential(ctx context.Context, 
 
 func (s LibraryCredentialsService) DeleteLibraryCredential(ctx context.Context, cmd *models.DeleteLibraryCredentialCommand) error {
 	return s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
-		var rawSql = "DELETE FROM library_credential WHERE uid=? and org_id=?"
+		var rawSql = "DELETE FROM library_credential WHERE id=? and org_id=?"
 
-		if result, err := session.Exec(rawSql, cmd.Uid, cmd.OrgId); err != nil {
+		if result, err := session.Exec(rawSql, cmd.Id, cmd.OrgId); err != nil {
 			return err
 		} else if cmd.NumDeleted, err = result.RowsAffected(); err != nil {
 			return err

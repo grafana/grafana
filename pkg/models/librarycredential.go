@@ -40,6 +40,7 @@ type AddLibraryCredentialCommand struct {
 }
 
 type UpdateLibraryCredentialCommand struct {
+	Id             int64             `json:"id"`
 	Name           string            `json:"name" binding:"Required"`
 	Type           string            `json:"type" binding:"Required"`
 	JsonData       *simplejson.Json  `json:"jsonData"`
@@ -54,7 +55,7 @@ type UpdateLibraryCredentialCommand struct {
 }
 
 type DeleteLibraryCredentialCommand struct {
-	Uid string `json:"uid"`
+	Id int64 `json:"id"`
 
 	OrgId int64 `json:"-"`
 
