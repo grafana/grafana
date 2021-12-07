@@ -6,7 +6,7 @@ import { textBoxItem } from './elements/textBox';
 export const DEFAULT_CANVAS_ELEMENT_CONFIG: CanvasElementOptions = {
   ...iconItem.getNewOptions(),
   type: iconItem.id,
-  name: `Group ${Date.now()}.${Math.floor(Math.random() * 100)}`,
+  name: `Element 1`,
 };
 
 export const canvasElementRegistry = new Registry<CanvasElementItem>(() => [
