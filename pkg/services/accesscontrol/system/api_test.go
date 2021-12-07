@@ -33,7 +33,7 @@ type getDescriptionTestCase struct {
 	expectedStatus int
 }
 
-func TestSystem_getDescription(t *testing.T) {
+func TestApi_getDescription(t *testing.T) {
 	tests := []getDescriptionTestCase{
 		{
 			desc: "should return description",
@@ -59,7 +59,7 @@ func TestSystem_getDescription(t *testing.T) {
 					Teams:        true,
 					BuiltInRoles: true,
 				},
-				Permissions: []string{"Admin", "Edit", "View"},
+				Permissions: []string{"View", "Edit", "Admin"},
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -133,7 +133,7 @@ type getPermissionsTestCase struct {
 	expectedStatus int
 }
 
-func TestSystem_getPermissions(t *testing.T) {
+func TestApi_getPermissions(t *testing.T) {
 	tests := []getPermissionsTestCase{
 		{
 			desc:           "expect permissions for resource with id 1",
@@ -195,7 +195,7 @@ type setBuiltinPermissionTestCase struct {
 	permissions    []*accesscontrol.Permission
 }
 
-func TestSystem_setBuiltinRolePermission(t *testing.T) {
+func TestApi_setBuiltinRolePermission(t *testing.T) {
 	tests := []setBuiltinPermissionTestCase{
 		{
 			desc:           "should set Edit permission for Viewer",
@@ -268,7 +268,7 @@ type setTeamPermissionTestCase struct {
 	permissions    []*accesscontrol.Permission
 }
 
-func TestSystem_setTeamPermission(t *testing.T) {
+func TestApi_setTeamPermission(t *testing.T) {
 	tests := []setTeamPermissionTestCase{
 		{
 			desc:           "should set Edit permission for team 1",
@@ -346,7 +346,7 @@ type setUserPermissionTestCase struct {
 	permissions    []*accesscontrol.Permission
 }
 
-func TestSystem_setUserPermission(t *testing.T) {
+func TestApi_setUserPermission(t *testing.T) {
 	tests := []setUserPermissionTestCase{
 		{
 			desc:           "should set Edit permission for user 1",
@@ -415,7 +415,7 @@ func TestSystem_setUserPermission(t *testing.T) {
 	}
 }
 
-func setupTestEnvironment(t *testing.T, user *models.SignedInUser, permissions []*accesscontrol.Permission, ops Options) (*System, *web.Mux, *sqlstore.SQLStore) {
+func setupTestEnvironment(t *testing.T, user *models.SignedInUser, permissions []*accesscontrol.Permission, ops Options) (*Service, *web.Mux, *sqlstore.SQLStore) {
 	sql := sqlstore.InitTestDB(t)
 	store := database.ProvideService(sql)
 
