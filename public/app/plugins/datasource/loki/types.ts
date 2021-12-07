@@ -22,7 +22,14 @@ export enum LokiResultType {
   Matrix = 'matrix',
 }
 
+export enum LokiQueryType {
+  Range = 'range',
+  Instant = 'instant',
+  Stream = 'stream',
+}
+
 export interface LokiQuery extends DataQuery {
+  queryType: LokiQueryType;
   expr: string;
   query?: string;
   format?: string;
@@ -31,9 +38,11 @@ export interface LokiQuery extends DataQuery {
   valueWithRefId?: boolean;
   maxLines?: number;
   resolution?: number;
+  volumeQuery?: boolean;
+
+  // now queryType
   range?: boolean;
   instant?: boolean;
-  volumeQuery?: boolean;
 }
 
 export interface LokiOptions extends DataSourceJsonData {

@@ -171,7 +171,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                 data-testid={this.props['data-testid']}
               >
                 <button
-                  className="gf-form-label query-keyword pointer"
+                  className="gf-form-label query-keyword pointer width-7"
                   onClick={this.onClickChooserButton}
                   disabled={buttonDisabled}
                 >
