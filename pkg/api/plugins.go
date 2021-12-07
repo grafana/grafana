@@ -290,6 +290,9 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	}
 
 	requestedFile := filepath.Clean(web.Params(c.Req)["*"])
+	//prevent path traversal attack, such as "../../../../../../<etc>/some/path"
+	requestedFile = filepath.Clean(string(os.PathSeparator) + requestedFile)
+	requestedFile, _ = filepath.Rel(string(os.PathSeparator), requestedFile)
 	pluginFilePath := filepath.Join(plugin.PluginDir, requestedFile)
 
 	if !plugin.IncludedInSignature(requestedFile) {
