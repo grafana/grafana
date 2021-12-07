@@ -28,7 +28,7 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
     return (await datasource.metricFindQuery('label_names()')).map((x) => x.text);
   };
 
-  const onGetLabelNameValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
+  const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
     return (await datasource.metricFindQuery('label_values(' + forLabel.label + ')')).map((x) => x.text);
   };
 
@@ -40,7 +40,7 @@ export const PromQueryBuilderInner = React.memo<Props>(({ datasource, query, onC
       <EditorRow>
         <LabelFilters
           onGetLabelNames={onGetLabelNames}
-          onGetLabelNameValues={onGetLabelNameValues}
+          onGetLabelValues={onGetLabelValues}
           labelsFilters={query.labels}
           onChange={onChangeLabels}
         />
