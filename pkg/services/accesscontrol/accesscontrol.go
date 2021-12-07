@@ -29,7 +29,7 @@ type PermissionsProvider interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
-type ResourcePermissionManager interface {
+type ResourcePermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
 	GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
@@ -38,11 +38,13 @@ type ResourcePermissionManager interface {
 	SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID string, actions []string) (*ResourcePermission, error)
 	// SetBuiltInRolePermission sets permission on resource for a built-in role (Admin, Editor, Viewer)
 	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, actions []string) (*ResourcePermission, error)
+	// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
 	MapActions(permission ResourcePermission) (string, bool)
+	// MapPermission will map a friendly named permission to it's corresponding actions configured in PermissionsToAction map.
 	MapPermission(permission string) []string
 }
 
-type ResourcePermissionStore interface {
+type ResourcePermissionsStore interface {
 	// SetUserResourcePermission sets permission for managed user role on a resource
 	SetUserResourcePermission(ctx context.Context, orgID, userID int64, cmd SetResourcePermissionCommand) (*ResourcePermission, error)
 	// SetTeamResourcePermission sets permission for managed team role on a resource

@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionStore) (*Service, error) {
+func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*Service, error) {
 	var permissions []string
 	validActions := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
@@ -55,7 +55,7 @@ func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessC
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
 	ac    accesscontrol.AccessControl
-	store accesscontrol.ResourcePermissionStore
+	store accesscontrol.ResourcePermissionsStore
 	api   *api
 
 	options      Options
@@ -143,7 +143,6 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 	})
 }
 
-// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
 func (s *Service) MapActions(permission accesscontrol.ResourcePermission) (string, bool) {
 	for _, p := range s.permissions {
 		if permission.Contains(s.options.PermissionsToActions[p]) {
@@ -153,7 +152,6 @@ func (s *Service) MapActions(permission accesscontrol.ResourcePermission) (strin
 	return "", false
 }
 
-// MapPermission will map a friendly named permission to it's corresponding actions configured in PermissionsToAction map.
 func (s *Service) MapPermission(permission string) []string {
 	for k, v := range s.options.PermissionsToActions {
 		if permission == k {
