@@ -243,6 +243,34 @@ async function prepareSVG(url: string): Promise<string> {
 // Really just a cache for the various symbol styles
 const markerMakers = new Registry<SymbolMaker>(() => makers);
 
+const prepareImage = (url: string, size: number): string => {
+  const canvas = document.createElement('canvas');
+  const img = new Image();
+  img.onload = () => {
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(img, 0, 0, size, size); //crop to circle
+      // ctx.globalCompositeOperation = 'destination-in';
+      // ctx.fillStyle = '#000';
+      // ctx.beginPath();
+      // ctx.arc(
+      //   size * 0.5, // x
+      //   size * 0.5, // y
+      //   size * 0.5, // radius
+      //   0, // start angle
+      //   2 * Math.PI // end angle
+      // );
+      // ctx.fill();
+      // ctx.globalCompositeOperation = 'source-over';
+      canvas.hidden = false;
+    }
+    img.src = URL.createObjectURL(url);
+  };
+  return canvas.toDataURL();
+};
+
 export function getMarkerAsPath(shape?: string): string | undefined {
   const marker = markerMakers.getIfExists(shape);
   if (marker?.aliasIds?.length) {
@@ -292,6 +320,35 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                   radius: cfg.size,
                   rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
                 }),
+              }),
+            ];
+          }
+        : errorMarker,
+    };
+    markerMakers.register(maker);
+    return maker.make;
+  }
+
+  if (symbol.endsWith('.png') || symbol.endsWith('.jpg')) {
+    const src = prepareImage(symbol, DEFAULT_SIZE);
+    console.log('source', src);
+    maker = {
+      id: symbol,
+      name: symbol,
+      aliasIds: [],
+      make: src
+        ? (cfg: StyleConfigValues) => {
+            const radius = cfg.size ?? DEFAULT_SIZE;
+            const rotation = cfg.rotation ?? 0;
+            const image = src;
+            return [
+              new Style({
+                image: new Icon({
+                  src: image,
+                  scale: (DEFAULT_SIZE + radius) / 100,
+                  rotation: (rotation * Math.PI) / 180,
+                }),
+                text: !cfg?.text ? undefined : textLabel(cfg),
               }),
             ];
           }
