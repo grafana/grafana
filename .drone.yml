@@ -843,6 +843,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -1364,6 +1366,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -1947,7 +1951,7 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise --github-token %GITHUB_TOKEN% C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
@@ -1970,6 +1974,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -2386,6 +2392,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -2962,7 +2970,7 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise --github-token %GITHUB_TOKEN% C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
@@ -2986,6 +2994,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -3487,6 +3497,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -4067,7 +4079,7 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise --github-token %GITHUB_TOKEN% C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
@@ -4086,6 +4098,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -4161,6 +4175,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: f4dc4a756d4767a7719a18410848fdb6f565c7b18f01b8e9f0293b0e9d022c41
+hmac: e792923df666783e0f620143a695ca0e07dca5208cc9428aafe6b3065ece8601
 
 ...

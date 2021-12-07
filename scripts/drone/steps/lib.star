@@ -1053,7 +1053,8 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'image': wix_image,
             'environment': {
                 'GCP_KEY': from_secret('gcp_key'),
-                'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
+                'PRERELEASE_BUCKET': from_secret(prerelease_bucket),
+                'GITHUB_TOKEN': from_secret('github_token')
             },
             'commands': installer_commands,
             'depends_on': [
@@ -1101,7 +1102,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm -r -force grafana-enterprise',
             'cp grabpl.exe C:\\App\\grabpl.exe',
             'rm -force grabpl.exe',
-            'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit),
+            'C:\\App\\grabpl.exe init-enterprise --github-token %GITHUB_TOKEN% C:\\App\\grafana-enterprise{}'.format(source_commit),
             'cp C:\\App\\grabpl.exe grabpl.exe',
         ])
 
