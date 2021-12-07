@@ -73,15 +73,13 @@ func New(cfg *setting.Cfg, pluginRequestValidator models.PluginRequestValidator,
 
 func newManager(cfg *setting.Cfg, pluginRequestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
 	sqlStore *sqlstore.SQLStore) *PluginManager {
-	return &PluginManager{
-		cfg:              cfg,
-		requestValidator: pluginRequestValidator,
-		sqlStore:         sqlStore,
-		pluginLoader:     pluginLoader,
-		store:            map[string]*plugins.Plugin{},
-		log:              log.New("plugin.manager"),
-		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
+
+	pm, err := ProvideService(cfg, pluginRequestValidator, pluginLoader, sqlStore)
+	if err != nil {
+		return nil
 	}
+
+	return pm
 }
 
 func (m *PluginManager) Init() error {

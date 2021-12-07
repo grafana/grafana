@@ -24,8 +24,8 @@ func TestGetPluginDashboards(t *testing.T) {
 			},
 		},
 	}
-	pm := newManager(cfg, nil, loader.New(nil, cfg, &signature.UnsignedPluginAuthorizer{Cfg: cfg}, &provider.Service{}), &sqlstore.SQLStore{})
-	err := pm.init()
+	pm := newManager(cfg, nil, loader.New(cfg, nil, &signature.UnsignedPluginAuthorizer{Cfg: cfg}, &provider.Service{}), &sqlstore.SQLStore{})
+	err := pm.Init()
 	require.NoError(t, err)
 
 	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {

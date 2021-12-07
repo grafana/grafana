@@ -371,32 +371,6 @@ func validatePluginJSON(data plugins.JSONData) error {
 	return nil
 }
 
-func (l *Loader) pluginClass(pluginDir string) plugins.Class {
-	isSubDir := func(base, target string) bool {
-		path, err := filepath.Rel(base, target)
-		if err != nil {
-			return false
-		}
-
-		if !strings.HasPrefix(path, "..") {
-			return true
-		}
-
-		return false
-	}
-
-	corePluginsDir := filepath.Join(l.cfg.StaticRootPath, "app/plugins")
-	if isSubDir(corePluginsDir, pluginDir) {
-		return plugins.Core
-	}
-
-	if isSubDir(l.cfg.BundledPluginsPath, pluginDir) {
-		return plugins.Bundled
-	}
-
-	return plugins.External
-}
-
 type foundPlugins map[string]plugins.JSONData
 
 // stripDuplicates will strip duplicate plugins or plugins that already exist

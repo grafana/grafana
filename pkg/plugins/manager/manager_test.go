@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"net/http"
-	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -26,32 +24,6 @@ import (
 const (
 	testPluginID = "test-plugin"
 )
-
-func TestPluginManager_init(t *testing.T) {
-	t.Run("Plugin folder will be created if not exists", func(t *testing.T) {
-		testDir := "plugin-test-dir"
-
-		exists, err := fs.Exists(testDir)
-		require.NoError(t, err)
-		assert.False(t, exists)
-
-		pm := createManager(t, func(pm *PluginManager) {
-			pm.cfg.PluginsPath = testDir
-		})
-
-		err = pm.Init()
-		require.NoError(t, err)
-
-		exists, err = fs.Exists(testDir)
-		require.NoError(t, err)
-		assert.True(t, exists)
-
-		t.Cleanup(func() {
-			err = os.Remove(testDir)
-			require.NoError(t, err)
-		})
-	})
-}
 
 func TestPluginManager_loadPlugins(t *testing.T) {
 	t.Run("Managed backend plugin", func(t *testing.T) {
@@ -601,13 +573,13 @@ type fakeLoader struct {
 	plugins.Loader
 }
 
-func (l *fakeLoader) Load(_ context.Context, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
+func (l *fakeLoader) Load(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
 	l.loadedPaths = append(l.loadedPaths, paths...)
 
 	return l.mockedLoadedPlugins, nil
 }
 
-func (l *fakeLoader) LoadWithFactory(_ context.Context, path string, _ backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
+func (l *fakeLoader) LoadWithFactory(_ context.Context, _ plugins.Class, path string, _ backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
 	l.loadedPaths = append(l.loadedPaths, path)
 
 	return l.mockedFactoryLoadedPlugin, nil
