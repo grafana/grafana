@@ -19,7 +19,6 @@
 - **TimeSeries:** Fix fillBelowTo wrongly affecting fills of unrelated series. [#41998](https://github.com/grafana/grafana/pull/41998), [@leeoniya](https://github.com/leeoniya)
 
 <!-- 8.2.6 END -->
-<!-- 8.3.0-beta1 END -->
 <!-- 8.2.5 START -->
 
 # 8.2.5 (2021-11-18)
