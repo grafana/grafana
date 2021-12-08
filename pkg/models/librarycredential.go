@@ -67,3 +67,9 @@ type GetLibraryCredentialsQuery struct {
 	OrgId  int64
 	Result []*LibraryCredential
 }
+
+type GetLibraryCredentialQuery struct {
+	Id     int64 `json:"id"`
+	OrgId  int64
+	Result *LibraryCredential
+}

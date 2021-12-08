@@ -536,6 +536,18 @@ export interface DataSourceJsonData {
   alertmanagerUid?: string;
 }
 
+export interface LibraryCredentials {
+  id: number;
+  uid: string;
+  orgId: number;
+  name: string;
+  type: string;
+  readOnly: boolean;
+  jsonData: any;
+  secureJsonData?: any;
+  secureJsonFields: KeyValue<boolean>;
+}
+
 /**
  * Data Source instance edit model.  This is returned from:
  *  /api/datasources
@@ -563,6 +575,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   readOnly: boolean;
   withCredentials: boolean;
   version?: number;
+  libraryCredential?: LibraryCredentials;
 }
 
 /**

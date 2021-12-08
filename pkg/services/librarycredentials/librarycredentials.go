@@ -21,6 +21,7 @@ func ProvideService(sqlStore *sqlstore.SQLStore, secretsService secrets.Service)
 
 type Service interface {
 	GetLibraryCredentials(ctx context.Context, query *models.GetLibraryCredentialsQuery) error
+	GetLibraryCredential(ctx context.Context, query *models.GetLibraryCredentialQuery) error
 	AddLibraryCredential(ctx context.Context, cmd *models.AddLibraryCredentialCommand) error
 	UpdateLibraryCredential(ctx context.Context, cmd *models.UpdateLibraryCredentialCommand) error
 	DeleteLibraryCredential(ctx context.Context, cmd *models.DeleteLibraryCredentialCommand) error
@@ -35,6 +36,23 @@ func (s LibraryCredentialsService) GetLibraryCredentials(ctx context.Context, qu
 	return s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		query.Result = make([]*models.LibraryCredential, 0)
 		return dbSession.Where("org_id=?", query.OrgId).Asc("name").Find(&query.Result)
+	})
+}
+
+func (s LibraryCredentialsService) GetLibraryCredential(ctx context.Context, query *models.GetLibraryCredentialQuery) error {
+	return s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		libraryCredential := &models.LibraryCredential{OrgId: query.OrgId, Id: query.Id}
+		has, err := dbSession.Get(libraryCredential)
+
+		if err != nil {
+			return err
+		}
+
+		if has {
+			query.Result = libraryCredential
+		}
+
+		return err
 	})
 }
 

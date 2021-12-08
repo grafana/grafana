@@ -64,7 +64,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 	return response.JSON(200, &result)
 }
 
-func GetDataSourceById(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response {
 	query := models.GetDataSourceQuery{
 		Id:    c.ParamsInt64(":id"),
 		OrgId: c.OrgId,
@@ -80,8 +80,13 @@ func GetDataSourceById(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
+	libCredQuery := models.GetLibraryCredentialQuery{OrgId: c.OrgId, Id: query.Result.LibraryCredentialId}
+	if err := hs.LibraryCredentialService.GetLibraryCredential(c.Req.Context(), &libCredQuery); err != nil {
+		return response.Error(500, "Failed to query library credential", err)
+	}
+
 	ds := query.Result
-	dtos := convertModelToDtos(ds)
+	dtos := convertModelToDtos(ds, libCredQuery.Result)
 
 	return response.JSON(200, &dtos)
 }
@@ -118,8 +123,13 @@ func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Respon
 }
 
 // GET /api/datasources/uid/:uid
-func GetDataSourceByUID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response {
 	ds, err := getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.OrgId)
+
+	libCredQuery := models.GetLibraryCredentialQuery{OrgId: c.OrgId, Id: ds.LibraryCredentialId}
+	if err := hs.LibraryCredentialService.GetLibraryCredential(c.Req.Context(), &libCredQuery); err != nil {
+		return response.Error(500, "Failed to query library credential", err)
+	}
 
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
@@ -128,7 +138,7 @@ func GetDataSourceByUID(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	dtos := convertModelToDtos(ds)
+	dtos := convertModelToDtos(ds, libCredQuery.Result)
 	return response.JSON(200, &dtos)
 }
 
@@ -231,7 +241,7 @@ func AddDataSource(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to add datasource", err)
 	}
 
-	ds := convertModelToDtos(cmd.Result)
+	ds := convertModelToDtos(cmd.Result, nil)
 	return response.JSON(200, util.DynMap{
 		"message":    "Datasource added",
 		"id":         cmd.Result.Id,
@@ -277,7 +287,7 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasource", err)
 	}
 
-	datasourceDTO := convertModelToDtos(query.Result)
+	datasourceDTO := convertModelToDtos(query.Result, nil)
 
 	hs.Live.HandleDatasourceUpdate(c.OrgId, datasourceDTO.UID)
 
@@ -343,7 +353,7 @@ func getRawDataSourceByUID(ctx context.Context, uid string, orgID int64) (*model
 }
 
 // Get /api/datasources/name/:name
-func GetDataSourceByName(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDataSourceByName(c *models.ReqContext) response.Response {
 	query := models.GetDataSourceQuery{Name: web.Params(c.Req)[":name"], OrgId: c.OrgId}
 
 	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
@@ -353,7 +363,12 @@ func GetDataSourceByName(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	dtos := convertModelToDtos(query.Result)
+	libCredQuery := models.GetLibraryCredentialQuery{OrgId: c.OrgId, Id: query.Result.LibraryCredentialId}
+	if err := hs.LibraryCredentialService.GetLibraryCredential(c.Req.Context(), &libCredQuery); err != nil {
+		return response.Error(500, "Failed to query library credential", err)
+	}
+
+	dtos := convertModelToDtos(query.Result, libCredQuery.Result)
 	return response.JSON(200, &dtos)
 }
 
@@ -409,7 +424,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	hs.pluginClient.CallResource(pCtx, c, web.Params(c.Req)["*"])
 }
 
-func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
+func convertModelToDtos(ds *models.DataSource, lc *models.LibraryCredential) dtos.DataSource {
 	dto := dtos.DataSource{
 		Id:                ds.Id,
 		UID:               ds.Uid,
@@ -430,6 +445,7 @@ func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 		SecureJsonFields:  map[string]bool{},
 		Version:           ds.Version,
 		ReadOnly:          ds.ReadOnly,
+		LibraryCredential: convertLibraryCredentialModelToDto(lc),
 	}
 
 	for k, v := range ds.SecureJsonData {

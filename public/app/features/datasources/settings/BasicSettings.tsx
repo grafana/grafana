@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { Button, InlineFormLabel, LegacyForms } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 const { Input, Switch } = LegacyForms;
@@ -42,6 +42,7 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
             onDefaultChange(event.target.checked);
           }}
         />
+        <Button>Connect to library credentials</Button>
       </div>
     </div>
   );

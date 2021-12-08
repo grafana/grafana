@@ -21,7 +21,7 @@ func (hs *HTTPServer) GetLibraryCredentials(c *models.ReqContext) response.Respo
 	result := []dtos.LibraryCredentialDto{}
 	for _, lc := range query.Result {
 		lcItem := convertLibraryCredentialModelToDto(lc)
-		result = append(result, lcItem)
+		result = append(result, *lcItem)
 	}
 
 	return response.JSON(200, &result)
@@ -90,19 +90,23 @@ func (hs *HTTPServer) DeleteLibraryCredentialById(c *models.ReqContext) response
 	return response.Success("Library credential deleted")
 }
 
-func convertLibraryCredentialModelToDto(ds *models.LibraryCredential) dtos.LibraryCredentialDto {
-	dto := dtos.LibraryCredentialDto{
-		OrgId:            ds.OrgId,
-		Id:               ds.Id,
-		UID:              ds.Uid,
-		Name:             ds.Name,
-		Type:             ds.Type,
-		JsonData:         ds.JsonData,
-		ReadOnly:         ds.ReadOnly,
+func convertLibraryCredentialModelToDto(lc *models.LibraryCredential) *dtos.LibraryCredentialDto {
+	if lc == nil {
+		return nil
+	}
+
+	dto := &dtos.LibraryCredentialDto{
+		OrgId:            lc.OrgId,
+		Id:               lc.Id,
+		UID:              lc.Uid,
+		Name:             lc.Name,
+		Type:             lc.Type,
+		JsonData:         lc.JsonData,
+		ReadOnly:         lc.ReadOnly,
 		SecureJsonFields: map[string]bool{},
 	}
 
-	for k, v := range ds.SecureJsonData {
+	for k, v := range lc.SecureJsonData {
 		if len(v) > 0 {
 			dto.SecureJsonFields[k] = true
 		}
