@@ -1,7 +1,6 @@
 import { PanelData } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 /**
  * This will setup features that are accessible through the root window location
@@ -12,9 +11,6 @@ import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/Dashboard
  */
 export function initWindowRuntime() {
   (window as any).grafanaRuntime = {
-    /** The expected schema version */
-    dashboardSchemaVersion: DASHBOARD_SCHEMA_VERSION,
-
     /** Get info for the current dashboard.  This will include the migrated dashboard JSON */
     getDashboardSaveModel: () => {
       const d = getDashboardSrv().getCurrent();
