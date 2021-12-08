@@ -33,6 +33,12 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     });
   };
 
+  const onInstantChange = (event: SyntheticEvent<HTMLInputElement>) => {
+    const isEnabled = event.currentTarget.checked;
+    onChange({ ...query, instant: isEnabled, exemplar: false });
+    onRunQuery();
+  };
+
   const onExemplarChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
     onChange({ ...query, exemplar: isEnabled });
@@ -61,12 +67,12 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         </Button>
         <Stack gap={1}>
           <label className={styles.switchLabel}>Instant</label>
-          <Switch />
+          <Switch value={query.instant} onChange={onInstantChange} />
         </Stack>
         {showExemplarSwitch && (
           <Stack gap={1}>
             <label className={styles.switchLabel}>Exemplars</label>
-            <Switch value={query.exemplar} onChange={onExemplarChange} />
+            <Switch value={query.exemplar} disabled={query.instant && !query.range} onChange={onExemplarChange} />
           </Stack>
         )}
         {editorMode === QueryEditorMode.Builder && (
