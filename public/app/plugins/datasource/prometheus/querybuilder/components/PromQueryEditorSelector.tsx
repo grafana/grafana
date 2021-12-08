@@ -29,6 +29,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     onChange({
       ...query,
       expr: promQueryModeller.renderQuery(updatedQuery),
+      visualQuery: updatedQuery,
       editorMode: QueryEditorMode.Builder,
     });
   };
