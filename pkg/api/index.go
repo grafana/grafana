@@ -289,6 +289,16 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
+	if c.OrgRole == models.ROLE_ADMIN {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Library Credentials",
+			Id:          "librarycredentials",
+			Description: "Create & manage library credentials",
+			Icon:        "book-open",
+			Url:         hs.Cfg.AppSubURL + "/org/librarycredentials",
+		})
+	}
+
 	if hs.Cfg.FeatureToggles["live-pipeline"] {
 		liveNavLinks := []*dtos.NavLink{}
 

@@ -5,6 +5,7 @@ export * from './folders';
 export * from './dashboard';
 export * from './acl';
 export * from './apiKeys';
+export * from './libraryCredentials';
 export * from './user';
 export * from './datasources';
 export * from './plugins';
