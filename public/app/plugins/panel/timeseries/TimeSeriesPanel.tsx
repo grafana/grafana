@@ -40,6 +40,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const enabledAutoBreakdowns = !!data?.annotations?.some((df) => df?.meta?.custom?.autoBreakdownsEnabled);
 
   return (
     <TimeSeries
@@ -54,7 +55,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       {(config, alignedDataFrame) => {
         return (
           <>
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
+            {/* <ZoomPlugin config={config} onZoom={onChangeTimeRange} /> */}
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <TooltipPlugin
                 data={alignedDataFrame}
@@ -114,6 +115,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                 exemplars={data.annotations}
                 timeZone={timeZone}
                 getFieldLinks={getFieldLinks}
+                onSelect={onChangeTimeRange}
+                autoBreakdownsEnabled={enabledAutoBreakdowns}
               />
             )}
 

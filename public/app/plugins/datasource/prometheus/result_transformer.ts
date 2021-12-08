@@ -93,7 +93,14 @@ export function transformV2(
       }
     }
 
-    return { ...dataFrame, meta: { ...dataFrame.meta, dataTopic: DataTopic.Annotations } };
+    return {
+      ...dataFrame,
+      meta: {
+        ...dataFrame.meta,
+        dataTopic: DataTopic.Annotations,
+        custom: { ...dataFrame?.meta?.custom, autoBreakdownsEnabled: true },
+      },
+    };
   });
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
@@ -223,7 +230,7 @@ export function transform(
     const sampledExemplars = sampleExemplars(events, options);
 
     const dataFrame = new ArrayDataFrame(sampledExemplars);
-    dataFrame.meta = { dataTopic: DataTopic.Annotations };
+    dataFrame.meta = { dataTopic: DataTopic.Annotations, custom: { autoBreakdownsEnabled: true } };
 
     // Add data links if configured
     if (transformOptions.exemplarTraceIdDestinations?.length) {
