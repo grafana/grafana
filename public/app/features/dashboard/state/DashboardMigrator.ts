@@ -56,6 +56,9 @@ standardEditorsRegistry.setInit(getStandardOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
 
 type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
+
+export const DASHBOARD_SCHEMA_VERSION = 34;
+
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
@@ -67,7 +70,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 34;
+    this.dashboard.schemaVersion = DASHBOARD_SCHEMA_VERSION;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
