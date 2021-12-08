@@ -143,7 +143,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
       <div>
         <div style={{ overflow: 'scroll' }}>
           {this.state.messages.map((msg) => (
-            <MessageElement key={msg.id} content={msg.content} username={msg.user.login} />
+            <MessageElement key={msg.id} message={msg} />
           ))}
         </div>
         <Input
@@ -159,15 +159,14 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
 }
 
 interface MessageElementProps {
-  content: string;
-  username: string;
+  message: Message;
 }
 
-const MessageElement: FunctionComponent<MessageElementProps> = ({ content, username }) => {
+const MessageElement: FunctionComponent<MessageElementProps> = ({ message }) => {
   return (
     <div style={{ paddingTop: '2px', paddingBottom: '2px', wordBreak: 'break-word' }}>
-      <div style={{ color: '#0088CC' }}>{username}</div>
-      <div>{content}</div>
+      <div style={{ color: '#0088CC' }}>{message.user ? message.user.login : 'System'}</div>
+      <div>{message.content}</div>
     </div>
   );
 };
