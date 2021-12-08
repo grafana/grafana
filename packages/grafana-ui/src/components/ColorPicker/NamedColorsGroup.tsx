@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useRef } from 'react';
 import { ThemeVizHue } from '@grafana/data';
 import { Property } from 'csstype';
 import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
@@ -17,6 +17,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
   onColorSelect,
   ...otherProps
 }) => {
+  const ref = useRef(null);
   const primaryShade = hue.shades.find((shade) => shade.primary)!;
   const label = upperFirst(hue.name);
 
@@ -30,7 +31,8 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
             isSelected={primaryShade.name === selectedColor}
             variant={ColorSwatchVariant.Large}
             color={primaryShade.color}
-            onClick={() => onColorSelect(primaryShade.name)}
+            ref={ref}
+            onPress={() => onColorSelect(primaryShade.name)}
           />
         )}
         <div
@@ -47,7 +49,8 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
                     key={shade.name}
                     isSelected={shade.name === selectedColor}
                     color={shade.color}
-                    onClick={() => onColorSelect(shade.name)}
+                    ref={ref}
+                    onPress={() => onColorSelect(shade.name)}
                   />
                 </div>
               )
