@@ -62,6 +62,7 @@ func (a *api) getDescription(c *models.ReqContext) response.Response {
 }
 
 type resourcePermissionDTO struct {
+	ID            int64    `json:"id"`
 	ResourceID    string   `json:"resourceId"`
 	RoleName      string   `json:"roleName"`
 	Managed       bool     `json:"managed"`
@@ -93,6 +94,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 			}
 
 			dto = append(dto, resourcePermissionDTO{
+				ID:            p.ID,
 				ResourceID:    p.ResourceID,
 				RoleName:      p.RoleName,
 				Managed:       p.Managed(),
@@ -125,22 +127,12 @@ func (a *api) setUserPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	permission, err := a.service.SetUserPermission(c.Req.Context(), c.OrgId, userID, resourceID, a.service.MapPermission(cmd.Permission))
+	_, err := a.service.SetUserPermission(c.Req.Context(), c.OrgId, userID, resourceID, a.service.MapPermission(cmd.Permission))
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set user permission", err)
 	}
 
-	translated, _ := a.service.MapActions(*permission)
-	return response.JSON(http.StatusOK, resourcePermissionDTO{
-		ResourceID:    permission.ResourceID,
-		RoleName:      permission.RoleName,
-		Managed:       permission.Managed(),
-		UserID:        permission.UserId,
-		UserLogin:     permission.UserLogin,
-		UserAvatarUrl: dtos.GetGravatarUrl(permission.UserEmail),
-		Actions:       permission.Actions,
-		Permission:    translated,
-	})
+	return response.Success("permission updated")
 }
 
 func (a *api) setTeamPermission(c *models.ReqContext) response.Response {
@@ -152,22 +144,12 @@ func (a *api) setTeamPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	permission, err := a.service.SetTeamPermission(c.Req.Context(), c.OrgId, teamID, resourceID, a.service.MapPermission(cmd.Permission))
+	_, err := a.service.SetTeamPermission(c.Req.Context(), c.OrgId, teamID, resourceID, a.service.MapPermission(cmd.Permission))
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set team permission", err)
 	}
 
-	translated, _ := a.service.MapActions(*permission)
-	return response.JSON(http.StatusOK, resourcePermissionDTO{
-		ResourceID:    permission.ResourceID,
-		Managed:       permission.Managed(),
-		RoleName:      permission.RoleName,
-		Team:          permission.Team,
-		TeamID:        permission.TeamId,
-		TeamAvatarUrl: dtos.GetGravatarUrlWithDefault(permission.TeamEmail, permission.Team),
-		Actions:       permission.Actions,
-		Permission:    translated,
-	})
+	return response.Success("permission updated")
 }
 
 func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
@@ -179,18 +161,10 @@ func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	permission, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, builtInRole, resourceID, a.service.MapPermission(cmd.Permission))
+	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, builtInRole, resourceID, a.service.MapPermission(cmd.Permission))
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set role permission", err)
 	}
 
-	translated, _ := a.service.MapActions(*permission)
-	return response.JSON(http.StatusOK, resourcePermissionDTO{
-		ResourceID:  permission.ResourceID,
-		RoleName:    permission.RoleName,
-		Managed:     permission.Managed(),
-		BuiltInRole: permission.BuiltInRole,
-		Actions:     permission.Actions,
-		Permission:  translated,
-	})
+	return response.Success("permission updated")
 }
