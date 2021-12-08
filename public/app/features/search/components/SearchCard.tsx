@@ -67,7 +67,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       </div>
       <div className={styles.info}>
         <div className={styles.titleContainer}>{item.title}</div>
-        <TagList tags={item.tags} onClick={onTagClick} />
+        <TagList isCompact tags={item.tags} onClick={onTagClick} />
       </div>
     </a>
   );
@@ -116,7 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     height: ${theme.spacing(7)};
     gap: ${theme.spacing(1)};
-    padding: 0 ${theme.spacing(1)};
+    padding: 0 ${theme.spacing(2)};
   `,
   overlay: css`
     bottom: 0;
