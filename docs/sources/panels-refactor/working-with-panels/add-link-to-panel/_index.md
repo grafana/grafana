@@ -1,7 +1,7 @@
 +++
 title = "Add a link to a panel"
 aliases = []
-weight = 10
+weight = 60
 +++
 
 # Add a link to a panel

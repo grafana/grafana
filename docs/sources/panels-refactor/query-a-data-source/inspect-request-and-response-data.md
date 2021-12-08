@@ -1,6 +1,6 @@
 +++
 title = "Inspect query request and response data"
-weight = 1
+weight = 50
 +++
 
 # Inspect query request and response data
@@ -9,8 +9,8 @@ After you have written a query, inspect the data that the system returns to ensu
 
 Before you begin:
 
-- Add a panel
-- Add a query
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
+- [Add a query]({{< relref "../query-a-data-source/add-a-query.md" >}}).
 
 To inspect query request and response data:
 

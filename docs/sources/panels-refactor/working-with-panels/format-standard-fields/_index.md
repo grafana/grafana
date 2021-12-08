@@ -1,7 +1,7 @@
 +++
 title = "Format a standard field"
 aliases = []
-weight = 10
+weight = 40
 +++
 
 # Format a standard field
@@ -16,9 +16,9 @@ For a complete list of field formatting options, refer to [Reference: Standard f
 
 Before you begin:
 
-- Add a panel to a dashboard.
+- [Add a panel to a dashboard]({{< relref "../add-panel/_index.md" >}}).
 
-Complete the following steps to format a standard field:
+To format a standard field:
 
 1. Open a dashboard, click the panel title, and click **Edit**.
 

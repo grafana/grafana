@@ -1,11 +1,15 @@
 +++
 title = "Delete a Grafana library panel"
-weight = 1
+weight = 60
 +++
 
 # Delete a Grafana library panel
 
-Before you delete a library panel, verify that it is no longer in use on any dashboard.
+Delete a library panel when you no longer need it.
+
+Before you begin:
+
+- Verify that the panel does not appear on a dashboard.
 
 To delete a library panel:
 

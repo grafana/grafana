@@ -1,6 +1,6 @@
 +++
 title = "Write an expression"
-weight = 1
+weight = 20
 +++
 
 # Write an expression

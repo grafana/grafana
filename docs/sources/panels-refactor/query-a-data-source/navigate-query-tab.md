@@ -1,6 +1,6 @@
 +++
 title = "Navigate the query tab"
-weight = 1
+weight = 20
 +++
 
 # Navigate the query tab

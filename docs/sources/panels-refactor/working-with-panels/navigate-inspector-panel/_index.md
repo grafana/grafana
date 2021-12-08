@@ -1,7 +1,7 @@
 +++
 title = "Navigate the Grafana Inspector panel"
 aliases = []
-weight = 10
+weight = 20
 +++
 
 # Navigate the Grafana Inspector panel

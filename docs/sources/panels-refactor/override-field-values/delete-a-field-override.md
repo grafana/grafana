@@ -1,6 +1,6 @@
 +++
 title = "Delete a field override"
-weight = 1
+weight = 50
 +++
 
 # Delete a field override
@@ -11,8 +11,8 @@ When you delete an override, the appearance of value defaults to its original fo
 
 Before you begin:
 
-- Add a panel
-- Add a field override
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
+- [Add a field override]({{< relref "../override-field-values/add-a-field-override.md" >}}).
 
 To delete a field override:
 

@@ -1,6 +1,6 @@
 +++
 title = "Add a threshold"
-weight = 10
+weight = 20
 +++
 
 # Add a threshold
@@ -9,9 +9,9 @@ You can add as many thresholds to a panel as you want. Grafana automatically sor
 
 Before you begin:
 
-- Add a panel
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
 
-To add a threshold, complete the following steps:
+To add a threshold:
 
 1. Edit the panel to which you want to add a threshold.
 1. On the panel display options, locate the **Thresholds** section.

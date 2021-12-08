@@ -1,7 +1,7 @@
 +++
 title = "Apply color to series and fields"
 aliases = []
-weight = 10
+weight = 50
 +++
 
 In addition to specifying color based on thresholds, you can configure the color of series and field data. The color options and their effect on the visualization depends on the visualization you are working with. Some visualizations have different color options.
@@ -11,7 +11,7 @@ Continuous color interpolates a color using the percentage of a value relative t
 
 Before you begin:
 
-- Add a panel
+- [Add a panel to a dashboard]({{< relref "../add-panel/_index.md" >}}).
 
 To apply color to series and fields:
 

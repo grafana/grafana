@@ -1,6 +1,6 @@
 +++
 title = "Apply a transformation to data"
-weight = 10
+weight = 20
 +++
 
 # Apply a transformation function to data
@@ -9,7 +9,7 @@ The following steps guide you in applying a transformation to data. This documen
 
 Before you begin:
 
-- Write a query
+- [Add a query]({{< relref "../query-a-data-source/add-a-query.md" >}}).
 
 To apply a transformation function to data:
 

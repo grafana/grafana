@@ -1,6 +1,6 @@
 +++
 title = "Map a special value"
-weight = 10
+weight = 50
 +++
 
 # Map a special value
@@ -9,7 +9,7 @@ Map a special value when you want to format uncommon, boolean, or empty values.
 
 Before you begin:
 
-- Add a panel
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
 
 To map a special value:
 

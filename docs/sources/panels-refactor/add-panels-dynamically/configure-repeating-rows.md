@@ -1,6 +1,6 @@
 +++
 title = "Configure repeating rows"
-weight = 1
+weight = 30
 +++
 
 # Configure repeating rows
@@ -12,7 +12,7 @@ Before you begin:
 
 - Ensure that the query includes a multi-value variable.
 
-To configure repeating rows, complete the following steps:
+To configure repeating rows:
 
 1. On the dashboard home page, click **Add panel**.
 

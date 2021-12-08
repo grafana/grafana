@@ -1,6 +1,6 @@
 +++
 title = "Configure repeating panels"
-weight = 1
+weight = 20
 +++
 
 # Configure repeating panels

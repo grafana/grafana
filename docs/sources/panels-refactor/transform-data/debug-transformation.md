@@ -1,6 +1,6 @@
 +++
 title = "Debug a transformation"
-weight = 10
+weight = 30
 +++
 
 # Debug a transformation
