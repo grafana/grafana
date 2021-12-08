@@ -69,7 +69,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
           }}
           onChange={(change) => {
             if (change.value != null) {
-              onChange(({ ...item, value: change.value, op: defaultOp } as any) as QueryBuilderLabelFilter);
+              onChange(({ ...item, value: change.value, op: item.op ?? defaultOp } as any) as QueryBuilderLabelFilter);
             }
           }}
         />

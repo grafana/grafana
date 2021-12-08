@@ -24,12 +24,13 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, isNested
   };
 
   const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<any> => {
-    if (query.labels.length === 0) {
+    const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+
+    if (labelsToConsider.length === 0) {
       await datasource.languageProvider.refreshLogLabels();
       return datasource.languageProvider.getLabelKeys();
     }
 
-    const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     const expr = lokiQueryModeller.renderLabels(labelsToConsider);
     return await datasource.languageProvider.fetchSeriesLabels(expr);
   };
