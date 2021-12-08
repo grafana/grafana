@@ -1,8 +1,9 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import NavBarItem, { Props } from './NavBarItem';
 import userEvent from '@testing-library/user-event';
+import { config, setLocationService } from '@grafana/runtime';
 
 const onClickMock = jest.fn();
 const defaults: Props = {
@@ -17,8 +18,12 @@ const defaults: Props = {
   },
 };
 
-function getTestContext(overrides: Partial<Props> = {}) {
+function getTestContext(overrides: Partial<Props> = {}, subUrl = '') {
   jest.clearAllMocks();
+  config.appSubUrl = subUrl;
+  const pushMock = jest.fn();
+  const locationService: any = { push: pushMock };
+  setLocationService(locationService);
   const props = { ...defaults, ...overrides };
 
   const { rerender } = render(
@@ -27,7 +32,7 @@ function getTestContext(overrides: Partial<Props> = {}) {
     </BrowserRouter>
   );
 
-  return { rerender };
+  return { rerender, pushMock };
 }
 
 describe('NavBarItem', () => {
@@ -99,6 +104,13 @@ describe('NavBarItem', () => {
       expect(screen.getByRole('link')).toHaveAttribute('href', 'https://www.grafana.com');
     });
 
+    it('then it renders the menu trigger as a link with appSubUrl', () => {
+      getTestContext({ link: { ...defaults.link, url: '/grafana/dashboard/new' } }, '/grafana');
+
+      expect(screen.getAllByRole('link')).toHaveLength(1);
+      expect(screen.getByRole('link')).toHaveAttribute('href', '/grafana/dashboard/new');
+    });
+
     describe('and hovering over the menu trigger link', () => {
       it('then the menu items should be visible', () => {
         getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } });
@@ -138,6 +150,57 @@ describe('NavBarItem', () => {
         expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '0');
         expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
+      });
+    });
+
+    describe('when appSubUrl is configured and user clicks on menuitem link', () => {
+      it('then location service should be called with correct url', async () => {
+        const { pushMock } = getTestContext(
+          {
+            link: {
+              ...defaults.link,
+              url: 'https://www.grafana.com',
+              children: [{ text: 'New', url: '/grafana/dashboard/new', children: [] }],
+            },
+          },
+          '/grafana'
+        );
+
+        userEvent.hover(screen.getByRole('link'));
+        await waitFor(() => {
+          expect(screen.getByText('Parent Node')).toBeInTheDocument();
+          expect(screen.getByText('New')).toBeInTheDocument();
+        });
+
+        userEvent.click(screen.getByText('New'));
+        await waitFor(() => {
+          expect(pushMock).toHaveBeenCalledTimes(1);
+          expect(pushMock).toHaveBeenCalledWith('/dashboard/new');
+        });
+      });
+    });
+
+    describe('when appSubUrl is not configured and user clicks on menuitem link', () => {
+      it('then location service should be called with correct url', async () => {
+        const { pushMock } = getTestContext({
+          link: {
+            ...defaults.link,
+            url: 'https://www.grafana.com',
+            children: [{ text: 'New', url: '/grafana/dashboard/new', children: [] }],
+          },
+        });
+
+        userEvent.hover(screen.getByRole('link'));
+        await waitFor(() => {
+          expect(screen.getByText('Parent Node')).toBeInTheDocument();
+          expect(screen.getByText('New')).toBeInTheDocument();
+        });
+
+        userEvent.click(screen.getByText('New'));
+        await waitFor(() => {
+          expect(pushMock).toHaveBeenCalledTimes(1);
+          expect(pushMock).toHaveBeenCalledWith('/grafana/dashboard/new');
+        });
       });
     });
   });

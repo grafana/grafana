@@ -3,7 +3,7 @@ import { Item } from '@react-stately/collections';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
 import { IconName, useTheme2 } from '@grafana/ui';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
@@ -50,7 +50,9 @@ const NavBarItem = ({
     }
 
     if (!target && url.startsWith('/')) {
-      locationService.push(url);
+      // when config.appSubUrl is configured the locationsService uses appSubUrl on all urls, so we need to strip it before push
+      const path = config.appSubUrl ? url.replace(config.appSubUrl, '') : url;
+      locationService.push(path);
     } else {
       window.open(url, target);
     }
