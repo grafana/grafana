@@ -169,21 +169,6 @@ describe('Tempo data source', () => {
     });
   });
 
-  it('should ignore incomplete tag queries', () => {
-    const ds = new TempoDatasource(defaultSettings);
-    const tempoQuery: TempoQuery = {
-      queryType: 'search',
-      refId: 'A',
-      query: '',
-      search: 'root.ip root.http.status_code=500',
-    };
-    const builtQuery = ds.buildSearchQuery(tempoQuery);
-    expect(builtQuery).toStrictEqual({
-      limit: DEFAULT_LIMIT,
-      tags: 'root.ip root.http.status_code=500',
-    });
-  });
-
   it('formats native search query history correctly', () => {
     const ds = new TempoDatasource(defaultSettings);
     const tempoQuery: TempoQuery = {
