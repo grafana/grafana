@@ -13,8 +13,8 @@ Before you begin:
 
 To map a special value:
 
-1. [Open the panel editor]({{< relref "./panel-editor.md#open-the-panel-editor" >}}).
-1. In the Value mappings section of the side pane, click **Add value mappings**.
+1. Edit the panel for which you want to map a special value.
+1. In panel display options, locate the **Value mappings** section and click **Add value mappings**.
 1. Click **Add a new mapping** and then select **Special**.
 1. Select the special value for Grafana to match. Options include:
    - Null
