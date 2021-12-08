@@ -45,6 +45,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
   //   placeholder: 'Select data source',
   // };
   subscription?: Unsubscribable;
+  chatBottom?: any;
 
   state: ChatState = {
     messages: [],
@@ -65,6 +66,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
       messages: resp.chatMessages,
     });
     this.updateSubscription();
+    this.scrollToBottom('auto');
   }
 
   handleChange = (e: any) => {
@@ -111,6 +113,13 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
     }
   };
 
+  scrollToBottom = (behavior: string) => {
+    if (!this.chatBottom) {
+      return;
+    }
+    this.chatBottom.scrollIntoView({ behavior: behavior });
+  };
+
   updateSubscription = () => {
     if (this.subscription) {
       this.subscription.unsubscribe();
@@ -129,6 +138,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
               this.setState((prevState) => ({
                 messages: [...prevState.messages, messageCreated],
               }));
+              this.scrollToBottom('smooth');
             }
           }
           // } else if (isLiveChannelStatusEvent(msg)) {
@@ -160,6 +170,12 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
           onChange={this.handleChange}
           onKeyUp={this.onKeyboardAdd}
           addonAfter={<Button onClick={this.sendMessage}>Send</Button>}
+        />
+        <div
+          style={{ float: 'left', clear: 'both' }}
+          ref={(el) => {
+            this.chatBottom = el;
+          }}
         />
       </div>
     );
