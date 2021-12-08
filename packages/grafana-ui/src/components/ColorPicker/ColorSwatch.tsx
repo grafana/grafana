@@ -30,6 +30,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
     const swatchStyles: CSSProperties = {
       width: swatchSize,
       height: swatchSize,
+      border: 'none',
       borderRadius: '50%',
       background: `${color}`,
       marginLeft: hasLabel ? '8px' : '0px',
@@ -57,7 +58,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
         {...otherProps}
       >
         {hasLabel && <span>{label}</span>}
-        <div style={swatchStyles} tabIndex={0} {...focusProps} />
+        <button style={swatchStyles} {...focusProps} />
       </div>
     );
   }
