@@ -11,14 +11,13 @@ export interface Props {
   onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
 }
 
-export function LabelFilters(props: Props) {
-  const { labelsFilters, onChange } = props;
-  const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>(labelsFilters);
+export function LabelFilters({ labelsFilters, onChange, onGetLabelNames, onGetLabelValues }: Props) {
+  const defaultOp = '=';
+  const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>(
+    labelsFilters.length === 0 ? [{ op: defaultOp }] : labelsFilters
+  );
 
   const onLabelsChange = (newItems: Array<Partial<QueryBuilderLabelFilter>>) => {
-    newItems = newItems.map((item) => {
-      return !item.op ? { op: '=~' } : item;
-    });
     setItems(newItems);
 
     // Extract full label filters with both label & value
@@ -31,28 +30,21 @@ export function LabelFilters(props: Props) {
   return (
     <EditorFieldGroup>
       <EditorField label="Labels">
-        <EditorList items={items} onChange={onLabelsChange} renderItem={getLabelFilterRenderer(props)} />
+        <EditorList
+          items={items}
+          onChange={onLabelsChange}
+          renderItem={(item, onChangeItem, onDelete) => (
+            <LabelFilterItem
+              item={item}
+              defaultOp={defaultOp}
+              onChange={onChangeItem}
+              onDelete={onDelete}
+              onGetLabelNames={onGetLabelNames}
+              onGetLabelValues={onGetLabelValues}
+            />
+          )}
+        />
       </EditorField>
     </EditorFieldGroup>
   );
-}
-
-function getLabelFilterRenderer({ onGetLabelNames, onGetLabelValues }: Props) {
-  function renderFilter(
-    item: Partial<QueryBuilderLabelFilter>,
-    onChange: (item: QueryBuilderLabelFilter) => void,
-    onDelete: () => void
-  ) {
-    return (
-      <LabelFilterItem
-        item={item}
-        onChange={(item) => onChange(item)}
-        onDelete={onDelete}
-        onGetLabelNames={onGetLabelNames}
-        onGetLabelValues={onGetLabelValues}
-      />
-    );
-  }
-
-  return renderFilter;
 }

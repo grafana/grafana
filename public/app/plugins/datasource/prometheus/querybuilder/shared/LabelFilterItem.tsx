@@ -5,6 +5,7 @@ import { QueryBuilderLabelFilter } from './types';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
 
 export interface Props {
+  defaultOp: string;
   item: Partial<QueryBuilderLabelFilter>;
   onChange: (value: QueryBuilderLabelFilter) => void;
   onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
@@ -12,7 +13,7 @@ export interface Props {
   onDelete: () => void;
 }
 
-export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onGetLabelValues }: Props) {
+export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabelNames, onGetLabelValues }: Props) {
   const [state, setState] = useState<{
     labelNames?: Array<SelectableValue<any>>;
     labelValues?: Array<SelectableValue<any>>;
@@ -38,6 +39,7 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onG
             if (change.label) {
               onChange(({
                 ...item,
+                op: item.op ?? defaultOp,
                 label: change.label,
               } as any) as QueryBuilderLabelFilter);
             }
@@ -45,7 +47,7 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onG
         />
 
         <Select
-          value={toOption(item.op ?? '=')}
+          value={toOption(item.op ?? defaultOp)}
           options={operators}
           width="auto"
           onChange={(change) => {
@@ -67,7 +69,7 @@ export function LabelFilterItem({ item, onChange, onDelete, onGetLabelNames, onG
           }}
           onChange={(change) => {
             if (change.value != null) {
-              onChange(({ ...item, value: change.value } as any) as QueryBuilderLabelFilter);
+              onChange(({ ...item, value: change.value, op: defaultOp } as any) as QueryBuilderLabelFilter);
             }
           }}
         />
