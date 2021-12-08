@@ -44,6 +44,14 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
           { id: 'histogram_quantile', params: [0.95] },
         ],
       },
+      {
+        name: 'Histogram quantile on increase ',
+        operations: [
+          { id: 'increase', params: ['auto'] },
+          { id: '__max_by', params: ['le'] },
+          { id: 'histogram_quantile', params: [0.95] },
+        ],
+      },
     ];
   }
 }
