@@ -1,6 +1,7 @@
 import React, { ReactElement } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 
 import { VariableModel } from '../types';
 import { VariableIdentifier } from '../state/types';
@@ -33,6 +34,7 @@ export function VariableEditorList({
     if (!result.destination || !result.source) {
       return;
     }
+    reportInteraction('Variable drag and drop');
     const identifier = JSON.parse(result.draggableId);
     onChangeOrder(identifier, result.source.index, result.destination.index);
   };

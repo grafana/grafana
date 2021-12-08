@@ -57,7 +57,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
 }
 
 function getMessageFor(
-  { data, message, needsNumberField, needsTimeField }: PanelDataErrorViewProps,
+  { data, message, needsNumberField, needsTimeField, needsStringField }: PanelDataErrorViewProps,
   dataSummary: PanelDataSummary
 ): string {
   if (message) {
@@ -66,6 +66,10 @@ function getMessageFor(
 
   if (!data.series || data.series.length === 0) {
     return 'No data';
+  }
+
+  if (needsStringField && !dataSummary.hasStringField) {
+    return 'Data is missing a string field';
   }
 
   if (needsNumberField && !dataSummary.hasNumberField) {
