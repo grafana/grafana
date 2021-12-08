@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { PromVisualQuery } from '../types';
 import { SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
+import { css } from '@emotion/css';
 
 export interface Props {
   query: PromVisualQuery;
@@ -11,6 +12,7 @@ export interface Props {
 }
 
 export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
+  const styles = getStyles();
   const [state, setState] = useState<{
     metrics?: Array<SelectableValue<any>>;
     isLoading?: boolean;
@@ -26,6 +28,7 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
     <EditorFieldGroup>
       <EditorField label="Metric">
         <Select
+          className={styles.select}
           value={query.metric ? toOption(query.metric) : undefined}
           placeholder="Select metric"
           allowCustomValue
@@ -46,3 +49,9 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
     </EditorFieldGroup>
   );
 }
+
+const getStyles = () => ({
+  select: css`
+    min-width: 125px;
+  `,
+});
