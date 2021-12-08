@@ -122,6 +122,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
         <Portal>
           <div ref={setPopperElement} style={popperStyles.popper} {...attributes.popper}>
             <SearchCardFull
+              className={styles.fullCard}
               editable={editable}
               item={item}
               onTagSelected={onTagSelected}
@@ -141,6 +142,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: absolute;
     top: 0;
   `,
+  fullCard: css`
+    @keyframes expand {
+      0% {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    animation: expand ${theme.transitions.duration.shortest}ms ease-in-out 0s 1 normal forwards;
+  `,
   gridItem: css`
     border: 1px solid ${theme.colors.border.medium};
     border-radius: 4px;
@@ -151,8 +166,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
   `,
   image: css`
-    padding: ${theme.spacing(1)} ${theme.spacing(4)} 0;
-    width: 100%;
+    box-shadow: ${theme.shadows.z2};
+    margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
+    width: calc(100% - 64px);
   `,
   imageContainer: css`
     background-color: ${theme.colors.background.secondary};

@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
+import classNames from 'classnames';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, TagList, useTheme2 } from '@grafana/ui';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
+  className?: string;
   editable?: boolean;
   item: DashboardSectionItem;
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
 }
 
-export function SearchCardFull({ editable, item, onTagSelected, onToggleChecked }: Props) {
+export function SearchCardFull({ className, editable, item, onTagSelected, onToggleChecked }: Props) {
   const theme = useTheme2();
   const [hasPreview, setHasPreview] = useState(true);
   const themeId = theme.isDark ? 'dark' : 'light';
@@ -45,7 +47,7 @@ export function SearchCardFull({ editable, item, onTagSelected, onToggleChecked 
   const folderTitle = item.folderTitle || 'General';
 
   return (
-    <a className={styles.gridItem} key={item.uid} href={item.url}>
+    <a className={classNames(className, styles.gridItem)} key={item.uid} href={item.url}>
       <div className={styles.imageContainer}>
         <SearchCheckbox
           className={styles.checkbox}
@@ -112,6 +114,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
   `,
   image: css`
+    box-shadow: ${theme.shadows.z3};
     height: 240px;
     margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
     width: 320px;
