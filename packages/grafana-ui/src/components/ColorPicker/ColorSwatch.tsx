@@ -1,9 +1,7 @@
 import { useFocusRing } from '@react-aria/focus';
-import React, { CSSProperties, RefObject } from 'react';
+import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 import { useTheme2 } from '../../themes/ThemeContext';
-import { useButton } from '@react-aria/button';
-import { PressEvent } from '@react-types/shared';
 
 /** @internal */
 export enum ColorSwatchVariant {
@@ -17,15 +15,13 @@ export interface Props extends React.DOMAttributes<HTMLDivElement> {
   label?: string;
   variant?: ColorSwatchVariant;
   isSelected?: boolean;
-  onPress?: (e: PressEvent) => void;
 }
 
 /** @internal */
 export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
-  ({ color, label, variant = ColorSwatchVariant.Small, isSelected, onPress, ...otherProps }, ref) => {
+  ({ color, label, variant = ColorSwatchVariant.Small, isSelected, ...otherProps }, ref) => {
     const theme = useTheme2();
 
-    const { buttonProps } = useButton({ onPress }, ref as RefObject<HTMLElement>);
     const { isFocusVisible, focusProps } = useFocusRing();
     const tc = tinycolor(color);
     const isSmall = variant === ColorSwatchVariant.Small;
@@ -61,7 +57,6 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
           cursor: 'pointer',
         }}
         {...otherProps}
-        {...buttonProps}
       >
         {hasLabel && <span>{label}</span>}
         <button style={swatchStyles} {...focusProps} />
