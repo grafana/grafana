@@ -215,7 +215,7 @@ func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboa
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
-	has, err := ss.engine.Table(&models.Dashboard{}).Where("is_folder = 1 AND folder_id = 0").Get(&dashboard)
+	has, err := ss.engine.Table(&models.Dashboard{}).Where("is_folder = " + dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
 	if err != nil {
 		return nil, err
 	}
