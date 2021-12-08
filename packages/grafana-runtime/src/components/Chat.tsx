@@ -104,6 +104,13 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
     return live.getStream<MessagePacket>(addr);
   };
 
+  onKeyboardAdd = async (event: any) => {
+    event.preventDefault();
+    if (event.key === 'Enter') {
+      await this.sendMessage();
+    }
+  };
+
   updateSubscription = () => {
     if (this.subscription) {
       this.subscription.unsubscribe();
@@ -141,7 +148,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
   render() {
     return (
       <div>
-        <div style={{ overflow: 'scroll' }}>
+        <div style={{ overflow: 'scroll', marginBottom: '10px' }}>
           {this.state.messages.map((msg) => (
             <MessageElement key={msg.id} content={msg.content} username={msg.user.login} />
           ))}
@@ -151,6 +158,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
           placeholder="Write a message"
           value={this.state.value}
           onChange={this.handleChange}
+          onKeyUp={this.onKeyboardAdd}
           addonAfter={<Button onClick={this.sendMessage}>Send</Button>}
         />
       </div>
