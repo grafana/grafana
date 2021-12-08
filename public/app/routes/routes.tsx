@@ -183,6 +183,30 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/org/librarycredentials',
+      roles: () => ['Editor', 'Admin'],
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "LibraryCredentialsPage" */ 'app/features/library-credentials/LibraryCredentialsPage'
+          )
+      ),
+    },
+    {
+      path: '/org/librarycredentials/new',
+      roles: () => ['Editor', 'Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LibraryCredential" */ 'app/features/library-credentials/LibraryCredential')
+      ),
+    },
+    {
+      path: '/org/librarycredentials/edit/:id',
+      roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LibraryCredential" */ 'app/features/library-credentials/LibraryCredential')
+      ),
+    },
+    {
       path: '/org/teams',
       roles: () => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList')),

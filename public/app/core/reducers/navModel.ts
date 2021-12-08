@@ -83,6 +83,7 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
       plugins: getItemWithNewSubTitle(state.plugins, subTitle),
       'org-settings': getItemWithNewSubTitle(state['org-settings'], subTitle),
       apikeys: getItemWithNewSubTitle(state.apikeys, subTitle),
+      librarycredentials: getItemWithNewSubTitle(state.librarycredentials, subTitle),
     };
   }
 

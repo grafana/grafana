@@ -4,6 +4,7 @@ import sharedReducers from 'app/core/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import teamsReducers from 'app/features/teams/state/reducers';
 import apiKeysReducers from 'app/features/api-keys/state/reducers';
+import libraryCredentialsReducers from 'app/features/library-credentials/state/reducers';
 import foldersReducers from 'app/features/folders/state/reducers';
 import dashboardReducers from 'app/features/dashboard/state/reducers';
 import exploreReducers from 'app/features/explore/state/main';
@@ -23,6 +24,7 @@ const rootReducers = {
   ...alertingReducers,
   ...teamsReducers,
   ...apiKeysReducers,
+  ...libraryCredentialsReducers,
   ...foldersReducers,
   ...dashboardReducers,
   ...exploreReducers,
