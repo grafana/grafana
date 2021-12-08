@@ -94,6 +94,6 @@ func (s *sqlStorage) GetMessages(ctx context.Context, orgId int64, ctId int, obj
 		if !has {
 			return nil
 		}
-		return dbSession.Where("chat_id=?", chat.Id).Find(&result)
+		return dbSession.Where("chat_id=?", chat.Id).OrderBy("id desc").Limit(100).Find(&result)
 	})
 }

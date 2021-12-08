@@ -5,8 +5,7 @@ import (
 	"errors"
 )
 
-type GetMessagesFilter struct {
-}
+type GetMessagesFilter struct{}
 
 const (
 	ContentTypeUser      = 1

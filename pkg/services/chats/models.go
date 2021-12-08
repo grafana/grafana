@@ -25,19 +25,29 @@ type Message struct {
 	Updated int64
 }
 
-type MessageDto struct {
-	Id      int64  `json:"id"`
-	UserId  int64  `json:"userId"`
-	Content string `json:"content"`
-	Created int64  `json:"created"`
+type MessageUser struct {
+	Id        int64  `json:"id"`
+	Name      string `json:"name"`
+	Login     string `json:"login"`
+	Email     string `json:"email"`
+	AvatarUrl string `json:"avatarUrl"`
 }
 
-func (i Message) ToDTO() MessageDto {
+type MessageDto struct {
+	Id      int64        `json:"id"`
+	UserId  int64        `json:"userId"`
+	Content string       `json:"content"`
+	Created int64        `json:"created"`
+	User    *MessageUser `json:"user,omitempty"`
+}
+
+func (i Message) ToDTO(user *MessageUser) MessageDto {
 	return MessageDto{
 		Id:      i.Id,
 		UserId:  i.UserId,
 		Content: i.Content,
 		Created: i.Created,
+		User:    user,
 	}
 }
 
