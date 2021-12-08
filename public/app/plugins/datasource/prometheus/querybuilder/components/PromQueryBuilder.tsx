@@ -23,10 +23,12 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     onChange({ ...query, labels });
   };
 
-  const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<any> => {
+  const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<string[]> => {
     // If no metric we need to use a different method
     if (!query.metric) {
-      return await (await datasource.metricFindQuery('label_names()')).map((x) => x.text);
+      // Todo add caching but inside language provider!
+      await datasource.languageProvider.fetchLabels();
+      return datasource.languageProvider.getLabelKeys();
     }
 
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);

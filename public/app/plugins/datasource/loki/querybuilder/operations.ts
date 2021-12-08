@@ -1,5 +1,9 @@
 import { defaultAddOperationHandler, functionRendererLeft } from '../../prometheus/querybuilder/shared/operationUtils';
-import { QueryBuilderOperation, QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
+import {
+  QueryBuilderOperation,
+  QueryBuilderOperationDef,
+  QueryBuilderOperationParamDef,
+} from '../../prometheus/querybuilder/shared/types';
 import { LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
@@ -7,10 +11,10 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: 'rate',
       displayName: 'Rate',
-      params: [],
-      defaultParams: [],
+      params: [getRangeVectorParamDef()],
+      defaultParams: ['auto'],
       category: LokiVisualQueryOperationCategory.Functions,
-      renderer: functionRendererLeft,
+      renderer: operationWithRangeVectorRenderer,
       onAddToQuery: defaultAddOperationHandler,
     },
     {
@@ -43,6 +47,28 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
   ];
 
   return list;
+}
+
+function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
+  return {
+    name: 'Range vector',
+    type: 'string',
+    options: ['auto', '$__interval', '$__range', '1m', '5m', '10m', '1h', '24h'],
+  };
+}
+
+function operationWithRangeVectorRenderer(
+  model: QueryBuilderOperation,
+  def: QueryBuilderOperationDef,
+  innerExpr: string
+) {
+  let rangeVector = (model.params ?? [])[0] ?? 'auto';
+
+  if (rangeVector === 'auto') {
+    rangeVector = '$__interval';
+  }
+
+  return `${def.id}(${innerExpr}[${rangeVector}])`;
 }
 
 function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
