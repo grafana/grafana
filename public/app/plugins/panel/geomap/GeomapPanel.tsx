@@ -15,6 +15,7 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   DataFrame,
+  Field,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
@@ -285,6 +286,33 @@ export class GeomapPanel extends Component<Props, State> {
     this.map.addInteraction(this.mouseWheelZoom);
     this.initControls(options.controls);
     this.forceUpdate(); // first render
+
+    // onclick listener
+    this.map.on('click', function (evt: MapBrowserEvent<UIEvent>) {
+      const feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
+        return feature;
+      });
+      if (feature) {
+        // @ts-ignore
+        const rowIndex = feature.values_.rowIndex;
+        feature.getProperties()?.frame?.fields.map((f: Field) => {
+          /*
+           * TODO: make URL into graph input field
+           * if actiavted as "clickable" objects
+           * have a field to input the URL to differentiate them from
+           */
+          if (f.name === 'slackId') {
+            const slackProfileURL = 'https://raintank-corp.slack.com/team/';
+            // direct message is unforently a direct
+            // const slackbaseURL = `slack://channel?team=T02S4RCS0&id=`;
+            // wonder why we get multiple elements in the first place
+            // have to check that it is actually the person in the first element of the slack
+            // or do we have to keep track of them from some other index
+            window.open(`${slackProfileURL}${f.values.get(rowIndex)}`);
+          }
+        });
+      }
+    });
 
     // Tooltip listener
     this.map.on('pointermove', this.pointerMoveListener);
