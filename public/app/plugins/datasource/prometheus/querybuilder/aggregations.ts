@@ -1,6 +1,7 @@
 import { capitalize } from 'lodash';
 import { LabelParamEditor } from './components/LabelParamEditor';
-import { addOperationWithRangeVector, defaultAddOperationHandler, functionRendererLeft } from './operations';
+import { addOperationWithRangeVector } from './operations';
+import { defaultAddOperationHandler, functionRendererLeft } from './shared/operationUtils';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { PromVisualQueryOperationCategory } from './types';
 

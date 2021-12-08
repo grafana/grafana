@@ -1,30 +1,18 @@
-import { renderLabels } from '../../prometheus/querybuilder/PromQueryModeller';
-import {
-  QueryBuilderLabelFilter,
-  QueryBuilderOperationDef,
-  VisualQueryModeller,
-} from '../../prometheus/querybuilder/shared/types';
-import { LokiVisualQuery } from './types';
+import { LokiAndPromQueryModellerBase } from '../../prometheus/querybuilder/shared/LokiAndPromQueryModellerBase';
+import { QueryBuilderLabelFilter } from '../../prometheus/querybuilder/shared/types';
+import { getOperationDefintions } from './operations';
+import { LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
-export class LokiQueryModeller implements VisualQueryModeller {
-  private operations: Record<string, QueryBuilderOperationDef<LokiVisualQuery>> = {};
-
-  constructor() {}
-
-  getOperationsForCategory(category: string) {
-    return Object.values(this.operations).filter((op) => op.category === category);
-  }
-
-  getOperationDef(id: string) {
-    const operation = this.operations[id];
-    if (!operation) {
-      throw new Error(`Operation ${id} not found`);
-    }
-    return operation;
-  }
-
-  getCategories() {
-    return ['Stuff'];
+export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQuery> {
+  constructor() {
+    super();
+    this.registerOperations(getOperationDefintions());
+    this.setOperationCategories([
+      LokiVisualQueryOperationCategory.Aggregations,
+      LokiVisualQueryOperationCategory.Formats,
+      LokiVisualQueryOperationCategory.Functions,
+      LokiVisualQueryOperationCategory.PipelineErrors,
+    ]);
   }
 
   renderLabels(labels: QueryBuilderLabelFilter[]) {
@@ -32,16 +20,19 @@ export class LokiQueryModeller implements VisualQueryModeller {
       return '{}';
     }
 
-    return renderLabels(labels);
+    return super.renderLabels(labels);
   }
 
   renderQuery(query: LokiVisualQuery) {
-    let result = `${this.renderLabels(query.labels)}`;
+    let queryString = `${this.renderLabels(query.labels)}`;
     if (query.search) {
-      result += ` |= "${query.search}"`;
+      queryString += ` |= "${query.search}"`;
     }
 
-    return result;
+    queryString = this.renderOperations(queryString, query.operations);
+    queryString = this.renderBinaryQueries(queryString, query.binaryQueries);
+
+    return queryString;
   }
 }
 

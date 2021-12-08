@@ -1,4 +1,5 @@
 import { promQueryModeller } from './PromQueryModeller';
+import { defaultAddOperationHandler, functionRendererLeft, functionRendererRight } from './shared/operationUtils';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
@@ -79,39 +80,6 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
   return list;
 }
 
-export function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  const params = renderParams(model, def, innerExpr);
-  const str = model.id + '(';
-
-  if (innerExpr) {
-    params.push(innerExpr);
-  }
-
-  return str + params.join(', ') + ')';
-}
-
-export function functionRendererRight(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  const params = renderParams(model, def, innerExpr);
-  const str = model.id + '(';
-
-  if (innerExpr) {
-    params.unshift(innerExpr);
-  }
-
-  return str + params.join(', ') + ')';
-}
-
-function renderParams(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  return (model.params ?? []).map((value, index) => {
-    const paramDef = def.params[index];
-    if (paramDef.type === 'string') {
-      return '"' + value + '"';
-    }
-
-    return value;
-  });
-}
-
 function operationWithRangeVectorRenderer(
   model: QueryBuilderOperation,
   def: QueryBuilderOperationDef,
@@ -135,18 +103,6 @@ function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
     name: 'Range vector',
     type: 'string',
     options: ['auto', '$__rate_interval', '$__interval', '$__range', '1m', '5m', '10m', '1h', '24h'],
-  };
-}
-
-export function defaultAddOperationHandler(def: QueryBuilderOperationDef, query: PromVisualQuery) {
-  const newOperation: QueryBuilderOperation = {
-    id: def.id,
-    params: def.defaultParams,
-  };
-
-  return {
-    ...query,
-    operations: [...query.operations, newOperation],
   };
 }
 

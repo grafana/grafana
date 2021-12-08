@@ -1,3 +1,4 @@
+import { VisualQueryBinary } from './shared/LokiAndPromQueryModellerBase';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 
 /**
@@ -10,11 +11,7 @@ export interface PromVisualQuery {
   binaryQueries?: PromVisualQueryBinary[];
 }
 
-export interface PromVisualQueryBinary {
-  operator: string;
-  vectorMatches?: string;
-  query: PromVisualQuery;
-}
+export type PromVisualQueryBinary = VisualQueryBinary<PromVisualQuery>;
 
 export enum PromVisualQueryOperationCategory {
   Aggregations = 'Aggregations',

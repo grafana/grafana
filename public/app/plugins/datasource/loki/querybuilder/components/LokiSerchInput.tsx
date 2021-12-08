@@ -14,7 +14,8 @@ export const LokiSearchInput = React.memo<Props>(({ query, onChange, onRunQuery 
     <EditorFieldGroup>
       <EditorField label="Search">
         <Input
-          width={50}
+          placeholder="Search your logs"
+          width={70}
           defaultValue={query.search}
           onBlur={(evt) => {
             onChange({ ...query, search: evt.currentTarget.value });

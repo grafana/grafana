@@ -21,4 +21,22 @@ describe('LokiQueryModeller', () => {
       })
     ).toBe('{app="grafana"} |= "error"');
   });
+
+  it('Can query with pipeline operation json', () => {
+    expect(
+      engine.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: 'json', params: [] }],
+      })
+    ).toBe('{app="grafana"} | json');
+  });
+
+  it('Can query with pipeline operation logfmt', () => {
+    expect(
+      engine.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: 'logfmt', params: [] }],
+      })
+    ).toBe('{app="grafana"} | logfmt');
+  });
 });
