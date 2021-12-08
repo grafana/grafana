@@ -50,9 +50,7 @@ const NavBarItem = ({
     }
 
     if (!target && url.startsWith('/')) {
-      // when config.appSubUrl is configured the locationsService uses appSubUrl on all urls, so we need to strip it before push
-      const path = config.appSubUrl ? url.replace(config.appSubUrl, '') : url;
-      locationService.push(path);
+      locationService.push(locationUtil.stripBaseFromUrl(url));
     } else {
       window.open(url, target);
     }
