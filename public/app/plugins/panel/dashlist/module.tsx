@@ -8,7 +8,7 @@ import {
   ReadonlyFolderPicker,
 } from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
 import { config } from '@grafana/runtime';
-import { PanelLayout, PanelOptions } from './models.gen';
+import { defaultPanelOptions, PanelLayout, PanelOptions } from './models.gen';
 
 export const plugin = new PanelPlugin<PanelOptions>(DashList)
   .setPanelOptions((builder) => {
@@ -30,32 +30,32 @@ export const plugin = new PanelPlugin<PanelOptions>(DashList)
       .addBooleanSwitch({
         path: 'showStarred',
         name: 'Starred',
-        defaultValue: true,
+        defaultValue: defaultPanelOptions.showStarred,
       })
       .addBooleanSwitch({
         path: 'showRecentlyViewed',
         name: 'Recently viewed',
-        defaultValue: false,
+        defaultValue: defaultPanelOptions.showRecentlyViewed,
       })
       .addBooleanSwitch({
         path: 'showSearch',
         name: 'Search',
-        defaultValue: false,
+        defaultValue: defaultPanelOptions.showSearch,
       })
       .addBooleanSwitch({
         path: 'showHeadings',
         name: 'Show headings',
-        defaultValue: true,
+        defaultValue: defaultPanelOptions.showHeadings,
       })
       .addNumberInput({
         path: 'maxItems',
         name: 'Max items',
-        defaultValue: 10,
+        defaultValue: defaultPanelOptions.maxItems,
       })
       .addTextInput({
         path: 'query',
         name: 'Query',
-        defaultValue: '',
+        defaultValue: defaultPanelOptions.query,
       })
       .addCustomEditor({
         path: 'folderId',
@@ -77,7 +77,7 @@ export const plugin = new PanelPlugin<PanelOptions>(DashList)
         path: 'tags',
         name: 'Tags',
         description: '',
-        defaultValue: [],
+        defaultValue: defaultPanelOptions.tags,
         editor(props) {
           return <TagsInput tags={props.value} onChange={props.onChange} />;
         },
