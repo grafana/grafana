@@ -26,9 +26,11 @@ def pipeline(
         }
     else:
         platform_conf = {
-            'os': 'windows',
-            'arch': 'amd64',
-            'version': '1809',
+            'platform': {
+                'os': 'windows',
+                'arch': 'amd64',
+                'version': '1809',
+            }
         }
 
     pipeline = {
@@ -43,6 +45,7 @@ def pipeline(
         ) + steps,
         'depends_on': depends_on,
     }
+    pipeline.update(platform_conf)
 
     if edition in ('enterprise', 'enterprise2'):
         # We have a custom clone step for enterprise
