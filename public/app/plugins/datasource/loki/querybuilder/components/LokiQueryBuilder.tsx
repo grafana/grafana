@@ -6,30 +6,47 @@ import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/sh
 import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { DataSourceApi } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
-import { Input } from '@grafana/ui';
+import { EditorRow, EditorRows } from '@grafana/experimental';
 import { QueryPreview } from './QueryPreview';
+import { LokiSearchInput } from './LokiSerchInput';
 
 export interface Props {
   query: LokiVisualQuery;
   datasource: LokiDatasource;
   onChange: (update: LokiVisualQuery) => void;
+  onRunQuery: () => void;
   isNested?: boolean;
 }
 
-export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, isNested, onChange }) => {
+export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, isNested, onChange, onRunQuery }) => {
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
 
   const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<any> => {
+    if (query.labels.length === 0) {
+      await datasource.languageProvider.refreshLogLabels();
+      return datasource.languageProvider.getLabelKeys();
+    }
+
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     const expr = lokiQueryModeller.renderLabels(labelsToConsider);
     return await datasource.languageProvider.fetchSeriesLabels(expr);
   };
 
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
-    return (await datasource.metricFindQuery('label_values(' + forLabel.label + ')')).map((x: any) => x.text);
+    if (!forLabel.label) {
+      return [];
+    }
+
+    const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+    if (labelsToConsider.length === 0) {
+      return await datasource.languageProvider.fetchLabelValues(forLabel.label);
+    }
+
+    const expr = lokiQueryModeller.renderLabels(labelsToConsider);
+    const result = await datasource.languageProvider.fetchSeriesLabels(expr);
+    return result[forLabel.label] ?? [];
   };
 
   return (
@@ -43,11 +60,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, isNested
         />
       </EditorRow>
       <EditorRow>
-        <EditorFieldGroup>
-          <EditorField label="Search">
-            <Input width={50} />
-          </EditorField>
-        </EditorFieldGroup>
+        <LokiSearchInput query={query} onChange={onChange} onRunQuery={onRunQuery} />
       </EditorRow>
       <EditorRow>
         <OperationList

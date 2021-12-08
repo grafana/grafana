@@ -28,11 +28,15 @@ export class LokiQueryModeller implements VisualQueryModeller {
   }
 
   renderLabels(labels: QueryBuilderLabelFilter[]) {
+    if (labels.length === 0) {
+      return '{}';
+    }
+
     return renderLabels(labels);
   }
 
   renderQuery(query: LokiVisualQuery) {
-    let result = `${renderLabels(query.labels)}`;
+    let result = `${this.renderLabels(query.labels)}`;
     if (query.search) {
       result += ` |= "${query.search}"`;
     }

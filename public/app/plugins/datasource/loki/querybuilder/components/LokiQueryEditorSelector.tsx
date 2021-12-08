@@ -49,6 +49,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           size="sm"
           fill="outline"
           onClick={onRunQuery}
+          icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
           disabled={data?.state === LoadingState.Loading}
         >
           Run query
@@ -74,7 +75,12 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
       <Space v={0.5} />
       {editorMode === QueryEditorMode.Code && <LokiQueryEditor {...props} />}
       {editorMode === QueryEditorMode.Builder && (
-        <LokiQueryBuilder datasource={props.datasource} query={visualQuery} onChange={onChangeViewModel} />
+        <LokiQueryBuilder
+          datasource={props.datasource}
+          query={visualQuery}
+          onChange={onChangeViewModel}
+          onRunQuery={props.onRunQuery}
+        />
       )}
     </>
   );
