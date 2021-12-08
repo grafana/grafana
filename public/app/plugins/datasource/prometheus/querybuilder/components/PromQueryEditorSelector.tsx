@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EditorHeader, FlexItem, InlineSelect, Space, Stack } from '@grafana/experimental';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
-import React, { useCallback, useState } from 'react';
+import React, { SyntheticEvent, useCallback, useState } from 'react';
 import { PromQueryEditor } from '../../components/PromQueryEditor';
 import { PromQueryEditorProps } from '../../components/types';
 import { promQueryModeller } from '../PromQueryModeller';
@@ -33,8 +33,16 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     });
   };
 
+  const onExemplarChange = (event: SyntheticEvent<HTMLInputElement>) => {
+    const isEnabled = event.currentTarget.checked;
+    onChange({ ...query, exemplar: isEnabled });
+    onRunQuery();
+  };
+
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
+
+  const showExemplarSwitch = props.app !== CoreApp.UnifiedAlerting;
 
   return (
     <>
@@ -55,10 +63,12 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
           <label className={styles.switchLabel}>Instant</label>
           <Switch />
         </Stack>
-        <Stack gap={1}>
-          <label className={styles.switchLabel}>Exemplars</label>
-          <Switch />
-        </Stack>
+        {showExemplarSwitch && (
+          <Stack gap={1}>
+            <label className={styles.switchLabel}>Exemplars</label>
+            <Switch value={query.exemplar} onChange={onExemplarChange} />
+          </Stack>
+        )}
         {editorMode === QueryEditorMode.Builder && (
           <InlineSelect
             width={14.5}
