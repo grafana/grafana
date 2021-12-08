@@ -75,13 +75,19 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       href={item.url}
       ref={(ref) => setMarkerElement((ref as unknown) as HTMLDivElement)}
       onMouseEnter={() => {
-        timeout.current = window.setTimeout(() => setIsOpen(true), 1000);
+        timeout.current = window.setTimeout(() => setIsOpen(true), 500);
       }}
       onMouseLeave={() => {
         if (timeout.current) {
           window.clearTimeout(timeout.current);
         }
         setIsOpen(false);
+      }}
+      onMouseMove={() => {
+        if (timeout.current) {
+          window.clearTimeout(timeout.current);
+        }
+        timeout.current = window.setTimeout(() => setIsOpen(true), 500);
       }}
     >
       <div className={styles.imageContainer}>
