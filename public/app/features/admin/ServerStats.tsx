@@ -6,6 +6,8 @@ import { AccessControlAction } from 'app/types';
 import { getServerStats, ServerStat } from './state/apis';
 import { contextSrv } from '../../core/services/context_srv';
 import { Loader } from '../plugins/admin/components/Loader';
+import { config } from '@grafana/runtime';
+import { CrawlerStatus } from './CrawlerStatus';
 
 export const ServerStats = () => {
   const [stats, setStats] = useState<ServerStat | null>(null);
@@ -84,6 +86,8 @@ export const ServerStats = () => {
       ) : (
         <p className={styles.notFound}>No stats found.</p>
       )}
+
+      {config.featureToggles.dashboardPreviews && <CrawlerStatus />}
     </>
   );
 };
