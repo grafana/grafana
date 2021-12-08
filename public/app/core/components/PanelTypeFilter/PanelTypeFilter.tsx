@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
-import { Icon, resetSelectStyles, MultiSelect, useStyles2 } from '@grafana/ui';
+import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 export interface Props {
@@ -42,7 +42,6 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
     getOptionValue: (i: any) => i.value,
     noOptionsMessage: 'No Panel types found',
     placeholder: 'Filter by type',
-    styles: resetSelectStyles(),
     maxMenuHeight,
     options,
     value,
