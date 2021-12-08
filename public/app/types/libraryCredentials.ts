@@ -1,8 +1,4 @@
-export interface LibraryCredential {
-  id: number;
-  name: string;
-  type: 'aws' | 'azure';
-}
+import { LibraryCredential } from '@grafana/data';
 
 export interface LibraryCredentialsState {
   libraryCredentials: LibraryCredential[];

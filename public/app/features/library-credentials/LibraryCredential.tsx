@@ -1,6 +1,6 @@
 // import { NavModel } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
-import { Button, Field, FieldSet, Form, Input } from '@grafana/ui';
+import { Button, Field, FieldSet, Form, Input, Select } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -38,10 +38,14 @@ export type Props = OwnProps & ConnectedProps<typeof connector>;
 interface LibraryCredentialFormInput {
   name: string;
   type: string;
-  // other stufffff
 }
 
-export class LibraryCredentialUnconnected extends PureComponent<Props> {
+interface State {
+  name: string;
+  type: string;
+}
+
+export class LibraryCredentialUnconnected extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
   }
@@ -91,7 +95,17 @@ export class LibraryCredentialUnconnected extends PureComponent<Props> {
             {({ register }) => (
               <FieldSet label={`${formAction} Library Credential`}>
                 <Field label="Name">
-                  <Input {...register('name', { required: true })} id="library-credential-name" width={60} />
+                  <Select
+                    options={[
+                      { label: 'AWS plugin', value: 'aws' },
+                      { label: 'Azure plugin', value: 'azure' },
+                      { label: 'GCP plugin', value: 'gcp' },
+                      { label: 'Custom', value: 'custom' },
+                    ]}
+                    value={'aws'}
+                    onChange={({ value }) => register('type')}
+                  ></Select>
+                  {/* <Input {...register('name', { required: true })} id="library-credential-name" width={60} /> */}
                 </Field>
                 <Field label="Type">
                   <Input {...register('type', { required: true })} id="library-credential-type" width={60} />

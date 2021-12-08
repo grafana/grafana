@@ -536,12 +536,12 @@ export interface DataSourceJsonData {
   alertmanagerUid?: string;
 }
 
-export interface LibraryCredentials {
+export interface LibraryCredential {
   id: number;
   uid: string;
   orgId: number;
   name: string;
-  type: string;
+  type: 'aws' | 'azure' | 'gcp' | 'custom';
   readOnly: boolean;
   jsonData: any;
   secureJsonData?: any;
@@ -575,7 +575,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   readOnly: boolean;
   withCredentials: boolean;
   version?: number;
-  libraryCredential?: LibraryCredentials;
+  libraryCredential?: LibraryCredential;
 }
 
 /**
