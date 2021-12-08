@@ -1,10 +1,10 @@
-import { DataFrame, SelectableValue } from '@grafana/data';
+import { DataFrame, Registry, SelectableValue } from '@grafana/data';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import { Feature } from 'ol';
 import { FeatureLike } from 'ol/Feature';
 import { Point } from 'ol/geom';
 import { getMarkerMaker, markerMakers, prepareImage, prepareSVG } from '../style/markers';
-import { GeometryTypeId, StyleConfigState } from '../style/types';
+import { GeometryTypeId, PreppedImage, StyleConfigState } from '../style/types';
 import { LocationInfo } from './location';
 
 export const getFeatures = async (
@@ -16,7 +16,7 @@ export const getFeatures = async (
   const { dims } = style;
   const values = { ...style.base };
 
-  //cache images or makers?
+  const formattedImage = new Registry<PreppedImage>();
 
   // Map each data value into new points
   for (let i = 0; i < frame.length; i++) {
@@ -45,20 +45,40 @@ export const getFeatures = async (
       // style based on dynamic style maker
       if (dims.symbol) {
         const symbol = dims.symbol.get(i);
-        if (symbol.indexOf('svg') > 0) {
-          const symbolMaker = markerMakers.getIfExists(symbol);
-          if (symbolMaker) {
-            dot.setStyle(symbolMaker.make(values));
-          } else {
-            values.symbol = await prepareSVG(getPublicOrAbsoluteUrl(symbol));
-            const dynamicMaker = await getMarkerMaker(values.symbol, style.hasText);
-            dot.setStyle(dynamicMaker(values));
-          }
+
+        const symbolMaker = markerMakers.getIfExists(symbol);
+
+        if (symbolMaker) {
+          //check if maker is registered
+          dot.setStyle(symbolMaker.make(values));
         } else {
-          const size = values.size ?? style.base.size ?? 50;
-          values.symbol = await prepareImage(dims.symbol.get(i), size, values.color);
-          // const dynamicMaker = await getMarkerMaker(values.symbol, style.hasText, hasImage: true);
-          // dot.setStyle(dynamicMaker(values));
+          let dynamicMarker;
+
+          if (symbol.endsWith('.png') || symbol.endsWith('.jpg')) {
+            const image = formattedImage.getIfExists(symbol);
+
+            if (!image) {
+              const size = values.size ?? 100;
+              const newImage = await prepareImage(dims.symbol.get(i), size, values.color);
+              values.symbol = newImage;
+              formattedImage.register({ id: symbol, name: symbol, aliasIds: [], image: newImage });
+            } else {
+              values.symbol = image.image;
+            }
+            dynamicMarker = await getMarkerMaker(values.symbol, style.hasText, true);
+          } else {
+            const svg = formattedImage.getIfExists(symbol);
+            if (!svg) {
+              const newSvg = await prepareSVG(getPublicOrAbsoluteUrl(symbol));
+              values.symbol = newSvg;
+              formattedImage.register({ id: symbol, name: symbol, aliasIds: [], image: newSvg });
+            } else {
+              values.symbol = svg.image;
+            }
+            dynamicMarker = await getMarkerMaker(values.symbol, style.hasText);
+            markerMakers.register({ id: symbol, name: symbol, aliasIds: [], make: dynamicMarker });
+          }
+          dot.setStyle(dynamicMarker(values));
         }
       } else {
         //non-dynamic style maker

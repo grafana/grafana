@@ -1,14 +1,9 @@
 import { Fill, RegularShape, Stroke, Circle, Style, Icon, Text } from 'ol/style';
-import { Registry, RegistryItem } from '@grafana/data';
-import { defaultStyleConfig, DEFAULT_SIZE, StyleConfigValues, StyleMaker } from './types';
+import { Registry } from '@grafana/data';
+import { defaultStyleConfig, DEFAULT_SIZE, StyleConfigValues, StyleMaker, SymbolMaker } from './types';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import tinycolor from 'tinycolor2';
 import { config } from '@grafana/runtime';
-
-interface SymbolMaker extends RegistryItem {
-  aliasIds: string[];
-  make: StyleMaker;
-}
 
 enum RegularShapeId {
   circle = 'circle',
@@ -281,7 +276,11 @@ export function getMarkerAsPath(shape?: string): string | undefined {
 }
 
 // Will prepare symbols as necessary
-export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): Promise<StyleMaker> {
+export async function getMarkerMaker(
+  symbol?: string,
+  hasTextLabel?: boolean,
+  hasPreppedImage?: boolean
+): Promise<StyleMaker> {
   if (!symbol) {
     return hasTextLabel ? textMarker : circleMarker;
   }
@@ -305,7 +304,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
             return [
               new Style({
                 image: new Icon({
-                  src: cfg.symbol ?? src,
+                  src,
                   color: cfg.color,
                   opacity: cfg.opacity ?? 1,
                   scale: (DEFAULT_SIZE + radius) / 100,
@@ -330,6 +329,29 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
     return maker.make;
   }
 
+  if (hasPreppedImage) {
+    maker = {
+      id: symbol,
+      name: symbol,
+      aliasIds: [],
+      make: (cfg: StyleConfigValues) => {
+        const radius = cfg.size ?? DEFAULT_SIZE;
+        const rotation = cfg.rotation ?? 0;
+        return new Style({
+          image: new Icon({
+            src: cfg.symbol,
+            opacity: cfg.opacity ?? 1,
+            scale: (DEFAULT_SIZE + radius) / 100,
+            rotation: (rotation * Math.PI) / 180,
+          }),
+          text: !cfg?.text ? undefined : textLabel(cfg),
+        });
+      },
+    };
+    markerMakers.register(maker);
+    return maker.make;
+  }
+
   if (symbol.endsWith('.png') || symbol.endsWith('.jpg')) {
     const src = await prepareImage(symbol, 50);
     maker = {
@@ -340,17 +362,15 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
         ? (cfg: StyleConfigValues) => {
             const radius = cfg.size ?? DEFAULT_SIZE;
             const rotation = cfg.rotation ?? 0;
-            return [
-              new Style({
-                image: new Icon({
-                  src: cfg.symbol ?? src,
-                  opacity: cfg.opacity ?? 1,
-                  scale: (DEFAULT_SIZE + radius) / 100,
-                  rotation: (rotation * Math.PI) / 180,
-                }),
-                text: !cfg?.text ? undefined : textLabel(cfg),
+            return new Style({
+              image: new Icon({
+                src,
+                opacity: cfg.opacity ?? 1,
+                scale: (DEFAULT_SIZE + radius) / 100,
+                rotation: (rotation * Math.PI) / 180,
               }),
-            ];
+              text: !cfg?.text ? undefined : textLabel(cfg),
+            });
           }
         : errorMarker,
     };

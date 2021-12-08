@@ -1,3 +1,4 @@
+import { RegistryItem } from '@grafana/data';
 import {
   ColorDimensionConfig,
   DimensionSupplier,
@@ -135,3 +136,11 @@ export interface StyleConfigState {
  * Given values create a style
  */
 export type StyleMaker = (values: StyleConfigValues) => Style | Style[];
+
+export interface SymbolMaker extends RegistryItem {
+  aliasIds: string[];
+  make: StyleMaker;
+}
+export interface PreppedImage extends RegistryItem {
+  image: string;
+}
