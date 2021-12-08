@@ -61,7 +61,6 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           <Switch />
         </Stack>
         <InlineSelect
-          width={14.5}
           value={null}
           placeholder="Query patterns"
           allowCustomValue
