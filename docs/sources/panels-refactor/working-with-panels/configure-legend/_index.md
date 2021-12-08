@@ -1,7 +1,7 @@
 +++
 title = "Configure a legend"
 aliases = []
-weight = 10
+weight = 70
 +++
 
 # Configure a legend
@@ -16,9 +16,9 @@ When you apply your changes, the visualization changes appear to all users of th
 
 Before you begin:
 
-- Add a panel
+- [Add a panel to a dashboard]({{< relref "../add-panel/_index.md" >}}).
 
-To isolate series data in a visualization, complete the following steps:
+To isolate series data in a visualization:
 
 1. Open the panel.
 

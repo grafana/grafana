@@ -1,21 +1,20 @@
 +++
 title = "Create a Grafana library panel"
-weight = 1
+weight = 20
 +++
 
 # Create a Grafana library panel
 
-Before you begin can use library panels, you have to create them.
+When you create a library panel, the panel on the source dashboard is converted to a library panel as well. You need to save the original dashboard once a panel is converted.
 
-> **Note:** When you create library panels, the panel on the source dashboard is converted to a library panel as well. You will need to save the original dashboard once a panel is converted.
+Before you begin:
 
-To create a library panel, complete the following steps:
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
 
-1. [Add a panel]({{< relref "./add-a-panel.md" >}}) or use an existing panel.
-1. Click the title of the panel and then click **Edit**.
-   The panel opens in edit mode.
+To create a library panel:
 
-1. In the panel display options (side pane), click the down arrow option to bring changes to the visualization.
+1. Open a panel in edit mode.
+1. In the panel display options, click the down arrow option to bring changes to the visualization.
    {{< figure src="/static/img/docs/library-panels/create-lib-panel-from-edit-8-0.png" class="docs-image--no-shadow" max-width= "800px" caption="Screenshot of the edit panel" >}}
 1. Click the **Library panels** option, and then click **Create new library panel** to open the create dialog.
    {{< figure src="/static/img/docs/library-panels/create-lib-panel-8-0.png" class="docs-image--no-shadow" max-width= "500px" caption="Screenshot of the create library panel dialog" >}}

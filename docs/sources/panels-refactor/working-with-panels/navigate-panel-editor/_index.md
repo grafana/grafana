@@ -25,7 +25,12 @@ This page describes the parts of the Grafana panel editor.
 
 3. Data section: The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
-- **Query tab -** Select your data source and enter queries here. For more information, refer to [Queries]({{< relref "queries.md" >}}).
+- **Query tab -** Select your data source and enter queries here. For more information, refer to [Query a data source](/../query-a-data-source/_index.md).
+
+[Query a data source]({{< relref ".../query-a-data-source/add-a-query/_index.md" >}})
+
+[Grafana data source]({{< relref "/../query-a-data-source/" >}})
+
 - **Transform tab -** Apply data transformations. For more information, refer to [Transformations]({{< relref "transformations/_index.md" >}}).
 - **Alert tab -** Write alert rules. For more information, refer to [Create alerts]({{< relref "../alerting/old-alerting/create-alerts.md" >}}).
 

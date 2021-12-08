@@ -1,7 +1,7 @@
 +++
 title = "Use expressions to manipulate data"
 aliases = []
-weight = 10
+weight = 40
 +++
 
 # Use expressions to manipulate data

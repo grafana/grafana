@@ -1,7 +1,7 @@
 +++
 title = "Working with Grafana panels"
 aliases = []
-weight = 10
+weight = 100
 +++
 
 # Working with Grafana panels
@@ -10,6 +10,6 @@ A Grafana panel is the user interface you use to define a data source query, and
 
 A panel editor includes a query builder and a series of options that you can use to transform data and add information to your panels.
 
-This topic area contains the following topics:
+This section includes the following topics:
 
 {{< section >}}

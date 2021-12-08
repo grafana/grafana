@@ -1,6 +1,6 @@
 +++
 title = "Add a query"
-weight = 1
+weight = 30
 +++
 
 # Add a query
@@ -9,9 +9,9 @@ A query returns data that Grafana visualizes in dashboards. When you create a pa
 
 Before you begin:
 
-- Ensure that you know the query language of the data source
-- Add a data source
-- Add a panel
+- Add a data source.
+- Ensure that you know the query language of the data source.
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
 
 To add a query:
 

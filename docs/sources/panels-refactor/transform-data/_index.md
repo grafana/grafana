@@ -1,7 +1,7 @@
 +++
 title = "Transform data"
 aliases = []
-weight = 10
+weight = 600
 +++
 
 # Transform data
@@ -15,6 +15,6 @@ With transformations, you can:
 - Perform mathmatical operations across queries
 - Use the output of one transformation as the input to another transformation
 
-This topic area contains the following topics:
+This section includes the following topics:
 
 {{< section >}}

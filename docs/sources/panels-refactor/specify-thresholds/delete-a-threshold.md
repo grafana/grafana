@@ -1,6 +1,6 @@
 +++
 title = "Delete a threshold"
-weight = 10
+weight = 40
 +++
 
 # Delete a threshold
@@ -9,9 +9,9 @@ Delete a threshold when it is no longer relevant to your business operations. Wh
 
 Before you begin:
 
-- Add a threshold
+- [Add a threshold]({{< relref "./add-a-threshold.md" >}}).
 
-To delete a threshold, complete the following steps:
+To delete a threshold:
 
 1. Navigate to the panel to which you want to add a threshold.
 1. Click the **Field** tab. (Or **Panel** tab for a graph panel.)

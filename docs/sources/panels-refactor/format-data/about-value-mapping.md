@@ -5,7 +5,7 @@ weight = 10
 
 # About value mapping
 
-Value mapping concept allow you to replace values or ranges in your visualizations with words or emojis.
+Value mapping allows you to replace values or ranges in your visualizations with words or emojis.
 
 Values mapped via value mappings will skip the unit formatting. This means that a text value mapped to a numerical value will not be formatted using the configured unit.
 

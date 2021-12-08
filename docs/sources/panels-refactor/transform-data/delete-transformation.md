@@ -1,6 +1,6 @@
 +++
 title = "Delete a transformation"
-weight = 10
+weight = 40
 +++
 
 # Delete a transformation

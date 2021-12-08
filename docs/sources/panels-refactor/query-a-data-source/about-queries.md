@@ -1,6 +1,6 @@
 +++
 title = "About queries"
-weight = 1
+weight = 10
 +++
 
 # About queries

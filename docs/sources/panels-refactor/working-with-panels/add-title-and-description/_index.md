@@ -1,7 +1,7 @@
 +++
 title = "Add a title and description to a panel"
 aliases = []
-weight = 10
+weight = 90
 +++
 
 # Add a title and description to a panel
@@ -10,9 +10,9 @@ Add a title and description to a panel to share with users any important informa
 
 Before you begin:
 
-- Add a panel
+- [Add a panel to a dashboard]({{< relref "../add-panel/_index.md" >}}).
 
-To add a title and description to a panel, complete the following steps:
+To add a title and description to a panel:
 
 1. Open a panel.
 

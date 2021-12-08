@@ -1,6 +1,6 @@
 +++
 title = "Manage queries"
-weight = 1
+weight = 80
 +++
 
 # Manage queries

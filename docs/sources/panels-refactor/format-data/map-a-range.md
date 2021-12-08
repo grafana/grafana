@@ -1,6 +1,6 @@
 +++
 title = "Map a range"
-weight = 10
+weight = 30
 +++
 
 # Map a range
@@ -9,11 +9,11 @@ Map a range of values when you want to format multiple, continuous values.
 
 Before you begin:
 
-- Add a panel
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
 
 To map a range:
 
-1. [Open the panel editor]({{< relref "./panel-editor.md#open-the-panel-editor" >}}).
+1. Edit the panel for which you want to map a range of values.
 1. In panel display options, in the **Value mappings** section, click **Add value mappings**.
 1. Click **Add a new mapping** and then select **Range**.
 1. Enter the beginning and ending values in the range for Grafana to match.

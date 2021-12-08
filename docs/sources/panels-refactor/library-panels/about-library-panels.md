@@ -1,6 +1,6 @@
 +++
 title = "About Grafana library panels"
-weight = 1
+weight = 10
 +++
 
 # About Grafana panel libraries

@@ -1,7 +1,7 @@
 +++
 title = "Add a panel to a dashboard"
 aliases = []
-weight = 10
+weight = 30
 +++
 
 # Add a panel to a dashboard

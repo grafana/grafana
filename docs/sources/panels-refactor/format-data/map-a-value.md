@@ -1,6 +1,6 @@
 +++
 title = "Map a value"
-weight = 10
+weight = 20
 +++
 
 # Map a value
@@ -9,12 +9,12 @@ Map a value when you want to format a single value.
 
 Before you begin:
 
-- Add a panel
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
 
 To map a value:
 
-1. [Open the panel editor]({{< relref "./panel-editor.md#open-the-panel-editor" >}}).
-1. In panel display option, locate the **Value mappings** section and click **Add value mappings**.
+1. Open a panel for which you want to map a value.
+1. In panel display options, locate the **Value mappings** section and click **Add value mappings**.
 1. Click **Add a new mapping** and then select **Value**.
 1. Enter the value for Grafana to match.
 1. (Optional) Enter display text.

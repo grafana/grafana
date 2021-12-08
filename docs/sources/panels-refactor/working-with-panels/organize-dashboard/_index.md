@@ -1,7 +1,7 @@
 +++
 title = "Organize a dashboard"
 aliases = []
-weight = 10
+weight = 80
 +++
 
 # Organize a dashboard
@@ -13,7 +13,7 @@ Before you begin:
 - Add two or more panels
 - Ensure that you sign in with Editor permissions
 
-To organize a dashboard, complete the following steps:
+To organize a dashboard:
 
 1. Hover your cursor over the panel, and click-and-drag the panel to its new location.
 

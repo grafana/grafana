@@ -1,6 +1,6 @@
 +++
 title = "Add a threshold to a graph"
-weight = 10
+weight = 30
 +++
 
 # Add a threshold to a graph (old) panel
@@ -9,9 +9,9 @@ In the Graph panel visualization, thresholds enable you to add lines or sections
 
 Before you begin:
 
-- Add a panel
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
 
-To add a threshold to a graph panel, complete the following steps:
+To add a threshold to a graph panel:
 
 1. Navigate to the graph panel to which you want to add a threshold.
 1. On the **Panel** tab, click **Thresholds**.

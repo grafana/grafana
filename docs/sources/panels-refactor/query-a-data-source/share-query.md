@@ -1,6 +1,6 @@
 +++
 title = "Share query results with another panel"
-weight = 1
+weight = 90
 +++
 
 # Share query results with another panel
@@ -13,8 +13,8 @@ This strategy can drastically reduce the number of queries being made when you f
 
 Before you begin:
 
-- Add a panel
-- Add a query
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
+- [Add a query]({{< relref "../query-a-data-source/add-a-query.md" >}}).
 
 To share data source queries with another panel:
 
