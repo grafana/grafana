@@ -10,7 +10,7 @@ import {
   Input,
   IconButton,
   useStyles2,
-  Card,
+  NewCard as Card,
 } from '@grafana/ui';
 import {
   DataFrame,
