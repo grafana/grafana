@@ -2,13 +2,13 @@ import { DeleteButton, FilterInput, LinkButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { LibraryCredential } from '@grafana/data';
 import { StoreState } from 'app/types';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { deleteLibraryCredentials, loadLibraryCredentials } from './state/actions';
 import { getLibraryCredentials } from './state/selectors';
 import { setSearchQuery } from './state/reducers';
+import { LibraryCredential } from '@grafana/data';
 
 interface OwnProps {}
 

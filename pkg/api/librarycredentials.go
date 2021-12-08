@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -59,6 +60,11 @@ func (hs *HTTPServer) UpdateLibraryCredential(c *models.ReqContext) response.Res
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
 
+	err := hs.fillLibraryCredentialWithSecureJSONData(c.Req.Context(), &cmd)
+	if err != nil {
+		return response.Error(500, "Failed to update datasource", err)
+	}
+
 	if err := hs.LibraryCredentialService.UpdateLibraryCredential(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to add library credential", err)
 	}
@@ -88,6 +94,29 @@ func (hs *HTTPServer) DeleteLibraryCredentialById(c *models.ReqContext) response
 	}
 
 	return response.Success("Library credential deleted")
+}
+
+func (hs *HTTPServer) fillLibraryCredentialWithSecureJSONData(ctx context.Context, cmd *models.UpdateLibraryCredentialCommand) error {
+	if len(cmd.SecureJsonData) == 0 {
+		return nil
+	}
+
+	libCredQuery := models.GetLibraryCredentialQuery{OrgId: cmd.OrgId, Id: cmd.Id}
+	if err := hs.LibraryCredentialService.GetLibraryCredential(ctx, &libCredQuery); err != nil {
+		return err
+	}
+
+	for k, v := range libCredQuery.Result.SecureJsonData {
+		if _, ok := cmd.SecureJsonData[k]; !ok {
+			decrypted, err := hs.SecretsService.Decrypt(ctx, v)
+			if err != nil {
+				return err
+			}
+			cmd.SecureJsonData[k] = string(decrypted)
+		}
+	}
+
+	return nil
 }
 
 func convertLibraryCredentialModelToDto(lc *models.LibraryCredential) *dtos.LibraryCredentialDto {
