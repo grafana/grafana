@@ -17,7 +17,8 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
   const [state, setState] = useState<{
     labelNames?: Array<SelectableValue<any>>;
     labelValues?: Array<SelectableValue<any>>;
-    isLoading?: boolean;
+    isLoadingLabelNames?: boolean;
+    isLoadingLabelValues?: boolean;
   }>({});
 
   return (
@@ -29,11 +30,11 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
           value={item.label ? toOption(item.label) : null}
           allowCustomValue
           onOpenMenu={async () => {
-            setState({ isLoading: true });
+            setState({ isLoadingLabelNames: true });
             const labelNames = (await onGetLabelNames(item)).map((x) => ({ label: x, value: x }));
-            setState({ labelNames, isLoading: undefined });
+            setState({ labelNames, isLoadingLabelNames: undefined });
           }}
-          isLoading={state.isLoading}
+          isLoading={state.isLoadingLabelNames}
           options={state.labelNames}
           onChange={(change) => {
             if (change.label) {
@@ -62,11 +63,17 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
           width="auto"
           value={item.value ? toOption(item.value) : null}
           allowCustomValue
-          options={state.labelValues}
           onOpenMenu={async () => {
-            const res = await onGetLabelValues(item);
-            setState({ ...state, labelValues: res.map((value) => ({ label: value, value })) });
+            setState({ isLoadingLabelValues: true });
+            const labelValues = await onGetLabelValues(item);
+            setState({
+              ...state,
+              labelValues: labelValues.map((value) => ({ label: value, value })),
+              isLoadingLabelValues: undefined,
+            });
           }}
+          isLoading={state.isLoadingLabelValues}
+          options={state.labelValues}
           onChange={(change) => {
             if (change.value != null) {
               onChange(({ ...item, value: change.value, op: item.op ?? defaultOp } as any) as QueryBuilderLabelFilter);

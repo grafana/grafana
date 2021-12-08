@@ -48,7 +48,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
 
-  const showExemplarSwitch = props.app !== CoreApp.UnifiedAlerting;
+  const showExemplarSwitch = props.app !== CoreApp.UnifiedAlerting && !query.instant;
 
   return (
     <>
@@ -72,7 +72,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         {showExemplarSwitch && (
           <Stack gap={1}>
             <label className={styles.switchLabel}>Exemplars</label>
-            <Switch value={query.exemplar} disabled={query.instant && !query.range} onChange={onExemplarChange} />
+            <Switch value={query.exemplar} onChange={onExemplarChange} />
           </Stack>
         )}
         {editorMode === QueryEditorMode.Builder && (
