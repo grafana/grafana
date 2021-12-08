@@ -57,6 +57,7 @@ export const ActionRow: FC<Props> = ({
               showLabel
               value={showPreviews}
               onChange={onShowPreviewsChange}
+              transparent
             />
           )}
         </HorizontalGroup>

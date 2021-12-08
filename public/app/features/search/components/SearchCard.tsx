@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { TagList, useTheme2 } from '@grafana/ui';
+import { Icon, TagList, useTheme2 } from '@grafana/ui';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 
@@ -62,7 +62,11 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
             onError={retryImage}
           />
         )}
-        {!hasPreview && <div className={styles.placeholder}>No preview available</div>}
+        {!hasPreview && (
+          <div className={styles.placeholder}>
+            <Icon name="apps" size="xl" />
+          </div>
+        )}
         <div className={styles.overlay} />
       </div>
       <div className={styles.info}>
