@@ -52,7 +52,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
           disabled={data?.state === LoadingState.Loading}
         >
-          Run query
+          Run query {data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
         </Button>
         <Stack gap={1}>
           <label className={styles.switchLabel}>Instant</label>

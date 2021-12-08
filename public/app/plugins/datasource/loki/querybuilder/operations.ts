@@ -14,7 +14,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       onAddToQuery: defaultAddOperationHandler,
     },
     {
-      id: 'Sum',
+      id: 'sum',
       displayName: 'Sum',
       params: [],
       defaultParams: [],
@@ -24,7 +24,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: 'json',
-      displayName: 'json',
+      displayName: 'Json',
       params: [],
       defaultParams: [],
       category: LokiVisualQueryOperationCategory.Formats,
@@ -33,7 +33,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: 'logfmt',
-      displayName: 'json',
+      displayName: 'Logfmt',
       params: [],
       defaultParams: [],
       category: LokiVisualQueryOperationCategory.Formats,
