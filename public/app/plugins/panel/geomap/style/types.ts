@@ -111,6 +111,7 @@ export interface StyleConfigFields {
   size?: string;
   text?: string;
   rotation?: string;
+  symbol?: string;
 }
 
 export interface StyleDimensions {
@@ -118,6 +119,7 @@ export interface StyleDimensions {
   size?: DimensionSupplier<number>;
   text?: DimensionSupplier<string>;
   rotation?: DimensionSupplier<number>;
+  symbol?: DimensionSupplier<string>;
 }
 
 export interface StyleConfigState {

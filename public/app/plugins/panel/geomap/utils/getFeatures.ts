@@ -1,18 +1,22 @@
 import { DataFrame, SelectableValue } from '@grafana/data';
+import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import { Feature } from 'ol';
 import { FeatureLike } from 'ol/Feature';
 import { Point } from 'ol/geom';
+import { getMarkerMaker, markerMakers, prepareImage, prepareSVG } from '../style/markers';
 import { GeometryTypeId, StyleConfigState } from '../style/types';
 import { LocationInfo } from './location';
 
-export const getFeatures = (
+export const getFeatures = async (
   frame: DataFrame,
   info: LocationInfo,
   style: StyleConfigState
-): Array<Feature<Point>> | undefined => {
+): Promise<Array<Feature<Point>> | undefined> => {
   const features: Array<Feature<Point>> = [];
   const { dims } = style;
   const values = { ...style.base };
+
+  //cache images or makers?
 
   // Map each data value into new points
   for (let i = 0; i < frame.length; i++) {
@@ -38,7 +42,28 @@ export const getFeatures = (
         values.text = dims.text.get(i);
       }
 
-      dot.setStyle(style.maker(values));
+      // style based on dynamic style maker
+      if (dims.symbol) {
+        const symbol = dims.symbol.get(i);
+        if (symbol.indexOf('svg') > 0) {
+          const symbolMaker = markerMakers.getIfExists(symbol);
+          if (symbolMaker) {
+            dot.setStyle(symbolMaker.make(values));
+          } else {
+            values.symbol = await prepareSVG(getPublicOrAbsoluteUrl(symbol));
+            const dynamicMaker = await getMarkerMaker(values.symbol, style.hasText);
+            dot.setStyle(dynamicMaker(values));
+          }
+        } else {
+          const size = values.size ?? style.base.size ?? 50;
+          values.symbol = await prepareImage(dims.symbol.get(i), size, values.color);
+          // const dynamicMaker = await getMarkerMaker(values.symbol, style.hasText, hasImage: true);
+          // dot.setStyle(dynamicMaker(values));
+        }
+      } else {
+        //non-dynamic style maker
+        dot.setStyle(style.maker(values));
+      }
     }
     features.push(dot);
   }

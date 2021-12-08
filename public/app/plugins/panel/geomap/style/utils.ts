@@ -25,7 +25,12 @@ export async function getStyleConfigState(cfg?: StyleConfig): Promise<StyleConfi
   }
   const hasText = styleUsesText(cfg);
   const fields: StyleConfigFields = {};
-  const maker = await getMarkerMaker(cfg.symbol?.fixed, hasText);
+
+  if (cfg.symbol?.field?.length) {
+    fields.symbol = cfg.symbol.field;
+  }
+
+  const maker = await getMarkerMaker(cfg.symbol?.fixed ?? defaultStyleConfig.symbol.fixed, hasText);
   const state: StyleConfigState = {
     config: cfg, // raw values
     hasText,

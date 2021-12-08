@@ -49,7 +49,7 @@ export function getResourceDimension(
 
   return {
     field,
-    get: field.values.get,
+    get: (i) => field.values.get(i),
     value: () => getLastNotNullFieldValue(field),
   };
 }

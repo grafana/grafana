@@ -12,7 +12,7 @@ import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import { getScaledDimension, getColorDimension, getTextDimension, getScalarDimension } from 'app/features/dimensions';
+import { getScaledDimension, getColorDimension, getTextDimension, getScalarDimension, getResourceDimension } from 'app/features/dimensions';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReplaySubject } from 'rxjs';
@@ -82,7 +82,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     return {
       init: () => vectorLayer,
       legend: legend,
-      update: (data: PanelData) => {
+      update: async (data: PanelData) => {
         if (!data.series?.length) {
           return; // ignore empty
         }
@@ -110,10 +110,13 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             if (style.fields.rotation) {
               dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
             }
+            if (style.fields.symbol) {
+              dims.symbol = getResourceDimension(frame, style.config.symbol ?? defaultStyleConfig.symbol);
+            }
             style.dims = dims;
           }
 
-          const frameFeatures = getFeatures(frame, info, style);
+          const frameFeatures = await getFeatures(frame, info, style);
 
           if (frameFeatures) {
             features.push(...frameFeatures);
@@ -144,6 +147,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             editor: StyleEditor,
             settings: {
               displayRotation: true,
+              hasSymbolField: true,
             },
             defaultValue: defaultOptions.style,
           })

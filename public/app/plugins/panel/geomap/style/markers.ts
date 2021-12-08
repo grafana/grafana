@@ -216,7 +216,7 @@ const makers: SymbolMaker[] = [
   },
 ];
 
-async function prepareSVG(url: string): Promise<string> {
+export async function prepareSVG(url: string): Promise<string> {
   return fetch(url, { method: 'GET' })
     .then((res) => {
       return res.text();
@@ -241,10 +241,10 @@ async function prepareSVG(url: string): Promise<string> {
 }
 
 // Really just a cache for the various symbol styles
-const markerMakers = new Registry<SymbolMaker>(() => makers);
+export const markerMakers = new Registry<SymbolMaker>(() => makers);
 // const icons = ReplaySubject<>(); //need to cache?
 
-const prepareImage = async (url: string, size: number): Promise<string> => {
+export const prepareImage = async (url: string, size: number, color?: string): Promise<string> => {
   const img = new Image();
   img.crossOrigin = 'anonymous'; //questionable
   return new Promise((resolve, reject) => {
@@ -305,7 +305,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
             return [
               new Style({
                 image: new Icon({
-                  src,
+                  src: cfg.symbol ?? src,
                   color: cfg.color,
                   opacity: cfg.opacity ?? 1,
                   scale: (DEFAULT_SIZE + radius) / 100,
@@ -331,7 +331,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
   }
 
   if (symbol.endsWith('.png') || symbol.endsWith('.jpg')) {
-    const src = await prepareImage(symbol, 200);
+    const src = await prepareImage(symbol, 50);
     maker = {
       id: symbol,
       name: symbol,
@@ -343,7 +343,8 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
             return [
               new Style({
                 image: new Icon({
-                  src,
+                  src: cfg.symbol ?? src,
+                  opacity: cfg.opacity ?? 1,
                   scale: (DEFAULT_SIZE + radius) / 100,
                   rotation: (rotation * Math.PI) / 180,
                 }),

@@ -38,6 +38,7 @@ export interface StyleEditorOptions {
   layerInfo?: Observable<LayerContentInfo>;
   simpleFixedValues?: boolean;
   displayRotation?: boolean;
+  hasSymbolField?: boolean;
 }
 
 export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions, any>> = ({
@@ -205,7 +206,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                 folderName: ResourceFolderName.Marker,
                 placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
                 placeholderValue: defaultStyleConfig.symbol.fixed,
-                showSourceRadio: false,
+                showSourceRadio: settings?.hasSymbolField ?? false,
               },
             } as any
           }
