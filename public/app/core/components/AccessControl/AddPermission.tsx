@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
 import { Button, Form, HorizontalGroup, Select } from '@grafana/ui';
 import { OrgRole } from 'app/types/acl';
-import { Assignments, AclTarget, SetResourcePermission } from '../types';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { Assignments, PermissionTarget, SetPermission } from './types';
 
 const roles = [OrgRole.Admin, OrgRole.Editor, OrgRole.Viewer];
 
@@ -13,13 +13,11 @@ export interface Props {
   assignments: Assignments;
   canListUsers: boolean;
   onCancel: () => void;
-  onAdd: (state: SetResourcePermission) => void;
+  onAdd: (state: SetPermission) => void;
 }
 
-export const AddResourcePermission = ({ permissions, assignments, canListUsers, onAdd, onCancel }: Props) => {
-  const pickerClassName = 'width-20';
-
-  const [target, setTarget] = useState<AclTarget>(AclTarget.User);
+export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, onCancel }: Props) => {
+  const [target, setPermissionTarget] = useState<PermissionTarget>(PermissionTarget.User);
   const [teamId, setTeamId] = useState<number>(0);
   const [userId, setUserId] = useState<number>(0);
   const [builtInRole, setBuiltinRole] = useState<string>('');
@@ -28,13 +26,13 @@ export const AddResourcePermission = ({ permissions, assignments, canListUsers, 
   const targetOptions = useMemo(() => {
     const options = [] as any;
     if (assignments.users && canListUsers) {
-      options.push({ value: AclTarget.User, label: 'User', isDisabled: false });
+      options.push({ value: PermissionTarget.User, label: 'User', isDisabled: false });
     }
     if (assignments.teams) {
-      options.push({ value: AclTarget.Team, label: 'Team' });
+      options.push({ value: PermissionTarget.Team, label: 'Team' });
     }
     if (assignments.builtInRoles) {
-      options.push({ value: AclTarget.BuiltInRole, label: 'Role' });
+      options.push({ value: PermissionTarget.BuiltInRole, label: 'Role' });
     }
     return options;
   }, [assignments, canListUsers]);
@@ -47,14 +45,14 @@ export const AddResourcePermission = ({ permissions, assignments, canListUsers, 
 
   const isValid = () => {
     switch (target) {
-      case AclTarget.Team:
+      case PermissionTarget.Team:
         return teamId > 0;
-      case AclTarget.User:
+      case PermissionTarget.User:
         return userId > 0;
-      case AclTarget.BuiltInRole:
+      case PermissionTarget.BuiltInRole:
         return roles.some((r) => r === builtInRole);
     }
-    return true;
+    return false;
   };
 
   return (
@@ -72,19 +70,19 @@ export const AddResourcePermission = ({ permissions, assignments, canListUsers, 
               aria-label="Role to add new permission to"
               value={target}
               options={targetOptions}
-              onChange={(v) => setTarget(v.value as AclTarget)}
+              onChange={(v) => setPermissionTarget(v.value as PermissionTarget)}
               menuShouldPortal
             />
 
-            {target === AclTarget.User && (
-              <UserPicker onSelected={(u) => setUserId(u.value || 0)} className={pickerClassName} />
+            {target === PermissionTarget.User && (
+              <UserPicker onSelected={(u) => setUserId(u.value || 0)} className={'width-20'} />
             )}
 
-            {target === AclTarget.Team && (
-              <TeamPicker onSelected={(t) => setTeamId(t.value?.id || 0)} className={pickerClassName} />
+            {target === PermissionTarget.Team && (
+              <TeamPicker onSelected={(t) => setTeamId(t.value?.id || 0)} className={'width-20'} />
             )}
 
-            {target === AclTarget.BuiltInRole && (
+            {target === PermissionTarget.BuiltInRole && (
               <Select
                 aria-label={'Built-in role picker'}
                 menuShouldPortal

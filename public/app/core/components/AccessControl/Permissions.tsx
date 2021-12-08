@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { SlideDown } from 'app/core/components/Animations/SlideDown';
-
 import { getBackendSrv } from 'app/core/services/backend_srv';
+
 import { Button } from '@grafana/ui';
-import { AclTarget, ResourcePermission, SetResourcePermission, SystemDescription } from './types';
-import { AddResourcePermission } from './components/AddResourcePermission';
-import { ResourcePermissionTable } from './components/ResourcePermissionsList';
+import { SlideDown } from 'app/core/components/Animations/SlideDown';
+import { AddPermission } from './AddPermission';
+import { PermissionList } from './PermissionList';
+import { PermissionTarget, ResourcePermission, SetPermission, Description } from './types';
 
-const permissionNone = '';
+const EMPTY_PERMISSION = '';
 
-const initialDescription: SystemDescription = {
+const INITIAL_DESCRIPTION: Description = {
   permissions: [],
   assignments: {
     teams: false,
@@ -26,11 +26,10 @@ export type Props = {
   canSetPermissions: boolean;
 };
 
-// TODO: error handling
-export const ResourcePermissions = ({ resource, resourceId, canListUsers, canSetPermissions }: Props) => {
+export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissions }: Props) => {
   const [isAdding, setIsAdding] = useState<boolean>(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
-  const [desc, setDesc] = useState<SystemDescription>(initialDescription);
+  const [desc, setDesc] = useState<Description>(INITIAL_DESCRIPTION);
 
   const fetchItems = useCallback(() => {
     return getPermissions(resource, resourceId).then((r) => setItems(r));
@@ -45,13 +44,13 @@ export const ResourcePermissions = ({ resource, resourceId, canListUsers, canSet
       .catch((e) => {});
   }, [resource, resourceId, fetchItems]);
 
-  const onAdd = (state: SetResourcePermission) => {
+  const onAdd = (state: SetPermission) => {
     let promise: Promise<void> | null = null;
-    if (state.target === AclTarget.User) {
+    if (state.target === PermissionTarget.User) {
       promise = setUserPermission(resource, resourceId, state.userId!, state.permission);
-    } else if (state.target === AclTarget.Team) {
+    } else if (state.target === PermissionTarget.Team) {
       promise = setTeamPermission(resource, resourceId, state.teamId!, state.permission);
-    } else if (state.target === AclTarget.BuiltInRole) {
+    } else if (state.target === PermissionTarget.BuiltInRole) {
       promise = setBuiltInRolePermission(resource, resourceId, state.builtInRole!, state.permission);
     }
 
@@ -63,11 +62,11 @@ export const ResourcePermissions = ({ resource, resourceId, canListUsers, canSet
   const onRemove = (item: ResourcePermission) => {
     let promise: Promise<void> | null = null;
     if (item.userId) {
-      promise = setUserPermission(resource, resourceId, item.userId, permissionNone);
+      promise = setUserPermission(resource, resourceId, item.userId, EMPTY_PERMISSION);
     } else if (item.teamId) {
-      promise = setTeamPermission(resource, resourceId, item.teamId, permissionNone);
+      promise = setTeamPermission(resource, resourceId, item.teamId, EMPTY_PERMISSION);
     } else if (item.builtInRole) {
-      promise = setBuiltInRolePermission(resource, resourceId, item.builtInRole, permissionNone);
+      promise = setBuiltInRolePermission(resource, resourceId, item.builtInRole, EMPTY_PERMISSION);
     }
 
     if (promise !== null) {
@@ -75,16 +74,16 @@ export const ResourcePermissions = ({ resource, resourceId, canListUsers, canSet
     }
   };
 
-  const onChange = (p: ResourcePermission, permission: string) => {
-    if (p.permission === permission) {
+  const onChange = (item: ResourcePermission, permission: string) => {
+    if (item.permission === permission) {
       return;
     }
-    if (p.userId) {
-      onAdd({ permission, userId: p.userId, target: AclTarget.User });
-    } else if (p.teamId) {
-      onAdd({ permission, teamId: p.teamId, target: AclTarget.Team });
-    } else if (p.builtInRole) {
-      onAdd({ permission, builtInRole: p.builtInRole, target: AclTarget.BuiltInRole });
+    if (item.userId) {
+      onAdd({ permission, userId: item.userId, target: PermissionTarget.User });
+    } else if (item.teamId) {
+      onAdd({ permission, teamId: item.teamId, target: PermissionTarget.Team });
+    } else if (item.builtInRole) {
+      onAdd({ permission, builtInRole: item.builtInRole, target: PermissionTarget.BuiltInRole });
     }
   };
 
@@ -106,7 +105,7 @@ export const ResourcePermissions = ({ resource, resourceId, canListUsers, canSet
 
       <div>
         <SlideDown in={isAdding}>
-          <AddResourcePermission
+          <AddPermission
             onAdd={onAdd}
             permissions={desc.permissions}
             assignments={desc.assignments}
@@ -114,26 +113,26 @@ export const ResourcePermissions = ({ resource, resourceId, canListUsers, canSet
             onCancel={() => setIsAdding(false)}
           />
         </SlideDown>
-        <ResourcePermissionTable
+        <PermissionList
           title="Roles"
           items={builtInRoles}
-          permissions={desc.permissions}
+          permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
           canRemove={canSetPermissions}
         />
-        <ResourcePermissionTable
+        <PermissionList
           title="Users"
           items={users}
-          permissions={desc.permissions}
+          permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
           canRemove={canSetPermissions}
         />
-        <ResourcePermissionTable
+        <PermissionList
           title="Teams"
           items={teams}
-          permissions={desc.permissions}
+          permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
           canRemove={canSetPermissions}
@@ -143,23 +142,28 @@ export const ResourcePermissions = ({ resource, resourceId, canListUsers, canSet
   );
 };
 
-const getDescription = (resource: string): Promise<SystemDescription> => {
-  return getBackendSrv().get<SystemDescription>(`/api/access-control/system/${resource}/description`);
+const getDescription = (resource: string): Promise<Description> => {
+  return getBackendSrv().get(`/api/access-control/system/${resource}/description`);
 };
 
 const getPermissions = (resource: string, datasourceId: number): Promise<ResourcePermission[]> => {
-  return getBackendSrv().get<ResourcePermission[]>(`/api/access-control/system/${resource}/${datasourceId}`);
+  return getBackendSrv().get(`/api/access-control/system/${resource}/${datasourceId}`);
 };
 
-const setUserPermission = (resource: string, resourceId: number, userId: number, permission: string) => {
+const setUserPermission = (resource: string, resourceId: number, userId: number, permission: string): Promise<void> => {
   return getBackendSrv().post(`/api/access-control/system/${resource}/${resourceId}/users/${userId}`, { permission });
 };
 
-const setTeamPermission = (resource: string, resourceId: number, teamId: number, permission: string) => {
+const setTeamPermission = (resource: string, resourceId: number, teamId: number, permission: string): Promise<void> => {
   return getBackendSrv().post(`/api/access-control/system/${resource}/${resourceId}/teams/${teamId}`, { permission });
 };
 
-const setBuiltInRolePermission = (resource: string, resourceId: number, builtInRole: string, permission: string) => {
+const setBuiltInRolePermission = (
+  resource: string,
+  resourceId: number,
+  builtInRole: string,
+  permission: string
+): Promise<void> => {
   return getBackendSrv().post(`/api/access-control/system/${resource}/${resourceId}/builtInRoles/${builtInRole}`, {
     permission,
   });

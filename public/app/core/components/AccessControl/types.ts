@@ -1,17 +1,6 @@
-export type SystemDescription = {
-  assignments: Assignments;
-  permissions: string[];
-};
-
-export type Assignments = {
-  users: boolean;
-  teams: boolean;
-  builtInRoles: boolean;
-};
-
 export type ResourcePermission = {
+  id: number;
   resourceId: string;
-  roleName: string;
   managed: boolean;
   userId?: number;
   userLogin?: string;
@@ -24,16 +13,26 @@ export type ResourcePermission = {
   permission: string;
 };
 
-export type SetResourcePermission = {
+export type SetPermission = {
   userId?: number;
   teamId?: number;
   builtInRole?: string;
   permission: string;
-  target: AclTarget;
+  target: PermissionTarget;
 };
 
-export enum AclTarget {
+export enum PermissionTarget {
   Team = 'Team',
   User = 'User',
   BuiltInRole = 'builtInRole',
 }
+export type Description = {
+  assignments: Assignments;
+  permissions: string[];
+};
+
+export type Assignments = {
+  users: boolean;
+  teams: boolean;
+  builtInRoles: boolean;
+};
