@@ -1,6 +1,6 @@
 import React, { FunctionComponent, PureComponent } from 'react';
 import { getBackendSrv } from '../services/backendSrv';
-import { Button, Input } from '@grafana/ui';
+import { Input } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '../services/live';
 import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
@@ -46,6 +46,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
   // };
   subscription?: Unsubscribable;
   chatBottom?: any;
+  chatInput?: any;
 
   state: ChatState = {
     messages: [],
@@ -67,6 +68,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
     });
     this.updateSubscription();
     this.scrollToBottom('auto');
+    this.chatInput.focus();
   }
 
   handleChange = (e: any) => {
@@ -74,6 +76,9 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
   };
 
   sendMessage = async () => {
+    if (!this.state.value) {
+      return;
+    }
     await getBackendSrv().post('/api/chats/send-message/', {
       objectId: this.props.objectId,
       contentTypeId: this.props.contentTypeId,
@@ -169,7 +174,9 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
           value={this.state.value}
           onChange={this.handleChange}
           onKeyUp={this.onKeyboardAdd}
-          addonAfter={<Button onClick={this.sendMessage}>Send</Button>}
+          ref={(el) => {
+            this.chatInput = el;
+          }}
         />
         <div
           style={{ float: 'left', clear: 'both' }}
@@ -187,9 +194,19 @@ interface MessageElementProps {
 }
 
 const MessageElement: FunctionComponent<MessageElementProps> = ({ message }) => {
+  let userColor = '#19a2e7';
+  if (message.userId === 0) {
+    userColor = '#34BA18';
+  }
+  const timeColor = '#898989';
+  const timeFormatted = new Date(message.created * 1000).toLocaleTimeString();
   return (
     <div style={{ paddingTop: '2px', paddingBottom: '2px', wordBreak: 'break-word' }}>
-      <div style={{ color: '#0088CC' }}>{message.user ? message.user.login : 'System'}</div>
+      <div>
+        <span style={{ color: userColor }}>{message.user ? message.user.login : 'System'}</span>
+        &nbsp;
+        <span style={{ color: timeColor }}>{timeFormatted}</span>
+      </div>
       <div>{message.content}</div>
     </div>
   );
