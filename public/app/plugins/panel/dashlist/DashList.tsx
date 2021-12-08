@@ -12,6 +12,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { getStyles } from './styles';
 import { PanelLayout, PanelOptions } from './models.gen';
+import { SearchCard } from 'app/features/search/components/SearchCard';
 
 type Dashboard = DashboardSearchHit & { isSearchResult?: boolean; isRecent?: boolean };
 
@@ -153,11 +154,13 @@ export function DashList(props: PanelProps<PanelOptions>) {
   );
 
   const renderPreviews = (dashboards: Dashboard[]) => (
-    <div>
-      TODO!!! PREVIEWS!!!!
-      <br />
-      WIDTH: {props.width}
-    </div>
+    <ul className={css.gridContainer}>
+      {dashboards.map((dash) => (
+        <li key={dash.uid}>
+          <SearchCard item={dash} />
+        </li>
+      ))}
+    </ul>
   );
 
   return (

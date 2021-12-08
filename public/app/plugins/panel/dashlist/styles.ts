@@ -54,4 +54,11 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     position: relative;
     list-style: none;
   `,
+
+  gridContainer: css`
+    display: grid;
+    gap: ${theme.spacing(1)};
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    margin-bottom: ${theme.spacing(1)};
+  `,
 });

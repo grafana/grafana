@@ -10,7 +10,7 @@ import { SearchCardFull } from './SearchCardFull';
 export interface Props {
   editable?: boolean;
   item: DashboardSectionItem;
-  onTagSelected: (name: string) => any;
+  onTagSelected?: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
 }
 

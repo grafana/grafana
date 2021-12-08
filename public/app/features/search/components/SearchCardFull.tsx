@@ -10,7 +10,7 @@ export interface Props {
   className?: string;
   editable?: boolean;
   item: DashboardSectionItem;
-  onTagSelected: (name: string) => any;
+  onTagSelected?: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
 }
 
