@@ -1,11 +1,9 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
+import { Icon, TagList, useTheme2 } from '@grafana/ui';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
-import { usePopper } from 'react-popper';
-import { SearchCardFull } from './SearchCardFull';
 
 export interface Props {
   editable?: boolean;
@@ -14,35 +12,12 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
 }
 
-export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
+export function SearchCardFull({ editable, item, onTagSelected, onToggleChecked }: Props) {
   const theme = useTheme2();
   const [hasPreview, setHasPreview] = useState(true);
   const themeId = theme.isDark ? 'dark' : 'light';
   const imageSrc = `/preview/dash/${item.uid}/thumb/${themeId}`;
   const styles = getStyles(theme);
-  const offset = useCallback(({ placement, reference, popper }) => {
-    let result: [number, number] = [0, 0];
-    if (placement === 'bottom' || placement === 'top') {
-      result = [0, -(reference.height + popper.height) / 2];
-    } else if (placement === 'left' || placement === 'right') {
-      result = [-(reference.width + popper.width) / 2, 0];
-    }
-    return result;
-  }, []);
-  const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
-  const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
-  const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement, {
-    modifiers: [
-      {
-        name: 'offset',
-        options: {
-          offset: offset,
-        },
-      },
-    ],
-  });
-  const [isOpen, setIsOpen] = useState(false);
-  const timeout = useRef<number | null>(null);
 
   const retryImage = () => {
     setHasPreview(false);
@@ -67,23 +42,10 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
 
     onTagSelected?.(tag);
   };
+  const folderTitle = item.folderTitle || 'General';
 
   return (
-    <a
-      className={styles.gridItem}
-      key={item.uid}
-      href={item.url}
-      ref={(ref) => setMarkerElement((ref as unknown) as HTMLDivElement)}
-      onMouseEnter={() => {
-        timeout.current = window.setTimeout(() => setIsOpen(true), 1000);
-      }}
-      onMouseLeave={() => {
-        if (timeout.current) {
-          window.clearTimeout(timeout.current);
-        }
-        setIsOpen(false);
-      }}
-    >
+    <a className={styles.gridItem} key={item.uid} href={item.url}>
       <div className={styles.imageContainer}>
         <SearchCheckbox
           className={styles.checkbox}
@@ -109,21 +71,17 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
         <div className={styles.overlay} />
       </div>
       <div className={styles.info}>
-        <div className={styles.titleContainer}>{item.title}</div>
-        <TagList isCompact tags={item.tags} onClick={onTagClick} />
-      </div>
-      {isOpen && (
-        <Portal>
-          <div ref={setPopperElement} style={popperStyles.popper} {...attributes.popper}>
-            <SearchCardFull
-              editable={editable}
-              item={item}
-              onTagSelected={onTagSelected}
-              onToggleChecked={onToggleChecked}
-            />
+        <div className={styles.titleContainer}>
+          <div>{item.title}</div>
+          <div className={styles.folder}>
+            <Icon name={'folder'} />
+            {folderTitle}
           </div>
-        </Portal>
-      )}
+        </div>
+        <div>
+          <TagList className={styles.tagList} tags={item.tags} onClick={onTagClick} />
+        </div>
+      </div>
     </a>
   );
 }
@@ -135,18 +93,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: absolute;
     top: 0;
   `,
+  folder: css`
+    align-items: center;
+    color: ${theme.colors.text.secondary};
+    display: flex;
+    font-size: ${theme.typography.size.sm};
+    gap: ${theme.spacing(0.5)};
+  `,
   gridItem: css`
     border: 1px solid ${theme.colors.border.medium};
     border-radius: 4px;
+    box-shadow: ${theme.shadows.z3};
     display: flex;
     flex-direction: column;
     height: 100%;
+    max-width: 384px;
     overflow: hidden;
     width: 100%;
   `,
   image: css`
-    padding: ${theme.spacing(1)} ${theme.spacing(4)} 0;
-    width: 100%;
+    height: 240px;
+    margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
+    width: 320px;
   `,
   imageContainer: css`
     background-color: ${theme.colors.background.secondary};
@@ -166,12 +134,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   info: css`
-    align-items: center;
     background-color: ${theme.colors.background.canvas};
     display: flex;
-    height: ${theme.spacing(7)};
+    flex-direction: column;
+    min-height: ${theme.spacing(7)};
     gap: ${theme.spacing(1)};
-    padding: 0 ${theme.spacing(2)};
+    padding: ${theme.spacing(1)} ${theme.spacing(2)};
   `,
   overlay: css`
     bottom: 0;
@@ -188,10 +156,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: center;
     width: 100%;
   `,
+  tagList: css`
+    justify-content: flex-start;
+  `,
   titleContainer: css`
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    gap: ${theme.spacing(0.5)};
   `,
 });
