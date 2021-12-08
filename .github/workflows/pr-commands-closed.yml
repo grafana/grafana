@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - run: |
-        echo PR #${{ github.event.number }} has been closed without being merged, removing all milestones.
+        echo PR #${{ github.event.number }} has been closed without being merged, removing milestone.
         gh pr edit ${{ github.event.number }} --milestone "" --repo $GITHUB_REPOSITORY
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
