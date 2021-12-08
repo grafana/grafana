@@ -1,6 +1,10 @@
-import { promQueryModeller } from './PromQueryModeller';
 import { defaultAddOperationHandler, functionRendererLeft, functionRendererRight } from './shared/operationUtils';
-import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
+import {
+  QueryBuilderOperation,
+  QueryBuilderOperationDef,
+  QueryBuilderOperationParamDef,
+  VisualQueryModeller,
+} from './shared/types';
 import { PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
@@ -12,7 +16,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [0.9],
       category: PromVisualQueryOperationCategory.Functions,
       renderer: functionRendererLeft,
-      onAddToQuery: defaultAddOperationHandler,
+      addOperationHandler: defaultAddOperationHandler,
     },
     {
       id: 'label_replace',
@@ -26,7 +30,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       category: PromVisualQueryOperationCategory.Functions,
       defaultParams: ['', '$1', '', '(.*)'],
       renderer: functionRendererRight,
-      onAddToQuery: defaultAddOperationHandler,
+      addOperationHandler: defaultAddOperationHandler,
     },
     {
       id: 'rate',
@@ -35,7 +39,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: ['auto'],
       category: PromVisualQueryOperationCategory.RateAndDeltas,
       renderer: operationWithRangeVectorRenderer,
-      onAddToQuery: addOperationWithRangeVector,
+      addOperationHandler: addOperationWithRangeVector,
     },
     {
       id: 'increase',
@@ -44,7 +48,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: ['auto'],
       category: PromVisualQueryOperationCategory.RateAndDeltas,
       renderer: operationWithRangeVectorRenderer,
-      onAddToQuery: addOperationWithRangeVector,
+      addOperationHandler: addOperationWithRangeVector,
     },
     {
       id: 'increase',
@@ -53,7 +57,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: ['auto'],
       category: PromVisualQueryOperationCategory.RateAndDeltas,
       renderer: operationWithRangeVectorRenderer,
-      onAddToQuery: addOperationWithRangeVector,
+      addOperationHandler: addOperationWithRangeVector,
     },
     // Not sure about this one. It could also be a more generic "Simple math operation" where user specifies
     // both the operator and the operand in a single input
@@ -64,7 +68,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [2],
       category: PromVisualQueryOperationCategory.Math,
       renderer: multiplyRenderer,
-      onAddToQuery: defaultAddOperationHandler,
+      addOperationHandler: defaultAddOperationHandler,
     },
     {
       id: '__nested_query',
@@ -73,7 +77,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Math,
       renderer: multiplyRenderer,
-      onAddToQuery: addNestedQueryHandler,
+      addOperationHandler: addNestedQueryHandler,
     },
   ];
 
@@ -109,11 +113,15 @@ function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
 /**
  * Since there can only be one operation with range vector this will replace the current one (if one was added )
  */
-export function addOperationWithRangeVector(def: QueryBuilderOperationDef, query: PromVisualQuery) {
+export function addOperationWithRangeVector(
+  def: QueryBuilderOperationDef,
+  query: PromVisualQuery,
+  modeller: VisualQueryModeller
+) {
   if (query.operations.length > 0) {
-    const firstOp = promQueryModeller.getOperationDef(query.operations[0].id);
+    const firstOp = modeller.getOperationDef(query.operations[0].id);
 
-    if (firstOp.onAddToQuery === addOperationWithRangeVector) {
+    if (firstOp.addOperationHandler === addOperationWithRangeVector) {
       return {
         ...query,
         operations: [

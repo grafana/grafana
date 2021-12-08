@@ -1,4 +1,3 @@
-import { PromVisualQuery } from '../types';
 import {
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
@@ -14,7 +13,7 @@ export interface VisualQueryBinary<T> {
 }
 
 export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations> implements VisualQueryModeller {
-  private operations: Record<string, QueryBuilderOperationDef<PromVisualQuery>> = {};
+  private operations: Record<string, QueryBuilderOperationDef<T>> = {};
   private categories: string[] = [];
 
   protected registerOperations(operations: QueryBuilderOperationDef[]) {

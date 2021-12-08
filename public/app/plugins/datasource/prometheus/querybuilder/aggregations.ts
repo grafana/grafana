@@ -41,8 +41,8 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
-      onAddToQuery: defaultAddOperationHandler,
-      onParamChanged: getOnLabelAdddedHandler(`__${name}_by`),
+      addOperationHandler: defaultAddOperationHandler,
+      paramChangedHandler: getOnLabelAdddedHandler(`__${name}_by`),
     },
     {
       id: `__${name}_by`,
@@ -59,8 +59,8 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
       defaultParams: [''],
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: getAggregationByRenderer(name),
-      onAddToQuery: defaultAddOperationHandler,
-      onParamChanged: getLastLabelRemovedHandler(name),
+      addOperationHandler: defaultAddOperationHandler,
+      paramChangedHandler: getLastLabelRemovedHandler(name),
       hideFromList: true,
     },
   ];
@@ -131,7 +131,7 @@ function createAggregationOverTime(name: string): QueryBuilderOperationDef {
     defaultParams: ['auto'],
     category: PromVisualQueryOperationCategory.Functions,
     renderer: operationWithRangeVectorRenderer,
-    onAddToQuery: addOperationWithRangeVector,
+    addOperationHandler: addOperationWithRangeVector,
   };
 }
 

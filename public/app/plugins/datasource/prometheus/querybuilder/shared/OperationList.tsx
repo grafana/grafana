@@ -42,7 +42,7 @@ export function OperationList<T extends QueryWithOperations>({ query, onChange, 
 
   const onAddOperation = (value: string[]) => {
     const operationDef = queryModeller.getOperationDef(value[1]);
-    onChange(operationDef.onAddToQuery(operationDef, query));
+    onChange(operationDef.addOperationHandler(operationDef, query, queryModeller));
   };
 
   return (

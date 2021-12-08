@@ -28,14 +28,21 @@ export interface QueryBuilderOperationDef<T = any> {
   category: string;
   hideFromList?: boolean;
   renderer: QueryBuilderOperationRenderer;
-  onAddToQuery: (operationDef: QueryBuilderOperationDef, query: T) => T;
-  onParamChanged?: (
-    index: number,
-    operation: QueryBuilderOperation,
-    operationDef: QueryBuilderOperationDef
-  ) => QueryBuilderOperation;
-  editorAction?: ComponentType<QueryBuilderOperationEditorProps>;
+  addOperationHandler: QueryBuilderAddOperationHandler<T>;
+  paramChangedHandler?: QueryBuilderOnParamChangedHandler;
 }
+
+export type QueryBuilderAddOperationHandler<T> = (
+  def: QueryBuilderOperationDef,
+  query: T,
+  modeller: VisualQueryModeller
+) => T;
+
+export type QueryBuilderOnParamChangedHandler = (
+  index: number,
+  operation: QueryBuilderOperation,
+  operationDef: QueryBuilderOperationDef
+) => QueryBuilderOperation;
 
 export type QueryBuilderOperationRenderer = (
   model: QueryBuilderOperation,

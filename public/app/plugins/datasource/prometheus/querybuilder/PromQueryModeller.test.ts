@@ -1,11 +1,11 @@
 import { PromQueryModeller } from './PromQueryModeller';
 
 describe('PromQueryModeller', () => {
-  const engine = new PromQueryModeller();
+  const modeller = new PromQueryModeller();
 
   it('Can render query with metric only', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'my_totals',
         labels: [],
         operations: [],
@@ -15,7 +15,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render query with label filters', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'my_totals',
         labels: [
           { label: 'cluster', op: '=', value: 'us-east' },
@@ -28,7 +28,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render query with function', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'my_totals',
         labels: [],
         operations: [{ id: 'sum', params: [] }],
@@ -38,7 +38,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render query with function with parameter to left of inner expression', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'metric',
         labels: [],
         operations: [{ id: 'histogram_quantile', params: [0.86] }],
@@ -48,7 +48,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render query with function with function parameters to the right of inner expression', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'metric',
         labels: [],
         operations: [{ id: 'label_replace', params: ['server', '$1', 'instance', 'as(.*)d'] }],
@@ -58,7 +58,7 @@ describe('PromQueryModeller', () => {
 
   it('Can group by expressions', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'metric',
         labels: [],
         operations: [{ id: '__sum_by', params: ['server', 'job'] }],
@@ -68,7 +68,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render avg around a group by', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'metric',
         labels: [],
         operations: [
@@ -81,7 +81,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render aggregations with parameters', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'metric',
         labels: [],
         operations: [{ id: 'topk', params: [5] }],
@@ -91,7 +91,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render rate', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
         operations: [{ id: 'rate', params: ['auto'] }],
@@ -101,7 +101,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render increase', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
         operations: [{ id: 'increase', params: ['auto'] }],
@@ -111,7 +111,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render rate with custom range-vector', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
         operations: [{ id: 'rate', params: ['10m'] }],
@@ -121,7 +121,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render multiply operation', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'metric',
         labels: [],
         operations: [{ id: '__multiply_by', params: [1000] }],
@@ -131,7 +131,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render query with simple binary query', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'metric_a',
         labels: [],
         operations: [],
@@ -151,7 +151,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render query with multiple binary queries and nesting', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'metric_a',
         labels: [],
         operations: [],
@@ -179,7 +179,7 @@ describe('PromQueryModeller', () => {
 
   it('Can render with binary queries with vectorMatches expression', () => {
     expect(
-      engine.renderQuery({
+      modeller.renderQuery({
         metric: 'metric_a',
         labels: [],
         operations: [],

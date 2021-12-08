@@ -123,8 +123,8 @@ function callParamChangedThenOnChange(
   paramIndex: number,
   onChange: (index: number, update: QueryBuilderOperation) => void
 ) {
-  if (def.onParamChanged) {
-    onChange(operationIndex, def.onParamChanged(paramIndex, operation, def));
+  if (def.paramChangedHandler) {
+    onChange(operationIndex, def.paramChangedHandler(paramIndex, operation, def));
   } else {
     onChange(operationIndex, operation);
   }

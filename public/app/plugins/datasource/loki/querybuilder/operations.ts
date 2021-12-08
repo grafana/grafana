@@ -1,10 +1,11 @@
-import { defaultAddOperationHandler, functionRendererLeft } from '../../prometheus/querybuilder/shared/operationUtils';
+import { functionRendererLeft } from '../../prometheus/querybuilder/shared/operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
+  VisualQueryModeller,
 } from '../../prometheus/querybuilder/shared/types';
-import { LokiVisualQueryOperationCategory } from './types';
+import { LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [
@@ -15,7 +16,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: ['auto'],
       category: LokiVisualQueryOperationCategory.Functions,
       renderer: operationWithRangeVectorRenderer,
-      onAddToQuery: defaultAddOperationHandler,
+      addOperationHandler: addLokiOperation,
     },
     {
       id: 'sum',
@@ -24,7 +25,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       category: LokiVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
-      onAddToQuery: defaultAddOperationHandler,
+      addOperationHandler: addLokiOperation,
     },
     {
       id: 'json',
@@ -33,7 +34,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       category: LokiVisualQueryOperationCategory.Formats,
       renderer: pipelineRenderer,
-      onAddToQuery: defaultAddOperationHandler,
+      addOperationHandler: addLokiOperation,
     },
     {
       id: 'logfmt',
@@ -42,7 +43,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       category: LokiVisualQueryOperationCategory.Formats,
       renderer: pipelineRenderer,
-      onAddToQuery: defaultAddOperationHandler,
+      addOperationHandler: addLokiOperation,
     },
   ];
 
@@ -68,9 +69,59 @@ function operationWithRangeVectorRenderer(
     rangeVector = '$__interval';
   }
 
-  return `${def.id}(${innerExpr}[${rangeVector}])`;
+  return `${def.id}(${innerExpr} [${rangeVector}])`;
 }
 
 function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   return `${innerExpr} | ${model.id}`;
+}
+
+function isRangeVectorFunction(def: QueryBuilderOperationDef) {
+  return def.renderer === operationWithRangeVectorRenderer;
+}
+
+function isPipelineOperation(def: QueryBuilderOperationDef) {
+  return def.renderer === pipelineRenderer;
+}
+
+export function addLokiOperation(
+  def: QueryBuilderOperationDef,
+  query: LokiVisualQuery,
+  modeller: VisualQueryModeller
+): LokiVisualQuery {
+  const newOperation: QueryBuilderOperation = {
+    id: def.id,
+    params: def.defaultParams,
+  };
+
+  const newOperations = [...query.operations];
+
+  // Adding a normal function
+  if (def.renderer === functionRendererLeft) {
+    const rangeVectorFunction = newOperations.find((x) => {
+      return isRangeVectorFunction(modeller.getOperationDef(x.id));
+    });
+
+    if (!rangeVectorFunction) {
+      const indexOfLastPipeFunction = newOperations.findIndex((x) => {
+        return isPipelineOperation(modeller.getOperationDef(x.id));
+      });
+      newOperations.splice(indexOfLastPipeFunction + 1, 0, { id: 'rate', params: ['auto'] });
+    }
+  }
+
+  // Adding a pipeline operation, needs to be added before first function operation
+  if (def.renderer === pipelineRenderer) {
+    const nonPipelineOpIndex = newOperations.findIndex((x) => {
+      return !isPipelineOperation(modeller.getOperationDef(x.id));
+    });
+    newOperations.splice(nonPipelineOpIndex, 0, newOperation);
+  } else {
+    newOperations.push(newOperation);
+  }
+
+  return {
+    ...query,
+    operations: newOperations,
+  };
 }
