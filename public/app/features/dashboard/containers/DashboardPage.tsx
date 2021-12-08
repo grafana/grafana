@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
-import { locationService, Chat } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, ScrollbarPosition, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 
@@ -383,7 +383,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             </div>
           </CustomScrollbar>
         </div>
-        <Chat contentTypeId={1} objectId={'1'} />
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
         {queryParams.editview && <DashboardSettings dashboard={dashboard} editview={queryParams.editview} />}

@@ -15,6 +15,7 @@ import { DashboardModel } from '../../state';
 import { KioskMode } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
+import { DashboardChatModalProxy } from 'app/features/dashboard/components/DashChat/DashChatModalProxy';
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
@@ -213,6 +214,23 @@ class DashNav extends PureComponent<Props> {
         </ModalsController>
       );
     }
+
+    buttons.push(
+      <ModalsController key="button-chat">
+        {({ showModal, hideModal }) => (
+          <ToolbarButton
+            tooltip="Show chat"
+            icon="chat"
+            onClick={() => {
+              showModal(DashboardChatModalProxy, {
+                dashboard,
+                onDismiss: hideModal,
+              });
+            }}
+          />
+        )}
+      </ModalsController>
+    );
 
     if (snapshotUrl) {
       buttons.push(
