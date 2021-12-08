@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { TagList, useTheme2 } from '@grafana/ui';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 
@@ -29,18 +29,30 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
     }, 5000);
   };
 
-  const handleCheckboxClick = (ev: React.MouseEvent) => {
+  const onCheckboxClick = (ev: React.MouseEvent) => {
     ev.stopPropagation();
     ev.preventDefault();
 
-    if (onToggleChecked) {
-      onToggleChecked(item);
-    }
+    onToggleChecked?.(item);
+  };
+
+  const onTagClick = (tag: string, ev: React.MouseEvent) => {
+    ev.stopPropagation();
+    ev.preventDefault();
+
+    onTagSelected?.(tag);
   };
 
   return (
     <a className={styles.gridItem} key={item.uid} href={item.url}>
       <div className={styles.imageContainer}>
+        <SearchCheckbox
+          className={styles.checkbox}
+          aria-label="Select dashboard"
+          editable={editable}
+          checked={item.checked}
+          onClick={onCheckboxClick}
+        />
         {hasPreview && (
           <img
             loading="lazy"
@@ -51,52 +63,80 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
           />
         )}
         {!hasPreview && <div className={styles.placeholder}>No preview available</div>}
+        <div className={styles.overlay} />
       </div>
       <div className={styles.info}>
-        <SearchCheckbox
-          aria-label="Select dashboard"
-          editable={editable}
-          checked={item.checked}
-          onClick={handleCheckboxClick}
-        />
-        {item.title}
+        <div className={styles.titleContainer}>{item.title}</div>
+        <TagList tags={item.tags} onClick={onTagClick} />
       </div>
     </a>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  checkbox: css`
+    left: 0;
+    margin: ${theme.spacing(1)};
+    position: absolute;
+    top: 0;
+  `,
   gridItem: css`
     border: 1px solid ${theme.colors.border.medium};
     border-radius: 4px;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     overflow: hidden;
+    width: 100%;
   `,
   image: css`
+    padding: ${theme.spacing(1)} ${theme.spacing(4)} 0;
     width: 100%;
   `,
   imageContainer: css`
-    height: 200px;
+    background-color: ${theme.colors.background.secondary};
+    flex: 1;
     overflow: hidden;
     position: relative;
+
+    &:after {
+      background: linear-gradient(180deg, rgba(196, 196, 196, 0) 0%, rgba(127, 127, 127, 0.25) 100%);
+      bottom: 0;
+      content: '';
+      left: 0;
+      margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
   `,
   info: css`
     align-items: center;
-    background-color: ${theme.colors.background.secondary};
+    background-color: ${theme.colors.background.canvas};
     display: flex;
-    height: 60px;
+    height: ${theme.spacing(7)};
     gap: ${theme.spacing(1)};
     padding: 0 ${theme.spacing(1)};
   `,
+  overlay: css`
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+  `,
   placeholder: css`
     align-items: center;
-    background: ${theme.colors.background.canvas};
     color: ${theme.colors.text.secondary};
     display: flex;
     height: 100%;
     justify-content: center;
-    position: absolute;
-    top: 0;
     width: 100%;
+  `,
+  titleContainer: css`
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   `,
 });

@@ -65,14 +65,16 @@ export const SearchResults: FC<Props> = memo(
         <div className={styles.listModeWrapper}>
           <AutoSizer>
             {({ height, width }) => {
-              const numColumns = Math.floor(width / 200);
+              const numColumns = Math.ceil(width / 320);
+              const cellWidth = width / numColumns;
+              const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
               const numRows = Math.ceil(items.length / numColumns);
               return showPreviews ? (
                 <FixedSizeGrid
                   columnCount={numColumns}
-                  columnWidth={width / numColumns}
+                  columnWidth={cellWidth}
                   rowCount={numRows}
-                  rowHeight={268}
+                  rowHeight={cellHeight}
                   className={styles.wrapper}
                   innerElementType="ul"
                   height={height}
@@ -166,7 +168,7 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
     gridContainer: css`
       display: grid;
       gap: ${md};
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       margin-bottom: ${md};
     `,
     resultsContainer: css`
