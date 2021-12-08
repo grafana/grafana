@@ -1,7 +1,11 @@
 import React, { FC, CSSProperties, ComponentType } from 'react';
 import { useMeasure } from 'react-use';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { css } from '@emotion/css';
 import { LegendPlacement } from '@grafana/schema';
+import { GrafanaTheme2 } from '@grafana/data';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { getFocusStyles } from '../../themes/mixins';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 /**
  * @beta
@@ -24,6 +28,7 @@ export interface VizLayoutComponentType extends FC<VizLayoutProps> {
  * @beta
  */
 export const VizLayout: VizLayoutComponentType = ({ width, height, legend, children }) => {
+  const styles = useStyles2(getVizStyles);
   const containerStyle: CSSProperties = {
     display: 'flex',
     width: `${width}px`,
@@ -38,10 +43,6 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   const { placement, maxHeight = '35%', maxWidth = '60%' } = legend.props;
 
   let size: VizSize | null = null;
-
-  const vizStyle: CSSProperties = {
-    flexGrow: 2,
-  };
 
   const legendStyle: CSSProperties = {};
 
@@ -76,7 +77,9 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   return (
     <div style={containerStyle}>
-      <div style={vizStyle}>{size && children(size.width, size.height)}</div>
+      <div tabIndex={0} className={styles.viz}>
+        {size && children(size.width, size.height)}
+      </div>
       <div style={legendStyle} ref={legendRef}>
         <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
       </div>
@@ -84,6 +87,15 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   );
 };
 
+export const getVizStyles = (theme: GrafanaTheme2) => {
+  return {
+    viz: css({
+      flexGrow: 2,
+      borderRadius: theme.shape.borderRadius(1),
+      '&:focus-visible': getFocusStyles(theme),
+    }),
+  };
+};
 interface VizSize {
   width: number;
   height: number;
