@@ -5,7 +5,7 @@ import mdx from './Button.mdx';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { ButtonGroup } from './ButtonGroup';
 import { ComponentSize } from '../../types/size';
-import { Card } from '../Card/Card';
+import { Card } from '../NewCard/NewCard';
 
 export default {
   title: 'Buttons/Button',

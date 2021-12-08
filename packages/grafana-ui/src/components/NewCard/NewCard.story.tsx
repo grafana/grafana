@@ -2,7 +2,7 @@ import React from 'react';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Card, Props } from './NewCard';
-import mdx from './Card.mdx';
+import mdx from './NewCard.mdx';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
 import { TagList } from '../Tags/TagList';
