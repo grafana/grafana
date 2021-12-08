@@ -1,9 +1,9 @@
 import React, { ReactNode } from 'react';
 import { Item } from '@react-stately/collections';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2, locationUtil, NavMenuItemType, NavModelItem } from '@grafana/data';
 import { IconName, useTheme2 } from '@grafana/ui';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';

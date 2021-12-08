@@ -1,9 +1,11 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import NavBarItem, { Props } from './NavBarItem';
 import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
+import { locationUtil } from '@grafana/data';
 import { config, setLocationService } from '@grafana/runtime';
+
+import NavBarItem, { Props } from './NavBarItem';
 
 const onClickMock = jest.fn();
 const defaults: Props = {
@@ -21,6 +23,7 @@ const defaults: Props = {
 function getTestContext(overrides: Partial<Props> = {}, subUrl = '') {
   jest.clearAllMocks();
   config.appSubUrl = subUrl;
+  locationUtil.initialize({ config, getTimeRangeForUrl: jest.fn(), getVariablesUrlParams: jest.fn() });
   const pushMock = jest.fn();
   const locationService: any = { push: pushMock };
   setLocationService(locationService);
@@ -102,13 +105,6 @@ describe('NavBarItem', () => {
 
       expect(screen.getAllByRole('link')).toHaveLength(1);
       expect(screen.getByRole('link')).toHaveAttribute('href', 'https://www.grafana.com');
-    });
-
-    it('then it renders the menu trigger as a link with appSubUrl', () => {
-      getTestContext({ link: { ...defaults.link, url: '/grafana/dashboard/new' } }, '/grafana');
-
-      expect(screen.getAllByRole('link')).toHaveLength(1);
-      expect(screen.getByRole('link')).toHaveAttribute('href', '/grafana/dashboard/new');
     });
 
     describe('and hovering over the menu trigger link', () => {
