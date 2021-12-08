@@ -43,7 +43,7 @@ export function LazyLoader({ children, width, height, onLoad, onChange }: Props)
 
   return (
     <div id={id} ref={wrapperRef} style={{ width, height }}>
-      {loaded && typeof children === 'function' ? children({ isInView }) : children}
+      {loaded && (typeof children === 'function' ? children({ isInView }) : children)}
     </div>
   );
 }
