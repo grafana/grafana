@@ -63,6 +63,8 @@ run: scripts/go/bin/bra ## Build and run web server on filesystem changes.
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
 
+run-all: run run-frontend ## call with `make -j2 run-all` to parallelize build steps
+
 ##@ Testing
 
 test-go: ## Run tests for backend.
