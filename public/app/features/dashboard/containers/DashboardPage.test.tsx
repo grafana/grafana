@@ -2,6 +2,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import { Props, UnthemedDashboardPage } from './DashboardPage';
+import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { Router } from 'react-router-dom';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { DashboardModel } from '../state';
@@ -15,8 +16,8 @@ import { createTheme } from '@grafana/data';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 
 jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
-  const LazyLoader: React.FC = ({ children }) => {
-    return <>{children}</>;
+  const LazyLoader = ({ children }: Pick<LazyLoaderProps, 'children'>) => {
+    return <>{typeof children === 'function' ? children({ isInView: true }) : children}</>;
   };
   return { LazyLoader };
 });
