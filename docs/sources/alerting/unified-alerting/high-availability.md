@@ -51,48 +51,29 @@ To enable high availability support you need to add at least 1 Grafana instance 
 
 ## Kubernetes
 
-If you are using Kubernetes, you can connect the different Grafana Pod's by
-using a headless service and DNS service discovery.
+If you are using Kubernetes, you can expose the pod IP [through an environment variable](https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/) via the container definition such as:
 
-1. Create a headless service for you Grafana deployment, make sure to replace
-   the `selector` part with the one that works for you.
-   ```yaml
-   apiVersion: v1
-   kind: Service
-   metadata:
-     labels:
-       app.kubernetes.io/name: grafana
-     name: grafana-headless
-   spec:
-     clusterIP: None
-     ports:
-       - port: 9094
-         protocol: TCP
-         targetPort: 9094
-     selector:
-       app.kubernetes.io/name: grafana
-     type: ClusterIP
-   ```
-1. Change you `grafana.ini`, so that the instances running in the Pod's are
-   using this service for service discovery.
+```bash
+env:
+- name: POD_IP
+  valueFrom:
+    fieldRef:
+      fieldPath: status.podIP
+```
+
+You can also connect the different Grafana pods by using a headless service and DNS service discovery.
+
+1. Create a headless service for you Grafana deployment.
+2. Change you grafana.ini so that the instances running in the pods are using this service for service discovery:
    ```toml
    ...
    [unified_alerting]
      enabled = true
-     ha_peers = "grafana-headless:9094"
+     ha_peers = "grafana-headless-service:9094"
    [alerting]
      enabled = false
    ```
-1. Make sure that your headless service is working by checking if any endpoints
-   were created by running the following command:
-   `kubectl get endpoints grafana-headless -o jsonpath="{.subsets[].addresses[*].ip}" `.
-   In the output you should see the instances IP.
-   ```text
-   10.244.0.4 10.244.0.5 10.244.0.7
-   ```
-1. Check your logs to see if the instances are connecting to each other. When
-   starting the Pod's you should see one of those messages for every server in
-   the cluster after a few seconds.
+3. Check your logs to see if the instances are connecting to each other. You should see one of those messages for every server:
    ```text
    t=2021-12-08T08:59:57+0000 lvl=info msg="component=cluster level=debug received=NotifyJoin node=01FPCM9TZ2QBYS46N3RCV9MEKR addr=10.244.0.4:9094" logger=ngalert.multiorg.alertmanager
    ```
