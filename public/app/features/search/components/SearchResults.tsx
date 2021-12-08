@@ -136,7 +136,7 @@ export const SearchResults: FC<Props> = memo(
 SearchResults.displayName = 'SearchResults';
 
 const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
-  const { md } = theme.spacing;
+  const { md, sm } = theme.spacing;
 
   return {
     virtualizedGridItemWrapper: css`
@@ -167,7 +167,7 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     gridContainer: css`
       display: grid;
-      gap: ${md};
+      gap: ${sm};
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       margin-bottom: ${md};
     `,
