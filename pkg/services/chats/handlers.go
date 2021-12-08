@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
+
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -30,7 +32,7 @@ func messageToDto(m *Message, userMap map[int64]*models.UserSearchHitDTO) *Messa
 			Name:      user.Name,
 			Login:     user.Login,
 			Email:     user.Email,
-			AvatarUrl: user.AvatarUrl,
+			AvatarUrl: dtos.GetGravatarUrl(user.Email),
 		}
 	}
 	return m.ToDTO(u)

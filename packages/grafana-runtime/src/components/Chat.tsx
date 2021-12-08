@@ -67,8 +67,8 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
       messages: resp.chatMessages,
     });
     this.updateSubscription();
-    this.scrollToBottom('auto');
-    this.chatInput.focus();
+    this.scrollToBottom();
+    this.focusInput();
   }
 
   handleChange = (e: any) => {
@@ -118,11 +118,18 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
     }
   };
 
-  scrollToBottom = (behavior: string) => {
+  focusInput = () => {
+    if (!this.chatInput) {
+      return;
+    }
+    this.chatInput.focus();
+  };
+
+  scrollToBottom = () => {
     if (!this.chatBottom) {
       return;
     }
-    this.chatBottom.scrollIntoView({ behavior: behavior });
+    this.chatBottom.scrollIntoView({ behavior: 'auto' });
   };
 
   updateSubscription = () => {
@@ -143,7 +150,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
               this.setState((prevState) => ({
                 messages: [...prevState.messages, messageCreated],
               }));
-              this.scrollToBottom('auto');
+              this.scrollToBottom();
             }
           }
           // } else if (isLiveChannelStatusEvent(msg)) {
@@ -194,20 +201,30 @@ interface MessageElementProps {
 }
 
 const MessageElement: FunctionComponent<MessageElementProps> = ({ message }) => {
-  let userColor = '#19a2e7';
-  if (message.userId === 0) {
-    userColor = '#34BA18';
+  let senderColor = '#34BA18';
+  let senderName = 'System';
+  let avatarUrl = '/public/img/grafana_icon.svg';
+  if (message.userId > 0) {
+    senderColor = '#19a2e7';
+    senderName = message.user.login;
+    avatarUrl = message.user.avatarUrl;
   }
   const timeColor = '#898989';
   const timeFormatted = new Date(message.created * 1000).toLocaleTimeString();
   return (
-    <div style={{ paddingTop: '2px', paddingBottom: '2px', wordBreak: 'break-word' }}>
-      <div>
-        <span style={{ color: userColor }}>{message.user ? message.user.login : 'System'}</span>
-        &nbsp;
-        <span style={{ color: timeColor }}>{timeFormatted}</span>
+    <div style={{ paddingTop: '3px', paddingBottom: '3px', wordBreak: 'break-word' }}>
+      <div style={{ float: 'left', paddingTop: '6px', marginRight: '10px' }}>
+        <img src={avatarUrl} alt="" style={{ width: '30px', height: '30px' }} />
       </div>
-      <div>{message.content}</div>
+      <div>
+        <div>
+          <span style={{ color: senderColor }}>{senderName}</span>
+          &nbsp;
+          <span style={{ color: timeColor }}>{timeFormatted}</span>
+        </div>
+        <div>{message.content}</div>
+      </div>
+      <div style={{ clear: 'both' }}></div>
     </div>
   );
 };
