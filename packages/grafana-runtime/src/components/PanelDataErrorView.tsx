@@ -12,6 +12,7 @@ export interface PanelDataErrorViewProps {
   data: PanelData;
   needsTimeField?: boolean;
   needsNumberField?: boolean;
+  needsStringField?: boolean;
   // suggestions?: VisualizationSuggestion[]; <<< for sure optional
 }
 

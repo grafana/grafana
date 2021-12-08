@@ -1,6 +1,7 @@
+import { GrafanaTheme2 } from '@grafana/data';
 import { CSSObjectWithLabel } from 'react-select';
 
-export default function resetSelectStyles() {
+export default function resetSelectStyles(theme: GrafanaTheme2) {
   return {
     clearIndicator: () => ({}),
     container: () => ({}),
@@ -31,7 +32,10 @@ export default function resetSelectStyles() {
     multiValueRemove: () => ({}),
     noOptionsMessage: () => ({}),
     option: () => ({}),
-    placeholder: () => ({}),
+    placeholder: (originalStyles: CSSObjectWithLabel) => ({
+      ...originalStyles,
+      color: theme.colors.text.disabled,
+    }),
     singleValue: () => ({}),
     valueContainer: () => ({}),
   };
