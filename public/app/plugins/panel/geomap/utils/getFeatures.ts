@@ -54,19 +54,7 @@ export const getFeatures = async (
         } else {
           let dynamicMarker;
 
-          if (symbol.endsWith('.png') || symbol.endsWith('.jpg')) {
-            const image = formattedImage.getIfExists(symbol);
-
-            if (!image) {
-              const size = values.size ?? 100;
-              const newImage = await prepareImage(dims.symbol.get(i), size, values.color);
-              values.symbol = newImage;
-              formattedImage.register({ id: symbol, name: symbol, aliasIds: [], image: newImage });
-            } else {
-              values.symbol = image.image;
-            }
-            dynamicMarker = await getMarkerMaker(values.symbol, style.hasText, true);
-          } else {
+          if (symbol.endsWith('.svg')) {
             const svg = formattedImage.getIfExists(symbol);
             if (!svg) {
               const newSvg = await prepareSVG(getPublicOrAbsoluteUrl(symbol));
@@ -77,6 +65,22 @@ export const getFeatures = async (
             }
             dynamicMarker = await getMarkerMaker(values.symbol, style.hasText);
             markerMakers.register({ id: symbol, name: symbol, aliasIds: [], make: dynamicMarker });
+          } else {
+            const image = formattedImage.getIfExists(symbol);
+
+            if (!image) {
+              const size = values.size ?? 100;
+              const newImage = await prepareImage(dims.symbol.get(i), size, values.color);
+              if (!newImage) {
+                console.log('failed to load image');
+              } else {
+                values.symbol = newImage;
+                formattedImage.register({ id: symbol, name: symbol, aliasIds: [], image: newImage });
+              }
+            } else {
+              values.symbol = image.image;
+            }
+            dynamicMarker = await getMarkerMaker(values.symbol, style.hasText, true);
           }
           dot.setStyle(dynamicMarker(values));
         }
