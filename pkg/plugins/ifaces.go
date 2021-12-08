@@ -55,9 +55,8 @@ type Client interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
 	backend.StreamHandler
+	backend.CallResourceHandler
 
-	// CallResource calls a plugin resource.
-	CallResource(pCtx backend.PluginContext, ctx *models.ReqContext, path string)
 	// CollectMetrics collects metrics from a plugin.
 	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
 }

@@ -2,13 +2,9 @@ package manager
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"sync"
@@ -26,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
@@ -249,161 +244,24 @@ func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataReq
 	return resp, err
 }
 
-func (m *PluginManager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
-	var dsURL string
-	if pCtx.DataSourceInstanceSettings != nil {
-		dsURL = pCtx.DataSourceInstanceSettings.URL
-	}
-
-	err := m.requestValidator.Validate(dsURL, reqCtx.Req)
-	if err != nil {
-		reqCtx.JsonApiErr(http.StatusForbidden, "Access denied", err)
-		return
-	}
-
-	clonedReq := reqCtx.Req.Clone(reqCtx.Req.Context())
-	rawURL := path
-	if clonedReq.URL.RawQuery != "" {
-		rawURL += "?" + clonedReq.URL.RawQuery
-	}
-	urlPath, err := url.Parse(rawURL)
-	if err != nil {
-		handleCallResourceError(err, reqCtx)
-		return
-	}
-	clonedReq.URL = urlPath
-	err = m.callResourceInternal(reqCtx.Resp, clonedReq, pCtx)
-	if err != nil {
-		handleCallResourceError(err, reqCtx)
-	}
-}
-
-func (m *PluginManager) callResourceInternal(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
-	p, exists := m.plugin(pCtx.PluginID)
+func (m *PluginManager) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	p, exists := m.plugin(req.PluginContext.PluginID)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
 
-	keepCookieModel := keepCookiesJSONModel{}
-	if dis := pCtx.DataSourceInstanceSettings; dis != nil {
-		err := json.Unmarshal(dis.JSONData, &keepCookieModel)
-		if err != nil {
-			p.Logger().Error("Failed to to unpack JSONData in datasource instance settings", "err", err)
-		}
-	}
-
-	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
-	proxyutil.PrepareProxyRequest(req)
-
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read request body: %w", err)
-	}
-
-	crReq := &backend.CallResourceRequest{
-		PluginContext: pCtx,
-		Path:          req.URL.Path,
-		Method:        req.Method,
-		URL:           req.URL.String(),
-		Headers:       req.Header,
-		Body:          body,
-	}
-
-	return instrumentation.InstrumentCallResourceRequest(p.PluginID(), func() error {
-		childCtx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		stream := newCallResourceResponseStream(childCtx)
-
-		var wg sync.WaitGroup
-		wg.Add(1)
-
-		defer func() {
-			if err := stream.Close(); err != nil {
-				m.log.Warn("Failed to close stream", "err", err)
-			}
-			wg.Wait()
-		}()
-
-		var flushStreamErr error
-		go func() {
-			flushStreamErr = flushStream(p, stream, w)
-			wg.Done()
-		}()
-
-		if err := p.CallResource(req.Context(), crReq, stream); err != nil {
+	err := instrumentation.InstrumentCallResourceRequest(p.PluginID(), func() error {
+		if err := p.CallResource(ctx, req, sender); err != nil {
 			return err
 		}
-
-		return flushStreamErr
+		return nil
 	})
-}
 
-func handleCallResourceError(err error, reqCtx *models.ReqContext) {
-	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-		reqCtx.JsonApiErr(503, "Plugin unavailable", err)
-		return
+	if err != nil {
+		return err
 	}
 
-	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-		reqCtx.JsonApiErr(404, "Not found", err)
-		return
-	}
-
-	reqCtx.JsonApiErr(500, "Failed to call resource", err)
-}
-
-func flushStream(plugin backendplugin.Plugin, stream callResourceClientResponseStream, w http.ResponseWriter) error {
-	processedStreams := 0
-
-	for {
-		resp, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			if processedStreams == 0 {
-				return errors.New("received empty resource response")
-			}
-			return nil
-		}
-		if err != nil {
-			if processedStreams == 0 {
-				return errutil.Wrap("failed to receive response from resource call", err)
-			}
-
-			plugin.Logger().Error("Failed to receive response from resource call", "err", err)
-			return stream.Close()
-		}
-
-		// Expected that headers and status are only part of first stream
-		if processedStreams == 0 && resp.Headers != nil {
-			// Make sure a content type always is returned in response
-			if _, exists := resp.Headers["Content-Type"]; !exists {
-				resp.Headers["Content-Type"] = []string{"application/json"}
-			}
-
-			for k, values := range resp.Headers {
-				// Due to security reasons we don't want to forward
-				// cookies from a backend plugin to clients/browsers.
-				if k == "Set-Cookie" {
-					continue
-				}
-
-				for _, v := range values {
-					// TODO: Figure out if we should use Set here instead
-					// nolint:gocritic
-					w.Header().Add(k, v)
-				}
-			}
-			w.WriteHeader(resp.Status)
-		}
-
-		if _, err := w.Write(resp.Body); err != nil {
-			plugin.Logger().Error("Failed to write resource response", "err", err)
-		}
-
-		if flusher, ok := w.(http.Flusher); ok {
-			flusher.Flush()
-		}
-		processedStreams++
-	}
+	return nil
 }
 
 func (m *PluginManager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
@@ -693,62 +551,4 @@ func (m *PluginManager) pluginSettingPaths() []string {
 	}
 
 	return pluginSettingDirs
-}
-
-// callResourceClientResponseStream is used for receiving resource call responses.
-type callResourceClientResponseStream interface {
-	Recv() (*backend.CallResourceResponse, error)
-	Close() error
-}
-
-type keepCookiesJSONModel struct {
-	KeepCookies []string `json:"keepCookies"`
-}
-
-type callResourceResponseStream struct {
-	ctx    context.Context
-	stream chan *backend.CallResourceResponse
-	closed bool
-}
-
-func newCallResourceResponseStream(ctx context.Context) *callResourceResponseStream {
-	return &callResourceResponseStream{
-		ctx:    ctx,
-		stream: make(chan *backend.CallResourceResponse),
-	}
-}
-
-func (s *callResourceResponseStream) Send(res *backend.CallResourceResponse) error {
-	if s.closed {
-		return errors.New("cannot send to a closed stream")
-	}
-
-	select {
-	case <-s.ctx.Done():
-		return errors.New("cancelled")
-	case s.stream <- res:
-		return nil
-	}
-}
-
-func (s *callResourceResponseStream) Recv() (*backend.CallResourceResponse, error) {
-	select {
-	case <-s.ctx.Done():
-		return nil, s.ctx.Err()
-	case res, ok := <-s.stream:
-		if !ok {
-			return nil, io.EOF
-		}
-		return res, nil
-	}
-}
-
-func (s *callResourceResponseStream) Close() error {
-	if s.closed {
-		return errors.New("cannot close a closed stream")
-	}
-
-	close(s.stream)
-	s.closed = true
-	return nil
 }
