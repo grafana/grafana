@@ -30,6 +30,7 @@ import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { ExploreGraph } from './ExploreGraph';
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { ExploreGraphLabel } from './ExploreGraphLabel';
+import { AutoBreakdowns } from './AutoBreakdowns';
 import { ExploreGraphStyle } from 'app/core/utils/explore';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -168,6 +169,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
+  onUpdateAutoBreakdownTimeRange = (timeRange: AbsoluteTimeRange) => {
+    this.setState({
+      autoBreakdownRange: timeRange,
+    });
+  };
+
   onChangeGraphStyle = (graphStyle: ExploreGraphStyle) => {
     const { exploreId, changeGraphStyle } = this.props;
     changeGraphStyle(exploreId, graphStyle);
@@ -210,20 +217,15 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       datasourceInstance,
     } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
+    const haveExemplars = !!queryResponse?.annotations?.length;
     const label = (
       <ExploreGraphLabel
         graphStyle={graphStyle}
         onChangeGraphStyle={this.onChangeGraphStyle}
-        withAutoBreakdowns={!!queryResponse?.annotations?.length}
+        withAutoBreakdowns={haveExemplars}
       />
     );
 
-    //Show auto breakdowns when we: 1. have selected it in graph styles 2. have exemplars 3. have selected range
-    const showBreakdowns =
-      graphStyle === 'auto_breakdowns' && !!queryResponse?.annotations?.length && this.state.autoBreakdownRange;
-    // This should be done in more plugin-structure style. It is noot going to work for other datasources
-    // But prometheus implements this function.
-    const dataFrames = showBreakdowns && datasourceInstance?.createAutoBreakdowns(this.state.autoBreakdownRange);
     return (
       <>
         <Collapse label={label} loading={loading} isOpen>
@@ -234,13 +236,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             width={width - spacing}
             absoluteRange={absoluteRange}
             onChangeTime={
-              graphStyle === 'auto_breakdowns'
-                ? (timeRange: AbsoluteTimeRange) => {
-                    this.setState({
-                      autoBreakdownRange: timeRange,
-                    });
-                  }
-                : this.onUpdateTimeRange
+              graphStyle === 'auto_breakdowns' ? this.onUpdateAutoBreakdownTimeRange : this.onUpdateTimeRange
             }
             timeZone={timeZone}
             annotations={queryResponse.annotations}
@@ -248,29 +244,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             loadingState={queryResponse.state}
           />
         </Collapse>
-        {dataFrames && (
-          <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-            {dataFrames.map((df: DataFrame) => {
-              return (
-                <div style={{ margin: '10px' }} key={`${df.name}`}>
-                  <Collapse label={`Auto breakdowns by ${df.name}`} isOpen>
-                    <ExploreGraph
-                      graphStyle={graphStyle}
-                      data={[df]}
-                      height={200}
-                      width={300}
-                      absoluteRange={this.state.autoBreakdownRange!}
-                      timeZone={timeZone}
-                      loadingState={LoadingState.Done}
-                      onChangeTime={() => {}}
-                      pluginId="barchart"
-                    />
-                  </Collapse>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <AutoBreakdowns
+          datasourceInstance={datasourceInstance}
+          graphStyle={graphStyle}
+          timeZone={timeZone}
+          autoBreakdownRange={this.state.autoBreakdownRange}
+        />
       </>
     );
   }
