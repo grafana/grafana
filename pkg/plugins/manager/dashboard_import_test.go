@@ -92,8 +92,9 @@ func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManage
 				},
 			},
 		}
-		pm := newManager(cfg, nil, loader.New(cfg, nil, &signature.UnsignedPluginAuthorizer{Cfg: cfg}, &provider.Service{}), &sqlstore.SQLStore{})
-		err := pm.Init()
+
+		pm, err := ProvideService(cfg, nil, loader.New(cfg, nil,
+			&signature.UnsignedPluginAuthorizer{Cfg: cfg}, &provider.Service{}), &sqlstore.SQLStore{})
 		require.NoError(t, err)
 
 		t.Run(desc, func(t *testing.T) {

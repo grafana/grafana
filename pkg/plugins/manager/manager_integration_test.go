@@ -43,9 +43,9 @@ func TestPluginManager_int_init(t *testing.T) {
 	license := &licensing.OSSLicensingService{
 		Cfg: cfg,
 	}
-	pm := newManager(cfg, nil, loader.New(cfg, license, &signature.UnsignedPluginAuthorizer{Cfg: cfg}, &provider.Service{}), nil)
 
-	err = pm.Init()
+	pm, err := ProvideService(cfg, nil, loader.New(cfg, license,
+		&signature.UnsignedPluginAuthorizer{Cfg: cfg}, &provider.Service{}), nil)
 	require.NoError(t, err)
 
 	verifyCorePluginCatalogue(t, pm)

@@ -467,7 +467,7 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 
 	requestValidator := &testPluginRequestValidator{}
 	loader := &fakeLoader{}
-	pm := newManager(cfg, requestValidator, loader, &sqlstore.SQLStore{})
+	pm := New(cfg, requestValidator, nil, loader, &sqlstore.SQLStore{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -526,7 +526,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 
 	requestValidator := &testPluginRequestValidator{}
 	loader := &fakeLoader{}
-	manager := newManager(cfg, requestValidator, loader, nil)
+	manager := New(cfg, requestValidator, nil, loader, nil)
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,
