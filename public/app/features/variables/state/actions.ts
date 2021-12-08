@@ -13,8 +13,8 @@ import {
   VariableOption,
   VariableRefresh,
   VariablesChanged,
+  VariablesChangedEvent,
   VariablesChangedInUrl,
-  VariablesFinishedProcessingTimeRangeChange,
   VariableWithMultiSupport,
   VariableWithOptions,
 } from '../types';
@@ -518,9 +518,9 @@ export const variableUpdated = (
     const variables = getVariables(state);
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
-    const affectedPanelIds = isAdHoc(variableInState)
-      ? undefined // for adhoc variables we don't know which panels that will be impacted
-      : getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels);
+    const event: VariablesChangedEvent = isAdHoc(variableInState)
+      ? { refreshAll: true, panelIds: [] } // for adhoc variables we don't know which panels that will be impacted
+      : { refreshAll: false, panelIds: getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels) };
 
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
@@ -537,7 +537,7 @@ export const variableUpdated = (
 
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
-        events.publish(new VariablesChanged({ panelIds: affectedPanelIds }));
+        events.publish(new VariablesChanged(event));
         locationService.partial(getQueryWithVariables(getState));
       }
     });
@@ -569,7 +569,7 @@ export const onTimeRangeUpdated = (
 
   try {
     await Promise.all(promises);
-    dependencies.events.publish(new VariablesFinishedProcessingTimeRangeChange({ panelIds: undefined }));
+    dependencies.events.publish(new VariablesChanged({ panelIds: [], refreshAll: true }));
   } catch (error) {
     console.error(error);
     dispatch(notifyApp(createVariableErrorNotification('Template variable service failed', error)));
@@ -625,7 +625,7 @@ export const templateVarsChangedInUrl = (
 
   if (update.length) {
     await Promise.all(update);
-    events.publish(new VariablesChangedInUrl({ panelIds: undefined }));
+    events.publish(new VariablesChangedInUrl({ panelIds: [], refreshAll: true }));
   }
 };
 
