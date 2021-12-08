@@ -41,8 +41,8 @@ type MessageDto struct {
 	User    *MessageUser `json:"user,omitempty"`
 }
 
-func (i Message) ToDTO(user *MessageUser) MessageDto {
-	return MessageDto{
+func (i Message) ToDTO(user *MessageUser) *MessageDto {
+	return &MessageDto{
 		Id:      i.Id,
 		UserId:  i.UserId,
 		Content: i.Content,
