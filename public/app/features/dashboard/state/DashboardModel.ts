@@ -45,7 +45,7 @@ import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
-import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { config, RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { Subscription } from 'rxjs';
 import { appEvents } from '../../../core/core';
@@ -54,6 +54,7 @@ import {
   VariablesChangedInUrl,
   VariablesFinishedProcessingTimeRangeChange,
 } from '../../variables/types';
+import { DASHBOARD_EXPORTER_RECORDINGS } from '../components/DashExportModal/constants';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -107,6 +108,7 @@ export class DashboardModel {
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
+  isRecorded?: boolean;
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
@@ -135,6 +137,7 @@ export class DashboardModel {
     appEventsSubscription: true,
     panelsAffectedByVariableChange: true,
     lastRefresh: true,
+    isRecorded: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -191,6 +194,9 @@ export class DashboardModel {
     this.appEventsSubscription.add(
       appEvents.subscribe(VariablesChangedInUrl, this.variablesChangedInUrlHandler.bind(this))
     );
+    if (config.dashboardRecordingEnabled && data[DASHBOARD_EXPORTER_RECORDINGS]?.length > 0) {
+      this.isRecorded = true;
+    }
   }
 
   addBuiltInAnnotationQuery() {

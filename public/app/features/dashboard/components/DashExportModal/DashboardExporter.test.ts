@@ -8,6 +8,7 @@ import { createConstantVariableAdapter } from '../../../variables/constant/adapt
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
 import { LibraryElementKind } from '../../../library-panels/types';
+import { DASHBOARD_EXPORTER_ELEMENTS, DASHBOARD_EXPORTER_INPUTS, DASHBOARD_EXPORTER_REQUIRES } from './constants';
 
 jest.mock('app/core/store', () => {
   return {
@@ -187,13 +188,13 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should add datasource as input', () => {
-    expect(exported.__inputs[0].name).toBe('DS_GFDB');
-    expect(exported.__inputs[0].pluginId).toBe('testdb');
-    expect(exported.__inputs[0].type).toBe('datasource');
+    expect(exported[DASHBOARD_EXPORTER_INPUTS][0].name).toBe('DS_GFDB');
+    expect(exported[DASHBOARD_EXPORTER_INPUTS][0].pluginId).toBe('testdb');
+    expect(exported[DASHBOARD_EXPORTER_INPUTS][0].type).toBe('datasource');
   });
 
   it('should add datasource to required', () => {
-    const require: any = find(exported.__requires, { name: 'TestDB' });
+    const require: any = find(exported[DASHBOARD_EXPORTER_REQUIRES], { name: 'TestDB' });
     expect(require.name).toBe('TestDB');
     expect(require.id).toBe('testdb');
     expect(require.type).toBe('datasource');
@@ -201,45 +202,45 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should not add built in datasources to required', () => {
-    const require: any = find(exported.__requires, { name: 'Mixed' });
+    const require: any = find(exported[DASHBOARD_EXPORTER_REQUIRES], { name: 'Mixed' });
     expect(require).toBe(undefined);
   });
 
   it('should add datasources used in mixed mode', () => {
-    const require: any = find(exported.__requires, { name: 'OtherDB' });
+    const require: any = find(exported[DASHBOARD_EXPORTER_REQUIRES], { name: 'OtherDB' });
     expect(require).not.toBe(undefined);
   });
 
   it('should add graph panel to required', () => {
-    const require: any = find(exported.__requires, { name: 'Graph' });
+    const require: any = find(exported[DASHBOARD_EXPORTER_REQUIRES], { name: 'Graph' });
     expect(require.name).toBe('Graph');
     expect(require.id).toBe('graph');
     expect(require.version).toBe('1.1.0');
   });
 
   it('should add table panel to required', () => {
-    const require: any = find(exported.__requires, { name: 'Table' });
+    const require: any = find(exported[DASHBOARD_EXPORTER_REQUIRES], { name: 'Table' });
     expect(require.name).toBe('Table');
     expect(require.id).toBe('table');
     expect(require.version).toBe('1.1.1');
   });
 
   it('should add heatmap panel to required', () => {
-    const require: any = find(exported.__requires, { name: 'Heatmap' });
+    const require: any = find(exported[DASHBOARD_EXPORTER_REQUIRES], { name: 'Heatmap' });
     expect(require.name).toBe('Heatmap');
     expect(require.id).toBe('heatmap');
     expect(require.version).toBe('1.1.2');
   });
 
   it('should add grafana version', () => {
-    const require: any = find(exported.__requires, { name: 'Grafana' });
+    const require: any = find(exported[DASHBOARD_EXPORTER_REQUIRES], { name: 'Grafana' });
     expect(require.type).toBe('grafana');
     expect(require.id).toBe('grafana');
     expect(require.version).toBe('3.0.2');
   });
 
   it('should add constant template variables as inputs', () => {
-    const input: any = find(exported.__inputs, { name: 'VAR_PREFIX' });
+    const input: any = find(exported[DASHBOARD_EXPORTER_INPUTS], { name: 'VAR_PREFIX' });
     expect(input.type).toBe('constant');
     expect(input.label).toBe('prefix');
     expect(input.value).toBe('collectd');
@@ -255,12 +256,12 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should add datasources only use via datasource variable to requires', () => {
-    const require: any = find(exported.__requires, { name: 'OtherDB_2' });
+    const require: any = find(exported[DASHBOARD_EXPORTER_REQUIRES], { name: 'OtherDB_2' });
     expect(require.id).toBe('other2');
   });
 
   it('should add library panels as elements', () => {
-    const element: LibraryElementExport = exported.__elements.find(
+    const element: LibraryElementExport = exported[DASHBOARD_EXPORTER_ELEMENTS].find(
       (element: LibraryElementExport) => element.uid === 'ah8NqyDPs'
     );
     expect(element.name).toBe('Library Panel 2');
@@ -273,7 +274,7 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should add library panels in collapsed rows as elements', () => {
-    const element: LibraryElementExport = exported.__elements.find(
+    const element: LibraryElementExport = exported[DASHBOARD_EXPORTER_ELEMENTS].find(
       (element: LibraryElementExport) => element.uid === 'jL6MrxCMz'
     );
     expect(element.name).toBe('Library Panel');

@@ -9,6 +9,7 @@ import { VariableOption, VariableRefresh } from '../../../variables/types';
 import { isConstant, isQuery } from '../../../variables/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
+import { DASHBOARD_EXPORTER_ELEMENTS, DASHBOARD_EXPORTER_INPUTS, DASHBOARD_EXPORTER_REQUIRES } from './constants';
 
 interface Input {
   name: string;
@@ -236,9 +237,9 @@ export class DashboardExporter {
 
         // make inputs and requires a top thing
         const newObj: { [key: string]: {} } = {};
-        newObj['__inputs'] = inputs;
-        newObj['__elements'] = [...libraryPanels.values()];
-        newObj['__requires'] = sortBy(requires, ['id']);
+        newObj[DASHBOARD_EXPORTER_INPUTS] = inputs;
+        newObj[DASHBOARD_EXPORTER_ELEMENTS] = [...libraryPanels.values()];
+        newObj[DASHBOARD_EXPORTER_REQUIRES] = sortBy(requires, ['id']);
 
         defaults(newObj, saveModel);
         return newObj;

@@ -24,6 +24,8 @@ import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { config, locationService } from '@grafana/runtime';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { getRecordedResponsePlayer } from '../../../core/services/RecordedResponsePlayer';
+import { DASHBOARD_EXPORTER_RECORDINGS } from '../components/DashExportModal/constants';
 
 export interface InitDashboardArgs {
   urlUid?: string;
@@ -123,6 +125,11 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // returns null if there was a redirect or error
     if (!dashDTO) {
       return;
+    }
+
+    const dtoAsRecord = dashDTO.dashboard as Record<string, any>;
+    if (config.dashboardRecordingEnabled && dtoAsRecord[DASHBOARD_EXPORTER_RECORDINGS]) {
+      getRecordedResponsePlayer().load(dtoAsRecord[DASHBOARD_EXPORTER_RECORDINGS]);
     }
 
     // set initializing state

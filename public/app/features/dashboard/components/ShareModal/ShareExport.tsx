@@ -9,6 +9,7 @@ import { ViewJsonModal } from './ViewJsonModal';
 import { config } from '@grafana/runtime';
 import { ShareModalTabProps } from './types';
 import { RequestResponseRecording } from '../../../../core/services/RequestResponseRecorder';
+import { DASHBOARD_EXPORTER_RECORDINGS } from '../DashExportModal/constants';
 
 interface Props extends ShareModalTabProps {
   shareExternally?: boolean;
@@ -53,7 +54,7 @@ export class ShareExport extends PureComponent<Props, State> {
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson: any) => {
         if (config.dashboardRecordingEnabled) {
-          dashboardJson['__recordings'] = this.props.recordings;
+          dashboardJson[DASHBOARD_EXPORTER_RECORDINGS] = this.props.recordings;
         }
 
         if (trimDefaults) {
@@ -87,7 +88,7 @@ export class ShareExport extends PureComponent<Props, State> {
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson: any) => {
         if (config.dashboardRecordingEnabled) {
-          dashboardJson['__recordings'] = this.props.recordings;
+          dashboardJson[DASHBOARD_EXPORTER_RECORDINGS] = this.props.recordings;
         }
 
         if (trimDefaults) {

@@ -1,5 +1,6 @@
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime/src';
 import { dateTime, isDateTime } from '@grafana/data/src';
+
 import { RequestResponseRecording } from './RequestResponseRecorder';
 
 export interface PlaysRecordedResponses {
@@ -40,14 +41,18 @@ class RecordedResponsePlayer implements PlaysRecordedResponses {
             matches[index]++;
           } else {
             if (typeof value === 'string' && typeof recorded === 'string') {
-              const valueWithoutDigits = value ? value?.replace(/[0-9]/g, 'x') : value;
-              const recordedWithoutDigits = recorded ? recorded?.replace(/[0-9]/g, 'x') : recorded;
-              if (valueWithoutDigits === recordedWithoutDigits) {
+              if (value.match(/^[a-zA-Z0-9\\-\\_]*$/) && recorded.match(/^[a-zA-Z0-9\\-\\_]*$/)) {
                 matches[index] = matches[index] ?? 0;
                 matches[index]++;
+              } else {
+                const valueWithoutDigits = value ? value?.replace(/[0-9]/g, 'x') : value;
+                const recordedWithoutDigits = recorded ? recorded?.replace(/[0-9]/g, 'x') : recorded;
+                if (valueWithoutDigits === recordedWithoutDigits) {
+                  matches[index] = matches[index] ?? 0;
+                  matches[index]++;
+                }
               }
-            }
-            if (typeof value === 'number' && typeof recorded === 'number') {
+            } else if (typeof value === 'number' && typeof recorded === 'number') {
               matches[index] = matches[index] ?? 0;
               matches[index]++;
             }
@@ -56,12 +61,19 @@ class RecordedResponsePlayer implements PlaysRecordedResponses {
       }
     }
 
-    const bestMatch = Object.keys(matches).find((key) => {
+    let bestMatch = Object.keys(matches).find((key) => {
       return matches[Number(key)] === keys.length;
     });
 
     if (!bestMatch) {
-      return;
+      return undefined;
+      bestMatch = Object.keys(matches).find((key) => {
+        return matches[Number(key)] === keys.length - 1;
+      });
+
+      if (!bestMatch) {
+        return undefined;
+      }
     }
 
     return (flattenedRecordings[Number(bestMatch)].fetchResponse as unknown) as FetchResponse<T>;

@@ -1,7 +1,7 @@
 import React, { ReactElement, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useInterval } from 'react-use';
-import { Modal, useForceUpdate } from '@grafana/ui';
+import { Badge, Modal, useForceUpdate } from '@grafana/ui';
 import {
   getRequestResponseRecorder,
   RequestResponseRecording,
@@ -42,8 +42,11 @@ export function RecordingControls({ dashboard }: RecordingControlsProps): ReactE
 
   return (
     <>
-      {getRequestResponseRecorder().isRecording() && <RecordingIndicator onClick={onRecordingStopped} />}
-      {!getRequestResponseRecorder().isRecording() && (
+      {dashboard.isRecorded && <Badge text="Recorded dashboard" color="blue" />}
+      {!dashboard.isRecorded && getRequestResponseRecorder().isRecording() && (
+        <RecordingIndicator onClick={onRecordingStopped} />
+      )}
+      {!dashboard.isRecorded && !getRequestResponseRecorder().isRecording() && (
         <DashNavButton tooltip="Start recording" icon="play" iconSize="lg" onClick={onRecordingStarted} />
       )}
       <Modal isOpen={Boolean(recordings.length)} title="Export dashboard with recordings" onDismiss={() => set([])}>
