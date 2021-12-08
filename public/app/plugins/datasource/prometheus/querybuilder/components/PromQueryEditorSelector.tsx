@@ -8,13 +8,13 @@ import { PromQueryEditorProps } from '../../components/types';
 import { promQueryModeller } from '../PromQueryModeller';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryEditorMode } from '../shared/types';
-import { getDefaultTestQuery, PromVisualQuery } from '../types';
+import { getDefaultEmptyQuery, PromVisualQuery } from '../types';
 import { PromQueryBuilder } from './PromQueryBuilder';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
-  const [visualQuery, setVisualQuery] = useState<PromVisualQuery>(getDefaultTestQuery());
+  const [visualQuery, setVisualQuery] = useState<PromVisualQuery>(query.visualQuery ?? getDefaultEmptyQuery());
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
@@ -77,7 +77,6 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         )}
         {editorMode === QueryEditorMode.Builder && (
           <InlineSelect
-            width={14.5}
             value={null}
             placeholder="Query patterns"
             allowCustomValue

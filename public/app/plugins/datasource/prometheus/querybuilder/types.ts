@@ -25,13 +25,13 @@ export interface PromQueryPattern {
   operations: QueryBuilderOperation[];
 }
 
-export function getDefaultTestQuery() {
+export function getDefaultEmptyQuery() {
   const model: PromVisualQuery = {
     metric: '',
     labels: [],
     operations: [
       { id: 'rate', params: ['auto'] },
-      { id: '__sum_by', params: ['job'] },
+      { id: 'sum', params: [] },
     ],
   };
 

@@ -23,14 +23,9 @@ export enum LokiVisualQueryOperationCategory {
   PipelineErrors = 'Pipeline errors',
 }
 
-export function getDefaultTestQuery() {
-  const model: LokiVisualQuery = {
-    labels: [
-      { label: 'cluster', op: '=~', value: '$cluster' },
-      { label: 'job', op: '=~', value: '($namespace)/query-scheduler.*' },
-    ],
+export function getDefaultEmptyQuery(): LokiVisualQuery {
+  return {
+    labels: [],
     operations: [],
   };
-
-  return model;
 }

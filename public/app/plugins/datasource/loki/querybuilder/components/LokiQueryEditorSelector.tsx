@@ -8,16 +8,13 @@ import React, { useCallback, useState } from 'react';
 import { LokiQueryEditor } from '../../components/LokiQueryEditor';
 import { LokiQueryEditorProps } from '../../components/types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
-import { LokiVisualQuery } from '../types';
+import { getDefaultEmptyQuery, LokiVisualQuery } from '../types';
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
-  const [visualQuery, setVisualQuery] = useState<LokiVisualQuery>({
-    labels: [],
-    operations: [],
-  });
+  const [visualQuery, setVisualQuery] = useState<LokiVisualQuery>(query.visualQuery ?? getDefaultEmptyQuery());
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
@@ -32,6 +29,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
     onChange({
       ...query,
       expr: lokiQueryModeller.renderQuery(updatedQuery),
+      visualQuery: updatedQuery,
       editorMode: QueryEditorMode.Builder,
     });
   };
