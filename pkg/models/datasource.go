@@ -54,7 +54,7 @@ type DataSource struct {
 	SecureJsonData      map[string][]byte `json:"secureJsonData"`
 	ReadOnly            bool              `json:"readOnly"`
 	Uid                 string            `json:"uid"`
-	LibraryCredentialId int64             `json:"libraryCredentialId"`
+	LibraryCredentialId *int64            `json:"libraryCredentialId"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`

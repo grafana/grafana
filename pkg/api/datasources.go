@@ -80,11 +80,13 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	libCredQuery := models.GetLibraryCredentialQuery{OrgId: c.OrgId, Id: query.Result.LibraryCredentialId}
-	if err := hs.LibraryCredentialService.GetLibraryCredential(c.Req.Context(), &libCredQuery); err != nil {
-		return response.Error(500, "Failed to query library credential", err)
+	var libCredQuery models.GetLibraryCredentialQuery
+	if query.Result.LibraryCredentialId != nil {
+		libCredQuery = models.GetLibraryCredentialQuery{OrgId: c.OrgId, Id: *query.Result.LibraryCredentialId}
+		if err := hs.LibraryCredentialService.GetLibraryCredential(c.Req.Context(), &libCredQuery); err != nil {
+			return response.Error(500, "Failed to query library credential", err)
+		}
 	}
-
 	ds := query.Result
 	dtos := convertModelToDtos(ds, libCredQuery.Result)
 
@@ -125,10 +127,12 @@ func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Respon
 // GET /api/datasources/uid/:uid
 func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response {
 	ds, err := getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.OrgId)
-
-	libCredQuery := models.GetLibraryCredentialQuery{OrgId: c.OrgId, Id: ds.LibraryCredentialId}
-	if err := hs.LibraryCredentialService.GetLibraryCredential(c.Req.Context(), &libCredQuery); err != nil {
-		return response.Error(500, "Failed to query library credential", err)
+	var libCredQuery models.GetLibraryCredentialQuery
+	if ds.LibraryCredentialId != nil {
+		libCredQuery = models.GetLibraryCredentialQuery{OrgId: c.OrgId, Id: *ds.LibraryCredentialId}
+		if err := hs.LibraryCredentialService.GetLibraryCredential(c.Req.Context(), &libCredQuery); err != nil {
+			return response.Error(500, "Failed to query library credential", err)
+		}
 	}
 
 	if err != nil {
@@ -363,9 +367,12 @@ func (hs *HTTPServer) GetDataSourceByName(c *models.ReqContext) response.Respons
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	libCredQuery := models.GetLibraryCredentialQuery{OrgId: c.OrgId, Id: query.Result.LibraryCredentialId}
-	if err := hs.LibraryCredentialService.GetLibraryCredential(c.Req.Context(), &libCredQuery); err != nil {
-		return response.Error(500, "Failed to query library credential", err)
+	var libCredQuery models.GetLibraryCredentialQuery
+	if query.Result.LibraryCredentialId != nil {
+		libCredQuery = models.GetLibraryCredentialQuery{OrgId: c.OrgId, Id: *query.Result.LibraryCredentialId}
+		if err := hs.LibraryCredentialService.GetLibraryCredential(c.Req.Context(), &libCredQuery); err != nil {
+			return response.Error(500, "Failed to query library credential", err)
+		}
 	}
 
 	dtos := convertModelToDtos(query.Result, libCredQuery.Result)
