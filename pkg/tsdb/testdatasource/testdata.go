@@ -1,6 +1,7 @@
 package testdatasource
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -14,7 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar) (*Service, error) {
+const pluginID = "testdata"
+
+func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) (*Service, error) {
 	s := &Service{
 		queryMux:  datasource.NewQueryTypeMux(),
 		scenarios: map[string]*Scenario{},
@@ -43,7 +46,8 @@ func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar) (*
 		CallResourceHandler: httpadapter.New(rMux),
 		StreamHandler:       s,
 	})
-	err := registrar.LoadAndRegister("testdata", factory)
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
+	err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver)
 	if err != nil {
 		return nil, err
 	}

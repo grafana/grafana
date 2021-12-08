@@ -71,7 +71,7 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar,
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store,
 	dsService *datasources.Service) *Service {
 	s := &Service{
 		httpClientProvider: httpClientProvider,
@@ -88,7 +88,8 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, re
 		CheckHealthHandler:  s,
 	})
 
-	if err := registrar.LoadAndRegister(pluginID, factory); err != nil {
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		slog.Error("Failed to register plugin", "error", err)
 	}
 	return s
