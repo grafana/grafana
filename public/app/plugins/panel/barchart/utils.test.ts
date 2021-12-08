@@ -147,7 +147,7 @@ describe('BarChart utils', () => {
   describe('prepareGraphableFrames', () => {
     it('will warn when there is no data in the response', () => {
       const result = prepareGraphableFrames([], createTheme(), { stacking: StackingMode.None } as any);
-      expect(result.warn).toEqual('No data in response');
+      expect(result).toBeNull();
     });
 
     it('will warn when there is no string field in the response', () => {
@@ -158,8 +158,7 @@ describe('BarChart utils', () => {
         ],
       });
       const result = prepareGraphableFrames([df], createTheme(), { stacking: StackingMode.None } as any);
-      expect(result.warn).toEqual('Bar charts requires a string field');
-      expect(result.frames).toBeUndefined();
+      expect(result).toBeNull();
     });
 
     it('will warn when there are no numeric fields in the response', () => {
@@ -170,8 +169,7 @@ describe('BarChart utils', () => {
         ],
       });
       const result = prepareGraphableFrames([df], createTheme(), { stacking: StackingMode.None } as any);
-      expect(result.warn).toEqual('No numeric fields found');
-      expect(result.frames).toBeUndefined();
+      expect(result).toBeNull();
     });
 
     it('will convert NaN and Infinty to nulls', () => {
@@ -181,9 +179,9 @@ describe('BarChart utils', () => {
           { name: 'value', values: [-10, NaN, 10, -Infinity, +Infinity] },
         ],
       });
-      const result = prepareGraphableFrames([df], createTheme(), { stacking: StackingMode.None } as any);
+      const frames = prepareGraphableFrames([df], createTheme(), { stacking: StackingMode.None } as any)!;
 
-      const field = result.frames![0].fields[1];
+      const field = frames[0].fields[1];
       expect(field!.values.toArray()).toMatchInlineSnapshot(`
       Array [
         -10,
@@ -205,21 +203,23 @@ describe('BarChart utils', () => {
         ],
       });
 
-      const resultAsc = prepareGraphableFrames([frame], createTheme(), {
+      const framesAsc = prepareGraphableFrames([frame], createTheme(), {
         legend: { sortBy: 'Min', sortDesc: false },
-      } as any);
-      expect(resultAsc.frames![0].fields[0].type).toBe(FieldType.string);
-      expect(resultAsc.frames![0].fields[1].name).toBe('a');
-      expect(resultAsc.frames![0].fields[2].name).toBe('c');
-      expect(resultAsc.frames![0].fields[3].name).toBe('b');
+      } as any)!;
 
-      const resultDesc = prepareGraphableFrames([frame], createTheme(), {
+      expect(framesAsc[0].fields[0].type).toBe(FieldType.string);
+      expect(framesAsc[0].fields[1].name).toBe('a');
+      expect(framesAsc[0].fields[2].name).toBe('c');
+      expect(framesAsc[0].fields[3].name).toBe('b');
+
+      const framesDesc = prepareGraphableFrames([frame], createTheme(), {
         legend: { sortBy: 'Min', sortDesc: true },
-      } as any);
-      expect(resultDesc.frames![0].fields[0].type).toBe(FieldType.string);
-      expect(resultDesc.frames![0].fields[1].name).toBe('b');
-      expect(resultDesc.frames![0].fields[2].name).toBe('c');
-      expect(resultDesc.frames![0].fields[3].name).toBe('a');
+      } as any)!;
+
+      expect(framesDesc[0].fields[0].type).toBe(FieldType.string);
+      expect(framesDesc[0].fields[1].name).toBe('b');
+      expect(framesDesc[0].fields[2].name).toBe('c');
+      expect(framesDesc[0].fields[3].name).toBe('a');
     });
   });
 });
