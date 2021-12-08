@@ -1,25 +1,28 @@
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime/src';
-import store, { Store } from 'app/core/store';
 import { dateTime, isDateTime } from '@grafana/data/src';
-import { RequestResponseRecording, STORE_KEY } from './RequestResponseRecorder';
+import { RequestResponseRecording } from './RequestResponseRecorder';
 
 export interface PlaysRecordedResponses {
+  load: (recordings: RequestResponseRecording[]) => void;
   find: <T>(options: BackendSrvRequest) => FetchResponse<T> | undefined;
 }
 
 class RecordedResponsePlayer implements PlaysRecordedResponses {
-  constructor(private readonly store: Store) {}
+  private recordings: RequestResponseRecording[] = [];
+  constructor() {}
+
+  load(recordings: RequestResponseRecording[]) {
+    this.recordings = recordings;
+  }
 
   find<T>(options: BackendSrvRequest): FetchResponse<T> | undefined {
-    const recordings: RequestResponseRecording[] = this.store.getObject(STORE_KEY, []);
-
-    if (recordings.length === 0) {
+    if (this.recordings.length === 0) {
       return undefined;
     }
 
     const flattenedOptions = this.flattenOptionsObject(options);
     const keys = Object.keys(flattenedOptions);
-    const flattenedRecordings = recordings.map((recording) => {
+    const flattenedRecordings = this.recordings.map((recording) => {
       const { options, fetchResponse } = recording;
       const flattenedRecordedOptions = this.flattenOptionsObject(options);
       return { flattenedRecordedOptions, fetchResponse };
@@ -104,7 +107,7 @@ class RecordedResponsePlayer implements PlaysRecordedResponses {
   }
 }
 
-let recordedResponsePlayer: PlaysRecordedResponses = new RecordedResponsePlayer(store);
+let recordedResponsePlayer: PlaysRecordedResponses = new RecordedResponsePlayer();
 
 export const setRecordedResponsePlayer = (recorder: PlaysRecordedResponses) => {
   if (process.env.NODE_ENV !== 'test') {

@@ -1,7 +1,7 @@
-import { BackendSrvRequest, FetchResponse } from '@grafana/runtime/src';
+import { BackendSrvRequest, FetchResponse, locationService } from '@grafana/runtime/src';
 import store, { Store } from 'app/core/store';
 
-export const STORE_KEY = 'grafana.dashboard.recordings';
+export const STORE_KEY = 'grafana.dashboard.isRecording';
 
 export interface RequestResponseRecording {
   options: BackendSrvRequest;
@@ -10,10 +10,9 @@ export interface RequestResponseRecording {
 
 export interface RecordsRequestResponse {
   start: () => void;
-  stop: () => void;
+  stop: () => RequestResponseRecording[];
   isRecording: () => boolean;
   record: (recording: RequestResponseRecording) => void;
-  get: () => RequestResponseRecording[];
 }
 
 class RequestResponseRecorder implements RecordsRequestResponse {
@@ -21,20 +20,21 @@ class RequestResponseRecorder implements RecordsRequestResponse {
   constructor(private readonly store: Store) {}
 
   start() {
-    this.store.setObject(STORE_KEY, []);
+    this.store.set(STORE_KEY, true);
+    locationService.reload();
   }
 
-  stop() {
-    this.recordings = this.store.getObject(STORE_KEY, []);
+  stop(): RequestResponseRecording[] {
     this.store.delete(STORE_KEY);
+    return this.recordings;
   }
 
   isRecording() {
-    return this.store.exists(STORE_KEY);
-  }
+    if (this.store.exists(STORE_KEY)) {
+      return this.store.get(STORE_KEY);
+    }
 
-  get() {
-    return this.recordings;
+    return false;
   }
 
   record(recording: RequestResponseRecording) {
@@ -42,9 +42,7 @@ class RequestResponseRecorder implements RecordsRequestResponse {
       return;
     }
 
-    const recordings: RequestResponseRecording[] = this.store.getObject(STORE_KEY, []);
-    recordings.push(recording);
-    this.store.setObject(STORE_KEY, recordings.concat(recording));
+    this.recordings = this.recordings.concat(recording);
   }
 }
 

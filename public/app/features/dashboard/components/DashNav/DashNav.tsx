@@ -1,12 +1,12 @@
 // Libaries
-import React, { PureComponent, FC, ReactNode } from 'react';
+import React, { FC, PureComponent, ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 // Utils & Services
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar } from '@grafana/ui';
+import { ButtonGroup, ModalsController, PageToolbar, ToolbarButton } from '@grafana/ui';
 import { locationUtil, textUtil } from '@grafana/data';
 // State
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
@@ -18,6 +18,7 @@ import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveD
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
+import { RecordingControls } from './RecordingControls';
 
 const mapDispatchToProps = {
   updateTimeZoneForSession,
@@ -148,6 +149,8 @@ class DashNav extends PureComponent<Props> {
           )}
         </ModalsController>
       );
+
+      buttons.push(<RecordingControls dashboard={this.props.dashboard} />);
     }
 
     this.addCustomContent(customLeftActions, buttons);
