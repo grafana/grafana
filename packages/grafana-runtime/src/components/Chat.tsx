@@ -1,8 +1,8 @@
-import React, { PureComponent } from 'react';
+import React, { FunctionComponent, PureComponent } from 'react';
 import { getBackendSrv } from '../services/backendSrv';
+import { Button, Input } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '../services/live';
-import { Button } from '../../../grafana-ui';
-import { isLiveChannelMessageEvent, LiveChannelScope } from '../../../grafana-data';
+import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 
 export interface ChatProps {
@@ -58,7 +58,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
     this.updateSubscription();
   }
 
-  handleChange = (e: { target: { value: any } }) => {
+  handleChange = (e: any) => {
     this.setState({ value: e.target.value });
   };
 
@@ -131,17 +131,33 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
 
   render() {
     return (
-      <div id="hello">
+      <div style={{ overflow: 'scroll' }}>
         <div>
           {this.state.messages.map((msg) => (
-            <span key={msg.id}>{msg.content}</span>
+            <MessageElement key={msg.id} {...msg} />
           ))}
         </div>
-        <div>
-          <input type="text" value={this.state.value} onChange={this.handleChange} />
-        </div>
-        <Button onClick={this.sendMessage}>Send</Button>
+        <Input
+          type="text"
+          placeholder="Write a message"
+          value={this.state.value}
+          onChange={this.handleChange}
+          addonAfter={<Button onClick={this.sendMessage}>Send</Button>}
+        />
       </div>
     );
   }
 }
+
+interface MessageElementProps {
+  content: string;
+}
+
+const MessageElement: FunctionComponent<MessageElementProps> = ({ content }) => {
+  return (
+    <div style={{ paddingTop: '1px', paddingBottom: '1px' }}>
+      <div>Username</div>
+      <div>{content}</div>
+    </div>
+  );
+};
