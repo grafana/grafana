@@ -138,7 +138,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
               this.setState((prevState) => ({
                 messages: [...prevState.messages, messageCreated],
               }));
-              this.scrollToBottom('smooth');
+              this.scrollToBottom('auto');
             }
           }
           // } else if (isLiveChannelStatusEvent(msg)) {
