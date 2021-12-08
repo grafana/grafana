@@ -1,13 +1,13 @@
 import React, { ReactElement } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 
 import { VariableModel } from '../types';
 import { VariableIdentifier } from '../state/types';
 import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { VariableEditorListRow } from './VariableEditorListRow';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { reportInteraction } from '../../../../../packages/grafana-runtime';
 
 export interface Props {
   variables: VariableModel[];

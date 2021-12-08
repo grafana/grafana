@@ -4,13 +4,13 @@ import { Draggable } from 'react-beautiful-dnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 
 import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { hasOptions, isAdHoc, isQuery } from '../guard';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
 import { VariableModel } from '../types';
-import { reportInteraction } from '../../../../../packages/grafana-runtime';
 
 export interface VariableEditorListRowProps {
   index: number;
