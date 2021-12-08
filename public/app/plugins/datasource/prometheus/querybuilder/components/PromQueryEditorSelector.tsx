@@ -46,6 +46,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
           size="sm"
           fill="outline"
           onClick={onRunQuery}
+          icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
           disabled={data?.state === LoadingState.Loading}
         >
           Run query
