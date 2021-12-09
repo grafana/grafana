@@ -1,7 +1,6 @@
-import { UrlQueryMap, PanelData } from '@grafana/data';
-import { getLocationSrv } from '@grafana/runtime';
-import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
-import { getTimeSrv } from '../dashboard/services/TimeSrv';
+import { PanelData } from '@grafana/data';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 /**
  * This will setup features that are accessible through the root window location
@@ -12,19 +11,6 @@ import { getTimeSrv } from '../dashboard/services/TimeSrv';
  */
 export function initWindowRuntime() {
   (window as any).grafanaRuntime = {
-    /** Navigate the page within the currently loaded application */
-    updateLocation: (path: string, query?: UrlQueryMap) => {
-      if (query?.theme) {
-        throw new Error(`chaning theme requires full page refresh`);
-      }
-      getLocationSrv().update({
-        path,
-        query,
-        replace: true,
-        partial: false,
-      });
-    },
-
     /** Get info for the current dashboard.  This will include the migrated dashboard JSON */
     getDashboardSaveModel: () => {
       const d = getDashboardSrv().getCurrent();
