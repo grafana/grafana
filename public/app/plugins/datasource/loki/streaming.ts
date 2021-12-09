@@ -32,14 +32,17 @@ export function doLokiChannelStream(
   ds: LokiDatasource,
   range: TimeRange
 ): Observable<DataQueryResponse> {
+  // maximum time to keep
+  const maxDelta = range.to.valueOf() - range.from.valueOf() + 1000;
+
   let frame: StreamingDataFrame | undefined = undefined;
   const updateFrame = (msg: any) => {
     if (msg?.message) {
       const p = msg.message as DataFrameJSON;
       if (!frame) {
         frame = new StreamingDataFrame(p, {
-          maxLength: 2000,
-          //  maxDelta:
+          maxLength: 5000, // hardcoded max buffer size?
+          maxDelta,
         });
       } else {
         frame.push(p);
