@@ -72,7 +72,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	} else {
 		wsurl.Scheme = "ws"
 	}
-	wsurl.Path = "/loki/api/v1/tail"
+	wsurl.Path = "/loki/api/v2alpha/tail"
 	wsurl.RawQuery = params.Encode()
 	// limit, start
 
