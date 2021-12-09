@@ -1100,29 +1100,6 @@ export function prometheusSpecialRegexEscape(value: any) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }
 
-function calculateMedianFromExemplarEvents(arrayWithExemplars: ExemplarEvent[]) {
-  const orderedValues = arrayWithExemplars
-    .map((exemplar) => Number(exemplar['Value']))
-    .filter((value) => !Number.isNaN(value))
-    .sort((a, b) => a - b);
-
-  const half = Math.floor(orderedValues.length / 2);
-  if (orderedValues.length % 2) {
-    return orderedValues[half];
-  }
-  return (orderedValues[half - 1] + orderedValues[half]) / 2;
-}
-
-function calculateP95FromExemplarEvents(arrayWithExemplars: ExemplarEvent[]) {
-  const orderedValues = arrayWithExemplars
-    .map((exemplar) => Number(exemplar['Value']))
-    .filter((value) => !Number.isNaN(value))
-    .sort((a, b) => a - b);
-
-  const pivot = Math.floor((orderedValues.length / 100) * 95);
-  return orderedValues[pivot];
-}
-
 function calculateMeanFromExemplarEvents(arrayWithExemplars: ExemplarEvent[]) {
   const values = arrayWithExemplars
     .map((exemplar) => Number(exemplar['Value']))
