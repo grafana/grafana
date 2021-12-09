@@ -50,13 +50,20 @@ class RequestResponseRecorder implements RecordsRequestResponse {
   }
 }
 
-let requestResponseRecorder: RecordsRequestResponse = new RequestResponseRecorder(new Store('session'));
+let requestResponseRecorder: RecordsRequestResponse | undefined;
 
-export const setRequestResponseRecorder = (recorder: RecordsRequestResponse) => {
+export function setRequestResponseRecorder(recorder: RecordsRequestResponse) {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('RequestResponseRecorder can be only overriden in test environment');
   }
-  requestResponseRecorder = recorder;
-};
 
-export const getRequestResponseRecorder = () => requestResponseRecorder;
+  requestResponseRecorder = recorder;
+}
+
+export function getRequestResponseRecorder(): RecordsRequestResponse {
+  if (!requestResponseRecorder) {
+    requestResponseRecorder = new RequestResponseRecorder(new Store('session'));
+  }
+
+  return requestResponseRecorder!;
+}

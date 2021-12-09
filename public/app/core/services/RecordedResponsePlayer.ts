@@ -72,13 +72,6 @@ class RecordedResponsePlayer implements PlaysRecordedResponses {
 
     if (!bestMatch) {
       return undefined;
-      bestMatch = Object.keys(matches).find((key) => {
-        return matches[Number(key)] === keys.length - 1;
-      });
-
-      if (!bestMatch) {
-        return undefined;
-      }
     }
 
     return (flattenedRecordings[Number(bestMatch)].fetchResponse as unknown) as FetchResponse<T>;
@@ -124,13 +117,20 @@ class RecordedResponsePlayer implements PlaysRecordedResponses {
   }
 }
 
-let recordedResponsePlayer: PlaysRecordedResponses = new RecordedResponsePlayer();
+let recordedResponsePlayer: PlaysRecordedResponses | undefined;
 
-export const setRecordedResponsePlayer = (recorder: PlaysRecordedResponses) => {
+export function setRecordedResponsePlayer(recorder: PlaysRecordedResponses) {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('RecordedResponsePlayer can be only overriden in test environment');
   }
-  recordedResponsePlayer = recorder;
-};
 
-export const getRecordedResponsePlayer = () => recordedResponsePlayer;
+  recordedResponsePlayer = recorder;
+}
+
+export function getRecordedResponsePlayer(): PlaysRecordedResponses {
+  if (!recordedResponsePlayer) {
+    recordedResponsePlayer = new RecordedResponsePlayer();
+  }
+
+  return recordedResponsePlayer;
+}
