@@ -2,6 +2,7 @@ import { useFocusRing } from '@react-aria/focus';
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 import { useTheme2 } from '../../themes/ThemeContext';
+import { selectors } from '@grafana/e2e-selectors';
 
 /** @internal */
 export enum ColorSwatchVariant {
@@ -59,6 +60,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
           alignItems: 'center',
           cursor: 'pointer',
         }}
+        data-testid={selectors.components.ColorSwatch.name}
         {...otherProps}
       >
         {hasLabel && <span>{label}</span>}
