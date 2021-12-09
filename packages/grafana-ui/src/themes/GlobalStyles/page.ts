@@ -129,8 +129,14 @@ export function getPageStyles(theme: GrafanaTheme2) {
       word-break: break-word;
     }
 
+    .chat-message button {
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+
     .chat-message:hover {
-      background-color: #25262c;
+      background-color: #1e1f24;
     }
 
     .chat-message-content {
@@ -165,6 +171,7 @@ export function getPageStyles(theme: GrafanaTheme2) {
 
     .chat-message-menu-item {
       cursor: pointer;
+      padding: 5px;
     }
 
     .chat-message-menu-item:hover {

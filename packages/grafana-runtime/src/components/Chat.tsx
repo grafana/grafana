@@ -1,6 +1,6 @@
 import React, { FunctionComponent, PureComponent, useState } from 'react';
 import { getBackendSrv } from '../services/backendSrv';
-import { IconButton, TextArea } from '@grafana/ui';
+import { TextArea, ValuePicker } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '../services/live';
 import { isLiveChannelMessageEvent, LiveChannelScope, renderChatMarkdown } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
@@ -260,9 +260,13 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
   const timeFormatted = new Date(message.created * 1000).toLocaleTimeString();
   const markdownContent = renderChatMarkdown(message.content);
 
-  const [actionMenuExpanded, setActionMenuExpanded] = useState(false);
+  // const [actionMenuExpanded, setActionMenuExpanded] = useState(false);
   const [showActionIcon, setShowActionIcon] = useState(false);
 
+  let actionOptions = [];
+  for (const i in actions) {
+    actionOptions.push({ label: actions[i].verbal, value: actions[i].action });
+  }
   return (
     <div
       onMouseEnter={() => {
@@ -285,56 +289,22 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
         <div>
           <div className="chat-message-content" dangerouslySetInnerHTML={{ __html: markdownContent }} />
         </div>
-        {(showActionIcon || actionMenuExpanded) && (
-          <IconButton
-            name="rocket"
-            size="xs"
-            onClick={() => {
-              if (actionMenuExpanded) {
-                setActionMenuExpanded(false);
-              } else {
-                setActionMenuExpanded(true);
-              }
+        {showActionIcon && (
+          <ValuePicker
+            label=""
+            icon="bars"
+            options={actionOptions}
+            onChange={(value: any) => {
+              value.value(message);
+              setShowActionIcon(false);
             }}
-            className="chat-message-menu-button"
+            variant="secondary"
+            size="sm"
+            isFullWidth={false}
           />
-        )}
-        {actionMenuExpanded && (
-          <div className="chat-message-menu">
-            {actions.map((action, idx) => (
-              <ChatMessageMenuItem
-                key={idx}
-                action={action}
-                message={message}
-                done={() => {
-                  setActionMenuExpanded(false);
-                }}
-              />
-            ))}
-          </div>
         )}
       </div>
       <div style={{ clear: 'both' }}></div>
-    </div>
-  );
-};
-
-interface ChatMessageMenuItemProps {
-  action: ChatMessageAction;
-  message: Message;
-  done: any;
-}
-
-const ChatMessageMenuItem: FunctionComponent<ChatMessageMenuItemProps> = ({ action, message, done }) => {
-  return (
-    <div
-      className="chat-message-menu-item"
-      onClick={() => {
-        action.action(message);
-        done();
-      }}
-    >
-      {action.verbal}
     </div>
   );
 };
