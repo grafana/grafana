@@ -84,11 +84,14 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'depends_on': [
                     'clone-enterprise',
                 ],
+                'environment': {
+                  'GITHUB_TOKEN': from_secret(github_token),
+                },
                 'commands': [
                                 'mv bin/grabpl /tmp/',
                                 'rmdir bin',
                                 'mv grafana-enterprise /tmp/',
-                                '/tmp/grabpl init-enterprise /tmp/grafana-enterprise{}'.format(source_commit),
+                                '/tmp/grabpl init-enterprise --github-token $${{GITHUB_TOKEN}} /tmp/grafana-enterprise{}'.format(source_commit),
                                 'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
                                 'mkdir bin',
                                 'mv /tmp/grabpl bin/'
@@ -1072,7 +1075,8 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'image': wix_image,
             'environment': {
                 'GCP_KEY': from_secret('gcp_key'),
-                'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
+                'PRERELEASE_BUCKET': from_secret(prerelease_bucket),
+                'GITHUB_TOKEN': from_secret('github_token')
             },
             'commands': installer_commands,
             'depends_on': [
@@ -1120,9 +1124,13 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm -r -force grafana-enterprise',
             'cp grabpl.exe C:\\App\\grabpl.exe',
             'rm -force grabpl.exe',
-            'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit),
+            'C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise{}'.format(source_commit),
             'cp C:\\App\\grabpl.exe grabpl.exe',
         ])
+        if 'environment' in steps[1]:
+            steps[1]['environment'] + {'GITHUB_TOKEN': from_secret(github_token)}
+        else:
+            steps[1]['environment'] = {'GITHUB_TOKEN': from_secret(github_token)}
 
     return steps
 
