@@ -37,7 +37,7 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	return expr
 }
 
-func parseQuery(dsInfo *datasourceInfo, queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
+func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
 		model := &QueryModel{}

@@ -128,7 +128,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		},
 	}
 
-	queries, err := parseQuery(dsInfo, req)
+	queries, err := parseQuery(req)
 	if err != nil {
 		return result, err
 	}

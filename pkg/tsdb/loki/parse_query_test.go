@@ -29,8 +29,7 @@ func TestParseQuery(t *testing.T) {
 				},
 			},
 		}
-		dsInfo := &datasourceInfo{}
-		models, err := parseQuery(dsInfo, queryContext)
+		models, err := parseQuery(queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*15, models[0].Step)
 		require.Equal(t, "go_goroutines 15s 15000 3000s 3000 3000000", models[0].Expr)
