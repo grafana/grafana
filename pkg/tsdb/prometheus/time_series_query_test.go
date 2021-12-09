@@ -205,6 +205,25 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", models[0].Expr)
 	})
 
+	t.Run("parsing query model with ${__interval} variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [${__interval}]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", models[0].Expr)
+	})
+
 	t.Run("parsing query model with $__interval_ms variable", func(t *testing.T) {
 		timeRange := backend.TimeRange{
 			From: now,
@@ -232,6 +251,25 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 
 		query := queryContext(`{
 			"expr": "rate(ALERTS{job=\"test\" [$__interval_ms]}) + rate(ALERTS{job=\"test\" [$__interval]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]}) + rate(ALERTS{job=\"test\" [2m]})", models[0].Expr)
+	})
+
+	t.Run("parsing query model with ${__interval_ms} and ${__interval} variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [${__interval_ms}]}) + rate(ALERTS{job=\"test\" [${__interval}]})",
 			"format": "time_series",
 			"intervalFactor": 1,
 			"refId": "A"
@@ -279,6 +317,25 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800]})", models[0].Expr)
+	})
+
+	t.Run("parsing query model with ${__range_s} variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [${__range_s}s]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [172800s]})", models[0].Expr)
 	})
 
 	t.Run("parsing query model with $__range_s variable below 0.5s", func(t *testing.T) {
