@@ -44,13 +44,11 @@ func ensureHttpMethodMiddleware(logger log.Logger) sdkhttpclient.Middleware {
 		// return an artificial method-not-allowed response.
 		// this will cause the prometheus library to retry with GET.
 		return sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			if true {
-				if req.Method == http.MethodPost {
-					resp := &http.Response{
-						StatusCode: http.StatusMethodNotAllowed,
-					}
-					return resp, nil
+			if req.Method == http.MethodPost {
+				resp := &http.Response{
+					StatusCode: http.StatusMethodNotAllowed,
 				}
+				return resp, nil
 			}
 
 			return next.RoundTrip(req)
