@@ -161,7 +161,9 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			fileHandler.Maxdays = sec.Key("max_days").MustInt64(7)
 			if err := fileHandler.Init(); err != nil {
 				Root.Error("Failed to initialize file handler", "dpath", dpath, "err", err)
-				return errutil.Wrapf(err, "failed to initialize file handler")
+				// uncomment to crash when it can't create a log file
+				//return errutil.Wrapf(err, "failed to initialize file handler")
+				continue
 			}
 
 			loggersToClose = append(loggersToClose, fileHandler)
