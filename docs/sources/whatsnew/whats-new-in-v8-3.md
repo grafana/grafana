@@ -38,7 +38,7 @@ Grafana will now make suggestions for visualization types based on the current d
 
 Grafana 8.3 includes a new Candlestick panel that is so much more. Beyond candlesticks and open, high, low, close, behaviors, it includes customizable up/down colors, bar color determined by intra-period or inter-period movement of the data, volume histogram with matching colors, and the ability to detach or create a separate volume histogram to allow for more flexible dashboard design. The candlestick panel is based upon our time series panel meaning it also has support for additional data with the same configuration options and styles.
 
-{{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8.3.png" max-width="1200px" caption="Candlestick panel" >}}
+{{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8-3.png" max-width="1200px" caption="Candlestick panel" >}}
 
 ### Geomap updates
 
