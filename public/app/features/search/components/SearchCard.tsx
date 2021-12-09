@@ -89,6 +89,13 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
     onTagSelected?.(tag);
   };
 
+  const onScroll = () => {
+    if (timeout.current) {
+      window.clearTimeout(timeout.current);
+    }
+    setIsOpen(false);
+  };
+
   return (
     <a
       className={styles.gridItem}
@@ -141,7 +148,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       </div>
       {isOpen && (
         <Portal>
-          <div ref={setPopperElement} style={popperStyles.popper} {...attributes.popper}>
+          <div onWheel={onScroll} ref={setPopperElement} style={popperStyles.popper} {...attributes.popper}>
             <SearchCardFull
               className={styles.fullCard}
               editable={editable}
