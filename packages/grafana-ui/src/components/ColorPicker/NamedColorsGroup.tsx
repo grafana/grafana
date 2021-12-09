@@ -33,6 +33,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
         {primaryShade && (
           <ColorSwatch
             key={primaryShade.name}
+            ariaLabel={primaryShade.name}
             isSelected={primaryShade.name === selectedColor}
             variant={ColorSwatchVariant.Large}
             color={primaryShade.color}
@@ -46,6 +47,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
                 <div key={shade.name} style={{ marginRight: '4px' }}>
                   <ColorSwatch
                     key={shade.name}
+                    ariaLabel={shade.name}
                     isSelected={shade.name === selectedColor}
                     color={shade.color}
                     onClick={() => onColorSelect(shade.name)}

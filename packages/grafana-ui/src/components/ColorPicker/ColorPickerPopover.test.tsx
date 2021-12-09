@@ -1,11 +1,25 @@
 import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { ColorSwatch } from './ColorSwatch';
 import { createTheme } from '@grafana/data';
+import userEvent from '@testing-library/user-event';
+import { mount, ReactWrapper } from 'enzyme';
 
 describe('ColorPickerPopover', () => {
   const theme = createTheme();
+
+  it('should be tabbable', () => {
+    render(<ColorPickerPopover color={'red'} onChange={() => {}} />);
+    const color = screen.getByRole('button', { name: 'red color' });
+    const customTab = screen.getByRole('button', { name: 'Custom' });
+
+    userEvent.tab();
+    expect(customTab).toHaveFocus();
+
+    userEvent.tab();
+    expect(color).toHaveFocus();
+  });
 
   describe('rendering', () => {
     it('should render provided color as selected if color provided by name', () => {

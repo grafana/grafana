@@ -15,11 +15,12 @@ export interface Props extends React.DOMAttributes<HTMLDivElement> {
   label?: string;
   variant?: ColorSwatchVariant;
   isSelected?: boolean;
+  ariaLabel?: string;
 }
 
 /** @internal */
 export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
-  ({ color, label, variant = ColorSwatchVariant.Small, isSelected, ...otherProps }, ref) => {
+  ({ color, label, variant = ColorSwatchVariant.Small, isSelected, ariaLabel, ...otherProps }, ref) => {
     const theme = useTheme2();
 
     const { isFocusVisible, focusProps } = useFocusRing();
@@ -48,6 +49,8 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
       swatchStyles.border = `2px solid ${theme.colors.border.medium}`;
     }
 
+    const colorLabel = `${label || ariaLabel} color`;
+
     return (
       <div
         ref={ref}
@@ -59,7 +62,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
         {...otherProps}
       >
         {hasLabel && <span>{label}</span>}
-        <button style={swatchStyles} {...focusProps} />
+        <button style={swatchStyles} {...focusProps} aria-label={colorLabel} />
       </div>
     );
   }
