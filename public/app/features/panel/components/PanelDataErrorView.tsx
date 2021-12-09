@@ -57,15 +57,20 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
 }
 
 function getMessageFor(
-  { data, message, needsNumberField, needsTimeField }: PanelDataErrorViewProps,
+  { data, message, needsNumberField, needsTimeField, needsStringField }: PanelDataErrorViewProps,
   dataSummary: PanelDataSummary
 ): string {
   if (message) {
     return message;
   }
 
-  if (!data.series || data.series.length === 0) {
+  // In some cases there is a data frame but with no fields
+  if (!data.series || data.series.length === 0 || (data.series.length === 1 && data.series[0].fields.length === 0)) {
     return 'No data';
+  }
+
+  if (needsStringField && !dataSummary.hasStringField) {
+    return 'Data is missing a string field';
   }
 
   if (needsNumberField && !dataSummary.hasNumberField) {

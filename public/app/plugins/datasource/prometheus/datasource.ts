@@ -310,9 +310,10 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     if (target.exemplar) {
       // We check all already processed targets and only create exemplar target for not used metric names
       const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
-      const targets = [...request.targets];
       // Remove targets that weren't processed yet (in targets array they are after current target)
-      targets.splice(request.targets.findIndex((t) => t.refId === target.refId));
+      const currentTargetIdx = request.targets.findIndex((t) => t.refId === target.refId);
+      const targets = request.targets.slice(0, currentTargetIdx);
+
       if (!metricName || (metricName && !targets.some((t) => t.expr.includes(metricName)))) {
         return true;
       }
