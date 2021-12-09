@@ -48,7 +48,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: '__line_contains',
       displayName: 'Line contains',
-      params: [{ type: 'string', name: 'String' }],
+      params: [{ name: 'String', type: 'string' }],
       defaultParams: [''],
       category: LokiVisualQueryOperationCategory.LineFilters,
       renderer: getLineFilterRenderer('|='),
@@ -57,10 +57,28 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: '__line_contains_not',
       displayName: 'Line does not contain',
-      params: [{ type: 'string', name: 'String' }],
+      params: [{ name: 'String', type: 'string' }],
       defaultParams: [''],
       category: LokiVisualQueryOperationCategory.LineFilters,
       renderer: getLineFilterRenderer('!='),
+      addOperationHandler: addLokiOperation,
+    },
+    {
+      id: '__line_matches_regex',
+      displayName: 'Line contains regex match',
+      params: [{ name: 'Regex', type: 'string' }],
+      defaultParams: [''],
+      category: LokiVisualQueryOperationCategory.LineFilters,
+      renderer: getLineFilterRenderer('|~'),
+      addOperationHandler: addLokiOperation,
+    },
+    {
+      id: '__line_matches_regex_not',
+      displayName: 'Line does not match regex',
+      params: [{ name: 'Regex', type: 'string' }],
+      defaultParams: [''],
+      category: LokiVisualQueryOperationCategory.LineFilters,
+      renderer: getLineFilterRenderer('!~'),
       addOperationHandler: addLokiOperation,
     },
   ];

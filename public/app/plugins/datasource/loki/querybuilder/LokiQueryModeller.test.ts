@@ -48,6 +48,24 @@ describe('LokiQueryModeller', () => {
     ).toBe('{app="grafana"} != "error"');
   });
 
+  it('Can query with line regex filter', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: '__line_matches_regex', params: ['error'] }],
+      })
+    ).toBe('{app="grafana"} |~ "error"');
+  });
+
+  it('Can query with line not matching regex', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: '__line_matches_regex_not', params: ['error'] }],
+      })
+    ).toBe('{app="grafana"} !~ "error"');
+  });
+
   describe('On add operation handlers', () => {
     it('When adding function without range vector param should automatically add rate', () => {
       const query = {
