@@ -90,22 +90,23 @@ type AddDataSourceCommand struct {
 
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
-	Name              string            `json:"name" binding:"Required"`
-	Type              string            `json:"type" binding:"Required"`
-	Access            DsAccess          `json:"access" binding:"Required"`
-	Url               string            `json:"url"`
-	Password          string            `json:"password"`
-	User              string            `json:"user"`
-	Database          string            `json:"database"`
-	BasicAuth         bool              `json:"basicAuth"`
-	BasicAuthUser     string            `json:"basicAuthUser"`
-	BasicAuthPassword string            `json:"basicAuthPassword"`
-	WithCredentials   bool              `json:"withCredentials"`
-	IsDefault         bool              `json:"isDefault"`
-	JsonData          *simplejson.Json  `json:"jsonData"`
-	SecureJsonData    map[string]string `json:"secureJsonData"`
-	Version           int               `json:"version"`
-	Uid               string            `json:"uid"`
+	Name                string            `json:"name" binding:"Required"`
+	Type                string            `json:"type" binding:"Required"`
+	Access              DsAccess          `json:"access" binding:"Required"`
+	Url                 string            `json:"url"`
+	Password            string            `json:"password"`
+	User                string            `json:"user"`
+	Database            string            `json:"database"`
+	BasicAuth           bool              `json:"basicAuth"`
+	BasicAuthUser       string            `json:"basicAuthUser"`
+	BasicAuthPassword   string            `json:"basicAuthPassword"`
+	WithCredentials     bool              `json:"withCredentials"`
+	IsDefault           bool              `json:"isDefault"`
+	JsonData            *simplejson.Json  `json:"jsonData"`
+	SecureJsonData      map[string]string `json:"secureJsonData"`
+	Version             int               `json:"version"`
+	Uid                 string            `json:"uid"`
+	LibraryCredentialId *int64            `json:"libraryCredentialId"`
 
 	OrgId                   int64             `json:"-"`
 	Id                      int64             `json:"-"`

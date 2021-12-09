@@ -32,6 +32,8 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { connect, ConnectedProps } from 'react-redux';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import { ShowConfirmModalEvent } from '../../../types/events';
+import { loadLibraryCredentials } from 'app/features/library-credentials/state/actions';
+import { getLibraryCredentials } from 'app/features/library-credentials/state/selectors';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
@@ -53,6 +55,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   );
 
   return {
+    libraryCredentials: getLibraryCredentials(state.libraryCredentials),
     dataSource: getDataSource(state.dataSources, dataSourceId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
     dataSourceId: dataSourceId,
@@ -75,6 +78,7 @@ const mapDispatchToProps = {
   initDataSourceSettings,
   testDataSource,
   cleanUpAction,
+  loadLibraryCredentials,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -85,6 +89,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
   componentDidMount() {
     const { initDataSourceSettings, dataSourceId } = this.props;
     initDataSourceSettings(dataSourceId);
+    this.props.loadLibraryCredentials();
   }
 
   componentWillUnmount() {
@@ -252,6 +257,9 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           isDefault={dataSource.isDefault}
           onDefaultChange={(state) => setIsDefault(state)}
           onNameChange={(name) => setDataSourceName(name)}
+          dataSource={dataSource}
+          libraryCredentials={this.props.libraryCredentials}
+          updateDataSource={this.props.updateDataSource}
         />
 
         {plugin && (

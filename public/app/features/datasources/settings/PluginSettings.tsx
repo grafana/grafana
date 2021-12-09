@@ -7,7 +7,6 @@ import {
   DataSourcePlugin,
   DataSourcePluginMeta,
   DataSourceSettings,
-  LibraryCredential,
 } from '@grafana/data';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 export type GenericDataSourcePlugin = DataSourcePlugin<DataSourceApi<DataQuery, DataSourceJsonData>>;
@@ -74,27 +73,8 @@ export class PluginSettings extends PureComponent<Props> {
   };
 
   async maskMatchingLibCredentials() {
-    // const libraryCredential = this.props.dataSource.libraryCredential
-    const libraryCredential: LibraryCredential = {
-      id: 123,
-      uid: '123',
-      orgId: 123,
-      type: 'aws',
-      name: 'mock credential',
-      jsonData: {
-        authType: 'keys',
-        defaultRegion: 'us-east-2',
-        endpoint: undefined,
-        externalId: undefined,
-        assumeRoleArn: undefined,
-      },
-      secureJsonFields: {
-        accessKey: true,
-        secretKey: true,
-      },
-      readOnly: true,
-    };
-    if (libraryCredential !== undefined) {
+    const libraryCredential = this.props.dataSource.libraryCredential;
+    if (libraryCredential) {
       const elementsThatCanBeMasked = document.querySelectorAll('[data-lib-credential]');
       elementsThatCanBeMasked.forEach((elem) => {
         const propertyName = elem.getAttribute('data-lib-credential');

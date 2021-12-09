@@ -46,6 +46,8 @@ const getProps = (): Props => ({
   loadError: null,
   loading: false,
   testingStatus: {},
+  libraryCredentials: {} as any,
+  loadLibraryCredentials: () => {},
 });
 
 describe('Render', () => {

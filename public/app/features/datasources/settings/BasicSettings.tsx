@@ -1,17 +1,31 @@
-import React, { FC } from 'react';
-import { Button, InlineFormLabel, LegacyForms } from '@grafana/ui';
+import React, { FC, useState } from 'react';
+import { Button, InlineFormLabel, LegacyForms, Modal } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { DataSourceSettings, LibraryCredential } from '@grafana/data';
 
 const { Input, Switch } = LegacyForms;
 
 export interface Props {
   dataSourceName: string;
   isDefault: boolean;
+  dataSource: DataSourceSettings;
   onNameChange: (name: string) => void;
   onDefaultChange: (value: boolean) => void;
+  libraryCredentials: LibraryCredential[];
+  updateDataSource: any;
 }
 
-const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, onNameChange }) => {
+const BasicSettings: FC<Props> = ({
+  dataSource,
+  dataSourceName,
+  isDefault,
+  libraryCredentials,
+  onDefaultChange,
+  onNameChange,
+  updateDataSource,
+}) => {
+  const [showLibraryCredentialsPicker, setShowLibararyCredentialsPicker] = useState(false);
+  console.log(libraryCredentials);
   return (
     <div className="gf-form-group" aria-label="Datasource settings page basic settings">
       <div className="gf-form-inline">
@@ -42,7 +56,50 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
             onDefaultChange(event.target.checked);
           }}
         />
-        <Button>Connect to library credentials</Button>
+        {!dataSource.libraryCredential && (
+          <Button type="button" variant="secondary" icon="link" onClick={() => setShowLibararyCredentialsPicker(true)}>
+            Use library credential
+          </Button>
+        )}
+        {showLibraryCredentialsPicker && (
+          <Modal
+            title="Select library credential"
+            icon="arrow-random"
+            onDismiss={() => setShowLibararyCredentialsPicker(false)}
+            isOpen={true}
+          >
+            <table className="filter-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th style={{ width: '34px' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {libraryCredentials.map((credential) => {
+                  return (
+                    <tr key={credential.id}>
+                      <td>{credential.name}</td>
+                      <td>{credential.type}</td>
+                      <td>
+                        <Button
+                          onClick={() => {
+                            updateDataSource({ ...dataSource, libraryCredentialId: credential.id });
+                            location.reload();
+                          }}
+                          aria-label={`Edit Library Credential: ${credential.name}`}
+                          icon="link"
+                          size="md"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </Modal>
+        )}
       </div>
     </div>
   );

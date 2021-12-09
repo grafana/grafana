@@ -4,10 +4,13 @@ import BasicSettings, { Props } from './BasicSettings';
 
 const setup = () => {
   const props: Props = {
+    dataSource: {} as any,
     dataSourceName: 'Graphite',
     isDefault: false,
     onDefaultChange: jest.fn(),
     onNameChange: jest.fn(),
+    libraryCredentials: [],
+    updateDataSource: {} as any,
   };
 
   return shallow(<BasicSettings {...props} />);

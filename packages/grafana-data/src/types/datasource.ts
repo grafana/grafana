@@ -576,6 +576,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   withCredentials: boolean;
   version?: number;
   libraryCredential?: LibraryCredential;
+  libraryCredentialId?: number;
 }
 
 /**
