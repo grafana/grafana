@@ -1,4 +1,11 @@
-import { DataQueryResponse, LiveChannelScope, LoadingState, TimeRange, toDataFrame } from '@grafana/data';
+import {
+  DataFrameJSON,
+  DataQueryResponse,
+  LiveChannelScope,
+  LoadingState,
+  StreamingDataFrame,
+  TimeRange,
+} from '@grafana/data';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 import { map, Observable } from 'rxjs';
 import LokiDatasource from './datasource';
@@ -25,7 +32,22 @@ export function doLokiChannelStream(
   ds: LokiDatasource,
   range: TimeRange
 ): Observable<DataQueryResponse> {
-  let counter = 0;
+  let frame: StreamingDataFrame | undefined = undefined;
+  const updateFrame = (msg: any) => {
+    if (msg?.message) {
+      const p = msg.message as DataFrameJSON;
+      if (!frame) {
+        frame = new StreamingDataFrame(p, {
+          maxLength: 2000,
+          //  maxDelta:
+        });
+      } else {
+        frame.push(p);
+      }
+    }
+    return frame;
+  };
+
   return getGrafanaLiveSrv()
     .getStream<any>({
       scope: LiveChannelScope.DataSource,
@@ -41,17 +63,9 @@ export function doLokiChannelStream(
     })
     .pipe(
       map((evt) => {
-        console.log('EVENT', evt);
+        const frame = updateFrame(evt);
         return {
-          data: [
-            toDataFrame({
-              fields: [
-                { name: 'time', values: [Date.now()] },
-                { name: 'vvv', values: [counter++] },
-                { name: 'evt', values: [evt], config: { custom: { displayMode: 'json-view' } } },
-              ],
-            }),
-          ],
+          data: frame ? [frame] : [],
           state: LoadingState.Streaming,
         };
       })
