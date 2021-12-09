@@ -31,13 +31,7 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import {
-  BackendDataSourceResponse,
-  BackendSrvRequest,
-  FetchError,
-  getBackendSrv,
-  toDataQueryResponse,
-} from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { addLabelToQuery } from './add_label_to_query';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -67,7 +61,7 @@ import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import { queryLogsVolume } from 'app/core/logs_model';
 import config from 'app/core/config';
-import { doLokiChannelStream, getLiveStreamKey } from './streaming';
+import { doLokiChannelStream } from './streaming';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -796,7 +790,5 @@ function getLogLevelFromLabels(labels: Labels): LogLevel {
   }
   return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
 }
-
-let requestId = 0;
 
 export default LokiDatasource;
