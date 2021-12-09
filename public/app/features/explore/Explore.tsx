@@ -165,16 +165,16 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
-    const { exploreId, updateTimeRange } = this.props;
-    updateTimeRange({ exploreId, absoluteRange });
-  };
-
-  onUpdateAutoBreakdownTimeRange = (timeRange: AbsoluteTimeRange) => {
-    // Click one point in the graph has same start and endpoint, using this to reset
-    const autoBreakdownRange = timeRange.to === timeRange.from ? undefined : timeRange;
-    this.setState({
-      autoBreakdownRange,
-    });
+    if (this.props.isBreakdowns) {
+      // Click one point in the graph has same start and endpoint, using this to reset
+      const autoBreakdownRange = absoluteRange.to === absoluteRange.from ? undefined : absoluteRange;
+      this.setState({
+        autoBreakdownRange,
+      });
+    } else {
+      const { exploreId, updateTimeRange } = this.props;
+      updateTimeRange({ exploreId, absoluteRange });
+    }
   };
 
   onChangeBreakdowns = () => {
@@ -250,7 +250,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             height={400}
             width={width - spacing}
             absoluteRange={absoluteRange}
-            onChangeTime={isBreakdowns ? this.onUpdateAutoBreakdownTimeRange : this.onUpdateTimeRange}
+            onChangeTime={this.onUpdateTimeRange}
             timeZone={timeZone}
             annotations={queryResponse.annotations}
             splitOpenFn={splitOpen}
