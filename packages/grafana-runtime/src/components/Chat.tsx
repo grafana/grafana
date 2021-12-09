@@ -1,6 +1,6 @@
 import React, { FunctionComponent, PureComponent } from 'react';
 import { getBackendSrv } from '../services/backendSrv';
-import { Input } from '@grafana/ui';
+import { TextArea } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '../services/live';
 import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
@@ -175,8 +175,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
             <MessageElement key={msg.id} message={msg} />
           ))}
         </div>
-        <Input
-          type="text"
+        <TextArea
           placeholder="Write a message"
           value={this.state.value}
           onChange={this.handleChange}
