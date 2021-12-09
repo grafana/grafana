@@ -395,7 +395,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		return
 	}
 
-	hs.callPluginResource(c.Req.Context(), plugin.ID, ds.Uid, c)
+	hs.callPluginResource(c, plugin.ID, ds.Uid)
 }
 
 func convertModelToDtos(ds *models.DataSource) dtos.DataSource {

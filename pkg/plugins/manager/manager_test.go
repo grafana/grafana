@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"sync"
@@ -442,10 +441,11 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 							})
 						}
 
-						w := httptest.NewRecorder()
-						err = ctx.manager.CallResource(context.Background(), &backend.CallResourceRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}}, fakeSender{})
+						sender := &fakeSender{}
+						err = ctx.manager.CallResource(context.Background(), &backend.CallResourceRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}}, sender)
 						require.NoError(t, err)
-						require.Equal(t, http.StatusOK, w.Code)
+						require.NotNil(t, sender.resp)
+						require.Equal(t, http.StatusOK, sender.resp.Status)
 					})
 				})
 			})
@@ -763,8 +763,11 @@ func (l fakeLogger) Debug(_ string, _ ...interface{}) {
 }
 
 type fakeSender struct {
+	resp *backend.CallResourceResponse
 }
 
-func (s fakeSender) Send(_ *backend.CallResourceResponse) error {
+func (s *fakeSender) Send(crr *backend.CallResourceResponse) error {
+	s.resp = crr
+
 	return nil
 }
