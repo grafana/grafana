@@ -1,13 +1,15 @@
-import React, { FunctionComponent, PureComponent } from 'react';
+import React, { FunctionComponent, PureComponent, useState } from 'react';
 import { getBackendSrv } from '../services/backendSrv';
-import { TextArea } from '@grafana/ui';
+import { IconButton, TextArea, useStyles2 } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '../services/live';
-import { isLiveChannelMessageEvent, LiveChannelScope, renderChatMarkdown } from '@grafana/data';
+import { GrafanaTheme2, isLiveChannelMessageEvent, LiveChannelScope, renderChatMarkdown } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
+import { css } from '@emotion/css';
 
 export interface ChatProps {
   contentTypeId: number;
   objectId: string;
+  actions?: ChatMessageAction[];
 }
 
 export interface User {
@@ -192,7 +194,7 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
       messageElements = (
         <div style={{ overflow: 'scroll', marginBottom: '10px' }}>
           {this.state.messages.map((msg) => (
-            <MessageElement key={msg.id} message={msg} />
+            <ChatMessage key={msg.id} message={msg} actions={this.props.actions} />
           ))}
         </div>
       );
@@ -224,8 +226,14 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
   }
 }
 
-interface MessageElementProps {
+interface ChatMessageAction {
+  verbal: string;
+  action: any;
+}
+
+interface ChatMessageProps {
   message: Message;
+  actions?: ChatMessageAction[];
 }
 
 // const messageContentCss = css`
@@ -234,7 +242,13 @@ interface MessageElementProps {
 //   }
 // `
 
-const MessageElement: FunctionComponent<MessageElementProps> = ({ message }) => {
+const ChatMessage: FunctionComponent<ChatMessageProps> = ({
+  message,
+  actions = [
+    { verbal: 'hi', action: 1 },
+    { verbal: 'hello', action: 1 },
+  ],
+}) => {
   let senderColor = '#34BA18';
   let senderName = 'System';
   let avatarUrl = '/public/img/grafana_icon.svg';
@@ -246,20 +260,71 @@ const MessageElement: FunctionComponent<MessageElementProps> = ({ message }) => 
   const timeColor = '#898989';
   const timeFormatted = new Date(message.created * 1000).toLocaleTimeString();
   const markdownContent = renderChatMarkdown(message.content);
+
+  const [actionMenuExpanded, setActionMenuExpanded] = useState(false);
+  const [showActionIcon, setShowActionIcon] = useState(false);
+  const styles = useStyles2(getStyles);
+
   return (
-    <div style={{ paddingTop: '3px', paddingBottom: '3px', wordBreak: 'break-word' }}>
+    <div
+      onMouseEnter={() => {
+        setShowActionIcon(true);
+      }}
+      onMouseLeave={() => {
+        setShowActionIcon(false);
+      }}
+      style={{ paddingTop: '3px', paddingBottom: '3px', wordBreak: 'break-word' }}
+    >
       <div style={{ float: 'left', paddingTop: '6px', marginRight: '10px' }}>
         <img src={avatarUrl} alt="" style={{ width: '30px', height: '30px' }} />
       </div>
-      <div>
+      <div style={{ position: 'relative' }}>
         <div>
           <span style={{ color: senderColor }}>{senderName}</span>
           &nbsp;
           <span style={{ color: timeColor }}>{timeFormatted}</span>
         </div>
-        <div className="chat-message-content" dangerouslySetInnerHTML={{ __html: markdownContent }} />
+        <div>
+          <div className="chat-message-content" dangerouslySetInnerHTML={{ __html: markdownContent }} />
+        </div>
+        {(showActionIcon || actionMenuExpanded) && (
+          <IconButton
+            name="rocket"
+            size="xs"
+            onClick={() => {
+              if (actionMenuExpanded) {
+                setActionMenuExpanded(false);
+              } else {
+                setActionMenuExpanded(true);
+              }
+            }}
+            className={styles}
+          />
+        )}
       </div>
+      {actionMenuExpanded && (
+        <div>
+          {actions.map((action, idx) => (
+            <ChatMessageMenuItem key={idx} action={action} />
+          ))}
+        </div>
+      )}
       <div style={{ clear: 'both' }}></div>
     </div>
   );
 };
+
+interface ChatMessageMenuItemProps {
+  action: ChatMessageAction;
+}
+
+const ChatMessageMenuItem: FunctionComponent<ChatMessageMenuItemProps> = ({ action }) => {
+  return <div>{action.verbal}</div>;
+};
+
+const getStyles = (theme: GrafanaTheme2) =>
+  css`
+    position: absolute;
+    right: ${theme.spacing(0.5)};
+    top: ${theme.spacing(1)};
+  `;
