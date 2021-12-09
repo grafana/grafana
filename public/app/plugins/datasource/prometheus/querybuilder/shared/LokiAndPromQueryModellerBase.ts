@@ -82,21 +82,11 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
 
     let expr = '{';
     for (const filter of labels) {
-      let values = '';
       if (expr !== '{') {
         expr += ', ';
       }
 
-      if (typeof filter.value === 'object') {
-        for (let i = 0; i < filter.value.length; i++) {
-          values += filter.value[i].label;
-          values += i < filter.value.length - 1 ? '|' : '';
-        }
-      } else {
-        values = filter.value;
-      }
-
-      expr += `${filter.label}${filter.op}"${values}"`;
+      expr += `${filter.label}${filter.op}"${filter.value}"`;
     }
 
     return expr + `}`;
