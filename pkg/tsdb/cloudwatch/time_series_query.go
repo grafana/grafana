@@ -91,7 +91,6 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 		resultChan <- &responseWrapper{
 			DataResponse: &dataResponse,
 		}
-		return nil, err
 	}
 	close(resultChan)
 

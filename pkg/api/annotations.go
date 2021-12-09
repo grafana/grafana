@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func GetAnnotations(c *models.ReqContext) response.Response {
@@ -51,7 +53,11 @@ func (e *CreateAnnotationError) Error() string {
 	return e.message
 }
 
-func PostAnnotation(c *models.ReqContext, cmd dtos.PostAnnotationsCmd) response.Response {
+func PostAnnotation(c *models.ReqContext) response.Response {
+	cmd := dtos.PostAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if canSave, err := canSaveByDashboardID(c, cmd.DashboardId); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -98,7 +104,11 @@ func formatGraphiteAnnotation(what string, data string) string {
 	return text
 }
 
-func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd) response.Response {
+func PostGraphiteAnnotation(c *models.ReqContext) response.Response {
+	cmd := dtos.PostGraphiteAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	repo := annotations.GetRepository()
 
 	if cmd.What == "" {
@@ -149,7 +159,11 @@ func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotatio
 	})
 }
 
-func UpdateAnnotation(c *models.ReqContext, cmd dtos.UpdateAnnotationsCmd) response.Response {
+func UpdateAnnotation(c *models.ReqContext) response.Response {
+	cmd := dtos.UpdateAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	annotationID := c.ParamsInt64(":annotationId")
 
 	repo := annotations.GetRepository()
@@ -175,7 +189,11 @@ func UpdateAnnotation(c *models.ReqContext, cmd dtos.UpdateAnnotationsCmd) respo
 	return response.Success("Annotation updated")
 }
 
-func PatchAnnotation(c *models.ReqContext, cmd dtos.PatchAnnotationsCmd) response.Response {
+func PatchAnnotation(c *models.ReqContext) response.Response {
+	cmd := dtos.PatchAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	annotationID := c.ParamsInt64(":annotationId")
 
 	repo := annotations.GetRepository()
@@ -223,7 +241,11 @@ func PatchAnnotation(c *models.ReqContext, cmd dtos.PatchAnnotationsCmd) respons
 	return response.Success("Annotation patched")
 }
 
-func DeleteAnnotations(c *models.ReqContext, cmd dtos.DeleteAnnotationsCmd) response.Response {
+func DeleteAnnotations(c *models.ReqContext) response.Response {
+	cmd := dtos.DeleteAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	repo := annotations.GetRepository()
 
 	err := repo.Delete(&annotations.DeleteParams{

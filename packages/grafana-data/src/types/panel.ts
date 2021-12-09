@@ -201,12 +201,20 @@ export interface VisualizationSuggestion<TOptions = any, TFieldConfig = any> {
   fieldConfig?: FieldConfigSource<Partial<TFieldConfig>>;
   /** Data transformations */
   transformations?: DataTransformerConfig[];
-  /** Tweak for small preview */
-  previewModifier?: (suggestion: VisualizationSuggestion) => void;
+  /** Options for how to render suggestion card */
+  cardOptions?: {
+    /** Tweak for small preview */
+    previewModifier?: (suggestion: VisualizationSuggestion) => void;
+    icon?: string;
+    imgSrc?: string;
+  };
   /** A value between 0-100 how suitable suggestion is */
   score?: VisualizationSuggestionScore;
 }
 
+/**
+ * @alpha
+ */
 export enum VisualizationSuggestionScore {
   /** We are pretty sure this is the best possible option */
   Best = 100,

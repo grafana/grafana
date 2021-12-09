@@ -149,7 +149,11 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	return response.JSON(200, dto)
 }
 
-func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd) response.Response {
+func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Response {
+	cmd := models.UpdatePluginSettingCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	if _, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID); !exists {
@@ -168,7 +172,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.Updat
 func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	list, err := hs.pluginDashboardManager.GetPluginDashboards(c.OrgId, pluginID)
+	list, err := hs.pluginDashboardManager.GetPluginDashboards(c.Req.Context(), c.OrgId, pluginID)
 	if err != nil {
 		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
@@ -208,7 +212,11 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 	return resp
 }
 
-func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) response.Response {
+func (hs *HTTPServer) ImportDashboard(c *models.ReqContext) response.Response {
+	apiCmd := dtos.ImportDashboardCommand{}
+	if err := web.Bind(c.Req, &apiCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	var err error
 	if apiCmd.PluginId == "" && apiCmd.Dashboard == nil {
 		return response.Error(422, "Dashboard must be set", nil)
@@ -281,14 +289,27 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	requestedFile := filepath.Clean(web.Params(c.Req)["*"])
-	pluginFilePath := filepath.Join(plugin.PluginDir, requestedFile)
+	// prepend slash for cleaning relative paths
+	requestedFile := filepath.Clean(filepath.Join("/", web.Params(c.Req)["*"]))
+	rel, err := filepath.Rel("/", requestedFile)
+	if err != nil {
+		// slash is prepended above therefore this is not expected to fail
+		c.JsonApiErr(500, "Failed to get the relative path", err)
+		return
+	}
 
-	if !plugin.IncludedInSignature(requestedFile) {
+	if !plugin.IncludedInSignature(rel) {
 		hs.log.Warn("Access to requested plugin file will be forbidden in upcoming Grafana versions as the file "+
 			"is not included in the plugin signature", "file", requestedFile)
 	}
 
+	absPluginDir, err := filepath.Abs(plugin.PluginDir)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to get plugin absolute path", nil)
+		return
+	}
+
+	pluginFilePath := filepath.Join(absPluginDir, rel)
 	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
 	// nolint:gosec
@@ -387,7 +408,11 @@ func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Respons
 	return response.JSON(200, hs.pluginErrorResolver.PluginErrors())
 }
 
-func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
+func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
+	dto := dtos.InstallPluginCommand{}
+	if err := web.Bind(c.Req, &dto); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version, plugins.AddOpts{})

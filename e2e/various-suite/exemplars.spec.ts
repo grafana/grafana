@@ -44,7 +44,7 @@ describe('Exemplars', () => {
 
     e2e.pages.Explore.visit();
 
-    e2e.components.DataSourcePicker.input().should('be.visible').click();
+    e2e.components.DataSourcePicker.container().should('be.visible').click();
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
     // we need to wait for the query-field being lazy-loaded, in two steps:

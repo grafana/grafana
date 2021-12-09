@@ -28,6 +28,10 @@ func (s *Service) handleCsvContentScenario(ctx context.Context, req *backend.Que
 		}
 
 		csvContent := model.Get("csvContent").MustString()
+		if len(csvContent) == 0 {
+			return backend.NewQueryDataResponse(), nil
+		}
+
 		alias := model.Get("alias").MustString("")
 
 		frame, err := LoadCsvContent(strings.NewReader(csvContent), alias)

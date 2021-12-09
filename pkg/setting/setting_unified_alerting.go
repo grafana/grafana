@@ -87,6 +87,14 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 			AlertingEnabled = &legacyAlerting
 			return &enabled, nil
 		}
+		if IsEnterprise {
+			enabled = false
+			if AlertingEnabled == nil {
+				legacyEnabled := true
+				AlertingEnabled = &legacyEnabled
+			}
+			return &enabled, nil
+		}
 		// next, check whether legacy flag is set
 		if AlertingEnabled != nil && !*AlertingEnabled {
 			enabled = true
