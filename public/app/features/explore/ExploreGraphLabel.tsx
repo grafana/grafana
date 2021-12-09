@@ -48,7 +48,7 @@ export function ExploreGraphLabel(props: Props) {
               size="sm"
               aria-label="Show-auto-breakdowns-button"
               className={cx({ ['explore-active-button']: isBreakdowns, [styles.buttonMargins]: true })}
-              onClick={onChangeBreakdowns}
+              onClick={onChangeBreakdowns as any}
             >
               Breakdowns
             </Button>

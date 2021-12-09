@@ -18,7 +18,7 @@ interface ExemplarsPluginProps {
   timeZone: TimeZone;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   onSelect?: (range: { from: number; to: number }) => void;
-  autoBreakdownsEnabled?: boolean;
+  enabledAutoBreakdowns?: boolean;
 }
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
@@ -26,7 +26,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
   timeZone,
   getFieldLinks,
   config,
-  autoBreakdownsEnabled = false,
+  enabledAutoBreakdowns = false,
   onSelect,
 }) => {
   const plotInstance = useRef<uPlot>();
@@ -51,7 +51,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
       plotInstance.current = u;
     });
 
-    if (autoBreakdownsEnabled) {
+    if (enabledAutoBreakdowns) {
       config.addHook('setSelect', (u) => {
         setSelection({
           min: u.posToVal(u.select.left, 'x'),
@@ -70,7 +70,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
           let left = u.valToPos(selection.min, 'x', true);
           let right = u.valToPos(selection.max, 'x', true);
           u.ctx.save();
-          u.ctx.fillStyle = 'rgba(0,255,0,0.1)';
+          u.ctx.fillStyle = 'rgba(255,120,8,0.2)';
           u.ctx.fillRect(left, u.bbox.top, right - left, u.bbox.height);
           u.ctx.restore();
         }
@@ -83,7 +83,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
       //   },
       // });
     }
-  }, [config, selection, autoBreakdownsEnabled]);
+  }, [config, selection, enabledAutoBreakdowns]);
 
   const mapExemplarToXYCoords = useCallback((dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
     const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
@@ -125,10 +125,11 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
           dataFrame={dataFrame}
           dataFrameFieldIndex={dataFrameFieldIndex}
           config={config}
+          enabledAutoBreakdowns={enabledAutoBreakdowns}
         />
       );
     },
-    [config, timeZone, getFieldLinks]
+    [config, timeZone, getFieldLinks, enabledAutoBreakdowns]
   );
 
   return (

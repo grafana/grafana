@@ -255,6 +255,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             annotations={queryResponse.annotations}
             splitOpenFn={splitOpen}
             loadingState={queryResponse.state}
+            isBreakdowns={isBreakdowns}
           />
         </Collapse>
         {isBreakdowns && (

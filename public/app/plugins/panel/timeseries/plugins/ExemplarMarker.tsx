@@ -21,6 +21,7 @@ interface ExemplarMarkerProps {
   dataFrameFieldIndex: DataFrameFieldIndex;
   config: UPlotConfigBuilder;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  enabledAutoBreakdowns?: boolean;
 }
 
 export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
@@ -29,6 +30,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
   dataFrameFieldIndex,
   config,
   getFieldLinks,
+  enabledAutoBreakdowns = false,
 }) => {
   const styles = useStyles(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
@@ -152,7 +154,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
           {getSymbol()}
         </svg>
       </div>
-      {isOpen && <Portal>{renderMarker()}</Portal>}
+      {!enabledAutoBreakdowns && isOpen && <Portal>{renderMarker()}</Portal>}
     </>
   );
 };

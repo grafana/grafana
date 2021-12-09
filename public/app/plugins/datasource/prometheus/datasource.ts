@@ -20,6 +20,7 @@ import {
   AbsoluteTimeRange,
   FieldType,
   ArrayDataFrame,
+  FieldColorModeId,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -490,6 +491,18 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
         //Add name and set field type
         dataFrame.name = label;
         dataFrame.setFieldType('name', FieldType.string);
+        const field1 = dataFrame.fields[1];
+        const field2 = dataFrame.fields[2];
+        if (field1) {
+          field1.config.color = {
+            mode: FieldColorModeId.Fixed,
+            fixedColor: field1.name === 'mean (selected)' ? 'orange' : 'green',
+          };
+        }
+
+        if (field2) {
+          field2.config.color = { mode: FieldColorModeId.Fixed, fixedColor: 'green' };
+        }
       }
       return dataFrame;
     });
@@ -502,7 +515,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     const highCardinalityLabels: string[] = [];
     const highCardinalityLimit = 100;
     let exemplarsBaseline = this.exemplarsForAutoBreakdowns;
-    let exemplarsSelected = [];
+    let exemplarsSelected: ExemplarEvent[] = [];
     if (timeRange) {
       [exemplarsSelected, exemplarsBaseline] = partition(
         this.exemplarsForAutoBreakdowns,

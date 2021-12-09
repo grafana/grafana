@@ -31,6 +31,7 @@ const dummyProps: Props = {
   loading: false,
   modifyQueries: jest.fn(),
   scanStart: jest.fn(),
+  changeBreakdowns: jest.fn(),
   scanStopAction: scanStopAction,
   setQueries: jest.fn(),
   queryKeys: [],
@@ -87,6 +88,7 @@ const dummyProps: Props = {
   loadLogsVolumeData: () => {},
   changeGraphStyle: () => {},
   graphStyle: 'lines',
+  isBreakdowns: false,
 };
 
 describe('Explore', () => {
