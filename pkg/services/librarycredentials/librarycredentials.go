@@ -179,6 +179,18 @@ func (s LibraryCredentialsService) DeleteLibraryCredential(ctx context.Context, 
 		} else if cmd.NumDeleted, err = result.RowsAffected(); err != nil {
 			return err
 		}
+
+		datasources := make([]*models.DataSource, 0)
+		if err := session.Table("data_source").Where("library_credential_id=? and org_id=?", cmd.Id, cmd.OrgId).Find(&datasources); err != nil {
+			return err
+		}
+
+		for _, ds := range datasources {
+			ds.LibraryCredentialId = nil
+			if _, err := session.Table("data_source").Where("id=? and org_id=?", ds.Id, ds.OrgId).Update(ds); err != nil {
+				return err
+			}
+		}
 		return nil
 	})
 }
