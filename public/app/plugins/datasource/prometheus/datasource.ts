@@ -496,7 +496,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     const highCardinalityLabels: string[] = [];
     const highCardinalityLimit = 100;
     let exemplarsBaseline = this.exemplarsForAutoBreakdowns;
-    let exemplarsSelected = [];
+    let exemplarsSelected: ExemplarEvent[] = [];
     if (timeRange) {
       [exemplarsSelected, exemplarsBaseline] = partition(
         this.exemplarsForAutoBreakdowns,
