@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Select, MultiSelect } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 import { SelectableValue, toOption } from '@grafana/data';
-import { QueryBuilderLabelFilter, QueryBuilderLabelFilterMultiValue } from './types';
+import { QueryBuilderLabelFilter } from './types';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
 
 export interface Props {
@@ -20,18 +20,6 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
     isLoadingLabelNames?: boolean;
     isLoadingLabelValues?: boolean;
   }>({});
-
-  const getMultiSelectValue = (item: any) => {
-    if (typeof item.value === 'object') {
-      return item.value.map((x: QueryBuilderLabelFilterMultiValue) => ({
-        label: x.label,
-        value: x.value,
-      }));
-    } else if (item.value) {
-      return toOption(item.value);
-    }
-    return [];
-  };
 
   return (
     <div data-testid="prometheus-dimensions-filter-item">
@@ -70,10 +58,10 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
           }}
         />
 
-        <MultiSelect
+        <Select
           inputId="prometheus-dimensions-filter-item-value"
           width="auto"
-          value={getMultiSelectValue(item)}
+          value={item.value ? toOption(item.value) : null}
           allowCustomValue
           onOpenMenu={async () => {
             setState({ isLoadingLabelValues: true });
@@ -85,14 +73,10 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
             });
           }}
           isLoading={state.isLoadingLabelValues}
-          options={getMultiSelectValue(item).concat(state.labelValues || [])}
+          options={state.labelValues}
           onChange={(change) => {
-            if (change.length > 0) {
-              onChange(({
-                ...item,
-                op: item.op ?? defaultOp,
-                value: change,
-              } as any) as QueryBuilderLabelFilter);
+            if (change.value != null) {
+              onChange(({ ...item, value: change.value, op: item.op ?? defaultOp } as any) as QueryBuilderLabelFilter);
             }
           }}
         />
