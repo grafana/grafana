@@ -455,6 +455,9 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(PauseAllAlerts))
 
+		adminRoute.Post("/crawler/start", reqGrafanaAdmin, routing.Wrap(hs.PreviewService.StartCrawler))
+		adminRoute.Post("/crawler/stop", reqGrafanaAdmin, routing.Wrap(hs.PreviewService.StopCrawler))
+
 		adminRoute.Post("/provisioning/dashboards/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDashboards)), routing.Wrap(hs.AdminProvisioningReloadDashboards))
 		adminRoute.Post("/provisioning/plugins/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersPlugins)), routing.Wrap(hs.AdminProvisioningReloadPlugins))
 		adminRoute.Post("/provisioning/datasources/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDatasources)), routing.Wrap(hs.AdminProvisioningReloadDatasources))
@@ -488,7 +491,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/render/*", reqSignedIn, hs.RenderToPng)
 
 	// Previews
-	r.Get("/preview/dash/:uid/:size/:theme", hs.PreviewService.GetDashboard)
+	r.Get("/preview/dash/:uid/:size/:theme", hs.PreviewService.GetImage)
 
 	// grafana.net proxy
 	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
