@@ -11,10 +11,10 @@ const absRequire = (createRequire || createRequireFromPath)(absPnpApiPath);
 
 if (existsSync(absPnpApiPath)) {
   if (!process.versions.pnp) {
-    // Setup the environment to be able to require eslint/lib/api.js
+    // Setup the environment to be able to require eslint
     require(absPnpApiPath).setup();
   }
 }
 
-// Defer to the real eslint/lib/api.js your application uses
-module.exports = absRequire(`eslint/lib/api.js`);
+// Defer to the real eslint your application uses
+module.exports = absRequire(`eslint`);
