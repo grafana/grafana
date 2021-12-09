@@ -170,8 +170,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onUpdateAutoBreakdownTimeRange = (timeRange: AbsoluteTimeRange) => {
+    // Click one point in the graph has same start and endpoint, using this to reset
+    const autoBreakdownRange = timeRange.to === timeRange.from ? undefined : timeRange;
     this.setState({
-      autoBreakdownRange: timeRange,
+      autoBreakdownRange,
     });
   };
 
