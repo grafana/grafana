@@ -1,7 +1,7 @@
 import React from 'react';
 import { cx, css } from '@emotion/css';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, RadioButtonGroup, useTheme2 } from '@grafana/ui';
+import { Button, RadioButtonGroup, Tooltip, useTheme2 } from '@grafana/ui';
 import { ExploreGraphStyle, EXPLORE_GRAPH_STYLES } from 'app/core/utils/explore';
 
 const ALL_GRAPH_STYLE_OPTIONS: Array<SelectableValue<ExploreGraphStyle>> = EXPLORE_GRAPH_STYLES.map((style) => ({
@@ -42,15 +42,17 @@ export function ExploreGraphLabel(props: Props) {
       <span>
         <RadioButtonGroup size="sm" options={graphStyleOptions} value={graphStyle} onChange={onChangeGraphStyle} />
         {supportsBreakdowns && (
-          <Button
-            variant="secondary"
-            size="sm"
-            aria-label="Show-auto-breakdowns-button"
-            className={cx({ ['explore-active-button']: isBreakdowns, [styles.buttonMargins]: true })}
-            onClick={onChangeBreakdowns}
-          >
-            Breakdowns
-          </Button>
+          <Tooltip content="Show breakdown charts for all dimensions of the exemplars. When enabled, select an area in the chart to compare breakdown aggreations against the baseline.">
+            <Button
+              variant="secondary"
+              size="sm"
+              aria-label="Show-auto-breakdowns-button"
+              className={cx({ ['explore-active-button']: isBreakdowns, [styles.buttonMargins]: true })}
+              onClick={onChangeBreakdowns}
+            >
+              Breakdowns
+            </Button>
+          </Tooltip>
         )}
       </span>
     </div>

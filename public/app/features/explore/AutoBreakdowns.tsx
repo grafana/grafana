@@ -48,6 +48,7 @@ export const AutoBreakdowns = (props: Props) => {
                 absoluteRange={absoluteRange}
                 loadingState={LoadingState.Done}
                 onChangeTime={() => {}}
+                showLegend={false}
                 pluginId="barchart"
               />
             </Collapse>

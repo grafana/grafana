@@ -51,6 +51,7 @@ interface Props {
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
   graphStyle: ExploreGraphStyle;
   pluginId?: string;
+  showLegend: boolean;
 }
 
 export function ExploreGraph({
@@ -67,6 +68,7 @@ export function ExploreGraph({
   graphStyle,
   pluginId = 'timeseries',
   tooltipDisplayMode = TooltipDisplayMode.Single,
+  showLegend = true,
 }: Props) {
   const theme = useTheme2();
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
@@ -132,6 +134,7 @@ export function ExploreGraph({
   }, [dataWithConfig, onHiddenSeriesChanged]);
 
   const seriesToShow = showAllTimeSeries ? dataWithConfig : dataWithConfig.slice(0, MAX_NUMBER_OF_TIME_SERIES);
+  const legendDisplayMode = showLegend ? LegendDisplayMode.List : LegendDisplayMode.Hidden;
 
   const panelContext: PanelContext = {
     eventBus: appEvents,
@@ -168,7 +171,7 @@ export function ExploreGraph({
         options={
           {
             tooltip: { mode: tooltipDisplayMode },
-            legend: { displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] },
+            legend: { displayMode: legendDisplayMode, placement: 'bottom', calcs: [] },
           } as TimeSeriesOptions
         }
       />

@@ -459,18 +459,28 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     const dataFrames = Object.keys(labels).map((label) => {
       // Loop over label values
       const labelValuesArray = labels[label].map((value: string) => {
+        if (!timeRange) {
+          const exemplarsByValue = exemplarsOutside.filter((exemplar) => exemplar[label] === value);
+          const mean = calculateMeanFromExemplarEvents(exemplarsByValue);
+          return {
+            name: value.toString(),
+            mean,
+          };
+        }
+
         // Filter out all exemplars that have that label + value
         const exemplarsWithinByValue = exemplarsWithin.filter((exemplar) => exemplar[label] === value);
         const exemplarsOutsideByValue = exemplarsOutside.filter((exemplar) => exemplar[label] === value);
 
-        // Calculate medians
-        const medianWithin = calculateMedianFromExemplarEvents(exemplarsWithinByValue);
-        const medianOutside = calculateMedianFromExemplarEvents(exemplarsOutsideByValue);
+        // Calculate stats
+        const meanWithin = calculateMeanFromExemplarEvents(exemplarsWithinByValue);
+        const meanOutside = calculateMeanFromExemplarEvents(exemplarsOutsideByValue);
+
         // Create object that will be used in data frame with label's value and avg
         return {
           name: value.toString(),
-          median_selected: timeRange ? medianWithin : undefined,
-          median_baseline: medianOutside,
+          'mean (selected)': meanWithin,
+          'mean (baseline)': meanOutside,
         };
       });
 
@@ -1090,15 +1100,15 @@ export function prometheusSpecialRegexEscape(value: any) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }
 
-function calculateMedianFromExemplarEvents(arrayWithExemplars: ExemplarEvent[]) {
-  const orderedValues = arrayWithExemplars
+function calculateMeanFromExemplarEvents(arrayWithExemplars: ExemplarEvent[]) {
+  const values = arrayWithExemplars
     .map((exemplar) => Number(exemplar['Value']))
-    .filter((value) => !Number.isNaN(value))
-    .sort((a, b) => a - b);
+    .filter((value) => !Number.isNaN(value));
 
-  const half = Math.floor(orderedValues.length / 2);
-  if (orderedValues.length % 2) {
-    return orderedValues[half];
+  if (values.length === 0) {
+    return undefined;
   }
-  return (orderedValues[half - 1] + orderedValues[half]) / 2;
+
+  const valueSum = values.reduce((acc, value) => acc + value, 0);
+  return valueSum / values.length;
 }
