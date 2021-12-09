@@ -71,9 +71,14 @@ func (s *Implementation) GetAuthInfo(ctx context.Context, query *models.GetAuthI
 	if err != nil {
 		return err
 	}
+	secretIdToken, err := s.decodeAndDecrypt(userAuth.OAuthIdToken)
+	if err != nil {
+		return err
+	}
 	userAuth.OAuthAccessToken = secretAccessToken
 	userAuth.OAuthRefreshToken = secretRefreshToken
 	userAuth.OAuthTokenType = secretTokenType
+	userAuth.OAuthIdToken = secretIdToken
 
 	query.Result = userAuth
 	return nil
@@ -101,9 +106,18 @@ func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInf
 			return err
 		}
 
+		var secretIdToken string
+		if idToken, ok := cmd.OAuthToken.Extra("id_token").(string); ok && idToken != "" {
+			secretIdToken, err = s.encryptAndEncode(idToken)
+			if err != nil {
+				return err
+			}
+		}
+
 		authUser.OAuthAccessToken = secretAccessToken
 		authUser.OAuthRefreshToken = secretRefreshToken
 		authUser.OAuthTokenType = secretTokenType
+		authUser.OAuthIdToken = secretIdToken
 		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 	}
 
@@ -135,9 +149,18 @@ func (s *Implementation) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateA
 			return err
 		}
 
+		var secretIdToken string
+		if idToken, ok := cmd.OAuthToken.Extra("id_token").(string); ok && idToken != "" {
+			secretIdToken, err = s.encryptAndEncode(idToken)
+			if err != nil {
+				return err
+			}
+		}
+
 		authUser.OAuthAccessToken = secretAccessToken
 		authUser.OAuthRefreshToken = secretRefreshToken
 		authUser.OAuthTokenType = secretTokenType
+		authUser.OAuthIdToken = secretIdToken
 		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 	}
 

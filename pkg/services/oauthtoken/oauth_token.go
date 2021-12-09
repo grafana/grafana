@@ -68,6 +68,11 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedI
 		RefreshToken: authInfoQuery.Result.OAuthRefreshToken,
 		TokenType:    authInfoQuery.Result.OAuthTokenType,
 	}
+
+	if authInfoQuery.Result.OAuthIdToken != "" {
+		persistedToken = persistedToken.WithExtra(map[string]interface{}{"id_token": authInfoQuery.Result.OAuthIdToken})
+	}
+
 	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(ctx, persistedToken).Token()
 	if err != nil {
