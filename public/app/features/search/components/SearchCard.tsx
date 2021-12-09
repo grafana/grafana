@@ -6,6 +6,7 @@ import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { usePopper } from 'react-popper';
 import { SearchCardFull } from './SearchCardFull';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export interface Props {
   editable?: boolean;
@@ -15,8 +16,12 @@ export interface Props {
 }
 
 export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
+  const TOTAL_RETRIES = 5;
   const theme = useTheme2();
   const [hasPreview, setHasPreview] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
+  const [updated, setUpdated] = useState<string>();
+  const [updatedBy, setUpdatedBy] = useState<string>();
   const themeId = theme.isDark ? 'dark' : 'light';
   const imageSrc = `/preview/dash/${item.uid}/thumb/${themeId}`;
   const styles = getStyles(theme);
@@ -44,14 +49,31 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   const [isOpen, setIsOpen] = useState(false);
   const timeout = useRef<number | null>(null);
 
-  const retryImage = () => {
-    setHasPreview(false);
-    const img = new Image();
-    img.onload = () => setHasPreview(true);
-    img.onerror = retryImage;
-    setTimeout(() => {
-      img.src = imageSrc;
-    }, 5000);
+  const onHover = async () => {
+    setIsOpen(true);
+    if (item.uid && !hasFetched) {
+      setHasFetched(true);
+      const dashboard = await backendSrv.getDashboardByUid(item.uid);
+      const { updated, updatedBy } = dashboard.meta;
+      setUpdated(new Date(updated).toLocaleString());
+      setUpdatedBy(updatedBy);
+    }
+  };
+
+  const retryImage = (retries: number) => {
+    return () => {
+      if (retries > 0) {
+        if (hasPreview) {
+          setHasPreview(false);
+        }
+        setTimeout(() => {
+          const img = new Image();
+          img.onload = () => setHasPreview(true);
+          img.onerror = retryImage(retries - 1);
+          img.src = imageSrc;
+        }, 10000);
+      }
+    };
   };
 
   const onCheckboxClick = (ev: React.MouseEvent) => {
@@ -75,7 +97,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       href={item.url}
       ref={(ref) => setMarkerElement((ref as unknown) as HTMLDivElement)}
       onMouseEnter={() => {
-        timeout.current = window.setTimeout(() => setIsOpen(true), 500);
+        timeout.current = window.setTimeout(onHover, 500);
       }}
       onMouseLeave={() => {
         if (timeout.current) {
@@ -87,7 +109,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
         if (timeout.current) {
           window.clearTimeout(timeout.current);
         }
-        timeout.current = window.setTimeout(() => setIsOpen(true), 500);
+        timeout.current = window.setTimeout(onHover, 500);
       }}
     >
       <div className={styles.imageContainer}>
@@ -104,7 +126,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
             className={styles.image}
             src={imageSrc}
             onLoad={() => setHasPreview(true)}
-            onError={retryImage}
+            onError={retryImage(TOTAL_RETRIES)}
           />
         )}
         {!hasPreview && (
@@ -127,6 +149,8 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
               item={item}
               onTagSelected={onTagSelected}
               onToggleChecked={onToggleChecked}
+              updated={updated}
+              updatedBy={updatedBy}
             />
           </div>
         </Portal>
@@ -166,6 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
   `,
   image: css`
+    aspect-ratio: 4 / 3;
     box-shadow: ${theme.shadows.z2};
     margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
     width: calc(100% - 64px);

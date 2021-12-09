@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import classNames from 'classnames';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, TagList, useTheme2 } from '@grafana/ui';
+import { Icon, Spinner, TagList, useTheme2 } from '@grafana/ui';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 
@@ -12,9 +12,19 @@ export interface Props {
   item: DashboardSectionItem;
   onTagSelected?: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
+  updated?: string;
+  updatedBy?: string;
 }
 
-export function SearchCardFull({ className, editable, item, onTagSelected, onToggleChecked }: Props) {
+export function SearchCardFull({
+  className,
+  editable,
+  item,
+  onTagSelected,
+  onToggleChecked,
+  updated,
+  updatedBy,
+}: Props) {
   const theme = useTheme2();
   const [hasPreview, setHasPreview] = useState(true);
   const themeId = theme.isDark ? 'dark' : 'light';
@@ -73,11 +83,24 @@ export function SearchCardFull({ className, editable, item, onTagSelected, onTog
         <div className={styles.overlay} />
       </div>
       <div className={styles.info}>
-        <div className={styles.titleContainer}>
-          <div>{item.title}</div>
-          <div className={styles.folder}>
-            <Icon name={'folder'} />
-            {folderTitle}
+        <div className={styles.header}>
+          <div className={styles.titleContainer}>
+            <div>{item.title}</div>
+            <div className={styles.folder}>
+              <Icon name={'folder'} />
+              {folderTitle}
+            </div>
+          </div>
+          <div className={styles.updateContainer}>
+            <div>Last updated</div>
+            {!updated && <Spinner />}
+            {updated && (
+              <div className={styles.update}>
+                {updatedBy}
+                <br />
+                {updated}
+              </div>
+            )}
           </div>
         </div>
         <div>
@@ -112,6 +135,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     max-width: 384px;
     overflow: hidden;
     width: 100%;
+  `,
+  header: css`
+    display: flex;
+    gap: ${theme.spacing(1)};
+    justify-content: space-between;
   `,
   image: css`
     box-shadow: ${theme.shadows.z3};
@@ -167,5 +195,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     gap: ${theme.spacing(0.5)};
+  `,
+  updateContainer: css`
+    align-items: flex-end;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    font-size: ${theme.typography.bodySmall.fontSize};
+    gap: ${theme.spacing(0.5)};
+  `,
+  update: css`
+    color: ${theme.colors.text.secondary};
+    text-align: right;
   `,
 });
