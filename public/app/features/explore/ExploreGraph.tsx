@@ -51,6 +51,7 @@ interface Props {
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
   graphStyle: ExploreGraphStyle;
   pluginId?: string;
+  isBreakDowns?: boolean;
 }
 
 export function ExploreGraph({
@@ -67,6 +68,7 @@ export function ExploreGraph({
   graphStyle,
   pluginId = 'timeseries',
   tooltipDisplayMode = TooltipDisplayMode.Single,
+  isBreakdowns = false,
 }: Props) {
   const theme = useTheme2();
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
@@ -169,6 +171,7 @@ export function ExploreGraph({
           {
             tooltip: { mode: tooltipDisplayMode },
             legend: { displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] },
+            enabledAutoBreakdowns: isBreakdowns,
           } as TimeSeriesOptions
         }
       />

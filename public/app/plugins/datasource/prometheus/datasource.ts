@@ -20,6 +20,7 @@ import {
   AbsoluteTimeRange,
   FieldType,
   ArrayDataFrame,
+  FieldColorModeId,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -480,6 +481,8 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
         //Add name and set field type
         dataFrame.name = label;
         dataFrame.setFieldType('name', FieldType.string);
+        dataFrame.fields[1].config.color = { mode: FieldColorModeId.Fixed, fixedColor: 'orange' };
+        dataFrame.fields[2].config.color = { mode: FieldColorModeId.Fixed, fixedColor: 'blue' };
       }
       return dataFrame;
     });
