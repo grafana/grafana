@@ -230,6 +230,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       <ExploreGraphLabel
         graphStyle={graphStyle}
         isBreakdowns={isBreakdowns}
+        supportsBreakdowns={haveExemplars}
         onChangeGraphStyle={this.onChangeGraphStyle}
         onChangeBreakdowns={this.onChangeBreakdowns}
       />
@@ -253,7 +254,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         </Collapse>
         <AutoBreakdowns
           datasourceInstance={datasourceInstance}
-          graphStyle={graphStyle}
           timeZone={timeZone}
           autoBreakdownRange={this.state.autoBreakdownRange}
         />

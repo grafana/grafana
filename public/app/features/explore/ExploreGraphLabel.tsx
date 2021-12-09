@@ -28,10 +28,11 @@ type Props = {
   onChangeGraphStyle: (style: ExploreGraphStyle) => void;
   onChangeBreakdowns: (isBreakdowns: boolean) => void;
   isBreakdowns: boolean;
+  supportsBreakdowns: boolean;
 };
 
 export function ExploreGraphLabel(props: Props) {
-  const { graphStyle, onChangeGraphStyle, isBreakdowns, onChangeBreakdowns } = props;
+  const { graphStyle, onChangeGraphStyle, isBreakdowns, onChangeBreakdowns, supportsBreakdowns } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
   let graphStyleOptions = ALL_GRAPH_STYLE_OPTIONS;
@@ -40,15 +41,17 @@ export function ExploreGraphLabel(props: Props) {
       Graph
       <span>
         <RadioButtonGroup size="sm" options={graphStyleOptions} value={graphStyle} onChange={onChangeGraphStyle} />
-        <Button
-          variant="secondary"
-          size="sm"
-          aria-label="Show-auto-breakdowns-button"
-          className={cx({ ['explore-active-button']: isBreakdowns, [styles.buttonMargins]: true })}
-          onClick={onChangeBreakdowns}
-        >
-          Breakdowns
-        </Button>
+        {supportsBreakdowns && (
+          <Button
+            variant="secondary"
+            size="sm"
+            aria-label="Show-auto-breakdowns-button"
+            className={cx({ ['explore-active-button']: isBreakdowns, [styles.buttonMargins]: true })}
+            onClick={onChangeBreakdowns}
+          >
+            Breakdowns
+          </Button>
+        )}
       </span>
     </div>
   );
