@@ -1,10 +1,9 @@
 import React, { FunctionComponent, PureComponent, useState } from 'react';
 import { getBackendSrv } from '../services/backendSrv';
-import { TextArea } from '@grafana/ui';
+import { TextArea, IconButton, WithContextMenu, MenuItem, MenuGroup } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '../services/live';
 import { isLiveChannelMessageEvent, LiveChannelScope, renderChatMarkdown } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
-import { IconButton, WithContextMenu } from '../../../grafana-ui';
 
 export interface ChatProps {
   contentTypeId: number;
@@ -249,10 +248,21 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
   // const [actionMenuExpanded, setActionMenuExpanded] = useState(false);
   const [showActionIcon, setShowActionIcon] = useState(false);
 
-  let actionOptions = [];
-  for (const i in actions) {
-    actionOptions.push({ label: actions[i].verbal, value: actions[i].action });
-  }
+  const renderMenuGroupItems = () => {
+    return (
+      <MenuGroup>
+        {actions.map((action) => (
+          <MenuItem
+            key={action.verbal}
+            label={action.verbal}
+            onClick={() => {
+              action.action(message);
+            }}
+          />
+        ))}
+      </MenuGroup>
+    );
+  };
   return (
     <div
       onMouseEnter={() => {
@@ -276,21 +286,9 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
           <div className="chat-message-content" dangerouslySetInnerHTML={{ __html: markdownContent }} />
         </div>
         {showActionIcon && (
-          <WithContextMenu renderMenuItems={() => []}>
+          <WithContextMenu renderMenuItems={renderMenuGroupItems}>
             {({ openMenu }) => <IconButton name="info-circle" onClick={openMenu} />}
           </WithContextMenu>
-          // <ValuePicker
-          //   label=""
-          //   icon="bars"
-          //   options={actionOptions}
-          //   onChange={(value: any) => {
-          //     value.value(message);
-          //     setShowActionIcon(false);
-          //   }}
-          //   variant="secondary"
-          //   size="sm"
-          //   isFullWidth={false}
-          // />
         )}
       </div>
       <div style={{ clear: 'both' }}></div>
