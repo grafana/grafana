@@ -5,6 +5,7 @@ import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { usePopper } from 'react-popper';
+import { detectOverflow } from '@popperjs/core';
 import { SearchCardFull } from './SearchCardFull';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -25,7 +26,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   const themeId = theme.isDark ? 'dark' : 'light';
   const imageSrc = `/preview/dash/${item.uid}/thumb/${themeId}`;
   const styles = getStyles(theme);
-  const offset = useCallback(({ placement, reference, popper }) => {
+  const offsetCallback = useCallback(({ placement, reference, popper }) => {
     let result: [number, number] = [0, 0];
     if (placement === 'bottom' || placement === 'top') {
       result = [0, -(reference.height + popper.height) / 2];
@@ -36,16 +37,38 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   }, []);
   const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
   const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
-  const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement, {
+  const { styles: popperStyles, attributes, state } = usePopper(markerElement, popperElement, {
     modifiers: [
       {
         name: 'offset',
         options: {
-          offset: offset,
+          offset: offsetCallback,
         },
       },
     ],
   });
+
+  // hack to correct positioning of popper
+  if (state && state.rects) {
+    const overflow = detectOverflow(state);
+    const adjustments: React.CSSProperties = {};
+    if (overflow.bottom > 0) {
+      adjustments.bottom = `${overflow.bottom}px`;
+    }
+    if (overflow.left > 0) {
+      adjustments.left = `${overflow.left}px`;
+    }
+    if (overflow.right > 0) {
+      adjustments.right = `${overflow.right}px`;
+    }
+    if (overflow.top > 0) {
+      adjustments.top = `${overflow.top}px`;
+    }
+    popperStyles.popper = {
+      ...popperStyles.popper,
+      ...adjustments,
+    };
+  }
   const [isOpen, setIsOpen] = useState(false);
   const timeout = useRef<number | null>(null);
 
