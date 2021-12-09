@@ -1,10 +1,9 @@
 import React, { FunctionComponent, PureComponent, useState } from 'react';
 import { getBackendSrv } from '../services/backendSrv';
-import { IconButton, TextArea, useStyles2 } from '@grafana/ui';
+import { IconButton, TextArea } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '../services/live';
-import { GrafanaTheme2, isLiveChannelMessageEvent, LiveChannelScope, renderChatMarkdown } from '@grafana/data';
+import { isLiveChannelMessageEvent, LiveChannelScope, renderChatMarkdown } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
-import { css } from '@emotion/css';
 
 export interface ChatProps {
   contentTypeId: number;
@@ -263,7 +262,6 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
 
   const [actionMenuExpanded, setActionMenuExpanded] = useState(false);
   const [showActionIcon, setShowActionIcon] = useState(false);
-  const styles = useStyles2(getStyles);
 
   return (
     <div
@@ -298,7 +296,7 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
                 setActionMenuExpanded(true);
               }
             }}
-            className={styles}
+            className="chat-message-menu-button"
           />
         )}
       </div>
@@ -321,10 +319,3 @@ interface ChatMessageMenuItemProps {
 const ChatMessageMenuItem: FunctionComponent<ChatMessageMenuItemProps> = ({ action }) => {
   return <div>{action.verbal}</div>;
 };
-
-const getStyles = (theme: GrafanaTheme2) =>
-  css`
-    position: absolute;
-    right: ${theme.spacing(0.5)};
-    top: ${theme.spacing(1)};
-  `;

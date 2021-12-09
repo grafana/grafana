@@ -140,5 +140,11 @@ export function getPageStyles(theme: GrafanaTheme2) {
     .chat-message-content a:hover {
       text-decoration: underline;
     }
+
+    .chat-message-menu-button {
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
   `;
 }
