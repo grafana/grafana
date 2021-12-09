@@ -271,7 +271,7 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
       onMouseLeave={() => {
         setShowActionIcon(false);
       }}
-      style={{ paddingTop: '3px', paddingBottom: '3px', wordBreak: 'break-word' }}
+      className="chat-message"
     >
       <div style={{ float: 'left', paddingTop: '6px', marginRight: '10px' }}>
         <img src={avatarUrl} alt="" style={{ width: '30px', height: '30px' }} />
@@ -299,14 +299,21 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
             className="chat-message-menu-button"
           />
         )}
+        {actionMenuExpanded && (
+          <div className="chat-message-menu">
+            {actions.map((action, idx) => (
+              <ChatMessageMenuItem
+                key={idx}
+                action={action}
+                message={message}
+                done={() => {
+                  setActionMenuExpanded(false);
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
-      {actionMenuExpanded && (
-        <div>
-          {actions.map((action, idx) => (
-            <ChatMessageMenuItem key={idx} action={action} message={message} />
-          ))}
-        </div>
-      )}
       <div style={{ clear: 'both' }}></div>
     </div>
   );
@@ -315,13 +322,16 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
 interface ChatMessageMenuItemProps {
   action: ChatMessageAction;
   message: Message;
+  done: any;
 }
 
-const ChatMessageMenuItem: FunctionComponent<ChatMessageMenuItemProps> = ({ action, message }) => {
+const ChatMessageMenuItem: FunctionComponent<ChatMessageMenuItemProps> = ({ action, message, done }) => {
   return (
     <div
+      className="chat-message-menu-item"
       onClick={() => {
-        action.action(message.content);
+        action.action(message);
+        done();
       }}
     >
       {action.verbal}

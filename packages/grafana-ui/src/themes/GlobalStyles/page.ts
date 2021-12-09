@@ -123,6 +123,16 @@ export function getPageStyles(theme: GrafanaTheme2) {
       overflow-y: scroll;
     }
 
+    .chat-message {
+      padding-top: 3px;
+      padding-bottom: 3px;
+      word-break: break-word;
+    }
+
+    .chat-message:hover {
+      background-color: #25262c;
+    }
+
     .chat-message-content {
       display: block;
       overflow: hidden;
@@ -145,6 +155,20 @@ export function getPageStyles(theme: GrafanaTheme2) {
       position: absolute;
       right: 0;
       top: 0;
+    }
+
+    .chat-message-menu {
+      position: absolute;
+      right: 20px;
+      top: 0;
+    }
+
+    .chat-message-menu-item {
+      cursor: pointer;
+    }
+
+    .chat-message-menu-item:hover {
+      color: #43c57e;
     }
   `;
 }
