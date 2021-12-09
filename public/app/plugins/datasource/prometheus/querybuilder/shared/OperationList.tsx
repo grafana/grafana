@@ -10,10 +10,19 @@ export interface Props<T extends QueryWithOperations> {
   query: T;
   datasource: DataSourceApi;
   onChange: (query: T) => void;
+  onRunQuery: () => void;
   queryModeller: VisualQueryModeller;
+  heading: string;
 }
 
-export function OperationList<T extends QueryWithOperations>({ query, onChange, datasource, queryModeller }: Props<T>) {
+export function OperationList<T extends QueryWithOperations>({
+  query,
+  datasource,
+  queryModeller,
+  heading,
+  onChange,
+  onRunQuery,
+}: Props<T>) {
   const styles = useStyles2(getStyles);
   const { operations } = query;
 
@@ -47,7 +56,7 @@ export function OperationList<T extends QueryWithOperations>({ query, onChange, 
 
   return (
     <Stack gap={1} direction="column">
-      <h5 className={styles.heading}>Operations</h5>
+      <h5 className={styles.heading}>{heading}</h5>
       <Stack gap={0}>
         {operations.map((op, index) => (
           <div className={styles.operationWrapper} key={index.toString()}>
@@ -59,6 +68,7 @@ export function OperationList<T extends QueryWithOperations>({ query, onChange, 
               datasource={datasource}
               onChange={onOperationChange}
               onRemove={onRemove}
+              onRunQuery={onRunQuery}
             />
             {index < operations.length - 1 && (
               <>

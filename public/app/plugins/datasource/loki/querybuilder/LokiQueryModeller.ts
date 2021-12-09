@@ -8,9 +8,9 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQu
     super();
     this.registerOperations(getOperationDefintions());
     this.setOperationCategories([
-      LokiVisualQueryOperationCategory.Aggregations,
       LokiVisualQueryOperationCategory.Formats,
       LokiVisualQueryOperationCategory.Functions,
+      LokiVisualQueryOperationCategory.LineFilters,
       LokiVisualQueryOperationCategory.PipelineErrors,
     ]);
   }
@@ -25,13 +25,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQu
 
   renderQuery(query: LokiVisualQuery) {
     let queryString = `${this.renderLabels(query.labels)}`;
-    if (query.search) {
-      queryString += ` |= "${query.search}"`;
-    }
-
     queryString = this.renderOperations(queryString, query.operations);
     queryString = this.renderBinaryQueries(queryString, query.binaryQueries);
-
     return queryString;
   }
 }

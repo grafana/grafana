@@ -79,6 +79,7 @@ export interface QueryBuilderOperationParamEditorProps {
   query: any;
   datasource: DataSourceApi;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
+  onRunQuery: () => void;
 }
 
 export enum QueryEditorMode {

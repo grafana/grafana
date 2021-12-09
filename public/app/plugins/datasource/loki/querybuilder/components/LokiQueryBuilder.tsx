@@ -8,7 +8,6 @@ import { lokiQueryModeller } from '../LokiQueryModeller';
 import { DataSourceApi } from '@grafana/data';
 import { EditorRow, EditorRows } from '@grafana/experimental';
 import { QueryPreview } from './QueryPreview';
-import { LokiSearchInput } from './LokiSerchInput';
 
 export interface Props {
   query: LokiVisualQuery;
@@ -61,13 +60,12 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, isNested
         />
       </EditorRow>
       <EditorRow>
-        <LokiSearchInput query={query} onChange={onChange} onRunQuery={onRunQuery} />
-      </EditorRow>
-      <EditorRow>
         <OperationList
+          heading="Pipeline"
           queryModeller={lokiQueryModeller}
           query={query}
           onChange={onChange}
+          onRunQuery={onRunQuery}
           datasource={datasource as DataSourceApi}
         />
       </EditorRow>

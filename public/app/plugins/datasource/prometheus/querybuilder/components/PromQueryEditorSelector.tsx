@@ -95,7 +95,12 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
       <Space v={0.5} />
       {editorMode === QueryEditorMode.Code && <PromQueryEditor {...props} />}
       {editorMode === QueryEditorMode.Builder && (
-        <PromQueryBuilder query={visualQuery} datasource={props.datasource} onChange={onChangeViewModel} />
+        <PromQueryBuilder
+          query={visualQuery}
+          datasource={props.datasource}
+          onChange={onChangeViewModel}
+          onRunQuery={props.onRunQuery}
+        />
       )}
     </>
   );

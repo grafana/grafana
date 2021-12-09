@@ -11,9 +11,10 @@ export interface Props {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   onChange: (query: PromVisualQuery) => void;
+  onRunQuery: () => void;
 }
 
-export function NestedQueryList({ query, datasource, onChange }: Props) {
+export function NestedQueryList({ query, datasource, onChange, onRunQuery }: Props) {
   const styles = useStyles2(getStyles);
   const nestedQueries = query.binaryQueries ?? [];
 
@@ -41,6 +42,7 @@ export function NestedQueryList({ query, datasource, onChange }: Props) {
               onChange={onNestedQueryUpdate}
               datasource={datasource}
               onRemove={onRemove}
+              onRunQuery={onRunQuery}
             />
           ))}
         </Stack>

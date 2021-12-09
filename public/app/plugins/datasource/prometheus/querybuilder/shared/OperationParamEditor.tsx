@@ -21,6 +21,14 @@ function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
   return (
     <Input
       defaultValue={props.value ?? ''}
+      onKeyDown={(evt) => {
+        if (evt.key === 'Enter') {
+          if (evt.currentTarget.value !== props.value) {
+            props.onChange(props.index, evt.currentTarget.value);
+          }
+          props.onRunQuery();
+        }
+      }}
       onBlur={(evt) => {
         props.onChange(props.index, evt.currentTarget.value);
       }}

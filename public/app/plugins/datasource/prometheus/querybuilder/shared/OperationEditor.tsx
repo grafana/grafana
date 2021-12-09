@@ -20,9 +20,19 @@ export interface Props {
   queryModeller: VisualQueryModeller;
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
+  onRunQuery: () => void;
 }
 
-export function OperationEditor({ operation, index, onRemove, onChange, queryModeller, query, datasource }: Props) {
+export function OperationEditor({
+  operation,
+  index,
+  onRemove,
+  onChange,
+  onRunQuery,
+  queryModeller,
+  query,
+  datasource,
+}: Props) {
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
 
@@ -62,6 +72,7 @@ export function OperationEditor({ operation, index, onRemove, onChange, queryMod
               value={operation.params[paramIndex]}
               operation={operation}
               onChange={onParamValueChanged}
+              onRunQuery={onRunQuery}
               query={query}
               datasource={datasource}
             />

@@ -13,9 +13,10 @@ export interface Props {
   index: number;
   onChange: (index: number, update: PromVisualQueryBinary) => void;
   onRemove: (index: number) => void;
+  onRunQuery: () => void;
 }
 
-export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, onChange, onRemove }) => {
+export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, onChange, onRemove, onRunQuery }) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -54,6 +55,7 @@ export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, 
           query={nestedQuery.query}
           datasource={datasource}
           isNested={true}
+          onRunQuery={onRunQuery}
           onChange={(update) => {
             onChange(index, { ...nestedQuery, query: update });
           }}

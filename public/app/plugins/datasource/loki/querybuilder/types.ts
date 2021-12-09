@@ -5,7 +5,6 @@ import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus
  */
 export interface LokiVisualQuery {
   labels: QueryBuilderLabelFilter[];
-  search?: string;
   operations: QueryBuilderOperation[];
   binaryQueries?: LokiVisualQueryBinary[];
 }
@@ -17,15 +16,15 @@ export interface LokiVisualQueryBinary {
 }
 
 export enum LokiVisualQueryOperationCategory {
-  Aggregations = 'Aggregations',
   Functions = 'Functions',
   Formats = 'Formats',
   PipelineErrors = 'Pipeline errors',
+  LineFilters = 'Line filters',
 }
 
 export function getDefaultEmptyQuery(): LokiVisualQuery {
   return {
     labels: [],
-    operations: [],
+    operations: [{ id: '__line_contains', params: [''] }],
   };
 }

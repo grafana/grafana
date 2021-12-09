@@ -15,10 +15,11 @@ export interface Props {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromVisualQuery) => void;
+  onRunQuery: () => void;
   isNested?: boolean;
 }
 
-export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, isNested }) => {
+export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, isNested }) => {
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -81,13 +82,15 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
       </EditorRow>
       <EditorRow>
         <OperationList<PromVisualQuery>
+          heading="Operations"
           queryModeller={promQueryModeller}
           datasource={datasource as DataSourceApi}
           query={query}
           onChange={onChange}
+          onRunQuery={onRunQuery}
         />
         {query.binaryQueries && query.binaryQueries.length > 0 && (
-          <NestedQueryList query={query} datasource={datasource} onChange={onChange} />
+          <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
         )}
       </EditorRow>
       {!isNested && (
