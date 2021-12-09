@@ -1,9 +1,9 @@
 import React, { FunctionComponent } from 'react';
-import { GrafanaTheme2, ThemeVizColor, ThemeVizHue } from '@grafana/data';
+import { GrafanaTheme2, ThemeVizHue } from '@grafana/data';
 import { Property } from 'csstype';
 import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
 import { upperFirst } from 'lodash';
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { css } from '@emotion/css';
 
 interface NamedColorsGroupProps {
@@ -20,11 +20,8 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
   ...otherProps
 }) => {
   const primaryShade = hue.shades.find((shade) => shade.primary)!;
-  const secondaryShade = hue.shades.find((shade) => shade.name === selectedColor);
-  const selected = secondaryShade || primaryShade.name === selectedColor;
   const label = upperFirst(hue.name);
-  const theme = useTheme2();
-  const styles = getStyles(theme, selected);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.colorRow} style={{}}>
@@ -63,13 +60,12 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
 
 export default NamedColorsGroup;
 
-const getStyles = (theme: GrafanaTheme2, selected: boolean | ThemeVizColor) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     colorRow: css`
       display: grid;
       grid-template-columns: 25% 1fr;
       grid-column-gap: ${theme.spacing(2)};
-      background: ${selected ? theme.colors.background.secondary : 'inherit'};
       padding: ${theme.spacing(1, 0)};
 
       &:hover {
