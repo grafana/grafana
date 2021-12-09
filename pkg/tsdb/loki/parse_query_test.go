@@ -50,4 +50,12 @@ func TestParseQuery(t *testing.T) {
 
 		require.Equal(t, "go_goroutines 50ms 50 0s 0 250", interpolateVariables(expr, interval, timeRange))
 	})
+	t.Run("interpolate variables, curly-braces syntax", func(t *testing.T) {
+		expr := "go_goroutines ${__interval} ${__interval_ms} ${__range} ${__range_s} ${__range_ms}"
+
+		interval := time.Second * 2
+		timeRange := time.Second * 50
+
+		require.Equal(t, "go_goroutines 2s 2000 50s 50 50000", interpolateVariables(expr, interval, timeRange))
+	})
 }

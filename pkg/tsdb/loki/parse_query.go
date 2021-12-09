@@ -19,6 +19,14 @@ const (
 	varRangeMs    = "$__range_ms"
 )
 
+const (
+	varIntervalAlt   = "${__interval}"
+	varIntervalMsAlt = "${__interval_ms}"
+	varRangeAlt      = "${__range}"
+	varRangeSAlt     = "${__range_s}"
+	varRangeMsAlt    = "${__range_ms}"
+)
+
 func interpolateVariables(expr string, interval time.Duration, timeRange time.Duration) string {
 	intervalText := intervalv2.FormatDuration(interval)
 	intervalMsText := strconv.FormatInt(int64(interval/time.Millisecond), 10)
@@ -34,6 +42,13 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	expr = strings.ReplaceAll(expr, varRangeS, rangeSText)
 	expr = strings.ReplaceAll(expr, varRange, rangeSText+"s")
 
+	// this is duplicated code, hopefully this can be handled in a nicer way when
+	// https://github.com/grafana/grafana/issues/42928 is done.
+	expr = strings.ReplaceAll(expr, varIntervalMsAlt, intervalMsText)
+	expr = strings.ReplaceAll(expr, varIntervalAlt, intervalText)
+	expr = strings.ReplaceAll(expr, varRangeMsAlt, rangeMsText)
+	expr = strings.ReplaceAll(expr, varRangeSAlt, rangeSText)
+	expr = strings.ReplaceAll(expr, varRangeAlt, rangeSText+"s")
 	return expr
 }
 
