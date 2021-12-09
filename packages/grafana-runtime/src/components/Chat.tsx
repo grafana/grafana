@@ -245,8 +245,8 @@ interface ChatMessageProps {
 const ChatMessage: FunctionComponent<ChatMessageProps> = ({
   message,
   actions = [
-    { verbal: 'hi', action: 1 },
-    { verbal: 'hello', action: 1 },
+    { verbal: 'hi', action: console.log },
+    { verbal: 'hello', action: console.log },
   ],
 }) => {
   let senderColor = '#34BA18';
@@ -305,7 +305,7 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
       {actionMenuExpanded && (
         <div>
           {actions.map((action, idx) => (
-            <ChatMessageMenuItem key={idx} action={action} />
+            <ChatMessageMenuItem key={idx} action={action} message={message} />
           ))}
         </div>
       )}
@@ -316,10 +316,19 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
 
 interface ChatMessageMenuItemProps {
   action: ChatMessageAction;
+  message: Message;
 }
 
-const ChatMessageMenuItem: FunctionComponent<ChatMessageMenuItemProps> = ({ action }) => {
-  return <div>{action.verbal}</div>;
+const ChatMessageMenuItem: FunctionComponent<ChatMessageMenuItemProps> = ({ action, message }) => {
+  return (
+    <div
+      onClick={() => {
+        action.action(message.content);
+      }}
+    >
+      {action.verbal}
+    </div>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) =>
