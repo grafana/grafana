@@ -76,6 +76,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/live/pipeline", reqGrafanaAdmin, hs.Index)
 	r.Get("/live/cloud", reqGrafanaAdmin, hs.Index)
 
+	r.Get("/chat", reqSignedIn, hs.Index)
+
 	r.Get("/plugins", reqSignedIn, hs.Index)
 	r.Get("/plugins/:id/", reqSignedIn, hs.Index)
 	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated

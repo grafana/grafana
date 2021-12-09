@@ -2,7 +2,7 @@ import React, { FunctionComponent, PureComponent } from 'react';
 import { getBackendSrv } from '../services/backendSrv';
 import { TextArea } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '../services/live';
-import { isLiveChannelMessageEvent, LiveChannelScope, renderMarkdown } from '@grafana/data';
+import { isLiveChannelMessageEvent, LiveChannelScope, renderChatMarkdown } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 
 export interface ChatProps {
@@ -111,9 +111,28 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
     return live.getStream<MessagePacket>(addr);
   };
 
-  onKeyboardAdd = async (event: any) => {
-    event.preventDefault();
-    if (event.key === 'Enter') {
+  onKeyboardPress = async (e: any) => {
+    if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+      let start = e.target.selectionStart,
+        end = e.target.selectionEnd;
+      this.setState(
+        (prevState) => ({ value: prevState.value.substring(0, start) + '\n' + prevState.value.substring(end) }),
+        () => {
+          this.chatInput.selectionStart = this.chatInput.selectionEnd = start + 1;
+        }
+      );
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+    }
+  };
+
+  onKeyboardUp = async (e: any) => {
+    if (e.key === 'Enter') {
+      if (e.shiftKey) {
+        return;
+      }
+      e.preventDefault();
       await this.sendMessage();
     }
   };
@@ -182,13 +201,14 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
     }
 
     return (
-      <div>
+      <div className="chat">
         {messageElements}
         <TextArea
           placeholder="Write a message"
           value={this.state.value}
           onChange={this.handleChange}
-          onKeyUp={this.onKeyboardAdd}
+          onKeyUp={this.onKeyboardUp}
+          onKeyPress={this.onKeyboardPress}
           ref={(el) => {
             this.chatInput = el;
           }}
@@ -225,7 +245,7 @@ const MessageElement: FunctionComponent<MessageElementProps> = ({ message }) => 
   }
   const timeColor = '#898989';
   const timeFormatted = new Date(message.created * 1000).toLocaleTimeString();
-  const markdownContent = renderMarkdown(message.content);
+  const markdownContent = renderChatMarkdown(message.content);
   return (
     <div style={{ paddingTop: '3px', paddingBottom: '3px', wordBreak: 'break-word' }}>
       <div style={{ float: 'left', paddingTop: '6px', marginRight: '10px' }}>

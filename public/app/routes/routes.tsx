@@ -12,6 +12,7 @@ import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/
 import { contextSrv } from 'app/core/services/context_srv';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
+import { getChatRoutes } from 'app/features/chat/routes';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -375,6 +376,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
+    ...getChatRoutes(),
     ...extraRoutes,
     {
       path: '/*',

@@ -118,6 +118,11 @@ export function getPageStyles(theme: GrafanaTheme2) {
       margin-top: ${theme.spacing(0.5)};
     }
 
+    .chat-message-content {
+      display: block;
+      overflow: hidden;
+    }
+
     .chat-message-content p {
       margin: 0;
       padding: 0;
