@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -76,7 +77,9 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 }
 
 func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
-	if filepath.Ext(fileName) != ".csv" || strings.Contains(fileName, "..") {
+	validFileName := regexp.MustCompile(`^\w+\.csv$`)
+
+	if !validFileName.MatchString(fileName) {
 		return nil, fmt.Errorf("invalid csv file name: %q", fileName)
 	}
 
