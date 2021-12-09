@@ -4,6 +4,7 @@ import { dateTime, isDateTime } from '@grafana/data/src';
 import { RequestResponseRecording } from './RequestResponseRecorder';
 
 export interface PlaysRecordedResponses {
+  clear: () => void;
   load: (recordings: RequestResponseRecording[]) => void;
   find: <T>(options: BackendSrvRequest) => FetchResponse<T> | undefined;
 }
@@ -11,6 +12,10 @@ export interface PlaysRecordedResponses {
 class RecordedResponsePlayer implements PlaysRecordedResponses {
   private recordings: RequestResponseRecording[] = [];
   constructor() {}
+
+  clear() {
+    this.recordings = [];
+  }
 
   load(recordings: RequestResponseRecording[]) {
     this.recordings = recordings;

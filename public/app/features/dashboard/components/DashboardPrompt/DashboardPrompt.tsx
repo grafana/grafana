@@ -14,6 +14,7 @@ import { useDispatch } from 'react-redux';
 import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';
 import { DashboardSavedEvent } from 'app/types/events';
 import { getRequestResponseRecorder } from '../../../../core/services/RequestResponseRecorder';
+import { getRecordedResponsePlayer } from '../../../../core/services/RecordedResponsePlayer';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -102,8 +103,9 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
       return true;
     }
 
-    // when we navigate away from the dashboard we need to stop the recording
+    // when we navigate away from the dashboard we need to stop the recording and clear the recorded responses
     getRequestResponseRecorder().stop();
+    getRecordedResponsePlayer().clear();
 
     if (ignoreChanges(dashboard, original)) {
       return true;
