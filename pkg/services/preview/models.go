@@ -1,5 +1,7 @@
 package preview
 
+import "encoding/json"
+
 type PreviewSize string
 
 const (
@@ -61,6 +63,41 @@ type previewResponse struct {
 	URL  string `json:"url"`  // redirect to this URL
 }
 
+// export enum CrawlerMode {
+// 	Thumbs = 'thumbs',
+// 	Analytics = 'analytics', // Enterprise only
+// 	Migrate = 'migrate',
+//   }
+
+//   export enum CrawlerAction {
+// 	Run = 'run',
+// 	Stop = 'stop',
+// 	Queue = 'queue', // TODO (later!) move some to the front
+//   }
+
+type crawlCmd struct {
+	Mode     string `json:"mode"`     // thumbs | analytics | migrate
+	Action   string `json:"action"`   // run | stop | queue
+	Theme    string `json:"theme"`    // light | dark
+	User     string `json:"user"`     // :(
+	Password string `json:"password"` // :(
+
+	Path string `json:"path"` // eventually for queue
+}
+
+type crawConfig struct {
+	crawlCmd
+
+	// Sent to the crawler with each command
+	URL               string `json:"url"`
+	ScreenshotsFolder string `json:"screenshotsFolder"`
+	ExportFolder      string `json:"exportFolder"`
+}
+
 type dashRenderer interface {
+	// Assumes you have already authenticated as admin
 	GetPreview(req *previewRequest) *previewResponse
+
+	// Assumes you have already authenticated as admin
+	CrawlerCmd(cfg *crawlCmd) (json.RawMessage, error)
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import { useTheme2 } from '@grafana/ui';
+import { Button, useTheme2 } from '@grafana/ui';
 import {
   formattedValueToString,
   getValueFormat,
@@ -9,8 +9,9 @@ import {
   isLiveChannelStatusEvent,
   LiveChannelScope,
 } from '@grafana/data';
-import { getGrafanaLiveSrv } from '@grafana/runtime';
+import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { DashboardSectionItem } from '../search/types';
+import { CrawlerStartButton } from './CrawlerStartButton';
 
 interface CrawlerStatusMessage<T = DashboardSectionItem> {
   state: 'initializing' | 'running' | 'done' | 'cancelled';
@@ -57,7 +58,13 @@ export const CrawlerStatus = () => {
   }, []);
 
   if (!status) {
-    return <div className={styles.wrap}>No status (never run)</div>;
+    return (
+      <div className={styles.wrap}>
+        No status (never run)
+        <br />
+        <CrawlerStartButton />
+      </div>
+    );
   }
 
   if (status.state === 'running') {
@@ -85,11 +92,26 @@ export const CrawlerStatus = () => {
           {formattedValueToString(fmtPer(percent))} :: {formattedValueToString(fmtSec(uptime))}
         </h2>
         {JSON.stringify(status)}
+
+        <Button
+          variant="secondary"
+          onClick={() => {
+            getBackendSrv().post('/api/admin/crawler/stop');
+          }}
+        >
+          Stop
+        </Button>
       </div>
     );
   }
 
-  return <div className={styles.wrap}>{JSON.stringify(status)}</div>;
+  return (
+    <div className={styles.wrap}>
+      {JSON.stringify(status)}
+      <br />
+      <CrawlerStartButton />
+    </div>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {

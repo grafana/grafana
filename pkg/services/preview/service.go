@@ -2,31 +2,50 @@ package preview
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"path/filepath"
+	"strings"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/segmentio/encoding/json"
 )
 
 var FEATURE_TOGGLE = "dashboardPreviews"
 
 type Service interface {
 	Enabled() bool
-	GetDashboard(c *models.ReqContext)
+	GetImage(c *models.ReqContext)
+
+	// Must be admin
+	StartCrawler(c *models.ReqContext) response.Response
+	StopCrawler(c *models.ReqContext) response.Response
 }
 
 func ProvideService(cfg *setting.Cfg, renderService rendering.Service) Service {
 	enabled := cfg.FeatureToggles[FEATURE_TOGGLE]
-	root := filepath.Join(cfg.DataPath, "previews", "dash")
+	root := filepath.Join(cfg.DataPath, "crawler", "preview")
+	renderer := newDummyRenderer(root)
+	if enabled {
+		exportFolder := filepath.Join(cfg.DataPath, "crawler", "export")
+		url := strings.TrimSuffix(cfg.RendererUrl, "/render") + "/scan"
+
+		renderer = newRenderHttp(url, crawConfig{
+			URL:               strings.TrimSuffix(cfg.RendererCallbackUrl, "/"),
+			ScreenshotsFolder: root,
+			ExportFolder:      exportFolder,
+		})
+	}
 
 	return &previewService{
 		enabled:  enabled,
-		renderer: newDummyRenderer(root),
+		renderer: renderer,
 	}
 }
 
@@ -39,7 +58,7 @@ func (hs *previewService) Enabled() bool {
 	return hs.enabled
 }
 
-func (hs *previewService) GetDashboard(c *models.ReqContext) {
+func (hs *previewService) GetImage(c *models.ReqContext) {
 	if !hs.enabled {
 		c.JSON(400, map[string]string{"error": "feature not enabled"})
 		return
@@ -82,6 +101,11 @@ func (hs *previewService) GetDashboard(c *models.ReqContext) {
 	rsp := hs.renderer.GetPreview(req)
 	if rsp.Code == 200 {
 		if rsp.Path != "" {
+			if strings.HasSuffix(rsp.Path, ".webp") {
+				c.Resp.Header().Set("Content-Type", "image/webp")
+			} else if strings.HasSuffix(rsp.Path, ".png") {
+				c.Resp.Header().Set("Content-Type", "image/png")
+			}
 			c.Resp.Header().Set("Content-Type", "image/png")
 			http.ServeFile(c.Resp, c.Req, rsp.Path)
 			return
@@ -98,6 +122,41 @@ func (hs *previewService) GetDashboard(c *models.ReqContext) {
 	}
 
 	c.JSON(500, map[string]string{"path": rsp.Path, "error": "unknown!"})
+}
+
+func (hs *previewService) StartCrawler(c *models.ReqContext) response.Response {
+	body, err := io.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(500, "error reading bytes", err)
+	}
+	cmd := &crawlCmd{}
+	err = json.Unmarshal(body, cmd)
+	if err != nil {
+		return response.Error(500, "error parsing bytes", err)
+	}
+	cmd.Action = "start"
+
+	msg, err := hs.renderer.CrawlerCmd(cmd)
+	if err != nil {
+		return response.Error(500, "error starting", err)
+	}
+
+	header := make(http.Header)
+	header.Set("Content-Type", "application/json")
+	return response.CreateNormalResponse(header, msg, 200)
+}
+
+func (hs *previewService) StopCrawler(c *models.ReqContext) response.Response {
+	_, err := hs.renderer.CrawlerCmd(&crawlCmd{
+		Action: "stop",
+	})
+	if err != nil {
+		return response.Error(500, "error stopping crawler", err)
+	}
+
+	result := make(map[string]string)
+	result["message"] = "Stopping..."
+	return response.JSON(200, result)
 }
 
 // Ideally this service would not require first looking up the full dashboard just to bet the id!

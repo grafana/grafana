@@ -1,6 +1,7 @@
 package preview
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -19,7 +20,9 @@ func newDummyRenderer(root string) dashRenderer {
 func (r *renderStub) GetPreview(req *previewRequest) *previewResponse {
 	p := getFilePath(r.root, req)
 	if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
-		return r.queueRender(p, req)
+		return &previewResponse{
+			Code: 404,
+		}
 	}
 
 	return &previewResponse{
@@ -28,13 +31,6 @@ func (r *renderStub) GetPreview(req *previewRequest) *previewResponse {
 	}
 }
 
-func (r *renderStub) queueRender(p string, req *previewRequest) *previewResponse {
-	go func() {
-		fmt.Printf("todo? queue")
-	}()
-
-	return &previewResponse{
-		Code: 202,
-		Path: p,
-	}
+func (r *renderStub) CrawlerCmd(cfg *crawlCmd) (json.RawMessage, error) {
+	return nil, fmt.Errorf("just a dummy crawler")
 }
