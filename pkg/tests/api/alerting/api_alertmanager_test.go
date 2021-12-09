@@ -201,6 +201,37 @@ func TestAMConfigAccess(t *testing.T) {
 		}
 	})
 
+	t.Run("when updating alertmanager configuration", func(t *testing.T) {
+		body := createAlertmanagerConfig(t)
+		createInvalidAlertmanagerConfig(t, store, 1)
+
+		testCases := []testCase{
+			{
+				desc:      "updates to invalid config should succeed",
+				url:       "http://%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusAccepted,
+				expBody:   `{"message": "configuration created"}`,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				url := fmt.Sprintf(tc.url, grafanaListedAddr)
+				buf := bytes.NewReader([]byte(body))
+				// nolint:gosec
+				resp, err := http.Post(url, "application/json", buf)
+				t.Cleanup(func() {
+					require.NoError(t, resp.Body.Close())
+				})
+				require.NoError(t, err)
+				require.Equal(t, tc.expStatus, resp.StatusCode)
+				b, err := ioutil.ReadAll(resp.Body)
+				require.NoError(t, err)
+				require.JSONEq(t, tc.expBody, string(b))
+			})
+		}
+	})
+
 	t.Run("when creating silence", func(t *testing.T) {
 		body := `
 		{
@@ -2667,4 +2698,84 @@ func getLongString(t *testing.T, n int) string {
 		b[i] = 'a'
 	}
 	return string(b)
+}
+
+func createAlertmanagerConfig(t *testing.T) string {
+	t.Helper()
+
+	return `
+	{
+		"alertmanager_config": {
+			"route": {
+				"receiver": "grafana-default-email"
+			},
+			"receivers": [{
+				"name": "grafana-default-email",
+				"grafana_managed_receiver_configs": [{
+					"uid": "",
+					"name": "email receiver",
+					"type": "email",
+					"isDefault": true,
+					"settings": {
+						"addresses": "<example@email.com>"
+					}
+				}]
+			}]
+		}
+	}
+	`
+}
+
+func createInvalidAlertmanagerConfig(t *testing.T, store *sqlstore.SQLStore, orgId int64) {
+	t.Helper()
+
+	invalidConfig := `
+	{
+		"alertmanager_config": {
+			"route": {
+				"receiver": "grafana-default-email"
+			},
+			"receivers": [{
+				"name": "grafana-default-email",
+				"grafana_managed_receiver_configs": [{
+					"uid": "",
+					"name": "email receiver",
+					"type": "email",
+					"isDefault": true,
+					"settings": {
+						"addresses": "<example@email.com>"
+					}
+				}]
+			}, {
+				"name": "invalid-receiver",
+				"grafana_managed_receiver_configs": [{
+					"uid": "",
+					"name": "invalid receiver",
+					"type": "slack",
+					"disableResolveMessage": false,
+					"settings": {
+						"recipient": "    "
+					}
+				}]
+			}]
+		}
+	}
+	`
+	invalidConfigVersion := "v1"
+
+	alertConfig := ngmodels.AlertConfiguration{
+		AlertmanagerConfiguration: invalidConfig,
+		ConfigurationVersion:      invalidConfigVersion,
+		Default:                   false,
+		OrgID:                     orgId,
+	}
+
+	err := store.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		if _, err := sess.Insert(alertConfig); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	require.NoError(t, err)
 }
