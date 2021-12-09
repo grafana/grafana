@@ -30,6 +30,10 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
     return Object.values(this.operations).filter((op) => op.category === category && !op.hideFromList);
   }
 
+  getAlternativeOperations(key: string) {
+    return Object.values(this.operations).filter((op) => op.alternativesKey === key);
+  }
+
   getCategories() {
     return this.categories;
   }

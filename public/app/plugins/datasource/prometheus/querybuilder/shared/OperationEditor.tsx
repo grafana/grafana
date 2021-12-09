@@ -10,6 +10,7 @@ import {
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
 } from '../shared/types';
+import { OperationName } from './OperationName';
 import { getOperationParamEditor } from './OperationParamEditor';
 
 export interface Props {
@@ -103,7 +104,13 @@ export function OperationEditor({
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <div className={styles.name}>{def.displayName ?? def.id}</div>
+        <OperationName
+          operation={operation}
+          def={def}
+          index={index}
+          onChange={onChange}
+          queryModeller={queryModeller}
+        />
         <FlexItem grow={1} />
         <IconButton name="times" size="sm" onClick={() => onRemove(index)} />
       </div>

@@ -10,7 +10,7 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
     this.registerOperations(getAggregationOperations());
     this.setOperationCategories([
       PromVisualQueryOperationCategory.Aggregations,
-      PromVisualQueryOperationCategory.RateAndDeltas,
+      PromVisualQueryOperationCategory.RangeFunctions,
       PromVisualQueryOperationCategory.Functions,
       PromVisualQueryOperationCategory.Math,
     ]);

@@ -22,11 +22,12 @@ export interface QueryWithOperations {
 
 export interface QueryBuilderOperationDef<T = any> {
   id: string;
-  displayName?: string;
+  displayName: string;
   params: QueryBuilderOperationParamDef[];
   defaultParams: QueryBuilderOperationParamValue[];
   category: string;
   hideFromList?: boolean;
+  alternativesKey?: string;
   renderer: QueryBuilderOperationRenderer;
   addOperationHandler: QueryBuilderAddOperationHandler<T>;
   paramChangedHandler?: QueryBuilderOnParamChangedHandler;
@@ -89,6 +90,7 @@ export enum QueryEditorMode {
 
 export interface VisualQueryModeller {
   getOperationsForCategory(category: string): QueryBuilderOperationDef[];
+  getAlternativeOperations(key: string): QueryBuilderOperationDef[];
   getCategories(): string[];
   getOperationDef(id: string): QueryBuilderOperationDef;
 }

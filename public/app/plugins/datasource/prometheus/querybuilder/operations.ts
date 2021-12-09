@@ -1,3 +1,4 @@
+import { capitalize } from 'lodash';
 import { defaultAddOperationHandler, functionRendererLeft, functionRendererRight } from './shared/operationUtils';
 import {
   QueryBuilderOperation,
@@ -33,15 +34,6 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       addOperationHandler: defaultAddOperationHandler,
     },
     {
-      id: 'changes',
-      displayName: 'Changes',
-      params: [getRangeVectorParamDef()],
-      defaultParams: ['auto'],
-      category: PromVisualQueryOperationCategory.Functions,
-      renderer: operationWithRangeVectorRenderer,
-      addOperationHandler: addOperationWithRangeVector,
-    },
-    {
       id: 'ln',
       displayName: 'Ln',
       params: [],
@@ -50,42 +42,11 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       renderer: functionRendererLeft,
       addOperationHandler: defaultAddOperationHandler,
     },
-    {
-      id: 'rate',
-      displayName: 'Rate',
-      params: [getRangeVectorParamDef()],
-      defaultParams: ['auto'],
-      category: PromVisualQueryOperationCategory.RateAndDeltas,
-      renderer: operationWithRangeVectorRenderer,
-      addOperationHandler: addOperationWithRangeVector,
-    },
-    {
-      id: 'irate',
-      displayName: 'Irate',
-      params: [getRangeVectorParamDef()],
-      defaultParams: ['auto'],
-      category: PromVisualQueryOperationCategory.RateAndDeltas,
-      renderer: operationWithRangeVectorRenderer,
-      addOperationHandler: addOperationWithRangeVector,
-    },
-    {
-      id: 'increase',
-      displayName: 'Increase',
-      params: [getRangeVectorParamDef()],
-      defaultParams: ['auto'],
-      category: PromVisualQueryOperationCategory.RateAndDeltas,
-      renderer: operationWithRangeVectorRenderer,
-      addOperationHandler: addOperationWithRangeVector,
-    },
-    {
-      id: 'delta',
-      displayName: 'Delta',
-      params: [getRangeVectorParamDef()],
-      defaultParams: ['auto'],
-      category: PromVisualQueryOperationCategory.RateAndDeltas,
-      renderer: operationWithRangeVectorRenderer,
-      addOperationHandler: addOperationWithRangeVector,
-    },
+    createRangeFunction('changes'),
+    createRangeFunction('rate'),
+    createRangeFunction('irate'),
+    createRangeFunction('increase'),
+    createRangeFunction('delta'),
     // Not sure about this one. It could also be a more generic "Simple math operation" where user specifies
     // both the operator and the operand in a single input
     {
@@ -94,7 +55,16 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       params: [{ name: 'Factor', type: 'number' }],
       defaultParams: [2],
       category: PromVisualQueryOperationCategory.Math,
-      renderer: multiplyRenderer,
+      renderer: getSimpleBinaryRenderer('*'),
+      addOperationHandler: defaultAddOperationHandler,
+    },
+    {
+      id: '__divide_by',
+      displayName: 'Divide by',
+      params: [{ name: 'Factor', type: 'number' }],
+      defaultParams: [2],
+      category: PromVisualQueryOperationCategory.Math,
+      renderer: getSimpleBinaryRenderer('/'),
       addOperationHandler: defaultAddOperationHandler,
     },
     {
@@ -103,12 +73,25 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       params: [],
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Math,
-      renderer: multiplyRenderer,
+      renderer: (model, def, innerExpr) => innerExpr,
       addOperationHandler: addNestedQueryHandler,
     },
   ];
 
   return list;
+}
+
+function createRangeFunction(name: string): QueryBuilderOperationDef {
+  return {
+    id: name,
+    displayName: capitalize(name),
+    params: [getRangeVectorParamDef()],
+    defaultParams: ['auto'],
+    alternativesKey: 'range function',
+    category: PromVisualQueryOperationCategory.RangeFunctions,
+    renderer: operationWithRangeVectorRenderer,
+    addOperationHandler: addOperationWithRangeVector,
+  };
 }
 
 function operationWithRangeVectorRenderer(
@@ -125,8 +108,10 @@ function operationWithRangeVectorRenderer(
   return `${def.id}(${innerExpr}[${rangeVector}])`;
 }
 
-function multiplyRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  return `${innerExpr} * ${model.params[0]}`;
+function getSimpleBinaryRenderer(operator: string) {
+  return function binaryRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+    return `${innerExpr} ${operator} ${model.params[0]}`;
+  };
 }
 
 function getRangeVectorParamDef(): QueryBuilderOperationParamDef {

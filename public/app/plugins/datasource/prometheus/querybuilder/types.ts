@@ -15,7 +15,7 @@ export type PromVisualQueryBinary = VisualQueryBinary<PromVisualQuery>;
 
 export enum PromVisualQueryOperationCategory {
   Aggregations = 'Aggregations',
-  RateAndDeltas = 'Rate and counters',
+  RangeFunctions = 'Range functions',
   Functions = 'Functions',
   Math = 'Math',
 }
