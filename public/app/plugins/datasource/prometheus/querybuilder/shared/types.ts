@@ -8,6 +8,11 @@ import { ComponentType } from 'react';
 export interface QueryBuilderLabelFilter {
   label: string;
   op: string;
+  value: string | QueryBuilderLabelFilterMultiValue[];
+}
+
+export interface QueryBuilderLabelFilterMultiValue {
+  label: string;
   value: string;
 }
 
