@@ -1,7 +1,8 @@
 import React, { FC, useMemo } from 'react';
 import { Provider } from 'react-redux';
-// @ts-ignore
 import { Button } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+
 import { createDependencyEdges, createDependencyNodes, filterNodesWithDependencies } from './utils';
 import { store } from '../../../store/store';
 import { VariableModel } from '../types';
@@ -34,7 +35,14 @@ export const UnProvidedVariablesDependenciesButton: FC<Props> = ({ variables }) 
     >
       {({ showModal }) => {
         return (
-          <Button onClick={() => showModal()} icon="channel-add" variant="secondary">
+          <Button
+            onClick={() => {
+              reportInteraction('Show variable dependencies');
+              showModal();
+            }}
+            icon="channel-add"
+            variant="secondary"
+          >
             Show dependencies
           </Button>
         );
