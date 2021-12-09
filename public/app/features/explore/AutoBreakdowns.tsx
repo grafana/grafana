@@ -17,6 +17,14 @@ const spacing = css({
   marginBottom: '10px',
 });
 
+function calcWidth(df: DataFrame): number {
+  const baseWidth = 300;
+  const margin = 10;
+  const panelPadding = 8;
+  const panelBorder = 1;
+  return df.length <= 8 ? baseWidth : 2 * baseWidth + margin + 2 * panelPadding + 2 * panelBorder;
+}
+
 export const AutoBreakdowns = (props: Props) => {
   const { datasourceInstance, graphStyle, autoBreakdownRange, timeZone } = props;
   if (!datasourceInstance || !autoBreakdownRange) {
@@ -30,12 +38,12 @@ export const AutoBreakdowns = (props: Props) => {
       {dataFrames.map((df: DataFrame) => {
         return (
           <div className={spacing} key={`${df.name}`}>
-            <Collapse label={`Auto breakdowns by ${df.name}`} isOpen>
+            <Collapse label={`Breakdown: ${df.name}`} isOpen>
               <ExploreGraph
                 graphStyle="bars"
                 data={[df]}
-                height={200}
-                width={300}
+                height={150}
+                width={calcWidth(df)}
                 timeZone={timeZone}
                 absoluteRange={autoBreakdownRange}
                 loadingState={LoadingState.Done}
