@@ -21,7 +21,6 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   const [hasPreview, setHasPreview] = useState(true);
   const [hasFetched, setHasFetched] = useState(false);
   const [updated, setUpdated] = useState<string>();
-  const [updatedBy, setUpdatedBy] = useState<string>();
   const themeId = theme.isDark ? 'dark' : 'light';
   const imageSrc = `/preview/dash/${item.uid}/thumb/${themeId}`;
   const offsetCallback = useCallback(({ placement, reference, popper }) => {
@@ -55,9 +54,8 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
     if (item.uid && !hasFetched) {
       setHasFetched(true);
       const dashboard = await backendSrv.getDashboardByUid(item.uid);
-      const { updated, updatedBy } = dashboard.meta;
+      const { updated } = dashboard.meta;
       setUpdated(new Date(updated).toLocaleString());
-      setUpdatedBy(updatedBy);
     }
   };
 
@@ -148,10 +146,9 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
               className={styles.fullCard}
               editable={editable}
               item={item}
+              lastUpdated={updated}
               onTagSelected={onTagSelected}
               onToggleChecked={onToggleChecked}
-              updated={updated}
-              updatedBy={updatedBy}
             />
           </div>
         </Portal>

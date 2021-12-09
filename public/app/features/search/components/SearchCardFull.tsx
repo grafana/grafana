@@ -12,19 +12,10 @@ export interface Props {
   item: DashboardSectionItem;
   onTagSelected?: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
-  updated?: string;
-  updatedBy?: string;
+  lastUpdated?: string;
 }
 
-export function SearchCardFull({
-  className,
-  editable,
-  item,
-  onTagSelected,
-  onToggleChecked,
-  updated,
-  updatedBy,
-}: Props) {
+export function SearchCardFull({ className, editable, item, onTagSelected, onToggleChecked, lastUpdated }: Props) {
   const theme = useTheme2();
   const [hasPreview, setHasPreview] = useState(true);
   const themeId = theme.isDark ? 'dark' : 'light';
@@ -93,14 +84,8 @@ export function SearchCardFull({
           </div>
           <div className={styles.updateContainer}>
             <div>Last updated</div>
-            {!updated && <Spinner />}
-            {updated && (
-              <div className={styles.update}>
-                {updatedBy}
-                <br />
-                {updated}
-              </div>
-            )}
+            {!lastUpdated && <Spinner />}
+            {lastUpdated && <div className={styles.update}>{lastUpdated}</div>}
           </div>
         </div>
         <div>
