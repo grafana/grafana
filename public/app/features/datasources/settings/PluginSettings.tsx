@@ -82,7 +82,8 @@ export class PluginSettings extends PureComponent<Props> {
           const match =
             libraryCredential.jsonData[propertyName] ||
             libraryCredential.secureJsonFields[propertyName] ||
-            (libraryCredential.secureJsonData && libraryCredential.secureJsonData[propertyName]);
+            (libraryCredential.secureJsonData && libraryCredential.secureJsonData[propertyName]) ||
+            (libraryCredential as any)[propertyName];
           if (match) {
             // TODO: maybe we could do something better than just replace the node with a span.
             const span = document.createElement('span');

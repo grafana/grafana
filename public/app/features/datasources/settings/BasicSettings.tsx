@@ -84,8 +84,8 @@ const BasicSettings: FC<Props> = ({
                       <td>{credential.type}</td>
                       <td>
                         <Button
-                          onClick={() => {
-                            updateDataSource({ ...dataSource, libraryCredentialId: credential.id });
+                          onClick={async () => {
+                            await updateDataSource({ ...dataSource, libraryCredentialId: credential.id });
                             location.reload();
                           }}
                           aria-label={`Edit Library Credential: ${credential.name}`}
