@@ -250,7 +250,7 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
 
   const renderMenuGroupItems = () => {
     return (
-      <MenuGroup>
+      <MenuGroup label="">
         {actions.map((action) => (
           <MenuItem
             key={action.verbal}
@@ -286,7 +286,7 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
           <div className="chat-message-content" dangerouslySetInnerHTML={{ __html: markdownContent }} />
         </div>
         {showActionIcon && (
-          <WithContextMenu renderMenuItems={renderMenuGroupItems}>
+          <WithContextMenu renderMenuItems={renderMenuGroupItems} focusOnOpen={false}>
             {({ openMenu }) => <IconButton name="info-circle" onClick={openMenu} />}
           </WithContextMenu>
         )}
