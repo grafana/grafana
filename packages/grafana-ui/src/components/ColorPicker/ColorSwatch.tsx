@@ -50,7 +50,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
       swatchStyles.border = `2px solid ${theme.colors.border.medium}`;
     }
 
-    const colorLabel = `${label || ariaLabel} color`;
+    const colorLabel = `${ariaLabel || label} color`;
 
     return (
       <div
