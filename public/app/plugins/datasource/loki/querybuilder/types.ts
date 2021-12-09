@@ -16,6 +16,8 @@ export interface LokiVisualQueryBinary {
 }
 
 export enum LokiVisualQueryOperationCategory {
+  Aggregations = 'Aggregations',
+  RangeFunctions = 'Range functions',
   Functions = 'Functions',
   Formats = 'Formats',
   PipelineErrors = 'Pipeline errors',

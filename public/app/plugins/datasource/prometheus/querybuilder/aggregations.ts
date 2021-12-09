@@ -1,7 +1,10 @@
-import { capitalize } from 'lodash';
 import { LabelParamEditor } from './components/LabelParamEditor';
 import { addOperationWithRangeVector } from './operations';
-import { defaultAddOperationHandler, functionRendererLeft } from './shared/operationUtils';
+import {
+  defaultAddOperationHandler,
+  functionRendererLeft,
+  getPromAndLokiOperationDisplayName,
+} from './shared/operationUtils';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { PromVisualQueryOperationCategory } from './types';
 
@@ -29,7 +32,7 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
   const operations: QueryBuilderOperationDef[] = [
     {
       id: name,
-      displayName: capitalize(name),
+      displayName: getPromAndLokiOperationDisplayName(name),
       params: [
         {
           name: 'Label',
@@ -47,7 +50,7 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
     },
     {
       id: `__${name}_by`,
-      displayName: `${capitalize(name)} by`,
+      displayName: `${getPromAndLokiOperationDisplayName(name)} by`,
       params: [
         {
           name: 'Label',
@@ -128,7 +131,7 @@ function createAggregationOverTime(name: string): QueryBuilderOperationDef {
   const functionName = `${name}_over_time`;
   return {
     id: functionName,
-    displayName: capitalize(functionName.replace(/_/g, ' ')),
+    displayName: getPromAndLokiOperationDisplayName(name),
     params: [getAggregationOverTimeRangeVector()],
     defaultParams: ['auto'],
     alternativesKey: 'overtime function',

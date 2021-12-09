@@ -1,3 +1,4 @@
+import { capitalize } from 'lodash';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryWithOperations } from './types';
 
 export function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
@@ -43,4 +44,8 @@ export function defaultAddOperationHandler<T extends QueryWithOperations>(def: Q
     ...query,
     operations: [...query.operations, newOperation],
   };
+}
+
+export function getPromAndLokiOperationDisplayName(funcName: string) {
+  return capitalize(funcName.replace(/_/g, ' '));
 }

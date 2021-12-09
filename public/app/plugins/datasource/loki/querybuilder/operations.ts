@@ -1,4 +1,7 @@
-import { functionRendererLeft } from '../../prometheus/querybuilder/shared/operationUtils';
+import {
+  functionRendererLeft,
+  getPromAndLokiOperationDisplayName,
+} from '../../prometheus/querybuilder/shared/operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -9,29 +12,21 @@ import { LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [
-    {
-      id: 'rate',
-      displayName: 'Rate',
-      params: [getRangeVectorParamDef()],
-      defaultParams: ['auto'],
-      category: LokiVisualQueryOperationCategory.Functions,
-      renderer: operationWithRangeVectorRenderer,
-      addOperationHandler: addLokiOperation,
-    },
-    {
-      id: 'sum',
-      displayName: 'Sum',
-      params: [],
-      defaultParams: [],
-      category: LokiVisualQueryOperationCategory.Functions,
-      renderer: functionRendererLeft,
-      addOperationHandler: addLokiOperation,
-    },
+    createRangeOperation('rate'),
+    createRangeOperation('count_over_time'),
+    createRangeOperation('bytes_rate'),
+    createRangeOperation('bytes_over_time'),
+    createRangeOperation('absent_over_time'),
+    createAggregationOperation('sum'),
+    createAggregationOperation('avg'),
+    createAggregationOperation('min'),
+    createAggregationOperation('max'),
     {
       id: 'json',
       displayName: 'Json',
       params: [],
       defaultParams: [],
+      alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
@@ -41,6 +36,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       displayName: 'Logfmt',
       params: [],
       defaultParams: [],
+      alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
@@ -50,6 +46,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       displayName: 'Line contains',
       params: [{ name: 'String', type: 'string' }],
       defaultParams: [''],
+      alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
       renderer: getLineFilterRenderer('|='),
       addOperationHandler: addLokiOperation,
@@ -59,6 +56,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       displayName: 'Line does not contain',
       params: [{ name: 'String', type: 'string' }],
       defaultParams: [''],
+      alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
       renderer: getLineFilterRenderer('!='),
       addOperationHandler: addLokiOperation,
@@ -68,6 +66,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       displayName: 'Line contains regex match',
       params: [{ name: 'Regex', type: 'string' }],
       defaultParams: [''],
+      alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
       renderer: getLineFilterRenderer('|~'),
       addOperationHandler: addLokiOperation,
@@ -77,6 +76,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       displayName: 'Line does not match regex',
       params: [{ name: 'Regex', type: 'string' }],
       defaultParams: [''],
+      alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
       renderer: getLineFilterRenderer('!~'),
       addOperationHandler: addLokiOperation,
@@ -97,6 +97,32 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
   ];
 
   return list;
+}
+
+function createRangeOperation(name: string): QueryBuilderOperationDef {
+  return {
+    id: name,
+    displayName: getPromAndLokiOperationDisplayName(name),
+    params: [getRangeVectorParamDef()],
+    defaultParams: ['auto'],
+    alternativesKey: 'range function',
+    category: LokiVisualQueryOperationCategory.RangeFunctions,
+    renderer: operationWithRangeVectorRenderer,
+    addOperationHandler: addLokiOperation,
+  };
+}
+
+function createAggregationOperation(name: string): QueryBuilderOperationDef {
+  return {
+    id: name,
+    displayName: getPromAndLokiOperationDisplayName(name),
+    params: [],
+    defaultParams: [],
+    alternativesKey: 'plain aggregation',
+    category: LokiVisualQueryOperationCategory.Aggregations,
+    renderer: functionRendererLeft,
+    addOperationHandler: addLokiOperation,
+  };
 }
 
 function getRangeVectorParamDef(): QueryBuilderOperationParamDef {

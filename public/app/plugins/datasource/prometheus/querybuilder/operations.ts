@@ -1,5 +1,9 @@
-import { capitalize } from 'lodash';
-import { defaultAddOperationHandler, functionRendererLeft, functionRendererRight } from './shared/operationUtils';
+import {
+  defaultAddOperationHandler,
+  functionRendererLeft,
+  functionRendererRight,
+  getPromAndLokiOperationDisplayName,
+} from './shared/operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -84,7 +88,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
 function createRangeFunction(name: string): QueryBuilderOperationDef {
   return {
     id: name,
-    displayName: capitalize(name),
+    displayName: getPromAndLokiOperationDisplayName(name),
     params: [getRangeVectorParamDef()],
     defaultParams: ['auto'],
     alternativesKey: 'range function',
