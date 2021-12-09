@@ -28,7 +28,7 @@ import { FetchQueueWorker } from './FetchQueueWorker';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { ShowModalReactEvent } from '../../types/events';
 import { getRequestResponseRecorder } from './RequestResponseRecorder';
-import { getRecordedResponsePlayer } from './RecordedResponsePlayer';
+import { getRecordedResponsePlayer } from './RecordedResponseMatcher';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 

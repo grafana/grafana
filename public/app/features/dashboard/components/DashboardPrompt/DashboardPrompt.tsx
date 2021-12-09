@@ -14,7 +14,7 @@ import { useDispatch } from 'react-redux';
 import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';
 import { DashboardSavedEvent } from 'app/types/events';
 import { getRequestResponseRecorder } from '../../../../core/services/RequestResponseRecorder';
-import { getRecordedResponsePlayer } from '../../../../core/services/RecordedResponsePlayer';
+import { getRecordedResponsePlayer } from '../../../../core/services/RecordedResponseMatcher';
 
 export interface Props {
   dashboard: DashboardModel;

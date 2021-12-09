@@ -1,16 +1,26 @@
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime/src';
-import { dateTime, isDateTime } from '@grafana/data/src';
+import { dateMath, dateTime, isDateTime } from '@grafana/data/src';
 
 import { RequestResponseRecording } from './RequestResponseRecorder';
 
-export interface PlaysRecordedResponses {
+export interface MatchesRecordedResponses {
   clear: () => void;
   load: (recordings: RequestResponseRecording[]) => void;
   find: <T>(options: BackendSrvRequest) => FetchResponse<T> | undefined;
 }
 
-class RecordedResponsePlayer implements PlaysRecordedResponses {
-  private recordings: RequestResponseRecording[] = [];
+interface FlattenedOptionsResponse {
+  flattenedRecordedOptions: Record<string, any>;
+  fetchResponse: FetchResponse;
+}
+
+const SLUG_REGEX = /^[a-zA-Z0-9\\-\\_]*$/g;
+const EPOC_REGEX = /[0-9]{9,10}/g;
+const DIGIT_REGEX = /[0-9]/g;
+
+class RecordedResponseMatcher implements MatchesRecordedResponses {
+  private recordings: FlattenedOptionsResponse[] = [];
+
   constructor() {}
 
   clear() {
@@ -18,7 +28,11 @@ class RecordedResponsePlayer implements PlaysRecordedResponses {
   }
 
   load(recordings: RequestResponseRecording[]) {
-    this.recordings = recordings;
+    for (const recording of recordings) {
+      const { options, fetchResponse } = recording;
+      const flattenedRecordedOptions = this.flattenOptionsObject(options);
+      this.recordings.push({ flattenedRecordedOptions, fetchResponse });
+    }
   }
 
   find<T>(options: BackendSrvRequest): FetchResponse<T> | undefined {
@@ -28,15 +42,10 @@ class RecordedResponsePlayer implements PlaysRecordedResponses {
 
     const flattenedOptions = this.flattenOptionsObject(options);
     const keys = Object.keys(flattenedOptions);
-    const flattenedRecordings = this.recordings.map((recording) => {
-      const { options, fetchResponse } = recording;
-      const flattenedRecordedOptions = this.flattenOptionsObject(options);
-      return { flattenedRecordedOptions, fetchResponse };
-    });
 
     const matches: Record<number, number> = {};
-    for (let index = 0; index < flattenedRecordings.length; index++) {
-      const { flattenedRecordedOptions } = flattenedRecordings[index];
+    for (let index = 0; index < this.recordings.length; index++) {
+      const { flattenedRecordedOptions } = this.recordings[index];
       for (const key of keys) {
         if (flattenedRecordedOptions.hasOwnProperty(key)) {
           const value = flattenedOptions[key];
@@ -44,23 +53,6 @@ class RecordedResponsePlayer implements PlaysRecordedResponses {
           if (value === recorded) {
             matches[index] = matches[index] ?? 0;
             matches[index]++;
-          } else {
-            if (typeof value === 'string' && typeof recorded === 'string') {
-              if (value.match(/^[a-zA-Z0-9\\-\\_]*$/) && recorded.match(/^[a-zA-Z0-9\\-\\_]*$/)) {
-                matches[index] = matches[index] ?? 0;
-                matches[index]++;
-              } else {
-                const valueWithoutDigits = value ? value?.replace(/[0-9]/g, 'x') : value;
-                const recordedWithoutDigits = recorded ? recorded?.replace(/[0-9]/g, 'x') : recorded;
-                if (valueWithoutDigits === recordedWithoutDigits) {
-                  matches[index] = matches[index] ?? 0;
-                  matches[index]++;
-                }
-              }
-            } else if (typeof value === 'number' && typeof recorded === 'number') {
-              matches[index] = matches[index] ?? 0;
-              matches[index]++;
-            }
           }
         }
       }
@@ -74,7 +66,7 @@ class RecordedResponsePlayer implements PlaysRecordedResponses {
       return undefined;
     }
 
-    return (flattenedRecordings[Number(bestMatch)].fetchResponse as unknown) as FetchResponse<T>;
+    return (this.recordings[Number(bestMatch)].fetchResponse as unknown) as FetchResponse<T>;
   }
 
   private flattenOptions(key: string, value: any, level = 0, flattened: Record<string, any> = {}): Record<string, any> {
@@ -100,6 +92,22 @@ class RecordedResponsePlayer implements PlaysRecordedResponses {
       return flattened;
     } else if (typeof value === 'string' && dateTime(value).isValid()) {
       flattened[keyLevel] = 'datetime';
+    } else if (typeof value === 'string' && dateMath.isMathString(value)) {
+      flattened[keyLevel] = 'datetime';
+    } else if (typeof value === 'string') {
+      if (value.match(SLUG_REGEX)) {
+        value = value?.replace(SLUG_REGEX, 'slug');
+      }
+      if (value.match(EPOC_REGEX)) {
+        value = value?.replace(EPOC_REGEX, 'epoc');
+      }
+      if (value.match(DIGIT_REGEX)) {
+        value = value?.replace(DIGIT_REGEX, '');
+      }
+
+      flattened[keyLevel] = value;
+    } else if (typeof value === 'number') {
+      flattened[keyLevel] = 1;
     } else {
       flattened[keyLevel] = value;
     }
@@ -117,19 +125,19 @@ class RecordedResponsePlayer implements PlaysRecordedResponses {
   }
 }
 
-let recordedResponsePlayer: PlaysRecordedResponses | undefined;
+let recordedResponsePlayer: MatchesRecordedResponses | undefined;
 
-export function setRecordedResponsePlayer(recorder: PlaysRecordedResponses) {
+export function setRecordedResponsePlayer(recorder: MatchesRecordedResponses) {
   if (process.env.NODE_ENV !== 'test') {
-    throw new Error('RecordedResponsePlayer can be only overriden in test environment');
+    throw new Error('RecordedResponseMatcher can be only overriden in test environment');
   }
 
   recordedResponsePlayer = recorder;
 }
 
-export function getRecordedResponsePlayer(): PlaysRecordedResponses {
+export function getRecordedResponsePlayer(): MatchesRecordedResponses {
   if (!recordedResponsePlayer) {
-    recordedResponsePlayer = new RecordedResponsePlayer();
+    recordedResponsePlayer = new RecordedResponseMatcher();
   }
 
   return recordedResponsePlayer;

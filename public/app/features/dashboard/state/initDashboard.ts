@@ -24,7 +24,7 @@ import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { config, locationService } from '@grafana/runtime';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
-import { getRecordedResponsePlayer } from '../../../core/services/RecordedResponsePlayer';
+import { getRecordedResponsePlayer } from '../../../core/services/RecordedResponseMatcher';
 import { DASHBOARD_EXPORTER_RECORDINGS } from '../components/DashExportModal/constants';
 
 export interface InitDashboardArgs {
