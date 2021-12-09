@@ -13,6 +13,7 @@ import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { useDispatch } from 'react-redux';
 import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';
 import { DashboardSavedEvent } from 'app/types/events';
+import { getRequestResponseRecorder } from '../../../../core/services/RequestResponseRecorder';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -100,6 +101,9 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
 
       return true;
     }
+
+    // when we navigate away from the dashboard we need to stop the recording
+    getRequestResponseRecorder().stop();
 
     if (ignoreChanges(dashboard, original)) {
       return true;

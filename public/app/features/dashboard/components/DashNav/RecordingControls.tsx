@@ -10,8 +10,9 @@ import { RecordingIndicator } from './RecordingIndicator';
 import { createWarningNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from 'app/core/actions';
 import { DashboardModel } from '../../state';
+import { ShareRecordings } from '../ShareModal/ShareRecordings';
 
-const REMINDER_INTERVAL = 5000;
+const REMINDER_INTERVAL = 10000;
 export interface RecordingControlsProps {
   dashboard: DashboardModel;
 }
@@ -34,6 +35,10 @@ export function RecordingControls({ dashboard }: RecordingControlsProps): ReactE
     forceUpdate();
   };
 
+  const onDismiss = () => {
+    set([]);
+  };
+
   return (
     <>
       {dashboard.isRecorded && <Badge text="Recorded dashboard" color="blue" />}
@@ -41,8 +46,8 @@ export function RecordingControls({ dashboard }: RecordingControlsProps): ReactE
         <RecordingIndicator onClick={onRecordingStopped} />
       )}
       {!dashboard.isRecorded && !getRequestResponseRecorder().isRecording() && (
-        <Modal isOpen={Boolean(recordings.length)} title="Export dashboard with recordings" onDismiss={() => set([])}>
-          {/*<ShareExport shareExternally={true} recordings={recordings} dashboard={dashboard} onDismiss={() => set([])} />*/}
+        <Modal isOpen={Boolean(recordings.length)} title="Export dashboard with recordings" onDismiss={onDismiss}>
+          <ShareRecordings recordings={recordings} dashboard={dashboard} onDismiss={onDismiss} />
         </Modal>
       )}
     </>

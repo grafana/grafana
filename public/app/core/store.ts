@@ -1,25 +1,36 @@
 type StoreValue = string | number | boolean | null;
+type StoreType = 'local' | 'session';
 
 export class Store {
+  private readonly store: Storage;
+
+  constructor(private readonly type: StoreType = 'local') {
+    if (this.type === 'local') {
+      this.store = window.localStorage;
+    } else {
+      this.store = window.sessionStorage;
+    }
+  }
+
   get(key: string) {
-    return window.localStorage[key];
+    return this.store[key];
   }
 
   set(key: string, value: StoreValue) {
-    window.localStorage[key] = value;
+    this.store[key] = value;
   }
 
   getBool(key: string, def: boolean): boolean {
     if (def !== void 0 && !this.exists(key)) {
       return def;
     }
-    return window.localStorage[key] === 'true';
+    return this.store[key] === 'true';
   }
 
   getObject(key: string, def?: any) {
     let ret = def;
     if (this.exists(key)) {
-      const json = window.localStorage[key];
+      const json = this.store[key];
       try {
         ret = JSON.parse(json);
       } catch (error) {
@@ -49,11 +60,11 @@ export class Store {
   }
 
   exists(key: string) {
-    return window.localStorage[key] !== void 0;
+    return this.store[key] !== void 0;
   }
 
   delete(key: string) {
-    window.localStorage.removeItem(key);
+    this.store.removeItem(key);
   }
 }
 

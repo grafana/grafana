@@ -1,5 +1,5 @@
 import { BackendSrvRequest, FetchResponse, locationService } from '@grafana/runtime/src';
-import store, { Store } from 'app/core/store';
+import { Store } from 'app/core/store';
 
 export const STORE_KEY = 'grafana.dashboard.isRecording';
 
@@ -25,6 +25,10 @@ class RequestResponseRecorder implements RecordsRequestResponse {
   }
 
   stop(): RequestResponseRecording[] {
+    if (!this.isRecording()) {
+      return [];
+    }
+
     this.store.delete(STORE_KEY);
     return this.recordings;
   }
@@ -46,7 +50,7 @@ class RequestResponseRecorder implements RecordsRequestResponse {
   }
 }
 
-let requestResponseRecorder: RecordsRequestResponse = new RequestResponseRecorder(store);
+let requestResponseRecorder: RecordsRequestResponse = new RequestResponseRecorder(new Store('session'));
 
 export const setRequestResponseRecorder = (recorder: RecordsRequestResponse) => {
   if (process.env.NODE_ENV !== 'test') {

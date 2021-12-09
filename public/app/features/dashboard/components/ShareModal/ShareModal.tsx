@@ -9,6 +9,8 @@ import { ShareEmbed } from './ShareEmbed';
 import { ShareModalTabModel } from './types';
 import { contextSrv } from 'app/core/core';
 import { ShareLibraryPanel } from './ShareLibraryPanel';
+import { ShareStartRecording } from './ShareStartRecording';
+import { getRequestResponseRecorder } from '../../../../core/services/RequestResponseRecorder';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
 const customPanelTabs: ShareModalTabModel[] = [];
@@ -47,6 +49,9 @@ function getTabs(props: Props) {
     tabs.push(...customPanelTabs);
   } else {
     tabs.push({ label: 'Export', value: 'export', component: ShareExport });
+    if (contextSrv.isSignedIn && !getRequestResponseRecorder().isRecording()) {
+      tabs.push({ label: 'Record', value: 'record', component: ShareStartRecording });
+    }
     tabs.push(...customDashboardTabs);
   }
 
