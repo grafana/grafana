@@ -63,6 +63,7 @@ const defaultInitialState = {
       eventBridge: { emit: () => {} } as any,
       queries: [{ expr: 'test' }] as any[],
       range: testRange,
+      history: [],
       refreshInterval: {
         label: 'Off',
         value: 0,
