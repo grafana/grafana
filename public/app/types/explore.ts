@@ -171,6 +171,8 @@ export interface ExploreItemState {
 
   /* explore graph style */
   graphStyle: ExploreGraphStyle;
+
+  isBreakdowns: boolean;
 }
 
 export interface ExploreUpdateState {
