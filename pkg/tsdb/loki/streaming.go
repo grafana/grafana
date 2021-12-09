@@ -32,7 +32,7 @@ func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStrea
 	if query.Expr == "" {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
-		}, fmt.Errorf("missing expr in cuannel")
+		}, fmt.Errorf("missing expr in channel (subscribe)")
 	}
 
 	s.plog.Info("TODO: backfill query", "query", query, "ds", dsInfo)
