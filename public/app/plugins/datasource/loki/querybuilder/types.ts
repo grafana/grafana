@@ -20,7 +20,6 @@ export enum LokiVisualQueryOperationCategory {
   RangeFunctions = 'Range functions',
   Functions = 'Functions',
   Formats = 'Formats',
-  PipelineErrors = 'Pipeline errors',
   LineFilters = 'Line filters',
   LabelFilters = 'Label filters',
 }

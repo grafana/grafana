@@ -173,7 +173,7 @@ function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperati
 }
 
 function isRangeVectorFunction(def: QueryBuilderOperationDef) {
-  return def.renderer === operationWithRangeVectorRenderer;
+  return def.category === LokiVisualQueryOperationCategory.RangeFunctions;
 }
 
 function getIndexOfOrLast(
@@ -201,13 +201,14 @@ export function addLokiOperation(
   const operations = [...query.operations];
 
   switch (def.category) {
-    case LokiVisualQueryOperationCategory.Functions:
+    case LokiVisualQueryOperationCategory.Aggregations:
+    case LokiVisualQueryOperationCategory.Functions: {
       const rangeVectorFunction = operations.find((x) => {
         return isRangeVectorFunction(modeller.getOperationDef(x.id));
       });
 
-      // If we are adding a function that does not take a range vector and none exists add one
-      if (!rangeVectorFunction && !isRangeVectorFunction(def)) {
+      // If we are adding a function but we have not range vector function yet add one
+      if (!rangeVectorFunction) {
         const placeToInsert = getIndexOfOrLast(
           operations,
           modeller,
@@ -217,6 +218,18 @@ export function addLokiOperation(
       }
 
       operations.push(newOperation);
+      break;
+    }
+    case LokiVisualQueryOperationCategory.RangeFunctions:
+      // Add range functions after any formats, line filters and label filters
+      const placeToInsert = getIndexOfOrLast(operations, modeller, (x) => {
+        return (
+          x.category !== LokiVisualQueryOperationCategory.Formats &&
+          x.category !== LokiVisualQueryOperationCategory.LineFilters &&
+          x.category !== LokiVisualQueryOperationCategory.LabelFilters
+        );
+      });
+      operations.splice(placeToInsert, 0, newOperation);
       break;
     case LokiVisualQueryOperationCategory.Formats:
     case LokiVisualQueryOperationCategory.LineFilters: {
