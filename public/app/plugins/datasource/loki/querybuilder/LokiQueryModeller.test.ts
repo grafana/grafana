@@ -66,6 +66,24 @@ describe('LokiQueryModeller', () => {
     ).toBe('{app="grafana"} !~ "error"');
   });
 
+  it('Can query with label filter expression', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: '__label_filter', params: ['__error__', '=', 'value'] }],
+      })
+    ).toBe('{app="grafana"} | __error__="value"');
+  });
+
+  it('Can query with label filter expression using greater than operator', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: '__label_filter', params: ['count', '>', 'value'] }],
+      })
+    ).toBe('{app="grafana"} | count > value');
+  });
+
   describe('On add operation handlers', () => {
     it('When adding function without range vector param should automatically add rate', () => {
       const query = {

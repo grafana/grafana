@@ -81,6 +81,19 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       renderer: getLineFilterRenderer('!~'),
       addOperationHandler: addLokiOperation,
     },
+    {
+      id: '__label_filter',
+      displayName: 'Label filter expression',
+      params: [
+        { name: 'Label', type: 'string' },
+        { name: 'Operator', type: 'string', options: ['=', '!=', '>', '<', '>=', '<='] },
+        { name: 'Value', type: 'string' },
+      ],
+      defaultParams: ['', '=', ''],
+      category: LokiVisualQueryOperationCategory.LabelFilters,
+      renderer: labelFilterRenderer,
+      addOperationHandler: addLokiOperation,
+    },
   ];
 
   return list;
@@ -112,6 +125,18 @@ function getLineFilterRenderer(operation: string) {
   return function lineFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
     return `${innerExpr} ${operation} "${model.params[0]}"`;
   };
+}
+
+function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+  if (model.params[0] === '') {
+    return innerExpr;
+  }
+
+  if (model.params[1] === '<' || model.params[1] === '>') {
+    return `${innerExpr} | ${model.params[0]} ${model.params[1]} ${model.params[2]}`;
+  }
+
+  return `${innerExpr} | ${model.params[0]}${model.params[1]}"${model.params[2]}"`;
 }
 
 function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
@@ -164,12 +189,23 @@ export function addLokiOperation(
 
       operations.push(newOperation);
       break;
-    case LokiVisualQueryOperationCategory.LineFilters:
     case LokiVisualQueryOperationCategory.Formats:
+    case LokiVisualQueryOperationCategory.LineFilters: {
       const placeToInsert = getIndexOfOrLast(operations, modeller, (x) => {
         return x.category !== LokiVisualQueryOperationCategory.LineFilters;
       });
       operations.splice(placeToInsert, 0, newOperation);
+      break;
+    }
+    case LokiVisualQueryOperationCategory.LabelFilters: {
+      const placeToInsert = getIndexOfOrLast(operations, modeller, (x) => {
+        return (
+          x.category !== LokiVisualQueryOperationCategory.LineFilters &&
+          x.category !== LokiVisualQueryOperationCategory.Formats
+        );
+      });
+      operations.splice(placeToInsert, 0, newOperation);
+    }
   }
 
   return {

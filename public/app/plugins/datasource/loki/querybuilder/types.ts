@@ -20,6 +20,7 @@ export enum LokiVisualQueryOperationCategory {
   Formats = 'Formats',
   PipelineErrors = 'Pipeline errors',
   LineFilters = 'Line filters',
+  LabelFilters = 'Label filters',
 }
 
 export function getDefaultEmptyQuery(): LokiVisualQuery {

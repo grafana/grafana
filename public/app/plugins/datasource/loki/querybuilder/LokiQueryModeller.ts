@@ -11,7 +11,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQu
       LokiVisualQueryOperationCategory.Formats,
       LokiVisualQueryOperationCategory.Functions,
       LokiVisualQueryOperationCategory.LineFilters,
-      LokiVisualQueryOperationCategory.PipelineErrors,
+      LokiVisualQueryOperationCategory.LabelFilters,
     ]);
   }
 
