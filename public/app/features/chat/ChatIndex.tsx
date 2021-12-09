@@ -8,7 +8,7 @@ export default function ChatIndex() {
 
   return (
     <Page navModel={navModel}>
-      <Page.Contents>
+      <Page.Contents className="chat-wrapper">
         <Chat contentTypeId={4} objectId={'all'} />
       </Page.Contents>
     </Page>

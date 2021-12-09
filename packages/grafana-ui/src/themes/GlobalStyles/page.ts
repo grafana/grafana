@@ -118,6 +118,11 @@ export function getPageStyles(theme: GrafanaTheme2) {
       margin-top: ${theme.spacing(0.5)};
     }
 
+    .chat-wrapper {
+      max-height: 600px;
+      overflow-y: scroll;
+    }
+
     .chat-message-content {
       display: block;
       overflow: hidden;
