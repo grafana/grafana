@@ -152,7 +152,7 @@ function getLineFilterRenderer(operation: string) {
     if (model.params[0] === '') {
       return innerExpr;
     }
-    return `${innerExpr} ${operation} "${model.params[0]}"`;
+    return `${innerExpr} ${operation} \`${model.params[0]}\``;
   };
 }
 

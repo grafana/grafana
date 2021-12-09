@@ -36,7 +36,7 @@ describe('LokiQueryModeller', () => {
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
         operations: [{ id: '__line_contains', params: ['error'] }],
       })
-    ).toBe('{app="grafana"} |= "error"');
+    ).toBe('{app="grafana"} |= `error`');
   });
 
   it('Can query with line filter contains operation with empty params', () => {
@@ -54,7 +54,7 @@ describe('LokiQueryModeller', () => {
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
         operations: [{ id: '__line_contains_not', params: ['error'] }],
       })
-    ).toBe('{app="grafana"} != "error"');
+    ).toBe('{app="grafana"} != `error`');
   });
 
   it('Can query with line regex filter', () => {
@@ -63,7 +63,7 @@ describe('LokiQueryModeller', () => {
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
         operations: [{ id: '__line_matches_regex', params: ['error'] }],
       })
-    ).toBe('{app="grafana"} |~ "error"');
+    ).toBe('{app="grafana"} |~ `error`');
   });
 
   it('Can query with line not matching regex', () => {
@@ -72,7 +72,7 @@ describe('LokiQueryModeller', () => {
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
         operations: [{ id: '__line_matches_regex_not', params: ['error'] }],
       })
-    ).toBe('{app="grafana"} !~ "error"');
+    ).toBe('{app="grafana"} !~ `error`');
   });
 
   it('Can query with label filter expression', () => {
