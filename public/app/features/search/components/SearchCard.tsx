@@ -25,7 +25,6 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   const [updatedBy, setUpdatedBy] = useState<string>();
   const themeId = theme.isDark ? 'dark' : 'light';
   const imageSrc = `/preview/dash/${item.uid}/thumb/${themeId}`;
-  const styles = getStyles(theme);
   const offsetCallback = useCallback(({ placement, reference, popper }) => {
     let result: [number, number] = [0, 0];
     if (placement === 'bottom' || placement === 'top') {
@@ -47,6 +46,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       },
     ],
   });
+  const styles = getStyles(theme, markerElement);
 
   // hack to correct positioning of popper
   if (state && state.rects) {
@@ -182,7 +182,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, markerElement: HTMLDivElement | null) => ({
   checkbox: css`
     left: 0;
     margin: ${theme.spacing(1)};
@@ -192,8 +192,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   fullCard: css`
     @keyframes expand {
       0% {
-        opacity: 0;
-        transform: scale(0.5);
+        opacity: 0.5;
+        transform: scale(${markerElement ? markerElement.getBoundingClientRect().width / 384 : 0.8});
       }
       100% {
         opacity: 1;
