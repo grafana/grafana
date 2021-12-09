@@ -170,8 +170,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onUpdateAutoBreakdownTimeRange = (timeRange: AbsoluteTimeRange) => {
+    // Click one point in the graph has same start and endpoint, using this to reset
+    const autoBreakdownRange = timeRange.to === timeRange.from ? undefined : timeRange;
     this.setState({
-      autoBreakdownRange: timeRange,
+      autoBreakdownRange,
     });
   };
 
@@ -179,8 +181,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { exploreId, changeBreakdowns, isBreakdowns } = this.props;
     const nextIsBreakdowns = !isBreakdowns;
     changeBreakdowns(exploreId, nextIsBreakdowns);
-    const autoBreakdownRange = nextIsBreakdowns ? this.props.absoluteRange : undefined;
-    this.setState({ autoBreakdownRange });
+    // Resetting selection range
+    if (!nextIsBreakdowns) {
+      this.setState({ autoBreakdownRange: undefined });
+    }
   };
 
   onChangeGraphStyle = (graphStyle: ExploreGraphStyle) => {
@@ -253,11 +257,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             loadingState={queryResponse.state}
           />
         </Collapse>
-        <AutoBreakdowns
-          datasourceInstance={datasourceInstance}
-          timeZone={timeZone}
-          autoBreakdownRange={this.state.autoBreakdownRange}
-        />
+        {isBreakdowns && (
+          <AutoBreakdowns
+            datasourceInstance={datasourceInstance}
+            timeZone={timeZone}
+            autoBreakdownRange={this.state.autoBreakdownRange}
+            absoluteRange={absoluteRange}
+          />
+        )}
       </>
     );
   }

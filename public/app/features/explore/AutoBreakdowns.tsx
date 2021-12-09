@@ -9,6 +9,7 @@ export interface Props {
   timeZone: TimeZone;
   datasourceInstance?: DataSourceApi | null;
   autoBreakdownRange?: AbsoluteTimeRange;
+  absoluteRange: AbsoluteTimeRange;
 }
 
 const spacing = css({
@@ -25,8 +26,8 @@ function calcWidth(df: DataFrame): number {
 }
 
 export const AutoBreakdowns = (props: Props) => {
-  const { datasourceInstance, autoBreakdownRange, timeZone } = props;
-  if (!datasourceInstance || !autoBreakdownRange) {
+  const { datasourceInstance, autoBreakdownRange, timeZone, absoluteRange } = props;
+  if (!datasourceInstance) {
     return null;
   }
   //@ts-ignore
@@ -44,7 +45,7 @@ export const AutoBreakdowns = (props: Props) => {
                 height={150}
                 width={calcWidth(df)}
                 timeZone={timeZone}
-                absoluteRange={autoBreakdownRange}
+                absoluteRange={absoluteRange}
                 loadingState={LoadingState.Done}
                 onChangeTime={() => {}}
                 pluginId="barchart"

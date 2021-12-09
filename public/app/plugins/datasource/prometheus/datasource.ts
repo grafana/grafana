@@ -452,10 +452,6 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
   //This holds all logic to create autobreakdown
   createAutoBreakdowns(timeRange?: AbsoluteTimeRange) {
-    // If we didn't select range, retrun undefined
-    if (!timeRange) {
-      return;
-    }
     // Create list of exemplars and all labels + values in array that exemplars have within timerange
     const { exemplarsWithin, exemplarsOutside, labels } = this.selectAutoBreakdownDataBasedOnTimeRange(timeRange);
 
@@ -471,7 +467,11 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
         const medianWithin = calculateMedianFromExemplarEvents(exemplarsWithinByValue);
         const medianOutside = calculateMedianFromExemplarEvents(exemplarsOutsideByValue);
         // Create object that will be used in data frame with label's value and avg
-        return { name: value.toString(), median_selected: medianWithin, median_baseline: medianOutside };
+        return {
+          name: value.toString(),
+          median_selected: timeRange ? medianWithin : undefined,
+          median_baseline: medianOutside,
+        };
       });
 
       // Create dataFrame from labelValuesArray
@@ -487,16 +487,21 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     return dataFrames;
   }
 
-  selectAutoBreakdownDataBasedOnTimeRange(timeRange: AbsoluteTimeRange) {
+  selectAutoBreakdownDataBasedOnTimeRange(timeRange?: AbsoluteTimeRange) {
     const dictionary: any = {};
     const highCardinalityLabels: string[] = [];
     const highCardinalityLimit = 100;
-    const [exemplarsWithinTimeRange, exemplarsOutsideTheRange] = partition(
-      this.exemplarsForAutoBreakdowns,
-      (exemplar) => exemplar['Time'] >= timeRange.from && exemplar['Time'] <= timeRange.to
-    );
+    let exemplarsBaseline = this.exemplarsForAutoBreakdowns;
+    let exemplarsSelected = [];
+    if (timeRange) {
+      [exemplarsSelected, exemplarsBaseline] = partition(
+        this.exemplarsForAutoBreakdowns,
+        (exemplar) => exemplar['Time'] >= timeRange.from && exemplar['Time'] <= timeRange.to
+      );
+    }
 
-    exemplarsWithinTimeRange.forEach((exemplar) => {
+    const exemplarsForBreakdowns = exemplarsSelected.length > 0 ? exemplarsSelected : this.exemplarsForAutoBreakdowns;
+    exemplarsForBreakdowns.forEach((exemplar) => {
       const { Time, Value, ...labels } = exemplar;
 
       Object.keys(labels).forEach((key) => {
@@ -522,7 +527,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       });
     });
     const { le, __name__, ...rest } = dictionary;
-    return { exemplarsWithin: exemplarsWithinTimeRange, exemplarsOutside: exemplarsOutsideTheRange, labels: rest };
+    return { exemplarsWithin: exemplarsSelected, exemplarsOutside: exemplarsBaseline, labels: rest };
   }
 
   createQuery(target: PromQuery, options: DataQueryRequest<PromQuery>, start: number, end: number) {
