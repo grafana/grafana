@@ -155,9 +155,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
     color: ${theme.colors.text.secondary};
     display: flex;
-    height: 100%;
+    height: 240px;
     justify-content: center;
-    width: 100%;
+    margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
+    width: 320px;
   `,
   tagList: css`
     justify-content: flex-start;

@@ -204,11 +204,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   placeholder: css`
     align-items: center;
+    aspect-ratio: 4 / 3;
     color: ${theme.colors.text.secondary};
     display: flex;
-    height: 100%;
     justify-content: center;
-    width: 100%;
+    margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
+    width: calc(100% - 64px);
   `,
   titleContainer: css`
     display: block;
