@@ -1,9 +1,10 @@
 import React, { FunctionComponent, PureComponent, useState } from 'react';
 import { getBackendSrv } from '../services/backendSrv';
-import { TextArea, ValuePicker } from '@grafana/ui';
+import { TextArea } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '../services/live';
 import { isLiveChannelMessageEvent, LiveChannelScope, renderChatMarkdown } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
+import { IconButton, WithContextMenu } from '../../../grafana-ui';
 
 export interface ChatProps {
   contentTypeId: number;
@@ -235,12 +236,6 @@ interface ChatMessageProps {
   actions?: ChatMessageAction[];
 }
 
-// const messageContentCss = css`
-//   p {
-//     margin: 0;
-//   }
-// `
-
 const ChatMessage: FunctionComponent<ChatMessageProps> = ({
   message,
   actions = [
@@ -290,18 +285,21 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
           <div className="chat-message-content" dangerouslySetInnerHTML={{ __html: markdownContent }} />
         </div>
         {showActionIcon && (
-          <ValuePicker
-            label=""
-            icon="bars"
-            options={actionOptions}
-            onChange={(value: any) => {
-              value.value(message);
-              setShowActionIcon(false);
-            }}
-            variant="secondary"
-            size="sm"
-            isFullWidth={false}
-          />
+          <WithContextMenu renderMenuItems={() => []}>
+            {({ openMenu }) => <IconButton name="info-circle" onClick={openMenu} />}
+          </WithContextMenu>
+          // <ValuePicker
+          //   label=""
+          //   icon="bars"
+          //   options={actionOptions}
+          //   onChange={(value: any) => {
+          //     value.value(message);
+          //     setShowActionIcon(false);
+          //   }}
+          //   variant="secondary"
+          //   size="sm"
+          //   isFullWidth={false}
+          // />
         )}
       </div>
       <div style={{ clear: 'both' }}></div>
