@@ -34,6 +34,7 @@ export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps)
           gridRowGap: theme.spacing(2),
           gridColumnGap: theme.spacing(2),
           flexGrow: 1,
+          paddingLeft: theme.spacing(2),
         }}
       >
         <ColorSwatch
