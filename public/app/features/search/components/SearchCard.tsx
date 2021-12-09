@@ -165,7 +165,12 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       </div>
       {isOpen && (
         <Portal>
-          <div ref={setPopperElement} style={popperStyles.popper} {...attributes.popper}>
+          <div
+            onWheel={() => setIsOpen(false)}
+            ref={setPopperElement}
+            style={popperStyles.popper}
+            {...attributes.popper}
+          >
             <SearchCardFull
               className={styles.fullCard}
               editable={editable}
