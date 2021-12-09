@@ -93,6 +93,18 @@ export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphS
 }
 
 /**
+ * Change state for autoBreakdown toggle
+ */
+interface ChangeBreakdownsPayload {
+  exploreId: ExploreId;
+  isBreakdowns: boolean;
+}
+const changeBreakdownsAction = createAction<ChangeBreakdownsPayload>('explore/changeBreakdowns');
+export function changeBreakdowns(exploreId: ExploreId, isBreakdowns: boolean): PayloadAction<ChangeBreakdownsPayload> {
+  return changeBreakdownsAction({ exploreId, isBreakdowns });
+}
+
+/**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
  */
@@ -219,6 +231,11 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   if (changeGraphStyleAction.match(action)) {
     const { graphStyle } = action.payload;
     return { ...state, graphStyle };
+  }
+
+  if (changeBreakdownsAction.match(action)) {
+    const { isBreakdowns } = action.payload;
+    return { ...state, isBreakdowns };
   }
 
   if (initializeExploreAction.match(action)) {

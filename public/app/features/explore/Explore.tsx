@@ -14,7 +14,7 @@ import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
-import { changeSize, changeGraphStyle } from './state/explorePane';
+import { changeBreakdowns, changeSize, changeGraphStyle } from './state/explorePane';
 import { updateTimeRange } from './state/time';
 import { addQueryRow, loadLogsVolumeData, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -175,6 +175,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     });
   };
 
+  onChangeBreakdowns = () => {
+    console.log('onChangeBreakdowns');
+
+    const { exploreId, changeBreakdowns, isBreakdowns } = this.props;
+    changeBreakdowns(exploreId, !isBreakdowns);
+  };
+
   onChangeGraphStyle = (graphStyle: ExploreGraphStyle) => {
     const { exploreId, changeGraphStyle } = this.props;
     changeGraphStyle(exploreId, graphStyle);
@@ -214,6 +221,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       loading,
       theme,
       graphStyle,
+      isBreakdowns,
       datasourceInstance,
     } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -221,8 +229,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const label = (
       <ExploreGraphLabel
         graphStyle={graphStyle}
+        isBreakdowns={isBreakdowns}
+        supportsBreakdowns={haveExemplars}
         onChangeGraphStyle={this.onChangeGraphStyle}
-        withAutoBreakdowns={haveExemplars}
+        onChangeBreakdowns={this.onChangeBreakdowns}
       />
     );
 
@@ -235,9 +245,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             height={400}
             width={width - spacing}
             absoluteRange={absoluteRange}
-            onChangeTime={
-              graphStyle === 'auto_breakdowns' ? this.onUpdateAutoBreakdownTimeRange : this.onUpdateTimeRange
-            }
+            onChangeTime={isBreakdowns ? this.onUpdateAutoBreakdownTimeRange : this.onUpdateTimeRange}
             timeZone={timeZone}
             annotations={queryResponse.annotations}
             splitOpenFn={splitOpen}
@@ -246,7 +254,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         </Collapse>
         <AutoBreakdowns
           datasourceInstance={datasourceInstance}
-          graphStyle={graphStyle}
           timeZone={timeZone}
           autoBreakdownRange={this.state.autoBreakdownRange}
         />
@@ -452,6 +459,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showNodeGraph,
     loading,
     graphStyle,
+    isBreakdowns,
   } = item;
 
   return {
@@ -473,12 +481,14 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showNodeGraph,
     loading,
     graphStyle,
+    isBreakdowns,
   };
 }
 
 const mapDispatchToProps = {
   changeSize,
   changeGraphStyle,
+  changeBreakdowns,
   modifyQueries,
   scanStart,
   scanStopAction,
