@@ -11,7 +11,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -112,7 +112,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -337,7 +337,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -417,7 +417,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -822,7 +822,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -844,6 +844,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -902,7 +904,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -998,7 +1000,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1372,7 +1374,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -1393,6 +1395,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -1446,7 +1450,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1467,7 +1471,8 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise ${DRONE_TAG}
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
+    ${DRONE_TAG}
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
@@ -1477,6 +1482,9 @@ steps:
   - yarn install --immutable
   depends_on:
   - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.4.8
   name: initialize
 - commands:
@@ -1896,7 +1904,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -1911,10 +1919,13 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/ci-wix:0.1.1
   name: initialize
 - commands:
@@ -1934,6 +1945,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -1951,37 +1964,6 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
----
-depends_on:
-- oss-build-release
-- oss-windows-release
-- enterprise-build-release
-- enterprise-windows-release
-kind: pipeline
-name: notify-release
-platform:
-  arch: amd64
-  os: linux
-steps:
-- image: plugins/slack
-  name: slack
-  settings:
-    channel: grafana-ci-notifications
-    template: |-
-      Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}
-      Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
-      Author: {{build.author}}
-    webhook:
-      from_secret: slack_webhook
-trigger:
-  ref:
-  - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
-  status:
-  - failure
-type: docker
 ---
 depends_on: []
 kind: pipeline
@@ -2008,7 +1990,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2359,7 +2341,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -2381,6 +2363,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -2431,7 +2415,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2452,7 +2436,7 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
@@ -2462,6 +2446,9 @@ steps:
   - yarn install --immutable
   depends_on:
   - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.4.8
   name: initialize
 - commands:
@@ -2878,7 +2865,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2893,10 +2880,13 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/ci-wix:0.1.1
   name: initialize
 - commands:
@@ -2917,6 +2907,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -2948,7 +2940,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3068,7 +3060,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3401,7 +3393,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -3418,6 +3410,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -3468,7 +3462,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3489,7 +3483,7 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
@@ -3498,6 +3492,9 @@ steps:
   - yarn install --immutable
   depends_on:
   - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.4.8
   name: initialize
 - commands:
@@ -3919,7 +3916,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -3934,10 +3931,13 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/ci-wix:0.1.1
   name: initialize
 - commands:
@@ -3953,6 +3953,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -3967,34 +3969,6 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
----
-depends_on:
-- oss-build-release-branch
-- oss-windows-release-branch
-- enterprise-build-release-branch
-- enterprise-windows-release-branch
-kind: pipeline
-name: notify-release-branch
-platform:
-  arch: amd64
-  os: linux
-steps:
-- image: plugins/slack
-  name: slack
-  settings:
-    channel: grafana-ci-notifications
-    template: |-
-      Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}
-      Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
-      Author: {{build.author}}
-    webhook:
-      from_secret: slack_webhook
-trigger:
-  ref:
-  - refs/heads/v[0-9]*
-  status:
-  - failure
-type: docker
 ---
 kind: pipeline
 name: scan-grafana/grafana:latest-image
@@ -4135,6 +4109,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 6d40d34bf1be42d27e01854f4b5e6075be0d7739429e16d36dc4da85a2acb23f
+hmac: b431c3bbdb4778dbed741bb5cd9840f106b4704280751dac4e145754f300a6ea
 
 ...
