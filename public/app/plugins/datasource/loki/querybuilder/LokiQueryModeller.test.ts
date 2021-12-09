@@ -39,6 +39,15 @@ describe('LokiQueryModeller', () => {
     ).toBe('{app="grafana"} |= "error"');
   });
 
+  it('Can query with line filter contains operation with empty params', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: '__line_contains', params: [''] }],
+      })
+    ).toBe('{app="grafana"}');
+  });
+
   it('Can query with line filter contains not operation', () => {
     expect(
       modeller.renderQuery({

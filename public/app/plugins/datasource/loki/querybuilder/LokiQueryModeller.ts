@@ -10,8 +10,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQu
     this.setOperationCategories([
       LokiVisualQueryOperationCategory.Formats,
       LokiVisualQueryOperationCategory.Functions,
-      LokiVisualQueryOperationCategory.LineFilters,
       LokiVisualQueryOperationCategory.LabelFilters,
+      LokiVisualQueryOperationCategory.LineFilters,
     ]);
   }
 
