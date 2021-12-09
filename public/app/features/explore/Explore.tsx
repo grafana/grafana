@@ -176,10 +176,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onChangeBreakdowns = () => {
-    console.log('onChangeBreakdowns');
-
     const { exploreId, changeBreakdowns, isBreakdowns } = this.props;
-    changeBreakdowns(exploreId, !isBreakdowns);
+    const nextIsBreakdowns = !isBreakdowns;
+    changeBreakdowns(exploreId, nextIsBreakdowns);
+    const autoBreakdownRange = nextIsBreakdowns ? this.props.absoluteRange : undefined;
+    this.setState({ autoBreakdownRange });
   };
 
   onChangeGraphStyle = (graphStyle: ExploreGraphStyle) => {

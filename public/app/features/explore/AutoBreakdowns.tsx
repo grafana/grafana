@@ -7,7 +7,6 @@ import { EXPLORE_GRAPH_STYLES } from 'app/core/utils/explore';
 
 export interface Props {
   timeZone: TimeZone;
-  graphStyle: any;
   datasourceInstance?: DataSourceApi | null;
   autoBreakdownRange?: AbsoluteTimeRange;
 }
@@ -18,7 +17,7 @@ const spacing = css({
 });
 
 export const AutoBreakdowns = (props: Props) => {
-  const { datasourceInstance, graphStyle, autoBreakdownRange, timeZone } = props;
+  const { datasourceInstance, autoBreakdownRange, timeZone } = props;
   if (!datasourceInstance || !autoBreakdownRange) {
     return null;
   }
