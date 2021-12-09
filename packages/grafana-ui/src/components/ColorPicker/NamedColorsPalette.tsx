@@ -22,9 +22,6 @@ export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps)
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '25% 1fr',
-          gridRowGap: theme.spacing(2),
-          gridColumnGap: theme.spacing(2),
           flexGrow: 1,
         }}
       >

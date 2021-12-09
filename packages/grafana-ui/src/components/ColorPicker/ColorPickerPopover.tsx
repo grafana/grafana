@@ -165,7 +165,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       width: 266px;
       font-size: ${theme.typography.bodySmall.fontSize};
       min-height: 184px;
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(2, 0)};
       display: flex;
       align-items: center;
       justify-content: center;
