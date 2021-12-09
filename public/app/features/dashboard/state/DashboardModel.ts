@@ -45,7 +45,7 @@ import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
-import { config, RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { Subscription } from 'rxjs';
 import { appEvents } from '../../../core/core';
@@ -194,7 +194,7 @@ export class DashboardModel {
     this.appEventsSubscription.add(
       appEvents.subscribe(VariablesChangedInUrl, this.variablesChangedInUrlHandler.bind(this))
     );
-    if (config.dashboardRecordingEnabled && data[DASHBOARD_EXPORTER_RECORDINGS]?.length > 0) {
+    if (data[DASHBOARD_EXPORTER_RECORDINGS]?.length > 0) {
       this.isRecorded = true;
     }
   }

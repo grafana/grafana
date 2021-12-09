@@ -12,7 +12,7 @@ import {
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { v4 as uuidv4 } from 'uuid';
-import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
+import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
@@ -185,7 +185,7 @@ export class BackendSrv implements BackendService {
     const url = parseUrlFromOptions(options);
     const init = parseInitFromOptions(options);
 
-    if (config.dashboardRecordingEnabled) {
+    if (!getRequestResponseRecorder().isRecording()) {
       const recorded = getRecordedResponsePlayer().find<T>(options);
       if (recorded) {
         return of(recorded).pipe(share()); // sharing this, so we can split into success and failure and then merge back
@@ -209,10 +209,8 @@ export class BackendSrv implements BackendService {
           config: options,
         };
 
-        if (config.dashboardRecordingEnabled) {
-          if (getRequestResponseRecorder().isRecording()) {
-            getRequestResponseRecorder().record({ options, fetchResponse });
-          }
+        if (getRequestResponseRecorder().isRecording()) {
+          getRequestResponseRecorder().record({ options, fetchResponse });
         }
 
         return fetchResponse;

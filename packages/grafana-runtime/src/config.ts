@@ -103,7 +103,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   recordedQueries = {
     enabled: false,
   };
-  dashboardRecordingEnabled = false;
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

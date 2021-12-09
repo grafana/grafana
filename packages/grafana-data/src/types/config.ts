@@ -143,5 +143,4 @@ export interface GrafanaConfig {
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
-  dashboardRecordingEnabled: boolean;
 }

@@ -128,7 +128,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     const dtoAsRecord = dashDTO.dashboard as Record<string, any>;
-    if (config.dashboardRecordingEnabled && dtoAsRecord[DASHBOARD_EXPORTER_RECORDINGS]) {
+    if (dtoAsRecord[DASHBOARD_EXPORTER_RECORDINGS]) {
       getRecordedResponsePlayer().load(dtoAsRecord[DASHBOARD_EXPORTER_RECORDINGS]);
     }
 

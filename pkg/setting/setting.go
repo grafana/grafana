@@ -426,9 +426,6 @@ type Cfg struct {
 
 	// Unified Alerting
 	UnifiedAlerting UnifiedAlertingSettings
-
-	// Dashboards
-	DashboardRecordingEnabled bool
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -927,7 +924,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
 
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
-	cfg.DashboardRecordingEnabled = dashboards.Key("recording_enabled").MustBool(false)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err

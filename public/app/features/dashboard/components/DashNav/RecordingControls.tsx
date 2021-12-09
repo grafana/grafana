@@ -7,10 +7,8 @@ import {
   RequestResponseRecording,
 } from '../../../../core/services/RequestResponseRecorder';
 import { RecordingIndicator } from './RecordingIndicator';
-import { DashNavButton } from './DashNavButton';
 import { createWarningNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from 'app/core/actions';
-import { ShareExport } from '../ShareModal/ShareExport';
 import { DashboardModel } from '../../state';
 
 const REMINDER_INTERVAL = 5000;
@@ -30,10 +28,6 @@ export function RecordingControls({ dashboard }: RecordingControlsProps): ReactE
     getRequestResponseRecorder().isRecording() ? REMINDER_INTERVAL : null
   );
 
-  const onRecordingStarted = () => {
-    getRequestResponseRecorder().start();
-  };
-
   const onRecordingStopped = () => {
     const recordings = getRequestResponseRecorder().stop();
     set(recordings);
@@ -47,11 +41,10 @@ export function RecordingControls({ dashboard }: RecordingControlsProps): ReactE
         <RecordingIndicator onClick={onRecordingStopped} />
       )}
       {!dashboard.isRecorded && !getRequestResponseRecorder().isRecording() && (
-        <DashNavButton tooltip="Start recording" icon="play" iconSize="lg" onClick={onRecordingStarted} />
+        <Modal isOpen={Boolean(recordings.length)} title="Export dashboard with recordings" onDismiss={() => set([])}>
+          {/*<ShareExport shareExternally={true} recordings={recordings} dashboard={dashboard} onDismiss={() => set([])} />*/}
+        </Modal>
       )}
-      <Modal isOpen={Boolean(recordings.length)} title="Export dashboard with recordings" onDismiss={() => set([])}>
-        <ShareExport shareExternally={true} recordings={recordings} dashboard={dashboard} onDismiss={() => set([])} />
-      </Modal>
     </>
   );
 }

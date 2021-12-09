@@ -8,13 +8,8 @@ import { ShowModalReactEvent } from 'app/types/events';
 import { ViewJsonModal } from './ViewJsonModal';
 import { config } from '@grafana/runtime';
 import { ShareModalTabProps } from './types';
-import { RequestResponseRecording } from '../../../../core/services/RequestResponseRecorder';
-import { DASHBOARD_EXPORTER_RECORDINGS } from '../DashExportModal/constants';
 
-interface Props extends ShareModalTabProps {
-  shareExternally?: boolean;
-  recordings?: RequestResponseRecording[];
-}
+interface Props extends ShareModalTabProps {}
 
 interface State {
   shareExternally: boolean;
@@ -27,7 +22,7 @@ export class ShareExport extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      shareExternally: Boolean(props.shareExternally),
+      shareExternally: false,
       trimDefaults: false,
     };
 
@@ -53,10 +48,6 @@ export class ShareExport extends PureComponent<Props, State> {
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson: any) => {
-        if (config.dashboardRecordingEnabled) {
-          dashboardJson[DASHBOARD_EXPORTER_RECORDINGS] = this.props.recordings;
-        }
-
         if (trimDefaults) {
           getBackendSrv()
             .post('/api/dashboards/trim', { dashboard: dashboardJson })
@@ -87,10 +78,6 @@ export class ShareExport extends PureComponent<Props, State> {
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson: any) => {
-        if (config.dashboardRecordingEnabled) {
-          dashboardJson[DASHBOARD_EXPORTER_RECORDINGS] = this.props.recordings;
-        }
-
         if (trimDefaults) {
           getBackendSrv()
             .post('/api/dashboards/trim', { dashboard: dashboardJson })
