@@ -1,10 +1,8 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Collapse } from '@grafana/ui';
-import { AbsoluteTimeRange, LoadingState, TimeZone, DataFrame, DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { AbsoluteTimeRange, LoadingState, TimeZone, DataFrame, DataSourceApi } from '@grafana/data';
 import { ExploreGraph } from './ExploreGraph';
-import { EXPLORE_GRAPH_STYLES } from 'app/core/utils/explore';
-
 export interface Props {
   timeZone: TimeZone;
   datasourceInstance?: DataSourceApi | null;
