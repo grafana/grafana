@@ -6468,9 +6468,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rushstack/node-core-library@npm:3.43.2":
-  version: 3.43.2
-  resolution: "@rushstack/node-core-library@npm:3.43.2"
+"@rushstack/node-core-library@npm:3.44.2":
+  version: 3.44.2
+  resolution: "@rushstack/node-core-library@npm:3.44.2"
   dependencies:
     "@types/node": 12.20.24
     colors: ~1.2.1
@@ -6480,8 +6480,8 @@ __metadata:
     resolve: ~1.17.0
     semver: ~7.3.0
     timsort: ~0.3.0
-    z-schema: ~3.18.3
-  checksum: a3aa5bf7ce07a547469827c14cf53057dcb6bdff47461a991a4e52076d1f36287814a46045cae1597bbc878061ac6d2e5097157c4d281fcbc5a8a769481511b6
+    z-schema: ~5.0.2
+  checksum: 6a0da67b5560379584772b18b41f20b605d0f282c0b774d6deafe44c2e288c6d033a7a9be5894ac0bb9a391fed1ef2dd344a5e27d5916baf11f07ca9227d1a32
   languageName: node
   linkType: hard
 
@@ -23539,7 +23539,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash.get@npm:^4.0.0, lodash.get@npm:^4.4.2":
+"lodash.get@npm:^4.4.2":
   version: 4.4.2
   resolution: "lodash.get@npm:4.4.2"
   checksum: e403047ddb03181c9d0e92df9556570e2b67e0f0a930fcbbbd779370972368f5568e914f913e93f3b08f6d492abc71e14d4e9b7a18916c31fa04bd2306efe545
@@ -34404,10 +34404,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"validator@npm:^8.0.0":
-  version: 8.2.0
-  resolution: "validator@npm:8.2.0"
-  checksum: a249ffd5a565704d19ed213da3e5003509f3fb4181577892e1d4520d24e49ea1f0c260708df07c8532089d0937431c5ece8af347a65b1310a3fa4e3945928e62
+"validator@npm:^13.7.0":
+  version: 13.7.0
+  resolution: "validator@npm:13.7.0"
+  checksum: 2b83283de1222ca549a7ef57f46e8d49c6669213348db78b7045bce36a3b5843ff1e9f709ebf74574e06223461ee1f264f8cc9a26a0060a79a27de079d8286ef
   languageName: node
   linkType: hard
 
@@ -35655,20 +35655,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"z-schema@npm:~3.18.3":
-  version: 3.18.4
-  resolution: "z-schema@npm:3.18.4"
+"z-schema@npm:~5.0.2":
+  version: 5.0.2
+  resolution: "z-schema@npm:5.0.2"
   dependencies:
     commander: ^2.7.1
-    lodash.get: ^4.0.0
-    lodash.isequal: ^4.0.0
-    validator: ^8.0.0
+    lodash.get: ^4.4.2
+    lodash.isequal: ^4.5.0
+    validator: ^13.7.0
   dependenciesMeta:
     commander:
       optional: true
   bin:
-    z-schema: ./bin/z-schema
-  checksum: 837f0a4794eacd589c0aca313f19caf8bed075ad77cd2af29e051d08e71131b375af5ff8d7f1c2cc3a7a916c4e4cc8ab6c30bf5c9882b9f7728515b2d2542c23
+    z-schema: bin/z-schema
+  checksum: 084b2f16043ac0a892914ee29cc0b4fafd9338133eec0345cd6ced25e814f647fa67be1090ad5f606759c2c1f2f8c28127960ba187f437f1caf6fb8cd45d7336
   languageName: node
   linkType: hard
 
