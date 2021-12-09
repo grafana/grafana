@@ -123,6 +123,10 @@ export function getPageStyles(theme: GrafanaTheme2) {
       overflow-y: scroll;
     }
 
+    .chat-messages {
+      margin-bottom: 10px;
+    }
+
     .chat-message {
       padding-top: 3px;
       padding-bottom: 3px;

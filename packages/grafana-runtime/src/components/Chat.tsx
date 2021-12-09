@@ -47,8 +47,8 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
   //   placeholder: 'Select data source',
   // };
   subscription?: Unsubscribable;
-  chatBottom?: any;
   chatInput?: any;
+  chatContainer?: any;
 
   state: ChatState = {
     messages: [],
@@ -147,10 +147,11 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
   };
 
   scrollToBottom = () => {
-    if (!this.chatBottom) {
+    if (!this.chatContainer) {
       return;
     }
-    this.chatBottom.scrollIntoView({ behavior: 'auto' });
+    console.log(this.chatContainer.scrollHeight);
+    this.chatContainer.parentNode.scrollTop = this.chatContainer.scrollHeight;
   };
 
   updateSubscription = () => {
@@ -174,15 +175,6 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
               this.scrollToBottom();
             }
           }
-          // } else if (isLiveChannelStatusEvent(msg)) {
-          //   const update: Partial<State> = {
-          //     status: msg,
-          //   };
-          //   if (msg.message) {
-          //     update.boardData = msg.message;
-          //   }
-          //   this.setState(update);
-          // }
         },
       });
     }
@@ -192,18 +184,23 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
     let messageElements;
     if (this.state.messages.length > 0) {
       messageElements = (
-        <div style={{ overflow: 'scroll', marginBottom: '10px' }}>
+        <div className="chat-messages">
           {this.state.messages.map((msg) => (
             <ChatMessage key={msg.id} message={msg} actions={this.props.actions} />
           ))}
         </div>
       );
     } else {
-      messageElements = <div style={{ overflow: 'scroll', marginBottom: '10px' }}>No messages here yet</div>;
+      messageElements = <div className="chat-messages">No messages here yet</div>;
     }
 
     return (
-      <div className="chat">
+      <div
+        className="chat"
+        ref={(el) => {
+          this.chatContainer = el;
+        }}
+      >
         {messageElements}
         <TextArea
           placeholder="Write a message"
@@ -213,12 +210,6 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
           onKeyPress={this.onKeyboardPress}
           ref={(el) => {
             this.chatInput = el;
-          }}
-        />
-        <div
-          style={{ float: 'left', clear: 'both' }}
-          ref={(el) => {
-            this.chatBottom = el;
           }}
         />
       </div>
