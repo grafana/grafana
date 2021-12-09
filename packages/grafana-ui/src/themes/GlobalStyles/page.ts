@@ -117,5 +117,18 @@ export function getPageStyles(theme: GrafanaTheme2) {
       margin-left: ${theme.spacing(1)};
       margin-top: ${theme.spacing(0.5)};
     }
+
+    .chat-message-content p {
+      margin: 0;
+      padding: 0;
+    }
+
+    .chat-message-content a {
+      color: #43c57e;
+    }
+
+    .chat-message-content a:hover {
+      text-decoration: underline;
+    }
   `;
 }

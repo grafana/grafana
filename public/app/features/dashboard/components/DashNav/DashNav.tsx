@@ -215,22 +215,24 @@ class DashNav extends PureComponent<Props> {
       );
     }
 
-    buttons.push(
-      <ModalsController key="button-chat">
-        {({ showModal, hideModal }) => (
-          <ToolbarButton
-            tooltip="Show chat"
-            icon="chat"
-            onClick={() => {
-              showModal(DashboardChatModalProxy, {
-                dashboard,
-                onDismiss: hideModal,
-              });
-            }}
-          />
-        )}
-      </ModalsController>
-    );
+    if (dashboard.uid) {
+      buttons.push(
+        <ModalsController key="button-chat">
+          {({ showModal, hideModal }) => (
+            <ToolbarButton
+              tooltip="Show chat"
+              icon="chat"
+              onClick={() => {
+                showModal(DashboardChatModalProxy, {
+                  dashboard,
+                  onDismiss: hideModal,
+                });
+              }}
+            />
+          )}
+        </ModalsController>
+      );
+    }
 
     if (snapshotUrl) {
       buttons.push(

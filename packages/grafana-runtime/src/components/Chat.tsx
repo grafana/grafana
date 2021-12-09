@@ -2,7 +2,7 @@ import React, { FunctionComponent, PureComponent } from 'react';
 import { getBackendSrv } from '../services/backendSrv';
 import { Input } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '../services/live';
-import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
+import { isLiveChannelMessageEvent, LiveChannelScope, renderMarkdown } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 
 export interface ChatProps {
@@ -168,13 +168,22 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
   };
 
   render() {
-    return (
-      <div>
+    let messageElements;
+    if (this.state.messages.length > 0) {
+      messageElements = (
         <div style={{ overflow: 'scroll', marginBottom: '10px' }}>
           {this.state.messages.map((msg) => (
             <MessageElement key={msg.id} message={msg} />
           ))}
         </div>
+      );
+    } else {
+      messageElements = <div style={{ overflow: 'scroll', marginBottom: '10px' }}>No messages here yet</div>;
+    }
+
+    return (
+      <div>
+        {messageElements}
         <Input
           type="text"
           placeholder="Write a message"
@@ -200,6 +209,12 @@ interface MessageElementProps {
   message: Message;
 }
 
+// const messageContentCss = css`
+//   p {
+//     margin: 0;
+//   }
+// `
+
 const MessageElement: FunctionComponent<MessageElementProps> = ({ message }) => {
   let senderColor = '#34BA18';
   let senderName = 'System';
@@ -211,6 +226,7 @@ const MessageElement: FunctionComponent<MessageElementProps> = ({ message }) => 
   }
   const timeColor = '#898989';
   const timeFormatted = new Date(message.created * 1000).toLocaleTimeString();
+  const markdownContent = renderMarkdown(message.content);
   return (
     <div style={{ paddingTop: '3px', paddingBottom: '3px', wordBreak: 'break-word' }}>
       <div style={{ float: 'left', paddingTop: '6px', marginRight: '10px' }}>
@@ -222,7 +238,7 @@ const MessageElement: FunctionComponent<MessageElementProps> = ({ message }) => 
           &nbsp;
           <span style={{ color: timeColor }}>{timeFormatted}</span>
         </div>
-        <div>{message.content}</div>
+        <div className="chat-message-content" dangerouslySetInnerHTML={{ __html: markdownContent }} />
       </div>
       <div style={{ clear: 'both' }}></div>
     </div>
