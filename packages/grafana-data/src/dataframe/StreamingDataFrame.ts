@@ -4,6 +4,7 @@ import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFram
 import { guessFieldTypeFromValue } from './processDataFrame';
 import { join } from '../transformations/transformers/joinDataFrames';
 import { AlignedData } from 'uplot';
+import { parseLabels } from '..';
 
 /**
  * Indicate if the frame is appened or replace
@@ -228,13 +229,7 @@ export class StreamingDataFrame implements DataFrame {
     let labelCount = this.labels.size;
 
     // parse labels
-    const parsedLabels: Labels = {};
-    if (label.length) {
-      label.split(',').forEach((kv) => {
-        const [key, val] = kv.trim().split('=');
-        parsedLabels[key] = val;
-      });
-    }
+    const parsedLabels = parseLabelsFromField(label);
 
     if (labelCount === 0) {
       // mutate existing fields and add labels
@@ -258,6 +253,21 @@ export class StreamingDataFrame implements DataFrame {
 
     this.labels.add(label);
   }
+}
+
+export function parseLabelsFromField(str: string): Labels {
+  if (!str.length) {
+    return {};
+  }
+  if (str.charAt(0) === '{') {
+    return parseLabels(str);
+  }
+  const parsedLabels: Labels = {};
+  str.split(',').forEach((kv) => {
+    const [key, val] = kv.trim().split('=');
+    parsedLabels[key] = val;
+  });
+  return parsedLabels;
 }
 
 // converts vertical insertion records with table keys in [0] and column values in [1...N]
