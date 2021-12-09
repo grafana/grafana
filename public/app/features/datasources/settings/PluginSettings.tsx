@@ -7,11 +7,10 @@ import {
   DataSourcePlugin,
   DataSourcePluginMeta,
   DataSourceSettings,
+  LibraryCredential,
 } from '@grafana/data';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-
 export type GenericDataSourcePlugin = DataSourcePlugin<DataSourceApi<DataQuery, DataSourceJsonData>>;
-
 export interface Props {
   plugin: GenericDataSourcePlugin;
   dataSource: DataSourceSettings;
@@ -52,6 +51,7 @@ export class PluginSettings extends PureComponent<Props> {
 
       this.component = loader.load(this.element, this.scopeProps, template);
     }
+    this.maskMatchingLibCredentials();
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -72,6 +72,49 @@ export class PluginSettings extends PureComponent<Props> {
   onModelChanged = (dataSource: DataSourceSettings) => {
     this.props.onModelChange(dataSource);
   };
+
+  async maskMatchingLibCredentials() {
+    // const libraryCredential = this.props.dataSource.libraryCredential
+    const libraryCredential: LibraryCredential = {
+      id: 123,
+      uid: '123',
+      orgId: 123,
+      type: 'aws',
+      name: 'mock credential',
+      jsonData: {
+        authType: 'keys',
+        defaultRegion: 'us-east-2',
+        endpoint: undefined,
+        externalId: undefined,
+        assumeRoleArn: undefined,
+      },
+      secureJsonFields: {
+        accessKey: true,
+        secretKey: true,
+      },
+      readOnly: true,
+    };
+    if (libraryCredential !== undefined) {
+      const elementsThatCanBeMasked = document.querySelectorAll('[data-lib-credential]');
+      elementsThatCanBeMasked.forEach((elem) => {
+        const propertyName = elem.getAttribute('data-lib-credential');
+        if (propertyName) {
+          const match =
+            libraryCredential.jsonData.hasOwnProperty(propertyName) ||
+            libraryCredential.secureJsonFields.hasOwnProperty(propertyName) ||
+            (libraryCredential.secureJsonData && libraryCredential.secureJsonData.hasOwnProperty(propertyName));
+          if (match) {
+            // TODO: maybe we could do something better than just replace the node with a span.
+            const span = document.createElement('span');
+            span.innerText = `This item was set with a library credential: ${libraryCredential.name}`;
+            span.style.border = 'solid';
+            span.style.padding = '1px 3px';
+            elem.replaceWith(span);
+          }
+        }
+      });
+    }
+  }
 
   render() {
     const { plugin, dataSource } = this.props;
