@@ -144,7 +144,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   image: css`
     box-shadow: ${theme.shadows.z3};
     height: 240px;
-    margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
+    margin: ${theme.spacing(1)} calc(${theme.spacing(4)} - 1px) 0;
     width: 320px;
   `,
   imageContainer: css`
@@ -156,7 +156,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       bottom: 0;
       content: '';
       left: 0;
-      margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
+      margin: ${theme.spacing(1)} calc(${theme.spacing(4)} - 1px) 0;
       position: absolute;
       right: 0;
       top: 0;
