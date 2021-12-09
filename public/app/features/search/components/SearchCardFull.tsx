@@ -126,6 +126,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: ${theme.spacing(0.5)};
   `,
   gridItem: css`
+    background-color: ${theme.colors.background.secondary};
     border: 1px solid ${theme.colors.border.medium};
     border-radius: 4px;
     box-shadow: ${theme.shadows.z3};
@@ -133,7 +134,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: column;
     height: 100%;
     max-width: 384px;
-    overflow: hidden;
     width: 100%;
   `,
   header: css`
@@ -148,9 +148,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 320px;
   `,
   imageContainer: css`
-    background-color: ${theme.colors.background.secondary};
     flex: 1;
-    overflow: hidden;
     position: relative;
 
     &:after {
@@ -166,6 +164,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   info: css`
     background-color: ${theme.colors.background.canvas};
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
     display: flex;
     flex-direction: column;
     min-height: ${theme.spacing(7)};

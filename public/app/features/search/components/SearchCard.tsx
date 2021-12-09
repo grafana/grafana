@@ -178,15 +178,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
       }
     }
 
-    animation: expand ${theme.transitions.duration.shortest}ms ease-in-out 0s 1 normal forwards;
+    animation: expand ${theme.transitions.duration.shortest}ms ease-in-out 0s 1 normal;
   `,
   gridItem: css`
+    background-color: ${theme.colors.background.secondary};
     border: 1px solid ${theme.colors.border.medium};
     border-radius: 4px;
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow: hidden;
     width: 100%;
   `,
   image: css`
@@ -196,9 +196,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: calc(100% - 64px);
   `,
   imageContainer: css`
-    background-color: ${theme.colors.background.secondary};
     flex: 1;
-    overflow: hidden;
     position: relative;
 
     &:after {
@@ -215,6 +213,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   info: css`
     align-items: center;
     background-color: ${theme.colors.background.canvas};
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
     display: flex;
     height: ${theme.spacing(7)};
     gap: ${theme.spacing(1)};
