@@ -79,7 +79,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	s.plog.Info("connecting to websocket", "url", wsurl)
 	c, _, err := websocket.DefaultDialer.Dial(wsurl.String(), nil)
 	if err != nil {
-		s.plog.Error("error connecting to websocket", err)
+		s.plog.Error("error connecting to websocket", "err", err)
 		return fmt.Errorf("error connecting to websocket")
 	}
 	defer c.Close()
@@ -91,12 +91,12 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				s.plog.Error("websocket read:", err)
+				s.plog.Error("websocket read:", "err", err)
 				return
 			}
 			err = sender.SendBytes(message)
 			if err != nil {
-				s.plog.Error("websocket write:", err)
+				s.plog.Error("websocket write:", "err", err)
 				return
 			}
 		}
