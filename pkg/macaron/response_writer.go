@@ -56,6 +56,14 @@ type responseWriter struct {
 
 func (rw *responseWriter) WriteHeader(s int) {
 	rw.callBefore()
+
+	// Avoid panic if status code is not a valid HTTP status code
+	if s < 100 || s > 999 {
+		rw.ResponseWriter.WriteHeader(500)
+		rw.status = 500
+		return
+	}
+
 	rw.ResponseWriter.WriteHeader(s)
 	rw.status = s
 }
