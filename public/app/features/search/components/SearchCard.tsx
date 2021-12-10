@@ -44,7 +44,11 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       },
     ],
   });
-  const styles = getStyles(theme, markerElement);
+  const styles = getStyles(
+    theme,
+    markerElement?.getBoundingClientRect().width,
+    popperElement?.getBoundingClientRect().width
+  );
 
   const [isOpen, setIsOpen] = useState(false);
   const timeout = useRef<number | null>(null);
@@ -133,7 +137,6 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
             <Icon name="apps" size="xl" />
           </div>
         )}
-        <div className={styles.overlay} />
       </div>
       <div className={styles.info}>
         <div className={styles.titleContainer}>{item.title}</div>
@@ -150,7 +153,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, markerElement: HTMLDivElement | null) => ({
+const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => ({
   portal: css`
     pointer-events: none;
   `,
@@ -163,11 +166,9 @@ const getStyles = (theme: GrafanaTheme2, markerElement: HTMLDivElement | null) =
   fullCard: css`
     @keyframes expand {
       0% {
-        opacity: 0.5;
-        transform: scale(${markerElement ? markerElement.getBoundingClientRect().width / 384 : 0.8});
+        transform: scale(${markerWidth / popperWidth});
       }
       100% {
-        opacity: 1;
         transform: scale(1);
       }
     }
@@ -213,13 +214,6 @@ const getStyles = (theme: GrafanaTheme2, markerElement: HTMLDivElement | null) =
     height: ${theme.spacing(7)};
     gap: ${theme.spacing(1)};
     padding: 0 ${theme.spacing(2)};
-  `,
-  overlay: css`
-    bottom: 0;
-    left: 0;
-    position: absolute;
-    right: 0;
-    top: 0;
   `,
   placeholder: css`
     align-items: center;

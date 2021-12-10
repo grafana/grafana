@@ -47,7 +47,6 @@ export function SearchCardFull({ className, item, lastUpdated }: Props) {
             <Icon name="apps" size="xl" />
           </div>
         )}
-        <div className={styles.overlay} />
       </div>
       <div className={styles.info}>
         <div className={styles.header}>
@@ -126,13 +125,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     min-height: ${theme.spacing(7)};
     gap: ${theme.spacing(1)};
     padding: ${theme.spacing(1)} ${theme.spacing(2)};
-  `,
-  overlay: css`
-    bottom: 0;
-    left: 0;
-    position: absolute;
-    right: 0;
-    top: 0;
   `,
   placeholder: css`
     align-items: center;
