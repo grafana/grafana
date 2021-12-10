@@ -72,3 +72,14 @@ The Go client module will be in _smithy/build/smithyprojections/smithy/source/go
 Generating Go code is made possible by the [Smithy Go](https://github.com/aws/smithy-go) plugin, which is at the time
 of writing only at version 0.1.0 and not yet Generally Available. As such, it's very poorly documented and difficult
 to familiarize oneself with.
+
+## Reference
+
+The Smithy Go plugin's entry point is the `GoCodeGenPlugin.execute` method. It uses `GoIntegration` JVM classes to
+provide extension points:
+
+- Pre-processing
+- Post-processing
+- Provide runtime plugins
+- Decorate the symbol provider
+- Provide the protocol generator
