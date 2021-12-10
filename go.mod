@@ -24,7 +24,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 	github.com/aws/aws-sdk-go v1.40.37
-	github.com/aws/smithy-go v1.5.0
+	github.com/aws/smithy-go v1.9.0
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v1.1.0
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
@@ -257,6 +257,8 @@ require (
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 )
 
+require github.com/grafana/grafana/smithy v0.0.0-00010101000000-000000000000
+
 require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.15 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
@@ -274,3 +276,5 @@ replace gopkg.in/macaron.v1 => ./pkg/macaron
 replace github.com/go-macaron/binding => ./pkg/macaron/binding
 
 replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
+
+replace github.com/grafana/grafana/smithy => ./smithy
