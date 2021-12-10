@@ -14,7 +14,6 @@ import (
 )
 
 func Test_GoKitWrapper(t *testing.T) {
-
 	getLogger := func(writer io.Writer) log.Logger {
 		log15Logger := log15.New()
 		log15Logger.SetHandler(log15.StreamHandler(writer, log15.LogfmtFormat()))
@@ -60,7 +59,7 @@ func Test_GoKitWrapper(t *testing.T) {
 		gokitLogger := getLogger(&data)
 		_ = gokitLogger.Log("msg", "test", "some", "more", "context", "data")
 		str := data.String()
-		require.Contains(t, str, fmt.Sprintf("lvl=info msg=test some=more context=data"))
+		require.Contains(t, str, "lvl=info msg=test some=more context=data")
 	})
 	t.Run("use empty msg when context misses msg", func(t *testing.T) {
 		var data bytes.Buffer
