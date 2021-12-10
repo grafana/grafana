@@ -54,6 +54,20 @@ jobs:
 
           [Check console output](${{steps.get-job-link.outputs.result}})
 
+    - name: Add label
+      if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '1' || env.BREAKING_CHANGES_IS_BREAKING == 1 }}
+      uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ steps.finder.outputs.pr }}
+      with:
+        script: |
+          github.rest.issues.addLabels({
+            issue_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['breaking change']
+          })
+
     - name: Exit
       run: exit ${{ env.BREAKING_CHANGES_IS_BREAKING }}
       shell: bash
