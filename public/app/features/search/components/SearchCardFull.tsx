@@ -3,19 +3,15 @@ import { css } from '@emotion/css';
 import classNames from 'classnames';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Spinner, TagList, useTheme2 } from '@grafana/ui';
-import { DashboardSectionItem, OnToggleChecked } from '../types';
-import { SearchCheckbox } from './SearchCheckbox';
+import { DashboardSectionItem } from '../types';
 
 export interface Props {
   className?: string;
-  editable?: boolean;
   item: DashboardSectionItem;
-  onTagSelected?: (name: string) => any;
-  onToggleChecked?: OnToggleChecked;
   lastUpdated?: string;
 }
 
-export function SearchCardFull({ className, editable, item, onTagSelected, onToggleChecked, lastUpdated }: Props) {
+export function SearchCardFull({ className, item, lastUpdated }: Props) {
   const theme = useTheme2();
   const [hasPreview, setHasPreview] = useState(true);
   const themeId = theme.isDark ? 'dark' : 'light';
@@ -32,31 +28,11 @@ export function SearchCardFull({ className, editable, item, onTagSelected, onTog
     }, 5000);
   };
 
-  const onCheckboxClick = (ev: React.MouseEvent) => {
-    ev.stopPropagation();
-    ev.preventDefault();
-
-    onToggleChecked?.(item);
-  };
-
-  const onTagClick = (tag: string, ev: React.MouseEvent) => {
-    ev.stopPropagation();
-    ev.preventDefault();
-
-    onTagSelected?.(tag);
-  };
   const folderTitle = item.folderTitle || 'General';
 
   return (
     <a className={classNames(className, styles.gridItem)} key={item.uid} href={item.url}>
       <div className={styles.imageContainer}>
-        <SearchCheckbox
-          className={styles.checkbox}
-          aria-label="Select dashboard"
-          editable={editable}
-          checked={item.checked}
-          onClick={onCheckboxClick}
-        />
         {hasPreview && (
           <img
             loading="lazy"
@@ -89,7 +65,7 @@ export function SearchCardFull({ className, editable, item, onTagSelected, onTog
           </div>
         </div>
         <div>
-          <TagList className={styles.tagList} tags={item.tags} onClick={onTagClick} />
+          <TagList className={styles.tagList} tags={item.tags} />
         </div>
       </div>
     </a>
@@ -97,12 +73,6 @@ export function SearchCardFull({ className, editable, item, onTagSelected, onTog
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  checkbox: css`
-    left: 0;
-    margin: ${theme.spacing(1)};
-    position: absolute;
-    top: 0;
-  `,
   folder: css`
     align-items: center;
     color: ${theme.colors.text.secondary};

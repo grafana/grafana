@@ -89,13 +89,6 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
     onTagSelected?.(tag);
   };
 
-  const onScroll = () => {
-    if (timeout.current) {
-      window.clearTimeout(timeout.current);
-    }
-    setIsOpen(false);
-  };
-
   return (
     <a
       className={styles.gridItem}
@@ -147,16 +140,9 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
         <TagList isCompact tags={item.tags} onClick={onTagClick} />
       </div>
       {isOpen && (
-        <Portal>
-          <div onWheel={onScroll} ref={setPopperElement} style={popperStyles.popper} {...attributes.popper}>
-            <SearchCardFull
-              className={styles.fullCard}
-              editable={editable}
-              item={item}
-              lastUpdated={updated}
-              onTagSelected={onTagSelected}
-              onToggleChecked={onToggleChecked}
-            />
+        <Portal className={styles.portal}>
+          <div ref={setPopperElement} style={popperStyles.popper} {...attributes.popper}>
+            <SearchCardFull className={styles.fullCard} item={item} lastUpdated={updated} />
           </div>
         </Portal>
       )}
@@ -165,6 +151,9 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
 }
 
 const getStyles = (theme: GrafanaTheme2, markerElement: HTMLDivElement | null) => ({
+  portal: css`
+    pointer-events: none;
+  `,
   checkbox: css`
     left: 0;
     margin: ${theme.spacing(1)};
