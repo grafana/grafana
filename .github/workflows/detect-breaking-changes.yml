@@ -69,7 +69,7 @@ jobs:
           })
 
     - name: Remove label (if there are breaking changes)
-      if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '1' || env.BREAKING_CHANGES_IS_BREAKING == 1 }}
+      if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '0' || env.BREAKING_CHANGES_IS_BREAKING == 0 }}
       uses: actions/github-script@v5
       env:
         PR_NUMBER: ${{ steps.finder.outputs.pr }}
