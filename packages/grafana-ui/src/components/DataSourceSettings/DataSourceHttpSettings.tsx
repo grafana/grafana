@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { BasicAuthSettings } from './BasicAuthSettings';
@@ -15,6 +15,15 @@ import { TagsInput } from '../TagsInput/TagsInput';
 import { SigV4AuthSettings } from './SigV4AuthSettings';
 import { useTheme } from '../../themes';
 import { HttpSettingsProps } from './types';
+
+// TODO: move to grafana/ui
+const LibraryCredential = ({ credentialName, children }: { credentialName: string; children: ReactNode }) => {
+  return (
+    <>
+      <span data-lib-credential={credentialName}>{children}</span>
+    </>
+  );
+};
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {
@@ -68,7 +77,24 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
   const theme = useTheme();
-
+  // todo remove mock
+  // dataSourceConfig.libraryCredential = {
+  //   id: 123,
+  //   uid: '123',
+  //   orgId: 123,
+  //   name: 'fake',
+  //   type: 'http',
+  //   jsonData: {
+  //     keepCookies: ['test'],
+  //     timeout: '10',
+  //   },
+  //   secureJsonFields: {},
+  //   readOnly: true,
+  //   url: 'URL',
+  //   basicAuth: true,
+  //   user: 'user',
+  //   password: 'password',
+  // };
   const onSettingsChange = useCallback(
     (change: Partial<DataSourceSettings<any, any>>) => {
       onChange({
@@ -135,7 +161,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
         <h3 className="page-heading">HTTP</h3>
         <div className="gf-form-group">
           <div className="gf-form">
-            <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} />
+            <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} libCredentialName="url" />
           </div>
 
           {showAccessOptions && (
@@ -166,13 +192,15 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                 >
                   Allowed cookies
                 </InlineFormLabel>
-                <TagsInput
-                  tags={dataSourceConfig.jsonData.keepCookies}
-                  width={40}
-                  onChange={(cookies) =>
-                    onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
-                  }
-                />
+                <LibraryCredential credentialName="keepCookies">
+                  <TagsInput
+                    tags={dataSourceConfig.jsonData.keepCookies}
+                    width={40}
+                    onChange={(cookies) =>
+                      onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
+                    }
+                  />
+                </LibraryCredential>
               </div>
               <div className="gf-form">
                 <FormField
@@ -189,6 +217,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                       jsonData: { ...dataSourceConfig.jsonData, timeout: parseInt(event.currentTarget.value, 10) },
                     });
                   }}
+                  libCredentialName="timeout"
                 />
               </div>
             </div>
@@ -201,6 +230,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <Switch
+              credentialName="basicAuth"
+              libraryCredential={dataSourceConfig.libraryCredential}
               label="Basic auth"
               labelClass="width-13"
               checked={dataSourceConfig.basicAuth}
@@ -209,6 +240,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
               }}
             />
             <Switch
+              credentialName="withCredentials"
+              libraryCredential={dataSourceConfig.libraryCredential}
               label="With Credentials"
               labelClass="width-13"
               checked={dataSourceConfig.withCredentials}
@@ -222,6 +255,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
           {azureAuthSettings?.azureAuthEnabled && (
             <div className="gf-form-inline">
               <Switch
+                credentialName="azureAuth"
+                libraryCredential={dataSourceConfig.libraryCredential}
                 label="Azure Authentication"
                 labelClass="width-13"
                 checked={dataSourceConfig.jsonData.azureAuth || false}
@@ -238,6 +273,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
           {sigV4AuthToggleEnabled && (
             <div className="gf-form-inline">
               <Switch
+                credentialName="sigV4Auth"
+                libraryCredential={dataSourceConfig.libraryCredential}
                 label="SigV4 auth"
                 labelClass="width-13"
                 checked={dataSourceConfig.jsonData.sigV4Auth || false}
@@ -266,6 +303,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             </div>
           </>
         )}
+
+        {/* todo: haven't wrapped any of the below with library credentials */}
 
         {azureAuthSettings?.azureAuthEnabled &&
           azureAuthSettings?.azureSettingsUI &&

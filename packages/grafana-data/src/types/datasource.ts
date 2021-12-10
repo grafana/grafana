@@ -541,11 +541,12 @@ export interface LibraryCredential {
   uid: string;
   orgId: number;
   name: string;
-  type: 'aws' | 'azure' | 'gcp' | 'custom';
+  type: 'aws' | 'azure' | 'gcp' | 'custom' | 'http';
   readOnly: boolean;
   jsonData: any;
   secureJsonData?: any;
   secureJsonFields: KeyValue<boolean>;
+  [key: string]: any; // TODO maybe we can specify for http instead?
 }
 
 /**

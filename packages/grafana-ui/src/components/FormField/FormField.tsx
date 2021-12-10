@@ -1,8 +1,16 @@
-import React, { InputHTMLAttributes, FunctionComponent } from 'react';
+import React, { InputHTMLAttributes, FunctionComponent, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
-import { PopoverContent } from '../Tooltip/Tooltip';
 
+import { PopoverContent } from '../Tooltip/Tooltip';
+// TODO: move to grafana/ui
+const LibraryCredential = ({ credentialName, children }: { credentialName: string; children: ReactNode }) => {
+  return (
+    <>
+      <span data-lib-credential={credentialName}>{children}</span>
+    </>
+  );
+};
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   tooltip?: PopoverContent;
@@ -10,6 +18,7 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   // If null no width will be specified not even default one
   inputWidth?: number | null;
   inputEl?: React.ReactNode;
+  libCredentialName?: string;
 }
 
 const defaultProps = {
@@ -28,17 +37,21 @@ export const FormField: FunctionComponent<Props> = ({
   inputWidth,
   inputEl,
   className,
+  libCredentialName,
   ...inputProps
 }) => {
   const styles = getStyles();
+  console.log('HEY?', inputEl, libCredentialName);
   return (
     <div className={cx(styles.formField, className)}>
       <InlineFormLabel width={labelWidth} tooltip={tooltip}>
         {label}
       </InlineFormLabel>
-      {inputEl || (
-        <input type="text" className={`gf-form-input ${inputWidth ? `width-${inputWidth}` : ''}`} {...inputProps} />
-      )}
+      <LibraryCredential credentialName={libCredentialName || ''}>
+        {inputEl || (
+          <input type="text" className={`gf-form-input ${inputWidth ? `width-${inputWidth}` : ''}`} {...inputProps} />
+        )}
+      </LibraryCredential>
     </div>
   );
 };

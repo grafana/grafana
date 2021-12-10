@@ -1,9 +1,42 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import { uniqueId } from 'lodash';
 import { Placement } from '@popperjs/core';
 import { Tooltip } from '../../../Tooltip/Tooltip';
 import { Icon } from '../../..';
+import { LibraryCredential as LibraryCredentialType } from '@grafana/data';
 
+// TODO: move to grafana/ui
+const LibraryCredentialVisible = ({
+  credentialName,
+  libraryCredential,
+  defaultValue,
+  children,
+}: {
+  credentialName: string;
+  libraryCredential?: LibraryCredentialType;
+  defaultValue: any;
+  children: (value: any, isDisabled: boolean) => ReactNode;
+}) => {
+  let value = defaultValue;
+  let isDisabled = false;
+  if (libraryCredential) {
+    const match =
+      libraryCredential.jsonData[credentialName] ||
+      libraryCredential.secureJsonFields[credentialName] ||
+      (libraryCredential.secureJsonData && libraryCredential.secureJsonData[credentialName]) ||
+      (libraryCredential as any)[credentialName];
+
+    if (match) {
+      isDisabled = true;
+      value = match;
+    }
+  }
+  return (
+    <>
+      <span>{children(value, isDisabled)}</span>
+    </>
+  );
+};
 export interface Props {
   label: string;
   checked: boolean;
@@ -13,6 +46,8 @@ export interface Props {
   tooltip?: string;
   tooltipPlacement?: Placement;
   transparent?: boolean;
+  credentialName?: string;
+  libraryCredential?: LibraryCredentialType;
   onChange: (event: React.SyntheticEvent<HTMLInputElement>) => void;
 }
 
@@ -40,6 +75,8 @@ export class Switch extends PureComponent<Props, State> {
       className,
       tooltip,
       tooltipPlacement,
+      credentialName,
+      libraryCredential,
     } = this.props;
 
     const labelId = this.state.id;
@@ -61,10 +98,24 @@ export class Switch extends PureComponent<Props, State> {
               )}
             </div>
           )}
-          <div className={switchClassName}>
-            <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} />
-            <span className="gf-form-switch__slider" />
-          </div>
+          <LibraryCredentialVisible
+            credentialName={credentialName || ''}
+            libraryCredential={libraryCredential}
+            defaultValue={checked}
+          >
+            {(value, isDisabled) => (
+              <div className={switchClassName} style={isDisabled ? { border: 'solid', cursor: 'default' } : {}}>
+                <input
+                  id={labelId}
+                  type="checkbox"
+                  checked={value}
+                  onChange={this.internalOnChange}
+                  disabled={isDisabled}
+                />
+                <span className="gf-form-switch__slider" />
+              </div>
+            )}
+          </LibraryCredentialVisible>
         </label>
       </div>
     );

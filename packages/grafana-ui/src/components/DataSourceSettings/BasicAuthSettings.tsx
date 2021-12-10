@@ -37,6 +37,7 @@ export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
     <>
       <InlineField>
         <FormField
+          libCredentialName="user"
           label="User"
           labelWidth={10}
           inputWidth={18}
@@ -47,6 +48,7 @@ export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
       </InlineField>
       <InlineField>
         <SecretFormField
+          libCredentialName="password"
           isConfigured={
             !!dataSourceConfig.basicAuthPassword ||
             !!(dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.basicAuthPassword)

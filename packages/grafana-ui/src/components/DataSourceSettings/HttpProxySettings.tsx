@@ -11,6 +11,8 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({
     <>
       <div className="gf-form-inline">
         <Switch
+          libraryCredential={dataSourceConfig.libraryCredential}
+          credentialName="tlsAuth"
           label="TLS Client Auth"
           labelClass="width-13"
           checked={dataSourceConfig.jsonData.tlsAuth || false}
@@ -18,6 +20,8 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({
         />
 
         <Switch
+          libraryCredential={dataSourceConfig.libraryCredential}
+          credentialName="tlsAuthWithCACert"
           label="With CA Cert"
           labelClass="width-13"
           checked={dataSourceConfig.jsonData.tlsAuthWithCACert || false}
@@ -29,6 +33,8 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({
       </div>
       <div className="gf-form-inline">
         <Switch
+          libraryCredential={dataSourceConfig.libraryCredential}
+          credentialName="tlsSkipVerify"
           label="Skip TLS Verify"
           labelClass="width-13"
           checked={dataSourceConfig.jsonData.tlsSkipVerify || false}
@@ -38,6 +44,8 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({
       {showForwardOAuthIdentityOption && (
         <div className="gf-form-inline">
           <Switch
+            libraryCredential={dataSourceConfig.libraryCredential}
+            credentialName="oauthPassThru"
             label="Forward OAuth Identity"
             labelClass="width-13"
             checked={dataSourceConfig.jsonData.oauthPassThru || false}
