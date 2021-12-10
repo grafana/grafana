@@ -1,6 +1,6 @@
 +++
 title = "Override field values"
-aliases = []
+aliases = ["docs/grafana/latest/panels/field-overrides/"]
 weight = 800
 +++
 

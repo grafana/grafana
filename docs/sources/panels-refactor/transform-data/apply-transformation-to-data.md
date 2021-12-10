@@ -5,7 +5,7 @@ weight = 20
 
 # Apply a transformation function to data
 
-The following steps guide you in applying a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Reference: Transformation functions](../../reference-transformation-functions/_index.md).
+The following steps guide you in applying a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Reference: Transformation functions]({{< relref "../reference-transformation-functions.md" >}}).
 
 Before you begin:
 
@@ -18,9 +18,9 @@ To apply a transformation function to data:
 1. Click the **Transform** tab.
 1. Click a transformation.
 
-   A transformation row appear where you configure the transformation options. For more information about how to configure a transformation, refer to [Reference: Transformation functions](../../reference-transformation-functions/_index.md).
+   A transformation row appear where you configure the transformation options. For more information about how to configure a transformation, refer to [Reference: Transformation functions]({{< relref "../reference-transformation-functions.md" >}}).
 
-   For information about available calculations, refer to [Reference: Calculations](../reference-calculations/_index.md).
+   For information about available calculations, refer to [Reference: Calculations]({{< relref "../reference-calculations.md" >}}).
 
 1. To apply another transformation, click **Add transformation**.
 

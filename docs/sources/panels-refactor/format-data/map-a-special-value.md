@@ -9,7 +9,7 @@ Map a special value when you want to format uncommon, boolean, or empty values.
 
 Before you begin:
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
 To map a special value:
 

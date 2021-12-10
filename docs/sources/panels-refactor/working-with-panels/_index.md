@@ -1,6 +1,6 @@
 +++
 title = "Working with Grafana panels"
-aliases = []
+aliases = ["docs/grafana/latest/panels/panel-editor/", "docs/grafana/latest/panels/add-a-panel/", "docs/grafana/latest/panels/standard-options/", "docs/grafana/latest/panels/panel-options/", "docs/grafana/latest/panels/legend-options/"]
 weight = 100
 +++
 

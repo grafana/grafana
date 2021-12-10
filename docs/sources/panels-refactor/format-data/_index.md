@@ -1,6 +1,6 @@
 +++
 title = "Format data using value mapping"
-aliases = []
+aliases = ["docs/grafana/latest/panels/value-mappings/"]
 weight = 700
 +++
 

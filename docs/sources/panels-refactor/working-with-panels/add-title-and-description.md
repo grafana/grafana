@@ -10,7 +10,7 @@ Add a title and description to a panel to share with users any important informa
 
 Before you begin:
 
-- [Add a panel to a dashboard]({{< relref "../add-panel/_index.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
 To add a title and description to a panel:
 
