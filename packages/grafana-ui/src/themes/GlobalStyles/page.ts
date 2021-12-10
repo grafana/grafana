@@ -153,6 +153,16 @@ export function getPageStyles(theme: GrafanaTheme2) {
       padding: 0;
     }
 
+    .chat-message blockquote {
+      padding: 0 0 0 10px;
+      margin: 0 0 10px;
+    }
+
+    .chat-message-content blockquote p {
+      font-size: 14px;
+      padding-top: 4px;
+    }
+
     .chat-message-content a {
       color: #43c57e;
     }

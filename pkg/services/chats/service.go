@@ -46,28 +46,46 @@ func (s *Service) fakeChat(ctx context.Context) {
 	tm := time.NewTimer(5 * time.Second)
 	defer tm.Stop()
 	i := 0
+	plusOneReactions := []string{
+		"+1",
+		"well said",
+		"a mug of beer for this gentleman",
+	}
+
+	getRandUser := func() int64 {
+		userID := rand.Intn(2) + 1
+		if i%10 == 0 {
+			userID = 0
+		}
+		return int64(userID)
+	}
+
 	for {
 		select {
 		case <-tm.C:
-			userID := rand.Intn(2) + 1
-			if i%10 == 0 {
-				userID = 0
-			}
 			var content string
+			var needPlusOne bool
 			if i%4 == 0 {
 				content = gofakeit.Question()
 			} else if i%5 == 0 {
 				content = gofakeit.Quote() + " " + gofakeit.Emoji()
+				needPlusOne = true
 			} else {
 				content = gofakeit.HackerPhrase()
 			}
-			_, err := s.SendMessage(ctx, 1, int64(userID), SendMessageCmd{
+			_, _ = s.SendMessage(ctx, 1, getRandUser(), SendMessageCmd{
 				ContentTypeId: ContentTypeTeam,
 				ObjectId:      "all",
 				Content:       content,
 			})
-			if err != nil {
-				println(err.Error())
+			if needPlusOne {
+				time.Sleep(2 * time.Second)
+				content = "> " + content + "\n\n" + plusOneReactions[rand.Intn(len(plusOneReactions))] + " " + gofakeit.Emoji()
+				_, _ = s.SendMessage(ctx, 1, getRandUser(), SendMessageCmd{
+					ContentTypeId: ContentTypeTeam,
+					ObjectId:      "all",
+					Content:       content,
+				})
 			}
 			i++
 			delay := rand.Intn(5) + 3
