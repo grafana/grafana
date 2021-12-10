@@ -73,13 +73,14 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 }
 
 func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
-	validFileName := regexp.MustCompile(`([\w_]+)\.csv`)
+	validFileName := regexp.MustCompile(`^\w+\.csv$`)
 
 	if !validFileName.MatchString(fileName) {
 		return nil, fmt.Errorf("invalid csv file name: %q", fileName)
 	}
 
-	filePath := filepath.Join(s.cfg.StaticRootPath, "testdata", fileName)
+	csvFilepath := filepath.Clean(filepath.Join("/", fileName))
+	filePath := filepath.Join(s.cfg.StaticRootPath, "testdata", csvFilepath)
 
 	// Can ignore gosec G304 here, because we check the file pattern above
 	// nolint:gosec
