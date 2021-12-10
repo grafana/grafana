@@ -92,6 +92,7 @@ export const CrawlerStatus = () => {
           {formattedValueToString(fmtPer(percent))} :: {formattedValueToString(fmtSec(uptime))}
         </h2>
         {JSON.stringify(status)}
+        <br />
 
         <Button
           variant="secondary"

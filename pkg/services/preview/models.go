@@ -76,11 +76,12 @@ type previewResponse struct {
 //   }
 
 type crawlCmd struct {
-	Mode     string `json:"mode"`     // thumbs | analytics | migrate
-	Action   string `json:"action"`   // run | stop | queue
-	Theme    string `json:"theme"`    // light | dark
-	User     string `json:"user"`     // :(
-	Password string `json:"password"` // :(
+	Mode        string `json:"mode"`        // thumbs | analytics | migrate
+	Action      string `json:"action"`      // run | stop | queue
+	Theme       string `json:"theme"`       // light | dark
+	User        string `json:"user"`        // :(
+	Password    string `json:"password"`    // :(
+	Concurrency int    `json:"concurrency"` // number of pages to run in parallel
 
 	Path string `json:"path"` // eventually for queue
 }

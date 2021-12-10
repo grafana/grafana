@@ -19,6 +19,7 @@ export const CrawlerStartButton = () => {
     password: 'admin',
     theme: config.theme2.isLight ? 'light' : 'dark',
     limit: 1000,
+    concurrency: 1,
   });
   const onDismiss = () => setOpen(false);
   const doStart = () => {
