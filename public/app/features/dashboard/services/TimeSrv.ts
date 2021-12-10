@@ -275,10 +275,9 @@ export class TimeSrv {
   setTime(time: RawTimeRange, fromRouteUpdate?: boolean) {
     extend(this.time, time);
 
-    // disable refresh if zoom in or zoom out
     if (isDateTime(time.to)) {
       this.oldRefresh = this.dashboard?.refresh || this.oldRefresh;
-      this.setAutoRefresh(false);
+      this.setAutoRefresh(oldRefresh);
     } else if (this.oldRefresh && this.oldRefresh !== this.dashboard?.refresh) {
       this.setAutoRefresh(this.oldRefresh);
       this.oldRefresh = null;
