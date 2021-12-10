@@ -54,7 +54,7 @@ jobs:
 
           [Check console output](${{steps.get-job-link.outputs.result}})
 
-    - name: Add label
+    - name: Add label (if breaking)
       if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '1' || env.BREAKING_CHANGES_IS_BREAKING == 1 }}
       uses: actions/github-script@v5
       env:
@@ -66,6 +66,20 @@ jobs:
             owner: context.repo.owner,
             repo: context.repo.repo,
             labels: ['breaking change']
+          })
+
+    - name: Remove label (if not breaking)
+      if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '1' || env.BREAKING_CHANGES_IS_BREAKING == 1 }}
+      uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ steps.finder.outputs.pr }}
+      with:
+        script: |
+          github.rest.issues.removeLabel({
+            issue_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            name: 'breaking change'
           })
 
     - name: Exit
