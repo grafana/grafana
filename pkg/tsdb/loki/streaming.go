@@ -82,7 +82,11 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		s.plog.Error("error connecting to websocket", "err", err)
 		return fmt.Errorf("error connecting to websocket")
 	}
-	defer c.Close()
+
+	defer func() {
+		err = c.Close()
+		s.plog.Error("error closing loki websocket", "err", err)
+	}()
 
 	// Read all messages
 	done := make(chan struct{})
