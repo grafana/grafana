@@ -1,5 +1,3 @@
-import { KeyValue } from '@grafana/data';
-
 /**
  * UserPermission is a map storing permissions in a form of
  * {
@@ -51,10 +49,6 @@ export enum AccessControlAction {
 
   ActionServerStatsRead = 'server.stats:read',
 }
-
-export type ObjectWithMetadata = {
-  accessControl?: KeyValue<boolean>;
-};
 
 export interface Role {
   uid: string;
