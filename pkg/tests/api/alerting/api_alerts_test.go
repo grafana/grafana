@@ -37,8 +37,7 @@ func (c *httpClient) Do(req *http.Request) (*http.Response, error) {
 
 func TestGetAlert(t *testing.T) {
 	grafDir, cfgPath := testinfra.CreateGrafDir(t)
-	sqlStore := setUpDatabase(t, grafDir)
-	addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
+	addr, sqlStore := testinfra.StartGrafana(t, grafDir, cfgPath)
 	t.Logf("Server running at %s", addr)
 
 	ctx := context.Background()
@@ -114,8 +113,7 @@ func TestGetAlert(t *testing.T) {
 
 func TestPauseAlert(t *testing.T) {
 	grafDir, cfgPath := testinfra.CreateGrafDir(t)
-	sqlStore := setUpDatabase(t, grafDir)
-	addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
+	addr, sqlStore := testinfra.StartGrafana(t, grafDir, cfgPath)
 	t.Logf("Server running at %s", addr)
 
 	ctx := context.Background()
@@ -178,8 +176,7 @@ func TestPauseAlert(t *testing.T) {
 
 func TestListAlerts(t *testing.T) {
 	grafDir, cfgPath := testinfra.CreateGrafDir(t)
-	sqlStore := setUpDatabase(t, grafDir)
-	addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
+	addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 	t.Logf("Server running at %s", addr)
 
 	ctx := context.Background()
