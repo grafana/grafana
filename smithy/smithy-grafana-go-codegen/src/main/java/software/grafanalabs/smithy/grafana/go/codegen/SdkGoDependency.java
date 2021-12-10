@@ -6,7 +6,7 @@ import software.amazon.smithy.go.codegen.SmithyGoDependency;
 /**
  * A class of constants for dependencies used by this package.
  */
-public class AwsGoDependency {
+public class SdkGoDependency {
     public static final String MODULE_PATH = "github.com/grafana/grafana/smithy";
 
     public static final GoDependency REST_JSON_PROTOCOL = sdk("protocol/restjson");
@@ -32,7 +32,7 @@ public class AwsGoDependency {
 
     public static final GoDependency REGEXP = SmithyGoDependency.stdlib("regexp");
 
-    protected AwsGoDependency() {
+    protected SdkGoDependency() {
     }
 
     protected static GoDependency sdk(String relativePath) {

@@ -106,12 +106,12 @@ public class AddAwsConfigFields implements GoIntegration {
 
     private static Symbol getAwsCoreSymbol(String symbolName) {
         return SymbolUtils.createValueSymbolBuilder(symbolName,
-                AwsGoDependency.CORE).build();
+                SdkGoDependency.CORE).build();
     }
 
     private static Symbol getAwsSignerV4Symbol(String symbolName) {
         return SymbolUtils.createValueSymbolBuilder(symbolName,
-                AwsGoDependency.SIGNER_V4).build();
+                SdkGoDependency.SIGNER_V4).build();
     }
 
     private static Symbol getUniversalSymbol(String symbolName) {
@@ -121,7 +121,7 @@ public class AddAwsConfigFields implements GoIntegration {
 
     private static Symbol getAwsRetrySymbol(String symbolName) {
         return SymbolUtils.createValueSymbolBuilder(symbolName,
-                AwsGoDependency.RETRY).build();
+                SdkGoDependency.RETRY).build();
     }
 
     /**
@@ -167,7 +167,7 @@ public class AddAwsConfigFields implements GoIntegration {
         writer.openBlock("func $L(o *Options) {", "}", RESOLVE_RETRYER, () -> {
             writer.openBlock("if o.$L != nil {", "}", RETRYER_CONFIG_NAME, () -> writer.write("return"));
             writer.write("o.$L = $T()", RETRYER_CONFIG_NAME, SymbolUtils.createValueSymbolBuilder("NewStandard",
-                    AwsGoDependency.RETRY).build());
+                    SdkGoDependency.RETRY).build());
         });
         writer.write("");
         writer.openBlock("func $L(cfg aws.Config, o *Options) {", "}", RESOLVE_AWS_CONFIG_RETRYER_PROVIDER, () -> {
@@ -182,7 +182,7 @@ public class AddAwsConfigFields implements GoIntegration {
             writer.openBlock("if o.$L != nil {", "}", HTTP_CLIENT_CONFIG_NAME, () -> writer.write("return"));
             writer.write("o.$L = $T()", HTTP_CLIENT_CONFIG_NAME,
                     SymbolUtils.createValueSymbolBuilder("NewBuildableClient",
-                            AwsGoDependency.HTTP_TRANSPORT).build());
+                            SdkGoDependency.HTTP_TRANSPORT).build());
         });
         writer.write("");
     }

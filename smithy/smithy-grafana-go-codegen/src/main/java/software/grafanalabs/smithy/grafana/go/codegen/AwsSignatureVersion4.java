@@ -62,8 +62,8 @@ public final class AwsSignatureVersion4 implements GoIntegration {
     private void writerSignerInterface(GoWriter writer) {
         writer.openBlock("type $L interface {", "}", SIGNER_INTERFACE_NAME, () -> {
             writer.addUseImports(SmithyGoDependency.CONTEXT);
-            writer.addUseImports(AwsGoDependency.CORE);
-            writer.addUseImports(AwsGoDependency.SIGNER_V4);
+            writer.addUseImports(SdkGoDependency.CORE);
+            writer.addUseImports(SdkGoDependency.SIGNER_V4);
             writer.addUseImports(SmithyGoDependency.NET_HTTP);
             writer.addUseImports(SmithyGoDependency.TIME);
             writer.write("SignHTTP(ctx context.Context, credentials aws.Credentials, r *http.Request, "
@@ -82,11 +82,11 @@ public final class AwsSignatureVersion4 implements GoIntegration {
 
     private void writeNewV4SignerFunc(GoWriter writer, ServiceShape serviceShape) {
         Symbol signerSymbol = SymbolUtils.createValueSymbolBuilder("Signer",
-                AwsGoDependency.SIGNER_V4).build();
+                SdkGoDependency.SIGNER_V4).build();
         Symbol newSignerSymbol = SymbolUtils.createValueSymbolBuilder("NewSigner",
-                AwsGoDependency.SIGNER_V4).build();
+                SdkGoDependency.SIGNER_V4).build();
         Symbol signerOptionsSymbol = SymbolUtils.createPointableSymbolBuilder("SignerOptions",
-                AwsGoDependency.SIGNER_V4).build();
+                SdkGoDependency.SIGNER_V4).build();
 
         writer.openBlock("func $L(o Options) *$T {", "}", NEW_SIGNER_FUNC_NAME, signerSymbol, () -> {
             writer.openBlock("return $T(func(so $P) {", "})", newSignerSymbol, signerOptionsSymbol, () -> {
@@ -122,9 +122,9 @@ public final class AwsSignatureVersion4 implements GoIntegration {
         writer.openBlock("func $L(stack $P, o Options) error {", "}", REGISTER_MIDDLEWARE_FUNCTION,
                 SymbolUtils.createPointableSymbolBuilder("Stack", SmithyGoDependency.SMITHY_MIDDLEWARE).build(), () -> {
                     Symbol newMiddlewareSymbol = SymbolUtils.createValueSymbolBuilder(
-                            "NewSignHTTPRequestMiddleware", AwsGoDependency.SIGNER_V4).build();
+                            "NewSignHTTPRequestMiddleware", SdkGoDependency.SIGNER_V4).build();
                     Symbol middlewareOptionsSymbol = SymbolUtils.createValueSymbolBuilder(
-                            "SignHTTPRequestMiddlewareOptions", AwsGoDependency.SIGNER_V4).build();
+                            "SignHTTPRequestMiddlewareOptions", SdkGoDependency.SIGNER_V4).build();
 
                     writer.openBlock("mw := $T($T{", "})", newMiddlewareSymbol, middlewareOptionsSymbol, () -> {
                         writer.write("CredentialsProvider: o.$L,", AddAwsConfigFields.CREDENTIALS_CONFIG_NAME);

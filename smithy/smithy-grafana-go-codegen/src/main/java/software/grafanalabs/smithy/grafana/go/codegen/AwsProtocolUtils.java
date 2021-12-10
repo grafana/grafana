@@ -25,220 +25,6 @@ final class AwsProtocolUtils {
     private AwsProtocolUtils() {
     }
 
-    /**
-     * Generates HTTP protocol tests with all required AWS-specific configuration set.
-     *
-     * @param context The generation context.
-     */
-    /*
-    static void generateHttpProtocolTests(GenerationContext context) {
-        Set<HttpProtocolUnitTestGenerator.ConfigValue> configValues = new TreeSet<>(SetUtils.of(
-                HttpProtocolUnitTestGenerator.ConfigValue.builder()
-                        .name(AddAwsConfigFields.REGION_CONFIG_NAME)
-                        .value(writer -> writer.write("$S,", "us-west-2"))
-                        .build(),
-                HttpProtocolUnitTestGenerator.ConfigValue.builder()
-                        .name(AddAwsConfigFields.ENDPOINT_RESOLVER_CONFIG_NAME)
-                        .value(writer -> {
-                            writer.addUseImports(AwsGoDependency.CORE);
-                            writer.openBlock("$L(func(region string, options $L) (e aws.Endpoint, err error) {", "}),",
-                                    EndpointGenerator.RESOLVER_FUNC_NAME, EndpointGenerator.RESOLVER_OPTIONS, () -> {
-                                        writer.write("e.URL = serverURL");
-                                        writer.write("e.SigningRegion = \"us-west-2\"");
-                                        writer.write("return e, err");
-                                    });
-                        })
-                        .build(),
-                HttpProtocolUnitTestGenerator.ConfigValue.builder()
-                        .name("APIOptions")
-                        .value(writer -> {
-                            Symbol stackSymbol = SymbolUtils.createPointableSymbolBuilder("Stack",
-                                    SmithyGoDependency.SMITHY_MIDDLEWARE).build();
-                            writer.openBlock("[]func($P) error{", "},", stackSymbol, () -> {
-                                writer.openBlock("func(s $P) error {", "},", stackSymbol, () -> {
-                                    writer.write("s.Finalize.Clear()");
-                                    writer.write("return nil");
-                                });
-                            });
-                        })
-                        .build()
-        ));
-
-        // TODO can this check be replaced with a lookup into the runtime plugins?
-        if (IdempotencyTokenMiddlewareGenerator.hasOperationsWithIdempotencyToken(context.getModel(),
-                context.getService())) {
-            configValues.add(
-                    HttpProtocolUnitTestGenerator.ConfigValue.builder()
-                            .name(IdempotencyTokenMiddlewareGenerator.IDEMPOTENCY_CONFIG_NAME)
-                            .value(writer -> {
-                                writer.addUseImports(SmithyGoDependency.SMITHY_RAND);
-                                writer.addUseImports(SmithyGoDependency.SMITHY_TESTING);
-                                writer.write("smithyrand.NewUUIDIdempotencyToken(&smithytesting.ByteLoop{}),");
-                            })
-                            .build()
-            );
-        }
-
-        Set<ConfigValue> inputConfigValues = new TreeSet<>(configValues);
-        inputConfigValues.add(HttpProtocolUnitTestGenerator.ConfigValue.builder()
-                .name(AddAwsConfigFields.HTTP_CLIENT_CONFIG_NAME)
-                .value(writer -> {
-                    writer.addUseImports(AwsGoDependency.HTTP_TRANSPORT);
-                    writer.write("awshttp.NewBuildableClient(),");
-                })
-                .build());
-
-        Set<HttpProtocolUnitTestGenerator.SkipTest> inputSkipTests = new TreeSet<>(SetUtils.of(
-                // Smithy 1.6 changed unit tests that the SDK codegen don't support or are opinionated.
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.restjson#RestJson"))
-                        .operation(ShapeId.from("aws.protocoltests.restjson#EmptyInputAndEmptyOutput"))
-                        .addTestName("RestJsonEmptyInputAndEmptyOutputWithJson")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.restjson#RestJson"))
-                        .operation(ShapeId.from("aws.protocoltests.restjson#EndpointOperation"))
-                        .addTestName("RestJsonEndpointTrait")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.restjson#RestJson"))
-                        .operation(ShapeId.from("aws.protocoltests.restjson#EndpointWithHostLabelOperation"))
-                        .addTestName("RestJsonEndpointTraitWithHostLabel")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.ec2#AwsEc2"))
-                        .operation(ShapeId.from("aws.protocoltests.ec2#EndpointOperation"))
-                        .addTestName("Ec2QueryEndpointTrait")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.ec2#AwsEc2"))
-                        .operation(ShapeId.from("aws.protocoltests.ec2#EndpointWithHostLabelOperation"))
-                        .addTestName("Ec2QueryEndpointTraitWithHostLabel")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.json#JsonProtocol"))
-                        .operation(ShapeId.from("aws.protocoltests.json#EmptyOperation"))
-                        .addTestName("json_1_1_service_supports_empty_payload_for_no_input_shape")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.json#JsonProtocol"))
-                        .operation(ShapeId.from("aws.protocoltests.json#EndpointOperation"))
-                        .addTestName("AwsJson11EndpointTrait")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.json#JsonProtocol"))
-                        .operation(ShapeId.from("aws.protocoltests.json#EndpointWithHostLabelOperation"))
-                        .addTestName("AwsJson11EndpointTraitWithHostLabel")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.json10#JsonRpc10"))
-                        .operation(ShapeId.from("aws.protocoltests.json10#NoInputAndNoOutput"))
-                        .addTestName("AwsJson10ServiceSupportsNoPayloadForNoInput")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.json10#JsonRpc10"))
-                        .operation(ShapeId.from("aws.protocoltests.json10#EndpointOperation"))
-                        .addTestName("AwsJson10EndpointTrait")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.json10#JsonRpc10"))
-                        .operation(ShapeId.from("aws.protocoltests.json10#EndpointWithHostLabelOperation"))
-                        .addTestName("AwsJson10EndpointTraitWithHostLabel")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.query#AwsQuery"))
-                        .operation(ShapeId.from("aws.protocoltests.query#EndpointOperation"))
-                        .addTestName("AwsQueryEndpointTrait")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.query#AwsQuery"))
-                        .operation(ShapeId.from("aws.protocoltests.query#EndpointWithHostLabelOperation"))
-                        .addTestName("AwsQueryEndpointTraitWithHostLabel")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.restxml#RestXml"))
-                        .operation(ShapeId.from("aws.protocoltests.restxml#EndpointOperation"))
-                        .addTestName("RestXmlEndpointTrait")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.restxml#RestXml"))
-                        .operation(ShapeId.from("aws.protocoltests.restxml#EndpointWithHostLabelHeaderOperation"))
-                        .addTestName("RestXmlEndpointTraitWithHostLabelAndHttpBinding")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.restxml#RestXml"))
-                        .operation(ShapeId.from("aws.protocoltests.restxml#EndpointWithHostLabelOperation"))
-                        .addTestName("RestXmlEndpointTraitWithHostLabel")
-                        .build(),
-
-                // Null lists/maps without sparse tag
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.restjson#RestJson"))
-                        .operation(ShapeId.from("aws.protocoltests.restjson#JsonLists"))
-                        .addTestName("RestJsonListsSerializeNull")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.restjson#RestJson"))
-                        .operation(ShapeId.from("aws.protocoltests.restjson#JsonMaps"))
-                        .addTestName("RestJsonSerializesNullMapValues")
-                        .build(),
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.json#JsonProtocol"))
-                        .operation(ShapeId.from("aws.protocoltests.json#NullOperation"))
-                        .addTestName("AwsJson11MapsSerializeNullValues")
-                        .addTestName("AwsJson11ListsSerializeNull")
-                        .build(),
-
-                // JSON RPC serialize empty modeled input should always serialize something
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.json10#JsonRpc10"))
-                        .operation(ShapeId.from("aws.protocoltests.json10#EmptyInputAndEmptyOutput"))
-                        .addTestName("AwsJson10EmptyInputAndEmptyOutput")
-                        .build(),
-
-                // HTTP Payload Values that are unset vs set by the customer and how content-type should be handled.
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.restjson#RestJson"))
-                        .operation(ShapeId.from("aws.protocoltests.restjson#TestPayloadBlob"))
-                        .addTestName("RestJsonHttpWithEmptyBlobPayload")
-                        .build()
-        ));
-
-        Set<HttpProtocolUnitTestGenerator.SkipTest> outputSkipTests = new TreeSet<>(SetUtils.of(
-                // REST-JSON optional (SHOULD) test cases
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.restjson#RestJson"))
-                        .operation(ShapeId.from("aws.protocoltests.restjson#JsonMaps"))
-                        .addTestName("RestJsonDeserializesDenseSetMapAndSkipsNull")
-                        .build(),
-
-                // REST-XML opinionated test - prefix headers as empty vs nil map
-                HttpProtocolUnitTestGenerator.SkipTest.builder()
-                        .service(ShapeId.from("aws.protocoltests.restxml#RestXml"))
-                        .operation(ShapeId.from("aws.protocoltests.restxml#HttpPrefixHeaders"))
-                        .addTestName("HttpPrefixHeadersAreNotPresent")
-                        .build()
-        ));
-
-        new HttpProtocolTestGenerator(context,
-                (HttpProtocolUnitTestRequestGenerator.Builder) new HttpProtocolUnitTestRequestGenerator
-                        .Builder()
-                        .settings(context.getSettings())
-                        .addSkipTests(inputSkipTests)
-                        .addClientConfigValues(inputConfigValues),
-                (HttpProtocolUnitTestResponseGenerator.Builder) new HttpProtocolUnitTestResponseGenerator
-                        .Builder()
-                        .settings(context.getSettings())
-                        .addSkipTests(outputSkipTests)
-                        .addClientConfigValues(configValues),
-                (HttpProtocolUnitTestResponseErrorGenerator.Builder) new HttpProtocolUnitTestResponseErrorGenerator
-                        .Builder()
-                        .settings(context.getSettings())
-                        .addClientConfigValues(configValues)
-        ).generateProtocolTests();
-    }
-    */
-
     public static void writeJsonErrorMessageCodeDeserializer(GenerationContext context) {
         GoWriter writer = context.getWriter().get();
         // The error code could be in the headers, even though for this protocol it should be in the body.
@@ -247,7 +33,7 @@ final class AwsProtocolUtils {
         writer.write("");
 
         initializeJsonDecoder(writer, "errorBody");
-        writer.addUseImports(AwsGoDependency.REST_JSON_PROTOCOL);
+        writer.addUseImports(SdkGoDependency.REST_JSON_PROTOCOL);
         // This will check various body locations for the error code and error message
         writer.write("code, message, err := restjson.GetErrorInfo(decoder)");
         handleDecodeError(writer);
@@ -330,9 +116,9 @@ final class AwsProtocolUtils {
         var writer = ctx.getWriter().get();
 
         var stringValue = SymbolUtils.createValueSymbolBuilder("StringValue",
-                AwsGoDependency.SERVICE_INTERNAL_EVENTSTREAM).build();
+                SdkGoDependency.SERVICE_INTERNAL_EVENTSTREAM).build();
         var contentTypeHeader = SymbolUtils.createValueSymbolBuilder("ContentTypeHeader",
-                AwsGoDependency.SERVICE_INTERNAL_EVENTSTREAMAPI).build();
+                SdkGoDependency.SERVICE_INTERNAL_EVENTSTREAMAPI).build();
 
         writer.write("msg.Headers.Set($T, $T($S))",
                 contentTypeHeader, stringValue, contentType);
@@ -383,7 +169,7 @@ final class AwsProtocolUtils {
                      }
                      """,
                 SymbolUtils.createValueSymbolBuilder("GetErrorInfo",
-                        AwsGoDependency.REST_JSON_PROTOCOL).build(),
+                        SdkGoDependency.REST_JSON_PROTOCOL).build(),
                 SymbolUtils.createValueSymbolBuilder("GenericAPIError", SmithyGoDependency.SMITHY).build());
     }
 }

@@ -160,9 +160,9 @@ public final class AwsEventStreamUtils {
         var writer = context.getWriter().get();
 
         var logRequest = SymbolUtils.createValueSymbolBuilder("LogRequest",
-                AwsGoDependency.CORE).build();
+                SdkGoDependency.CORE).build();
         var logResponse = SymbolUtils.createValueSymbolBuilder("LogResponse",
-                AwsGoDependency.CORE).build();
+                SdkGoDependency.CORE).build();
 
         writer.openBlock("func $T(o *Options, request, response bool) {", "}",
                 getToggleEventStreamClientLogModeSymbol(), () -> {
@@ -212,7 +212,7 @@ public final class AwsEventStreamUtils {
                 "_deserializeOpEventStream");
 
         var errorf = getSymbol("Errorf", SmithyGoDependency.FMT, false);
-        var getSignedRequestSignature = getSymbol("GetSignedRequestSignature", AwsGoDependency.SIGNER_V4, false);
+        var getSignedRequestSignature = getSymbol("GetSignedRequestSignature", SdkGoDependency.SIGNER_V4, false);
         var symbolProvider = context.getSymbolProvider();
         var model = context.getModel();
         var outputShape = model.expectShape(operationShape.getOutput().get());
@@ -263,18 +263,18 @@ public final class AwsEventStreamUtils {
                                 }
                                  """, getSignedRequestSignature, errorf).write("")
                                 .openBlock("signer := $T(", ")", getSymbol("NewStreamSigner",
-                                        AwsGoDependency.SIGNER_V4, false), () -> w
+                                        SdkGoDependency.SIGNER_V4, false), () -> w
                                         .write("""
                                                $T(ctx),
                                                $T(ctx),
                                                $T(ctx),
                                                requestSignature,
                                                """, getSymbol("GetSigningCredentials",
-                                                        AwsGoDependency.MIDDLEWARE, false),
+                                                        SdkGoDependency.MIDDLEWARE, false),
                                                 getSymbol("GetSigningName",
-                                                        AwsGoDependency.MIDDLEWARE, false),
+                                                        SdkGoDependency.MIDDLEWARE, false),
                                                 getSymbol("GetSigningRegion",
-                                                        AwsGoDependency.MIDDLEWARE, false)
+                                                        SdkGoDependency.MIDDLEWARE, false)
                                         )).write("");
 
                         var events = inputInfo.get().getEventStreamTarget().asUnionShape()
@@ -451,7 +451,7 @@ public final class AwsEventStreamUtils {
                     writer.write("GetSignature(ctx context.Context, headers, payload []byte, signingTime time.Time, "
                                  + "optFns ...func($P)) ([]byte, error)",
                             SymbolUtils.createPointableSymbolBuilder("StreamSignerOptions",
-                                            AwsGoDependency.SIGNER_V4)
+                                            SdkGoDependency.SIGNER_V4)
                                     .build());
                 }).write("");
     }
@@ -478,7 +478,7 @@ public final class AwsEventStreamUtils {
         var decoderSymbol = getEventStreamSymbol("Decoder");
 
         var messageSymbol = SymbolUtils.createPointableSymbolBuilder("Message",
-                AwsGoDependency.SERVICE_INTERNAL_EVENTSTREAM).build();
+                SdkGoDependency.SERVICE_INTERNAL_EVENTSTREAM).build();
 
         var readCloser = getSymbol("ReadCloser", SmithyGoDependency.IO, false);
 
@@ -506,7 +506,7 @@ public final class AwsEventStreamUtils {
 
         writer.writeInline("func $L(readCloser $T, decoder $P",
                 getEventStreamReaderImplConstructorName(eventStream, service), readCloser,
-                getSymbol("Decoder", AwsGoDependency.SERVICE_INTERNAL_EVENTSTREAM));
+                getSymbol("Decoder", SdkGoDependency.SERVICE_INTERNAL_EVENTSTREAM));
         if (withInitialMessages) {
             writer.writeInline(", ird func($P) (interface{}, error)", messageSymbol);
         }
@@ -774,7 +774,7 @@ public final class AwsEventStreamUtils {
         var writerImplName = getEventStreamWriterImplName(eventStream, service);
 
         var writerSymbol = getModuleSymbol(settings, writerImplName);
-        var encoderSymbol = getSymbol("Encoder", AwsGoDependency.SERVICE_INTERNAL_EVENTSTREAM);
+        var encoderSymbol = getSymbol("Encoder", SdkGoDependency.SERVICE_INTERNAL_EVENTSTREAM);
         var writeCloser = getSymbol("WriteCloser", SmithyGoDependency.IO);
         var signerInterface = getModuleSymbol(settings, EVENT_STREAM_SIGNER_INTERFACE);
 
@@ -1558,7 +1558,7 @@ public final class AwsEventStreamUtils {
     }
 
     private static Symbol getEventStreamSymbol(String name, boolean pointable) {
-        return getSymbol(name, AwsGoDependency.SERVICE_INTERNAL_EVENTSTREAM, pointable);
+        return getSymbol(name, SdkGoDependency.SERVICE_INTERNAL_EVENTSTREAM, pointable);
     }
 
     private static Symbol getEventStreamApiSymbol(String name) {
@@ -1566,7 +1566,7 @@ public final class AwsEventStreamUtils {
     }
 
     private static Symbol getEventStreamApiSymbol(String name, boolean pointable) {
-        return getSymbol(name, AwsGoDependency.SERVICE_INTERNAL_EVENTSTREAMAPI, pointable);
+        return getSymbol(name, SdkGoDependency.SERVICE_INTERNAL_EVENTSTREAMAPI, pointable);
     }
 
     private static Symbol getSymbol(String name, GoDependency dependency) {
