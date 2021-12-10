@@ -102,7 +102,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     chatWrapper: css`
       margin-top: 10px;
       border-top: 2px solid #2d2b34;
-      max-height: 400px;
+      max-height: 300px;
       overflow-y: scroll;
       padding: 0 3px;
     `,

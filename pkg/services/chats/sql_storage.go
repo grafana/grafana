@@ -50,10 +50,11 @@ func (s *sqlStorage) CreateMessage(ctx context.Context, orgId int64, ctId int, o
 		if !has {
 			chat.Created = nowUnix
 			chat.Updated = nowUnix
-			chatId, err = dbSession.Insert(&chat)
+			_, err = dbSession.Insert(&chat)
 			if err != nil {
 				return err
 			}
+			chatId = chat.Id
 		}
 		message := Message{
 			ChatId:  chatId,
