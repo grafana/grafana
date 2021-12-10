@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 
 PACKAGES=$(lerna list -p -l)
-PACKAGE_NAMES=()
 EXIT_CODE=0
 GITHUB_MESSAGE=""
-RED=$(tput setaf 1)
-GREEN=$(tput setaf 2)
-ENDCOLOR=$(tput sgr0)
 
 # Loop through packages
 while IFS= read -r line; do
