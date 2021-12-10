@@ -48,6 +48,9 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
+      if (selection) {
+        setSelection(null);
+      }
       plotInstance.current = u;
     });
 
