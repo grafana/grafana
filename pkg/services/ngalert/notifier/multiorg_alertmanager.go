@@ -311,7 +311,7 @@ func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (*Alertmanager, er
 	}
 
 	if !orgAM.Ready() {
-		return nil, ErrAlertmanagerNotReady
+		return orgAM, ErrAlertmanagerNotReady
 	}
 
 	return orgAM, nil
