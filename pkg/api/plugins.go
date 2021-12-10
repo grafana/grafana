@@ -478,15 +478,15 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 	}
 
 	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `plugin.PluginDir` is based
-	// on plugin the folder structure on disk and not user input.
-	path := filepath.Join(plugin.PluginDir, fmt.Sprintf("%s.md", strings.ToUpper(name)))
+	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
+	// use this with a prefix of the plugin's directory, which is set during plugin loading
+	path := filepath.Join(plugin.PluginDir, mdFilepath(strings.ToUpper(name)))
 	exists, err := fs.Exists(path)
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
-		path = filepath.Join(plugin.PluginDir, fmt.Sprintf("%s.md", strings.ToLower(name)))
+		path = filepath.Join(plugin.PluginDir, mdFilepath(strings.ToLower(name)))
 	}
 
 	exists, err = fs.Exists(path)
@@ -498,11 +498,15 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 	}
 
 	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `plugin.PluginDir` is based
-	// on plugin the folder structure on disk and not user input.
+	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
+	// use this with a prefix of the plugin's directory, which is set during plugin loading
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 	return data, nil
+}
+
+func mdFilepath(mdFilename string) string {
+	return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename)))
 }
