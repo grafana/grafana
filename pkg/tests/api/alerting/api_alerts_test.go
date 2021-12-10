@@ -27,10 +27,15 @@ import (
 type httpClient struct {
 	http.Client
 
-	t *testing.T
+	t    *testing.T
+	addr string
 }
 
 func (c *httpClient) Do(req *http.Request) (*http.Response, error) {
+	c.t.Helper()
+	u, err := url.Parse(fmt.Sprintf("http://%s%s", c.addr, req.URL.Path))
+	require.NoError(c.t, err)
+	req.URL = u
 	c.t.Logf("Performing request, URL: %q, method: %s", req.URL, req.Method)
 	return c.Client.Do(req)
 }
@@ -43,22 +48,25 @@ func TestGetAlert(t *testing.T) {
 	ctx := context.Background()
 	client := grafana.New(grafana.Options{
 		HTTPClient: &httpClient{
-			t: t,
+			t:    t,
+			addr: addr,
 		},
-		APIOptions: []func(*middleware.Stack) error{
-			func(stack *middleware.Stack) error {
-				if err := stack.Build.Add(&buildRequest{
-					addr: addr,
-					op:   getAlertOp,
-				}, middleware.After); err != nil {
-					return err
-				}
-				return stack.Deserialize.Add(&deserializeResponse{
-					t:  t,
-					op: getAlertOp,
-				}, middleware.After)
+		/*
+			APIOptions: []func(*middleware.Stack) error{
+				func(stack *middleware.Stack) error {
+					if err := stack.Build.Add(&buildRequest{
+						addr: addr,
+						op:   getAlertOp,
+					}, middleware.After); err != nil {
+						return err
+					}
+					return stack.Deserialize.Add(&deserializeResponse{
+						t:  t,
+						op: getAlertOp,
+					}, middleware.After)
+				},
 			},
-		},
+		*/
 	})
 
 	t.Run("Non-existent alert", func(t *testing.T) {
