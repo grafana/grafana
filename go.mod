@@ -269,8 +269,6 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.0.0-20211007135653
 
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
 
-replace github.com/aws/smithy-go => ../smithy-go
-
 replace gopkg.in/macaron.v1 => ./pkg/macaron
 
 replace github.com/go-macaron/binding => ./pkg/macaron/binding
