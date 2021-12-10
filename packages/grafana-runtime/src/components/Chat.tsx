@@ -226,13 +226,7 @@ interface ChatMessageProps {
   actions?: ChatMessageAction[];
 }
 
-const ChatMessage: FunctionComponent<ChatMessageProps> = ({
-  message,
-  actions = [
-    { verbal: 'hi', action: console.log },
-    { verbal: 'hello', action: console.log },
-  ],
-}) => {
+const ChatMessage: FunctionComponent<ChatMessageProps> = ({ message, actions = [] }) => {
   let senderColor = '#34BA18';
   let senderName = 'System';
   let avatarUrl = '/public/img/grafana_icon.svg';
@@ -285,7 +279,7 @@ const ChatMessage: FunctionComponent<ChatMessageProps> = ({
         <div>
           <div className="chat-message-content" dangerouslySetInnerHTML={{ __html: markdownContent }} />
         </div>
-        {showActionIcon && (
+        {actions.length > 0 && showActionIcon && (
           <WithContextMenu renderMenuItems={renderMenuGroupItems} focusOnOpen={false}>
             {({ openMenu }) => <IconButton name="info-circle" onClick={openMenu} />}
           </WithContextMenu>
