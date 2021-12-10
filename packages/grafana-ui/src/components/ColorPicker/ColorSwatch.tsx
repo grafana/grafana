@@ -11,17 +11,16 @@ export enum ColorSwatchVariant {
 }
 
 /** @internal */
-export interface Props extends React.DOMAttributes<HTMLDivElement> {
+export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   color: string;
   label?: string;
   variant?: ColorSwatchVariant;
   isSelected?: boolean;
-  ariaLabel?: string;
 }
 
 /** @internal */
 export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
-  ({ color, label, variant = ColorSwatchVariant.Small, isSelected, ariaLabel, ...otherProps }, ref) => {
+  ({ color, label, variant = ColorSwatchVariant.Small, isSelected, 'aria-label': ariaLabel, ...otherProps }, ref) => {
     const theme = useTheme2();
 
     const { isFocusVisible, focusProps } = useFocusRing();
