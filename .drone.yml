@@ -11,7 +11,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -112,7 +112,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -337,7 +337,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -417,7 +417,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -822,7 +822,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -834,15 +834,18 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
+  - .\grabpl.exe windows-installer --edition oss --packages-bucket grafana-downloads
+    --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/main/
-  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/main/
+  - gsutil cp $$fname gs://grafana-downloads/oss/main/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
   depends_on:
   - initialize
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -901,7 +904,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -997,7 +1000,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1344,6 +1347,9 @@ steps:
 trigger:
   ref:
   - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - name: cypress_cache
@@ -1368,7 +1374,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -1389,6 +1395,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -1396,6 +1404,9 @@ steps:
 trigger:
   ref:
   - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - name: cypress_cache
@@ -1439,7 +1450,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1460,7 +1471,8 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise ${DRONE_TAG}
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
+    ${DRONE_TAG}
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
@@ -1470,6 +1482,9 @@ steps:
   - yarn install --immutable
   depends_on:
   - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.4.8
   name: initialize
 - commands:
@@ -1788,7 +1803,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -1799,10 +1814,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
+  - package
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -1835,64 +1847,9 @@ steps:
   image: grafana/build-container:1.4.8
   name: package-enterprise2
 - commands:
-  - ./e2e/start-server
-  depends_on:
-  - package-enterprise2
-  detach: true
-  environment:
-    PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
-    PORT: 3002
-    RUNDIR: e2e/tmp-grafana-enterprise2
-  image: grafana/build-container:1.4.8
-  name: end-to-end-tests-server-enterprise2
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite dashboards-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-dashboards-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-smoke-tests-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite panels-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-panels-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite various-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-various-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - package-enterprise2
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -1903,10 +1860,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2
   depends_on:
-  - end-to-end-tests-dashboards-suite-enterprise2
-  - end-to-end-tests-panels-suite-enterprise2
-  - end-to-end-tests-smoke-tests-suite-enterprise2
-  - end-to-end-tests-various-suite-enterprise2
+  - package-enterprise2
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -1919,6 +1873,9 @@ steps:
 trigger:
   ref:
   - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - name: cypress_cache
@@ -1947,7 +1904,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -1962,10 +1919,13 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/ci-wix:0.1.1
   name: initialize
 - commands:
@@ -1985,6 +1945,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -1992,6 +1954,9 @@ steps:
 trigger:
   ref:
   - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - name: cypress_cache
@@ -1999,34 +1964,6 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
----
-depends_on:
-- oss-build-release
-- oss-windows-release
-- enterprise-build-release
-- enterprise-windows-release
-kind: pipeline
-name: notify-release
-platform:
-  arch: amd64
-  os: linux
-steps:
-- image: plugins/slack
-  name: slack
-  settings:
-    channel: grafana-ci-notifications
-    template: |-
-      Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}
-      Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
-      Author: {{build.author}}
-    webhook:
-      from_secret: slack_webhook
-trigger:
-  ref:
-  - refs/tags/v*
-  status:
-  - failure
-type: docker
 ---
 depends_on: []
 kind: pipeline
@@ -2053,7 +1990,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2404,7 +2341,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -2426,6 +2363,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -2476,7 +2415,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2497,7 +2436,7 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
@@ -2507,6 +2446,9 @@ steps:
   - yarn install --immutable
   depends_on:
   - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.4.8
   name: initialize
 - commands:
@@ -2825,7 +2767,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -2836,10 +2778,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads-test
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
+  - package
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -2872,64 +2811,9 @@ steps:
   image: grafana/build-container:1.4.8
   name: package-enterprise2
 - commands:
-  - ./e2e/start-server
-  depends_on:
-  - package-enterprise2
-  detach: true
-  environment:
-    PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
-    PORT: 3002
-    RUNDIR: e2e/tmp-grafana-enterprise2
-  image: grafana/build-container:1.4.8
-  name: end-to-end-tests-server-enterprise2
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite dashboards-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-dashboards-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-smoke-tests-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite panels-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-panels-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite various-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-various-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - package-enterprise2
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -2940,10 +2824,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-test
   depends_on:
-  - end-to-end-tests-dashboards-suite-enterprise2
-  - end-to-end-tests-panels-suite-enterprise2
-  - end-to-end-tests-smoke-tests-suite-enterprise2
-  - end-to-end-tests-various-suite-enterprise2
+  - package-enterprise2
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -2984,7 +2865,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2999,10 +2880,13 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/ci-wix:0.1.1
   name: initialize
 - commands:
@@ -3023,6 +2907,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -3054,7 +2940,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3174,7 +3060,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3507,7 +3393,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -3524,6 +3410,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -3574,7 +3462,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3595,7 +3483,7 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
@@ -3604,6 +3492,9 @@ steps:
   - yarn install --immutable
   depends_on:
   - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.4.8
   name: initialize
 - commands:
@@ -3927,7 +3818,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
-  - end-to-end-tests-server
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -3938,10 +3829,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
+  - package
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -3974,64 +3862,9 @@ steps:
   image: grafana/build-container:1.4.8
   name: package-enterprise2
 - commands:
-  - ./e2e/start-server
-  depends_on:
-  - package-enterprise2
-  detach: true
-  environment:
-    PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
-    PORT: 3002
-    RUNDIR: e2e/tmp-grafana-enterprise2
-  image: grafana/build-container:1.4.8
-  name: end-to-end-tests-server-enterprise2
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite dashboards-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-dashboards-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-smoke-tests-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite panels-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-panels-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - ./bin/grabpl e2e-tests --port 3002 --suite various-suite --tries 3
-  depends_on:
-  - cypress
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: grafana/ci-e2e:12.19.0-1
-  name: end-to-end-tests-various-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
-  - end-to-end-tests-server-enterprise2
+  - package-enterprise2
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -4042,10 +3875,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2
   depends_on:
-  - end-to-end-tests-dashboards-suite-enterprise2
-  - end-to-end-tests-panels-suite-enterprise2
-  - end-to-end-tests-smoke-tests-suite-enterprise2
-  - end-to-end-tests-various-suite-enterprise2
+  - package-enterprise2
   - redis-integration-tests
   - memcached-integration-tests
   environment:
@@ -4086,7 +3916,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.4/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -4101,10 +3931,13 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: grafana/ci-wix:0.1.1
   name: initialize
 - commands:
@@ -4120,6 +3953,8 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
@@ -4134,34 +3969,6 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
----
-depends_on:
-- oss-build-release-branch
-- oss-windows-release-branch
-- enterprise-build-release-branch
-- enterprise-windows-release-branch
-kind: pipeline
-name: notify-release-branch
-platform:
-  arch: amd64
-  os: linux
-steps:
-- image: plugins/slack
-  name: slack
-  settings:
-    channel: grafana-ci-notifications
-    template: |-
-      Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}
-      Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
-      Author: {{build.author}}
-    webhook:
-      from_secret: slack_webhook
-trigger:
-  ref:
-  - refs/heads/v[0-9]*
-  status:
-  - failure
-type: docker
 ---
 kind: pipeline
 name: scan-grafana/grafana:latest-image
@@ -4302,6 +4109,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 63011a7e74dab6811078cf83929581cc25cc8a2133c388a93b8284b98de1d379
+hmac: b431c3bbdb4778dbed741bb5cd9840f106b4704280751dac4e145754f300a6ea
 
 ...

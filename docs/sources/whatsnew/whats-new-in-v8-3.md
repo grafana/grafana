@@ -38,7 +38,7 @@ Grafana will now make suggestions for visualization types based on the current d
 
 Grafana 8.3 includes a new Candlestick panel that is so much more. Beyond candlesticks and open, high, low, close, behaviors, it includes customizable up/down colors, bar color determined by intra-period or inter-period movement of the data, volume histogram with matching colors, and the ability to detach or create a separate volume histogram to allow for more flexible dashboard design. The candlestick panel is based upon our time series panel meaning it also has support for additional data with the same configuration options and styles.
 
-{{< figure src="/static/img/docs/candlestick-panel/candlestick_panel_8_3.png" max-width="1200px" caption="Candlestick panel" >}}
+{{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8-3.png" max-width="1200px" caption="Candlestick panel" >}}
 
 ### Geomap updates
 
@@ -51,6 +51,16 @@ The Geomap panel has been updated to support multiple data layers. The panel can
 Grafana Alerting is now the default alerting experience for all new Open Source installations of Grafana 8.3. Grafana Alerting in 8.3 includes the ability to test contact points and notification routing. Grafana 8.3 also adds the ability to configure and use external, Prometheus-style alert managers from within the Grafana Alerting workflow.
 
 {{< figure src="/static/img/docs/alerting/alerting_8_0.png" max-width="1200px" caption="Grafana Alerting" >}}
+
+## Support for AWS CloudWatch Metrics Insights
+
+Grafana and Amazon Managed Grafana now support AWS Metrics Insights – a fast, flexible, SQL-based query engine that enables you to identify trends and patterns across millions of operational metrics in real time.
+
+You can use Metrics Insights in the AWS CloudWatch plugin. Using this new feature is as simple as selecting the Metric Query type. The Metric Query type has two different modes: a Builder mode and a Code editor mode.
+
+The example below demonstrates using the new Metrics Insight capability to view the top 5 instances with the highest average CPU Utilization, ordered by maximum, in descending order. The code editor has built-in autocompletion support that gives suggestions throughout the composition of the query.
+
+{{< figure src="/static/img/docs/cloudwatch/cloudwatch-code-editor-autocomplete-8.3.0.gif" max-width="1200px" caption="Grafana Alerting" >}}
 
 # Grafana Enterprise
 
