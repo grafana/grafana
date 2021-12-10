@@ -64,7 +64,7 @@ type datasourceInfo struct {
 	TimeInterval      string `json:"timeInterval"`
 }
 
-type ResponseModel struct {
+type QueryModel struct {
 	Expr         string `json:"expr"`
 	LegendFormat string `json:"legendFormat"`
 	Interval     string `json:"interval"`
@@ -128,7 +128,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		},
 	}
 
-	queries, err := parseQuery(dsInfo, req)
+	queries, err := parseQuery(req)
 	if err != nil {
 		return result, err
 	}

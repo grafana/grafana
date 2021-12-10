@@ -210,6 +210,8 @@ function initEchoSrv() {
         writeKey: (config as any).rudderstackWriteKey,
         dataPlaneUrl: (config as any).rudderstackDataPlaneUrl,
         user: config.bootData.user,
+        sdkUrl: (config as any).rudderstackSdkUrl,
+        configUrl: (config as any).rudderstackConfigUrl,
       })
     );
   }

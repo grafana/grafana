@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import { AsyncMultiSelect, Icon, resetSelectStyles, useStyles2 } from '@grafana/ui';
+import { AsyncMultiSelect, Icon, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { FolderInfo, PermissionLevelString } from 'app/types';
@@ -36,7 +36,6 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
     isMulti: true,
     noOptionsMessage: 'No folders found',
     placeholder: 'Filter by folder',
-    styles: resetSelectStyles(),
     maxMenuHeight,
     value,
     onChange,
