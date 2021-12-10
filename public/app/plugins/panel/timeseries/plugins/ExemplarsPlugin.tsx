@@ -87,9 +87,11 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
           let top = u.valToPos(selection.maxY || 0, yKey, true);
           let bottom = u.valToPos(selection.minY || 0, yKey, true);
           u.ctx.save();
-          u.ctx.fillStyle = 'rgba(255,120,8,0.4)';
+          u.ctx.fillStyle = 'rgba(255,120,8,0.2)';
+          u.ctx.strokeStyle = 'rgba(255,120,8,1)';
 
           u.ctx.fillRect(left, top, right - left, bottom - top);
+          u.ctx.strokeRect(left, top, right - left, bottom - top);
           u.ctx.restore();
         }
       });
