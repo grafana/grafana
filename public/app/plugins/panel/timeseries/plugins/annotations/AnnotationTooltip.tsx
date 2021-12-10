@@ -3,6 +3,7 @@ import { HorizontalGroup, IconButton, Tag, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, textUtil } from '@grafana/data';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { css } from '@emotion/css';
+import { Chat } from '../../../../../../../packages/grafana-runtime';
 
 interface AnnotationTooltipProps {
   annotation: AnnotationsDataFrameViewDTO;
@@ -82,6 +83,9 @@ export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
             ))}
           </HorizontalGroup>
         </>
+        <div className={styles.chatWrapper}>
+          <Chat contentTypeId={5} objectId={annotation.id.toString()} />
+        </div>
       </div>
     </div>
   );
@@ -93,6 +97,14 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       max-width: 400px;
+      min-width: 300px;
+    `,
+    chatWrapper: css`
+      margin-top: 10px;
+      border-top: 2px solid #2d2b34;
+      max-height: 400px;
+      overflow-y: scroll;
+      padding: 0 3px;
     `,
     header: css`
       padding: ${theme.spacing(0.5, 1)};

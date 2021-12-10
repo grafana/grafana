@@ -8,17 +8,19 @@ import (
 type GetMessagesFilter struct{}
 
 const (
-	ContentTypeUser      = 1
-	ContentTypeDashboard = 2
-	ContentTypeIncident  = 3
-	ContentTypeTeam      = 4
+	ContentTypeUser       = 1
+	ContentTypeDashboard  = 2
+	ContentTypeIncident   = 3
+	ContentTypeTeam       = 4
+	ContentTypeAnnotation = 5
 )
 
 var registeredContentTypes = map[int]struct{}{
-	ContentTypeUser:      {},
-	ContentTypeDashboard: {},
-	ContentTypeIncident:  {},
-	ContentTypeTeam:      {},
+	ContentTypeUser:       {},
+	ContentTypeDashboard:  {},
+	ContentTypeIncident:   {},
+	ContentTypeTeam:       {},
+	ContentTypeAnnotation: {},
 }
 
 var (
