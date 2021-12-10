@@ -231,11 +231,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     const haveExemplars = !!queryResponse?.annotations?.length;
+    const supportsBreakdowns = haveExemplars;
     const label = (
       <ExploreGraphLabel
         graphStyle={graphStyle}
         isBreakdowns={isBreakdowns}
-        supportsBreakdowns={haveExemplars}
+        supportsBreakdowns={supportsBreakdowns}
         onChangeGraphStyle={this.onChangeGraphStyle}
         onChangeBreakdowns={this.onChangeBreakdowns}
       />
@@ -258,7 +259,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             isBreakdowns={isBreakdowns}
           />
         </Collapse>
-        {isBreakdowns && (
+        {isBreakdowns && supportsBreakdowns && (
           <AutoBreakdowns
             datasourceInstance={datasourceInstance}
             timeZone={timeZone}
