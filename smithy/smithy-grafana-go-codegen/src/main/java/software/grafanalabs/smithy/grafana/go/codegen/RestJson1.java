@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import software.amazon.smithy.codegen.core.CodegenException;
@@ -42,11 +41,10 @@ import software.amazon.smithy.model.traits.EventPayloadTrait;
 import software.amazon.smithy.model.traits.MediaTypeTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait;
-import software.amazon.smithy.model.traits.XmlNamespaceTrait;
 import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
 
 /**
- * Handles generating the aws.rest-json protocol for services.
+ * Handles generating the REST/JSON protocol for services.
  *
  * It handles reading and writing from document bodies, including generating any
  * functions needed for performing serde.

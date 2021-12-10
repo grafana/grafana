@@ -22,7 +22,7 @@ public class AddProtocols implements GoIntegration {
     @Override
     public List<RuntimeClientPlugin> getClientPlugins() {
         List<RuntimeClientPlugin> plugins = HttpProtocolUtils.getCloseResponseClientPlugins((model, service) -> {
-            // All AWS protocols are HTTP based currently. When protocol is added that is not it must be
+            // All protocols are HTTP based currently. When a protocol is added that is not, it must be
             // excluded if the service is configured for that protocol.
             return true;
         });
