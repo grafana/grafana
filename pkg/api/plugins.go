@@ -498,7 +498,7 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 		return nil, err
 	}
 	if !exists {
-		path = filepath.Join(plugin.PluginDir, mdFilepath( strings.ToLower(name)))
+		path = filepath.Join(plugin.PluginDir, mdFilepath(strings.ToLower(name)))
 	}
 
 	exists, err = fs.Exists(path)
