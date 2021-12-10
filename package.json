@@ -254,7 +254,7 @@
     "@visx/event": "2.1.0",
     "@visx/gradient": "2.1.0",
     "@visx/group": "2.1.0",
-    "@visx/scale": "2.1.0",
+    "@visx/scale": "2.2.2",
     "@visx/shape": "2.1.0",
     "@visx/tooltip": "2.1.0",
     "@welldone-software/why-did-you-render": "6.2.1",

@@ -10372,6 +10372,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@visx/scale@npm:2.2.2":
+  version: 2.2.2
+  resolution: "@visx/scale@npm:2.2.2"
+  dependencies:
+    "@types/d3-interpolate": ^1.3.1
+    "@types/d3-scale": ^3.3.0
+    "@types/d3-time": ^2.0.0
+    d3-interpolate: ^1.4.0
+    d3-scale: ^3.3.0
+    d3-time: ^2.1.1
+  checksum: 10f687e9e7ffc4704b76478eff7abf9031ec0398f3b7eb99fdc3bbdbb947e6bc2991aaa52dfd2731fa4ee32c24e6221fce0f83a979b0a16832be3433da08540e
+  languageName: node
+  linkType: hard
+
 "@visx/shape@npm:2.1.0":
   version: 2.1.0
   resolution: "@visx/shape@npm:2.1.0"
@@ -19130,7 +19144,7 @@ __metadata:
     "@visx/event": 2.1.0
     "@visx/gradient": 2.1.0
     "@visx/group": 2.1.0
-    "@visx/scale": 2.1.0
+    "@visx/scale": 2.2.2
     "@visx/shape": 2.1.0
     "@visx/tooltip": 2.1.0
     "@welldone-software/why-did-you-render": 6.2.1
