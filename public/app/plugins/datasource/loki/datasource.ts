@@ -28,6 +28,7 @@ import {
   LogLevel,
   LogRowModel,
   QueryResultMeta,
+  renderLabelsTemplate,
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
@@ -667,8 +668,8 @@ export class LokiDatasource
       view.forEach((row) => {
         annotations.push({
           time: new Date(row.ts).valueOf(),
-          title: renderTemplate(titleFormat, labels),
-          text: renderTemplate(textFormat, labels) || row.line,
+          title: renderLabelsTemplate(titleFormat, labels),
+          text: renderLabelsTemplate(textFormat, labels) || row.line,
           tags,
         });
       });
@@ -733,16 +734,6 @@ export class LokiDatasource
       return addLabelToQuery(queryExpr, key, value, operator, true);
     }
   }
-}
-
-export function renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {
-  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-  return aliasPattern.replace(aliasRegex, (_match, g1) => {
-    if (aliasData[g1]) {
-      return aliasData[g1];
-    }
-    return '';
-  });
 }
 
 export function lokiRegularEscape(value: any) {

@@ -4,7 +4,7 @@ import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFram
 import { guessFieldTypeFromValue } from './processDataFrame';
 import { join } from '../transformations/transformers/joinDataFrames';
 import { AlignedData } from 'uplot';
-import { parseLabels } from '..';
+import { parseLabels, renderLabelsTemplate } from '..';
 
 /**
  * Indicate if the frame is appened or replace
@@ -36,6 +36,9 @@ export interface StreamingFrameOptions {
   maxLength?: number; // 1000
   maxDelta?: number; // how long to keep things
   action?: StreamingFrameAction; // default will append
+
+  /** optionally format field names based on labels */
+  legendFormat?: string;
 }
 
 enum PushMode {
@@ -89,7 +92,6 @@ export class StreamingDataFrame implements DataFrame {
    */
   push(msg: DataFrameJSON) {
     const { schema, data } = msg;
-
     this.packetInfo.number++;
 
     if (schema) {
@@ -97,8 +99,8 @@ export class StreamingDataFrame implements DataFrame {
       this.timeFieldIndex = schema.fields.findIndex((f) => f.type === FieldType.time);
       if (
         this.timeFieldIndex === 1 &&
-        schema.fields[0].name === 'labels' &&
-        schema.fields[0].type === FieldType.string
+        schema.fields[0].type === FieldType.string &&
+        (schema.fields[0].name === 'labels' || schema.fields[0].name === 'Labels')
       ) {
         this.pushMode = PushMode.labels;
         this.timeFieldIndex = 0; // after labels are removed!
@@ -110,7 +112,7 @@ export class StreamingDataFrame implements DataFrame {
       if (schema.meta) {
         this.meta = { ...schema.meta };
       }
-
+      const { legendFormat } = this.options;
       if (hasSameStructure(this.schemaFields, niceSchemaFields)) {
         const len = niceSchemaFields.length;
         this.fields.forEach((f, idx) => {
@@ -118,11 +120,20 @@ export class StreamingDataFrame implements DataFrame {
           f.config = sf.config ?? {};
           f.labels = sf.labels;
         });
+        if (legendFormat) {
+          this.fields.forEach((f) => {
+            f.config.displayNameFromDS = renderLabelsTemplate(legendFormat, f.labels ?? {});
+          });
+        }
       } else {
         const isWide = this.pushMode === PushMode.wide;
         this.fields = niceSchemaFields.map((f) => {
+          const config = f.config ?? {};
+          if (legendFormat) {
+            config.displayNameFromDS = renderLabelsTemplate(legendFormat, f.labels ?? {});
+          }
           return {
-            config: f.config ?? {},
+            config,
             name: f.name,
             labels: f.labels,
             type: f.type ?? FieldType.other,
@@ -226,7 +237,8 @@ export class StreamingDataFrame implements DataFrame {
 
   // adds a set of fields for a new label
   private addLabel(label: string) {
-    let labelCount = this.labels.size;
+    const { legendFormat } = this.options;
+    const labelCount = this.labels.size;
 
     // parse labels
     const parsedLabels = parseLabelsFromField(label);
@@ -236,15 +248,21 @@ export class StreamingDataFrame implements DataFrame {
       this.fields.forEach((f, i) => {
         if (i > 0) {
           f.labels = parsedLabels;
+          if (legendFormat) {
+            f.config.displayNameFromDS = renderLabelsTemplate(legendFormat, parsedLabels);
+          }
         }
       });
     } else {
       for (let i = 1; i < this.schemaFields.length; i++) {
         let proto = this.schemaFields[i] as Field;
-
+        const config = proto.config ?? {};
+        if (legendFormat) {
+          config.displayNameFromDS = '333' + renderLabelsTemplate(legendFormat, parsedLabels);
+        }
         this.fields.push({
           ...proto,
-          config: proto.config ?? {},
+          config,
           labels: parsedLabels,
           values: new ArrayVector(Array(this.length).fill(undefined)),
         });

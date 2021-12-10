@@ -102,7 +102,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		}
 	}()
 
-	ticker := time.NewTicker(time.Second * 30) //.Step)
+	ticker := time.NewTicker(time.Second * 60) //.Step)
 	defer ticker.Stop()
 
 	for {
@@ -115,7 +115,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 			return nil
 		case t := <-ticker.C:
 			count++
-			s.plog.Error("websocket ping? %v / %d", t, count)
+			s.plog.Error("loki websocket ping?", "time", t, "count", count)
 		}
 	}
 }
