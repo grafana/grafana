@@ -240,6 +240,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - pull_request
@@ -573,6 +576,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   branch:
   - master
@@ -672,6 +678,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   branch:
@@ -1019,6 +1028,9 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
+
+node:
+  type: no-parallel
 
 trigger:
   ref:
@@ -1461,6 +1473,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/tags/v*
@@ -1597,6 +1612,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   ref:
@@ -1933,6 +1951,9 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
+
+node:
+  type: no-parallel
 
 trigger:
   event:
@@ -2369,6 +2390,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - custom
@@ -2505,6 +2529,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   event:
@@ -2816,6 +2843,9 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
+
+node:
+  type: no-parallel
 
 trigger:
   ref:
@@ -3250,6 +3280,9 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
+
+node:
+  type: no-parallel
 
 trigger:
   ref:
