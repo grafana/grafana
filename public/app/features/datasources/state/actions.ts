@@ -25,6 +25,7 @@ import {
   testDataSourceSucceeded,
 } from './reducers';
 import { getDataSource, getDataSourceMeta } from './selectors';
+import { addAccessControlQueryParam } from 'app/core/utils/accessControl';
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];
@@ -151,15 +152,10 @@ export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<
 export async function getDataSourceUsingUidOrId(uid: string | number): Promise<DataSourceSettings> {
   // Try first with uid api
   try {
-    let byUidUri = `/api/datasources/uid/${uid}`;
-    if (config.featureToggles['accesscontrol']) {
-      byUidUri += '?accesscontrol=true';
-    }
-
     const byUid = await lastValueFrom(
       getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
-        url: byUidUri,
+        url: addAccessControlQueryParam(`/api/datasources/uid/${uid}`),
         showErrorAlert: false,
       })
     );
@@ -174,15 +170,10 @@ export async function getDataSourceUsingUidOrId(uid: string | number): Promise<D
   // try lookup by old db id
   const id = typeof uid === 'string' ? parseInt(uid, 10) : uid;
   if (!Number.isNaN(id)) {
-    let byIdUri = `/api/datasources/${id}`;
-    if (config.featureToggles['accesscontrol']) {
-      byIdUri += '?accesscontrol=true';
-    }
-
     const response = await lastValueFrom(
       getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
-        url: byIdUri,
+        url: addAccessControlQueryParam(`/api/datasources/${id}`),
         showErrorAlert: false,
       })
     );

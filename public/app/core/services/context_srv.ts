@@ -86,16 +86,6 @@ export class ContextSrv {
   }
 
   // Checks whether user has required permission
-  hasPermissionInMetadata(action: AccessControlAction | string, object: WithAccessControlMetadata): boolean {
-    // Fallback if access control disabled
-    if (!config.featureToggles['accesscontrol']) {
-      return true;
-    }
-
-    return !!object.accessControl?.[action];
-  }
-
-  // Checks whether user has required permission
   hasPermission(action: AccessControlAction | string): boolean {
     // Fallback if access control disabled
     if (!config.featureToggles['accesscontrol']) {
