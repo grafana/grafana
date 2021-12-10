@@ -26,7 +26,10 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
     return [
       {
         name: 'Rate then sum',
-        operations: [{ id: 'rate', params: ['auto'] }],
+        operations: [
+          { id: 'rate', params: ['auto'] },
+          { id: 'sum', params: [] },
+        ],
       },
       {
         name: 'Rate then sum by(label) then avg',

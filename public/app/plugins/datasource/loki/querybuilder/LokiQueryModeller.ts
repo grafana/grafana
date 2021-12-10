@@ -9,8 +9,9 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQu
     this.registerOperations(getOperationDefintions());
     this.setOperationCategories([
       LokiVisualQueryOperationCategory.Aggregations,
+      LokiVisualQueryOperationCategory.RangeFunctions,
       LokiVisualQueryOperationCategory.Formats,
-      LokiVisualQueryOperationCategory.Functions,
+      //LokiVisualQueryOperationCategory.Functions,
       LokiVisualQueryOperationCategory.LabelFilters,
       LokiVisualQueryOperationCategory.LineFilters,
     ]);

@@ -131,7 +131,7 @@ function createAggregationOverTime(name: string): QueryBuilderOperationDef {
   const functionName = `${name}_over_time`;
   return {
     id: functionName,
-    displayName: getPromAndLokiOperationDisplayName(name),
+    displayName: getPromAndLokiOperationDisplayName(functionName),
     params: [getAggregationOverTimeRangeVector()],
     defaultParams: ['auto'],
     alternativesKey: 'overtime function',

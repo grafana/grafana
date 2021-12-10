@@ -29,10 +29,7 @@ export function getDefaultEmptyQuery() {
   const model: PromVisualQuery = {
     metric: '',
     labels: [],
-    operations: [
-      { id: 'rate', params: ['auto'] },
-      { id: 'sum', params: [] },
-    ],
+    operations: [],
   };
 
   return model;
