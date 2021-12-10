@@ -17,7 +17,7 @@ interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  onSelect?: (range: { from: number; to: number }) => void;
+  onSelect?: (range: { from: number; to: number }, values?: { min?: number; max?: number }) => void;
   enabledAutoBreakdowns?: boolean;
 }
 
@@ -34,54 +34,69 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
 
   useEffect(() => {
     if (selection && onSelect) {
-      onSelect({ from: selection.min, to: selection.max });
+      onSelect({ from: selection.min, to: selection.max }, { min: selection.minY, max: selection.maxY });
     }
   }, [selection, onSelect]);
-
-  useEffect(() => {
-    return () => {
-      setSelection(null);
-      plotInstance.current?.setSelect({ top: 0, left: 0, width: 0, height: 0 });
-    };
-    //@ts-ignore
-  }, []);
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
       plotInstance.current = u;
+      // Wrap all setSelect hooks to prevent them from firing if user is annotating
+      const setSelectHooks = u.hooks.setSelect;
+
+      if (setSelectHooks) {
+        for (let i = 0; i < setSelectHooks.length; i++) {
+          const hook = setSelectHooks[i];
+
+          if (hook !== setSelect) {
+            setSelectHooks[i] = (...args) => {
+              hook!(...args);
+            };
+          }
+        }
+      }
     });
 
-    if (enabledAutoBreakdowns) {
-      config.addHook('setSelect', (u) => {
-        setSelection({
-          min: u.posToVal(u.select.left, 'x'),
-          max: u.posToVal(u.select.left + u.select.width, 'x'),
-          bbox: {
-            left: u.select.left,
-            top: 0,
-            height: u.select.height,
-            width: u.select.width,
-          },
-        });
+    const setSelect = (u: uPlot) => {
+      const yKey = u.series[1].scale || 'y';
+      setSelection({
+        min: u.posToVal(u.select.left, 'x'),
+        max: u.posToVal(u.select.left + u.select.width, 'x'),
+        maxY: u.posToVal(u.select.top, yKey),
+        minY: u.posToVal(u.select.top + u.select.height, yKey),
+        bbox: {
+          left: u.select.left,
+          top: u.select.top,
+          height: u.select.height,
+          width: u.select.width,
+        },
       });
+    };
+
+    if (enabledAutoBreakdowns) {
+      config.addHook('setSelect', setSelect);
 
       config.addHook('drawAxes', (u) => {
         if (selection) {
+          const yKey = u.series[1].scale || 'y';
           let left = u.valToPos(selection.min, 'x', true);
           let right = u.valToPos(selection.max, 'x', true);
+          let top = u.valToPos(selection.maxY || 0, yKey, true);
+          let bottom = u.valToPos(selection.minY || 0, yKey, true);
           u.ctx.save();
-          u.ctx.fillStyle = 'rgba(255,120,8,0.2)';
-          u.ctx.fillRect(left, u.bbox.top, right - left, u.bbox.height);
+          u.ctx.fillStyle = 'rgba(255,120,8,0.4)';
+
+          u.ctx.fillRect(left, top, right - left, bottom - top);
           u.ctx.restore();
         }
       });
 
-      // config.setCursor({
-      //   drag: {
-      //     x: true,
-      //     y: true,
-      //   },
-      // });
+      config.setCursor({
+        drag: {
+          x: true,
+          y: true,
+        },
+      });
     }
   }, [config, selection, enabledAutoBreakdowns]);
 

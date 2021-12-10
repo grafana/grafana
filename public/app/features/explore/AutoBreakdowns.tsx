@@ -7,6 +7,7 @@ export interface Props {
   timeZone: TimeZone;
   datasourceInstance?: DataSourceApi | null;
   autoBreakdownRange?: AbsoluteTimeRange;
+  autoBreakdownValues?: { min: number; max: number };
   absoluteRange: AbsoluteTimeRange;
 }
 
@@ -24,12 +25,17 @@ function calcWidth(df: DataFrame): number {
 }
 
 export const AutoBreakdowns = (props: Props) => {
-  const { datasourceInstance, autoBreakdownRange, timeZone, absoluteRange } = props;
+  const { datasourceInstance, autoBreakdownRange, timeZone, absoluteRange, autoBreakdownValues } = props;
   if (!datasourceInstance) {
     return null;
   }
+
+  let dataFrames;
   //@ts-ignore
-  const dataFrames = datasourceInstance?.createAutoBreakdowns(autoBreakdownRange);
+  if (datasourceInstance?.createAutoBreakdowns) {
+    //@ts-ignore
+    dataFrames = datasourceInstance?.createAutoBreakdowns(autoBreakdownRange, autoBreakdownValues);
+  }
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap' }}>

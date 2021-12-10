@@ -452,9 +452,12 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   }
 
   //This holds all logic to create autobreakdown
-  createAutoBreakdowns(timeRange?: AbsoluteTimeRange) {
+  createAutoBreakdowns(timeRange?: AbsoluteTimeRange, values?: { min: number; max: number }) {
     // Create list of exemplars and all labels + values in array that exemplars have within timerange
-    const { exemplarsWithin, exemplarsOutside, labels } = this.selectAutoBreakdownDataBasedOnTimeRange(timeRange);
+    const { exemplarsWithin, exemplarsOutside, labels } = this.selectAutoBreakdownDataBasedOnRangeAndValues(
+      timeRange,
+      values
+    );
 
     // Loop over label names
     const dataFrames = Object.keys(labels).map((label) => {
@@ -510,16 +513,22 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     return dataFrames;
   }
 
-  selectAutoBreakdownDataBasedOnTimeRange(timeRange?: AbsoluteTimeRange) {
+  selectAutoBreakdownDataBasedOnRangeAndValues(timeRange?: AbsoluteTimeRange, values?: { min: number; max: number }) {
     const dictionary: any = {};
     const highCardinalityLabels: string[] = [];
     const highCardinalityLimit = 100;
     let exemplarsBaseline = this.exemplarsForAutoBreakdowns;
     let exemplarsSelected: ExemplarEvent[] = [];
     if (timeRange) {
+      const val = values || { min: -Infinity, max: Infinity };
+      console.log(val);
       [exemplarsSelected, exemplarsBaseline] = partition(
         this.exemplarsForAutoBreakdowns,
-        (exemplar) => exemplar['Time'] >= timeRange.from && exemplar['Time'] <= timeRange.to
+        (exemplar) =>
+          exemplar['Time'] >= timeRange.from &&
+          exemplar['Time'] <= timeRange.to &&
+          exemplar['Value'] >= val.min &&
+          exemplar['Value'] <= val.max
       );
     }
 
@@ -549,7 +558,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
         }
       });
     });
-    const { le, __name__, ...rest } = dictionary;
+    const { le, __name__, traceID, ...rest } = dictionary;
     return { exemplarsWithin: exemplarsSelected, exemplarsOutside: exemplarsBaseline, labels: rest };
   }
 

@@ -45,6 +45,8 @@ export type PlotTooltipInterpolator = (
 export interface PlotSelection {
   min: number;
   max: number;
+  minY?: number;
+  maxY?: number;
 
   // selection bounding box, relative to canvas
   bbox: {

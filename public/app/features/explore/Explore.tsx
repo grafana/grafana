@@ -69,6 +69,7 @@ enum ExploreDrawer {
 interface ExploreState {
   openDrawer?: ExploreDrawer;
   autoBreakdownRange?: AbsoluteTimeRange;
+  autoBreakdownValues?: { min: number; max: number };
 }
 
 export type Props = ExploreProps & ConnectedProps<typeof connector>;
@@ -105,6 +106,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.state = {
       openDrawer: undefined,
       autoBreakdownRange: undefined,
+      autoBreakdownValues: undefined,
     };
   }
 
@@ -164,12 +166,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.props.scanStopAction({ exploreId: this.props.exploreId });
   };
 
-  onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
+  onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange, values?: { min: number; max: number }) => {
     if (this.props.isBreakdowns) {
       // Click one point in the graph has same start and endpoint, using this to reset
       const autoBreakdownRange = absoluteRange.to === absoluteRange.from ? undefined : absoluteRange;
       this.setState({
         autoBreakdownRange,
+        autoBreakdownValues: values,
       });
     } else {
       const { exploreId, updateTimeRange } = this.props;
@@ -263,6 +266,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             datasourceInstance={datasourceInstance}
             timeZone={timeZone}
             autoBreakdownRange={this.state.autoBreakdownRange}
+            autoBreakdownValues={this.state.autoBreakdownValues}
             absoluteRange={absoluteRange}
           />
         )}
