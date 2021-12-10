@@ -83,3 +83,6 @@ provide extension points:
 - Provide runtime plugins
 - Decorate the symbol provider
 - Provide the protocol generator
+
+`GoIntegration`s are found via `software.amazon.smithy.build.PluginContext.getPluginClassLoader()`, which gets passed
+to `java.util.ServiceLoader`.

@@ -1,4 +1,4 @@
-//+build mage
+//go:build mage
 
 package main
 
@@ -28,7 +28,7 @@ func Smithy() error {
 	if err := os.MkdirAll("build/go", 0755); err != nil {
 		return err
 	}
-	if err := sh.RunV("cp", "-r", "build/smithyprojections/smithy/source/go-codegen", "build/go/grafana"); err != nil {
+	if err := sh.RunV("cp", "-r", "sdk-codegen/build/smithyprojections/sdk-codegen/source/go-codegen", "build/go/grafana"); err != nil {
 		return err
 	}
 
@@ -41,7 +41,7 @@ func Smithy() error {
 func HTMLDocs() error {
 	mg.Deps(Smithy)
 	if err := sh.RunV("openapi-generator", "generate", "-o", "build/html", "-g", "html2", "-i",
-		"build/smithyprojections/smithy/source/openapi/Grafana.openapi.json"); err != nil {
+		"sdk-codegen/build/smithyprojections/sdk-codegen/source/openapi/Grafana.openapi.json"); err != nil {
 		return err
 	}
 
