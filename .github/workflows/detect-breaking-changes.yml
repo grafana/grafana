@@ -1,0 +1,60 @@
+name: Levitate
+
+on: push
+
+jobs:
+  build:
+    name: Detecting breaking changes
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: c-hive/gha-yarn-cache@v2
+
+    - name: Yarn install
+      run: yarn install --immutable
+
+    - name: Build packages
+      run: yarn packages:build 
+
+    # We need this as we can only access the "Run ID" through the context and we need the "Job ID".
+    - name: Get job link
+      id: get-job-link
+      uses: actions/github-script@v5
+      with:
+        result-encoding: string
+        script: |
+          const { owner, repo } = context.repo;
+          const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${context.runId}/jobs`
+          const result = await github.request(url)
+          console.log(result.data)
+
+          return `https://github.com/grafana/grafana/runs/${result.data.jobs[0].id}?check_suite_focus=true`;
+
+    - name: Detect breaking changes
+      run: ./scripts/check-breaking-changes.sh 
+      env:
+        FORCE_COLOR: 3
+        GITHUB_JOB_LINK: ${{steps.get-job-link.outputs.result}}
+
+    - name: Find current pull request ID
+      uses: jwalton/gh-find-current-pr@v1
+      id: finder
+
+    - name: Comment on PR
+      if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '1' || env.BREAKING_CHANGES_IS_BREAKING == 1 }}
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        number: ${{ steps.finder.outputs.pr }}
+        message: |
+          ⚠️ &nbsp;&nbsp;**Possible breaking changes**
+
+          ${{ env.BREAKING_CHANGES_MESSAGE }}
+
+          [Check console output](${{steps.get-job-link.outputs.result}})
+
+    - name: Exit
+      run: exit ${{ env.BREAKING_CHANGES_IS_BREAKING }}
+      shell: bash
+
