@@ -153,7 +153,7 @@ export async function getDataSourceUsingUidOrId(uid: string | number): Promise<D
   try {
     let byUidUri = `/api/datasources/uid/${uid}`;
     if (config.featureToggles['accesscontrol']) {
-      byUidUri += '?metadata=true';
+      byUidUri += '?accesscontrol=true';
     }
 
     const byUid = await lastValueFrom(
@@ -176,7 +176,7 @@ export async function getDataSourceUsingUidOrId(uid: string | number): Promise<D
   if (!Number.isNaN(id)) {
     let byIdUri = `/api/datasources/${id}`;
     if (config.featureToggles['accesscontrol']) {
-      byIdUri += '?metadata=true';
+      byIdUri += '?accesscontrol=true';
     }
 
     const response = await lastValueFrom(

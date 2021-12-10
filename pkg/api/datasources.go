@@ -66,7 +66,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) getDataSourceAccessControlMetadata(c *models.ReqContext, dsID int64) (accesscontrol.Metadata, error) {
-	if !hs.Cfg.FeatureToggles["accesscontrol"] || !c.QueryBool("metadata") {
+	if !hs.Cfg.FeatureToggles["accesscontrol"] || !c.QueryBool("accesscontrol") {
 		return nil, nil
 	}
 
