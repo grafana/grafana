@@ -19,7 +19,7 @@ jobs:
       run: yarn packages:build 
 
     # We need this as we can only access the "Run ID" through the context and we need the "Job ID".
-    - name: Get job link
+    - name: Get link for the Github Action job
       id: get-job-link
       uses: actions/github-script@v5
       with:
@@ -42,7 +42,7 @@ jobs:
       uses: jwalton/gh-find-current-pr@v1
       id: finder
 
-    - name: Comment on PR
+    - name: Comment on PR (if there are breaking changes)
       if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '1' || env.BREAKING_CHANGES_IS_BREAKING == 1 }}
       uses: marocchino/sticky-pull-request-comment@v2
       with:
@@ -54,7 +54,7 @@ jobs:
 
           [Check console output](${{steps.get-job-link.outputs.result}})
 
-    - name: Add label (if breaking)
+    - name: Add label (if there are breaking changes)
       if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '1' || env.BREAKING_CHANGES_IS_BREAKING == 1 }}
       uses: actions/github-script@v5
       env:
@@ -68,7 +68,7 @@ jobs:
             labels: ['breaking change']
           })
 
-    - name: Remove label (if not breaking)
+    - name: Remove label (if there are breaking changes)
       if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '1' || env.BREAKING_CHANGES_IS_BREAKING == 1 }}
       uses: actions/github-script@v5
       env:
