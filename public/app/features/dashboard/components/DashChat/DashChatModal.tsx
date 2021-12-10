@@ -11,7 +11,7 @@ export const DashboardChatModal: React.FC<ChatDashboardModalProps> = ({ dashboar
     <>
       <Modal
         isOpen={true}
-        title="Dashboard chat"
+        title="Dashboard discussions"
         icon="save"
         onDismiss={onDismiss}
         className={css`

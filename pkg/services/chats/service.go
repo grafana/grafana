@@ -31,7 +31,8 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, store *sqlstore.SQLStore, liv
 		},
 	}
 	if os.Getenv("GF_CHAT_FAKE") != "" {
-		go s.fakeChat(context.Background())
+		go s.fakeChat(context.Background(), ContentTypeTeam, "all")
+		go s.fakeChat(context.Background(), ContentTypeDashboard, "PbAqqAtnz")
 	}
 	return s
 }
@@ -42,7 +43,7 @@ func (s *Service) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (s *Service) fakeChat(ctx context.Context) {
+func (s *Service) fakeChat(ctx context.Context, contentTypeID int, objectID string) {
 	tm := time.NewTimer(5 * time.Second)
 	defer tm.Stop()
 	i := 0
@@ -74,16 +75,16 @@ func (s *Service) fakeChat(ctx context.Context) {
 				content = gofakeit.HackerPhrase()
 			}
 			_, _ = s.SendMessage(ctx, 1, getRandUser(), SendMessageCmd{
-				ContentTypeId: ContentTypeTeam,
-				ObjectId:      "all",
+				ContentTypeId: contentTypeID,
+				ObjectId:      objectID,
 				Content:       content,
 			})
 			if needPlusOne {
 				time.Sleep(2 * time.Second)
 				content = "> " + content + "\n\n" + plusOneReactions[rand.Intn(len(plusOneReactions))] + " " + gofakeit.Emoji()
 				_, _ = s.SendMessage(ctx, 1, getRandUser(), SendMessageCmd{
-					ContentTypeId: ContentTypeTeam,
-					ObjectId:      "all",
+					ContentTypeId: contentTypeID,
+					ObjectId:      objectID,
 					Content:       content,
 				})
 			}
