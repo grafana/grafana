@@ -70,7 +70,7 @@ func (s *Service) fakeChat(ctx context.Context) {
 				println(err.Error())
 			}
 			i++
-			delay := rand.Intn(5) + 1
+			delay := rand.Intn(5) + 3
 			tm.Reset(time.Duration(delay) * time.Second)
 		case <-ctx.Done():
 			return
