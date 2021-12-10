@@ -1,6 +1,6 @@
 +++
 title = "Transform data"
-aliases = []
+aliases = ["docs/grafana/latest/panels/transformations/", "docs/grafana/latest/panels/transformations/config-from-query/", "docs/grafana/latest/panels/transformations/rows-to-fields/", "docs/grafana/latest/panels/transformations/apply-transformations/", ""]
 weight = 600
 +++
 

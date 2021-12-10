@@ -10,7 +10,7 @@ Explore and export panel, panel data, and data frame JSON models.
 
 Before you begin:
 
-- [Add a panel to a dashboard]({{< relref "../add-panel/_index.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
 To view a panel JSON model:
 

@@ -1,6 +1,6 @@
 +++
 title = "Reference: Transformation functions"
-aliases = []
+aliases = ["docs/grafana/latest/panels/transformations/types-options/"]
 weight = 1200
 +++
 

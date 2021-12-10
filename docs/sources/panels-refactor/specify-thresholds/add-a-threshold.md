@@ -9,7 +9,7 @@ You can add as many thresholds to a panel as you want. Grafana automatically sor
 
 Before you begin:
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
 To add a threshold:
 

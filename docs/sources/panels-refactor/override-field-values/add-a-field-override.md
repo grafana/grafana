@@ -9,7 +9,7 @@ You can override a field when you want to change the display of the value in the
 
 Before you begin:
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
 To add a field override:
 

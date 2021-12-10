@@ -1,6 +1,6 @@
 +++
 title = "Create reusable Grafana panels"
-aliases = []
+aliases = ["docs/grafana/latest/panels/panel-library/"]
 weight = 300
 +++
 

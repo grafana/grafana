@@ -11,7 +11,7 @@ Continuous color interpolates a color using the percentage of a value relative t
 
 Before you begin:
 
-- [Add a panel to a dashboard]({{< relref "../add-panel/_index.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
 To apply color to series and fields:
 

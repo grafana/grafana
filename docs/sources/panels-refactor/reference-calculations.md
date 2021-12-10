@@ -1,6 +1,6 @@
 +++
 title = "Reference: Calculations"
-aliases = []
+aliases = ["docs/grafana/latest/panels/calculations-list/"]
 weight = 900
 +++
 

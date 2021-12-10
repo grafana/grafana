@@ -1,6 +1,6 @@
 +++
 title = "Specify thresholds to set the color of visualization text and background"
-aliases = []
+aliases = ["docs/grafana/next/panels/thresholds/"]
 weight = 400
 +++
 

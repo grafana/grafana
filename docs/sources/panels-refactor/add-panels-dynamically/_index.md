@@ -1,6 +1,7 @@
 +++
 title = "Enable template variables to add panels dynamically"
-aliases = ["/docs/grafana/latest/features/panels/panels/"]
+keywords = ["dynamic", "variable", "panel"]
+aliases = ["docs/grafana/latest/panels/repeat-panels-or-rows/"]
 weight = 200
 +++
 

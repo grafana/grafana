@@ -9,7 +9,7 @@ In the Graph panel visualization, thresholds enable you to add lines or sections
 
 Before you begin:
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
 To add a threshold to a graph panel:
 

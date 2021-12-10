@@ -9,7 +9,7 @@ Unlink a library panel when you want to make a change to the panel and not affec
 
 Before you unlink a library panel:
 
-- [Add a library panel to a dashboard]({{< relref "../library-panels/add-library-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
 To unlink a library panel from a dashboard:
 

@@ -1,6 +1,6 @@
 +++
 title = "Query a data source"
-aliases = []
+aliases = ["docs/grafana/latest/panels/queries/", "docs/grafana/latest/panels/expressions/", "docs/grafana/latest/panels/inspect-panel/", "docs/grafana/latest/panels/share-query-results/"]
 weight = 500
 +++
 

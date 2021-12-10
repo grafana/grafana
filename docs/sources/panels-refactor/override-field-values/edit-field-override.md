@@ -9,7 +9,7 @@ Edit a field override when you want to make changes to an override setting.
 
 Before you begin:
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/_index.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 - [Add a field override]({{< relref "../override-field-values/add-a-field-override.md" >}}).
 
 To edit a field override:
