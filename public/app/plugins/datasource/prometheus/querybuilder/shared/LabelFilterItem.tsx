@@ -21,6 +21,28 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
     isLoadingLabelValues?: boolean;
   }>({});
 
+  const isMultiSelect = () => {
+    return item.op === operators[0].label;
+  };
+
+  const getValue = (item: any) => {
+    if (item && item.value) {
+      if (item.value.indexOf('|') > 0) {
+        return item.value.split('|').map((x: any) => ({ label: x, value: x }));
+      }
+      return toOption(item.value);
+    }
+    return null;
+  };
+
+  const getOptions = () => {
+    if (!state.labelValues && item && item.value && item.value.indexOf('|') > 0) {
+      return getValue(item);
+    }
+
+    return state.labelValues;
+  };
+
   return (
     <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
@@ -61,7 +83,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
         <Select
           inputId="prometheus-dimensions-filter-item-value"
           width="auto"
-          value={item.value ? toOption(item.value) : null}
+          value={getValue(item)}
           allowCustomValue
           onOpenMenu={async () => {
             setState({ isLoadingLabelValues: true });
@@ -72,11 +94,25 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
               isLoadingLabelValues: undefined,
             });
           }}
+          isMulti={isMultiSelect()}
           isLoading={state.isLoadingLabelValues}
-          options={state.labelValues}
+          options={getOptions()}
           onChange={(change) => {
-            if (change.value != null) {
+            if (change.value) {
               onChange(({ ...item, value: change.value, op: item.op ?? defaultOp } as any) as QueryBuilderLabelFilter);
+            } else {
+              const changes = change
+                .map((change: any) => {
+                  return change.label;
+                })
+                .filter((label: string) => {
+                  if (state.labelValues) {
+                    return state.labelValues.some((x) => x.label === label);
+                  }
+                  return false;
+                })
+                .join('|');
+              onChange(({ ...item, value: changes, op: item.op ?? defaultOp } as any) as QueryBuilderLabelFilter);
             }
           }}
         />
