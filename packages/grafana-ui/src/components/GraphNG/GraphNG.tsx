@@ -176,7 +176,9 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
             if (eventBus === evt.origin) {
               return;
             }
-            this.handleCursorUpdate(evt);
+            // Hackathon fix for jumpy cursor
+            // this.handleCursorUpdate(evt);
+            return;
           },
         })
     );
