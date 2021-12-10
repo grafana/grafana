@@ -40,6 +40,9 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
+      if (selection) {
+        setSelection(null);
+      }
       plotInstance.current = u;
       // Wrap all setSelect hooks to prevent them from firing if user is annotating
       const setSelectHooks = u.hooks.setSelect;
