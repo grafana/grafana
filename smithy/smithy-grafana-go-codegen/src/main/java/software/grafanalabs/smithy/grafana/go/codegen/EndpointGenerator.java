@@ -58,7 +58,7 @@ public final class EndpointGenerator implements Runnable {
     private static final String EndpointResolverFromURL = "EndpointResolverFromURL";
     private static final String ENDPOINT_SOURCE_CUSTOM = "EndpointSourceCustom";
     private static final Symbol AWS_ENDPOINT = SymbolUtils.createPointableSymbolBuilder(
-            "Endpoint", AwsGoDependency.AWS_CORE).build();
+            "Endpoint", AwsGoDependency.CORE).build();
 
     private static final int ENDPOINT_MODEL_VERSION = 3;
     private static final String INTERNAL_ENDPOINT_PACKAGE = "internal/endpoints";
@@ -132,7 +132,7 @@ public final class EndpointGenerator implements Runnable {
                                                  %s specifies the resolver must resolve a dual-stack endpoint.
                                                  """, DUAL_STACK_ENDPOINT_OPTION))
                     .type(SymbolUtils.createValueSymbolBuilder(DUAL_STACK_ENDPOINT_TYPE_NAME,
-                            AwsGoDependency.AWS_CORE).build())
+                            AwsGoDependency.CORE).build())
                     .shared(true)
                     .withGetter(true)
                     .build(),
@@ -142,7 +142,7 @@ public final class EndpointGenerator implements Runnable {
                                                  %s specifies the resolver must resolve a FIPS endpoint.
                                                  """, USE_FIPS_ENDPOINT_OPTION))
                     .type(SymbolUtils.createValueSymbolBuilder(FIPS_ENDPOINT_TYPE_NAME,
-                            AwsGoDependency.AWS_CORE).build())
+                            AwsGoDependency.CORE).build())
                     .shared(true)
                     .withGetter(true)
                     .build()
@@ -333,9 +333,9 @@ public final class EndpointGenerator implements Runnable {
     }
 
     private void generateAwsEndpointResolverWrapper(GoWriter writer) {
-        var endpointResolver = SymbolUtils.createValueSymbolBuilder("EndpointResolver", AwsGoDependency.AWS_CORE)
+        var endpointResolver = SymbolUtils.createValueSymbolBuilder("EndpointResolver", AwsGoDependency.CORE)
                 .build();
-        var endpointResolverWithOptions = SymbolUtils.createValueSymbolBuilder("EndpointResolverWithOptions", AwsGoDependency.AWS_CORE)
+        var endpointResolverWithOptions = SymbolUtils.createValueSymbolBuilder("EndpointResolverWithOptions", AwsGoDependency.CORE)
                 .build();
         var resolverInterface = SymbolUtils.createValueSymbolBuilder(RESOLVER_INTERFACE_NAME).build();
 
@@ -350,7 +350,7 @@ public final class EndpointGenerator implements Runnable {
 
         writeExternalResolveEndpointImplementation(writer, wrappedResolverSymbol, "w", () -> {
             var endpointNotFoundError = SymbolUtils.createValueSymbolBuilder("EndpointNotFoundError",
-                    AwsGoDependency.AWS_CORE).build();
+                    AwsGoDependency.CORE).build();
             var errorf = SymbolUtils.createValueSymbolBuilder("Errorf",
                     SmithyGoDependency.FMT).build();
             writer.write("""
@@ -376,7 +376,7 @@ public final class EndpointGenerator implements Runnable {
         });
 
         var endpoint = SymbolUtils.createValueSymbolBuilder("Endpoint",
-                AwsGoDependency.AWS_CORE).build();
+                AwsGoDependency.CORE).build();
         writer.write("""
                      type $L func(service, region string) ($T, error)
 
@@ -449,7 +449,7 @@ public final class EndpointGenerator implements Runnable {
     private void generateMiddlewareResolverBody(GoStackStepMiddlewareGenerator g, GoWriter w) {
         w.addUseImports(SmithyGoDependency.FMT);
         w.addUseImports(SmithyGoDependency.NET_URL);
-        w.addUseImports(AwsGoDependency.AWS_MIDDLEWARE);
+        w.addUseImports(AwsGoDependency.MIDDLEWARE);
         w.addUseImports(SmithyGoDependency.SMITHY_MIDDLEWARE);
         w.addUseImports(SmithyGoDependency.SMITHY_HTTP_TRANSPORT);
 
@@ -470,7 +470,7 @@ public final class EndpointGenerator implements Runnable {
                 """, LOGGER_OPTION, SymbolUtils.createValueSymbolBuilder("GetLogger",
                 SmithyGoDependency.SMITHY_MIDDLEWARE).build());
 
-        w.write("var endpoint $T", SymbolUtils.createValueSymbolBuilder("Endpoint", AwsGoDependency.AWS_CORE)
+        w.write("var endpoint $T", SymbolUtils.createValueSymbolBuilder("Endpoint", AwsGoDependency.CORE)
                 .build());
         w.write("endpoint, err = m.Resolver.ResolveEndpoint(awsmiddleware.GetRegion(ctx), eo)");
         w.openBlock("if err != nil {", "}", () -> {
@@ -526,7 +526,7 @@ public final class EndpointGenerator implements Runnable {
     }
 
     private void generatePublicResolverTypes(GoWriter writer) {
-        Symbol awsEndpointSymbol = SymbolUtils.createValueSymbolBuilder("Endpoint", AwsGoDependency.AWS_CORE).build();
+        Symbol awsEndpointSymbol = SymbolUtils.createValueSymbolBuilder("Endpoint", AwsGoDependency.CORE).build();
         Symbol internalEndpointsSymbol = getInternalEndpointsSymbol(INTERNAL_RESOLVER_NAME, true).build();
 
         Symbol resolverOptionsSymbol = SymbolUtils.createPointableSymbolBuilder(RESOLVER_OPTIONS).build();
@@ -581,7 +581,7 @@ public final class EndpointGenerator implements Runnable {
         writer.openBlock("func $L(url string, optFns ...func($P)) EndpointResolver {", "}",
                 EndpointResolverFromURL, AWS_ENDPOINT, () -> {
                     Symbol customEndpointSource = SymbolUtils.createValueSymbolBuilder(
-                            ENDPOINT_SOURCE_CUSTOM, AwsGoDependency.AWS_CORE
+                            ENDPOINT_SOURCE_CUSTOM, AwsGoDependency.CORE
                     ).build();
                     writer.write("e := $T{ URL : url, Source : $T }", AWS_ENDPOINT, customEndpointSource);
                     writer.write("for _, fn := range optFns { fn(&e) }");
@@ -633,7 +633,7 @@ public final class EndpointGenerator implements Runnable {
             Symbol resolverOptionsSymbol,
             Runnable body
     ) {
-        Symbol awsEndpointSymbol = SymbolUtils.createValueSymbolBuilder("Endpoint", AwsGoDependency.AWS_CORE).build();
+        Symbol awsEndpointSymbol = SymbolUtils.createValueSymbolBuilder("Endpoint", AwsGoDependency.CORE).build();
         writer.openBlock("func ($L $P) ResolveEndpoint(region string, options $T) (endpoint $T, err error) {", "}",
                         receiverIdentifier, receiverType, resolverOptionsSymbol, awsEndpointSymbol, body::run)
                 .write("");
@@ -700,7 +700,7 @@ public final class EndpointGenerator implements Runnable {
         writeInternalResolveEndpointImplementation(writer, resolverImplSymbol, "r", () -> {
             // Currently, all APIs require a region to derive the endpoint for that API. If there are ever a truly
             // region-less API then this should be gated at codegen.
-            writer.addUseImports(AwsGoDependency.AWS_CORE);
+            writer.addUseImports(AwsGoDependency.CORE);
             writer.write("if len(region) == 0 { return endpoint, &aws.MissingRegionError{} }").write("")
                     .write("opt := $L(options)", TRANSFORM_TO_SHARED_OPTIONS)
                     .write("return r.partitions.ResolveEndpoint(region, opt)");
@@ -871,7 +871,7 @@ public final class EndpointGenerator implements Runnable {
         node.getBooleanMember("deprecated").ifPresent(booleanNode -> {
             if (booleanNode.getValue()) {
                 writer.write("Deprecated: $T,", SymbolUtils.createValueSymbolBuilder("TrueTernary",
-                        AwsGoDependency.AWS_CORE).build());
+                        AwsGoDependency.CORE).build());
             }
         });
     }
@@ -1259,7 +1259,7 @@ public final class EndpointGenerator implements Runnable {
         }
 
         public Symbol getSymbol() {
-            return SymbolUtils.createValueSymbolBuilder(getConstantName(), AwsGoDependency.AWS_CORE)
+            return SymbolUtils.createValueSymbolBuilder(getConstantName(), AwsGoDependency.CORE)
                     .build();
         }
     }
@@ -1280,7 +1280,7 @@ public final class EndpointGenerator implements Runnable {
         }
 
         public Symbol getSymbol() {
-            return SymbolUtils.createValueSymbolBuilder(getConstantName(), AwsGoDependency.AWS_CORE)
+            return SymbolUtils.createValueSymbolBuilder(getConstantName(), AwsGoDependency.CORE)
                     .build();
         }
     }

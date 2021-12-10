@@ -160,9 +160,9 @@ public final class AwsEventStreamUtils {
         var writer = context.getWriter().get();
 
         var logRequest = SymbolUtils.createValueSymbolBuilder("LogRequest",
-                AwsGoDependency.AWS_CORE).build();
+                AwsGoDependency.CORE).build();
         var logResponse = SymbolUtils.createValueSymbolBuilder("LogResponse",
-                AwsGoDependency.AWS_CORE).build();
+                AwsGoDependency.CORE).build();
 
         writer.openBlock("func $T(o *Options, request, response bool) {", "}",
                 getToggleEventStreamClientLogModeSymbol(), () -> {
@@ -212,7 +212,7 @@ public final class AwsEventStreamUtils {
                 "_deserializeOpEventStream");
 
         var errorf = getSymbol("Errorf", SmithyGoDependency.FMT, false);
-        var getSignedRequestSignature = getSymbol("GetSignedRequestSignature", AwsGoDependency.AWS_SIGNER_V4, false);
+        var getSignedRequestSignature = getSymbol("GetSignedRequestSignature", AwsGoDependency.SIGNER_V4, false);
         var symbolProvider = context.getSymbolProvider();
         var model = context.getModel();
         var outputShape = model.expectShape(operationShape.getOutput().get());
@@ -263,18 +263,18 @@ public final class AwsEventStreamUtils {
                                 }
                                  """, getSignedRequestSignature, errorf).write("")
                                 .openBlock("signer := $T(", ")", getSymbol("NewStreamSigner",
-                                        AwsGoDependency.AWS_SIGNER_V4, false), () -> w
+                                        AwsGoDependency.SIGNER_V4, false), () -> w
                                         .write("""
                                                $T(ctx),
                                                $T(ctx),
                                                $T(ctx),
                                                requestSignature,
                                                """, getSymbol("GetSigningCredentials",
-                                                        AwsGoDependency.AWS_MIDDLEWARE, false),
+                                                        AwsGoDependency.MIDDLEWARE, false),
                                                 getSymbol("GetSigningName",
-                                                        AwsGoDependency.AWS_MIDDLEWARE, false),
+                                                        AwsGoDependency.MIDDLEWARE, false),
                                                 getSymbol("GetSigningRegion",
-                                                        AwsGoDependency.AWS_MIDDLEWARE, false)
+                                                        AwsGoDependency.MIDDLEWARE, false)
                                         )).write("");
 
                         var events = inputInfo.get().getEventStreamTarget().asUnionShape()
@@ -451,7 +451,7 @@ public final class AwsEventStreamUtils {
                     writer.write("GetSignature(ctx context.Context, headers, payload []byte, signingTime time.Time, "
                                  + "optFns ...func($P)) ([]byte, error)",
                             SymbolUtils.createPointableSymbolBuilder("StreamSignerOptions",
-                                            AwsGoDependency.AWS_SIGNER_V4)
+                                            AwsGoDependency.SIGNER_V4)
                                     .build());
                 }).write("");
     }

@@ -40,7 +40,7 @@ final class AwsProtocolUtils {
                 HttpProtocolUnitTestGenerator.ConfigValue.builder()
                         .name(AddAwsConfigFields.ENDPOINT_RESOLVER_CONFIG_NAME)
                         .value(writer -> {
-                            writer.addUseImports(AwsGoDependency.AWS_CORE);
+                            writer.addUseImports(AwsGoDependency.CORE);
                             writer.openBlock("$L(func(region string, options $L) (e aws.Endpoint, err error) {", "}),",
                                     EndpointGenerator.RESOLVER_FUNC_NAME, EndpointGenerator.RESOLVER_OPTIONS, () -> {
                                         writer.write("e.URL = serverURL");
@@ -83,7 +83,7 @@ final class AwsProtocolUtils {
         inputConfigValues.add(HttpProtocolUnitTestGenerator.ConfigValue.builder()
                 .name(AddAwsConfigFields.HTTP_CLIENT_CONFIG_NAME)
                 .value(writer -> {
-                    writer.addUseImports(AwsGoDependency.AWS_HTTP_TRANSPORT);
+                    writer.addUseImports(AwsGoDependency.HTTP_TRANSPORT);
                     writer.write("awshttp.NewBuildableClient(),");
                 })
                 .build());
@@ -247,7 +247,7 @@ final class AwsProtocolUtils {
         writer.write("");
 
         initializeJsonDecoder(writer, "errorBody");
-        writer.addUseImports(AwsGoDependency.AWS_REST_JSON_PROTOCOL);
+        writer.addUseImports(AwsGoDependency.REST_JSON_PROTOCOL);
         // This will check various body locations for the error code and error message
         writer.write("code, message, err := restjson.GetErrorInfo(decoder)");
         handleDecodeError(writer);
@@ -383,7 +383,7 @@ final class AwsProtocolUtils {
                      }
                      """,
                 SymbolUtils.createValueSymbolBuilder("GetErrorInfo",
-                        AwsGoDependency.AWS_REST_JSON_PROTOCOL).build(),
+                        AwsGoDependency.REST_JSON_PROTOCOL).build(),
                 SymbolUtils.createValueSymbolBuilder("GenericAPIError", SmithyGoDependency.SMITHY).build());
     }
 }
