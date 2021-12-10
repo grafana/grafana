@@ -70,13 +70,13 @@ func (hs *HTTPServer) getDataSourceAccessControlMetadata(c *models.ReqContext, d
 		return nil, nil
 	}
 
-	key := fmt.Sprintf("%d", dsID)
-	dsIDs := map[string]bool{key: true}
-
 	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
 	if err != nil || len(userPermissions) == 0 {
 		return nil, err
 	}
+
+	key := fmt.Sprintf("%d", dsID)
+	dsIDs := map[string]bool{key: true}
 
 	metadata, err := accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "datasources", dsIDs)
 	if err != nil {
