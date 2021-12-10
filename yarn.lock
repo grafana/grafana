@@ -3365,7 +3365,7 @@ __metadata:
     "@types/react": 17.0.30
     "@types/react-dom": 17.0.10
     "@types/sinon": ^10.0.4
-    "@types/testing-library__jest-dom": 5.9.5
+    "@types/testing-library__jest-dom": 5.14.2
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.2
     d3-interpolate: 1.4.0
@@ -3728,7 +3728,7 @@ __metadata:
     "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.7.1
     "@types/slate-react": 0.22.5
-    "@types/testing-library__jest-dom": 5.9.5
+    "@types/testing-library__jest-dom": 5.14.2
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.1
     "@types/uuid": 8.3.0
@@ -9877,12 +9877,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/testing-library__jest-dom@npm:5.9.5":
-  version: 5.9.5
-  resolution: "@types/testing-library__jest-dom@npm:5.9.5"
+"@types/testing-library__jest-dom@npm:5.14.2":
+  version: 5.14.2
+  resolution: "@types/testing-library__jest-dom@npm:5.14.2"
   dependencies:
     "@types/jest": "*"
-  checksum: f2ed81103acb52d54f992d826e3854551294618628997dc01f8955efd8c1d476d64715b79187371b09ec3e61e44cc10a7ffe1e427d1bda798552f83d18309056
+  checksum: e08715a565cc189112a6611485d779a0f1ceb546a9d4601b21aacff7596d7acf8b7c702e4c5f825677431ff601df3e635887dc8a5735da1a263cc857eb7c3833
   languageName: node
   linkType: hard
 
@@ -19121,7 +19121,7 @@ __metadata:
     "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.7.1
     "@types/slate-react": 0.22.5
-    "@types/testing-library__jest-dom": 5.9.5
+    "@types/testing-library__jest-dom": 5.14.2
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.2
     "@types/uuid": 8.3.0
