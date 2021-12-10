@@ -277,7 +277,7 @@ export class TimeSrv {
 
     if (isDateTime(time.to)) {
       this.oldRefresh = this.dashboard?.refresh || this.oldRefresh;
-      this.setAutoRefresh(oldRefresh);
+      this.setAutoRefresh(this.oldRefresh);
     } else if (this.oldRefresh && this.oldRefresh !== this.dashboard?.refresh) {
       this.setAutoRefresh(this.oldRefresh);
       this.oldRefresh = null;
