@@ -22,21 +22,6 @@ import (
 	"github.com/grafana/grafana/smithy/build/go/grafana/types"
 )
 
-func ValidateOrgAlert(c *models.ReqContext) {
-	id := c.ParamsInt64(":alertId")
-	query := models.GetAlertByIdQuery{Id: id}
-
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
-		c.JsonApiErr(404, "Alert not found", nil)
-		return
-	}
-
-	if c.OrgId != query.Result.OrgId {
-		c.JsonApiErr(403, "You are not allowed to edit/view alert", nil)
-		return
-	}
-}
-
 func GetAlertStatesForDashboard(c *models.ReqContext) response.Response {
 	dashboardID := c.QueryInt64("dashboardId")
 
@@ -198,13 +183,28 @@ func (hs *HTTPServer) AlertTest(c *models.ReqContext) response.Response {
 	return response.JSON(200, dtoRes)
 }
 
+type errorResponse struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
 // GET /api/alerts/:id
 func GetAlert(c *models.ReqContext) response.Response {
 	id := c.ParamsInt64(":alertId")
 	query := models.GetAlertByIdQuery{Id: id}
 
 	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
-		return response.Error(500, "List alerts failed", err)
+		return response.JSON(404, errorResponse{
+			Code:    "NoSuchResource",
+			Message: fmt.Sprintf("Alert with ID %d not found", id),
+		})
+	}
+
+	if c.OrgId != query.Result.OrgId {
+		return response.JSON(403, errorResponse{
+			Code:    "Forbidden",
+			Message: fmt.Sprintf("Accessing alert with ID %d forbidden", id),
+		})
 	}
 
 	alertID := strconv.FormatInt(query.Result.Id, 10)

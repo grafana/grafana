@@ -376,7 +376,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
 			alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(PauseAlert))
-			alertsRoute.Get("/:alertId", ValidateOrgAlert, routing.Wrap(GetAlert))
+			alertsRoute.Get("/:alertId", routing.Wrap(GetAlert))
 			alertsRoute.Get("/", routing.Wrap(GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(GetAlertStatesForDashboard))
 		})
