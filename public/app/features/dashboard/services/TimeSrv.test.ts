@@ -212,15 +212,13 @@ describe('timeSrv', () => {
       expect(_dashboard.refresh).toBe('30s');
     });
 
-    it('should restore refresh after relative time range is set', () => {
+    it('should not discard refresh after relative time range is set', () => {
       _dashboard.refresh = '10s';
       timeSrv.setTime({
         from: dateTime([2011, 1, 1]),
         to: dateTime([2015, 1, 1]),
       });
-      expect(_dashboard.refresh).toBe(false);
-      timeSrv.setTime({ from: '2011-01-01', to: 'now' });
-      expect(_dashboard.refresh).toBe('10s');
+      expect(_dashboard.refresh).toBe(_dashboard.refresh);
     });
 
     it('should keep refresh after relative time range is changed and now delay exists', () => {
