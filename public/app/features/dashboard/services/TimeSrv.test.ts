@@ -218,7 +218,7 @@ describe('timeSrv', () => {
         from: dateTime([2011, 1, 1]),
         to: dateTime([2015, 1, 1]),
       });
-      expect(_dashboard.refresh).toBe(_dashboard.refresh);
+      expect(_dashboard.refresh).toBe('10s');
     });
 
     it('should keep refresh after relative time range is changed and now delay exists', () => {
