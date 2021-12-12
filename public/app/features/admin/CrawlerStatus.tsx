@@ -88,10 +88,13 @@ export const CrawlerStatus = () => {
         {status.lastItem && (
           <img style={{ float: 'right' }} src={`/preview/dash/${status.lastItem.uid}/thumb/${status.theme}`} />
         )}
+        <ul>
+          <li></li>
+        </ul>
         <h2>
           {formattedValueToString(fmtPer(percent))} :: {formattedValueToString(fmtSec(uptime))}
         </h2>
-        {JSON.stringify(status)}
+        <pre>{JSON.stringify(status, null, 2)}</pre>
         <br />
 
         <Button

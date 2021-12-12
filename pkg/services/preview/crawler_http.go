@@ -53,10 +53,10 @@ func (r *renderHttp) CrawlerCmd(cfg *crawlCmd) (json.RawMessage, error) {
 	if error != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 
-	fmt.Println("response Status:", response.Status)
-	fmt.Println("response Headers:", response.Header)
 	return ioutil.ReadAll(response.Body)
 }
 
