@@ -137,6 +137,11 @@ func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resour
 	allScope := GetResourceAllScope(resource)
 	allIDScope := GetResourceAllIDScope(resource)
 
+	// prefix of ID based scopes (resource:id)
+	idPrefix := Scope(resource, "id")
+	// index of the ID in the scope
+	idIndex := len(idPrefix) + 1
+
 	// Loop through permissions once
 	result := map[string]Metadata{}
 	for _, p := range permissions {
@@ -146,10 +151,9 @@ func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resour
 				result = addActionToMetadata(result, p.Action, id)
 			}
 		} else {
-			parts := strings.Split(p.Scope, ":")
-			if len(parts) == 3 && parts[0] == resource && parts[1] == "id" && resourceIDs[parts[2]] {
+			if len(p.Scope) > idIndex && strings.HasPrefix(p.Scope, idPrefix) && resourceIDs[p.Scope[idIndex:]] {
 				// Add action to a specific resource
-				result = addActionToMetadata(result, p.Action, parts[2])
+				result = addActionToMetadata(result, p.Action, p.Scope[idIndex:])
 			}
 		}
 	}

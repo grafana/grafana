@@ -79,6 +79,19 @@ func TestGetResourcesMetadata(t *testing.T) {
 				"1": {"resources:action1": true, "otherresources:action1": true},
 			},
 		},
+		{
+			desc:     "Should correctly handle permissions with multilayer scope",
+			resource: "resources:sub",
+			permissions: []*Permission{
+				{Action: "resources:action1", Scope: Scope("resources", "sub", "id", "1")},
+				{Action: "resources:action1", Scope: Scope("resources", "sub", "id", "123")},
+			},
+			resourcesIDs: map[string]bool{"1": true, "123": true},
+			expected: map[string]Metadata{
+				"1":   {"resources:action1": true},
+				"123": {"resources:action1": true},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
