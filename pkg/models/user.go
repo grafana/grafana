@@ -183,6 +183,8 @@ type SignedInUser struct {
 	HelpFlags1     HelpFlags1
 	LastSeenAt     time.Time
 	Teams          []int64
+	// Permissions grouped by orgID and actions
+	Permissions map[int64]map[string]map[string]struct{}
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
