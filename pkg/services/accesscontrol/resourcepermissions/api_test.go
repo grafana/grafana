@@ -111,7 +111,7 @@ func TestApi_getDescription(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			_, server, _ := setupTestEnvironment(t, &models.SignedInUser{}, tt.permissions, tt.options)
-			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/system/%s/description", tt.options.Resource), nil)
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/description", tt.options.Resource), nil)
 			require.NoError(t, err)
 			recorder := httptest.NewRecorder()
 			server.ServeHTTP(recorder, req)
@@ -151,21 +151,21 @@ func TestApi_getPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			system, server, sql := setupTestEnvironment(t, &models.SignedInUser{OrgId: 1}, tt.permissions, testOptions)
+			service, server, sql := setupTestEnvironment(t, &models.SignedInUser{OrgId: 1}, tt.permissions, testOptions)
 
 			// seed team 1 with "Edit" permission on dashboard 1
 			team, err := sql.CreateTeam("test", "test@test.com", 1)
 			require.NoError(t, err)
-			_, err = system.SetTeamPermission(context.Background(), team.OrgId, team.Id, tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
+			_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
 			require.NoError(t, err)
 			// seed user 1 with "View" permission on dashboard 1
 			u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
 			require.NoError(t, err)
-			_, err = system.SetUserPermission(context.Background(), u.OrgId, u.Id, tt.resourceID, []string{"dashboards:read"})
+			_, err = service.SetUserPermission(context.Background(), u.OrgId, u.Id, tt.resourceID, []string{"dashboards:read"})
 			require.NoError(t, err)
 
 			// seed built in role Admin with "View" permission on dashboard 1
-			_, err = system.SetBuiltInRolePermission(context.Background(), 1, "Admin", tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
+			_, err = service.SetBuiltInRolePermission(context.Background(), 1, "Admin", tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
 			require.NoError(t, err)
 
 			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
@@ -419,15 +419,15 @@ func setupTestEnvironment(t *testing.T, user *models.SignedInUser, permissions [
 	sql := sqlstore.InitTestDB(t)
 	store := database.ProvideService(sql)
 
-	system, err := New(ops, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store)
+	service, err := New(ops, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store)
 	require.NoError(t, err)
 
 	server := web.New()
 	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
-	system.api.router.Register(server)
+	service.api.router.Register(server)
 
-	return system, server, sql
+	return service, server, sql
 }
 
 type testContext struct {
@@ -462,7 +462,7 @@ var testOptions = Options{
 }
 
 func getPermission(t *testing.T, server *web.Mux, resource, resourceID string) ([]resourcePermissionDTO, *httptest.ResponseRecorder) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/system/%s/%s", resource, resourceID), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/%s", resource, resourceID), nil)
 	require.NoError(t, err)
 	recorder := httptest.NewRecorder()
 	server.ServeHTTP(recorder, req)
@@ -476,7 +476,7 @@ func getPermission(t *testing.T, server *web.Mux, resource, resourceID string) (
 
 func setPermission(t *testing.T, server *web.Mux, resource, resourceID, permission, assignment, assignTo string) *httptest.ResponseRecorder {
 	body := strings.NewReader(fmt.Sprintf(`{"permission": "%s"}`, permission))
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/api/access-control/system/%s/%s/%s/%s", resource, resourceID, assignment, assignTo), body)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/api/access-control/%s/%s/%s/%s", resource, resourceID, assignment, assignTo), body)
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	recorder := httptest.NewRecorder()
