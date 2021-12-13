@@ -184,7 +184,7 @@ type SignedInUser struct {
 	LastSeenAt     time.Time
 	Teams          []int64
 	// Permissions grouped by orgID and actions
-	Permissions map[int64]map[string]map[string]struct{}
+	Permissions map[int64]map[string][]string
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {

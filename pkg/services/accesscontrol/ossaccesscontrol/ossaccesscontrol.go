@@ -65,7 +65,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	metrics.MAccessEvaluationCount.Inc()
 
 	if user.Permissions == nil {
-		user.Permissions = map[int64]map[string]map[string]struct{}{}
+		user.Permissions = map[int64]map[string][]string{}
 	}
 
 	if _, ok := user.Permissions[user.OrgId]; !ok {

@@ -147,7 +147,7 @@ func LoadPermissionsMiddleware(ac accesscontrol.AccessControl) web.Handler {
 				return
 			}
 			if c.SignedInUser.Permissions == nil {
-				c.SignedInUser.Permissions = map[int64]map[string]map[string]struct{}{
+				c.SignedInUser.Permissions = map[int64]map[string][]string{
 					c.OrgId: accesscontrol.GroupScopesByAction(permissions),
 				}
 			} else {
