@@ -50,7 +50,7 @@ jobs:
         message: |
           ⚠️ &nbsp;&nbsp;**Possible breaking changes**
 
-          _(Open the links in another tab to go to the correct steps)_
+          _(Open the links below in a new tab to go to the correct steps)_
 
           ${{ env.BREAKING_CHANGES_MESSAGE }}
 
