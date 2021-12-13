@@ -53,6 +53,7 @@ export interface GraphNGProps extends Themeable2 {
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
+  onBeforeRerender?: (props: GraphNGProps, prevProps: GraphNGProps) => void;
 
   /**
    * needed for propsToDiff to re-init the plot & config
@@ -233,7 +234,10 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
         }
       }
 
-      newState && this.setState(newState);
+      if (newState) {
+        this.setState(newState);
+        this.props.onBeforeRerender?.(this.props, prevProps);
+      }
     }
   }
 

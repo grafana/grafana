@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { Field, PanelProps } from '@grafana/data';
+import { Field, LoadingState, PanelProps } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import { GraphNGProps, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
@@ -12,6 +12,17 @@ import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { measureDataRenderDelay } from './measureDataRenderDelay';
+
+export const createOnDataRenderDelay: (data: TimeSeriesPanelProps['data']) => GraphNGProps['onBeforeRerender'] = (
+  data
+) => {
+  if (!config.livePerformance.measureDataRenderDelay || data.state !== LoadingState.Streaming) {
+    return undefined;
+  }
+
+  return (props, newProps) => measureDataRenderDelay(props.frames, newProps.frames);
+};
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -28,6 +39,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   id,
 }) => {
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
+  const onBeforeRerender = createOnDataRenderDelay(data);
 
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
@@ -50,6 +62,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
+      onBeforeRerender={onBeforeRerender}
     >
       {(config, alignedDataFrame) => {
         return (
