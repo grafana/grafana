@@ -8,7 +8,7 @@ import { IconConfig } from 'app/features/canvas/elements/icon';
 import { ResourceDimensionMode } from 'app/features/dimensions';
 
 export interface PanelOptions {
-  root: Omit<CanvasElementOptions<IconConfig>, 'type'>; // type is forced
+  root: Omit<CanvasElementOptions<IconConfig>, 'type' | 'name'>; // type is forced
 }
 
 export const defaultPanelOptions: PanelOptions = {

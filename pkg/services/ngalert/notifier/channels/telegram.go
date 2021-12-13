@@ -33,6 +33,9 @@ func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template,
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 
 	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString())
 	chatID := model.Settings.Get("chatid").MustString()

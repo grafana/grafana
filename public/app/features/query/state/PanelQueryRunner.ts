@@ -51,7 +51,7 @@ export interface QueryRunnerOptions<
   maxDataPoints: number;
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
-  cacheTimeout?: string;
+  cacheTimeout?: string | null;
   transformations?: DataTransformerConfig[];
 }
 

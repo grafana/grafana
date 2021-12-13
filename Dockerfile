@@ -11,7 +11,7 @@ COPY plugins-bundled plugins-bundled
 
 RUN yarn install
 
-COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json ./
 COPY public public
 COPY tools tools
 COPY scripts scripts
@@ -27,7 +27,6 @@ RUN apk add --no-cache gcc g++ make
 WORKDIR /grafana
 
 COPY go.mod go.sum embed.go Makefile build.go package.json ./
-COPY ./local/* ./local/
 COPY cue cue
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins

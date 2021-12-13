@@ -5,13 +5,14 @@ import { measureText, TooltipPlugin, UPLOT_AXIS_FONT_SIZE, useTheme2 } from '@gr
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
 import { prepareBarChartDisplayValues } from './utils';
+import { PanelDataErrorView } from '@grafana/runtime';
 
 interface Props extends PanelProps<BarChartOptions> {}
 
 /**
  * @alpha
  */
-export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone }) => {
+export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone, id }) => {
   const theme = useTheme2();
 
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
@@ -48,12 +49,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     return options.tooltip;
   }, [options.tooltip, options.stacking]);
 
-  if (!info.display || info.warn) {
-    return (
-      <div className="panel-empty">
-        <p>{info.warn ?? 'No data found in response'}</p>
-      </div>
-    );
+  if (!info.display) {
+    return <PanelDataErrorView panelId={id} data={data} message={info.warn} needsNumberField={true} />;
   }
 
   return (

@@ -22,8 +22,10 @@ export class BarChartSuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: (s) => {
-        s.options!.barWidth = 0.8;
+      cardOptions: {
+        previewModifier: (s) => {
+          s.options!.barWidth = 0.8;
+        },
       },
     });
   }

@@ -55,11 +55,13 @@ func (s *PipelinePushHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 	if err != nil {
 		return
 	}
+	defer func() { _ = conn.Close() }()
 	setupWSConn(r.Context(), conn, s.config)
 
 	for {
 		_, body, err := conn.ReadMessage()
 		if err != nil {
+			logger.Debug("Error reading websocket connection", "error", err)
 			break
 		}
 

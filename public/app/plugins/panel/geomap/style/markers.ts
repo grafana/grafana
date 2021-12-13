@@ -121,13 +121,14 @@ const makers: SymbolMaker[] = [
     aliasIds: [MarkerShapePath.square],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
+      const rotation = cfg.rotation ?? 0;
       return new Style({
         image: new RegularShape({
           stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
           fill: getFillColor(cfg),
           points: 4,
           radius,
-          angle: Math.PI / 4,
+          rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
         }),
         text: textLabel(cfg),
       });
@@ -139,13 +140,14 @@ const makers: SymbolMaker[] = [
     aliasIds: [MarkerShapePath.triangle],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
+      const rotation = cfg.rotation ?? 0;
       return new Style({
         image: new RegularShape({
           stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
           fill: getFillColor(cfg),
           points: 3,
           radius,
-          rotation: Math.PI / 4,
+          rotation: (rotation * Math.PI) / 180,
           angle: 0,
         }),
         text: textLabel(cfg),
@@ -158,6 +160,7 @@ const makers: SymbolMaker[] = [
     aliasIds: [MarkerShapePath.star],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
+      const rotation = cfg.rotation ?? 0;
       return new Style({
         image: new RegularShape({
           stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
@@ -166,6 +169,7 @@ const makers: SymbolMaker[] = [
           radius,
           radius2: radius * 0.4,
           angle: 0,
+          rotation: (rotation * Math.PI) / 180,
         }),
         text: textLabel(cfg),
       });
@@ -177,6 +181,7 @@ const makers: SymbolMaker[] = [
     aliasIds: [MarkerShapePath.cross],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
+      const rotation = cfg.rotation ?? 0;
       return new Style({
         image: new RegularShape({
           stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
@@ -184,6 +189,7 @@ const makers: SymbolMaker[] = [
           radius,
           radius2: 0,
           angle: 0,
+          rotation: (rotation * Math.PI) / 180,
         }),
         text: textLabel(cfg),
       });
@@ -195,13 +201,14 @@ const makers: SymbolMaker[] = [
     aliasIds: [MarkerShapePath.x],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
+      const rotation = cfg.rotation ?? 0;
       return new Style({
         image: new RegularShape({
           stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
           points: 4,
           radius,
           radius2: 0,
-          angle: Math.PI / 4,
+          rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
         }),
         text: textLabel(cfg),
       });
@@ -265,6 +272,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
       make: src
         ? (cfg: StyleConfigValues) => {
             const radius = cfg.size ?? DEFAULT_SIZE;
+            const rotation = cfg.rotation ?? 0;
             return [
               new Style({
                 image: new Icon({
@@ -272,6 +280,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                   color: cfg.color,
                   opacity: cfg.opacity ?? 1,
                   scale: (DEFAULT_SIZE + radius) / 100,
+                  rotation: (rotation * Math.PI) / 180,
                 }),
                 text: !cfg?.text ? undefined : textLabel(cfg),
               }),
@@ -281,7 +290,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                   fill: new Fill({ color: 'rgba(0,0,0,0)' }),
                   points: 4,
                   radius: cfg.size,
-                  angle: Math.PI / 4,
+                  rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
                 }),
               }),
             ];

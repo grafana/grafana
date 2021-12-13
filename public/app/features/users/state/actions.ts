@@ -13,7 +13,7 @@ export function loadUsers(): ThunkResult<void> {
 
 export function loadInvitees(): ThunkResult<void> {
   return async (dispatch) => {
-    if (!contextSrv.hasPermission(AccessControlAction.OrgUsersAdd)) {
+    if (!contextSrv.hasPermission(AccessControlAction.UsersCreate)) {
       return;
     }
 

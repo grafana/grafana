@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -95,13 +97,19 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	lbls, annotations := addMigrationInfo(&da)
 	lbls["alertname"] = da.Name
 	annotations["message"] = da.Message
+	var err error
+
+	data, err := migrateAlertRuleQueries(cond.Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate alert rule queries: %w", err)
+	}
 
 	ar := &alertRule{
 		OrgID:           da.OrgId,
 		Title:           da.Name, // TODO: Make sure all names are unique, make new name on constraint insert error.
 		UID:             util.GenerateShortUID(),
 		Condition:       cond.Condition,
-		Data:            cond.Data,
+		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		Version:         1,
 		NamespaceUID:    folderUID, // Folder already created, comes from env var.
@@ -112,7 +120,6 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		Labels:          lbls,
 	}
 
-	var err error
 	ar.NoDataState, err = transNoData(da.ParsedSettings.NoDataState)
 	if err != nil {
 		return nil, err
@@ -131,11 +138,52 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		m.mg.Logger.Error("alert migration error: failed to create silence", "rule_name", ar.Title, "err", err)
 	}
 
+	if err := m.addErrorSilence(da, ar); err != nil {
+		m.mg.Logger.Error("alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
+	}
+
 	if err := m.addNoDataSilence(da, ar); err != nil {
 		m.mg.Logger.Error("alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
 	}
 
 	return ar, nil
+}
+
+// migrateAlertRuleQueries attempts to fix alert rule queries so they can work in unified alerting. Queries of some data sources are not compatible with unified alerting.
+func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
+	result := make([]alertQuery, 0, len(data))
+	for _, d := range data {
+		// queries that are expression are not relevant, skip them.
+		if d.DatasourceUID == expr.OldDatasourceUID {
+			result = append(result, d)
+			continue
+		}
+		var fixedData map[string]json.RawMessage
+		err := json.Unmarshal(d.Model, &fixedData)
+		if err != nil {
+			return nil, err
+		}
+		fixedData = fixGraphiteReferencedSubQueries(fixedData)
+		updatedModel, err := json.Marshal(fixedData)
+		if err != nil {
+			return nil, err
+		}
+		d.Model = updatedModel
+		result = append(result, d)
+	}
+	return result, nil
+}
+
+// fixGraphiteReferencedSubQueries attempts to fix graphite referenced sub queries, given unified alerting does not support this.
+// targetFull of Graphite data source contains the expanded version of field 'target', so let's copy that.
+func fixGraphiteReferencedSubQueries(queryData map[string]json.RawMessage) map[string]json.RawMessage {
+	fullQuery, ok := queryData[graphite.TargetFullModelField]
+	if ok {
+		delete(queryData, graphite.TargetFullModelField)
+		queryData[graphite.TargetModelField] = fullQuery
+	}
+
+	return queryData
 }
 
 type alertQuery struct {
@@ -215,7 +263,9 @@ func transExecErr(s string) (string, error) {
 	case "", "alerting":
 		return "Alerting", nil
 	case "keep_state":
-		return "Alerting", nil
+		// Keep last state is translated to error as we now emit a
+		// DatasourceError alert when the state is error
+		return "Error", nil
 	}
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
 }

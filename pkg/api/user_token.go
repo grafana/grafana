@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
@@ -19,7 +21,11 @@ func (hs *HTTPServer) GetUserAuthTokens(c *models.ReqContext) response.Response 
 }
 
 // POST /api/user/revoke-auth-token
-func (hs *HTTPServer) RevokeUserAuthToken(c *models.ReqContext, cmd models.RevokeAuthTokenCmd) response.Response {
+func (hs *HTTPServer) RevokeUserAuthToken(c *models.ReqContext) response.Response {
+	cmd := models.RevokeAuthTokenCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	return hs.revokeUserAuthTokenInternal(c, c.UserId, cmd)
 }
 

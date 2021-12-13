@@ -197,4 +197,26 @@ describe('useManageDashboards', () => {
       expect(result.current.canDelete).toBe(false);
     });
   });
+
+  describe('when called on an empty folder', () => {
+    it('then canDelete should be true', () => {
+      const results: DashboardSection[] = [
+        { id: 1, checked: true, items: [], title: 'One', type: DashboardSearchItemType.DashFolder, toggle, url: '/' },
+        {
+          id: GENERAL_FOLDER_ID,
+          checked: false,
+          items: [],
+          title: 'General',
+          type: DashboardSearchItemType.DashFolder,
+          toggle,
+          url: '/',
+        },
+        { id: 2, checked: false, items: [], title: 'Two', type: DashboardSearchItemType.DashFolder, toggle, url: '/' },
+      ];
+
+      const { result } = setupTestContext({ results });
+
+      expect(result.current.canDelete).toBe(true);
+    });
+  });
 });

@@ -258,7 +258,7 @@ describe('AmRoutes', () => {
     await clickSelectOption(receiverSelect, 'critical');
 
     const groupSelect = ui.groupSelect.get();
-    userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
+    userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
 
     // configure timing intervals
     userEvent.click(byText('Timing options').get(rootRouteContainer));
@@ -317,8 +317,8 @@ describe('AmRoutes', () => {
     await clickSelectOption(receiverSelect, 'default');
 
     const groupSelect = ui.groupSelect.get();
-    userEvent.type(byRole('textbox').get(groupSelect), 'severity{enter}');
-    userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
+    userEvent.type(byRole('combobox').get(groupSelect), 'severity{enter}');
+    userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
     //save
     userEvent.click(ui.saveButton.get(rootRouteContainer));
 
@@ -531,14 +531,14 @@ describe('AmRoutes', () => {
 });
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
-  userEvent.click(byRole('textbox').get(selectElement));
+  userEvent.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText);
 };
 
 const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
-  const inputs = byRole('textbox').queryAll(selectElement);
-  expect(inputs).toHaveLength(2);
-  userEvent.type(inputs[0], value);
-  userEvent.click(inputs[1]);
+  const input = byRole('textbox').get(selectElement);
+  const select = byRole('combobox').get(selectElement);
+  userEvent.type(input, value);
+  userEvent.click(select);
   await selectOptionInTest(selectElement, timeUnit);
 };

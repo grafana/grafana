@@ -192,6 +192,7 @@ type timeSeries struct {
 
 type metricDescriptorResponse struct {
 	Descriptors []metricDescriptor `json:"metricDescriptors"`
+	Token       string             `json:"nextPageToken"`
 }
 type metricDescriptor struct {
 	ValueType        string `json:"valueType"`
@@ -206,6 +207,7 @@ type metricDescriptor struct {
 
 type projectResponse struct {
 	Projects []projectDescription `json:"projects"`
+	Token    string               `json:"nextPageToken"`
 }
 
 type projectDescription struct {
@@ -215,6 +217,7 @@ type projectDescription struct {
 
 type serviceResponse struct {
 	Services []serviceDescription `json:"services"`
+	Token    string               `json:"nextPageToken"`
 }
 type serviceDescription struct {
 	Name        string `json:"name"`
@@ -222,7 +225,8 @@ type serviceDescription struct {
 }
 
 type sloResponse struct {
-	SLOs []sloDescription `json:"serviceLevelObjectives"`
+	SLOs  []sloDescription `json:"serviceLevelObjectives"`
+	Token string           `json:"nextPageToken"`
 }
 
 type sloDescription struct {
