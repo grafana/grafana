@@ -322,6 +322,7 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
@@ -329,7 +330,7 @@ services:
   name: postgres
   volumes:
   - name: postgres
-    path: /var/lib/postgresql/data
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -414,6 +415,7 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
@@ -421,7 +423,7 @@ services:
   name: postgres
   volumes:
   - name: postgres
-    path: /var/lib/postgresql/data
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -1003,6 +1005,7 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
@@ -1010,7 +1013,7 @@ services:
   name: postgres
   volumes:
   - name: postgres
-    path: /var/lib/postgresql/data
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -1453,6 +1456,7 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
@@ -1460,7 +1464,7 @@ services:
   name: postgres
   volumes:
   - name: postgres
-    path: /var/lib/postgresql/data
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -2005,6 +2009,7 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
@@ -2012,7 +2017,7 @@ services:
   name: postgres
   volumes:
   - name: postgres
-    path: /var/lib/postgresql/data
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -2430,6 +2435,7 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
@@ -2437,7 +2443,7 @@ services:
   name: postgres
   volumes:
   - name: postgres
-    path: /var/lib/postgresql/data
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -3087,6 +3093,7 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
@@ -3094,7 +3101,7 @@ services:
   name: postgres
   volumes:
   - name: postgres
-    path: /var/lib/postgresql/data
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -3489,6 +3496,7 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
@@ -3496,7 +3504,7 @@ services:
   name: postgres
   volumes:
   - name: postgres
-    path: /var/lib/postgresql/data
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -4163,6 +4171,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 54a81856e84e4e7721dcea5932e1af52bf7218253b15ffdf8a39bb8848a91465
+hmac: e28bb925fee6eae2cfa6af11a3e33c79d8c47a9acc91966f07f61ae06ec32ce7
 
 ...

@@ -7,10 +7,11 @@ def integration_test_services(edition):
               'POSTGRES_USER': 'grafanatest',
               'POSTGRES_PASSWORD': 'grafanatest',
               'POSTGRES_DB': 'grafanatest',
+              'PGDATA': '/var/lib/postgresql/data/pgdata',
             },
             'volumes': [{
                 'name': 'postgres',
-                'path': '/var/lib/postgresql/data'
+                'path': '/var/lib/postgresql/data/pgdata'
             }],
         },
         {
