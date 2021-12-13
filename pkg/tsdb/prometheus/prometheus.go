@@ -144,8 +144,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider, forceHttpGet bool) (apiv1.API, error) {
-	customParamsMiddleware := customQueryParametersMiddleware(plog)
-	middlewares := []sdkhttpclient.Middleware{customParamsMiddleware}
+	middlewares := []sdkhttpclient.Middleware{
+		customQueryParametersMiddleware(plog),
+		backendQueryMiddleware(plog),
+	}
 	if forceHttpGet {
 		middlewares = append(middlewares, forceHttpGetMiddleware(plog))
 	}

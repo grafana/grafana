@@ -54,6 +54,17 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 		Responses: backend.Responses{},
 	}
 
+	// If any custom headers are specified in the backend query request, they are
+	// added to the request context. These headers are used in the custom
+	// query headers middleware.
+	if len(req.Headers) > 0 {
+		copiedHeaders := make(map[string]string)
+		for k, v := range req.Headers {
+			copiedHeaders[k] = v
+		}
+		ctx = context.WithValue(ctx, backendQueryHeadersKey, copiedHeaders)
+	}
+
 	queries, err := s.parseTimeSeriesQuery(req, dsInfo)
 	if err != nil {
 		return &result, err
