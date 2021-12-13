@@ -17,7 +17,6 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -28,9 +27,9 @@ const (
 )
 
 type AlertmanagerSrv struct {
-	mam     *notifier.MultiOrgAlertmanager
-	secrets secrets.Service
-	store   store.AlertingStore
+	mam     MultiOrgAlertmanager
+	secrets SecretsProvider
+	store   AlertingStore
 	log     log.Logger
 }
 

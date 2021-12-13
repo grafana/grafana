@@ -246,7 +246,9 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	{
 		// let's delete its "running config" to make it non-ready
 		mam.alertmanagers[1].config = nil
-		_, err := mam.AlertmanagerFor(1)
+		am, err := mam.AlertmanagerFor(1)
+		require.NotNil(t, am)
+		require.False(t, am.Ready())
 		require.EqualError(t, err, ErrAlertmanagerNotReady.Error())
 	}
 

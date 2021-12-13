@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/stretchr/testify/require"
 )
@@ -136,5 +138,58 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Error:  notifier.ReceiverTimeoutError{},
 			}},
 		}}))
+	})
+}
+
+func TestAlertmanagerConfig(t *testing.T) {
+	mam := newAlertmanagerProvider(t)
+	mam.Setup(1, &FakeAlertmanager{})
+	mam.Setup(2, &FakeAlertmanager{})
+	store := newFakeAlertingStore(t)
+	store.Setup(1)
+	store.Setup(2)
+	secrets := FakeSecretService{}
+	sut := AlertmanagerSrv{mam: mam, store: store, secrets: secrets}
+
+	t.Run("assert 404 Not Found when applying config to nonexistent org", func(t *testing.T) {
+		rc := models.ReqContext{
+			SignedInUser: &models.SignedInUser{
+				OrgRole: models.ROLE_EDITOR,
+				OrgId:   5,
+			},
+		}
+		request := apimodels.PostableUserConfig{}
+
+		response := sut.RoutePostAlertingConfig(&rc, request)
+
+		require.Equal(t, 404, response.Status())
+	})
+
+	t.Run("assert 403 Forbidden when applying config while not Editor", func(t *testing.T) {
+		rc := models.ReqContext{
+			SignedInUser: &models.SignedInUser{
+				OrgRole: models.ROLE_VIEWER,
+				OrgId:   1,
+			},
+		}
+		request := apimodels.PostableUserConfig{}
+
+		response := sut.RoutePostAlertingConfig(&rc, request)
+
+		require.Equal(t, 403, response.Status())
+	})
+
+	t.Run("assert 202 when config successfully applied", func(t *testing.T) {
+		rc := models.ReqContext{
+			SignedInUser: &models.SignedInUser{
+				OrgRole: models.ROLE_EDITOR,
+				OrgId:   1,
+			},
+		}
+		request := apimodels.PostableUserConfig{}
+
+		response := sut.RoutePostAlertingConfig(&rc, request)
+
+		require.Equal(t, 202, response.Status())
 	})
 }
