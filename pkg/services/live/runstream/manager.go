@@ -136,7 +136,7 @@ func (s *Manager) handleDatasourceEvent(orgID int64, dsUID string, resubmit bool
 	if resubmit {
 		// Re-submit streams.
 		for _, sr := range resubmitRequests {
-			_, err := s.SubmitStream(s.baseCtx, sr.user, sr.Channel, sr.Path, sr.Query, sr.PluginContext, sr.StreamRunner, true)
+			_, err := s.SubmitStream(s.baseCtx, sr.user, sr.Channel, sr.Path, sr.Data, sr.PluginContext, sr.StreamRunner, true)
 			if err != nil {
 				// Log error but do not prevent execution of caller routine.
 				logger.Error("Error re-submitting stream", "path", sr.Path, "error", err)
@@ -301,7 +301,7 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 			&backend.RunStreamRequest{
 				PluginContext: pluginCtx,
 				Path:          sr.Path,
-				Query:         sr.Query,
+				Data:          sr.Data,
 			},
 			backend.NewStreamSender(&packetSender{channelLocalPublisher: s.channelSender, channel: sr.Channel}),
 		)
@@ -376,7 +376,7 @@ type streamRequest struct {
 	user          *models.SignedInUser
 	PluginContext backend.PluginContext
 	StreamRunner  StreamRunner
-	Query         []byte
+	Data          []byte
 }
 
 type submitRequest struct {
@@ -400,7 +400,7 @@ var errDatasourceNotFound = errors.New("datasource not found")
 
 // SubmitStream submits stream handler in Manager to manage.
 // The stream will be opened and kept till channel has active subscribers.
-func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, channel string, path string, query []byte, pCtx backend.PluginContext, streamRunner StreamRunner, isResubmit bool) (*submitResult, error) {
+func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, channel string, path string, data []byte, pCtx backend.PluginContext, streamRunner StreamRunner, isResubmit bool) (*submitResult, error) {
 	if isResubmit {
 		// Resolve new plugin context as it could be modified since last call.
 		var datasourceUID string
@@ -425,7 +425,7 @@ func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, c
 			Path:          path,
 			PluginContext: pCtx,
 			StreamRunner:  streamRunner,
-			Query:         query,
+			Data:          data,
 		},
 	}
 
