@@ -2,9 +2,72 @@ import { reduceField, ReducerID } from '..';
 import { getFieldDisplayName } from '../field';
 import { DataFrame, FieldType } from '../types/dataFrame';
 import { DataFrameJSON } from './DataFrameJSON';
-import { StreamingDataFrame } from './StreamingDataFrame';
+import { closestIdx, StreamingDataFrame } from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {
+  describe('closestIdx', function () {
+    [
+      {
+        num: 10,
+        arr: [2, 3, 4, 5, 6],
+        expected: 4,
+        descr: 'bigger than all in array',
+      },
+      {
+        num: 10,
+        arr: [2, 3, 4, 5, 11, 12, 13],
+        expected: 4,
+        descr: 'bigger than some in array #1 - smaller difference to bigger number',
+      },
+      {
+        num: 10,
+        arr: [2, 3, 4, 5, 16, 17, 18],
+        expected: 3,
+        descr: 'bigger than some in array #2 - smaller difference to smaller number',
+      },
+      {
+        num: 10,
+        arr: [2, 3, 4, 9, 11, 12, 13],
+        expected: 3,
+        descr: 'bigger than some in array #3 - same difference between smaller and bigger number - favors smaller',
+      },
+      {
+        num: 10,
+        arr: [9, 10, 11, 12, 13, 14],
+        expected: 1,
+        descr: 'present in the array',
+      },
+      {
+        num: 10,
+        arr: [10, 11, 12, 13, 14],
+        expected: 0,
+        descr: 'present in the array on first position',
+      },
+      {
+        num: 10,
+        arr: [5, 6, 7, 8, 9, 10],
+        expected: 5,
+        descr: 'present in the array on last position',
+      },
+      {
+        num: 10,
+        arr: [11, 12, 13, 14, 15],
+        expected: 0,
+        descr: 'smaller than all in array',
+      },
+      {
+        num: 10,
+        arr: [],
+        expected: -1,
+        descr: 'empty array',
+      },
+    ].forEach(({ num, arr, expected, descr }) => {
+      it(descr, () => {
+        expect(closestIdx(num, arr)).toEqual(expected);
+      });
+    });
+  });
+
   describe('when called with a DataFrame', () => {
     const json: DataFrameJSON = {
       schema: {

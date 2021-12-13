@@ -285,7 +285,7 @@ export function transpose(vrecs: any[][]) {
 }
 
 // binary search for index of closest value
-function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
+export function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
   let mid;
   lo = lo || 0;
   hi = hi || arr.length - 1;
