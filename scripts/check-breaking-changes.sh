@@ -18,6 +18,12 @@ while IFS= read -r line; do
     CURRENT="$PACKAGE_PATH/dist/"
 
 
+    # Temporarily skipping @grafana/toolkit, as it doesn't have any exposed static typing
+    if [[ "$PACKAGE_NAME" == '@grafana/toolkit' ]]; then
+        continue
+    fi
+
+
     # Run the comparison and record the exit code
     echo ""
     echo ""
