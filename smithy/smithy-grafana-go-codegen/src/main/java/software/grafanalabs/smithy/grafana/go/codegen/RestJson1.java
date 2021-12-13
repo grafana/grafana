@@ -141,7 +141,7 @@ public final class RestJson1 extends HttpBindingProtocolGenerator {
     }
 
     /**
-     * Retruns the MediaType for the payload shape derived from the MediaTypeTrait, shape type, or document content type.
+     * Returns the MediaType for the payload shape derived from the MediaTypeTrait, shape type, or document content type.
      *
      * @param payloadShape shape bound to the payload.
      * @return string for media type.

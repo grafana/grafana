@@ -3,9 +3,10 @@ package eventstreamapi
 import (
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
-	"io"
 )
 
 type eventStreamWriterKey struct{}
@@ -42,6 +43,7 @@ func (i *InitializeStreamWriter) HandleFinalize(
 ) {
 	request, ok := in.Request.(*smithyhttp.Request)
 	if !ok {
+		panic("WTFFF")
 		return out, metadata, fmt.Errorf("unknown transport type: %T", in.Request)
 	}
 
