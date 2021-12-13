@@ -161,18 +161,18 @@ func (inj *injector) callInvoke(f interface{}, t reflect.Type, numIn int) ([]ref
 
 // Maps the concrete value of val to its dynamic type using reflect.TypeOf,
 // It returns the TypeMapper registered in.
-func (i *injector) Map(val interface{}) TypeMapper {
-	i.values[reflect.TypeOf(val)] = reflect.ValueOf(val)
-	return i
+func (inj *injector) Map(val interface{}) TypeMapper {
+	inj.values[reflect.TypeOf(val)] = reflect.ValueOf(val)
+	return inj
 }
 
-func (i *injector) MapTo(val interface{}, ifacePtr interface{}) TypeMapper {
-	i.values[InterfaceOf(ifacePtr)] = reflect.ValueOf(val)
-	return i
+func (inj *injector) MapTo(val interface{}, ifacePtr interface{}) TypeMapper {
+	inj.values[InterfaceOf(ifacePtr)] = reflect.ValueOf(val)
+	return inj
 }
 
-func (i *injector) GetVal(t reflect.Type) reflect.Value {
-	val := i.values[t]
+func (inj *injector) GetVal(t reflect.Type) reflect.Value {
+	val := inj.values[t]
 
 	if val.IsValid() {
 		return val
@@ -181,7 +181,7 @@ func (i *injector) GetVal(t reflect.Type) reflect.Value {
 	// no concrete types found, try to find implementors
 	// if t is an interface
 	if t.Kind() == reflect.Interface {
-		for k, v := range i.values {
+		for k, v := range inj.values {
 			if k.Implements(t) {
 				val = v
 				break

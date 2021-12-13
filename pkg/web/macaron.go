@@ -44,7 +44,7 @@ func Version() string {
 
 // Handler can be any callable function.
 // Macaron attempts to inject services into the handler's argument list,
-// and panics if an argument could not be fullfilled via dependency injection.
+// and panics if an argument could not be fulfilled via dependency injection.
 type Handler interface{}
 
 // handlerFuncInvoker is an inject.FastInvoker wrapper of func(http.ResponseWriter, *http.Request).
