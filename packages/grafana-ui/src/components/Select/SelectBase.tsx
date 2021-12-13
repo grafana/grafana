@@ -6,7 +6,6 @@ import { default as AsyncCreatable } from 'react-select/async-creatable';
 
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
-import { css, cx } from '@emotion/css';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';
@@ -251,33 +250,6 @@ export function SelectBase<T>({
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
           ValueContainer,
-          Placeholder(props: any) {
-            return (
-              <div
-                {...props.innerProps}
-                className={cx(
-                  css(props.getStyles('placeholder', props)),
-                  css`
-                    display: inline-block;
-                    color: ${theme.colors.text.disabled};
-                    grid-area: 1 / 1 / 2 / 3;
-                    box-sizing: border-box;
-                    line-height: 1;
-                    white-space: nowrap;
-                  `,
-                  // When width: auto, the placeholder must take up space in the Select otherwise the width collapses down
-                  width !== 'auto' &&
-                    css`
-                      position: absolute;
-                      top: 50%;
-                      transform: translateY(-50%);
-                    `
-                )}
-              >
-                {props.children}
-              </div>
-            );
-          },
           IndicatorsContainer(props: any) {
             const { selectProps } = props;
             const { value, showAllSelectedWhenOpen, maxVisibleValues, menuIsOpen } = selectProps;
@@ -346,7 +318,7 @@ export function SelectBase<T>({
           ...components,
         }}
         styles={{
-          ...resetSelectStyles(),
+          ...resetSelectStyles(theme),
           menuPortal: (base: any) => ({
             ...base,
             zIndex: theme.zIndex.portal,
