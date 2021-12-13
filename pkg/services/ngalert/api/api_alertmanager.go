@@ -376,7 +376,7 @@ func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.P
 	return NotImplementedResp
 }
 
-func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigParams) response.Response {
+func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return accessForbiddenResp()
 	}

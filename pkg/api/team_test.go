@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -45,7 +46,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
 			var sentLimit int
 			var sendPage int
-			bus.AddHandler("test", func(query *models.SearchTeamsQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
 				query.Result = mockResult
 
 				sentLimit = query.Limit
@@ -70,7 +71,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
 			var sentLimit int
 			var sendPage int
-			bus.AddHandler("test", func(query *models.SearchTeamsQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
 				query.Result = mockResult
 
 				sentLimit = query.Limit

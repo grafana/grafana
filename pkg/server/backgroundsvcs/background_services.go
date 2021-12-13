@@ -45,7 +45,7 @@ func ProvideBackgroundServiceRegistry(
 	rendering *rendering.RenderingService, tokenService models.UserTokenBackgroundService,
 	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, pm *manager.PluginManager,
 	metrics *metrics.InternalMetricsService, usageStats *uss.UsageStats, updateChecker *updatechecker.Service,
-	tracing *tracing.TracingService, remoteCache *remotecache.RemoteCache,
+	tracing tracing.Tracer, remoteCache *remotecache.RemoteCache,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ *azuremonitor.Service, _ *cloudwatch.CloudWatchService, _ *elasticsearch.Service, _ *graphite.Service,
 	_ *influxdb.Service, _ *loki.Service, _ *opentsdb.Service, _ *prometheus.Service, _ *tempo.Service,

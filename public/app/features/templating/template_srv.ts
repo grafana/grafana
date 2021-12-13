@@ -7,7 +7,7 @@ import { AdHocVariableFilter, AdHocVariableModel, VariableModel } from '../varia
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { FormatOptions, formatRegistry, FormatRegistryID } from './formatRegistry';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/state/types';
-import { safeStringifyValue } from '../../core/utils/explore';
+import { variableAdapters } from '../variables/adapters';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
@@ -115,7 +115,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return filters;
   }
 
-  formatValue(value: any, format: any, variable: any, text?: string) {
+  formatValue(value: any, format: any, variable: any, text?: string): string {
     // for some scopedVars there is no variable
     variable = variable || {};
 
@@ -282,9 +282,9 @@ export class TemplateSrv implements BaseTemplateSrv {
         return match;
       }
 
-      if (isAdHoc(variable)) {
-        const value = safeStringifyValue(variable.filters);
-        const text = variable.id;
+      if (fmt === FormatRegistryID.queryParam || isAdHoc(variable)) {
+        const value = variableAdapters.get(variable.type).getValueForUrl(variable);
+        const text = isAdHoc(variable) ? variable.id : variable.current.text;
 
         return this.formatValue(value, fmt, variable, text);
       }
@@ -301,7 +301,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         value = this.getAllValue(variable);
         text = ALL_VARIABLE_TEXT;
         // skip formatting of custom all values
-        if (variable.allValue && fmt !== FormatRegistryID.text && fmt !== FormatRegistryID.queryParam) {
+        if (variable.allValue && fmt !== FormatRegistryID.text) {
           return this.replace(value);
         }
       }

@@ -1,3 +1,43 @@
+<!-- 8.3.2 START -->
+
+# 8.3.2 (2021-12-10)
+
+- **Security**: Fixes CVE-2021-43813 and CVE-2021-PENDING. For more information, see our [blog](https://grafana.com/blog/2021/12/10/grafana-8.3.2-and-7.5.12-released-with-moderate-severity-security-fix/
+
+<!-- 8.3.2 END -->
+
+<!-- 8.3.1 START -->
+
+# 8.3.1 (2021-12-07)
+
+- **Security**: Fixes CVE-2021-43798. For more information, see our [blog](https://grafana.com/blog/2021/12/07/grafana-8.3.1-8.2.7-8.1.8-and-8.0.7-released-with-high-severity-security-fix/)
+
+<!-- 8.3.1 END -->
+
+<!-- 8.3.0 START -->
+
+# 8.3.0 (2021-11-30)
+
+### Features and enhancements
+
+- **Alerting:** Prevent folders from being deleted when they contain alerts. [#42307](https://github.com/grafana/grafana/pull/42307), [@peterholmberg](https://github.com/peterholmberg)
+- **Alerting:** Show full preview value in tooltip. [#42445](https://github.com/grafana/grafana/pull/42445), [@peterholmberg](https://github.com/peterholmberg)
+- **BarGauge:** Limit title width when name is really long. [#42346](https://github.com/grafana/grafana/pull/42346), [@torkelo](https://github.com/torkelo)
+- **CloudMonitoring:** Avoid to escape regexps in filters. [#41961](https://github.com/grafana/grafana/pull/41961), [@andresmgot](https://github.com/andresmgot)
+- **CloudWatch:** Add support for AWS Metric Insights. [#42487](https://github.com/grafana/grafana/pull/42487), [@sunker](https://github.com/sunker)
+- **TooltipPlugin:** Remove other panels' shared tooltip in edit panel. [#42187](https://github.com/grafana/grafana/pull/42187), [@mdvictor](https://github.com/mdvictor)
+- **Visualizations:** Limit y label width to 40% of visualization width. [#42350](https://github.com/grafana/grafana/pull/42350), [@torkelo](https://github.com/torkelo)
+
+### Bug fixes
+
+- **Alerting:** Clear alerting rule evaluation errors after intermittent failures. [#42386](https://github.com/grafana/grafana/pull/42386), [@gotjosh](https://github.com/gotjosh)
+- **Alerting:** Fix refresh on legacy Alert List panel. [#42322](https://github.com/grafana/grafana/pull/42322), [@peterholmberg](https://github.com/peterholmberg)
+- **Dashboard:** Fix queries for panels with non-integer widths. [#42420](https://github.com/grafana/grafana/pull/42420), [@gabor](https://github.com/gabor)
+- **Explore:** Fix url update inconsistency. [#42288](https://github.com/grafana/grafana/pull/42288), [@gabor](https://github.com/gabor)
+- **Prometheus:** Fix range variables interpolation for time ranges smaller than 1 second. [#42242](https://github.com/grafana/grafana/pull/42242), [@ivanahuckova](https://github.com/ivanahuckova)
+- **ValueMappings:** Fixes issue with regex value mapping that only sets color. [#42311](https://github.com/grafana/grafana/pull/42311), [@torkelo](https://github.com/torkelo)
+
+<!-- 8.3.0 END -->
 <!-- 8.3.0-beta2 START -->
 
 # 8.3.0-beta2 (2021-11-25)
@@ -146,6 +186,28 @@ The access mode "browser" is deprecated in the following data sources and will b
 
 - **grafana/ui:** Enable slider marks display. [#41275](https://github.com/grafana/grafana/pull/41275), [@dprokop](https://github.com/dprokop)
 
+<!-- 8.2.7 START -->
+
+# 8.2.7 (2021-12-07)
+
+- **Security**: Fixes CVE-2021-43798. For more information, see our [blog](https://grafana.com/blog/2021/12/07/grafana-8.3.1-8.2.7-8.1.8-and-8.0.7-released-with-high-severity-security-fix/)
+
+<!-- 8.2.7 END -->
+
+<!-- 8.2.6 START -->
+
+# 8.2.6 (2021-12-02)
+
+### Features and enhancements
+
+- **Security:** Upgrade Docker base image to Alpine 3.14.3. [#42061](https://github.com/grafana/grafana/pull/42061), [@dsotirakis](https://github.com/dsotirakis)
+- **Security:** Upgrade Go to 1.17.2. [#42427](https://github.com/grafana/grafana/pull/42427), [@idafurjes](https://github.com/idafurjes)
+
+### Bug fixes
+
+- **TimeSeries:** Fix fillBelowTo wrongly affecting fills of unrelated series. [#41998](https://github.com/grafana/grafana/pull/41998), [@leeoniya](https://github.com/leeoniya)
+
+<!-- 8.2.6 END -->
 <!-- 8.3.0-beta1 END -->
 <!-- 8.2.5 START -->
 
@@ -410,6 +472,14 @@ Panel queries and/or annotation queries that used more than one statistic will b
 - **Grafana UI:** Fix TS error property `css` is missing in type. [#38078](https://github.com/grafana/grafana/pull/38078), [@jackw](https://github.com/jackw)
 
 <!-- 8.2.0-beta1 END -->
+
+<!-- 8.1.8 START -->
+
+# 8.1.8 (2021-12-07)
+
+- **Security**: Fixes CVE-2021-43798. For more information, see our [blog](https://grafana.com/blog/2021/12/07/grafana-8.3.1-8.2.7-8.1.8-and-8.0.7-released-with-high-severity-security-fix/)
+
+<!-- 8.1.8 END -->
 
 <!-- 8.1.7 START -->
 
@@ -684,6 +754,14 @@ Issue [#33879](https://github.com/grafana/grafana/issues/33879)
 - **Toolkit:** Improve error messages when tasks fail. [#36381](https://github.com/grafana/grafana/pull/36381), [@joshhunt](https://github.com/joshhunt)
 
 <!-- 8.1.0-beta1 END -->
+
+<!-- 8.0.7 START -->
+
+# 8.0.7 (2021-12-07)
+
+- **Security**: Fixes CVE-2021-43798. For more information, see our [blog](https://grafana.com/blog/2021/12/07/grafana-8.3.1-8.2.7-8.1.8-and-8.0.7-released-with-high-severity-security-fix/)
+
+<!-- 8.0.7 END -->
 
 <!-- 8.0.6 START -->
 

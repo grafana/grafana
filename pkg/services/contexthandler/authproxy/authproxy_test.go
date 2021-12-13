@@ -1,6 +1,7 @@
 package authproxy
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -130,7 +131,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 	t.Run("Logs in via LDAP", func(t *testing.T) {
 		const id int64 = 42
 
-		bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 			cmd.Result = &models.User{
 				Id: id,
 			}

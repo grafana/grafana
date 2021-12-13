@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -133,12 +134,12 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		}
 
 		setUp := func() {
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = aclMockResp
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
 				query.Result = []*models.TeamDTO{}
 				return nil
 			})
