@@ -62,13 +62,13 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 		},
 	}
 
-	s.Bus.AddHandler(s.GetDataSources)
-	s.Bus.AddHandler(s.GetDataSourcesByType)
+	s.Bus.AddHandlerCtx(s.GetDataSources)
+	s.Bus.AddHandlerCtx(s.GetDataSourcesByType)
 	s.Bus.AddHandlerCtx(s.GetDataSource)
 	s.Bus.AddHandlerCtx(s.AddDataSource)
 	s.Bus.AddHandlerCtx(s.DeleteDataSource)
 	s.Bus.AddHandlerCtx(s.UpdateDataSource)
-	s.Bus.AddHandler(s.GetDefaultDataSource)
+	s.Bus.AddHandlerCtx(s.GetDefaultDataSource)
 
 	return s
 }
@@ -77,12 +77,12 @@ func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSource
 	return s.SQLStore.GetDataSource(ctx, query)
 }
 
-func (s *Service) GetDataSources(query *models.GetDataSourcesQuery) error {
-	return s.SQLStore.GetDataSources(query)
+func (s *Service) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
+	return s.SQLStore.GetDataSources(ctx, query)
 }
 
-func (s *Service) GetDataSourcesByType(query *models.GetDataSourcesByTypeQuery) error {
-	return s.SQLStore.GetDataSourcesByType(query)
+func (s *Service) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+	return s.SQLStore.GetDataSourcesByType(ctx, query)
 }
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
@@ -109,8 +109,8 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 	return s.SQLStore.UpdateDataSource(ctx, cmd)
 }
 
-func (s *Service) GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) error {
-	return s.SQLStore.GetDefaultDataSource(query)
+func (s *Service) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+	return s.SQLStore.GetDefaultDataSource(ctx, query)
 }
 
 func (s *Service) GetHTTPClient(ds *models.DataSource, provider httpclient.Provider) (*http.Client, error) {

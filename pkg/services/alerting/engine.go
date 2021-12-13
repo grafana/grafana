@@ -257,7 +257,7 @@ func (e *AlertEngine) registerUsageMetrics() {
 		metrics := map[string]interface{}{}
 
 		for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
-			if e.usageStatsService.ShouldBeReported(dsType) {
+			if e.usageStatsService.ShouldBeReported(ctx, dsType) {
 				metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
 			} else {
 				alertingOtherCount += usageCount

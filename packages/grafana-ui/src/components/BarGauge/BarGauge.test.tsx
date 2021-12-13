@@ -218,9 +218,7 @@ describe('BarGauge', () => {
       const styles = getTitleStyles(props);
       expect(styles.wrapper.flexDirection).toBe('column');
     });
-  });
 
-  describe('Horizontal bar with title', () => {
     it('should place below if height < 40', () => {
       const props = getProps({
         height: 30,
@@ -247,6 +245,19 @@ describe('BarGauge', () => {
       });
       const styles2 = getTitleStyles(props2);
       expect(styles2.title.width).toBe('43px');
+    });
+
+    it('Should limit text length to 40%', () => {
+      const props = getProps({
+        height: 30,
+        value: getValue(
+          100,
+          'saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+        ),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getTitleStyles(props);
+      expect(styles.title.width).toBe('119px');
     });
 
     it('should use alignmentFactors if provided', () => {

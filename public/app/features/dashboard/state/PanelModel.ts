@@ -313,7 +313,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
-      maxDataPoints: this.maxDataPoints || width,
+      maxDataPoints: this.maxDataPoints || Math.floor(width),
       minInterval: this.interval,
       scopedVars: this.scopedVars,
       cacheTimeout: this.cacheTimeout,

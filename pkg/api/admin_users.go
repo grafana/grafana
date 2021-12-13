@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -11,9 +12,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) response.Response {
+func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
+	form := dtos.AdminCreateUserForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd := models.CreateUserCommand{
 		Login:    form.Login,
 		Email:    form.Email,
@@ -56,7 +62,11 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext, form dtos.AdminCreat
 	return response.JSON(200, result)
 }
 
-func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPasswordForm) response.Response {
+func AdminUpdateUserPassword(c *models.ReqContext) response.Response {
+	form := dtos.AdminUpdateUserPasswordForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	userID := c.ParamsInt64(":id")
 
 	if len(form.Password) < 4 {
@@ -87,7 +97,11 @@ func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPass
 }
 
 // PUT /api/admin/users/:id/permissions
-func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext, form dtos.AdminUpdateUserPermissionsForm) response.Response {
+func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.Response {
+	form := dtos.AdminUpdateUserPermissionsForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	userID := c.ParamsInt64(":id")
 
 	err := updateUserPermissions(hs.SQLStore, userID, form.IsGrafanaAdmin)
@@ -182,7 +196,11 @@ func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) response.Resp
 }
 
 // POST /api/admin/users/:id/revoke-auth-token
-func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext, cmd models.RevokeAuthTokenCmd) response.Response {
+func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext) response.Response {
+	cmd := models.RevokeAuthTokenCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	userID := c.ParamsInt64(":id")
 	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
 }

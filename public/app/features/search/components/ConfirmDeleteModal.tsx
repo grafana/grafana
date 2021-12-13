@@ -32,7 +32,7 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, 
     text += `selected folder${folderEnding} and dashboard${dashEnding}?\n`;
     subtitle = `All dashboards and alerts of the selected folder${folderEnding} will also be deleted`;
   } else if (folderCount > 0) {
-    text += `selected folder${folderEnding} and all their dashboards and alerts?`;
+    text += `selected folder${folderEnding} and all ${folderCount === 1 ? 'its' : 'their'} dashboards and alerts?`;
   } else {
     text += `selected dashboard${dashEnding}?`;
   }

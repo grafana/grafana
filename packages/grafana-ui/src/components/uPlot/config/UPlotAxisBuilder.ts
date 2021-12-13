@@ -75,7 +75,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         (acc, value) => Math.max(acc, measureText(value, UPLOT_AXIS_FONT_SIZE).width),
         0
       );
-      axisSize += axis!.gap! + axis!.labelGap! + maxTextWidth;
+      // limit y tick label width to 40% of visualization
+      const textWidthWithLimit = Math.min(self.width * 0.4, maxTextWidth);
+      // Not sure why this += and not normal assignment
+      axisSize += axis!.gap! + axis!.labelGap! + textWidthWithLimit;
     }
 
     return Math.ceil(axisSize);

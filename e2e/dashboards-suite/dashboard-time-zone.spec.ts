@@ -53,7 +53,7 @@ e2e.scenario({
     e2e.components.TimeZonePicker.containerV2()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.singleValue().should('be.visible').should('have.text', 'Coordinated Universal Time');
+        e2e.components.Select.singleValue().should('have.text', 'Coordinated Universal Time');
         e2e.components.Select.input().should('be.visible').click();
       });
 

@@ -50,6 +50,7 @@ function GraphiteQueryEditorContent() {
         className={styles.toggleButton}
         icon="pen"
         variant="secondary"
+        aria-label="Toggle editor mode"
         onClick={() => {
           dispatch(actions.toggleEditorMode());
         }}
