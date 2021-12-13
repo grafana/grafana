@@ -1,5 +1,5 @@
 import React from 'react';
-import { ResourcePermission } from 'app/types/accessControl';
+import { ResourcePermission } from './types';
 import { PermissionListItem } from './PermissionListItem';
 
 interface Props {

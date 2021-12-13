@@ -1,5 +1,5 @@
 import React from 'react';
-import { ResourcePermission } from 'app/types/accessControl';
+import { ResourcePermission } from './types';
 import { Icon, Select, Tooltip } from '@grafana/ui';
 
 interface Props {
@@ -73,9 +73,5 @@ const getPermissionInfo = (p: ResourcePermission): string => {
     .filter((a, i, arr) => arr.indexOf(a) === i)
     .sort()
     .join(' ');
-
-  if (p.managed) {
-    return `Actions: ${actions}`;
-  }
-  return `Role name: ${p.roleName} Actions: ${actions}`;
+  return `Actions: ${actions}`;
 };
