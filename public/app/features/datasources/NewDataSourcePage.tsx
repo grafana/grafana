@@ -10,7 +10,7 @@ import { addDataSource, loadDataSourcePlugins } from './state/actions';
 import { getDataSourcePlugins } from './state/selectors';
 import { setDataSourceTypeSearchQuery } from './state/reducers';
 import { Card } from 'app/core/components/Card/Card';
-import { PluginsErrorsInfo } from '../plugins/PluginsErrorsInfo';
+import { PluginsErrorsInfo } from '../plugins/components/PluginsErrorsInfo';
 
 function mapStateToProps(state: StoreState) {
   return {

@@ -24,7 +24,7 @@ import { StoreState, AccessControlAction } from 'app/types/';
 import { DataSourceSettings, urlUtil } from '@grafana/data';
 import { Alert, Button } from '@grafana/ui';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from '../state/navModel';
-import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
+import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
 import { CloudInfoBox } from './CloudInfoBox';

@@ -114,7 +114,7 @@ func ParseURL(u string) (*url.URL, error) {
 	logger.Debug("Parsing MSSQL URL", "url", u)
 
 	// Recognize ODBC connection strings like host\instance:1234
-	reODBC := regexp.MustCompile(`^[^\\:]+(?:\\[^:]+)?(?::\d+)?$`)
+	reODBC := regexp.MustCompile(`^[^\\:]+(?:\\[^:]+)?(?::\d+)?(?:;.+)?$`)
 	var host string
 	switch {
 	case reODBC.MatchString(u):

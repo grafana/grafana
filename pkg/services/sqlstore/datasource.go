@@ -40,40 +40,45 @@ func (ss *SQLStore) GetDataSource(ctx context.Context, query *models.GetDataSour
 	})
 }
 
-func (ss *SQLStore) GetDataSources(query *models.GetDataSourcesQuery) error {
+func (ss *SQLStore) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
 	var sess *xorm.Session
-	if query.DataSourceLimit <= 0 {
-		sess = x.Where("org_id=?", query.OrgId).Asc("name")
-	} else {
-		sess = x.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgId).Asc("name")
-	}
+	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+		if query.DataSourceLimit <= 0 {
+			sess = dbSess.Where("org_id=?", query.OrgId).Asc("name")
+		} else {
+			sess = dbSess.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgId).Asc("name")
+		}
 
-	query.Result = make([]*models.DataSource, 0)
-	return sess.Find(&query.Result)
+		query.Result = make([]*models.DataSource, 0)
+		return sess.Find(&query.Result)
+	})
 }
 
 // GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string
-func (ss *SQLStore) GetDataSourcesByType(query *models.GetDataSourcesByTypeQuery) error {
+func (ss *SQLStore) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
 	if query.Type == "" {
 		return fmt.Errorf("datasource type cannot be empty")
 	}
 
 	query.Result = make([]*models.DataSource, 0)
-	return x.Where("type=?", query.Type).Asc("id").Find(&query.Result)
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		return sess.Where("type=?", query.Type).Asc("id").Find(&query.Result)
+	})
 }
 
 // GetDefaultDataSource is used to get the default datasource of organization
-func (ss *SQLStore) GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) error {
+func (ss *SQLStore) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
 	datasource := models.DataSource{}
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		exists, err := sess.Where("org_id=? AND is_default=?", query.OrgId, true).Get(&datasource)
 
-	exists, err := x.Where("org_id=? AND is_default=?", query.OrgId, true).Get(&datasource)
+		if !exists {
+			return models.ErrDataSourceNotFound
+		}
 
-	if !exists {
-		return models.ErrDataSourceNotFound
-	}
-
-	query.Result = &datasource
-	return err
+		query.Result = &datasource
+		return err
+	})
 }
 
 // DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
@@ -194,7 +199,7 @@ func updateIsDefaultFlag(ds *models.DataSource, sess *DBSession) error {
 }
 
 func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
-	return inTransactionCtx(ctx, func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}

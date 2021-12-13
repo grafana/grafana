@@ -37,7 +37,7 @@ func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *
 	return nil
 }
 
-func (s *Implementation) GetAuthInfo(query *models.GetAuthInfoQuery) error {
+func (s *Implementation) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
 	userAuth := &models.UserAuth{
 		UserId:     query.UserId,
 		AuthModule: query.AuthModule,
@@ -79,7 +79,7 @@ func (s *Implementation) GetAuthInfo(query *models.GetAuthInfoQuery) error {
 	return nil
 }
 
-func (s *Implementation) SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
+func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
 	authUser := &models.UserAuth{
 		UserId:     cmd.UserId,
 		AuthModule: cmd.AuthModule,
@@ -113,7 +113,7 @@ func (s *Implementation) SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
 	})
 }
 
-func (s *Implementation) UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error {
+func (s *Implementation) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
 	authUser := &models.UserAuth{
 		UserId:     cmd.UserId,
 		AuthModule: cmd.AuthModule,
@@ -153,7 +153,7 @@ func (s *Implementation) UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error
 	})
 }
 
-func (s *Implementation) DeleteAuthInfo(cmd *models.DeleteAuthInfoCommand) error {
+func (s *Implementation) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error {
 	return s.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		_, err := sess.Delete(cmd.UserAuth)
 		return err

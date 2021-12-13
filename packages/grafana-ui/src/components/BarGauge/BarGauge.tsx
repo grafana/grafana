@@ -268,10 +268,13 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
   const titleFontSize = titleHeight / TITLE_LINE_HEIGHT;
   const textSize = measureText(title, titleFontSize);
 
+  // Do not allow title to take up more than 40% width
+  const textWidth = Math.min(textSize.width + 15, width * 0.4);
+
   return {
     fontSize: text?.titleSize ?? titleFontSize,
     height: 0,
-    width: textSize.width + 15,
+    width: textWidth,
     placement: 'left',
   };
 }

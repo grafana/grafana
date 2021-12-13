@@ -591,6 +591,19 @@ describe('PrometheusDatasource', () => {
       expect(interpolatedQuery.legendFormat).toBe(legend);
     });
 
+    it('should call replace function for interval', () => {
+      const query = {
+        expr: 'test{job="bar"}',
+        interval: '$step',
+        refId: 'A',
+      };
+      const step = '5s';
+      templateSrvStub.replace.mockReturnValue(step);
+
+      const interpolatedQuery = ds.applyTemplateVariables(query, { step: { text: step, value: step } });
+      expect(interpolatedQuery.interval).toBe(step);
+    });
+
     it('should call replace function for expr', () => {
       const query = {
         expr: 'test{job="$job"}',
@@ -601,19 +614,6 @@ describe('PrometheusDatasource', () => {
 
       const interpolatedQuery = ds.applyTemplateVariables(query, { job: { text: job, value: job } });
       expect(interpolatedQuery.expr).toBe(job);
-    });
-
-    it('should not call replace function for interval', () => {
-      const query = {
-        expr: 'test{job="bar"}',
-        interval: '$interval',
-        refId: 'A',
-      };
-      const interval = '10s';
-      templateSrvStub.replace.mockReturnValue(interval);
-
-      const interpolatedQuery = ds.applyTemplateVariables(query, { interval: { text: interval, value: interval } });
-      expect(interpolatedQuery.interval).not.toBe(interval);
     });
 
     it('should add ad-hoc filters to expr', () => {
@@ -1666,6 +1666,35 @@ describe('PrometheusDatasource', () => {
       expect(templateSrvStub.replace.mock.calls).toHaveLength(3);
       templateSrvStub.replace = jest.fn((a: string) => a);
     });
+  });
+
+  it('should give back 1 exemplar target when multiple queries with exemplar enabled and same metric', () => {
+    const targetA: PromQuery = {
+      refId: 'A',
+      expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+      exemplar: true,
+    };
+    const targetB: PromQuery = {
+      refId: 'B',
+      expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+      exemplar: true,
+    };
+
+    ds.languageProvider = {
+      histogramMetrics: ['tns_request_duration_seconds_bucket'],
+    } as any;
+
+    const request = ({
+      targets: [targetA, targetB],
+      interval: '1s',
+      panelId: '',
+    } as any) as DataQueryRequest<PromQuery>;
+
+    const Aexemplars = ds.shouldRunExemplarQuery(targetA, request);
+    const BExpemplars = ds.shouldRunExemplarQuery(targetB, request);
+
+    expect(Aexemplars).toBe(true);
+    expect(BExpemplars).toBe(false);
   });
 });
 

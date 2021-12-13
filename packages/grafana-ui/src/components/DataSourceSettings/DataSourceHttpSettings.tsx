@@ -5,7 +5,7 @@ import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
-import { Select } from '../Forms/Legacy/Select/Select';
+import { Select } from '../Select/Select';
 import { Input } from '../Forms/Legacy/Input/Input';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { Icon } from '../Icon/Icon';
@@ -101,8 +101,9 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
 
   const accessSelect = (
     <Select
+      aria-label="Access"
       menuShouldPortal
-      width={20}
+      className="width-20 gf-form-input"
       options={ACCESS_OPTIONS}
       value={ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
       onChange={(selectedValue) => onSettingsChange({ access: selectedValue.value })}
@@ -180,6 +181,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                   labelWidth={13}
                   inputWidth={20}
                   tooltip="HTTP request timeout in seconds"
+                  placeholder="Timeout in seconds"
+                  aria-label="Timeout in seconds"
                   value={dataSourceConfig.jsonData.timeout}
                   onChange={(event) => {
                     onSettingsChange({

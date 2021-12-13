@@ -99,6 +99,7 @@ export enum GrafanaAlertStateDecision {
   NoData = 'NoData',
   KeepLastState = 'KeepLastState',
   OK = 'OK',
+  Error = 'Error',
 }
 
 interface AlertDataQuery extends DataQuery {

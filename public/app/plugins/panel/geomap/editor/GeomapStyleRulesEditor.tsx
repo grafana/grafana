@@ -1,17 +1,27 @@
 import React, { FC, useCallback } from 'react';
+import { Button, useTheme2 } from '@grafana/ui';
 import { StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+
 import { FeatureStyleConfig } from '../types';
-import { Button } from '@grafana/ui';
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
 import { StyleRuleEditor, StyleRuleEditorSettings } from './StyleRuleEditor';
+import { defaultStyleConfig } from '../style/types';
 
 export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[], any, any>> = (props) => {
   const { value, onChange, context, item } = props;
+  const theme = useTheme2();
 
   const settings = item.settings;
   const onAddRule = useCallback(() => {
-    onChange([...value, DEFAULT_STYLE_RULE]);
-  }, [onChange, value]);
+    const { palette } = theme.visualization;
+    const color = {
+      fixed: palette[Math.floor(Math.random() * palette.length)],
+    };
+
+    const newRule = [...value, { ...DEFAULT_STYLE_RULE, style: { ...defaultStyleConfig, color } }];
+
+    onChange(newRule);
+  }, [onChange, value, theme.visualization]);
 
   const onRuleChange = useCallback(
     (idx) => (style: FeatureStyleConfig | undefined) => {

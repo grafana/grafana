@@ -347,10 +347,10 @@ This transformation changes the field type of the specified field.
   - **Numeric -** attempts to make the values numbers
   - **String -** will make the values strings
   - **Time -** attempts to parse the values as time
-    - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
+    - Will show an option to specify a DateFormat for the input field like yyyy-mm-dd or DD MM YYYY hh:mm:ss
   - **Boolean -** will make the values booleans
 
-For example the following query could be modified by selecting the time field, as Time, and Date Format as YYYY.
+For example the following query could be modified by selecting the time field, as Time, and Input format as YYYY.
 
 | Time       | Mark  | Value |
 | ---------- | ----- | ----- |

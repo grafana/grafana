@@ -11,6 +11,15 @@ import { mapSegmentsToSelectables, mapStringsToSelectables } from '../components
 import { SelectableValue } from '@grafana/data';
 
 /**
+ * All auto-complete lists are updated while typing. To avoid performance issues we do not render more
+ * than MAX_SUGGESTIONS limits in a single dropdown.
+ *
+ * MAX_SUGGESTIONS is per metrics and tags separately. On the very first dropdown where metrics and tags are
+ * combined together meaning it may end up with max of 2 * MAX_SUGGESTIONS items in total.
+ */
+const MAX_SUGGESTIONS = 5000;
+
+/**
  * Providers are hooks for views to provide temporal data for autocomplete. They don't modify the state.
  */
 
@@ -72,8 +81,10 @@ async function getAltSegments(
       });
     });
 
-    // add wildcard option
+    // add wildcard option and limit number of suggestions (API doesn't support limiting
+    // hence we are doing it here)
     altSegments.unshift({ value: '*', expandable: true });
+    altSegments.splice(MAX_SUGGESTIONS);
 
     if (state.supportsTags && index === 0) {
       removeTaggedEntry(altSegments);
@@ -88,6 +99,10 @@ async function getAltSegments(
   return [];
 }
 
+/**
+ * Get the list of segments with tags and metrics. Suggestions are reduced in getAltSegments and addAltTagSegments so in case
+ * we hit MAX_SUGGESTIONS limit there are always some tags and metrics shown.
+ */
 export async function getAltSegmentsSelectables(
   state: GraphiteQueryEditorState,
   index: number,
@@ -106,7 +121,10 @@ export function getTagOperatorsSelectables(): Array<SelectableValue<GraphiteTagO
 async function getTags(state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> {
   try {
     const tagExpressions = state.queryModel.renderTagExpressions(index);
-    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix, { range: state.range });
+    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix, {
+      range: state.range,
+      limit: MAX_SUGGESTIONS,
+    });
 
     const altTags = map(values, 'text');
     altTags.splice(0, 0, state.removeTagValue);
@@ -134,7 +152,10 @@ async function getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: str
   let tagsAsSegments: GraphiteSegment[];
   try {
     const tagExpressions = state.queryModel.renderTagExpressions();
-    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix, { range: state.range });
+    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix, {
+      range: state.range,
+      limit: MAX_SUGGESTIONS,
+    });
     tagsAsSegments = map(values, (val) => {
       return {
         value: val.text,
@@ -150,6 +171,9 @@ async function getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: str
   return tagsAsSegments;
 }
 
+/**
+ * Get list of tags, used when adding additional tags (first tag is selected from a joined list of metrics and tags)
+ */
 export async function getTagsAsSegmentsSelectables(
   state: GraphiteQueryEditorState,
   tagPrefix: string
@@ -165,7 +189,9 @@ async function getTagValues(
 ): Promise<string[]> {
   const tagExpressions = state.queryModel.renderTagExpressions(index);
   const tagKey = tag.key;
-  const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {});
+  const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {
+    limit: MAX_SUGGESTIONS,
+  });
   const altValues = map(values, 'text');
   // Add template variables as additional values
   eachRight(state.templateSrv.getVariables(), (variable) => {

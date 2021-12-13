@@ -76,9 +76,9 @@ Learn more about Grafana options and packages.
 
 #### Typescript
 
-- [Grafana Data]({{< relref "../../packages_api/data/_index.md" >}})
-- [Grafana Runtime]({{< relref "../../packages_api/runtime/_index.md" >}})
-- [Grafana UI]({{< relref "../../packages_api/ui/_index.md" >}})
+- Grafana Data
+- Grafana Runtime
+- Grafana UI
 
 #### Go
 

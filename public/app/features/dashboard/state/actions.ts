@@ -2,7 +2,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 // Actions
-import { loadPluginDashboards } from '../../plugins/state/actions';
+import { loadPluginDashboards } from '../../plugins/admin/state/actions';
 import { cleanUpDashboard, loadDashboardPermissions } from './reducers';
 import { notifyApp } from 'app/core/actions';
 import { updateTimeZoneForSession, updateWeekStartForSession } from 'app/features/profile/state/reducers';

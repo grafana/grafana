@@ -114,7 +114,9 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 		mw := customQueryParametersMiddleware(log.New("test"))
 		rt := mw.CreateMiddleware(httpclient.Options{
 			CustomOptions: map[string]interface{}{
-				customQueryParametersKey: "custom=par/am&second=f oo",
+				grafanaDataKey: map[string]interface{}{
+					customQueryParametersKey: "custom=par/am&second=f oo",
+				},
 			},
 		}, finalRoundTripper)
 		require.NotNil(t, rt)
@@ -144,7 +146,9 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 		mw := customQueryParametersMiddleware(log.New("test"))
 		rt := mw.CreateMiddleware(httpclient.Options{
 			CustomOptions: map[string]interface{}{
-				customQueryParametersKey: "custom=par/am&second=f oo",
+				grafanaDataKey: map[string]interface{}{
+					customQueryParametersKey: "custom=par/am&second=f oo",
+				},
 			},
 		}, finalRoundTripper)
 		require.NotNil(t, rt)

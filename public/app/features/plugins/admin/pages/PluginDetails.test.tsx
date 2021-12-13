@@ -40,7 +40,7 @@ jest.mock('../hooks/usePluginConfig.tsx', () => ({
 const renderPluginDetails = (
   pluginOverride: Partial<CatalogPlugin>,
   {
-    pageId = PluginTabIds.OVERVIEW,
+    pageId,
     pluginsStateOverride,
   }: {
     pageId?: PluginTabIds;
@@ -55,7 +55,7 @@ const renderPluginDetails = (
     location: {
       hash: '',
       pathname: `/plugins/${id}`,
-      search: `?page=${pageId}`,
+      search: pageId ? `?page=${pageId}` : '',
       state: undefined,
     },
   });
@@ -118,11 +118,11 @@ describe('Plugin details page', () => {
 
       const props = getRouteComponentProps({
         match: { params: { pluginId: id }, isExact: true, url: '', path: '' },
-        queryParams: { page: PluginTabIds.OVERVIEW },
+        queryParams: {},
         location: {
           hash: '',
           pathname: `/plugins/${id}`,
-          search: `?page=${PluginTabIds.OVERVIEW}`,
+          search: '',
           state: undefined,
         },
       });
@@ -143,6 +143,40 @@ describe('Plugin details page', () => {
       const { queryByText } = renderPluginDetails({ id });
 
       await waitFor(() => expect(queryByText(/licensed under the apache 2.0 license/i)).toBeInTheDocument());
+    });
+
+    it('should display an app config page by default for installed app plugins', async () => {
+      const name = 'Akumuli';
+
+      // @ts-ignore
+      usePluginConfig.mockReturnValue({
+        value: {
+          meta: {
+            type: PluginType.app,
+            enabled: false,
+            pinned: false,
+            jsonData: {},
+          },
+          configPages: [
+            {
+              title: 'Config',
+              icon: 'cog',
+              id: 'configPage',
+              body: function ConfigPage() {
+                return <div>Custom Config Page!</div>;
+              },
+            },
+          ],
+        },
+      });
+
+      const { queryByText } = renderPluginDetails({
+        name,
+        isInstalled: true,
+        type: PluginType.app,
+      });
+
+      await waitFor(() => expect(queryByText(/custom config page/i)).toBeInTheDocument());
     });
 
     it('should display the number of downloads in the header', async () => {
@@ -457,6 +491,25 @@ describe('Plugin details page', () => {
       // TODO<Import these texts from a single source of truth instead of having them defined in multiple places>
       const message = 'The install controls have been disabled because the Grafana server cannot access grafana.com.';
       expect(rendered.getByText(message)).toBeInTheDocument();
+    });
+
+    it('should not display the install / uninstall / update buttons if `pluginAdminEnabled` flag is set to FALSE in the Grafana config', async () => {
+      let rendered: RenderResult;
+
+      // Disable the install controls for the plugins catalog
+      config.pluginAdminEnabled = false;
+
+      // Should not show an "Install" button
+      rendered = renderPluginDetails({ id, isInstalled: false });
+      await waitFor(() => expect(rendered.queryByRole('button', { name: /^install/i })).not.toBeInTheDocument());
+
+      // Should not show an "Uninstall" button
+      rendered = renderPluginDetails({ id, isInstalled: true });
+      await waitFor(() => expect(rendered.queryByRole('button', { name: /^uninstall/i })).not.toBeInTheDocument());
+
+      // Should not show an "Update" button
+      rendered = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
+      await waitFor(() => expect(rendered.queryByRole('button', { name: /^update/i })).not.toBeInTheDocument());
     });
 
     it('should display a "Create" button as a post installation step for installed data source plugins', async () => {

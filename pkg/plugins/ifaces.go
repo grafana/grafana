@@ -87,9 +87,9 @@ type PluginLoaderAuthorizer interface {
 
 type PluginDashboardManager interface {
 	// GetPluginDashboards gets dashboards for a certain org/plugin.
-	GetPluginDashboards(orgID int64, pluginID string) ([]*PluginDashboardInfoDTO, error)
+	GetPluginDashboards(ctx context.Context, orgID int64, pluginID string) ([]*PluginDashboardInfoDTO, error)
 	// LoadPluginDashboard loads a plugin dashboard.
-	LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error)
+	LoadPluginDashboard(ctx context.Context, pluginID, path string) (*models.Dashboard, error)
 	// ImportDashboard imports a dashboard.
 	ImportDashboard(ctx context.Context, pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
 		overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser) (PluginDashboardInfoDTO,

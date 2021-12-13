@@ -116,7 +116,11 @@ export class DashboardExporter {
               pluginName: ds.meta?.name,
             };
 
-            obj.datasource = '${' + refName + '}';
+            if (obj.datasource === null || typeof obj.datasource === 'string') {
+              obj.datasource = '${' + refName + '}';
+            } else {
+              obj.datasource.uid = '${' + refName + '}';
+            }
           })
       );
     };

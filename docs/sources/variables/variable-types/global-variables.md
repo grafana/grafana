@@ -15,11 +15,11 @@ Grafana has global built-in variables that can be used in expressions in the que
 
 This variable is the name of the current dashboard.
 
-## $**from and $**to
+## $\_\_from and $\_\_to
 
 Grafana has two built in time range variables: `$__from` and `$__to`. They are currently always interpolated as epoch milliseconds by default but you can control date formatting.
 
-> This special formatting syntax is only available in Grafan a 7.1.2+
+> This special formatting syntax is only available in Grafana 7.1.2+
 
 | Syntax                   | Example result           | Description                                                                                               |
 | ------------------------ | ------------------------ | --------------------------------------------------------------------------------------------------------- |

@@ -14,7 +14,7 @@ Grafana Labs will send you a response indicating the next steps in handling your
 
 ## Security announcements
 
-We maintain a category on the community site called [Security Announcements](https://community.grafana.com/c/security-announcements),
+We maintain a category on the community site called [Security Announcements](https://community.grafana.com/c/support/security-announcements),
 where we will post a summary, remediation, and mitigation details for any patch containing security fixes.
 
-You can also subscribe to email updates to this category if you have a grafana.com account and sign on to the community site or track updates via an [RSS feed](https://community.grafana.com/c/security-announcements.rss).
+You can also subscribe to email updates to this category if you have a grafana.com account and sign on to the community site or track updates via an [RSS feed](https://community.grafana.com/c/support/security-announcements.rss).

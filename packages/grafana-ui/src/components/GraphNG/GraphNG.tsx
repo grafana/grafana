@@ -6,6 +6,7 @@ import {
   DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
+  Field,
   FieldMatcherID,
   fieldMatchers,
   LegacyGraphHoverEvent,
@@ -44,8 +45,8 @@ export interface GraphNGProps extends Themeable2 {
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   renderers?: Renderers;
-  tweakScale?: (opts: ScaleProps) => ScaleProps;
-  tweakAxis?: (opts: AxisProps) => AxisProps;
+  tweakScale?: (opts: ScaleProps, forField: Field) => ScaleProps;
+  tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
   prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;

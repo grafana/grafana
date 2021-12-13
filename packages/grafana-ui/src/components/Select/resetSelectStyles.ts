@@ -1,4 +1,7 @@
-export default function resetSelectStyles() {
+import { GrafanaTheme2 } from '@grafana/data';
+import { CSSObjectWithLabel } from 'react-select';
+
+export default function resetSelectStyles(theme: GrafanaTheme2) {
   return {
     clearIndicator: () => ({}),
     container: () => ({}),
@@ -8,7 +11,16 @@ export default function resetSelectStyles() {
     groupHeading: () => ({}),
     indicatorsContainer: () => ({}),
     indicatorSeparator: () => ({}),
-    input: () => ({}),
+    input: function (originalStyles: CSSObjectWithLabel) {
+      return {
+        ...originalStyles,
+        color: 'inherit',
+        margin: 0,
+        padding: 0,
+        // Set an explicit z-index here to ensure this element always overlays the singleValue
+        zIndex: 1,
+      };
+    },
     loadingIndicator: () => ({}),
     loadingMessage: () => ({}),
     menu: () => ({}),
@@ -20,7 +32,10 @@ export default function resetSelectStyles() {
     multiValueRemove: () => ({}),
     noOptionsMessage: () => ({}),
     option: () => ({}),
-    placeholder: () => ({}),
+    placeholder: (originalStyles: CSSObjectWithLabel) => ({
+      ...originalStyles,
+      color: theme.colors.text.disabled,
+    }),
     singleValue: () => ({}),
     valueContainer: () => ({}),
   };
