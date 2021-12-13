@@ -4,6 +4,7 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  PanelPluginMeta,
   toDataFrame,
   VisualizationSuggestion,
 } from '@grafana/data';
@@ -19,6 +20,16 @@ for (const pluginId of panelsToCheckFirst) {
     module: `app/plugins/panel/${pluginId}/module`,
   } as any;
 }
+
+config.panels['text'] = {
+  id: 'text',
+  name: 'Text',
+  skipDataQuery: true,
+  info: {
+    description: 'pretty decent plugin',
+    logos: { small: 'small/logo', large: 'large/logo' },
+  },
+} as PanelPluginMeta;
 
 class ScenarioContext {
   data: DataFrame[] = [];
@@ -58,7 +69,7 @@ scenario('No series', (ctx) => {
   ctx.setData([]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Table, SuggestionName.TextPanel, SuggestionName.DashboardList]);
+    expect(ctx.names()).toEqual([SuggestionName.Table, SuggestionName.TextPanel]);
   });
 });
 
@@ -73,7 +84,7 @@ scenario('No rows', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Table, SuggestionName.TextPanel, SuggestionName.DashboardList]);
+    expect(ctx.names()).toEqual([SuggestionName.Table]);
   });
 });
 

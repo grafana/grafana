@@ -18,7 +18,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		Bus: bus.New(),
 	}
 
-	ae.Bus.AddHandler(func(query *models.GetAllAlertsQuery) error {
+	ae.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetAllAlertsQuery) error {
 		var createFake = func(file string) *simplejson.Json {
 			// Ignore gosec warning G304 since it's a test
 			// nolint:gosec

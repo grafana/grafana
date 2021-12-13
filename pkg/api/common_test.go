@@ -1,7 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -52,10 +54,6 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 				return sc.handlerFunc(sc.context)
 			}
 
-			if sc.handlerFuncCtx != nil {
-				return sc.handlerFuncCtx(context.Background(), sc.context)
-			}
-
 			return nil
 		})
 
@@ -79,10 +77,6 @@ func anonymousUserScenario(t *testing.T, desc string, method string, url string,
 			sc.context = c
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
-			}
-
-			if sc.handlerFuncCtx != nil {
-				return sc.handlerFuncCtx(context.Background(), sc.context)
 			}
 
 			return nil
@@ -154,7 +148,6 @@ type scenarioContext struct {
 	context              *models.ReqContext
 	resp                 *httptest.ResponseRecorder
 	handlerFunc          handlerFunc
-	handlerFuncCtx       handlerFuncCtx
 	defaultHandler       web.Handler
 	req                  *http.Request
 	url                  string
@@ -167,7 +160,6 @@ func (sc *scenarioContext) exec() {
 
 type scenarioFunc func(c *scenarioContext)
 type handlerFunc func(c *models.ReqContext) response.Response
-type handlerFuncCtx func(ctx context.Context, c *models.ReqContext) response.Response
 
 func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHandler {
 	t.Helper()
@@ -375,4 +367,9 @@ func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T)
 	recorder := httptest.NewRecorder()
 	server.ServeHTTP(recorder, req)
 	return recorder
+}
+
+func mockRequestBody(v interface{}) io.ReadCloser {
+	b, _ := json.Marshal(v)
+	return io.NopCloser(bytes.NewReader(b))
 }

@@ -19,6 +19,7 @@ import (
 
 const (
 	NoDataAlertName = "DatasourceNoData"
+	ErrorAlertName  = "DatasourceError"
 
 	Rulename = "rulename"
 )
@@ -52,6 +53,10 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 		return noDataAlert(nL, nA, alertState, urlStr)
 	}
 
+	if alertState.State == eval.Error {
+		return errorAlert(nL, nA, alertState, urlStr)
+	}
+
 	return &models.PostableAlert{
 		Annotations: models.LabelSet(nA),
 		StartsAt:    strfmt.DateTime(alertState.StartsAt),
@@ -72,6 +77,25 @@ func noDataAlert(labels data.Labels, annotations data.Labels, alertState *state.
 		labels[Rulename] = name
 	}
 	labels[model.AlertNameLabel] = NoDataAlertName
+
+	return &models.PostableAlert{
+		Annotations: models.LabelSet(annotations),
+		StartsAt:    strfmt.DateTime(alertState.StartsAt),
+		EndsAt:      strfmt.DateTime(alertState.EndsAt),
+		Alert: models.Alert{
+			Labels:       models.LabelSet(labels),
+			GeneratorURL: strfmt.URI(urlStr),
+		},
+	}
+}
+
+// errorAlert is a special alert sent when evaluation of an alert rule failed due to an error. Like noDataAlert, it
+// replaces the old behaviour of "Keep Last State" creating a separate alert called DatasourceError.
+func errorAlert(labels, annotations data.Labels, alertState *state.State, urlStr string) *models.PostableAlert {
+	if name, ok := labels[model.AlertNameLabel]; ok {
+		labels[Rulename] = name
+	}
+	labels[model.AlertNameLabel] = ErrorAlertName
 
 	return &models.PostableAlert{
 		Annotations: models.LabelSet(annotations),

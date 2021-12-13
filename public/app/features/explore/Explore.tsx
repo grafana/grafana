@@ -96,6 +96,8 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
 export class Explore extends React.PureComponent<Props, ExploreState> {
+  scrollElement: HTMLDivElement | undefined;
+
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -232,13 +234,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderTablePanel(width: number) {
-    const { exploreId, datasourceInstance } = this.props;
+    const { exploreId, datasourceInstance, timeZone } = this.props;
     return (
       <TableContainer
         ariaLabel={selectors.pages.Explore.General.table}
         width={width}
         exploreId={exploreId}
         onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
+        timeZone={timeZone}
       />
     );
   }
@@ -285,7 +288,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       // If there is no data (like 404) we show a separate error so no need to show anything here
-      dataFrames.length && <TraceViewContainer exploreId={exploreId} dataFrames={dataFrames} splitOpenFn={splitOpen} />
+      dataFrames.length && (
+        <TraceViewContainer
+          exploreId={exploreId}
+          dataFrames={dataFrames}
+          splitOpenFn={splitOpen}
+          scrollElement={this.scrollElement}
+        />
+      )
     );
   }
 
@@ -303,6 +313,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogs,
       showTrace,
       showNodeGraph,
+      timeZone,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -311,7 +322,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
 
     return (
-      <CustomScrollbar autoHeightMin={'100%'}>
+      <CustomScrollbar
+        autoHeightMin={'100%'}
+        scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
+      >
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
@@ -364,6 +378,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           exploreId={exploreId}
                           width={width}
                           onClose={this.toggleShowQueryInspector}
+                          timeZone={timeZone}
                         />
                       )}
                     </ErrorBoundaryAlert>

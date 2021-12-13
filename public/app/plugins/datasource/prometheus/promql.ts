@@ -16,6 +16,7 @@ export const RATE_RANGES: CompletionItem[] = [
 ];
 
 export const OPERATORS = ['by', 'group_left', 'group_right', 'ignoring', 'on', 'offset', 'without'];
+export const LOGICAL_OPERATORS = ['or', 'and', 'unless'];
 
 const AGGREGATION_OPERATORS: CompletionItem[] = [
   {
@@ -426,6 +427,8 @@ export const FUNCTIONS = [
     documentation: 'The most recent point value in specified interval.',
   },
 ];
+
+export const PROM_KEYWORDS = FUNCTIONS.map((keyword) => keyword.label);
 
 const tokenizer: Grammar = {
   comment: {

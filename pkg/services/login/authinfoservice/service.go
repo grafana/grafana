@@ -33,10 +33,10 @@ func ProvideAuthInfoService(bus bus.Bus, store *sqlstore.SQLStore, userProtectio
 	}
 
 	s.Bus.AddHandlerCtx(s.GetExternalUserInfoByLogin)
-	s.Bus.AddHandler(s.GetAuthInfo)
-	s.Bus.AddHandler(s.SetAuthInfo)
-	s.Bus.AddHandler(s.UpdateAuthInfo)
-	s.Bus.AddHandler(s.DeleteAuthInfo)
+	s.Bus.AddHandlerCtx(s.GetAuthInfo)
+	s.Bus.AddHandlerCtx(s.SetAuthInfo)
+	s.Bus.AddHandlerCtx(s.UpdateAuthInfo)
+	s.Bus.AddHandlerCtx(s.DeleteAuthInfo)
 
 	return s
 }
@@ -70,7 +70,7 @@ func (s *Implementation) getUser(user *models.User) (bool, error) {
 	return has, err
 }
 
-func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (bool, *models.User, *models.UserAuth, error) {
+func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUserByAuthInfoQuery) (bool, *models.User, *models.UserAuth, error) {
 	authQuery := &models.GetAuthInfoQuery{}
 
 	// Try to find the user by auth module and id first
@@ -78,7 +78,7 @@ func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (boo
 		authQuery.AuthModule = query.AuthModule
 		authQuery.AuthId = query.AuthId
 
-		err := s.GetAuthInfo(authQuery)
+		err := s.GetAuthInfo(ctx, authQuery)
 		if !errors.Is(err, models.ErrUserNotFound) {
 			if err != nil {
 				return false, nil, nil, err
@@ -86,7 +86,7 @@ func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (boo
 
 			// if user id was specified and doesn't match the user_auth entry, remove it
 			if query.UserId != 0 && query.UserId != authQuery.Result.UserId {
-				err := s.DeleteAuthInfo(&models.DeleteAuthInfoCommand{
+				err := s.DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
 					UserAuth: authQuery.Result,
 				})
 				if err != nil {
@@ -102,7 +102,7 @@ func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (boo
 
 				if !has {
 					// if the user has been deleted then remove the entry
-					err = s.DeleteAuthInfo(&models.DeleteAuthInfoCommand{
+					err = s.DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
 						UserAuth: authQuery.Result,
 					})
 					if err != nil {
@@ -158,13 +158,13 @@ func (s *Implementation) LookupByOneOf(userId int64, email string, login string)
 	return foundUser, user, nil
 }
 
-func (s *Implementation) GenericOAuthLookup(authModule string, authId string, userID int64) (*models.UserAuth, error) {
+func (s *Implementation) GenericOAuthLookup(ctx context.Context, authModule string, authId string, userID int64) (*models.UserAuth, error) {
 	if authModule == genericOAuthModule && userID != 0 {
 		authQuery := &models.GetAuthInfoQuery{}
 		authQuery.AuthModule = authModule
 		authQuery.AuthId = authId
 		authQuery.UserId = userID
-		err := s.GetAuthInfo(authQuery)
+		err := s.GetAuthInfo(ctx, authQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -174,10 +174,10 @@ func (s *Implementation) GenericOAuthLookup(authModule string, authId string, us
 	return nil, nil
 }
 
-func (s *Implementation) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (*models.User, error) {
+func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
 	// 1. LookupAndFix = auth info, user, error
 	// TODO: Not a big fan of the fact that we are deleting auth info here, might want to move that
-	foundUser, user, authInfo, err := s.LookupAndFix(query)
+	foundUser, user, authInfo, err := s.LookupAndFix(ctx, query)
 	if err != nil && !errors.Is(err, models.ErrUserNotFound) {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (s *Implementation) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (
 	}
 
 	// Special case for generic oauth duplicates
-	ai, err := s.GenericOAuthLookup(query.AuthModule, query.AuthId, user.Id)
+	ai, err := s.GenericOAuthLookup(ctx, query.AuthModule, query.AuthId, user.Id)
 	if !errors.Is(err, models.ErrUserNotFound) {
 		if err != nil {
 			return nil, err
@@ -211,7 +211,7 @@ func (s *Implementation) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (
 			AuthModule: query.AuthModule,
 			AuthId:     query.AuthId,
 		}
-		if err := s.SetAuthInfo(cmd); err != nil {
+		if err := s.SetAuthInfo(ctx, cmd); err != nil {
 			return nil, err
 		}
 	}

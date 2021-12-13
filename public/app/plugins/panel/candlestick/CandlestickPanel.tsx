@@ -18,11 +18,13 @@ import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBu
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { prepareCandlestickFields } from './fields';
 import uPlot from 'uplot';
+import { PanelDataErrorView } from '@grafana/runtime';
 
 interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
 
 export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
   data,
+  id,
   timeRange,
   timeZone,
   width,
@@ -51,6 +53,10 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
       tweakScale,
       tweakAxis,
     };
+
+    if (!info) {
+      return doNothing;
+    }
 
     // Un-encoding the already parsed special fields
     // This takes currently matched fields and saves the name so they can be looked up by name later
@@ -202,12 +208,8 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
-  if (!info.frame || info.warn) {
-    return (
-      <div className="panel-empty">
-        <p>{info.warn ?? 'No data found in response'}</p>
-      </div>
-    );
+  if (!info) {
+    return <PanelDataErrorView panelId={id} data={data} needsTimeField={true} needsNumberField={true} />;
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());

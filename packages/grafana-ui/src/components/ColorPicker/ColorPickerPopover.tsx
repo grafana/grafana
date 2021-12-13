@@ -7,6 +7,7 @@ import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerProp
 import { css } from '@emotion/css';
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '../../themes';
+import { FocusScope } from '@react-aria/focus';
 
 export type ColorPickerChangeHandler = (color: string) => void;
 
@@ -116,18 +117,20 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
     const { theme } = this.props;
     const styles = getStyles(theme);
     return (
-      <div className={styles.colorPickerPopover}>
-        <div className={styles.colorPickerPopoverTabs}>
-          <div className={this.getTabClassName('palette')} onClick={this.onTabChange('palette')}>
-            Colors
+      <FocusScope contain restoreFocus autoFocus>
+        <div className={styles.colorPickerPopover}>
+          <div className={styles.colorPickerPopoverTabs}>
+            <div tabIndex={0} className={this.getTabClassName('palette')} onClick={this.onTabChange('palette')}>
+              Colors
+            </div>
+            <div tabIndex={0} className={this.getTabClassName('spectrum')} onClick={this.onTabChange('spectrum')}>
+              Custom
+            </div>
+            {this.renderCustomPickerTabs()}
           </div>
-          <div className={this.getTabClassName('spectrum')} onClick={this.onTabChange('spectrum')}>
-            Custom
-          </div>
-          {this.renderCustomPickerTabs()}
+          <div className={styles.colorPickerPopoverContent}>{this.renderPicker()}</div>
         </div>
-        <div className={styles.colorPickerPopoverContent}>{this.renderPicker()}</div>
-      </div>
+      </FocusScope>
     );
   }
 }

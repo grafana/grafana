@@ -33,7 +33,7 @@ type DashboardProvisioningService interface {
 	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
-	UnprovisionDashboard(dashboardID int64) error
+	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
 }
 
@@ -346,9 +346,9 @@ func (dr *dashboardServiceImpl) ImportDashboard(ctx context.Context, dto *SaveDa
 
 // UnprovisionDashboard removes info about dashboard being provisioned. Used after provisioning configs are changed
 // and provisioned dashboards are left behind but not deleted.
-func (dr *dashboardServiceImpl) UnprovisionDashboard(dashboardId int64) error {
+func (dr *dashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashboardId int64) error {
 	cmd := &models.UnprovisionDashboardCommand{Id: dashboardId}
-	return bus.Dispatch(cmd)
+	return bus.DispatchCtx(ctx, cmd)
 }
 
 type FakeDashboardService struct {

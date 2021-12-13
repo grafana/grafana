@@ -43,18 +43,18 @@ func ProvideServiceAccountsService(
 	return s, nil
 }
 
-func (s *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
-	if !s.cfg.FeatureToggles["service-accounts"] {
-		s.log.Debug(ServiceAccountFeatureToggleNotFound)
+func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
+	if !sa.cfg.FeatureToggles["service-accounts"] {
+		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil, nil
 	}
-	return s.store.CreateServiceAccount(ctx, saForm)
+	return sa.store.CreateServiceAccount(ctx, saForm)
 }
 
-func (s *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
-	if !s.cfg.FeatureToggles["service-accounts"] {
-		s.log.Debug(ServiceAccountFeatureToggleNotFound)
+func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
+	if !sa.cfg.FeatureToggles["service-accounts"] {
+		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil
 	}
-	return s.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
+	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
 }

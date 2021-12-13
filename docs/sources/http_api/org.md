@@ -20,6 +20,14 @@ the admin of all organizations API only works with basic authentication, see [Ad
 
 `GET /api/org/`
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+
+| Action    | Scope |
+| --------- | ----- |
+| orgs:read | N/A   |
+
 **Example Request**:
 
 ```http
@@ -93,6 +101,14 @@ Returns all org users within the current organization, but with less detailed in
 Accessible to users with org admin role, admin in any folder or admin of any team.
 Mainly used by Grafana UI for providing list of users when adding team members and
 when editing folder/dashboard permissions.
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+
+| Action         | Scope    |
+| -------------- | -------- |
+| org.users:read | users:\* |
 
 **Example Request**:
 
@@ -186,6 +202,14 @@ Content-Type: application/json
 
 `PUT /api/org`
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+
+| Action     | Scope |
+| ---------- | ----- |
+| orgs:write | N/A   |
+
 **Example Request**:
 
 ```http
@@ -259,6 +283,14 @@ is called `admin` and has permission to use this API).
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+
+| Action    | Scope |
+| --------- | ----- |
+| orgs:read | N/A   |
+
 **Example Request**:
 
 ```http
@@ -293,6 +325,14 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+
+| Action    | Scope | Note                           |
+| --------- | ----- | ------------------------------ |
+| orgs:read | N/A   | Needs to be assigned globally. |
+
 **Example Request**:
 
 ```http
@@ -326,6 +366,14 @@ Content-Type: application/json
 `POST /api/orgs`
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+
+| Action      | Scope | Note                           |
+| ----------- | ----- | ------------------------------ |
+| orgs:create | N/A   | Needs to be assigned globally. |
 
 **Example Request**:
 
@@ -362,6 +410,14 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+
+| Action    | Scope | Note                           |
+| --------- | ----- | ------------------------------ |
+| orgs:read | N/A   | Needs to be assigned globally. |
+
 **Example Request**:
 
 ```http
@@ -396,6 +452,14 @@ Content-Type: application/json
 Update Organization, fields _Address 1_, _Address 2_, _City_ are not implemented yet.
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+
+| Action     | Scope |
+| ---------- | ----- |
+| orgs:write | N/A   |
+
 **Example Request**:
 
 ```http
@@ -422,6 +486,14 @@ Content-Type: application/json
 `DELETE /api/orgs/:orgId`
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+
+| Action      | Scope |
+| ----------- | ----- |
+| orgs:delete | N/A   |
 
 **Example Request**:
 
