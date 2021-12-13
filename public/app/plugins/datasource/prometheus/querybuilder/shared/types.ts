@@ -2,7 +2,7 @@
  * Shared types that can be reused by Loki and other data sources
  */
 
-import { DataSourceApi, SelectableValue } from '@grafana/data';
+import { DataSourceApi, RegistryItem, SelectableValue } from '@grafana/data';
 import { ComponentType } from 'react';
 
 export interface QueryBuilderLabelFilter {
@@ -20,9 +20,7 @@ export interface QueryWithOperations {
   operations: QueryBuilderOperation[];
 }
 
-export interface QueryBuilderOperationDef<T = any> {
-  id: string;
-  displayName: string;
+export interface QueryBuilderOperationDef<T = any> extends RegistryItem {
   documentation?: string;
   params: QueryBuilderOperationParamDef[];
   defaultParams: QueryBuilderOperationParamValue[];

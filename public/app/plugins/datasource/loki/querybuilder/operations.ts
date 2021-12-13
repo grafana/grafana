@@ -23,7 +23,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     createAggregationOperation('max'),
     {
       id: 'json',
-      displayName: 'Json',
+      name: 'Json',
       params: [],
       defaultParams: [],
       alternativesKey: 'format',
@@ -33,7 +33,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: 'logfmt',
-      displayName: 'Logfmt',
+      name: 'Logfmt',
       params: [],
       defaultParams: [],
       alternativesKey: 'format',
@@ -43,7 +43,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: '__line_contains',
-      displayName: 'Line contains',
+      name: 'Line contains',
       params: [{ name: 'String', type: 'string' }],
       defaultParams: [''],
       alternativesKey: 'line filter',
@@ -53,7 +53,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: '__line_contains_not',
-      displayName: 'Line does not contain',
+      name: 'Line does not contain',
       params: [{ name: 'String', type: 'string' }],
       defaultParams: [''],
       alternativesKey: 'line filter',
@@ -63,7 +63,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: '__line_matches_regex',
-      displayName: 'Line contains regex match',
+      name: 'Line contains regex match',
       params: [{ name: 'Regex', type: 'string' }],
       defaultParams: [''],
       alternativesKey: 'line filter',
@@ -73,7 +73,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: '__line_matches_regex_not',
-      displayName: 'Line does not match regex',
+      name: 'Line does not match regex',
       params: [{ name: 'Regex', type: 'string' }],
       defaultParams: [''],
       alternativesKey: 'line filter',
@@ -83,7 +83,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: '__label_filter',
-      displayName: 'Label filter expression',
+      name: 'Label filter expression',
       params: [
         { name: 'Label', type: 'string' },
         { name: 'Operator', type: 'string', options: ['=', '!=', '>', '<', '>=', '<='] },
@@ -102,7 +102,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
 function createRangeOperation(name: string): QueryBuilderOperationDef {
   return {
     id: name,
-    displayName: getPromAndLokiOperationDisplayName(name),
+    name: getPromAndLokiOperationDisplayName(name),
     params: [getRangeVectorParamDef()],
     defaultParams: ['auto'],
     alternativesKey: 'range function',
@@ -115,7 +115,7 @@ function createRangeOperation(name: string): QueryBuilderOperationDef {
 function createAggregationOperation(name: string): QueryBuilderOperationDef {
   return {
     id: name,
-    displayName: getPromAndLokiOperationDisplayName(name),
+    name: getPromAndLokiOperationDisplayName(name),
     params: [],
     defaultParams: [],
     alternativesKey: 'plain aggregation',

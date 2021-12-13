@@ -16,7 +16,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [
     {
       id: 'histogram_quantile',
-      displayName: 'Histogram quantile',
+      name: 'Histogram quantile',
       params: [{ name: 'Quantile', type: 'number', options: [0.99, 0.95, 0.9, 0.75, 0.5, 0.25] }],
       defaultParams: [0.9],
       category: PromVisualQueryOperationCategory.Functions,
@@ -25,7 +25,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: 'label_replace',
-      displayName: 'Label replace',
+      name: 'Label replace',
       params: [
         { name: 'Destination label', type: 'string' },
         { name: 'Replacement', type: 'string' },
@@ -39,7 +39,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: 'ln',
-      displayName: 'Ln',
+      name: 'Ln',
       params: [],
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Functions,
@@ -55,7 +55,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     // both the operator and the operand in a single input
     {
       id: '__multiply_by',
-      displayName: 'Multiply by',
+      name: 'Multiply by',
       params: [{ name: 'Factor', type: 'number' }],
       defaultParams: [2],
       category: PromVisualQueryOperationCategory.Math,
@@ -64,7 +64,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: '__divide_by',
-      displayName: 'Divide by',
+      name: 'Divide by',
       params: [{ name: 'Factor', type: 'number' }],
       defaultParams: [2],
       category: PromVisualQueryOperationCategory.Math,
@@ -73,7 +73,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     },
     {
       id: '__nested_query',
-      displayName: 'Binary operation with query',
+      name: 'Binary operation with query',
       params: [],
       defaultParams: [],
       category: PromVisualQueryOperationCategory.Math,
@@ -88,7 +88,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
 function createRangeFunction(name: string): QueryBuilderOperationDef {
   return {
     id: name,
-    displayName: getPromAndLokiOperationDisplayName(name),
+    name: getPromAndLokiOperationDisplayName(name),
     params: [getRangeVectorParamDef()],
     defaultParams: ['auto'],
     alternativesKey: 'range function',

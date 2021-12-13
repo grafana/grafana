@@ -5,9 +5,10 @@ import { PromQueryPattern, PromVisualQuery, PromVisualQueryOperationCategory } f
 
 export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQuery> {
   constructor() {
-    super();
-    this.registerOperations(getOperationDefintions());
-    this.registerOperations(getAggregationOperations());
+    super(() => {
+      return [...getOperationDefintions(), ...getAggregationOperations()];
+    });
+
     this.setOperationCategories([
       PromVisualQueryOperationCategory.Aggregations,
       PromVisualQueryOperationCategory.RangeFunctions,

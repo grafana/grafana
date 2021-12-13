@@ -32,7 +32,7 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
   const operations: QueryBuilderOperationDef[] = [
     {
       id: name,
-      displayName: getPromAndLokiOperationDisplayName(name),
+      name: getPromAndLokiOperationDisplayName(name),
       params: [
         {
           name: 'Label',
@@ -50,7 +50,7 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
     },
     {
       id: `__${name}_by`,
-      displayName: `${getPromAndLokiOperationDisplayName(name)} by`,
+      name: `${getPromAndLokiOperationDisplayName(name)} by`,
       params: [
         {
           name: 'Label',
@@ -131,7 +131,7 @@ function createAggregationOverTime(name: string): QueryBuilderOperationDef {
   const functionName = `${name}_over_time`;
   return {
     id: functionName,
-    displayName: getPromAndLokiOperationDisplayName(functionName),
+    name: getPromAndLokiOperationDisplayName(functionName),
     params: [getAggregationOverTimeRangeVector()],
     defaultParams: ['auto'],
     alternativesKey: 'overtime function',

@@ -5,8 +5,8 @@ import { LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQuery> {
   constructor() {
-    super();
-    this.registerOperations(getOperationDefintions());
+    super(getOperationDefintions);
+
     this.setOperationCategories([
       LokiVisualQueryOperationCategory.Aggregations,
       LokiVisualQueryOperationCategory.RangeFunctions,

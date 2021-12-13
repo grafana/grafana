@@ -1,3 +1,4 @@
+import { Registry } from '@grafana/data';
 import {
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
@@ -13,13 +14,11 @@ export interface VisualQueryBinary<T> {
 }
 
 export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations> implements VisualQueryModeller {
-  private operations: Record<string, QueryBuilderOperationDef<T>> = {};
+  protected operationsRegisty: Registry<QueryBuilderOperationDef>;
   private categories: string[] = [];
 
-  protected registerOperations(operations: QueryBuilderOperationDef[]) {
-    for (const op of operations) {
-      this.operations[op.id] = op;
-    }
+  constructor(getOperations: () => QueryBuilderOperationDef[]) {
+    this.operationsRegisty = new Registry<QueryBuilderOperationDef>(getOperations);
   }
 
   protected setOperationCategories(categories: string[]) {
@@ -27,11 +26,11 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
   }
 
   getOperationsForCategory(category: string) {
-    return Object.values(this.operations).filter((op) => op.category === category && !op.hideFromList);
+    return this.operationsRegisty.list().filter((op) => op.category === category && !op.hideFromList);
   }
 
   getAlternativeOperations(key: string) {
-    return Object.values(this.operations).filter((op) => op.alternativesKey === key);
+    return this.operationsRegisty.list().filter((op) => op.alternativesKey === key);
   }
 
   getCategories() {
@@ -39,19 +38,12 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
   }
 
   getOperationDef(id: string) {
-    const operation = this.operations[id];
-    if (!operation) {
-      throw new Error(`Operation ${id} not found`);
-    }
-    return operation;
+    return this.operationsRegisty.get(id);
   }
 
   renderOperations(queryString: string, operations: QueryBuilderOperation[]) {
     for (const operation of operations) {
-      const def = this.operations[operation.id];
-      if (!def) {
-        throw new Error(`Operation ${operation.id} not found`);
-      }
+      const def = this.operationsRegisty.get(operation.id);
       queryString = def.renderer(operation, def, queryString);
     }
 

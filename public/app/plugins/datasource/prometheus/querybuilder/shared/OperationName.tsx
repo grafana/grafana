@@ -27,12 +27,12 @@ export const OperationName = React.memo<Props>(({ operation, def, index, onChang
     } else {
       const alternatives = queryModeller
         .getAlternativeOperations(def.alternativesKey!)
-        .map((alt) => ({ label: alt.displayName, value: alt }));
+        .map((alt) => ({ label: alt.name, value: alt }));
       setState({ isOpen: true, alternatives });
     }
   };
 
-  const nameElement = <span>{def.displayName ?? def.id}</span>;
+  const nameElement = <span>{def.name ?? def.id}</span>;
 
   if (!def.alternativesKey) {
     return nameElement;

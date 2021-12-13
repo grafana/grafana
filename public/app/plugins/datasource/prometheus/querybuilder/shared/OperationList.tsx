@@ -43,7 +43,7 @@ export function OperationList<T extends QueryWithOperations>({
       label: category,
       children: queryModeller.getOperationsForCategory(category).map((operation) => ({
         value: operation.id,
-        label: operation.displayName ?? operation.id,
+        label: operation.name,
         isLeaf: true,
       })),
     };
