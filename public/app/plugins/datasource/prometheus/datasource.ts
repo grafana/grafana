@@ -14,8 +14,9 @@ import {
   LoadingState,
   rangeUtil,
   ScopedVars,
-  TimeRange,
   DataFrame,
+  DataLink,
+  DataLinkClickEvent,
   dateTime,
   AbsoluteTimeRange,
   FieldType,
@@ -502,10 +503,21 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
             mode: FieldColorModeId.Fixed,
             fixedColor: field1.name === 'mean (selected)' ? 'orange' : 'green',
           };
+          const link: DataLink = {
+            title: `Filter for ${label}`,
+            url: 'foobar',
+            onClick: (e: DataLinkClickEvent) => console.log(e.origin),
+          };
+          field1.config.links = [link];
         }
 
         if (field2) {
           field2.config.color = { mode: FieldColorModeId.Fixed, fixedColor: 'green' };
+          const link: DataLink = {
+            title: `Filter for ${label}`,
+            url: 'foobar',
+          };
+          field2.config.links = [link];
         }
       }
       return dataFrame;
