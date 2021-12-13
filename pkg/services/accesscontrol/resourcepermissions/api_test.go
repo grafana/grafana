@@ -1,4 +1,4 @@
-package system
+package resourcepermissions
 
 import (
 	"context"
