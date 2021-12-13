@@ -10299,9 +10299,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/bounds@npm:2.1.0":
-  version: 2.1.0
-  resolution: "@visx/bounds@npm:2.1.0"
+"@visx/bounds@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@visx/bounds@npm:2.1.2"
   dependencies:
     "@types/react": "*"
     "@types/react-dom": "*"
@@ -10309,7 +10309,7 @@ __metadata:
   peerDependencies:
     react: ^16.0.0-0 || ^17.0.0-0
     react-dom: ^16.0.0-0 || ^17.0.0-0
-  checksum: 8acddcdf3971f2a44a2750a6913b359ebb4be6119037330f481fe49ecb6d4dc1686d6e0e4cd9c6341e227769bbdbf6b5d35b6a08e129537a43e519ac738bde12
+  checksum: cd013c105d95d44bf29f570e26e63a466d8e9212861d9a92e818d239f6dbf8f0efa049556cbb4bbf1b849e730d63aaeeb5c9f7a013e1c6912db2243fa8e90b69
   languageName: node
   linkType: hard
 
@@ -10401,19 +10401,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/tooltip@npm:2.1.0":
-  version: 2.1.0
-  resolution: "@visx/tooltip@npm:2.1.0"
+"@visx/tooltip@npm:2.2.2":
+  version: 2.2.2
+  resolution: "@visx/tooltip@npm:2.2.2"
   dependencies:
     "@types/react": "*"
-    "@visx/bounds": 2.1.0
+    "@visx/bounds": 2.1.2
     classnames: ^2.3.1
     prop-types: ^15.5.10
     react-use-measure: ^2.0.4
   peerDependencies:
     react: ^16.8.0-0 || ^17.0.0-0
     react-dom: ^16.8.0-0 || ^17.0.0-0
-  checksum: 591a5f073767d23fe3f99c5cc46c81b3e4fd43a8c2cba6405a3f47365a49b45a69f59d7d014183ef0d1b13cb3a1976726ee5e3d024947822a0a8b2c6ceb6089d
+  checksum: 5287f58f78c88df3745c4ea5dfb58e918e716df5429825eacd401e0385767a6226dd2105dd4f5b472bb15df9b9f30da0fc67263f512d3f372a172d2c9a8c3e16
   languageName: node
   linkType: hard
 
@@ -19139,7 +19139,7 @@ __metadata:
     "@visx/group": 2.1.0
     "@visx/scale": 2.2.2
     "@visx/shape": 2.4.0
-    "@visx/tooltip": 2.1.0
+    "@visx/tooltip": 2.2.2
     "@welldone-software/why-did-you-render": 6.2.1
     "@wojtekmaj/enzyme-adapter-react-17": 0.6.2
     abortcontroller-polyfill: 1.4.0
