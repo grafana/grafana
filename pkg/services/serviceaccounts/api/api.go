@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -60,7 +59,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 		return response.Error(500, "Failed to create service account", err)
 	}
 
-	return response.JSON(201, user).SetHeader("Location", fmt.Sprintf("/api/serviceaccounts/%d", user.Id))
+	return response.JSON(201, user)
 }
 
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
