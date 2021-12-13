@@ -110,7 +110,7 @@ func TestMiddlewareQuota(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("userQuota", func(query *models.GetUserQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("userQuota", func(_ context.Context, query *models.GetUserQuotaByTargetQuery) error {
 				query.Result = &models.UserQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -119,7 +119,7 @@ func TestMiddlewareQuota(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("orgQuota", func(query *models.GetOrgQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("orgQuota", func(_ context.Context, query *models.GetOrgQuotaByTargetQuery) error {
 				query.Result = &models.OrgQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,

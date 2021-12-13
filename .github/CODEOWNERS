@@ -85,6 +85,7 @@ go.sum @grafana/backend-platform
 /plugins-bundled @grafana/plugins-platform-frontend
 /public @grafana/user-essentials
 /public/app/core/components/TimePicker @grafana/grafana-bi-squad
+/public/app/core/components/Layers @grafana/grafana-edge-squad
 /public/app/features/canvas/ @grafana/grafana-edge-squad
 /public/app/features/dimensions/ @grafana/grafana-edge-squad
 /public/app/features/live/ @grafana/grafana-edge-squad

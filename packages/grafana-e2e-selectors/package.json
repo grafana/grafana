@@ -27,23 +27,15 @@
     "@rollup/plugin-commonjs": "21.0.1",
     "@rollup/plugin-node-resolve": "13.0.6",
     "@types/node": "16.11.6",
-    "@types/rollup-plugin-visualizer": "4.2.1",
-    "@types/systemjs": "^0.20.6",
     "rimraf": "3.0.1",
     "rollup": "2.58.3",
     "rollup-plugin-sourcemaps": "0.6.3",
-    "rollup-plugin-terser": "7.0.2",
-    "rollup-plugin-typescript2": "0.30.0",
-    "rollup-plugin-visualizer": "5.5.2",
-    "ts-loader": "6.2.1",
-    "ts-node": "9.0.0"
+    "rollup-plugin-terser": "7.0.2"
   },
   "types": "src/index.ts",
   "dependencies": {
     "@grafana/tsconfig": "^1.0.0-rc1",
-    "execa": "5.1.1",
     "tslib": "2.3.1",
-    "typescript": "4.4.3",
-    "yaml": "^1.8.3"
+    "typescript": "4.4.3"
   }
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -29,7 +30,7 @@ const (
 func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
-		bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourcesQuery) error {
 			assert.Equal(t, testOrgID, query.OrgId)
 			query.Result = []*models.DataSource{
 				{Name: "mmm"},
@@ -102,7 +103,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	const url = "localhost:5432"
 
 	// Stub handler
-	bus.AddHandler("sql", func(cmd *models.AddDataSourceCommand) error {
+	bus.AddHandlerCtx("sql", func(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 		assert.Equal(t, name, cmd.Name)
 		assert.Equal(t, url, cmd.Url)
 
@@ -156,7 +157,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	const url = "localhost:5432"
 
 	// Stub handler
-	bus.AddHandler("sql", func(cmd *models.AddDataSourceCommand) error {
+	bus.AddHandlerCtx("sql", func(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 		assert.Equal(t, name, cmd.Name)
 		assert.Equal(t, url, cmd.Url)
 
@@ -191,26 +192,26 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		Type:   "postgresql",
 		Access: "Proxy",
 	}
-	getDatasourceStub := func(query *models.GetDataSourceQuery) error {
+	getDatasourceStub := func(ctx context.Context, query *models.GetDataSourceQuery) error {
 		result := testDatasource
 		result.Id = query.Id
 		result.OrgId = query.OrgId
 		query.Result = &result
 		return nil
 	}
-	getDatasourcesStub := func(cmd *models.GetDataSourcesQuery) error {
+	getDatasourcesStub := func(ctx context.Context, cmd *models.GetDataSourcesQuery) error {
 		cmd.Result = []*models.DataSource{}
 		return nil
 	}
-	addDatasourceStub := func(cmd *models.AddDataSourceCommand) error {
+	addDatasourceStub := func(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 		cmd.Result = &testDatasource
 		return nil
 	}
-	updateDatasourceStub := func(cmd *models.UpdateDataSourceCommand) error {
+	updateDatasourceStub := func(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 		cmd.Result = &testDatasource
 		return nil
 	}
-	deleteDatasourceStub := func(cmd *models.DeleteDataSourceCommand) error {
+	deleteDatasourceStub := func(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
 		cmd.DeletedDatasourcesCount = 1
 		return nil
 	}
@@ -477,7 +478,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Cleanup(bus.ClearBusHandlers)
 			for i, handler := range test.busStubs {
-				bus.AddHandler(fmt.Sprintf("test_handler_%v", i), handler)
+				bus.AddHandlerCtx(fmt.Sprintf("test_handler_%v", i), handler)
 			}
 
 			cfg := setting.NewCfg()

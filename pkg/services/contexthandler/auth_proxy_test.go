@@ -32,7 +32,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 
 	// XXX: These handlers have to be injected AFTER calling getContextHandler, since the latter
 	// creates a SQLStore which installs its own handlers.
-	upsertHandler := func(cmd *models.UpsertUserCommand) error {
+	upsertHandler := func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 		require.Equal(t, name, cmd.ExternalUser.Login)
 		cmd.Result = &models.User{Id: userID}
 		return nil
@@ -49,7 +49,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		}
 		return nil
 	}
-	bus.AddHandler("", upsertHandler)
+	bus.AddHandlerCtx("", upsertHandler)
 	bus.AddHandlerCtx("", getUserHandler)
 	t.Cleanup(func() {
 		bus.ClearBusHandlers()
