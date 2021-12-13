@@ -3670,7 +3670,7 @@ __metadata:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@mdx-js/react": 1.6.22
     "@monaco-editor/react": 4.3.1
-    "@popperjs/core": 2.5.4
+    "@popperjs/core": 2.11.0
     "@react-aria/button": 3.3.4
     "@react-aria/focus": 3.5.0
     "@react-aria/menu": 3.3.0
@@ -5876,10 +5876,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@popperjs/core@npm:2.5.4":
-  version: 2.5.4
-  resolution: "@popperjs/core@npm:2.5.4"
-  checksum: 609d2d5a0ff4aa2810656783b22740cc5a859ccb0c2a1a2274c7073edae17701270d71c7688291a7ec0441706e458ec00d98912fdc81082f24e8853a295e60ac
+"@popperjs/core@npm:2.11.0":
+  version: 2.11.0
+  resolution: "@popperjs/core@npm:2.11.0"
+  checksum: 84d6f197d3ddfd8a5b05c7276c3692d8404c96128a946ab0a800b25567d8fc231928319c1f97a67e0817e76ce2a1b735589ef0f38f8e8835692408660a2395a1
   languageName: node
   linkType: hard
 
@@ -19062,7 +19062,7 @@ __metadata:
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.0.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.1
-    "@popperjs/core": 2.5.4
+    "@popperjs/core": 2.11.0
     "@react-aria/button": 3.3.4
     "@react-aria/focus": 3.5.0
     "@react-aria/interactions": 3.7.0
