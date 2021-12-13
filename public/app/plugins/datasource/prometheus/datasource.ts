@@ -17,6 +17,7 @@ import {
   TimeRange,
   DataFrame,
   dateTime,
+  renderLabelsTemplate,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -35,7 +36,7 @@ import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { getInitHints, getQueryHints } from './query_hints';
-import { getOriginalMetricName, renderTemplate, transform, transformV2 } from './result_transformer';
+import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
@@ -752,9 +753,9 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
         time: timestamp,
         timeEnd: timestamp,
         annotation,
-        title: renderTemplate(titleFormat, labels),
+        title: renderLabelsTemplate(titleFormat, labels),
         tags,
-        text: renderTemplate(textFormat, labels),
+        text: renderLabelsTemplate(textFormat, labels),
       };
     }
 
