@@ -48,6 +48,12 @@ export function findCommonLabels(labelsSets: Labels[]): Labels {
   }, (undefined as unknown) as Labels);
 }
 
+/** replace any labels in a string */
+export function renderLabelsTemplate(aliasPattern: string, aliasData: Labels): string {
+  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
+  return aliasPattern.replace(aliasRegex, (_, g1) => (aliasData[g1] ? aliasData[g1] : g1));
+}
+
 /**
  * Returns a map of labels that are in `labels`, but not in `commonLabels`.
  */
