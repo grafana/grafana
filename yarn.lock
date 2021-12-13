@@ -6356,23 +6356,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@reduxjs/toolkit@npm:1.6.1":
-  version: 1.6.1
-  resolution: "@reduxjs/toolkit@npm:1.6.1"
+"@reduxjs/toolkit@npm:1.7.0":
+  version: 1.7.0
+  resolution: "@reduxjs/toolkit@npm:1.7.0"
   dependencies:
-    immer: ^9.0.1
-    redux: ^4.1.0
-    redux-thunk: ^2.3.0
-    reselect: ^4.0.0
+    immer: ^9.0.7
+    redux: ^4.1.2
+    redux-thunk: ^2.4.1
+    reselect: ^4.1.5
   peerDependencies:
-    react: ^16.14.0 || ^17.0.0
-    react-redux: ^7.2.1
+    react: ^16.9.0 || ^17.0.0 || 18.0.0-beta
+    react-redux: ^7.2.1 || ^8.0.0-beta
   peerDependenciesMeta:
     react:
       optional: true
     react-redux:
       optional: true
-  checksum: 487e34003671b4bf3fbb983dd4d6e23ddeea0170aaefee765e38a7942b317895c8fae91a82dd698489a072c4ca8be9d317749a329ad9fb0129c3ed96f6142c18
+  checksum: 4a5ac40866485136a28020330df9340af80e1eaa9fd51870c531a48140d5f9ef89cfbec31def6bd87f1ae0e6ef5590ebec709bf57e0a8ccb915ebd542b0199d6
   languageName: node
   linkType: hard
 
@@ -19076,7 +19076,7 @@ __metadata:
     "@react-types/menu": 3.4.1
     "@react-types/overlays": 3.5.1
     "@react-types/shared": 3.10.0
-    "@reduxjs/toolkit": 1.6.1
+    "@reduxjs/toolkit": 1.7.0
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@sentry/browser": 6.15.0
     "@sentry/types": 6.15.0
@@ -20243,10 +20243,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immer@npm:9.0.6, immer@npm:^9.0.1":
+"immer@npm:9.0.6":
   version: 9.0.6
   resolution: "immer@npm:9.0.6"
   checksum: 75da22f3b32f3f14604eb389b4f50e84a14f2e42f306f0cbe4d2969aed54ec7fda9a7e9ca42ebae2ba73ec9bb6ec1001fafbac535accaf03860054ab0f7e8388
+  languageName: node
+  linkType: hard
+
+"immer@npm:^9.0.7":
+  version: 9.0.7
+  resolution: "immer@npm:9.0.7"
+  checksum: 3655ad64bf5ab5adf2854f7d2a9ad543f2cd995fcd169b6f10294f41fdb2cbcbd44d8beaa3e01b3c0b6149001190e57f6ab2cd735e6a929780b7462f2e973c9b
   languageName: node
   linkType: hard
 
@@ -29803,21 +29810,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux-thunk@npm:^2.3.0":
-  version: 2.4.0
-  resolution: "redux-thunk@npm:2.4.0"
+"redux-thunk@npm:^2.4.1":
+  version: 2.4.1
+  resolution: "redux-thunk@npm:2.4.1"
   peerDependencies:
     redux: ^4
-  checksum: 250cd88087bb4614052a5175fd6bd4c70b6a4479c357af8628b3a1d5f75d5b0a6c01645acc3257d3ed147a949708dd748a50b00402d548c3331038ed4f296edc
+  checksum: af5abb425fb9dccda02e5f387d6f3003997f62d906542a3d35fc9420088f550dc1a018bdc246c7d23ee852b4d4ab8b5c64c5be426e45a328d791c4586a3c6b6e
   languageName: node
   linkType: hard
 
-"redux@npm:4.1.1, redux@npm:^4.0.0, redux@npm:^4.0.4, redux@npm:^4.0.5, redux@npm:^4.1.0":
+"redux@npm:4.1.1, redux@npm:^4.0.0, redux@npm:^4.0.4, redux@npm:^4.0.5":
   version: 4.1.1
   resolution: "redux@npm:4.1.1"
   dependencies:
     "@babel/runtime": ^7.9.2
   checksum: 99519438a5d20b69404ad3816307ccc189f16df04b64c50d82c415ec488ea68b656d7a2fc81b6345e8d90f095344dfea68246500f72613d76464986660bc0485
+  languageName: node
+  linkType: hard
+
+"redux@npm:^4.1.2":
+  version: 4.1.2
+  resolution: "redux@npm:4.1.2"
+  dependencies:
+    "@babel/runtime": ^7.9.2
+  checksum: 6a839cee5bd580c5298d968e9e2302150e961318253819bcd97f9d945a5a409559eacddf6026f4118bb68b681c593d90e8a2c5bbf278f014aff9bf0d2d8fa084
   languageName: node
   linkType: hard
 
@@ -30206,7 +30222,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"reselect@npm:*, reselect@npm:^4.0.0":
+"reselect@npm:*":
   version: 4.1.0
   resolution: "reselect@npm:4.1.0"
   checksum: ef150c3cccf8c43f7e5f9f35b0f826f82287e84fb5219928b1c7a4c8e99297f004ecd27e4888334115d35c82ab20bc2c95987244d12253480d256a1241495ad2
@@ -30217,6 +30233,13 @@ __metadata:
   version: 4.0.0
   resolution: "reselect@npm:4.0.0"
   checksum: ac7dfc9ef2cdb42b6fc87a856f3ce904c2e4363a2bc1e6fb7eea5f78902a6f506e4388e6509752984877c6dbfe501100c076671d334799eb5a1bfe9936cb2c12
+  languageName: node
+  linkType: hard
+
+"reselect@npm:^4.1.5":
+  version: 4.1.5
+  resolution: "reselect@npm:4.1.5"
+  checksum: 54c13c1e795b2ea70cba8384138aebe78adda00cbea303cc94b64da0a70d74c896cc9a03115ae38b8bff990e7a60dcd6452ab68cbec01b0b38c1afda70714cf0
   languageName: node
   linkType: hard
 
