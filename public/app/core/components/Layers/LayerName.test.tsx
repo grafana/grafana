@@ -1,8 +1,8 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { LayerHeaderProps, LayerHeader } from './LayerHeader';
+import { LayerNameProps, LayerName } from './LayerName';
 
-describe('LayerHeader', () => {
+describe('LayerName', () => {
   it('Can edit title', () => {
     const scenario = renderScenario({});
     screen.getByTestId('layer-name-div').click();
@@ -11,7 +11,7 @@ describe('LayerHeader', () => {
     fireEvent.change(input, { target: { value: 'new name' } });
     fireEvent.blur(input);
 
-    expect((scenario.props.onChange as any).mock.calls[0][0].name).toBe('new name');
+    expect((scenario.props.onChange as any).mock.calls[0][0]).toBe('new name');
   });
 
   it('Show error when empty name is specified', async () => {
@@ -36,21 +36,21 @@ describe('LayerHeader', () => {
     expect(alert.textContent).toBe('Layer name already exists');
   });
 
-  function renderScenario(overrides: Partial<LayerHeaderProps>) {
-    const props: LayerHeaderProps = {
-      layer: { name: 'Layer 1', type: '?' },
-      canRename: (v: string) => {
-        const names = new Set(['Layer 1', 'Layer 2']);
-        return !names.has(v);
-      },
+  function renderScenario(overrides: Partial<LayerNameProps>) {
+    const props: LayerNameProps = {
+      name: 'Layer 1',
       onChange: jest.fn(),
+      verifyLayerNameUniqueness: (nameToCheck: string) => {
+        const names = new Set(['Layer 1', 'Layer 2']);
+        return !names.has(nameToCheck);
+      },
     };
 
     Object.assign(props, overrides);
 
     return {
       props,
-      renderResult: render(<LayerHeader {...props} />),
+      renderResult: render(<LayerName {...props} />),
     };
   }
 });

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -120,7 +119,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 				},
 			},
 			"output":   tmpl(sn.Message),
-			"issued":   time.Now().Unix(),
+			"issued":   timeNow().Unix(),
 			"interval": 86400,
 			"status":   status,
 			"handlers": handlers,
