@@ -6,7 +6,6 @@ import { OrgRole } from 'app/types/acl';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { Assignments, PermissionTarget, SetPermission } from './types';
 
-const roles = [OrgRole.Admin, OrgRole.Editor, OrgRole.Viewer];
 
 export interface Props {
   permissions: string[];
