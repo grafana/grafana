@@ -15,7 +15,8 @@ import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
 import { PopoverContent, Tooltip } from '../../../Tooltip/Tooltip';
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { ThemeContext } from '../../../../themes';
 
 /**
  * Changes in new selects:
@@ -49,6 +50,8 @@ export const MenuList = (props: any) => {
   );
 };
 export class Select<T> extends PureComponent<LegacySelectProps<T>> {
+  static contextType = ThemeContext;
+
   static defaultProps: Partial<LegacySelectProps<any>> = {
     className: '',
     isDisabled: false,
@@ -137,7 +140,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onChange={onChange}
               options={options}
               placeholder={placeholder || 'Choose'}
-              styles={resetSelectStyles()}
+              styles={resetSelectStyles(this.context as GrafanaTheme2)}
               isDisabled={isDisabled}
               isLoading={isLoading}
               isClearable={isClearable}
