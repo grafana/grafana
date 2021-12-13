@@ -32,7 +32,7 @@ func newApi(ac accesscontrol.AccessControl, router routing.RouteRegister, manage
 func (a *api) registerEndpoints() {
 	auth := middleware.Middleware(a.ac)
 	disable := middleware.Disable(a.ac.IsDisabled())
-	a.router.Group(fmt.Sprintf("/api/access-control/system/%s", a.service.options.Resource), func(r routing.RouteRegister) {
+	a.router.Group(fmt.Sprintf("/api/access-control/%s", a.service.options.Resource), func(r routing.RouteRegister) {
 		idScope := accesscontrol.Scope(a.service.options.Resource, "id", accesscontrol.Parameter(":resourceID"))
 		actionWrite, actionRead := fmt.Sprintf("%s.permissions:write", a.service.options.Resource), fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))

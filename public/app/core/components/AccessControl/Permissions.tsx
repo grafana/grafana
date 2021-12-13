@@ -143,19 +143,19 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
 };
 
 const getDescription = (resource: string): Promise<Description> => {
-  return getBackendSrv().get(`/api/access-control/system/${resource}/description`);
+  return getBackendSrv().get(`/api/access-control/${resource}/description`);
 };
 
 const getPermissions = (resource: string, datasourceId: number): Promise<ResourcePermission[]> => {
-  return getBackendSrv().get(`/api/access-control/system/${resource}/${datasourceId}`);
+  return getBackendSrv().get(`/api/access-control/${resource}/${datasourceId}`);
 };
 
 const setUserPermission = (resource: string, resourceId: number, userId: number, permission: string): Promise<void> => {
-  return getBackendSrv().post(`/api/access-control/system/${resource}/${resourceId}/users/${userId}`, { permission });
+  return getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/users/${userId}`, { permission });
 };
 
 const setTeamPermission = (resource: string, resourceId: number, teamId: number, permission: string): Promise<void> => {
-  return getBackendSrv().post(`/api/access-control/system/${resource}/${resourceId}/teams/${teamId}`, { permission });
+  return getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/teams/${teamId}`, { permission });
 };
 
 const setBuiltInRolePermission = (
@@ -164,7 +164,7 @@ const setBuiltInRolePermission = (
   builtInRole: string,
   permission: string
 ): Promise<void> => {
-  return getBackendSrv().post(`/api/access-control/system/${resource}/${resourceId}/builtInRoles/${builtInRole}`, {
+  return getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/builtInRoles/${builtInRole}`, {
     permission,
   });
 };
