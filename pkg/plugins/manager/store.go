@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Masterminds/semver"
+
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -41,6 +43,10 @@ func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) 
 }
 
 func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo plugins.Repository) error {
+	if !isSemVerExpr(version) {
+		return plugins.ErrInvalidPluginVersionFormat
+	}
+
 	var newPluginArchive *plugins.PluginArchiveInfo
 	if plugin, exists := m.plugin(pluginID); exists {
 		if !plugin.IsExternalPlugin() {
@@ -143,4 +149,14 @@ func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
 	m.log.Info("Uninstalling plugin %v", plugin.PluginDir)
 
 	return os.RemoveAll(plugin.PluginDir)
+}
+
+func isSemVerExpr(version string) bool {
+	if version == "" {
+		return false
+	}
+
+	_, err := semver.NewConstraint(version)
+
+	return err == nil
 }
