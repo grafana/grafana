@@ -6,7 +6,6 @@ import { OrgRole } from 'app/types/acl';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { Assignments, PermissionTarget, SetPermission } from './types';
 
-
 export interface Props {
   permissions: string[];
   assignments: Assignments;
@@ -42,18 +41,10 @@ export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, o
     }
   }, [permissions]);
 
-  const isValid = () => {
-    switch (target) {
-      case PermissionTarget.Team:
-        return teamId > 0;
-      case PermissionTarget.User:
-        return userId > 0;
-      case PermissionTarget.BuiltInRole:
-        return OrgRole.hasOwnProperty(builtInRole);
-      default:
-        return false;
-    }
-  };
+  const isValid = () =>
+    (target === PermissionTarget.Team && teamId > 0) ||
+    (target === PermissionTarget.User && userId > 0) ||
+    (PermissionTarget.BuiltInRole && OrgRole.hasOwnProperty(builtInRole));
 
   return (
     <div className="cta-form" aria-label="Permissions slider">
