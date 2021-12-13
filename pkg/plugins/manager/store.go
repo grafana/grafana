@@ -2,6 +2,8 @@ package manager
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -38,13 +40,8 @@ func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) 
 	return pluginsList
 }
 
-func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
-	var pluginZipURL string
-
-	if opts.PluginRepoURL == "" {
-		opts.PluginRepoURL = grafanaComURL
-	}
-
+func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo plugins.Repository) error {
+	var newPluginArchive *plugins.PluginArchiveInfo
 	if plugin, exists := m.plugin(pluginID); exists {
 		if !plugin.IsExternalPlugin() {
 			return plugins.ErrInstallCorePlugin
@@ -57,36 +54,52 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 			}
 		}
 
-		// get plugin update information to confirm if upgrading is possible
-		updateInfo, err := m.pluginInstaller.GetUpdateInfo(ctx, pluginID, version, opts.PluginRepoURL)
+		// get plugin update information to confirm if target update is possible
+		dlOpts, err := repo.GetDownloadOptions(ctx, pluginID, version)
 		if err != nil {
 			return err
 		}
 
-		pluginZipURL = updateInfo.PluginZipURL
+		// if existing plugin version is the same as the target update version
+		if dlOpts.Version == plugin.Info.Version {
+			return plugins.DuplicateError{
+				PluginID:          plugin.ID,
+				ExistingPluginDir: plugin.PluginDir,
+			}
+		}
+
+		if dlOpts.PluginZipURL == "" && dlOpts.Version == "" {
+			return fmt.Errorf("could not determine update options for %s", pluginID)
+		}
 
 		// remove existing installation of plugin
 		err = m.Remove(ctx, plugin.ID)
 		if err != nil {
 			return err
 		}
+
+		if dlOpts.PluginZipURL != "" {
+			newPluginArchive, err = repo.DownloadWithURL(ctx, pluginID, dlOpts.PluginZipURL)
+			if err != nil {
+				return err
+			}
+		} else {
+			newPluginArchive, err = repo.Download(ctx, pluginID, dlOpts.Version)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		var err error
+		newPluginArchive, err = repo.Download(ctx, pluginID, version)
+		if err != nil {
+			return err
+		}
 	}
 
-	if opts.PluginInstallDir == "" {
-		opts.PluginInstallDir = m.cfg.PluginsPath
-	}
-
-	if opts.PluginZipURL == "" {
-		opts.PluginZipURL = pluginZipURL
-	}
-
-	err := m.pluginInstaller.Install(ctx, pluginID, version, opts.PluginInstallDir, opts.PluginZipURL, opts.PluginRepoURL)
+	err := m.loadPlugins(newPluginArchive.Path)
 	if err != nil {
-		return err
-	}
-
-	err = m.loadPlugins(opts.PluginInstallDir)
-	if err != nil {
+		m.log.Error("Could not load plugin", "path", newPluginArchive.Path, "err", err)
 		return err
 	}
 
@@ -116,5 +129,18 @@ func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
 		}
 	}
 
-	return m.pluginInstaller.Uninstall(ctx, plugin.PluginDir)
+	// verify it's a plugin directory
+	if _, err := os.Stat(filepath.Join(plugin.PluginDir, "plugin.json")); err != nil {
+		if os.IsNotExist(err) {
+			if _, err := os.Stat(filepath.Join(plugin.PluginDir, "dist", "plugin.json")); err != nil {
+				if os.IsNotExist(err) {
+					return fmt.Errorf("tried to remove %s, but it doesn't seem to be a plugin", plugin.PluginDir)
+				}
+			}
+		}
+	}
+
+	m.log.Info("Uninstalling plugin %v", plugin.PluginDir)
+
+	return os.RemoveAll(plugin.PluginDir)
 }

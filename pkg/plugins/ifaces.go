@@ -17,14 +17,10 @@ type Store interface {
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 
-	// Add adds a plugin to the store.
-	Add(ctx context.Context, pluginID, version string, opts AddOpts) error
+	// Add adds a plugin from the repository to the store.
+	Add(ctx context.Context, pluginID, version string, repo Repository) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
-}
-
-type AddOpts struct {
-	PluginInstallDir, PluginZipURL, PluginRepoURL string
 }
 
 // Loader is responsible for loading plugins from the file system.
@@ -36,18 +32,14 @@ type Loader interface {
 	LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*Plugin, error)
 }
 
-// Installer is responsible for managing plugins (add / remove) on the file system.
-type Installer interface {
-	// Install downloads the requested plugin in the provided file system location.
-	Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
-	// Uninstall removes the requested plugin from the provided file system location.
-	Uninstall(ctx context.Context, pluginDir string) error
-	// GetUpdateInfo provides update information for the requested plugin.
-	GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (UpdateInfo, error)
-}
-
-type UpdateInfo struct {
-	PluginZipURL string
+// Repository is responsible for retrieving plugin information from a repository.
+type Repository interface {
+	// Download downloads the requested plugin archive.
+	Download(ctx context.Context, pluginID, version string) (*PluginArchiveInfo, error)
+	// GetDownloadOptions provides information for downloading the requested plugin.
+	GetDownloadOptions(ctx context.Context, pluginID, version string) (*PluginDownloadOptions, error)
+	// DownloadWithURL downloads the requested plugin from the specified URL.
+	DownloadWithURL(ctx context.Context, pluginID, archiveURL string) (*PluginArchiveInfo, error)
 }
 
 // Client is used to communicate with backend plugin implementations.

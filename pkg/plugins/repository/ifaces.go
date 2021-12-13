@@ -1,4 +1,4 @@
-package installer
+package repository
 
 type Logger interface {
 	Successf(format string, args ...interface{})

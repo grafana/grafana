@@ -86,6 +86,7 @@ type HTTPServer struct {
 	AccessControl             accesscontrol.AccessControl
 	DataProxy                 *datasourceproxy.DataSourceProxyService
 	PluginRequestValidator    models.PluginRequestValidator
+	pluginRepo                plugins.Repository
 	pluginClient              plugins.Client
 	pluginStore               plugins.Store
 	pluginDashboardManager    plugins.PluginDashboardManager
@@ -133,7 +134,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginService login.Service, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
-	contextHandler *contexthandler.ContextHandler,
+	contextHandler *contexthandler.ContextHandler, pluginRepo plugins.Repository,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	notificationService *notifications.NotificationService, tracingService tracing.Tracer,
@@ -155,6 +156,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SQLStore:                  sqlStore,
 		AlertEngine:               alertEngine,
 		PluginRequestValidator:    pluginRequestValidator,
+		pluginRepo:                pluginRepo,
 		pluginClient:              pluginClient,
 		pluginStore:               pluginStore,
 		pluginStaticRouteResolver: pluginStaticRouteResolver,

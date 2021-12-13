@@ -22,15 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
-)
-
-const (
-	grafanaComURL = "https://grafana.com/api/plugins"
 )
 
 var _ plugins.Client = (*PluginManager)(nil)
@@ -45,7 +40,6 @@ type PluginManager struct {
 	requestValidator models.PluginRequestValidator
 	sqlStore         *sqlstore.SQLStore
 	store            map[string]*plugins.Plugin
-	pluginInstaller  plugins.Installer
 	pluginLoader     plugins.Loader
 	pluginsMu        sync.RWMutex
 	log              log.Logger
@@ -69,7 +63,6 @@ func newManager(cfg *setting.Cfg, pluginRequestValidator models.PluginRequestVal
 		pluginLoader:     pluginLoader,
 		store:            map[string]*plugins.Plugin{},
 		log:              log.New("plugin.manager"),
-		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
 }
 

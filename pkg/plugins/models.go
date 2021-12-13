@@ -14,7 +14,7 @@ const (
 var (
 	ErrInstallCorePlugin           = errors.New("cannot install a Core plugin")
 	ErrUninstallCorePlugin         = errors.New("cannot uninstall a Core plugin")
-	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside")
+	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside of plugins directory")
 	ErrPluginNotInstalled          = errors.New("plugin is not installed")
 )
 
@@ -210,4 +210,16 @@ type ErrorCode string
 type Error struct {
 	ErrorCode `json:"errorCode"`
 	PluginID  string `json:"pluginId,omitempty"`
+}
+
+type PluginArchiveInfo struct {
+	ID           string
+	Version      string
+	Dependencies map[string]*PluginArchiveInfo
+	Path         string
+}
+
+type PluginDownloadOptions struct {
+	Version      string
+	PluginZipURL string
 }
