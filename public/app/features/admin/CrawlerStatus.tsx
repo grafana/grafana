@@ -24,11 +24,12 @@ interface CrawlerStatusMessage<T = DashboardSectionItem> {
   };
   count: number;
   index: number;
+  received: number;
   lastItemMS: number;
   lastItem?: T;
   counter: {
     networkRequests: number;
-    oldSchemas: number;
+    frontendMigrations: number;
   };
 }
 
@@ -89,7 +90,10 @@ export const CrawlerStatus = () => {
           <img style={{ float: 'right' }} src={`/preview/dash/${status.lastItem.uid}/thumb/${status.theme}`} />
         )}
         <ul>
-          <li></li>
+          <li>
+            {status.index} / {status.count} (recieved: {status.received})
+          </li>
+          {Boolean(status.counter.frontendMigrations) && <li>MIGRATIONS: {status.counter.frontendMigrations}</li>}
         </ul>
         <h2>
           {formattedValueToString(fmtPer(percent))} :: {formattedValueToString(fmtSec(uptime))}
