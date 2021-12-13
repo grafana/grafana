@@ -1,5 +1,6 @@
 import { parseLabels, formatLabels, findCommonLabels, findUniqueLabels, matchAllLabels } from './labels';
 import { Labels } from '../types/data';
+import { renderLabelsTemplate } from '.';
 
 describe('parseLabels()', () => {
   it('returns no labels on empty labels string', () => {
@@ -74,5 +75,26 @@ describe('matchAllLabels()', () => {
 
   it('be graceful with null values (match)', () => {
     expect(matchAllLabels((undefined as unknown) as Labels, { foo: 'bar' })).toBeTruthy();
+  });
+});
+
+describe('renderLabelsTemplate()', () => {
+  it('works with empty labels', () => {
+    expect(renderLabelsTemplate('hello', {})).toEqual('hello');
+  });
+
+  it('Simple replace', () => {
+    expect(renderLabelsTemplate('value: {{a}}', { a: 'AAA' })).toEqual('value: AAA');
+
+    // spaces ok
+    expect(renderLabelsTemplate('value: {{ a }}', { a: 'AAA' })).toEqual('value: AAA');
+  });
+
+  it('Bad syntax', () => {
+    expect(renderLabelsTemplate('value: {{a}', { a: 'AAA' })).toEqual('value: {{a}');
+    expect(renderLabelsTemplate('value: {a}}}', { a: 'AAA' })).toEqual('value: {a}}}');
+
+    // Current behavior -- not sure if expected or not
+    expect(renderLabelsTemplate('value: {{{a}}}', { a: 'AAA' })).toEqual('value: {a}');
   });
 });
