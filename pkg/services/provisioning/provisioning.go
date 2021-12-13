@@ -137,20 +137,32 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 
 func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) error {
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
-	err := ps.provisionDatasources(ctx, datasourcePath)
-	return errutil.Wrap("Datasource provisioning error", err)
+	if err := ps.provisionDatasources(ctx, datasourcePath); err != nil {
+		err = errutil.Wrap("Datasource provisioning error", err)
+		ps.log.Error("Failed to provision data sources", "error", err)
+		return err
+	}
+	return nil
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
-	err := ps.provisionPlugins(ctx, appPath, ps.pluginStore)
-	return errutil.Wrap("app provisioning error", err)
+	if err := ps.provisionPlugins(ctx, appPath, ps.pluginStore); err != nil {
+		err = errutil.Wrap("app provisioning error", err)
+		ps.log.Error("Failed to provision plugins", "error", err)
+		return err
+	}
+	return nil
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) error {
 	alertNotificationsPath := filepath.Join(ps.Cfg.ProvisioningPath, "notifiers")
-	err := ps.provisionNotifiers(ctx, alertNotificationsPath, ps.EncryptionService)
-	return errutil.Wrap("Alert notification provisioning error", err)
+	if err := ps.provisionNotifiers(ctx, alertNotificationsPath, ps.EncryptionService); err != nil {
+		err = errutil.Wrap("Alert notification provisioning error", err)
+		ps.log.Error("Failed to provision alert notifications", "error", err)
+		return err
+	}
+	return nil
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
