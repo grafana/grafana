@@ -78,6 +78,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 			cluster.DefaultProbeTimeout,
 			cluster.DefaultProbeInterval,
 			nil,
+			true,
 		)
 
 		if err != nil {

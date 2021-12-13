@@ -25,7 +25,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 	if c.OrgId != 0 {
 		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
-		err := bus.Dispatch(&query)
+		err := bus.DispatchCtx(c.Req.Context(), &query)
 
 		if err != nil {
 			return nil, err
@@ -36,7 +36,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			Datasources: query.Result,
 		}
 
-		if err := bus.Dispatch(&dsFilterQuery); err != nil {
+		if err := bus.DispatchCtx(c.Req.Context(), &dsFilterQuery); err != nil {
 			if !errors.Is(err, bus.ErrHandlerNotFound) {
 				return nil, err
 			}
@@ -155,7 +155,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		return nil, err
 	}
 
-	pluginsToPreload := []*PreloadPlugin{}
+	pluginsToPreload := make([]*PreloadPlugin, 0)
 	for _, app := range enabledPlugins[plugins.App] {
 		if app.Preload {
 			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
@@ -176,27 +176,12 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		if isDefault, _ := dsM["isDefault"].(bool); isDefault {
 			defaultDS = n
 		}
-
-		module, _ := dsM["module"].(string)
-		if preload, _ := dsM["preload"].(bool); preload && module != "" {
-			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
-				Path:    module,
-				Version: dsM["info"].(map[string]interface{})["version"].(string),
-			})
-		}
 	}
 
 	panels := map[string]interface{}{}
 	for _, panel := range enabledPlugins[plugins.Panel] {
 		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
 			continue
-		}
-
-		if panel.Preload {
-			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
-				Path:    panel.Module,
-				Version: panel.Info.Version,
-			})
 		}
 
 		panels[panel.ID] = map[string]interface{}{
@@ -248,6 +233,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
 		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
 		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
+		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,
+		"rudderstackConfigUrl":                setting.RudderstackConfigUrl,
 		"applicationInsightsConnectionString": hs.Cfg.ApplicationInsightsConnectionString,
 		"applicationInsightsEndpointUrl":      hs.Cfg.ApplicationInsightsEndpointUrl,
 		"disableLoginForm":                    setting.DisableLoginForm,

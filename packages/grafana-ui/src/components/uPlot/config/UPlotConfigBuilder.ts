@@ -4,6 +4,7 @@ import {
   DataFrame,
   DefaultTimeZone,
   EventBus,
+  Field,
   getTimeZoneInfo,
   GrafanaTheme2,
   TimeRange,
@@ -230,13 +231,13 @@ export class UPlotConfigBuilder {
       // When fillBelowTo option enabled, handle series bands fill manually
       if (this.bands?.length) {
         config.bands = this.bands;
-        const keepFill = new Set<number>();
+        const killFill = new Set<number>();
         for (const b of config.bands) {
-          keepFill.add(b.series[0]);
+          killFill.add(b.series[1]);
         }
 
         for (let i = 1; i < config.series.length; i++) {
-          if (!keepFill.has(i)) {
+          if (killFill.has(i)) {
             config.series[i].fill = undefined;
           }
         }
@@ -287,8 +288,8 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   eventBus: EventBus;
   allFrames: DataFrame[];
   renderers?: Renderers;
-  tweakScale?: (opts: ScaleProps) => ScaleProps;
-  tweakAxis?: (opts: AxisProps) => AxisProps;
+  tweakScale?: (opts: ScaleProps, forField: Field) => ScaleProps;
+  tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
 } & T;
 
 /** @alpha */

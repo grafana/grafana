@@ -1,10 +1,4 @@
-import {
-  MapLayerRegistryItem,
-  MapLayerOptions,
-  PanelData,
-  GrafanaTheme2,
-  PluginState,
-} from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -129,7 +123,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         // get properties for first feature to use as ui options
         const layerInfo = features.pipe(
           first(),
-          rxjsmap((v) => getLayerPropertyInfo(v)),
+          rxjsmap((v) => getLayerPropertyInfo(v))
         );
 
         builder
@@ -147,18 +141,6 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             defaultValue: defaultOptions.src,
           })
           .addCustomEditor({
-            id: 'config.rules',
-            path: 'config.rules',
-            name: 'Style Rules',
-            description: 'Apply styles based on feature properties',
-            editor: GeomapStyleRulesEditor,
-            settings: {
-              features: features,
-              layerInfo: layerInfo,
-            },
-            defaultValue: [],
-          })
-          .addCustomEditor({
             id: 'config.style',
             path: 'config.style',
             name: 'Default Style',
@@ -166,8 +148,21 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             editor: StyleEditor,
             settings: {
               simpleFixedValues: true,
+              layerInfo,
             },
             defaultValue: defaultOptions.style,
+          })
+          .addCustomEditor({
+            id: 'config.rules',
+            path: 'config.rules',
+            name: 'Style Rules',
+            description: 'Apply styles based on feature properties',
+            editor: GeomapStyleRulesEditor,
+            settings: {
+              features,
+              layerInfo,
+            },
+            defaultValue: [],
           });
       },
     };

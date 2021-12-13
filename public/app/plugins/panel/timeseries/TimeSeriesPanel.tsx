@@ -11,6 +11,7 @@ import { prepareGraphableFields } from './utils';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
+import { PanelDataErrorView } from '@grafana/runtime';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -24,6 +25,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   fieldConfig,
   onChangeTimeRange,
   replaceVariables,
+  id,
 }) => {
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
 
@@ -31,14 +33,10 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
+  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2), [data]);
 
-  if (!frames || warn) {
-    return (
-      <div className="panel-empty">
-        <p>{warn ?? 'No data found in response'}</p>
-      </div>
-    );
+  if (!frames) {
+    return <PanelDataErrorView panelId={id} data={data} needsTimeField={true} needsNumberField={true} />;
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
@@ -71,39 +69,45 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}
             {/* Enables annotations creation*/}
-            <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
-              {({ startAnnotating }) => {
-                return (
-                  <ContextMenuPlugin
-                    data={alignedDataFrame}
-                    config={config}
-                    timeZone={timeZone}
-                    replaceVariables={replaceVariables}
-                    defaultItems={
-                      enableAnnotationCreation
-                        ? [
+            {enableAnnotationCreation ? (
+              <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
+                {({ startAnnotating }) => {
+                  return (
+                    <ContextMenuPlugin
+                      data={alignedDataFrame}
+                      config={config}
+                      timeZone={timeZone}
+                      replaceVariables={replaceVariables}
+                      defaultItems={[
+                        {
+                          items: [
                             {
-                              items: [
-                                {
-                                  label: 'Add annotation',
-                                  ariaLabel: 'Add annotation',
-                                  icon: 'comment-alt',
-                                  onClick: (e, p) => {
-                                    if (!p) {
-                                      return;
-                                    }
-                                    startAnnotating({ coords: p.coords });
-                                  },
-                                },
-                              ],
+                              label: 'Add annotation',
+                              ariaLabel: 'Add annotation',
+                              icon: 'comment-alt',
+                              onClick: (e, p) => {
+                                if (!p) {
+                                  return;
+                                }
+                                startAnnotating({ coords: p.coords });
+                              },
                             },
-                          ]
-                        : []
-                    }
-                  />
-                );
-              }}
-            </AnnotationEditorPlugin>
+                          ],
+                        },
+                      ]}
+                    />
+                  );
+                }}
+              </AnnotationEditorPlugin>
+            ) : (
+              <ContextMenuPlugin
+                data={alignedDataFrame}
+                config={config}
+                timeZone={timeZone}
+                replaceVariables={replaceVariables}
+                defaultItems={[]}
+              />
+            )}
             {data.annotations && (
               <ExemplarsPlugin
                 config={config}

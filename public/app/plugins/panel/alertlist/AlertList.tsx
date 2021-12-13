@@ -78,6 +78,7 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
     props.options.folderId,
     props.options.alertName,
     props.options.sortOrder,
+    props.timeRange,
   ]);
 
   const recentStateChanges = useAsync(async () => {

@@ -23,10 +23,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
 
   dashlistStar: css`
-    display: flex;
-    align-items: center;
+    align-self: center;
+    margin-right: 0px;
     color: ${theme.colors.secondary.text};
-    cursor: pointer;
     z-index: 1;
   `,
 

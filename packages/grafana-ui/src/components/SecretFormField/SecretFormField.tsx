@@ -63,7 +63,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
               value="configured"
               {...omit(inputProps, 'value')}
             />
-            <Button onClick={onReset} variant="secondary">
+            <Button onClick={onReset} variant="secondary" type="button">
               Reset
             </Button>
           </>

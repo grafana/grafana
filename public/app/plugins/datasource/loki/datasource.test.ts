@@ -185,14 +185,26 @@ describe('LokiDatasource', () => {
 
       it('should add volume hint param for log volume queries', () => {
         const target = { expr: '{job="grafana"}', refId: 'B', volumeQuery: true };
-        const req = ds.createRangeQuery(target, options as any, 1000);
-        expect(req.hint).toBe('logvolhist');
+        ds.runRangeQuery(target, options);
+        expect(backendSrv.fetch).toBeCalledWith(
+          expect.objectContaining({
+            headers: {
+              'X-Query-Tags': 'Source=logvolhist',
+            },
+          })
+        );
       });
 
       it('should not add volume hint param for regular queries', () => {
         const target = { expr: '{job="grafana"}', refId: 'B', volumeQuery: false };
-        const req = ds.createRangeQuery(target, options as any, 1000);
-        expect(req.hint).not.toBeDefined();
+        ds.runRangeQuery(target, options);
+        expect(backendSrv.fetch).not.toBeCalledWith(
+          expect.objectContaining({
+            headers: {
+              'X-Query-Tags': 'Source=logvolhist',
+            },
+          })
+        );
       });
     });
   });
@@ -861,7 +873,7 @@ describe('LokiDatasource', () => {
       });
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
-          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz"} | logfmt | job="grafana"', ds);
+          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz",job="grafana"} | logfmt', ds);
         });
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"} | logfmt [5m])', 'rate({bar="baz",job="grafana"} | logfmt [5m])', ds);
@@ -896,7 +908,7 @@ describe('LokiDatasource', () => {
       });
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
-          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz"} | logfmt | job!="grafana"', ds);
+          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz",job!="grafana"} | logfmt', ds);
         });
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"} | logfmt [5m])', 'rate({bar="baz",job!="grafana"} | logfmt [5m])', ds);

@@ -141,7 +141,7 @@ describe('LibraryPanelsSearch', () => {
 
       expect(screen.getByPlaceholderText(/search by name/i)).toBeInTheDocument();
       expect(screen.getByText(/no library panels found./i)).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /panel type filter/i })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /panel type filter/i })).toBeInTheDocument();
     });
 
     describe('and user changes panel filter', () => {
@@ -149,8 +149,8 @@ describe('LibraryPanelsSearch', () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showPanelFilter: true });
         getLibraryPanelsSpy.mockClear();
 
-        userEvent.type(screen.getByRole('textbox', { name: /panel type filter/i }), 'Graph{enter}');
-        userEvent.type(screen.getByRole('textbox', { name: /panel type filter/i }), 'Time Series{enter}');
+        userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Graph{enter}');
+        userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Time Series{enter}');
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
         expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
           searchString: '',
@@ -169,7 +169,7 @@ describe('LibraryPanelsSearch', () => {
 
       expect(screen.getByPlaceholderText(/search by name/i)).toBeInTheDocument();
       expect(screen.getByText(/no library panels found./i)).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /folder filter/i })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /folder filter/i })).toBeInTheDocument();
     });
 
     describe('and user changes folder filter', () => {
@@ -177,8 +177,8 @@ describe('LibraryPanelsSearch', () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showFolderFilter: true });
         getLibraryPanelsSpy.mockClear();
 
-        userEvent.click(screen.getByRole('textbox', { name: /folder filter/i }));
-        userEvent.type(screen.getByRole('textbox', { name: /folder filter/i }), '{enter}', {
+        userEvent.click(screen.getByRole('combobox', { name: /folder filter/i }));
+        userEvent.type(screen.getByRole('combobox', { name: /folder filter/i }), '{enter}', {
           skipClick: true,
         });
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));

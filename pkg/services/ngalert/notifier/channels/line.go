@@ -19,6 +19,13 @@ var (
 
 // NewLineNotifier is the constructor for the LINE notifier
 func NewLineNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*LineNotifier, error) {
+	if model.Settings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
+	}
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
+
 	token := fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString())
 	if token == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find token in settings"}

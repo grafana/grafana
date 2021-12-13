@@ -215,6 +215,22 @@ so must be recompiled to validate newly-added CUE files.`,
 		},
 	},
 	{
+		Name:   "trim-resource",
+		Usage:  "trim schema-specified defaults from a resource",
+		Action: runCueCommand(cmd.trimResource),
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "dashboard",
+				Usage: "path to file containing (valid) dashboard JSON",
+			},
+			&cli.BoolFlag{
+				Name:  "apply",
+				Usage: "invert the operation: apply defaults instead of trimming them",
+				Value: false,
+			},
+		},
+	},
+	{
 		Name:  "gen-ts",
 		Usage: "generate TypeScript from all known CUE file types",
 		Description: `gen-ts generates TypeScript from all CUE files at

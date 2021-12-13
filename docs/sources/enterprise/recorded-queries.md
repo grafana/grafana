@@ -13,7 +13,7 @@ For our plugins that do not return time series, it might be useful to plot histo
 
 ## How recorded queries work
 
-**> Note:** An administrator must configure a Prometheus data source and associate it with a [Remote write target](#remote-write-target) before recorded queries can be used.
+> **Note:** An administrator must configure a Prometheus data source and associate it with a [Remote write target](#remote-write-target) before recorded queries can be used.
 
 Recorded queries only work with backend data source plugins. Refer to [Backend data source plugin](https://grafana.com/tutorials/build-a-data-source-backend-plugin/) for more information about backend data source plugins. You can recorded three types of queries:
 

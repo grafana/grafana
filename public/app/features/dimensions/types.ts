@@ -51,6 +51,21 @@ export interface ScaleDimensionOptions {
   hideRange?: boolean; // false
 }
 
+export enum ScalarDimensionMode {
+  Mod = 'mod',
+  Clamped = 'clamped',
+}
+export interface ScalarDimensionConfig extends BaseDimensionConfig<number> {
+  mode: ScalarDimensionMode;
+  min: number;
+  max: number;
+}
+
+export interface ScalarDimensionOptions {
+  min: number;
+  max: number;
+}
+
 export interface TextDimensionOptions {
   // anything?
 }

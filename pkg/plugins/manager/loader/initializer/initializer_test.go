@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/inconshreveable/log15"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -37,6 +38,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: setting.NewCfg(),
+			log: &fakeLogger{},
 		}
 
 		err := i.Initialize(p)
@@ -71,6 +73,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: setting.NewCfg(),
+			log: fakeLogger{},
 		}
 
 		err := i.Initialize(p)
@@ -117,6 +120,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			cfg: &setting.Cfg{
 				AppSubURL: "appSubURL",
 			},
+			log: fakeLogger{},
 		}
 
 		err := i.Initialize(p)
@@ -163,6 +167,7 @@ func TestInitializer_InitializeWithFactory(t *testing.T) {
 			cfg: &setting.Cfg{
 				AppSubURL: "appSubURL",
 			},
+			log: fakeLogger{},
 		}
 
 		factoryInvoked := false
@@ -202,6 +207,7 @@ func TestInitializer_InitializeWithFactory(t *testing.T) {
 			cfg: &setting.Cfg{
 				AppSubURL: "appSubURL",
 			},
+			log: fakeLogger{},
 		}
 
 		err := i.InitializeWithFactory(p, nil)
@@ -236,6 +242,7 @@ func TestInitializer_envVars(t *testing.T) {
 				},
 			},
 			license: licensing,
+			log:     fakeLogger{},
 		}
 
 		envVars := i.envVars(p)
@@ -252,6 +259,7 @@ func TestInitializer_setPathsBasedOnApp(t *testing.T) {
 	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
 		i := &Initializer{
 			cfg: setting.NewCfg(),
+			log: fakeLogger{},
 		}
 
 		child := &plugins.Plugin{
@@ -346,4 +354,16 @@ func (t *testLicensingService) Environment() map[string]string {
 
 type testPlugin struct {
 	backendplugin.Plugin
+}
+
+type fakeLogger struct {
+	log.Logger
+}
+
+func (f fakeLogger) New(_ ...interface{}) log15.Logger {
+	return fakeLogger{}
+}
+
+func (f fakeLogger) Warn(_ string, _ ...interface{}) {
+
 }

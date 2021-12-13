@@ -141,10 +141,14 @@ func TestAccountDataAccess(t *testing.T) {
 
 			ac1cmd := models.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 			ac2cmd := models.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
+			serviceaccountcmd := models.CreateUserCommand{Login: "serviceaccount", Email: "service@test.com", Name: "serviceaccount name", IsAdmin: true, IsServiceAccount: true}
 
 			ac1, err := sqlStore.CreateUser(context.Background(), ac1cmd)
 			require.NoError(t, err)
 			ac2, err := sqlStore.CreateUser(context.Background(), ac2cmd)
+			require.NoError(t, err)
+			// user only used for making sure we filter out the service accounts
+			_, err = sqlStore.CreateUser(context.Background(), serviceaccountcmd)
 			require.NoError(t, err)
 
 			t.Run("Should be able to read user info projection", func(t *testing.T) {

@@ -8,12 +8,13 @@ import { fetchBuiltinRoles, fetchRoleOptions, UserRolePicker } from 'app/core/co
 
 export interface Props {
   users: OrgUser[];
+  orgId?: number;
   onRoleChange: (role: OrgRole, user: OrgUser) => void;
   onRemoveUser: (user: OrgUser) => void;
 }
 
 const UsersTable: FC<Props> = (props) => {
-  const { users, onRoleChange, onRemoveUser } = props;
+  const { users, orgId, onRoleChange, onRemoveUser } = props;
   const canUpdateRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
   const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
   const rolePickerDisabled = !canUpdateRole;
@@ -25,9 +26,9 @@ const UsersTable: FC<Props> = (props) => {
   useEffect(() => {
     async function fetchOptions() {
       try {
-        let options = await fetchRoleOptions();
+        let options = await fetchRoleOptions(orgId);
         setRoleOptions(options);
-        const builtInRoles = await fetchBuiltinRoles();
+        const builtInRoles = await fetchBuiltinRoles(orgId);
         setBuiltinRoles(builtInRoles);
       } catch (e) {
         console.error('Error loading options');
@@ -36,7 +37,7 @@ const UsersTable: FC<Props> = (props) => {
     if (contextSrv.accessControlEnabled()) {
       fetchOptions();
     }
-  }, []);
+  }, [orgId]);
 
   const getRoleOptions = async () => roleOptions;
   const getBuiltinRoles = async () => builtinRoles;
@@ -83,6 +84,7 @@ const UsersTable: FC<Props> = (props) => {
                 {contextSrv.accessControlEnabled() ? (
                   <UserRolePicker
                     userId={user.userId}
+                    orgId={orgId}
                     builtInRole={user.role}
                     onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
                     getRoleOptions={getRoleOptions}

@@ -32,7 +32,7 @@ import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
@@ -224,7 +224,7 @@ export class ElasticDatasource
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
-    const queryString = annotation.query || '*';
+    const queryString = annotation.query;
     const tagsField = annotation.tagsField || 'tags';
     const textField = annotation.textField || null;
 
@@ -247,8 +247,8 @@ export class ElasticDatasource
       dateRanges.push({ range: rangeEnd });
     }
 
-    const queryInterpolated = this.templateSrv.replace(queryString, {}, 'lucene');
-    const query = {
+    const queryInterpolated = this.interpolateLuceneQuery(queryString);
+    const query: any = {
       bool: {
         filter: [
           {
@@ -257,15 +257,17 @@ export class ElasticDatasource
               minimum_should_match: 1,
             },
           },
-          {
-            query_string: {
-              query: queryInterpolated,
-            },
-          },
         ],
       },
     };
 
+    if (queryInterpolated) {
+      query.bool.filter.push({
+        query_string: {
+          query: queryInterpolated,
+        },
+      });
+    }
     const data: any = {
       query,
       size: 10000,
@@ -365,9 +367,8 @@ export class ElasticDatasource
     );
   }
 
-  private interpolateLuceneQuery(queryString: string, scopedVars: ScopedVars) {
-    // Elasticsearch queryString should always be '*' if empty string
-    return this.templateSrv.replace(queryString, scopedVars, 'lucene') || '*';
+  private interpolateLuceneQuery(queryString: string, scopedVars?: ScopedVars) {
+    return this.templateSrv.replace(queryString, scopedVars, 'lucene');
   }
 
   interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
@@ -381,7 +382,7 @@ export class ElasticDatasource
             ...bucketAgg.settings,
             filters: bucketAgg.settings?.filters?.map((filter) => ({
               ...filter,
-              query: this.interpolateLuceneQuery(filter.query || '', scopedVars),
+              query: this.interpolateLuceneQuery(filter.query, scopedVars) || '*',
             })),
           },
         };
@@ -650,14 +651,14 @@ export class ElasticDatasource
 
         target.metrics = [];
         // Setting this for metrics queries that are typed as logs
-        queryObj = this.queryBuilder.getLogsQuery(target, limit, adhocFilters, target.query);
+        queryObj = this.queryBuilder.getLogsQuery(target, limit, adhocFilters);
       } else {
         logLimits.push();
         if (target.alias) {
-          target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
+          target.alias = this.interpolateLuceneQuery(target.alias, options.scopedVars);
         }
 
-        queryObj = this.queryBuilder.build(target, adhocFilters, target.query);
+        queryObj = this.queryBuilder.build(target, adhocFilters);
       }
 
       const esQuery = JSON.stringify(queryObj);
@@ -799,7 +800,7 @@ export class ElasticDatasource
     );
   }
 
-  getTerms(queryDef: any, range = getDefaultTimeRange()): Observable<MetricFindValue[]> {
+  getTerms(queryDef: TermsQuery, range = getDefaultTimeRange()): Observable<MetricFindValue[]> {
     const searchType = gte(this.esVersion, '5.0.0') ? 'query_then_fetch' : 'count';
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
@@ -846,13 +847,13 @@ export class ElasticDatasource
     const parsedQuery = JSON.parse(query);
     if (query) {
       if (parsedQuery.find === 'fields') {
-        parsedQuery.type = this.templateSrv.replace(parsedQuery.type, {}, 'lucene');
+        parsedQuery.type = this.interpolateLuceneQuery(parsedQuery.type);
         return lastValueFrom(this.getFields(parsedQuery.type, range));
       }
 
       if (parsedQuery.find === 'terms') {
-        parsedQuery.field = this.templateSrv.replace(parsedQuery.field, {}, 'lucene');
-        parsedQuery.query = this.templateSrv.replace(parsedQuery.query || '*', {}, 'lucene');
+        parsedQuery.field = this.interpolateLuceneQuery(parsedQuery.field);
+        parsedQuery.query = this.interpolateLuceneQuery(parsedQuery.query);
         return lastValueFrom(this.getTerms(parsedQuery, range));
       }
     }
@@ -865,7 +866,7 @@ export class ElasticDatasource
   }
 
   getTagValues(options: any) {
-    return lastValueFrom(this.getTerms({ field: options.key, query: '*' }));
+    return lastValueFrom(this.getTerms({ field: options.key }));
   }
 
   targetContainsTemplate(target: any) {

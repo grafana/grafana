@@ -12,6 +12,7 @@ import {
   SelectableValue,
   toCSV,
   transformDataFrame,
+  TimeZone,
 } from '@grafana/data';
 import { Button, Container, Spinner, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -30,6 +31,7 @@ import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer'
 interface Props {
   isLoading: boolean;
   options: GetDataOptions;
+  timeZone: TimeZone;
   data?: DataFrame[];
   panel?: PanelModel;
   onOptionsChange?: (options: GetDataOptions) => void;
@@ -184,7 +186,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   };
 
   getProcessedData(): DataFrame[] {
-    const { options, panel } = this.props;
+    const { options, panel, timeZone } = this.props;
     const data = this.state.transformedData;
 
     if (!options.withFieldConfig || !panel) {
@@ -197,6 +199,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       data,
       theme: config.theme2,
       fieldConfig: panel.fieldConfig,
+      timeZone,
       replaceVariables: (value: string) => {
         return value;
       },

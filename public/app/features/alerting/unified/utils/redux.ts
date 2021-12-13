@@ -13,8 +13,13 @@ export interface AsyncRequestState<T> {
   requestId?: string;
 }
 
-export const initialAsyncRequestState: AsyncRequestState<any> = Object.freeze({
+export const initialAsyncRequestState: Pick<
+  AsyncRequestState<undefined>,
+  'loading' | 'dispatched' | 'result' | 'error'
+> = Object.freeze({
   loading: false,
+  result: undefined,
+  error: undefined,
   dispatched: false,
 });
 

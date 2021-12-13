@@ -122,7 +122,7 @@ func TestNeedsSending(t *testing.T) {
 		},
 		{
 			name:        "state: error, needs to be re-sent",
-			expected:    false,
+			expected:    true,
 			resendDelay: 1 * time.Minute,
 			testState: &State{
 				State:              eval.Error,

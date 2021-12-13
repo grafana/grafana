@@ -7,6 +7,7 @@ import { setUsersSearchQuery } from './state/reducers';
 jest.mock('app/core/core', () => ({
   contextSrv: {
     hasPermission: () => true,
+    hasAccess: () => true,
   },
 }));
 
