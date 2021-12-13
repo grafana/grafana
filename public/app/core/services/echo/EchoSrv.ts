@@ -1,8 +1,8 @@
 import { getEchoSrv, EchoEventType } from '@grafana/runtime';
 import { captureException } from '@sentry/browser';
-import { PerformanceEvent } from './backends/PerformanceBackend';
+import { PerformanceEvent, PerformanceEventName } from './backends/PerformanceBackend';
 
-export const reportPerformance = (metric: string, value: number) => {
+export const reportPerformance = (metric: PerformanceEventName | string, value: number) => {
   getEchoSrv().addEvent<PerformanceEvent>({
     type: EchoEventType.Performance,
     payload: {

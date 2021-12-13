@@ -1,6 +1,18 @@
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 import { backendSrv } from '../../backend_srv';
 
+export enum PerformanceEventName {
+  frontend_boot_load_time_seconds = 'frontend_boot_load_time_seconds',
+  frontend_boot_js_done_time_seconds = 'frontend_boot_js_done_time_seconds',
+  frontend_boot_css_time_seconds = 'frontend_boot_css_time_seconds',
+  frontend_live_timeseries_data_render_delay = 'frontend_live_timeseries_data_render_delay',
+}
+
+export const liveEventNames: string[] = [PerformanceEventName.frontend_live_timeseries_data_render_delay];
+
+export const isLiveEvent = (performanceEvent: PerformanceEvent): boolean =>
+  liveEventNames.includes(performanceEvent.payload.name);
+
 export interface PerformanceEventPayload {
   name: string;
   value: number;
@@ -22,8 +34,12 @@ export class PerformanceBackend implements EchoBackend<PerformanceEvent, Perform
 
   constructor(public options: PerformanceBackendOptions) {}
 
-  addEvent = (e: EchoEvent) => {
-    this.buffer.push(e.payload);
+  private shouldBeSentToBackend = (e: PerformanceEvent) => !isLiveEvent(e);
+
+  addEvent = (e: PerformanceEvent) => {
+    if (this.shouldBeSentToBackend(e)) {
+      this.buffer.push(e.payload);
+    }
   };
 
   flush = () => {
