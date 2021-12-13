@@ -23,7 +23,7 @@ export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, o
   const [permission, setPermission] = useState<string>('');
 
   const targetOptions = useMemo(() => {
-    const options = [] as any;
+    const options = [];
     if (assignments.users && canListUsers) {
       options.push({ value: PermissionTarget.User, label: 'User', isDisabled: false });
     }
