@@ -49,7 +49,7 @@ export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, o
       case PermissionTarget.User:
         return userId > 0;
       case PermissionTarget.BuiltInRole:
-        return roles.some((r) => r === builtInRole);
+        return OrgRole.hasOwnProperty(builtInRole);
     }
     return false;
   };
