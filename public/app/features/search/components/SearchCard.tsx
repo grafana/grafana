@@ -16,13 +16,15 @@ export interface Props {
 }
 
 export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
-  const TOTAL_RETRIES = 5;
-  const theme = useTheme2();
-  const [hasPreview, setHasPreview] = useState(true);
-  const [hasFetched, setHasFetched] = useState(false);
-  const [updated, setUpdated] = useState<string>();
-  const themeId = theme.isDark ? 'dark' : 'light';
-  const imageSrc = `/preview/dash/${item.uid}/thumb/${themeId}`;
+  const NUM_IMAGE_RETRIES = 5;
+  const IMAGE_RETRY_DELAY = 10000;
+
+  const [hasImage, setHasImage] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<string>();
+  const [showExpandedView, setShowExpandedView] = useState(false);
+  const timeout = useRef<number | null>(null);
+
+  // Popper specific logic
   const offsetCallback = useCallback(({ placement, reference, popper }) => {
     let result: [number, number] = [0, 0];
     if (placement === 'bottom' || placement === 'top') {
@@ -44,37 +46,55 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       },
     ],
   });
+
+  const theme = useTheme2();
+  const themeId = theme.isDark ? 'dark' : 'light';
+  const imageSrc = `/preview/dash/${item.uid}/thumb/${themeId}`;
   const styles = getStyles(
     theme,
     markerElement?.getBoundingClientRect().width,
     popperElement?.getBoundingClientRect().width
   );
 
-  const [isOpen, setIsOpen] = useState(false);
-  const timeout = useRef<number | null>(null);
-
-  const onHover = async () => {
-    setIsOpen(true);
-    if (item.uid && !hasFetched) {
-      setHasFetched(true);
+  const onShowExpandedView = async () => {
+    setShowExpandedView(true);
+    if (item.uid && !lastUpdated) {
       const dashboard = await backendSrv.getDashboardByUid(item.uid);
       const { updated } = dashboard.meta;
-      setUpdated(new Date(updated).toLocaleString());
+      setLastUpdated(new Date(updated).toLocaleString());
     }
+  };
+
+  const onMouseEnter = () => {
+    timeout.current = window.setTimeout(onShowExpandedView, 500);
+  };
+
+  const onMouseMove = () => {
+    if (timeout.current) {
+      window.clearTimeout(timeout.current);
+    }
+    timeout.current = window.setTimeout(onShowExpandedView, 500);
+  };
+
+  const onMouseLeave = () => {
+    if (timeout.current) {
+      window.clearTimeout(timeout.current);
+    }
+    setShowExpandedView(false);
   };
 
   const retryImage = (retries: number) => {
     return () => {
       if (retries > 0) {
-        if (hasPreview) {
-          setHasPreview(false);
+        if (hasImage) {
+          setHasImage(false);
         }
-        setTimeout(() => {
+        window.setTimeout(() => {
           const img = new Image();
-          img.onload = () => setHasPreview(true);
+          img.onload = () => setHasImage(true);
           img.onerror = retryImage(retries - 1);
           img.src = imageSrc;
-        }, 10000);
+        }, IMAGE_RETRY_DELAY);
       }
     };
   };
@@ -95,25 +115,13 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
 
   return (
     <a
-      className={styles.gridItem}
+      className={styles.card}
       key={item.uid}
       href={item.url}
       ref={(ref) => setMarkerElement((ref as unknown) as HTMLDivElement)}
-      onMouseEnter={() => {
-        timeout.current = window.setTimeout(onHover, 500);
-      }}
-      onMouseLeave={() => {
-        if (timeout.current) {
-          window.clearTimeout(timeout.current);
-        }
-        setIsOpen(false);
-      }}
-      onMouseMove={() => {
-        if (timeout.current) {
-          window.clearTimeout(timeout.current);
-        }
-        timeout.current = window.setTimeout(onHover, 500);
-      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onMouseMove={onMouseMove}
     >
       <div className={styles.imageContainer}>
         <SearchCheckbox
@@ -123,29 +131,28 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
           checked={item.checked}
           onClick={onCheckboxClick}
         />
-        {hasPreview && (
+        {hasImage ? (
           <img
             loading="lazy"
             className={styles.image}
             src={imageSrc}
-            onLoad={() => setHasPreview(true)}
-            onError={retryImage(TOTAL_RETRIES)}
+            onLoad={() => setHasImage(true)}
+            onError={retryImage(NUM_IMAGE_RETRIES)}
           />
-        )}
-        {!hasPreview && (
-          <div className={styles.placeholder}>
+        ) : (
+          <div className={styles.imagePlaceholder}>
             <Icon name="apps" size="xl" />
           </div>
         )}
       </div>
       <div className={styles.info}>
-        <div className={styles.titleContainer}>{item.title}</div>
+        <div className={styles.title}>{item.title}</div>
         <TagList displayMax={1} tags={item.tags} onClick={onTagClick} />
       </div>
-      {isOpen && (
+      {showExpandedView && (
         <Portal className={styles.portal}>
           <div ref={setPopperElement} style={popperStyles.popper} {...attributes.popper}>
-            <SearchCardFull className={styles.fullCard} item={item} lastUpdated={updated} />
+            <SearchCardFull className={styles.expandedView} item={item} lastUpdated={lastUpdated} />
           </div>
         </Portal>
       )}
@@ -154,8 +161,14 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
 }
 
 const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => ({
-  portal: css`
-    pointer-events: none;
+  card: css`
+    background-color: ${theme.colors.background.secondary};
+    border: 1px solid ${theme.colors.border.medium};
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
   `,
   checkbox: css`
     left: 0;
@@ -163,7 +176,7 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => ({
     position: absolute;
     top: 0;
   `,
-  fullCard: css`
+  expandedView: css`
     @keyframes expand {
       0% {
         transform: scale(${markerWidth / popperWidth});
@@ -174,15 +187,6 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => ({
     }
 
     animation: expand ${theme.transitions.duration.shortest}ms ease-in-out 0s 1 normal;
-  `,
-  gridItem: css`
-    background-color: ${theme.colors.background.secondary};
-    border: 1px solid ${theme.colors.border.medium};
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
   `,
   image: css`
     aspect-ratio: 4 / 3;
@@ -205,6 +209,15 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => ({
       top: 0;
     }
   `,
+  imagePlaceholder: css`
+    align-items: center;
+    aspect-ratio: 4 / 3;
+    color: ${theme.colors.text.secondary};
+    display: flex;
+    justify-content: center;
+    margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
+    width: calc(100% - 64px);
+  `,
   info: css`
     align-items: center;
     background-color: ${theme.colors.background.canvas};
@@ -215,16 +228,10 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => ({
     gap: ${theme.spacing(1)};
     padding: 0 ${theme.spacing(2)};
   `,
-  placeholder: css`
-    align-items: center;
-    aspect-ratio: 4 / 3;
-    color: ${theme.colors.text.secondary};
-    display: flex;
-    justify-content: center;
-    margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
-    width: calc(100% - 64px);
+  portal: css`
+    pointer-events: none;
   `,
-  titleContainer: css`
+  title: css`
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
