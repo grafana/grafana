@@ -32,6 +32,9 @@ func TestBackendQueryMiddleware(t *testing.T) {
 		res, err := rt.RoundTrip(req)
 		require.NoError(t, err)
 		require.NotNil(t, res)
+		if res.Body != nil {
+			require.NoError(t, res.Body.Close())
+		}
 
 		require.Equal(t, req.Header.Get("X-Grafana-Test"), "test")
 		require.Equal(t, req.Header.Get("X-Grafana-Test2"), "test2")
@@ -54,6 +57,9 @@ func TestBackendQueryMiddleware(t *testing.T) {
 			res, err := rt.RoundTrip(req)
 			require.NoError(t, err)
 			require.NotNil(t, res)
+			if res.Body != nil {
+				require.NoError(t, res.Body.Close())
+			}
 
 			require.Equal(t, req.Header, headers)
 		}
@@ -67,6 +73,9 @@ func TestBackendQueryMiddleware(t *testing.T) {
 			res, err := rt.RoundTrip(req)
 			require.NoError(t, err)
 			require.NotNil(t, res)
+			if res.Body != nil {
+				require.NoError(t, res.Body.Close())
+			}
 
 			require.Equal(t, req.Header, headers)
 		}
@@ -80,6 +89,9 @@ func TestBackendQueryMiddleware(t *testing.T) {
 			res, err := rt.RoundTrip(req)
 			require.NoError(t, err)
 			require.NotNil(t, res)
+			if res.Body != nil {
+				require.NoError(t, res.Body.Close())
+			}
 
 			require.Equal(t, req.Header, headers)
 		}
