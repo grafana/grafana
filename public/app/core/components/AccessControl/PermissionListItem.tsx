@@ -68,9 +68,4 @@ const getDescription = (item: ResourcePermission) => {
   return <span key="name" />;
 };
 
-const getPermissionInfo = (p: ResourcePermission): string => {
-  const actions = [...(new Set(p.actions))]
-    .sort()
-    .join(' ');
-  return `Actions: ${actions}`;
-};
+const getPermissionInfo = (p: ResourcePermission): string => `Actions: ${[...new Set(p.actions)].sort().join(' ')}`;
