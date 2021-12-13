@@ -114,7 +114,7 @@ func TestGetAlert(t *testing.T) {
 			Created:     &created,
 			Updated:     &updated,
 		}
-		diff := cmp.Diff(exp, *out, cmpopts.IgnoreUnexported(middleware.Metadata{}))
+		diff := cmp.Diff(exp, *out, cmpopts.IgnoreUnexported(middleware.Metadata{}), cmpopts.IgnoreUnexported(exp))
 		assert.Empty(t, diff)
 	})
 }
