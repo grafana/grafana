@@ -200,7 +200,7 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:sign')
     .option('--signatureType <type>', 'Signature Type')
-    .option('--rootUrls <urls...>', 'Root URLs')
+    .option('--rootUrls <type>', 'Root URLs')
     .description('Create a plugin signature')
     .action(async (cmd) => {
       await execTask(pluginSignTask)({
