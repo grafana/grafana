@@ -140,7 +140,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       </div>
       <div className={styles.info}>
         <div className={styles.titleContainer}>{item.title}</div>
-        <TagList isCompact tags={item.tags} onClick={onTagClick} />
+        <TagList displayMax={1} tags={item.tags} onClick={onTagClick} />
       </div>
       {isOpen && (
         <Portal className={styles.portal}>
