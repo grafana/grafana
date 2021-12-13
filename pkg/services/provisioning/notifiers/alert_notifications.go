@@ -35,7 +35,7 @@ func (dc *NotificationProvisioner) apply(ctx context.Context, cfg *notifications
 		return err
 	}
 
-	if err := dc.mergeNotifications(cfg.Notifications); err != nil {
+	if err := dc.mergeNotifications(ctx, cfg.Notifications); err != nil {
 		return err
 	}
 
@@ -48,7 +48,7 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 
 		if notification.OrgID == 0 && notification.OrgName != "" {
 			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
-			if err := bus.Dispatch(getOrg); err != nil {
+			if err := bus.DispatchCtx(ctx, getOrg); err != nil {
 				return err
 			}
 			notification.OrgID = getOrg.Result.Id
@@ -73,11 +73,11 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 	return nil
 }
 
-func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*notificationFromConfig) error {
+func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notificationToMerge []*notificationFromConfig) error {
 	for _, notification := range notificationToMerge {
 		if notification.OrgID == 0 && notification.OrgName != "" {
 			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
-			if err := bus.Dispatch(getOrg); err != nil {
+			if err := bus.DispatchCtx(ctx, getOrg); err != nil {
 				return err
 			}
 			notification.OrgID = getOrg.Result.Id
@@ -86,7 +86,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 		}
 
 		cmd := &models.GetAlertNotificationsWithUidQuery{OrgId: notification.OrgID, Uid: notification.UID}
-		err := bus.Dispatch(cmd)
+		err := bus.DispatchCtx(ctx, cmd)
 		if err != nil {
 			return err
 		}
@@ -106,7 +106,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := bus.Dispatch(insertCmd); err != nil {
+			if err := bus.DispatchCtx(ctx, insertCmd); err != nil {
 				return err
 			}
 		} else {
@@ -124,7 +124,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := bus.Dispatch(updateCmd); err != nil {
+			if err := bus.DispatchCtx(ctx, updateCmd); err != nil {
 				return err
 			}
 		}

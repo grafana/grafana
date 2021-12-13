@@ -1,10 +1,10 @@
-import React, { FC, RefCallback, useCallback, useEffect, useRef } from 'react';
-import { isNil } from 'lodash';
-import classNames from 'classnames';
 import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import classNames from 'classnames';
+import { isNil } from 'lodash';
+import React, { FC, RefCallback, useCallback, useEffect, useRef } from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
 import { useStyles2 } from '../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
 
 export type ScrollbarPosition = positionValues;
 

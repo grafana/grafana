@@ -872,7 +872,7 @@ describe('LokiDatasource', () => {
       });
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
-          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz"} | logfmt | job="grafana"', ds);
+          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz",job="grafana"} | logfmt', ds);
         });
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"} | logfmt [5m])', 'rate({bar="baz",job="grafana"} | logfmt [5m])', ds);
@@ -907,7 +907,7 @@ describe('LokiDatasource', () => {
       });
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
-          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz"} | logfmt | job!="grafana"', ds);
+          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz",job!="grafana"} | logfmt', ds);
         });
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"} | logfmt [5m])', 'rate({bar="baz",job!="grafana"} | logfmt [5m])', ds);
