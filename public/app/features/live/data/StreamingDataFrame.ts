@@ -1,8 +1,5 @@
-import { DataFrame, Field, FieldDTO, FieldType, Labels, QueryResultMeta } from '../types';
-import { ArrayVector } from '../vector';
-import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
-import { guessFieldTypeFromValue, toFilteredDataFrameDTO } from './processDataFrame';
-import { join } from '../transformations/transformers/joinDataFrames';
+import { DataFrame, Field, FieldDTO, FieldType, Labels, QueryResultMeta, DataFrameJSON, decodeFieldValueEntities, FieldSchema, guessFieldTypeFromValue, ArrayVector, toFilteredDataFrameDTO } from '@grafana/data';
+import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { AlignedData } from 'uplot';
 
 /**

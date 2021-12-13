@@ -1,7 +1,4 @@
-import { reduceField, ReducerID, StreamingFrameAction, StreamingFrameOptions } from '..';
-import { getFieldDisplayName } from '../field';
-import { DataFrame, FieldType } from '../types';
-import { DataFrameJSON } from './DataFrameJSON';
+import { reduceField, ReducerID, StreamingFrameAction, StreamingFrameOptions, getFieldDisplayName, DataFrame, FieldType, DataFrameJSON } from '@grafana/data';
 import { StreamingDataFrame } from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {
