@@ -9209,10 +9209,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:^4.14.123, @types/lodash@npm:^4.14.146":
+"@types/lodash@npm:^4.14.123":
   version: 4.14.176
   resolution: "@types/lodash@npm:4.14.176"
   checksum: 9e949704dfffab60365b5cdca0477926af6eabe82c64b7be8f74b3a117bb373d58371be962c2b159dd0cf8fad49a7dcacc748564aea4ce6b6883c197a6f0bfa8
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:^4.14.172":
+  version: 4.14.178
+  resolution: "@types/lodash@npm:4.14.178"
+  checksum: a69a04a60bfc5257c3130a554b4efa0c383f0141b7b3db8ab7cf07ad2a46ea085fce66d0242da41da7e5647b133d5dfb2c15add9cbed8d7fef955e4a1e5b3128
   languageName: node
   linkType: hard
 
@@ -10358,20 +10365,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/scale@npm:2.1.0":
-  version: 2.1.0
-  resolution: "@visx/scale@npm:2.1.0"
-  dependencies:
-    "@types/d3-interpolate": ^1.3.1
-    "@types/d3-scale": ^3.3.0
-    "@types/d3-time": ^2.0.0
-    d3-interpolate: ^1.4.0
-    d3-scale: ^3.3.0
-    d3-time: ^2.1.1
-  checksum: 5f4006cefbc733e032bb49fff2c190c06c56a848b2f0ae607235bc847b9027d69bf1cca2c422cf872bdd27bf3e22ea2cc108a0ca545339d02de005856626a29f
-  languageName: node
-  linkType: hard
-
 "@visx/scale@npm:2.2.2":
   version: 2.2.2
   resolution: "@visx/scale@npm:2.2.2"
@@ -10386,25 +10379,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/shape@npm:2.1.0":
-  version: 2.1.0
-  resolution: "@visx/shape@npm:2.1.0"
+"@visx/shape@npm:2.4.0":
+  version: 2.4.0
+  resolution: "@visx/shape@npm:2.4.0"
   dependencies:
     "@types/d3-path": ^1.0.8
     "@types/d3-shape": ^1.3.1
-    "@types/lodash": ^4.14.146
+    "@types/lodash": ^4.14.172
     "@types/react": "*"
     "@visx/curve": 2.1.0
     "@visx/group": 2.1.0
-    "@visx/scale": 2.1.0
+    "@visx/scale": 2.2.2
     classnames: ^2.3.1
     d3-path: ^1.0.5
     d3-shape: ^1.2.0
-    lodash: ^4.17.15
+    lodash: ^4.17.21
     prop-types: ^15.5.10
   peerDependencies:
     react: ^16.3.0-0 || ^17.0.0-0
-  checksum: 6bda755794123bcac26898f5fd67877a37f474c725f160bbba9616d9a46d74e313ba1d9e0a30cac0b2ea143fb3b5345d03ae2e5f6937b46c88e79bdf7a371450
+  checksum: ab68e5db959de09695001ded2a694f9958b30318ac81d123815872e258392d1cf3c7a40cb4b4049f4e64ca4432d10059093057e5310edb9f35736c0dbdb06aea
   languageName: node
   linkType: hard
 
@@ -19145,7 +19138,7 @@ __metadata:
     "@visx/gradient": 2.1.0
     "@visx/group": 2.1.0
     "@visx/scale": 2.2.2
-    "@visx/shape": 2.1.0
+    "@visx/shape": 2.4.0
     "@visx/tooltip": 2.1.0
     "@welldone-software/why-did-you-render": 6.2.1
     "@wojtekmaj/enzyme-adapter-react-17": 0.6.2
