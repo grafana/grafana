@@ -18,5 +18,3 @@ To view field overrides:
 1. In the panel display options, click the **Overrides** tab.
 
 > The override settings that appear on the **All** tab are the same as the settings that appear on the **Overrides** tab.
-
-![View overrides](/static/img/docs/time-series-panel/panel-editor-8-0.png)

@@ -20,5 +20,3 @@ To map a regular expression:
 1. (Optional) Enter display text.
 1. (Optional) Set the color.
 1. Click **Update** to save the value mapping.
-
-![Map a regular expression](/static/img/docs/value-mappings/map-regex-8-0.png)
