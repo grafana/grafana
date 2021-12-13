@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
-import { useEffectOnce, useLifecycles } from 'react-use';
+import { useEffectOnce } from 'react-use';
 
 export interface Props {
   children: React.ReactNode | (({ isInView }: { isInView: boolean }) => React.ReactNode);
@@ -25,21 +25,18 @@ export function LazyLoader({ children, width, height, onLoad, onChange }: Props)
       setIsInView(entry.isIntersecting);
       onChange?.(entry.isIntersecting);
     });
-  });
 
-  useLifecycles(
-    () => {
-      if (wrapperRef.current) {
-        LazyLoader.observer.observe(wrapperRef.current);
-      }
-    },
-    () => {
+    if (wrapperRef.current) {
+      LazyLoader.observer.observe(wrapperRef.current);
+    }
+
+    return () => {
       delete LazyLoader.callbacks[id];
       if (Object.keys(LazyLoader.callbacks).length === 0) {
         LazyLoader.observer.disconnect();
       }
-    }
-  );
+    };
+  });
 
   return (
     <div id={id} ref={wrapperRef} style={{ width, height }}>
