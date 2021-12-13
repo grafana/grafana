@@ -53,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -115,6 +116,7 @@ type HTTPServer struct {
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
 	expressionService         *expr.Service
+	teamGuardian              teamguardian.TeamGuardian
 }
 
 type ServerOptions struct {
@@ -140,7 +142,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
-	dataSourcesService *datasources.Service, secretsService secrets.Service, expressionService *expr.Service) (*HTTPServer, error) {
+	dataSourcesService *datasources.Service, secretsService secrets.Service, expressionService *expr.Service,
+	teamGuardian teamguardian.TeamGuardian) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -194,6 +197,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
 		expressionService:         expressionService,
+		teamGuardian:              teamGuardian,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
