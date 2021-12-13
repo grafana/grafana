@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -51,24 +50,24 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) response.Response {
 	cmd := serviceaccounts.CreateServiceaccountForm{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "Bad request data", err)
+		return response.Error(400, "Bad request data", err)
 	}
 	user, err := api.service.CreateServiceAccount(c.Req.Context(), &cmd)
 	switch {
 	case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
-		return response.Error(http.StatusBadRequest, "Failed to create role with the provided name", err)
+		return response.Error(400, "Failed to create role with the provided name", err)
 	case err != nil:
-		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
+		return response.Error(500, "Failed to create service account", err)
 	}
 
-	return response.JSON(http.StatusCreated, user).SetHeader("Location", fmt.Sprintf("/api/serviceaccounts/%d", user.Id))
+	return response.JSON(201, user).SetHeader("Location", fmt.Sprintf("/api/serviceaccounts/%d", user.Id))
 }
 
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
 	scopeID := ctx.ParamsInt64(":serviceAccountId")
 	err := api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
+		return response.Error(500, "Service account deletion error", err)
 	}
 	return response.Success("service account deleted")
 }
