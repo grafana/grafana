@@ -16,7 +16,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
   - **Reduce row -** Apply selected calculation on each row of selected fields independently.
   - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
-- **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Reference: Calculations](../reference-calculations/_index.md).
+- **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Reference: Calculations]({{< relref "./reference-calculations.md" >}}).
 - **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
@@ -49,9 +49,9 @@ After you concatenate the fields, the data frame would be:
 
 ## Config from query results
 
-This transformation allow you to select one query and from it extract [standard options]({{< relref "../standard-options.md" >}}) like **Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results. This enables dynamic query driven visualization configuration.
+This transformation allow you to select one query and from it extract standard options like **Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results. This enables dynamic query driven visualization configuration.
 
-If you want to extract a unique config for every row in the config query result then try the [Rows to fields]({{< relref "./rows-to-fields" >}}) transformation instead.
+If you want to extract a unique config for every row in the config query result then try the rows to fields transformation.
 
 ## Convert field type
 
@@ -183,7 +183,7 @@ Conditions that are invalid or incompletely configured are ignored.
 
 ## Group by
 
-This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to the [List of calculations]({{< relref "../calculations-list.md" >}}).
+This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to the [List of calculations]({{< relref "./reference-calculations.md" >}}).
 
 Here's an example of original data.
 
@@ -283,7 +283,7 @@ In "Rows" mode, the result has a table for each series and show each label value
 
 ## Merge
 
-Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../../visualizations/table/_index.md" >}}).
+Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
 
 In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the transformation.
 
@@ -464,7 +464,7 @@ Output:
 
 The extra labels can now be used in the field display name provide more complete field names.
 
-If you want to extract config from one query and appply it to another you should use the [Config from query results](#query-from-config-results).
+If you want to extract config from one query and appply it to another you should use the config from query results transformation.
 
 ### Example
 
@@ -488,7 +488,7 @@ As you can see each row in the source data becomes a separate field. Each field 
 
 > **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 
-Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. [Read more about the different data frame formats here]({{< relref "../../developers/plugins/data-frames.md" >}}).
+Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames]({{< relref "../developers/plugins/data-frames.md" >}}).
 
 This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 

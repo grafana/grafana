@@ -1,9 +1,9 @@
 +++
-title = "Expressions"
-weight = 800
+title = "About expressions"
+weight = 10
 +++
 
-# Server-side expressions
+# About expressions
 
 > **Note:** This documentation is for a beta feature.
 
@@ -11,7 +11,7 @@ Server-side expressions allow you to manipulate data returned from queries with 
 
 ## Using expressions
 
-Expressions are primarily used by the new [Grafana 8 alerts]({{< relref "../alerting/unified-alerting/" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
+Expressions are primarily used by the new [Grafana 8 alerts]({{< relref "../../../alerting/unified-alerting/_index.md" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
 
 > **Note:** Expressions do not work with legacy dashboard alerts.
 
@@ -21,20 +21,20 @@ Expressions are meant to augment data sources by enabling queries from different
 
 > **Note:** When possible, you should do data processing inside the data source. Copying data from storage to the Grafana server for processing is inefficient, so expressions are targeted at lightweight data processing.
 
-Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data]({{< relref "../basics/timeseries-dimensions.md" >}}). For example, a query that returns multiple series, where each series is identified by labels or tags.
+Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data]({{< relref "../../../basics/timeseries-dimensions.md" >}}). For example, a query that returns multiple series, where each series is identified by labels or tags.
 
 An individual expression takes one or more queries or other expressions as input and adds data to the result. Each individual expression or query is represented by a variable that is a named identifier known as its RefID (e.g., the default letter `A` or `B`).
 
 To reference the output of an individual expression or a data source query in another expression, this identifier is used as a variable.
 
-## Types of expression
+## Types of expressions
 
 Expressions work with two types of data.
 
 - A collection of time series.
-- A collection of numbers, where each item in the collection is a single number.
+- A collection of numbers, where each number is an item.
 
-Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by it dimensions which are stored as [labels]({{< relref "../basics/timeseries-dimensions.md#labels" >}}) or key-value pairs.
+Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by its dimensions which are stored as [labels]({{< relref "../../../basics/timeseries-dimensions.md#labels" >}}) or key-value pairs.
 
 ## Data source queries
 
@@ -49,7 +49,7 @@ Currently, the only non-time series format (number) is supported when using data
 | MIA | A    | 1       |
 | NYC | B    | 2       |
 
-will produce a number that works with expressions. The string columns become labels and the number column the corresponding value. For example `{"Loc": "MIA", "Host": "A"}` with a value of 1.
+The example above will produce a number that works with expressions. The string columns become labels and the number column the corresponding value. For example `{"Loc": "MIA", "Host": "A"}` with a value of 1.
 
 ## Operations
 
@@ -75,7 +75,7 @@ With binary operations, such as `$A + $B` or `$A || $B`, the operator is applied
 - If one variable is a number, and the other variable is a time series, then the operation between the value of each point in the time series and the number is performed.
 - If both `$A` and `$B` are time series data, then the operation between each value in the two series is performed for each time stamp that exists in both `$A` and `$B`. The Resample operation can be used to line up time stamps. (**Note:** in the future, we plan to add options to the Math operation for different behaviors).
 
-So in summary:
+Summary:
 
 - Number OP number = number
 - Number OP series = series
