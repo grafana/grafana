@@ -3755,7 +3755,7 @@ __metadata:
     memoize-one: 6.0.0
     mock-raf: 1.0.1
     moment: 2.29.1
-    monaco-editor: 0.27.0
+    monaco-editor: ^0.31.0
     postcss: 8.3.11
     postcss-loader: 6.1.1
     prismjs: 1.25.0
@@ -19215,7 +19215,7 @@ __metadata:
     mini-css-extract-plugin: 2.4.4
     moment: 2.29.1
     moment-timezone: 0.5.33
-    monaco-editor: 0.27.0
+    monaco-editor: ^0.31.0
     monaco-promql: ^1.7.2
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
@@ -24672,10 +24672,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"monaco-editor@npm:0.27.0":
-  version: 0.27.0
-  resolution: "monaco-editor@npm:0.27.0"
-  checksum: 766ce20ea6f5b5861ce3a05fa437d0755622520ce3e7d6af84a103ea5daa52fe7053cfa4ab470fa84eb42a27810c336b39764c984b9cd30bc32fd69b2eba233b
+"monaco-editor@npm:^0.31.0":
+  version: 0.31.0
+  resolution: "monaco-editor@npm:0.31.0"
+  checksum: 6a610e8720d22ec65e55b7d746d058dbd20ff91afca19bcdd9f3a9f4bf58843229d4a3784868b9fdb3129d7bbfc2f905c530b72576090fdcc8ffe07ef8531159
   languageName: node
   linkType: hard
 
