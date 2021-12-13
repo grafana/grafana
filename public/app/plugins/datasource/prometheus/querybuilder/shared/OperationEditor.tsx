@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { FlexItem, Stack } from '@grafana/experimental';
-import { Button, IconButton, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 import React from 'react';
 import {
   VisualQueryModeller,
@@ -112,7 +112,18 @@ export function OperationEditor({
           queryModeller={queryModeller}
         />
         <FlexItem grow={1} />
-        <IconButton name="times" size="sm" onClick={() => onRemove(index)} />
+        <div>
+          {/* <Button icon="info-circle" size="sm" variant="secondary" fill="text" className={styles.headerButton} /> */}
+          <Button
+            icon="times"
+            size="sm"
+            onClick={() => onRemove(index)}
+            fill="text"
+            className={styles.headerButton}
+            variant="secondary"
+            title="Remove operation"
+          />
+        </div>
       </div>
       <div className={styles.body}>{operationElements}</div>
     </div>
@@ -186,6 +197,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontWeight: theme.typography.fontWeightMedium,
       verticalAlign: 'middle',
       height: '32px',
+    }),
+    headerButton: css({
+      color: theme.colors.text.secondary,
     }),
     paramValue: css({
       display: 'table-cell',

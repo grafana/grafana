@@ -15,6 +15,7 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
       PromVisualQueryOperationCategory.Math,
     ]);
   }
+
   renderQuery(query: PromVisualQuery) {
     let queryString = `${query.metric}${this.renderLabels(query.labels)}`;
     queryString = this.renderOperations(queryString, query.operations);

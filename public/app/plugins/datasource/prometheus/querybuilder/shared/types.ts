@@ -23,6 +23,7 @@ export interface QueryWithOperations {
 export interface QueryBuilderOperationDef<T = any> {
   id: string;
   displayName: string;
+  documentation?: string;
   params: QueryBuilderOperationParamDef[];
   defaultParams: QueryBuilderOperationParamValue[];
   category: string;
