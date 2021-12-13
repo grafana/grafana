@@ -765,8 +765,8 @@ steps:
   - end-to-end-tests-smoke-tests-suite
   - end-to-end-tests-various-suite
   environment:
-    GITHUB_PACKAGE_TOKEN:
-      from_secret: github_package_token
+    NPM_TOKEN:
+      from_secret: npm_token
   image: grafana/build-container:1.4.8
   name: release-canary-npm-packages
 - commands:
@@ -4109,6 +4109,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: b431c3bbdb4778dbed741bb5cd9840f106b4704280751dac4e145754f300a6ea
+hmac: e84ccb068a1b18aa34aaee36b44d2372d6c97bac8becd42261661952ca847b0c
 
 ...

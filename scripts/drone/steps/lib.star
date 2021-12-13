@@ -909,7 +909,7 @@ def release_canary_npm_packages_step(edition):
             'end-to-end-tests-various-suite',
         ],
         'environment': {
-            'GITHUB_PACKAGE_TOKEN': from_secret('github_package_token'),
+            'NPM_TOKEN': from_secret('npm_token'),
         },
         'commands': [
             './scripts/circle-release-canary-packages.sh',
