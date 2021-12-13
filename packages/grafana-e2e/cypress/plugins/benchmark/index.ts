@@ -26,10 +26,13 @@ const startBenchmarking = async ({ testName }: { testName: string }) => {
   return true;
 };
 
-const stopBenchmarking = async ({ testName }: { testName: string }) => {
+const stopBenchmarking = async ({ testName, appStats }: { testName: string; appStats: CollectedData }) => {
   const data = await Promise.all(collectors.map(async (coll) => [coll.getName(), await coll.stop({ id: testName })]));
 
-  results.push(fromPairs(data));
+  results.push({
+    ...fromPairs(data),
+    ...appStats,
+  });
 
   return true;
 };

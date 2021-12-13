@@ -7,6 +7,7 @@ export interface BenchmarkArguments {
     repeat: number;
     delayAfterOpeningDashboard: number;
     duration: number;
+    collectAppStats?: (window: Window) => Record<string, unknown>;
   };
   skipScenario?: boolean;
 }
@@ -14,7 +15,7 @@ export interface BenchmarkArguments {
 export const benchmark = ({
   name,
   skipScenario = false,
-  benchmarkingOptions: { duration, delayAfterOpeningDashboard, repeat, dashboardFolder },
+  benchmarkingOptions: { duration, delayAfterOpeningDashboard, repeat, dashboardFolder, collectAppStats },
 }: BenchmarkArguments) => {
   if (skipScenario) {
     describe(name, () => {
@@ -48,7 +49,15 @@ export const benchmark = ({
           e2e().startBenchmarking(testName);
           e2e().wait(duration);
 
-          e2e().stopBenchmarking(testName);
+          if (collectAppStats) {
+            e2e()
+              .window()
+              .then((win) => {
+                e2e().stopBenchmarking(testName, collectAppStats(win));
+              });
+          } else {
+            e2e().stopBenchmarking(testName, {});
+          }
         });
       });
 

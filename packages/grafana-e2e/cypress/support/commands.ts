@@ -36,6 +36,6 @@ Cypress.Commands.add('startBenchmarking', (testName: string) => {
   return cy.task('startBenchmarking', { testName });
 });
 
-Cypress.Commands.add('stopBenchmarking', (testName: string) => {
-  return cy.task('stopBenchmarking', { testName });
+Cypress.Commands.add('stopBenchmarking', (testName: string, appStats: Record<string, unknown>) => {
+  return cy.task('stopBenchmarking', { testName, appStats });
 });
