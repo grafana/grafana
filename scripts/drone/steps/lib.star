@@ -931,7 +931,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
               '--packages-bucket grafana-downloads-test'
     elif ver_mode == 'release':
-        packages_bucket = '$${PRERELEASE_BUCKET}/artifacts/downloads' + enterprise2_suffix(edition)
+        packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}/${{DRONE_TAG}}'.format(enterprise2_suffix(edition))
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
     else:
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)

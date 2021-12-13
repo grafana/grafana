@@ -1296,7 +1296,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads/${DRONE_TAG}
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -1812,7 +1812,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads/${DRONE_TAG}
   depends_on:
   - package
   - redis-integration-tests
@@ -1858,7 +1858,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets-enterprise2
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2
+  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2/${DRONE_TAG}
   depends_on:
   - package-enterprise2
   - redis-integration-tests
@@ -4109,6 +4109,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 0c6499564400a2892b18ca2a3e6ee855b4dec73ca913c1147fccff2978050bbe
+hmac: 1025f93a644fd0d45ff40a31dc99362e64157ef529604baa7f83b824a9a0ee82
 
 ...
