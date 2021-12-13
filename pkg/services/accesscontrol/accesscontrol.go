@@ -100,11 +100,7 @@ func BuildPermissionsMap(permissions []*Permission) map[string]bool {
 func GroupScopesByAction(permissions []*Permission) map[string][]string {
 	m := make(map[string][]string)
 	for _, p := range permissions {
-		if _, ok := m[p.Action]; ok {
-			m[p.Action] = append(m[p.Action], p.Scope)
-		} else {
-			m[p.Action] = []string{p.Scope}
-		}
+		m[p.Action] = append(m[p.Action], p.Scope)
 	}
 	return m
 }
