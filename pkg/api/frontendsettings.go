@@ -289,6 +289,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"recordedQueries": map[string]bool{
 			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(false),
 		},
+		"livePerformance": map[string]bool{
+			"measureDataRenderDelay": hs.Cfg.SectionWithEnvOverrides("live_performance").Key("measure_data_render_delay").MustBool(false),
+		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
 	}
 
