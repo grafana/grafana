@@ -97,7 +97,7 @@
     "@mdx-js/react": "1.6.22",
     "@rollup/plugin-commonjs": "21.0.1",
     "@rollup/plugin-image": "2.1.1",
-    "@rollup/plugin-node-resolve": "13.0.6",
+    "@rollup/plugin-node-resolve": "13.1.1",
     "@storybook/addon-a11y": "6.4.4",
     "@storybook/addon-actions": "6.4.4",
     "@storybook/addon-docs": "6.4.4",

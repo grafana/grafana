@@ -3347,7 +3347,7 @@ __metadata:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-json": 4.1.0
-    "@rollup/plugin-node-resolve": 13.0.6
+    "@rollup/plugin-node-resolve": 13.1.1
     "@swc/helpers": 0.3.2
     "@testing-library/dom": 8.11.1
     "@testing-library/jest-dom": 5.16.1
@@ -3401,7 +3401,7 @@ __metadata:
   dependencies:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@rollup/plugin-commonjs": 21.0.1
-    "@rollup/plugin-node-resolve": 13.0.6
+    "@rollup/plugin-node-resolve": 13.1.1
     "@types/node": 16.11.6
     rimraf: 3.0.1
     rollup: 2.58.3
@@ -3423,7 +3423,7 @@ __metadata:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 21.0.1
-    "@rollup/plugin-node-resolve": 13.0.6
+    "@rollup/plugin-node-resolve": 13.1.1
     "@types/node": 16.11.6
     "@types/uuid": 8.3.0
     babel-loader: 8.2.2
@@ -3488,7 +3488,7 @@ __metadata:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@grafana/ui": 8.4.0-pre
     "@rollup/plugin-commonjs": 21.0.1
-    "@rollup/plugin-node-resolve": 13.0.6
+    "@rollup/plugin-node-resolve": 13.1.1
     "@sentry/browser": 6.15.0
     "@testing-library/dom": ^8.11.1
     "@testing-library/react": ^12.1.2
@@ -3522,7 +3522,7 @@ __metadata:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-json": 4.1.0
-    "@rollup/plugin-node-resolve": 13.0.6
+    "@rollup/plugin-node-resolve": 13.1.1
     "@swc/helpers": 0.3.2
     rimraf: 3.0.1
     rollup: 2.58.3
@@ -3678,7 +3678,7 @@ __metadata:
     "@react-stately/menu": 3.2.3
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-image": 2.1.1
-    "@rollup/plugin-node-resolve": 13.0.6
+    "@rollup/plugin-node-resolve": 13.1.1
     "@sentry/browser": 6.15.0
     "@storybook/addon-a11y": 6.4.4
     "@storybook/addon-actions": 6.4.4
@@ -6416,9 +6416,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-node-resolve@npm:13.0.6":
-  version: 13.0.6
-  resolution: "@rollup/plugin-node-resolve@npm:13.0.6"
+"@rollup/plugin-node-resolve@npm:13.1.1":
+  version: 13.1.1
+  resolution: "@rollup/plugin-node-resolve@npm:13.1.1"
   dependencies:
     "@rollup/pluginutils": ^3.1.0
     "@types/resolve": 1.17.1
@@ -6428,7 +6428,7 @@ __metadata:
     resolve: ^1.19.0
   peerDependencies:
     rollup: ^2.42.0
-  checksum: da304025ca898f3ad70e3a24d788634298f2ca6e139517adff43f27ea9cf821af3ee3530ca6f8abaf7e697294b59803837cd8f0ec22e3b1d34d3411c39e9a32c
+  checksum: 28f917b2af2051b987173438ccfa6848acb8323eef0fa0bc0d4d9b962b853dbc885849875867e9a29c076098fb4452664663242303b69f5999df5df5f475863f
   languageName: node
   linkType: hard
 
