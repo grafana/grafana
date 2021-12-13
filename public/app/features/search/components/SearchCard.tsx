@@ -5,7 +5,7 @@ import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { usePopper } from 'react-popper';
-import { SearchCardFull } from './SearchCardFull';
+import { SearchCardExpanded } from './SearchCardExpanded';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 export interface Props {
@@ -83,16 +83,16 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
     setShowExpandedView(false);
   };
 
-  const retryImage = (retries: number) => {
+  const retryImage = (remainingRetries: number) => {
     return () => {
-      if (retries > 0) {
+      if (remainingRetries > 0) {
         if (hasImage) {
           setHasImage(false);
         }
         window.setTimeout(() => {
           const img = new Image();
           img.onload = () => setHasImage(true);
-          img.onerror = retryImage(retries - 1);
+          img.onerror = retryImage(remainingRetries - 1);
           img.src = imageSrc;
         }, IMAGE_RETRY_DELAY);
       }
@@ -152,7 +152,13 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       {showExpandedView && (
         <Portal className={styles.portal}>
           <div ref={setPopperElement} style={popperStyles.popper} {...attributes.popper}>
-            <SearchCardFull className={styles.expandedView} item={item} lastUpdated={lastUpdated} />
+            <SearchCardExpanded
+              className={styles.expandedView}
+              imageHeight={240}
+              imageWidth={320}
+              item={item}
+              lastUpdated={lastUpdated}
+            />
           </div>
         </Portal>
       )}
@@ -169,6 +175,10 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => ({
     flex-direction: column;
     height: 100%;
     width: 100%;
+
+    &:hover {
+      background-color: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
+    }
   `,
   checkbox: css`
     left: 0;
@@ -187,6 +197,7 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => ({
     }
 
     animation: expand ${theme.transitions.duration.shortest}ms ease-in-out 0s 1 normal;
+    background-color: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
   `,
   image: css`
     aspect-ratio: 4 / 3;

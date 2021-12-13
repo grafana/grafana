@@ -7,49 +7,59 @@ import { DashboardSectionItem } from '../types';
 
 export interface Props {
   className?: string;
+  imageHeight: number;
+  imageWidth: number;
   item: DashboardSectionItem;
   lastUpdated?: string;
 }
 
-export function SearchCardFull({ className, item, lastUpdated }: Props) {
+export function SearchCardExpanded({ className, imageHeight, imageWidth, item, lastUpdated }: Props) {
+  const NUM_IMAGE_RETRIES = 5;
+  const IMAGE_RETRY_DELAY = 10000;
+
   const theme = useTheme2();
-  const [hasPreview, setHasPreview] = useState(true);
+  const [hasImage, setHasImage] = useState(true);
   const themeId = theme.isDark ? 'dark' : 'light';
   const imageSrc = `/preview/dash/${item.uid}/thumb/${themeId}`;
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, imageHeight, imageWidth);
 
-  const retryImage = () => {
-    setHasPreview(false);
-    const img = new Image();
-    img.onload = () => setHasPreview(true);
-    img.onerror = retryImage;
-    setTimeout(() => {
-      img.src = imageSrc;
-    }, 5000);
+  const retryImage = (remainingRetries: number) => {
+    return () => {
+      if (remainingRetries > 0) {
+        if (hasImage) {
+          setHasImage(false);
+        }
+        window.setTimeout(() => {
+          const img = new Image();
+          img.onload = () => setHasImage(true);
+          img.onerror = retryImage(remainingRetries - 1);
+          img.src = imageSrc;
+        }, IMAGE_RETRY_DELAY);
+      }
+    };
   };
 
   const folderTitle = item.folderTitle || 'General';
 
   return (
-    <a className={classNames(className, styles.gridItem)} key={item.uid} href={item.url}>
+    <a className={classNames(className, styles.card)} key={item.uid} href={item.url}>
       <div className={styles.imageContainer}>
-        {hasPreview && (
+        {hasImage ? (
           <img
             loading="lazy"
             className={styles.image}
             src={imageSrc}
-            onLoad={() => setHasPreview(true)}
-            onError={retryImage}
+            onLoad={() => setHasImage(true)}
+            onError={retryImage(NUM_IMAGE_RETRIES)}
           />
-        )}
-        {!hasPreview && (
-          <div className={styles.placeholder}>
+        ) : (
+          <div className={styles.imagePlaceholder}>
             <Icon name="apps" size="xl" />
           </div>
         )}
       </div>
       <div className={styles.info}>
-        <div className={styles.header}>
+        <div className={styles.infoHeader}>
           <div className={styles.titleContainer}>
             <div>{item.title}</div>
             <div className={styles.folder}>
@@ -59,8 +69,7 @@ export function SearchCardFull({ className, item, lastUpdated }: Props) {
           </div>
           <div className={styles.updateContainer}>
             <div>Last updated</div>
-            {!lastUpdated && <Spinner />}
-            {lastUpdated && <div className={styles.update}>{lastUpdated}</div>}
+            {lastUpdated ? <div className={styles.update}>{lastUpdated}</div> : <Spinner />}
           </div>
         </div>
         <div>
@@ -71,15 +80,8 @@ export function SearchCardFull({ className, item, lastUpdated }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  folder: css`
-    align-items: center;
-    color: ${theme.colors.text.secondary};
-    display: flex;
-    font-size: ${theme.typography.size.sm};
-    gap: ${theme.spacing(0.5)};
-  `,
-  gridItem: css`
+const getStyles = (theme: GrafanaTheme2, imageHeight: Props['imageHeight'], imageWidth: Props['imageWidth']) => ({
+  card: css`
     background-color: ${theme.colors.background.secondary};
     border: 1px solid ${theme.colors.border.medium};
     border-radius: 4px;
@@ -87,19 +89,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     height: 100%;
-    max-width: 384px;
+    max-width: calc(${imageWidth}px + (${theme.spacing(4)} * 2))};
     width: 100%;
   `,
-  header: css`
+  folder: css`
+    align-items: center;
+    color: ${theme.colors.text.secondary};
     display: flex;
-    gap: ${theme.spacing(1)};
-    justify-content: space-between;
+    font-size: ${theme.typography.size.sm};
+    gap: ${theme.spacing(0.5)};
   `,
   image: css`
     box-shadow: ${theme.shadows.z3};
-    height: 240px;
+    height: ${imageHeight}px;
     margin: ${theme.spacing(1)} calc(${theme.spacing(4)} - 1px) 0;
-    width: 320px;
+    width: ${imageWidth}px;
   `,
   imageContainer: css`
     flex: 1;
@@ -116,6 +120,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
       top: 0;
     }
   `,
+  imagePlaceholder: css`
+    align-items: center;
+    color: ${theme.colors.text.secondary};
+    display: flex;
+    height: ${imageHeight}px;
+    justify-content: center;
+    margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
+    width: ${imageWidth}px;
+  `,
   info: css`
     background-color: ${theme.colors.background.canvas};
     border-bottom-left-radius: 4px;
@@ -126,14 +139,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: ${theme.spacing(1)};
     padding: ${theme.spacing(1)} ${theme.spacing(2)};
   `,
-  placeholder: css`
-    align-items: center;
-    color: ${theme.colors.text.secondary};
+  infoHeader: css`
     display: flex;
-    height: 240px;
-    justify-content: center;
-    margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
-    width: 320px;
+    gap: ${theme.spacing(1)};
+    justify-content: space-between;
   `,
   tagList: css`
     justify-content: flex-start;
