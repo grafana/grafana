@@ -189,7 +189,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 
 	t.Run("assert 202 when alertmanager to configure is not ready", func(t *testing.T) {
-		sut := createSut(t)
+		sut := createSutWithNonReadyAlertmanager(t)
 		rc := models.ReqContext{
 			SignedInUser: &models.SignedInUser{
 				OrgRole: models.ROLE_EDITOR,
