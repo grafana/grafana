@@ -189,7 +189,7 @@ function initEchoSrv() {
 
   if (config.livePerformance.measureDataRenderDelay) {
     registerEchoBackend(
-      new LivePerformanceBackend({
+      LivePerformanceBackend.create({
         maxIntervalsToKeep: 100,
       })
     );

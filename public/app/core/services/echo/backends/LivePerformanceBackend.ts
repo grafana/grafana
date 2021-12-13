@@ -1,5 +1,5 @@
 import { EchoBackend, EchoEventType } from '@grafana/runtime';
-import { fromPairs } from 'lodash';
+import { fromPairs, mapValues, sortBy } from 'lodash';
 import { isLiveEvent, liveEventNames, PerformanceEvent } from './PerformanceBackend';
 
 type IntervalStats = {
@@ -16,10 +16,11 @@ export class LivePerformanceBackend implements EchoBackend<PerformanceEvent, Liv
   supportedEvents = [EchoEventType.Performance];
 
   private buffer = emptyArrayByEventName<number>();
+  private livePerformanceStats = emptyArrayByEventName<IntervalStats>();
 
   private currentIndexByEventName = fromPairs(liveEventNames.map((name) => [name, 0]));
 
-  constructor(public options: LivePerformanceBackendOptions) {}
+  private constructor(public options: LivePerformanceBackendOptions) {}
 
   addEvent = (e: PerformanceEvent) => {
     if (isLiveEvent(e)) {
@@ -44,7 +45,7 @@ export class LivePerformanceBackend implements EchoBackend<PerformanceEvent, Liv
 
         const count = values.length;
         const index = this.currentIndexByEventName[name];
-        livePerformanceStats[name][index] = {
+        this.livePerformanceStats[name][index] = {
           ...reduced,
           count,
           time: Date.now(),
@@ -55,6 +56,16 @@ export class LivePerformanceBackend implements EchoBackend<PerformanceEvent, Liv
 
     this.buffer = emptyArrayByEventName<number>();
   };
+
+  static create = (options: LivePerformanceBackendOptions) => {
+    if (!singletonInstance) {
+      singletonInstance = new LivePerformanceBackend(options);
+    }
+
+    return singletonInstance;
+  };
+
+  getStats = () => mapValues(this.livePerformanceStats, (stats) => sortBy(stats, (v) => v.time));
 }
 
 const emptyArrayByEventName = <T>() =>
@@ -63,4 +74,6 @@ const emptyArrayByEventName = <T>() =>
     return acc;
   }, {} as Record<string, T[]>);
 
-export const livePerformanceStats = emptyArrayByEventName<IntervalStats>();
+let singletonInstance: LivePerformanceBackend | undefined;
+
+export const getLivePerformanceBackend = () => singletonInstance;
