@@ -8,6 +8,10 @@ def integration_test_services(edition):
               'POSTGRES_PASSWORD': 'grafanatest',
               'POSTGRES_DB': 'grafanatest',
             },
+            'volumes': [{
+                'name': 'postgres',
+                'path': '/var/lib/postgresql/data'
+            }],
         },
         {
             'name': 'mysql',
@@ -18,6 +22,10 @@ def integration_test_services(edition):
                 'MYSQL_USER': 'grafana',
                 'MYSQL_PASSWORD': 'password',
             },
+            'volumes': [{
+                'name': 'mysql',
+                'path': '/var/lib/mysql'
+            }]
         },
     ]
 

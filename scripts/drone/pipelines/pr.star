@@ -117,6 +117,20 @@ def pr_pipelines(edition):
         'event': ['pull_request',],
     }
 
+    volumes = [
+    {
+        'name': 'postgres',
+        'temp': {
+            'medium': 'memory'
+        }
+    },
+    {
+        'name': 'mysql',
+        'temp': {
+            'medium': 'memory'
+        }
+    }]
+
     return [
         pipeline(
             name='pr-test', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
@@ -125,6 +139,6 @@ def pr_pipelines(edition):
             name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
                 + build_steps,
         ), pipeline(
-            name='pr-integration-tests', edition=edition, trigger=trigger, services=services, steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps,
+            name='pr-integration-tests', edition=edition, trigger=trigger, services=services, steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps, volumes=volumes,
         ),
     ]

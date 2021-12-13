@@ -327,6 +327,9 @@ services:
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -334,6 +337,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -391,6 +397,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on: []
 kind: pipeline
@@ -407,6 +419,9 @@ services:
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -414,6 +429,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -990,6 +1008,9 @@ services:
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -997,6 +1018,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -1434,6 +1458,9 @@ services:
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -1441,6 +1468,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.1-alpine
   name: redis
@@ -1980,6 +2010,9 @@ services:
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -1987,6 +2020,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -2399,6 +2435,9 @@ services:
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -2406,6 +2445,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.1-alpine
   name: redis
@@ -3050,6 +3092,9 @@ services:
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -3057,6 +3102,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -3446,6 +3494,9 @@ services:
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -3453,6 +3504,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.1-alpine
   name: redis
@@ -4109,6 +4163,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: e84ccb068a1b18aa34aaee36b44d2372d6c97bac8becd42261661952ca847b0c
+hmac: 54a81856e84e4e7721dcea5932e1af52bf7218253b15ffdf8a39bb8848a91465
 
 ...
