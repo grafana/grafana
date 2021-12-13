@@ -24,8 +24,6 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa 
 	// create a new service account - "user" with empty permissions
 	cmd := models.CreateUserCommand{
 		Login:            "Service-Account-" + uuid.New().String(),
-		Email:            uuid.New().String(),
-		Password:         "Password-" + uuid.New().String(),
 		Name:             sa.Name + "-Service-Account-" + uuid.New().String(),
 		OrgId:            sa.OrgID,
 		IsServiceAccount: true,
