@@ -42,7 +42,7 @@ func ProvideServiceAccountsService(
 
 	basicKeys := store.GetNonServiceAccountAPIKeys(context.Background())
 	if len(basicKeys) > 0 {
-		s.log.Debug("Launching background thread to upgrade API keys to service accounts", "numberKeys", len(basicKeys))
+		s.log.Info("Launching background thread to upgrade API keys to service accounts", "numberKeys", len(basicKeys))
 		go func() {
 			for _, key := range basicKeys {
 				sa, err := store.CreateServiceAccountForApikey(context.Background(), key.OrgId, key.Name, key.Role)
