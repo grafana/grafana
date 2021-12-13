@@ -70,7 +70,7 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
     }
 
     if (promise !== null) {
-      promise.then(() => fetchItems());
+      promise.then(fetchItems);
     }
   };
 
