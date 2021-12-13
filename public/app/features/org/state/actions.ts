@@ -28,3 +28,15 @@ export function updateOrganization(
     dispatch(loadOrganization(dependencies));
   };
 }
+
+export function setUserOrganization(
+  orgId: number,
+  dependencies: OrganizationDependencies = { getBackendSrv: getBackendSrv }
+): ThunkResult<any> {
+  return async (dispatch) => {
+    const organizationResponse = await dependencies.getBackendSrv().post('/api/user/using/' + orgId);
+
+    dispatch(updateConfigurationSubtitle(organizationResponse.name));
+    dispatch(organizationLoaded(organizationResponse));
+  };
+}
