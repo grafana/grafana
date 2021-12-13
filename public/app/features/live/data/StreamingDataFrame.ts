@@ -1,16 +1,7 @@
 import { DataFrame, Field, FieldDTO, FieldType, Labels, QueryResultMeta, DataFrameJSON, decodeFieldValueEntities, FieldSchema, guessFieldTypeFromValue, ArrayVector, toFilteredDataFrameDTO } from '@grafana/data';
 import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { StreamingFrameAction, StreamingFrameOptions, getStreamingFrameOptions } from '@grafana/runtime';
 import { AlignedData } from 'uplot';
-
-/**
- * Indicate if the frame is appened or replace
- *
- * @public -- but runtime
- */
-export enum StreamingFrameAction {
-  Append = 'append',
-  Replace = 'replace',
-}
 
 /**
  * Stream packet info is attached to StreamingDataFrames and indicate how many
@@ -24,15 +15,6 @@ export interface StreamPacketInfo {
   action: StreamingFrameAction;
   length: number;
   schemaChanged: boolean;
-}
-
-/**
- * @alpha
- */
-export interface StreamingFrameOptions {
-  maxLength: number; // 1000
-  maxDelta: number; // how long to keep things
-  action: StreamingFrameAction; // default will append
 }
 
 enum PushMode {
@@ -164,20 +146,12 @@ export class StreamingDataFrame implements DataFrame {
   };
 
   static empty = (opts?: Partial<StreamingFrameOptions>): StreamingDataFrame =>
-    new StreamingDataFrame(StreamingDataFrame.optionsWithDefaults(opts));
+    new StreamingDataFrame(getStreamingFrameOptions(opts));
 
   static fromDataFrameJSON = (frame: DataFrameJSON, opts?: Partial<StreamingFrameOptions>): StreamingDataFrame => {
-    const streamingDataFrame = new StreamingDataFrame(StreamingDataFrame.optionsWithDefaults(opts));
+    const streamingDataFrame = new StreamingDataFrame(getStreamingFrameOptions(opts));
     streamingDataFrame.push(frame);
     return streamingDataFrame;
-  };
-
-  static optionsWithDefaults = (opts?: Partial<StreamingFrameOptions>): StreamingFrameOptions => {
-    return {
-      maxLength: opts?.maxLength ?? 1000,
-      maxDelta: opts?.maxDelta ?? Infinity,
-      action: opts?.action ?? StreamingFrameAction.Append,
-    };
   };
 
   private get alwaysReplace() {

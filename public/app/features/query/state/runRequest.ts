@@ -17,21 +17,21 @@ import {
   guessFieldTypes,
   LoadingState,
   PanelData,
-  StreamingDataFrame,
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
-import {
-  isAnyStreamingResponseData,
-  isStreamingResponseData,
-  StreamingResponseDataType,
-  toDataQueryError,
-} from '@grafana/runtime';
+import { toDataQueryError } from '@grafana/runtime';
 import { emitDataRequestEvent } from './queryAnalytics';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { cancelNetworkRequestsOnUnsubscribe } from './processing/canceler';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import {
+  isAnyStreamingResponseData,
+  isStreamingResponseData,
+  StreamingResponseDataType,
+} from 'app/features/live/data/utils';
+import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 

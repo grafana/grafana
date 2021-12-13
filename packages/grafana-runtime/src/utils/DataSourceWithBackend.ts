@@ -9,15 +9,19 @@ import {
   makeClassES5Compatible,
   DataFrame,
   parseLiveChannelAddress,
-  StreamingFrameOptions,
-  StreamingFrameAction,
   getDataSourceRef,
   DataSourceRef,
-  StreamingDataFrame,
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
-import { getBackendSrv, getDataSourceSrv, getGrafanaLiveSrv } from '../services';
+import {
+  getBackendSrv,
+  getDataSourceSrv,
+  getGrafanaLiveSrv,
+  StreamingFrameOptions,
+  StreamingFrameAction,
+  getStreamingFrameOptions,
+} from '../services';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
 /**
@@ -307,7 +311,7 @@ export const standardStreamOptionsProvider: StreamOptionsProvider = (request: Da
   if (request.rangeRaw?.to === 'now') {
     buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
   }
-  return StreamingDataFrame.optionsWithDefaults(buffer);
+  return getStreamingFrameOptions(buffer);
 };
 
 //@ts-ignore

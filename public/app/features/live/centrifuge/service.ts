@@ -1,14 +1,12 @@
 import Centrifuge from 'centrifuge/dist/centrifuge';
-import { GrafanaLiveSrv, LiveDataStreamOptions } from '@grafana/runtime/src/services/live';
-import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
 import {
-  LiveChannelAddress,
-  LiveChannelConnectionState,
-  LiveChannelId,
+  GrafanaLiveSrv,
+  LiveDataStreamOptions,
   StreamingFrameAction,
   StreamingFrameOptions,
-  toLiveChannelId,
-} from '@grafana/data';
+} from '@grafana/runtime/src/services/live';
+import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
+import { LiveChannelAddress, LiveChannelConnectionState, LiveChannelId, toLiveChannelId } from '@grafana/data';
 import { CentrifugeLiveChannel } from './channel';
 import { LiveDataStream } from './LiveDataStream';
 
