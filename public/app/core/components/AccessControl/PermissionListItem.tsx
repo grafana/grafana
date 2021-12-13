@@ -69,8 +69,7 @@ const getDescription = (item: ResourcePermission) => {
 };
 
 const getPermissionInfo = (p: ResourcePermission): string => {
-  const actions = p.actions
-    .filter((a, i, arr) => arr.indexOf(a) === i)
+  const actions = [...(new Set(p.actions))]
     .sort()
     .join(' ');
   return `Actions: ${actions}`;
