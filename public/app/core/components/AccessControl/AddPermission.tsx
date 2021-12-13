@@ -50,8 +50,9 @@ export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, o
         return userId > 0;
       case PermissionTarget.BuiltInRole:
         return OrgRole.hasOwnProperty(builtInRole);
+      default:
+        return false;
     }
-    return false;
   };
 
   return (
