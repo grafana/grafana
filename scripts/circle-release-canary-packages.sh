@@ -20,7 +20,7 @@ else
   echo "Changes detected in ${count} packages"
   echo "Starting to release latest canary version"
 
-  echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
+  echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
 
   # For some reason the --no-git-reset is not working as described so
   # to get lerna to publish the packages we need to do a commit to the
