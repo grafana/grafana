@@ -7,13 +7,7 @@ import { StoreState } from 'app/types';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { getNavModel } from '../../core/selectors/navModel';
-
-const createOrg = async (newOrg: { name: string }) => {
-  const result = await getBackendSrv().post('/api/orgs/', newOrg);
-
-  await getBackendSrv().post('/api/user/using/' + result.orgId);
-  window.location.href = getConfig().appSubUrl + '/org';
-};
+import { setUserOrganization } from './state/actions';
 
 const validateOrg = async (orgName: string) => {
   try {
@@ -30,13 +24,21 @@ const validateOrg = async (orgName: string) => {
 
 interface PropsWithState {
   navModel: NavModel;
+  setUserOrganization: typeof setUserOrganization;
 }
 
 interface CreateOrgFormDTO {
   name: string;
 }
 
-export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
+export const NewOrgPage: FC<PropsWithState> = ({ navModel, setUserOrganization }) => {
+  const createOrg = async (newOrg: { name: string }) => {
+    const result = await getBackendSrv().post('/api/orgs/', newOrg);
+
+    setUserOrganization(result.orgId);
+    window.location.href = getConfig().appSubUrl + '/org';
+  };
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -75,4 +77,8 @@ const mapStateToProps = (state: StoreState) => {
   return { navModel: getNavModel(state.navIndex, 'global-orgs') };
 };
 
-export default connect(mapStateToProps)(NewOrgPage);
+const mapDispatchToProps = {
+  setUserOrganization,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(NewOrgPage);
