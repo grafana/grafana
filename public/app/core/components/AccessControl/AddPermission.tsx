@@ -85,7 +85,7 @@ export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, o
               <Select
                 aria-label={'Built-in role picker'}
                 menuShouldPortal
-                options={roles.map((r) => ({ value: r, label: r }))}
+                options={Object.values(OrgRole).map((r) => ({ value: r, label: r }))}
                 onChange={(r) => setBuiltinRole(r.value || '')}
                 width={40}
               />
