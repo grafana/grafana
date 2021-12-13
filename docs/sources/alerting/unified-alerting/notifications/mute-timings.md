@@ -7,6 +7,21 @@ weight = 450
 
 # Mute timings
 
+A mute timing is a named recurring interval of time to mute notifications for a notification policy. This is useful for preventing alert notifications from a notification policy for a period of time that reoccurs, such as a regular maintenance period. If an alert is triggered and it matches the interval then a notification will not be sent for that policy.
+
+As with silences, mute timings do not prevent alert rules from being evaluated. They also do not stop alert instances being shown in the user interface. Mute timings only prevent notifications from being created.
+
+You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./fundamentals/alertmanager.md" >}}).
+
+## Mute timings vs silences
+
+While similar in effect there are a few key differences between mute timings and silences.
+
+| Mute timing                                        | Silence                                                                      |
+| -------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Uses time interval definitions that can reoccur    | Has a fixed start and end time                                               |
+| Is created and then added to notification policies | Uses labels to match against an alert to determine whether to silence or not |
+
 ## Create a mute timing
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
