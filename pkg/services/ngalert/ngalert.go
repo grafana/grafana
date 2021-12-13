@@ -138,6 +138,9 @@ func (ng *AlertNG) init() error {
 	}
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store)
 	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
+	mam := api.AlertmanagerProvider{
+		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
+	}
 
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
@@ -155,7 +158,7 @@ func (ng *AlertNG) init() error {
 		RuleStore:            store,
 		AlertingStore:        store,
 		AdminConfigStore:     store,
-		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
+		MultiOrgAlertmanager: mam,
 		StateManager:         ng.stateManager,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())

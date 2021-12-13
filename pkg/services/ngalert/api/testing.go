@@ -23,8 +23,8 @@ func newAlertmanagerProvider(t *testing.T) *FakeAlertmanagerProvider {
 	}
 }
 
-func (f FakeAlertmanagerProvider) Setup(orgID int64, am Alertmanager) {
-	f.alertmanagers[orgID] = am
+func (f FakeAlertmanagerProvider) Setup(orgID int64) {
+	f.alertmanagers[orgID] = &FakeAlertmanager{}
 }
 
 func (f FakeAlertmanagerProvider) AlertmanagerFor(orgID int64) (Alertmanager, error) {

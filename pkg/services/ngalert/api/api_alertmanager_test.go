@@ -142,14 +142,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 }
 
 func TestAlertmanagerConfig(t *testing.T) {
-	mam := newAlertmanagerProvider(t)
-	mam.Setup(1, &FakeAlertmanager{})
-	mam.Setup(2, &FakeAlertmanager{})
-	store := newFakeAlertingStore(t)
-	store.Setup(1)
-	store.Setup(2)
-	secrets := FakeSecretService{}
-	sut := AlertmanagerSrv{mam: mam, store: store, secrets: secrets}
+	sut := createSut(t)
 
 	t.Run("assert 404 Not Found when applying config to nonexistent org", func(t *testing.T) {
 		rc := models.ReqContext{
@@ -163,6 +156,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
 		require.Equal(t, 404, response.Status())
+		require.Contains(t, string(response.Body()), "Alertmanager does not exist for this organization")
 	})
 
 	t.Run("assert 403 Forbidden when applying config while not Editor", func(t *testing.T) {
@@ -177,6 +171,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
 		require.Equal(t, 403, response.Status())
+		require.Contains(t, string(response.Body()), "permission denied")
 	})
 
 	t.Run("assert 202 when config successfully applied", func(t *testing.T) {
@@ -194,16 +189,11 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 
 	t.Run("assert 202 when alertmanager to configure is not ready", func(t *testing.T) {
-		mam := NonReadyAlertmanagerProvider{
-			alertmanagers: map[int64]Alertmanager{},
-		}
-		mam.Setup(3, &FakeAlertmanager{})
-		store.Setup(3)
-		sut := AlertmanagerSrv{mam: mam, store: store, secrets: secrets}
+		sut := createSut(t)
 		rc := models.ReqContext{
 			SignedInUser: &models.SignedInUser{
 				OrgRole: models.ROLE_EDITOR,
-				OrgId:   3,
+				OrgId:   1,
 			},
 		}
 		request := apimodels.PostableUserConfig{}
@@ -214,11 +204,37 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 }
 
+func createSut(t *testing.T) AlertmanagerSrv {
+	t.Helper()
+
+	mam := newAlertmanagerProvider(t)
+	store := newFakeAlertingStore(t)
+	mam.Setup(1)
+	mam.Setup(2)
+	store.Setup(1)
+	store.Setup(2)
+	secrets := FakeSecretService{}
+	return AlertmanagerSrv{mam: mam, store: store, secrets: secrets}
+}
+
+func createSutWithNonReadyAlertmanager(t *testing.T) AlertmanagerSrv {
+	t.Helper()
+
+	mam := NonReadyAlertmanagerProvider{
+		alertmanagers: map[int64]Alertmanager{},
+	}
+	store := newFakeAlertingStore(t)
+	secrets := FakeSecretService{}
+	mam.Setup(1)
+	store.Setup(1)
+	return AlertmanagerSrv{mam: mam, store: store, secrets: secrets}
+}
+
 type NonReadyAlertmanagerProvider struct {
 	alertmanagers map[int64]Alertmanager
 }
 
-func (f NonReadyAlertmanagerProvider) Setup(orgID int64, am Alertmanager) {
+func (f NonReadyAlertmanagerProvider) Setup(orgID int64) {
 	f.alertmanagers[orgID] = &FakeAlertmanager{}
 }
 
