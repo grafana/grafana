@@ -14,7 +14,7 @@
 // under the License.
 
 // Package inject provides utilities for mapping and injecting dependencies in various ways.
-package macaron
+package web
 
 import (
 	"fmt"

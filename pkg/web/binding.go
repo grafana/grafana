@@ -1,4 +1,4 @@
-package macaron
+package web
 
 import (
 	"encoding/json"

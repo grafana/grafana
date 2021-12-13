@@ -16,7 +16,7 @@
 // under the License.
 
 // Package macaron is a high productive and modular web framework in Go.
-package macaron // import "gopkg.in/web.v1"
+package web
 
 import (
 	"context"

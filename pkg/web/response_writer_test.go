@@ -1,4 +1,4 @@
-package macaron_test
+package web
 
 import (
 	"net/http"
