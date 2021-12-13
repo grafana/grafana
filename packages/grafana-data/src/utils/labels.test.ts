@@ -84,10 +84,14 @@ describe('renderLabelsTemplate()', () => {
   });
 
   it('Simple replace', () => {
-    expect(renderLabelsTemplate('value: {{a}}', { a: 'AAA' })).toEqual('value: AAA');
+    const labels = {
+      a: 'AAA',
+      b: 'BBB',
+      'with space': 'CCC',
+    };
 
-    // spaces ok
-    expect(renderLabelsTemplate('value: {{ a }}', { a: 'AAA' })).toEqual('value: AAA');
+    expect(renderLabelsTemplate('value: {{a}}', labels)).toEqual('value: AAA');
+    expect(renderLabelsTemplate('{{a}} {{with space}}', labels)).toEqual('AAA CCC');
   });
 
   it('Bad syntax', () => {

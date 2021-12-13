@@ -50,7 +50,10 @@ export function findCommonLabels(labelsSets: Labels[]): Labels {
 
 /** replace labels in a string.  Used for loki+prometheus legend formats */
 export function renderLabelsTemplate(aliasPattern: string, aliasData: Labels): string {
-  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
+  let aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
+  if (false) {
+    aliasRegex = /(?:\{+\s*)([^{}]+)(?:\s*\}+)/g;
+  }
   return aliasPattern.replace(aliasRegex, (_, g1) => (aliasData[g1] ? aliasData[g1] : g1));
 }
 
