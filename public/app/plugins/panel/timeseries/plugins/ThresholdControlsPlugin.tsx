@@ -42,7 +42,7 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
     if (!thresholds) {
       return null;
     }
-    const scale = buildScaleKey(fieldConfig.defaults as FieldConfig<GraphFieldConfig>);
+    const scale = buildScaleKey(fieldConfig.defaults);
 
     const decimals = fieldConfig.defaults.decimals;
     const handles = [];
