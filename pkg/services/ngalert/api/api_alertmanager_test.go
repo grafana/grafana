@@ -192,4 +192,39 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 		require.Equal(t, 202, response.Status())
 	})
+
+	t.Run("assert 202 when alertmanager to configure is not ready", func(t *testing.T) {
+		mam := NonReadyAlertmanagerProvider{
+			alertmanagers: map[int64]Alertmanager{},
+		}
+		mam.Setup(3, &FakeAlertmanager{})
+		store.Setup(3)
+		sut := AlertmanagerSrv{mam: mam, store: store, secrets: secrets}
+		rc := models.ReqContext{
+			SignedInUser: &models.SignedInUser{
+				OrgRole: models.ROLE_EDITOR,
+				OrgId:   3,
+			},
+		}
+		request := apimodels.PostableUserConfig{}
+
+		response := sut.RoutePostAlertingConfig(&rc, request)
+
+		require.Equal(t, 202, response.Status())
+	})
+}
+
+type NonReadyAlertmanagerProvider struct {
+	alertmanagers map[int64]Alertmanager
+}
+
+func (f NonReadyAlertmanagerProvider) Setup(orgID int64, am Alertmanager) {
+	f.alertmanagers[orgID] = &FakeAlertmanager{}
+}
+
+func (f NonReadyAlertmanagerProvider) AlertmanagerFor(orgID int64) (Alertmanager, error) {
+	if am, ok := f.alertmanagers[orgID]; ok {
+		return am, notifier.ErrAlertmanagerNotReady
+	}
+	return nil, notifier.ErrNoAlertmanagerForOrg
 }
