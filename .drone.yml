@@ -825,6 +825,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on:
 - build-main
@@ -1384,6 +1390,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on:
 - oss-build-release
@@ -1917,6 +1929,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -2365,6 +2383,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on:
 - oss-build-test-release
@@ -2892,6 +2916,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -3431,6 +3461,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on:
 - oss-build-release-branch
@@ -3957,6 +3993,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -4171,6 +4213,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: e28bb925fee6eae2cfa6af11a3e33c79d8c47a9acc91966f07f61ae06ec32ce7
+hmac: 9afe1d2e12d866e8c4232a61a7a82c4d00f89e12456e1eb0ae29bba3f20d30a5
 
 ...

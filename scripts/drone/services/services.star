@@ -1,3 +1,9 @@
+def integration_test_services_volumes():
+    return [
+        { 'name': 'postgres', 'temp': { 'medium': 'memory' } },
+        { 'name': 'mysql', 'temp': { 'medium': 'memory' }
+    }]
+
 def integration_test_services(edition):
     services = [
         {
