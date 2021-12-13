@@ -50,6 +50,8 @@ jobs:
         message: |
           ⚠️ &nbsp;&nbsp;**Possible breaking changes**
 
+          _(Open the links in another tab to go to the correct steps)_
+
           ${{ env.BREAKING_CHANGES_MESSAGE }}
 
           [Check console output](${{steps.get-job-link.outputs.result}})
