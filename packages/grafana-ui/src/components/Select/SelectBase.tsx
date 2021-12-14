@@ -1,4 +1,4 @@
-import React, { ComponentProps, useCallback } from 'react';
+import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
 import { default as ReactSelect } from 'react-select';
 import Creatable from 'react-select/creatable';
 import { default as ReactAsyncSelect } from 'react-select/async';
@@ -145,6 +145,27 @@ export function SelectBase<T>({
   }
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
+
+  const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
+  const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
+
+  // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
+  // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).
+  // We can remove this workaround when the bug in react-select is fixed: https://github.com/JedWatson/react-select/issues/4936
+  // Note: we use useEffect instead of hooking into onMenuOpen due to another bug: https://github.com/JedWatson/react-select/issues/3375
+  useEffect(() => {
+    if (
+      loadOptions &&
+      isOpen &&
+      reactSelectRef.current &&
+      reactSelectRef.current.controlRef &&
+      menuPlacement === 'auto'
+    ) {
+      const distance = window.innerHeight - reactSelectRef.current.controlRef.getBoundingClientRect().bottom;
+      setCloseToBottom(distance < maxMenuHeight);
+    }
+  }, [maxMenuHeight, menuPlacement, loadOptions, isOpen]);
+
   const onChangeWithEmpty = useCallback(
     (value: SelectValue<T>, action: ActionMeta) => {
       if (isMulti && (value === undefined || value === null)) {
@@ -205,7 +226,7 @@ export function SelectBase<T>({
     minMenuHeight,
     maxVisibleValues,
     menuIsOpen: isOpen,
-    menuPlacement,
+    menuPlacement: menuPlacement === 'auto' && closeToBottom ? 'top' : menuPlacement,
     menuPosition,
     menuShouldBlockScroll: true,
     menuPortalTarget: menuShouldPortal ? document.body : undefined,
@@ -247,6 +268,7 @@ export function SelectBase<T>({
   return (
     <>
       <ReactSelectComponent
+        ref={reactSelectRef}
         components={{
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
