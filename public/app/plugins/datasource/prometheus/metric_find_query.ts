@@ -1,4 +1,4 @@
-import { chain, map as _map, uniq } from 'lodash';
+import { chain, map as _map } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MetricFindValue, TimeRange } from '@grafana/data';
