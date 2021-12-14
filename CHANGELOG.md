@@ -2,7 +2,7 @@
 
 # 8.3.2 (2021-12-10)
 
-- **Security**: Fixes CVE-2021-43813 and CVE-2021-PENDING. For more information, see our [blog](https://grafana.com/blog/2021/12/10/grafana-8.3.2-and-7.5.12-released-with-moderate-severity-security-fix/
+- **Security**: Fixes CVE-2021-43813 and CVE-2021-43815. For more information, see our [blog](https://grafana.com/blog/2021/12/10/grafana-8.3.2-and-7.5.12-released-with-moderate-severity-security-fix/
 
 <!-- 8.3.2 END -->
 

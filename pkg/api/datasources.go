@@ -395,18 +395,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		return
 	}
 
-	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn())
-	if err != nil {
-		c.JsonApiErr(500, "Unable to process datasource instance model", err)
-	}
-
-	pCtx := backend.PluginContext{
-		User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
-		OrgID:                      c.OrgId,
-		PluginID:                   plugin.ID,
-		DataSourceInstanceSettings: dsInstanceSettings,
-	}
-	hs.pluginClient.CallResource(pCtx, c, web.Params(c.Req)["*"])
+	hs.callPluginResource(c, plugin.ID, ds.Uid)
 }
 
 func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
