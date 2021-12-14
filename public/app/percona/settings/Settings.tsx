@@ -1,10 +1,11 @@
 import { logger } from '@percona/platform-core';
-import React, { FC, useEffect, useMemo, useState, useCallback } from 'react';
+import React, { FC, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 
 import { Spinner, useTheme } from '@grafana/ui';
 
 import { EmptyBlock } from '../shared/components/Elements/EmptyBlock';
-import { ContentTab, TabbedContent } from '../shared/components/Elements/TabbedContent';
+import { ContentTab, TabbedContent, TabOrientation } from '../shared/components/Elements/TabbedContent';
+import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 
@@ -27,6 +28,7 @@ export const SettingsPanel: FC = () => {
   const styles = getSettingsStyles(theme);
   const { metrics, advanced, ssh, alertManager, perconaPlatform, communication } = Messages.tabs;
   const [settings, setSettings] = useState<Settings>();
+  const techPreviewRef = useRef<HTMLDivElement | null>(null);
 
   const updateSettings = useCallback(
     async (body: SettingsAPIChangePayload, callback: LoadingCallback, refresh?: boolean) => {
@@ -115,7 +117,12 @@ export const SettingsPanel: FC = () => {
             {
               label: perconaPlatform,
               key: TabKeys.perconaPlatform,
-              component: <Platform isConnected={settings.isConnectedToPortal} getSettings={getSettings} />,
+              component: (
+                <>
+                  {techPreviewRef.current && createPortal(<TechnicalPreview />, techPreviewRef.current)}
+                  <Platform isConnected={settings.isConnectedToPortal} getSettings={getSettings} />
+                </>
+              ),
             },
             {
               label: communication,
@@ -140,6 +147,7 @@ export const SettingsPanel: FC = () => {
 
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
+      <div ref={(e) => (techPreviewRef.current = e)} />
       <div className={styles.settingsWrapper}>
         {(loading || hasNoAccess) && (
           <div className={styles.emptyBlock}>
