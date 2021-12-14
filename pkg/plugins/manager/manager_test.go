@@ -59,7 +59,9 @@ func TestPluginManager_init(t *testing.T) {
 
 func TestPluginManager_loadPlugins(t *testing.T) {
 	t.Run("Managed backend plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.External, true, true, "")
+		p, pc := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
+			p.Backend = true
+		})
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -85,7 +87,9 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Unmanaged backend plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.External, false, true, "")
+		p, pc := createPlugin(t, testPluginID, plugins.External, false, func(p *plugins.Plugin) {
+			p.Backend = true
+		})
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -111,7 +115,9 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Managed non-backend plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.External, false, true, "")
+		p, pc := createPlugin(t, testPluginID, plugins.External, false, func(p *plugins.Plugin) {
+			p.Backend = true
+		})
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -137,7 +143,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Unmanaged non-backend plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.External, false, false, "")
+		p, pc := createPlugin(t, testPluginID, plugins.External, false)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -164,7 +170,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 }
 
 func TestPluginManager_Installer(t *testing.T) {
-	t.Run("Add", func(t *testing.T) {
+	t.Run("Add new plugin", func(t *testing.T) {
 		testDir, err := ioutil.TempDir(os.TempDir(), "plugin-manager-test-*")
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -172,8 +178,13 @@ func TestPluginManager_Installer(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		p, pc := createPlugin(t, testPluginID, "1.0.0", plugins.External, true, true,
-			testDir)
+		p, pc := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
+			tmpDir, err := ioutil.TempDir(testDir, strings.Join([]string{testPluginID, "*"}, "-"))
+			require.NoError(t, err)
+			require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "plugin.json"), []byte{}, 0644))
+			p.PluginDir = tmpDir
+			p.Backend = true
+		})
 
 		l := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -214,8 +225,15 @@ func TestPluginManager_Installer(t *testing.T) {
 			}, err)
 		})
 
-		t.Run("Update", func(t *testing.T) {
-			p, pc := createPlugin(t, testPluginID, "1.2.0", plugins.External, true, true, pm.cfg.PluginsPath)
+		t.Run("Update existing plugin", func(t *testing.T) {
+			p, pc := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
+				p.Backend = true
+
+				tmpDir, err := ioutil.TempDir(pm.cfg.PluginsPath, strings.Join([]string{testPluginID, "*"}, "-")) //testDir
+				require.NoError(t, err)
+				require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "plugin.json"), []byte{}, 0644))
+				p.PluginDir = tmpDir
+			})
 
 			l := &fakeLoader{
 				mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -224,12 +242,11 @@ func TestPluginManager_Installer(t *testing.T) {
 
 			repo.downloadOptionsHandler = func(_ context.Context, _, _ string) (*plugins.PluginDownloadOptions, error) {
 				return &plugins.PluginDownloadOptions{
-					Version:      "1.2.0",
-					PluginZipURL: "",
+					Version: "1.2.0",
 				}, nil
 			}
 
-			err = pm.Add(context.Background(), testPluginID, "", repo)
+			err = pm.Add(context.Background(), testPluginID, "1.2.0", repo)
 			assert.NoError(t, err)
 
 			assert.Equal(t, 2, repo.downloadCount)
@@ -245,7 +262,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			assert.Len(t, pm.Plugins(context.Background()), 1)
 		})
 
-		t.Run("Uninstall", func(t *testing.T) {
+		t.Run("Uninstall existing plugin", func(t *testing.T) {
 			err := pm.Remove(context.Background(), p.ID)
 			require.NoError(t, err)
 
@@ -264,7 +281,9 @@ func TestPluginManager_Installer(t *testing.T) {
 	})
 
 	t.Run("Can't update core plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.Core, true, true, "")
+		p, pc := createPlugin(t, testPluginID, plugins.Core, true, func(p *plugins.Plugin) {
+			p.Backend = true
+		})
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -290,7 +309,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Add(context.Background(), testPluginID, "", repo)
+		err = pm.Add(context.Background(), testPluginID, "1.0.0", repo)
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall core plugin", func(t *testing.T) {
@@ -300,7 +319,9 @@ func TestPluginManager_Installer(t *testing.T) {
 	})
 
 	t.Run("Can't update bundled plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.Bundled, true, true, "")
+		p, pc := createPlugin(t, testPluginID, plugins.Bundled, true, func(p *plugins.Plugin) {
+			p.Backend = true
+		})
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -324,7 +345,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Add(context.Background(), testPluginID, "", &fakePluginRepo{})
+		err = pm.Add(context.Background(), testPluginID, "1.0.0", &fakePluginRepo{})
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall bundled plugin", func(t *testing.T) {
@@ -523,6 +544,40 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 	})
 }
 
+func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed bool,
+	cbs ...func(*plugins.Plugin)) (*plugins.Plugin, *fakePluginClient) {
+	t.Helper()
+
+	p := &plugins.Plugin{
+		Class: class,
+		JSONData: plugins.JSONData{
+			ID:   pluginID,
+			Type: plugins.DataSource,
+			Info: plugins.Info{
+				Version: "1.0.0",
+			},
+		},
+	}
+
+	logger := fakeLogger{}
+
+	p.SetLogger(logger)
+
+	pc := &fakePluginClient{
+		pluginID: pluginID,
+		logger:   logger,
+		managed:  managed,
+	}
+
+	p.RegisterClient(pc)
+
+	for _, cb := range cbs {
+		cb(p)
+	}
+
+	return p, pc
+}
+
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
@@ -544,42 +599,6 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	}
 
 	return pm
-}
-
-func createPlugin(t *testing.T, pluginID, version string, class plugins.Class, managed, backend bool, path string) (*plugins.Plugin, *fakePluginClient) {
-	p := &plugins.Plugin{
-		Class: class,
-		JSONData: plugins.JSONData{
-			ID:      pluginID,
-			Type:    plugins.DataSource,
-			Backend: backend,
-			Info: plugins.Info{
-				Version: version,
-			},
-		},
-	}
-
-	if path != "" {
-		tmpDir, err := ioutil.TempDir(path, strings.Join([]string{pluginID, "*"}, "-"))
-		require.NoError(t, err)
-		require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "plugin.json"), []byte{}, 0644))
-
-		p.PluginDir = tmpDir
-	}
-
-	logger := fakeLogger{}
-
-	p.SetLogger(logger)
-
-	pc := &fakePluginClient{
-		pluginID: pluginID,
-		logger:   logger,
-		managed:  managed,
-	}
-
-	p.RegisterClient(pc)
-
-	return p, pc
 }
 
 type managerScenarioCtx struct {
@@ -610,7 +629,9 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 		manager: manager,
 	}
 
-	ctx.plugin, ctx.pluginClient = createPlugin(t, testPluginID, "", plugins.Core, managed, true, "")
+	ctx.plugin, ctx.pluginClient = createPlugin(t, testPluginID, plugins.Core, managed, func(p *plugins.Plugin) {
+		p.Backend = true
+	})
 
 	fn(t, ctx)
 }

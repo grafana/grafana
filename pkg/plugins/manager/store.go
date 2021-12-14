@@ -43,7 +43,7 @@ func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) 
 }
 
 func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo plugins.Repository) error {
-	if !isSemVerExpr(version) {
+	if version != "" && !isSemVerExpr(version) {
 		return plugins.ErrInvalidPluginVersionFormat
 	}
 
