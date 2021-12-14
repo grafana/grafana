@@ -11,6 +11,6 @@ export {
 } from './standardTransformersRegistry';
 export { RegexpOrNamesMatcherOptions, ByNamesMatcherOptions, ByNamesMatcherMode } from './matchers/nameMatcher';
 export { RenameByRegexTransformerOptions } from './transformers/renameByRegex';
-export { outerJoinDataFrames, join as joinAlignedData } from './transformers/joinDataFrames';
+export { outerJoinDataFrames } from './transformers/joinDataFrames';
 export * from './transformers/histogram';
 export { ensureTimeField } from './transformers/convertFieldType';

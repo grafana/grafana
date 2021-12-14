@@ -11,8 +11,8 @@ import {
   guessFieldTypeFromValue,
   ArrayVector,
   toFilteredDataFrameDTO,
-  joinAlignedData,
 } from '@grafana/data';
+import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
   StreamingFrameAction,
   StreamingFrameOptions,
@@ -24,8 +24,6 @@ import { AlignedData } from 'uplot';
  * Stream packet info is attached to StreamingDataFrames and indicate how many
  * rows were added to the end of the frame.  The number of discarded rows can be
  * calculated from previous state
- *
- * @public -- but runtime
  */
 export interface StreamPacketInfo {
   number: number;
@@ -56,8 +54,6 @@ export type SerializedStreamingDataFrame = {
 
 /**
  * Unlike a circular buffer, this will append and periodically slice the front
- *
- * @alpha
  */
 export class StreamingDataFrame implements DataFrame {
   name?: string;
@@ -283,7 +279,7 @@ export class StreamingDataFrame implements DataFrame {
           tables.push(labeledTables.get(label) ?? dummyTable);
         });
 
-        values = joinAlignedData(tables);
+        values = join(tables);
       }
 
       if (values.length !== this.fields.length) {

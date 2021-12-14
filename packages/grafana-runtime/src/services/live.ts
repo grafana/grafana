@@ -17,7 +17,7 @@ export interface LiveDataFilter {
 /**
  * Indicate if the frame is appened or replace
  *
- * @public -- but runtime
+ * @alpha
  */
 export enum StreamingFrameAction {
   Append = 'append',
