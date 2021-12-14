@@ -321,7 +321,6 @@ def upload_cdn_step(edition, ver_mode):
         ],
     }
 
-
 def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
     variants_str = ''
     if variants:
