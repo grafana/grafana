@@ -49,7 +49,11 @@ func getSafeHeader(header http.Header) map[string][]string {
 	for name, values := range header {
 		safeName := strings.Replace(name, "\n", "", -1)
 		for _, value := range values {
-			safeHeader[name] = append(safeHeader[safeName], strings.Replace(value, "\n", "", -1))
+			if name == "Cookie" {
+				safeHeader["Cookie"] = append(safeHeader["Cookie"], "**redacted**")
+			} else {
+				safeHeader[name] = append(safeHeader[safeName], strings.Replace(value, "\n", "", -1))
+			}
 		}
 	}
 
