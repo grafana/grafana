@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
 	"github.com/grafana/loki/pkg/logproto"
@@ -27,12 +28,14 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+const pluginID = "loki"
+
 type Service struct {
 	im   instancemgmt.InstanceManager
 	plog log.Logger
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 	s := &Service{
 		im:   im,
@@ -43,7 +46,8 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.LoadAndRegister("loki", factory); err != nil {
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		s.plog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

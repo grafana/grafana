@@ -3700,7 +3700,7 @@ __metadata:
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
     "@testing-library/user-event": 13.5.0
-    "@types/classnames": 2.2.7
+    "@types/classnames": 2.3.0
     "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.1.0
@@ -3736,7 +3736,7 @@ __metadata:
     ansicolor: 1.1.95
     babel-loader: 8.2.2
     calculate-size: 1.1.1
-    classnames: 2.2.6
+    classnames: 2.3.1
     clipboard: 2.0.4
     common-tags: ^1.8.0
     core-js: 3.10.0
@@ -8383,21 +8383,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/classnames@npm:2.2.7":
-  version: 2.2.7
-  resolution: "@types/classnames@npm:2.2.7"
-  checksum: f94e9610ff424863f14398a8ad9c23025a8d54a372fa6bb333329ff2f77a29e1e0be0747f0fc3261c390c66f8643ea5aaa83ba8008e236b2962b071b3ca2ddee
-  languageName: node
-  linkType: hard
-
-"@types/classnames@npm:2.2.9":
-  version: 2.2.9
-  resolution: "@types/classnames@npm:2.2.9"
-  checksum: df4a984dd287dfc22f3b7ba3d7746e0daf0349b1f6ff053ce1bfe0a753bbf58aca347873a33e309e7c11b00ab6e65eeea399521f95500904cd87c3fca316607b
-  languageName: node
-  linkType: hard
-
-"@types/classnames@npm:^2.2.7":
+"@types/classnames@npm:2.3.0, @types/classnames@npm:^2.2.7":
   version: 2.3.0
   resolution: "@types/classnames@npm:2.3.0"
   dependencies:
@@ -10299,9 +10285,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/bounds@npm:2.1.0":
-  version: 2.1.0
-  resolution: "@visx/bounds@npm:2.1.0"
+"@visx/bounds@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@visx/bounds@npm:2.1.2"
   dependencies:
     "@types/react": "*"
     "@types/react-dom": "*"
@@ -10309,7 +10295,7 @@ __metadata:
   peerDependencies:
     react: ^16.0.0-0 || ^17.0.0-0
     react-dom: ^16.0.0-0 || ^17.0.0-0
-  checksum: 8acddcdf3971f2a44a2750a6913b359ebb4be6119037330f481fe49ecb6d4dc1686d6e0e4cd9c6341e227769bbdbf6b5d35b6a08e129537a43e519ac738bde12
+  checksum: cd013c105d95d44bf29f570e26e63a466d8e9212861d9a92e818d239f6dbf8f0efa049556cbb4bbf1b849e730d63aaeeb5c9f7a013e1c6912db2243fa8e90b69
   languageName: node
   linkType: hard
 
@@ -10401,19 +10387,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/tooltip@npm:2.1.0":
-  version: 2.1.0
-  resolution: "@visx/tooltip@npm:2.1.0"
+"@visx/tooltip@npm:2.2.2":
+  version: 2.2.2
+  resolution: "@visx/tooltip@npm:2.2.2"
   dependencies:
     "@types/react": "*"
-    "@visx/bounds": 2.1.0
+    "@visx/bounds": 2.1.2
     classnames: ^2.3.1
     prop-types: ^15.5.10
     react-use-measure: ^2.0.4
   peerDependencies:
     react: ^16.8.0-0 || ^17.0.0-0
     react-dom: ^16.8.0-0 || ^17.0.0-0
-  checksum: 591a5f073767d23fe3f99c5cc46c81b3e4fd43a8c2cba6405a3f47365a49b45a69f59d7d014183ef0d1b13cb3a1976726ee5e3d024947822a0a8b2c6ceb6089d
+  checksum: 5287f58f78c88df3745c4ea5dfb58e918e716df5429825eacd401e0385767a6226dd2105dd4f5b472bb15df9b9f30da0fc67263f512d3f372a172d2c9a8c3e16
   languageName: node
   linkType: hard
 
@@ -11915,21 +11901,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"autoprefixer@npm:10.2.6":
-  version: 10.2.6
-  resolution: "autoprefixer@npm:10.2.6"
+"autoprefixer@npm:10.4.0":
+  version: 10.4.0
+  resolution: "autoprefixer@npm:10.4.0"
   dependencies:
-    browserslist: ^4.16.6
-    caniuse-lite: ^1.0.30001230
-    colorette: ^1.2.2
+    browserslist: ^4.17.5
+    caniuse-lite: ^1.0.30001272
     fraction.js: ^4.1.1
     normalize-range: ^0.1.2
+    picocolors: ^1.0.0
     postcss-value-parser: ^4.1.0
   peerDependencies:
     postcss: ^8.1.0
   bin:
     autoprefixer: bin/autoprefixer
-  checksum: dedcc56739b3e5beda3927c13cd4dbb8e1eeb568418b28fb6b4a52697e951ec72ae3aca89e5d871c310e520a8bbbe24267b7401d21f96c07bf0ea6527977f9e8
+  checksum: 7d511c64daeaa13c7888b40b0394cd891fab1852a1f60165330c9e49ab70ac29ad1e3386665d86361661cf2bbe90cea42b78ea73cb77b373ffe30a8f4973a955
   languageName: node
   linkType: hard
 
@@ -11984,6 +11970,15 @@ __metadata:
   dependencies:
     follow-redirects: ^1.14.0
   checksum: 41299c21f77323e7c56ea49d2d5ed25407d24bb145a4ce3441a8db17359ae56554f9495dca6e15d343a9530e106212a684c75a4db3bedfbe19f6414a8d94378e
+  languageName: node
+  linkType: hard
+
+"axios@npm:0.24.0":
+  version: 0.24.0
+  resolution: "axios@npm:0.24.0"
+  dependencies:
+    follow-redirects: ^1.14.4
+  checksum: 468cf496c08a6aadfb7e699bebdac02851e3043d4e7d282350804ea8900e30d368daa6e3cd4ab83b8ddb5a3b1e17a5a21ada13fc9cebd27b74828f47a4236316
   languageName: node
   linkType: hard
 
@@ -13207,10 +13202,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30000981, caniuse-lite@npm:^1.0.30001109, caniuse-lite@npm:^1.0.30001125, caniuse-lite@npm:^1.0.30001230, caniuse-lite@npm:^1.0.30001271":
+"caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30000981, caniuse-lite@npm:^1.0.30001109, caniuse-lite@npm:^1.0.30001125, caniuse-lite@npm:^1.0.30001271":
   version: 1.0.30001271
   resolution: "caniuse-lite@npm:1.0.30001271"
   checksum: 0271e234e17c588fa203a34523f90c5a21ab62f41a2c3acabe96f0251593ac92f192cadd7a3dcbcf49bb28de4f57ca274d775c75700c3f38e9c42028d3becb0f
+  languageName: node
+  linkType: hard
+
+"caniuse-lite@npm:^1.0.30001272":
+  version: 1.0.30001286
+  resolution: "caniuse-lite@npm:1.0.30001286"
+  checksum: 04de4742552d4aeb713677b40693d9ac1fbd259573e0ff739565278bcecb6f398f3227546a4e930f4d5cf95b61458f4a53c9c1f90f5b0c4f6063b32e4c54b89e
   languageName: node
   linkType: hard
 
@@ -13258,12 +13260,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:2.7.5":
-  version: 2.7.5
-  resolution: "centrifuge@npm:2.7.5"
+"centrifuge@npm:2.8.4":
+  version: 2.8.4
+  resolution: "centrifuge@npm:2.8.4"
   dependencies:
-    protobufjs: ^6.10.2
-  checksum: 63c7cc487e38280e0cec3d984fe0fa6096654dae1d8920d004a5882d0bfd7d4591b5d0e11d7ca204ecbac0bdff104a95e1368df9ae76e5ef305847a04bfa45c0
+    protobufjs: ^6.11.2
+  checksum: eb6efe8eb10b3fa001cfa6197467a8ec1cbd9c7e33e0595a4748b0bcf6b5b93505730a4aed1d6ef685a2c8756296ad597d23a5927ea0170420ca8df4dec0a9ec
   languageName: node
   linkType: hard
 
@@ -13506,13 +13508,6 @@ __metadata:
   version: 2.3.1
   resolution: "classnames@npm:2.3.1"
   checksum: 14db8889d56c267a591f08b0834989fe542d47fac659af5a539e110cc4266694e8de86e4e3bbd271157dbd831361310a8293e0167141e80b0f03a0f175c80960
-  languageName: node
-  linkType: hard
-
-"classnames@npm:2.2.6":
-  version: 2.2.6
-  resolution: "classnames@npm:2.2.6"
-  checksum: 09a4fda780158aa8399079898eabeeca0c48c28641d9e4de140db7412e5e346843039ded1af0152f755afc2cc246ff8c3d6f227bf0dcb004e070b7fa14ec54cc
   languageName: node
   linkType: hard
 
@@ -18059,6 +18054,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"follow-redirects@npm:^1.14.4":
+  version: 1.14.6
+  resolution: "follow-redirects@npm:1.14.6"
+  peerDependenciesMeta:
+    debug:
+      optional: true
+  checksum: 7fcdb089a733d2aa39041880790e9f772df009fcd0b243fee7e10acf0e14a8dab5208cf79eb1de35b9cc6033d4dde7f95becadfaa360c50d460b4c730b375e80
+  languageName: node
+  linkType: hard
+
 "for-each@npm:^0.3.3":
   version: 0.3.3
   resolution: "for-each@npm:0.3.3"
@@ -19083,7 +19088,7 @@ __metadata:
     "@testing-library/user-event": 13.5.0
     "@types/angular": 1.8.3
     "@types/angular-route": 1.7.0
-    "@types/classnames": 2.2.9
+    "@types/classnames": 2.3.0
     "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.1.0
@@ -19139,7 +19144,7 @@ __metadata:
     "@visx/group": 2.1.0
     "@visx/scale": 2.2.2
     "@visx/shape": 2.4.0
-    "@visx/tooltip": 2.1.0
+    "@visx/tooltip": 2.2.2
     "@welldone-software/why-did-you-render": 6.2.1
     "@wojtekmaj/enzyme-adapter-react-17": 0.6.2
     abortcontroller-polyfill: 1.4.0
@@ -19148,16 +19153,16 @@ __metadata:
     angular-route: 1.8.2
     angular-sanitize: 1.8.2
     app: "link:./public/app"
-    autoprefixer: 10.2.6
-    axios: 0.21.2
+    autoprefixer: 10.4.0
+    axios: 0.24.0
     babel-jest: 27.4.2
     babel-loader: 8.2.2
     babel-plugin-angularjs-annotate: 0.10.0
     baron: 3.0.3
     brace: 0.11.1
     calculate-size: 1.1.1
-    centrifuge: 2.7.5
-    classnames: 2.2.6
+    centrifuge: 2.8.4
+    classnames: 2.3.1
     clipboard: 2.0.4
     comlink: 4.3.1
     common-tags: ^1.8.0
@@ -28052,7 +28057,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"protobufjs@npm:^6.10.2":
+"protobufjs@npm:^6.11.2":
   version: 6.11.2
   resolution: "protobufjs@npm:6.11.2"
   dependencies:
