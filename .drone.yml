@@ -3844,7 +3844,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets-enterprise2
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads
+  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-enterprise2
   depends_on:
   - package-enterprise2
   - redis-integration-tests
@@ -4001,6 +4001,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 2677a57381f4801629ff230e97b7859207a61bcb3a9340fee836bb18a04b95e7
+hmac: 18aa4bedb40fcb3c91faf357a5ecba3b9903bc9e4fb04a29fbbd0e1c0ae7a349
 
 ...
