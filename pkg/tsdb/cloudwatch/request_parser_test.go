@@ -64,7 +64,7 @@ func TestRequestParser(t *testing.T) {
 			"hide":      false,
 		})
 
-		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-time.Hour), time.Now().Add(-2*time.Hour))
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
 		assert.Equal(t, "us-east-1", res.Region)
 		assert.Equal(t, "ref1", res.RefId)
@@ -98,7 +98,7 @@ func TestRequestParser(t *testing.T) {
 			"hide":      false,
 		})
 
-		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-time.Hour), time.Now().Add(-2*time.Hour))
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
 		assert.Equal(t, "us-east-1", res.Region)
 		assert.Equal(t, "ref1", res.RefId)
@@ -132,7 +132,7 @@ func TestRequestParser(t *testing.T) {
 		})
 		query.Set("period", "900")
 
-		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-time.Hour), time.Now().Add(-2*time.Hour))
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
 		assert.Equal(t, 900, res.Period)
 	})
@@ -265,7 +265,7 @@ func TestRequestParser(t *testing.T) {
 		t.Run("when metric query type and metric editor mode is not specified", func(t *testing.T) {
 			t.Run("it should be metric search builder", func(t *testing.T) {
 				query := getBaseJsonQuery()
-				res, err := parseRequestQuery(query, "ref1", time.Now().Add(-time.Hour), time.Now().Add(-2*time.Hour))
+				res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 				require.NoError(t, err)
 				assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
 				assert.Equal(t, MetricEditorModeBuilder, res.MetricEditorMode)
@@ -275,7 +275,7 @@ func TestRequestParser(t *testing.T) {
 			t.Run("and an expression is specified it should be metric search builder", func(t *testing.T) {
 				query := getBaseJsonQuery()
 				query.Set("expression", "SUM(a)")
-				res, err := parseRequestQuery(query, "ref1", time.Now().Add(-time.Hour), time.Now().Add(-2*time.Hour))
+				res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 				require.NoError(t, err)
 				assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
 				assert.Equal(t, MetricEditorModeRaw, res.MetricEditorMode)
@@ -286,7 +286,7 @@ func TestRequestParser(t *testing.T) {
 		t.Run("and an expression is specified it should be metric search builder", func(t *testing.T) {
 			query := getBaseJsonQuery()
 			query.Set("expression", "SUM(a)")
-			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-time.Hour), time.Now().Add(-2*time.Hour))
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 			require.NoError(t, err)
 			assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
 			assert.Equal(t, MetricEditorModeRaw, res.MetricEditorMode)
