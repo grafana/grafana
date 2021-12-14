@@ -9,17 +9,13 @@ import {
   LiveChannelLeaveEvent,
   LiveChannelScope,
   LoadingState,
-  StreamingDataFrame,
-  StreamingFrameAction,
 } from '@grafana/data';
 import { Observable, Subject, Subscription, Unsubscribable } from 'rxjs';
 import { DataStreamHandlerDeps, LiveDataStream } from './LiveDataStream';
 import { mapValues } from 'lodash';
-import {
-  isStreamingResponseData,
-  StreamingResponseData,
-  StreamingResponseDataType,
-} from '@grafana/runtime/src/services/live';
+import { StreamingFrameAction } from '@grafana/runtime';
+import { isStreamingResponseData, StreamingResponseData, StreamingResponseDataType } from '../data/utils';
+import { StreamingDataFrame } from '../data/StreamingDataFrame';
 
 type SubjectsInsteadOfObservables<T> = {
   [key in keyof T]: T[key] extends Observable<infer U> ? Subject<U> : T[key];

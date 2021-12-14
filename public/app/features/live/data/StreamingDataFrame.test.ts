@@ -1,7 +1,5 @@
-import { reduceField, ReducerID, StreamingFrameAction, StreamingFrameOptions } from '..';
-import { getFieldDisplayName } from '../field';
-import { DataFrame, FieldType } from '../types';
-import { DataFrameJSON } from './DataFrameJSON';
+import { reduceField, ReducerID, getFieldDisplayName, DataFrame, FieldType, DataFrameJSON } from '@grafana/data';
+import { getStreamingFrameOptions, StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime';
 import { StreamingDataFrame } from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {
@@ -414,7 +412,7 @@ describe('Streaming JSON', () => {
 
   describe('options with defaults', function () {
     it('should provide defaults', function () {
-      expect(StreamingDataFrame.optionsWithDefaults()).toEqual({
+      expect(getStreamingFrameOptions()).toEqual({
         action: StreamingFrameAction.Append,
         maxDelta: Infinity,
         maxLength: 1000,
