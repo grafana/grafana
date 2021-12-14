@@ -1,4 +1,4 @@
-name: Update changelog
+name: Remove milestone
 on:
   workflow_dispatch:
     inputs:
