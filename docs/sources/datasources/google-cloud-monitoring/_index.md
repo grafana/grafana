@@ -14,13 +14,12 @@ Grafana ships with built-in support for Google Cloud Monitoring. Add it as a dat
 
 ## Google Cloud Monitoring settings
 
-To access Google Cloud Monitoring settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Google Cloud Monitoring data source.
+To access Google Cloud Monitoring settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, click **Add data source**, then click the Google Cloud Monitoring data source.
 
-| Name                  | Description                                                                                                                                                                            |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`                | The data source name. This is how you refer to the data source in panels and queries.                                                                                                  |
-| `Default`             | Default data source means that it is pre-selected for new panels.                                                                                                                      |
-| `Service Account Key` | Upload or paste in the Service Account Key file for a GCP Project. For more information, refer to [Using a Google Service Account Key File](#using-a-google-service-account-key-file). |
+| Name      | Description                                                                           |
+| --------- | ------------------------------------------------------------------------------------- |
+| `Name`    | The data source name. This is how you refer to the data source in panels and queries. |
+| `Default` | Default data source means that it is pre-selected for new panels.                     |
 
 ## Authentication
 
@@ -44,26 +43,16 @@ Click on the links above and click the `Enable` button:
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
-1. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
+2. Click on the `Create credentials` dropdown/button and choose the `Service account` option.
+3. Fill in a name for the service account in the Service account name field and then choose the Monitoring Viewer role from the Role dropdown:
 
-   {{< figure src="/static/img/docs/v71/cloudmonitoring_create_service_account_button.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account button" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
-1. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
-
-   {{< figure src="/static/img/docs/v71/cloudmonitoring_create_service_account_key.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account key" >}}
-
-1. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
-
-   {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
-
-1. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
-1. Upload it to Grafana on the data source Configuration page. You can either upload the file or paste in the contents of the file.
-
-   {{< figure src="/static/img/docs/v71/cloudmonitoring_grafana_upload_key.png" max-width="550px" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
-
-1. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
-
-   {{< figure src="/static/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" max-width="600px" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
+5. Continue and click Done.
+6. Use the newly created account to [create a service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-service-account-keys-create-console).
+7. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
+8. Upload it to Grafana on the data source Configuration page.
+9. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
 ### Using GCE Default Service Account
 
