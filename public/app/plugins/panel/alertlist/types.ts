@@ -48,4 +48,5 @@ export interface UnifiedAlertListOptions {
   folder: { id: number; title: string };
   stateFilter: StateFilter;
   alertInstanceLabelFilter: string;
+  datasource: string;
 }

@@ -168,6 +168,9 @@ function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], ru
       return rule.namespaceName === options.folder.title;
     });
   }
+  if (options.datasource) {
+    filteredRules = filteredRules.filter(({ dataSourceName }) => dataSourceName === options.datasource);
+  }
 
   return filteredRules;
 }

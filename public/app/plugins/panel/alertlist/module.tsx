@@ -5,7 +5,7 @@ import { AlertList } from './AlertList';
 import { UnifiedAlertList } from './UnifiedAlertList';
 import { AlertListOptions, ShowOption, SortOrder, UnifiedAlertListOptions } from './types';
 import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
-import { config } from '@grafana/runtime';
+import { config, DataSourcePicker } from '@grafana/runtime';
 import { RuleFolderPicker } from 'app/features/alerting/unified/components/rule-editor/RuleFolderPicker';
 import {
   ALL_FOLDER,
@@ -216,6 +216,26 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
             onChange={({ title, id }) => {
               return props.onChange({ title, id });
             }}
+          />
+        );
+      },
+      category: ['Filter'],
+    })
+    .addCustomEditor({
+      path: 'datasource',
+      name: 'Datasource',
+      description: 'Filter alerts from selected datasource',
+      id: 'datasource',
+      defaultValue: null,
+      editor: function RenderDatasourcePicker(props) {
+        return (
+          <DataSourcePicker
+            {...props}
+            alerting
+            noDefault
+            current={props.value}
+            onChange={(ds) => props.onChange(ds.name)}
+            onClear={() => props.onChange('')}
           />
         );
       },
