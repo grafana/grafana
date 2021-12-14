@@ -200,7 +200,17 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:sign')
     .option('--signatureType <type>', 'Signature Type')
-    .option('--rootUrls <type>', 'Root URLs')
+    .option('--rootUrls <type>', 'Root URLs', function(url: string, urls: string[]) {
+      
+      if (typeof url !== 'string') {
+        return urls;
+      }
+
+      const parts = url.split(',');
+      urls.push(...parts);
+
+      return urls;
+    }, [])
     .description('Create a plugin signature')
     .action(async (cmd) => {
       await execTask(pluginSignTask)({
