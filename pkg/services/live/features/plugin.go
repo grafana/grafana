@@ -73,7 +73,7 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 	resp, err := r.handler.SubscribeStream(ctx, &backend.SubscribeStreamRequest{
 		PluginContext: pCtx,
 		Path:          r.path,
-		Query:         e.Data,
+		Data:          e.Data,
 	})
 	if err != nil {
 		logger.Error("Plugin OnSubscribe call error", "error", err, "path", r.path)

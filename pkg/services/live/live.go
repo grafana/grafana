@@ -13,6 +13,10 @@ import (
 	"sync"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana/pkg/services/query"
+
 	"github.com/centrifugal/centrifuge"
 	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
@@ -64,7 +68,7 @@ type CoreGrafanaScope struct {
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	logsService *cloudwatch.LogsService, pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
-	usageStatsService usagestats.Service) (*GrafanaLive, error) {
+	usageStatsService usagestats.Service, queryDataService *query.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		PluginContextProvider: plugCtxProvider,
@@ -75,6 +79,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
 		SecretsService:        secretsService,
+		queryDataService:      queryDataService,
 		channels:              make(map[string]models.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
@@ -200,12 +205,12 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		// Pre-build/validate channel rules for all organizations on start.
 		// This can be unreasonable to have in production scenario with many
 		// organizations.
-		query := &models.SearchOrgsQuery{}
-		err := sqlstore.SearchOrgs(context.TODO(), query)
+		orgQuery := &models.SearchOrgsQuery{}
+		err := sqlstore.SearchOrgs(context.TODO(), orgQuery)
 		if err != nil {
 			return nil, fmt.Errorf("can't get org list: %w", err)
 		}
-		for _, org := range query.Result {
+		for _, org := range orgQuery.Result {
 			_, _, err := channelRuleGetter.Get(org.Id, "")
 			if err != nil {
 				return nil, fmt.Errorf("error building channel rules for org %d: %w", org.Id, err)
@@ -259,6 +264,16 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		}
 		logger.Debug("Client connected", "user", client.UserID(), "client", client.ID())
 		connectedAt := time.Now()
+
+		// Called when client issues RPC (async request over Live connection).
+		client.OnRPC(func(e centrifuge.RPCEvent, cb centrifuge.RPCCallback) {
+			err := runConcurrentlyIfNeeded(client.Context(), semaphore, func() {
+				cb(g.handleOnRPC(client, e))
+			})
+			if err != nil {
+				cb(centrifuge.RPCReply{}, err)
+			}
+		})
 
 		// Called when client subscribes to the channel.
 		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
@@ -385,6 +400,7 @@ type GrafanaLive struct {
 	SQLStore              *sqlstore.SQLStore
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
+	queryDataService      *query.Service
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
@@ -502,7 +518,7 @@ func checkAllowedOrigin(origin string, originURL *url.URL, appURL *url.URL, orig
 	return false, nil
 }
 
-var clientConcurrency = 8
+var clientConcurrency = 12
 
 func (g *GrafanaLive) IsHA() bool {
 	return g.Cfg != nil && g.Cfg.LiveHAEngine != ""
@@ -544,6 +560,48 @@ func (g *GrafanaLive) HandleDatasourceUpdate(orgID int64, dsUID string) {
 	if err != nil {
 		logger.Error("Error handling datasource update", "error", err)
 	}
+}
+
+// Use a configuration that's compatible with the standard library
+// to minimize the risk of introducing bugs. This will make sure
+// that map keys is ordered.
+var jsonStd = jsoniter.ConfigCompatibleWithStandardLibrary
+
+func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEvent) (centrifuge.RPCReply, error) {
+	logger.Debug("Client calls RPC", "user", client.UserID(), "client", client.ID(), "method", e.Method)
+	if e.Method != "grafana.query" {
+		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
+	}
+	user, ok := livecontext.GetContextSignedUser(client.Context())
+	if !ok {
+		logger.Error("No user found in context", "user", client.UserID(), "client", client.ID(), "method", e.Method)
+		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
+	}
+	var req dtos.MetricRequest
+	err := json.Unmarshal(e.Data, &req)
+	if err != nil {
+		return centrifuge.RPCReply{}, centrifuge.ErrorBadRequest
+	}
+	resp, err := g.queryDataService.QueryData(client.Context(), user, false, req, true)
+	if err != nil {
+		logger.Error("Error query data", "user", client.UserID(), "client", client.ID(), "method", e.Method, "error", err)
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusForbidden), Message: http.StatusText(http.StatusForbidden)}
+		}
+		var badQuery *query.ErrBadQuery
+		if errors.As(err, &badQuery) {
+			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: http.StatusText(http.StatusBadRequest)}
+		}
+		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
+	}
+	data, err := jsonStd.Marshal(resp)
+	if err != nil {
+		logger.Error("Error marshaling query response", "user", client.UserID(), "client", client.ID(), "method", e.Method, "error", err)
+		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
+	}
+	return centrifuge.RPCReply{
+		Data: data,
+	}, nil
 }
 
 func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
