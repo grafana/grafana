@@ -21,7 +21,6 @@ func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessC
 		scopeResolver: accesscontrol.NewScopeResolver(),
 	}
 	s.registerUsageMetrics()
-	accesscontrol.InitPerms()
 	return s
 }
 

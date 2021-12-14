@@ -34,9 +34,9 @@ func ProvideServiceAccountsService(
 		store: database.NewServiceAccountsStore(store),
 		log:   log.New("serviceaccounts"),
 	}
-	if err := ac.DeclareFixedRoles(role); err != nil {
-		return nil, err
-	}
+
+	RegisterRoles(ac)
+
 	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister)
 	serviceaccountsAPI.RegisterAPIEndpoints(cfg)
 	return s, nil

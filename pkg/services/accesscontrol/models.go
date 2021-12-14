@@ -265,9 +265,6 @@ const (
 	ActionLDAPStatusRead   = "ldap.status:read"
 	ActionLDAPConfigReload = "ldap.config:reload"
 
-	ActionApikeyList   = "apikey:list"
-	ActionApikeyAdd    = "apikey:add"
-	ActionApikeyRemove = "apikey:remove"
 	// Server actions
 	ActionServerStatsRead = "server.stats:read"
 
@@ -305,19 +302,3 @@ var LicensingPageReaderAccess = EvalAny(
 	EvalPermission(ActionLicensingRead),
 	EvalPermission(ActionServerStatsRead),
 )
-
-var (
-	//API key actions
-	ActionApikeyListEv          Evaluator
-	ActionApikeyAddEv           Evaluator
-	ActionApikeyRemoveEv        Evaluator
-	ActionApikeyAddAdditionalEv Evaluator
-)
-
-func InitPerms() {
-	//API key actions
-	ActionApikeyListEv = EvalPermission("apikey:list")
-	ActionApikeyAddEv = EvalPermission("apikey:add")
-	ActionApikeyRemoveEv = EvalPermission("apikey:remove")
-	ActionApikeyAddAdditionalEv = EvalPermission("apikey:addadditional")
-}
