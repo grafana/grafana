@@ -14,10 +14,10 @@ export interface Props {
   datasource: LokiDatasource;
   onChange: (update: LokiVisualQuery) => void;
   onRunQuery: () => void;
-  isNested?: boolean;
+  nested?: boolean;
 }
 
-export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, isNested, onChange, onRunQuery }) => {
+export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, onChange, onRunQuery }) => {
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -61,7 +61,6 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, isNested
       </EditorRow>
       <EditorRow>
         <OperationList
-          heading="Pipeline"
           queryModeller={lokiQueryModeller}
           query={query}
           onChange={onChange}
@@ -69,7 +68,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, isNested
           datasource={datasource as DataSourceApi}
         />
       </EditorRow>
-      {!isNested && (
+      {!nested && (
         <EditorRow>
           <QueryPreview query={query} />
         </EditorRow>

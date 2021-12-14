@@ -3,6 +3,7 @@ import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EditorHeader, FlexItem, InlineSelect, Space, Stack } from '@grafana/experimental';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
 import React, { SyntheticEvent, useCallback, useState } from 'react';
+import { useToggle } from 'react-use';
 import { PromQueryEditor } from '../../components/PromQueryEditor';
 import { PromQueryEditorProps } from '../../components/types';
 import { promQueryModeller } from '../PromQueryModeller';
@@ -15,6 +16,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
   const { query, onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
   const [visualQuery, setVisualQuery] = useState<PromVisualQuery>(query.visualQuery ?? getDefaultEmptyQuery());
+  const [explainMode, toggleExplainMode] = useToggle(false);
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
@@ -77,18 +79,24 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
           </Stack>
         )}
         {editorMode === QueryEditorMode.Builder && (
-          <InlineSelect
-            value={null}
-            placeholder="Query patterns"
-            allowCustomValue
-            onChange={({ value }) => {
-              onChangeViewModel({
-                ...visualQuery,
-                operations: value?.operations!,
-              });
-            }}
-            options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
-          />
+          <>
+            <Stack gap={1}>
+              <label className={styles.switchLabel}>Explain</label>
+              <Switch value={explainMode} onChange={toggleExplainMode} />
+            </Stack>
+            <InlineSelect
+              value={null}
+              placeholder="Query patterns"
+              allowCustomValue
+              onChange={({ value }) => {
+                onChangeViewModel({
+                  ...visualQuery,
+                  operations: value?.operations!,
+                });
+              }}
+              options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
+            />
+          </>
         )}
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
@@ -98,6 +106,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         <PromQueryBuilder
           query={visualQuery}
           datasource={props.datasource}
+          explainMode={explainMode}
           onChange={onChangeViewModel}
           onRunQuery={props.onRunQuery}
         />

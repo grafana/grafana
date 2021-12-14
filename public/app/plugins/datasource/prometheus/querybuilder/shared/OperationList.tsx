@@ -12,14 +12,13 @@ export interface Props<T extends QueryWithOperations> {
   onChange: (query: T) => void;
   onRunQuery: () => void;
   queryModeller: VisualQueryModeller;
-  heading: string;
+  explainMode?: boolean;
 }
 
 export function OperationList<T extends QueryWithOperations>({
   query,
   datasource,
   queryModeller,
-  heading,
   onChange,
   onRunQuery,
 }: Props<T>) {
@@ -56,7 +55,6 @@ export function OperationList<T extends QueryWithOperations>({
 
   return (
     <Stack gap={1} direction="column">
-      {/* <h5 className={styles.heading}>{heading}</h5> */}
       <Stack gap={0}>
         {operations.map((op, index) => (
           <div className={styles.operationWrapper} key={index.toString()}>
