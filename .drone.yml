@@ -2334,7 +2334,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: build-storybook
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -2837,7 +2837,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: memcached-integration-tests
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
   depends_on:
   - package
   environment:
@@ -2883,7 +2883,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
   depends_on:
   - package-enterprise2
   environment:
@@ -3427,7 +3427,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: build-storybook
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -3914,7 +3914,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: memcached-integration-tests
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
   depends_on:
   - package
   environment:
@@ -3960,7 +3960,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
   depends_on:
   - package-enterprise2
   environment:
@@ -4213,6 +4213,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 66b7fc9ba00c21e4ccbddd3086283ce78a95ecea589eb35825c970a73f477643
+hmac: a0122f07c90b7ee4e0903c0d1f8efb46b7901520fed21618d47052188ba3cfa3
 
 ...
