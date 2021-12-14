@@ -97,10 +97,11 @@ export function OperationEditor({
   }
 
   // Handle adding button for rest params
+  let restParam: React.ReactNode | undefined;
   if (def.params.length > 0) {
     const lastParamDef = def.params[def.params.length - 1];
     if (lastParamDef.restParam) {
-      operationElements.push(renderAddRestParamButton(lastParamDef, onAddRestParam, operation.params.length, styles));
+      restParam = renderAddRestParamButton(lastParamDef, onAddRestParam, operation.params.length, styles);
     }
   }
 
@@ -128,6 +129,7 @@ export function OperationEditor({
         </div>
       </div>
       <div className={styles.body}>{operationElements}</div>
+      {restParam}
     </div>
   );
 }
@@ -139,10 +141,10 @@ function renderAddRestParamButton(
   styles: OperationEditorStyles
 ) {
   return (
-    <div className={styles.paramRow} key={`${paramIndex}-2`}>
-      <div className={styles.paramName}>
-        <Button size="sm" icon="plus" title={`Add ${paramDef.name}`} variant="secondary" onClick={onAddRestParam} />
-      </div>
+    <div className={styles.restParam} key={`${paramIndex}-2`}>
+      <Button size="sm" icon="plus" title={`Add ${paramDef.name}`} variant="secondary" onClick={onAddRestParam}>
+        {paramDef.name}
+      </Button>
     </div>
   );
 }
@@ -211,6 +213,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'table-cell',
       paddingBottom: theme.spacing(0.5),
       verticalAlign: 'middle',
+    }),
+    restParam: css({
+      padding: theme.spacing(0, 1, 1, 1),
     }),
     docBox: css({
       padding: theme.spacing(1),

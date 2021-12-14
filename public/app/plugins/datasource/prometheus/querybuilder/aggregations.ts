@@ -35,7 +35,7 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
       name: getPromAndLokiOperationDisplayName(name),
       params: [
         {
-          name: 'Label',
+          name: 'By label',
           type: 'string',
           restParam: true,
           optional: true,
