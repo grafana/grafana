@@ -17,7 +17,7 @@ import {
   DataQueryRequest,
   PreferredVisualisationType,
   CoreApp,
-  renderLabelsTemplate,
+  renderLegendFormat,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { partition, groupBy } from 'lodash';
@@ -505,7 +505,7 @@ function getValueField({
 
 function createLabelInfo(labels: { [key: string]: string }, options: TransformOptions) {
   if (options?.legendFormat) {
-    const title = renderLabelsTemplate(getTemplateSrv().replace(options.legendFormat, options?.scopedVars), labels);
+    const title = renderLegendFormat(getTemplateSrv().replace(options.legendFormat, options?.scopedVars), labels);
     return { name: title, labels };
   }
 

@@ -62,6 +62,7 @@ import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import { queryLogsVolume } from 'app/core/logs_model';
 import config from 'app/core/config';
+import { renderLegendFormat } from '../prometheus/labels';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -684,8 +685,8 @@ export class LokiDatasource
       view.forEach((row) => {
         annotations.push({
           time: new Date(row.ts).valueOf(),
-          title: renderLabelsTemplate(titleFormat, labels),
-          text: renderLabelsTemplate(textFormat, labels) || row.line,
+          title: renderLegendFormat(titleFormat, labels),
+          text: renderLegendFormat(textFormat, labels) || row.line,
           tags,
         });
       });

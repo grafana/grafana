@@ -17,7 +17,7 @@ import {
   QueryResultMeta,
   TimeSeriesValue,
   ScopedVars,
-  renderLabelsTemplate,
+  renderLegendFormat,
 } from '@grafana/data';
 
 import { getTemplateSrv, getDataSourceSrv } from '@grafana/runtime';
@@ -283,7 +283,7 @@ export function createMetricLabel(labelData: { [key: string]: string }, options?
   let label =
     options === undefined || isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
-      : renderLabelsTemplate(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
+      : renderLegendFormat(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
 
   if (!label && options) {
     label = options.query;
