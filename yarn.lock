@@ -5339,7 +5339,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lingui/cli@npm:^3.12.1":
+"@lingui/cli@npm:3.12.1":
   version: 3.12.1
   resolution: "@lingui/cli@npm:3.12.1"
   dependencies:
@@ -5398,7 +5398,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lingui/core@npm:^3.12.1":
+"@lingui/core@npm:3.12.1, @lingui/core@npm:^3.12.1":
   version: 3.12.1
   resolution: "@lingui/core@npm:3.12.1"
   dependencies:
@@ -5409,18 +5409,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lingui/core@npm:^3.13.0":
-  version: 3.13.0
-  resolution: "@lingui/core@npm:3.13.0"
-  dependencies:
-    "@babel/runtime": ^7.11.2
-    make-plural: ^6.2.2
-    messageformat-parser: ^4.1.3
-  checksum: 6108eb43fa0ce7e72d954107fb52d843d33baa657d5a9ccec88e495fa05a8ebdd187f7240be9b9a158648137edc1dc75965ae7a9326718b3979c54d9f810bbbb
-  languageName: node
-  linkType: hard
-
-"@lingui/macro@npm:*, @lingui/macro@npm:^3.12.1":
+"@lingui/macro@npm:*, @lingui/macro@npm:3.12.1":
   version: 3.12.1
   resolution: "@lingui/macro@npm:3.12.1"
   dependencies:
@@ -5433,15 +5422,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lingui/react@npm:^3.12.1":
-  version: 3.13.0
-  resolution: "@lingui/react@npm:3.13.0"
+"@lingui/react@npm:3.12.1":
+  version: 3.12.1
+  resolution: "@lingui/react@npm:3.12.1"
   dependencies:
     "@babel/runtime": ^7.11.2
-    "@lingui/core": ^3.13.0
+    "@lingui/core": ^3.12.1
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
-  checksum: ca97bd3e80b25ab83c830f08ca304166e15378935c1cdebca1bbf0b46f119b5873896d7063c4fbc43f877c324ecd27b0d79fd37592fcc3c1bffe2ea6529c45dc
+  checksum: 330129116777496422037ea5a8de5883bddefb29ddbe978fab44ea1309a6e95633178b613524fcea403bd5d39b6691e4868e6ceaed76179646dc955ec6b7aeff
   languageName: node
   linkType: hard
 
@@ -19306,10 +19295,10 @@ __metadata:
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 4.1.2
-    "@lingui/cli": ^3.12.1
-    "@lingui/core": ^3.12.1
-    "@lingui/macro": ^3.12.1
-    "@lingui/react": ^3.12.1
+    "@lingui/cli": 3.12.1
+    "@lingui/core": 3.12.1
+    "@lingui/macro": 3.12.1
+    "@lingui/react": 3.12.1
     "@microsoft/api-extractor": 7.18.16
     "@opentelemetry/api": 1.0.2
     "@opentelemetry/exporter-collector": 0.25.0

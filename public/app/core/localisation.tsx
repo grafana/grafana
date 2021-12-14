@@ -1,10 +1,16 @@
+import React, { useState } from 'react';
 import { I18n, i18n } from '@lingui/core';
+import { I18nProvider as LinguiI18nProvider } from '@lingui/react';
 
 import { messages } from '../../locales/en/messages';
 
 let i18nInstance: I18n;
 
-export function initI18n(locale = 'en') {
+export function getI18n(locale = 'en') {
+  if (i18nInstance) {
+    return i18nInstance;
+  }
+
   i18n.load(locale, messages);
 
   // Browser support for Intl.PluralRules is good and covers what we support in .browserlistrc,
@@ -23,14 +29,16 @@ export function initI18n(locale = 'en') {
   }
 
   i18n.activate(locale);
-
   i18nInstance = i18n;
-}
-
-export function getI18n() {
-  if (!i18nInstance) {
-    initI18n();
-  }
 
   return i18nInstance;
+}
+
+interface I18nProviderProps {
+  children: React.ReactNode;
+}
+export function I18nProvider({ children }: I18nProviderProps) {
+  const [i18nRef] = useState(() => getI18n());
+
+  return <LinguiI18nProvider i18n={i18nRef}>{children}</LinguiI18nProvider>;
 }
