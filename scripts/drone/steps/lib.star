@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = '2.7.4'
+grabpl_version = '2.7.5'
 build_image = 'grafana/build-container:1.4.8'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -84,11 +84,14 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'depends_on': [
                     'clone-enterprise',
                 ],
+                'environment': {
+                  'GITHUB_TOKEN': from_secret(github_token),
+                },
                 'commands': [
                                 'mv bin/grabpl /tmp/',
                                 'rmdir bin',
                                 'mv grafana-enterprise /tmp/',
-                                '/tmp/grabpl init-enterprise /tmp/grafana-enterprise{}'.format(source_commit),
+                                '/tmp/grabpl init-enterprise --github-token $${{GITHUB_TOKEN}} /tmp/grafana-enterprise{}'.format(source_commit),
                                 'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
                                 'mkdir bin',
                                 'mv /tmp/grabpl bin/'
@@ -290,10 +293,10 @@ def publish_storybook_step(edition, ver_mode):
 
 
 def upload_cdn_step(edition, ver_mode):
-    if ver_mode == "main":
-        bucket = "grafana-static-assets"
-    else:
+    if ver_mode == "release":
         bucket = "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+    else:
+        bucket = "grafana-static-assets"
 
     deps = []
     if edition in 'enterprise2':
@@ -906,7 +909,7 @@ def release_canary_npm_packages_step(edition):
             'end-to-end-tests-various-suite',
         ],
         'environment': {
-            'GITHUB_PACKAGE_TOKEN': from_secret('github_package_token'),
+            'NPM_TOKEN': from_secret('npm_token'),
         },
         'commands': [
             './scripts/circle-release-canary-packages.sh',
@@ -927,11 +930,11 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'test-release':
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
               '--packages-bucket grafana-downloads-test'
-    elif ver_mode == 'main':
-        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
+    elif ver_mode == 'release':
+        packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}/${{DRONE_TAG}}'.format(enterprise2_suffix(edition))
+        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
     else:
-        packages_bucket = ' --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads' + enterprise2_suffix(edition)
-        cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
+        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
 
     deps = []
     if edition in 'enterprise2':
@@ -1072,7 +1075,8 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'image': wix_image,
             'environment': {
                 'GCP_KEY': from_secret('gcp_key'),
-                'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
+                'PRERELEASE_BUCKET': from_secret(prerelease_bucket),
+                'GITHUB_TOKEN': from_secret('github_token')
             },
             'commands': installer_commands,
             'depends_on': [
@@ -1120,9 +1124,13 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm -r -force grafana-enterprise',
             'cp grabpl.exe C:\\App\\grabpl.exe',
             'rm -force grabpl.exe',
-            'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit),
+            'C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise{}'.format(source_commit),
             'cp C:\\App\\grabpl.exe grabpl.exe',
         ])
+        if 'environment' in steps[1]:
+            steps[1]['environment'] + {'GITHUB_TOKEN': from_secret(github_token)}
+        else:
+            steps[1]['environment'] = {'GITHUB_TOKEN': from_secret(github_token)}
 
     return steps
 
