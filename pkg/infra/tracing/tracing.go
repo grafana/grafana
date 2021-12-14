@@ -47,10 +47,9 @@ func ProvideService(cfg *setting.Cfg) (TracerService, error) {
 		return nil, err
 	}
 
-	if ts.enabled {
+	if ots.enabled {
 		return ots, ots.initOpentelemetryTracer()
 	}
-
 	return ots, nil
 }
 
@@ -157,6 +156,7 @@ func (ts *Opentracing) initGlobalTracer() error {
 	opentracing.SetGlobalTracer(tracer)
 
 	ts.closer = closer
+	GlobalTracer = ts
 
 	return nil
 }
@@ -172,15 +172,19 @@ func (ts *Opentracing) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ts *Opentracing) StartSpan(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+func (ts *Opentracing) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, spanName)
 	opentracingSpan := OpentracingSpan{span: span}
 	return ctx, opentracingSpan
 }
 
 func (ts *Opentracing) Inject(ctx context.Context, header http.Header, span Span) {
+	opentracingSpan, ok := span.(OpentracingSpan)
+	if !ok {
+		logger.Error("Failed to cast opentracing span")
+	}
 	err := opentracing.GlobalTracer().Inject(
-		span.(opentracing.Span).Context(),
+		opentracingSpan.span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(header))
 

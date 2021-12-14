@@ -22,7 +22,7 @@ type TracerService interface {
 }
 
 type Tracer interface {
-	StartSpan(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span)
+	Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span)
 	Inject(context.Context, http.Header, Span)
 }
 
@@ -41,6 +41,7 @@ type Opentelemetry struct {
 	log     log.Logger
 
 	tracerProvider *tracesdk.TracerProvider
+	tracer         trace.Tracer
 
 	Cfg *setting.Cfg
 }
@@ -95,7 +96,8 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 	}
 
 	ots.tracerProvider = tp
-	GlobalTracer = otel.GetTracerProvider().Tracer("component-main").(Tracer)
+	ots.tracer = otel.GetTracerProvider().Tracer("component-main")
+	GlobalTracer = ots
 
 	return nil
 }
@@ -116,9 +118,12 @@ func (ots *Opentelemetry) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ots *Opentelemetry) StartSpan(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
-	ctx, span := GlobalTracer.StartSpan(ctx, spanName)
-	return ctx, span
+func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+	ctx, span := ots.tracer.Start(ctx, spanName)
+	opentelemetrySpan := OpentelemetrySpan{
+		span: span,
+	}
+	return ctx, opentelemetrySpan
 }
 
 func (ots *Opentelemetry) Inject(ctx context.Context, header http.Header, _ Span) {

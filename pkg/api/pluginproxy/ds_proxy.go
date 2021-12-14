@@ -148,7 +148,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	}
 
 	proxy.logRequest()
-	ctx, span := tracing.GlobalTracer.StartSpan(proxy.ctx.Req.Context(), "datasource reverse proxy")
+	ctx, span := tracing.GlobalTracer.Start(proxy.ctx.Req.Context(), "datasource reverse proxy")
 	defer span.End()
 
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)

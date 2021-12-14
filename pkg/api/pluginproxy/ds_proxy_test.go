@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -27,6 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
+	"gopkg.in/ini.v1"
 )
 
 func TestDataSourceProxy_routeRule(t *testing.T) {
@@ -579,143 +582,174 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 }
 
 // test DataSourceProxy request handling.
-// func TestDataSourceProxy_requestHandling(t *testing.T) {
-// 	// httpClientProvider := httpclient.NewProvider()
-// 	var writeErr error
+func TestDataSourceProxy_requestHandling(t *testing.T) {
+	httpClientProvider := httpclient.NewProvider()
+	var writeErr error
 
-// 	type setUpCfg struct {
-// 		headers map[string]string
-// 		writeCb func(w http.ResponseWriter, r *http.Request)
-// 	}
+	type setUpCfg struct {
+		headers map[string]string
+		writeCb func(w http.ResponseWriter, r *http.Request)
+	}
 
-// 	setUp := func(t *testing.T, cfgs ...setUpCfg) (*models.ReqContext, *models.DataSource) {
-// 		writeErr = nil
+	setUp := func(t *testing.T, cfgs ...setUpCfg) (*models.ReqContext, *models.DataSource) {
+		writeErr = nil
 
-// 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 			http.SetCookie(w, &http.Cookie{Name: "flavor", Value: "chocolateChip"})
-// 			written := false
-// 			for _, cfg := range cfgs {
-// 				if cfg.writeCb != nil {
-// 					t.Log("Writing response via callback")
-// 					cfg.writeCb(w, r)
-// 					written = true
-// 				}
-// 			}
-// 			if !written {
-// 				t.Log("Writing default response")
-// 				w.WriteHeader(200)
-// 				_, writeErr = w.Write([]byte("I am the backend"))
-// 			}
-// 		}))
-// 		t.Cleanup(backend.Close)
+		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.SetCookie(w, &http.Cookie{Name: "flavor", Value: "chocolateChip"})
+			written := false
+			for _, cfg := range cfgs {
+				if cfg.writeCb != nil {
+					t.Log("Writing response via callback")
+					cfg.writeCb(w, r)
+					written = true
+				}
+			}
+			if !written {
+				t.Log("Writing default response")
+				w.WriteHeader(200)
+				_, writeErr = w.Write([]byte("I am the backend"))
+			}
+		}))
+		t.Cleanup(backend.Close)
 
-// 		ds := &models.DataSource{Url: backend.URL, Type: models.DS_GRAPHITE}
+		ds := &models.DataSource{Url: backend.URL, Type: models.DS_GRAPHITE}
 
-// 		responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
+		responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
 
-// 		// XXX: Really unsure why, but setting headers within the HTTP handler function doesn't stick,
-// 		// so doing it here instead
-// 		for _, cfg := range cfgs {
-// 			for k, v := range cfg.headers {
-// 				responseWriter.Header().Set(k, v)
-// 			}
-// 		}
+		// XXX: Really unsure why, but setting headers within the HTTP handler function doesn't stick,
+		// so doing it here instead
+		for _, cfg := range cfgs {
+			for k, v := range cfg.headers {
+				responseWriter.Header().Set(k, v)
+			}
+		}
 
-// 		return &models.ReqContext{
-// 			SignedInUser: &models.SignedInUser{},
-// 			Context: &web.Context{
-// 				Req:  httptest.NewRequest("GET", "/render", nil),
-// 				Resp: responseWriter,
-// 			},
-// 		}, ds
-// 	}
+		return &models.ReqContext{
+			SignedInUser: &models.SignedInUser{},
+			Context: &web.Context{
+				Req:  httptest.NewRequest("GET", "/render", nil),
+				Resp: responseWriter,
+			},
+		}, ds
+	}
 
-// 	// t.Run("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func(t *testing.T) {
-// 	// 	ctx, ds := setUp(t)
-// 	// 	var routes []*plugins.Route
-// 	// 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-// 	// 	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
-// 	// 	proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
-// 	// 	require.NoError(t, err)
+	t.Run("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func(t *testing.T) {
+		ctx, ds := setUp(t)
+		var routes []*plugins.Route
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
+		require.NoError(t, err)
 
-// 	// 	// tracing.GlobalTracer = otel.GetTracerProvider().Tracer("component-main").(tracing.Tracer)
-// 	// 	// ots := &tracing.Opentelemetry{
-// 	// 	// 	// Cfg: cfg,
-// 	// 	// 	// log: log.New("tracing"),
-// 	// 	// }
+		file, err := ini.Load("./test-data/test_opentracing.ini")
+		require.NoError(t, err)
+		tracingService, err := tracing.ProvideService(&setting.Cfg{Raw: file})
+		require.NoError(t, err)
+		require.NotNil(t, tracingService)
 
-// 	// 	proxy.HandleRequest()
+		proxy.HandleRequest()
 
-// 	// 	require.NoError(t, writeErr)
-// 	// 	assert.Empty(t, proxy.ctx.Resp.Header().Get("Set-Cookie"))
-// 	// })
+		require.NoError(t, writeErr)
+		assert.Empty(t, proxy.ctx.Resp.Header().Get("Set-Cookie"))
+	})
 
-// 	// t.Run("When response header Set-Cookie is set should remove proxied Set-Cookie header and restore the original Set-Cookie header", func(t *testing.T) {
-// 	// 	ctx, ds := setUp(t, setUpCfg{
-// 	// 		headers: map[string]string{
-// 	// 			"Set-Cookie": "important_cookie=important_value",
-// 	// 		},
-// 	// 	})
-// 	// 	var routes []*plugins.Route
-// 	// 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-// 	// 	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
-// 	// 	proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
-// 	// 	require.NoError(t, err)
+	t.Run("When response header Set-Cookie is set should remove proxied Set-Cookie header and restore the original Set-Cookie header", func(t *testing.T) {
+		ctx, ds := setUp(t, setUpCfg{
+			headers: map[string]string{
+				"Set-Cookie": "important_cookie=important_value",
+			},
+		})
+		var routes []*plugins.Route
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
+		require.NoError(t, err)
 
-// 	// 	proxy.HandleRequest()
+		proxy.HandleRequest()
 
-// 	// 	require.NoError(t, writeErr)
-// 	// 	assert.Equal(t, "important_cookie=important_value", proxy.ctx.Resp.Header().Get("Set-Cookie"))
-// 	// })
+		require.NoError(t, writeErr)
+		assert.Equal(t, "important_cookie=important_value", proxy.ctx.Resp.Header().Get("Set-Cookie"))
+	})
 
-// 	// t.Run("Data source returns status code 401", func(t *testing.T) {
-// 	// 	ctx, ds := setUp(t, setUpCfg{
-// 	// 		writeCb: func(w http.ResponseWriter, r *http.Request) {
-// 	// 			w.WriteHeader(401)
-// 	// 			w.Header().Set("www-authenticate", `Basic realm="Access to the server"`)
-// 	// 			_, err := w.Write([]byte("Not authenticated"))
-// 	// 			require.NoError(t, err)
-// 	// 			t.Log("Wrote 401 response")
-// 	// 		},
-// 	// 	})
-// 	// 	var routes []*plugins.Route
-// 	// 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-// 	// 	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
-// 	// 	proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
-// 	// 	require.NoError(t, err)
+	t.Run("Data source returns status code 401", func(t *testing.T) {
+		ctx, ds := setUp(t, setUpCfg{
+			writeCb: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(401)
+				w.Header().Set("www-authenticate", `Basic realm="Access to the server"`)
+				_, err := w.Write([]byte("Not authenticated"))
+				require.NoError(t, err)
+				t.Log("Wrote 401 response")
+			},
+		})
+		var routes []*plugins.Route
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
+		require.NoError(t, err)
 
-// 	// 	proxy.HandleRequest()
+		proxy.HandleRequest()
 
-// 	// 	require.NoError(t, writeErr)
-// 	// 	assert.Equal(t, 400, proxy.ctx.Resp.Status(), "Status code 401 should be converted to 400")
-// 	// 	assert.Empty(t, proxy.ctx.Resp.Header().Get("www-authenticate"))
-// 	// })
+		require.NoError(t, writeErr)
+		assert.Equal(t, 400, proxy.ctx.Resp.Status(), "Status code 401 should be converted to 400")
+		assert.Empty(t, proxy.ctx.Resp.Header().Get("www-authenticate"))
+	})
 
-// 	// t.Run("Data source should handle proxy path url encoding correctly", func(t *testing.T) {
-// 	// 	var req *http.Request
-// 	// 	ctx, ds := setUp(t, setUpCfg{
-// 	// 		writeCb: func(w http.ResponseWriter, r *http.Request) {
-// 	// 			req = r
-// 	// 			w.WriteHeader(200)
-// 	// 			_, err := w.Write([]byte("OK"))
-// 	// 			require.NoError(t, err)
-// 	// 		},
-// 	// 	})
+	t.Run("Data source should handle proxy path url encoding correctly", func(t *testing.T) {
+		var req *http.Request
+		ctx, ds := setUp(t, setUpCfg{
+			writeCb: func(w http.ResponseWriter, r *http.Request) {
+				req = r
+				w.WriteHeader(200)
+				_, err := w.Write([]byte("OK"))
+				require.NoError(t, err)
+			},
+		})
 
-// 	// 	ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
-// 	// 	var routes []*plugins.Route
-// 	// 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-// 	// 	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
-// 	// 	proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
-// 	// 	require.NoError(t, err)
+		ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
+		var routes []*plugins.Route
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
+		require.NoError(t, err)
 
-// 	// 	proxy.HandleRequest()
+		proxy.HandleRequest()
 
-// 	// 	require.NoError(t, writeErr)
-// 	// 	require.NotNil(t, req)
-// 	// 	require.Equal(t, "/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", req.RequestURI)
-// 	// })
-// }
+		require.NoError(t, writeErr)
+		require.NotNil(t, req)
+		require.Equal(t, "/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", req.RequestURI)
+	})
+
+	t.Run("Data source should handle proxy path url encoding correctly with opentelemetry", func(t *testing.T) {
+		var req *http.Request
+		ctx, ds := setUp(t, setUpCfg{
+			writeCb: func(w http.ResponseWriter, r *http.Request) {
+				req = r
+				w.WriteHeader(200)
+				_, err := w.Write([]byte("OK"))
+				require.NoError(t, err)
+			},
+		})
+
+		ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
+		var routes []*plugins.Route
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
+		require.NoError(t, err)
+
+		file, err := ini.Load("./test-data/test_opentelemetry.ini")
+		require.NoError(t, err)
+		tracingService, err := tracing.ProvideService(&setting.Cfg{Raw: file})
+		require.NoError(t, err)
+		require.NotNil(t, tracingService)
+
+		proxy.HandleRequest()
+
+		require.NoError(t, writeErr)
+		require.NotNil(t, req)
+		require.Equal(t, "/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", req.RequestURI)
+	})
+}
 
 func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	ctx := models.ReqContext{
