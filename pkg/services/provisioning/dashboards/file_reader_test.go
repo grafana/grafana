@@ -608,7 +608,7 @@ func (s *fakeDashboardProvisioningService) SaveFolderForProvisionedDashboards(ct
 	return dto.Dashboard, nil
 }
 
-func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardID int64) error {
+func (s *fakeDashboardProvisioningService) UnprovisionDashboard(ctx context.Context, dashboardID int64) error {
 	for key, val := range s.provisioned {
 		for index, dashboard := range val {
 			if dashboard.DashboardId == dashboardID {
@@ -620,7 +620,7 @@ func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardID int6
 }
 
 func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error {
-	err := s.UnprovisionDashboard(dashboardID)
+	err := s.UnprovisionDashboard(ctx, dashboardID)
 	if err != nil {
 		return err
 	}

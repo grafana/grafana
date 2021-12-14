@@ -144,7 +144,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		decryptFn:         decryptFn,
 	}
 
-	am.gokitLogger = gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger))
+	am.gokitLogger = logging.NewWrapper(am.logger)
 	am.fileStore = NewFileStore(am.orgID, kvStore, am.WorkingDirPath())
 
 	nflogFilepath, err := am.fileStore.FilepathFor(context.TODO(), notificationLogFilename)

@@ -36,7 +36,7 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
+				err := CanAdmin(context.Background(), bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
 				require.Equal(t, models.ErrNotAllowedToUpdateTeam, err)
 			})
 		})
@@ -53,7 +53,7 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
+				err := CanAdmin(context.Background(), bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
 				require.NoError(t, err)
 			})
 		})
@@ -75,14 +75,14 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanAdmin(bus.GetBus(), testTeamOtherOrg.OrgId, testTeamOtherOrg.Id, &editor)
+				err := CanAdmin(context.Background(), bus.GetBus(), testTeamOtherOrg.OrgId, testTeamOtherOrg.Id, &editor)
 				require.Equal(t, models.ErrNotAllowedToUpdateTeamInDifferentOrg, err)
 			})
 		})
 
 		t.Run("Given an org admin and a team", func(t *testing.T) {
 			t.Run("Should be able to update the team", func(t *testing.T) {
-				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &admin)
+				err := CanAdmin(context.Background(), bus.GetBus(), testTeam.OrgId, testTeam.Id, &admin)
 				require.NoError(t, err)
 			})
 		})
