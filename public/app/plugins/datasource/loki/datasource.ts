@@ -32,7 +32,6 @@ import {
   QueryResultMeta,
   ScopedVars,
   TimeRange,
-  renderLabelsTemplate,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
