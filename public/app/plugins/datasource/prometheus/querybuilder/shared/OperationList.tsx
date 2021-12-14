@@ -2,8 +2,13 @@ import { css } from '@emotion/css';
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { ButtonCascader, CascaderOption, useStyles2 } from '@grafana/ui';
-import React from 'react';
-import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from '../shared/types';
+import React, { useState } from 'react';
+import {
+  QueryBuilderOperation,
+  QueryBuilderOperationDef,
+  QueryWithOperations,
+  VisualQueryModeller,
+} from '../shared/types';
 import { OperationEditor } from './OperationEditor';
 
 export interface Props<T extends QueryWithOperations> {
@@ -15,6 +20,10 @@ export interface Props<T extends QueryWithOperations> {
   explainMode?: boolean;
 }
 
+export interface State {
+  docItems: QueryBuilderOperationDef[];
+}
+
 export function OperationList<T extends QueryWithOperations>({
   query,
   datasource,
@@ -23,6 +32,7 @@ export function OperationList<T extends QueryWithOperations>({
   onRunQuery,
 }: Props<T>) {
   const styles = useStyles2(getStyles);
+  const [state, setState] = useState<State>({ docItems: [] });
   const { operations } = query;
 
   const onOperationChange = (index: number, update: QueryBuilderOperation) => {
@@ -55,31 +65,44 @@ export function OperationList<T extends QueryWithOperations>({
 
   return (
     <Stack gap={1} direction="column">
-      <Stack gap={0}>
-        {operations.map((op, index) => (
-          <div className={styles.operationWrapper} key={index.toString()}>
-            <OperationEditor
-              queryModeller={queryModeller}
-              index={index}
-              operation={op}
-              query={query}
-              datasource={datasource}
-              onChange={onOperationChange}
-              onRemove={onRemove}
-              onRunQuery={onRunQuery}
-            />
-            {index < operations.length - 1 && (
-              <>
-                <div className={styles.line} />
-                <div className={styles.lineArrow} />
-              </>
-            )}
-          </div>
-        ))}
-        <div className={operations.length > 0 ? styles.addOperationPadding : undefined}>
+      <Stack gap={1}>
+        {operations.length > 0 && (
+          <Stack gap={0}>
+            {operations.map((op, index) => (
+              <div className={styles.operationWrapper} key={index.toString()}>
+                <OperationEditor
+                  queryModeller={queryModeller}
+                  index={index}
+                  operation={op}
+                  query={query}
+                  datasource={datasource}
+                  onChange={onOperationChange}
+                  onRemove={onRemove}
+                  onRunQuery={onRunQuery}
+                  onShowInfo={(def) => {
+                    setState({ docItems: [...state.docItems, def] });
+                  }}
+                />
+                {index < operations.length - 1 && (
+                  <>
+                    <div className={styles.line} />
+                    <div className={styles.lineArrow} />
+                  </>
+                )}
+              </div>
+            ))}
+          </Stack>
+        )}
+        <div className={styles.addButton}>
           <ButtonCascader key="cascader" icon="plus" options={addOptions} onChange={onAddOperation} />
         </div>
       </Stack>
+      {state.docItems.map((def) => (
+        <div key={def.id}>
+          <div>{def.name}</div>
+          <div>{def.documentation}</div>
+        </div>
+      ))}
     </Stack>
   );
 }
@@ -112,8 +135,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     operationWrapper: css({
       display: 'flex',
     }),
-    addOperationPadding: css({
-      paddingLeft: theme.spacing(2),
+    addButton: css({
+      paddingBottom: theme.spacing(1),
     }),
   };
 };

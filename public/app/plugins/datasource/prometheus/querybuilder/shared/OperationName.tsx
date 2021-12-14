@@ -47,7 +47,7 @@ export const OperationName = React.memo<Props>(({ operation, def, index, onChang
           title={'Click to replace with alternative function'}
         >
           {nameElement}
-          <Icon className={`${styles.dropdown} qbn-dropdown-icon`} name="arrow-down" size="sm" />
+          <Icon className={`${styles.dropdown} operation-header-show-on-hover`} name="arrow-down" size="sm" />
         </button>
       )}
       {state.isOpen && (
@@ -83,14 +83,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       boxShadow: 'none',
       cursor: 'pointer',
-      '&:hover': {
-        '.qbn-dropdown-icon': {
-          display: 'inline-block',
-        },
-      },
     }),
     dropdown: css({
-      display: 'none',
+      opacity: 0,
       color: theme.colors.text.secondary,
     }),
   };

@@ -10,6 +10,7 @@ import { promQueryModeller } from '../PromQueryModeller';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { QueryPreview } from './QueryPreview';
 import { DataSourceApi } from '@grafana/data';
+import { OperationsEditorRow } from '../shared/OperationsEditorRow';
 
 export interface Props {
   query: PromVisualQuery;
@@ -81,7 +82,7 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           onGetLabelValues={onGetLabelValues}
         />
       </EditorRow>
-      <EditorRow>
+      <OperationsEditorRow>
         <OperationList<PromVisualQuery>
           queryModeller={promQueryModeller}
           datasource={datasource as DataSourceApi}
@@ -92,7 +93,7 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
         {query.binaryQueries && query.binaryQueries.length > 0 && (
           <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
         )}
-      </EditorRow>
+      </OperationsEditorRow>
       {!nested && (
         <EditorRow>
           <QueryPreview query={query} />

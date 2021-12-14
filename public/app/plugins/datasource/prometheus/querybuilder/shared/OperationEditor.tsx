@@ -10,6 +10,7 @@ import {
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
 } from '../shared/types';
+import { OperationInfoButton } from './OperationInfoButton';
 import { OperationName } from './OperationName';
 import { getOperationParamEditor } from './OperationParamEditor';
 
@@ -21,6 +22,7 @@ export interface Props {
   queryModeller: VisualQueryModeller;
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
+  onShowInfo: (def: QueryBuilderOperationDef) => void;
   onRunQuery: () => void;
 }
 
@@ -30,6 +32,7 @@ export function OperationEditor({
   onRemove,
   onChange,
   onRunQuery,
+  onShowInfo,
   queryModeller,
   query,
   datasource,
@@ -112,14 +115,13 @@ export function OperationEditor({
           queryModeller={queryModeller}
         />
         <FlexItem grow={1} />
-        <div>
-          {/* <Button icon="info-circle" size="sm" variant="secondary" fill="text" className={styles.headerButton} /> */}
+        <div className={`${styles.operationHeaderButtons} operation-header-show-on-hover`}>
+          <OperationInfoButton def={def} />
           <Button
             icon="times"
             size="sm"
             onClick={() => onRemove(index)}
             fill="text"
-            className={styles.headerButton}
             variant="secondary"
             title="Remove operation"
           />
@@ -168,6 +170,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       cursor: 'grab',
       borderRadius: theme.shape.borderRadius(1),
+      marginBottom: theme.spacing(1),
     }),
     header: css({
       borderBottom: `1px solid ${theme.colors.border.medium}`,
@@ -175,9 +178,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
       display: 'flex',
       alignItems: 'center',
-    }),
-    name: css({
-      // fontSize: theme.typography.bodySmall.fontSize,
+      '&:hover .operation-header-show-on-hover': css({
+        opacity: 1,
+      }),
     }),
     infoIcon: css({
       color: theme.colors.text.secondary,
@@ -198,13 +201,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       verticalAlign: 'middle',
       height: '32px',
     }),
-    headerButton: css({
-      color: theme.colors.text.secondary,
+    operationHeaderButtons: css({
+      opacity: 0,
+      transition: theme.transitions.create(['opacity'], {
+        duration: theme.transitions.duration.short,
+      }),
     }),
     paramValue: css({
       display: 'table-cell',
       paddingBottom: theme.spacing(0.5),
       verticalAlign: 'middle',
+    }),
+    docBox: css({
+      padding: theme.spacing(1),
     }),
   };
 };
