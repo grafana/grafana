@@ -257,6 +257,7 @@ require (
 )
 
 require (
+	cloud.google.com/go/kms v1.0.0
 	github.com/Azure/go-autorest/autorest/adal v0.9.15 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
 )
