@@ -83,12 +83,16 @@ jobs:
         PR_NUMBER: ${{ steps.finder.outputs.pr }}
       with:
         script: |
-          github.rest.issues.removeLabel({
-            issue_number: process.env.PR_NUMBER,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            name: 'breaking change'
-          })
+          try {
+            github.rest.issues.removeLabel({
+              issue_number: process.env.PR_NUMBER,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'breaking change'
+            })
+          } catch () {
+            console.log('"breaking change" label does not exist on the PR.')
+          }
 
     - name: Exit
       run: exit ${{ env.BREAKING_CHANGES_IS_BREAKING }}
