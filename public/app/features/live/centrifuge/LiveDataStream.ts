@@ -1,8 +1,4 @@
-import type {
-  LiveDataStreamOptions,
-  StreamingDataQueryResponse,
-  StreamingFrameOptions,
-} from '@grafana/runtime/src/services/live';
+import type { LiveDataStreamOptions, StreamingFrameOptions } from '@grafana/runtime/src/services/live';
 import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
 import {
   DataFrameJSON,
@@ -17,7 +13,7 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { map, Observable, ReplaySubject, Subject, Subscriber, Subscription } from 'rxjs';
-import { DataStreamSubscriptionKey } from './service';
+import { DataStreamSubscriptionKey, StreamingDataQueryResponse } from './service';
 import { StreamingDataFrame } from '../data/StreamingDataFrame';
 import { StreamingResponseDataType } from '../data/utils';
 
