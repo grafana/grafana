@@ -293,10 +293,10 @@ def publish_storybook_step(edition, ver_mode):
 
 
 def upload_cdn_step(edition, ver_mode):
-    if ver_mode == "main":
-        bucket = "grafana-static-assets"
-    else:
+    if ver_mode == "release":
         bucket = "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+    else:
+        bucket = "grafana-static-assets"
 
     deps = []
     if edition in 'enterprise2':
