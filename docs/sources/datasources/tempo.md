@@ -149,7 +149,7 @@ You can link to Tempo trace from logs in Loki or Elastic by configuring an inter
 
 ## Provision the Tempo data source
 
-You can configure data sources using config files with Grafana's provisioning system. Read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}).
+You can modify the Grafana configuration files to provision the Tempo data source. Read more about how it works and all the settings you can set for data sources on the [provisioning]({{< relref "../administration/provisioning/#datasources" >}}) topic.
 
 Here is an example config:
 
