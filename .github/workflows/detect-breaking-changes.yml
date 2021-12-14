@@ -39,6 +39,7 @@ jobs:
           return `https://github.com/grafana/grafana/runs/${result.data.jobs[0].id}?check_suite_focus=true`;
 
     - name: Detect breaking changes
+      id: breaking-changes
       run: ./scripts/check-breaking-changes.sh 
       env:
         FORCE_COLOR: 3
@@ -49,7 +50,7 @@ jobs:
       id: finder
 
     - name: Comment on PR
-      if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '1' || env.BREAKING_CHANGES_IS_BREAKING == 1 }}
+      if: ${{ steps.breaking-changes.outputs.is_breaking == 1 }}
       uses: marocchino/sticky-pull-request-comment@v2
       with:
         number: ${{ steps.finder.outputs.pr }}
@@ -58,18 +59,36 @@ jobs:
 
           _(Open the links below in a new tab to go to the correct steps)_
 
-          ${{ env.BREAKING_CHANGES_MESSAGE }}
+          ${{ steps.breaking-changes.outputs.message }}
 
           [Check console output](${{steps.get-job-link.outputs.result}})
 
     - name: Remove comment on PR
-      if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '0' || env.BREAKING_CHANGES_IS_BREAKING == 0 }}
+      if: ${{ steps.breaking-changes.outputs.is_breaking == 0 }}
       uses: marocchino/sticky-pull-request-comment@v2
       with:
+        number: ${{ steps.finder.outputs.pr }}
         delete: true
 
-    - name: Add label (if there are breaking changes)
-      if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '1' || env.BREAKING_CHANGES_IS_BREAKING == 1 }}
+    - name: Check if "breaking change" label exists
+      id: does-label-exist
+      uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ steps.finder.outputs.pr }}
+      with:
+        script: |
+          const { data } = await github.rest.issues.listLabelsOnIssue({
+            issue_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+          });
+          const labels = data.map(({ name }) => name);
+          const doesExist = labels.includes('breaking change');
+
+          return doesExist;
+  
+    - name: Add "breaking change" label
+      if: ${{ steps.breaking-changes.outputs.is_breaking == 1 && steps.does-label-exist.outputs.result == false }}
       uses: actions/github-script@v5
       env:
         PR_NUMBER: ${{ steps.finder.outputs.pr }}
@@ -82,25 +101,49 @@ jobs:
             labels: ['breaking change']
           })
 
-    - name: Remove label (if there are breaking changes)
-      if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '0' || env.BREAKING_CHANGES_IS_BREAKING == 0 }}
+    - name: Remove "breaking change" label
+      if: ${{ steps.breaking-changes.outputs.is_breaking == 0 && steps.does-label-exist.outputs.result == true }}
       uses: actions/github-script@v5
       env:
         PR_NUMBER: ${{ steps.finder.outputs.pr }}
       with:
         script: |
-          try {
-            github.rest.issues.removeLabel({
-              issue_number: process.env.PR_NUMBER,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: 'breaking change'
-            })
-          } catch () {
-            console.log('"breaking change" label does not exist on the PR.')
-          }
+          github.rest.issues.removeLabel({
+            issue_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            name: 'breaking change'
+          })
+
+    - name: Add "grafana/plugins-platform-frontend" as a reviewer
+      if: ${{ steps.breaking-changes.outputs.is_breaking == 1 }}
+      uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ steps.finder.outputs.pr }}
+      with:
+        script: |
+          github.rest.pulls.requestReviewers({
+            pull_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            reviewers: ['grafana/plugins-platform-frontend']
+          })
+
+    - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
+      if: ${{ steps.breaking-changes.outputs.is_breaking == 0 }}
+      uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ steps.finder.outputs.pr }}
+      with:
+        script: |
+          github.rest.pulls.removeRequestedReviewers({
+            pull_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            reviewers: ['grafana/plugins-platform-frontend']
+          })
 
     - name: Exit
-      run: exit ${{ env.BREAKING_CHANGES_IS_BREAKING }}
+      run: exit ${{ steps.breaking-changes.outputs.is_breaking }}
       shell: bash
 

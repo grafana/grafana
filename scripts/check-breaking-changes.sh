@@ -11,7 +11,6 @@ while IFS= read -r line; do
     IFS=':' read -ra ADDR <<< "$line"
     PACKAGE_PATH="${ADDR[0]}"
     PACKAGE_NAME="${ADDR[1]}"
-    PACKAGE_VERSION="${ADDR[2]}"
 
     # Calculate current and previous package paths / names
     PREV="$PACKAGE_NAME@canary"
@@ -46,8 +45,8 @@ while IFS= read -r line; do
 done <<< "$PACKAGES"
 
 # "Export" the message to an environment variable that can be used across Github Actions steps
-echo "BREAKING_CHANGES_IS_BREAKING=$EXIT_CODE" >> $GITHUB_ENV
-echo "BREAKING_CHANGES_MESSAGE=$GITHUB_MESSAGE" >> $GITHUB_ENV
+echo "::set-output name=is_breaking::$EXIT_CODE"
+echo "::set-output name=message::$GITHUB_MESSAGE"
 
 # We will exit the workflow accordingly at another step
 exit 0
