@@ -17,6 +17,7 @@ import { getAllRulesSourceNames } from 'app/features/alerting/unified/utils/data
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { Annotation, RULE_LIST_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
@@ -150,6 +151,17 @@ function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], ru
         (options.stateFilter.inactive && rule.rule.state === PromAlertingRuleState.Inactive)
       );
     });
+  }
+  if (options.alertInstanceLabelFilter) {
+    const matchers = parseMatchers(options.alertInstanceLabelFilter);
+    // Reduce rules and instances to only those that match
+    filteredRules = filteredRules.reduce((rules, rule) => {
+      const filteredAlerts = rule.rule.alerts.filter(({ labels }) => labelsMatchMatchers(labels, matchers));
+      if (filteredAlerts.length) {
+        rules.push({ ...rule, rule: { ...rule.rule, alerts: filteredAlerts } });
+      }
+      return rules;
+    }, [] as PromRuleWithLocation[]);
   }
   if (options.folder) {
     filteredRules = filteredRules.filter((rule) => {

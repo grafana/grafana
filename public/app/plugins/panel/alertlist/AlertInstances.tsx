@@ -8,7 +8,6 @@ import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-aler
 import { UnifiedAlertListOptions } from './types';
 import { AlertInstancesTable } from 'app/features/alerting/unified/components/rules/AlertInstancesTable';
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
-import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 
 interface Props {
   ruleWithLocation: PromRuleWithLocation;
@@ -45,22 +44,22 @@ export const AlertInstances = ({ ruleWithLocation, options }: Props) => {
 
 function filterAlerts(options: PanelProps<UnifiedAlertListOptions>['options'], alerts: Alert[]): Alert[] {
   let filteredAlerts = [...alerts];
-  if (options.alertInstanceLabelFilter) {
-    const matchers = parseMatchers(options.alertInstanceLabelFilter || '');
-    filteredAlerts = filteredAlerts.filter(({ labels }) => labelsMatchMatchers(labels, matchers));
-  }
-  if (Object.values(options.alertInstanceStateFilter).some((value) => value)) {
+  if (
+    [Object.values(options.alertInstanceStateFilter), Object.values(options.stateFilter)].flat().some((value) => value)
+  ) {
     filteredAlerts = filteredAlerts.filter((alert) => {
       return (
         (options.alertInstanceStateFilter.Alerting && alert.state === GrafanaAlertState.Alerting) ||
         (options.alertInstanceStateFilter.Pending && alert.state === GrafanaAlertState.Pending) ||
         (options.alertInstanceStateFilter.NoData && alert.state === GrafanaAlertState.NoData) ||
         (options.alertInstanceStateFilter.Normal && alert.state === GrafanaAlertState.Normal) ||
-        (options.alertInstanceStateFilter.Error && alert.state === GrafanaAlertState.Error)
+        (options.alertInstanceStateFilter.Error && alert.state === GrafanaAlertState.Error) ||
+        (options.stateFilter.firing && alert.state === PromAlertingRuleState.Firing) ||
+        (options.stateFilter.inactive && alert.state === PromAlertingRuleState.Inactive) ||
+        (options.stateFilter.pending && alert.state === PromAlertingRuleState.Pending)
       );
     });
   }
-
   return filteredAlerts;
 }
 
