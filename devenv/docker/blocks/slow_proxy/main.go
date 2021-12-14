@@ -6,6 +6,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -31,7 +32,10 @@ func main() {
 	proxy := httputil.NewSingleHostReverseProxy(originURL)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("sleeping for %s then proxying request: url '%s', headers: '%v'", sleep.String(), r.RequestURI, r.Header)
+		safeSleep := strings.Replace(sleep.String(), "\n", "", -1)
+		safeRequestUri := strings.Replace(r.RequestURI, "\n", "", -1)
+
+		log.Printf("sleeping for %s then proxying request: url '%s', headers: '%v'", safeSleep, safeRequestUri, r.Header)
 		<-time.After(sleep)
 		proxy.ServeHTTP(w, r)
 	})
