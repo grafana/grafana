@@ -44,17 +44,16 @@ export const AlertInstances = ({ ruleWithLocation, options }: Props) => {
 
 function filterAlerts(options: PanelProps<UnifiedAlertListOptions>['options'], alerts: Alert[]): Alert[] {
   let filteredAlerts = [...alerts];
-  if (
-    [Object.values(options.alertInstanceStateFilter), Object.values(options.stateFilter)].flat().some((value) => value)
-  ) {
+  if (Object.values(options.stateFilter).some((value) => value)) {
     filteredAlerts = filteredAlerts.filter((alert) => {
       return (
-        (options.alertInstanceStateFilter.Alerting && alert.state === GrafanaAlertState.Alerting) ||
-        (options.alertInstanceStateFilter.Pending && alert.state === GrafanaAlertState.Pending) ||
-        (options.alertInstanceStateFilter.NoData && alert.state === GrafanaAlertState.NoData) ||
-        (options.alertInstanceStateFilter.Normal && alert.state === GrafanaAlertState.Normal) ||
-        (options.alertInstanceStateFilter.Error && alert.state === GrafanaAlertState.Error) ||
-        (options.stateFilter.firing && alert.state === PromAlertingRuleState.Firing) ||
+        (options.stateFilter.firing &&
+          (alert.state === GrafanaAlertState.Alerting || alert.state === PromAlertingRuleState.Firing)) ||
+        (options.stateFilter.pending &&
+          (alert.state === GrafanaAlertState.Pending || alert.state === PromAlertingRuleState.Pending)) ||
+        (options.stateFilter.noData && alert.state === GrafanaAlertState.NoData) ||
+        (options.stateFilter.normal && alert.state === GrafanaAlertState.Normal) ||
+        (options.stateFilter.error && alert.state === GrafanaAlertState.Error) ||
         (options.stateFilter.inactive && alert.state === PromAlertingRuleState.Inactive) ||
         (options.stateFilter.pending && alert.state === PromAlertingRuleState.Pending)
       );

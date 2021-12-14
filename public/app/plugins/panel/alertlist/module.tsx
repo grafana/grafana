@@ -223,7 +223,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     })
     .addBooleanSwitch({
       path: 'stateFilter.firing',
-      name: 'Alerting',
+      name: 'Alerting / Firing',
       defaultValue: true,
       category: ['Alert state filter'],
     })
@@ -240,34 +240,22 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       category: ['Alert state filter'],
     })
     .addBooleanSwitch({
-      path: 'alertInstanceStateFilter.Alerting',
-      name: 'Alerting',
-      defaultValue: true,
-      category: ['Alert instance state filter'],
-    })
-    .addBooleanSwitch({
-      path: 'alertInstanceStateFilter.Pending',
-      name: 'Pending',
-      defaultValue: true,
-      category: ['Alert instance state filter'],
-    })
-    .addBooleanSwitch({
-      path: 'alertInstanceStateFilter.NoData',
+      path: 'stateFilter.noData',
       name: 'No Data',
       defaultValue: false,
-      category: ['Alert instance state filter'],
+      category: ['Alert state filter'],
     })
     .addBooleanSwitch({
-      path: 'alertInstanceStateFilter.Normal',
+      path: 'stateFilter.normal',
       name: 'Normal',
       defaultValue: false,
-      category: ['Alert instance state filter'],
+      category: ['Alert state filter'],
     })
     .addBooleanSwitch({
-      path: 'alertInstanceStateFilter.Error',
+      path: 'stateFilter.error',
       name: 'Error',
       defaultValue: true,
-      category: ['Alert instance state filter'],
+      category: ['Alert state filter'],
     });
 });
 
