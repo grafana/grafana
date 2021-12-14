@@ -26,12 +26,6 @@ import { dataSource as expressionDatasource } from 'app/features/expressions/Exp
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { cancelNetworkRequestsOnUnsubscribe } from './processing/canceler';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import {
-  isAnyStreamingResponseData,
-  isStreamingResponseData,
-  StreamingResponseDataType,
-} from 'app/features/live/data/utils';
-import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -87,18 +81,6 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     request,
     timeRange,
   };
-  panelData.series = panelData.series.map((frame, frameIndex) => {
-    const dataPacket = panelData.series[frameIndex];
-    if (isStreamingResponseData(dataPacket, StreamingResponseDataType.FullFrame)) {
-      return StreamingDataFrame.deserialize(dataPacket.frame);
-    } else if (isStreamingResponseData(dataPacket, StreamingResponseDataType.NewValuesSameSchema)) {
-      const buffer = state.panelData.series[frameIndex] as StreamingDataFrame;
-      buffer.pushNewValues(dataPacket.values);
-      return buffer;
-    }
-
-    return dataPacket;
-  });
 
   return { packets, panelData };
 }
@@ -243,9 +225,7 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
 
   // Make sure the data frames are properly formatted
   const STARTTIME = performance.now();
-  const processedDataFrames = series.map((data) =>
-    isAnyStreamingResponseData(data) ? data : getProcessedDataFrame(data)
-  );
+  const processedDataFrames = series.map((data) => getProcessedDataFrame(data));
   const annotationsProcessed = getProcessedDataFrames(annotations);
   const STOPTIME = performance.now();
 

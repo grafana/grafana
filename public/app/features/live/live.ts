@@ -1,7 +1,10 @@
 import { BackendSrv, GrafanaLiveSrv } from '@grafana/runtime';
-import { CentrifugeSrv } from './centrifuge/service';
+import { CentrifugeSrv, StreamingDataQueryResponse } from './centrifuge/service';
 
 import { toLiveChannelId } from '@grafana/data';
+import { StreamingDataFrame } from './data/StreamingDataFrame';
+import { isStreamingResponseData, StreamingResponseDataType } from './data/utils';
+import { map } from 'rxjs';
 
 type GrafanaLiveServiceDeps = {
   centrifugeSrv: CentrifugeSrv;
@@ -22,7 +25,36 @@ export class GrafanaLiveService implements GrafanaLiveSrv {
    * Connect to a channel and return results as DataFrames
    */
   getDataStream: GrafanaLiveSrv['getDataStream'] = (options) => {
-    return this.deps.centrifugeSrv.getDataStream(options);
+    let buffer: StreamingDataFrame;
+
+    const updateBuffer = (next: StreamingDataQueryResponse): void => {
+      const data = next.data[0];
+      if (!buffer && !isStreamingResponseData(data, StreamingResponseDataType.FullFrame)) {
+        console.warn(`expected first packet to contain a full frame, received ${data?.type}`);
+        return;
+      }
+
+      switch (data.type) {
+        case StreamingResponseDataType.FullFrame: {
+          buffer = StreamingDataFrame.deserialize(data.frame);
+          return;
+        }
+        case StreamingResponseDataType.NewValuesSameSchema: {
+          buffer.pushNewValues(data.values);
+          return;
+        }
+      }
+    };
+
+    return this.deps.centrifugeSrv.getDataStream(options).pipe(
+      map((next) => {
+        updateBuffer(next);
+        return {
+          ...next,
+          data: [buffer],
+        };
+      })
+    );
   };
 
   /**

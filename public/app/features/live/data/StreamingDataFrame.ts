@@ -11,8 +11,8 @@ import {
   guessFieldTypeFromValue,
   ArrayVector,
   toFilteredDataFrameDTO,
+  joinAlignedData,
 } from '@grafana/data';
-import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
   StreamingFrameAction,
   StreamingFrameOptions,
@@ -283,7 +283,7 @@ export class StreamingDataFrame implements DataFrame {
           tables.push(labeledTables.get(label) ?? dummyTable);
         });
 
-        values = join(tables);
+        values = joinAlignedData(tables);
       }
 
       if (values.length !== this.fields.length) {

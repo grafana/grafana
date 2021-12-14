@@ -1,10 +1,9 @@
 import {
   DataFrame,
-  DataQueryError,
+  DataQueryResponse,
   LiveChannelAddress,
   LiveChannelEvent,
   LiveChannelPresenceStatus,
-  LoadingState,
 } from '@grafana/data';
 import { Observable } from 'rxjs';
 
@@ -56,35 +55,6 @@ export interface LiveDataStreamOptions {
   filter?: LiveDataFilter;
 }
 
-type StreamingResponseData = any; // ????
-
-/**
- * @alpha -- experimental
- */
-export type StreamingDataQueryResponse = {
-  /**
-   * The response data.  When streaming, this may be empty
-   * or a partial result set
-   */
-  data: [StreamingResponseData];
-
-  /**
-   * Unique subscription key
-   */
-  key: string;
-
-  /**
-   * Optionally include error info along with the response data
-   */
-  error?: DataQueryError;
-
-  /**
-   * Use this to control which state the response should have
-   * Defaults to LoadingState.Done if state is not defined
-   */
-  state: LoadingState;
-};
-
 /**
  * @alpha -- experimental
  */
@@ -102,7 +72,7 @@ export interface GrafanaLiveSrv {
   /**
    * Connect to a channel and return results as DataFrames
    */
-  getDataStream(options: LiveDataStreamOptions): Observable<StreamingDataQueryResponse>;
+  getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse>;
 
   /**
    * For channels that support presence, this will request the current state from the server.
