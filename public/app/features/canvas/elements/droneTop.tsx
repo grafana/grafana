@@ -109,7 +109,6 @@ export const droneTopItem: CanvasElementItem<any, any> = {
     return data;
   },
 
-  // Heatmap overlay options
   registerOptionsUI: (builder) => {
     const category = ['Drone Top'];
     builder

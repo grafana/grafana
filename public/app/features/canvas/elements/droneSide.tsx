@@ -93,7 +93,6 @@ export const droneSideItem: CanvasElementItem<any, any> = {
     return data;
   },
 
-  // Heatmap overlay options
   registerOptionsUI: (builder) => {
     const category = ['Drone Side'];
     builder.addCustomEditor({
