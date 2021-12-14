@@ -48,10 +48,6 @@ type Query struct {
 	MaxDataPoints int64
 }
 
-func (q *Query) GetDatasourceUID() string {
-	return q.DataSource.Uid
-}
-
 // TimeRange is a time.Time based TimeRange.
 type TimeRange struct {
 	From time.Time

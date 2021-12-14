@@ -49,10 +49,6 @@ type rawNode struct {
 	DataSource *models.DataSource
 }
 
-func (rn *rawNode) IsExpressionQuery() bool {
-	return IsDataSource(rn.DataSource.Uid)
-}
-
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
 	rawType, ok := rn.Query["type"]
 	if !ok {

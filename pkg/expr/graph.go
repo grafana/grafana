@@ -152,7 +152,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 
 		var node Node
 
-		if rn.IsExpressionQuery() {
+		if IsDataSource(rn.DataSource.Uid) {
 			node, err = buildCMDNode(dp, rn)
 		} else {
 			node, err = s.buildDSNode(dp, rn, req)
