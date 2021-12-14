@@ -38,7 +38,6 @@ export function setUserOrganization(
     const organizationResponse = await dependencies.getBackendSrv().post('/api/user/using/' + orgId);
 
     dispatch(updateConfigurationSubtitle(organizationResponse.name));
-    dispatch(organizationLoaded(organizationResponse));
   };
 }
 
