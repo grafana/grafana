@@ -132,6 +132,13 @@ export interface LiveChannelAddress {
   scope: LiveChannelScope;
   namespace: string; // depends on the scope
   path: string;
+
+  /**
+   * Additional metadata passed to a channel.  The backend will propigate this JSON object to
+   * each OnSubscribe and RunStream calls.  This value should be constant across multiple requests
+   * to the same channel path
+   */
+  data?: any;
 }
 
 /**

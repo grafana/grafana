@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
@@ -40,6 +41,14 @@ func ProvideServiceAccountsService(
 	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister)
 	serviceaccountsAPI.RegisterAPIEndpoints(cfg)
 	return s, nil
+}
+
+func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
+	if !sa.cfg.FeatureToggles["service-accounts"] {
+		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
+		return nil, nil
+	}
+	return sa.store.CreateServiceAccount(ctx, saForm)
 }
 
 func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
