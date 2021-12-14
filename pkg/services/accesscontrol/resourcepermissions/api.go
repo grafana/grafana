@@ -132,7 +132,7 @@ func (a *api) setUserPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "failed to set user permission", err)
 	}
 
-	return response.Success("permission updated")
+	return permissionSetResponse(cmd)
 }
 
 func (a *api) setTeamPermission(c *models.ReqContext) response.Response {
@@ -149,7 +149,7 @@ func (a *api) setTeamPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "failed to set team permission", err)
 	}
 
-	return response.Success("permission updated")
+	return permissionSetResponse(cmd)
 }
 
 func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
@@ -166,5 +166,13 @@ func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "failed to set role permission", err)
 	}
 
-	return response.Success("permission updated")
+	return permissionSetResponse(cmd)
+}
+
+func permissionSetResponse(cmd setPermissionCommand) response.Response {
+	message := "Permission updated"
+	if cmd.Permission == "" {
+		message = "Permission removed"
+	}
+	return response.Success(message)
 }
