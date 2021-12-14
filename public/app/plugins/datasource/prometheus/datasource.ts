@@ -9,8 +9,11 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  DataSourceWithQueryExportSupport,
+  DataSourceWithQueryImportSupport,
   dateMath,
   DateTime,
+  AbstractQuery,
   LoadingState,
   rangeUtil,
   ScopedVars,
@@ -55,7 +58,9 @@ import PrometheusMetricFindQuery from './metric_find_query';
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
-export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromOptions> {
+export class PrometheusDatasource
+  extends DataSourceWithBackend<PromQuery, PromOptions>
+  implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery> {
   type: string;
   editorSrc: string;
   ruleMappings: { [index: string]: string };
@@ -168,6 +173,14 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     }
 
     return getBackendSrv().fetch<T>(options);
+  }
+
+  async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<PromQuery[]> {
+    return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
+  }
+
+  async exportToAbstractQueries(queries: PromQuery[]): Promise<AbstractQuery[]> {
+    return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
   }
 
   // Use this for tab completion features, wont publish response to other components

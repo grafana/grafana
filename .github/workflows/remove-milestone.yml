@@ -1,0 +1,23 @@
+name: Remove milestone
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: Needs to match, exactly, the name of a milestone
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+          repository: "grafana/grafana-github-actions"
+          path: ./actions
+          ref: main
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+      - name: Remove milestone from open issues
+        uses: ./actions/remove-milestone
+        with:
+          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
