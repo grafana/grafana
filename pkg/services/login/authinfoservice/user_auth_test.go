@@ -133,6 +133,8 @@ func TestUserAuth(t *testing.T) {
 				Expiry:       time.Now(),
 				TokenType:    "Bearer",
 			}
+			idToken := "testidtoken"
+			token = token.WithExtra(map[string]interface{}{"id_token": idToken})
 
 			// Find a user to set tokens on
 			login := "loginuser0"
@@ -161,9 +163,10 @@ func TestUserAuth(t *testing.T) {
 			err = srv.GetAuthInfo(context.Background(), getAuthQuery)
 
 			require.Nil(t, err)
-			require.Equal(t, getAuthQuery.Result.OAuthAccessToken, token.AccessToken)
-			require.Equal(t, getAuthQuery.Result.OAuthRefreshToken, token.RefreshToken)
-			require.Equal(t, getAuthQuery.Result.OAuthTokenType, token.TokenType)
+			require.Equal(t, token.AccessToken, getAuthQuery.Result.OAuthAccessToken)
+			require.Equal(t, token.RefreshToken, getAuthQuery.Result.OAuthRefreshToken)
+			require.Equal(t, token.TokenType, getAuthQuery.Result.OAuthTokenType)
+			require.Equal(t, idToken, getAuthQuery.Result.OAuthIdToken)
 		})
 
 		t.Run("Always return the most recently used auth_module", func(t *testing.T) {
