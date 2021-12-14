@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"go.opentelemetry.io/otel/attribute"
+	trace "go.opentelemetry.io/otel/trace"
 
 	opentracing "github.com/opentracing/opentracing-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
@@ -20,11 +22,12 @@ const (
 	envJaegerAgentPort = "JAEGER_AGENT_PORT"
 )
 
-func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
+func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 	ts := &TracingService{
 		Cfg: cfg,
 		log: log.New("tracing"),
 	}
+
 	if err := ts.parseSettings(); err != nil {
 		return nil, err
 	}
@@ -33,7 +36,16 @@ func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 		return ts, ts.initGlobalTracer()
 	}
 
-	return ts, nil
+	ots := &OpentelemetryTracingService{
+		Cfg: cfg,
+		log: log.New("tracing"),
+	}
+
+	if err := ots.parseSettingsOpentelemetry(); err != nil {
+		return nil, err
+	}
+
+	return ots, ots.initOpentelemetryTracer()
 }
 
 type TracingService struct {
@@ -49,6 +61,10 @@ type TracingService struct {
 	disableSharedZipkinSpans bool
 
 	Cfg *setting.Cfg
+}
+
+type OpentracingSpan struct {
+	span opentracing.Span
 }
 
 func (ts *TracingService) parseSettings() error {
@@ -148,6 +164,24 @@ func (ts *TracingService) Run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (ts *TracingService) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, spanName)
+	oSpan := OpentracingSpan{
+		span: span,
+	}
+	return ctx, oSpan
+}
+
+func (s OpentracingSpan) End() {
+	s.span.Finish()
+}
+
+func (s OpentracingSpan) SetAttributes(kv ...attribute.KeyValue) {
+	for k, v := range kv {
+		s.span.SetTag(fmt.Sprint(k), v)
+	}
 }
 
 func splitTagSettings(input string) map[string]string {

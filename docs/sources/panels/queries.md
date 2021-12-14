@@ -95,6 +95,8 @@ Panel data source query options:
 
 - **Relative time -** You can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the top right corner of the dashboard. This allows you to show metrics from different time periods or days on the same dashboard.
 
+  > **Note:** Panel time overrides have no effect when the time range for the dashboard is absolute.
+
 - **Time shift -** The time shift function is another way to override the time range for individual panels. It only works with relative time ranges and allows you to adjust the time range.
 
   For example, you could shift the time range for the panel to be two hours earlier than the dashboard time picker. For more information, refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}}).

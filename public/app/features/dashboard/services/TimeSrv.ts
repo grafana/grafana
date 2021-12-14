@@ -287,22 +287,16 @@ export class TimeSrv {
     // update url
     if (fromRouteUpdate !== true) {
       const urlRange = this.timeRangeForUrl();
-      const urlParams = locationService.getSearch();
+      const urlParams = locationService.getSearchObject();
 
-      const from = urlParams.get('from');
-      const to = urlParams.get('to');
-
-      if (from && to && from === urlRange.from.toString() && to === urlRange.to.toString()) {
+      if (urlParams.from === urlRange.from.toString() && urlParams.to === urlRange.to.toString()) {
         return;
       }
 
-      urlParams.set('from', urlRange.from.toString());
-      urlParams.set('to', urlRange.to.toString());
+      urlParams.from = urlRange.from.toString();
+      urlParams.to = urlRange.to.toString();
 
-      locationService.push({
-        ...locationService.getLocation(),
-        search: urlParams.toString(),
-      });
+      locationService.partial(urlParams);
     }
 
     this.refreshDashboard();

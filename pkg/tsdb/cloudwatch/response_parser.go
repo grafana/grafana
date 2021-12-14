@@ -229,19 +229,27 @@ func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]stri
 	if len(query.Alias) == 0 && query.isInferredSearchExpression() && !query.isMultiValuedDimensionExpression() {
 		return label
 	}
+	if len(query.Alias) == 0 && query.MetricQueryType == MetricQueryTypeQuery {
+		return label
+	}
 
+	// common fields
 	data := map[string]string{
-		"region":    region,
-		"namespace": namespace,
-		"metric":    metricName,
-		"stat":      stat,
-		"period":    period,
+		"region": region,
+		"period": period,
 	}
 	if len(label) != 0 {
 		data["label"] = label
 	}
-	for k, v := range dimensions {
-		data[k] = v
+
+	// since the SQL query string is not (yet) parsed, we don't know what namespace, metric, statistic and labels it's using at this point
+	if query.MetricQueryType != MetricQueryTypeQuery {
+		data["namespace"] = namespace
+		data["metric"] = metricName
+		data["stat"] = stat
+		for k, v := range dimensions {
+			data[k] = v
+		}
 	}
 
 	result := aliasFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
