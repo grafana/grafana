@@ -48,7 +48,7 @@ jobs:
       uses: jwalton/gh-find-current-pr@v1
       id: finder
 
-    - name: Comment on PR (if there are breaking changes)
+    - name: Comment on PR
       if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '1' || env.BREAKING_CHANGES_IS_BREAKING == 1 }}
       uses: marocchino/sticky-pull-request-comment@v2
       with:
@@ -61,6 +61,12 @@ jobs:
           ${{ env.BREAKING_CHANGES_MESSAGE }}
 
           [Check console output](${{steps.get-job-link.outputs.result}})
+
+    - name: Remove comment on PR
+      if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '0' || env.BREAKING_CHANGES_IS_BREAKING == 0 }}
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        delete: true
 
     - name: Add label (if there are breaking changes)
       if: ${{ env.BREAKING_CHANGES_IS_BREAKING == '1' || env.BREAKING_CHANGES_IS_BREAKING == 1 }}
