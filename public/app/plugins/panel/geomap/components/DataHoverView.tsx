@@ -43,12 +43,17 @@ export class DataHoverView extends PureComponent<Props> {
     return (
       <table className={this.style.infoWrap}>
         <tbody>
-          {data.fields.map((f, i) => (
-            <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? this.style.highlight : ''}>
-              <th>{getFieldDisplayName(f, data)}:</th>
-              <td>{fmt(f, rowIndex)}</td>
-            </tr>
-          ))}
+          {data.fields.map((f, i) => {
+            if (f.config.custom?.hideFrom?.tooltip) {
+              return null;
+            }
+            return (
+              <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? this.style.highlight : ''}>
+                <th>{getFieldDisplayName(f, data)}:</th>
+                <td>{fmt(f, rowIndex)}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     );
