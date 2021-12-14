@@ -155,5 +155,4 @@ func LoadPermissionsMiddleware(ac accesscontrol.AccessControl) web.Handler {
 		}
 		c.SignedInUser.Permissions[c.OrgId] = accesscontrol.GroupScopesByAction(permissions)
 	}
-	}
 }
