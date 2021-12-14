@@ -128,6 +128,7 @@ def get_steps(edition, ver_mode):
     should_publish = ver_mode in ('release', 'test-release',)
     should_upload = should_publish or ver_mode in ('release-branch',)
     include_enterprise2 = edition == 'enterprise'
+    edition2 = 'enterprise2'
 
     build_steps = [
         codespell_step(),
@@ -146,7 +147,6 @@ def get_steps(edition, ver_mode):
         ensure_cuetsified_step(),
     ]
 
-    edition2 = 'enterprise2'
     if include_enterprise2:
         build_steps.extend([
             lint_backend_step(edition=edition2),
@@ -191,14 +191,8 @@ def get_steps(edition, ver_mode):
     windows_package_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
 
     if include_enterprise2:
-        edition2 = 'enterprise2'
         publish_steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
-            e2e_tests_server_step(edition=edition2, port=3002),
-            e2e_tests_step('dashboards-suite', edition=edition2, port=3002, tries=3),
-            e2e_tests_step('smoke-tests-suite', edition=edition2, port=3002, tries=3),
-            e2e_tests_step('panels-suite', edition=edition2, port=3002, tries=3),
-            e2e_tests_step('various-suite', edition=edition2, port=3002, tries=3),
             upload_cdn_step(edition=edition2, ver_mode=ver_mode),
         ])
         if should_upload:
@@ -248,6 +242,9 @@ def release_pipelines(ver_mode='release', trigger=None):
     if not trigger:
         trigger = {
             'ref': ['refs/tags/v*',],
+            'repo': {
+              'exclude': ['grafana/grafana'],
+            },
         }
 
     should_publish = ver_mode in ('release', 'test-release',)
@@ -270,10 +267,10 @@ def release_pipelines(ver_mode='release', trigger=None):
             depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines],
         )
 
-    pipelines.append(notify_pipeline(
-        name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
-        depends_on=[p['name'] for p in pipelines], template=failure_template, secret='slack_webhook',
-    ))
+    #pipelines.append(notify_pipeline(
+    #    name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
+    #    depends_on=[p['name'] for p in pipelines], template=failure_template, secret='slack_webhook',
+    #))
 
     return pipelines
 

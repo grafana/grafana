@@ -149,6 +149,18 @@ func TestAlertRuleExtraction(t *testing.T) {
 		require.NotNil(t, err)
 	})
 
+	t.Run("Cannot save panel with query that is referenced by legacy alerting", func(t *testing.T) {
+		panelWithQuery, err := ioutil.ReadFile("./testdata/panel-with-bad-query-id.json")
+		require.Nil(t, err)
+		dashJSON, err := simplejson.NewJson(panelWithQuery)
+		require.Nil(t, err)
+		dash := models.NewDashboardFromJson(dashJSON)
+		extractor := NewDashAlertExtractor(dash, 1, nil)
+
+		_, err = extractor.GetAlerts(WithUAEnabled(context.Background(), true))
+		require.Equal(t, "alert validation error: Alert on PanelId: 2 refers to query(B) that cannot be found. Legacy alerting queries are not able to be removed at this time in order to preserve the ability to rollback to previous versions of Grafana", err.Error())
+	})
+
 	t.Run("Panel does not have datasource configured, use the default datasource", func(t *testing.T) {
 		panelWithoutSpecifiedDatasource, err := ioutil.ReadFile("./testdata/panel-without-specified-datasource.json")
 		require.Nil(t, err)
