@@ -56,7 +56,7 @@ export function OperationList<T extends QueryWithOperations>({
 
   return (
     <Stack gap={1} direction="column">
-      <h5 className={styles.heading}>{heading}</h5>
+      {/* <h5 className={styles.heading}>{heading}</h5> */}
       <Stack gap={0}>
         {operations.map((op, index) => (
           <div className={styles.operationWrapper} key={index.toString()}>
