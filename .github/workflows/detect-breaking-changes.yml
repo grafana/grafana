@@ -18,12 +18,6 @@ jobs:
     - name: Install Yarn
       run: npm install --global yarn
 
-    - name: Install dependencies
-      run: yarn install --immutable
-
-    - name: Build packages
-      run: yarn packages:build 
-
     # We need this as we can only access the "Run ID" through the context and we need the "Job ID".
     - name: Get link for the Github Action job
       id: get-job-link
@@ -38,16 +32,42 @@ jobs:
 
           return `https://github.com/grafana/grafana/runs/${result.data.jobs[0].id}?check_suite_focus=true`;
 
+    - name: Find current pull request ID
+      uses: jwalton/gh-find-current-pr@v1
+      id: finder
+
+    - name: Check if "breaking change" label exists
+      id: does-label-exist
+      uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ steps.finder.outputs.pr }}
+      with:
+        script: |
+          const { data } = await github.rest.issues.listLabelsOnIssue({
+            issue_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+          });
+          const labels = data.map(({ name }) => name);
+          const doesExist = labels.includes('breaking change');
+
+          return doesExist ? 1 : 0;
+
+    - name: Debug
+      run: echo -e "Job link - ${{steps.get-job-link.outputs.result}} \nPull request - ${{steps.finder.outputs.pr}} \nLabel exists - ${{steps.does-label-exist.outputs.result}}"
+      
+    - name: Install dependencies
+      run: yarn install --immutable
+
+    - name: Build packages
+      run: yarn packages:build
+
     - name: Detect breaking changes
       id: breaking-changes
       run: ./scripts/check-breaking-changes.sh 
       env:
         FORCE_COLOR: 3
         GITHUB_JOB_LINK: ${{steps.get-job-link.outputs.result}}
-
-    - name: Find current pull request ID
-      uses: jwalton/gh-find-current-pr@v1
-      id: finder
 
     - name: Comment on PR
       if: ${{ steps.breaking-changes.outputs.is_breaking == 1 }}
@@ -70,25 +90,9 @@ jobs:
         number: ${{ steps.finder.outputs.pr }}
         delete: true
 
-    - name: Check if "breaking change" label exists
-      id: does-label-exist
-      uses: actions/github-script@v5
-      env:
-        PR_NUMBER: ${{ steps.finder.outputs.pr }}
-      with:
-        script: |
-          const { data } = await github.rest.issues.listLabelsOnIssue({
-            issue_number: process.env.PR_NUMBER,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-          });
-          const labels = data.map(({ name }) => name);
-          const doesExist = labels.includes('breaking change');
 
-          return doesExist;
-  
     - name: Add "breaking change" label
-      if: ${{ steps.breaking-changes.outputs.is_breaking == 1 && steps.does-label-exist.outputs.result == false }}
+      if: ${{ steps.breaking-changes.outputs.is_breaking == 1 && steps.does-label-exist.outputs.result == 0 }}
       uses: actions/github-script@v5
       env:
         PR_NUMBER: ${{ steps.finder.outputs.pr }}
@@ -102,7 +106,7 @@ jobs:
           })
 
     - name: Remove "breaking change" label
-      if: ${{ steps.breaking-changes.outputs.is_breaking == 0 && steps.does-label-exist.outputs.result == true }}
+      if: ${{ steps.breaking-changes.outputs.is_breaking == 0 && steps.does-label-exist.outputs.result == 1 }}
       uses: actions/github-script@v5
       env:
         PR_NUMBER: ${{ steps.finder.outputs.pr }}
@@ -115,6 +119,8 @@ jobs:
             name: 'breaking change'
           })
 
+    # This is very weird, the actual request goes through (comes back with a 201), but does not assign the team.
+    # Related issue: https://github.com/renovatebot/renovate/issues/1908
     - name: Add "grafana/plugins-platform-frontend" as a reviewer
       if: ${{ steps.breaking-changes.outputs.is_breaking == 1 }}
       uses: actions/github-script@v5
@@ -122,12 +128,15 @@ jobs:
         PR_NUMBER: ${{ steps.finder.outputs.pr }}
       with:
         script: |
-          github.rest.pulls.requestReviewers({
+          const response = await github.rest.pulls.requestReviewers({
             pull_number: process.env.PR_NUMBER,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            reviewers: ['grafana/plugins-platform-frontend']
+            reviewers: [],
+            team_reviewers: ['grafana/plugins-platform-frontend']
           })
+
+          console.log(response)
 
     - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
       if: ${{ steps.breaking-changes.outputs.is_breaking == 0 }}
@@ -136,12 +145,15 @@ jobs:
         PR_NUMBER: ${{ steps.finder.outputs.pr }}
       with:
         script: |
-          github.rest.pulls.removeRequestedReviewers({
+          const response = await github.rest.pulls.removeRequestedReviewers({
             pull_number: process.env.PR_NUMBER,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            reviewers: ['grafana/plugins-platform-frontend']
+            reviewers: [],
+            team_reviewers: ['grafana/plugins-platform-frontend']
           })
+
+          console.log(response)
 
     - name: Exit
       run: exit ${{ steps.breaking-changes.outputs.is_breaking }}
