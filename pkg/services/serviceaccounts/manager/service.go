@@ -37,30 +37,10 @@ func ProvideServiceAccountsService(
 	if err := ac.DeclareFixedRoles(role); err != nil {
 		return nil, err
 	}
-	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister, s.store)
 	serviceaccountsAPI.RegisterAPIEndpoints(cfg)
 
-	basicKeys := store.GetNonServiceAccountAPIKeys(context.Background())
-	if len(basicKeys) > 0 {
-		s.log.Info("Launching background thread to upgrade API keys to service accounts", "numberKeys", len(basicKeys))
-		go func() {
-			for _, key := range basicKeys {
-				sa, err := store.CreateServiceAccountForApikey(context.Background(), key.OrgId, key.Name, key.Role)
-				if err != nil {
-					s.log.Error("Failed to create service account for API key", "err", err, "keyId", key.Id)
-					continue
-				}
-
-				err = store.UpdateApikeyServiceAccount(context.Background(), key.Id, sa.Id)
-				if err != nil {
-					s.log.Error("Failed to attach new service account to API key", "err", err, "keyId", key.Id, "newServiceAccountId", sa.Id)
-					continue
-				}
-				s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", sa.Id)
-			}
-		}()
-	}
-
+	s.store.UpgradeServiceAccounts(context.Background())
 	return s, nil
 }
 

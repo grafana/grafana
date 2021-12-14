@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -17,17 +18,21 @@ type ServiceAccountsAPI struct {
 	service        serviceaccounts.Service
 	accesscontrol  accesscontrol.AccessControl
 	RouterRegister routing.RouteRegister
+	log            log.Logger
+	store          serviceaccounts.Store
 }
 
 func NewServiceAccountsAPI(
 	service serviceaccounts.Service,
 	accesscontrol accesscontrol.AccessControl,
 	routerRegister routing.RouteRegister,
+	store serviceaccounts.Store,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
 		service:        service,
 		accesscontrol:  accesscontrol,
 		RouterRegister: routerRegister,
+		store:          store,
 	}
 }
 
@@ -40,6 +45,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
+		serviceAccountsRoute.Get("/upgrade", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.UpgradeServiceAccounts))
 	})
 }
 
@@ -50,4 +56,12 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) resp
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
 	return response.Success("service account deleted")
+}
+
+func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) response.Response {
+	if err := api.store.UpgradeServiceAccounts(ctx.Req.Context()); err == nil {
+		return response.Success("service accounts upgraded")
+	} else {
+		return response.Error(500, "Internal server error", err)
+	}
 }

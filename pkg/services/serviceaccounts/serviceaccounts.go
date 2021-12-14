@@ -7,4 +7,5 @@ type Service interface {
 }
 type Store interface {
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
+	UpgradeServiceAccounts(ctx context.Context) error
 }
