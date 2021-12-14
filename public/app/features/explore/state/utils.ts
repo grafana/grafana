@@ -19,6 +19,7 @@ import {
   toGraphStyle,
 } from '../../../core/utils/explore';
 import { toRawTimeRange } from '../utils/time';
+import { isEmpty, omitBy } from 'lodash';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -68,6 +69,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   logsVolumeDataProvider: undefined,
   logsVolumeData: undefined,
   graphStyle: loadGraphStyle(),
+  panelsState: {},
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({
@@ -107,12 +109,16 @@ export async function loadAndInitDatasource(
 }
 
 export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
+  const prunedPanelsState = omitBy(pane.panelsState, isEmpty);
+
   return {
     // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
     // lets just fallback instead of crashing.
     datasource: pane.datasourceInstance?.name || '',
     queries: pane.queries.map(clearQueryKeys),
     range: toRawTimeRange(pane.range),
+    // don't include panelsState in the url unless a piece of state is actually set
+    panelsState: isEmpty(prunedPanelsState) ? undefined : prunedPanelsState,
   };
 }
 

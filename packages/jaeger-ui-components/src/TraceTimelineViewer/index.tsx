@@ -27,6 +27,7 @@ import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink } from '../typ
 import TTraceTimeline from '../types/TTraceTimeline';
 import { autoColor } from '../Theme';
 import ExternalLinkContext from '../url/externalLinkContext';
+import { LinkModel } from '@grafana/data';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
@@ -103,6 +104,8 @@ type TProps = TExtractUiFindFromStateReturn & {
   theme: GrafanaTheme2;
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
+  focusedSpanId?: string;
+  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
 };
 
 type State = {

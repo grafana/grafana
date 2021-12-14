@@ -13,6 +13,7 @@ import {
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
+  ExplorePanelsState,
 } from '@grafana/data';
 import { ExploreGraphStyle } from 'app/core/utils/explore';
 
@@ -171,6 +172,7 @@ export interface ExploreItemState {
 
   /* explore graph style */
   graphStyle: ExploreGraphStyle;
+  panelsState: ExplorePanelsState;
 }
 
 export interface ExploreUpdateState {

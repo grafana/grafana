@@ -1,4 +1,14 @@
-import { DataFrame, DataFrameView, SplitOpen, TraceSpanRow } from '@grafana/data';
+import {
+  DataFrame,
+  DataFrameView,
+  DataLink,
+  DataSourceApi,
+  Field,
+  mapInternalLinkToExplore,
+  SplitOpen,
+  TraceSpanRow,
+} from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import {
   Trace,
   TracePageHeader,
@@ -12,10 +22,12 @@ import {
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
+import { TempoQuery } from 'app/plugins/datasource/tempo/datasource';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { changePanelState } from '../state/explorePane';
 import { createSpanLinkFactory } from './createSpanLink';
 import { UIElements } from './uiElements';
 import { useChildrenState } from './useChildrenState';
@@ -29,6 +41,7 @@ function noop(): {} {
 }
 
 type Props = {
+  datasource: DataSourceApi;
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
@@ -63,6 +76,48 @@ export function TraceView(props: Props) {
    * State of the top minimap, slim means it is collapsed.
    */
   const [slim, setSlim] = useState(false);
+
+  const panelState = useSelector((state: StoreState) => state.explore[props.exploreId]?.panelsState.trace);
+  const dispatch = useDispatch();
+  const focusedSpanId = panelState?.spanId;
+  const setFocusedSpanId = (spanId?: string) =>
+    dispatch(
+      changePanelState(props.exploreId, 'trace', {
+        ...panelState,
+        spanId,
+      })
+    );
+  const createFocusSpanLink = (traceId: string, spanId: string) => {
+    const link: DataLink<TempoQuery> = {
+      title: 'Deep link to this span',
+      url: '',
+      internal: {
+        datasourceUid: props.datasource.uid,
+        datasourceName: props.datasource.name,
+        query: {
+          refId: '',
+          queryType: 'traceId',
+          query: traceId,
+          search: '',
+        },
+        panelsState: {
+          trace: {
+            spanId,
+          },
+        },
+      },
+    };
+
+    return mapInternalLinkToExplore({
+      link,
+      internalLink: link.internal!,
+      scopedVars: {},
+      range: {} as any,
+      field: {} as Field,
+      onClickFn: () => setFocusedSpanId(focusedSpanId === spanId ? undefined : spanId),
+      replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+    });
+  };
 
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
@@ -151,6 +206,8 @@ export function TraceView(props: Props) {
         uiFind={search}
         createSpanLink={createSpanLink}
         scrollElement={props.scrollElement}
+        focusedSpanId={focusedSpanId}
+        createFocusSpanLink={createFocusSpanLink}
       />
     </UIElementsContext.Provider>
   );

@@ -13,7 +13,7 @@ function renderTraceView(frames = [frameOld]) {
   const store = configureStore();
   const { container, baseElement } = render(
     <Provider store={store}>
-      <TraceView exploreId={ExploreId.left} dataFrames={frames} splitOpenFn={() => {}} />
+      <TraceView exploreId={ExploreId.left} dataFrames={frames} splitOpenFn={() => {}} datasource={null as any} />
     </Provider>
   );
   return {
@@ -148,7 +148,7 @@ describe('TraceView', () => {
     const store = configureStore();
     const { rerender } = render(
       <Provider store={store}>
-        <TraceView exploreId={ExploreId.left} dataFrames={[frameOld]} splitOpenFn={() => {}} />
+        <TraceView exploreId={ExploreId.left} dataFrames={[frameOld]} splitOpenFn={() => {}} datasource={null as any} />
       </Provider>
     );
     const span = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[2];
@@ -158,7 +158,7 @@ describe('TraceView', () => {
 
     rerender(
       <Provider store={store}>
-        <TraceView exploreId={ExploreId.left} dataFrames={[frameNew]} splitOpenFn={() => {}} />
+        <TraceView exploreId={ExploreId.left} dataFrames={[frameNew]} splitOpenFn={() => {}} datasource={null as any} />
       </Provider>
     );
     expect(screen.queryByText(/Process/)).not.toBeInTheDocument();

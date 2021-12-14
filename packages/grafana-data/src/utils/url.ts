@@ -197,7 +197,12 @@ export const urlUtil = {
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
   if (compact) {
-    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries]);
+    const compactState: unknown[] = [urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries];
+    // only serialize panel state if we have at least one non-default panel configuration
+    if (urlState.panelsState !== undefined) {
+      compactState.push(urlState.panelsState);
+    }
+    return JSON.stringify(compactState);
   }
   return JSON.stringify(urlState);
 }
