@@ -19,9 +19,13 @@ type Store interface {
 
 	// Add adds a plugin from the repository to the store.
 	Add(ctx context.Context, pluginID, version string, repo Repository) error
+	// AddWithFactory adds a plugin to the store.
+	AddWithFactory(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc, resolver PluginPathResolver) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
 }
+
+type PluginPathResolver func() (string, error)
 
 // Loader is responsible for loading plugins from the file system.
 type Loader interface {
@@ -56,11 +60,6 @@ type Client interface {
 type RendererManager interface {
 	// Renderer returns a renderer plugin.
 	Renderer() *Plugin
-}
-
-type CoreBackendRegistrar interface {
-	// LoadAndRegister loads and registers a Core backend plugin
-	LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error
 }
 
 type StaticRouteResolver interface {
