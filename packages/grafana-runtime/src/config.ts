@@ -69,7 +69,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
     recordedQueries: false,
     newNavigation: false,
     fullRangeLogsVolume: false,
-    queryOverLive: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

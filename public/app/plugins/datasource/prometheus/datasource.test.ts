@@ -1667,6 +1667,35 @@ describe('PrometheusDatasource', () => {
       templateSrvStub.replace = jest.fn((a: string) => a);
     });
   });
+
+  it('should give back 1 exemplar target when multiple queries with exemplar enabled and same metric', () => {
+    const targetA: PromQuery = {
+      refId: 'A',
+      expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+      exemplar: true,
+    };
+    const targetB: PromQuery = {
+      refId: 'B',
+      expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+      exemplar: true,
+    };
+
+    ds.languageProvider = {
+      histogramMetrics: ['tns_request_duration_seconds_bucket'],
+    } as any;
+
+    const request = ({
+      targets: [targetA, targetB],
+      interval: '1s',
+      panelId: '',
+    } as any) as DataQueryRequest<PromQuery>;
+
+    const Aexemplars = ds.shouldRunExemplarQuery(targetA, request);
+    const BExpemplars = ds.shouldRunExemplarQuery(targetB, request);
+
+    expect(Aexemplars).toBe(true);
+    expect(BExpemplars).toBe(false);
+  });
 });
 
 describe('PrometheusDatasource for POST', () => {

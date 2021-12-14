@@ -1,16 +1,11 @@
 import Centrifuge from 'centrifuge/dist/centrifuge';
-import {
-  BackendDataSourceResponse,
-  FetchResponse,
-  LiveDataStreamOptions,
-  LiveQueryDataOptions,
-} from '@grafana/runtime';
+import { LiveDataStreamOptions } from '@grafana/runtime';
 import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
   DataFrame,
   DataFrameJSON,
-  DataQueryError,
+  dataFrameToJSON,
   DataQueryResponse,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
@@ -50,19 +45,6 @@ export interface CentrifugeSrv {
   getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse>;
 
   /**
-   * Execute a query over the live websocket and potentiall subscribe to a live channel.
-   *
-   * Since the initial request and subscription are on the same socket, this will support HA setups
-   */
-  getQueryData(
-    options: LiveQueryDataOptions
-  ): Promise<
-    | { data: BackendDataSourceResponse | undefined }
-    | FetchResponse<BackendDataSourceResponse | undefined>
-    | DataQueryError
-  >;
-
-  /**
    * For channels that support presence, this will request the current state from the server.
    *
    * Join and leave messages will be sent to the open stream
@@ -80,9 +62,7 @@ export class CentrifugeService implements CentrifugeSrv {
   constructor(private deps: CentrifugeSrvDeps) {
     deps.dataStreamSubscriberReadiness.subscribe((next) => (this.dataStreamSubscriberReady = next));
     const liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
-    this.centrifuge = new Centrifuge(liveUrl, {
-      timeout: 30000,
-    });
+    this.centrifuge = new Centrifuge(liveUrl, {});
     this.centrifuge.setConnectData({
       sessionId: deps.sessionId,
       orgId: deps.orgId,
@@ -163,7 +143,7 @@ export class CentrifugeService implements CentrifugeSrv {
     if (!this.centrifuge.isConnected()) {
       await this.connectionBlocker;
     }
-    channel.subscription = this.centrifuge.subscribe(channel.id, events);
+    channel.subscription = this.centrifuge.subscribe(channel.id, events, { data: channel.addr.data });
     return;
   }
 
@@ -237,7 +217,7 @@ export class CentrifugeService implements CentrifugeSrv {
       };
 
       if (options.frame) {
-        process(options.frame);
+        process(dataFrameToJSON(options.frame));
       } else if (channel.lastMessageWithSchema) {
         process(channel.lastMessageWithSchema);
       }
@@ -289,15 +269,6 @@ export class CentrifugeService implements CentrifugeSrv {
       };
     });
   }
-
-  /**
-   * Executes a query over the live websocket. Query response can contain live channels we can subscribe to for further updates
-   *
-   * Since the initial request and subscription are on the same socket, this will support HA setups
-   */
-  getQueryData: CentrifugeSrv['getQueryData'] = async (options) => {
-    return this.centrifuge.namedRPC('grafana.query', options.body);
-  };
 
   /**
    * For channels that support presence, this will request the current state from the server.
