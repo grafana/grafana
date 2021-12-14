@@ -14,7 +14,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: main
+          ref: mob/main-user-essentials
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Remove milestone from open issues
