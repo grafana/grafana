@@ -404,6 +404,21 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 						require.Equal(t, "All good", res.Message)
 						require.Equal(t, json, res.JSONDetails)
 					})
+
+					t.Run("Call resource should return expected response", func(t *testing.T) {
+						ctx.pluginClient.CallResourceHandlerFunc = func(ctx context.Context,
+							req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+							return sender.Send(&backend.CallResourceResponse{
+								Status: http.StatusOK,
+							})
+						}
+
+						sender := &fakeSender{}
+						err = ctx.manager.CallResource(context.Background(), &backend.CallResourceRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}}, sender)
+						require.NoError(t, err)
+						require.NotNil(t, sender.resp)
+						require.Equal(t, http.StatusOK, sender.resp.Status)
+					})
 				})
 			})
 		})
@@ -550,17 +565,17 @@ type fakePluginInstaller struct {
 	uninstallCount int
 }
 
-func (f *fakePluginInstaller) Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
+func (f *fakePluginInstaller) Install(_ context.Context, _, _, _, _, _ string) error {
 	f.installCount++
 	return nil
 }
 
-func (f *fakePluginInstaller) Uninstall(ctx context.Context, pluginPath string) error {
+func (f *fakePluginInstaller) Uninstall(_ context.Context, _ string) error {
 	f.uninstallCount++
 	return nil
 }
 
-func (f *fakePluginInstaller) GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
+func (f *fakePluginInstaller) GetUpdateInfo(_ context.Context, _, _, _ string) (plugins.UpdateInfo, error) {
 	return plugins.UpdateInfo{}, nil
 }
 
@@ -602,102 +617,102 @@ type fakePluginClient struct {
 	backendplugin.Plugin
 }
 
-func (tp *fakePluginClient) PluginID() string {
-	return tp.pluginID
+func (pc *fakePluginClient) PluginID() string {
+	return pc.pluginID
 }
 
-func (tp *fakePluginClient) Logger() log.Logger {
-	return tp.logger
+func (pc *fakePluginClient) Logger() log.Logger {
+	return pc.logger
 }
 
-func (tp *fakePluginClient) Start(ctx context.Context) error {
-	tp.mutex.Lock()
-	defer tp.mutex.Unlock()
-	tp.exited = false
-	tp.startCount++
+func (pc *fakePluginClient) Start(_ context.Context) error {
+	pc.mutex.Lock()
+	defer pc.mutex.Unlock()
+	pc.exited = false
+	pc.startCount++
 	return nil
 }
 
-func (tp *fakePluginClient) Stop(ctx context.Context) error {
-	tp.mutex.Lock()
-	defer tp.mutex.Unlock()
-	tp.stopCount++
-	tp.exited = true
+func (pc *fakePluginClient) Stop(_ context.Context) error {
+	pc.mutex.Lock()
+	defer pc.mutex.Unlock()
+	pc.stopCount++
+	pc.exited = true
 	return nil
 }
 
-func (tp *fakePluginClient) IsManaged() bool {
-	return tp.managed
+func (pc *fakePluginClient) IsManaged() bool {
+	return pc.managed
 }
 
-func (tp *fakePluginClient) Exited() bool {
-	tp.mutex.RLock()
-	defer tp.mutex.RUnlock()
-	return tp.exited
+func (pc *fakePluginClient) Exited() bool {
+	pc.mutex.RLock()
+	defer pc.mutex.RUnlock()
+	return pc.exited
 }
 
-func (tp *fakePluginClient) Decommission() error {
-	tp.mutex.Lock()
-	defer tp.mutex.Unlock()
+func (pc *fakePluginClient) Decommission() error {
+	pc.mutex.Lock()
+	defer pc.mutex.Unlock()
 
-	tp.decommissioned = true
+	pc.decommissioned = true
 
 	return nil
 }
 
-func (tp *fakePluginClient) IsDecommissioned() bool {
-	tp.mutex.RLock()
-	defer tp.mutex.RUnlock()
-	return tp.decommissioned
+func (pc *fakePluginClient) IsDecommissioned() bool {
+	pc.mutex.RLock()
+	defer pc.mutex.RUnlock()
+	return pc.decommissioned
 }
 
-func (tp *fakePluginClient) kill() {
-	tp.mutex.Lock()
-	defer tp.mutex.Unlock()
-	tp.exited = true
+func (pc *fakePluginClient) kill() {
+	pc.mutex.Lock()
+	defer pc.mutex.Unlock()
+	pc.exited = true
 }
 
-func (tp *fakePluginClient) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
-	if tp.CollectMetricsHandlerFunc != nil {
-		return tp.CollectMetricsHandlerFunc(ctx)
+func (pc *fakePluginClient) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+	if pc.CollectMetricsHandlerFunc != nil {
+		return pc.CollectMetricsHandlerFunc(ctx)
 	}
 
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *fakePluginClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	if tp.CheckHealthHandlerFunc != nil {
-		return tp.CheckHealthHandlerFunc(ctx, req)
+func (pc *fakePluginClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	if pc.CheckHealthHandlerFunc != nil {
+		return pc.CheckHealthHandlerFunc(ctx, req)
 	}
 
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if tp.QueryDataHandlerFunc != nil {
-		return tp.QueryDataHandlerFunc(ctx, req)
+func (pc *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if pc.QueryDataHandlerFunc != nil {
+		return pc.QueryDataHandlerFunc(ctx, req)
 	}
 
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *fakePluginClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	if tp.CallResourceHandlerFunc != nil {
-		return tp.CallResourceHandlerFunc(ctx, req, sender)
+func (pc *fakePluginClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if pc.CallResourceHandlerFunc != nil {
+		return pc.CallResourceHandlerFunc(ctx, req, sender)
 	}
 
 	return backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *fakePluginClient) SubscribeStream(ctx context.Context, request *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+func (pc *fakePluginClient) SubscribeStream(_ context.Context, _ *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *fakePluginClient) PublishStream(ctx context.Context, request *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (pc *fakePluginClient) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *fakePluginClient) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
+func (pc *fakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
 	return backendplugin.ErrMethodNotImplemented
 }
 
@@ -711,10 +726,20 @@ type fakeLogger struct {
 	log.Logger
 }
 
-func (tl fakeLogger) Info(msg string, ctx ...interface{}) {
+func (l fakeLogger) Info(_ string, _ ...interface{}) {
 
 }
 
-func (tl fakeLogger) Debug(msg string, ctx ...interface{}) {
+func (l fakeLogger) Debug(_ string, _ ...interface{}) {
 
+}
+
+type fakeSender struct {
+	resp *backend.CallResourceResponse
+}
+
+func (s *fakeSender) Send(crr *backend.CallResourceResponse) error {
+	s.resp = crr
+
+	return nil
 }

@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"gopkg.in/macaron.v1"
 )
 
 const (
@@ -566,7 +565,7 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	version, _ := strconv.ParseInt(macaron.Params(c.Req)[":id"], 10, 32)
+	version, _ := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 32)
 	query := models.GetDashboardVersionQuery{
 		OrgId:       c.OrgId,
 		DashboardId: dashID,

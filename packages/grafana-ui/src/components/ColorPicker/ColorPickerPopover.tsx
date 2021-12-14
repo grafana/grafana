@@ -120,12 +120,12 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
       <FocusScope contain restoreFocus autoFocus>
         <div className={styles.colorPickerPopover}>
           <div className={styles.colorPickerPopoverTabs}>
-            <div tabIndex={0} className={this.getTabClassName('palette')} onClick={this.onTabChange('palette')}>
+            <button className={this.getTabClassName('palette')} onClick={this.onTabChange('palette')}>
               Colors
-            </div>
-            <div tabIndex={0} className={this.getTabClassName('spectrum')} onClick={this.onTabChange('spectrum')}>
+            </button>
+            <button className={this.getTabClassName('spectrum')} onClick={this.onTabChange('spectrum')}>
               Custom
-            </div>
+            </button>
             {this.renderCustomPickerTabs()}
           </div>
           <div className={styles.colorPickerPopoverContent}>{this.renderPicker()}</div>
@@ -152,6 +152,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
         background: ${theme.colors.background.secondary};
         color: ${theme.colors.text.secondary};
         cursor: pointer;
+        border: none;
       }
 
       .ColorPickerPopover__tab--active {
@@ -161,19 +162,19 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
     `,
     colorPickerPopoverContent: css`
-      width: 336px;
+      width: 266px;
       font-size: ${theme.typography.bodySmall.fontSize};
       min-height: 184px;
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(2, 0)};
       display: flex;
       align-items: center;
       justify-content: center;
     `,
     colorPickerPopoverTabs: css`
       display: flex;
+      column-gap: 10px;
       width: 100%;
       border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
-      overflow: hidden;
     `,
   };
 });
