@@ -21,7 +21,6 @@ export interface Props {
   dashboard: DashboardModel;
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
-  scrollTop: number;
 }
 
 export interface State {
@@ -125,32 +124,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.updateGridPos(newItem, layout);
   };
 
-  isInView(panel: PanelModel, gridWidth: number) {
-    if (panel.isViewing || panel.isEditing) {
-      return true;
-    }
-
-    const scrollTop = this.props.scrollTop;
-    const screenPos = this.getPanelScreenPos(panel, gridWidth);
-
-    // Show things that are almost in the view
-    const buffer = 100;
-
-    // The panel is above the viewport
-    if (scrollTop > screenPos.bottom + buffer) {
-      return false;
-    }
-
-    const scrollViewBottom = scrollTop + this.windowHeight;
-
-    // Panel is below view
-    if (screenPos.top > scrollViewBottom + buffer) {
-      return false;
-    }
-
-    return !this.props.dashboard.otherPanelInFullscreen(panel);
-  }
-
   getPanelScreenPos(panel: PanelModel, gridWidth: number): { top: number; bottom: number } {
     let top = 0;
 
@@ -184,9 +157,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
-
-      // Update is in view state
-      panel.isInView = this.isInView(panel, gridWidth);
 
       panelElements.push(
         <GrafanaGridItem
@@ -226,7 +196,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
         dashboard={this.props.dashboard}
         isEditing={panel.isEditing}
         isViewing={panel.isViewing}
-        isInView={panel.isInView}
         width={width}
         height={height}
       />
@@ -235,13 +204,14 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   render() {
     const { dashboard } = this.props;
+
+    /**
+     * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
+     * properly working. For more information go here:
+     * https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#can-i-use-autosizer-within-a-flex-container
+     */
     return (
-      /**
-       * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
-       * properly working. For more information go here:
-       * https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#can-i-use-autosizer-within-a-flex-container
-       */
-      <div style={{ flex: '1 1 auto' }}>
+      <div style={{ flex: '1 1 auto', display: this.props.editPanel ? 'none' : undefined }}>
         <AutoSizer disableHeight>
           {({ width }) => {
             if (width === 0) {

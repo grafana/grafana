@@ -78,7 +78,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			for _, id := range tt.builtinPermissions {
-				_, err := store.SetBuiltinResourcePermission(context.Background(), tt.orgID, "Admin", accesscontrol.SetResourcePermissionCommand{
+				_, err := store.SetBuiltInResourcePermission(context.Background(), tt.orgID, "Admin", accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,

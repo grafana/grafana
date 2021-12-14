@@ -57,7 +57,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SQLStore) erro
 		NewPassword: passwordHashed,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(context.Background(), &cmd); err != nil {
 		return errutil.Wrapf(err, "failed to update user password")
 	}
 
