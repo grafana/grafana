@@ -99,40 +99,11 @@ describe('PrometheusMetricFindQuery', () => {
       });
     });
 
-    it('label_values(metric, resource) should generate series query with correct time', async () => {
+    it('label_values(metric, resource) should generate label values query with correct time', async () => {
       const query = setupMetricFindQuery({
         query: 'label_values(metric, resource)',
         response: {
-          data: [
-            { __name__: 'metric', resource: 'value1' },
-            { __name__: 'metric', resource: 'value2' },
-            { __name__: 'metric', resource: 'value3' },
-          ],
-        },
-      });
-      const results = await query.process();
-
-      expect(results).toHaveLength(3);
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `proxied/api/v1/series?match${encodeURIComponent(
-          '[]'
-        )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
-        hideFromInspector: true,
-        headers: {},
-      });
-    });
-
-    it('label_values(metric{label1="foo", label2="bar", label3="baz"}, resource) should generate series query with correct time', async () => {
-      const query = setupMetricFindQuery({
-        query: 'label_values(metric{label1="foo", label2="bar", label3="baz"}, resource)',
-        response: {
-          data: [
-            { __name__: 'metric', resource: 'value1' },
-            { __name__: 'metric', resource: 'value2' },
-            { __name__: 'metric', resource: 'value3' },
-          ],
+          data: ['value1', 'value2', 'value3'],
         },
       });
       const results = await query.process();
@@ -142,34 +113,31 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
         url:
-          'proxied/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C%20label2%3D%22bar%22%2C%20label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
+          `proxied/api/v1/label/resource/values?` +
+          `${encodeURIComponent('match[]')}=metric` +
+          `&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
       });
     });
 
-    it('label_values(metric, resource) result should not contain empty string', async () => {
+    it('label_values(metric{label1="foo", label2="bar", label3="baz"}, resource) should generate label values query with correct time', async () => {
       const query = setupMetricFindQuery({
-        query: 'label_values(metric, resource)',
+        query: 'label_values(metric{label1="foo", label2="bar", label3="baz"}, resource)',
         response: {
-          data: [
-            { __name__: 'metric', resource: 'value1' },
-            { __name__: 'metric', resource: 'value2' },
-            { __name__: 'metric', resource: '' },
-          ],
+          data: ['value1', 'value2', 'value3'],
         },
       });
-      const results: any = await query.process();
+      const results = await query.process();
 
-      expect(results).toHaveLength(2);
-      expect(results[0].text).toBe('value1');
-      expect(results[1].text).toBe('value2');
+      expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/series?match${encodeURIComponent(
-          '[]'
-        )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        url:
+          `proxied/api/v1/label/resource/values?` +
+          `${encodeURIComponent('match[]')}=${encodeURIComponent('metric{label1="foo", label2="bar", label3="baz"}')}` +
+          `&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
       });

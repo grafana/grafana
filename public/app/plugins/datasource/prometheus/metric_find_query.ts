@@ -70,44 +70,27 @@ export default class PrometheusMetricFindQuery {
     const start = this.datasource.getPrometheusTime(this.range.from, false);
     const end = this.datasource.getPrometheusTime(this.range.to, true);
 
-    let url: string;
-
+    let params: object;
     if (!metric) {
-      const params = {
+      params = {
         start: start.toString(),
         end: end.toString(),
       };
-      // return label values globally
-      url = `/api/v1/label/${label}/values`;
-
-      return this.datasource.metadataRequest(url, params).then((result: any) => {
-        return _map(result.data.data, (value) => {
-          return { text: value };
-        });
-      });
     } else {
-      const params = {
+      params = {
         'match[]': metric,
         start: start.toString(),
         end: end.toString(),
       };
-      url = `/api/v1/series`;
-
-      return this.datasource.metadataRequest(url, params).then((result: any) => {
-        const _labels = _map(result.data.data, (metric) => {
-          return metric[label] || '';
-        }).filter((label) => {
-          return label !== '';
-        });
-
-        return uniq(_labels).map((metric) => {
-          return {
-            text: metric,
-            expandable: true,
-          };
-        });
-      });
     }
+
+    const url = `/api/v1/label/${label}/values`;
+
+    return this.datasource.metadataRequest(url, params).then((result: any) => {
+      return _map(result.data.data, (value) => {
+        return { text: value };
+      });
+    });
   }
 
   metricNameQuery(metricFilterPattern: string) {
