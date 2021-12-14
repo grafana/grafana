@@ -10,7 +10,7 @@ mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
 rm /bin/cp
 mv /usr/local/bin/cp /bin/cp
 
-apk add --no-cache curl 'nodejs=14.16.1-r1' npm yarn build-base openssh git-lfs perl-utils coreutils python3
+apk add --no-cache curl npm yarn build-base openssh git-lfs perl-utils coreutils python3
 
 #
 # Only relevant for testing, but cypress does not work with musl/alpine.
@@ -65,8 +65,8 @@ current_dir=$PWD
 cd /usr/local/grafana-toolkit && yarn install && cd $current_dir
 ln -s /usr/local/grafana-toolkit/bin/grafana-toolkit.js /usr/local/bin/grafana-toolkit
 
-GOOGLE_SDK_VERSION=316.0.0
-GOOGLE_SDK_CHECKSUM=96a0b75474dbfa9f3d46dcdec7a4d68a664cb7d57fade5710fe88b1fdf6babb3
+GOOGLE_SDK_VERSION=365.0.1
+GOOGLE_SDK_CHECKSUM=17003cdba67a868c2518ac16efa60dc6175533b7a9fb87304459784308e30fb0
 
 curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz
 echo "${GOOGLE_SDK_CHECKSUM} google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz" | sha256sum --check --status
