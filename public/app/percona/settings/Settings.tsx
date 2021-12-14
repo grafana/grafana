@@ -12,6 +12,7 @@ import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 import { ContentTab, TabbedContent, TabOrientation } from '../shared/components/Elements/TabbedContent';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 import { EmptyBlock } from '../shared/components/Elements/EmptyBlock';
+import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
 
 export const SettingsPanel: FC = () => {
   const { path: basePath } = PAGE_MODEL;
@@ -23,6 +24,7 @@ export const SettingsPanel: FC = () => {
   const styles = getSettingsStyles(theme);
   const { metrics, advanced, ssh, alertManager, perconaPlatform, communication } = Messages.tabs;
   const [settings, setSettings] = useState<Settings>();
+  const techPreviewRef = useRef<HTMLDivElement | null>(null);
 
   const updateSettings = useCallback(
     async (body: SettingsAPIChangePayload, callback: LoadingCallback, refresh?: boolean) => {
@@ -111,7 +113,12 @@ export const SettingsPanel: FC = () => {
             {
               label: perconaPlatform,
               key: TabKeys.perconaPlatform,
-              component: <Platform isConnected={settings.isConnectedToPortal} getSettings={getSettings} />,
+              component: (
+                <>
+                  {techPreviewRef.current && createPortal(<TechnicalPreview />, techPreviewRef.current)}
+                  <Platform isConnected={settings.isConnectedToPortal} getSettings={getSettings} />
+                </>
+              ),
             },
             {
               label: communication,
@@ -136,6 +143,7 @@ export const SettingsPanel: FC = () => {
 
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
+      <div ref={(e) => (techPreviewRef.current = e)} />
       <div className={styles.settingsWrapper}>
         {(loading || hasNoAccess) && (
           <div className={styles.emptyBlock}>
