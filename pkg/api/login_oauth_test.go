@@ -11,7 +11,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -20,9 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *macaron.Macaron {
+func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 	t.Helper()
 
 	if cfg == nil {
@@ -41,12 +41,12 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *macaron.Macaron {
 		HooksService:  hooks.ProvideService(),
 	}
 
-	m := macaron.New()
+	m := web.New()
 	m.Use(getContextHandler(t, cfg).Middleware)
 	viewPath, err := filepath.Abs("../../public/views")
 	require.NoError(t, err)
 
-	m.UseMiddleware(macaron.Renderer(viewPath, "[[", "]]"))
+	m.UseMiddleware(web.Renderer(viewPath, "[[", "]]"))
 
 	m.Get("/login/:name", routing.Wrap(hs.OAuthLogin))
 	return m

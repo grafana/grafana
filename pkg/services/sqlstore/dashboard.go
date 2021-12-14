@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -214,18 +215,13 @@ func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboa
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
-	has, err := ss.engine.Get(&dashboard)
+	has, err := ss.engine.Table(&models.Dashboard{}).Where("is_folder = " + dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
 	if err != nil {
 		return nil, err
-	} else if !has {
+	}
+	if !has {
 		return nil, models.ErrDashboardNotFound
 	}
-
-	// if there is a dashboard instead of a folder with that title
-	if !dashboard.IsFolder {
-		return nil, models.ErrDashboardNotFound
-	}
-
 	dashboard.SetId(dashboard.Id)
 	dashboard.SetUid(dashboard.Uid)
 	return &dashboard, nil
