@@ -10,7 +10,6 @@ import {
   AnnotationQueryRequest,
   DataFrame,
   DataFrameView,
-  DataQuery,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -18,9 +17,12 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   DataSourceWithLogsVolumeSupport,
+  DataSourceWithQueryExportSupport,
+  DataSourceWithQueryImportSupport,
   dateMath,
   DateTime,
   FieldCache,
+  AbstractQuery,
   FieldType,
   getLogLevelFromKey,
   Labels,
@@ -83,7 +85,11 @@ const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
 
 export class LokiDatasource
   extends DataSourceApi<LokiQuery, LokiOptions>
-  implements DataSourceWithLogsContextSupport, DataSourceWithLogsVolumeSupport<LokiQuery> {
+  implements
+    DataSourceWithLogsContextSupport,
+    DataSourceWithLogsVolumeSupport<LokiQuery>,
+    DataSourceWithQueryImportSupport<LokiQuery>,
+    DataSourceWithQueryExportSupport<LokiQuery> {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
@@ -366,8 +372,24 @@ export class LokiDatasource
     return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
-  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<LokiQuery[]> {
-    return this.languageProvider.importQueries(queries, originDataSource);
+  async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<LokiQuery[]> {
+    await this.languageProvider.start();
+    const existingKeys = this.languageProvider.labelKeys;
+
+    if (existingKeys && existingKeys.length) {
+      abstractQueries = abstractQueries.map((abstractQuery) => {
+        abstractQuery.labelMatchers = abstractQuery.labelMatchers.filter((labelMatcher) => {
+          return existingKeys.includes(labelMatcher.name);
+        });
+        return abstractQuery;
+      });
+    }
+
+    return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
+  }
+
+  async exportToAbstractQueries(queries: LokiQuery[]): Promise<AbstractQuery[]> {
+    return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {
