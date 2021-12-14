@@ -57,5 +57,13 @@
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/78"
     }
+  },
+  {
+    "type": "label",
+    "name": "area/plugins-catalog",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/76"
+    }
   }
 ]
