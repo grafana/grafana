@@ -1,0 +1,5 @@
+  maildev:
+    image: maildev/maildev
+    ports:
+      - "12080:80"
+      - "1025:25"

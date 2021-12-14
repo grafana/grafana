@@ -87,4 +87,16 @@ describe('MetricStatEditor', () => {
       expect(screen.queryByText('Match exact')).toBeNull();
     });
   });
+
+  describe('match exact', () => {
+    it('should be checked when value is true', () => {
+      render(<MetricStatEditor {...props} disableExpressions={false} />);
+      expect(screen.getByLabelText('Match exact - optional')).toBeChecked();
+    });
+
+    it('should be unchecked when value is false', () => {
+      render(<MetricStatEditor {...props} query={{ ...props.query, matchExact: false }} disableExpressions={false} />);
+      expect(screen.getByLabelText('Match exact - optional')).not.toBeChecked();
+    });
+  });
 });

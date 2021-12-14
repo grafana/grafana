@@ -96,6 +96,8 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
 export class Explore extends React.PureComponent<Props, ExploreState> {
+  scrollElement: HTMLDivElement | undefined;
+
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -286,7 +288,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       // If there is no data (like 404) we show a separate error so no need to show anything here
-      dataFrames.length && <TraceViewContainer exploreId={exploreId} dataFrames={dataFrames} splitOpenFn={splitOpen} />
+      dataFrames.length && (
+        <TraceViewContainer
+          exploreId={exploreId}
+          dataFrames={dataFrames}
+          splitOpenFn={splitOpen}
+          scrollElement={this.scrollElement}
+        />
+      )
     );
   }
 
@@ -313,7 +322,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
 
     return (
-      <CustomScrollbar autoHeightMin={'100%'}>
+      <CustomScrollbar
+        autoHeightMin={'100%'}
+        scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
+      >
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (

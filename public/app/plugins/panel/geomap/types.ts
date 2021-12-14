@@ -1,4 +1,5 @@
 import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
+import { LayerElement } from 'app/core/components/Layers/types';
 import BaseLayer from 'ol/layer/Base';
 import { Units } from 'ol/proj/Units';
 import { StyleConfig } from './style/types';
@@ -70,7 +71,7 @@ export interface GazetteerPathEditorConfigSettings {
 //-------------------
 // Runtime model
 //-------------------
-export interface MapLayerState<TConfig = any> {
+export interface MapLayerState<TConfig = any> extends LayerElement {
   options: MapLayerOptions<TConfig>;
   handler: MapLayerHandler;
   layer: BaseLayer; // the openlayers instance
