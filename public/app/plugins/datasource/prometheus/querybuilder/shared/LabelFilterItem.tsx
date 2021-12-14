@@ -105,12 +105,6 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
                 .map((change: any) => {
                   return change.label;
                 })
-                .filter((label: string) => {
-                  if (state.labelValues) {
-                    return state.labelValues.some((x) => x.label === label);
-                  }
-                  return false;
-                })
                 .join('|');
               onChange(({ ...item, value: changes, op: item.op ?? defaultOp } as any) as QueryBuilderLabelFilter);
             }

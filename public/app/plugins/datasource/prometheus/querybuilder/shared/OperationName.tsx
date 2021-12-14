@@ -44,7 +44,7 @@ export const OperationName = React.memo<Props>(({ operation, def, index, onChang
         <button
           className={styles.wrapper}
           onClick={onToggleSwitcher}
-          title="Click to replace with alternative function"
+          title={'Click to replace with alternative function'}
         >
           {nameElement}
           <Icon className={`${styles.dropdown} qbn-dropdown-icon`} name="arrow-down" size="sm" />
