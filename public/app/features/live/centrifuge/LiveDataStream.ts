@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { map, Observable, ReplaySubject, Subject, Subscriber, Subscription } from 'rxjs';
 import { DataStreamSubscriptionKey, StreamingDataQueryResponse } from './service';
-import { StreamingDataFrame } from '../data/StreamingDataFrame';
+import { getStreamingFrameOptions, StreamingDataFrame } from '../data/StreamingDataFrame';
 import { StreamingResponseDataType } from '../data/utils';
 
 const bufferIfNot = (canEmitObservable: Observable<boolean>) => <T>(source: Observable<T>): Observable<T[]> => {
@@ -200,16 +200,13 @@ export class LiveDataStream<T = unknown> {
     }
   };
 
-  private resizeBuffer = (options: LiveDataStreamOptions) => {
-    const bufferOptions = options.buffer;
+  private resizeBuffer = (bufferOptions: StreamingFrameOptions) => {
     if (bufferOptions && this.frameBuffer.needsResizing(bufferOptions)) {
       this.frameBuffer.resize(bufferOptions);
     }
   };
 
   private prepareInternalStreamForNewSubscription = (options: LiveDataStreamOptions): void => {
-    this.resizeBuffer(options);
-
     if (!this.frameBuffer.hasAtLeastOnePacket() && options.frame) {
       // will skip initial frames from subsequent subscribers
       this.process(dataFrameToJSON(options.frame));
@@ -221,7 +218,9 @@ export class LiveDataStream<T = unknown> {
       clearTimeout(this.shutdownTimeoutId);
       this.shutdownTimeoutId = undefined;
     }
+    const buffer = getStreamingFrameOptions(options.buffer);
 
+    this.resizeBuffer(buffer);
     this.prepareInternalStreamForNewSubscription(options);
 
     const fieldsNamesFilter = options.filter?.fields;
@@ -240,7 +239,7 @@ export class LiveDataStream<T = unknown> {
         data: [
           {
             type: StreamingResponseDataType.FullFrame,
-            frame: this.frameBuffer.serialize(fieldFilterPredicate, options.buffer),
+            frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer),
           },
         ],
         error,

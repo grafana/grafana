@@ -36,22 +36,11 @@ export interface StreamingFrameOptions {
 /**
  * @alpha
  */
-export function getStreamingFrameOptions(opts?: Partial<StreamingFrameOptions>): StreamingFrameOptions {
-  return {
-    maxLength: opts?.maxLength ?? 1000,
-    maxDelta: opts?.maxDelta ?? Infinity,
-    action: opts?.action ?? StreamingFrameAction.Append,
-  };
-}
-
-/**
- * @alpha
- */
 export interface LiveDataStreamOptions {
   addr: LiveChannelAddress;
   frame?: DataFrame; // initial results
   key?: string;
-  buffer?: StreamingFrameOptions;
+  buffer?: Partial<StreamingFrameOptions>;
   filter?: LiveDataFilter;
 }
 

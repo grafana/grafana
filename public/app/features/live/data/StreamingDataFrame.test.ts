@@ -1,6 +1,6 @@
 import { reduceField, ReducerID, getFieldDisplayName, DataFrame, FieldType, DataFrameJSON } from '@grafana/data';
-import { getStreamingFrameOptions, StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime';
-import { StreamingDataFrame } from './StreamingDataFrame';
+import { StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime';
+import { getStreamingFrameOptions, StreamingDataFrame } from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {
   describe('when called with a DataFrame', () => {

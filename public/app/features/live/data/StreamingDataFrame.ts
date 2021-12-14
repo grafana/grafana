@@ -16,7 +16,6 @@ import { join } from '@grafana/data/src/transformations/transformers/joinDataFra
 import {
   StreamingFrameAction,
   StreamingFrameOptions,
-  getStreamingFrameOptions,
 } from '@grafana/runtime/src/services/live';
 import { AlignedData } from 'uplot';
 
@@ -418,6 +417,14 @@ export class StreamingDataFrame implements DataFrame {
   }
 
   getOptions = (): Readonly<StreamingFrameOptions> => this.options;
+}
+
+export function getStreamingFrameOptions(opts?: Partial<StreamingFrameOptions>): StreamingFrameOptions {
+  return {
+    maxLength: opts?.maxLength ?? 1000,
+    maxDelta: opts?.maxDelta ?? Infinity,
+    action: opts?.action ?? StreamingFrameAction.Append,
+  };
 }
 
 // converts vertical insertion records with table keys in [0] and column values in [1...N]

@@ -3,7 +3,6 @@ import {
   DataSourceWithBackend,
   getBackendSrv,
   getGrafanaLiveSrv,
-  getStreamingFrameOptions,
   getTemplateSrv,
   StreamingFrameOptions,
 } from '@grafana/runtime';
@@ -109,7 +108,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
             key: `${request.requestId}.${counter++}`,
             addr: addr!,
             filter,
-            buffer: getStreamingFrameOptions(buffer),
+            buffer,
           })
         );
       } else {

@@ -125,6 +125,9 @@ export interface LiveChannelPresenceStatus {
   users: any; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
+/**
+ * @alpha -- experimental
+ */
 export type LiveChannelId = string;
 
 /**
