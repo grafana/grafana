@@ -3,6 +3,8 @@ package features
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/live/leader"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
@@ -17,6 +19,10 @@ type PluginContextGetter interface {
 	GetPluginContext(user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error)
 }
 
+type SubscribeStreamCaller interface {
+	CallPluginSubscribeStream(orgID int64, user *models.SignedInUser, channel string, toNodeID string) (backend.SubscribeStreamStatus, error)
+}
+
 // PluginRunner can handle streaming operations for channels belonging to plugins.
 type PluginRunner struct {
 	pluginID            string
@@ -24,16 +30,18 @@ type PluginRunner struct {
 	pluginContextGetter PluginContextGetter
 	handler             backend.StreamHandler
 	runStreamManager    *runstream.Manager
+	leaderManager       leader.Manager
 }
 
 // NewPluginRunner creates new PluginRunner.
-func NewPluginRunner(pluginID string, datasourceUID string, runStreamManager *runstream.Manager, pluginContextGetter PluginContextGetter, handler backend.StreamHandler) *PluginRunner {
+func NewPluginRunner(pluginID string, datasourceUID string, runStreamManager *runstream.Manager, pluginContextGetter PluginContextGetter, handler backend.StreamHandler, leaderManager leader.Manager) *PluginRunner {
 	return &PluginRunner{
 		pluginID:            pluginID,
 		datasourceUID:       datasourceUID,
 		pluginContextGetter: pluginContextGetter,
 		handler:             handler,
 		runStreamManager:    runStreamManager,
+		leaderManager:       leaderManager,
 	}
 }
 
@@ -46,17 +54,20 @@ func (m *PluginRunner) GetHandlerForPath(path string) (models.ChannelHandler, er
 		runStreamManager:    m.runStreamManager,
 		handler:             m.handler,
 		pluginContextGetter: m.pluginContextGetter,
+		leaderManager:       m.leaderManager,
 	}, nil
 }
 
 // PluginPathRunner can handle streaming operations for channels belonging to plugin specific path.
 type PluginPathRunner struct {
-	path                string
-	pluginID            string
-	datasourceUID       string
-	runStreamManager    *runstream.Manager
-	handler             backend.StreamHandler
-	pluginContextGetter PluginContextGetter
+	path                  string
+	pluginID              string
+	datasourceUID         string
+	runStreamManager      *runstream.Manager
+	handler               backend.StreamHandler
+	pluginContextGetter   PluginContextGetter
+	leaderManager         leader.Manager
+	subscribeStreamCaller SubscribeStreamCaller
 }
 
 // OnSubscribe passes control to a plugin.
@@ -70,6 +81,11 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 		logger.Error("Plugin context not found", "path", r.path)
 		return models.SubscribeReply{}, 0, centrifuge.ErrorInternal
 	}
+
+	if r.leaderManager != nil {
+		return r.handleHASubscribe(ctx, user, e)
+	}
+
 	resp, err := r.handler.SubscribeStream(ctx, &backend.SubscribeStreamRequest{
 		PluginContext: pCtx,
 		Path:          r.path,
@@ -126,4 +142,8 @@ func (r *PluginPathRunner) OnPublish(ctx context.Context, user *models.SignedInU
 		return models.PublishReply{}, resp.Status, nil
 	}
 	return models.PublishReply{Data: resp.Data}, backend.PublishStreamStatusOK, nil
+}
+
+func (r *PluginPathRunner) handleHASubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+
 }

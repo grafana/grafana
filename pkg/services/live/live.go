@@ -13,6 +13,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+
+	"github.com/grafana/grafana/pkg/services/live/leader"
+
 	"github.com/centrifugal/centrifuge"
 	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
@@ -64,9 +68,10 @@ type CoreGrafanaScope struct {
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	logsService *cloudwatch.LogsService, pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
-	usageStatsService usagestats.Service) (*GrafanaLive, error) {
+	usageStatsService usagestats.Service, bus bus.Bus) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
+		bus:                   bus,
 		PluginContextProvider: plugCtxProvider,
 		RouteRegister:         routeRegister,
 		LogsService:           logsService,
@@ -149,6 +154,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	channelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, nil)
 
 	var managedStreamRunner *managedstream.Runner
+	var leaderManager leader.Manager
 	if g.IsHA() {
 		redisClient := redis.NewClient(&redis.Options{
 			Addr: g.Cfg.LiveHAEngineAddress,
@@ -156,6 +162,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		cmd := redisClient.Ping(context.TODO())
 		if _, err := cmd.Result(); err != nil {
 			return nil, fmt.Errorf("error pinging Redis: %v", err)
+		}
+		if g.Cfg.FeatureToggles["live-ha-leader"] {
+			leaderManager = leader.NewRedisManager(redisClient)
+			g.leaderManager = leaderManager
 		}
 		managedStreamRunner = managedstream.NewRunner(
 			g.Publish,
@@ -233,7 +243,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
 
-	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
+	g.surveyCaller = survey.NewCaller(managedStreamRunner, g.bus, g, node)
 	err = g.surveyCaller.SetupHandlers()
 	if err != nil {
 		return nil, err
@@ -385,6 +395,8 @@ type GrafanaLive struct {
 	SQLStore              *sqlstore.SQLStore
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
+	bus                   bus.Bus
+	leaderManager         leader.Manager
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
@@ -853,6 +865,7 @@ func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string
 		g.runStreamManager,
 		g.contextGetter,
 		streamHandler,
+		g.leaderManager,
 	), nil
 }
 
@@ -875,6 +888,7 @@ func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace
 		g.runStreamManager,
 		g.contextGetter,
 		streamHandler,
+		g.leaderManager,
 	), nil
 }
 

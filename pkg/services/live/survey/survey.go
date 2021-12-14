@@ -9,21 +9,38 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/live"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 )
 
+type ChannelHandlerGetter interface {
+	GetChannelHandler(user *models.SignedInUser, channel string) (models.ChannelHandler, live.Channel, error)
+}
+
 type Caller struct {
-	managedStreamRunner *managedstream.Runner
-	node                *centrifuge.Node
+	channelHandlerGetter ChannelHandlerGetter
+	managedStreamRunner  *managedstream.Runner
+	bus                  bus.Bus
+	node                 *centrifuge.Node
 }
 
 const (
-	managedStreamsCall = "managed_streams"
+	managedStreamsCall    = "managed_streams"
+	pluginSubscribeStream = "plugin_subscribe_stream"
 )
 
-func NewCaller(managedStreamRunner *managedstream.Runner, node *centrifuge.Node) *Caller {
-	return &Caller{managedStreamRunner: managedStreamRunner, node: node}
+func NewCaller(managedStreamRunner *managedstream.Runner, bus bus.Bus, channelHandlerGetter ChannelHandlerGetter, node *centrifuge.Node) *Caller {
+	return &Caller{
+		channelHandlerGetter: channelHandlerGetter,
+		managedStreamRunner:  managedStreamRunner,
+		node:                 node,
+		bus:                  bus,
+	}
 }
 
 func (c *Caller) SetupHandlers() error {
@@ -47,6 +64,8 @@ func (c *Caller) handleSurvey(e centrifuge.SurveyEvent, cb centrifuge.SurveyCall
 	switch e.Op {
 	case managedStreamsCall:
 		resp, err = c.handleManagedStreams(e.Data)
+	case pluginSubscribeStream:
+		resp, err = c.handlePluginSubscribeStream(e.Data)
 	default:
 		err = errors.New("method not found")
 	}
@@ -78,6 +97,84 @@ func (c *Caller) handleManagedStreams(data []byte) (interface{}, error) {
 	return NodeManagedChannelsResponse{
 		Channels: channels,
 	}, nil
+}
+
+type PluginSubscribeStreamRequest struct {
+	OrgID   int64  `json:"org"`
+	UserID  int64  `json:"userId"`
+	Channel string `json:"channel"`
+}
+
+type PluginSubscribeStreamResponse struct {
+	Status backend.SubscribeStreamStatus `json:"status,omitempty"`
+}
+
+func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStreamResponse, error) {
+	var req PluginSubscribeStreamRequest
+	err := json.Unmarshal(data, &req)
+	if err != nil {
+		return nil, err
+	}
+	query := models.GetSignedInUserQuery{UserId: req.UserID, OrgId: req.OrgID}
+	if err := c.bus.DispatchCtx(context.Background(), &query); err != nil {
+		// TODO: better handling of auth error.
+		return nil, errors.New("unauthorized")
+	}
+	user := query.Result
+
+	handler, parsedChannel, err := c.channelHandlerGetter.GetChannelHandler(user, req.Channel)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: handle reply also.
+	_, status, err := handler.OnSubscribe(context.Background(), user, models.SubscribeEvent{
+		Channel: req.Channel,
+		Path:    parsedChannel.Path,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &PluginSubscribeStreamResponse{
+		Status: status,
+	}, nil
+}
+
+func (c *Caller) CallPluginSubscribeStream(orgID int64, user *models.SignedInUser, channel string, toNodeID string) (backend.SubscribeStreamStatus, error) {
+	req := PluginSubscribeStreamRequest{
+		OrgID:   orgID,
+		UserID:  user.UserId,
+		Channel: channel,
+	}
+	jsonData, err := json.Marshal(req)
+	if err != nil {
+		return 0, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	resp, err := c.node.Survey(ctx, pluginSubscribeStream, jsonData)
+	if err != nil {
+		return 0, err
+	}
+
+	for nodeID, result := range resp {
+		if result.Code != 0 {
+			return 0, fmt.Errorf("unexpected survey code: %d", result.Code)
+		}
+		if nodeID != toNodeID {
+			continue
+		}
+		var res PluginSubscribeStreamResponse
+		err := json.Unmarshal(result.Data, &res)
+		if err != nil {
+			return 0, err
+		}
+		return res.Status, nil
+	}
+	// TODO: maybe handle in a special way.
+	return 0, errors.New("leader not responded")
 }
 
 func (c *Caller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChannel, error) {
