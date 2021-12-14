@@ -3700,7 +3700,7 @@ __metadata:
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
     "@testing-library/user-event": 13.5.0
-    "@types/classnames": 2.2.7
+    "@types/classnames": 2.3.0
     "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.1.0
@@ -3736,7 +3736,7 @@ __metadata:
     ansicolor: 1.1.95
     babel-loader: 8.2.2
     calculate-size: 1.1.1
-    classnames: 2.2.6
+    classnames: 2.3.1
     clipboard: 2.0.4
     common-tags: ^1.8.0
     core-js: 3.10.0
@@ -8383,21 +8383,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/classnames@npm:2.2.7":
-  version: 2.2.7
-  resolution: "@types/classnames@npm:2.2.7"
-  checksum: f94e9610ff424863f14398a8ad9c23025a8d54a372fa6bb333329ff2f77a29e1e0be0747f0fc3261c390c66f8643ea5aaa83ba8008e236b2962b071b3ca2ddee
-  languageName: node
-  linkType: hard
-
-"@types/classnames@npm:2.2.9":
-  version: 2.2.9
-  resolution: "@types/classnames@npm:2.2.9"
-  checksum: df4a984dd287dfc22f3b7ba3d7746e0daf0349b1f6ff053ce1bfe0a753bbf58aca347873a33e309e7c11b00ab6e65eeea399521f95500904cd87c3fca316607b
-  languageName: node
-  linkType: hard
-
-"@types/classnames@npm:^2.2.7":
+"@types/classnames@npm:2.3.0, @types/classnames@npm:^2.2.7":
   version: 2.3.0
   resolution: "@types/classnames@npm:2.3.0"
   dependencies:
@@ -13522,13 +13508,6 @@ __metadata:
   version: 2.3.1
   resolution: "classnames@npm:2.3.1"
   checksum: 14db8889d56c267a591f08b0834989fe542d47fac659af5a539e110cc4266694e8de86e4e3bbd271157dbd831361310a8293e0167141e80b0f03a0f175c80960
-  languageName: node
-  linkType: hard
-
-"classnames@npm:2.2.6":
-  version: 2.2.6
-  resolution: "classnames@npm:2.2.6"
-  checksum: 09a4fda780158aa8399079898eabeeca0c48c28641d9e4de140db7412e5e346843039ded1af0152f755afc2cc246ff8c3d6f227bf0dcb004e070b7fa14ec54cc
   languageName: node
   linkType: hard
 
@@ -19109,7 +19088,7 @@ __metadata:
     "@testing-library/user-event": 13.5.0
     "@types/angular": 1.8.3
     "@types/angular-route": 1.7.0
-    "@types/classnames": 2.2.9
+    "@types/classnames": 2.3.0
     "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.1.0
@@ -19183,7 +19162,7 @@ __metadata:
     brace: 0.11.1
     calculate-size: 1.1.1
     centrifuge: 2.7.5
-    classnames: 2.2.6
+    classnames: 2.3.1
     clipboard: 2.0.4
     comlink: 4.3.1
     common-tags: ^1.8.0
