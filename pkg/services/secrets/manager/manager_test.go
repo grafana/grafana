@@ -279,6 +279,8 @@ func TestSecretsService_Run(t *testing.T) {
 		// Execute background process after ttl during a
 		// millisecond with gc ticker on every nanosecond.
 		gcInterval = time.Nanosecond
+
+		t.Cleanup(func() { now = time.Now })
 		now = func() time.Time { return time.Now().Add(dekTTL) }
 
 		ctx, cancel := context.WithTimeout(ctx, time.Millisecond)
@@ -298,6 +300,7 @@ func TestSecretsService_Run(t *testing.T) {
 		require.NoError(t, err)
 
 		// Reuse of data encryption key one minute later should update expiry
+		t.Cleanup(func() { now = time.Now })
 		now = func() time.Time { return time.Now().Add(time.Minute) }
 		_, err = svc.Encrypt(ctx, []byte("grafana"), withoutScope)
 		require.NoError(t, err)

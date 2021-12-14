@@ -314,9 +314,9 @@ func (s *SecretsService) GetProviders() map[string]secrets.Provider {
 	return s.providers
 }
 
-// These variables are used to be test the code
-// responsible for periodically cleaning up data
-// encryption keys cache.
+// These variables are used to test the code
+// responsible for periodically cleaning up
+// data encryption keys cache.
 var (
 	now        = time.Now
 	dekTTL     = 15 * time.Minute
