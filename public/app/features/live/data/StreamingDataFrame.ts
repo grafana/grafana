@@ -1,6 +1,23 @@
-import { DataFrame, Field, FieldDTO, FieldType, Labels, QueryResultMeta, DataFrameJSON, decodeFieldValueEntities, FieldSchema, guessFieldTypeFromValue, ArrayVector, toFilteredDataFrameDTO } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  FieldDTO,
+  FieldType,
+  Labels,
+  QueryResultMeta,
+  DataFrameJSON,
+  decodeFieldValueEntities,
+  FieldSchema,
+  guessFieldTypeFromValue,
+  ArrayVector,
+  toFilteredDataFrameDTO,
+} from '@grafana/data';
 import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { StreamingFrameAction, StreamingFrameOptions, getStreamingFrameOptions } from '@grafana/runtime';
+import {
+  StreamingFrameAction,
+  StreamingFrameOptions,
+  getStreamingFrameOptions,
+} from '@grafana/runtime/src/services/live';
 import { AlignedData } from 'uplot';
 
 /**

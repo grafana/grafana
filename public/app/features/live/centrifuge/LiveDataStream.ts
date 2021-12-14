@@ -1,4 +1,8 @@
-import { LiveDataStreamOptions, StreamingDataQueryResponse, StreamingFrameOptions } from '@grafana/runtime';
+import type {
+  LiveDataStreamOptions,
+  StreamingDataQueryResponse,
+  StreamingFrameOptions,
+} from '@grafana/runtime/src/services/live';
 import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
 import {
   DataFrameJSON,
