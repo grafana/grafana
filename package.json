@@ -148,7 +148,7 @@
     "@typescript-eslint/eslint-plugin": "5.4.0",
     "@typescript-eslint/parser": "5.4.0",
     "@wojtekmaj/enzyme-adapter-react-17": "0.6.2",
-    "autoprefixer": "10.2.6",
+    "autoprefixer": "10.4.0",
     "axios": "0.24.0",
     "babel-jest": "27.4.2",
     "babel-loader": "8.2.2",
