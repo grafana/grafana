@@ -200,7 +200,7 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:sign')
     .option('--signatureType <type>', 'Signature Type')
-    .option('--rootUrls <type>', 'Root URLs', function(url: string, urls: string[]) {
+    .option('--rootUrls <urls...>', 'Root URLs', function(url: string, urls: string[]) {
       
       if (typeof url !== 'string') {
         return urls;
