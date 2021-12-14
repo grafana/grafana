@@ -317,7 +317,7 @@ def upload_cdn_step(edition, ver_mode):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {} --bucket "$${{PRERELEASE_BUCKET}}/artifacts/static-assets"'.format(edition),
+            './bin/grabpl upload-cdn --edition {} --bucket "{}"'.format(edition, bucket),
         ],
     }
 
