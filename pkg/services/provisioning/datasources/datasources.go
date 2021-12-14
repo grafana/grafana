@@ -51,14 +51,14 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 		}
 
 		if errors.Is(err, models.ErrDataSourceNotFound) {
-			dc.log.Info("inserting datasource from configuration ", "name", ds.Name, "uid", ds.UID)
 			insertCmd := createInsertCommand(ds)
+			dc.log.Info("inserting datasource from configuration ", "name", insertCmd.Name, "uid", insertCmd.Uid)
 			if err := bus.DispatchCtx(ctx, insertCmd); err != nil {
 				return err
 			}
 		} else {
-			dc.log.Debug("updating datasource from configuration", "name", ds.Name, "uid", ds.UID)
 			updateCmd := createUpdateCommand(ds, cmd.Result.Id)
+			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.Uid)
 			if err := bus.DispatchCtx(ctx, updateCmd); err != nil {
 				return err
 			}
