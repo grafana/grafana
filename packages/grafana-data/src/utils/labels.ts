@@ -10,9 +10,7 @@ const labelRegexp = /\b(\w+)(!?=~?)"([^"\n]*?)"/g;
  *
  * Example: `parseLabels('{job="foo", instance="bar"}) // {job: "foo", instance: "bar"}`
  */
-export function parseLabels(labels: string, foo: string): Labels {
-  console.log(foo);
-
+export function parseLabels(labels: string): Labels {
   const labelsByKey: Labels = {};
   labels.replace(labelRegexp, (_, key, operator, value) => {
     labelsByKey[key] = value;

@@ -3,12 +3,12 @@ import { Labels } from '../types/data';
 
 describe('parseLabels()', () => {
   it('returns no labels on empty labels string', () => {
-    expect(parseLabels('', 'Foo')).toEqual({});
-    expect(parseLabels('{}', 'Foo')).toEqual({});
+    expect(parseLabels('')).toEqual({});
+    expect(parseLabels('{}')).toEqual({});
   });
 
   it('returns labels on labels string', () => {
-    expect(parseLabels('{foo="bar", baz="42"}', 'Foo')).toEqual({ foo: 'bar', baz: '42' });
+    expect(parseLabels('{foo="bar", baz="42"}')).toEqual({ foo: 'bar', baz: '42' });
   });
 });
 
