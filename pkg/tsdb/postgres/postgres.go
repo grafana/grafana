@@ -34,7 +34,7 @@ func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) (*Service, erro
 		QueryDataHandler: s,
 	})
 
-	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
 	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}

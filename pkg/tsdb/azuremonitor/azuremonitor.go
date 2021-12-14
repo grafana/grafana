@@ -55,7 +55,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, p
 		CallResourceHandler: httpadapter.New(resourceMux),
 	})
 
-	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
 	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		azlog.Error("Failed to register plugin", "error", err)
 	}

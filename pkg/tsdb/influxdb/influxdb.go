@@ -34,7 +34,7 @@ type Service struct {
 
 var ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 
-func ProvideService(httpClient httpclient.Provider, pluginStore plugins.Store, cfg *setting.Cfg) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClient httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClient))
 	s := &Service{
 		QueryParser:    &InfluxdbQueryParser{},
@@ -47,7 +47,7 @@ func ProvideService(httpClient httpclient.Provider, pluginStore plugins.Store, c
 		QueryDataHandler: s,
 	})
 
-	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
 	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		s.glog.Error("Failed to register plugin", "error", err)
 		return nil, err

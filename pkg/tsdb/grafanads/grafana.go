@@ -43,8 +43,8 @@ var (
 	logger                            = log.New("tsdb.grafana")
 )
 
-func ProvideService(cfg *setting.Cfg, registrar plugins.Store) *Service {
-	return newService(cfg, registrar)
+func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) *Service {
+	return newService(cfg, pluginStore)
 }
 
 func newService(cfg *setting.Cfg, pluginStore plugins.Store) *Service {
@@ -59,7 +59,7 @@ func newService(cfg *setting.Cfg, pluginStore plugins.Store) *Service {
 		},
 	}
 
-	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
 	if err := pluginStore.AddWithFactory(context.Background(), pluginID, coreplugin.New(backend.ServeOpts{
 		CheckHealthHandler: s,
 		QueryDataHandler:   s,

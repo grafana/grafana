@@ -18,18 +18,18 @@ type Store interface {
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 
 	// Add adds a plugin to the store.
-	Add(ctx context.Context, pluginID, version string, opts AddOpts) error
+	Add(ctx context.Context, pluginID, version string) error
 	// AddWithFactory adds a plugin to the store.
 	AddWithFactory(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc, resolver PluginPathResolver) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
 }
 
+type PluginPathResolver func() (string, error)
+
 type AddOpts struct {
 	PluginInstallDir, PluginZipURL, PluginRepoURL string
 }
-
-type PluginPathResolver func() (string, error)
 
 // Loader is responsible for loading plugins from the file system.
 type Loader interface {

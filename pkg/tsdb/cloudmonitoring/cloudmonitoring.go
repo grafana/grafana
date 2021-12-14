@@ -88,7 +88,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pl
 		CheckHealthHandler:  s,
 	})
 
-	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
 	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		slog.Error("Failed to register plugin", "error", err)
 	}

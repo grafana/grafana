@@ -34,7 +34,7 @@ type Service struct {
 	im                 instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, pluginStore plugins.Store, cfg *setting.Cfg) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
 	plog.Debug("initializing")
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 
@@ -46,8 +46,7 @@ func ProvideService(httpClientProvider httpclient.Provider, pluginStore plugins.
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
-
-	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
 	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 		return nil, err

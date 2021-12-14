@@ -19,9 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
-const pluginID = "elasticsearch"
-
 var eslog = log.New("tsdb.elasticsearch")
+
+const pluginID = "elasticsearch"
 
 type Service struct {
 	HTTPClientProvider httpclient.Provider
@@ -29,7 +29,7 @@ type Service struct {
 	im                 instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, pluginStore plugins.Store, cfg *setting.Cfg) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
 	eslog.Debug("initializing")
 
 	im := datasource.NewInstanceManager(newInstanceSettings())
@@ -40,7 +40,7 @@ func ProvideService(httpClientProvider httpclient.Provider, pluginStore plugins.
 	})
 
 	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory,
-		plugins.CoreBackendPluginPathResolver(cfg, pluginID)); err != nil {
+		plugins.CoreDataSourcePathResolver(cfg, pluginID)); err != nil {
 		eslog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

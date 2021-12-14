@@ -46,7 +46,7 @@ func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) (*Service, erro
 		CallResourceHandler: httpadapter.New(rMux),
 		StreamHandler:       s,
 	})
-	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
 	err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver)
 	if err != nil {
 		return nil, err

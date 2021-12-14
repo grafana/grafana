@@ -45,14 +45,14 @@ type datasourceInfo struct {
 	datasourceID int64
 }
 
-const pluginID = "cloudwatch"
-
 const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
 const defaultRegion = "default"
 
 // Constants also defined in datasource/cloudwatch/datasource.ts
 const logIdentifierInternal = "__log__grafana_internal__"
 const logStreamIdentifierInternal = "__logstream__grafana_internal__"
+
+const pluginID = "cloudwatch"
 
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
@@ -65,7 +65,7 @@ func ProvideService(cfg *setting.Cfg, logsService *LogsService, pluginStore plug
 		QueryDataHandler: executor,
 	})
 
-	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
 	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 		return nil, err

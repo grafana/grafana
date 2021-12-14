@@ -32,7 +32,7 @@ type Service struct {
 	im     instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, pluginStore plugins.Store, cfg *setting.Cfg) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 	s := &Service{
 		logger: log.New("tsdb.opentsdb"),
@@ -42,7 +42,7 @@ func ProvideService(httpClientProvider httpclient.Provider, pluginStore plugins.
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
-	resolver := plugins.CoreBackendPluginPathResolver(cfg, pluginID)
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
 	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		return nil, err
 	}

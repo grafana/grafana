@@ -33,7 +33,7 @@ func ComposeRendererStartCommand() string {
 	return fmt.Sprintf("%s_%s_%s%s", "plugin_start", os, strings.ToLower(arch), extension)
 }
 
-func CoreBackendPluginPathResolver(cfg *setting.Cfg, pluginRootDirName string) PluginPathResolver {
+func CoreDataSourcePathResolver(cfg *setting.Cfg, pluginRootDirName string) PluginPathResolver {
 	return func() (string, error) {
 		// override mismatch cloud monitoring plugin
 		if pluginRootDirName == "stackdriver" {

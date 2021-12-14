@@ -48,6 +48,6 @@ type fakePluginStore struct {
 	plugins.Store
 }
 
-func (pm *fakePluginStore) AddWithFactory(_ context.Context, _ string, _ backendplugin.PluginFactoryFunc, _ plugins.PluginPathResolver) error {
+func (ps *fakePluginStore) AddWithFactory(_ context.Context, _ string, _ backendplugin.PluginFactoryFunc, _ plugins.PluginPathResolver) error {
 	return nil
 }
