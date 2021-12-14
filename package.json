@@ -256,7 +256,7 @@
     "@visx/group": "2.1.0",
     "@visx/scale": "2.2.2",
     "@visx/shape": "2.4.0",
-    "@visx/tooltip": "2.1.0",
+    "@visx/tooltip": "2.2.2",
     "@welldone-software/why-did-you-render": "6.2.1",
     "abortcontroller-polyfill": "1.4.0",
     "angular": "1.8.2",
