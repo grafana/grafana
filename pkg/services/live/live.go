@@ -655,7 +655,7 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 					reply, status, err = sub.Subscribe(client.Context(), pipeline.Vars{
 						OrgID:   orgID,
 						Channel: channel,
-					})
+					}, e.Data)
 					if err != nil {
 						logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 						return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
@@ -680,6 +680,7 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 		reply, status, err = handler.OnSubscribe(client.Context(), user, models.SubscribeEvent{
 			Channel: channel,
 			Path:    addr.Path,
+			Data:    e.Data,
 		})
 		if err != nil {
 			logger.Error("Error calling channel handler subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)

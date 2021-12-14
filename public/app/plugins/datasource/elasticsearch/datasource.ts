@@ -6,17 +6,18 @@ import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/run
 import {
   DataFrame,
   DataLink,
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
+  DataSourceWithQueryImportSupport,
   DataSourceWithLogsVolumeSupport,
   DateTime,
   dateTime,
   Field,
   getDefaultTimeRange,
+  AbstractQuery,
   getLogLevelFromKey,
   LogLevel,
   LogRowModel,
@@ -63,7 +64,10 @@ const ELASTIC_META_FIELDS = [
 
 export class ElasticDatasource
   extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions>
-  implements DataSourceWithLogsContextSupport, DataSourceWithLogsVolumeSupport<ElasticsearchQuery> {
+  implements
+    DataSourceWithLogsContextSupport,
+    DataSourceWithQueryImportSupport<ElasticsearchQuery>,
+    DataSourceWithLogsVolumeSupport<ElasticsearchQuery> {
   basicAuth?: string;
   withCredentials?: boolean;
   url: string;
@@ -163,8 +167,8 @@ export class ElasticDatasource
       );
   }
 
-  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<ElasticsearchQuery[]> {
-    return this.languageProvider.importQueries(queries, originDataSource.meta.id);
+  async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<ElasticsearchQuery[]> {
+    return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
   }
 
   /**

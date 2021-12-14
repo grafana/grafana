@@ -79,6 +79,10 @@ Here is a minimal policy example:
 
 Grafana is not able to load custom namespaces through the GetMetricData API. If you still want your custom metrics to show up in the fields in the query editor, you can specify the names of the namespaces containing the custom metrics in the _Namespaces of Custom Metrics_ field. The field accepts a multiple namespaces, separated by a comma.
 
+#### Timeout
+
+Timeout specifically, for CloudWatch Logs queries. Log queries don't recognize standard Grafana query timeout as they don't keep a single request open and instead periodically poll for results. Because of limits on concurrently running queries in CloudWatch they can also take a longer time to finish.
+
 #### X-Ray trace links
 
 Link an X-Ray data source in the "X-Ray trace link" section of the configuration page to automatically add links in your logs when the log contains `@xrayTraceId` field.
