@@ -51,7 +51,6 @@ func newClient(skipTLSVerify bool, grafanaVersion string, logger Logger) *Client
 
 func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL, checksum, destPath string,
 	allowSymlinks bool, repo plugins.Repository) (*plugins.PluginArchiveInfo, error) {
-
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
