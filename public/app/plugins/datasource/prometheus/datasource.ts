@@ -54,7 +54,7 @@ import {
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
-import { renderLegendFormat } from './labels';
+import { renderLegendFormat } from './legend';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];

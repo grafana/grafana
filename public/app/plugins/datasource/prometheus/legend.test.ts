@@ -1,4 +1,4 @@
-import { renderLegendFormat } from './labels';
+import { renderLegendFormat } from './legend';
 
 describe('renderLegendFormat()', () => {
   const labels = {
