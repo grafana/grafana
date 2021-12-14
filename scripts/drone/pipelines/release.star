@@ -175,7 +175,7 @@ def get_steps(edition, ver_mode):
       build_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
 
     if should_upload:
-        publish_steps.append(upload_cdn_step(edition=edition))
+        publish_steps.append(upload_cdn_step(edition=edition, ver_mode=ver_mode))
         publish_steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode))
     if should_publish:
         publish_step = publish_storybook_step(edition=edition, ver_mode=ver_mode)
@@ -191,7 +191,7 @@ def get_steps(edition, ver_mode):
     if include_enterprise2:
         publish_steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
-            upload_cdn_step(edition=edition2),
+            upload_cdn_step(edition=edition2, ver_mode=ver_mode),
         ])
         if should_upload:
             step = upload_packages_step(edition=edition2, ver_mode=ver_mode)
