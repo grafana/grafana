@@ -24,7 +24,7 @@ interface RuleStateHistoryProps {
   alertId: string;
 }
 
-const RuleStateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
+const StateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
   const { loading, error, result = [] } = useManagedAlertStateHistory(alertId);
 
   if (loading && !error) {
@@ -123,4 +123,4 @@ function hasMatchingPrecedingState(index: number, items: StateHistoryItem[]): bo
   return previousHistoryItem.newState === currentHistoryItem.prevState;
 }
 
-export { RuleStateHistory };
+export { StateHistory };
