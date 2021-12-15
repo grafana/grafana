@@ -322,11 +322,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -334,6 +338,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -391,6 +398,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on: []
 kind: pipeline
@@ -402,11 +415,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -414,6 +431,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -805,6 +825,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on:
 - build-main
@@ -985,11 +1011,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -997,6 +1027,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -1357,6 +1390,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on:
 - oss-build-release
@@ -1429,11 +1468,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -1441,6 +1484,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.1-alpine
   name: redis
@@ -1883,6 +1929,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -1975,11 +2027,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -1987,6 +2043,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -2324,6 +2383,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on:
 - oss-build-test-release
@@ -2394,11 +2459,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -2406,6 +2475,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.1-alpine
   name: redis
@@ -2844,6 +2916,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -3045,11 +3123,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -3057,6 +3139,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -3376,6 +3461,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on:
 - oss-build-release-branch
@@ -3441,11 +3532,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -3453,6 +3548,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.1-alpine
   name: redis
@@ -3895,6 +3993,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -4109,6 +4213,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: f5a6e496e7c71454eebf1a74ee83030fa3bab8dd721a2c228e8de2fdbc1e47de
+hmac: 095d741ce6f28b818cbf059f4cf19d5403a4e451fabfcad111c8674124e10db9
 
 ...
