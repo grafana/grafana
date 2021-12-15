@@ -29,7 +29,7 @@ export class ConfigEditor extends PureComponent<Props> {
             <h5>Uploading a Service Account Key File</h5>
             <p>
               To authenticate with the Google Cloud Monitoring API, you need to create a Google Cloud Platform (GCP)
-              Service Account for the Project you want to show data for. A Grafana data source integrates with one GCP
+              Service Account and key for the Project you want to show data for. A Grafana data source integrates with
               Project. If you want to visualize data from multiple GCP Projects then you need to create one data source
               per GCP Project.
             </p>
