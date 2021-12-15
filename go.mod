@@ -258,6 +258,7 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.15 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
 	github.com/segmentio/asm v1.1.1 // indirect
+	github.com/containerd/containerd v1.5.8 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
