@@ -1,4 +1,4 @@
-import { updateOrganization } from './actions';
+import { updateOrganization, setUserOrganization } from './actions';
 import { updateConfigurationSubtitle } from 'app/core/actions';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
@@ -32,6 +32,29 @@ describe('updateOrganization', () => {
       const dispatchedActions = await thunkTester(initialState)
         .givenThunk(updateOrganization)
         .whenThunkIsDispatched({ getBackendSrv: () => backendSrvMock });
+
+      expect(dispatchedActions[0].type).toEqual(updateConfigurationSubtitle.type);
+      expect(dispatchedActions[0].payload).toEqual(initialState.organization.organization.name);
+    });
+  });
+});
+
+describe('setUserOrganization', () => {
+  describe('when setUserOrganization thunk is dispatched', () => {
+    const postMock = jest.fn().mockResolvedValue({ id: 1, name: 'New Org Name' });
+
+    const backendSrvMock: any = {
+      post: postMock,
+    };
+
+    const orgId = 1;
+
+    it('then it should dispatch updateConfigurationSubtitle', async () => {
+      const { initialState } = setup();
+
+      const dispatchedActions = await thunkTester(initialState)
+        .givenThunk(setUserOrganization)
+        .whenThunkIsDispatched(orgId, { getBackendSrv: () => backendSrvMock });
 
       expect(dispatchedActions[0].type).toEqual(updateConfigurationSubtitle.type);
       expect(dispatchedActions[0].payload).toEqual(initialState.organization.organization.name);
