@@ -942,8 +942,10 @@ export class DashboardModel {
 
       if (row.panels.length > 0) {
         // Use first panel to figure out if it was moved or pushed
-        const firstPanel = row.panels[0];
-        const yDiff = firstPanel.gridPos.y - (row.gridPos.y + row.gridPos.h);
+        // If the panel doesn't have gridPos.y, use the row gridPos.y instead.
+        // This can happen for some generated dashboards.
+        const firstPanelYPos = row.panels[0].gridPos.y ?? row.gridPos.y;
+        const yDiff = firstPanelYPos - (row.gridPos.y + row.gridPos.h);
 
         // start inserting after row
         let insertPos = rowIndex + 1;
@@ -952,8 +954,9 @@ export class DashboardModel {
         let yMax = row.gridPos.y;
 
         for (const panel of row.panels) {
+          // set the y gridPos if it wasn't already set
+          panel.gridPos.y ??= row.gridPos.y;
           // make sure y is adjusted (in case row moved while collapsed)
-          // console.log('yDiff', yDiff);
           panel.gridPos.y -= yDiff;
           // insert after row
           this.panels.splice(insertPos, 0, new PanelModel(panel));
