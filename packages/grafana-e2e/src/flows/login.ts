@@ -1,5 +1,4 @@
 import { e2e } from '../index';
-import { fromBaseUrl } from '../support/url';
 
 const DEFAULT_USERNAME = 'admin';
 const DEFAULT_PASSWORD = 'admin';
@@ -8,7 +7,7 @@ export const login = (username = DEFAULT_USERNAME, password = DEFAULT_PASSWORD, 
   if (loginViaApi) {
     cy.request({
       method: 'POST',
-      url: fromBaseUrl('/login'),
+      url: `${e2e.env('BASE_URL')}/login`,
       body: {
         user: username,
         password,
