@@ -2,13 +2,9 @@ import { css } from '@emotion/css';
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { ButtonCascader, CascaderOption, useStyles2 } from '@grafana/ui';
-import React, { useState } from 'react';
-import {
-  QueryBuilderOperation,
-  QueryBuilderOperationDef,
-  QueryWithOperations,
-  VisualQueryModeller,
-} from '../shared/types';
+import React from 'react';
+import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from '../shared/types';
 import { OperationEditor } from './OperationEditor';
 
 export interface Props<T extends QueryWithOperations> {
@@ -20,10 +16,6 @@ export interface Props<T extends QueryWithOperations> {
   explainMode?: boolean;
 }
 
-export interface State {
-  docItems: QueryBuilderOperationDef[];
-}
-
 export function OperationList<T extends QueryWithOperations>({
   query,
   datasource,
@@ -32,7 +24,6 @@ export function OperationList<T extends QueryWithOperations>({
   onRunQuery,
 }: Props<T>) {
   const styles = useStyles2(getStyles);
-  const [state, setState] = useState<State>({ docItems: [] });
   const { operations } = query;
 
   const onOperationChange = (index: number, update: QueryBuilderOperation) => {
@@ -63,46 +54,49 @@ export function OperationList<T extends QueryWithOperations>({
     onChange(operationDef.addOperationHandler(operationDef, query, queryModeller));
   };
 
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) {
+      return;
+    }
+
+    const updatedList = [...operations];
+    const element = updatedList[result.source.index];
+    updatedList.splice(result.source.index, 1);
+    updatedList.splice(result.destination.index, 0, element);
+    onChange({ ...query, operations: updatedList });
+  };
+
   return (
     <Stack gap={1} direction="column">
       <Stack gap={1}>
         {operations.length > 0 && (
-          <Stack gap={0}>
-            {operations.map((op, index) => (
-              <div className={styles.operationWrapper} key={index.toString()}>
-                <OperationEditor
-                  queryModeller={queryModeller}
-                  index={index}
-                  operation={op}
-                  query={query}
-                  datasource={datasource}
-                  onChange={onOperationChange}
-                  onRemove={onRemove}
-                  onRunQuery={onRunQuery}
-                  onShowInfo={(def) => {
-                    setState({ docItems: [...state.docItems, def] });
-                  }}
-                />
-                {index < operations.length - 1 && (
-                  <>
-                    <div className={styles.line} />
-                    <div className={styles.lineArrow} />
-                  </>
-                )}
-              </div>
-            ))}
-          </Stack>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="sortable-field-mappings" direction="horizontal">
+              {(provided) => (
+                <div className={styles.operationList} ref={provided.innerRef} {...provided.droppableProps}>
+                  {operations.map((op, index) => (
+                    <OperationEditor
+                      key={index}
+                      queryModeller={queryModeller}
+                      index={index}
+                      operation={op}
+                      query={query}
+                      datasource={datasource}
+                      onChange={onOperationChange}
+                      onRemove={onRemove}
+                      onRunQuery={onRunQuery}
+                    />
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         )}
         <div className={styles.addButton}>
           <ButtonCascader key="cascader" icon="plus" options={addOptions} onChange={onAddOperation} />
         </div>
       </Stack>
-      {state.docItems.map((def) => (
-        <div key={def.id}>
-          <div>{def.name}</div>
-          <div>{def.documentation}</div>
-        </div>
-      ))}
     </Stack>
   );
 }
@@ -114,26 +108,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontWeight: theme.typography.fontWeightMedium,
       marginBottom: 0,
     }),
-    line: css({
-      height: '2px',
-      width: '8px',
-      backgroundColor: theme.colors.border.strong,
-      //alignSelf: 'center',
-      position: 'relative',
-      top: '14px',
-    }),
-    lineArrow: css({
-      width: 0,
-      height: 0,
-      borderTop: `5px solid transparent`,
-      borderBottom: `5px solid transparent`,
-      borderLeft: `7px solid ${theme.colors.border.strong}`,
-      //alignSelf: 'center',
-      position: 'relative',
-      top: '10px',
-    }),
-    operationWrapper: css({
+    operationList: css({
       display: 'flex',
+      flexWrap: 'wrap',
+      gap: theme.spacing(2),
     }),
     addButton: css({
       paddingBottom: theme.spacing(1),

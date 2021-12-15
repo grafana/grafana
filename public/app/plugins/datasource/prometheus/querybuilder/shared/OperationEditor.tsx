@@ -3,6 +3,7 @@ import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { FlexItem, Stack } from '@grafana/experimental';
 import { Button, useStyles2 } from '@grafana/ui';
 import React from 'react';
+import { Draggable } from 'react-beautiful-dnd';
 import {
   VisualQueryModeller,
   QueryBuilderOperation,
@@ -22,7 +23,6 @@ export interface Props {
   queryModeller: VisualQueryModeller;
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
-  onShowInfo: (def: QueryBuilderOperationDef) => void;
   onRunQuery: () => void;
 }
 
@@ -32,7 +32,6 @@ export function OperationEditor({
   onRemove,
   onChange,
   onRunQuery,
-  onShowInfo,
   queryModeller,
   query,
   datasource,
@@ -106,31 +105,41 @@ export function OperationEditor({
   }
 
   return (
-    <div className={styles.card}>
-      <div className={styles.header}>
-        <OperationName
-          operation={operation}
-          def={def}
-          index={index}
-          onChange={onChange}
-          queryModeller={queryModeller}
-        />
-        <FlexItem grow={1} />
-        <div className={`${styles.operationHeaderButtons} operation-header-show-on-hover`}>
-          <OperationInfoButton def={def} />
-          <Button
-            icon="times"
-            size="sm"
-            onClick={() => onRemove(index)}
-            fill="text"
-            variant="secondary"
-            title="Remove operation"
-          />
+    <Draggable draggableId={`operation-${index}`} index={index}>
+      {(provided) => (
+        <div className={styles.card} ref={provided.innerRef} {...provided.draggableProps}>
+          <div className={styles.header} {...provided.dragHandleProps}>
+            <OperationName
+              operation={operation}
+              def={def}
+              index={index}
+              onChange={onChange}
+              queryModeller={queryModeller}
+            />
+            <FlexItem grow={1} />
+            <div className={`${styles.operationHeaderButtons} operation-header-show-on-hover`}>
+              <OperationInfoButton def={def} />
+              <Button
+                icon="times"
+                size="sm"
+                onClick={() => onRemove(index)}
+                fill="text"
+                variant="secondary"
+                title="Remove operation"
+              />
+            </div>
+          </div>
+          <div className={styles.body}>{operationElements}</div>
+          {restParam}
+          {index < query.operations.length - 1 && (
+            <div className={styles.arrow}>
+              <div className={styles.arrowLine} />
+              <div className={styles.arrowArrow} />
+            </div>
+          )}
         </div>
-      </div>
-      <div className={styles.body}>{operationElements}</div>
-      {restParam}
-    </div>
+      )}
+    </Draggable>
   );
 }
 
@@ -173,6 +182,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       cursor: 'grab',
       borderRadius: theme.shape.borderRadius(1),
       marginBottom: theme.spacing(1),
+      position: 'relative',
     }),
     header: css({
       borderBottom: `1px solid ${theme.colors.border.medium}`,
@@ -217,8 +227,27 @@ const getStyles = (theme: GrafanaTheme2) => {
     restParam: css({
       padding: theme.spacing(0, 1, 1, 1),
     }),
-    docBox: css({
-      padding: theme.spacing(1),
+    arrow: css({
+      position: 'absolute',
+      top: '0',
+      right: '-18px',
+      display: 'flex',
+    }),
+    arrowLine: css({
+      height: '2px',
+      width: '8px',
+      backgroundColor: theme.colors.border.strong,
+      position: 'relative',
+      top: '14px',
+    }),
+    arrowArrow: css({
+      width: 0,
+      height: 0,
+      borderTop: `5px solid transparent`,
+      borderBottom: `5px solid transparent`,
+      borderLeft: `7px solid ${theme.colors.border.strong}`,
+      position: 'relative',
+      top: '10px',
     }),
   };
 };
