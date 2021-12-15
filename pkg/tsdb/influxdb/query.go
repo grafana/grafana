@@ -26,6 +26,9 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 		res += query.renderWhereClause()
 		res += query.renderTimeFilter(queryContext)
 		res += query.renderGroupBy(queryContext)
+		res += query.renderOrderByTime()
+		res += query.renderLimit()
+		res += query.renderSlimit()
 		res += query.renderTz()
 	}
 
@@ -151,12 +154,36 @@ func (query *Query) renderGroupBy(queryContext *backend.QueryDataRequest) string
 	return groupBy
 }
 
+func (query *Query) renderOrderByTime() string {
+	orderByTime := query.OrderByTime
+	if orderByTime == "" {
+		return ""
+	}
+	return fmt.Sprintf(" ORDER BY time %s", orderByTime)
+}
+
 func (query *Query) renderTz() string {
 	tz := query.Tz
 	if tz == "" {
 		return ""
 	}
 	return fmt.Sprintf(" tz('%s')", tz)
+}
+
+func (query *Query) renderLimit() string {
+	limit := query.Limit
+	if limit == "" {
+		return ""
+	}
+	return fmt.Sprintf(" limit %s", limit)
+}
+
+func (query *Query) renderSlimit() string {
+	slimit := query.Slimit
+	if slimit == "" {
+		return ""
+	}
+	return fmt.Sprintf(" slimit %s", slimit)
 }
 
 func epochMStoInfluxTime(tr *backend.TimeRange) (string, string) {

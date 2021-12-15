@@ -1,4 +1,4 @@
-import { cloneDeep, extend, get, has, isString, map as _map, omit, pick, reduce } from 'lodash';
+import { cloneDeep, extend, get, has, isString, map as _map, omit, pick, reduce, groupBy } from 'lodash';
 import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,8 +22,9 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
+  CoreApp,
 } from '@grafana/data';
-
+import TableModel from 'app/core/table_model';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
@@ -32,6 +33,7 @@ import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
 import { buildRawQuery } from './queryUtils';
+import config from 'app/core/config';
 
 // we detect the field type based on the value-array
 function getFieldType(values: unknown[]): FieldType {
@@ -113,6 +115,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   database: any;
   basicAuth: any;
   withCredentials: any;
+  access: 'direct' | 'proxy';
   interval: any;
   responseParser: any;
   httpMode: string;
@@ -135,6 +138,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.database = instanceSettings.database;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
+    this.access = instanceSettings.access;
     const settingsData = instanceSettings.jsonData || ({} as InfluxOptions);
     this.interval = settingsData.timeInterval;
     this.httpMode = settingsData.httpMode || 'GET';
@@ -150,19 +154,164 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
+    // for not-flux queries we call `this.classicQuery`, and that
+    // handles the is-hidden situation.
+    // for the flux-case, we do the filtering here
+    const filteredRequest = {
+      ...request,
+      targets: request.targets.filter((t) => t.hide !== true),
+    };
+
     if (this.isFlux) {
-      // for not-flux queries we call `this.classicQuery`, and that
-      // handles the is-hidden situation.
-      // for the flux-case, we do the filtering here
-      const filteredRequest = {
-        ...request,
-        targets: request.targets.filter((t) => t.hide !== true),
-      };
       return super.query(filteredRequest);
+    }
+
+    if (config.featureToggles.influxBackendMigration && this.access === 'proxy' && request.app === CoreApp.Explore) {
+      return super.query(filteredRequest).pipe(
+        map((res) => {
+          if (res.error) {
+            throw {
+              message: 'InfluxDB Error: ' + res.error.message,
+              res,
+            };
+          }
+
+          const seriesList = [];
+
+          if (res.data && res.data.length > 0) {
+            switch (request.targets[0].resultFormat) {
+              case 'logs':
+                seriesList.push(this.getTable(res.data, filteredRequest, { preferredVisualisationType: 'logs' }));
+                break;
+              case 'table': {
+                seriesList.push(this.getTable(res.data, filteredRequest, {}));
+                break;
+              }
+              default: {
+                for (let i = 0; i < res.data.length; i++) {
+                  seriesList.push(this.getSeries(res.data[i], request.targets[0].resultFormat));
+                }
+                break;
+              }
+            }
+          }
+
+          return { data: seriesList };
+        })
+      );
     }
 
     // Fallback to classic query support
     return this.classicQuery(request);
+  }
+
+  getSeries(frame: DataFrame, resultFormat: any) {
+    return {
+      ...frame,
+      meta: {
+        ...frame.meta,
+        preferredVisualisationType: resultFormat,
+      },
+    };
+  }
+
+  getTable(dfs: DataFrame[], request: DataQueryRequest<InfluxQuery>, meta: QueryResultMeta): TableModel {
+    let table = new TableModel();
+    table.meta = {
+      ...meta,
+      // executedQueryString: request.targets[0].query,
+    };
+
+    request.targets.forEach((target) => {
+      if (dfs.length > 0) {
+        table.refId = dfs[0].refId;
+        table = this.getTableCols(dfs, table, target);
+
+        // if group by tag(s) added
+        if (dfs[0].fields[1].labels) {
+          let dfsByLabels: any = groupBy(dfs, (df: DataFrame) => Object.values(df.fields[1].labels!));
+          const labels = Object.keys(dfsByLabels);
+          dfsByLabels = Object.values(dfsByLabels);
+
+          for (let i = 0; i < dfsByLabels.length; i++) {
+            table = this.getTableRows(dfsByLabels[i], table, [...labels[i].split(',')]);
+          }
+        } else {
+          table = this.getTableRows(dfs, table, []);
+        }
+      }
+    });
+
+    return table;
+  }
+
+  getTableCols(dfs: DataFrame[], table: TableModel, target: any): TableModel {
+    const selectedParams = this.getSelectedParams(target);
+
+    dfs[0].fields.forEach((field: any) => {
+      // Time col
+      if (field.name === 'time') {
+        table.columns.push(field.name === 'time' ? { text: 'Time', type: FieldType.time } : { text: field.name });
+      }
+
+      if (field.name === 'value') {
+        // Group by (label) column(s)
+        if (field.labels) {
+          Object.keys(field.labels).forEach((key) => {
+            table.columns.push({ text: key });
+          });
+        }
+      }
+    });
+
+    // Select (metric) column(s)
+    for (let i = 0; i < selectedParams.length; i++) {
+      table.columns.push({ text: selectedParams[i] });
+    }
+
+    return table;
+  }
+
+  getTableRows(dfs: DataFrame[], table: TableModel, labels: any): TableModel {
+    const values = dfs[0].fields[0].values.toArray();
+
+    for (let j = 0; j < values.length; j++) {
+      const time = values[j];
+      const metrics = dfs.map((df: DataFrame) => {
+        return df.fields[1].values.toArray()[j];
+      });
+      table.rows.push([time, ...labels, ...metrics]);
+    }
+    return table;
+  }
+
+  getSelectedParams(target: InfluxQuery): string[] {
+    let allParams: string[] = [];
+    target.select?.forEach((select) => {
+      const selector = select.filter((x) => x.type !== 'field');
+      if (selector.length > 0) {
+        allParams.push(selector[0].type);
+      } else {
+        if (select[0] && select[0].params && select[0].params[0]) {
+          allParams.push(select[0].params[0].toString());
+        }
+      }
+    });
+
+    let uniqueParams: string[] = [];
+    allParams.forEach((param) => {
+      uniqueParams.push(this.incrementName(param, param, uniqueParams, 0));
+    });
+
+    return uniqueParams;
+  }
+
+  incrementName(name: string, nameIncremenet: string, params: string[], index: number): string {
+    if (params.indexOf(nameIncremenet) > -1) {
+      index++;
+      return this.incrementName(name, name + '_' + index, params, index);
+    }
+    return nameIncremenet;
   }
 
   getQueryDisplayText(query: InfluxQuery) {
@@ -185,7 +334,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
     // this only works in flux-mode, it should not be called in non-flux-mode
     if (!this.isFlux) {
-      throw new Error('applyTemplateVariables called in influxql-mode. this should never happen');
+      return query;
     }
 
     // We want to interpolate these variables on backend
