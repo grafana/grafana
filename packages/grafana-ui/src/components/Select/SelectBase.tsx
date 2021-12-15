@@ -6,7 +6,7 @@ import { default as AsyncCreatable } from 'react-select/async-creatable';
 
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
-import resetSelectStyles from './resetSelectStyles';
+import { useCustomSelectStyles } from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';
 import { ValueContainer } from './ValueContainer';
@@ -147,6 +147,7 @@ export function SelectBase<T>({
 
   const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
+  const selectStyles = useCustomSelectStyles(theme, width);
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
   // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).
@@ -339,29 +340,7 @@ export function SelectBase<T>({
           SelectContainer,
           ...components,
         }}
-        styles={{
-          ...resetSelectStyles(theme),
-          menuPortal: (base: any) => ({
-            ...base,
-            zIndex: theme.zIndex.portal,
-          }),
-          //These are required for the menu positioning to function
-          menu: ({ top, bottom, position }: any) => ({
-            top,
-            bottom,
-            position,
-            minWidth: '100%',
-            zIndex: theme.zIndex.dropdown,
-          }),
-          container: () => ({
-            width: width ? theme.spacing(width) : '100%',
-            display: width === 'auto' ? 'inline-flex' : 'flex',
-          }),
-          option: (provided: any, state: any) => ({
-            ...provided,
-            opacity: state.isDisabled ? 0.5 : 1,
-          }),
-        }}
+        styles={selectStyles}
         className={className}
         {...commonSelectProps}
         {...creatableProps}
