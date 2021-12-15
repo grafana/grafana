@@ -276,16 +276,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		})
 
 		// Called when client subscribes to the channel.
-		client.OnRPC(func(e centrifuge.RPCEvent, cb centrifuge.RPCCallback) {
-			err := runConcurrentlyIfNeeded(client.Context(), semaphore, func() {
-				cb(g.handleOnRPC(client, e))
-			})
-			if err != nil {
-				cb(centrifuge.RPCReply{}, err)
-			}
-		})
-
-		// Called when client subscribes to the channel.
 		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
 			err := runConcurrentlyIfNeeded(client.Context(), semaphore, func() {
 				cb(g.handleOnSubscribe(client, e))
