@@ -4,6 +4,8 @@ import { getBackendSrv, config } from '@grafana/runtime';
 import { UserOrg } from 'app/types';
 import { useAsync } from 'react-use';
 import { Button, HorizontalGroup } from '@grafana/ui';
+import { setUserOrganization } from './state/actions';
+import { connect, ConnectedProps } from 'react-redux';
 
 const navModel = {
   main: {
@@ -19,16 +21,22 @@ const navModel = {
 const getUserOrgs = async () => {
   return await getBackendSrv().get('/api/user/orgs');
 };
-const setUserOrg = async (org: UserOrg) => {
-  return await getBackendSrv()
-    .post('/api/user/using/' + org.orgId)
-    .then(() => {
-      window.location.href = config.appSubUrl + '/';
-    });
+
+const mapDispatchToProps = {
+  setUserOrganization,
 };
 
-export const SelectOrgPage: FC = () => {
+const connector = connect(null, mapDispatchToProps);
+
+type Props = ConnectedProps<typeof connector>;
+
+export const SelectOrgPage: FC<Props> = ({ setUserOrganization }) => {
   const [orgs, setOrgs] = useState<UserOrg[]>();
+
+  const setUserOrg = async (org: UserOrg) => {
+    setUserOrganization(org.orgId);
+    window.location.href = config.appSubUrl + '/';
+  };
 
   useAsync(async () => {
     setOrgs(await getUserOrgs());
@@ -55,4 +63,4 @@ export const SelectOrgPage: FC = () => {
   );
 };
 
-export default SelectOrgPage;
+export default connector(SelectOrgPage);
