@@ -1,9 +1,8 @@
 import { ThunkResult } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
-import { organizationLoaded } from './reducers';
+import { organizationLoaded, userOrganizationsLoaded } from './reducers';
 import { updateConfigurationSubtitle } from 'app/core/actions';
 import { getConfig } from 'app/core/config';
-import { userOrgsLoadedAction } from 'app/features/admin/state/reducers';
 
 type OrganizationDependencies = { getBackendSrv: typeof getBackendSrv };
 
@@ -59,7 +58,7 @@ export function getUserOrganizations(
 ): ThunkResult<any> {
   return async (dispatch) => {
     const result = await dependencies.getBackendSrv().get('/api/user/orgs');
-    dispatch(userOrgsLoadedAction(result));
+    dispatch(userOrganizationsLoaded(result));
 
     return result;
   };

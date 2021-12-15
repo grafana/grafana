@@ -10,6 +10,7 @@ describe('organizationReducer', () => {
         .whenActionIsDispatched(organizationLoaded({ id: 1, name: 'An org' }))
         .thenStateShouldEqual({
           organization: { id: 1, name: 'An org' },
+          userOrg: [],
         });
     });
   });
@@ -21,6 +22,7 @@ describe('organizationReducer', () => {
         .whenActionIsDispatched(setOrganizationName('New Name'))
         .thenStateShouldEqual({
           organization: { id: 1, name: 'New Name' },
+          userOrg: [],
         });
     });
   });

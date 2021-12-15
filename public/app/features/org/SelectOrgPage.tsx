@@ -1,8 +1,8 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import Page from 'app/core/components/Page/Page';
 import { config } from '@grafana/runtime';
 import { StoreState, UserOrg } from 'app/types';
-import { useAsync } from 'react-use';
+import { useEffectOnce } from 'react-use';
 import { Button, HorizontalGroup } from '@grafana/ui';
 import { getUserOrganizations, setUserOrganization } from './state/actions';
 import { connect, ConnectedProps } from 'react-redux';
@@ -18,11 +18,11 @@ const navModel = {
   },
 };
 
-function mapStateToProps(state: StoreState) {
+const mapStateToProps = (state: StoreState) => {
   return {
-    userOrgs: state.user.orgs,
+    userOrgs: state.organization.userOrg,
   };
-}
+};
 
 const mapDispatchToProps = {
   setUserOrganization,
@@ -34,16 +34,14 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type Props = ConnectedProps<typeof connector>;
 
 export const SelectOrgPage: FC<Props> = ({ setUserOrganization, getUserOrganizations, userOrgs }) => {
-  const [orgs, setOrgs] = useState<UserOrg[]>(userOrgs);
-
   const setUserOrg = async (org: UserOrg) => {
     setUserOrganization(org.orgId);
     window.location.href = config.appSubUrl + '/';
   };
 
-  useAsync(async () => {
-    setOrgs(await getUserOrganizations());
-  }, []);
+  useEffectOnce(() => {
+    getUserOrganizations();
+  });
 
   return (
     <Page navModel={navModel}>
@@ -54,8 +52,8 @@ export const SelectOrgPage: FC<Props> = ({ setUserOrganization, getUserOrganizat
             now. You can change this later at any time.
           </p>
           <HorizontalGroup wrap>
-            {orgs &&
-              orgs.map((org) => (
+            {userOrgs &&
+              userOrgs.map((org) => (
                 <Button key={org.orgId} icon="signin" onClick={() => setUserOrg(org)}>
                   {org.name}
                 </Button>
