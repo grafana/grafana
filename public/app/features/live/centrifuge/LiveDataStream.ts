@@ -141,8 +141,6 @@ export class LiveDataStream<T = unknown> {
   private shutdownIfNoSubscribers = () => {
     if (!this.stream.observed) {
       this.shutdown();
-    } else {
-      console.log('stream is observed - shutdown averted! ' + this.deps.channelId);
     }
   };
 
