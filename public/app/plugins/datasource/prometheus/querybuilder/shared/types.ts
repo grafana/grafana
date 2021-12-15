@@ -30,6 +30,7 @@ export interface QueryBuilderOperationDef<T = any> extends RegistryItem {
   renderer: QueryBuilderOperationRenderer;
   addOperationHandler: QueryBuilderAddOperationHandler<T>;
   paramChangedHandler?: QueryBuilderOnParamChangedHandler;
+  explainHandler?: (op: QueryBuilderOperation, def: QueryBuilderOperationDef<T>) => string;
 }
 
 export type QueryBuilderAddOperationHandler<T> = (

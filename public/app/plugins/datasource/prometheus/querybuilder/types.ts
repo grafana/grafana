@@ -17,7 +17,7 @@ export enum PromVisualQueryOperationCategory {
   Aggregations = 'Aggregations',
   RangeFunctions = 'Range functions',
   Functions = 'Functions',
-  Math = 'Math',
+  BinaryOps = 'Binary operations',
 }
 
 export interface PromQueryPattern {

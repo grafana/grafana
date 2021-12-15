@@ -13,7 +13,7 @@ export function OperationsEditorRow({ children }: Props) {
 
   return (
     <div className={styles.root}>
-      <Stack gap={2}>{children}</Stack>
+      <Stack gap={1}>{children}</Stack>
     </div>
   );
 }
@@ -21,7 +21,7 @@ export function OperationsEditorRow({ children }: Props) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     root: css({
-      padding: theme.spacing(1, 0, 0, 1),
+      padding: theme.spacing(1, 1, 0, 1),
       backgroundColor: theme.colors.background.secondary,
       borderRadius: theme.shape.borderRadius(1),
     }),

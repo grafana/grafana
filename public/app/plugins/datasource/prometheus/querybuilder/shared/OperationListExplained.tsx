@@ -14,13 +14,10 @@ export function OperationListExplained<T extends QueryWithOperations>({ query, q
     <>
       {query.operations.map((op, index) => {
         const def = queryModeller.getOperationDef(op.id);
-        const title = def.renderer(op, def, '<query>');
+        const title = def.renderer(op, def, '<expr>');
+        const body = def.explainHandler ? def.explainHandler(op, def) : def.documentation ?? 'no docs';
 
-        return (
-          <OperationExplainedBox stepNumber={index + stepNumber} key={index} title={title}>
-            {def.documentation ?? 'no docs'}
-          </OperationExplainedBox>
-        );
+        return <OperationExplainedBox stepNumber={index + stepNumber} key={index} title={title} markdown={body} />;
       })}
     </>
   );

@@ -1,3 +1,4 @@
+import pluralize from 'pluralize';
 import { LabelParamEditor } from './components/LabelParamEditor';
 import { addOperationWithRangeVector } from './operations';
 import {
@@ -66,6 +67,7 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
       renderer: getAggregationByRenderer(name),
       addOperationHandler: defaultAddOperationHandler,
       paramChangedHandler: getLastLabelRemovedHandler(name),
+      explainHandler: getAggregationExplainer(name),
       hideFromList: true,
     },
   ];
@@ -89,6 +91,16 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
 function getAggregationByRenderer(aggregation: string) {
   return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
     return `${aggregation} by(${model.params.join(', ')}) (${innerExpr})`;
+  };
+}
+
+/**
+ * Very simple poc implementation, needs to be modified to support all aggregation operators
+ */
+function getAggregationExplainer(aggregationName: string) {
+  return function aggregationExplainer(model: QueryBuilderOperation) {
+    const labels = model.params.map((label) => `\`${label}\``).join(' and ');
+    return `Calculates ${aggregationName} over dimensions while preserving ${pluralize('label')} ${labels}.`;
   };
 }
 

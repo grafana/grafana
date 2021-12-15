@@ -21,7 +21,7 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
       PromVisualQueryOperationCategory.Aggregations,
       PromVisualQueryOperationCategory.RangeFunctions,
       PromVisualQueryOperationCategory.Functions,
-      PromVisualQueryOperationCategory.Math,
+      PromVisualQueryOperationCategory.BinaryOps,
     ]);
   }
 
