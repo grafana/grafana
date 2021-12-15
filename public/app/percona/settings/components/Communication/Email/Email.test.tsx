@@ -15,7 +15,8 @@ xdescribe('Email::', () => {
           hello: 'hello',
           require_tls: false,
         }}
-        updateSettings={() => {}}
+        updateSettings={() => Promise.resolve()}
+        testSettings={() => Promise.resolve()}
       />
     );
 
@@ -32,7 +33,8 @@ xdescribe('Email::', () => {
           hello: 'hello',
           require_tls: false,
         }}
-        updateSettings={() => {}}
+        updateSettings={() => Promise.resolve()}
+        testSettings={() => Promise.resolve()}
       />
     );
     const button = root.find('button');
@@ -49,7 +51,8 @@ xdescribe('Email::', () => {
           hello: 'hello',
           require_tls: false,
         }}
-        updateSettings={() => {}}
+        updateSettings={() => Promise.resolve()}
+        testSettings={() => Promise.resolve()}
       />
     );
 
@@ -68,7 +71,8 @@ xdescribe('Email::', () => {
           hello: 'hello',
           require_tls: false,
         }}
-        updateSettings={() => {}}
+        updateSettings={() => Promise.resolve()}
+        testSettings={() => Promise.resolve()}
       />
     );
 

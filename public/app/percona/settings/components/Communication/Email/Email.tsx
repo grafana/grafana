@@ -4,12 +4,16 @@ import {
   validators,
   RadioButtonGroupField,
   CheckboxField,
+  logger,
 } from '@percona/platform-core';
 import { FormApi } from 'final-form';
-import React, { FC, useState } from 'react';
+import React, { FC, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { withTypes } from 'react-final-form';
 
+import { AppEvents } from '@grafana/data';
 import { Button, Spinner, useTheme } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { EmailAuthType } from 'app/percona/settings/Settings.types';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 
@@ -18,24 +22,38 @@ import { Messages } from '../Communication.messages';
 
 import { emailOptions } from './Email.constants';
 import { EmailProps, FormEmailSettings } from './Email.types';
-import { getInitialValues, cleanupFormValues } from './Email.utils';
+import { cleanupFormValues, getInitialValues } from './Email.utils';
+import { TestEmailSettings } from './TestEmailSettings/TestEmailSettings';
 
-export const Email: FC<EmailProps> = ({ updateSettings, settings }) => {
+export const Email: FC<EmailProps> = ({ updateSettings, settings, testSettings }) => {
   const theme = useTheme();
+  const testRef = useRef<HTMLDivElement | null>(null);
+  const applyRef = useRef<HTMLDivElement | null>(null);
+  const testEmailRef = useRef(settings.test_email);
   const settingsStyles = getSettingsStyles(theme);
   const [loading, setLoading] = useState(false);
 
-  const applyChanges = (values: FormEmailSettings) =>
-    updateSettings(
+  const applyChanges = async (values: FormEmailSettings) => {
+    await updateSettings(
       {
-        email_alerting_settings: cleanupFormValues(values),
+        email_alerting_settings: { ...cleanupFormValues(values), test_email: testEmailRef.current },
       },
       setLoading
     );
+  };
 
   const resetUsernameAndPasswordState = (form: FormApi<FormEmailSettings>) => {
     form.resetFieldState('username');
     form.resetFieldState('password');
+  };
+
+  const handleTestClick = async (values: FormEmailSettings, email: string) => {
+    try {
+      await testSettings({ email_alerting_settings: cleanupFormValues(values) }, email);
+      appEvents.emit(AppEvents.alertSuccess, [Messages.emailSent]);
+    } catch (e) {
+      logger.error(e);
+    }
   };
 
   const initialValues = getInitialValues(settings);
@@ -131,18 +149,35 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings }) => {
             />
             <CheckboxField name="requireTls" label="Require TLS" />
 
-            <Button
-              className={settingsStyles.actionButton}
-              type="submit"
-              disabled={!valid || pristine || loading}
-              data-testid="email-settings-submit-button"
-            >
-              {loading && <Spinner />}
-              {Messages.actionButton}
-            </Button>
+            {testRef.current &&
+              createPortal(
+                <TestEmailSettings
+                  onInput={(email) => (testEmailRef.current = email)}
+                  onTest={(email) => handleTestClick(values, email)}
+                  initialValue={settings.test_email}
+                />,
+                testRef.current
+              )}
+
+            {applyRef.current &&
+              createPortal(
+                <Button
+                  className={settingsStyles.actionButton}
+                  type="submit"
+                  disabled={!valid || pristine || loading}
+                  data-testid="email-settings-submit-button"
+                  onClick={handleSubmit}
+                >
+                  {loading && <Spinner />}
+                  {Messages.actionButton}
+                </Button>,
+                applyRef.current
+              )}
           </form>
         )}
       />
+      <div ref={(e) => (testRef.current = e)}></div>
+      <div ref={(e) => (applyRef.current = e)}></div>
     </>
   );
 };

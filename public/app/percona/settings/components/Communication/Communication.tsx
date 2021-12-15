@@ -1,10 +1,13 @@
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
 
 import { Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 
+import { EmailPayload } from '../../Settings.types';
+
 import { Messages } from './Communication.messages';
+import { CommunicationService } from './Communication.service';
 import { CommunicationProps } from './Communication.types';
 import { Email } from './Email/Email';
 import { Slack } from './Slack/Slack';
@@ -14,13 +17,23 @@ export const Communication: FC<CommunicationProps> = ({ alertingSettings, update
   const settingsStyles = getSettingsStyles(theme);
   const [activeTab, setActiveTab] = useState(Messages.tabs.email.key);
 
+  const testEmailSetting = async (settings: EmailPayload, email: string): Promise<void> =>
+    CommunicationService.testEmailSettings(settings, email);
+
   const tabs = useMemo(
     () => [
       {
         label: Messages.tabs.email.label,
         key: Messages.tabs.email.key,
         active: activeTab === Messages.tabs.email.key,
-        component: <Email key="email" updateSettings={updateSettings} settings={alertingSettings.email} />,
+        component: (
+          <Email
+            key="email"
+            testSettings={testEmailSetting}
+            updateSettings={updateSettings}
+            settings={alertingSettings.email}
+          />
+        ),
       },
       {
         label: Messages.tabs.slack.label,

@@ -55,6 +55,7 @@ export const Messages = {
     },
   },
   actionButton: 'Apply changes',
+  emailSent: 'Email sent',
   tabs: {
     slack: {
       key: 'slack',
