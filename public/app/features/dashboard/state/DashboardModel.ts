@@ -942,6 +942,8 @@ export class DashboardModel {
 
       if (row.panels.length > 0) {
         // Use first panel to figure out if it was moved or pushed
+        // If the panel doesn't have gridPos.y, use the row gridPos.y instead.
+        // This can happen for some generated dashboards.
         const firstPanelYPos = row.panels[0].gridPos.y ?? row.gridPos.y;
         const yDiff = firstPanelYPos - (row.gridPos.y + row.gridPos.h);
 
