@@ -73,7 +73,7 @@ func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID st
 }
 
 func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
-	if !s.options.Assignments.Teams {
+	if !s.options.Assignments.Users {
 		return nil, ErrInvalidAssignment
 	}
 
