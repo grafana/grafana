@@ -18,7 +18,7 @@ func NewWeComNotifier(model *NotificationChannelConfig, t *template.Template, fn
 	url := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
 
 	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find webhook url in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find webhook URL in settings"}
 	}
 
 	return &WeComNotifier{
