@@ -25,7 +25,7 @@ func InitPerms() {
 	//API key actions
 	ActionApikeyListEv = accesscontrol.EvalPermission(ActionApikeyList)
 	ActionApikeyAddEv = accesscontrol.EvalPermission(ActionApikeyAdd)
-	ActionApikeyRemoveEv = accesscontrol.EvalPermission(ActionApikeyRemove, accesscontrol.Parameter(":id"))
+	ActionApikeyRemoveEv = accesscontrol.EvalPermission(ActionApikeyRemove) //Improvement:Check here or in database layer that user has permissiono modify the service account attached to this api key
 	ActionApikeyAddAdditionalEv = accesscontrol.EvalPermission(ActionApikeyAddAdditional)
 }
 
