@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/require"
 )
@@ -39,19 +40,40 @@ func TestDatasourceAsConfig(t *testing.T) {
 		bus.AddHandler("test", mockGetOrg)
 	}
 
-	t.Run("apply default values when missing", func(t *testing.T) {
-		setup()
-		dc := newDatasourceProvisioner(logger)
-		err := dc.applyChanges(context.Background(), withoutDefaults)
-		if err != nil {
-			t.Fatalf("applyChanges return an error %v", err)
-		}
+	t.Run("when some values missing", func(t *testing.T) {
+		t.Run("should apply default on insert", func(t *testing.T) {
+			setup()
+			dc := newDatasourceProvisioner(logger)
+			err := dc.applyChanges(context.Background(), withoutDefaults)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
 
-		require.Equal(t, len(fakeRepo.inserted), 1)
-		require.Equal(t, fakeRepo.inserted[0].OrgId, int64(1))
-		require.Equal(t, fakeRepo.inserted[0].Access, models.DsAccess("proxy"))
-		require.Equal(t, fakeRepo.inserted[0].Name, "My datasource name")
-		require.Equal(t, fakeRepo.inserted[0].Uid, "P2AD1F727255C56BA")
+			require.Equal(t, len(fakeRepo.inserted), 1)
+			require.Equal(t, fakeRepo.inserted[0].OrgId, int64(1))
+			require.Equal(t, fakeRepo.inserted[0].Access, models.DsAccess("proxy"))
+			require.Equal(t, fakeRepo.inserted[0].Name, "My datasource name")
+			require.Equal(t, fakeRepo.inserted[0].Uid, "P2AD1F727255C56BA")
+		})
+
+		t.Run("should not change UID when updates", func(t *testing.T) {
+			setup()
+
+			fakeRepo.loadAll = []*models.DataSource{
+				{Name: "My datasource name", OrgId: 1, Id: 1, Uid: util.GenerateShortUID()},
+			}
+
+			dc := newDatasourceProvisioner(logger)
+			err := dc.applyChanges(context.Background(), withoutDefaults)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
+
+			require.Equal(t, len(fakeRepo.deleted), 0)
+			require.Equal(t, len(fakeRepo.inserted), 0)
+			require.Equal(t, len(fakeRepo.updated), 1)
+			require.Equal(t, "", fakeRepo.updated[0].Uid) // XORM will not update the field if its value is default
+		})
 	})
 
 	t.Run("no datasource in database", func(t *testing.T) {
@@ -219,14 +241,6 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 		validateDatasource(t, dsCfg)
 		validateDeleteDatasources(t, dsCfg)
-	})
-}
-
-func TestUIDFromNames(t *testing.T) {
-	t.Run("generate safe uid from name", func(t *testing.T) {
-		require.Equal(t, safeUIDFromName("Hello world"), "P64EC88CA00B268E5")
-		require.Equal(t, safeUIDFromName("Hello World"), "PA591A6D40BF42040")
-		require.Equal(t, safeUIDFromName("AAA"), "PCB1AD2119D8FAFB6")
 	})
 }
 
