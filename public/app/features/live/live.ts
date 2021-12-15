@@ -51,7 +51,7 @@ export class GrafanaLiveService implements GrafanaLiveSrv {
         updateBuffer(next);
         return {
           ...next,
-          data: [buffer],
+          data: [buffer ?? StreamingDataFrame.empty()],
         };
       })
     );
