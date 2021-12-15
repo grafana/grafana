@@ -1,6 +1,6 @@
 import React from 'react';
 import { ResourcePermission } from './types';
-import { Icon, Select, Tooltip } from '@grafana/ui';
+import { Button, Icon, Select, Tooltip } from '@grafana/ui';
 
 interface Props {
   item: ResourcePermission;
@@ -34,15 +34,18 @@ export const PermissionListItem = ({ item, permissionLevels, canRemove, onRemove
     </td>
     <td>
       {item.managed ? (
-        <button className="btn btn-danger btn-small" disabled={!canRemove} onClick={() => onRemove(item)}>
-          <Icon name="times" size="sm" />
-        </button>
+        <Button
+          size="sm"
+          variant="destructive"
+          icon="times"
+          disabled={!canRemove}
+          onClick={() => onRemove(item)}
+          aria-label={`Remove permission for ${getName(item)}`}
+        />
       ) : (
-        <button className="btn btn-inverse btn-small">
-          <Tooltip content="Provisioned permission">
-            <Icon name="lock" size="sm" />
-          </Tooltip>
-        </button>
+        <Tooltip content="Provisioned permission">
+          <Button size="sm" icon="lock" />
+        </Tooltip>
       )}
     </td>
   </tr>
@@ -55,6 +58,16 @@ const getAvatar = (item: ResourcePermission) => {
     return <img className="filter-table__avatar" src={item.userAvatarUrl} alt={`Avatar for user ${item.userId}`} />;
   }
   return <Icon size="xl" name="shield" />;
+};
+
+const getName = (item: ResourcePermission) => {
+  if (item.userId) {
+    return item.userLogin;
+  }
+  if (item.teamId) {
+    return item.team;
+  }
+  return item.builtInRole;
 };
 
 const getDescription = (item: ResourcePermission) => {
