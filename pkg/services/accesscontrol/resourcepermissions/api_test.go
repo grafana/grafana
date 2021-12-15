@@ -172,6 +172,7 @@ func TestApi_getPermissions(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
+				assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
 				for _, p := range permissions {
 					if p.UserID != 0 {
 						assert.Equal(t, "View", p.Permission)
