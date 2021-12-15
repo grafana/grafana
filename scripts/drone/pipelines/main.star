@@ -42,6 +42,7 @@ load(
 load(
     'scripts/drone/services/services.star',
     'integration_test_services',
+    'integration_test_services_volumes',
     'ldap_service',
 )
 
@@ -132,6 +133,7 @@ def get_steps(edition, is_downstream=False):
 
 def main_pipelines(edition):
     services = integration_test_services(edition)
+    volumes = integration_test_services_volumes()
     trigger = {
         'event': ['push',],
         'branch': 'main',
@@ -146,6 +148,7 @@ def main_pipelines(edition):
         pipeline(
             name='build-main', edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + steps,
+            volumes=volumes,
         ),
         pipeline(
             name='windows-main', edition=edition, trigger=trigger,
@@ -173,6 +176,7 @@ def main_pipelines(edition):
         pipelines.append(pipeline(
             name='build-main-downstream', edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, is_downstream=True) + steps,
+            volumes=volumes,
         ))
         pipelines.append(pipeline(
             name='windows-main-downstream', edition=edition, trigger=trigger,
