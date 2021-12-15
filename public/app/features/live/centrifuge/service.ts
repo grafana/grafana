@@ -138,7 +138,7 @@ export class CentrifugeService implements CentrifugeSrv {
       this.open.delete(id);
     });
 
-    // return the not-yet initalized channel
+    // return the not-yet initialized channel
     return channel;
   }
 
