@@ -280,12 +280,20 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	}
 
 	if c.OrgRole == models.ROLE_ADMIN {
+		// TODO: add service accounts here
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "API keys",
 			Id:          "apikeys",
 			Description: "Create & manage API keys",
 			Icon:        "key-skeleton-alt",
 			Url:         hs.Cfg.AppSubURL + "/org/apikeys",
+		})
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Service accounts",
+			Id:          "serviceaccounts",
+			Description: "Create & manage Service accounts",
+			Icon:        "key-skeleton-alt",
+			Url:         hs.Cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
 
