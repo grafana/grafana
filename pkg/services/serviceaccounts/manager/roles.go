@@ -6,11 +6,13 @@ import (
 )
 
 var (
-	ActionApikeyList   = "apikey:list"
-	ActionApikeyAdd    = "apikey:add"
-	ActionApikeyRemove = "apikey:remove"
-	apikeyAdminEdit    = "fixed:apikey:admin:edit"
-	apikeyAdminRead    = "fixed:apikey:admin:read"
+	ActionApikeyList          = "apikey:list"
+	ActionApikeyAdd           = "apikey:add"
+	ActionApikeyRemove        = "apikey:remove"
+	ActionApikeyAddAdditional = "apikey:addadditional"
+
+	apikeyAdminEdit = "fixed:apikey:admin:edit"
+	apikeyAdminRead = "fixed:apikey:admin:read"
 
 	//API key actions
 	ActionApikeyListEv          accesscontrol.Evaluator
@@ -21,10 +23,10 @@ var (
 
 func InitPerms() {
 	//API key actions
-	ActionApikeyListEv = accesscontrol.EvalPermission("apikey:list")
-	ActionApikeyAddEv = accesscontrol.EvalPermission("apikey:add")
-	ActionApikeyRemoveEv = accesscontrol.EvalPermission("apikey:remove")
-	ActionApikeyAddAdditionalEv = accesscontrol.EvalPermission("apikey:addadditional")
+	ActionApikeyListEv = accesscontrol.EvalPermission(ActionApikeyList)
+	ActionApikeyAddEv = accesscontrol.EvalPermission(ActionApikeyAdd)
+	ActionApikeyRemoveEv = accesscontrol.EvalPermission(ActionApikeyRemove, accesscontrol.Parameter(":id"))
+	ActionApikeyAddAdditionalEv = accesscontrol.EvalPermission(ActionApikeyAddAdditional)
 }
 
 func RegisterRoles(ac accesscontrol.AccessControl) error {
