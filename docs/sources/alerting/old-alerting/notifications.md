@@ -262,20 +262,6 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 
 Grafana alert notifications can be sent to [Sensu](<(https://sensu.io)>) Go as events via the API. This operation requires an API key. For information on creating this key, refer to [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication).
 
-### WeCom
-
-WeCom contact points need a Webhook URL. These are obtained by setting up a WeCom robot on the corresponding group chat. To obtain a Webhook URL using the WeCom desktop Client please follow these steps:
-
-  In WeCom PC Client:
-
-1. Click the "..." in the top right corner of a group chat that you want your alerts to be delivered to
-2. Click "Add Group Robot", select "New Robot" and give your robot a name. Click "Add Robot"
-3. There should be a Webhook URL in the panel.
-
-| Setting | Description        |
-| ------- | ------------------ |
-| Url     | WeCom webhook URL. |
-
 ## Enable images in notifications {#external-image-store}
 
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
