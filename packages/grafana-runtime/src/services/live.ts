@@ -77,7 +77,7 @@ export interface GrafanaLiveSrv {
    *
    * Since the initial request and subscription are on the same socket, this will support HA setups
    *
-   * NOTE: this function willl be called when the feature toggle `queryOverLive` is set
+   * @alpha -- this function requires the feature toggle `queryOverLive` to be set
    */
   getQueryData(options: LiveQueryDataOptions): Observable<DataQueryResponse>;
 
