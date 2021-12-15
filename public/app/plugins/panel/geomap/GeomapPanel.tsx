@@ -329,7 +329,6 @@ export class GeomapPanel extends Component<Props, State> {
     hoverPayload.columnIndex = undefined;
     hoverPayload.rowIndex = undefined;
     hoverPayload.feature = undefined;
-    hoverPayload.onlyDisplay = undefined;
 
     let ttip: GeomapHoverPayload = {} as GeomapHoverPayload;
     const features: GeomapHoverFeature[] = [];

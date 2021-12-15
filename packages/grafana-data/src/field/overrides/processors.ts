@@ -191,9 +191,4 @@ export interface FieldNamePickerConfigSettings {
    * Placeholder text to display when nothing is selected.
    */
   placeholderText?: string;
-
-  /**
-   * Allow more than one field to be selected
-   */
-  allowMultiple?: boolean;
 }

@@ -15,5 +15,4 @@ export interface GeomapHoverPayload extends DataHoverPayload {
   feature?: FeatureLike;
   pageX: number;
   pageY: number;
-  onlyDisplay?: string[];
 }
