@@ -270,7 +270,7 @@ WeCom contact points need a Webhook URL. These are obtained by setting up a WeCo
 
 1. Click the "..." in the top right corner of a group chat that you want your alerts to be delivered to
 2. Click "Add Group Robot", select "New Robot" and give your robot a name. Click "Add Robot"
-3. There should be a Webhook URL in the panel. Click "Copy URL" and paste it in Grafana WeCom setting page and click "finish"
+3. There should be a Webhook URL in the panel.
 
 | Setting | Description        |
 | ------- | ------------------ |
