@@ -1,6 +1,6 @@
 import { PanelData } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { getLivePerformanceBackend } from 'app/core/services/echo/backends/LivePerformanceBackend';
+import { LivePerformance } from 'app/core/services/LivePerformance';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 /**
@@ -43,9 +43,9 @@ export function initWindowRuntime() {
       }, {} as Record<number, PanelData | undefined>);
     },
 
-    /** Gets live performance stats collected by the LivePerformance echo backend */
+    /** Gets live performance stats collected by the LivePerformance service */
     getLivePerformanceStats: () => {
-      return getLivePerformanceBackend()?.getStats();
+      return LivePerformance.instance()?.getStats();
     },
   };
 }

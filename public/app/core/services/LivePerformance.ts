@@ -1,6 +1,6 @@
-import { EchoBackend, EchoEventType } from '@grafana/runtime';
+import config from 'app/core/config';
+
 import { fromPairs, mapValues, sortBy } from 'lodash';
-import { isLiveEvent, liveEventNames, PerformanceEvent } from './PerformanceBackend';
 
 type IntervalStats = {
   time: number;
@@ -10,26 +10,29 @@ type IntervalStats = {
   avg: number;
 };
 
-type LivePerformanceBackendOptions = { maxIntervalsToKeep: number };
+type LivePerformanceOptions = { maxIntervalsToKeep: number; intervalDuration: number };
 
-export class LivePerformanceBackend implements EchoBackend<PerformanceEvent, LivePerformanceBackendOptions> {
-  supportedEvents = [EchoEventType.Performance];
+export enum MeasurementName {
+  DataRenderDelay = 'DataRenderDelay',
+}
 
+const measurementNames = Object.keys(MeasurementName);
+
+export class LivePerformance {
   private buffer = emptyArrayByEventName<number>();
   private livePerformanceStats = emptyArrayByEventName<IntervalStats>();
 
-  private currentIndexByEventName = fromPairs(liveEventNames.map((name) => [name, 0]));
+  private currentIndexByEventName = fromPairs(measurementNames.map((name) => [name, 0]));
 
-  private constructor(public options: LivePerformanceBackendOptions) {}
+  private constructor(public options: LivePerformanceOptions) {
+    setInterval(this.calculateStatsForCurrentInterval, options.intervalDuration);
+  }
 
-  addEvent = (e: PerformanceEvent) => {
-    if (isLiveEvent(e)) {
-      const { name, value } = e.payload;
-      this.buffer[name].push(value);
-    }
+  add = (name: MeasurementName, value: number) => {
+    this.buffer[name].push(value);
   };
 
-  flush = () => {
+  calculateStatsForCurrentInterval = () => {
     Object.entries(this.buffer)
       .filter(([_, values]) => values.length)
       .forEach(([name, values]) => {
@@ -57,23 +60,27 @@ export class LivePerformanceBackend implements EchoBackend<PerformanceEvent, Liv
     this.buffer = emptyArrayByEventName<number>();
   };
 
-  static create = (options: LivePerformanceBackendOptions) => {
-    if (!singletonInstance) {
-      singletonInstance = new LivePerformanceBackend(options);
+  static initialize = (options: LivePerformanceOptions) => {
+    if (LivePerformance.shouldInitialize()) {
+      singletonInstance = new LivePerformance(options);
     }
+  };
 
+  static instance = () => {
     return singletonInstance;
   };
+
+  static shouldInitialize = () => !singletonInstance && LivePerformance.isEnabled();
+
+  static isEnabled = () => config.livePerformance.measureDataRenderDelay;
 
   getStats = () => mapValues(this.livePerformanceStats, (stats) => sortBy(stats, (v) => v.time));
 }
 
 const emptyArrayByEventName = <T>() =>
-  liveEventNames.reduce((acc, next) => {
+  measurementNames.reduce((acc, next) => {
     acc[next] = [];
     return acc;
   }, {} as Record<string, T[]>);
 
-let singletonInstance: LivePerformanceBackend | undefined;
-
-export const getLivePerformanceBackend = () => singletonInstance;
+let singletonInstance: LivePerformance | undefined;

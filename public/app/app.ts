@@ -37,7 +37,7 @@ import {
 } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
-import { PerformanceBackend, PerformanceEventName } from './core/services/echo/backends/PerformanceBackend';
+import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import 'app/features/all';
 import { getScrollbarWidth, getStandardFieldConfigs } from '@grafana/ui';
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
@@ -66,7 +66,7 @@ import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { AngularApp } from './angular';
 import { ModalManager } from './core/services/ModalManager';
 import { initWindowRuntime } from './features/runtime/init';
-import { LivePerformanceBackend } from './core/services/echo/backends/LivePerformanceBackend';
+import { LivePerformance } from './core/services/LivePerformance';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -104,6 +104,10 @@ export class GrafanaApp {
       addExtensionReducers();
       configureStore();
       initExtensions();
+      LivePerformance.initialize({
+        maxIntervalsToKeep: 100,
+        intervalDuration: 10_000,
+      });
 
       standardEditorsRegistry.setInit(getAllOptionEditors);
       standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
@@ -168,10 +172,10 @@ function initEchoSrv() {
   setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
 
   window.addEventListener('load', (e) => {
-    const loadMetricName = PerformanceEventName.frontend_boot_load_time_seconds;
+    const loadMetricName = 'frontend_boot_load_time_seconds';
     // Metrics below are marked in public/views/index-template.html
-    const jsLoadMetricName = PerformanceEventName.frontend_boot_js_done_time_seconds;
-    const cssLoadMetricName = PerformanceEventName.frontend_boot_css_time_seconds;
+    const jsLoadMetricName = 'frontend_boot_js_done_time_seconds';
+    const cssLoadMetricName = 'frontend_boot_css_time_seconds';
 
     if (performance) {
       performance.mark(loadMetricName);
@@ -185,14 +189,6 @@ function initEchoSrv() {
 
   if (contextSrv.user.orgRole !== '') {
     registerEchoBackend(new PerformanceBackend({}));
-  }
-
-  if (config.livePerformance.measureDataRenderDelay) {
-    registerEchoBackend(
-      LivePerformanceBackend.create({
-        maxIntervalsToKeep: 100,
-      })
-    );
   }
 
   if (config.sentry.enabled) {

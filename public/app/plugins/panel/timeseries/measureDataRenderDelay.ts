@@ -1,6 +1,5 @@
 import { closestIdx, DataFrame, FieldType } from '@grafana/data';
-import { reportPerformance } from 'app/core/services/echo/EchoSrv';
-import { PerformanceEventName } from 'app/core/services/echo/backends/PerformanceBackend';
+import { LivePerformance, MeasurementName } from 'app/core/services/LivePerformance';
 
 const measureDataRenderDelayForFrame = (prevFrame: DataFrame, newFrame: DataFrame, now: number) => {
   if (!prevFrame.length || !newFrame.length) {
@@ -22,10 +21,7 @@ const measureDataRenderDelayForFrame = (prevFrame: DataFrame, newFrame: DataFram
 
   const firstBiggerIndex = newValues[closest] > latestTimeInOldFrame ? closest : closest + 1;
   if (newValues[firstBiggerIndex]) {
-    reportPerformance(
-      PerformanceEventName.frontend_live_timeseries_data_render_delay,
-      now - newValues[firstBiggerIndex]
-    );
+    LivePerformance.instance()?.add(MeasurementName.DataRenderDelay, now - newValues[firstBiggerIndex]);
   }
 };
 
