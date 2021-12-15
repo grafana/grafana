@@ -626,6 +626,8 @@ type LogsVolumeQueryOptions<T extends DataQuery> = {
 export function queryLogVolume<T extends DataQuery>(
   datasource: DataSourceApi<T, any, any>,
   originalQuery: DataQueryRequest<T>,
+  // convert original query into volume query
+  // query object will have adjusted interval (with currently used bucketing size)
   logVolumeFactory: (query: DataQueryRequest<T>) => DataQueryRequest<T>,
   options: LogsVolumeQueryOptions<T>
 ): Observable<DataQueryResponse> {
@@ -668,10 +670,16 @@ export function queryLogVolume<T extends DataQuery>(
           if (aggregatedLogsVolume[0]) {
             aggregatedLogsVolume[0].meta = {
               custom: {
+                // cache info contains information logs query that was made, to check
+                // if the data for new query could be reused and taken from cache (i.e.
+                // if targets didn't change and date range is more narrow)
                 cacheInfo: {
                   targets: originalQuery.targets,
                   absoluteRange: { from: originalQuery.range.from.valueOf(), to: originalQuery.range.to.valueOf() },
                 },
+                // range used to display the histogram, it's shifted back to make enough
+                // space for the first bucket (e.g. if range starts at 12:12, anf bucket size
+                // is 1hour, it mill ensure 12:00 is visible on the graph
                 displayRange: {
                   from: originalQuery.range.from.valueOf() - bucketSize,
                   to: originalQuery.range.to.valueOf(),

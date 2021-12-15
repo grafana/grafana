@@ -42,6 +42,8 @@ export function LogsVolumePanel(props: Props) {
           data={logsVolumeData.data}
           height={height}
           width={width - spacing}
+          // custom.displayRange should be used in most cases, fallback to absolute range is used only in case of
+          // error in the data source that didn't return display range as expected
           absoluteRange={logsVolumeData.data.length ? logsVolumeData.data[0].meta.custom.displayRange : absoluteRange}
           onChangeTime={onUpdateTimeRange}
           timeZone={timeZone}

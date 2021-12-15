@@ -138,6 +138,17 @@ export class LokiDatasource
     return queryLogVolume(
       this,
       request,
+      /**
+       * Create proper buckets for the histogram. Loki looks for logs backwards in time so to the get correct aggregation
+       * we need to shift ranges a bit, example:
+       * - requested range is 12:25 - 13:50
+       * - we round up the range to 13:00 - 14:00
+       * - returned data contains:
+       * -- timestamp: 13:00, covering points between 12:00-13:00
+       * -- timestamp: 14:00, covering points between 13:00-14:00
+       * - but this way each bucket's timestamp points to the end of the bucket, so...
+       * - we shift the timestamp above to get more natural aggregation, timestamp pointing to the start of the bucket
+       */
       (logsVolumeRequest: DataQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> => {
         const shift =
           logsVolumeRequest.intervalMs - (logsVolumeRequest.range.from.valueOf() % logsVolumeRequest.intervalMs);
