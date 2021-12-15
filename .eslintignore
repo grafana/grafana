@@ -8,3 +8,7 @@ dist
 e2e/tmp
 public/lib/monaco
 deployment_tools_config.json
+
+# Auto-generated localisation files
+public/locales/_build/
+public/locales/**/*.js
