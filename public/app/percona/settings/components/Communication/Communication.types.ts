@@ -4,5 +4,5 @@ import { AlertingSettings, EmailPayload, SlackPayload } from '../../Settings.typ
 export interface CommunicationProps {
   alertingEnabled: boolean;
   alertingSettings: AlertingSettings;
-  updateSettings: (body: EmailPayload | SlackPayload, callback: LoadingCallback) => void;
+  updateSettings: (body: EmailPayload | SlackPayload, callback: LoadingCallback) => Promise<void>;
 }

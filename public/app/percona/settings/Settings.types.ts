@@ -7,6 +7,7 @@ export interface EmailSettings {
   secret?: string;
   identity?: string;
   require_tls?: boolean;
+  test_email?: string;
 }
 
 export interface SlackSettings {

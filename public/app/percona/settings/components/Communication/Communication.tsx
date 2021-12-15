@@ -3,14 +3,19 @@ import { Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { cx } from 'emotion';
 import { CommunicationProps } from './Communication.types';
+import { EmailPayload } from '../../Settings.types';
 import { Email } from './Email/Email';
 import { Slack } from './Slack/Slack';
 import { Messages } from './Communication.messages';
+import { CommunicationService } from './Communication.service';
 
 export const Communication: FC<CommunicationProps> = ({ alertingSettings, updateSettings }) => {
   const theme = useTheme();
   const settingsStyles = getSettingsStyles(theme);
   const [activeTab, setActiveTab] = useState(Messages.tabs.email.key);
+
+  const testEmailSetting = async (settings: EmailPayload, email: string): Promise<void> =>
+    CommunicationService.testEmailSettings(settings, email);
 
   const tabs = useMemo(
     () => [
@@ -18,7 +23,14 @@ export const Communication: FC<CommunicationProps> = ({ alertingSettings, update
         label: Messages.tabs.email.label,
         key: Messages.tabs.email.key,
         active: activeTab === Messages.tabs.email.key,
-        component: <Email key="email" updateSettings={updateSettings} settings={alertingSettings.email} />,
+        component: (
+          <Email
+            key="email"
+            testSettings={testEmailSetting}
+            updateSettings={updateSettings}
+            settings={alertingSettings.email}
+          />
+        ),
       },
       {
         label: Messages.tabs.slack.label,
