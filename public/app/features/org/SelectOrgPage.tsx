@@ -35,7 +35,7 @@ type Props = ConnectedProps<typeof connector>;
 
 export const SelectOrgPage: FC<Props> = ({ setUserOrganization, getUserOrganizations, userOrgs }) => {
   const setUserOrg = async (org: UserOrg) => {
-    setUserOrganization(org.orgId);
+    await setUserOrganization(org.orgId);
     window.location.href = config.appSubUrl + '/';
   };
 
