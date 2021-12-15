@@ -1,16 +1,17 @@
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
 import {
+  AbstractLabelOperator,
   AnnotationQueryRequest,
   CoreApp,
   DataFrame,
   dateTime,
   FieldCache,
-  TimeSeries,
-  toUtc,
+  FieldType,
   LogRowModel,
   MutableDataFrame,
-  FieldType,
+  TimeSeries,
+  toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, config } from '@grafana/runtime';
 
@@ -1013,6 +1014,38 @@ describe('LokiDatasource', () => {
 
         expect(ds.getLogsVolumeDataProvider(options)).not.toBeDefined();
       });
+    });
+  });
+
+  describe('importing queries', () => {
+    it('keeps all labels when no labels are loaded', async () => {
+      const ds = createLokiDSForTests();
+      fetchMock.mockImplementation(() => of(createFetchResponse({ data: [] })));
+      const queries = await ds.importFromAbstractQueries([
+        {
+          refId: 'A',
+          labelMatchers: [
+            { name: 'foo', operator: AbstractLabelOperator.Equal, value: 'bar' },
+            { name: 'foo2', operator: AbstractLabelOperator.Equal, value: 'bar2' },
+          ],
+        },
+      ]);
+      expect(queries[0].expr).toBe('{foo="bar", foo2="bar2"}');
+    });
+
+    it('filters out non existing labels', async () => {
+      const ds = createLokiDSForTests();
+      fetchMock.mockImplementation(() => of(createFetchResponse({ data: ['foo'] })));
+      const queries = await ds.importFromAbstractQueries([
+        {
+          refId: 'A',
+          labelMatchers: [
+            { name: 'foo', operator: AbstractLabelOperator.Equal, value: 'bar' },
+            { name: 'foo2', operator: AbstractLabelOperator.Equal, value: 'bar2' },
+          ],
+        },
+      ]);
+      expect(queries[0].expr).toBe('{foo="bar"}');
     });
   });
 });
