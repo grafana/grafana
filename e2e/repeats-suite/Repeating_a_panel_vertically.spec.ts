@@ -12,5 +12,13 @@ describe('Repeating a panel vertically', () => {
       e2e.components.Panels.Panel.title('Panel Title 2'),
       e2e.components.Panels.Panel.title('Panel Title 3'),
     ];
+
+    panelTitles.forEach((panelTitle, i) => {
+      panelTitle.should('be.visible');
+      expect(
+        panelTitles[i].getBoundingClientRect().y > panelTitles?.[i - 1].getBoundingClientRect().y ??
+          Number.NEGATIVE_INFINITY
+      );
+    });
   });
 });
