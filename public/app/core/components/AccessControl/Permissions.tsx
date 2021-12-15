@@ -175,21 +175,20 @@ const getPermissions = (resource: string, datasourceId: number): Promise<Resourc
   return getBackendSrv().get(`/api/access-control/${resource}/${datasourceId}`);
 };
 
-const setUserPermission = (resource: string, resourceId: number, userId: number, permission: string): Promise<void> => {
-  return getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/users/${userId}`, { permission });
-};
+const setUserPermission = (resource: string, resourceId: number, userId: number, permission: string) =>
+  setPermission(resource, resourceId, 'users', userId, permission);
 
-const setTeamPermission = (resource: string, resourceId: number, teamId: number, permission: string): Promise<void> => {
-  return getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/teams/${teamId}`, { permission });
-};
+const setTeamPermission = (resource: string, resourceId: number, teamId: number, permission: string) =>
+  setPermission(resource, resourceId, 'teams', teamId, permission);
 
-const setBuiltInRolePermission = (
+const setBuiltInRolePermission = (resource: string, resourceId: number, builtInRole: string, permission: string) =>
+  setPermission(resource, resourceId, 'builtInRoles', builtInRole, permission);
+
+const setPermission = (
   resource: string,
   resourceId: number,
-  builtInRole: string,
+  type: 'users' | 'teams' | 'builtInRoles',
+  typeId: number | string,
   permission: string
-): Promise<void> => {
-  return getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/builtInRoles/${builtInRole}`, {
-    permission,
-  });
-};
+): Promise<void> =>
+  getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/${type}/${typeId}/`, { permission });
