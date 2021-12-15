@@ -7,17 +7,19 @@ describe('Repeating a panel vertically', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
 
     let prevTop = Number.NEGATIVE_INFINITY;
-    e2e()
-      .get(`[data-testid^="data-testid Panel header"]`)
-      .should('have.length', 3)
-      .each((el, i) => {
-        expect(el).to.have.text(`Panel Title ${i + 1}`);
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        expect(el).to.be.visible;
-
-        const top = el[0].getBoundingClientRect().top;
-        expect(top).to.be.greaterThan(prevTop);
-        prevTop = top;
-      });
+    const panelTitles = [
+      'Panel Title 1',
+      'Panel Title 2',
+      'Panel Title 3',
+    ]
+    panelTitles.forEach((title) => {
+      e2e.components.Panels.Panel.title(title)
+        .should('be.visible')
+        .then(($el) => {
+          const top = $el[0].getBoundingClientRect().top;
+          expect(top).to.be.greaterThan(prevTop);
+          prevTop = top;
+        });
+    })
   });
 });
