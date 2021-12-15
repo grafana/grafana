@@ -171,9 +171,8 @@ const getDescription = async (resource: string): Promise<Description> => {
   }
 };
 
-const getPermissions = (resource: string, datasourceId: number): Promise<ResourcePermission[]> => {
-  return getBackendSrv().get(`/api/access-control/${resource}/${datasourceId}`);
-};
+const getPermissions = (resource: string, datasourceId: number): Promise<ResourcePermission[]> =>
+  getBackendSrv().get(`/api/access-control/${resource}/${datasourceId}`);
 
 const setUserPermission = (resource: string, resourceId: number, userId: number, permission: string) =>
   setPermission(resource, resourceId, 'users', userId, permission);
