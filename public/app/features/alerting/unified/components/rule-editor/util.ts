@@ -31,11 +31,13 @@ export function queriesWithUpdatedReferences(
     }
 
     if (isResampleExpression || isReduceExpression) {
+      const isReferencing = query.model.expression === previousRefId;
+
       return {
         ...query,
         model: {
           ...query.model,
-          expression: newRefId,
+          expression: isReferencing ? newRefId : query.model.expression,
         },
       };
     }
