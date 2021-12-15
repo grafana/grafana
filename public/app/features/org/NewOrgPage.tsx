@@ -2,18 +2,11 @@ import React, { FC } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import Page from 'app/core/components/Page/Page';
 import { Button, Input, Field, Form } from '@grafana/ui';
-import { getConfig } from 'app/core/config';
 import { StoreState } from 'app/types';
-import { connect } from 'react-redux';
-import { NavModel } from '@grafana/data';
+import { connect, ConnectedProps } from 'react-redux';
 import { getNavModel } from '../../core/selectors/navModel';
-
-const createOrg = async (newOrg: { name: string }) => {
-  const result = await getBackendSrv().post('/api/orgs/', newOrg);
-
-  await getBackendSrv().post('/api/user/using/' + result.orgId);
-  window.location.href = getConfig().appSubUrl + '/org';
-};
+import { createOrganization } from './state/actions';
+import { getConfig } from 'app/core/config';
 
 const validateOrg = async (orgName: string) => {
   try {
@@ -28,15 +21,28 @@ const validateOrg = async (orgName: string) => {
   return 'Organization already exists';
 };
 
-interface PropsWithState {
-  navModel: NavModel;
-}
+const mapStateToProps = (state: StoreState) => {
+  return { navModel: getNavModel(state.navIndex, 'global-orgs') };
+};
+
+const mapDispatchToProps = {
+  createOrganization,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = ConnectedProps<typeof connector>;
 
 interface CreateOrgFormDTO {
   name: string;
 }
 
-export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
+export const NewOrgPage: FC<Props> = ({ navModel, createOrganization }) => {
+  const createOrg = async (newOrg: { name: string }) => {
+    await createOrganization(newOrg);
+    window.location.href = getConfig().appSubUrl + '/org';
+  };
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -71,8 +77,4 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
   );
 };
 
-const mapStateToProps = (state: StoreState) => {
-  return { navModel: getNavModel(state.navIndex, 'global-orgs') };
-};
-
-export default connect(mapStateToProps)(NewOrgPage);
+export default connector(NewOrgPage);
