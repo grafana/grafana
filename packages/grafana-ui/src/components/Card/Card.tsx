@@ -1,8 +1,8 @@
 import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '../../themes';
-import { CardContainer, CardContainerProps } from './CardContainer';
+import { useStyles2, useTheme2 } from '../../themes';
+import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
 import { getFocusStyles } from '../../themes/mixins';
 
 /**
@@ -49,6 +49,7 @@ export const Card: CardInterface = ({
   children,
   heading: deprecatedHeading,
   description: deprecatedDescription,
+  className,
   ...htmlProps
 }) => {
   const hasHeadingComponent = useMemo(
@@ -61,9 +62,16 @@ export const Card: CardInterface = ({
 
   const disableHover = disabled || (!onClick && !href);
   const onCardClick = onClick && !disabled ? onClick : undefined;
+  const theme = useTheme2();
+  const styles = getCardContainerStyles(theme, disabled, disableHover);
 
   return (
-    <CardContainer disableEvents={disabled} disableHover={disableHover} {...htmlProps}>
+    <CardContainer
+      disableEvents={disabled}
+      disableHover={disableHover}
+      className={cx(styles.container, className)}
+      {...htmlProps}
+    >
       <CardContext.Provider value={{ href, onClick: onCardClick, disabled }}>
         {!hasHeadingComponent && <Heading />}
         {deprecatedHeading && <Heading>{deprecatedHeading}</Heading>}
@@ -197,6 +205,10 @@ const getFigureStyles = (theme: GrafanaTheme2) => ({
 
     marginRight: theme.spacing(2),
     width: '40px',
+
+    '> img': {
+      width: '100%',
+    },
 
     '&:empty': {
       display: 'none',

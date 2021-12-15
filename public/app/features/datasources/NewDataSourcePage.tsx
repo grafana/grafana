@@ -186,6 +186,9 @@ function getStyles(theme: GrafanaTheme2) {
     figure: css({
       width: 'inherit',
       marginRight: '0px',
+      '> img': {
+        width: theme.spacing(7),
+      },
     }),
     meta: css({
       marginTop: '6px',

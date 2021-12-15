@@ -46,7 +46,7 @@ const getStyles = () => {
     list: css({
       listStyle: 'none',
       display: 'grid',
-      gap: '8px',
+      // gap: '8px', Add back when legacy support for old Card interface is dropped
     }),
     logo: css({
       objectFit: 'contain',
