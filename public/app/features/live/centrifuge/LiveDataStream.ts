@@ -2,7 +2,6 @@ import type { LiveDataStreamOptions, StreamingFrameOptions } from '@grafana/runt
 import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
 import {
   DataFrameJSON,
-  dataFrameToJSON,
   DataQueryError,
   Field,
   isLiveChannelMessageEvent,
@@ -211,7 +210,7 @@ export class LiveDataStream<T = unknown> {
   private prepareInternalStreamForNewSubscription = (options: LiveDataStreamOptions): void => {
     if (!this.frameBuffer.hasAtLeastOnePacket() && options.frame) {
       // will skip initial frames from subsequent subscribers
-      this.process(dataFrameToJSON(options.frame));
+      this.process(options.frame);
     }
   };
 
