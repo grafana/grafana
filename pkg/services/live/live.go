@@ -246,7 +246,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
 
-	g.surveyCaller = survey.NewCaller(managedStreamRunner, g.bus, g, node)
+	g.surveyCaller = survey.NewCaller(managedStreamRunner, g.bus, g, node, g.leaderManager)
 	err = g.surveyCaller.SetupHandlers()
 	if err != nil {
 		return nil, err
@@ -745,7 +745,7 @@ func (g *GrafanaLive) watchChannelLeader(client *centrifuge.Client, orgChannel s
 				client.Disconnect(centrifuge.DisconnectForceReconnect)
 				return
 			}
-			logger.Debug("Subscription leader exists", "channel", orgChannel)
+			logger.Debug("Subscription leader OK", "channel", orgChannel)
 		}
 	}
 }

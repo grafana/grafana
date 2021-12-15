@@ -9,6 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/live/orgchannel"
+
+	"github.com/grafana/grafana/pkg/services/live/leader"
+
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -32,6 +36,7 @@ type Caller struct {
 	managedStreamRunner  *managedstream.Runner
 	bus                  bus.Bus
 	node                 *centrifuge.Node
+	leaderManager        leader.Manager
 }
 
 const (
@@ -39,12 +44,13 @@ const (
 	pluginSubscribeStream = "plugin_subscribe_stream"
 )
 
-func NewCaller(managedStreamRunner *managedstream.Runner, bus bus.Bus, channelHandlerGetter ChannelHandlerGetter, node *centrifuge.Node) *Caller {
+func NewCaller(managedStreamRunner *managedstream.Runner, bus bus.Bus, channelHandlerGetter ChannelHandlerGetter, node *centrifuge.Node, leaderManager leader.Manager) *Caller {
 	return &Caller{
 		channelHandlerGetter: channelHandlerGetter,
 		managedStreamRunner:  managedStreamRunner,
 		node:                 node,
 		bus:                  bus,
+		leaderManager:        leaderManager,
 	}
 }
 
@@ -129,6 +135,17 @@ func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStrea
 		logger.Debug("Non-leader node")
 		return &PluginSubscribeStreamResponse{}, nil
 	}
+
+	ok, _, currentLeadershipID, err := c.leaderManager.GetLeader(context.Background(), orgchannel.PrependOrgID(req.OrgID, req.Channel))
+	if err != nil {
+		// TODO: better handling of non-leader error.
+		return nil, errors.New("error checking leader")
+	}
+	if !ok || currentLeadershipID != req.LeadershipID {
+		// TODO: better handling of non-leader error.
+		return nil, errors.New("error leader changed")
+	}
+
 	query := models.GetSignedInUserQuery{UserId: req.UserID, OrgId: req.OrgID}
 	if err := c.bus.DispatchCtx(context.Background(), &query); err != nil {
 		// TODO: better handling of auth error.
