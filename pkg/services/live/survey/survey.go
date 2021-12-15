@@ -11,11 +11,16 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
+)
+
+var (
+	logger = log.New("live.survey")
 )
 
 type ChannelHandlerGetter interface {
@@ -100,13 +105,16 @@ func (c *Caller) handleManagedStreams(data []byte) (interface{}, error) {
 }
 
 type PluginSubscribeStreamRequest struct {
-	OrgID   int64  `json:"org"`
-	UserID  int64  `json:"userId"`
-	Channel string `json:"channel"`
+	OrgID        int64  `json:"org"`
+	UserID       int64  `json:"userId"`
+	Channel      string `json:"channel"`
+	LeaderNodeID string `json:"leaderNodeId"`
+	LeadershipID string `json:"leadershipId"`
 }
 
 type PluginSubscribeStreamResponse struct {
 	Status backend.SubscribeStreamStatus `json:"status,omitempty"`
+	Reply  models.SubscribeReply         `json:"reply"`
 }
 
 func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStreamResponse, error) {
@@ -114,6 +122,12 @@ func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStrea
 	err := json.Unmarshal(data, &req)
 	if err != nil {
 		return nil, err
+	}
+	logger.Debug("Handle plugin subscribe stream survey", "req", req)
+	if req.LeaderNodeID != c.node.ID() {
+		// TODO: should only send survey to the leader node.
+		logger.Debug("Non-leader node")
+		return &PluginSubscribeStreamResponse{}, nil
 	}
 	query := models.GetSignedInUserQuery{UserId: req.UserID, OrgId: req.OrgID}
 	if err := c.bus.DispatchCtx(context.Background(), &query); err != nil {
@@ -127,10 +141,11 @@ func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStrea
 		return nil, err
 	}
 
-	// TODO: handle reply also.
-	_, status, err := handler.OnSubscribe(context.Background(), user, models.SubscribeEvent{
-		Channel: req.Channel,
-		Path:    parsedChannel.Path,
+	reply, status, err := handler.OnSubscribe(context.Background(), user, models.SubscribeEvent{
+		Channel:      req.Channel,
+		Path:         parsedChannel.Path,
+		OnLeader:     true,
+		LeadershipID: req.LeadershipID,
 	})
 	if err != nil {
 		return nil, err
@@ -138,43 +153,44 @@ func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStrea
 
 	return &PluginSubscribeStreamResponse{
 		Status: status,
+		Reply:  reply,
 	}, nil
 }
 
-func (c *Caller) CallPluginSubscribeStream(orgID int64, user *models.SignedInUser, channel string, toNodeID string) (backend.SubscribeStreamStatus, error) {
+func (c *Caller) CallPluginSubscribeStream(ctx context.Context, user *models.SignedInUser, channel string, leaderNodeID string, leadershipID string) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	req := PluginSubscribeStreamRequest{
-		OrgID:   orgID,
-		UserID:  user.UserId,
-		Channel: channel,
+		OrgID:        user.OrgId,
+		UserID:       user.UserId,
+		Channel:      channel,
+		LeaderNodeID: leaderNodeID,
+		LeadershipID: leadershipID,
 	}
 	jsonData, err := json.Marshal(req)
 	if err != nil {
-		return 0, err
+		return models.SubscribeReply{}, 0, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
 
 	resp, err := c.node.Survey(ctx, pluginSubscribeStream, jsonData)
 	if err != nil {
-		return 0, err
+		return models.SubscribeReply{}, 0, err
 	}
 
 	for nodeID, result := range resp {
 		if result.Code != 0 {
-			return 0, fmt.Errorf("unexpected survey code: %d", result.Code)
+			return models.SubscribeReply{}, 0, fmt.Errorf("unexpected survey code: %d", result.Code)
 		}
-		if nodeID != toNodeID {
+		if nodeID != leaderNodeID {
 			continue
 		}
 		var res PluginSubscribeStreamResponse
 		err := json.Unmarshal(result.Data, &res)
 		if err != nil {
-			return 0, err
+			return models.SubscribeReply{}, 0, err
 		}
-		return res.Status, nil
+		return res.Reply, res.Status, nil
 	}
 	// TODO: maybe handle in a special way.
-	return 0, errors.New("leader not responded")
+	return models.SubscribeReply{}, 0, errors.New("leader not responded")
 }
 
 func (c *Caller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChannel, error) {

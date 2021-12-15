@@ -18,14 +18,18 @@ type ChannelClientCount func(orgID int64, channel string) (int, error)
 type SubscribeEvent struct {
 	Channel string
 	Path    string
+
+	// TODO: mostly hack for now to re-use plugin OnSubscribe implementation.
+	OnLeader     bool
+	LeadershipID string
 }
 
 // SubscribeReply is a reaction to SubscribeEvent.
 type SubscribeReply struct {
-	Presence  bool
-	JoinLeave bool
-	Recover   bool
-	Data      json.RawMessage
+	Presence  bool            `json:"presence,omitempty"`
+	JoinLeave bool            `json:"joinLeave,omitempty"`
+	Recover   bool            `json:"recover,omitempty"`
+	Data      json.RawMessage `json:"data,omitempty"`
 }
 
 // PublishEvent contains publication data.

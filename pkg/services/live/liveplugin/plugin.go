@@ -14,12 +14,13 @@ import (
 )
 
 type ChannelLocalPublisher struct {
-	node     *centrifuge.Node
-	pipeline *pipeline.Pipeline
+	node              *centrifuge.Node
+	pipeline          *pipeline.Pipeline
+	channelLeaderMode bool
 }
 
-func NewChannelLocalPublisher(node *centrifuge.Node, pipeline *pipeline.Pipeline) *ChannelLocalPublisher {
-	return &ChannelLocalPublisher{node: node, pipeline: pipeline}
+func NewChannelLocalPublisher(node *centrifuge.Node, pipeline *pipeline.Pipeline, channelLeaderMode bool) *ChannelLocalPublisher {
+	return &ChannelLocalPublisher{node: node, pipeline: pipeline, channelLeaderMode: channelLeaderMode}
 }
 
 func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte) error {
@@ -37,10 +38,15 @@ func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte) error 
 			return nil
 		}
 	}
-	pub := &centrifuge.Publication{
-		Data: data,
+	var err error
+	if p.channelLeaderMode {
+		_, err = p.node.Publish(channel, data)
+	} else {
+		pub := &centrifuge.Publication{
+			Data: data,
+		}
+		err = p.node.Hub().BroadcastPublication(channel, pub, centrifuge.StreamPosition{})
 	}
-	err := p.node.Hub().BroadcastPublication(channel, pub, centrifuge.StreamPosition{})
 	if err != nil {
 		return fmt.Errorf("error publishing %s: %w", string(data), err)
 	}

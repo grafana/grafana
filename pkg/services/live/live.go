@@ -151,8 +151,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		node.SetPresenceManager(presenceManager)
 	}
 
-	channelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, nil)
-
 	var managedStreamRunner *managedstream.Runner
 	var leaderManager leader.Manager
 	if g.IsHA() {
@@ -164,18 +162,19 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			return nil, fmt.Errorf("error pinging Redis: %v", err)
 		}
 		if g.Cfg.FeatureToggles["live-ha-leader"] {
+			logger.Debug("Live HA channel leader mode ON")
 			leaderManager = leader.NewRedisManager(redisClient)
 			g.leaderManager = leaderManager
 		}
 		managedStreamRunner = managedstream.NewRunner(
 			g.Publish,
-			channelLocalPublisher,
+			liveplugin.NewChannelLocalPublisher(node, nil, g.leaderManager != nil),
 			managedstream.NewRedisFrameCache(redisClient),
 		)
 	} else {
 		managedStreamRunner = managedstream.NewRunner(
 			g.Publish,
-			channelLocalPublisher,
+			liveplugin.NewChannelLocalPublisher(node, nil, false),
 			managedstream.NewMemoryFrameCache(),
 		)
 	}
@@ -229,9 +228,9 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	}
 
 	g.contextGetter = liveplugin.NewContextGetter(g.PluginContextProvider)
-	pipelinedChannelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, g.Pipeline)
+	pipelinedChannelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, g.Pipeline, g.leaderManager != nil)
 	numLocalSubscribersGetter := liveplugin.NewNumLocalSubscribersGetter(node)
-	g.runStreamManager = runstream.NewManager(pipelinedChannelLocalPublisher, numLocalSubscribersGetter, g.contextGetter)
+	g.runStreamManager = runstream.NewManager(pipelinedChannelLocalPublisher, numLocalSubscribersGetter, g.contextGetter, g.leaderManager, g)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
@@ -647,6 +646,30 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 		return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
 	}
 	logger.Debug("Client subscribed", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
+
+	if g.leaderManager != nil && (strings.Contains(e.Channel, "plugin") || strings.Contains(e.Channel, "ds")) {
+		go func() {
+			for {
+				select {
+				case <-client.Context().Done():
+					return
+				case <-time.After(20 * time.Second):
+					// TODO: orgID?
+					ok, _, _, err := g.leaderManager.GetLeader(client.Context(), e.Channel)
+					if err != nil {
+						logger.Error("Error getting leader", "error", err, "channel", e.Channel)
+						continue
+					}
+					if !ok {
+						client.Disconnect(centrifuge.DisconnectForceReconnect)
+						return
+					}
+					logger.Debug("Subscription leader exists", "channel", e.Channel)
+				}
+			}
+		}()
+	}
+
 	return centrifuge.SubscribeReply{
 		Options: centrifuge.SubscribeOptions{
 			Presence:  reply.Presence,
@@ -783,6 +806,10 @@ func publishStatusToHTTPError(status backend.PublishStreamStatus) (int, string) 
 	}
 }
 
+func (g *GrafanaLive) GetNodeID() string {
+	return g.node.ID()
+}
+
 // GetChannelHandler gives thread-safe access to the channel.
 func (g *GrafanaLive) GetChannelHandler(user *models.SignedInUser, channel string) (models.ChannelHandler, live.Channel, error) {
 	// Parse the identifier ${scope}/${namespace}/${path}
@@ -866,6 +893,8 @@ func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string
 		g.contextGetter,
 		streamHandler,
 		g.leaderManager,
+		g.surveyCaller,
+		g,
 	), nil
 }
 
@@ -889,6 +918,8 @@ func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace
 		g.contextGetter,
 		streamHandler,
 		g.leaderManager,
+		g.surveyCaller,
+		g,
 	), nil
 }
 

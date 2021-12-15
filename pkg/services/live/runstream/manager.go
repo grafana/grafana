@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/live/leader"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
@@ -46,6 +47,10 @@ func (p *packetSender) Send(packet *backend.StreamPacket) error {
 	return p.channelLocalPublisher.PublishLocal(p.channel, packet.Data)
 }
 
+type NodeIDGetter interface {
+	GetNodeID() string
+}
+
 // Manager manages streams from Grafana to plugins (i.e. RunStream method).
 type Manager struct {
 	mu                      sync.RWMutex
@@ -60,6 +65,9 @@ type Manager struct {
 	checkInterval           time.Duration
 	maxChecks               int
 	datasourceCheckInterval time.Duration
+	leaderTouchInterval     time.Duration
+	leaderManager           leader.Manager
+	nodeIDGetter            NodeIDGetter
 }
 
 // ManagerOption modifies Manager behavior (used for tests for example).
@@ -76,11 +84,12 @@ func WithCheckConfig(interval time.Duration, maxChecks int) ManagerOption {
 const (
 	defaultCheckInterval           = 5 * time.Second
 	defaultDatasourceCheckInterval = 60 * time.Second
+	defaultLeaderTouchInterval     = 5 * time.Second
 	defaultMaxChecks               = 3
 )
 
 // NewManager creates new Manager.
-func NewManager(channelSender ChannelLocalPublisher, presenceGetter NumLocalSubscribersGetter, pluginContextGetter PluginContextGetter, opts ...ManagerOption) *Manager {
+func NewManager(channelSender ChannelLocalPublisher, presenceGetter NumLocalSubscribersGetter, pluginContextGetter PluginContextGetter, leaderManager leader.Manager, nodeIDGetter NodeIDGetter, opts ...ManagerOption) *Manager {
 	sm := &Manager{
 		streams:                 make(map[string]streamContext),
 		datasourceStreams:       map[string]map[string]struct{}{},
@@ -92,6 +101,9 @@ func NewManager(channelSender ChannelLocalPublisher, presenceGetter NumLocalSubs
 		checkInterval:           defaultCheckInterval,
 		maxChecks:               defaultMaxChecks,
 		datasourceCheckInterval: defaultDatasourceCheckInterval,
+		leaderTouchInterval:     defaultLeaderTouchInterval,
+		leaderManager:           leaderManager,
+		nodeIDGetter:            nodeIDGetter,
 	}
 	for _, opt := range opts {
 		opt(sm)
@@ -136,7 +148,7 @@ func (s *Manager) handleDatasourceEvent(orgID int64, dsUID string, resubmit bool
 	if resubmit {
 		// Re-submit streams.
 		for _, sr := range resubmitRequests {
-			_, err := s.SubmitStream(s.baseCtx, sr.user, sr.Channel, sr.Path, sr.PluginContext, sr.StreamRunner, true)
+			_, err := s.SubmitStream(s.baseCtx, sr.user, sr.Channel, sr.Path, sr.PluginContext, sr.StreamRunner, sr.leadershipID, true)
 			if err != nil {
 				// Log error but do not prevent execution of caller routine.
 				logger.Error("Error re-submitting stream", "path", sr.Path, "error", err)
@@ -175,10 +187,28 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 	defer presenceTicker.Stop()
 	datasourceTicker := time.NewTicker(s.datasourceCheckInterval)
 	defer datasourceTicker.Stop()
+	leaderTouchTicker := time.NewTicker(s.leaderTouchInterval)
+	defer leaderTouchTicker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
+		case <-leaderTouchTicker.C:
+			if s.leaderManager == nil {
+				continue
+			}
+			ok, err := s.leaderManager.TouchLeader(ctx, sr.Channel, s.nodeIDGetter.GetNodeID(), sr.leadershipID)
+			if err != nil {
+				// TODO: what should we do here?
+				logger.Error("Error touching leader entry", "channel", sr.Channel, "path", sr.Path, "error", err)
+				continue
+			}
+			if !ok {
+				// TODO: what should we do here?
+				logger.Error("Leader changed", "channel", sr.Channel, "path", sr.Path)
+				continue
+			}
+			logger.Debug("Leader touch ok", "channel", sr.Channel, "path", sr.Path)
 		case <-datasourceTicker.C:
 			if sr.PluginContext.DataSourceInstanceSettings != nil {
 				dsUID := sr.PluginContext.DataSourceInstanceSettings.UID
@@ -375,6 +405,7 @@ type streamRequest struct {
 	user          *models.SignedInUser
 	PluginContext backend.PluginContext
 	StreamRunner  StreamRunner
+	leadershipID  string
 }
 
 type submitRequest struct {
@@ -398,7 +429,7 @@ var errDatasourceNotFound = errors.New("datasource not found")
 
 // SubmitStream submits stream handler in Manager to manage.
 // The stream will be opened and kept till channel has active subscribers.
-func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, channel string, path string, pCtx backend.PluginContext, streamRunner StreamRunner, isResubmit bool) (*submitResult, error) {
+func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, channel string, path string, pCtx backend.PluginContext, streamRunner StreamRunner, leadershipID string, isResubmit bool) (*submitResult, error) {
 	if isResubmit {
 		// Resolve new plugin context as it could be modified since last call.
 		var datasourceUID string
@@ -423,6 +454,7 @@ func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, c
 			Path:          path,
 			PluginContext: pCtx,
 			StreamRunner:  streamRunner,
+			leadershipID:  leadershipID,
 		},
 	}
 
