@@ -26,8 +26,7 @@ export class DataHoverView extends PureComponent<Props> {
     const { feature, columnIndex } = this.props;
     let { data, rowIndex } = this.props;
     if (feature) {
-      const properties = feature.getProperties();
-      delete properties.geometry;
+      const { geometry, ...properties } = feature.getProperties();
       data = new ArrayDataFrame([properties]);
       rowIndex = 0;
     }
@@ -44,7 +43,7 @@ export class DataHoverView extends PureComponent<Props> {
             .map((f, i) => (
               <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? this.style.highlight : ''}>
                 <th>{getFieldDisplayName(f, data)}:</th>
-                <td>{fmt(f, rowIndex ?? 0)}</td>
+                <td>{fmt(f, rowIndex!)}</td>
               </tr>
             ))}
         </tbody>
