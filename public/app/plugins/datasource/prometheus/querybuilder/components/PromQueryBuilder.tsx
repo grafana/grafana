@@ -18,7 +18,6 @@ export interface Props {
   onChange: (update: PromVisualQuery) => void;
   onRunQuery: () => void;
   nested?: boolean;
-  explainMode?: boolean;
 }
 
 export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, nested }) => {

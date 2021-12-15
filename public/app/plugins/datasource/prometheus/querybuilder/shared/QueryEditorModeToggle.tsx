@@ -8,6 +8,7 @@ export interface Props {
 }
 
 const editorModes = [
+  { label: 'Explain', value: QueryEditorMode.Explain },
   { label: 'Builder', value: QueryEditorMode.Builder },
   { label: 'Code', value: QueryEditorMode.Code },
 ];

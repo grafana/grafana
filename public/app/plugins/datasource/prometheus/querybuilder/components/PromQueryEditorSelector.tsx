@@ -3,7 +3,6 @@ import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EditorHeader, FlexItem, InlineSelect, Space, Stack } from '@grafana/experimental';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
 import React, { SyntheticEvent, useCallback, useState } from 'react';
-import { useToggle } from 'react-use';
 import { PromQueryEditor } from '../../components/PromQueryEditor';
 import { PromQueryEditorProps } from '../../components/types';
 import { promQueryModeller } from '../PromQueryModeller';
@@ -11,12 +10,12 @@ import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryEditorMode } from '../shared/types';
 import { getDefaultEmptyQuery, PromVisualQuery } from '../types';
 import { PromQueryBuilder } from './PromQueryBuilder';
+import { PromQueryBuilderExplained } from './PromQueryBuilderExplaind';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
   const [visualQuery, setVisualQuery] = useState<PromVisualQuery>(query.visualQuery ?? getDefaultEmptyQuery());
-  const [explainMode, toggleExplainMode] = useToggle(false);
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
@@ -50,7 +49,6 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
-
   const showExemplarSwitch = props.app !== CoreApp.UnifiedAlerting && !query.instant;
 
   return (
@@ -80,10 +78,6 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         )}
         {editorMode === QueryEditorMode.Builder && (
           <>
-            <Stack gap={1}>
-              <label className={styles.switchLabel}>Explain</label>
-              <Switch value={explainMode} onChange={toggleExplainMode} />
-            </Stack>
             <InlineSelect
               value={null}
               placeholder="Query patterns"
@@ -106,11 +100,11 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         <PromQueryBuilder
           query={visualQuery}
           datasource={props.datasource}
-          explainMode={explainMode}
           onChange={onChangeViewModel}
           onRunQuery={props.onRunQuery}
         />
       )}
+      {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={visualQuery} />}
     </>
   );
 });
