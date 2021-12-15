@@ -219,15 +219,8 @@ export { FileUpload } from './FileUpload/FileUpload';
 export * from './FileDropzone';
 export { TimeRangeInput } from './DateTimePickers/TimeRangeInput';
 export { RelativeTimeRangePicker } from './DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker';
-/** @deprecated Use `NewCard` instead */
 export { Card, Props as CardProps, getCardStyles } from './Card/Card';
-/** @deprecated Use `NewCardContainer` instead */
 export { CardContainer, CardContainerProps } from './Card/CardContainer';
-export { Card as NewCard, Props as NewCardProps } from './NewCard/NewCard';
-export {
-  CardContainer as NewCardContainer,
-  CardContainerProps as NewCardContainerProps,
-} from './NewCard/NewCardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';

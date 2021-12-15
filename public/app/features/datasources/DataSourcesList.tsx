@@ -3,7 +3,7 @@ import React, { FC } from 'react';
 
 // Types
 import { DataSourceSettings, LayoutMode } from '@grafana/data';
-import { NewCard as Card, Tag, useStyles } from '@grafana/ui';
+import { Card, Tag, useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 export interface Props {

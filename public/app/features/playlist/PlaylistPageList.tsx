@@ -1,6 +1,6 @@
 import React from 'react';
 import { PlaylistDTO } from './types';
-import { Button, NewCard as Card, LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, Card, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';

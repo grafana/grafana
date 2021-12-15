@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import { NewCardContainer as CardContainer, LinkButton, useStyles2 } from '@grafana/ui';
+import { CardContainer, LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { AccessControlAction } from 'app/types';
 import { getServerStats, ServerStat } from './state/apis';

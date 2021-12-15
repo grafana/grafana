@@ -2,7 +2,7 @@ import React from 'react';
 import { Redirect } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, NewCard as Card, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Alert, Card, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useCombinedRulesMatching } from './hooks/useCombinedRule';
 import { createViewLink } from './utils/misc';

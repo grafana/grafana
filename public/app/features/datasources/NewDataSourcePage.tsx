@@ -1,7 +1,7 @@
 import React, { FC, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { DataSourcePluginMeta, GrafanaTheme2, NavModel } from '@grafana/data';
-import { NewCard as Card, LinkButton, List, PluginSignatureBadge, FilterInput, useStyles2 } from '@grafana/ui';
+import { Card, LinkButton, List, PluginSignatureBadge, FilterInput, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 

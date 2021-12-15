@@ -12,7 +12,7 @@ import { Switch } from '../Switch/Switch';
 import { allButtonVariants, Button } from '../Button';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
-import { Card } from '../NewCard/NewCard';
+import { Card } from '../Card/Card';
 import { Select } from '../Select/Select';
 
 interface DemoBoxProps {
