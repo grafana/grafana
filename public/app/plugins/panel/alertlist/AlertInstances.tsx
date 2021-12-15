@@ -43,8 +43,9 @@ export const AlertInstances = ({ ruleWithLocation, options }: Props) => {
 };
 
 function filterAlerts(options: PanelProps<UnifiedAlertListOptions>['options'], alerts: Alert[]): Alert[] {
+  const hasAlertState = Object.values(options.stateFilter).some((value) => value);
   let filteredAlerts = [...alerts];
-  if (Object.values(options.stateFilter).some((value) => value)) {
+  if (hasAlertState) {
     filteredAlerts = filteredAlerts.filter((alert) => {
       return (
         (options.stateFilter.firing &&
@@ -54,8 +55,7 @@ function filterAlerts(options: PanelProps<UnifiedAlertListOptions>['options'], a
         (options.stateFilter.noData && alert.state === GrafanaAlertState.NoData) ||
         (options.stateFilter.normal && alert.state === GrafanaAlertState.Normal) ||
         (options.stateFilter.error && alert.state === GrafanaAlertState.Error) ||
-        (options.stateFilter.inactive && alert.state === PromAlertingRuleState.Inactive) ||
-        (options.stateFilter.pending && alert.state === PromAlertingRuleState.Pending)
+        (options.stateFilter.inactive && alert.state === PromAlertingRuleState.Inactive)
       );
     });
   }
