@@ -36,8 +36,8 @@ export const PermissionListItem = ({ item, permissionLevels, canRemove, onRemove
       {item.managed ? (
         <Button
           size="sm"
-          variant="destructive"
           icon="times"
+          variant="destructive"
           disabled={!canRemove}
           onClick={() => onRemove(item)}
           aria-label={`Remove permission for ${getName(item)}`}

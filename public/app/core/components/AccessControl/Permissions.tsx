@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { sortBy } from 'lodash';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 import { Button } from '@grafana/ui';
@@ -87,9 +88,30 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
     }
   };
 
-  const teams = useMemo(() => items.filter((i) => i.teamId).sort(sortOn('team')), [items]);
-  const users = useMemo(() => items.filter((i) => i.userId).sort(sortOn('userLogin')), [items]);
-  const builtInRoles = useMemo(() => items.filter((i) => i.builtInRole).sort(sortOn('builtInRole')), [items]);
+  const teams = useMemo(
+    () =>
+      sortBy(
+        items.filter((i) => i.teamId),
+        ['team']
+      ),
+    [items]
+  );
+  const users = useMemo(
+    () =>
+      sortBy(
+        items.filter((i) => i.userId),
+        ['userLogin']
+      ),
+    [items]
+  );
+  const builtInRoles = useMemo(
+    () =>
+      sortBy(
+        items.filter((i) => i.builtInRole),
+        ['builtInRole']
+      ),
+    [items]
+  );
 
   return (
     <div>
@@ -167,16 +189,4 @@ const setBuiltInRolePermission = (
   return getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/builtInRoles/${builtInRole}`, {
     permission,
   });
-};
-
-const sortOn = (key: 'userLogin' | 'team' | 'builtInRole') => {
-  return (a: ResourcePermission, b: ResourcePermission): number => {
-    if (a[key]! > b[key]!) {
-      return 1;
-    }
-    if (a[key]! < b[key]!) {
-      return -1;
-    }
-    return 0;
-  };
 };
