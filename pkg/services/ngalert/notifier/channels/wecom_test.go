@@ -81,7 +81,7 @@ func TestWeComNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "wecom_testing" of type "wecom": could not find webhook url in settings`,
+			expInitError: `failed to validate receiver "wecom_testing" of type "wecom": could not find webhook URL in settings`,
 		},
 	}
 
