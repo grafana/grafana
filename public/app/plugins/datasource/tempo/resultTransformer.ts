@@ -220,9 +220,11 @@ function getSpanTags(
     span.kind !== undefined &&
     span.kind !== collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind.SPAN_KIND_INTERNAL
   ) {
+    // collectorTypes...SpanKind includes "SPAN_KIND_UNSPECIFIED" at 0 so we need to subtract 1 from
+    // the index to map to the correct value in the SpanKind enum
     spanTags.push({
       key: 'span.kind',
-      value: SpanKind[collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind[span.kind] as any].toLowerCase(),
+      value: SpanKind[(collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind[span.kind] as any) - 1].toLowerCase(),
     });
   }
 
