@@ -100,7 +100,8 @@ function getAggregationByRenderer(aggregation: string) {
 function getAggregationExplainer(aggregationName: string) {
   return function aggregationExplainer(model: QueryBuilderOperation) {
     const labels = model.params.map((label) => `\`${label}\``).join(' and ');
-    return `Calculates ${aggregationName} over dimensions while preserving ${pluralize('label')} ${labels}.`;
+    const labelWord = pluralize('label', model.params.length);
+    return `Calculates ${aggregationName} over dimensions while preserving ${labelWord} ${labels}.`;
   };
 }
 
