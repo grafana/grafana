@@ -7,7 +7,7 @@ load(
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 def pipeline(
-    name, edition, trigger, steps, services=[], platform='linux', depends_on=[],
+    name, edition, trigger, steps, services=[], platform='linux', depends_on=[], volumes=[],
     ):
     if platform != 'windows':
         platform_conf = {
@@ -48,6 +48,7 @@ def pipeline(
         }],
         'depends_on': depends_on,
     }
+    pipeline['volumes'].extend(volumes)
     pipeline.update(platform_conf)
 
     if edition in ('enterprise', 'enterprise2'):
