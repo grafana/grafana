@@ -141,6 +141,8 @@ export class LiveDataStream<T = unknown> {
   private shutdownIfNoSubscribers = () => {
     if (!this.stream.observed) {
       this.shutdown();
+    } else {
+      console.log('stream is observed - shutdown averted! ' + this.deps.channelId);
     }
   };
 
@@ -213,11 +215,15 @@ export class LiveDataStream<T = unknown> {
     }
   };
 
-  get = (options: LiveDataStreamOptions, subKey: DataStreamSubscriptionKey): Observable<StreamingDataQueryResponse> => {
+  private clearShutdownTimeout = () => {
     if (this.shutdownTimeoutId) {
       clearTimeout(this.shutdownTimeoutId);
       this.shutdownTimeoutId = undefined;
     }
+  };
+
+  get = (options: LiveDataStreamOptions, subKey: DataStreamSubscriptionKey): Observable<StreamingDataQueryResponse> => {
+    this.clearShutdownTimeout();
     const buffer = getStreamingFrameOptions(options.buffer);
 
     this.resizeBuffer(buffer);
@@ -312,6 +318,7 @@ export class LiveDataStream<T = unknown> {
         // TODO: potentially resize (downsize) the buffer on unsubscribe
         sub.unsubscribe();
         if (!this.stream.observed) {
+          this.clearShutdownTimeout();
           this.shutdownTimeoutId = setTimeout(this.shutdownIfNoSubscribers, this.deps.shutdownDelayInMs);
         }
       };
