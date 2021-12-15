@@ -232,8 +232,14 @@ export class UPlotConfigBuilder {
       if (this.bands?.length) {
         config.bands = this.bands;
         const killFill = new Set<number>();
+
         for (const b of config.bands) {
           killFill.add(b.series[1]);
+        }
+
+        // don't remove fills of series that have their own fillBelowTo defined (pseudo-stacking case)
+        for (const b of config.bands) {
+          killFill.delete(b.series[0]);
         }
 
         for (let i = 1; i < config.series.length; i++) {
