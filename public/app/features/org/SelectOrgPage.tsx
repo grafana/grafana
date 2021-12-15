@@ -1,10 +1,10 @@
 import React, { FC, useState } from 'react';
 import Page from 'app/core/components/Page/Page';
-import { getBackendSrv, config } from '@grafana/runtime';
-import { UserOrg } from 'app/types';
+import { config } from '@grafana/runtime';
+import { StoreState, UserOrg } from 'app/types';
 import { useAsync } from 'react-use';
 import { Button, HorizontalGroup } from '@grafana/ui';
-import { setUserOrganization } from './state/actions';
+import { getUserOrganizations, setUserOrganization } from './state/actions';
 import { connect, ConnectedProps } from 'react-redux';
 
 const navModel = {
@@ -18,20 +18,23 @@ const navModel = {
   },
 };
 
-const getUserOrgs = async () => {
-  return await getBackendSrv().get('/api/user/orgs');
-};
+function mapStateToProps(state: StoreState) {
+  return {
+    userOrgs: state.user.orgs,
+  };
+}
 
 const mapDispatchToProps = {
   setUserOrganization,
+  getUserOrganizations,
 };
 
-const connector = connect(null, mapDispatchToProps);
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = ConnectedProps<typeof connector>;
 
-export const SelectOrgPage: FC<Props> = ({ setUserOrganization }) => {
-  const [orgs, setOrgs] = useState<UserOrg[]>();
+export const SelectOrgPage: FC<Props> = ({ setUserOrganization, getUserOrganizations, userOrgs }) => {
+  const [orgs, setOrgs] = useState<UserOrg[]>(userOrgs);
 
   const setUserOrg = async (org: UserOrg) => {
     setUserOrganization(org.orgId);
@@ -39,8 +42,9 @@ export const SelectOrgPage: FC<Props> = ({ setUserOrganization }) => {
   };
 
   useAsync(async () => {
-    setOrgs(await getUserOrgs());
+    setOrgs(await getUserOrganizations());
   }, []);
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>
