@@ -3,7 +3,7 @@ import { Button, CodeEditor, Table, useStyles, Field } from '@grafana/ui';
 import { ChannelFrame, Rule } from './types';
 import { getBackendSrv, config } from '@grafana/runtime';
 import { css } from '@emotion/css';
-import { getDisplayProcessor, GrafanaTheme, StreamingDataFrame } from '@grafana/data';
+import { dataFrameFromJSON, getDisplayProcessor, GrafanaTheme } from '@grafana/data';
 
 interface Props {
   rule: Rule;
@@ -30,7 +30,7 @@ export const RuleTest: React.FC<Props> = (props) => {
         if (t) {
           setResponse(
             t.map((f) => {
-              const frame = new StreamingDataFrame(f.frame);
+              const frame = dataFrameFromJSON(f.frame);
               for (const field of frame.fields) {
                 field.display = getDisplayProcessor({ field, theme: config.theme2 });
               }
