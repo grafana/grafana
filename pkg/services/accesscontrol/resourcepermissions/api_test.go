@@ -220,7 +220,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			},
 		},
 		{
-			desc:           "should set return http 400 for invalid built in role",
+			desc:           "should return http 400 for invalid built in role",
 			resourceID:     "1",
 			builtInRole:    "Invalid",
 			expectedStatus: http.StatusBadRequest,
