@@ -53,6 +53,7 @@ export const TimeZonePicker: React.FC<Props> = (props) => {
 
   return (
     <Select
+      menuShouldPortal={true}
       inputId={inputId}
       value={selected}
       placeholder="Type to search (country, city, abbreviation)"
