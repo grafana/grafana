@@ -27,10 +27,11 @@ type SubscribeEvent struct {
 
 // SubscribeReply is a reaction to SubscribeEvent.
 type SubscribeReply struct {
-	Presence  bool            `json:"presence,omitempty"`
-	JoinLeave bool            `json:"joinLeave,omitempty"`
-	Recover   bool            `json:"recover,omitempty"`
-	Data      json.RawMessage `json:"data,omitempty"`
+	Presence     bool            `json:"presence,omitempty"`
+	JoinLeave    bool            `json:"joinLeave,omitempty"`
+	Recover      bool            `json:"recover,omitempty"`
+	Data         json.RawMessage `json:"data,omitempty"`
+	LeadershipID string          `json:"leadershipId"`
 }
 
 // PublishEvent contains publication data.

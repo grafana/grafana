@@ -20,6 +20,10 @@ type RedisManager struct {
 	getOrCreateScript *redis.Script
 }
 
+const (
+	leaderTTLSeconds = 10
+)
+
 // KEYS[1] - channel hash key
 // ARGV[1] - hash key expire seconds
 // ARGV[2] - current node ID
@@ -44,7 +48,7 @@ func NewRedisManager(redisClient *redis.Client) *RedisManager {
 }
 
 func (m *RedisManager) GetOrCreateLeader(ctx context.Context, ch string, currentNodeID string, newLeadershipID string) (string, string, error) {
-	result, err := m.getOrCreateScript.Eval(ctx, m.redisClient, []string{ch}, 10, currentNodeID, newLeadershipID).StringSlice()
+	result, err := m.getOrCreateScript.Eval(ctx, m.redisClient, []string{ch}, leaderTTLSeconds, currentNodeID, newLeadershipID).StringSlice()
 	if err != nil {
 		return "", "", err
 	}
@@ -69,7 +73,7 @@ func (m *RedisManager) GetLeader(ctx context.Context, ch string) (bool, string, 
 }
 
 func (m *RedisManager) TouchLeader(ctx context.Context, ch string, currentNodeID string, currentLeadershipID string) (bool, error) {
-	return m.redisClient.Expire(ctx, ch, 10*time.Second).Result()
+	return m.redisClient.Expire(ctx, ch, leaderTTLSeconds*time.Second).Result()
 }
 
 func (m *RedisManager) CleanLeader(ctx context.Context, ch string) error {

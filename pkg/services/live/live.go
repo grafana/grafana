@@ -705,27 +705,13 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 	}
 	logger.Debug("Client subscribed", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 
-	if g.leaderManager != nil && (strings.Contains(e.Channel, "plugin") || strings.Contains(e.Channel, "ds")) {
-		go func() {
-			for {
-				select {
-				case <-client.Context().Done():
-					return
-				case <-time.After(20 * time.Second):
-					// TODO: orgID?
-					ok, _, _, err := g.leaderManager.GetLeader(client.Context(), e.Channel)
-					if err != nil {
-						logger.Error("Error getting leader", "error", err, "channel", e.Channel)
-						continue
-					}
-					if !ok {
-						client.Disconnect(centrifuge.DisconnectForceReconnect)
-						return
-					}
-					logger.Debug("Subscription leader exists", "channel", e.Channel)
-				}
-			}
-		}()
+	parsedChannel, _ := live.ParseChannel(channel)
+	if g.leaderManager != nil && (parsedChannel.Scope == live.ScopePlugin || parsedChannel.Scope == live.ScopeDatasource) {
+		if reply.LeadershipID == "" {
+			logger.Error("No leadership ID found in subscribe reply", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		}
+		go g.watchChannelLeader(client, e.Channel, reply.LeadershipID)
 	}
 
 	return centrifuge.SubscribeReply{
@@ -736,6 +722,32 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 			Data:      reply.Data,
 		},
 	}, nil
+}
+
+func (g *GrafanaLive) watchChannelLeader(client *centrifuge.Client, orgChannel string, leadershipID string) {
+	for {
+		select {
+		case <-client.Context().Done():
+			return
+		case <-time.After(10 * time.Second):
+			ok, _, currentLeadershipID, err := g.leaderManager.GetLeader(client.Context(), orgChannel)
+			if err != nil {
+				logger.Error("Error getting leader", "error", err, "channel", orgChannel)
+				continue
+			}
+			if !ok {
+				logger.Debug("Subscription leader not found", "channel", orgChannel)
+				client.Disconnect(centrifuge.DisconnectForceReconnect)
+				return
+			}
+			if leadershipID != currentLeadershipID {
+				logger.Debug("Subscription leadership ID mismatch", "channel", orgChannel)
+				client.Disconnect(centrifuge.DisconnectForceReconnect)
+				return
+			}
+			logger.Debug("Subscription leader exists", "channel", orgChannel)
+		}
+	}
 }
 
 func (g *GrafanaLive) handleOnPublish(client *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {

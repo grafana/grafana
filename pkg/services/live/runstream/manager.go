@@ -84,7 +84,7 @@ func WithCheckConfig(interval time.Duration, maxChecks int) ManagerOption {
 const (
 	defaultCheckInterval           = 5 * time.Second
 	defaultDatasourceCheckInterval = 60 * time.Second
-	defaultLeaderTouchInterval     = 5 * time.Second
+	defaultLeaderTouchInterval     = 3 * time.Second
 	defaultMaxChecks               = 3
 )
 
