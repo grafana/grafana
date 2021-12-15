@@ -9,16 +9,20 @@ import {
   makeClassES5Compatible,
   DataFrame,
   parseLiveChannelAddress,
-  StreamingFrameOptions,
-  StreamingFrameAction,
   getDataSourceRef,
   DataSourceRef,
   dataFrameToJSON,
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
+import {
+  getBackendSrv,
+  getDataSourceSrv,
+  getGrafanaLiveSrv,
+  StreamingFrameOptions,
+  StreamingFrameAction,
+} from '../services';
 import { config } from '../config';
-import { getBackendSrv, getDataSourceSrv, getGrafanaLiveSrv } from '../services';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
 /**
@@ -259,7 +263,7 @@ class DataSourceWithBackend<
 export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
   rsp: DataQueryResponse,
   req: DataQueryRequest<TQuery>,
-  getter: (req: DataQueryRequest<TQuery>, frame: DataFrame) => StreamingFrameOptions
+  getter: (req: DataQueryRequest<TQuery>, frame: DataFrame) => Partial<StreamingFrameOptions>
 ): Observable<DataQueryResponse> {
   const live = getGrafanaLiveSrv();
   if (!live) {
@@ -300,22 +304,22 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
 export type StreamOptionsProvider<TQuery extends DataQuery = DataQuery> = (
   request: DataQueryRequest<TQuery>,
   frame: DataFrame
-) => StreamingFrameOptions;
+) => Partial<StreamingFrameOptions>;
 
 /**
  * @public
  */
 export const standardStreamOptionsProvider: StreamOptionsProvider = (request: DataQueryRequest, frame: DataFrame) => {
-  const buffer: StreamingFrameOptions = {
+  const opts: Partial<StreamingFrameOptions> = {
     maxLength: request.maxDataPoints ?? 500,
     action: StreamingFrameAction.Append,
   };
 
   // For recent queries, clamp to the current time range
   if (request.rangeRaw?.to === 'now') {
-    buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+    opts.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
   }
-  return buffer;
+  return opts;
 };
 
 //@ts-ignore

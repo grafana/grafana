@@ -67,8 +67,8 @@ describe('Lookup gazetteer', () => {
                 -80.891064,
                 -100.891064,
                 -111.891064,
-                undefined,
-                undefined,
+                ,
+                ,
               ],
             },
             Object {
@@ -79,8 +79,8 @@ describe('Lookup gazetteer', () => {
                 12.448457,
                 24.448457,
                 33.448457,
-                undefined,
-                undefined,
+                ,
+                ,
               ],
             },
             Object {

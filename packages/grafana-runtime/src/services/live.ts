@@ -5,7 +5,6 @@ import {
   LiveChannelAddress,
   LiveChannelEvent,
   LiveChannelPresenceStatus,
-  StreamingFrameOptions,
 } from '@grafana/data';
 import { Observable } from 'rxjs';
 
@@ -17,13 +16,32 @@ export interface LiveDataFilter {
 }
 
 /**
+ * Indicate if the frame is appened or replace
+ *
+ * @alpha
+ */
+export enum StreamingFrameAction {
+  Append = 'append',
+  Replace = 'replace',
+}
+
+/**
+ * @alpha
+ */
+export interface StreamingFrameOptions {
+  maxLength: number; // 1000
+  maxDelta: number; // how long to keep things
+  action: StreamingFrameAction; // default will append
+}
+
+/**
  * @alpha
  */
 export interface LiveDataStreamOptions {
   addr: LiveChannelAddress;
   frame?: DataFrameJSON; // initial results
   key?: string;
-  buffer?: StreamingFrameOptions;
+  buffer?: Partial<StreamingFrameOptions>;
   filter?: LiveDataFilter;
 }
 

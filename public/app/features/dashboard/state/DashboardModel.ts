@@ -49,11 +49,7 @@ import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { Subscription } from 'rxjs';
 import { appEvents } from '../../../core/core';
-import {
-  VariablesChanged,
-  VariablesChangedInUrl,
-  VariablesFinishedProcessingTimeRangeChange,
-} from '../../variables/types';
+import { VariablesChanged, VariablesChangedEvent, VariablesChangedInUrl } from '../../variables/types';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -182,12 +178,6 @@ export class DashboardModel {
     this.appEventsSubscription = new Subscription();
     this.lastRefresh = Date.now();
     this.appEventsSubscription.add(appEvents.subscribe(VariablesChanged, this.variablesChangedHandler.bind(this)));
-    this.appEventsSubscription.add(
-      appEvents.subscribe(
-        VariablesFinishedProcessingTimeRangeChange,
-        this.variablesFinishedProcessingTimeRangeChangeHandler.bind(this)
-      )
-    );
     this.appEventsSubscription.add(
       appEvents.subscribe(VariablesChangedInUrl, this.variablesChangedInUrlHandler.bind(this))
     );
@@ -378,12 +368,12 @@ export class DashboardModel {
     dispatch(onTimeRangeUpdated(timeRange));
   }
 
-  startRefresh(affectedPanelIds?: number[]) {
+  startRefresh(event: VariablesChangedEvent = { refreshAll: true, panelIds: [] }) {
     this.events.publish(new RefreshEvent());
     this.lastRefresh = Date.now();
 
     if (this.panelInEdit) {
-      if (!affectedPanelIds || affectedPanelIds.includes(this.panelInEdit.id)) {
+      if (event.refreshAll || event.panelIds.includes(this.panelInEdit.id)) {
         this.panelInEdit.refresh();
         return;
       }
@@ -391,7 +381,7 @@ export class DashboardModel {
 
     for (const panel of this.panels) {
       if (!this.otherPanelInFullscreen(panel)) {
-        if (!affectedPanelIds || affectedPanelIds.includes(panel.id)) {
+        if (event.refreshAll || event.panelIds.includes(panel.id)) {
           panel.refresh();
         }
       }
@@ -446,7 +436,7 @@ export class DashboardModel {
       return;
     }
 
-    this.startRefresh(this.panelsAffectedByVariableChange);
+    this.startRefresh({ panelIds: this.panelsAffectedByVariableChange, refreshAll: false });
     this.panelsAffectedByVariableChange = null;
   }
 
@@ -1218,24 +1208,10 @@ export class DashboardModel {
   }
 
   private variablesChangedHandler(event: VariablesChanged) {
-    this.variablesChangedBaseHandler(event, true);
-  }
+    this.processRepeats();
 
-  private variablesFinishedProcessingTimeRangeChangeHandler(event: VariablesFinishedProcessingTimeRangeChange) {
-    this.variablesChangedBaseHandler(event);
-  }
-
-  private variablesChangedBaseHandler(
-    event: VariablesChanged | VariablesFinishedProcessingTimeRangeChange,
-    processRepeats = false
-  ) {
-    if (processRepeats) {
-      this.processRepeats();
-    }
-
-    if (!event.payload.panelIds || getTimeSrv().isRefreshOutsideThreshold(this.lastRefresh)) {
-      // passing undefined in panelIds means we want to update all panels
-      this.startRefresh(undefined);
+    if (event.payload.refreshAll || getTimeSrv().isRefreshOutsideThreshold(this.lastRefresh)) {
+      this.startRefresh({ refreshAll: true, panelIds: [] });
       return;
     }
 
@@ -1245,11 +1221,11 @@ export class DashboardModel {
       );
     }
 
-    this.startRefresh(event.payload.panelIds);
+    this.startRefresh(event.payload);
   }
 
   private variablesChangedInUrlHandler(event: VariablesChangedInUrl) {
     this.templateVariableValueUpdated();
-    this.startRefresh(event.payload.panelIds);
+    this.startRefresh(event.payload);
   }
 }

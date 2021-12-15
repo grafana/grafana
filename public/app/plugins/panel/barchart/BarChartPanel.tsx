@@ -5,16 +5,17 @@ import { measureText, TooltipPlugin, UPLOT_AXIS_FONT_SIZE, useTheme2 } from '@gr
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
 import { prepareGraphableFrames } from './utils';
+import { PanelDataErrorView } from '@grafana/runtime';
 
 interface Props extends PanelProps<BarChartOptions> {}
 
 /**
  * @alpha
  */
-export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone }) => {
+export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone, id }) => {
   const theme = useTheme2();
 
-  const { frames, warn } = useMemo(() => prepareGraphableFrames(data?.series, theme, options), [data, theme, options]);
+  const frames = useMemo(() => prepareGraphableFrames(data?.series, theme, options), [data, theme, options]);
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
       return width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;
@@ -48,12 +49,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     return options.tooltip;
   }, [options.tooltip, options.stacking]);
 
-  if (!frames || warn) {
-    return (
-      <div className="panel-empty">
-        <p>{warn ?? 'No data found in response'}</p>
-      </div>
-    );
+  if (!frames) {
+    return <PanelDataErrorView panelId={id} data={data} needsStringField={true} needsNumberField={true} />;
   }
 
   return (

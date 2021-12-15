@@ -1,6 +1,7 @@
 package teamguardian
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -30,19 +31,19 @@ func TestUpdateTeam(t *testing.T) {
 
 		t.Run("Given an editor and a team he isn't a member of", func(t *testing.T) {
 			t.Run("Should not be able to update the team", func(t *testing.T) {
-				bus.AddHandler("test", func(cmd *models.GetTeamMembersQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetTeamMembersQuery) error {
 					cmd.Result = []*models.TeamMemberDTO{}
 					return nil
 				})
 
-				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
+				err := CanAdmin(context.Background(), bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
 				require.Equal(t, models.ErrNotAllowedToUpdateTeam, err)
 			})
 		})
 
 		t.Run("Given an editor and a team he is an admin in", func(t *testing.T) {
 			t.Run("Should be able to update the team", func(t *testing.T) {
-				bus.AddHandler("test", func(cmd *models.GetTeamMembersQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetTeamMembersQuery) error {
 					cmd.Result = []*models.TeamMemberDTO{{
 						OrgId:      testTeam.OrgId,
 						TeamId:     testTeam.Id,
@@ -52,7 +53,7 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
+				err := CanAdmin(context.Background(), bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
 				require.NoError(t, err)
 			})
 		})
@@ -64,7 +65,7 @@ func TestUpdateTeam(t *testing.T) {
 			}
 
 			t.Run("Shouldn't be able to update the team", func(t *testing.T) {
-				bus.AddHandler("test", func(cmd *models.GetTeamMembersQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetTeamMembersQuery) error {
 					cmd.Result = []*models.TeamMemberDTO{{
 						OrgId:      testTeamOtherOrg.OrgId,
 						TeamId:     testTeamOtherOrg.Id,
@@ -74,14 +75,14 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanAdmin(bus.GetBus(), testTeamOtherOrg.OrgId, testTeamOtherOrg.Id, &editor)
+				err := CanAdmin(context.Background(), bus.GetBus(), testTeamOtherOrg.OrgId, testTeamOtherOrg.Id, &editor)
 				require.Equal(t, models.ErrNotAllowedToUpdateTeamInDifferentOrg, err)
 			})
 		})
 
 		t.Run("Given an org admin and a team", func(t *testing.T) {
 			t.Run("Should be able to update the team", func(t *testing.T) {
-				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &admin)
+				err := CanAdmin(context.Background(), bus.GetBus(), testTeam.OrgId, testTeam.Id, &admin)
 				require.NoError(t, err)
 			})
 		})
