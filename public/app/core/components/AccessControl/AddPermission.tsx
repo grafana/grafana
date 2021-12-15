@@ -61,7 +61,7 @@ export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, o
               aria-label="Role to add new permission to"
               value={target}
               options={targetOptions}
-              onChange={(v) => setPermissionTarget(v.value as PermissionTarget)}
+              onChange={(v) => setPermissionTarget(v.value!)}
               menuShouldPortal
             />
 
