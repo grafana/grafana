@@ -12,7 +12,7 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package macaron
+package web
 
 import (
 	urlpkg "net/url"
@@ -338,6 +338,7 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params map[strin
 				params["*"+strconv.Itoa(globLevel)] = unescapedSegment
 				return handle, true
 			}
+		default: // ignore
 		}
 	}
 

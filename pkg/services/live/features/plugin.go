@@ -103,6 +103,7 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 	resp, err := r.handler.SubscribeStream(ctx, &backend.SubscribeStreamRequest{
 		PluginContext: pCtx,
 		Path:          r.path,
+		Data:          e.Data,
 	})
 	if err != nil {
 		logger.Error("Plugin OnSubscribe call error", "error", err, "path", r.path)
@@ -112,7 +113,7 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 		return models.SubscribeReply{}, resp.Status, nil
 	}
 
-	submitResult, err := r.runStreamManager.SubmitStream(ctx, user, orgchannel.PrependOrgID(user.OrgId, e.Channel), r.path, pCtx, r.handler, e.LeadershipID, false)
+	submitResult, err := r.runStreamManager.SubmitStream(ctx, user, orgchannel.PrependOrgID(user.OrgId, e.Channel), r.path, pCtx, e.Data, r.handler, e.LeadershipID, false)
 	if err != nil {
 		logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
 		return models.SubscribeReply{}, 0, centrifuge.ErrorInternal

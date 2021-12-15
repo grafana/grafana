@@ -18,6 +18,7 @@ type ChannelClientCount func(orgID int64, channel string) (int, error)
 type SubscribeEvent struct {
 	Channel string
 	Path    string
+	Data    json.RawMessage
 
 	// TODO: mostly hack for now to re-use plugin OnSubscribe implementation.
 	OnLeader     bool

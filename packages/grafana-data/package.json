@@ -45,7 +45,7 @@
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@rollup/plugin-commonjs": "21.0.1",
     "@rollup/plugin-json": "4.1.0",
-    "@rollup/plugin-node-resolve": "13.0.6",
+    "@rollup/plugin-node-resolve": "13.1.1",
     "@swc/helpers": "0.3.2",
     "@testing-library/dom": "8.11.1",
     "@testing-library/jest-dom": "5.16.1",

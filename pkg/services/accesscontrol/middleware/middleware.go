@@ -137,3 +137,22 @@ func UseOrgFromContextParams(c *models.ReqContext) (int64, error) {
 func UseGlobalOrg(c *models.ReqContext) (int64, error) {
 	return accesscontrol.GlobalOrgID, nil
 }
+
+func LoadPermissionsMiddleware(ac accesscontrol.AccessControl) web.Handler {
+	return func(c *models.ReqContext) {
+		if ac.IsDisabled() {
+			return
+		}
+
+		permissions, err := ac.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+		if err != nil {
+			c.JsonApiErr(http.StatusForbidden, "", err)
+			return
+		}
+
+		if c.SignedInUser.Permissions == nil {
+			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+		}
+		c.SignedInUser.Permissions[c.OrgId] = accesscontrol.GroupScopesByAction(permissions)
+	}
+}
