@@ -15,6 +15,10 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
 }
 
+export function getThumbnailURL(uid: string, isLight?: boolean) {
+  return `/api/dashboards/uid/${uid}/img/thumb/${isLight ? 'light' : 'dark'}`;
+}
+
 export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
   const NUM_IMAGE_RETRIES = 5;
   const IMAGE_RETRY_DELAY = 10000;
@@ -48,8 +52,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   });
 
   const theme = useTheme2();
-  const themeId = theme.isDark ? 'dark' : 'light';
-  const imageSrc = `/preview/dash/${item.uid}/thumb/${themeId}`;
+  const imageSrc = getThumbnailURL(item.uid!, theme.isLight);
   const styles = getStyles(
     theme,
     markerElement?.getBoundingClientRect().width,

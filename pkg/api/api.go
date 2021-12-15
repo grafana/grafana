@@ -327,6 +327,11 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Get("/uid/:uid", routing.Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/uid/:uid", routing.Wrap(hs.DeleteDashboardByUID))
 
+			if hs.PreviewService != nil {
+				dashboardRoute.Get("/uid/:uid/img/:size/:theme", hs.PreviewService.GetImage)
+				dashboardRoute.Post("/uid/:uid/img/:size/:theme", hs.PreviewService.SetImage)
+			}
+
 			dashboardRoute.Post("/calculate-diff", routing.Wrap(CalculateDashboardDiff))
 			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))
 
@@ -491,10 +496,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, hs.RenderToPng)
-
-	if hs.PreviewService != nil {
-		r.Get("/preview/dash/:uid/:size/:theme", hs.PreviewService.GetImage)
-	}
 
 	// grafana.net proxy
 	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)

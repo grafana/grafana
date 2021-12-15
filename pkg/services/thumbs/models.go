@@ -1,4 +1,4 @@
-package preview
+package thumbs
 
 import "encoding/json"
 

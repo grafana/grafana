@@ -86,9 +86,6 @@ export const CrawlerStatus = () => {
 
     return (
       <div className={styles.running}>
-        {status.lastItem && (
-          <img style={{ float: 'right' }} src={`/preview/dash/${status.lastItem.uid}/thumb/${status.theme}`} />
-        )}
         <ul>
           <li>
             {status.index} / {status.count} (recieved: {status.received})
