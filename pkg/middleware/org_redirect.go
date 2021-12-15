@@ -44,7 +44,13 @@ func OrgRedirect(cfg *setting.Cfg) web.Handler {
 			return
 		}
 
-		newURL := fmt.Sprintf("%s%s?%s", cfg.AppURL, strings.TrimPrefix(c.Req.URL.Path, "/"), c.Req.URL.Query().Encode())
+		var queryString string = c.Req.URL.Query().Encode()
+		if strings.Contains(queryString, "kiosk=") && !strings.Contains(queryString, "kiosk=tv") {
+			queryString = strings.Replace(queryString, "kiosk=", "kiosk", -1)
+		}
+
+		newURL := fmt.Sprintf("%s%s?%s", cfg.AppURL, strings.TrimPrefix(c.Req.URL.Path, "/"), queryString)
+
 		c.Redirect(newURL, 302)
 	}
 }
