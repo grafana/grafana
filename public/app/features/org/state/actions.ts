@@ -2,6 +2,7 @@ import { ThunkResult } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
 import { organizationLoaded } from './reducers';
 import { updateConfigurationSubtitle } from 'app/core/actions';
+import { getConfig } from 'app/core/config';
 
 type OrganizationDependencies = { getBackendSrv: typeof getBackendSrv };
 
@@ -26,5 +27,28 @@ export function updateOrganization(
 
     dispatch(updateConfigurationSubtitle(organization.name));
     dispatch(loadOrganization(dependencies));
+  };
+}
+
+export function setUserOrganization(
+  orgId: number,
+  dependencies: OrganizationDependencies = { getBackendSrv: getBackendSrv }
+): ThunkResult<any> {
+  return async (dispatch) => {
+    const organizationResponse = await dependencies.getBackendSrv().post('/api/user/using/' + orgId);
+
+    dispatch(updateConfigurationSubtitle(organizationResponse.name));
+  };
+}
+
+export function createOrganization(
+  newOrg: { name: string },
+  dependencies: OrganizationDependencies = { getBackendSrv: getBackendSrv }
+): ThunkResult<any> {
+  return async (dispatch) => {
+    const result = await dependencies.getBackendSrv().post('/api/orgs/', newOrg);
+
+    dispatch(setUserOrganization(result.orgId));
+    window.location.href = getConfig().appSubUrl + '/org';
   };
 }
