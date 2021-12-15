@@ -16,10 +16,10 @@ export interface Props {
 
 export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, onCancel }: Props) => {
   const [target, setPermissionTarget] = useState<PermissionTarget>(PermissionTarget.User);
-  const [teamId, setTeamId] = useState<number>(0);
-  const [userId, setUserId] = useState<number>(0);
-  const [builtInRole, setBuiltinRole] = useState<string>('');
-  const [permission, setPermission] = useState<string>('');
+  const [teamId, setTeamId] = useState(0);
+  const [userId, setUserId] = useState(0);
+  const [builtInRole, setBuiltinRole] = useState('');
+  const [permission, setPermission] = useState('');
 
   const targetOptions = useMemo(() => {
     const options = [];
