@@ -71,7 +71,6 @@ These examples show how often and when reminders are sent for a triggered alert.
 | Threema                                       | `threema`                 | yes, external only | no                       |
 | VictorOps                                     | `victorops`               | yes, external only | yes                      |
 | [Webhook](#webhook)                           | `webhook`                 | yes, external only | yes                      |
-| [WeCom](#wecom)                               | `wecom`                   | yes, external only | no                       |
 
 ### Email
 
