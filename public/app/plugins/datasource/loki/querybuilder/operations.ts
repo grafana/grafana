@@ -8,21 +8,22 @@ import {
   QueryBuilderOperationParamDef,
   VisualQueryModeller,
 } from '../../prometheus/querybuilder/shared/types';
-import { LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
+import { LokiOperationId, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [
-    createRangeOperation('rate'),
-    createRangeOperation('count_over_time'),
-    createRangeOperation('bytes_rate'),
-    createRangeOperation('bytes_over_time'),
-    createRangeOperation('absent_over_time'),
-    createAggregationOperation('sum'),
-    createAggregationOperation('avg'),
-    createAggregationOperation('min'),
-    createAggregationOperation('max'),
+    createRangeOperation(LokiOperationId.Rate),
+    createRangeOperation(LokiOperationId.CountOverTime),
+    createRangeOperation(LokiOperationId.SumOverTime),
+    createRangeOperation(LokiOperationId.BytesRate),
+    createRangeOperation(LokiOperationId.BytesOverTime),
+    createRangeOperation(LokiOperationId.AbsentOverTime),
+    createAggregationOperation(LokiOperationId.Sum),
+    createAggregationOperation(LokiOperationId.Avg),
+    createAggregationOperation(LokiOperationId.Min),
+    createAggregationOperation(LokiOperationId.Max),
     {
-      id: 'json',
+      id: LokiOperationId.Json,
       name: 'Json',
       params: [],
       defaultParams: [],
@@ -32,7 +33,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       addOperationHandler: addLokiOperation,
     },
     {
-      id: 'logfmt',
+      id: LokiOperationId.Logfmt,
       name: 'Logfmt',
       params: [],
       defaultParams: [],
@@ -42,7 +43,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       addOperationHandler: addLokiOperation,
     },
     {
-      id: '__line_contains',
+      id: LokiOperationId.LineContains,
       name: 'Line contains',
       params: [{ name: 'String', type: 'string' }],
       defaultParams: [''],
@@ -52,7 +53,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       addOperationHandler: addLokiOperation,
     },
     {
-      id: '__line_contains_not',
+      id: LokiOperationId.LineContainsNot,
       name: 'Line does not contain',
       params: [{ name: 'String', type: 'string' }],
       defaultParams: [''],
@@ -62,7 +63,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       addOperationHandler: addLokiOperation,
     },
     {
-      id: '__line_matches_regex',
+      id: LokiOperationId.LineMatchesRegex,
       name: 'Line contains regex match',
       params: [{ name: 'Regex', type: 'string' }],
       defaultParams: [''],
@@ -72,7 +73,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       addOperationHandler: addLokiOperation,
     },
     {
-      id: '__line_matches_regex_not',
+      id: LokiOperationId.LineMatchesRegexNot,
       name: 'Line does not match regex',
       params: [{ name: 'Regex', type: 'string' }],
       defaultParams: [''],
@@ -82,7 +83,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       addOperationHandler: addLokiOperation,
     },
     {
-      id: '__label_filter',
+      id: LokiOperationId.LabelFilter,
       name: 'Label filter expression',
       params: [
         { name: 'Label', type: 'string' },
@@ -92,6 +93,15 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: ['', '=', ''],
       category: LokiVisualQueryOperationCategory.LabelFilters,
       renderer: labelFilterRenderer,
+      addOperationHandler: addLokiOperation,
+    },
+    {
+      id: LokiOperationId.LabelFilterNoErrors,
+      name: 'No formatting errors',
+      params: [],
+      defaultParams: ['', '=', ''],
+      category: LokiVisualQueryOperationCategory.LabelFilters,
+      renderer: (model, def, innerExpr) => `${innerExpr} | __error__=""`,
       addOperationHandler: addLokiOperation,
     },
   ];

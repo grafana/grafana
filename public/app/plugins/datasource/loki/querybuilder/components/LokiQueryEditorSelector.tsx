@@ -64,8 +64,13 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           value={null}
           placeholder="Query patterns"
           allowCustomValue
-          onChange={({ value }) => {}}
-          options={[]}
+          onChange={({ value }) => {
+            onChangeViewModel({
+              ...visualQuery,
+              operations: value?.operations!,
+            });
+          }}
+          options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
         />
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>

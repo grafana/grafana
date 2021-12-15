@@ -1,4 +1,5 @@
 import { LokiQueryModeller } from './LokiQueryModeller';
+import { LokiOperationId } from './types';
 
 describe('LokiQueryModeller', () => {
   const modeller = new LokiQueryModeller();
@@ -16,7 +17,7 @@ describe('LokiQueryModeller', () => {
     expect(
       modeller.renderQuery({
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
-        operations: [{ id: 'json', params: [] }],
+        operations: [{ id: LokiOperationId.Json, params: [] }],
       })
     ).toBe('{app="grafana"} | json');
   });
@@ -25,7 +26,7 @@ describe('LokiQueryModeller', () => {
     expect(
       modeller.renderQuery({
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
-        operations: [{ id: 'logfmt', params: [] }],
+        operations: [{ id: LokiOperationId.Logfmt, params: [] }],
       })
     ).toBe('{app="grafana"} | logfmt');
   });
@@ -34,7 +35,7 @@ describe('LokiQueryModeller', () => {
     expect(
       modeller.renderQuery({
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
-        operations: [{ id: '__line_contains', params: ['error'] }],
+        operations: [{ id: LokiOperationId.LineContains, params: ['error'] }],
       })
     ).toBe('{app="grafana"} |= `error`');
   });
@@ -43,7 +44,7 @@ describe('LokiQueryModeller', () => {
     expect(
       modeller.renderQuery({
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
-        operations: [{ id: '__line_contains', params: [''] }],
+        operations: [{ id: LokiOperationId.LineContains, params: [''] }],
       })
     ).toBe('{app="grafana"}');
   });
@@ -52,7 +53,7 @@ describe('LokiQueryModeller', () => {
     expect(
       modeller.renderQuery({
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
-        operations: [{ id: '__line_contains_not', params: ['error'] }],
+        operations: [{ id: LokiOperationId.LineContainsNot, params: ['error'] }],
       })
     ).toBe('{app="grafana"} != `error`');
   });
@@ -61,7 +62,7 @@ describe('LokiQueryModeller', () => {
     expect(
       modeller.renderQuery({
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
-        operations: [{ id: '__line_matches_regex', params: ['error'] }],
+        operations: [{ id: LokiOperationId.LineMatchesRegex, params: ['error'] }],
       })
     ).toBe('{app="grafana"} |~ `error`');
   });
@@ -70,7 +71,7 @@ describe('LokiQueryModeller', () => {
     expect(
       modeller.renderQuery({
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
-        operations: [{ id: '__line_matches_regex_not', params: ['error'] }],
+        operations: [{ id: LokiOperationId.LineMatchesRegexNot, params: ['error'] }],
       })
     ).toBe('{app="grafana"} !~ `error`');
   });
@@ -79,7 +80,7 @@ describe('LokiQueryModeller', () => {
     expect(
       modeller.renderQuery({
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
-        operations: [{ id: '__label_filter', params: ['__error__', '=', 'value'] }],
+        operations: [{ id: LokiOperationId.LabelFilter, params: ['__error__', '=', 'value'] }],
       })
     ).toBe('{app="grafana"} | __error__="value"');
   });
@@ -88,9 +89,18 @@ describe('LokiQueryModeller', () => {
     expect(
       modeller.renderQuery({
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
-        operations: [{ id: '__label_filter', params: ['count', '>', 'value'] }],
+        operations: [{ id: LokiOperationId.LabelFilter, params: ['count', '>', 'value'] }],
       })
     ).toBe('{app="grafana"} | count > value');
+  });
+
+  it('Can query no formatting errors operation', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.LabelFilterNoErrors, params: [] }],
+      })
+    ).toBe('{app="grafana"} | __error__=""');
   });
 
   describe('On add operation handlers', () => {
