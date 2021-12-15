@@ -1,24 +1,10 @@
 import React, { FC } from 'react';
-import { getBackendSrv } from '@grafana/runtime';
 import Page from 'app/core/components/Page/Page';
 import { Button, Input, Field, Form } from '@grafana/ui';
 import { StoreState } from 'app/types';
 import { connect, ConnectedProps } from 'react-redux';
 import { getNavModel } from '../../core/selectors/navModel';
-import { createOrganization } from './state/actions';
-
-const validateOrg = async (orgName: string) => {
-  try {
-    await getBackendSrv().get(`api/orgs/name/${encodeURI(orgName)}`);
-  } catch (error) {
-    if (error.status === 404) {
-      error.isHandled = true;
-      return true;
-    }
-    return 'Something went wrong';
-  }
-  return 'Organization already exists';
-};
+import { createOrganization, validateOrganization } from './state/actions';
 
 const mapStateToProps = (state: StoreState) => {
   return { navModel: getNavModel(state.navIndex, 'global-orgs') };
@@ -26,6 +12,7 @@ const mapStateToProps = (state: StoreState) => {
 
 const mapDispatchToProps = {
   createOrganization,
+  validateOrganization,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -36,7 +23,7 @@ interface CreateOrgFormDTO {
   name: string;
 }
 
-export const NewOrgPage: FC<Props> = ({ navModel, createOrganization }) => {
+export const NewOrgPage: FC<Props> = ({ navModel, createOrganization, validateOrganization }) => {
   const createOrg = (newOrg: { name: string }) => {
     createOrganization(newOrg);
   };
@@ -61,7 +48,7 @@ export const NewOrgPage: FC<Props> = ({ navModel, createOrganization }) => {
                     placeholder="Org name"
                     {...register('name', {
                       required: 'Organization name is required',
-                      validate: async (orgName) => await validateOrg(orgName),
+                      validate: async (orgName) => await validateOrganization(orgName),
                     })}
                   />
                 </Field>
