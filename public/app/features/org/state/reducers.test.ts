@@ -16,7 +16,7 @@ describe('organizationReducer', () => {
         .whenActionIsDispatched(organizationLoaded({ id: 1, name: 'An org' }))
         .thenStateShouldEqual({
           organization: { id: 1, name: 'An org' },
-          userOrg: [],
+          userOrgs: [],
         });
     });
   });
@@ -28,7 +28,7 @@ describe('organizationReducer', () => {
         .whenActionIsDispatched(setOrganizationName('New Name'))
         .thenStateShouldEqual({
           organization: { id: 1, name: 'New Name' },
-          userOrg: [],
+          userOrgs: [],
         });
     });
   });
@@ -39,12 +39,12 @@ describe('organizationReducer', () => {
         .givenReducer(organizationReducer, {
           ...initialState,
           organization: { id: 1, name: 'An org' },
-          userOrg: [],
+          userOrgs: [],
         })
         .whenActionIsDispatched(userOrganizationsLoaded([{ orgId: 1, name: 'New org', role: OrgRole.Editor }]))
         .thenStateShouldEqual({
           organization: { id: 1, name: 'An org' },
-          userOrg: [{ orgId: 1, name: 'New org', role: OrgRole.Editor }],
+          userOrgs: [{ orgId: 1, name: 'New org', role: OrgRole.Editor }],
         });
     });
   });

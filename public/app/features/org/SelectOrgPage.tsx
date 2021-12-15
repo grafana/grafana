@@ -20,7 +20,7 @@ const navModel = {
 
 const mapStateToProps = (state: StoreState) => {
   return {
-    userOrgs: state.organization.userOrg,
+    userOrgs: state.organization.userOrgs,
   };
 };
 

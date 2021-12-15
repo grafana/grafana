@@ -4,7 +4,7 @@ import { Organization, OrganizationState, UserOrg } from 'app/types';
 
 export const initialState: OrganizationState = {
   organization: {} as Organization,
-  userOrg: [] as UserOrg[],
+  userOrgs: [] as UserOrg[],
 };
 
 const organizationSlice = createSlice({
@@ -18,7 +18,7 @@ const organizationSlice = createSlice({
       return { ...state, organization: { ...state.organization, name: action.payload } };
     },
     userOrganizationsLoaded: (state, action: PayloadAction<UserOrg[]>): OrganizationState => {
-      return { ...state, userOrg: action.payload };
+      return { ...state, userOrgs: action.payload };
     },
   },
 });

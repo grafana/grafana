@@ -7,5 +7,5 @@ export interface Organization {
 
 export interface OrganizationState {
   organization: Organization;
-  userOrg: UserOrg[];
+  userOrgs: UserOrg[];
 }
