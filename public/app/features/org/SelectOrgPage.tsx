@@ -6,8 +6,6 @@ import { useAsync } from 'react-use';
 import { Button, HorizontalGroup } from '@grafana/ui';
 import { setUserOrganization } from './state/actions';
 import { connect, ConnectedProps } from 'react-redux';
-import appEvents from 'app/core/app_events';
-import { AppEvents } from '@grafana/data';
 
 const navModel = {
   main: {
@@ -36,12 +34,8 @@ export const SelectOrgPage: FC<Props> = ({ setUserOrganization }) => {
   const [orgs, setOrgs] = useState<UserOrg[]>();
 
   const setUserOrg = async (org: UserOrg) => {
-    try {
-      await setUserOrganization(org.orgId);
-      window.location.href = config.appSubUrl + '/';
-    } catch (error) {
-      appEvents.emit(AppEvents.alertError, [error.data.error]);
-    }
+    await setUserOrganization(org.orgId);
+    window.location.href = config.appSubUrl + '/';
   };
 
   useAsync(async () => {

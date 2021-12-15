@@ -7,8 +7,6 @@ import { connect, ConnectedProps } from 'react-redux';
 import { getNavModel } from '../../core/selectors/navModel';
 import { createOrganization } from './state/actions';
 import { getConfig } from 'app/core/config';
-import appEvents from 'app/core/app_events';
-import { AppEvents } from '@grafana/data';
 
 const validateOrg = async (orgName: string) => {
   try {
@@ -41,12 +39,8 @@ interface CreateOrgFormDTO {
 
 export const NewOrgPage: FC<Props> = ({ navModel, createOrganization }) => {
   const createOrg = async (newOrg: { name: string }) => {
-    try {
-      await createOrganization(newOrg);
-      window.location.href = getConfig().appSubUrl + '/org';
-    } catch (error) {
-      appEvents.emit(AppEvents.alertError, [error.data.error]);
-    }
+    await createOrganization(newOrg);
+    window.location.href = getConfig().appSubUrl + '/org';
   };
 
   return (
