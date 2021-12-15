@@ -266,7 +266,7 @@ Grafana alert notifications can be sent to [Sensu](<(https://sensu.io)>) Go as e
 
 To set up WeCom, you must create a WeCom robot webhook. In WeCom PC Client:
 
-1. Right Click the group chat that you wanted to add the robot
+1. Click the "..." in the top right corner of the chat group that you wanted to add the robot
 2. Click "Add Group Robot", select "New Robot" and give your robot a name. Click "Add Robot"
 3. There should be a Webhook URL in the panel. Click "Copy URL" and paste it in Grafana WeCom setting page and click "finish"
 
