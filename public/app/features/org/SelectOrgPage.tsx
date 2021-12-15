@@ -34,7 +34,7 @@ export const SelectOrgPage: FC<Props> = ({ setUserOrganization }) => {
   const [orgs, setOrgs] = useState<UserOrg[]>();
 
   const setUserOrg = async (org: UserOrg) => {
-    setUserOrganization(org.orgId);
+    await setUserOrganization(org.orgId);
     window.location.href = config.appSubUrl + '/';
   };
 

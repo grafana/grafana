@@ -6,6 +6,9 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -16,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func TestTeamsNotifier(t *testing.T) {
+func TestWeComNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
@@ -43,25 +46,10 @@ func TestTeamsNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"@type":      "MessageCard",
-				"@context":   "http://schema.org/extensions",
-				"summary":    "[FIRING:1]  (val1)",
-				"title":      "[FIRING:1]  (val1)",
-				"themeColor": "#D63232",
-				"sections": []map[string]interface{}{
-					{
-						"title": "Details",
-						"text":  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
-					},
+				"markdown": map[string]interface{}{
+					"content": "# [FIRING:1]  (val1)\n**Firing**\n\nValue: <no value>\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n\n",
 				},
-				"potentialAction": []map[string]interface{}{
-					{
-						"@context": "http://schema.org",
-						"@type":    "OpenUri",
-						"name":     "View Rule",
-						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
-					},
-				},
+				"msgtype": "markdown",
 			},
 			expMsgError: nil,
 		}, {
@@ -84,31 +72,16 @@ func TestTeamsNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"@type":      "MessageCard",
-				"@context":   "http://schema.org/extensions",
-				"summary":    "[FIRING:2]  ",
-				"title":      "[FIRING:2]  ",
-				"themeColor": "#D63232",
-				"sections": []map[string]interface{}{
-					{
-						"title": "Details",
-						"text":  "2 alerts are firing, 0 are resolved",
-					},
+				"markdown": map[string]interface{}{
+					"content": "# [FIRING:2]  \n2 alerts are firing, 0 are resolved\n",
 				},
-				"potentialAction": []map[string]interface{}{
-					{
-						"@context": "http://schema.org",
-						"@type":    "OpenUri",
-						"name":     "View Rule",
-						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
-					},
-				},
+				"msgtype": "markdown",
 			},
 			expMsgError: nil,
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "teams_testing" of type "teams": could not find url property in settings`,
+			expInitError: `failed to validate receiver "wecom_testing" of type "wecom": could not find webhook URL in settings`,
 		},
 	}
 
@@ -118,14 +91,15 @@ func TestTeamsNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			m := &NotificationChannelConfig{
-				Name:     "teams_testing",
-				Type:     "teams",
+				Name:     "wecom_testing",
+				Type:     "wecom",
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewTeamsNotifier(m, tmpl)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			decryptFn := secretsService.GetDecryptedValue
+			pn, err := NewWeComNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
-				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
@@ -146,8 +120,8 @@ func TestTeamsNotifier(t *testing.T) {
 				require.Equal(t, c.expMsgError.Error(), err.Error())
 				return
 			}
-			require.True(t, ok)
 			require.NoError(t, err)
+			require.True(t, ok)
 
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
