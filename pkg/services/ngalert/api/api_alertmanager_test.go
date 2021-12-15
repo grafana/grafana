@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/stretchr/testify/require"
 )
 
@@ -213,7 +214,7 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	mam.Setup(2)
 	store.Setup(1)
 	store.Setup(2)
-	secrets := FakeSecretService{}
+	secrets := fakes.NewFakeSecretsService()
 	return AlertmanagerSrv{mam: mam, store: store, secrets: secrets}
 }
 
@@ -224,7 +225,7 @@ func createSutWithNonReadyAlertmanager(t *testing.T) AlertmanagerSrv {
 		alertmanagers: map[int64]Alertmanager{},
 	}
 	store := newFakeAlertingStore(t)
-	secrets := FakeSecretService{}
+	secrets := fakes.NewFakeSecretsService()
 	mam.Setup(1)
 	store.Setup(1)
 	return AlertmanagerSrv{mam: mam, store: store, secrets: secrets}

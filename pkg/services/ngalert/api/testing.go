@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 type FakeAlertmanagerProvider struct {
@@ -55,16 +54,6 @@ func (f FakeAlertingStore) GetLatestAlertmanagerConfiguration(query *models.GetL
 		return nil
 	}
 	return store.ErrNoAlertmanagerConfiguration
-}
-
-type FakeSecretService struct{}
-
-func (f FakeSecretService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
-	return payload, nil
-}
-
-func (f FakeSecretService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
-	return payload, nil
 }
 
 type FakeAlertmanager struct{}
