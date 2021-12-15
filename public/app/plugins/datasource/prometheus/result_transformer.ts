@@ -17,7 +17,6 @@ import {
   DataQueryRequest,
   PreferredVisualisationType,
   CoreApp,
-  renderLegendFormat,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { partition, groupBy } from 'lodash';
@@ -34,6 +33,7 @@ import {
   PromValue,
   TransformOptions,
 } from './types';
+import { renderLegendFormat } from './legend';
 
 const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
 const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
