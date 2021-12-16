@@ -33,7 +33,7 @@ export const PermissionListItem = ({ item, permissionLevels, canRemove, onRemove
       </Tooltip>
     </td>
     <td>
-      {item.managed ? (
+      {item.isManaged ? (
         <Button
           size="sm"
           icon="times"
