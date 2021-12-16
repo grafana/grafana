@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -20,7 +19,6 @@ type ServiceAccountsAPI struct {
 	service        serviceaccounts.Service
 	accesscontrol  accesscontrol.AccessControl
 	RouterRegister routing.RouteRegister
-	log            log.Logger
 	store          serviceaccounts.Store
 }
 
