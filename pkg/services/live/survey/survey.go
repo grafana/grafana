@@ -9,17 +9,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/live/orgchannel"
-
-	"github.com/grafana/grafana/pkg/services/live/leader"
-
-	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/live/leader"
+	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 )
 
