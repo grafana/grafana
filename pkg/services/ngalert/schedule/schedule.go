@@ -357,9 +357,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 			for _, item := range alertRules {
 				key := item.GetKey()
 				itemVersion := item.Version
-				ruleInfo, newRoutine := sch.registry.getOrCreateInfo(key, func() *alertRuleInfo {
-					return newAlertRuleInfo(ctx)
-				})
+				ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key)
 
 				// enforce minimum evaluation interval
 				if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
@@ -597,13 +595,13 @@ type alertRuleRegistry struct {
 
 // getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
 // Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
-func (r *alertRuleRegistry) getOrCreateInfo(key models.AlertRuleKey, createNew func() *alertRuleInfo) (*alertRuleInfo, bool) {
+func (r *alertRuleRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	info, ok := r.alertRuleInfo[key]
 	if !ok {
-		info = createNew()
+		info = newAlertRuleInfo(context)
 		r.alertRuleInfo[key] = info
 	}
 	return info, !ok
