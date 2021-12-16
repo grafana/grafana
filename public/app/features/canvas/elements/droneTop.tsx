@@ -3,9 +3,9 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { TextDimensionEditor } from 'app/features/dimensions/editors';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 import { CanvasElementItem, CanvasElementProps } from '../element';
-import { DimensionContext, TextDimensionConfig } from 'app/features/dimensions';
+import { DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
 
 interface DroneTopData {
   bRightRotorRPM?: number;
@@ -16,11 +16,11 @@ interface DroneTopData {
 }
 
 interface DroneTopConfig {
-  bRightRotorRPM?: TextDimensionConfig;
-  bLeftRotorRPM?: TextDimensionConfig;
-  fRightRotorRPM?: TextDimensionConfig;
-  fLeftRotorRPM?: TextDimensionConfig;
-  yawAngle?: TextDimensionConfig;
+  bRightRotorRPM?: ScalarDimensionConfig;
+  bLeftRotorRPM?: ScalarDimensionConfig;
+  fRightRotorRPM?: ScalarDimensionConfig;
+  fLeftRotorRPM?: ScalarDimensionConfig;
+  yawAngle?: ScalarDimensionConfig;
 }
 
 const DroneTopDisplay: FC<CanvasElementProps<DroneTopConfig, DroneTopData>> = (props) => {
@@ -99,11 +99,11 @@ export const droneTopItem: CanvasElementItem<any, any> = {
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: DroneTopConfig) => {
     const data: DroneTopData = {
-      bRightRotorRPM: cfg?.bRightRotorRPM ? Number(ctx.getText(cfg.bRightRotorRPM).value()) : 0,
-      bLeftRotorRPM: cfg?.bLeftRotorRPM ? Number(ctx.getText(cfg.bLeftRotorRPM).value()) : 0,
-      fRightRotorRPM: cfg?.fRightRotorRPM ? Number(ctx.getText(cfg.fRightRotorRPM).value()) : 0,
-      fLeftRotorRPM: cfg?.fLeftRotorRPM ? Number(ctx.getText(cfg.fLeftRotorRPM).value()) : 0,
-      yawAngle: cfg?.yawAngle ? Number(ctx.getText(cfg.yawAngle).value()) : 0,
+      bRightRotorRPM: cfg?.bRightRotorRPM ? ctx.getScalar(cfg.bRightRotorRPM).value() : 0,
+      bLeftRotorRPM: cfg?.bLeftRotorRPM ? ctx.getScalar(cfg.bLeftRotorRPM).value() : 0,
+      fRightRotorRPM: cfg?.fRightRotorRPM ? ctx.getScalar(cfg.fRightRotorRPM).value() : 0,
+      fLeftRotorRPM: cfg?.fLeftRotorRPM ? ctx.getScalar(cfg.fLeftRotorRPM).value() : 0,
+      yawAngle: cfg?.yawAngle ? ctx.getScalar(cfg.yawAngle).value() : 0,
     };
 
     return data;
@@ -117,35 +117,35 @@ export const droneTopItem: CanvasElementItem<any, any> = {
         id: 'yawAngle',
         path: 'config.yawAngle',
         name: 'Yaw Angle',
-        editor: TextDimensionEditor,
+        editor: ScalarDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'fRightRotorRPM',
         path: 'config.fRightRotorRPM',
         name: 'Front Right Rotor RPM',
-        editor: TextDimensionEditor,
+        editor: ScalarDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'fLeftRotorRPM',
         path: 'config.fLeftRotorRPM',
         name: 'Front Left Rotor RPM',
-        editor: TextDimensionEditor,
+        editor: ScalarDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'bRightRotorRPM',
         path: 'config.bRightRotorRPM',
         name: 'Back Right Rotor RPM',
-        editor: TextDimensionEditor,
+        editor: ScalarDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'bLeftRotorRPM',
         path: 'config.bLeftRotorRPM',
         name: 'Back Left Rotor RPM',
-        editor: TextDimensionEditor,
+        editor: ScalarDimensionEditor,
       });
   },
 };

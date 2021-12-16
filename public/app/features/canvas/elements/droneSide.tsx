@@ -3,16 +3,16 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { TextDimensionEditor } from 'app/features/dimensions/editors';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 import { CanvasElementItem, CanvasElementProps } from '../element';
-import { DimensionContext, TextDimensionConfig } from 'app/features/dimensions';
+import { DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
 
 interface DroneSideData {
   pitchAngle?: number;
 }
 
 interface DroneSideConfig {
-  pitchAngle?: TextDimensionConfig;
+  pitchAngle?: ScalarDimensionConfig;
 }
 
 const DroneSideDisplay: FC<CanvasElementProps<DroneSideConfig, DroneSideData>> = (props) => {
@@ -87,7 +87,7 @@ export const droneSideItem: CanvasElementItem<any, any> = {
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: DroneSideConfig) => {
     const data: DroneSideData = {
-      pitchAngle: cfg?.pitchAngle ? Number(ctx.getText(cfg.pitchAngle).value()) : 0,
+      pitchAngle: cfg?.pitchAngle ? ctx.getScalar(cfg.pitchAngle).value() : 0,
     };
 
     return data;
@@ -100,7 +100,7 @@ export const droneSideItem: CanvasElementItem<any, any> = {
       id: 'pitchAngle',
       path: 'config.pitchAngle',
       name: 'Pitch Angle',
-      editor: TextDimensionEditor,
+      editor: ScalarDimensionEditor,
     });
   },
 };

@@ -3,16 +3,16 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { TextDimensionEditor } from 'app/features/dimensions/editors';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 import { CanvasElementItem, CanvasElementProps } from '../element';
-import { DimensionContext, TextDimensionConfig } from 'app/features/dimensions';
+import { DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
 
 interface DroneFrontData {
   rollAngle?: number;
 }
 
 interface DroneFrontConfig {
-  rollAngle?: TextDimensionConfig;
+  rollAngle?: ScalarDimensionConfig;
 }
 
 const DroneFrontDisplay: FC<CanvasElementProps<DroneFrontConfig, DroneFrontData>> = (props) => {
@@ -88,7 +88,7 @@ export const droneFrontItem: CanvasElementItem<any, any> = {
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: DroneFrontConfig) => {
     const data: DroneFrontData = {
-      rollAngle: cfg?.rollAngle ? Number(ctx.getText(cfg.rollAngle).value()) : 0,
+      rollAngle: cfg?.rollAngle ? ctx.getScalar(cfg.rollAngle).value() : 0,
     };
 
     return data;
@@ -101,7 +101,7 @@ export const droneFrontItem: CanvasElementItem<any, any> = {
       id: 'rollAngle',
       path: 'config.rollAngle',
       name: 'Roll Angle',
-      editor: TextDimensionEditor,
+      editor: ScalarDimensionEditor,
     });
   },
 };
