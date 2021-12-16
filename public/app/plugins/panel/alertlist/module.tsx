@@ -154,12 +154,14 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     .addNumberInput({
       name: 'Max items',
       path: 'maxItems',
+      description: 'Maximum alerts to display',
       defaultValue: 20,
       category: ['Options'],
     })
     .addSelect({
       name: 'Sort order',
       path: 'sortOrder',
+      description: 'Sort order of alerts and alert instances',
       settings: {
         options: [
           { label: 'Alphabetical (asc)', value: SortOrder.AlphaAsc },
@@ -175,24 +177,35 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     .addBooleanSwitch({
       path: 'dashboardAlerts',
       name: 'Alerts from this dashboard',
+      description: 'Show alerts from this dashboard',
       defaultValue: false,
       category: ['Options'],
     })
     .addBooleanSwitch({
       path: 'showInstances',
       name: 'Show alert instances',
+      description: 'Show individual alert instances for multi-dimensional rules',
       defaultValue: false,
       category: ['Options'],
     })
     .addTextInput({
       path: 'alertName',
       name: 'Alert name',
+      description: 'Filter for alerts containing this text',
+      defaultValue: '',
+      category: ['Filter'],
+    })
+    .addTextInput({
+      path: 'alertInstanceLabelFilter',
+      name: 'Alert instance label',
+      description: 'Filter alert instances using label querying, ex: {severity="critical", instance=~"cluster-us-.+"}',
       defaultValue: '',
       category: ['Filter'],
     })
     .addCustomEditor({
       path: 'folder',
       name: 'Folder',
+      description: 'Filter for alerts in the selected folder',
       id: 'folder',
       defaultValue: null,
       editor: function RenderFolderPicker(props) {
@@ -212,19 +225,49 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       path: 'stateFilter.firing',
       name: 'Alerting',
       defaultValue: true,
-      category: ['State filter'],
+      category: ['Alert state filter'],
     })
     .addBooleanSwitch({
       path: 'stateFilter.pending',
       name: 'Pending',
       defaultValue: true,
-      category: ['State filter'],
+      category: ['Alert state filter'],
     })
     .addBooleanSwitch({
       path: 'stateFilter.inactive',
       name: 'Inactive',
       defaultValue: false,
-      category: ['State filter'],
+      category: ['Alert state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'alertInstanceStateFilter.Alerting',
+      name: 'Alerting',
+      defaultValue: true,
+      category: ['Alert instance state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'alertInstanceStateFilter.Pending',
+      name: 'Pending',
+      defaultValue: true,
+      category: ['Alert instance state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'alertInstanceStateFilter.NoData',
+      name: 'No Data',
+      defaultValue: false,
+      category: ['Alert instance state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'alertInstanceStateFilter.Normal',
+      name: 'Normal',
+      defaultValue: false,
+      category: ['Alert instance state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'alertInstanceStateFilter.Error',
+      name: 'Error',
+      defaultValue: true,
+      category: ['Alert instance state filter'],
     });
 });
 

@@ -2,12 +2,13 @@ package database
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type ServiceAccountsStoreImpl struct {
@@ -19,6 +20,21 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 	return &ServiceAccountsStoreImpl{
 		sqlStore: store,
 	}
+}
+
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa *serviceaccounts.CreateServiceaccountForm) (user *models.User, err error) {
+	// create a new service account - "user" with empty permissions
+	cmd := models.CreateUserCommand{
+		Login:            "Service-Account-" + uuid.New().String(),
+		Name:             sa.Name + "-Service-Account-" + uuid.New().String(),
+		OrgId:            sa.OrgID,
+		IsServiceAccount: true,
+	}
+	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create user: %v", err)
+	}
+	return newuser, nil
 }
 
 func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceaccountID int64) error {

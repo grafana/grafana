@@ -7,6 +7,7 @@ import { getModalStyles } from './getModalStyles';
 import { ModalHeader } from './ModalHeader';
 import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
+import { FocusScope } from '@react-aria/focus';
 
 export interface Props {
   /** @deprecated no longer used */
@@ -75,16 +76,18 @@ export function Modal(props: PropsWithChildren<Props>) {
         className={styles.modalBackdrop}
         onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
       />
-      <div className={cx(styles.modal, className)}>
-        <div className={headerClass}>
-          {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
-          {typeof title !== 'string' && title}
-          <div className={styles.modalHeaderClose}>
-            <IconButton aria-label="Close dialogue" surface="header" name="times" size="xl" onClick={onDismiss} />
+      <FocusScope contain autoFocus restoreFocus>
+        <div className={cx(styles.modal, className)}>
+          <div className={headerClass}>
+            {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
+            {typeof title !== 'string' && title}
+            <div className={styles.modalHeaderClose}>
+              <IconButton aria-label="Close dialogue" surface="header" name="times" size="xl" onClick={onDismiss} />
+            </div>
           </div>
+          <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
         </div>
-        <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
-      </div>
+      </FocusScope>
     </Portal>
   );
 }

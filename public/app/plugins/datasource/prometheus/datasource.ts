@@ -9,13 +9,17 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  DataSourceWithQueryExportSupport,
+  DataSourceWithQueryImportSupport,
   dateMath,
   DateTime,
+  AbstractQuery,
   LoadingState,
   rangeUtil,
   ScopedVars,
   TimeRange,
   DataFrame,
+  dateTime,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -34,7 +38,7 @@ import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { getInitHints, getQueryHints } from './query_hints';
-import { getOriginalMetricName, renderTemplate, transform, transformV2 } from './result_transformer';
+import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
@@ -50,11 +54,14 @@ import {
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
+import { renderLegendFormat } from './legend';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
-export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromOptions> {
+export class PrometheusDatasource
+  extends DataSourceWithBackend<PromQuery, PromOptions>
+  implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery> {
   type: string;
   editorSrc: string;
   ruleMappings: { [index: string]: string };
@@ -167,6 +174,14 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     }
 
     return getBackendSrv().fetch<T>(options);
+  }
+
+  async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<PromQuery[]> {
+    return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
+  }
+
+  async exportToAbstractQueries(queries: PromQuery[]): Promise<AbstractQuery[]> {
+    return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
   }
 
   // Use this for tab completion features, wont publish response to other components
@@ -299,21 +314,19 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     };
   };
 
-  shouldRunExemplarQuery(target: PromQuery): boolean {
-    /* We want to run exemplar query only for histogram metrics:
-    1. If we haven't processd histogram metrics yet, we need to check if expr includes "_bucket" which means that it is probably histogram metric (can rarely lead to false positive).
-    2. If we have processed histogram metrics, check if it is part of query expr.
-    */
+  shouldRunExemplarQuery(target: PromQuery, request: DataQueryRequest<PromQuery>): boolean {
     if (target.exemplar) {
-      const histogramMetrics = this.languageProvider.histogramMetrics;
+      // We check all already processed targets and only create exemplar target for not used metric names
+      const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
+      // Remove targets that weren't processed yet (in targets array they are after current target)
+      const currentTargetIdx = request.targets.findIndex((t) => t.refId === target.refId);
+      const targets = request.targets.slice(0, currentTargetIdx);
 
-      if (histogramMetrics.length > 0) {
-        return !!histogramMetrics.find((metric) => target.expr.includes(metric));
-      } else {
-        return target.expr.includes('_bucket');
+      if (!metricName || (metricName && !targets.some((t) => t.expr.includes(metricName)))) {
+        return true;
       }
+      return false;
     }
-
     return false;
   }
 
@@ -321,7 +334,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     const processedTarget = {
       ...target,
       queryType: PromQueryType.timeSeriesQuery,
-      exemplar: this.shouldRunExemplarQuery(target),
+      exemplar: this.shouldRunExemplarQuery(target, request),
       requestId: request.panelId + target.refId,
       // We need to pass utcOffsetSec to backend to calculate aligned range
       utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
@@ -753,9 +766,9 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
         time: timestamp,
         timeEnd: timestamp,
         annotation,
-        title: renderTemplate(titleFormat, labels),
+        title: renderLegendFormat(titleFormat, labels),
         tags,
-        text: renderTemplate(textFormat, labels),
+        text: renderLegendFormat(textFormat, labels),
       };
     }
 
@@ -789,11 +802,33 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
   async testDatasource() {
     const now = new Date().getTime();
-    const query = { expr: '1+1' } as PromQueryRequest;
-    const response = await lastValueFrom(this.performInstantQuery(query, now / 1000));
-    return response.data.status === 'success'
-      ? { status: 'success', message: 'Data source is working' }
-      : { status: 'error', message: response.data.error };
+    const request: DataQueryRequest<PromQuery> = {
+      targets: [{ refId: 'test', expr: '1+1', instant: true }],
+      requestId: `${this.id}-health`,
+      scopedVars: {},
+      dashboardId: 0,
+      panelId: 0,
+      interval: '1m',
+      intervalMs: 60000,
+      maxDataPoints: 1,
+      range: {
+        from: dateTime(now - 1000),
+        to: dateTime(now),
+      },
+    } as DataQueryRequest<PromQuery>;
+
+    return lastValueFrom(this.query(request))
+      .then((res: DataQueryResponse) => {
+        if (!res || !res.data || res.state !== LoadingState.Done) {
+          return { status: 'error', message: `Error reading Prometheus: ${res?.error?.message}` };
+        } else {
+          return { status: 'success', message: 'Data source is working' };
+        }
+      })
+      .catch((err: any) => {
+        console.error('Prometheus Error', err);
+        return { status: 'error', message: err.message };
+      });
   }
 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
@@ -938,6 +973,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       ...target,
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
       expr: this.templateSrv.replace(expr, variables, this.interpolateQueryExpr),
+      interval: this.templateSrv.replace(target.interval, variables),
     };
   }
 }

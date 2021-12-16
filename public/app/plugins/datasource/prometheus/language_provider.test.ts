@@ -2,7 +2,7 @@ import Plain from 'slate-plain-serializer';
 import { Editor as SlateEditor } from 'slate';
 import LanguageProvider from './language_provider';
 import { PrometheusDatasource } from './datasource';
-import { HistoryItem } from '@grafana/data';
+import { AbstractLabelOperator, HistoryItem } from '@grafana/data';
 import { PromQuery } from './types';
 import Mock = jest.Mock;
 import { SearchFunctionType } from '@grafana/ui';
@@ -592,6 +592,36 @@ describe('Language completion provider', () => {
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
       await instance.start();
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Query imports', () => {
+    it('returns empty queries', async () => {
+      const instance = new LanguageProvider(datasource);
+      const result = await instance.importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
+      expect(result).toEqual({ refId: 'bar', expr: '', range: true });
+    });
+
+    describe('exporting to abstract query', () => {
+      it('exports labels with metric name', async () => {
+        const instance = new LanguageProvider(datasource);
+        const abstractQuery = instance.exportToAbstractQuery({
+          refId: 'bar',
+          expr: 'metric_name{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
+          instant: true,
+          range: false,
+        });
+        expect(abstractQuery).toMatchObject({
+          refId: 'bar',
+          labelMatchers: [
+            { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
+            { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
+            { name: 'label3', operator: AbstractLabelOperator.EqualRegEx, value: 'value3' },
+            { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
+            { name: '__name__', operator: AbstractLabelOperator.Equal, value: 'metric_name' },
+          ],
+        });
+      });
     });
   });
 });

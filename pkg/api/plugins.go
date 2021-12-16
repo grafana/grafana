@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -22,6 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -149,7 +154,11 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	return response.JSON(200, dto)
 }
 
-func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd) response.Response {
+func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Response {
+	cmd := models.UpdatePluginSettingCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	if _, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID); !exists {
@@ -168,7 +177,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.Updat
 func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	list, err := hs.pluginDashboardManager.GetPluginDashboards(c.OrgId, pluginID)
+	list, err := hs.pluginDashboardManager.GetPluginDashboards(c.Req.Context(), c.OrgId, pluginID)
 	if err != nil {
 		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
@@ -208,7 +217,11 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 	return resp
 }
 
-func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) response.Response {
+func (hs *HTTPServer) ImportDashboard(c *models.ReqContext) response.Response {
+	apiCmd := dtos.ImportDashboardCommand{}
+	if err := web.Bind(c.Req, &apiCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	var err error
 	if apiCmd.PluginId == "" && apiCmd.Dashboard == nil {
 		return response.Error(422, "Dashboard must be set", nil)
@@ -281,14 +294,27 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	requestedFile := filepath.Clean(web.Params(c.Req)["*"])
-	pluginFilePath := filepath.Join(plugin.PluginDir, requestedFile)
+	// prepend slash for cleaning relative paths
+	requestedFile := filepath.Clean(filepath.Join("/", web.Params(c.Req)["*"]))
+	rel, err := filepath.Rel("/", requestedFile)
+	if err != nil {
+		// slash is prepended above therefore this is not expected to fail
+		c.JsonApiErr(500, "Failed to get the relative path", err)
+		return
+	}
 
-	if !plugin.IncludedInSignature(requestedFile) {
+	if !plugin.IncludedInSignature(rel) {
 		hs.log.Warn("Access to requested plugin file will be forbidden in upcoming Grafana versions as the file "+
 			"is not included in the plugin signature", "file", requestedFile)
 	}
 
+	absPluginDir, err := filepath.Abs(plugin.PluginDir)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to get plugin absolute path", nil)
+		return
+	}
+
+	pluginFilePath := filepath.Join(absPluginDir, rel)
 	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
 	// nolint:gosec
@@ -369,28 +395,21 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 //
 // /api/plugins/:pluginId/resources/*
 func (hs *HTTPServer) CallResource(c *models.ReqContext) {
-	pluginID := web.Params(c.Req)[":pluginId"]
-
-	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, "", c.SignedInUser, false)
-	if err != nil {
-		c.JsonApiErr(500, "Failed to get plugin settings", err)
-		return
-	}
-	if !found {
-		c.JsonApiErr(404, "Plugin not found", nil)
-		return
-	}
-	hs.pluginClient.CallResource(pCtx, c, web.Params(c.Req)["*"])
+	hs.callPluginResource(c, web.Params(c.Req)[":pluginId"], "")
 }
 
 func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Response {
 	return response.JSON(200, hs.pluginErrorResolver.PluginErrors())
 }
 
-func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
+func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
+	dto := dtos.InstallPluginCommand{}
+	if err := web.Bind(c.Req, &dto); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version, plugins.AddOpts{})
+	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version)
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
@@ -465,15 +484,15 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 	}
 
 	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `plugin.PluginDir` is based
-	// on plugin the folder structure on disk and not user input.
-	path := filepath.Join(plugin.PluginDir, fmt.Sprintf("%s.md", strings.ToUpper(name)))
+	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
+	// use this with a prefix of the plugin's directory, which is set during plugin loading
+	path := filepath.Join(plugin.PluginDir, mdFilepath(strings.ToUpper(name)))
 	exists, err := fs.Exists(path)
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
-		path = filepath.Join(plugin.PluginDir, fmt.Sprintf("%s.md", strings.ToLower(name)))
+		path = filepath.Join(plugin.PluginDir, mdFilepath(strings.ToLower(name)))
 	}
 
 	exists, err = fs.Exists(path)
@@ -485,11 +504,230 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 	}
 
 	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `plugin.PluginDir` is based
-	// on plugin the folder structure on disk and not user input.
+	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
+	// use this with a prefix of the plugin's directory, which is set during plugin loading
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 	return data, nil
+}
+
+func mdFilepath(mdFilename string) string {
+	return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename)))
+}
+
+func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID, dsUID string) {
+	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, dsUID, c.SignedInUser, false)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to get plugin settings", err)
+		return
+	}
+	if !found {
+		c.JsonApiErr(404, "Plugin not found", nil)
+		return
+	}
+
+	var dsURL string
+	if pCtx.DataSourceInstanceSettings != nil {
+		dsURL = pCtx.DataSourceInstanceSettings.URL
+	}
+
+	err = hs.PluginRequestValidator.Validate(dsURL, c.Req)
+	if err != nil {
+		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
+		return
+	}
+
+	clonedReq := c.Req.Clone(c.Req.Context())
+	rawURL := web.Params(c.Req)["*"]
+	if clonedReq.URL.RawQuery != "" {
+		rawURL += "?" + clonedReq.URL.RawQuery
+	}
+	urlPath, err := url.Parse(rawURL)
+	if err != nil {
+		handleCallResourceError(err, c)
+		return
+	}
+	clonedReq.URL = urlPath
+
+	if err = hs.makePluginResourceRequest(c.Resp, clonedReq, pCtx); err != nil {
+		handleCallResourceError(err, c)
+	}
+}
+
+func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
+	keepCookieModel := struct {
+		KeepCookies []string `json:"keepCookies"`
+	}{}
+	if dis := pCtx.DataSourceInstanceSettings; dis != nil {
+		err := json.Unmarshal(dis.JSONData, &keepCookieModel)
+		if err != nil {
+			hs.log.Warn("failed to to unpack JSONData in datasource instance settings", "err", err)
+		}
+	}
+	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
+	proxyutil.PrepareProxyRequest(req)
+
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read request body: %w", err)
+	}
+
+	crReq := &backend.CallResourceRequest{
+		PluginContext: pCtx,
+		Path:          req.URL.Path,
+		Method:        req.Method,
+		URL:           req.URL.String(),
+		Headers:       req.Header,
+		Body:          body,
+	}
+
+	childCtx, cancel := context.WithCancel(req.Context())
+	defer cancel()
+	stream := newCallResourceResponseStream(childCtx)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	defer func() {
+		if err := stream.Close(); err != nil {
+			hs.log.Warn("Failed to close plugin resource stream", "err", err)
+		}
+		wg.Wait()
+	}()
+
+	var flushStreamErr error
+	go func() {
+		flushStreamErr = hs.flushStream(stream, w)
+		wg.Done()
+	}()
+
+	if err := hs.pluginClient.CallResource(req.Context(), crReq, stream); err != nil {
+		return err
+	}
+
+	return flushStreamErr
+}
+
+func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w http.ResponseWriter) error {
+	processedStreams := 0
+
+	for {
+		resp, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			if processedStreams == 0 {
+				return errors.New("received empty resource response")
+			}
+			return nil
+		}
+		if err != nil {
+			if processedStreams == 0 {
+				return errutil.Wrap("failed to receive response from resource call", err)
+			}
+
+			hs.log.Error("Failed to receive response from resource call", "err", err)
+			return stream.Close()
+		}
+
+		// Expected that headers and status are only part of first stream
+		if processedStreams == 0 && resp.Headers != nil {
+			// Make sure a content type always is returned in response
+			if _, exists := resp.Headers["Content-Type"]; !exists {
+				resp.Headers["Content-Type"] = []string{"application/json"}
+			}
+
+			for k, values := range resp.Headers {
+				// Due to security reasons we don't want to forward
+				// cookies from a backend plugin to clients/browsers.
+				if k == "Set-Cookie" {
+					continue
+				}
+
+				for _, v := range values {
+					// TODO: Figure out if we should use Set here instead
+					// nolint:gocritic
+					w.Header().Add(k, v)
+				}
+			}
+			w.WriteHeader(resp.Status)
+		}
+
+		if _, err := w.Write(resp.Body); err != nil {
+			hs.log.Error("Failed to write resource response", "err", err)
+		}
+
+		if flusher, ok := w.(http.Flusher); ok {
+			flusher.Flush()
+		}
+		processedStreams++
+	}
+}
+
+func handleCallResourceError(err error, reqCtx *models.ReqContext) {
+	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+		reqCtx.JsonApiErr(503, "Plugin unavailable", err)
+		return
+	}
+
+	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+		reqCtx.JsonApiErr(404, "Not found", err)
+		return
+	}
+
+	reqCtx.JsonApiErr(500, "Failed to call resource", err)
+}
+
+// callResourceClientResponseStream is used for receiving resource call responses.
+type callResourceClientResponseStream interface {
+	Recv() (*backend.CallResourceResponse, error)
+	Close() error
+}
+
+type callResourceResponseStream struct {
+	ctx    context.Context
+	stream chan *backend.CallResourceResponse
+	closed bool
+}
+
+func newCallResourceResponseStream(ctx context.Context) *callResourceResponseStream {
+	return &callResourceResponseStream{
+		ctx:    ctx,
+		stream: make(chan *backend.CallResourceResponse),
+	}
+}
+
+func (s *callResourceResponseStream) Send(res *backend.CallResourceResponse) error {
+	if s.closed {
+		return errors.New("cannot send to a closed stream")
+	}
+
+	select {
+	case <-s.ctx.Done():
+		return errors.New("cancelled")
+	case s.stream <- res:
+		return nil
+	}
+}
+
+func (s *callResourceResponseStream) Recv() (*backend.CallResourceResponse, error) {
+	select {
+	case <-s.ctx.Done():
+		return nil, s.ctx.Err()
+	case res, ok := <-s.stream:
+		if !ok {
+			return nil, io.EOF
+		}
+		return res, nil
+	}
+}
+
+func (s *callResourceResponseStream) Close() error {
+	if s.closed {
+		return errors.New("cannot close a closed stream")
+	}
+
+	close(s.stream)
+	s.closed = true
+	return nil
 }

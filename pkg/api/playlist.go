@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func ValidateOrgPlaylist(c *models.ReqContext) {
@@ -138,7 +140,11 @@ func DeletePlaylist(c *models.ReqContext) response.Response {
 	return response.JSON(200, "")
 }
 
-func CreatePlaylist(c *models.ReqContext, cmd models.CreatePlaylistCommand) response.Response {
+func CreatePlaylist(c *models.ReqContext) response.Response {
+	cmd := models.CreatePlaylistCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.OrgId
 
 	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
@@ -148,7 +154,11 @@ func CreatePlaylist(c *models.ReqContext, cmd models.CreatePlaylistCommand) resp
 	return response.JSON(200, cmd.Result)
 }
 
-func UpdatePlaylist(c *models.ReqContext, cmd models.UpdatePlaylistCommand) response.Response {
+func UpdatePlaylist(c *models.ReqContext) response.Response {
+	cmd := models.UpdatePlaylistCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
 

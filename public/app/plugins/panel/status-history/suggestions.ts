@@ -43,8 +43,10 @@ export class StatusHistorySuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: (s) => {
-        s.options!.colWidth = 0.7;
+      cardOptions: {
+        previewModifier: (s) => {
+          s.options!.colWidth = 0.7;
+        },
       },
     });
 

@@ -3,7 +3,7 @@ import { prepareGraphableFields } from './utils';
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {
-    const frames = [
+    const input = [
       toDataFrame({
         fields: [
           { name: 'a', values: [1, 2, 3] },
@@ -11,12 +11,12 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const info = prepareGraphableFields(frames, createTheme());
-    expect(info.warn).toEqual('Data does not have a time field');
+    const frames = prepareGraphableFields(input, createTheme());
+    expect(frames).toBeNull();
   });
 
   it('requires a number or boolean value', () => {
-    const frames = [
+    const input = [
       toDataFrame({
         fields: [
           { name: 'a', type: FieldType.time, values: [1, 2, 3] },
@@ -24,12 +24,12 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const info = prepareGraphableFields(frames, createTheme());
-    expect(info.warn).toEqual('No graphable fields');
+    const frames = prepareGraphableFields(input, createTheme());
+    expect(frames).toBeNull();
   });
 
   it('will graph numbers and boolean values', () => {
-    const frames = [
+    const input = [
       toDataFrame({
         fields: [
           { name: 'a', type: FieldType.time, values: [1, 2, 3] },
@@ -39,10 +39,9 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const info = prepareGraphableFields(frames, createTheme());
-    expect(info.warn).toBeUndefined();
+    const frames = prepareGraphableFields(input, createTheme());
+    const out = frames![0];
 
-    const out = info.frames![0];
     expect(out.fields.map((f) => f.name)).toEqual(['a', 'c', 'd']);
 
     const field = out.fields.find((f) => f.name === 'c');
@@ -66,9 +65,9 @@ describe('prepare timeseries graph', () => {
         { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity] },
       ],
     });
-    const result = prepareGraphableFields([df], createTheme());
+    const frames = prepareGraphableFields([df], createTheme());
 
-    const field = result.frames![0].fields.find((f) => f.name === 'a');
+    const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values.toArray()).toMatchInlineSnapshot(`
       Array [
         -10,

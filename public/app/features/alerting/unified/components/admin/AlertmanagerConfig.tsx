@@ -55,7 +55,7 @@ export default function AlertmanagerConfig(): JSX.Element {
   const loading = isDeleting || isLoadingConfig || isSaving;
 
   const onSubmit = (values: FormValues) => {
-    if (alertManagerSourceName) {
+    if (alertManagerSourceName && config) {
       dispatch(
         updateAlertManagerConfigAction({
           newConfig: JSON.parse(values.configJSON),

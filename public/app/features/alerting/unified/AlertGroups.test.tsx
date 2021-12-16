@@ -49,7 +49,7 @@ const ui = {
   sourceButton: byText('See source'),
   matcherInput: byTestId('search-query-input'),
   groupByContainer: byTestId('group-by-container'),
-  groupByInput: byRole('textbox', { name: /group by label keys/i }),
+  groupByInput: byRole('combobox', { name: /group by label keys/i }),
   clearButton: byRole('button', { name: 'Clear filters' }),
 };
 

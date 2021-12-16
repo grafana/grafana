@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
 	"github.com/grafana/loki/pkg/logproto"
@@ -27,12 +28,14 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+const pluginID = "loki"
+
 type Service struct {
 	im   instancemgmt.InstanceManager
 	plog log.Logger
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 	s := &Service{
 		im:   im,
@@ -43,7 +46,8 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.LoadAndRegister("loki", factory); err != nil {
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		s.plog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}
@@ -64,7 +68,7 @@ type datasourceInfo struct {
 	TimeInterval      string `json:"timeInterval"`
 }
 
-type ResponseModel struct {
+type QueryModel struct {
 	Expr         string `json:"expr"`
 	LegendFormat string `json:"legendFormat"`
 	Interval     string `json:"interval"`
@@ -128,7 +132,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		},
 	}
 
-	queries, err := parseQuery(dsInfo, req)
+	queries, err := parseQuery(req)
 	if err != nil {
 		return result, err
 	}
@@ -141,10 +145,12 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		//Currently hard coded as not used - applies to log queries
-		limit := 1000
-		//Currently hard coded as not used - applies to queries which produce a stream response
-		interval := time.Second * 1
+		// `limit` only applies to log-producing queries, and we
+		// currently only support metric queries, so this can be set to any value.
+		limit := 1
+
+		// we do not use `interval`, so we set it to zero
+		interval := time.Duration(0)
 
 		value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
 		if err != nil {
@@ -178,38 +184,6 @@ func formatLegend(metric model.Metric, query *lokiQuery) string {
 	})
 
 	return string(result)
-}
-
-func parseQuery(dsInfo *datasourceInfo, queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
-	qs := []*lokiQuery{}
-	for _, query := range queryContext.Queries {
-		model := &ResponseModel{}
-		err := json.Unmarshal(query.JSON, model)
-		if err != nil {
-			return nil, err
-		}
-
-		start := query.TimeRange.From
-		end := query.TimeRange.To
-
-		var resolution int64 = 1
-		if model.Resolution >= 1 && model.Resolution <= 5 || model.Resolution == 10 {
-			resolution = model.Resolution
-		}
-
-		step := calculateStep(query.Interval, query.TimeRange.To.Sub(query.TimeRange.From), resolution)
-
-		qs = append(qs, &lokiQuery{
-			Expr:         model.Expr,
-			Step:         step,
-			LegendFormat: model.LegendFormat,
-			Start:        start,
-			End:          end,
-			RefID:        query.RefID,
-		})
-	}
-
-	return qs, nil
 }
 
 func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames, error) {

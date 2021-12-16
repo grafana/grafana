@@ -35,7 +35,6 @@ export class StatTimelineSuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: (s) => {},
     });
 
     list.append({ name: SuggestionName.StateTimeline });

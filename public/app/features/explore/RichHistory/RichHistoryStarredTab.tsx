@@ -80,15 +80,12 @@ export function RichHistoryStarredTab(props: Props) {
     exploreId,
   } = props;
 
-  const [filteredQueries, setFilteredQueries] = useState<RichHistoryQuery[]>([]);
+  const [data, setData] = useState<[RichHistoryQuery[], ReturnType<typeof createDatasourcesList>]>([[], []]);
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearchInput, setDebouncedSearchInput] = useState('');
 
   const theme = useTheme();
   const styles = getStyles(theme);
-
-  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
-  const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
 
   useDebounce(
     () => {
@@ -99,16 +96,21 @@ export function RichHistoryStarredTab(props: Props) {
   );
 
   useEffect(() => {
+    const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
+    const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
     const starredQueries = queries.filter((q) => q.starred === true);
-    setFilteredQueries(
+    setData([
       filterAndSortQueries(
         starredQueries,
         sortOrder,
         datasourceFilters.map((d) => d.value),
         debouncedSearchInput
-      )
-    );
+      ),
+      listOfDatasources,
+    ]);
   }, [queries, sortOrder, datasourceFilters, debouncedSearchInput]);
+
+  const [filteredQueries, listOfDatasources] = data;
 
   return (
     <div className={styles.container}>

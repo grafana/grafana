@@ -25,12 +25,13 @@ describe('AzureMonitor resourcePickerData', () => {
 
       expect(argQuery).toContain(`where type == 'microsoft.resources/subscriptions'`);
       expect(argQuery).toContain(`where type == 'microsoft.resources/subscriptions/resourcegroups'`);
+      expect(argQuery).toContain(`project resourceGroupURI=id, resourceGroupName=name, resourceGroup, subscriptionId`);
     });
 
     it('returns only subscriptions at the top level', async () => {
       const results = await resourcePickerData.getResourcePickerData();
 
-      expect(results.map((v) => v.id)).toEqual(['/subscriptions/abc-123', '/subscription/def-456']);
+      expect(results.map((v) => v.id)).toEqual(['/subscriptions/abc-123', '/subscriptions/def-456']);
     });
 
     it('nests resource groups under their subscriptions', async () => {
@@ -38,13 +39,14 @@ describe('AzureMonitor resourcePickerData', () => {
 
       expect(results[0].children?.map((v) => v.id)).toEqual([
         '/subscriptions/abc-123/resourceGroups/prod',
+        '/subscriptions/abc-123/resourceGroups/test',
         '/subscriptions/abc-123/resourceGroups/pre-prod',
       ]);
 
       expect(results[1].children?.map((v) => v.id)).toEqual([
-        '/subscription/def-456/resourceGroups/dev',
-        '/subscription/def-456/resourceGroups/test',
-        '/subscription/def-456/resourceGroups/qa',
+        '/subscriptions/def-456/resourceGroups/dev',
+        '/subscriptions/def-456/resourceGroups/test',
+        '/subscriptions/def-456/resourceGroups/qa',
       ]);
     });
 
@@ -76,20 +78,22 @@ describe('AzureMonitor resourcePickerData', () => {
         const results = await resourcePickerData.getResourcePickerData();
         expect(results[0].children?.map((v) => v.id)).toEqual([
           '/subscriptions/abc-123/resourceGroups/prod',
+          '/subscriptions/abc-123/resourceGroups/test',
           '/subscriptions/abc-123/resourceGroups/pre-prod',
           // second page
           '/subscriptions/abc-123/resourceGroups/prod',
+          '/subscriptions/abc-123/resourceGroups/test',
           '/subscriptions/abc-123/resourceGroups/pre-prod',
         ]);
 
         expect(results[1].children?.map((v) => v.id)).toEqual([
-          '/subscription/def-456/resourceGroups/dev',
-          '/subscription/def-456/resourceGroups/test',
-          '/subscription/def-456/resourceGroups/qa',
+          '/subscriptions/def-456/resourceGroups/dev',
+          '/subscriptions/def-456/resourceGroups/test',
+          '/subscriptions/def-456/resourceGroups/qa',
           // second page
-          '/subscription/def-456/resourceGroups/dev',
-          '/subscription/def-456/resourceGroups/test',
-          '/subscription/def-456/resourceGroups/qa',
+          '/subscriptions/def-456/resourceGroups/dev',
+          '/subscriptions/def-456/resourceGroups/test',
+          '/subscriptions/def-456/resourceGroups/qa',
         ]);
       });
     });
@@ -97,7 +101,7 @@ describe('AzureMonitor resourcePickerData', () => {
 
   describe('getResourcesForResourceGroup', () => {
     const resourceRow = {
-      id: '/subscription/def-456/resourceGroups/dev',
+      id: '/subscriptions/def-456/resourceGroups/dev',
       name: 'Dev',
       type: ResourceRowType.ResourceGroup,
       typeLabel: 'Resource group',
@@ -121,10 +125,10 @@ describe('AzureMonitor resourcePickerData', () => {
       const results = await resourcePickerData.getResourcesForResourceGroup(resourceRow);
 
       expect(results.map((v) => v.id)).toEqual([
-        '/subscription/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/web-server',
-        '/subscription/def-456/resourceGroups/dev/providers/Microsoft.Compute/disks/web-server_DataDisk',
-        '/subscription/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/db-server',
-        '/subscription/def-456/resourceGroups/dev/providers/Microsoft.Compute/disks/db-server_DataDisk',
+        '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/web-server',
+        '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/disks/web-server_DataDisk',
+        '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/db-server',
+        '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/disks/db-server_DataDisk',
       ]);
 
       results.forEach((v) => expect(v.type).toEqual(ResourceRowType.Resource));

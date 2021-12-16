@@ -1,8 +1,6 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen, waitFor } from '@testing-library/react';
 import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
-import { LegacyForms, Button } from '@grafana/ui';
-const { Input, Select } = LegacyForms;
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
@@ -22,24 +20,25 @@ const setup = (propsFunc?: (props: Props) => Props) => {
       { value: 'chinaazuremonitor', label: 'Azure China' },
     ],
     onCredentialsChange: jest.fn(),
-    getSubscriptions: jest.fn(),
+    getSubscriptions: jest.fn(() => Promise.resolve([])),
   };
 
   if (propsFunc) {
     props = propsFunc(props);
   }
 
-  return shallow(<AzureCredentialsForm {...props} />);
+  return render(<AzureCredentialsForm {...props} />);
 };
 
 describe('Render', () => {
   it('should render component', () => {
-    const wrapper = setup();
-    expect(wrapper).toMatchSnapshot();
+    setup();
+
+    expect(screen.getByText('Azure Cloud')).toBeInTheDocument();
   });
 
-  it('should disable azure monitor secret input', () => {
-    const wrapper = setup((props) => ({
+  it('should disable azure monitor secret input', async () => {
+    setup((props) => ({
       ...props,
       credentials: {
         authType: 'clientsecret',
@@ -49,11 +48,12 @@ describe('Render', () => {
         clientSecret: Symbol(),
       },
     }));
-    expect(wrapper).toMatchSnapshot();
+    await waitFor(() => screen.getByTestId('client-secret'));
+    expect(screen.getByTestId('client-secret')).toBeDisabled();
   });
 
-  it('should enable azure monitor load subscriptions button', () => {
-    const wrapper = setup((props) => ({
+  it('should enable azure monitor load subscriptions button', async () => {
+    setup((props) => ({
       ...props,
       credentials: {
         authType: 'clientsecret',
@@ -63,46 +63,34 @@ describe('Render', () => {
         clientSecret: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
       },
     }));
-    expect(wrapper).toMatchSnapshot();
+    await waitFor(() => expect(screen.getByText('Load Subscriptions')).toBeInTheDocument());
   });
 
   describe('when disabled', () => {
-    it('should disable inputs', () => {
-      const wrapper = setup((props) => ({
+    it('should disable inputs', async () => {
+      setup((props) => ({
         ...props,
         disabled: true,
       }));
-      const inputs = wrapper.find(Input);
-      expect(inputs.length).toBeGreaterThan(1);
-      inputs.forEach((input) => {
-        expect(input.prop('disabled')).toBe(true);
-      });
+
+      await waitFor(() => screen.getByLabelText('Azure Cloud'));
+      expect(screen.getByLabelText('Azure Cloud')).toBeDisabled();
     });
 
-    it('should remove buttons', () => {
-      const wrapper = setup((props) => ({
+    it('should remove buttons', async () => {
+      setup((props) => ({
         ...props,
         disabled: true,
       }));
-      expect(wrapper.find(Button).exists()).toBe(false);
+      await waitFor(() => expect(screen.queryByText('Load Subscriptions')).not.toBeInTheDocument());
     });
 
-    it('should disable cloud selector', () => {
-      const wrapper = setup((props) => ({
-        ...props,
-        disabled: true,
-      }));
-      const selects = wrapper.find(Select);
-      selects.forEach((s) => expect(s.prop('isDisabled')).toBe(true));
-    });
-
-    it('should render a children component', () => {
-      const wrapper = setup((props) => ({
+    it('should render children components', () => {
+      setup((props) => ({
         ...props,
         children: <button>click me</button>,
       }));
-      const button = wrapper.find('button');
-      expect(button.text()).toBe('click me');
+      expect(screen.getByText('click me')).toBeInTheDocument();
     });
   });
 });
