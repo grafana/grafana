@@ -216,7 +216,8 @@ const makers: SymbolMaker[] = [
   },
 ];
 
-async function prepareSVG(url: string): Promise<string> {
+async function prepareSVG(url: string, size?: number): Promise<string> {
+  const side = size ?? 100;
   return fetch(url, { method: 'GET' })
     .then((res) => {
       return res.text();
@@ -230,6 +231,8 @@ async function prepareSVG(url: string): Promise<string> {
       }
       // open layers requires a white fill becaues it uses tint to set color
       svg.setAttribute('fill', '#fff');
+      svg.setAttribute('width', `${side}px`);
+      svg.setAttribute('height', `${side}px`);
       const svgString = new XMLSerializer().serializeToString(svg);
       const svgURI = encodeURIComponent(svgString);
       return `data:image/svg+xml,${svgURI}`;
