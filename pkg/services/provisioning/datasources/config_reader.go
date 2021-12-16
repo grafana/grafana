@@ -2,17 +2,17 @@ package datasources
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
-	"gopkg.in/yaml.v2"
 )
 
 type configReader struct {
@@ -36,12 +36,6 @@ func (cr *configReader) readConfig(ctx context.Context, path string) ([]*configs
 			}
 
 			if datasource != nil {
-				for _, ds := range datasource.Datasources {
-					if ds.UID == "" && ds.Name != "" {
-						ds.UID = safeUIDFromName(ds.Name)
-					}
-				}
-
 				datasources = append(datasources, datasource)
 			}
 		}
@@ -144,11 +138,4 @@ func (cr *configReader) validateAccessAndOrgID(ctx context.Context, ds *upsertDa
 		ds.Access = models.DS_ACCESS_PROXY
 	}
 	return nil
-}
-
-func safeUIDFromName(name string) string {
-	h := sha256.New()
-	_, _ = h.Write([]byte(name))
-	bs := h.Sum(nil)
-	return strings.ToUpper(fmt.Sprintf("P%x", bs[:8]))
 }

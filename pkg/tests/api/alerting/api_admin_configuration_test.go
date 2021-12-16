@@ -64,7 +64,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusNotFound) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), "{\"message\": \"no admin configuration available\"}")
+		require.JSONEq(t, string(b), "{\"message\": \"API error\",\"error\": \"no admin configuration available\"}")
 	}
 
 	// Now, lets re-set external Alertmanagers for main organisation.
