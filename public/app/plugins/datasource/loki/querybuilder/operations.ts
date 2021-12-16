@@ -8,6 +8,7 @@ import {
   QueryBuilderOperationParamDef,
   VisualQueryModeller,
 } from '../../prometheus/querybuilder/shared/types';
+import { FUNCTIONS } from '../syntax';
 import { LokiOperationId, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
@@ -41,6 +42,8 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       category: LokiVisualQueryOperationCategory.Formats,
       renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        `This will extract all keys and values from a [logfmt](https://grafana.com/docs/loki/latest/logql/log_queries/#logfmt) formatted log line as labels. The extracted lables can be used in label filter expression and used as values for aggregations via the unwrap operation. `,
     },
     {
       id: LokiOperationId.LineContains,
@@ -51,6 +54,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       category: LokiVisualQueryOperationCategory.LineFilters,
       renderer: getLineFilterRenderer('|='),
       addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines that contain string \`${op.params[0]}\`.`,
     },
     {
       id: LokiOperationId.LineContainsNot,
@@ -61,6 +65,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       category: LokiVisualQueryOperationCategory.LineFilters,
       renderer: getLineFilterRenderer('!='),
       addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines that does not contain string \`${op.params[0]}\`.`,
     },
     {
       id: LokiOperationId.LineMatchesRegex,
@@ -71,6 +76,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       category: LokiVisualQueryOperationCategory.LineFilters,
       renderer: getLineFilterRenderer('|~'),
       addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines that match regex \`${op.params[0]}\`.`,
     },
     {
       id: LokiOperationId.LineMatchesRegexNot,
@@ -81,6 +87,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       category: LokiVisualQueryOperationCategory.LineFilters,
       renderer: getLineFilterRenderer('!~'),
       addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines that does not match regex \`${op.params[0]}\`.`,
     },
     {
       id: LokiOperationId.LabelFilter,
@@ -94,15 +101,28 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       category: LokiVisualQueryOperationCategory.LabelFilters,
       renderer: labelFilterRenderer,
       addOperationHandler: addLokiOperation,
+      explainHandler: () => `Label expression filter allows filtering using original and extracted labels.`,
     },
     {
       id: LokiOperationId.LabelFilterNoErrors,
-      name: 'No formatting errors',
+      name: 'No pipeline errors',
       params: [],
-      defaultParams: ['', '=', ''],
+      defaultParams: [],
       category: LokiVisualQueryOperationCategory.LabelFilters,
       renderer: (model, def, innerExpr) => `${innerExpr} | __error__=""`,
       addOperationHandler: addLokiOperation,
+      explainHandler: () => `Filter out all formatting and parsing errors.`,
+    },
+    {
+      id: LokiOperationId.Unwrap,
+      name: 'Unwrap',
+      params: [{ name: 'Identifier', type: 'string' }],
+      defaultParams: [''],
+      category: LokiVisualQueryOperationCategory.Formats,
+      renderer: (op, def, innerExpr) => `${innerExpr} | unwrap ${op.params[0]}`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) =>
+        `Use the extracted label \`${op.params[0]}\` as sample values instead of log lines for the subsequent range aggregation.`,
     },
   ];
 
@@ -119,6 +139,10 @@ function createRangeOperation(name: string): QueryBuilderOperationDef {
     category: LokiVisualQueryOperationCategory.RangeFunctions,
     renderer: operationWithRangeVectorRenderer,
     addOperationHandler: addLokiOperation,
+    explainHandler: (op, def) => {
+      const opDocs = FUNCTIONS.find((x) => x.insertText === op.id);
+      return `${opDocs?.documentation}`;
+    },
   };
 }
 
@@ -132,6 +156,10 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef {
     category: LokiVisualQueryOperationCategory.Aggregations,
     renderer: functionRendererLeft,
     addOperationHandler: addLokiOperation,
+    explainHandler: (op, def) => {
+      const opDocs = FUNCTIONS.find((x) => x.insertText === op.id);
+      return `${opDocs?.documentation}.`;
+    },
   };
 }
 

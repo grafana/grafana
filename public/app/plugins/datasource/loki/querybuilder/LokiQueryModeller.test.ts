@@ -103,6 +103,15 @@ describe('LokiQueryModeller', () => {
     ).toBe('{app="grafana"} | __error__=""');
   });
 
+  it('Can query with unwrap operation', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.Unwrap, params: ['count'] }],
+      })
+    ).toBe('{app="grafana"} | unwrap count');
+  });
+
   describe('On add operation handlers', () => {
     it('When adding function without range vector param should automatically add rate', () => {
       const query = {

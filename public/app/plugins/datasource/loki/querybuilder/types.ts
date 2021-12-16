@@ -47,6 +47,7 @@ export enum LokiOperationId {
   LineMatchesRegexNot = '__line_matches_regex_not',
   LabelFilter = '__label_filter',
   LabelFilterNoErrors = '__label_filter_no_errors',
+  Unwrap = 'unwrap',
 }
 
 export function getDefaultEmptyQuery(): LokiVisualQuery {

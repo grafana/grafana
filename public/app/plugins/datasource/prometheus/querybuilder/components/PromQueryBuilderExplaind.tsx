@@ -17,9 +17,6 @@ export const PromQueryBuilderExplained = React.memo<Props>(({ query, nested }) =
         Fetch all series matching metric name and label filters.
       </OperationExplainedBox>
       <OperationListExplained<PromVisualQuery> stepNumber={2} queryModeller={promQueryModeller} query={query} />
-      {/* <EditorRow>
-        <QueryPreview query={query} />
-      </EditorRow> */}
     </Stack>
   );
 });

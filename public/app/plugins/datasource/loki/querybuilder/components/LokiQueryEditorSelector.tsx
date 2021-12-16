@@ -10,6 +10,7 @@ import { LokiQueryEditorProps } from '../../components/types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { getDefaultEmptyQuery, LokiVisualQuery } from '../types';
 import { LokiQueryBuilder } from './LokiQueryBuilder';
+import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplaind';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
@@ -84,6 +85,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           onRunQuery={props.onRunQuery}
         />
       )}
+      {editorMode === QueryEditorMode.Explain && <LokiQueryBuilderExplained query={visualQuery} />}
     </>
   );
 });
