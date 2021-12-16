@@ -349,24 +349,28 @@ This transformation changes the field type of the specified field.
   - **Time -** attempts to parse the values as time
     - Will show an option to specify a DateFormat for the input field like yyyy-mm-dd or DD MM YYYY hh:mm:ss
   - **Boolean -** will make the values booleans
+  - **JSON -** attempts to parse the values as JSON, potentially resulting in complex objects or arrays
 
-For example the following query could be modified by selecting the time field, as Time, and Input format as YYYY.
+For example the following query could be modified by:
 
-| Time       | Mark  | Value |
-| ---------- | ----- | ----- |
-| 2017-07-01 | above | 25    |
-| 2018-08-02 | below | 22    |
-| 2019-09-02 | below | 29    |
-| 2020-10-04 | above | 22    |
+- selecting the time field as Time, and Input format as YYYY
+- selecting the JSON field as JSON
+
+| Time       | Mark  | Value | JSON     |
+| ---------- | ----- | ----- | -------- |
+| 2017-07-01 | above | 25    | "[0, 1]" |
+| 2018-08-02 | below | 22    | "[2, 3]" |
+| 2019-09-02 | below | 29    | "[4, 5]" |
+| 2020-10-04 | above | 22    | "[6, 7]" |
 
 The result:
 
-| Time                | Mark  | Value |
-| ------------------- | ----- | ----- |
-| 2017-01-01 00:00:00 | above | 25    |
-| 2018-01-01 00:00:00 | below | 22    |
-| 2019-01-01 00:00:00 | below | 29    |
-| 2020-01-01 00:00:00 | above | 22    |
+| Time                | Mark  | Value | JSON   |
+| ------------------- | ----- | ----- | ------ |
+| 2017-01-01 00:00:00 | above | 25    | [0, 1] |
+| 2018-01-01 00:00:00 | below | 22    | [2, 3] |
+| 2019-01-01 00:00:00 | below | 29    | [4, 5] |
+| 2020-01-01 00:00:00 | above | 22    | [6, 7] |
 
 ## Series to rows
 

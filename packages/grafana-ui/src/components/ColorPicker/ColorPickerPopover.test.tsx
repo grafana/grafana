@@ -29,7 +29,7 @@ describe('ColorPickerPopover', () => {
       expect(colorSwatchWrapper[0]).toBeInTheDocument();
 
       userEvent.click(colorSwatchWrapper[0]);
-      expect(color).toHaveStyle('box-shadow: inset 0 0 0 2px #73BF69, inset 0 0 0 4px #000');
+      expect(color).toHaveStyle('box-shadow: inset 0 0 0 2px #73BF69, inset 0 0 0 4px #000000');
     });
   });
 
