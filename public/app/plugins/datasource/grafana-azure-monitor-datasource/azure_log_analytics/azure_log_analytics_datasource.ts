@@ -115,8 +115,39 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     const templateSrv = getTemplateSrv();
-    const resource = templateSrv.replace(item.resource, scopedVars);
+    const allVars = templateSrv.getVariables();
+    let resource = templateSrv.replace(item.resource, scopedVars);
     let workspace = templateSrv.replace(item.workspace, scopedVars);
+    let resPath = '';
+
+    // Complete the path for the selected resource if necessary
+    const resourceVar = allVars.find((var_: any) => var_.id === item.resource?.substring(1));
+    const resourceVarRawQuery = (resourceVar as any)?.query?.grafanaTemplateVariableFn.rawQuery;
+    var subscription = (resourceVar as any)?.query?.subscription;
+
+    if (resourceVarRawQuery.includes('Subscriptions(')) {
+      resPath = '/subscriptions/' + resource;
+      resource = resPath;
+    } else if (resourceVarRawQuery.includes('ResourceGroups(')) {
+      resPath = '/subscriptions/' + subscription + '/resourceGroups/' + resource;
+      resource = resPath;
+    } else if (resourceVarRawQuery.includes('ResourceNames(')) {
+      var resGroup = allVars.find(
+        (var_: any) => var_.id === (resourceVar as any)?.query?.grafanaTemplateVariableFn.resourceGroup.substring(1)
+      );
+      var namespaceVar = allVars.find(
+        (var_: any) => var_.id === (resourceVar as any)?.query?.grafanaTemplateVariableFn.metricDefinition.substring(1)
+      );
+      resPath =
+        '/subscriptions/' +
+        subscription +
+        '/resourceGroups/' +
+        (resGroup as any).current.value +
+        '/providers/' +
+        (namespaceVar as any).current.value +
+        resource;
+      resource = resPath;
+    }
 
     if (!workspace && !resource && this.firstWorkspace) {
       workspace = this.firstWorkspace;
