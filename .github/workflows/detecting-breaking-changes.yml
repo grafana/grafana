@@ -1,4 +1,4 @@
-name: Levitate 2
+name: Levitate
 
 on: pull_request_target
 
