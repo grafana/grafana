@@ -17210,10 +17210,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-no-only-tests@npm:2.4.0":
-  version: 2.4.0
-  resolution: "eslint-plugin-no-only-tests@npm:2.4.0"
-  checksum: 761c6c04716e6cfaf45bf2d483a9614618a1151ed7b547a8ae5fb66757aeba66f49a2a2dd9b8fc46067fc2e4a4e80a58d0a82cd340e226abd25ebdf15030d88f
+"eslint-plugin-no-only-tests@npm:2.6.0":
+  version: 2.6.0
+  resolution: "eslint-plugin-no-only-tests@npm:2.6.0"
+  checksum: 4e3c9cc7e09c13e855fd7af4a8969128f766dcf32a0680715ebcaa903c7fe44db8e45e994c8b908443a6019cbd9ea1b51f413bf968a0c58214aded930a863df9
   languageName: node
   linkType: hard
 
@@ -19459,7 +19459,7 @@ __metadata:
     eslint-config-prettier: 8.3.0
     eslint-plugin-jsdoc: 37.0.3
     eslint-plugin-lodash: ^7.2.0
-    eslint-plugin-no-only-tests: 2.4.0
+    eslint-plugin-no-only-tests: 2.6.0
     eslint-plugin-prettier: 4.0.0
     eslint-plugin-react: 7.22.0
     eslint-plugin-react-hooks: 4.2.0
