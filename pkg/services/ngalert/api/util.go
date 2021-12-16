@@ -258,7 +258,7 @@ func ErrResp(status int, err error, msg string, args ...interface{}) *response.N
 	if msg != "" {
 		err = errors.WithMessagef(err, msg, args...)
 	}
-	return response.Error(status, err.Error(), nil)
+	return response.Error(status, "API error", err)
 }
 
 // accessForbiddenResp creates a response of forbidden access.
