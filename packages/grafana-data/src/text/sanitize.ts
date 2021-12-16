@@ -9,6 +9,25 @@ const XSSWL = Object.keys(xss.whiteList).reduce((acc, element) => {
 
 const sanitizeXSS = new xss.FilterXSS({
   whiteList: XSSWL,
+  css: {
+    whiteList: {
+      ...xss.getDefaultCSSWhiteList(),
+      'flex-direction': true,
+      'flex-wrap': true,
+      'flex-basis': true,
+      'flex-grow': true,
+      'flex-shrink': true,
+      'flex-flow': true,
+      gap: true,
+      order: true,
+      'justify-content': true,
+      'justify-items': true,
+      'justify-self': true,
+      'align-items': true,
+      'align-content': true,
+      'align-self': true,
+    },
+  },
 });
 
 /**
