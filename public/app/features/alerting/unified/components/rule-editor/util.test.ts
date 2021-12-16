@@ -194,5 +194,8 @@ describe('rule-editor', () => {
     it('should rewire refs with brackets', () => {
       expect(updateMathExpressionRefs('abs(${Foo}) + $Foo', 'Foo', 'Bar')).toBe('abs(${Bar}) + ${Bar}');
     });
+    it('should not rewire refs with partial variable match', () => {
+      expect(updateMathExpressionRefs('$A3 + $B', 'A', 'C')).toBe('$A3 + $B');
+    });
   });
 });
