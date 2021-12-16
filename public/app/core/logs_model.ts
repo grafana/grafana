@@ -12,6 +12,7 @@ import {
   dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
+  DurationUnit,
   FieldCache,
   FieldColorModeId,
   FieldConfig,
@@ -618,9 +619,38 @@ function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFram
 
 const LOGS_VOLUME_QUERY_DEFAULT_TIMEOUT = 60000;
 
+/**
+ * Maps formatted interval to moment.js manipulation strings (can be used with startOf to round range time to buckets)
+ */
+export const LOG_VOLUME_BUCKETS: Record<string, DurationUnit> = {
+  '1ms': 'millisecond',
+  '1s': 'second',
+  '1m': 'minute',
+  '1h': 'hour',
+  '1d': 'day',
+};
+
 type LogsVolumeQueryOptions<T extends DataQuery> = {
   timeout?: number;
   extractLevel: (dataFrame: DataFrame) => LogLevel;
+};
+
+export type LogVolumeMeta = {
+  cacheInfo: {
+    targets: DataQuery[];
+    absoluteRange: AbsoluteTimeRange;
+  };
+  bucketSize: number;
+};
+
+export const hasLogsVolumeMeta = (custom: any): custom is LogVolumeMeta => {
+  return (
+    custom !== undefined &&
+    custom.cacheInfo !== undefined &&
+    typeof custom.cacheInfo.targets === 'object' &&
+    typeof custom.cacheInfo.absoluteRange === 'object' &&
+    typeof custom.bucketSize === 'number'
+  );
 };
 
 export function queryLogVolume<T extends DataQuery>(
@@ -677,15 +707,8 @@ export function queryLogVolume<T extends DataQuery>(
                   targets: originalQuery.targets,
                   absoluteRange: { from: originalQuery.range.from.valueOf(), to: originalQuery.range.to.valueOf() },
                 },
-                // range used to display the histogram, it's shifted back to make enough
-                // space for the first bucket (e.g. if range starts at 12:12, anf bucket size
-                // is 1hour, it mill ensure 12:00 is visible on the graph
-                displayRange: {
-                  from: originalQuery.range.from.valueOf() - bucketSize,
-                  to: originalQuery.range.to.valueOf(),
-                },
                 bucketSize,
-              },
+              } as LogVolumeMeta,
             };
           }
           observer.next({

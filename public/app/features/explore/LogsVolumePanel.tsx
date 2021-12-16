@@ -3,6 +3,7 @@ import { Alert, Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, u
 import { ExploreGraph } from './ExploreGraph';
 import React from 'react';
 import { css } from '@emotion/css';
+import { hasLogsVolumeMeta } from 'app/core/logs_model';
 
 type Props = {
   logsVolumeData?: DataQueryResponse;
@@ -42,9 +43,7 @@ export function LogsVolumePanel(props: Props) {
           data={logsVolumeData.data}
           height={height}
           width={width - spacing}
-          // custom.displayRange should be used in most cases, fallback to absolute range is used only in case of
-          // error in the data source that didn't return display range as expected
-          absoluteRange={logsVolumeData.data.length ? logsVolumeData.data[0].meta.custom.displayRange : absoluteRange}
+          absoluteRange={absoluteRange}
           onChangeTime={onUpdateTimeRange}
           timeZone={timeZone}
           splitOpenFn={splitOpen}
@@ -98,6 +97,11 @@ function logsLevelZoomRatio(
   logsVolumeData: DataQueryResponse | undefined,
   selectedTimeRange: AbsoluteTimeRange
 ): number | undefined {
-  const dataRange = logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom?.absoluteRange;
-  return dataRange ? (selectedTimeRange.from - selectedTimeRange.to) / (dataRange.from - dataRange.to) : undefined;
+  const meta = logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom;
+  if (hasLogsVolumeMeta(meta)) {
+    const dataRange = meta.cacheInfo.absoluteRange;
+    return (selectedTimeRange.from - selectedTimeRange.to) / (dataRange.from - dataRange.to);
+  } else {
+    return undefined;
+  }
 }

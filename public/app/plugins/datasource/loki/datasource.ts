@@ -33,6 +33,7 @@ import {
   QueryResultMeta,
   ScopedVars,
   TimeRange,
+  DurationUnit,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -61,7 +62,7 @@ import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
-import { queryLogVolume } from 'app/core/logs_model';
+import { LOG_VOLUME_BUCKETS, queryLogVolume } from 'app/core/logs_model';
 import config from 'app/core/config';
 import { renderLegendFormat } from '../prometheus/legend';
 
@@ -136,52 +137,8 @@ export class LokiDatasource
       return undefined;
     }
 
-    return queryLogVolume(
-      this,
-      request,
-      /**
-       * Create proper buckets for the histogram. Loki looks for logs backwards in time so to the get correct aggregation
-       * we need to shift ranges a bit, example:
-       * - requested range is 12:25 - 13:50
-       * - we round up the range to 13:00 - 14:00
-       * - returned data contains:
-       * -- timestamp: 13:00, covering points between 12:00-13:00
-       * -- timestamp: 14:00, covering points between 13:00-14:00
-       * - but this way each bucket's timestamp points to the end of the bucket, so...
-       * - we shift the timestamp above to get more natural aggregation, timestamp pointing to the start of the bucket
-       */
-      (logsVolumeRequest: DataQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> => {
-        const shift =
-          logsVolumeRequest.intervalMs - (logsVolumeRequest.range.from.valueOf() % logsVolumeRequest.intervalMs);
-
-        logsVolumeRequest.range.from.add(shift, 'ms');
-        logsVolumeRequest.range.to.add(shift, 'ms');
-
-        logsVolumeRequest.targets = logsVolumeRequest.targets
-          .filter((target) => target.expr && !isMetricsQuery(target.expr))
-          .map((target) => {
-            return {
-              ...target,
-              instant: false,
-              volumeQuery: true,
-              expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
-            };
-          });
-        return logsVolumeRequest;
-      },
-      { extractLevel, timeout: LOGS_VOLUME_TIMEOUT }
-    ).pipe(
-      map((response) => {
-        response.data = response.data.map((frame: MutableDataFrame) => {
-          for (let i = 0; i < frame.length; i++) {
-            const item = frame.get(i);
-            item.Time = item.Time - frame.meta?.custom?.bucketSize || 0;
-            frame.set(i, item);
-          }
-          return frame;
-        });
-        return response;
-      })
+    return queryLogVolume(this, request, logVolumeFactory, { extractLevel, timeout: LOGS_VOLUME_TIMEOUT }).pipe(
+      map(shiftLogVolumeBack)
     );
   }
 
@@ -827,6 +784,52 @@ function getLogLevelFromLabels(labels: Labels): LogLevel {
     }
   }
   return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
+}
+
+/**
+ * Create proper buckets for the histogram. Loki looks for logs backwards in time so to the get correct aggregation
+ * we need to shift ranges a bit, example:
+ * - requested range is 12:25 - 13:50
+ * - assuming interval is 1 hour, round up the range by ceiling to nearest hour: to 13:00 - 14:00 (same way with other intervals)
+ * - returned data contains:
+ * -- at timestamp of 13:00: logs count between 12:00-13:00
+ * -- at timestamp of 14:00: logs count between 13:00-14:00
+ * - but notice that each bucket's timestamp points to the END of the bucket, so...
+ * - we will shift the timestamp back  by 1 hour to get more natural aggregation, this way timestamp is pointing to the
+ *   start of the bucket (see shiftLogVolumeBack)
+ */
+function logVolumeFactory(logsVolumeRequest: DataQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> {
+  const duration: DurationUnit = LOG_VOLUME_BUCKETS[logsVolumeRequest.interval] || 'millisecond';
+  logsVolumeRequest.range.from.startOf(duration).add(1, duration);
+  logsVolumeRequest.range.to.startOf(duration).add(1, duration);
+
+  logsVolumeRequest.targets = logsVolumeRequest.targets
+    .filter((target) => target.expr && !isMetricsQuery(target.expr))
+    .map((target) => {
+      return {
+        ...target,
+        instant: false,
+        volumeQuery: true,
+        expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
+      };
+    });
+  return logsVolumeRequest;
+}
+
+function shiftLogVolumeBack(response: DataQueryResponse) {
+  response.data = response.data.map((frame: MutableDataFrame) => {
+    const bucketSize = frame.meta?.custom?.bucketSize;
+    if (!bucketSize) {
+      return frame;
+    }
+    for (let i = 0; i < frame.length; i++) {
+      const item = frame.get(i);
+      item.Time = item.Time - bucketSize;
+      frame.set(i, item);
+    }
+    return frame;
+  });
+  return response;
 }
 
 export default LokiDatasource;

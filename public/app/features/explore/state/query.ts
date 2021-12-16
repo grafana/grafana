@@ -42,6 +42,7 @@ import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
 import { createCacheKey, getResultsFromCache } from './utils';
 import deepEqual from 'fast-deep-equal';
+import { hasLogsVolumeMeta } from 'app/core/logs_model';
 
 //
 // Actions and Payloads
@@ -516,13 +517,13 @@ function canReuseLogsVolumeData(
   queries: DataQuery[],
   selectedTimeRange: AbsoluteTimeRange
 ): boolean {
-  if (logsVolumeData && logsVolumeData.data[0]) {
+  const meta = logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom;
+  if (hasLogsVolumeMeta(meta)) {
     // check if queries are the same
-    if (!deepEqual(logsVolumeData.data[0].meta?.custom?.cacheInfo?.targets, queries)) {
+    if (!deepEqual(meta.cacheInfo.targets, queries)) {
       return false;
     }
-    const dataRange =
-      logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom?.cacheInfo?.absoluteRange;
+    const dataRange = meta.cacheInfo.absoluteRange;
     // if selected range is within loaded logs volume
     if (dataRange && dataRange.from <= selectedTimeRange.from && selectedTimeRange.to <= dataRange.to) {
       return true;
