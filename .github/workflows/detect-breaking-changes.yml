@@ -2,7 +2,7 @@ name: Levitate
 
 on:
   pull_request:
-    types: [synchronize, reopened]
+    types: [synchronize, opened, reopened]
 
 jobs:
   build:
