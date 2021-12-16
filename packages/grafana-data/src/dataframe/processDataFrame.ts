@@ -470,7 +470,12 @@ export function getDataFrameRow(data: DataFrame, row: number): any[] {
  * Returns a copy that does not include functions
  */
 export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
-  const fields: FieldDTO[] = data.fields.map((f) => {
+  return toFilteredDataFrameDTO(data);
+}
+
+export function toFilteredDataFrameDTO(data: DataFrame, fieldPredicate?: (f: Field) => boolean): DataFrameDTO {
+  const filteredFields = fieldPredicate ? data.fields.filter(fieldPredicate) : data.fields;
+  const fields: FieldDTO[] = filteredFields.map((f) => {
     let values = f.values.toArray();
     // The byte buffers serialize like objects
     if (values instanceof Float64Array) {
