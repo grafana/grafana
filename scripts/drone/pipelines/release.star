@@ -41,6 +41,7 @@ load(
 load(
     'scripts/drone/services/services.star',
     'integration_test_services',
+    'integration_test_services_volumes',
     'ldap_service',
 )
 
@@ -205,12 +206,14 @@ def get_steps(edition, ver_mode):
 def get_oss_pipelines(trigger, ver_mode):
     edition = 'oss'
     services = integration_test_services(edition=edition)
+    volumes = integration_test_services_volumes()
     build_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
     return [
         pipeline(
             name='oss-build-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
               build_steps + package_steps + publish_steps,
+            volumes=volumes,
         ),
         pipeline(
             name='oss-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
@@ -222,12 +225,14 @@ def get_oss_pipelines(trigger, ver_mode):
 def get_enterprise_pipelines(trigger, ver_mode):
     edition = 'enterprise'
     services = integration_test_services(edition=edition)
+    volumes = integration_test_services_volumes()
     build_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
     return [
         pipeline(
             name='enterprise-build-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
               build_steps + package_steps + publish_steps,
+            volumes=volumes,
         ),
         pipeline(
             name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
@@ -242,6 +247,9 @@ def release_pipelines(ver_mode='release', trigger=None):
     if not trigger:
         trigger = {
             'ref': ['refs/tags/v*',],
+            'repo': {
+              'exclude': ['grafana/grafana'],
+            },
         }
 
     should_publish = ver_mode in ('release', 'test-release',)
@@ -264,10 +272,10 @@ def release_pipelines(ver_mode='release', trigger=None):
             depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines],
         )
 
-    pipelines.append(notify_pipeline(
-        name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
-        depends_on=[p['name'] for p in pipelines], template=failure_template, secret='slack_webhook',
-    ))
+    #pipelines.append(notify_pipeline(
+    #    name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
+    #    depends_on=[p['name'] for p in pipelines], template=failure_template, secret='slack_webhook',
+    #))
 
     return pipelines
 

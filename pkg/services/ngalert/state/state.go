@@ -111,6 +111,7 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 		if errors.As(a.Error, &queryError) {
 			for _, next := range alertRule.Data {
 				if next.RefID == queryError.RefID {
+					a.Labels["ref_id"] = next.RefID
 					a.Labels["datasource_uid"] = next.DatasourceUID
 					break
 				}

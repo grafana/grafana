@@ -7,6 +7,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
 import { stylesFactory, useTheme2 } from '../../themes';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
 
 export interface Props {
   children: ReactNode;
@@ -98,6 +100,13 @@ export const Drawer: FC<Props> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const currentWidth = isExpanded ? '100%' : width;
+  const overlayRef = React.useRef(null);
+  const { overlayProps } = useOverlay(
+    {
+      isDismissable: true,
+    },
+    overlayRef
+  );
 
   // RcDrawer v4.x needs to be mounted in advance for animations to play.
   useEffect(() => {
@@ -122,46 +131,48 @@ export const Drawer: FC<Props> = ({
           : selectors.components.Drawer.General.title('no title')
       }
     >
-      {typeof title === 'string' && (
-        <div className={drawerStyles.header}>
-          <div className={drawerStyles.actions}>
-            {expandable && !isExpanded && (
+      <FocusScope restoreFocus contain autoFocus>
+        {typeof title === 'string' && (
+          <div className={drawerStyles.header} {...overlayProps} ref={overlayRef}>
+            <div className={drawerStyles.actions}>
+              {expandable && !isExpanded && (
+                <IconButton
+                  name="angle-left"
+                  size="xl"
+                  onClick={() => setIsExpanded(true)}
+                  surface="header"
+                  aria-label={selectors.components.Drawer.General.expand}
+                />
+              )}
+              {expandable && isExpanded && (
+                <IconButton
+                  name="angle-right"
+                  size="xl"
+                  onClick={() => setIsExpanded(false)}
+                  surface="header"
+                  aria-label={selectors.components.Drawer.General.contract}
+                />
+              )}
               <IconButton
-                name="angle-left"
+                name="times"
                 size="xl"
-                onClick={() => setIsExpanded(true)}
+                onClick={onClose}
                 surface="header"
-                aria-label={selectors.components.Drawer.General.expand}
+                aria-label={selectors.components.Drawer.General.close}
               />
-            )}
-            {expandable && isExpanded && (
-              <IconButton
-                name="angle-right"
-                size="xl"
-                onClick={() => setIsExpanded(false)}
-                surface="header"
-                aria-label={selectors.components.Drawer.General.contract}
-              />
-            )}
-            <IconButton
-              name="times"
-              size="xl"
-              onClick={onClose}
-              surface="header"
-              aria-label={selectors.components.Drawer.General.close}
-            />
+            </div>
+            <div className={drawerStyles.titleWrapper}>
+              <h3>{title}</h3>
+              {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
+              {typeof subtitle !== 'string' && subtitle}
+            </div>
           </div>
-          <div className={drawerStyles.titleWrapper}>
-            <h3>{title}</h3>
-            {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
-            {typeof subtitle !== 'string' && subtitle}
-          </div>
+        )}
+        {typeof title !== 'string' && title}
+        <div className={drawerStyles.content} {...overlayProps} ref={overlayRef}>
+          {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
         </div>
-      )}
-      {typeof title !== 'string' && title}
-      <div className={drawerStyles.content}>
-        {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
-      </div>
+      </FocusScope>
     </RcDrawer>
   );
 };
