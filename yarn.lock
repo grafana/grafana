@@ -11080,13 +11080,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"abortcontroller-polyfill@npm:1.7.3":
-  version: 1.7.3
-  resolution: "abortcontroller-polyfill@npm:1.7.3"
-  checksum: 55739d7f0c9bd6afa2aabb3148778967c4dd4dcff91f6b9259df38da34f9882d3f7730b0954e9767a19cc16a8dd9a58915da4e8a50220300d45af3817d7557b1
-  languageName: node
-  linkType: hard
-
 "accepts@npm:~1.3.4, accepts@npm:~1.3.5, accepts@npm:~1.3.7":
   version: 1.3.7
   resolution: "accepts@npm:1.3.7"
@@ -19142,7 +19135,6 @@ __metadata:
     "@visx/tooltip": 2.1.0
     "@welldone-software/why-did-you-render": 6.2.1
     "@wojtekmaj/enzyme-adapter-react-17": 0.6.2
-    abortcontroller-polyfill: 1.7.3
     angular: 1.8.2
     angular-bindonce: 0.3.1
     angular-route: 1.8.2
