@@ -67,7 +67,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 33;
+    this.dashboard.schemaVersion = 34;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -692,12 +692,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 32) {
-      panelUpgrades.push((panel: PanelModel) => {
-        this.migrateCloudWatchQueries(panel);
-        return panel;
-      });
-
-      this.migrateCloudWatchAnnotationQuery();
+      // CloudWatch migrations have been moved to version 34
     }
 
     // Replace datasource name with reference, uid and type
@@ -725,6 +720,15 @@ export class DashboardMigrator {
 
         return panel;
       });
+    }
+
+    if (oldVersion < 34) {
+      panelUpgrades.push((panel: PanelModel) => {
+        this.migrateCloudWatchQueries(panel);
+        return panel;
+      });
+
+      this.migrateCloudWatchAnnotationQuery();
     }
 
     if (panelUpgrades.length === 0) {

@@ -149,7 +149,13 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             'Resolution 1/1 sets step parameter of Loki metrics range queries such that each pixel corresponds to one data point. For better performance, lower resolutions can be picked. 1/2 only retrieves a data point for every other pixel, and 1/10 retrieves one data point per 10 pixels.'
           }
         >
-          <Select isSearchable={false} onChange={onResolutionChange} options={RESOLUTION_OPTIONS} value={resolution} />
+          <Select
+            isSearchable={false}
+            onChange={onResolutionChange}
+            options={RESOLUTION_OPTIONS}
+            value={resolution}
+            aria-label="Select resolution"
+          />
         </InlineField>
       </div>
     </div>

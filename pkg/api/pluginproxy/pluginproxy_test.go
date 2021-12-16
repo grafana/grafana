@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
 )
 
 func TestPluginProxy(t *testing.T) {
@@ -53,7 +53,7 @@ func TestPluginProxy(t *testing.T) {
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},
@@ -75,7 +75,7 @@ func TestPluginProxy(t *testing.T) {
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},
@@ -98,7 +98,7 @@ func TestPluginProxy(t *testing.T) {
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},
@@ -118,7 +118,7 @@ func TestPluginProxy(t *testing.T) {
 			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{IsAnonymous: true},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},
@@ -155,7 +155,7 @@ func TestPluginProxy(t *testing.T) {
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},
@@ -187,7 +187,7 @@ func TestPluginProxy(t *testing.T) {
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},
@@ -234,7 +234,7 @@ func TestPluginProxy(t *testing.T) {
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},

@@ -150,4 +150,9 @@ compilation-stats.json
 # auto generated Go files
 *_gen.go
 
+# Auto-generated localisation files
+public/locales/_build/
+public/locales/**/*.js
+
 deployment_tools_config.json
+

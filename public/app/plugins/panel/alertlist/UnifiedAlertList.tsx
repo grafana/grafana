@@ -100,7 +100,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
                           )}
                         </div>
                       </div>
-                      <AlertInstances ruleWithLocation={ruleWithLocation} showInstances={props.options.showInstances} />
+                      <AlertInstances ruleWithLocation={ruleWithLocation} options={props.options} />
                     </div>
                   </li>
                 );
