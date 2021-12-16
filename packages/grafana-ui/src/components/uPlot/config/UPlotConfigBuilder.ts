@@ -218,7 +218,10 @@ export class UPlotConfigBuilder {
 
     config.tzDate = this.tzDate;
     config.padding = this.padding;
-    config.bands = this.bands;
+
+    if (this.bands.length) {
+      config.bands = this.bands;
+    }
 
     return config;
   }
