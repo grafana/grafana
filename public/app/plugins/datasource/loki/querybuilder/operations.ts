@@ -43,7 +43,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
-        `This will extract all keys and values from a [logfmt](https://grafana.com/docs/loki/latest/logql/log_queries/#logfmt) formatted log line as labels. The extracted lables can be used in label filter expression and used as values for aggregations via the unwrap operation. `,
+        `This will extract all keys and values from a [logfmt](https://grafana.com/docs/loki/latest/logql/log_queries/#logfmt) formatted log line as labels. The extracted lables can be used in label filter expressions and used as values for a range aggregation via the unwrap operation. `,
     },
     {
       id: LokiOperationId.LineContains,
@@ -140,8 +140,13 @@ function createRangeOperation(name: string): QueryBuilderOperationDef {
     renderer: operationWithRangeVectorRenderer,
     addOperationHandler: addLokiOperation,
     explainHandler: (op, def) => {
-      const opDocs = FUNCTIONS.find((x) => x.insertText === op.id);
-      return `${opDocs?.documentation}`;
+      let opDocs = FUNCTIONS.find((x) => x.insertText === op.id)?.documentation ?? '';
+
+      if (op.params[0] === 'auto' || op.params[0] === '$__interval') {
+        return `${opDocs} \`$__interval\` is variable that will be replaced with a calculated interval based on **Max data points**,  **Min interval** and query time range. You find these options you find under **Query options** at the right of the data source select dropdown.`;
+      } else {
+        return `${opDocs} The [range vector](https://grafana.com/docs/loki/latest/logql/metric_queries/#range-vector-aggregation) is set to \`${op.params[0]}\`.`;
+      }
     },
   };
 }

@@ -118,7 +118,7 @@ export function OperationEditor({
             />
             <FlexItem grow={1} />
             <div className={`${styles.operationHeaderButtons} operation-header-show-on-hover`}>
-              <OperationInfoButton def={def} />
+              <OperationInfoButton def={def} operation={operation} />
               <Button
                 icon="times"
                 size="sm"

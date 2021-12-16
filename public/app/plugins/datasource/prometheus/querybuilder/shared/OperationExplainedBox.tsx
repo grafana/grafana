@@ -66,6 +66,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       'p:last-child': {
         margin: 0,
       },
+      a: {
+        color: theme.colors.text.link,
+        textDecoration: 'underline',
+      },
     }),
   };
 };

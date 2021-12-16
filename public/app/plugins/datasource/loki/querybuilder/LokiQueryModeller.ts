@@ -35,12 +35,22 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQu
   getQueryPatterns(): LokiQueryPattern[] {
     return [
       {
-        name: 'Regex + logfmt + count over time',
+        name: 'Log query and label filter',
         operations: [
           { id: LokiOperationId.LineMatchesRegex, params: [''] },
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
-          { id: LokiOperationId.CountOverTime, params: ['auto'] },
+          { id: LokiOperationId.LabelFilter, params: ['', '=', ''] },
+        ],
+      },
+      {
+        name: 'Time series query on value inside log line',
+        operations: [
+          { id: LokiOperationId.LineMatchesRegex, params: [''] },
+          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.LabelFilterNoErrors, params: [] },
+          { id: LokiOperationId.Unwrap, params: [''] },
+          { id: LokiOperationId.SumOverTime, params: ['auto'] },
           { id: LokiOperationId.Sum, params: [] },
         ],
       },

@@ -5,13 +5,14 @@ import { Button, Portal, useStyles2 } from '@grafana/ui';
 import React, { useState } from 'react';
 import { usePopper } from 'react-popper';
 import { useToggle } from 'react-use';
-import { QueryBuilderOperationDef } from './types';
+import { QueryBuilderOperation, QueryBuilderOperationDef } from './types';
 
 export interface Props {
+  operation: QueryBuilderOperation;
   def: QueryBuilderOperationDef;
 }
 
-export const OperationInfoButton = React.memo<Props>(({ def }) => {
+export const OperationInfoButton = React.memo<Props>(({ def, operation }) => {
   const styles = useStyles2(getStyles);
   const [popperTrigger, setPopperTrigger] = useState<HTMLButtonElement | null>(null);
   const [popover, setPopover] = useState<HTMLDivElement | null>(null);
@@ -45,13 +46,13 @@ export const OperationInfoButton = React.memo<Props>(({ def }) => {
         <Portal>
           <div ref={setPopover} style={popper.styles.popper} {...popper.attributes.popper} className={styles.docBox}>
             <div className={styles.docBoxHeader}>
-              <span>{def.name}</span>
+              <span>{def.renderer(operation, def, '<expr>')}</span>
               <FlexItem grow={1} />
               <Button icon="times" onClick={toggleIsOpen} fill="text" variant="secondary" title="Remove operation" />
             </div>
             <div
               className={styles.docBoxBody}
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(def.documentation) }}
+              dangerouslySetInnerHTML={{ __html: getOperationDocs(def, operation) }}
             ></div>
           </div>
         </Portal>
@@ -76,6 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     docBoxHeader: css({
       fontSize: theme.typography.h5.fontSize,
+      fontFamily: theme.typography.fontFamilyMonospace,
       paddingBottom: theme.spacing(1),
       display: 'flex',
       alignItems: 'center',
@@ -95,3 +97,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+function getOperationDocs(def: QueryBuilderOperationDef, op: QueryBuilderOperation): string {
+  return renderMarkdown(def.explainHandler ? def.explainHandler(op, def) : def.documentation ?? 'no docs');
+}
