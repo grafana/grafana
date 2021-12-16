@@ -474,7 +474,11 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 		})
 	}
 
-	return eGroup.Wait()
+	err := eGroup.Wait()
+	if err != nil {
+		return err
+	}
+	return g.node.Shutdown(context.Background())
 }
 
 func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []glob.Glob) func(r *http.Request) bool {

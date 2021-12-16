@@ -3,7 +3,6 @@ package leader
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -11,13 +10,14 @@ import (
 type Manager interface {
 	GetOrCreateLeader(ctx context.Context, ch string, currentNodeID string, newLeadershipID string) (string, string, error)
 	GetLeader(ctx context.Context, ch string) (bool, string, string, error)
-	TouchLeader(ctx context.Context, ch string, currentNodeID string, currentLeadershipID string) (bool, error)
+	TouchLeader(ctx context.Context, ch string, currentLeadershipID string) (bool, error)
 	CleanLeader(ctx context.Context, ch string) error
 }
 
 type RedisManager struct {
 	redisClient       *redis.Client
 	getOrCreateScript *redis.Script
+	touchLeaderScript *redis.Script
 }
 
 const (
@@ -40,10 +40,26 @@ redis.call("expire", KEYS[1], ARGV[1])
 return redis.call("hmget", KEYS[1], "n", "l")
 `
 
+// KEYS[1] - channel hash key
+// ARGV[1] - hash key expire seconds
+// ARGV[2] - expected leadership ID
+// Returns leader nodeID and current leadershipID.
+const touchLeaderScriptSource = `
+if redis.call('exists', KEYS[1]) ~= 0 then
+	if redis.call('hget', KEYS[1], "l") ~= ARGV[2] then
+		return 0
+	end
+	redis.call("expire", KEYS[1], ARGV[1])
+	return 1
+end
+return 0
+`
+
 func NewRedisManager(redisClient *redis.Client) *RedisManager {
 	return &RedisManager{
 		redisClient:       redisClient,
 		getOrCreateScript: redis.NewScript(getOrCreateScriptSource),
+		touchLeaderScript: redis.NewScript(touchLeaderScriptSource),
 	}
 }
 
@@ -72,8 +88,9 @@ func (m *RedisManager) GetLeader(ctx context.Context, ch string) (bool, string, 
 	return true, result[0].(string), result[1].(string), nil
 }
 
-func (m *RedisManager) TouchLeader(ctx context.Context, ch string, currentNodeID string, currentLeadershipID string) (bool, error) {
-	return m.redisClient.Expire(ctx, ch, leaderTTLSeconds*time.Second).Result()
+func (m *RedisManager) TouchLeader(ctx context.Context, ch string, currentLeadershipID string) (bool, error) {
+	//return m.redisClient.Expire(ctx, ch, leaderTTLSeconds*time.Second).Result()
+	return m.touchLeaderScript.Eval(ctx, m.redisClient, []string{ch}, leaderTTLSeconds, currentLeadershipID).Bool()
 }
 
 func (m *RedisManager) CleanLeader(ctx context.Context, ch string) error {

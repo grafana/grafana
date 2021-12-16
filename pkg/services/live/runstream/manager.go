@@ -189,6 +189,8 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 	defer datasourceTicker.Stop()
 	leaderTouchTicker := time.NewTicker(s.leaderTouchInterval)
 	defer leaderTouchTicker.Stop()
+	maxLeaderCheckFailures := 2
+	var currentLeaderCheckFailures int
 	for {
 		select {
 		case <-ctx.Done():
@@ -197,16 +199,21 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 			if s.leaderManager == nil {
 				continue
 			}
-			ok, err := s.leaderManager.TouchLeader(ctx, sr.Channel, s.nodeIDGetter.GetNodeID(), sr.leadershipID)
+			ok, err := s.leaderManager.TouchLeader(ctx, sr.Channel, sr.leadershipID)
 			if err != nil {
-				// TODO: what should we do here?
 				logger.Error("Error touching leader entry", "channel", sr.Channel, "path", sr.Path, "error", err)
+				currentLeaderCheckFailures++
+				if currentLeaderCheckFailures == maxLeaderCheckFailures {
+					logger.Error("Stop stream as we can't touch it for a long time", "channel", sr.Channel, "path", sr.Path)
+					s.stopStream(sr, cancelFn)
+					return
+				}
 				continue
 			}
 			if !ok {
-				// TODO: what should we do here?
 				logger.Error("Leader changed", "channel", sr.Channel, "path", sr.Path)
-				continue
+				s.stopStream(sr, cancelFn)
+				return
 			}
 			logger.Debug("Leader touch ok", "channel", sr.Channel, "path", sr.Path)
 		case <-datasourceTicker.C:
