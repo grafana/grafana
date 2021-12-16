@@ -139,7 +139,7 @@ The option is called `cloud monitoring auto` and the defaults are:
 - 5m for time ranges >= 23 hours and < 6 days
 - 1h for time ranges >= 6 days
 
-The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
+The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable](https://grafana.com/docs/grafana/latest/variables/variable-types/add-interval-variable/).
 
 You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -206,10 +206,10 @@ The SLO query builder in the Google Cloud Monitoring data source allows you to d
 To create an SLO query, follow these steps:
 
 1. Choose the option **Service Level Objectives (SLO)** in the **Query Type** dropdown.
-1. Choose a project from the **Project** dropdown.
-1. Choose an [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** dropdown.
-1. Choose an [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** dropdown.
-1. Choose a [time series selector](https://cloud.google.com/monitoring/service-monitoring/timeseries-selectors#ts-selector-list) from the **Selector** dropdown.
+2. Choose a project from the **Project** dropdown.
+3. Choose an [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** dropdown.
+4. Choose an [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** dropdown.
+5. Choose a [time series selector](https://cloud.google.com/stackdriver/docs/solutions/slo-monitoring/api/timeseries-selectors#ts-selector-list) from the **Selector** dropdown.
 
 The friendly names for the time series selectors are shown in Grafana. Here is the mapping from the friendly name to the system name that is used in the Service Monitoring documentation:
 
