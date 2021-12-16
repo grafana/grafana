@@ -24,20 +24,15 @@ func GetAPIKeys(c *models.ReqContext) response.Response {
 	result := make([]*models.ApiKeyDTO, len(query.Result))
 	for i, t := range query.Result {
 		var expiration *time.Time = nil
-		var expired bool = false
 		if t.Expires != nil {
 			v := time.Unix(*t.Expires, 0)
 			expiration = &v
-			expired = time.Now().After(*expiration)
 		}
 		result[i] = &models.ApiKeyDTO{
 			Id:         t.Id,
 			Name:       t.Name,
 			Role:       t.Role,
 			Expiration: expiration,
-		}
-		if c.QueryBool("includeExpired") {
-			result[i].IsExpired = expired
 		}
 	}
 

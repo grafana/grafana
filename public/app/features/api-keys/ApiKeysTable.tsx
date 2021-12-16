@@ -28,13 +28,14 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete }) => {
       {apiKeys.length > 0 ? (
         <tbody>
           {apiKeys.map((key) => {
+            const isExpired = Boolean(key.expiration && Date.now() > new Date(key.expiration).getTime());
             return (
-              <tr key={key.id} className={styles.tableRow(key.isExpired)}>
+              <tr key={key.id} className={styles.tableRow(isExpired)}>
                 <td>{key.name}</td>
                 <td>{key.role}</td>
                 <td>
                   {formatDate(key.expiration, timeZone)}
-                  {key.isExpired && (
+                  {isExpired && (
                     <span className={styles.tooltipContainer}>
                       <Tooltip content="This API key has expired.">
                         <Icon name={'exclamation-triangle' as IconName} />
@@ -62,7 +63,7 @@ function formatDate(expiration: string | undefined, timeZone: TimeZone): string 
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tableRow: (isExpired: ApiKey['isExpired']) => css`
+  tableRow: (isExpired: boolean) => css`
     color: ${isExpired ? theme.colors.text.secondary : theme.colors.text.primary};
   `,
   tooltipContainer: css`

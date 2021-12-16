@@ -2,7 +2,6 @@
 
 export interface ApiKey {
   id?: number;
-  isExpired?: boolean;
   name: string;
   role: OrgRole;
   secondsToLive: number | null;
