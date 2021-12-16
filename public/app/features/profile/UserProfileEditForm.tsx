@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { Trans } from '@lingui/macro';
 import { Button, Field, FieldSet, Form, Icon, Input, Tooltip } from '@grafana/ui';
 import { UserDTO } from 'app/types';
 import config from 'app/core/config';
@@ -21,7 +22,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
     <Form onSubmit={onSubmitProfileUpdate} validateOn="onBlur">
       {({ register, errors }) => {
         return (
-          <FieldSet label="Edit profile">
+          <FieldSet label={<Trans id="edit-user-profile.title">Edit profile</Trans>}>
             <Field label="Name" invalid={!!errors.name} error="Name is required" disabled={disableLoginForm}>
               <Input
                 {...register('name', { required: true })}
