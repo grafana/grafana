@@ -60,7 +60,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 		if mg.Cfg.IsLiveConfigEnabled() {
 			addLiveChannelMigrations(mg)
 		}
-
 		if mg.Cfg.IsDashboardPreviesEnabled() {
 			addDashboardThumbsMigrations(mg)
 		}
