@@ -144,7 +144,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		decryptFn:         decryptFn,
 	}
 
-	am.gokitLogger = gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger))
+	am.gokitLogger = logging.NewWrapper(am.logger)
 	am.fileStore = NewFileStore(am.orgID, kvStore, am.WorkingDirPath())
 
 	nflogFilepath, err := am.fileStore.FilepathFor(context.TODO(), notificationLogFilename)
@@ -519,6 +519,8 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 		n, err = channels.NewKafkaNotifier(cfg, tmpl)
 	case "webhook":
 		n, err = channels.NewWebHookNotifier(cfg, tmpl, am.decryptFn)
+	case "wecom":
+		n, err = channels.NewWeComNotifier(cfg, tmpl, am.decryptFn)
 	case "sensugo":
 		n, err = channels.NewSensuGoNotifier(cfg, tmpl, am.decryptFn)
 	case "discord":
