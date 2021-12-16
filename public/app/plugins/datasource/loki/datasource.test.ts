@@ -8,6 +8,7 @@ import {
   dateTime,
   FieldCache,
   FieldType,
+  LoadingState,
   LogRowModel,
   MutableDataFrame,
   TimeSeries,
@@ -25,6 +26,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
 import { makeMockLokiDatasource } from './mocks';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { cloneDeep } from 'lodash';
 
 jest.mock('@grafana/runtime', () => ({
   // @ts-ignore
@@ -998,6 +1000,89 @@ describe('LokiDatasource', () => {
         });
 
         expect(ds.getLogsVolumeDataProvider(options)).toBeDefined();
+      });
+
+      it('normalizes the way log counters are aggregated in buckets', async () => {
+        const interval = '1h',
+          intervalMs = 3600000;
+
+        const selectedRange = {
+          from: toUtc('2018-04-25 12:25'),
+          to: toUtc('2018-04-25 13:50'),
+        };
+
+        const expectedQueryRange = {
+          from: toUtc('2018-04-25 13:00'), // rounded up
+          to: toUtc('2018-04-25 14:00'), // rounded up
+        };
+
+        const expectedResultRange = {
+          from: toUtc('2018-04-25 12:00'), // shifted back
+          to: toUtc('2018-04-25 13:00'), // shifted back
+        };
+
+        const ds = createLokiDSForTests();
+
+        // setup regular Explore query with selected data range
+        const options = getQueryOptions<LokiQuery>({
+          interval,
+          intervalMs,
+          scopedVars: {
+            __interval: { value: interval, text: 'test' },
+            __interval_ms: { value: intervalMs, text: 'test' },
+          },
+          targets: [{ expr: '{label=value}', refId: 'A' }],
+          range: {
+            from: selectedRange.from,
+            to: selectedRange.to,
+            raw: selectedRange,
+          },
+        });
+
+        // check the range is rounded up when passed to Loki
+        fetchMock.mockImplementation((request: { url: string }) => {
+          expect(request.url.includes('start=' + expectedQueryRange.from.unix())).toBeTruthy();
+          expect(request.url.includes('end=' + expectedQueryRange.to.unix())).toBeTruthy();
+          const volumeResponse = cloneDeep(testMetricsResponse);
+          volumeResponse.data.data.result = [
+            {
+              metric: { label: 'value' },
+              values: [
+                [expectedQueryRange.from.unix(), '1'],
+                [expectedQueryRange.to.unix(), '2'],
+              ],
+            },
+          ];
+          return of(volumeResponse);
+        });
+
+        // check buckets are shifted back
+        const logVolumeProvider = ds.getLogsVolumeDataProvider(options);
+        await expect(logVolumeProvider).toEmitValuesWith((received) => {
+          expect(received).toMatchObject([
+            { state: LoadingState.Loading, error: undefined, data: [] },
+            {
+              state: LoadingState.Done,
+              error: undefined,
+              data: [
+                {
+                  fields: [
+                    {
+                      name: 'Time',
+                      values: {
+                        buffer: [expectedResultRange.from.unix() * 1000, expectedResultRange.to.unix() * 1000],
+                      },
+                    },
+                    {
+                      name: 'Value',
+                      values: { buffer: [1, 2] },
+                    },
+                  ],
+                },
+              ],
+            },
+          ]);
+        });
       });
     });
 

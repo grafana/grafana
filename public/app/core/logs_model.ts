@@ -620,7 +620,7 @@ function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFram
 const LOGS_VOLUME_QUERY_DEFAULT_TIMEOUT = 60000;
 
 /**
- * Maps formatted interval to moment.js manipulation strings (can be used with startOf to round range time to buckets)
+ * Maps formatted interval to moment.js duration unit so it can be used with startOf to round buckets start/end time
  */
 export const LOG_VOLUME_BUCKETS: Record<string, DurationUnit> = {
   '1ms': 'millisecond',
@@ -696,11 +696,10 @@ export function queryLogVolume<T extends DataQuery>(
       )
       .subscribe({
         complete: () => {
-          const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
-          if (aggregatedLogsVolume[0]) {
-            aggregatedLogsVolume[0].meta = {
+          const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel).map((frame) => {
+            frame.meta = {
               custom: {
-                // cache info contains information logs query that was made, to check
+                // cache info contains information about logs query that was made to check
                 // if the data for new query could be reused and taken from cache (i.e.
                 // if targets didn't change and date range is more narrow)
                 cacheInfo: {
@@ -708,9 +707,10 @@ export function queryLogVolume<T extends DataQuery>(
                   absoluteRange: { from: originalQuery.range.from.valueOf(), to: originalQuery.range.to.valueOf() },
                 },
                 bucketSize,
-              } as LogVolumeMeta,
+              },
             };
-          }
+            return frame;
+          });
           observer.next({
             state: LoadingState.Done,
             error: undefined,

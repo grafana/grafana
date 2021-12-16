@@ -4,6 +4,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  dateTimeParse,
   FieldType,
   LoadingState,
   LogLevel,
@@ -957,6 +958,9 @@ describe('logs volume', () => {
     datasource: MockObservableDataSourceApi,
     request: DataQueryRequest<TestDataQuery>;
 
+  const interval = '1h',
+    intervalMs = 3600000;
+
   function createFrame(labels: object, timestamps: number[], values: number[]) {
     return toDataFrame({
       fields: [
@@ -984,9 +988,20 @@ describe('logs volume', () => {
 
   function setup(datasourceSetup: () => void) {
     datasourceSetup();
+
     request = ({
       targets: [{ target: 'volume query 1' }, { target: 'volume query 2' }],
-      scopedVars: {},
+      range: {
+        from: dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' }),
+        to: dateTimeParse('2021-06-18 00:00:00', { timeZone: 'utc' }),
+        raw: { from: '0', to: '1' },
+      },
+      interval,
+      intervalMs,
+      scopedVars: {
+        __interval: { value: interval, text: 'test' },
+        __interval_ms: { value: intervalMs, text: 'test' },
+      },
     } as unknown) as DataQueryRequest<TestDataQuery>;
     volumeProvider = queryLogVolume(datasource, request, (r) => r, {
       extractLevel: (dataFrame: DataFrame) => {
@@ -1036,6 +1051,31 @@ describe('logs volume', () => {
               fields: createExpectedFields('error', [100, 200, 300], [1, 2, 1]),
             },
           ],
+        },
+      ]);
+    });
+  });
+
+  it('attaches cache info and bucket size to each frame of the response', async () => {
+    setup(setupMultipleResults);
+
+    const meta = {
+      custom: {
+        cacheInfo: {
+          targets: [{ target: 'volume query 1' }, { target: 'volume query 2' }],
+          absoluteRange: { from: request.range.from.unix() * 1000, to: request.range.to.unix() * 1000 },
+        },
+        bucketSize: intervalMs,
+      },
+    };
+
+    await expect(volumeProvider).toEmitValuesWith((received) => {
+      expect(received).toMatchObject([
+        { state: LoadingState.Loading, error: undefined, data: [] },
+        {
+          state: LoadingState.Done,
+          error: undefined,
+          data: [{ meta }, { meta }],
         },
       ]);
     });
