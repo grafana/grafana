@@ -433,6 +433,11 @@ func (cfg Cfg) IsLiveConfigEnabled() bool {
 	return cfg.FeatureToggles["live-config"]
 }
 
+// IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
+func (cfg Cfg) IsDashboardPreviesEnabled() bool {
+	return cfg.FeatureToggles["dashboardPreviews"]
+}
+
 // IsTrimDefaultsEnabled returns whether the standalone trim dashboard default feature is enabled.
 func (cfg Cfg) IsTrimDefaultsEnabled() bool {
 	return cfg.FeatureToggles["trimDefaults"]

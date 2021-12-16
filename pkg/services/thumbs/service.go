@@ -22,8 +22,7 @@ import (
 )
 
 var (
-	FEATURE_TOGGLE            = "dashboardPreviews"
-	tlog           log.Logger = log.New("thumbnails")
+	tlog log.Logger = log.New("thumbnails")
 )
 
 type Service interface {
@@ -37,8 +36,7 @@ type Service interface {
 }
 
 func ProvideService(cfg *setting.Cfg, renderService rendering.Service) Service {
-	enabled := cfg.FeatureToggles[FEATURE_TOGGLE]
-	if !enabled {
+	if !cfg.IsDashboardPreviesEnabled() {
 		return &dummyService{}
 	}
 
