@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/pkg/errors"
 )
 
 func (ss *SQLStore) addUserQueryAndCommandHandlers() {
@@ -197,7 +197,26 @@ func (ss *SQLStore) CloneUserToServiceAccount(ctx context.Context, siUser *model
 
 	newuser, err := ss.CreateUser(ctx, cmd)
 	if err != nil {
-		return nil, errors.Errorf("Failed to create user: %v", err)
+		ss.log.Warn("user not cloned", "err", err)
+		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return newuser, err
+}
+
+func (ss *SQLStore) CreateServiceAccountForApikey(ctx context.Context, orgId int64, keyname string, role models.RoleType) (*models.User, error) {
+	prefix := "Service-Account-Autogen-"
+	cmd := models.CreateUserCommand{
+		Login:            fmt.Sprintf("%v-%v-%v", prefix, orgId, keyname),
+		Name:             prefix + keyname,
+		OrgId:            orgId,
+		DefaultOrgRole:   string(role),
+		IsServiceAccount: true,
+	}
+
+	newuser, err := ss.CreateUser(ctx, cmd)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	return newuser, err

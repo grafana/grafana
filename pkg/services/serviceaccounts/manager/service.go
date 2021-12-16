@@ -40,8 +40,9 @@ func ProvideServiceAccountsService(
 		s.log.Error("Failed to register roles", "error", err)
 	}
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister, s.store)
 	serviceaccountsAPI.RegisterAPIEndpoints(cfg)
+
 	return s, nil
 }
 
