@@ -231,7 +231,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
         return (
           <DataSourcePicker
             {...props}
-            alerting
+            type={['prometheus', 'loki', 'grafana']}
             noDefault
             current={props.value}
             onChange={(ds) => props.onChange(ds.name)}

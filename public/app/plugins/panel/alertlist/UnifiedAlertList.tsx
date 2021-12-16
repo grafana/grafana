@@ -13,7 +13,11 @@ import { flattenRules, alertStateToState, getFirstActiveAt } from 'app/features/
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
-import { getAllRulesSourceNames } from 'app/features/alerting/unified/utils/datasource';
+import {
+  getAllRulesSourceNames,
+  GRAFANA_DATASOURCE_NAME,
+  GRAFANA_RULES_SOURCE_NAME,
+} from 'app/features/alerting/unified/utils/datasource';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { Annotation, RULE_LIST_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -169,7 +173,13 @@ function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], ru
     });
   }
   if (options.datasource) {
-    filteredRules = filteredRules.filter(({ dataSourceName }) => dataSourceName === options.datasource);
+    const isGrafanaDS = options.datasource === GRAFANA_DATASOURCE_NAME;
+
+    filteredRules = filteredRules.filter(
+      isGrafanaDS
+        ? ({ dataSourceName }) => dataSourceName === GRAFANA_RULES_SOURCE_NAME
+        : ({ dataSourceName }) => dataSourceName === options.datasource
+    );
   }
 
   return filteredRules;
