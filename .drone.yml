@@ -796,7 +796,7 @@ steps:
   environment:
     GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
       from_secret: gcp_upload_artifacts_key
-    UPLOAD_E2E_TEST_ARTIFACTS_BUCKET: deployment-pipeline-artifacts-dev
+    UPLOAD_E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
 - commands:
   - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
@@ -4124,7 +4124,7 @@ name: prerelease_bucket
 ---
 get:
   name: not-sure-yet-what-to-put-here
-  path: secret/data/hosted-grafana/ops-us-east-0/deployment-artifacts-uploader-account
+  path: infra/ci/grafana/releng/artifacts-uploader-service-account
 kind: secret
 name: gcp_upload_artifacts_key
 ---
