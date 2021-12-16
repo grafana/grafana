@@ -39,7 +39,7 @@ type ResourcePermissionsService interface {
 	// SetBuiltInRolePermission sets permission on resource for a built-in role (Admin, Editor, Viewer)
 	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, actions []string) (*ResourcePermission, error)
 	// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
-	MapActions(permission ResourcePermission) (string, bool)
+	MapActions(permission ResourcePermission) string
 	// MapPermission will map a friendly named permission to it's corresponding actions configured in PermissionsToAction map.
 	MapPermission(permission string) []string
 }

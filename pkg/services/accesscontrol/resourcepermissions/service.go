@@ -143,13 +143,13 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 	})
 }
 
-func (s *Service) MapActions(permission accesscontrol.ResourcePermission) (string, bool) {
+func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {
 	for _, p := range s.permissions {
 		if permission.Contains(s.options.PermissionsToActions[p]) {
-			return p, true
+			return p
 		}
 	}
-	return "", false
+	return ""
 }
 
 func (s *Service) MapPermission(permission string) []string {
