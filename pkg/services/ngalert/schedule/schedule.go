@@ -111,7 +111,7 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 
 	sch := schedule{
-		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]alertRuleInfo)},
+		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
 		maxAttempts:             cfg.MaxAttempts,
 		clock:                   cfg.C,
 		baseInterval:            cfg.BaseInterval,
@@ -340,15 +340,15 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 			type readyToRunItem struct {
 				key      models.AlertRuleKey
-				ruleInfo alertRuleInfo
+				ruleInfo *alertRuleInfo
+				version  int64
 			}
 
 			readyToRun := make([]readyToRunItem, 0)
 			for _, item := range alertRules {
 				key := item.GetKey()
 				itemVersion := item.Version
-				newRoutine := !sch.registry.exists(key)
-				ruleInfo := sch.registry.getOrCreateInfo(key, itemVersion)
+				ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key)
 
 				// enforce minimum evaluation interval
 				if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
@@ -360,7 +360,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return sch.ruleRoutine(ctx, key, ruleInfo.evalCh, ruleInfo.stopCh)
+						return sch.ruleRoutine(ruleInfo.ctx, key, ruleInfo.evalCh)
 					})
 				}
 
@@ -373,7 +373,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleInfo: ruleInfo})
+					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleInfo: ruleInfo, version: itemVersion})
 				}
 
 				// remove the alert rule from the registered alert rules
@@ -389,19 +389,21 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 				item := readyToRun[i]
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					item.ruleInfo.evalCh <- &evalContext{now: tick, version: item.ruleInfo.version}
+					success := item.ruleInfo.eval(tick, item.version)
+					if !success {
+						sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+					}
 				})
 			}
 
 			// unregister and stop routines of the deleted alert rules
 			for key := range registeredDefinitions {
-				ruleInfo, err := sch.registry.get(key)
-				if err != nil {
-					sch.log.Error("failed to get alert rule routine information", "err", err)
+				ruleInfo, ok := sch.registry.del(key)
+				if !ok {
+					sch.log.Error("unable to delete alert rule routine information because it did not exist", "uid", key.UID, "org_id", key.OrgID)
 					continue
 				}
-				ruleInfo.stopCh <- struct{}{}
-				sch.registry.del(key)
+				ruleInfo.stop()
 			}
 		case <-ctx.Done():
 			waitErr := dispatcherGroup.Wait()
@@ -421,7 +423,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 	}
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext) error {
 	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
 	logger.Debug("alert rule routine started")
 
@@ -516,9 +518,14 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 
 	evalRunning := false
 	var currentRule *models.AlertRule
+	defer sch.stopApplied(key)
 	for {
 		select {
-		case ctx := <-evalCh:
+		case ctx, ok := <-evalCh:
+			if !ok {
+				logger.Debug("Evaluation channel has been closed. Exiting")
+				return nil
+			}
 			if evalRunning {
 				continue
 			}
@@ -546,13 +553,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					logger.Error("evaluation failed after all retries", "err", err)
 				}
 			}()
-		case <-stopCh:
-			sch.stopApplied(key)
-			logger.Debug("stopping alert rule routine")
-			// interrupt evaluation if it's running
-			return nil
 		case <-grafanaCtx.Done():
-			return grafanaCtx.Err()
+			logger.Debug("stopping alert rule routine")
+			return nil
 		}
 	}
 }
@@ -578,51 +581,34 @@ func (sch *schedule) saveAlertStates(states []*state.State) {
 
 type alertRuleRegistry struct {
 	mu            sync.Mutex
-	alertRuleInfo map[models.AlertRuleKey]alertRuleInfo
+	alertRuleInfo map[models.AlertRuleKey]*alertRuleInfo
 }
 
-// getOrCreateInfo returns the channel for the specific alert rule
-// if it does not exists creates one and returns it
-func (r *alertRuleRegistry) getOrCreateInfo(key models.AlertRuleKey, ruleVersion int64) alertRuleInfo {
+// getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
+// Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
+func (r *alertRuleRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	info, ok := r.alertRuleInfo[key]
 	if !ok {
-		r.alertRuleInfo[key] = alertRuleInfo{evalCh: make(chan *evalContext), stopCh: make(chan struct{}), version: ruleVersion}
-		return r.alertRuleInfo[key]
+		info = newAlertRuleInfo(context)
+		r.alertRuleInfo[key] = info
 	}
-	info.version = ruleVersion
-	r.alertRuleInfo[key] = info
-	return info
+	return info, !ok
 }
 
-// get returns the channel for the specific alert rule
-// if the key does not exist returns an error
-func (r *alertRuleRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error) {
+// del removes pair that has specific key from alertRuleInfo.
+// Returns 2-tuple where the first element is value of the removed pair
+// and the second element indicates whether element with the specified key existed.
+func (r *alertRuleRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-
 	info, ok := r.alertRuleInfo[key]
-	if !ok {
-		return nil, fmt.Errorf("%v key not found", key)
+	if ok {
+		delete(r.alertRuleInfo, key)
 	}
-	return &info, nil
-}
-
-func (r *alertRuleRegistry) exists(key models.AlertRuleKey) bool {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	_, ok := r.alertRuleInfo[key]
-	return ok
-}
-
-func (r *alertRuleRegistry) del(key models.AlertRuleKey) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	delete(r.alertRuleInfo, key)
+	return info, ok
 }
 
 func (r *alertRuleRegistry) iter() <-chan models.AlertRuleKey {
@@ -651,9 +637,27 @@ func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 }
 
 type alertRuleInfo struct {
-	evalCh  chan *evalContext
-	stopCh  chan struct{}
-	version int64
+	evalCh chan *evalContext
+	ctx    context.Context
+	stop   context.CancelFunc
+}
+
+func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
+	ctx, cancel := context.WithCancel(parent)
+	return &alertRuleInfo{evalCh: make(chan *evalContext), ctx: ctx, stop: cancel}
+}
+
+// eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
+func (a *alertRuleInfo) eval(t time.Time, version int64) bool {
+	select {
+	case a.evalCh <- &evalContext{
+		now:     t,
+		version: version,
+	}:
+		return true
+	case <-a.ctx.Done():
+		return false
+	}
 }
 
 type evalContext struct {
