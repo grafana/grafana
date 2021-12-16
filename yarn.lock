@@ -3810,7 +3810,7 @@ __metadata:
     clipboard: 2.0.4
     common-tags: ^1.8.0
     core-js: 3.20.0
-    css-loader: 6.4.0
+    css-loader: 6.5.1
     css-minimizer-webpack-plugin: 3.2.0
     csstype: 3.0.9
     d3: 5.15.0
@@ -14955,24 +14955,6 @@ __metadata:
   peerDependencies:
     webpack: ^4.0.0 || ^5.0.0
   checksum: dbd80f052b41ea7c33d96a2fbeabca82773f7e3567300c636ffb079ffcf8ba111b02f315346942334ed27ffc137323c9a4ac1e446eaed5837abbdd3fdd371a0c
-  languageName: node
-  linkType: hard
-
-"css-loader@npm:6.4.0":
-  version: 6.4.0
-  resolution: "css-loader@npm:6.4.0"
-  dependencies:
-    icss-utils: ^5.1.0
-    postcss: ^8.2.15
-    postcss-modules-extract-imports: ^3.0.0
-    postcss-modules-local-by-default: ^4.0.0
-    postcss-modules-scope: ^3.0.0
-    postcss-modules-values: ^4.0.0
-    postcss-value-parser: ^4.1.0
-    semver: ^7.3.5
-  peerDependencies:
-    webpack: ^5.0.0
-  checksum: e842905fce973517dab8ae1e1f6412691c9b4164fbaf94f10ef2ec073c9aa97b5cf9a753a45965fd44aab6528e068be85fd2f8437c6126a823399458dff04282
   languageName: node
   linkType: hard
 
