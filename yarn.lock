@@ -3810,7 +3810,7 @@ __metadata:
     classnames: 2.3.1
     clipboard: 2.0.4
     common-tags: ^1.8.0
-    core-js: 3.10.0
+    core-js: 3.20.0
     css-loader: 6.4.0
     css-minimizer-webpack-plugin: ^3.1.1
     csstype: 3.0.9
@@ -14579,10 +14579,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.10.0":
-  version: 3.10.0
-  resolution: "core-js@npm:3.10.0"
-  checksum: d3ae5274ac6332204b98de1947edc090cac1e6d16d8cbebbeda5ba62afa69a122b1e52e5fff166217b4217b50b0729c5268d3f6612eea8a54b7b65c11d45bb58
+"core-js@npm:3.20.0":
+  version: 3.20.0
+  resolution: "core-js@npm:3.20.0"
+  checksum: 4dca42f27553e1068b5329fbe133bca9256be819b64b4d0e244b8dc0db69181430d79aed3c33eeb7388f8ec019ea125e76fbd0c28523d112779f9bb5147a0939
   languageName: node
   linkType: hard
 
@@ -19413,7 +19413,7 @@ __metadata:
     comlink: 4.3.1
     common-tags: ^1.8.0
     copy-webpack-plugin: 9.0.1
-    core-js: 3.10.0
+    core-js: 3.20.0
     css-loader: 6.5.1
     css-minimizer-webpack-plugin: ^3.1.3
     cypress: 9.0.0
