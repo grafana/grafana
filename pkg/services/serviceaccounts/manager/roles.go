@@ -15,19 +15,11 @@ var (
 	apikeyAdminRead = "fixed:apikey:admin:read"
 
 	//API key actions
-	ActionApikeyListEv          accesscontrol.Evaluator
-	ActionApikeyAddEv           accesscontrol.Evaluator
-	ActionApikeyRemoveEv        accesscontrol.Evaluator
-	ActionApikeyAddAdditionalEv accesscontrol.Evaluator
-)
-
-func InitPerms() {
-	//API key actions
-	ActionApikeyListEv = accesscontrol.EvalPermission(ActionApikeyList)
-	ActionApikeyAddEv = accesscontrol.EvalPermission(ActionApikeyAdd)
-	ActionApikeyRemoveEv = accesscontrol.EvalPermission(ActionApikeyRemove) //Improvement:Check here or in database layer that user has permissiono modify the service account attached to this api key
+	ActionApikeyListEv          = accesscontrol.EvalPermission(ActionApikeyList)
+	ActionApikeyAddEv           = accesscontrol.EvalPermission(ActionApikeyAdd)
+	ActionApikeyRemoveEv        = accesscontrol.EvalPermission(ActionApikeyRemove) //Improvement:Check here or in database layer that user has permissiono modify the service account attached to this api key
 	ActionApikeyAddAdditionalEv = accesscontrol.EvalPermission(ActionApikeyAddAdditional)
-}
+)
 
 func RegisterRoles(ac accesscontrol.AccessControl) error {
 	role := accesscontrol.RoleRegistration{
@@ -98,6 +90,5 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 		return err
 	}
 
-	InitPerms()
 	return nil
 }
