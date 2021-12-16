@@ -29,6 +29,7 @@ import { getNewSelectPartOptions, getNewGroupByPartOptions, makePartList } from 
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { useUniqueId } from '../useUniqueId';
 
 type Props = {
   query: InfluxQuery;
@@ -53,6 +54,10 @@ function withTemplateVariableOptions(optionsPromise: Promise<string[]>): Promise
 }
 
 export const Editor = (props: Props): JSX.Element => {
+  const uniqueId = useUniqueId();
+  const formatAsId = `influxdb-qe-format-as-${uniqueId}`;
+  const orderByTimeId = `influxdb-qe-order-by${uniqueId}`;
+
   const styles = useStyles2(getStyles);
   const query = normalizeQuery(props.query);
   const { datasource } = props;
@@ -172,10 +177,11 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, tz });
           }}
         />
-        <InlineLabel width="auto" className={styles.inlineLabel}>
+        <InlineLabel htmlFor={orderByTimeId} width="auto" className={styles.inlineLabel}>
           ORDER BY TIME
         </InlineLabel>
         <OrderByTimeSection
+          inputId={orderByTimeId}
           value={query.orderByTime === 'DESC' ? 'DESC' : 'ASC' /* FIXME: make this shared with influx_query_model */}
           onChange={(v) => {
             onAppliedChange({ ...query, orderByTime: v });
@@ -206,8 +212,9 @@ export const Editor = (props: Props): JSX.Element => {
           }}
         />
       </SegmentSection>
-      <SegmentSection label="FORMAT AS" fill={true}>
+      <SegmentSection htmlFor={formatAsId} label="FORMAT AS" fill={true}>
         <FormatAsSection
+          inputId={formatAsId}
           format={query.resultFormat ?? DEFAULT_RESULT_FORMAT}
           onChange={(format) => {
             onAppliedChange({ ...query, resultFormat: format });
