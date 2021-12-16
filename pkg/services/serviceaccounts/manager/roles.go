@@ -54,7 +54,9 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 		Role: accesscontrol.RoleDTO{
 			Version:     1,
 			Name:        apikeyAdminRead,
+			DisplayName: "Apikeys reader",
 			Description: "Gives access to list apikeys.",
+			Group:       "Service accounts",
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionApikeyList,
@@ -72,7 +74,9 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 		Role: accesscontrol.RoleDTO{
 			Version:     1,
 			Name:        apikeyAdminEdit,
+			DisplayName: "Apikeys writer",
 			Description: "Gives access to add and delete api keys.",
+			Group:       "Service accounts",
 			Permissions: accesscontrol.ConcatPermissions(apikeyAdminReadRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: ActionApikeyAdd,
