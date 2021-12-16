@@ -1,6 +1,6 @@
-name: Levitate (test)
+name: Levitate (new)
 
-on: pull_request_target
+on: pull_request
 
 jobs:
   build:
