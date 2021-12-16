@@ -15,12 +15,14 @@ import {
   ScaleDimensionConfig,
   TextDimensionConfig,
   DimensionContext,
+  ScalarDimensionConfig,
 } from 'app/features/dimensions';
 import {
   getColorDimensionFromData,
   getScaleDimensionFromData,
   getResourceDimensionFromData,
   getTextDimensionFromData,
+  getScalarDimensionFromData,
 } from 'app/features/dimensions/utils';
 import { ElementState } from './element';
 import { RootElement } from './root';
@@ -96,6 +98,7 @@ export class Scene {
   context: DimensionContext = {
     getColor: (color: ColorDimensionConfig) => getColorDimensionFromData(this.data, color),
     getScale: (scale: ScaleDimensionConfig) => getScaleDimensionFromData(this.data, scale),
+    getScalar: (scalar: ScalarDimensionConfig) => getScalarDimensionFromData(this.data, scalar),
     getText: (text: TextDimensionConfig) => getTextDimensionFromData(this.data, text),
     getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.data, res),
   };
