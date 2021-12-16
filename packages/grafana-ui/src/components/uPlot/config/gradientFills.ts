@@ -6,6 +6,7 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
+import { ScaleOrientation } from '@grafana/schema';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 import { getCanvasContext } from '../../../utils/measureText';
@@ -40,7 +41,7 @@ export function getOpacityGradientFn(
   return (plot: uPlot, seriesIdx: number) => {
     const ctx = getCanvasContext();
     const gradient = makeDirectionalGradient(
-      plot.scales.x!.ori === 0 ? GradientDirection.Down : GradientDirection.Left,
+      plot.scales.x!.ori === ScaleOrientation.Horizontal ? GradientDirection.Down : GradientDirection.Left,
       plot.bbox,
       ctx
     );
@@ -60,7 +61,7 @@ export function getHueGradientFn(
   return (plot: uPlot, seriesIdx: number) => {
     const ctx = getCanvasContext();
     const gradient = makeDirectionalGradient(
-      plot.scales.x!.ori === 0 ? GradientDirection.Down : GradientDirection.Left,
+      plot.scales.x!.ori === ScaleOrientation.Horizontal ? GradientDirection.Down : GradientDirection.Left,
       plot.bbox,
       ctx
     );
@@ -135,7 +136,7 @@ export function scaleGradient(u: uPlot, scaleKey: string, scaleStops: ScaleValue
 
   let x0, y0, x1, y1;
 
-  if (u.scales.x!.ori === 0) {
+  if (u.scales.x!.ori === ScaleOrientation.Horizontal) {
     x0 = x1 = 0;
     y0 = minStopPos;
     y1 = maxStopPos;
