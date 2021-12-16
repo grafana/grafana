@@ -95,7 +95,6 @@ func (ss *SQLStore) GetAlertNotificationsWithUid(ctx context.Context, query *mod
 
 func (ss *SQLStore) GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-
 		results := make([]*models.AlertNotification, 0)
 		if err := sess.Where("org_id = ?", query.OrgId).Asc("name").Find(&results); err != nil {
 			return err
