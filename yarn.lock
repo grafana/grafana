@@ -3827,7 +3827,7 @@ __metadata:
     d3: 5.15.0
     date-fns: 2.27.0
     enzyme: 3.11.0
-    expose-loader: 3.0.0
+    expose-loader: 3.1.0
     hoist-non-react-statics: 3.3.2
     immutable: 4.0.0
     is-hotkey: 0.1.6
@@ -17801,15 +17801,6 @@ __metadata:
     jest-message-util: ^27.4.2
     jest-regex-util: ^27.4.0
   checksum: 5eba0f348fd234420d7b4f09968d30d0b19e9e73579ad060e5e635be879671dfb9bed472befe1d5fe8749b6beefc08beba0e034d5aad2aca11e4d5ac43873326
-  languageName: node
-  linkType: hard
-
-"expose-loader@npm:3.0.0":
-  version: 3.0.0
-  resolution: "expose-loader@npm:3.0.0"
-  peerDependencies:
-    webpack: ^5.0.0
-  checksum: d18e4c6d29f7bdf1c3b8e99530bf1e67940c76037e82fa520db6cfcc1b9632f643409ed931eb525471aaa550493208acb0d5ce30405d79de2dd7abd1af44bfec
   languageName: node
   linkType: hard
 
