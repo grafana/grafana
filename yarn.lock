@@ -8551,7 +8551,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/cheerio@npm:*":
+"@types/cheerio@npm:*, @types/cheerio@npm:^0.22.22":
   version: 0.22.30
   resolution: "@types/cheerio@npm:0.22.30"
   dependencies:
@@ -16878,15 +16878,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"enzyme-to-json@npm:3.4.4":
-  version: 3.4.4
-  resolution: "enzyme-to-json@npm:3.4.4"
+"enzyme-to-json@npm:3.6.2":
+  version: 3.6.2
+  resolution: "enzyme-to-json@npm:3.6.2"
   dependencies:
-    lodash: ^4.17.15
+    "@types/cheerio": ^0.22.22
+    lodash: ^4.17.21
     react-is: ^16.12.0
   peerDependencies:
     enzyme: ^3.4.0
-  checksum: 7e41e841d617eb90cdfc0723041e2b9803ccd7929c70b50892dfda083c3878a29e4eac2dd60c8d18219e226be16b1d8b3e4c9b6aaa7e1783d66991bc5e2700fa
+  checksum: e81f3dc05b5c440da416544a3cbc41fb9e79de0777453e48fe55de822f7d6f56ee08e5173d46a7624cf2781198396509c470bdd616a1ea441e6fa9ddf4396477
   languageName: node
   linkType: hard
 
@@ -19453,7 +19454,7 @@ __metadata:
     debounce-promise: 3.1.2
     emotion: 11.0.0
     enzyme: 3.11.0
-    enzyme-to-json: 3.4.4
+    enzyme-to-json: 3.6.2
     eslint: 7.28.0
     eslint-config-prettier: 8.3.0
     eslint-plugin-jsdoc: 37.0.3
