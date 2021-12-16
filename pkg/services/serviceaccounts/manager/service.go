@@ -41,7 +41,6 @@ func ProvideServiceAccountsService(
 	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister, s.store)
 	serviceaccountsAPI.RegisterAPIEndpoints(cfg)
 
-	s.store.UpgradeServiceAccounts(context.Background())
 	return s, nil
 }
 
