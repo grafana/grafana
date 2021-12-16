@@ -1,3 +1,18 @@
+<!-- 8.3.4 START -->
+
+# 8.3.4 (unreleased)
+
+### Features and enhancements
+
+- **AppPlugins:** Support app plugins with only default nav. [#43016](https://github.com/grafana/grafana/pull/43016), [@torkelo](https://github.com/torkelo)
+
+### Bug fixes
+
+- **Configuration:** You can now see your expired API keys if you have no active ones. [#42452](https://github.com/grafana/grafana/pull/42452), [@ashharrison90](https://github.com/ashharrison90)
+- **Prometheus:** Interpolate variables with curly brackets syntax. [#42927](https://github.com/grafana/grafana/pull/42927), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Toolkit:** Fix bug with rootUrls not being properly parsed when signing a private plugin. [#43014](https://github.com/grafana/grafana/pull/43014), [@dessen-xu](https://github.com/dessen-xu)
+
+<!-- 8.3.4 END -->
 <!-- 8.3.3 START -->
 
 # 8.3.3 (2021-12-10)
