@@ -32,7 +32,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa 
 	}
 	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create user", "error", err)
+		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
 	return newuser, nil
 }
