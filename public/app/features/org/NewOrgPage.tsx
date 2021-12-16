@@ -4,7 +4,7 @@ import { Button, Input, Field, Form } from '@grafana/ui';
 import { StoreState } from 'app/types';
 import { connect, ConnectedProps } from 'react-redux';
 import { getNavModel } from '../../core/selectors/navModel';
-import { createOrganization, validateOrganization } from './state/actions';
+import { createOrganization } from './state/actions';
 
 const mapStateToProps = (state: StoreState) => {
   return { navModel: getNavModel(state.navIndex, 'global-orgs') };
@@ -12,7 +12,6 @@ const mapStateToProps = (state: StoreState) => {
 
 const mapDispatchToProps = {
   createOrganization,
-  validateOrganization,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -23,7 +22,7 @@ interface CreateOrgFormDTO {
   name: string;
 }
 
-export const NewOrgPage: FC<Props> = ({ navModel, createOrganization, validateOrganization }) => {
+export const NewOrgPage: FC<Props> = ({ navModel, createOrganization }) => {
   const createOrg = (newOrg: { name: string }) => {
     createOrganization(newOrg);
   };
@@ -48,7 +47,6 @@ export const NewOrgPage: FC<Props> = ({ navModel, createOrganization, validateOr
                     placeholder="Org name"
                     {...register('name', {
                       required: 'Organization name is required',
-                      validate: async (orgName) => await validateOrganization(orgName),
                     })}
                   />
                 </Field>
