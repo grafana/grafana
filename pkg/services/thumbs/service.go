@@ -38,24 +38,22 @@ type Service interface {
 
 func ProvideService(cfg *setting.Cfg, renderService rendering.Service) Service {
 	enabled := cfg.FeatureToggles[FEATURE_TOGGLE]
-	root := filepath.Join(cfg.DataPath, "crawler", "preview")
-	renderer := newDummyRenderer(root)
-	if enabled {
-		exportFolder := filepath.Join(cfg.DataPath, "crawler", "export")
-		url := strings.TrimSuffix(cfg.RendererUrl, "/render") + "/scan"
-
-		renderer = newRenderHttp(url, crawConfig{
-			URL:               strings.TrimSuffix(cfg.RendererCallbackUrl, "/"),
-			ScreenshotsFolder: root,
-			ExportFolder:      exportFolder,
-		})
+	if !enabled {
+		return &dummyService{}
 	}
+
+	root := filepath.Join(cfg.DataPath, "crawler", "preview")
+	url := strings.TrimSuffix(cfg.RendererUrl, "/render") + "/scan"
+
+	renderer := newRenderHttp(url, crawConfig{
+		URL:               strings.TrimSuffix(cfg.RendererCallbackUrl, "/"),
+		ScreenshotsFolder: root,
+	})
 
 	tempdir := filepath.Join(cfg.DataPath, "temp")
 	_ = os.MkdirAll(tempdir, 0700)
 
 	return &previewService{
-		enabled:  enabled,
 		renderer: renderer,
 		root:     root,
 		tempdir:  tempdir,
@@ -63,22 +61,16 @@ func ProvideService(cfg *setting.Cfg, renderService rendering.Service) Service {
 }
 
 type previewService struct {
-	enabled  bool
 	renderer dashRenderer
 	root     string
 	tempdir  string
 }
 
 func (hs *previewService) Enabled() bool {
-	return hs.enabled
+	return true
 }
 
 func (hs *previewService) parseImageReq(c *models.ReqContext, checkSave bool) *previewRequest {
-	if !hs.enabled {
-		c.JSON(400, map[string]string{"error": "feature not enabled"})
-		return nil
-	}
-
 	params := web.Params(c.Req)
 
 	size, ok := getPreviewSize(params[":size"])

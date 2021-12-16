@@ -1,36 +1,32 @@
 package thumbs
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"os"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/models"
 )
 
-type renderStub struct {
-	root string // folder path
+// When the feature flag is not enabled we just implement a dummy service
+type dummyService struct{}
+
+func (ds *dummyService) GetImage(c *models.ReqContext) {
+	c.JSON(400, map[string]string{"error": "invalid size"})
 }
 
-func newDummyRenderer(root string) dashRenderer {
-	return &renderStub{
-		root: root,
-	}
+func (ds *dummyService) SetImage(c *models.ReqContext) {
+	c.JSON(400, map[string]string{"error": "invalid size"})
 }
 
-func (r *renderStub) GetPreview(req *previewRequest) *previewResponse {
-	p := getFilePath(r.root, req)
-	if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
-		return &previewResponse{
-			Code: 404,
-		}
-	}
-
-	return &previewResponse{
-		Path: p,
-		Code: 200,
-	}
+func (ds *dummyService) Enabled() bool {
+	return false
 }
 
-func (r *renderStub) CrawlerCmd(cfg *crawlCmd) (json.RawMessage, error) {
-	return nil, fmt.Errorf("just a dummy crawler")
+func (ds *dummyService) StartCrawler(c *models.ReqContext) response.Response {
+	result := make(map[string]string)
+	result["error"] = "Not enabled"
+	return response.JSON(200, result)
+}
+func (ds *dummyService) StopCrawler(c *models.ReqContext) response.Response {
+	result := make(map[string]string)
+	result["error"] = "Not enabled"
+	return response.JSON(200, result)
 }

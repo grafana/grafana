@@ -92,7 +92,6 @@ type crawConfig struct {
 	// Sent to the crawler with each command
 	URL               string `json:"url"`
 	ScreenshotsFolder string `json:"screenshotsFolder"`
-	ExportFolder      string `json:"exportFolder"`
 }
 
 type dashRenderer interface {
