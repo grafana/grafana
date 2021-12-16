@@ -1,6 +1,8 @@
 name: Levitate
 
-on: push
+on:
+  pull_request:
+    types: [synchronize, reopened]
 
 jobs:
   build:
