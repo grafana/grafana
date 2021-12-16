@@ -1778,7 +1778,12 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space.
+Keys of alpha features to enable, separated by commas. Example:
+  
+```ini
+[feature_toggles]
+enable = tempoSearch,tempoServiceGraph
+```
 
 ## [date_formats]
 
