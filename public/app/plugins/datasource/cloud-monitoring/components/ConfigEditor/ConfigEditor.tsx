@@ -49,7 +49,7 @@ export class ConfigEditor extends PureComponent<Props> {
               }}
             ></JWTConfig>
           )}
-          <div className="grafana-info-box" style={{ marginTop: '10px' }}>
+          <div className="grafana-info-box" style={{ marginTop: '16px' }}>
             <p>
               Don’t know how to get a service account key file or create a service account? Read more{' '}
               <a
