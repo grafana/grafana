@@ -23,6 +23,18 @@ jobs:
             labels: ['announcement']
           })
 
+    - uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ github.event.number }}
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '👋 Thanks for reporting!'
+          })
+
     # - name: Install Node.js
     #   uses: actions/setup-node@v2
     #   with:
