@@ -3,6 +3,7 @@ name: Levitate (notify)
 # read-write repo token
 # access to secrets
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["Levitate (detect)"]
     types:
