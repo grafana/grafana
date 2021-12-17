@@ -23,7 +23,7 @@ jobs:
       uses: actions/github-script@v5
       with:
         script: |
-            const script = require('./scripts/pr-get-job-link.js')
+            const script = require('./.github/workflows/scripts/pr-get-job-link.js')
             await script({github, context, core})
       
     - name: Install dependencies
