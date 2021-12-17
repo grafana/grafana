@@ -7,6 +7,9 @@ import {
   GraphGradientMode,
   HideableFieldConfig,
   StackingMode,
+  GraphDrawStyle,
+  PointsConfig,
+  LineConfig,
 } from '@grafana/schema';
 import { DataFrame, Field, VizOrientation } from '@grafana/data';
 
@@ -31,10 +34,10 @@ export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, 
 /**
  * @alpha
  */
-export interface BarChartFieldConfig extends AxisConfig, HideableFieldConfig {
-  lineWidth?: number; // 0
+export interface BarChartFieldConfig extends AxisConfig, HideableFieldConfig, PointsConfig, LineConfig {
   fillOpacity?: number; // 100
   gradientMode?: GraphGradientMode;
+  drawStyle?: GraphDrawStyle;
 }
 
 /**
@@ -45,6 +48,7 @@ export const defaultBarChartFieldConfig: BarChartFieldConfig = {
   fillOpacity: 80,
   gradientMode: GraphGradientMode.None,
   axisSoftMin: 0,
+  drawStyle: GraphDrawStyle.Bars, // of course
 };
 
 export interface BarChartDisplayValues {
