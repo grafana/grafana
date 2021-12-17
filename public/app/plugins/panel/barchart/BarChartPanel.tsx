@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { TooltipDisplayMode, StackingMode } from '@grafana/schema';
-import { PanelProps, TimeRange, VizOrientation } from '@grafana/data';
+import { DataFrame, PanelProps, TimeRange, VizOrientation } from '@grafana/data';
 import { measureText, TooltipPlugin, UPLOT_AXIS_FONT_SIZE, useTheme2 } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
@@ -49,6 +49,10 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     return options.tooltip;
   }, [options.tooltip, options.stacking]);
 
+  const renderTooltip = (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
+    return <div>HELLO</div>;
+  };
+
   if (!frames) {
     return <PanelDataErrorView panelId={id} data={data} needsStringField={true} needsNumberField={true} />;
   }
@@ -66,7 +70,15 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       xTickLabelMaxLength={xTickLabelMaxLength}
     >
       {(config, alignedFrame) => {
-        return <TooltipPlugin data={alignedFrame} config={config} mode={tooltip.mode} timeZone={timeZone} />;
+        return (
+          <TooltipPlugin
+            data={alignedFrame}
+            config={config}
+            mode={tooltip.mode}
+            timeZone={timeZone}
+            renderTooltip={renderTooltip}
+          />
+        );
       }}
     </BarChart>
   );
