@@ -264,7 +264,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.4.8
+  image: google/cloud-sdk
   name: e2e_test_artifacts_upload
 - commands:
   - yarn storybook:build
@@ -4132,6 +4132,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 4285602a2235c8f67ed7ff1dcd0e96002c6d0fea8f175b2e399cc77263dd5653
+hmac: fff47785a8be2a9031ada7781f02291462a55d5f2632ee809cf84e57441be60e
 
 ...
