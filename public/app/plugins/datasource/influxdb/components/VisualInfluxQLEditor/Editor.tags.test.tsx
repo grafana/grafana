@@ -7,7 +7,6 @@ import { Editor } from './Editor';
 import * as mockedMeta from '../../influxQLMetadataQuery';
 
 jest.mock('../../influxQLMetadataQuery', () => {
-  // const orig = jest.requireActual('../../influxQLMetadataQuery');
   return {
     getTagKeysForMeasurementAndTags: jest
       .fn()
