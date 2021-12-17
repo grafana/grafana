@@ -1,6 +1,6 @@
 import { CollectedData, DataCollector } from './DataCollector';
 import { CDPDataCollector } from './CDPDataCollector';
-import { fromPairs } from 'lodash';
+import { fromPairs, mapValues } from 'lodash';
 import fs from 'fs';
 const remoteDebuggingPortOptionPrefix = '--remote-debugging-port=';
 import { json2csvAsync } from 'json-2-csv';
@@ -26,12 +26,17 @@ const startBenchmarking = async ({ testName }: { testName: string }) => {
   return true;
 };
 
+// TODO: find a better way to represent these stats
+const formatLiveStats = (stats: CollectedData) =>
+  mapValues(stats, (v) => (Array.isArray(v) && v.length ? v[v.length - 1] : v));
+
 const stopBenchmarking = async ({ testName, appStats }: { testName: string; appStats: CollectedData }) => {
   const data = await Promise.all(collectors.map(async (coll) => [coll.getName(), await coll.stop({ id: testName })]));
 
+  console.log(JSON.stringify({ appstats: true, appStats }));
   results.push({
     ...fromPairs(data),
-    ...appStats,
+    ...formatLiveStats(appStats),
   });
 
   return true;

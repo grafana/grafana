@@ -1,5 +1,18 @@
 import { e2e } from '@grafana/e2e';
 
+type WithGrafanaRuntime<T> = T & {
+  grafanaRuntime: {
+    livePerformance: {
+      start: () => void;
+      getStats: () => Record<string, unknown>;
+    };
+  };
+};
+
+const hasGrafanaRuntime = <T>(obj: T): obj is WithGrafanaRuntime<T> => {
+  return typeof (obj as any)?.grafanaRuntime === 'object';
+};
+
 e2e.benchmark({
   name: 'Live performance benchmarking - 6x20hz panels',
   benchmarkingOptions: {
@@ -10,11 +23,18 @@ e2e.benchmark({
 
     appStats: {
       startCollecting: (window) => {
-        (window as any).grafanaRuntime?.livePerformance.start();
+        if (!hasGrafanaRuntime(window)) {
+          return;
+        }
+
+        return window.grafanaRuntime.livePerformance.start();
       },
       collect: (window) => {
-        const stats: Record<string, unknown[]> = (window as any).grafanaRuntime?.livePerformance.getStats();
-        return stats ? stats : {};
+        if (!hasGrafanaRuntime(window)) {
+          return {};
+        }
+
+        return window.grafanaRuntime.livePerformance.getStats() ?? {};
       },
     },
   },
