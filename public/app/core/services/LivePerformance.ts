@@ -40,17 +40,18 @@ export class LivePerformance {
   start = (options?: Partial<LivePerformanceOptions>) => {
     if (!LivePerformance.isEnabled()) {
       console.warn('live performance is not enabled');
-      return;
+      return false;
     }
 
     if (this.state.running) {
       console.warn('live performance collection is already running');
-      return;
+      return true;
     }
 
     this.options = LivePerformance.optionsWithDefaults(options);
     this.state.intervalId = setInterval(this.calculateStatsForCurrentInterval, this.options.intervalDuration);
     this.state.running = true;
+    return true;
   };
 
   stopAndGetStats = () => {
@@ -61,6 +62,7 @@ export class LivePerformance {
 
     clearInterval(this.state.intervalId);
 
+    this.calculateStatsForCurrentInterval();
     const stats = mapValues(this.state.livePerformanceStats, (stats) => sortBy(stats, (v) => v.time));
     this.state = LivePerformance.emptyState();
     return stats;
