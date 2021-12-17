@@ -9,6 +9,10 @@ const XSSWL = Object.keys(xss.whiteList).reduce((acc, element) => {
 
 const sanitizeXSS = new xss.FilterXSS({
   whiteList: XSSWL,
+});
+
+const sanitizeTextPanelWhitelist = new xss.FilterXSS({
+  whiteList: XSSWL,
   css: {
     whiteList: {
       ...xss.getDefaultCSSWhiteList(),
@@ -43,6 +47,15 @@ export function sanitize(unsanitizedString: string): string {
   } catch (error) {
     console.error('String could not be sanitized', unsanitizedString);
     return unsanitizedString;
+  }
+}
+
+export function sanitizeTextPanelContent(unsanitizedString: string): string {
+  try {
+    return sanitizeTextPanelWhitelist.process(unsanitizedString);
+  } catch (error) {
+    console.error('String could not be sanitized', unsanitizedString);
+    return 'Text string could not be sanitized';
   }
 }
 

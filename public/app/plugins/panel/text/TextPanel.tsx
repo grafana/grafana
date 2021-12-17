@@ -52,7 +52,7 @@ export class TextPanel extends PureComponent<Props, State> {
 
     content = replaceVariables(content, {}, 'html');
 
-    return config.disableSanitizeHtml ? content : textUtil.sanitize(content);
+    return config.disableSanitizeHtml ? content : textUtil.sanitizeTextPanelContent(content);
   }
 
   processContent(options: PanelOptions): string {
