@@ -8,7 +8,7 @@ import {
   HideableFieldConfig,
   StackingMode,
 } from '@grafana/schema';
-import { VizOrientation } from '@grafana/data';
+import { DataFrame, Field, VizOrientation } from '@grafana/data';
 
 /**
  * @alpha
@@ -18,10 +18,14 @@ export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, 
   stacking: StackingMode;
   showValue: VisibilityMode;
   barWidth: number;
+  barRadius?: number;
   groupWidth: number;
   xTickLabelRotation: number;
   xTickLabelMaxLength: number;
-  rawValue: (seriesIdx: number, valueIdx: number) => number;
+  colorByField?: string;
+
+  // negative values indicate backwards skipping behavior
+  xTickLabelSpacing?: number;
 }
 
 /**
@@ -42,3 +46,17 @@ export const defaultBarChartFieldConfig: BarChartFieldConfig = {
   gradientMode: GraphGradientMode.None,
   axisSoftMin: 0,
 };
+
+export interface BarChartDisplayValues {
+  /** When the data can not display, this will be returned */
+  warn?: string;
+
+  /** All fields joined */
+  aligned: DataFrame;
+
+  /** The fields we can display, first field is X axis */
+  display: DataFrame;
+
+  /** Potentialy color by a field value */
+  colorByField?: Field;
+}

@@ -9,9 +9,10 @@ import {
   getFieldSeriesColor,
   GrafanaTheme2,
   MutableDataFrame,
+  outerJoinDataFrames,
   VizOrientation,
 } from '@grafana/data';
-import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
+import { BarChartDisplayValues, BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
 import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
 import { Padding } from 'uplot';
@@ -25,6 +26,7 @@ import {
 } from '@grafana/schema';
 import { collectStackingGroups, orderIdsByCalcs } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 import { orderBy } from 'lodash';
+import { findField } from 'app/features/dimensions';
 
 /** @alpha */
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -45,19 +47,29 @@ function getBarCharScaleOrientation(orientation: VizOrientation) {
   };
 }
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
+export interface BarChartOptionsEX extends BarChartOptions {
+  rawValue: (seriesIdx: number, valueIdx: number) => number | null;
+  getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
+  fillOpacity?: number;
+}
+
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   frame,
   theme,
   orientation,
   showValue,
   groupWidth,
   barWidth,
+  barRadius = 0,
   stacking,
   text,
   rawValue,
+  getColor,
+  fillOpacity,
   allFrames,
   xTickLabelRotation,
   xTickLabelMaxLength,
+  xTickLabelSpacing = 0,
   legend,
 }) => {
   const builder = new UPlotConfigBuilder();
@@ -81,12 +93,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     xDir: vizOrientation.xDir,
     groupWidth,
     barWidth,
+    barRadius,
     stacking,
     rawValue,
+    getColor,
+    fillOpacity,
     formatValue,
     text,
     showValue,
     legend,
+    xSpacing: xTickLabelSpacing,
   };
 
   const config = getConfig(opts, theme);
@@ -275,14 +291,21 @@ function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLengt
 /** @internal */
 export function preparePlotFrame(data: DataFrame[]) {
   const firstFrame = data[0];
-  const firstString = firstFrame.fields.find((f) => f.type === FieldType.string);
 
-  if (!firstString) {
-    throw new Error('No string field in DF');
+  // find first string field (x labels)
+  let xField = firstFrame.fields.find((f) => f.type === FieldType.string);
+
+  if (!xField) {
+    // fall back to first time field
+    xField = firstFrame.fields.find((f) => f.type === FieldType.time);
+
+    if (!xField) {
+      throw new Error('No string or time fields found');
+    }
   }
 
   const resultFrame = new MutableDataFrame();
-  resultFrame.addField(firstString);
+  resultFrame.addField(xField);
 
   for (const f of firstFrame.fields) {
     if (f.type === FieldType.number) {
@@ -294,39 +317,77 @@ export function preparePlotFrame(data: DataFrame[]) {
 }
 
 /** @internal */
-export function prepareGraphableFrames(
+export function prepareBarChartDisplayValues(
   series: DataFrame[],
   theme: GrafanaTheme2,
   options: BarChartOptions
-): DataFrame[] | null {
+): BarChartDisplayValues {
   if (!series?.length) {
-    return null;
+    return { warn: 'No data in response' } as BarChartDisplayValues;
   }
 
-  const frames: DataFrame[] = [];
-  const firstFrame = series[0];
-
-  if (!firstFrame.fields.some((f) => f.type === FieldType.string)) {
-    return null;
+  // Bar chart requires a single frame
+  const frame = series.length === 1 ? series[0] : outerJoinDataFrames({ frames: series, enforceSort: false });
+  if (!frame) {
+    return { warn: 'Unable to join data' } as BarChartDisplayValues;
   }
 
-  if (!firstFrame.fields.some((f) => f.type === FieldType.number)) {
-    return null;
+  // Color by a field different than the input
+  if (options.colorByField) {
+    const colorByField = findField(frame, options.colorByField);
+    if (!colorByField) {
+      return { warn: 'Color field not found' } as BarChartDisplayValues;
+    }
+    // find first string field
+    let xField = frame.fields.find((f) => f !== colorByField && f.type === FieldType.string);
+    if (!xField) {
+      // or first time field
+      xField = frame.fields.find((f) => f !== colorByField && f.type === FieldType.time);
+    }
+    if (!xField) {
+      return { aligned: frame, colorByField, warn: 'Missing X field' } as BarChartDisplayValues;
+    }
+
+    // Single Y field
+    const yField = frame.fields.find((f) => f.type === FieldType.number && f !== colorByField && f !== xField);
+    if (!yField) {
+      return { aligned: frame, colorByField, warn: 'Missing Y field' } as BarChartDisplayValues;
+    }
+
+    return {
+      aligned: frame,
+      colorByField,
+      display: {
+        fields: [xField, yField],
+        length: xField.values.length,
+      },
+    };
   }
 
-  const legendOrdered = isLegendOrdered(options.legend);
-  let seriesIndex = 0;
+  let stringField: Field | undefined = undefined;
+  let timeField: Field | undefined = undefined;
+  let fields: Field[] = [];
+  for (const field of frame.fields) {
+    switch (field.type) {
+      case FieldType.string:
+        if (!stringField) {
+          stringField = field;
+        }
+        break;
 
-  for (let frame of series) {
-    const fields: Field[] = [];
-    for (const field of frame.fields) {
-      if (field.type === FieldType.number) {
-        field.state = field.state ?? {};
+      case FieldType.time:
+        if (!timeField) {
+          timeField = field;
+        }
+        break;
 
-        field.state.seriesIndex = seriesIndex++;
-
-        let copy = {
+      case FieldType.number: {
+        const copy = {
           ...field,
+          state: {
+            ...field.state,
+            seriesIndex: fields.length, // off by one?
+          },
           config: {
             ...field.config,
             custom: {
@@ -353,34 +414,44 @@ export function prepareGraphableFrames(
         }
 
         fields.push(copy);
-      } else {
-        fields.push({ ...field });
       }
     }
-
-    let orderedFields: Field[] | undefined;
-
-    if (legendOrdered) {
-      orderedFields = orderBy(
-        fields,
-        ({ state }) => {
-          return state?.calcs?.[options.legend.sortBy!.toLowerCase()];
-        },
-        options.legend.sortDesc ? 'desc' : 'asc'
-      );
-      // The string field needs to be the first one
-      if (orderedFields[orderedFields.length - 1].type === FieldType.string) {
-        orderedFields.unshift(orderedFields.pop()!);
-      }
-    }
-
-    frames.push({
-      ...frame,
-      fields: orderedFields || fields,
-    });
   }
 
-  return frames;
+  const firstField = stringField || timeField;
+
+  if (!firstField) {
+    return {
+      warn: 'Bar charts requires a string or time field',
+    } as BarChartDisplayValues;
+  }
+
+  if (!fields.length) {
+    return {
+      warn: 'No numeric fields found',
+    } as BarChartDisplayValues;
+  }
+
+  if (isLegendOrdered(options.legend)) {
+    fields = orderBy(
+      fields,
+      ({ state }) => {
+        return state?.calcs?.[options.legend.sortBy!.toLowerCase()];
+      },
+      options.legend.sortDesc ? 'desc' : 'asc'
+    );
+  }
+
+  // String field is first
+  fields.unshift(firstField);
+
+  return {
+    aligned: frame,
+    display: {
+      fields,
+      length: firstField.values.length,
+    },
+  };
 }
 
 export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);
