@@ -361,7 +361,7 @@
     "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "1.4.1",
     "tslib": "2.3.1",
-    "uplot": "leeoniya/uPlot#f1675d1b56745e50150f0fbb878d07f033bd16a0",
+    "uplot": "1.6.18",
     "uuid": "8.3.0",
     "vendor": "link:./public/vendor",
     "visjs-network": "4.25.0",

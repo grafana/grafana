@@ -3880,7 +3880,7 @@ __metadata:
     ts-loader: 8.0.11
     tslib: 2.3.1
     typescript: 4.4.3
-    uplot: "leeoniya/uPlot#f1675d1b56745e50150f0fbb878d07f033bd16a0"
+    uplot: 1.6.18
     uuid: 8.3.0
     webpack: 5.58.1
     webpack-filter-warnings-plugin: 1.2.1
@@ -19615,7 +19615,7 @@ __metadata:
     ts-node: 10.4.0
     tslib: 2.3.1
     typescript: 4.4.3
-    uplot: "leeoniya/uPlot#f1675d1b56745e50150f0fbb878d07f033bd16a0"
+    uplot: 1.6.18
     uuid: 8.3.0
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
@@ -34571,17 +34571,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@leeoniya/uPlot#f1675d1b56745e50150f0fbb878d07f033bd16a0":
-  version: 1.6.17
-  resolution: "uplot@https://github.com/leeoniya/uPlot.git#commit=f1675d1b56745e50150f0fbb878d07f033bd16a0"
-  checksum: 5544305a7f3ad06557402d90c1f9007f7557f2b8c13a27ac36f7982340f6e2bec6df02c0560b30002d6f32c782396ecc2e8722ced67c516e800d90ac2fda5780
-  languageName: node
-  linkType: hard
-
 "uplot@npm:1.6.16":
   version: 1.6.16
   resolution: "uplot@npm:1.6.16"
   checksum: f7243693f9319a47a92f758a0fe1315b2f713f68ec9bbabce4f8929525a8648ac5936e1448a4f122486de6fc78da4b6038f20b71a9416da6228572e305e0d171
+  languageName: node
+  linkType: hard
+
+"uplot@npm:1.6.18":
+  version: 1.6.18
+  resolution: "uplot@npm:1.6.18"
+  checksum: 6e6365be1954b506fbe4f1cd905f53b7494df21bdad2fa71def4977521adb392c22df4568b195bc2081e6ebeb85e77afdb1c4db2d99cd1a2feb1c96a2330842e
   languageName: node
   linkType: hard
 
