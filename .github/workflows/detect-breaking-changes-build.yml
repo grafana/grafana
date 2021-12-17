@@ -10,43 +10,43 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '16'
+    # - name: Install Node.js
+    #   uses: actions/setup-node@v2
+    #   with:
+    #     node-version: '16'
 
-    - name: Install Yarn
-      run: npm install --global yarn
+    # - name: Install Yarn
+    #   run: npm install --global yarn
 
-    - name: Get link for the Github Action job
-      id: job
-      uses: actions/github-script@v5
-      with:
-        script: |
-            const script = require('./.github/workflows/scripts/pr-get-job-link.js')
-            await script({github, context, core})
+    # - name: Get link for the Github Action job
+    #   id: job
+    #   uses: actions/github-script@v5
+    #   with:
+    #     script: |
+    #         const script = require('./.github/workflows/scripts/pr-get-job-link.js')
+    #         await script({github, context, core})
       
-    - name: Install dependencies
-      run: yarn install --immutable
+    # - name: Install dependencies
+    #   run: yarn install --immutable
 
-    - name: Build packages
-      run: yarn packages:build
+    # - name: Build packages
+    #   run: yarn packages:build
 
-    - name: Detect breaking changes
-      id: breaking-changes
-      run: ./scripts/check-breaking-changes.sh 
-      env:
-        FORCE_COLOR: 3
-        GITHUB_JOB_LINK: ${{steps.job.outputs.link}}
-        GITHUB_STEP_NUMBER: 7
+    # - name: Detect breaking changes
+    #   id: breaking-changes
+    #   run: ./scripts/check-breaking-changes.sh 
+    #   env:
+    #     FORCE_COLOR: 3
+    #     GITHUB_JOB_LINK: ${{steps.job.outputs.link}}
+    #     GITHUB_STEP_NUMBER: 7
 
-    - name: Persisting the check output
-      run: |
-          mkdir -p ./pr
-          echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.mesage }}\", \"pr_number\": "${{ github.event.number }}" }" > ./pr/result.json
+    # - name: Persisting the check output
+    #   run: |
+    #       mkdir -p ./pr
+    #       echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.mesage }}\", \"pr_number\": "${{ github.event.number }}" }" > ./pr/result.json
 
-    - name: Upload check output as artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: pr
-        path: pr/
+    # - name: Upload check output as artifact
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: pr
+    #     path: pr/
