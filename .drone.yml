@@ -4239,12 +4239,12 @@ kind: secret
 name: prerelease_bucket
 ---
 get:
-  name: gcp_upload_artifacts_key
+  name: credentials.json
   path: infra/data/ci/grafana/releng/artifacts-uploader-service-account
 kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: dbf68212e30b94c68723956dbdfc4074b6a6f8ab4d1cfb7d3d96345feb429a63
+hmac: f5168979aa193234b29e842eca3b635e59825ac8613d3c9847a603274314d71b
 
 ...

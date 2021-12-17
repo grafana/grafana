@@ -25,5 +25,5 @@ def secrets():
         vault_secret(github_token, 'infra/data/ci/github/grafanabot', 'pat'),
         vault_secret(drone_token, 'infra/data/ci/drone', 'machine-user-token'),
         vault_secret(prerelease_bucket, 'infra/data/ci/grafana/prerelease', 'bucket'),
-        vault_secret(gcp_upload_artifacts_key, 'infra/data/ci/grafana/releng/artifacts-uploader-service-account', 'gcp_upload_artifacts_key'),
+        vault_secret(gcp_upload_artifacts_key, 'infra/data/ci/grafana/releng/artifacts-uploader-service-account', 'credentials.json'),
     ]
