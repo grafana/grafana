@@ -19,6 +19,7 @@ Grafana allows you to query, visualize, alert on and understand your metrics no 
 
 - [Get Grafana](https://grafana.com/get)
 - [Installation guides](http://docs.grafana.org/installation/)
+- [![TeamCode try-it-now](https://static01.teamcode.com/badge/demo.svg)](https://www.teamcode.com/tin/clone?applicationId=270273627750297600)
 
 Unsure if Grafana is for you? Watch Grafana in action on [play.grafana.org](https://play.grafana.org/)!
 
