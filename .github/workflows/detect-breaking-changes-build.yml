@@ -12,7 +12,7 @@ jobs:
 
     - name: Test
       env:
-        SOME_SECRET: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+        SOME_SECRET: ${{ secrets.UNKNOWN_SECRET }}
       run: |
         echo "TEST: \"${SOME_SECRET:0:4}\""
     # - name: Install Node.js
