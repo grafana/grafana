@@ -139,7 +139,7 @@ The option is called `cloud monitoring auto` and the defaults are:
 - 5m for time ranges >= 23 hours and < 6 days
 - 1h for time ranges >= 6 days
 
-The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable](https://grafana.com/docs/grafana/latest/variables/variable-types/add-interval-variable/).
+The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable]({{< relref "../../variables/variable-types/add-interval-variable.md" >}}).
 
 You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -283,12 +283,7 @@ Variable of the type _Query_ allows you to query Google Cloud Monitoring for var
 
 ### Using variables in queries
 
-There are two syntaxes:
-
-- `$<varname>` Example: `metric.label.$metric_label`
-- `[[varname]]` Example: `metric.label.[[metric_label]]`
-
-Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the _Multi-value_ or _Include all value_ options are enabled, Grafana converts the labels from plain text to a regex compatible string, which means you have to use `=~` instead of `=`.
+Refer to the [variable syntax documentation]({{< relref "../../variables/syntax.md" >}}).
 
 ## Annotations
 
