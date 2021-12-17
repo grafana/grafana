@@ -1,61 +1,40 @@
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
-import { ClickOutsideWrapper } from '@grafana/ui';
+import { ClickOutsideWrapper, HorizontalGroup, Spinner } from '@grafana/ui';
 import { RolePickerMenu } from './RolePickerMenu';
 import { RolePickerInput } from './RolePickerInput';
 import { Role, OrgRole } from 'app/types';
 
 export interface Props {
   builtInRole: OrgRole;
-  getRoles: () => Promise<Role[]>;
-  getRoleOptions: () => Promise<Role[]>;
-  getBuiltinRoles: () => Promise<Record<string, Role[]>>;
-  onRolesChange: (newRoles: string[]) => void;
-  onBuiltinRoleChange: (newRole: OrgRole) => void;
+  appliedRoles: Role[];
+  roleOptions: Role[];
+  builtInRoles: Record<string, Role[]>;
+  isLoading?: boolean;
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
+  onRolesChange: (newRoles: string[]) => void;
+  onBuiltinRoleChange: (newRole: OrgRole) => void;
 }
 
 export const RolePicker = ({
   builtInRole,
-  getRoles,
-  getRoleOptions,
-  getBuiltinRoles,
+  appliedRoles,
+  roleOptions,
+  builtInRoles,
+  disabled,
+  isLoading,
+  builtinRolesDisabled,
   onRolesChange,
   onBuiltinRoleChange,
-  disabled,
-  builtinRolesDisabled,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
-  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
-  const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole>(builtInRole);
-  const [builtInRoles, setBuiltinRoles] = useState<Record<string, Role[]>>({});
   const [query, setQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchOptions() {
-      try {
-        let options = await getRoleOptions();
-        setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
-
-        const builtInRoles = await getBuiltinRoles();
-        setBuiltinRoles(builtInRoles);
-
-        const userRoles = await getRoles();
-        setAppliedRoles(userRoles);
-        setSelectedRoles(userRoles);
-      } catch (e) {
-        // TODO handle error
-        console.error('Error loading options');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchOptions();
-  }, [getRoles, getRoleOptions, getBuiltinRoles, builtInRole]);
+    setSelectedRoles(appliedRoles);
+  }, [appliedRoles]);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -109,7 +88,12 @@ export const RolePicker = ({
   };
 
   if (isLoading) {
-    return null;
+    return (
+      <HorizontalGroup justify="center">
+        <span>Loading...</span>
+        <Spinner size={16} />
+      </HorizontalGroup>
+    );
   }
 
   return (
