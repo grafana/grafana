@@ -11,6 +11,7 @@ import { StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from 'app/plugins/panel/barchart/types';
 import { BarChartSuggestionsSupplier } from './suggestions';
+import { addPointAndLineStyles } from '../timeseries/config';
 
 export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
@@ -59,28 +60,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         });
 
       // Support points and lines as override options
-      const categoryStyles = ['Graph style'];
-      builder
-        .addRadio({
-          path: 'drawStyle',
-          name: 'Style',
-          category: categoryStyles,
-          defaultValue: cfg.drawStyle,
-          settings: {
-            options: graphFieldOptions.drawStyle,
-          },
-          hideFromDefaults: true,
-        })
-        .addRadio({
-          path: 'lineInterpolation',
-          name: 'Line interpolation',
-          category: categoryStyles,
-          defaultValue: cfg.lineInterpolation,
-          settings: {
-            options: graphFieldOptions.lineInterpolation,
-          },
-          hideFromDefaults: true,
-        });
+      addPointAndLineStyles(cfg, builder, true, true);
 
       commonOptionsBuilder.addAxisConfig(builder, cfg, true);
       commonOptionsBuilder.addHideFrom(builder);
