@@ -52,7 +52,7 @@ Click on the links above and click the `Enable` button:
 5. Click **Done**.
 1. Use the newly created account to [create a service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-service-account-keys-create-console). A JSON key file is created and downloaded to your computer. 
 1. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
-8. Upload it to Grafana on the data source Configuration page.
+1. Upload the key to Grafana via the data source configuration page.
 9. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
 ### Using GCE Default Service Account
