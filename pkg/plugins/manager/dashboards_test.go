@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/plugins"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -24,8 +26,9 @@ func TestGetPluginDashboards(t *testing.T) {
 			},
 		},
 	}
-	pm, err := ProvideService(cfg, nil, loader.New(cfg, nil,
-		&signature.UnsignedPluginAuthorizer{Cfg: cfg}, &provider.Service{}), &sqlstore.SQLStore{})
+	pmCfg := plugins.FromGrafanaCfg(cfg)
+	pm, err := ProvideService(cfg, nil, loader.New(pmCfg, nil,
+		&signature.UnsignedPluginAuthorizer{Cfg: pmCfg}, &provider.Service{}), &sqlstore.SQLStore{})
 	require.NoError(t, err)
 
 	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {

@@ -219,6 +219,7 @@ func TestLoader_Load(t *testing.T) {
 			name:  "Load an unsigned plugin (development)",
 			class: plugins.External,
 			cfg: &plugins.Cfg{
+				DevMode:     true,
 				PluginsPath: filepath.Join(parentDir),
 			},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},

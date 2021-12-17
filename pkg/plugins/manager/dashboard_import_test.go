@@ -93,8 +93,9 @@ func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManage
 			},
 		}
 
-		pm, err := ProvideService(cfg, nil, loader.New(cfg, nil,
-			&signature.UnsignedPluginAuthorizer{Cfg: cfg}, &provider.Service{}), &sqlstore.SQLStore{})
+		pmCfg := plugins.FromGrafanaCfg(cfg)
+		pm, err := ProvideService(cfg, nil, loader.New(pmCfg, nil,
+			&signature.UnsignedPluginAuthorizer{Cfg: pmCfg}, &provider.Service{}), &sqlstore.SQLStore{})
 		require.NoError(t, err)
 
 		t.Run(desc, func(t *testing.T) {

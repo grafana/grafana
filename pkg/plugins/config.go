@@ -33,6 +33,11 @@ func NewCfg() *Cfg {
 
 func FromGrafanaCfg(grafanaCfg *setting.Cfg) *Cfg {
 	cfg := &Cfg{}
+
+	cfg.DevMode = grafanaCfg.Env == setting.Dev
+	cfg.PluginsPath = grafanaCfg.PluginsPath
+
+	cfg.PluginSettings = grafanaCfg.PluginSettings
 	cfg.PluginsAllowUnsigned = grafanaCfg.PluginsAllowUnsigned
 	cfg.EnterpriseLicensePath = grafanaCfg.EnterpriseLicensePath
 
@@ -44,6 +49,9 @@ func FromGrafanaCfg(grafanaCfg *setting.Cfg) *Cfg {
 	cfg.Azure = grafanaCfg.Azure
 
 	cfg.CheckForUpdates = grafanaCfg.CheckForUpdates
+
+	cfg.BuildVersion = grafanaCfg.BuildVersion
+	cfg.AppSubURL = grafanaCfg.AppURL
 
 	return cfg
 }
