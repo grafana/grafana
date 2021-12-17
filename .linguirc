@@ -1,0 +1,27 @@
+{
+  "locales": [
+    "en",
+    "fr",
+    "es"
+  ],
+  "catalogs": [
+    {
+      "path": "public/locales/{locale}/messages",
+      "include": [
+        "public/app"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "public/app/plugins"
+      ]
+    }
+  ],
+  "fallbackLocales": {
+    "default": "en"
+  },
+  "sourceLocale": "en",
+  "format": "po",
+  "formatOptions": {
+    "lineNumbers": false
+  }
+}
