@@ -10,6 +10,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Add "announcement" label
+      uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ github.event.number }}
+      with:
+        script: |
+          github.rest.issues.addLabels({
+            issue_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['announcement']
+          })
+
     # - name: Install Node.js
     #   uses: actions/setup-node@v2
     #   with:
