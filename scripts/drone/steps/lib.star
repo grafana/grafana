@@ -294,7 +294,7 @@ def publish_storybook_step(edition, ver_mode):
 def e2e_test_artifacts(edition):
     return {
         'name': 'e2e_test_artifacts_upload' + enterprise2_suffix(edition),
-        'image': 'publish_image',
+        'image': 'google/cloud-sdk',
         'depends_on': [            
             'end-to-end-tests-dashboards-suite',
             'end-to-end-tests-panels-suite',
@@ -307,7 +307,8 @@ def e2e_test_artifacts(edition):
             'GITHUB_TOKEN': from_secret('github_token'),
         },
         'commands': [     
-            'ls -lah',       
+            'ls -lah ./e2e',
+            'find ./e2e -type f -name "*.mp4"',
             'printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json',
             'gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json',
             'gsutil -m rsync -d -r ./e2e/videos gs://releng-pipeline-artifacts-dev/artifacts/${DRONE_BUILD_NUMBER}',
