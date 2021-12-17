@@ -35,8 +35,6 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
       border: 'none',
       borderRadius: '50%',
       background: `${color}`,
-      marginLeft: hasLabel ? '8px' : '0px',
-      marginRight: isSmall ? '0px' : '6px',
       outline: isFocusVisible ? `2px solid  ${theme.colors.primary.main}` : 'none',
       outlineOffset: '1px',
       transition: 'none',
@@ -62,7 +60,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
         data-testid={selectors.components.ColorSwatch.name}
         {...otherProps}
       >
-        {hasLabel && <span>{label}</span>}
+        {hasLabel && <span style={{ marginRight: theme.spacing(1) }}>{label}</span>}
         <button style={swatchStyles} {...focusProps} aria-label={colorLabel} />
       </div>
     );

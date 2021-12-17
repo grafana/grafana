@@ -19,40 +19,25 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
   onColorSelect,
   ...otherProps
 }) => {
-  const primaryShade = hue.shades.find((shade) => shade.primary)!;
   const label = upperFirst(hue.name);
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.colorRow} style={{}}>
+    <div className={styles.colorRow}>
       <div className={styles.colorLabel}>{label}</div>
       <div {...otherProps} className={styles.swatchRow}>
-        {primaryShade && (
-          <ColorSwatch
-            key={primaryShade.name}
-            aria-label={primaryShade.name}
-            isSelected={primaryShade.name === selectedColor}
-            variant={ColorSwatchVariant.Large}
-            color={primaryShade.color}
-            onClick={() => onColorSelect(primaryShade.name)}
-          />
-        )}
-        <div className={styles.swatchContainer}>
-          {hue.shades.map(
-            (shade) =>
-              !shade.primary && (
-                <div key={shade.name} style={{ marginRight: '4px' }}>
-                  <ColorSwatch
-                    key={shade.name}
-                    aria-label={shade.name}
-                    isSelected={shade.name === selectedColor}
-                    color={shade.color}
-                    onClick={() => onColorSelect(shade.name)}
-                  />
-                </div>
-              )
-          )}
-        </div>
+        {hue.shades.map((shade) => (
+          <div key={shade.name}>
+            <ColorSwatch
+              key={shade.name}
+              aria-label={shade.name}
+              variant={shade.primary ? ColorSwatchVariant.Large : ColorSwatchVariant.Small}
+              isSelected={shade.name === selectedColor}
+              color={shade.color}
+              onClick={() => onColorSelect(shade.name)}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -66,7 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: grid;
       grid-template-columns: 25% 1fr;
       grid-column-gap: ${theme.spacing(2)};
-      padding: ${theme.spacing(1, 0)};
+      padding: ${theme.spacing(0.5, 0)};
 
       &:hover {
         background: ${theme.colors.background.secondary};
@@ -74,14 +59,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     colorLabel: css`
       padding-left: ${theme.spacing(2)};
+      display: flex;
+      align-items: center;
     `,
     swatchRow: css`
       display: flex;
-      flex-direction: row;
-    `,
-    swatchContainer: css`
-      display: flex;
-      margin-top: 8px;
+      gap: ${theme.spacing(1)};
+      align-items: center;
+      justify-content: space-around;
     `,
   };
 };
