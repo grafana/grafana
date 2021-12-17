@@ -98,22 +98,11 @@ func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
 			Channel:    "plugin/testdata/random-labeled-stream",
 			Data:       frameJSON,
 			MinuteRate: 250,
+		}, &ManagedChannel{
+			Channel:    "plugin/testdata/random-20Hz-stream",
+			Data:       frameJSON,
+			MinuteRate: 1200,
 		})
-
-		var numberOf20hzChannels = 6
-		for i := 1; i <= numberOf20hzChannels; i++ {
-			var baseChannelName = "plugin/testdata/random-20Hz-stream"
-			var channelNameSuffix = ""
-			if i > 1 {
-				channelNameSuffix = fmt.Sprintf("-%d", i)
-			}
-
-			channels = append(channels, &ManagedChannel{
-				Channel:    baseChannelName + channelNameSuffix,
-				Data:       frameJSON,
-				MinuteRate: 1200,
-			})
-		}
 	}
 
 	sort.Slice(channels, func(i, j int) bool {

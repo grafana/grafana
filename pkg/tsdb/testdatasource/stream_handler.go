@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-var random20HzStreamRegex = regexp.MustCompile(`random-20Hz-stream.*`)
+var random20HzStreamRegex = regexp.MustCompile(`random-20Hz-stream(-\d+)?`)
 
 func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	s.logger.Debug("Allowing access to stream", "path", req.Path, "user", req.PluginContext.User)
