@@ -59,17 +59,3 @@ In addition to direct access of data (labels and annotations) stored as KeyValue
 | Remove      | []string  | KeyValue                                | Returns a copy of the Key/Value map without the given keys. |
 | Names       |           | []string                                | List of label names                                         |
 | Values      |           | []string                                | List of label values                                        |
-
-## Functions
-
-Some functions to transform values are also available, along with [default functions provided by Go templating](https://golang.org/pkg/text/template/#hdr-Functions).
-
-| Name         | Arguments                    | Returns                                                                                                      |
-| ------------ | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| title        | string                       | Capitalizes first character of each word.                                                                    |
-| toUpper      | string                       | Converts all characters to upper case.                                                                       |
-| match        | pattern, string              | Match a string using RegExp.                                                                                 |
-| reReplaceAll | pattern, replacement, string | RegExp substitution, unanchored.                                                                             |
-| join         | string, []string             | Concatenates the elements of the second argument to create a single string. First argument is the separator. |
-| safeHtml     | string                       | Marks string as HTML, not requiring auto-escaping.                                                           |
-| stringSlice  | ...string                    | Returns passed strings as slice of strings.                                                                  |

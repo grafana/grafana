@@ -38,7 +38,7 @@ import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { getInitHints, getQueryHints } from './query_hints';
-import { getOriginalMetricName, renderTemplate, transform, transformV2 } from './result_transformer';
+import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
@@ -54,6 +54,7 @@ import {
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
+import { renderLegendFormat } from './legend';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
@@ -765,9 +766,9 @@ export class PrometheusDatasource
         time: timestamp,
         timeEnd: timestamp,
         annotation,
-        title: renderTemplate(titleFormat, labels),
+        title: renderLegendFormat(titleFormat, labels),
         tags,
-        text: renderTemplate(textFormat, labels),
+        text: renderLegendFormat(textFormat, labels),
       };
     }
 
