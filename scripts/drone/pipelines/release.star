@@ -22,7 +22,7 @@ load(
     'e2e_tests_step',
     'build_storybook_step',
     'copy_packages_for_docker_step',
-    'build_docker_images_step',
+    'package_docker_images_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
     'redis_integration_tests_step',
@@ -41,6 +41,7 @@ load(
 load(
     'scripts/drone/services/services.star',
     'integration_test_services',
+    'integration_test_services_volumes',
     'ldap_service',
 )
 
@@ -48,34 +49,77 @@ load(
     'scripts/drone/utils/utils.star',
     'pipeline',
     'notify_pipeline',
+    'failure_template',
+    'drone_change_template',
 )
+load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-def release_npm_packages_step(edition, ver_mode):
-    if edition == 'enterprise':
+def build_npm_packages_step(edition, ver_mode):
+    if edition == 'enterprise' or ver_mode != 'release':
         return None
 
-    if ver_mode == 'release':
-        commands = ['./scripts/build/release-packages.sh ${DRONE_TAG}']
-    else:
-        commands = []
-
     return {
-        'name': 'release-npm-packages',
+        'name': 'build-npm-packages',
         'image': build_image,
         'depends_on': [
             # Has to run after publish-storybook since this step cleans the files publish-storybook depends on
             'publish-storybook',
         ],
-        'environment': {
-            'NPM_TOKEN': {
-                'from_secret': 'npm_token',
-            },
-            'GITHUB_PACKAGE_TOKEN': {
-                'from_secret': 'github_package_token',
-            },
-        },
-        'commands': commands,
+        'commands': ['./scripts/build/build-npm-packages.sh ${DRONE_TAG}'],
     }
+
+def store_npm_packages_step(edition, ver_mode):
+    if edition == 'enterprise' or ver_mode != 'release':
+        return None
+
+    return {
+        'name': 'store-npm-packages',
+        'image': publish_image,
+        'depends_on': [
+            'build-npm-packages',
+        ],
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+            'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
+        },
+        'commands': ['./scripts/build/store-npm-packages.sh ${DRONE_TAG}'],
+    }
+
+def retrieve_npm_packages_step(edition, ver_mode):
+    if edition == 'enterprise' or ver_mode != 'release':
+        return None
+
+    return {
+        'name': 'retrieve-npm-packages',
+        'image': publish_image,
+        'depends_on': [
+            # Has to run after publish-storybook since this step cleans the files publish-storybook depends on
+            'publish-storybook',
+        ],
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+            'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
+        },
+        'commands': ['./scripts/build/retrieve-npm-packages.sh ${DRONE_TAG}'],
+    }
+
+def release_npm_packages_step(edition, ver_mode):
+    if edition == 'enterprise' or ver_mode != 'release':
+        return None
+
+    return {
+        'name': 'release-npm-packages',
+        'image': build_image,
+        'depends_on': [
+            'retrieve-npm-packages',
+        ],
+        'environment': {
+            'NPM_TOKEN': from_secret('npm_token'),
+            'GITHUB_PACKAGE_TOKEN': from_secret('github_package_token'),
+        },
+        'commands': ['./scripts/build/release-npm-packages.sh ${DRONE_TAG}'],
+    }
+
 
 def get_steps(edition, ver_mode):
     build_steps = []
@@ -85,6 +129,7 @@ def get_steps(edition, ver_mode):
     should_publish = ver_mode in ('release', 'test-release',)
     should_upload = should_publish or ver_mode in ('release-branch',)
     include_enterprise2 = edition == 'enterprise'
+    edition2 = 'enterprise2'
 
     build_steps = [
         codespell_step(),
@@ -103,7 +148,6 @@ def get_steps(edition, ver_mode):
         ensure_cuetsified_step(),
     ]
 
-    edition2 = 'enterprise2'
     if include_enterprise2:
         build_steps.extend([
             lint_backend_step(edition=edition2),
@@ -122,8 +166,8 @@ def get_steps(edition, ver_mode):
         e2e_tests_step('panels-suite', edition=edition, tries=3),
         e2e_tests_step('various-suite', edition=edition, tries=3),
         copy_packages_for_docker_step(),
-        build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
-        build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
+        package_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
+        package_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
     ])
 
     build_storybook = build_storybook_step(edition=edition, ver_mode=ver_mode)
@@ -134,27 +178,23 @@ def get_steps(edition, ver_mode):
       build_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
 
     if should_upload:
-        publish_steps.append(upload_cdn_step(edition=edition))
+        publish_steps.append(upload_cdn_step(edition=edition, ver_mode=ver_mode))
         publish_steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode))
     if should_publish:
         publish_step = publish_storybook_step(edition=edition, ver_mode=ver_mode)
-        release_npm_step = release_npm_packages_step(edition=edition, ver_mode=ver_mode)
+        build_npm_step = build_npm_packages_step(edition=edition, ver_mode=ver_mode)
+        store_npm_step = store_npm_packages_step(edition=edition, ver_mode=ver_mode)
         if publish_step:
             publish_steps.append(publish_step)
-        if release_npm_step:
-            publish_steps.append(release_npm_step)
+        if build_npm_step and store_npm_step:
+            publish_steps.append(build_npm_step)
+            publish_steps.append(store_npm_step)
     windows_package_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
 
     if include_enterprise2:
-        edition2 = 'enterprise2'
         publish_steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
-            e2e_tests_server_step(edition=edition2, port=3002),
-            e2e_tests_step('dashboards-suite', edition=edition2, port=3002, tries=3),
-            e2e_tests_step('smoke-tests-suite', edition=edition2, port=3002, tries=3),
-            e2e_tests_step('panels-suite', edition=edition2, port=3002, tries=3),
-            e2e_tests_step('various-suite', edition=edition2, port=3002, tries=3),
-            upload_cdn_step(edition=edition2),
+            upload_cdn_step(edition=edition2, ver_mode=ver_mode),
         ])
         if should_upload:
             step = upload_packages_step(edition=edition2, ver_mode=ver_mode)
@@ -166,12 +206,14 @@ def get_steps(edition, ver_mode):
 def get_oss_pipelines(trigger, ver_mode):
     edition = 'oss'
     services = integration_test_services(edition=edition)
+    volumes = integration_test_services_volumes()
     build_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
     return [
         pipeline(
             name='oss-build-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
               build_steps + package_steps + publish_steps,
+            volumes=volumes,
         ),
         pipeline(
             name='oss-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
@@ -183,12 +225,14 @@ def get_oss_pipelines(trigger, ver_mode):
 def get_enterprise_pipelines(trigger, ver_mode):
     edition = 'enterprise'
     services = integration_test_services(edition=edition)
+    volumes = integration_test_services_volumes()
     build_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
     return [
         pipeline(
             name='enterprise-build-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
               build_steps + package_steps + publish_steps,
+            volumes=volumes,
         ),
         pipeline(
             name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
@@ -203,6 +247,9 @@ def release_pipelines(ver_mode='release', trigger=None):
     if not trigger:
         trigger = {
             'ref': ['refs/tags/v*',],
+            'repo': {
+              'exclude': ['grafana/grafana'],
+            },
         }
 
     should_publish = ver_mode in ('release', 'test-release',)
@@ -224,12 +271,11 @@ def release_pipelines(ver_mode='release', trigger=None):
             steps=[download_grabpl_step()] + initialize_step(edition='oss', platform='linux', ver_mode=ver_mode, install_deps=False) + steps,
             depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines],
         )
-        pipelines.append(publish_pipeline)
 
-    pipelines.append(notify_pipeline(
-        name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=trigger,
-        depends_on=[p['name'] for p in pipelines],
-    ))
+    #pipelines.append(notify_pipeline(
+    #    name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
+    #    depends_on=[p['name'] for p in pipelines], template=failure_template, secret='slack_webhook',
+    #))
 
     return pipelines
 
@@ -260,8 +306,8 @@ def test_release_pipelines():
     pipelines = oss_pipelines + enterprise_pipelines + [publish_pipeline,]
 
     pipelines.append(notify_pipeline(
-        name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=trigger,
-        depends_on=[p['name'] for p in pipelines],
+        name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
+        depends_on=[p['name'] for p in pipelines], template=failure_template, secret='slack_webhook',
     ))
 
     return pipelines

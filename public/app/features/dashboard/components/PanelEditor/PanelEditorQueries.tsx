@@ -19,20 +19,18 @@ export class PanelEditorQueries extends PureComponent<Props> {
   }
 
   buildQueryOptions(panel: PanelModel): QueryGroupOptions {
-    const dataSource: QueryGroupDataSource = panel.datasource?.uid
-      ? {
-          default: false,
-          ...panel.datasource,
-        }
-      : {
-          default: true,
-        };
-
-    const datasourceSettings = getDatasourceSrv().getInstanceSettings(dataSource.uid);
+    const dataSource: QueryGroupDataSource = panel.datasource ?? {
+      default: true,
+    };
+    const datasourceSettings = getDatasourceSrv().getInstanceSettings(dataSource);
 
     return {
       cacheTimeout: datasourceSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : undefined,
-      dataSource,
+      dataSource: {
+        default: datasourceSettings?.isDefault,
+        type: datasourceSettings?.type,
+        uid: datasourceSettings?.uid,
+      },
       queries: panel.targets,
       maxDataPoints: panel.maxDataPoints,
       minInterval: panel.interval,

@@ -26,7 +26,7 @@ const isGreaterValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> 
 const isGreaterOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> = {
   id: ValueMatcherID.greaterOrEqual,
   name: 'Is greater or equal',
-  description: 'Match when field value is lower or greater than option.',
+  description: 'Match when field value is greater than or equal to option.',
   get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values.get(valueIndex);
@@ -37,7 +37,7 @@ const isGreaterOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<nu
     };
   },
   getOptionsDisplayText: (options) => {
-    return `Matches all rows where field value is lower or greater than: ${options.value}.`;
+    return `Matches all rows where field value is greater than or equal to: ${options.value}.`;
   },
   isApplicable: (field) => field.type === FieldType.number,
   getDefaultOptions: () => ({ value: 0 }),

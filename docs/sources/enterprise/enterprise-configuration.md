@@ -456,3 +456,42 @@ The default is `"grafana"`.
 A space-separated list of memcached servers. Example: `memcached-server-1:11211 memcached-server-2:11212 memcached-server-3:11211`. Or if there's only one server: `memcached-server:11211`.
 
 The default is `"localhost:11211"`.
+
+## [recorded_queries]
+
+### enabled
+
+Whether the recorded queries feature is enabled
+
+### min_interval
+
+Sets the minimum interval to enforce between query evaluations. The default value is `10s`. Query evaluation will be
+adjusted if they are less than this value. Higher values can help with resource management.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g.
+30s or 1m.
+
+### max_queries
+
+The maximum number of recorded queries that can exist.
+
+### default_remote_write_datasource_uid
+
+The UID of the datasource where the query data will be written.
+
+If all `default_remote_write_*` properties are set, this information will be populated at startup. If a remote write target has
+already been configured, nothing will happen.
+
+### default_remote_write_path
+
+The api path where metrics will be written
+
+If all `default_remote_write_*` properties are set, this information will be populated at startup. If a remote write target has
+already been configured, nothing will happen.
+
+### default_remote_write_datasource_org_id
+
+The org id of the datasource where the query data will be written.
+
+If all `default_remote_write_*` properties are set, this information will be populated at startup. If a remote write target has
+already been configured, nothing will happen.

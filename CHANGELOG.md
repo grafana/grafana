@@ -1,3 +1,146 @@
+<!-- 8.3.3 START -->
+
+# 8.3.3 (2021-12-10)
+
+### Features and enhancements
+
+- **BarChart:** Use new data error view component to show actions in panel edit. [#42474](https://github.com/grafana/grafana/pull/42474), [@torkelo](https://github.com/torkelo)
+- **CloudMonitor:** Iterate over pageToken for resources. [#42546](https://github.com/grafana/grafana/pull/42546), [@iwysiu](https://github.com/iwysiu)
+- **Macaron:** Prevent WriteHeader invalid HTTP status code panic. [#42973](https://github.com/grafana/grafana/pull/42973), [@bergquist](https://github.com/bergquist)
+
+### Bug fixes
+
+- **AnnoListPanel:** Fix interpolation of variables in tags. [#42318](https://github.com/grafana/grafana/pull/42318), [@francoisdtm](https://github.com/francoisdtm)
+- **CloudWatch:** Allow queries to have no dimensions specified. [#42800](https://github.com/grafana/grafana/pull/42800), [@sunker](https://github.com/sunker)
+- **CloudWatch:** Fix broken queries for users migrating from 8.2.4/8.2.5 to 8.3.0. [#42611](https://github.com/grafana/grafana/pull/42611), [@sunker](https://github.com/sunker)
+- **CloudWatch:** Make sure MatchExact flag gets the right value. [#42621](https://github.com/grafana/grafana/pull/42621), [@sunker](https://github.com/sunker)
+- **Dashboards:** Fix so that empty folders can be deleted from the manage dashboards/folders page. [#42527](https://github.com/grafana/grafana/pull/42527), [@ashharrison90](https://github.com/ashharrison90)
+- **InfluxDB:** Improve handling of metadata query errors in InfluxQL. [#42500](https://github.com/grafana/grafana/pull/42500), [@gabor](https://github.com/gabor)
+- **Loki:** Fix adding of ad hoc filters for queries with parser and line_format expressions. [#42590](https://github.com/grafana/grafana/pull/42590), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Prometheus:** Fix running of exemplar queries for non-histogram metrics. [#42749](https://github.com/grafana/grafana/pull/42749), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Prometheus:** Interpolate template variables in interval. [#42637](https://github.com/grafana/grafana/pull/42637), [@ivanahuckova](https://github.com/ivanahuckova)
+- **StateTimeline:** Fix toolitp not showing when for frames with multiple fields. [#42741](https://github.com/grafana/grafana/pull/42741), [@dprokop](https://github.com/dprokop)
+- **TraceView:** Fix virtualized scrolling when trace view is opened in right pane in Explore. [#42480](https://github.com/grafana/grafana/pull/42480), [@autoric](https://github.com/autoric)
+- **Variables:** Fix repeating panels for on time range changed variables. [#42828](https://github.com/grafana/grafana/pull/42828), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Variables:** Fix so queryparam option works for scoped variables. [#42742](https://github.com/grafana/grafana/pull/42742), [@hugohaggmark](https://github.com/hugohaggmark)
+
+<!-- 8.3.3 END -->
+<!-- 8.3.2 START -->
+
+# 8.3.2 (2021-12-10)
+
+- **Security**: Fixes CVE-2021-43813 and CVE-2021-43815. For more information, see our [blog](https://grafana.com/blog/2021/12/10/grafana-8.3.2-and-7.5.12-released-with-moderate-severity-security-fix/
+
+<!-- 8.3.2 END -->
+
+<!-- 8.3.1 START -->
+
+# 8.3.1 (2021-12-07)
+
+- **Security**: Fixes CVE-2021-43798. For more information, see our [blog](https://grafana.com/blog/2021/12/07/grafana-8.3.1-8.2.7-8.1.8-and-8.0.7-released-with-high-severity-security-fix/)
+
+<!-- 8.3.1 END -->
+
+<!-- 8.3.0 START -->
+
+# 8.3.0 (2021-11-30)
+
+### Features and enhancements
+
+- **Alerting:** Prevent folders from being deleted when they contain alerts. [#42307](https://github.com/grafana/grafana/pull/42307), [@peterholmberg](https://github.com/peterholmberg)
+- **Alerting:** Show full preview value in tooltip. [#42445](https://github.com/grafana/grafana/pull/42445), [@peterholmberg](https://github.com/peterholmberg)
+- **BarGauge:** Limit title width when name is really long. [#42346](https://github.com/grafana/grafana/pull/42346), [@torkelo](https://github.com/torkelo)
+- **CloudMonitoring:** Avoid to escape regexps in filters. [#41961](https://github.com/grafana/grafana/pull/41961), [@andresmgot](https://github.com/andresmgot)
+- **CloudWatch:** Add support for AWS Metric Insights. [#42487](https://github.com/grafana/grafana/pull/42487), [@sunker](https://github.com/sunker)
+- **TooltipPlugin:** Remove other panels' shared tooltip in edit panel. [#42187](https://github.com/grafana/grafana/pull/42187), [@mdvictor](https://github.com/mdvictor)
+- **Visualizations:** Limit y label width to 40% of visualization width. [#42350](https://github.com/grafana/grafana/pull/42350), [@torkelo](https://github.com/torkelo)
+
+### Bug fixes
+
+- **Alerting:** Clear alerting rule evaluation errors after intermittent failures. [#42386](https://github.com/grafana/grafana/pull/42386), [@gotjosh](https://github.com/gotjosh)
+- **Alerting:** Fix refresh on legacy Alert List panel. [#42322](https://github.com/grafana/grafana/pull/42322), [@peterholmberg](https://github.com/peterholmberg)
+- **Dashboard:** Fix queries for panels with non-integer widths. [#42420](https://github.com/grafana/grafana/pull/42420), [@gabor](https://github.com/gabor)
+- **Explore:** Fix url update inconsistency. [#42288](https://github.com/grafana/grafana/pull/42288), [@gabor](https://github.com/gabor)
+- **Prometheus:** Fix range variables interpolation for time ranges smaller than 1 second. [#42242](https://github.com/grafana/grafana/pull/42242), [@ivanahuckova](https://github.com/ivanahuckova)
+- **ValueMappings:** Fixes issue with regex value mapping that only sets color. [#42311](https://github.com/grafana/grafana/pull/42311), [@torkelo](https://github.com/torkelo)
+
+<!-- 8.3.0 END -->
+<!-- 8.3.0-beta2 START -->
+
+# 8.3.0-beta2 (2021-11-25)
+
+### Features and enhancements
+
+- **Alerting:** Create DatasourceError alert if evaluation returns error. [#41869](https://github.com/grafana/grafana/pull/41869), [@gerobinson](https://github.com/gerobinson)
+- **Alerting:** Make Unified Alerting enabled by default for those who do not use legacy alerting. [#42200](https://github.com/grafana/grafana/pull/42200), [@armandgrillet](https://github.com/armandgrillet)
+- **Alerting:** Support mute timings configuration through the api for the embedded alert manager. [#41533](https://github.com/grafana/grafana/pull/41533), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+- **CloudWatch:** Add missing AWS/Events metrics. [#42164](https://github.com/grafana/grafana/pull/42164), [@n2N8Z](https://github.com/n2N8Z)
+- **Docs:** Add easier to find deprecation notices to certain data sources and to the changelog. [#41938](https://github.com/grafana/grafana/pull/41938), [@gabor](https://github.com/gabor)
+- **Plugins Catalog:** Enable install controls based on the pluginAdminEnabled flag. [#41686](https://github.com/grafana/grafana/pull/41686), [@leventebalogh](https://github.com/leventebalogh)
+- **Query caching:** Increase max_value_mb default to 10. (Enterprise)
+- **Table:** Add space between values for the DefaultCell. [#42246](https://github.com/grafana/grafana/pull/42246), [@kirederik](https://github.com/kirederik)
+- **Table:** Add space between values on JSONViewCell. [#42156](https://github.com/grafana/grafana/pull/42156), [@kirederik](https://github.com/kirederik)
+- **Tracing:** Make query editors available in dashboard for Tempo and Zipkin. [#41974](https://github.com/grafana/grafana/pull/41974), [@ivanahuckova](https://github.com/ivanahuckova)
+
+### Bug fixes
+
+- **AccessControl:** Renamed `orgs` roles, removed `fixed:orgs:reader` introduced in beta1. [#42049](https://github.com/grafana/grafana/pull/42049), [@gamab](https://github.com/gamab)
+- **Azure Monitor:** Add trap focus for modals in grafana/ui and other small a11y fixes for Azure Monitor. [#41449](https://github.com/grafana/grafana/pull/41449), [@sarahzinger](https://github.com/sarahzinger)
+- **CodeEditor:** Prevent suggestions from being clipped. [#42120](https://github.com/grafana/grafana/pull/42120), [@kaydelaney](https://github.com/kaydelaney)
+- **Dashboard:** Fix cache timeout persistence. [#42204](https://github.com/grafana/grafana/pull/42204), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Datasource:** Fix stable sort order of query responses. [#41868](https://github.com/grafana/grafana/pull/41868), [@marefr](https://github.com/marefr)
+- **Explore:** Fix error in query history when removing last item. [#42179](https://github.com/grafana/grafana/pull/42179), [@gabor](https://github.com/gabor)
+- **Logs:** Fix requesting of older logs when flipped order. [#41966](https://github.com/grafana/grafana/pull/41966), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Prometheus:** Fix running of health check query based on access mode. [#42189](https://github.com/grafana/grafana/pull/42189), [@ivanahuckova](https://github.com/ivanahuckova)
+- **TextPanel:** Fix suggestions for existing panels. [#42195](https://github.com/grafana/grafana/pull/42195), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Tracing:** Fix incorrect indentations due to reoccurring spanIDs. [#41919](https://github.com/grafana/grafana/pull/41919), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Tracing:** Show start time of trace with milliseconds precision. [#42132](https://github.com/grafana/grafana/pull/42132), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Variables:** Make renamed or missing variable section expandable. [#41964](https://github.com/grafana/grafana/pull/41964), [@hugohaggmark](https://github.com/hugohaggmark)
+
+### Breaking changes
+
+### Grafana 8 Alerting enabled by default for installations that do not use legacy alerting
+
+Starting with Grafana v8.3.0, if you have **not** explicitly disabled unified alerting and **do not** have legacy alerts set up you are automatically "migrated" to Grafana 8 Alerting.
+
+A migration **from legacy to Grafana 8 Alerting** will never incur a data loss, as the previous data is kept around for rollback purposes. However, going from **Grafana 8 Alerting to legacy alerting** will delete all the data created for Grafana 8 Alerting. It is recommended that you **backup your database** before attempting a migration between systems.
+
+If unclear, please verify the table below:
+
+| `[alerting][enabled]` | `[unified_alerting][enabled]` | With Existing Legacy Alerts | Result             |
+| --------------------- | ----------------------------- | --------------------------- | ------------------ |
+| `true`                | `true`                        | N/A                         | Error              |
+| `true`                | `false`                       | N/A                         | Legacy Alerting    |
+| `true`                | not set                       | Yes                         | Legacy Alerting    |
+| `true`                | not set                       | No                          | Grafana 8 Alerting |
+| not set               | `true`                        | N/A                         | Grafana 8 Alerting |
+| not set               | `false`                       | N/A                         | Legacy Alerting    |
+| not set               | not set                       | Yes                         | Legacy Alerting    |
+| not set               | not set                       | No                          | Grafana 8 Alerting |
+| `false`               | `true`                        | N/A                         | Grafana 8 Alerting |
+| `false`               | `false`                       | N/A                         | Alerting disabled  |
+| `false`               | not set                       | N/A                         | Grafana 8 Alerting |
+
+N/A in the "With Existing Legacy Alerts" column means that it does not matter if you have legacy alerts or not.
+Issue [#42200](https://github.com/grafana/grafana/issues/42200)
+
+### Keep Last State for "If execution error or timeout" when upgrading to Grafana 8 alerting
+
+In Grafana 8.3.0-beta2 we changed how alert rules that use `Keep Last State` for `If execution error or timeout` are upgraded from Legacy Alerting to Grafana 8 alerting. In 8.3.0-beta1 and earlier, alert rules with `Keep Last State` for `If execution error or timeout` were changed to `Alerting` when upgrading from Legacy Alerting to Grafana 8 alerting. However, in 8.3.0-beta2 these alert rules are now upgraded to a new option called `Error`. With this option, on encountering an error evaluating an alert rule, Grafana creates a special alert called `DatasourceError` with the `rule_uid` and `ref_id` as labels and an annotation called `Error` with the error message. Issue [#41869](https://github.com/grafana/grafana/issues/41869)
+
+### Deprecations
+
+The access mode "browser" is deprecated in the following data sources and will be removed in a later release:
+
+- Prometheus
+- InfluxDB
+- Elasticsearch Issue [#41938](https://github.com/grafana/grafana/issues/41938)
+
+### Plugin development fixes & changes
+
+- **Select:** Select menus now properly scroll during keyboard navigation. [#41917](https://github.com/grafana/grafana/pull/41917), [@ashharrison90](https://github.com/ashharrison90)
+
+<!-- 8.3.0-beta2 END -->
 <!-- 8.3.0-beta1 START -->
 
 # 8.3.0-beta1 (2021-11-18)
@@ -70,6 +213,28 @@
 
 - **grafana/ui:** Enable slider marks display. [#41275](https://github.com/grafana/grafana/pull/41275), [@dprokop](https://github.com/dprokop)
 
+<!-- 8.2.7 START -->
+
+# 8.2.7 (2021-12-07)
+
+- **Security**: Fixes CVE-2021-43798. For more information, see our [blog](https://grafana.com/blog/2021/12/07/grafana-8.3.1-8.2.7-8.1.8-and-8.0.7-released-with-high-severity-security-fix/)
+
+<!-- 8.2.7 END -->
+
+<!-- 8.2.6 START -->
+
+# 8.2.6 (2021-12-02)
+
+### Features and enhancements
+
+- **Security:** Upgrade Docker base image to Alpine 3.14.3. [#42061](https://github.com/grafana/grafana/pull/42061), [@dsotirakis](https://github.com/dsotirakis)
+- **Security:** Upgrade Go to 1.17.2. [#42427](https://github.com/grafana/grafana/pull/42427), [@idafurjes](https://github.com/idafurjes)
+
+### Bug fixes
+
+- **TimeSeries:** Fix fillBelowTo wrongly affecting fills of unrelated series. [#41998](https://github.com/grafana/grafana/pull/41998), [@leeoniya](https://github.com/leeoniya)
+
+<!-- 8.2.6 END -->
 <!-- 8.3.0-beta1 END -->
 <!-- 8.2.5 START -->
 
@@ -334,6 +499,14 @@ Panel queries and/or annotation queries that used more than one statistic will b
 - **Grafana UI:** Fix TS error property `css` is missing in type. [#38078](https://github.com/grafana/grafana/pull/38078), [@jackw](https://github.com/jackw)
 
 <!-- 8.2.0-beta1 END -->
+
+<!-- 8.1.8 START -->
+
+# 8.1.8 (2021-12-07)
+
+- **Security**: Fixes CVE-2021-43798. For more information, see our [blog](https://grafana.com/blog/2021/12/07/grafana-8.3.1-8.2.7-8.1.8-and-8.0.7-released-with-high-severity-security-fix/)
+
+<!-- 8.1.8 END -->
 
 <!-- 8.1.7 START -->
 
@@ -608,6 +781,14 @@ Issue [#33879](https://github.com/grafana/grafana/issues/33879)
 - **Toolkit:** Improve error messages when tasks fail. [#36381](https://github.com/grafana/grafana/pull/36381), [@joshhunt](https://github.com/joshhunt)
 
 <!-- 8.1.0-beta1 END -->
+
+<!-- 8.0.7 START -->
+
+# 8.0.7 (2021-12-07)
+
+- **Security**: Fixes CVE-2021-43798. For more information, see our [blog](https://grafana.com/blog/2021/12/07/grafana-8.3.1-8.2.7-8.1.8-and-8.0.7-released-with-high-severity-security-fix/)
+
+<!-- 8.0.7 END -->
 
 <!-- 8.0.6 START -->
 

@@ -19,7 +19,8 @@ const scalarOptions = [
 export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions, any>> = (
   props
 ) => {
-  const { value, context, onChange } = props;
+  const { value, context, onChange, item } = props;
+  const { settings } = item;
 
   const DEFAULT_VALUE = 0;
 
@@ -94,7 +95,12 @@ export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig
         {isFixed && (
           <InlineFieldRow>
             <InlineField label="Value" labelWidth={8} grow={true}>
-              <NumberInput value={val?.fixed ?? DEFAULT_VALUE} onChange={onValueChange} />
+              <NumberInput
+                value={val?.fixed ?? DEFAULT_VALUE}
+                onChange={onValueChange}
+                max={settings?.max}
+                min={settings?.min}
+              />
             </InlineField>
           </InlineFieldRow>
         )}

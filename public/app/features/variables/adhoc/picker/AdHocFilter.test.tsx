@@ -27,7 +27,6 @@ describe('AdHocFilter', () => {
 
     // Select value
     userEvent.click(screen.getByText('select value'));
-    screen.debug(screen.getAllByTestId('AdHocFilterValue-value-wrapper'));
     // There are already some filters rendered
     const selectEl2 = screen.getAllByTestId('AdHocFilterValue-value-wrapper')[2];
     await selectEvent.select(selectEl2, 'val3', { container: document.body });

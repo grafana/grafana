@@ -21,7 +21,6 @@ export class BarGaugeSuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: (s) => {},
     });
 
     // This is probably not a good option for many numeric fields

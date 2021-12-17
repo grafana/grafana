@@ -277,8 +277,8 @@ export function saveDashboard(options: SaveDashboardOptions) {
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().request({
     method: 'DELETE',
-    url: `/api/folders/${uid}?forceDeleteRules=true`,
-    showSuccessAlert: showSuccessAlert === true,
+    url: `/api/folders/${uid}?forceDeleteRules=false`,
+    showSuccessAlert: showSuccessAlert,
   });
 }
 
@@ -298,7 +298,7 @@ export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().request({
     method: 'DELETE',
     url: `/api/dashboards/uid/${uid}`,
-    showSuccessAlert: showSuccessAlert === true,
+    showSuccessAlert: showSuccessAlert,
   });
 }
 

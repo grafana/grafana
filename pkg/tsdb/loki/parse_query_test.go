@@ -29,8 +29,7 @@ func TestParseQuery(t *testing.T) {
 				},
 			},
 		}
-		dsInfo := &datasourceInfo{}
-		models, err := parseQuery(dsInfo, queryContext)
+		models, err := parseQuery(queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*15, models[0].Step)
 		require.Equal(t, "go_goroutines 15s 15000 3000s 3000 3000000", models[0].Expr)
@@ -50,5 +49,13 @@ func TestParseQuery(t *testing.T) {
 		timeRange := time.Millisecond * 250
 
 		require.Equal(t, "go_goroutines 50ms 50 0s 0 250", interpolateVariables(expr, interval, timeRange))
+	})
+	t.Run("interpolate variables, curly-braces syntax", func(t *testing.T) {
+		expr := "go_goroutines ${__interval} ${__interval_ms} ${__range} ${__range_s} ${__range_ms}"
+
+		interval := time.Second * 2
+		timeRange := time.Second * 50
+
+		require.Equal(t, "go_goroutines 2s 2000 50s 50 50000", interpolateVariables(expr, interval, timeRange))
 	})
 }
