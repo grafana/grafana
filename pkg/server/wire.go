@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
@@ -88,6 +89,7 @@ var wireBasicSet = wire.NewSet(
 	setting.NewCfgFromArgs,
 	New,
 	api.ProvideHTTPServer,
+	query.ProvideService,
 	bus.ProvideBus,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
 	rendering.ProvideService,

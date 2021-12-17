@@ -5,7 +5,7 @@ import { TimelineMode, TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
 import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
 import { StateTimelineTooltip } from './StateTimelineTooltip';
-import { getLastStreamingDataFramePacket } from '@grafana/data/src/dataframe/StreamingDataFrame';
+import { getLastStreamingDataFramePacket } from 'app/features/live/data/StreamingDataFrame';
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
 
