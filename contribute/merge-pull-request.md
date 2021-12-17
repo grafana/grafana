@@ -21,6 +21,10 @@ The following checklist/summary should give you a quick overview of what to ask/
 
 Before actually merging a pull request there's a couple of things to take into consideration.
 
+### Status checks
+
+To be able to merge a pull request all of its required status checks needs to pass including a review approval.
+
 ### Format the pull request title
 
 Make sure that the pull request title is properly formatted according to `<Area>: <Summary>` and try to make the summary short and understandable for the community as a whole.
@@ -31,9 +35,9 @@ See [formatting guidelines](create-pull-request.md#formatting-guidelines) for mo
 
 ### Assign a milestone
 
-It's recommended to add a milestone to every pull request. This makes it easier to track what changes did go into a certain release. Without this you're basically left with going through git commits which could be a lot harder.
+A milestone **should** be added to every pull request. Several things in the Grafana release process requires at least pull requests to be in a milestone, for example [generating changelog/release notes](#include-in-changelog-and-release-notes).
 
-There's also various tooling built that in some cases requires a pull request to be assigned a milestone, for example [generating changelog/release notes](#include-in-changelog-and-release-notes).
+In addition this makes it easier to track what changes did go into a certain release. Without this you're basically left with going through git commits which could be a lot harder.
 
 ### Include in changelog and release notes?
 
