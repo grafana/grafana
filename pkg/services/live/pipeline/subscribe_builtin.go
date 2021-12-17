@@ -28,7 +28,7 @@ func (s *BuiltinSubscriber) Type() string {
 	return SubscriberTypeBuiltin
 }
 
-func (s *BuiltinSubscriber) Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (s *BuiltinSubscriber) Subscribe(ctx context.Context, vars Vars, data []byte) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	u, ok := livecontext.GetContextSignedUser(ctx)
 	if !ok {
 		return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
@@ -40,5 +40,6 @@ func (s *BuiltinSubscriber) Subscribe(ctx context.Context, vars Vars) (models.Su
 	return handler.OnSubscribe(ctx, u, models.SubscribeEvent{
 		Channel: vars.Channel,
 		Path:    vars.Path,
+		Data:    data,
 	})
 }

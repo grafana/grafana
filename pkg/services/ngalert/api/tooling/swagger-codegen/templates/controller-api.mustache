@@ -13,15 +13,33 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 )
 
+type {{classname}}ForkingService interface { {{#operation}}
+	{{nickname}}(*models.ReqContext) response.Response{{/operation}}
+}
+
 type {{classname}}Service interface { {{#operation}}
 	{{nickname}}(*models.ReqContext{{#bodyParams}}, apimodels.{{dataType}}{{/bodyParams}}) response.Response{{/operation}}
 }
 
-func (api *API) Register{{classname}}Endpoints(srv {{classname}}Service, m *metrics.API) {
+{{#operations}}{{#operation}}
+func (f *Forked{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Response {
+	{{#bodyParams}}
+	conf := apimodels.{{dataType}}{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return  f.fork{{nickname}}(ctx, conf)
+	{{/bodyParams}}
+	{{^bodyParams}}
+	return  f.fork{{nickname}}(ctx)
+	{{/bodyParams}}
+}
+{{/operation}}{{/operations}}
+
+func (api *API) Register{{classname}}Endpoints(srv {{classname}}ForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
 	group.{{httpMethod}}(
-		toMacaronPath("{{{path}}}"){{#bodyParams}},
-		binding.Bind(apimodels.{{dataType}}{}){{/bodyParams}},
+		toMacaronPath("{{{path}}}"),
 		metrics.Instrument(
 			http.Method{{httpMethod}},
 			"{{{path}}}",
