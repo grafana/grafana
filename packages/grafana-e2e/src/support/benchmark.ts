@@ -51,12 +51,19 @@ export const benchmark = ({
           e2e().wait(delayAfterOpeningDashboard);
 
           if (appStats) {
+            const startCollecting = appStats.startCollecting;
+            if (startCollecting) {
+              e2e()
+                .window()
+                .then((win) => startCollecting(win));
+            }
+
+            e2e().startBenchmarking(testName);
+            e2e().wait(duration);
+
             e2e()
               .window()
               .then((win) => {
-                appStats.startCollecting?.(win);
-                e2e().startBenchmarking(testName);
-                e2e().wait(duration);
                 e2e().stopBenchmarking(testName, appStats.collect(win));
               });
           } else {
@@ -66,8 +73,5 @@ export const benchmark = ({
           }
         });
       });
-
-    // @todo remove when possible: https://github.com/cypress-io/cypress/issues/2831
-    it('temporary', () => {});
   });
 };
