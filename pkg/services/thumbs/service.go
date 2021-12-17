@@ -162,7 +162,9 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 		fmt.Println("error", err)
 		return
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 	tlog.Info("Uploaded File: %+v\n", handler.Filename)
 	tlog.Info("File Size: %+v\n", handler.Size)
 	tlog.Info("MIME Header: %+v\n", handler.Header)
@@ -176,7 +178,9 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 		tlog.Info("ERROR", "err", handler.Header)
 		return
 	}
-	defer tempFile.Close()
+	defer func() {
+		_ = tempFile.Close()
+	}()
 
 	// read all of the contents of our uploaded file into a
 	// byte array
