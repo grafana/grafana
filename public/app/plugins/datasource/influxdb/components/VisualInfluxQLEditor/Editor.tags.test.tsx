@@ -32,11 +32,7 @@ jest.mock('../../influxQLMetadataQuery', () => {
 });
 
 beforeEach(() => {
-  // we need to ts-ignore here, the functions in that module
-  // are mocked, so they do have `mockReset`, but typescript
-  // does not know this
-  // @ts-ignore
-  mockedMeta.getTagKeysForMeasurementAndTags.mockClear();
+  (mockedMeta.getTagKeysForMeasurementAndTags as jest.Mock).mockClear();
 });
 
 const ONLY_TAGS = [
@@ -106,9 +102,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
     // and verify getTagKeysForMeasurementAndTags was called again,
     // and in the tags-param we did not receive the `field1` part.
     expect(mockedMeta.getTagKeysForMeasurementAndTags).toHaveBeenCalledTimes(2);
-    // need to ts-ignore the `.mock` part
-    // @ts-ignore
-    expect(mockedMeta.getTagKeysForMeasurementAndTags.mock.calls[1][2]).toStrictEqual(ONLY_TAGS);
+    expect((mockedMeta.getTagKeysForMeasurementAndTags as jest.Mock).mock.calls[1][2]).toStrictEqual(ONLY_TAGS);
 
     // now we click on the WHERE/host2 button
     await act(async () => {
@@ -117,9 +111,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
 
     // verify `getTagValues` was called once, and in the tags-param we did not receive `field1`
     expect(mockedMeta.getTagValues).toHaveBeenCalledTimes(1);
-    // need to ts-ignore the `.mock` part
-    // @ts-ignore
-    expect(mockedMeta.getTagValues.mock.calls[0][3]).toStrictEqual(ONLY_TAGS);
+    expect((mockedMeta.getTagValues as jest.Mock).mock.calls[0][3]).toStrictEqual(ONLY_TAGS);
 
     // now we click on the FROM/cpudata button
     await act(async () => {
@@ -128,8 +120,6 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
 
     // verify `getTagValues` was called once, and in the tags-param we did not receive `field1`
     expect(mockedMeta.getAllMeasurementsForTags).toHaveBeenCalledTimes(1);
-    // need to ts-ignore the `.mock` part
-    // @ts-ignore
-    expect(mockedMeta.getAllMeasurementsForTags.mock.calls[0][1]).toStrictEqual(ONLY_TAGS);
+    expect((mockedMeta.getAllMeasurementsForTags as jest.Mock).mock.calls[0][1]).toStrictEqual(ONLY_TAGS);
   });
 });
