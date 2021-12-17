@@ -27,16 +27,14 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
       <div className={styles.colorLabel}>{label}</div>
       <div {...otherProps} className={styles.swatchRow}>
         {hue.shades.map((shade) => (
-          <div key={shade.name}>
-            <ColorSwatch
-              key={shade.name}
-              aria-label={shade.name}
-              variant={shade.primary ? ColorSwatchVariant.Large : ColorSwatchVariant.Small}
-              isSelected={shade.name === selectedColor}
-              color={shade.color}
-              onClick={() => onColorSelect(shade.name)}
-            />
-          </div>
+          <ColorSwatch
+            key={shade.name}
+            aria-label={shade.name}
+            variant={shade.primary ? ColorSwatchVariant.Large : ColorSwatchVariant.Small}
+            isSelected={shade.name === selectedColor}
+            color={shade.color}
+            onClick={() => onColorSelect(shade.name)}
+          />
         ))}
       </div>
     </div>
