@@ -2923,19 +2923,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cypress/webpack-preprocessor@npm:5.10.0":
-  version: 5.10.0
-  resolution: "@cypress/webpack-preprocessor@npm:5.10.0"
+"@cypress/webpack-preprocessor@npm:5.11.0":
+  version: 5.11.0
+  resolution: "@cypress/webpack-preprocessor@npm:5.11.0"
   dependencies:
-    bluebird: ^3.7.1
-    debug: 4.3.2
+    bluebird: 3.7.1
+    debug: ^4.3.2
     lodash: ^4.17.20
   peerDependencies:
     "@babel/core": ^7.0.1
     "@babel/preset-env": ^7.0.0
     babel-loader: ^8.0.2
     webpack: ^4 || ^5
-  checksum: f6faa1f0134cac746e14b2f6e18a85da36aedc81b76f230e95d45065ff9205d08b0448f543c3a37490890aabc87359655f1ddbcd30e60a252e2490b7f2591e3c
+  checksum: c040d7b71f51a0009c5c9bdafd84ce223cc901fa521a648deacf32a8882b2ba91cfe88f269ad2aebe3753215f558bbbe7affa2575efe12624dcca7a0cde980d6
   languageName: node
   linkType: hard
 
@@ -3499,7 +3499,7 @@ __metadata:
   dependencies:
     "@babel/core": 7.16.0
     "@babel/preset-env": 7.16.4
-    "@cypress/webpack-preprocessor": 5.10.0
+    "@cypress/webpack-preprocessor": 5.11.0
     "@grafana/e2e-selectors": 8.4.0-pre
     "@grafana/tsconfig": ^1.0.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
@@ -12798,7 +12798,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bluebird@npm:3.7.2, bluebird@npm:^3.3.5, bluebird@npm:^3.5.5, bluebird@npm:^3.7.1":
+"bluebird@npm:3.7.1":
+  version: 3.7.1
+  resolution: "bluebird@npm:3.7.1"
+  checksum: 58c295399e109925149977ebcb40e42fd109d3e458899e71441bc7e5e0867bbd796fdd20278b425fa29f13377fe335fbfc2a6e68e5ca1da03b1c3afdc439d097
+  languageName: node
+  linkType: hard
+
+"bluebird@npm:3.7.2, bluebird@npm:^3.3.5, bluebird@npm:^3.5.5":
   version: 3.7.2
   resolution: "bluebird@npm:3.7.2"
   checksum: 869417503c722e7dc54ca46715f70e15f4d9c602a423a02c825570862d12935be59ed9c7ba34a9b31f186c017c23cac6b54e35446f8353059c101da73eac22ef
