@@ -11,8 +11,10 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Test
+      env:
+        SOME_SECRET: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
       run: |
-        echo "TEST: \"${{ secrets.GH_BOT_ACCESS_TOKEN }}\""
+        echo "TEST: \"${SOME_SECRET:0:4}\""
     # - name: Install Node.js
     #   uses: actions/setup-node@v2
     #   with:
