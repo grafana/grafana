@@ -251,10 +251,9 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY | head -c10
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - gsutil -m rsync -d -r ./e2e/videos gs://${E2E_TEST_ARTIFACTS_BUCKET}/artifacts/${DRONE_BUILD_NUMBER}
+  - gsutil -m rsync -d -r ./e2e/videos gs://releng-pipeline-artifacts-dev/artifacts/${DRONE_BUILD_NUMBER}
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -4245,6 +4244,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 5dcdc53eeef4f768565d1f9180386ecbeb47dc3cf716d0bd3f165233bdb3c846
+hmac: 1ee92d51eb5338a70d20b4583a98a8168178487791b921b01370daa6b71a0d41
 
 ...
