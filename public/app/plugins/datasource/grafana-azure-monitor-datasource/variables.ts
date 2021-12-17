@@ -28,7 +28,6 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
 
       if (queryObj.queryType === AzureQueryType.GrafanaTemplateVariableFn && queryObj.grafanaTemplateVariableFn) {
         try {
-          console.log('heeej');
           const templateVariablesResults = await this.callGrafanaTemplateVariableFn(queryObj.grafanaTemplateVariableFn);
           return {
             data: templateVariablesResults ? [toDataFrame(templateVariablesResults)] : [],
