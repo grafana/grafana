@@ -293,10 +293,10 @@ def publish_storybook_step(edition, ver_mode):
 
 
 def upload_cdn_step(edition, ver_mode):
-    if ver_mode == "main":
-        bucket = "grafana-static-assets"
-    else:
+    if ver_mode == "release":
         bucket = "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+    else:
+        bucket = "grafana-static-assets"
 
     deps = []
     if edition in 'enterprise2':
@@ -496,6 +496,7 @@ def lint_frontend_step():
         'commands': [
             'yarn run prettier:check',
             'yarn run lint',
+            'yarn run i18n:compile', # TODO: right place for this?
             'yarn run typecheck',
         ],
     }
@@ -933,6 +934,8 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     elif ver_mode == 'release':
         packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}/${{DRONE_TAG}}'.format(enterprise2_suffix(edition))
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
+    elif edition == 'enterprise2':
+        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads-enterprise2'.format(edition)
     else:
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
 

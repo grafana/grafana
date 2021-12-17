@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 )
 
 var (
@@ -93,11 +95,8 @@ func serviceAccountDeletionScenario(t *testing.T, httpMethod string, endpoint st
 }
 
 func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock, routerRegister routing.RouteRegister, acmock *accesscontrolmock.Mock) *web.Mux {
-	a := NewServiceAccountsAPI(
-		svc,
-		acmock,
-		routerRegister,
-	)
+	store := sqlstore.InitTestDB(t)
+	a := NewServiceAccountsAPI(svc, acmock, routerRegister, database.NewServiceAccountsStore(store))
 	a.RegisterAPIEndpoints(&setting.Cfg{FeatureToggles: map[string]bool{"service-accounts": true}})
 
 	m := web.New()
