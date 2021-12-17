@@ -18,15 +18,15 @@ jobs:
 
     steps:
     - name: Debugging
-        uses: actions/github-script@v3.1.0
-        with:
-          script: |
-            console.log(JSON.stringify({
-              workflow_run_event: "${{github.event.workflow_run.event }}",
-              workflow_run_conclusion: "${{github.event.workflow_run.conclusion }}",
-              workflow_run_id: ${{github.event.workflow_run.id }},
-              workflow_run_url: "${{github.event.workflow_run.url }}",
-            }, null, 4));
+      uses: actions/github-script@v3.1.0
+      with:
+        script: |
+          console.log(JSON.stringify({
+            workflow_run_event: "${{github.event.workflow_run.event }}",
+            workflow_run_conclusion: "${{github.event.workflow_run.conclusion }}",
+            workflow_run_id: ${{github.event.workflow_run.id }},
+            workflow_run_url: "${{github.event.workflow_run.url }}",
+          }, null, 4));
 
     # - name: Comment on PR
     #   if: ${{ steps.breaking-changes.outputs.is_breaking == 1 }}

@@ -47,6 +47,6 @@ jobs:
 
     - name: Upload check output as artifact
       uses: actions/upload-artifact@v2
-        with:
-          name: pr
-          path: pr/
+      with:
+        name: pr
+        path: pr/
