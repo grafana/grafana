@@ -797,6 +797,8 @@ steps:
     GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
       from_secret: gcp_upload_artifacts_key
     UPLOAD_E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
+    GITHUB_TOKEN:
+      from_secret: github_token
 - commands:
   - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
@@ -4123,7 +4125,7 @@ kind: secret
 name: prerelease_bucket
 ---
 get:
-  name: not-sure-yet-what-to-put-here
+  name: gcp_upload_artifacts_key
   path: infra/ci/grafana/releng/artifacts-uploader-service-account
 kind: secret
 name: gcp_upload_artifacts_key
