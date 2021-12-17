@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -64,7 +65,28 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 	return response.JSON(200, &result)
 }
 
-func GetDataSourceById(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) getDataSourceAccessControlMetadata(c *models.ReqContext, dsID int64) (accesscontrol.Metadata, error) {
+	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
+		return nil, nil
+	}
+
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	if err != nil || len(userPermissions) == 0 {
+		return nil, err
+	}
+
+	key := fmt.Sprintf("%d", dsID)
+	dsIDs := map[string]bool{key: true}
+
+	metadata, err := accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "datasources", dsIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return metadata[key], err
+}
+
+func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response {
 	query := models.GetDataSourceQuery{
 		Id:    c.ParamsInt64(":id"),
 		OrgId: c.OrgId,
@@ -82,6 +104,13 @@ func GetDataSourceById(c *models.ReqContext) response.Response {
 
 	ds := query.Result
 	dtos := convertModelToDtos(ds)
+
+	// Add accesscontrol metadata
+	metadata, err := hs.getDataSourceAccessControlMetadata(c, ds.Id)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to query metadata", err)
+	}
+	dtos.AccessControl = metadata
 
 	return response.JSON(200, &dtos)
 }
@@ -118,17 +147,25 @@ func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Respon
 }
 
 // GET /api/datasources/uid/:uid
-func GetDataSourceByUID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response {
 	ds, err := getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.OrgId)
 
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
-			return response.Error(404, "Data source not found", nil)
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
-		return response.Error(500, "Failed to query datasources", err)
+		return response.Error(http.StatusInternalServerError, "Failed to query datasource", err)
 	}
 
 	dtos := convertModelToDtos(ds)
+
+	// Add accesscontrol metadata
+	metadata, err := hs.getDataSourceAccessControlMetadata(c, ds.Id)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to query metadata", err)
+	}
+	dtos.AccessControl = metadata
+
 	return response.JSON(200, &dtos)
 }
 

@@ -179,6 +179,7 @@ export class GeomapPanel extends Component<Props, State> {
           type: item.id,
           name: this.getNextLayerName(),
           config: cloneDeep(item.defaultOptions),
+          tooltip: true,
         },
         false
       ).then((lyr) => {
@@ -331,19 +332,31 @@ export class GeomapPanel extends Component<Props, State> {
 
     let ttip: GeomapHoverPayload = {} as GeomapHoverPayload;
     const features: GeomapHoverFeature[] = [];
-    this.map.forEachFeatureAtPixel(pixel, (feature, layer, geo) => {
-      if (!hoverPayload.data) {
-        const props = feature.getProperties();
-        const frame = props['frame'];
-        if (frame) {
-          hoverPayload.data = ttip.data = frame as DataFrame;
-          hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
-        } else {
-          hoverPayload.feature = ttip.feature = feature;
+    this.map.forEachFeatureAtPixel(
+      pixel,
+      (feature, layer, geo) => {
+        //match hover layer to layer in layers
+        //check if the layer show tooltip is enabled
+        //then also pass the list of tooltip fields if exists
+        if (!hoverPayload.data) {
+          const props = feature.getProperties();
+          const frame = props['frame'];
+          if (frame) {
+            hoverPayload.data = ttip.data = frame as DataFrame;
+            hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
+          } else {
+            hoverPayload.feature = ttip.feature = feature;
+          }
         }
+        features.push({ feature, layer, geo });
+      },
+      {
+        layerFilter: (l) => {
+          const hoverLayerState = (l as any).__state as MapLayerState;
+          return hoverLayerState.options.tooltip !== false;
+        },
       }
-      features.push({ feature, layer, geo });
-    });
+    );
     this.hoverPayload.features = features.length ? features : undefined;
     this.props.eventBus.publish(this.hoverEvent);
 
@@ -461,6 +474,7 @@ export class GeomapPanel extends Component<Props, State> {
       },
     };
     this.byName.set(UID, state);
+    (state.layer as any).__state = state;
     return state;
   }
 
