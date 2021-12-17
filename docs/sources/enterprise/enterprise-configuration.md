@@ -265,7 +265,11 @@ List of comma- or space-separated organizations. Each user must be a member of a
 
 ### org_mapping
 
-List of comma- or space-separated Organization:OrgId mappings.
+List of comma- or space-separated Organization:OrgId mappings. Organization can be `*` meaning "All users".
+
+### org_role_mapping
+
+List of comma- or space-separated Organization:Role mappings. "Role" can have the following values: `Viewer`, `Editor` or `Admin`. Organization can be `*` meaning "All users".
 
 ### role_values_editor
 

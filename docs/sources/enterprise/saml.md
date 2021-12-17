@@ -40,29 +40,30 @@ In terms of initiation:
 
 The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../administration/configuration.md#configure-with-environment-variables" >}}).
 
-| Setting                                                    | Required | Description                                                                                                      | Default       |
-| ---------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------- | ------------- |
-| `enabled`                                                  | No       | Whether SAML authentication is allowed                                                                           | `false`       |
-| `single_logout`                                            | No       | Whether SAML Single Logout enabled                                                                               | `false`       |
-| `allow_idp_initiated`                                      | No       | Whether SAML IdP-initiated login is allowed                                                                      | `false`       |
-| `certificate` or `certificate_path`                        | Yes      | Base64-encoded string or Path for the SP X.509 certificate                                                       |               |
-| `private_key` or `private_key_path`                        | Yes      | Base64-encoded string or Path for the SP private key                                                             |               |
-| `signature_algorithm`                                      | No       | Signature algorithm used for signing requests to the IdP. Supported values are rsa-sha1, rsa-sha256, rsa-sha512. |               |
-| `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                                 |               |
-| `max_issue_delay`                                          | No       | Duration, since the IdP issued a response and the SP is allowed to process it                                    | `90s`         |
-| `metadata_valid_duration`                                  | No       | Duration, for how long the SP metadata is valid                                                                  | `48h`         |
-| `relay_state`                                              | No       | Relay state for IdP-initiated login. Should match relay state configured in IdP                                  |               |
-| `assertion_attribute_name`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user name                         | `displayName` |
-| `assertion_attribute_login`                                | No       | Friendly name or name of the attribute within the SAML assertion to use as the user login handle                 | `mail`        |
-| `assertion_attribute_email`                                | No       | Friendly name or name of the attribute within the SAML assertion to use as the user email                        | `mail`        |
-| `assertion_attribute_groups`                               | No       | Friendly name or name of the attribute within the SAML assertion to use as the user groups                       |               |
-| `assertion_attribute_role`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user roles                        |               |
-| `assertion_attribute_org`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user organization                 |               |
-| `allowed_organizations`                                    | No       | List of comma- or space-separated organizations. User should be a member of at least one organization to log in. |               |
-| `org_mapping`                                              | No       | List of comma- or space-separated Organization:OrgId mappings                                                    |               |
-| `role_values_editor`                                       | No       | List of comma- or space-separated roles which will be mapped into the Editor role                                |               |
-| `role_values_admin`                                        | No       | List of comma- or space-separated roles which will be mapped into the Admin role                                 |               |
-| `role_values_grafana_admin`                                | No       | List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role           |               |
+| Setting                                                    | Required | Description                                                                                                                                                                     | Default       |
+| ---------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `enabled`                                                  | No       | Whether SAML authentication is allowed                                                                                                                                          | `false`       |
+| `single_logout`                                            | No       | Whether SAML Single Logout enabled                                                                                                                                              | `false`       |
+| `allow_idp_initiated`                                      | No       | Whether SAML IdP-initiated login is allowed                                                                                                                                     | `false`       |
+| `certificate` or `certificate_path`                        | Yes      | Base64-encoded string or Path for the SP X.509 certificate                                                                                                                      |               |
+| `private_key` or `private_key_path`                        | Yes      | Base64-encoded string or Path for the SP private key                                                                                                                            |               |
+| `signature_algorithm`                                      | No       | Signature algorithm used for signing requests to the IdP. Supported values are rsa-sha1, rsa-sha256, rsa-sha512.                                                                |               |
+| `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                                                                                                |               |
+| `max_issue_delay`                                          | No       | Duration, since the IdP issued a response and the SP is allowed to process it                                                                                                   | `90s`         |
+| `metadata_valid_duration`                                  | No       | Duration, for how long the SP metadata is valid                                                                                                                                 | `48h`         |
+| `relay_state`                                              | No       | Relay state for IdP-initiated login. Should match relay state configured in IdP                                                                                                 |               |
+| `assertion_attribute_name`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user name                                                                                        | `displayName` |
+| `assertion_attribute_login`                                | No       | Friendly name or name of the attribute within the SAML assertion to use as the user login handle                                                                                | `mail`        |
+| `assertion_attribute_email`                                | No       | Friendly name or name of the attribute within the SAML assertion to use as the user email                                                                                       | `mail`        |
+| `assertion_attribute_groups`                               | No       | Friendly name or name of the attribute within the SAML assertion to use as the user groups                                                                                      |               |
+| `assertion_attribute_role`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user roles                                                                                       |               |
+| `assertion_attribute_org`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user organization                                                                                |               |
+| `allowed_organizations`                                    | No       | List of comma- or space-separated organizations. User should be a member of at least one organization to log in.                                                                |               |
+| `org_mapping`                                              | No       | List of comma- or space-separated Organization:OrgId mappings. Organization can be `*` meaning "All users".                                                                     |               |
+| `org_role_mapping`                                         | No       | List of comma- or space-separated Organization:Role mappings. "Role" can have the following values: `Viewer`, `Editor` or `Admin`. Organization can be `*` meaning "All users". |               |
+| `role_values_editor`                                       | No       | List of comma- or space-separated roles which will be mapped into the Editor role                                                                                               |               |
+| `role_values_admin`                                        | No       | List of comma- or space-separated roles which will be mapped into the Admin role                                                                                                |               |
+| `role_values_grafana_admin`                                | No       | List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role                                                                          |               |
 
 ### Enable SAML authentication
 
@@ -181,21 +182,28 @@ role_values_grafana_admin = superadmin
 
 Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.
 
-1. In configuration file, set [`assertion_attribute_org`]({{< relref "./enterprise-configuration.md#assertion-attribute-org" >}}) to the attribute name you store organization info in.
+1. In configuration file, set [`assertion_attribute_org`]({{< relref "./enterprise-configuration.md#assertion-attribute-org" >}}) to the attribute name you store organization info in. This attribute can be an array if you want a user to be in multiple organizations.
 1. Set [`org_mapping`]({{< relref "./enterprise-configuration.md#org-mapping" >}}) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by id.
+1. Set [`org_role_mapping`]({{< relref "./enterprise-configuration.md#org-role-mapping" >}}) option to the comma-separated list of `Organization:Role` pairs if you want users to have different roles in multiple organizations.
 
-For example, use following configuration to assign users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`, based on `Org` assertion attribute value:
+For example, use following configuration to assign users from `Engineering` organization to the Grafana organization with id `2` as Editor and users from `Sales` - to the org with id `3` as Admin, based on `Org` assertion attribute value:
 
 ```bash
 [auth.saml]
 assertion_attribute_org = Org
 org_mapping = Engineering:2, Sales:3
+org_role_mapping = Engineering:Editor, Sales:Admin
 ```
 
 You can specify multiple organizations both for the IdP and Grafana:
 
 - `org_mapping = Engineering:2, Sales:2` to map users from `Engineering` and `Sales` to `2` in Grafana.
 - `org_mapping = Engineering:2, Engineering:3` to assign `Engineering` to both `2` and `3` in Grafana.
+
+You can use `*` as an Organization if you want all your users to be in some organizations or with a default role:
+
+- `org_mapping = *:2` to map all users to `2` in Grafana.
+- `org_role_mapping = *:Editor` to map all users to Editors in their organizations.
 
 ### Configure allowed organizations
 
