@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEqual } from 'lodash';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { GraphNG, GraphNGProps, PlotLegend, UPlotConfigBuilder, usePanelContext, useTheme2 } from '@grafana/ui';
 import { LegendDisplayMode } from '@grafana/schema';
@@ -22,7 +22,7 @@ const propsToDiff: Array<string | PropDiffFn> = [
   'groupWidth',
   'stacking',
   'showValue',
-  'legend',
+  (prev: BarChartProps, next: BarChartProps) => isEqual(prev.legend, next.legend),
   (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
 ];
 
