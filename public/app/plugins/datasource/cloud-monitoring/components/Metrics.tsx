@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { startCase, uniqBy } from 'lodash';
 
-import { Select, useTheme2, getSelectStyles, stylesFactory } from '@grafana/ui';
+import { Select, useTheme2, getSelectStyles, useStyles2 } from '@grafana/ui';
 import { TemplateSrv } from '@grafana/runtime';
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { QueryEditorRow, QueryEditorField } from '.';
@@ -41,19 +41,9 @@ export function Metrics(props: Props) {
   });
 
   const theme = useTheme2();
-  const styles = getSelectStyles(theme);
-  const getStyle = stylesFactory((theme: GrafanaTheme2) => {
-    return {
-      metricsType: css`
-        label: grafana-select-option-description;
-        font-weight: normal;
-        font-style: italic;
-        color: ${theme.colors.text.secondary};
-      `,
-    };
-  });
+  const selectStyles = getSelectStyles(theme);
 
-  const customStyle = getStyle(theme);
+  const customStyle = useStyles2(getStyles);
 
   const { services, service, metrics, metricDescriptors } = state;
   const { metricType, templateVariableOptions, projectName, templateSrv, datasource, onChange, children } = props;
@@ -81,8 +71,8 @@ export function Metrics(props: Props) {
           component: function optionComponent() {
             return (
               <div>
-                <div className={customStyle.metricsType}>{m.type}</div>
-                <div className={styles.optionDescription}>{m.description}</div>
+                <div className={customStyle}>{m.type}</div>
+                <div className={selectStyles.optionDescription}>{m.description}</div>
               </div>
             );
           },
@@ -108,14 +98,7 @@ export function Metrics(props: Props) {
       }
     };
     loadMetricDescriptors();
-  }, [
-    datasource,
-    getSelectedMetricDescriptor,
-    metricType,
-    projectName,
-    customStyle.metricsType,
-    styles.optionDescription,
-  ]);
+  }, [datasource, getSelectedMetricDescriptor, metricType, projectName, customStyle, selectStyles.optionDescription]);
 
   const onServiceChange = ({ value: service }: any) => {
     const metrics = metricDescriptors
@@ -190,3 +173,10 @@ export function Metrics(props: Props) {
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => css`
+  label: grafana-select-option-description;
+  font-weight: normal;
+  font-style: italic;
+  color: ${theme.colors.text.secondary};
+`;
