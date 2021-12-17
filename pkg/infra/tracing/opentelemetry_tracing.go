@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -29,6 +30,10 @@ type Tracer interface {
 type Span interface {
 	End()
 	SetAttributes(kv ...attribute.KeyValue)
+	SetName(name string)
+	SetStatus(code codes.Code, description string)
+	RecordError(err error, options ...trace.EventOption)
+	AddEvents(keys []string, values []EventValue)
 }
 
 var (
@@ -48,6 +53,11 @@ type Opentelemetry struct {
 
 type OpentelemetrySpan struct {
 	span trace.Span
+}
+
+type EventValue struct {
+	Str string
+	Num int64
 }
 
 func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
@@ -136,4 +146,29 @@ func (s OpentelemetrySpan) End() {
 
 func (s OpentelemetrySpan) SetAttributes(kv ...attribute.KeyValue) {
 	s.span.SetAttributes(kv...)
+}
+
+func (s OpentelemetrySpan) SetName(name string) {
+	s.span.SetName(name)
+}
+
+func (s OpentelemetrySpan) SetStatus(code codes.Code, description string) {
+	s.span.SetStatus(code, description)
+}
+
+func (s OpentelemetrySpan) RecordError(err error, options ...trace.EventOption) {
+	for _, o := range options {
+		s.span.RecordError(err, o)
+	}
+}
+
+func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
+	for i, v := range values {
+		if v.Num != 0 {
+			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).String(v.Str)))
+		}
+		if v.Str != "" {
+			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).Int64(v.Num)))
+		}
+	}
 }

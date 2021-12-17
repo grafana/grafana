@@ -11,12 +11,15 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"go.opentelemetry.io/otel/attribute"
-	trace "go.opentelemetry.io/otel/trace"
-
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	ol "github.com/opentracing/opentracing-go/log"
+	tlog "github.com/opentracing/opentracing-go/log"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/zipkin"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	trace "go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -47,10 +50,7 @@ func ProvideService(cfg *setting.Cfg) (TracerService, error) {
 		return nil, err
 	}
 
-	if ots.enabled {
-		return ots, ots.initOpentelemetryTracer()
-	}
-	return ots, nil
+	return ots, ots.initOpentelemetryTracer()
 }
 
 type Opentracing struct {
@@ -201,6 +201,43 @@ func (s OpentracingSpan) SetAttributes(kv ...attribute.KeyValue) {
 	for k, v := range kv {
 		s.span.SetTag(fmt.Sprint(k), v)
 	}
+}
+
+func (s OpentracingSpan) SetName(name string) {
+	s.span.SetOperationName(name)
+}
+
+func (s OpentracingSpan) SetStatus(code codes.Code, description string) {
+	ext.Error.Set(s.span, true)
+}
+
+func (s OpentracingSpan) RecordError(err error, options ...trace.EventOption) {
+	ext.Error.Set(s.span, true)
+}
+
+func (s OpentracingSpan) AddEvents(keys []string, values []EventValue) {
+	if len(keys) > 1 {
+		if keys[1] == "message" {
+			s.span.LogFields(
+				tlog.Error(fmt.Errorf("%v", values[1].Str)),
+				tlog.String(keys[1], values[1].Str),
+			)
+			return
+		}
+	}
+
+	fields := []ol.Field{}
+	for i, v := range values {
+		if v.Str != "" {
+			field := ol.String(keys[i], v.Str)
+			fields = append(fields, field)
+		}
+		if v.Num != 0 {
+			field := ol.Int64(keys[i], v.Num)
+			fields = append(fields, field)
+		}
+	}
+	s.span.LogFields(fields...)
 }
 
 func splitTagSettings(input string) map[string]string {

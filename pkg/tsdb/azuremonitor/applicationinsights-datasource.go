@@ -14,8 +14,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -141,23 +142,16 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	req.URL.Path = path.Join(req.URL.Path, query.ApiURL)
 	req.URL.RawQuery = query.Params.Encode()
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "application insights query")
-	span.SetTag("target", query.Target)
-	span.SetTag("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond))
-	span.SetTag("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond))
-	span.SetTag("datasource_id", dsInfo.DatasourceID)
-	span.SetTag("org_id", dsInfo.OrgID)
+	ctx, span := tracing.GlobalTracer.Start(ctx, "application insights query")
+	span.SetAttributes(attribute.Key("target").String(query.Target))
+	span.SetAttributes(attribute.Key("from").Int64(query.TimeRange.From.UnixNano() / int64(time.Millisecond)))
+	span.SetAttributes(attribute.Key("until").Int64(query.TimeRange.To.UnixNano() / int64(time.Millisecond)))
+	span.SetAttributes(attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
+	span.SetAttributes(attribute.Key("org_id").Int64(dsInfo.OrgID))
 
-	defer span.Finish()
+	defer span.End()
 
-	err = opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header))
-
-	if err != nil {
-		azlog.Warn("failed to inject global tracer")
-	}
+	tracing.GlobalTracer.Inject(ctx, req.Header, span)
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, client, req)

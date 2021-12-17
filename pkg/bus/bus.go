@@ -7,8 +7,9 @@ import (
 	"reflect"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // HandlerFunc defines a handler function interface.
@@ -95,10 +96,10 @@ func (b *InProcBus) SetTransactionManager(tm TransactionManager) {
 func (b *InProcBus) Dispatch(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "bus - "+msgName)
-	defer span.Finish()
+	ctx, span := tracing.GlobalTracer.Start(ctx, "bus - "+msgName)
+	defer span.End()
 
-	span.SetTag("msg", msgName)
+	span.SetAttributes(attribute.Key("msg").String(msgName))
 
 	withCtx := true
 	var handler = b.handlersWithCtx[msgName]
@@ -149,10 +150,10 @@ func (b *InProcBus) Publish(ctx context.Context, msg Msg) error {
 		}
 	}
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "bus - "+msgName)
-	defer span.Finish()
+	_, span := tracing.GlobalTracer.Start(ctx, "bus - "+msgName)
+	defer span.End()
 
-	span.SetTag("msg", msgName)
+	span.SetAttributes(attribute.Key("msg").String(msgName))
 
 	return nil
 }

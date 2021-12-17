@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
@@ -23,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/opentracing/opentracing-go"
-	ol "github.com/opentracing/opentracing-go/log"
 	cw "github.com/weaveworks/common/tracing"
 )
 
@@ -73,8 +72,8 @@ func FromContext(c context.Context) *models.ReqContext {
 
 // Middleware provides a middleware to initialize the Macaron context.
 func (h *ContextHandler) Middleware(mContext *web.Context) {
-	span, _ := opentracing.StartSpanFromContext(mContext.Req.Context(), "Auth - Middleware")
-	defer span.Finish()
+	_, span := tracing.GlobalTracer.Start(mContext.Req.Context(), "Auth - Middleware")
+	defer span.End()
 
 	reqContext := &models.ReqContext{
 		Context:        mContext,
@@ -135,11 +134,13 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 	}
 
 	reqContext.Logger = log.New("context", "userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
-
-	span.LogFields(
-		ol.String("uname", reqContext.Login),
-		ol.Int64("orgId", reqContext.OrgId),
-		ol.Int64("userId", reqContext.UserId))
+	span.AddEvents(
+		[]string{"uname", "orgId", "userId"},
+		[]tracing.EventValue{
+			{Str: reqContext.Login},
+			{Num: reqContext.OrgId},
+			{Num: reqContext.UserId}},
+	)
 
 	mContext.Map(reqContext)
 
@@ -157,8 +158,8 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 		return false
 	}
 
-	span, _ := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithAnonymousUser")
-	defer span.Finish()
+	_, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "initContextWithAnonymousUser")
+	defer span.End()
 
 	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
 	if err != nil {
@@ -192,8 +193,8 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return false
 	}
 
-	span, _ := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithAPIKey")
-	defer span.Finish()
+	_, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "initContextWithAPIKey")
+	defer span.End()
 
 	// base64 decode key
 	decoded, err := apikeygen.Decode(keyString)
@@ -272,8 +273,8 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		return false
 	}
 
-	span, ctx := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithBasicAuth")
-	defer span.Finish()
+	ctx, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "initContextWithBasicAuth")
+	defer span.End()
 
 	username, password, err := util.DecodeBasicAuthHeader(header)
 	if err != nil {
@@ -328,8 +329,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 		return false
 	}
 
-	span, ctx := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithToken")
-	defer span.Finish()
+	ctx, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "initContextWithToken")
+	defer span.End()
 
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
@@ -369,8 +370,8 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, a
 			return
 		}
 
-		span, ctx := opentracing.StartSpanFromContext(reqContext.Req.Context(), "rotateEndOfRequestFunc")
-		defer span.Finish()
+		ctx, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "rotateEndOfRequestFunc")
+		defer span.End()
 
 		addr := reqContext.RemoteAddr()
 		ip, err := network.GetIPFromAddress(addr)
@@ -396,8 +397,8 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 		return false
 	}
 
-	span, _ := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithRenderAuth")
-	defer span.Finish()
+	_, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "initContextWithRenderAuth")
+	defer span.End()
 
 	renderUser, exists := h.RenderService.GetRenderUser(reqContext.Req.Context(), key)
 	if !exists {
@@ -466,8 +467,8 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 		return false
 	}
 
-	span, _ := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithAuthProxy")
-	defer span.Finish()
+	_, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "initContextWithAuthProxy")
+	defer span.End()
 
 	// Check if allowed to continue with this IP
 	if err := auth.IsAllowedIP(); err != nil {
