@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Select, FieldSet, InlineField, Alert } from '@grafana/ui';
+import { Select, InlineField, Alert } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps, onUpdateDatasourceJsonDataOptionSelect } from '@grafana/data';
 import { AuthType, authTypes, CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types';
 import { JWTConfig } from './JWTConfig';
@@ -18,7 +18,7 @@ export class ConfigEditor extends PureComponent<Props> {
     return (
       <>
         <h3 className="page-heading">Authentication</h3>
-        <FieldSet>
+        <div>
           <InlineField label="Type" labelWidth={20}>
             <Select
               menuShouldPortal
@@ -49,9 +49,7 @@ export class ConfigEditor extends PureComponent<Props> {
               }}
             ></JWTConfig>
           )}
-        </FieldSet>
-        <div className="gf-form-group">
-          <div className="grafana-info-box">
+          <div className="grafana-info-box" style={{ marginTop: '10px' }}>
             <p>
               Don’t know how to get a service account key file or create a service account? Read more{' '}
               <a
