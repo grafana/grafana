@@ -344,19 +344,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       let seriesData = self.data[seriesIdx];
 
       if (seriesData[hoveredIdx] == null) {
-        let nonNullLft = hoveredIdx,
-          nonNullRgt = hoveredIdx,
+        let nonNullLft = null,
+          nonNullRgt = null,
           i;
 
         i = hoveredIdx;
-        while (nonNullLft === hoveredIdx && i-- > 0) {
+        while (nonNullLft == null && i-- > 0) {
           if (seriesData[i] != null) {
             nonNullLft = i;
           }
         }
 
         i = hoveredIdx;
-        while (nonNullRgt === hoveredIdx && i++ < seriesData.length) {
+        while (nonNullRgt == null && i++ < seriesData.length) {
           if (seriesData[i] != null) {
             nonNullRgt = i;
           }
@@ -365,19 +365,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
         let xVals = self.data[0];
 
         let curPos = self.valToPos(cursorXVal, 'x');
-        let rgtPos = self.valToPos(xVals[nonNullRgt], 'x');
-        let lftPos = self.valToPos(xVals[nonNullLft], 'x');
+        let rgtPos = nonNullRgt == null ? Infinity : self.valToPos(xVals[nonNullRgt], 'x');
+        let lftPos = nonNullLft == null ? -Infinity : self.valToPos(xVals[nonNullLft], 'x');
 
         let lftDelta = curPos - lftPos;
         let rgtDelta = rgtPos - curPos;
 
         if (lftDelta <= rgtDelta) {
           if (lftDelta <= hoverProximityPx) {
-            hoveredIdx = nonNullLft;
+            hoveredIdx = nonNullLft!;
           }
         } else {
           if (rgtDelta <= hoverProximityPx) {
-            hoveredIdx = nonNullRgt;
+            hoveredIdx = nonNullRgt!;
           }
         }
       }
