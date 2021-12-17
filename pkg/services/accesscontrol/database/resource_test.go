@@ -82,7 +82,7 @@ func TestAccessControlStore_SetUserResourcePermissions(t *testing.T) {
 			require.NoError(t, err)
 			assert.Len(t, added, len(test.actions))
 			for _, p := range added {
-				assert.Equal(t, getResourceScope(test.resource, test.resourceID), p.Scope)
+				assert.Equal(t, accesscontrol.GetResourceScope(test.resource, test.resourceID), p.Scope)
 			}
 		})
 	}
@@ -158,7 +158,7 @@ func TestAccessControlStore_SetTeamResourcePermissions(t *testing.T) {
 			require.NoError(t, err)
 			assert.Len(t, added, len(test.actions))
 			for _, p := range added {
-				assert.Equal(t, getResourceScope(test.resource, test.resourceID), p.Scope)
+				assert.Equal(t, accesscontrol.GetResourceScope(test.resource, test.resourceID), p.Scope)
 			}
 		})
 	}
@@ -234,7 +234,7 @@ func TestAccessControlStore_SetBuiltinResourcePermissions(t *testing.T) {
 			require.NoError(t, err)
 			assert.Len(t, added, len(test.actions))
 			for _, p := range added {
-				assert.Equal(t, getResourceScope(test.resource, test.resourceID), p.Scope)
+				assert.Equal(t, accesscontrol.GetResourceScope(test.resource, test.resourceID), p.Scope)
 			}
 		})
 	}
