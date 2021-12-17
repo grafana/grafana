@@ -36,7 +36,8 @@ else
   mkdir $PROV_DIR/datasources
   mkdir $PROV_DIR/dashboards
 
-  cp $E2E_APP_CONFIG $RUNDIR/conf/custom.ini
+  cp -r ./e2e/data/. $RUNDIR/data
+  cp ./e2e/custom.ini $RUNDIR/conf/custom.ini
   cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
 fi
 
