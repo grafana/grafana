@@ -324,7 +324,7 @@ func (sch *schedule) UpdateAlertRule(key models.AlertRuleKey) {
 func (sch *schedule) DeleteAlertRule(key models.AlertRuleKey) {
 	ruleInfo, ok := sch.registry.del(key)
 	if !ok {
-		sch.log.Info("unable to get alert rule routine information by key", "uid", key.UID, "org_id", key.OrgID)
+		sch.log.Info("unable to delete alert rule routine information by key", "uid", key.UID, "org_id", key.OrgID)
 		return
 	}
 	// stop rule evaluation

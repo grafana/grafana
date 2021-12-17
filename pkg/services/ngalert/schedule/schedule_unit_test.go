@@ -833,7 +833,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 func TestSchedule_UpdateAlertRule(t *testing.T) {
 	t.Run("when rule exists", func(t *testing.T) {
 		t.Run("it should call Update", func(t *testing.T) {
-			sch := createMockedScheduler(t)
+			sch := setupSchedulerWithFakeStores(t)
 			key := generateRuleKey()
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			go func() {
@@ -847,7 +847,7 @@ func TestSchedule_UpdateAlertRule(t *testing.T) {
 			}
 		})
 		t.Run("should exit if it is closed", func(t *testing.T) {
-			sch := createMockedScheduler(t)
+			sch := setupSchedulerWithFakeStores(t)
 			key := generateRuleKey()
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			info.stop()
@@ -856,7 +856,7 @@ func TestSchedule_UpdateAlertRule(t *testing.T) {
 	})
 	t.Run("when rule does not exist", func(t *testing.T) {
 		t.Run("should exit", func(t *testing.T) {
-			sch := createMockedScheduler(t)
+			sch := setupSchedulerWithFakeStores(t)
 			key := generateRuleKey()
 			sch.UpdateAlertRule(key)
 		})
@@ -866,7 +866,7 @@ func TestSchedule_UpdateAlertRule(t *testing.T) {
 func TestSchedule_DeleteAlertRule(t *testing.T) {
 	t.Run("when rule exists", func(t *testing.T) {
 		t.Run("it should stop evaluation loop and remove the controller from registry", func(t *testing.T) {
-			sch := createMockedScheduler(t)
+			sch := setupSchedulerWithFakeStores(t)
 			key := generateRuleKey()
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			sch.DeleteAlertRule(key)
@@ -875,7 +875,7 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 			require.False(t, sch.registry.exists(key))
 		})
 		t.Run("should remove controller from registry", func(t *testing.T) {
-			sch := createMockedScheduler(t)
+			sch := setupSchedulerWithFakeStores(t)
 			key := generateRuleKey()
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			info.stop()
@@ -887,7 +887,7 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 	})
 	t.Run("when rule does not exist", func(t *testing.T) {
 		t.Run("should exit", func(t *testing.T) {
-			sch := createMockedScheduler(t)
+			sch := setupSchedulerWithFakeStores(t)
 			key := generateRuleKey()
 			sch.DeleteAlertRule(key)
 		})
@@ -901,7 +901,7 @@ func generateRuleKey() models.AlertRuleKey {
 	}
 }
 
-func createMockedScheduler(t *testing.T) *schedule {
+func setupSchedulerWithFakeStores(t *testing.T) *schedule {
 	t.Helper()
 	ruleStore := newFakeRuleStore(t)
 	instanceStore := &FakeInstanceStore{}

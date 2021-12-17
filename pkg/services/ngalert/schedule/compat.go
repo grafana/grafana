@@ -127,7 +127,7 @@ func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *s
 	return alerts
 }
 
-// FromAlertsStateToStoppedAlert converts firingStates that have evaluation state eval.Alerting to models.PostableAlert that are accepted by notifiers.
+// FromAlertsStateToStoppedAlert converts firingStates that have evaluation state either eval.Alerting or eval.NoData or eval.Error to models.PostableAlert that are accepted by notifiers.
 // Returns a list of alert instances that have expiration time.Now
 func FromAlertsStateToStoppedAlert(firingStates []*state.State, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
