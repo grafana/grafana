@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { startCase, uniqBy } from 'lodash';
 
-import { Select } from '@grafana/ui';
+import { Select, useTheme2, getSelectStyles, stylesFactory } from '@grafana/ui';
 import { TemplateSrv } from '@grafana/runtime';
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { QueryEditorRow, QueryEditorField } from '.';
 import CloudMonitoringDatasource from '../datasource';
 import { INNER_LABEL_WIDTH, LABEL_WIDTH, SELECT_WIDTH } from '../constants';
 import { MetricDescriptor } from '../types';
+import { css } from '@emotion/css';
 
 export interface Props {
   onChange: (metricDescriptor: MetricDescriptor) => void;
@@ -39,6 +40,21 @@ export function Metrics(props: Props) {
     projectName: null,
   });
 
+  const theme = useTheme2();
+  const styles = getSelectStyles(theme);
+  const getStyle = stylesFactory((theme: GrafanaTheme2) => {
+    return {
+      metricsType: css`
+        label: grafana-select-option-description;
+        font-weight: normal;
+        font-style: italic;
+        color: ${theme.colors.text.secondary};
+      `,
+    };
+  });
+
+  const customStyle = getStyle(theme);
+
   const { services, service, metrics, metricDescriptors } = state;
   const { metricType, templateVariableOptions, projectName, templateSrv, datasource, onChange, children } = props;
 
@@ -55,13 +71,21 @@ export function Metrics(props: Props) {
       if (!selectedMetricDescriptor) {
         return [];
       }
+
       const metricsByService = metricDescriptors
         .filter((m) => m.service === selectedMetricDescriptor.service)
         .map((m) => ({
           service: m.service,
           value: m.type,
           label: m.displayName,
-          description: m.description,
+          component: function optionComponent() {
+            return (
+              <div>
+                <div className={customStyle.metricsType}>{m.type}</div>
+                <div className={styles.optionDescription}>{m.description}</div>
+              </div>
+            );
+          },
         }));
       return metricsByService;
     };
@@ -84,7 +108,14 @@ export function Metrics(props: Props) {
       }
     };
     loadMetricDescriptors();
-  }, [datasource, getSelectedMetricDescriptor, metricType, projectName]);
+  }, [
+    datasource,
+    getSelectedMetricDescriptor,
+    metricType,
+    projectName,
+    customStyle.metricsType,
+    styles.optionDescription,
+  ]);
 
   const onServiceChange = ({ value: service }: any) => {
     const metrics = metricDescriptors
