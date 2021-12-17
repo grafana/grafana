@@ -31,8 +31,8 @@ func (d DashboardPermissionFilter) Where() (string, []interface{}) {
     	WHERE d.org_id IN (-1, ?)
         AND (
 			d.has_acl = ` + falseStr + `
-        	OR (
-            	SELECT acl.dashboard_id FROM dashboard_acl AS acl WHERE d.id = acl.dashboard_id
+        	OR EXISTS (
+            	SELECT 1 FROM dashboard_acl AS acl WHERE d.id = acl.dashboard_id
             	AND acl.permission >= ?
             	AND (
                 	acl.user_id = ?
