@@ -49,7 +49,7 @@ Click on the links above and click the `Enable` button:
 
 {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
-5. Continue and click Done.
+5. Click **Done**.
 6. Use the newly created account to [create a service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-service-account-keys-create-console).
 7. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
 8. Upload it to Grafana on the data source Configuration page.
