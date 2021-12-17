@@ -15,7 +15,6 @@ import { LegendDisplayMode } from '@grafana/schema';
 import { BarChartDisplayValues, BarChartOptions } from './types';
 import { isLegendOrdered, preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
-import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { getFieldLegendItem } from '../state-timeline/utils';
 
 /**
