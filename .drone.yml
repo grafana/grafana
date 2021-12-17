@@ -4239,11 +4239,11 @@ name: prerelease_bucket
 ---
 get:
   name: gcp_upload_artifacts_key
-  path: infra/ci/grafana/releng/artifacts-uploader-service-account
+  path: infra/data/ci/grafana/releng/artifacts-uploader-service-account
 kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 83d453a5fd1b0379a7427f87df0d16476aa81d5af9cbfb2d415a33a84f05d7ea
+hmac: 38b15ef792ec086f0de6b302b0010e58ee741df86a13ff747a38ad7e4bfc815b
 
 ...
