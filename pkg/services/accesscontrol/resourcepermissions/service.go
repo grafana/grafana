@@ -202,8 +202,10 @@ func (s *Service) declareFixedRoles() error {
 	scopeAll := accesscontrol.Scope(s.options.Resource, "*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version: 5,
-			Name:    fmt.Sprintf("fixed:%s.permissions:reader", s.options.Resource),
+			Version:     5,
+			Name:        fmt.Sprintf("fixed:%s.permissions:reader", s.options.Resource),
+			DisplayName: s.options.ReaderRoleName,
+			Group:       s.options.RoleGroup,
 			Permissions: []accesscontrol.Permission{
 				{Action: fmt.Sprintf("%s.permissions:read", s.options.Resource), Scope: scopeAll},
 			},
@@ -213,8 +215,10 @@ func (s *Service) declareFixedRoles() error {
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version: 5,
-			Name:    fmt.Sprintf("fixed:%s.permissions:writer", s.options.Resource),
+			Version:     5,
+			Name:        fmt.Sprintf("fixed:%s.permissions:writer", s.options.Resource),
+			DisplayName: s.options.WriterRoleName,
+			Group:       s.options.RoleGroup,
 			Permissions: accesscontrol.ConcatPermissions(readerRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: fmt.Sprintf("%s.permissions:write", s.options.Resource), Scope: scopeAll},
 			}),
