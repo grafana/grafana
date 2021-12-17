@@ -311,7 +311,8 @@ def e2e_test_artifacts(edition):
             'find ./e2e -type f -name "*.mp4"',
             'printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json',
             'gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json',
-            'gsutil -m rsync -a --progress --prune-empty-dirs --include="./e2e/**/*.spec.ts.mp4" --exclude="*" gs://$${E2E_TEST_ARTIFACTS_BUCKET}/artifacts/${DRONE_BUILD_NUMBER}',
+            # we want to only include files in e2e folder that end with .spec.ts.mp4
+            'gsutil -m rsync -rx \'(?!^(.*)\\.spec\\.ts\\.mp4$)\' ./e2e gs://$${E2E_TEST_ARTIFACTS_BUCKET}/artifacts/${DRONE_BUILD_NUMBER}',
         ],
     }
 
