@@ -266,7 +266,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk
+  image: publish_image
   name: e2e_test_artifacts_upload
 - commands:
   - yarn storybook:build
@@ -4245,6 +4245,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: cc84604dbe70b26837e601ecf7997630e63ef45e0dcca3ec2f7b4dcff771cf2e
+hmac: 34c31de263392640bd70b1441c8573eb4b962982dc4303ec64aa8cf5150ff292
 
 ...

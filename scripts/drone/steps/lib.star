@@ -294,7 +294,7 @@ def publish_storybook_step(edition, ver_mode):
 def e2e_test_artifacts(edition):
     return {
         'name': 'e2e_test_artifacts_upload' + enterprise2_suffix(edition),
-        'image': 'google/cloud-sdk',
+        'image': 'publish_image',
         'depends_on': [            
             'end-to-end-tests-dashboards-suite',
             'end-to-end-tests-panels-suite',
