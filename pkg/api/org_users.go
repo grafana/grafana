@@ -65,7 +65,7 @@ func (hs *HTTPServer) addOrgUserHelper(ctx context.Context, cmd models.AddOrgUse
 
 // GET /api/org/users
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(c.Req.Context(), &models.GetOrgUsersQuery{
+	result, err := hs.getOrgUsersHelper(c.Req.Context(), &dtos.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
@@ -80,7 +80,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 
 // GET /api/org/users/lookup
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
-	orgUsers, err := hs.getOrgUsersHelper(c.Req.Context(), &models.GetOrgUsersQuery{
+	orgUsers, err := hs.getOrgUsersHelper(c.Req.Context(), &dtos.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
@@ -105,7 +105,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 
 // GET /api/orgs/:orgId/users
 func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(c.Req.Context(), &models.GetOrgUsersQuery{
+	result, err := hs.getOrgUsersHelper(c.Req.Context(), &dtos.GetOrgUsersQuery{
 		OrgId: c.ParamsInt64(":orgId"),
 		Query: "",
 		Limit: 0,
@@ -118,12 +118,12 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	return response.JSON(200, result)
 }
 
-func (hs *HTTPServer) getOrgUsersHelper(ctx context.Context, query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
+func (hs *HTTPServer) getOrgUsersHelper(ctx context.Context, query *dtos.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*dtos.OrgUserDTO, error) {
 	if err := hs.SQLStore.GetOrgUsers(ctx, query); err != nil {
 		return nil, err
 	}
 
-	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result))
+	filteredUsers := make([]*dtos.OrgUserDTO, 0, len(query.Result))
 	for _, user := range query.Result {
 		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
 			continue
@@ -150,7 +150,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 		page = 1
 	}
 
-	query := &models.SearchOrgUsersQuery{
+	query := &dtos.SearchOrgUsersQuery{
 		OrgID: c.OrgId,
 		Query: c.Query("query"),
 		Limit: perPage,
@@ -161,7 +161,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 		return response.Error(500, "Failed to get users for current organization", err)
 	}
 
-	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result.OrgUsers))
+	filteredUsers := make([]*dtos.OrgUserDTO, 0, len(query.Result.OrgUsers))
 	for _, user := range query.Result.OrgUsers {
 		if dtos.IsHiddenUser(user.Login, c.SignedInUser, hs.Cfg) {
 			continue

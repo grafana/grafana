@@ -48,7 +48,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 
-		var resp []models.OrgUserDTO
+		var resp []dtos.OrgUserDTO
 		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.Len(t, resp, 3)
@@ -62,7 +62,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 
-		var resp models.SearchOrgUsersQueryResult
+		var resp dtos.SearchOrgUsersQueryResult
 		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 
@@ -80,7 +80,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 
-		var resp models.SearchOrgUsersQueryResult
+		var resp dtos.SearchOrgUsersQueryResult
 		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 
@@ -105,7 +105,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 			require.Equal(t, http.StatusOK, sc.resp.Code)
 
-			var resp []models.OrgUserDTO
+			var resp []dtos.OrgUserDTO
 			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 			require.NoError(t, err)
 			assert.Len(t, resp, 2)
@@ -382,7 +382,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			require.Equal(t, tc.expectedCode, response.Code)
 
 			if tc.expectedCode != http.StatusForbidden {
-				var userList []*models.OrgUserDTO
+				var userList []*dtos.OrgUserDTO
 				err := json.NewDecoder(response.Body).Decode(&userList)
 				require.NoError(t, err)
 
@@ -499,7 +499,7 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				require.NoError(t, err)
 				assert.EqualValuesf(t, tc.expectedMessage, message, "server did not answer expected message")
 
-				getUsersQuery := models.GetOrgUsersQuery{OrgId: tc.targetOrg}
+				getUsersQuery := dtos.GetOrgUsersQuery{OrgId: tc.targetOrg}
 				err = sc.db.GetOrgUsers(context.Background(), &getUsersQuery)
 				require.NoError(t, err)
 				assert.Len(t, getUsersQuery.Result, tc.expectedUserCount)
@@ -742,7 +742,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedMessage, message)
 
-				getUsersQuery := models.GetOrgUsersQuery{OrgId: tc.targetOrg}
+				getUsersQuery := dtos.GetOrgUsersQuery{OrgId: tc.targetOrg}
 				err = sc.db.GetOrgUsers(context.Background(), &getUsersQuery)
 				require.NoError(t, err)
 				assert.Len(t, getUsersQuery.Result, tc.expectedUserCount)
