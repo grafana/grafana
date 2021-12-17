@@ -87,7 +87,7 @@ const query: InfluxQuery = {
 };
 
 describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
-  it('should work', async () => {
+  it('should not send fields in tag-structures to metadata queries', async () => {
     const onChange = jest.fn();
     const onRunQuery = jest.fn();
     const datasource: InfluxDatasource = ({
