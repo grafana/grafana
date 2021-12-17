@@ -1,5 +1,6 @@
-import { closestIdx, DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 import { LivePerformance, MeasurementName } from 'app/core/services/LivePerformance';
+import { closestIdx } from 'app/features/live/data/StreamingDataFrame';
 
 const measureDataRenderDelayForFrame = (prevFrame: DataFrame, newFrame: DataFrame, now: number) => {
   if (!prevFrame.length || !newFrame.length) {

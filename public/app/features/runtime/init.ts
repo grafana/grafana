@@ -25,7 +25,7 @@ export function initWindowRuntime() {
     getDashboardTimeRange: () => {
       const tr = getTimeSrv().timeRange();
       return {
-        from: tr.from.valueOf(),
+        // from: tr.from.valueOf(),/;./;..//.
         to: tr.to.valueOf(),
         raw: tr.raw,
       };
