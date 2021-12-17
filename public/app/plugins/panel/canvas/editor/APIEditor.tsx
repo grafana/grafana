@@ -1,7 +1,7 @@
 import React, { FC, useCallback } from 'react';
 import { Button, InlineField, InlineFieldRow, JSONFormatter, StringValueEditor } from '@grafana/ui';
 import { AppEvents, StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 
 export interface APIEditorConfig {
@@ -82,7 +82,7 @@ export const APIEditor: FC<StandardEditorProps<APIEditorConfig, any, any>> = (pr
     return;
   };
 
-  return (
+  return config.disableSanitizeHtml ? (
     <>
       <InlineFieldRow>
         <InlineField label={'Endpoint'} labelWidth={labelWidth} grow={true}>
@@ -108,5 +108,7 @@ export const APIEditor: FC<StandardEditorProps<APIEditorConfig, any, any>> = (pr
       <br />
       {renderJSON(value?.data ?? '{}')}
     </>
+  ) : (
+    <>Must enable disableSanitizeHtml feature flag to access</>
   );
 };
