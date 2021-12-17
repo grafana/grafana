@@ -36,33 +36,40 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
     return null;
   }
 
+  console.log(config.unifiedAlertingEnabled);
+  console.log(config.alertingEnabled);
+
   return (
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar} hideBorder>
         {tabs.map((tab) => {
-          if (config.unifiedAlertingEnabled && tab.id === PanelEditorTabId.Alert) {
+          if (tab.id === PanelEditorTabId.Alert) {
+            if (config.unifiedAlertingEnabled || config.alertingEnabled) {
+              return (
+                <PanelAlertTab
+                  key={tab.id}
+                  label={tab.text}
+                  active={tab.active}
+                  onChangeTab={() => onChangeTab(tab)}
+                  icon={tab.icon as IconName}
+                  panel={panel}
+                  dashboard={dashboard}
+                />
+              );
+            }
+            return null;
+          } else {
             return (
-              <PanelAlertTab
+              <Tab
                 key={tab.id}
                 label={tab.text}
                 active={tab.active}
                 onChangeTab={() => onChangeTab(tab)}
                 icon={tab.icon as IconName}
-                panel={panel}
-                dashboard={dashboard}
+                counter={getCounter(panel, tab)}
               />
             );
           }
-          return (
-            <Tab
-              key={tab.id}
-              label={tab.text}
-              active={tab.active}
-              onChangeTab={() => onChangeTab(tab)}
-              icon={tab.icon as IconName}
-              counter={getCounter(panel, tab)}
-            />
-          );
         })}
       </TabsBar>
       <TabContent className={styles.tabContent}>
