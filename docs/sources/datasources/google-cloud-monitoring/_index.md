@@ -44,7 +44,8 @@ Click on the links above and click the `Enable` button:
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
 1. Click on the **Create credentials** dropdown/button and select the **Service account** option.
-3. Fill in a name for the service account in the Service account name field and then choose the Monitoring Viewer role from the Role dropdown:
+1. In **Service account name**, enter a name for the account.
+1. From the **Role** dropdown, choose the **Monitoring Viewer** role as shown in the image below:
 
 {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
