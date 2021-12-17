@@ -312,7 +312,8 @@ def e2e_test_artifacts(edition):
             'printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json',
             'gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json',
             # we want to only include files in e2e folder that end with .spec.ts.mp4
-            'gsutil -m rsync -rx \'(?!^(.*)\\.spec\\.ts\\.mp4$)\' ./e2e gs://$${E2E_TEST_ARTIFACTS_BUCKET}/artifacts/${DRONE_BUILD_NUMBER}',
+            'gsutil -m rsync -rx \'(?!^(.*)\\.spec\\.ts\\.mp4$)\' ./e2e gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos',
+            'echo "E2E Test artifacts uploaded to: $${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos"'
         ],
     }
 
