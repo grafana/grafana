@@ -81,11 +81,14 @@ export const updateSubscriptions = (
 
 export const useSubscriptions: DataHook = (query, datasource, onChange, setError) => {
   const defaultSubscription = datasource.azureMonitorDatasource.defaultSubscriptionId;
+  const { subscription } = query;
 
   const subscriptionOptions = useAsyncState(
     async () => {
       const results = await datasource.azureMonitorDatasource.getSubscriptions();
-      return results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
+      const options = formatOptions(results, subscription);
+
+      return options;
     },
     setError,
     []

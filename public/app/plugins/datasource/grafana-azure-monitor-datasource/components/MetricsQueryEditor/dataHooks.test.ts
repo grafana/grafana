@@ -9,8 +9,9 @@ import {
   useResourceGroups,
   useResourceNames,
   useResourceTypes,
+  useSubscriptions,
 } from './dataHooks';
-import { AzureMetricQuery, AzureMonitorOption, AzureQueryType } from '../../types';
+import { AzureMetricQuery, AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import createMockDatasource from '../../__mocks__/datasource';
 import { MockedObjectDeep } from 'ts-jest/dist/utils/testing';
 import Datasource from '../../datasource';
@@ -88,9 +89,10 @@ interface TestScenario {
   name: string;
   hook: DataHook;
 
-  // For convenience, only need to define the azureMonitor part of the query
+  // For convenience, only need to define the azureMonitor part of the query for some tests
   emptyQueryPartial: AzureMetricQuery;
   customProperties: AzureMetricQuery;
+  topLevelCustomProperties?: Partial<AzureMonitorQuery>;
 
   expectedCustomPropertyResults?: Array<AzureMonitorOption<string>>;
   expectedOptions: AzureMonitorOption[];
@@ -104,6 +106,32 @@ describe('AzureMonitor: metrics dataHooks', () => {
   };
 
   const testTable: TestScenario[] = [
+    {
+      name: 'useSubscriptions',
+      hook: useSubscriptions,
+      emptyQueryPartial: {},
+      topLevelCustomProperties: {
+        subscription: 'subscription-$ENVIRONMENT',
+      },
+      customProperties: {},
+      expectedOptions: [
+        {
+          label: 'sub-abc-123',
+          value: 'sub-abc-123',
+        },
+      ],
+      expectedCustomPropertyResults: [
+        {
+          label: 'sub-abc-123',
+          value: 'sub-abc-123',
+        },
+        {
+          label: 'subscription-$ENVIRONMENT',
+          value: 'subscription-$ENVIRONMENT',
+        },
+      ],
+    },
+
     {
       name: 'useResourceGroups',
       hook: useResourceGroups,
@@ -265,6 +293,10 @@ describe('AzureMonitor: metrics dataHooks', () => {
     datasource = createMockDatasource();
     datasource.getVariables = jest.fn().mockReturnValue(['$sub', '$rg', '$rt', '$variable']);
 
+    datasource.azureMonitorDatasource.getSubscriptions = jest
+      .fn()
+      .mockResolvedValue([opt('sub-abc-123', 'sub-abc-123')]);
+
     datasource.getResourceGroups = jest
       .fn()
       .mockResolvedValue([
@@ -304,6 +336,7 @@ describe('AzureMonitor: metrics dataHooks', () => {
       const query = {
         ...bareQuery,
         azureMonitor: scenario.customProperties,
+        ...scenario.topLevelCustomProperties,
       };
       const { result, waitForNextUpdate } = renderHook(() => scenario.hook(query, datasource, onChange, setError));
       await waitForNextUpdate(WAIT_OPTIONS);
