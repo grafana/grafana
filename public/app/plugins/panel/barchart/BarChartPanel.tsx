@@ -4,7 +4,7 @@ import { PanelProps, TimeRange, VizOrientation } from '@grafana/data';
 import { measureText, TooltipPlugin, UPLOT_AXIS_FONT_SIZE, useTheme2 } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
-import { prepareGraphableFrames } from './utils';
+import { prepareBarChartDisplayValues } from './utils';
 import { PanelDataErrorView } from '@grafana/runtime';
 
 interface Props extends PanelProps<BarChartOptions> {}
@@ -15,7 +15,7 @@ interface Props extends PanelProps<BarChartOptions> {}
 export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone, id }) => {
   const theme = useTheme2();
 
-  const frames = useMemo(() => prepareGraphableFrames(data?.series, theme, options), [data, theme, options]);
+  const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
       return width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;
@@ -49,13 +49,14 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     return options.tooltip;
   }, [options.tooltip, options.stacking]);
 
-  if (!frames) {
-    return <PanelDataErrorView panelId={id} data={data} needsStringField={true} needsNumberField={true} />;
+  if (!info.display) {
+    return <PanelDataErrorView panelId={id} data={data} message={info.warn} needsNumberField={true} />;
   }
 
   return (
     <BarChart
-      frames={frames}
+      frames={[info.display]}
+      data={info}
       timeZone={timeZone}
       timeRange={({ from: 1, to: 1 } as unknown) as TimeRange} // HACK
       structureRev={data.structureRev}

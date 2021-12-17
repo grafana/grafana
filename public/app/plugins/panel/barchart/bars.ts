@@ -12,6 +12,7 @@ import {
   VizLegendOptions,
 } from '@grafana/schema';
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -40,27 +41,31 @@ export interface BarsOptions {
   xDir: ScaleDirection;
   groupWidth: number;
   barWidth: number;
+  barRadius: number;
   showValue: VisibilityMode;
   stacking: StackingMode;
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
+  getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
+  fillOpacity?: number;
   formatValue: (seriesIdx: number, value: any) => string;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
   legend?: VizLegendOptions;
+  xSpacing?: number;
 }
 
 /**
  * @internal
  */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
-  const { xOri, xDir: dir, rawValue, formatValue, showValue } = opts;
+  const { xOri, xDir: dir, rawValue, getColor, formatValue, fillOpacity = 1, showValue, xSpacing = 0 } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   const isStacked = opts.stacking !== StackingMode.None;
   const pctStacked = opts.stacking === StackingMode.Percent;
 
-  let { groupWidth, barWidth } = opts;
+  let { groupWidth, barWidth, barRadius = 0 } = opts;
 
   if (isStacked) {
     [groupWidth, barWidth] = [barWidth, groupWidth];
@@ -75,10 +80,31 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   barMark.style.background = 'rgba(255,255,255,0.4)';
 
   const xSplits: Axis.Splits = (u: uPlot) => {
+    const dim = isXHorizontal ? u.bbox.width : u.bbox.height;
     const _dir = dir * (isXHorizontal ? 1 : -1);
 
+    let dataLen = u.data[0].length;
+    let lastIdx = dataLen - 1;
+
+    let skipMod = 0;
+
+    if (xSpacing !== 0) {
+      let cssDim = dim / devicePixelRatio;
+      let maxTicks = Math.abs(Math.floor(cssDim / xSpacing));
+
+      skipMod = dataLen < maxTicks ? 0 : Math.ceil(dataLen / maxTicks);
+    }
+
+    let splits: number[] = [];
+
     // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
-    let splits = u.data[0].map((v, i) => i);
+    u.data[0].forEach((v, i) => {
+      let shouldSkip = skipMod !== 0 && (xSpacing > 0 ? i : lastIdx - i) % skipMod > 0;
+
+      if (!shouldSkip) {
+        splits.push(i);
+      }
+    });
 
     return _dir === 1 ? splits : splits.reverse();
   };
@@ -145,13 +171,30 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 
   let barsPctLayout: Array<null | { offs: number[]; size: number[] }> = [];
+  let barsColors: Array<null | { fill: Array<string | null>; stroke: Array<string | null> }> = [];
   let barRects: Rect[] = [];
 
   // minimum available space for labels between bar end and plotting area bound (in canvas pixels)
   let vSpace = Infinity;
   let hSpace = Infinity;
 
+  let useMappedColors = getColor != null;
+
+  let mappedColorDisp = useMappedColors
+    ? {
+        fill: {
+          unit: 3,
+          values: (u: uPlot, seriesIdx: number) => barsColors[seriesIdx]!.fill,
+        },
+        stroke: {
+          unit: 3,
+          values: (u: uPlot, seriesIdx: number) => barsColors[seriesIdx]!.stroke,
+        },
+      }
+    : {};
+
   let barsBuilder = uPlot.paths.bars!({
+    radius: barRadius,
     disp: {
       x0: {
         unit: 2,
@@ -161,6 +204,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         unit: 2,
         values: (u, seriesIdx) => barsPctLayout[seriesIdx]!.size,
       },
+      ...mappedColorDisp,
     },
     // collect rendered bar geometry
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
@@ -210,6 +254,27 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     } else {
       barsPctLayout = [null as any].concat(distrTwo(u.data[0].length, u.data.length - 1));
     }
+
+    if (useMappedColors) {
+      barsColors = [null];
+
+      // map per-bar colors
+      for (let i = 1; i < u.data.length; i++) {
+        let colors = u.data[i].map((value, valueIdx) => {
+          if (value != null) {
+            return getColor!(i, valueIdx, value);
+          }
+
+          return null;
+        });
+
+        barsColors.push({
+          fill: fillOpacity < 1 ? colors.map((c) => (c != null ? alpha(c, fillOpacity) : null)) : colors,
+          stroke: colors,
+        });
+      }
+    }
+
     barRects.length = 0;
     vSpace = hSpace = Infinity;
   };

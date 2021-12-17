@@ -100,6 +100,19 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           min: 0,
         },
       })
+      .addSliderInput({
+        path: 'xTickLabelSpacing',
+        name: 'Bar label minimum spacing',
+        description: 'Bar labels will be skipped to maintain this distance',
+        defaultValue: 0,
+        settings: {
+          min: -300,
+          max: 300,
+          step: 10,
+          marks: { '-300': 'Backward', 0: 'None', 300: 'Forward' },
+          included: false,
+        },
+      })
       .addRadio({
         path: 'showValue',
         name: 'Show values',
@@ -145,6 +158,21 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           max: 1,
           step: 0.01,
         },
+      })
+      .addSliderInput({
+        path: 'barRadius',
+        name: 'Bar radius',
+        defaultValue: 0,
+        settings: {
+          min: 0,
+          max: 0.5,
+          step: 0.05,
+        },
+      })
+      .addFieldNamePicker({
+        path: 'colorByField',
+        name: 'Color by field',
+        description: 'Use the color value for a sibling field to color each bar value.',
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);
