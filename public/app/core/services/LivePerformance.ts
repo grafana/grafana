@@ -19,21 +19,61 @@ export enum MeasurementName {
 const measurementNames = Object.keys(MeasurementName);
 
 export class LivePerformance {
-  private buffer = emptyArrayByEventName<number>();
-  private livePerformanceStats = emptyArrayByEventName<IntervalStats>();
+  private options = LivePerformance.optionsWithDefaults();
+  private state = LivePerformance.emptyState();
 
-  private currentIndexByEventName = fromPairs(measurementNames.map((name) => [name, 0]));
+  static optionsWithDefaults = (opt?: Partial<LivePerformanceOptions>): LivePerformanceOptions => ({
+    maxIntervalsToKeep: opt?.maxIntervalsToKeep ?? 10,
+    intervalDuration: opt?.intervalDuration ?? 10000,
+  });
 
-  private constructor(public options: LivePerformanceOptions) {
-    setInterval(this.calculateStatsForCurrentInterval, options.intervalDuration);
-  }
+  static emptyState = () => ({
+    buffer: emptyArrayByEventName<number>(),
+    livePerformanceStats: emptyArrayByEventName<IntervalStats>(),
+    currentIndexByEventName: fromPairs(measurementNames.map((name) => [name, 0])),
+    running: false,
+    intervalId: undefined as undefined | ReturnType<typeof setInterval>,
+  });
+
+  isRunning = () => this.state.running;
+
+  start = (options?: Partial<LivePerformanceOptions>) => {
+    if (!LivePerformance.isEnabled()) {
+      console.warn('live performance is not enabled');
+      return;
+    }
+
+    if (this.state.running) {
+      console.warn('live performance collection is already running');
+      return;
+    }
+
+    this.options = LivePerformance.optionsWithDefaults(options);
+    this.state.intervalId = setInterval(this.calculateStatsForCurrentInterval, this.options.intervalDuration);
+    this.state.running = true;
+  };
+
+  stopAndGetStats = () => {
+    if (!this.state.running || !this.state.intervalId) {
+      console.warn('live performance was not started');
+      return;
+    }
+
+    clearInterval(this.state.intervalId);
+
+    const stats = mapValues(this.state.livePerformanceStats, (stats) => sortBy(stats, (v) => v.time));
+    this.state = LivePerformance.emptyState();
+    return stats;
+  };
 
   add = (name: MeasurementName, value: number) => {
-    this.buffer[name].push(value);
+    if (this.isRunning()) {
+      this.state.buffer[name].push(value);
+    }
   };
 
   calculateStatsForCurrentInterval = () => {
-    Object.entries(this.buffer)
+    Object.entries(this.state.buffer)
       .filter(([_, values]) => values.length)
       .forEach(([name, values]) => {
         const reduced = values.reduce(
@@ -47,34 +87,20 @@ export class LivePerformance {
         );
 
         const count = values.length;
-        const index = this.currentIndexByEventName[name];
-        this.livePerformanceStats[name][index] = {
+        const index = this.state.currentIndexByEventName[name];
+        this.state.livePerformanceStats[name][index] = {
           ...reduced,
           count,
           time: Date.now(),
           avg: reduced.sum / count,
         };
-        this.currentIndexByEventName[name] = (index + 1) % this.options.maxIntervalsToKeep;
+        this.state.currentIndexByEventName[name] = (index + 1) % this.options.maxIntervalsToKeep;
       });
-
-    this.buffer = emptyArrayByEventName<number>();
   };
 
-  static initialize = (options: LivePerformanceOptions) => {
-    if (LivePerformance.shouldInitialize()) {
-      singletonInstance = new LivePerformance(options);
-    }
-  };
-
-  static instance = () => {
-    return singletonInstance;
-  };
-
-  static shouldInitialize = () => !singletonInstance && LivePerformance.isEnabled();
+  static instance = () => singleton;
 
   static isEnabled = () => config.livePerformance.measureDataRenderDelay;
-
-  getStats = () => mapValues(this.livePerformanceStats, (stats) => sortBy(stats, (v) => v.time));
 }
 
 const emptyArrayByEventName = <T>() =>
@@ -83,4 +109,4 @@ const emptyArrayByEventName = <T>() =>
     return acc;
   }, {} as Record<string, T[]>);
 
-let singletonInstance: LivePerformance | undefined;
+const singleton = new LivePerformance();

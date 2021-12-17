@@ -43,9 +43,12 @@ export function initWindowRuntime() {
       }, {} as Record<number, PanelData | undefined>);
     },
 
-    /** Gets live performance stats collected by the LivePerformance service */
-    getLivePerformanceStats: () => {
-      return LivePerformance.instance()?.getStats();
+    livePerformance: {
+      /** Gets stats collected by the LivePerformance service and stops further collection */
+      getStats: () => LivePerformance.instance().stopAndGetStats(),
+
+      /** Enables LivePerformance to collect stats */
+      start: () => LivePerformance.instance().start(),
     },
   };
 }

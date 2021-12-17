@@ -65,7 +65,6 @@ import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { AngularApp } from './angular';
 import { ModalManager } from './core/services/ModalManager';
 import { initWindowRuntime } from './features/runtime/init';
-import { LivePerformance } from './core/services/LivePerformance';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -103,10 +102,6 @@ export class GrafanaApp {
       addExtensionReducers();
       configureStore();
       initExtensions();
-      LivePerformance.initialize({
-        maxIntervalsToKeep: 100,
-        intervalDuration: 10_000,
-      });
 
       standardEditorsRegistry.setInit(getAllOptionEditors);
       standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
