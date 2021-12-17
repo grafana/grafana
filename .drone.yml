@@ -255,7 +255,8 @@ steps:
   - find ./e2e -type f -name "*.mp4"
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - gsutil -m rsync -d -r ./e2e/videos gs://releng-pipeline-artifacts-dev/artifacts/${DRONE_BUILD_NUMBER}
+  - gsutil -m rsync -a --progress --prune-empty-dirs --include="./e2e/**/*.spec.ts.mp4"
+    --exclude="*" gs://$${E2E_TEST_ARTIFACTS_BUCKET}/artifacts/${DRONE_BUILD_NUMBER}
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -4246,6 +4247,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 340e13ccdc4b39c9c72dc090e1b9813142950d6ccce3cd9595d74a925d134719
+hmac: 805991c54bd3650db1967c1236b517ad2749441a3bc9637f8d757f4229e85df1
 
 ...
