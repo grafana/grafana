@@ -105,6 +105,7 @@ export const APIEditor: FC<StandardEditorProps<APIEditorConfig, any, any>> = (pr
         </InlineField>
       </InlineFieldRow>
       {renderTestAPIButton(value)}
+      <br />
       {renderJSON(value?.data ?? '{}')}
     </>
   );
