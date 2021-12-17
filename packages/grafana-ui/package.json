@@ -88,7 +88,7 @@
     "slate-plain-serializer": "0.7.10",
     "tinycolor2": "1.4.1",
     "tslib": "2.3.1",
-    "uplot": "1.6.17",
+    "uplot": "1.6.18",
     "uuid": "8.3.0"
   },
   "devDependencies": {
@@ -154,10 +154,10 @@
     "babel-loader": "8.2.2",
     "common-tags": "^1.8.0",
     "css-loader": "6.5.1",
-    "css-minimizer-webpack-plugin": "3.2.0",
+    "css-minimizer-webpack-plugin": "3.3.0",
     "csstype": "3.0.9",
     "enzyme": "3.11.0",
-    "expose-loader": "3.0.0",
+    "expose-loader": "3.1.0",
     "mock-raf": "1.0.1",
     "postcss": "8.3.11",
     "postcss-loader": "6.1.1",

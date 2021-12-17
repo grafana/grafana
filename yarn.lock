@@ -2923,19 +2923,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cypress/webpack-preprocessor@npm:5.10.0":
-  version: 5.10.0
-  resolution: "@cypress/webpack-preprocessor@npm:5.10.0"
+"@cypress/webpack-preprocessor@npm:5.11.0":
+  version: 5.11.0
+  resolution: "@cypress/webpack-preprocessor@npm:5.11.0"
   dependencies:
-    bluebird: ^3.7.1
-    debug: 4.3.2
+    bluebird: 3.7.1
+    debug: ^4.3.2
     lodash: ^4.17.20
   peerDependencies:
     "@babel/core": ^7.0.1
     "@babel/preset-env": ^7.0.0
     babel-loader: ^8.0.2
     webpack: ^4 || ^5
-  checksum: f6faa1f0134cac746e14b2f6e18a85da36aedc81b76f230e95d45065ff9205d08b0448f543c3a37490890aabc87359655f1ddbcd30e60a252e2490b7f2591e3c
+  checksum: c040d7b71f51a0009c5c9bdafd84ce223cc901fa521a648deacf32a8882b2ba91cfe88f269ad2aebe3753215f558bbbe7affa2575efe12624dcca7a0cde980d6
   languageName: node
   linkType: hard
 
@@ -3499,7 +3499,7 @@ __metadata:
   dependencies:
     "@babel/core": 7.16.0
     "@babel/preset-env": 7.16.4
-    "@cypress/webpack-preprocessor": 5.10.0
+    "@cypress/webpack-preprocessor": 5.11.0
     "@grafana/e2e-selectors": 8.4.0-pre
     "@grafana/tsconfig": ^1.0.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
@@ -3822,12 +3822,12 @@ __metadata:
     common-tags: ^1.8.0
     core-js: 3.20.0
     css-loader: 6.5.1
-    css-minimizer-webpack-plugin: 3.2.0
+    css-minimizer-webpack-plugin: 3.3.0
     csstype: 3.0.9
     d3: 5.15.0
     date-fns: 2.27.0
     enzyme: 3.11.0
-    expose-loader: 3.0.0
+    expose-loader: 3.1.0
     hoist-non-react-statics: 3.3.2
     immutable: 4.0.0
     is-hotkey: 0.1.6
@@ -3880,7 +3880,7 @@ __metadata:
     ts-loader: 8.0.11
     tslib: 2.3.1
     typescript: 4.4.3
-    uplot: 1.6.17
+    uplot: 1.6.18
     uuid: 8.3.0
     webpack: 5.58.1
     webpack-filter-warnings-plugin: 1.2.1
@@ -12798,7 +12798,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bluebird@npm:3.7.2, bluebird@npm:^3.3.5, bluebird@npm:^3.5.5, bluebird@npm:^3.7.1":
+"bluebird@npm:3.7.1":
+  version: 3.7.1
+  resolution: "bluebird@npm:3.7.1"
+  checksum: 58c295399e109925149977ebcb40e42fd109d3e458899e71441bc7e5e0867bbd796fdd20278b425fa29f13377fe335fbfc2a6e68e5ca1da03b1c3afdc439d097
+  languageName: node
+  linkType: hard
+
+"bluebird@npm:3.7.2, bluebird@npm:^3.3.5, bluebird@npm:^3.5.5":
   version: 3.7.2
   resolution: "bluebird@npm:3.7.2"
   checksum: 869417503c722e7dc54ca46715f70e15f4d9c602a423a02c825570862d12935be59ed9c7ba34a9b31f186c017c23cac6b54e35446f8353059c101da73eac22ef
@@ -15030,9 +15037,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-minimizer-webpack-plugin@npm:3.2.0":
-  version: 3.2.0
-  resolution: "css-minimizer-webpack-plugin@npm:3.2.0"
+"css-minimizer-webpack-plugin@npm:3.3.0":
+  version: 3.3.0
+  resolution: "css-minimizer-webpack-plugin@npm:3.3.0"
   dependencies:
     "@types/cssnano": ^4.0.1
     cssnano: ^5.0.6
@@ -15050,7 +15057,7 @@ __metadata:
       optional: true
     esbuild:
       optional: true
-  checksum: 97f783d8adc82f0e95a53dd324af9b4d19ca8b50a07358990bd86a41d305717d86e36bacdec931b01276471f9a26aa0f998c9646d9bc091d56a7b0d01c750a07
+  checksum: 53a7c9551602d899aafecc1ca7f012f3c506af3b853e7cb3f3d9313956d06a8177c7c22491fb21cec9de58e030c8234e1921e01902ebcc88ae3a9212b75fe06b
   languageName: node
   linkType: hard
 
@@ -17804,15 +17811,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expose-loader@npm:3.0.0":
-  version: 3.0.0
-  resolution: "expose-loader@npm:3.0.0"
-  peerDependencies:
-    webpack: ^5.0.0
-  checksum: d18e4c6d29f7bdf1c3b8e99530bf1e67940c76037e82fa520db6cfcc1b9632f643409ed931eb525471aaa550493208acb0d5ce30405d79de2dd7abd1af44bfec
-  languageName: node
-  linkType: hard
-
 "expose-loader@npm:3.1.0":
   version: 3.1.0
   resolution: "expose-loader@npm:3.1.0"
@@ -19485,7 +19483,7 @@ __metadata:
     copy-webpack-plugin: 9.0.1
     core-js: 3.20.0
     css-loader: 6.5.1
-    css-minimizer-webpack-plugin: 3.2.0
+    css-minimizer-webpack-plugin: 3.3.0
     cypress: 9.1.1
     d3: 5.15.0
     d3-force: ^2.1.1
@@ -19624,7 +19622,7 @@ __metadata:
     ts-node: 10.4.0
     tslib: 2.3.1
     typescript: 4.4.3
-    uplot: 1.6.17
+    uplot: 1.6.18
     uuid: 8.3.0
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
@@ -34587,10 +34585,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.17":
-  version: 1.6.17
-  resolution: "uplot@npm:1.6.17"
-  checksum: f63d3d4337c12dacc6940fa8e3a8a94416db787e175c715b4975a28fea85f340beb89d3907c83cd1663943d77abd26057098dc8152117d76f8fa184be295edbb
+"uplot@npm:1.6.18":
+  version: 1.6.18
+  resolution: "uplot@npm:1.6.18"
+  checksum: 6e6365be1954b506fbe4f1cd905f53b7494df21bdad2fa71def4977521adb392c22df4568b195bc2081e6ebeb85e77afdb1c4db2d99cd1a2feb1c96a2330842e
   languageName: node
   linkType: hard
 
