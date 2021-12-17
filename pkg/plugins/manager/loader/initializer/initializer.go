@@ -12,17 +12,16 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Initializer struct {
-	cfg             *setting.Cfg
+	cfg             *plugins.Cfg
 	license         models.Licensing
 	backendProvider plugins.BackendFactoryProvider
 	log             log.Logger
 }
 
-func New(cfg *setting.Cfg, backendProvider plugins.BackendFactoryProvider, license models.Licensing) Initializer {
+func New(cfg *plugins.Cfg, backendProvider plugins.BackendFactoryProvider, license models.Licensing) Initializer {
 	return Initializer{
 		cfg:             cfg,
 		license:         license,
@@ -132,7 +131,7 @@ func (ps pluginSettings) asEnvVar(prefix string, hostEnv []string) []string {
 	return env
 }
 
-func getPluginSettings(pluginID string, cfg *setting.Cfg) pluginSettings {
+func getPluginSettings(pluginID string, cfg *plugins.Cfg) pluginSettings {
 	ps := pluginSettings{}
 	for k, v := range cfg.PluginSettings[pluginID] {
 		if k == "path" || strings.ToLower(k) == "id" {

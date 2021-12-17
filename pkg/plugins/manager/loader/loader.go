@@ -35,7 +35,7 @@ var (
 var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
-	cfg                *setting.Cfg
+	cfg                *plugins.Cfg
 	pluginFinder       finder.Finder
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
@@ -46,14 +46,14 @@ type Loader struct {
 
 func ProvideService(cfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	backendProvider plugins.BackendFactoryProvider) (*Loader, error) {
-	return New(cfg, license, authorizer, backendProvider), nil
+	return New(plugins.FromGrafanaCfg(cfg), license, authorizer, backendProvider), nil
 }
 
-func New(cfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	backendProvider plugins.BackendFactoryProvider) *Loader {
 	return &Loader{
 		cfg:                cfg,
-		pluginFinder:       finder.New(cfg),
+		pluginFinder:       finder.New(),
 		pluginInitializer:  initializer.New(cfg, backendProvider, license),
 		signatureValidator: signature.NewValidator(authorizer),
 		errs:               make(map[string]*plugins.SignatureError),

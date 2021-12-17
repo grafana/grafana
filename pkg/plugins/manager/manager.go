@@ -33,7 +33,7 @@ var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
-	cfg              *setting.Cfg
+	cfg              *plugins.Cfg
 	requestValidator models.PluginRequestValidator
 	sqlStore         *sqlstore.SQLStore
 	store            map[string]*plugins.Plugin
@@ -44,12 +44,12 @@ type PluginManager struct {
 	log              log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, requestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
+func ProvideService(grafanaCfg *setting.Cfg, requestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
 	sqlStore *sqlstore.SQLStore) (*PluginManager, error) {
-	pm := New(cfg, requestValidator, map[plugins.Class][]string{
-		plugins.Core:     corePluginPaths(cfg),
-		plugins.Bundled:  {cfg.BundledPluginsPath},
-		plugins.External: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg)...),
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), requestValidator, map[plugins.Class][]string{
+		plugins.Core:     corePluginPaths(grafanaCfg),
+		plugins.Bundled:  {grafanaCfg.BundledPluginsPath},
+		plugins.External: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...),
 	}, pluginLoader, sqlStore)
 	if err := pm.Init(); err != nil {
 		return nil, err
@@ -57,14 +57,14 @@ func ProvideService(cfg *setting.Cfg, requestValidator models.PluginRequestValid
 	return pm, nil
 }
 
-func New(cfg *setting.Cfg, requestValidator models.PluginRequestValidator, pluginPaths map[plugins.Class][]string,
+func New(cfg *plugins.Cfg, requestValidator models.PluginRequestValidator, pluginPaths map[plugins.Class][]string,
 	pluginLoader plugins.Loader, sqlStore *sqlstore.SQLStore) *PluginManager {
 	return &PluginManager{
 		cfg:              cfg,
 		requestValidator: requestValidator,
 		pluginLoader:     pluginLoader,
 		pluginPaths:      pluginPaths,
-		store:            map[string]*plugins.Plugin{},
+		store:            make(map[string]*plugins.Plugin),
 		log:              log.New("plugin.manager"),
 		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 		sqlStore:         sqlStore,

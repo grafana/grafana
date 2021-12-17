@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestInitializer_Initialize(t *testing.T) {
@@ -36,7 +35,7 @@ func TestInitializer_Initialize(t *testing.T) {
 		}
 
 		i := &Initializer{
-			cfg: setting.NewCfg(),
+			cfg: plugins.NewCfg(),
 			log: &fakeLogger{},
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
@@ -66,7 +65,7 @@ func TestInitializer_Initialize(t *testing.T) {
 		}
 
 		i := &Initializer{
-			cfg: setting.NewCfg(),
+			cfg: plugins.NewCfg(),
 			log: fakeLogger{},
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
@@ -100,7 +99,7 @@ func TestInitializer_Initialize(t *testing.T) {
 		}
 
 		i := &Initializer{
-			cfg: &setting.Cfg{
+			cfg: &plugins.Cfg{
 				AppSubURL: "appSubURL",
 			},
 			log: fakeLogger{},
@@ -136,7 +135,7 @@ func TestInitializer_InitializeWithFactory(t *testing.T) {
 			Class:     plugins.External,
 		}
 		i := &Initializer{
-			cfg: &setting.Cfg{
+			cfg: &plugins.Cfg{
 				AppSubURL: "appSubURL",
 			},
 			log: fakeLogger{},
@@ -175,7 +174,7 @@ func TestInitializer_InitializeWithFactory(t *testing.T) {
 			Class:     plugins.External,
 		}
 		i := &Initializer{
-			cfg: &setting.Cfg{
+			cfg: &plugins.Cfg{
 				AppSubURL: "appSubURL",
 			},
 			log: fakeLogger{},
@@ -207,7 +206,7 @@ func TestInitializer_envVars(t *testing.T) {
 		}
 
 		i := &Initializer{
-			cfg: &setting.Cfg{
+			cfg: &plugins.Cfg{
 				EnterpriseLicensePath: "/path/to/ent/license",
 				PluginSettings: map[string]map[string]string{
 					"test": {

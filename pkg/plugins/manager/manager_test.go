@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"net/http"
-	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -14,11 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/ini.v1"
 )
 
 const (
@@ -471,18 +467,8 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
-	staticRootPath, err := filepath.Abs("../../../public/")
-	require.NoError(t, err)
-
-	cfg := &setting.Cfg{
-		Raw:            ini.Empty(),
-		Env:            setting.Prod,
-		StaticRootPath: staticRootPath,
-	}
-
 	requestValidator := &testPluginRequestValidator{}
-	loader := &fakeLoader{}
-	pm := New(cfg, requestValidator, nil, loader, &sqlstore.SQLStore{})
+	pm := New(&plugins.Cfg{}, requestValidator, nil, &fakeLoader{}, &sqlstore.SQLStore{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -527,17 +513,13 @@ type managerScenarioCtx struct {
 
 func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerScenarioCtx)) {
 	t.Helper()
-	cfg := setting.NewCfg()
+	cfg := &plugins.Cfg{}
 	cfg.AWSAllowedAuthProviders = []string{"keys", "credentials"}
 	cfg.AWSAssumeRoleEnabled = true
 
 	cfg.Azure.ManagedIdentityEnabled = true
 	cfg.Azure.Cloud = "AzureCloud"
 	cfg.Azure.ManagedIdentityClientId = "client-id"
-
-	staticRootPath, err := filepath.Abs("../../../public")
-	require.NoError(t, err)
-	cfg.StaticRootPath = staticRootPath
 
 	requestValidator := &testPluginRequestValidator{}
 	loader := &fakeLoader{}
