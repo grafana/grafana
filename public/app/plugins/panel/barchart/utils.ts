@@ -226,7 +226,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   }
 
   if (stackingGroups.size !== 0) {
-    builder.setStacking(true);
     for (const [_, seriesIds] of stackingGroups.entries()) {
       const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
       for (let j = seriesIdxs.length - 1; j > 0; j--) {
