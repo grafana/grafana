@@ -2,11 +2,11 @@ name: Levitate (notify)
 
 # read-write repo token
 # access to secrets
-on:
-  workflow_run:
-    workflows: ["Levitate (detect)"]
-    types:
-      - completed
+# on:
+#   workflow_run:
+#     workflows: ["Levitate (detect)"]
+#     types:
+#       - completed
 
 jobs:
   notify:

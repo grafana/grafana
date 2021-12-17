@@ -1,6 +1,6 @@
 name: Levitate
 
-on: pull_request_target
+on: push
 
 jobs:
   build:
