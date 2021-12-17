@@ -155,6 +155,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
         font-size: ${theme.typography.bodySmall.fontSize};
         cursor: pointer;
         border: none;
+
+        &:focus:not(:focus-visible) {
+          outline: none;
+          box-shadow: none;
+        }
       }
 
       .ColorPickerPopover__tab--active {
@@ -164,7 +169,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
     `,
     colorPickerPopoverContent: css`
-      width: 266px;
+      width: 246px;
       font-size: ${theme.typography.bodySmall.fontSize};
       min-height: 184px;
       padding: ${theme.spacing(1)};
