@@ -279,10 +279,7 @@
       "targets": [
         {
           "csvContent": "Time,Duration,Status\n2020-01-01T00:00:00Z, 10, 1\n2020-01-02T00:00:00Z, 19, 1\n2020-01-03T00:00:00Z,10, 2\n2020-01-04T00:00:00Z,15, 1\n2020-01-05T00:00:00Z,15, 3\n2020-01-06T00:00:00Z,5, 2\n2020-01-07T00:00:00Z, 10, 1\n2020-01-08T00:00:00Z, 19, 1\n2020-01-09T00:00:00Z,10, 2\n2020-01-10T00:00:00Z,15, 1\n2020-01-11T00:00:00Z,15, 3\n2020-01-12T00:00:00Z,5, 2\n2020-01-13T00:00:00Z, 10, 1\n2020-01-14T00:00:00Z, 19, 1\n2020-01-15T00:00:00Z,10, 2",
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
+          "datasource": "gdev-testdata",
           "refId": "A",
           "scenarioId": "csv_content"
         }
@@ -437,10 +434,7 @@
       "type": "barchart"
     },
     {
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
+      "datasource": "-- Dashboard --",
       "fieldConfig": {
         "defaults": {
           "color": {
