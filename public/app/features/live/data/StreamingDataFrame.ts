@@ -1,40 +1,34 @@
-import { Field, DataFrame, FieldType, Labels, QueryResultMeta } from '../types';
-import { ArrayVector } from '../vector';
-import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
-import { guessFieldTypeFromValue } from './processDataFrame';
-import { join } from '../transformations/transformers/joinDataFrames';
+import {
+  DataFrame,
+  Field,
+  FieldDTO,
+  FieldType,
+  Labels,
+  QueryResultMeta,
+  DataFrameJSON,
+  decodeFieldValueEntities,
+  FieldSchema,
+  guessFieldTypeFromValue,
+  ArrayVector,
+  toFilteredDataFrameDTO,
+} from '@grafana/data';
+import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import {
+  StreamingFrameAction,
+  StreamingFrameOptions,
+} from '@grafana/runtime/src/services/live';
 import { AlignedData } from 'uplot';
-
-/**
- * Indicate if the frame is appened or replace
- *
- * @public -- but runtime
- */
-export enum StreamingFrameAction {
-  Append = 'append',
-  Replace = 'replace',
-}
 
 /**
  * Stream packet info is attached to StreamingDataFrames and indicate how many
  * rows were added to the end of the frame.  The number of discarded rows can be
  * calculated from previous state
- *
- * @public -- but runtime
  */
 export interface StreamPacketInfo {
   number: number;
   action: StreamingFrameAction;
   length: number;
-}
-
-/**
- * @alpha
- */
-export interface StreamingFrameOptions {
-  maxLength?: number; // 1000
-  maxDelta?: number; // how long to keep things
-  action?: StreamingFrameAction; // default will append
+  schemaChanged: boolean;
 }
 
 enum PushMode {
@@ -43,10 +37,22 @@ enum PushMode {
   // long
 }
 
+export type SerializedStreamingDataFrame = {
+  name?: string;
+  fields: FieldDTO[];
+  refId?: string;
+  meta: QueryResultMeta;
+  schemaFields: FieldSchema[];
+  timeFieldIndex: number;
+  pushMode: PushMode;
+  length: number;
+  packetInfo: StreamPacketInfo;
+  options: StreamingFrameOptions;
+  labels: Set<string>;
+};
+
 /**
  * Unlike a circular buffer, this will append and periodically slice the front
- *
- * @alpha
  */
 export class StreamingDataFrame implements DataFrame {
   name?: string;
@@ -56,40 +62,142 @@ export class StreamingDataFrame implements DataFrame {
   fields: Array<Field<any, ArrayVector<any>>> = [];
   length = 0;
 
-  options: StreamingFrameOptions;
-
   private schemaFields: FieldSchema[] = [];
   private timeFieldIndex = -1;
   private pushMode = PushMode.wide;
-  private alwaysReplace = false;
 
   // current labels
   private labels: Set<string> = new Set();
   readonly packetInfo: StreamPacketInfo = {
+    schemaChanged: true,
     number: 0,
     action: StreamingFrameAction.Replace,
     length: 0,
   };
 
-  constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
-    this.options = {
-      maxLength: 1000,
-      maxDelta: Infinity,
-      ...opts,
-    };
-    this.alwaysReplace = this.options.action === StreamingFrameAction.Replace;
+  private constructor(public options: StreamingFrameOptions) {
+    // Get Length to show up if you use spread
+    Object.defineProperty(this, 'length', {
+      enumerable: true,
+    });
 
-    this.push(frame);
+    // Get fields to show up if you use spread
+    Object.defineProperty(this, 'fields', {
+      enumerable: true,
+    });
   }
+
+  serialize = (
+    fieldPredicate?: (f: Field) => boolean,
+    optionsOverride?: Partial<StreamingFrameOptions>
+  ): SerializedStreamingDataFrame => {
+    const options = optionsOverride ? Object.assign({}, { ...this.options, ...optionsOverride }) : this.options;
+    const dataFrameDTO = toFilteredDataFrameDTO(this, fieldPredicate);
+
+    const numberOfItemsToRemove = getNumberOfItemsToRemove(
+      dataFrameDTO.fields.map((f) => f.values) as unknown[][],
+      options.maxLength,
+      this.timeFieldIndex,
+      options.maxDelta
+    );
+
+    dataFrameDTO.fields = dataFrameDTO.fields.map((f) => ({
+      ...f,
+      values: (f.values as unknown[]).slice(numberOfItemsToRemove),
+    }));
+
+    return {
+      ...dataFrameDTO,
+      // TODO: Labels and schema are not filtered by field
+      labels: this.labels,
+      schemaFields: this.schemaFields,
+
+      name: this.name,
+      refId: this.refId,
+      meta: this.meta,
+      length: this.length,
+      timeFieldIndex: this.timeFieldIndex,
+      pushMode: this.pushMode,
+      packetInfo: this.packetInfo,
+      options,
+    };
+  };
+
+  private initFromSerialized = (serialized: Omit<SerializedStreamingDataFrame, 'options'>) => {
+    this.name = serialized.name;
+    this.refId = serialized.refId;
+    this.meta = serialized.meta;
+    this.length = serialized.length;
+    this.labels = serialized.labels;
+    this.schemaFields = serialized.schemaFields;
+    this.timeFieldIndex = serialized.timeFieldIndex;
+    this.pushMode = serialized.pushMode;
+    this.packetInfo.length = serialized.packetInfo.length;
+    this.packetInfo.number = serialized.packetInfo.number;
+    this.packetInfo.action = StreamingFrameAction.Replace;
+    this.packetInfo.schemaChanged = true;
+    this.fields = serialized.fields.map((f) => ({
+      ...f,
+      type: f.type ?? FieldType.other,
+      config: f.config ?? {},
+      values: Array.isArray(f.values) ? new ArrayVector(f.values) : new ArrayVector(),
+    }));
+
+    assureValuesAreWithinLengthLimit(
+      this.fields.map((f) => f.values.buffer),
+      this.options.maxLength,
+      this.timeFieldIndex,
+      this.options.maxDelta
+    );
+  };
+
+  static deserialize = (serialized: SerializedStreamingDataFrame) => {
+    const frame = new StreamingDataFrame(serialized.options);
+    frame.initFromSerialized(serialized);
+    return frame;
+  };
+
+  static empty = (opts?: Partial<StreamingFrameOptions>): StreamingDataFrame =>
+    new StreamingDataFrame(getStreamingFrameOptions(opts));
+
+  static fromDataFrameJSON = (frame: DataFrameJSON, opts?: Partial<StreamingFrameOptions>): StreamingDataFrame => {
+    const streamingDataFrame = new StreamingDataFrame(getStreamingFrameOptions(opts));
+    streamingDataFrame.push(frame);
+    return streamingDataFrame;
+  };
+
+  private get alwaysReplace() {
+    return this.options.action === StreamingFrameAction.Replace;
+  }
+
+  needsResizing = ({ maxLength, maxDelta }: StreamingFrameOptions) => {
+    const needsMoreLength = maxLength && this.options.maxLength < maxLength;
+    const needsBiggerDelta = maxDelta && this.options.maxDelta < maxDelta;
+    const needsToOverrideDefaultInfinityDelta = maxDelta && this.options.maxDelta === Infinity;
+    return Boolean(needsMoreLength || needsBiggerDelta || needsToOverrideDefaultInfinityDelta);
+  };
+
+  resize = ({ maxLength, maxDelta }: Partial<StreamingFrameOptions>) => {
+    if (maxDelta) {
+      if (this.options.maxDelta === Infinity) {
+        this.options.maxDelta = maxDelta;
+      } else {
+        this.options.maxDelta = Math.max(maxDelta, this.options.maxDelta);
+      }
+    }
+    this.options.maxLength = Math.max(this.options.maxLength, maxLength ?? 0);
+  };
 
   /**
    * apply the new message to the existing data.  This will replace the existing schema
    * if a new schema is included in the message, or append data matching the current schema
    */
-  push(msg: DataFrameJSON) {
+  push(msg: DataFrameJSON): StreamPacketInfo {
     const { schema, data } = msg;
 
     this.packetInfo.number++;
+    this.packetInfo.length = 0;
+    this.packetInfo.schemaChanged = false;
 
     if (schema) {
       this.pushMode = PushMode.wide;
@@ -118,6 +226,7 @@ export class StreamingDataFrame implements DataFrame {
           f.labels = sf.labels;
         });
       } else {
+        this.packetInfo.schemaChanged = true;
         const isWide = this.pushMode === PushMode.wide;
         this.fields = niceSchemaFields.map((f) => {
           return {
@@ -127,7 +236,8 @@ export class StreamingDataFrame implements DataFrame {
             type: f.type ?? FieldType.other,
             // transfer old values by type & name, unless we relied on labels to match fields
             values: isWide
-              ? this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ?? new ArrayVector()
+              ? this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ??
+                new ArrayVector(Array(this.length).fill(undefined))
               : new ArrayVector(),
           };
         });
@@ -155,6 +265,7 @@ export class StreamingDataFrame implements DataFrame {
         // make sure fields are initalized for each label
         for (const label of labeledTables.keys()) {
           if (!this.labels.has(label)) {
+            this.packetInfo.schemaChanged = true;
             this.addLabel(label);
           }
         }
@@ -221,7 +332,53 @@ export class StreamingDataFrame implements DataFrame {
       // Update the frame length
       this.length = appended[0].length;
     }
+
+    return {
+      ...this.packetInfo,
+    };
   }
+
+  pushNewValues = (values: unknown[][]) => {
+    if (!values?.length) {
+      return;
+    }
+
+    this.packetInfo.action = StreamingFrameAction.Append;
+    this.packetInfo.number++;
+    this.packetInfo.length = values[0].length;
+    this.packetInfo.schemaChanged = false;
+
+    circPush(
+      this.fields.map((f) => f.values.buffer),
+      values,
+      this.options.maxLength,
+      this.timeFieldIndex,
+      this.options.maxDelta
+    );
+  };
+
+  resetStateCalculations = () => {
+    this.fields.forEach((f) => {
+      f.state = {
+        ...(f.state ?? {}),
+        calcs: undefined,
+        range: undefined,
+      };
+    });
+  };
+
+  getMatchingFieldIndexes = (fieldPredicate: (f: Field) => boolean): number[] =>
+    this.fields
+      .map((f, index) => (fieldPredicate(f) ? index : undefined))
+      .filter((val) => val !== undefined) as number[];
+
+  getValuesFromLastPacket = (): unknown[][] =>
+    this.fields.map((f) => {
+      const values = f.values.buffer;
+      return values.slice(Math.max(values.length - this.packetInfo.length));
+    });
+
+  hasAtLeastOnePacket = () => Boolean(this.packetInfo.length);
 
   // adds a set of fields for a new label
   private addLabel(label: string) {
@@ -258,6 +415,16 @@ export class StreamingDataFrame implements DataFrame {
 
     this.labels.add(label);
   }
+
+  getOptions = (): Readonly<StreamingFrameOptions> => this.options;
+}
+
+export function getStreamingFrameOptions(opts?: Partial<StreamingFrameOptions>): StreamingFrameOptions {
+  return {
+    maxLength: opts?.maxLength ?? 1000,
+    maxDelta: opts?.maxDelta ?? Infinity,
+    action: opts?.action ?? StreamingFrameAction.Append,
+  };
 }
 
 // converts vertical insertion records with table keys in [0] and column values in [1...N]
@@ -317,9 +484,31 @@ export function getLastStreamingDataFramePacket(frame: DataFrame) {
 }
 
 // mutable circular push
-function circPush(data: number[][], newData: number[][], maxLength = Infinity, deltaIdx = 0, maxDelta = Infinity) {
+function circPush(data: unknown[][], newData: unknown[][], maxLength = Infinity, deltaIdx = 0, maxDelta = Infinity) {
   for (let i = 0; i < data.length; i++) {
-    data[i] = data[i].concat(newData[i]);
+    for (let k = 0; k < newData[i].length; k++) {
+      data[i].push(newData[i][k]);
+    }
+  }
+
+  return assureValuesAreWithinLengthLimit(data, maxLength, deltaIdx, maxDelta);
+}
+
+function assureValuesAreWithinLengthLimit(data: unknown[][], maxLength = Infinity, deltaIdx = 0, maxDelta = Infinity) {
+  const count = getNumberOfItemsToRemove(data, maxLength, deltaIdx, maxDelta);
+
+  if (count) {
+    for (let i = 0; i < data.length; i++) {
+      data[i].splice(0, count);
+    }
+  }
+
+  return count;
+}
+
+function getNumberOfItemsToRemove(data: unknown[][], maxLength = Infinity, deltaIdx = 0, maxDelta = Infinity) {
+  if (!data[0]?.length) {
+    return 0;
   }
 
   const nlen = data[0].length;
@@ -331,19 +520,13 @@ function circPush(data: number[][], newData: number[][], maxLength = Infinity, d
   }
 
   if (maxDelta !== Infinity && deltaIdx >= 0) {
-    const deltaLookup = data[deltaIdx];
+    const deltaLookup = data[deltaIdx] as number[];
 
     const low = deltaLookup[sliceIdx];
     const high = deltaLookup[nlen - 1];
 
     if (high - low > maxDelta) {
       sliceIdx = closestIdx(high - maxDelta, deltaLookup, sliceIdx);
-    }
-  }
-
-  if (sliceIdx) {
-    for (let i = 0; i < data.length; i++) {
-      data[i] = data[i].slice(sliceIdx);
     }
   }
 
