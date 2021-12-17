@@ -250,6 +250,23 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey_upload_artifacts.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
+  - gsutil -m rsync -d -r ./e2e/videos gs://$${UPLOAD_E2E_TEST_ARTIFACTS_BUCKET}/artifacts/${DRONE_BUILD_NUMBER}
+  depends_on:
+  - end-to-end-tests-dashboards-suite
+  - end-to-end-tests-panels-suite
+  - end-to-end-tests-smoke-tests-suite
+  - end-to-end-tests-various-suite
+  environment:
+    E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
+    GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
+      from_secret: gcp_upload_artifacts_key
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.4.8
+  name: e2e_test_artifacts_upload
+- commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
@@ -783,22 +800,6 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
-- commands:
-  - printenv GCP_KEY | base64 -d > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - gsutil -m rsync -d -r ./e2e/videos gs://$${UPLOAD_E2E_TEST_ARTIFACTS_BUCKET}/artifacts/${DRONE_BUILD_NUMBER}
-  depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
-  name: upload-e2e-test-artifacts
-  environment:
-    GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
-      from_secret: gcp_upload_artifacts_key
-    UPLOAD_E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
-    GITHUB_TOKEN:
-      from_secret: github_token
 - commands:
   - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
@@ -4131,6 +4132,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: d408adc68afccd30b8a463ad877b0105d346aafd5e1cc9a3f7a207a5f24a9c64
+hmac: 4285602a2235c8f67ed7ff1dcd0e96002c6d0fea8f175b2e399cc77263dd5653
 
 ...

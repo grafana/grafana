@@ -291,6 +291,28 @@ def publish_storybook_step(edition, ver_mode):
         'commands': commands,
     }
 
+def e2e_test_artifacts(edition):
+    return {
+        'name': 'e2e_test_artifacts_upload' + enterprise2_suffix(edition),
+        'image': build_image,
+        'depends_on': [            
+            'end-to-end-tests-dashboards-suite',
+            'end-to-end-tests-panels-suite',
+            'end-to-end-tests-smoke-tests-suite',
+            'end-to-end-tests-various-suite',
+        ],
+        'environment': {
+            'GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY': from_secret('gcp_upload_artifacts_key'),
+            'E2E_TEST_ARTIFACTS_BUCKET': 'releng-pipeline-artifacts-dev',
+            'GITHUB_TOKEN': from_secret('github_token'),
+        },
+        'commands': [
+            'printenv GCP_KEY | base64 -d > /tmp/gcpkey_upload_artifacts.json',
+            'gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json',
+            'gsutil -m rsync -d -r ./e2e/videos gs://$${UPLOAD_E2E_TEST_ARTIFACTS_BUCKET}/artifacts/${DRONE_BUILD_NUMBER}',
+        ],
+    }
+
 
 def upload_cdn_step(edition, ver_mode):
     if ver_mode == "release":
