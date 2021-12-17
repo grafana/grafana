@@ -3880,7 +3880,7 @@ __metadata:
     ts-loader: 8.0.11
     tslib: 2.3.1
     typescript: 4.4.3
-    uplot: 1.6.17
+    uplot: 1.6.18
     uuid: 8.3.0
     webpack: 5.58.1
     webpack-filter-warnings-plugin: 1.2.1
@@ -19615,7 +19615,7 @@ __metadata:
     ts-node: 10.4.0
     tslib: 2.3.1
     typescript: 4.4.3
-    uplot: 1.6.17
+    uplot: 1.6.18
     uuid: 8.3.0
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
@@ -34578,10 +34578,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.17":
-  version: 1.6.17
-  resolution: "uplot@npm:1.6.17"
-  checksum: f63d3d4337c12dacc6940fa8e3a8a94416db787e175c715b4975a28fea85f340beb89d3907c83cd1663943d77abd26057098dc8152117d76f8fa184be295edbb
+"uplot@npm:1.6.18":
+  version: 1.6.18
+  resolution: "uplot@npm:1.6.18"
+  checksum: 6e6365be1954b506fbe4f1cd905f53b7494df21bdad2fa71def4977521adb392c22df4568b195bc2081e6ebeb85e77afdb1c4db2d99cd1a2feb1c96a2330842e
   languageName: node
   linkType: hard
 
