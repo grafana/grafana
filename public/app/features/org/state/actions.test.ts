@@ -1,6 +1,7 @@
-import { updateOrganization } from './actions';
+import { updateOrganization, setUserOrganization, getUserOrganizations } from './actions';
 import { updateConfigurationSubtitle } from 'app/core/actions';
 import { thunkTester } from 'test/core/thunk/thunkTester';
+import { OrgRole } from 'app/types';
 
 const setup = () => {
   const initialState = {
@@ -9,6 +10,7 @@ const setup = () => {
         id: 1,
         name: 'New Org Name',
       },
+      userOrg: [{ orgId: 1, name: 'New Org Name', role: OrgRole.Editor }],
     },
   };
 
@@ -35,6 +37,48 @@ describe('updateOrganization', () => {
 
       expect(dispatchedActions[0].type).toEqual(updateConfigurationSubtitle.type);
       expect(dispatchedActions[0].payload).toEqual(initialState.organization.organization.name);
+    });
+  });
+});
+
+describe('setUserOrganization', () => {
+  describe('when setUserOrganization thunk is dispatched', () => {
+    const postMock = jest.fn().mockResolvedValue({ id: 1, name: 'New Org Name' });
+
+    const backendSrvMock: any = {
+      post: postMock,
+    };
+
+    const orgId = 1;
+
+    it('then it should dispatch updateConfigurationSubtitle', async () => {
+      const { initialState } = setup();
+
+      const dispatchedActions = await thunkTester(initialState)
+        .givenThunk(setUserOrganization)
+        .whenThunkIsDispatched(orgId, { getBackendSrv: () => backendSrvMock });
+
+      expect(dispatchedActions[0].type).toEqual(updateConfigurationSubtitle.type);
+      expect(dispatchedActions[0].payload).toEqual(initialState.organization.organization.name);
+    });
+  });
+});
+
+describe('getUserOrganizations', () => {
+  describe('when getUserOrganizations thunk is dispatched', () => {
+    const getMock = jest.fn().mockResolvedValue({ orgId: 1, name: 'New Org Name', role: OrgRole.Editor });
+    const backendSrvMock: any = {
+      get: getMock,
+    };
+
+    it('then it should dispatch updateConfigurationSubtitle', async () => {
+      const { initialState } = setup();
+
+      const dispatchedActions = await thunkTester(initialState)
+        .givenThunk(getUserOrganizations)
+        .whenThunkIsDispatched({ getBackendSrv: () => backendSrvMock });
+
+      expect(dispatchedActions[0].payload).toEqual(initialState.organization.userOrg[0]);
     });
   });
 });

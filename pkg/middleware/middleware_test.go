@@ -149,7 +149,7 @@ func TestMiddlewareContext(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
 			query.Result = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
 			return nil
 		})
@@ -166,7 +166,7 @@ func TestMiddlewareContext(t *testing.T) {
 	middlewareScenario(t, "Valid API key, but does not match DB hash", func(t *testing.T, sc *scenarioContext) {
 		const keyhash = "Something_not_matching"
 
-		bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
 			query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
 			return nil
 		})
@@ -183,7 +183,7 @@ func TestMiddlewareContext(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
 			// api key expired one second before
 			expires := sc.contextHandler.GetTime().Add(-1 * time.Second).Unix()
 			query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash,
@@ -389,7 +389,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario(t, "Should respect auto signup option", func(t *testing.T, sc *scenarioContext) {
 			var actualAuthProxyAutoSignUp *bool = nil
 
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 				actualAuthProxyAutoSignUp = &cmd.SignupAllowed
 				return login.ErrInvalidCredentials
 			})
@@ -416,7 +416,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return models.ErrUserNotFound
 			})
 
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 				cmd.Result = &models.User{Id: userID}
 				return nil
 			})
@@ -444,7 +444,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return models.ErrUserNotFound
 			})
 
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 				cmd.Result = &models.User{Id: userID}
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
 				return nil
@@ -475,7 +475,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return models.ErrUserNotFound
 			})
 
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 				cmd.Result = &models.User{Id: userID}
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
 				return nil
@@ -508,7 +508,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return models.ErrUserNotFound
 			})
 
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 				cmd.Result = &models.User{Id: userID}
 				return nil
 			})
@@ -560,7 +560,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 				cmd.Result = &models.User{Id: userID}
 				return nil
 			})
@@ -583,7 +583,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 				cmd.Result = &models.User{Id: userID}
 				return nil
 			})
@@ -608,7 +608,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 				cmd.Result = &models.User{Id: userID}
 				return nil
 			})
@@ -627,7 +627,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should return 407 status code if LDAP says no", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("LDAP", func(cmd *models.UpsertUserCommand) error {
+			bus.AddHandlerCtx("LDAP", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 				return errors.New("Do not add user")
 			})
 

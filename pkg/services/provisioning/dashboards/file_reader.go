@@ -200,7 +200,7 @@ func (fr *FileReader) handleMissingDashboardFiles(ctx context.Context, provision
 		// so afterwards the dashboard is considered unprovisioned.
 		for _, dashboardID := range dashboardsToDelete {
 			fr.log.Debug("unprovisioning provisioned dashboard. missing on disk", "id", dashboardID)
-			err := fr.dashboardProvisioningService.UnprovisionDashboard(dashboardID)
+			err := fr.dashboardProvisioningService.UnprovisionDashboard(ctx, dashboardID)
 			if err != nil {
 				fr.log.Error("failed to unprovision dashboard", "dashboard_id", dashboardID, "error", err)
 			}

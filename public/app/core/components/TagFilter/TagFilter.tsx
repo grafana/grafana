@@ -3,7 +3,7 @@ import React, { FC } from 'react';
 import { css } from '@emotion/css';
 import { components } from 'react-select';
 import debounce from 'debounce-promise';
-import { stylesFactory, useTheme, resetSelectStyles, Icon, AsyncMultiSelect } from '@grafana/ui';
+import { stylesFactory, useTheme, Icon, AsyncMultiSelect } from '@grafana/ui';
 import { escapeStringForRegex, GrafanaTheme } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
@@ -82,7 +82,6 @@ export const TagFilter: FC<Props> = ({
     noOptionsMessage: 'No tags found',
     onChange: onTagChange,
     placeholder,
-    styles: resetSelectStyles(),
     value,
     width,
     components: {

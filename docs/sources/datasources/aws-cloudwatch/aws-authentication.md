@@ -3,7 +3,7 @@ title = "Authentication"
 description = "AWS authentication"
 keywords = ["grafana", "aws", "authentication"]
 aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
-weight = 05
+weight = 5
 +++
 
 # AWS authentication

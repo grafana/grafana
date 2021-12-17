@@ -116,7 +116,10 @@ func (p *AlertingProxy) withReq(
 			var m map[string]interface{}
 			if err := json.Unmarshal(resp.Body(), &m); err == nil {
 				if message, ok := m["message"]; ok {
-					errMessage = message.(string)
+					errMessageStr, isString := message.(string)
+					if isString {
+						errMessage = errMessageStr
+					}
 				}
 			}
 		} else if strings.HasPrefix(resp.Header().Get("Content-Type"), "text/html") {
@@ -238,7 +241,7 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 		now = timeNow()
 	}
 
-	evaluator := eval.Evaluator{Cfg: cfg, Log: log}
+	evaluator := eval.Evaluator{Cfg: cfg, Log: log, DataSourceCache: datasourceCache}
 	evalResults, err := evaluator.ConditionEval(&evalCond, now, expressionService)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
@@ -255,7 +258,7 @@ func ErrResp(status int, err error, msg string, args ...interface{}) *response.N
 	if msg != "" {
 		err = errors.WithMessagef(err, msg, args...)
 	}
-	return response.Error(status, err.Error(), nil)
+	return response.Error(status, "API error", err)
 }
 
 // accessForbiddenResp creates a response of forbidden access.
