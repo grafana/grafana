@@ -1,6 +1,6 @@
 import { GrafanaTheme2, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
 import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '@grafana/schema';
-import { getGradientRange, GradientDirection, scaleGradient } from './gradientFills';
+import { getGradientRange, scaleGradient } from './gradientFills';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
@@ -86,7 +86,6 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
       let grd = scaleGradient(
         u,
         u.series[1].scale!,
-        GradientDirection.Up,
         steps.map((step) => {
           let color = tinycolor(theme.visualization.getColorByName(step.color));
 
