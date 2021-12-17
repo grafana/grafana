@@ -13,7 +13,6 @@ import {
   PanelData,
   LoadingState,
   applyFieldOverrides,
-  StreamingDataFrame,
   LiveChannelAddress,
 } from '@grafana/data';
 import { TablePanel } from '../table/TablePanel';
@@ -21,6 +20,7 @@ import { LivePanelOptions, MessageDisplayMode } from './types';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
+import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 interface Props extends PanelProps<LivePanelOptions> {}
 
