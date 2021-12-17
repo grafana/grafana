@@ -42,6 +42,10 @@ type ResourceStore interface {
 	GetResourcesPermissions(ctx context.Context, orgID int64, query GetResourcesPermissionsQuery) ([]ResourcePermission, error)
 }
 
+// Metadata contains user accesses for a given resource
+// Ex: map[string]bool{"create":true, "delete": true}
+type Metadata map[string]bool
+
 // HasGlobalAccess checks user access with globally assigned permissions only
 func HasGlobalAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
 	return func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
@@ -115,4 +119,44 @@ func ValidateScope(scope string) bool {
 		}
 	}
 	return !strings.ContainsAny(prefix, "*?")
+}
+
+func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map[string]Metadata {
+	metadata, initialized := allMetadata[id]
+	if !initialized {
+		metadata = Metadata{action: true}
+	} else {
+		metadata[action] = true
+	}
+	allMetadata[id] = metadata
+	return allMetadata
+}
+
+// GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
+func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs map[string]bool) (map[string]Metadata, error) {
+	allScope := GetResourceAllScope(resource)
+	allIDScope := GetResourceAllIDScope(resource)
+
+	// prefix of ID based scopes (resource:id)
+	idPrefix := Scope(resource, "id")
+	// index of the ID in the scope
+	idIndex := len(idPrefix) + 1
+
+	// Loop through permissions once
+	result := map[string]Metadata{}
+	for _, p := range permissions {
+		if p.Scope == "*" || p.Scope == allScope || p.Scope == allIDScope {
+			// Add global action to all resources
+			for id := range resourceIDs {
+				result = addActionToMetadata(result, p.Action, id)
+			}
+		} else {
+			if len(p.Scope) > idIndex && strings.HasPrefix(p.Scope, idPrefix) && resourceIDs[p.Scope[idIndex:]] {
+				// Add action to a specific resource
+				result = addActionToMetadata(result, p.Action, p.Scope[idIndex:])
+			}
+		}
+	}
+
+	return result, nil
 }
