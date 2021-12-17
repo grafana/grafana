@@ -251,7 +251,7 @@
     "@react-aria/interactions": "3.7.0",
     "@react-aria/menu": "3.3.0",
     "@react-aria/overlays": "3.7.2",
-    "@react-aria/utils": "3.10.0",
+    "@react-aria/utils": "3.11.0",
     "@react-stately/collections": "3.3.4",
     "@react-stately/menu": "3.2.3",
     "@react-stately/tree": "3.2.0",
