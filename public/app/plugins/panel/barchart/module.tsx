@@ -109,7 +109,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           min: -300,
           max: 300,
           step: 10,
-          marks: { '-300': 'left', 0: 'none', 300: 'right' },
+          marks: { '-300': 'Backward', 0: 'None', 300: 'Forward' },
           included: false,
         },
       })

@@ -50,6 +50,7 @@ function getBarCharScaleOrientation(orientation: VizOrientation) {
 export interface BarChartOptionsEX extends BarChartOptions {
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
   getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
+  fillOpacity?: number;
 }
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
@@ -64,6 +65,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   text,
   rawValue,
   getColor,
+  fillOpacity,
   allFrames,
   xTickLabelRotation,
   xTickLabelMaxLength,
@@ -95,6 +97,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     stacking,
     rawValue,
     getColor,
+    fillOpacity,
     formatValue,
     text,
     showValue,
@@ -121,6 +124,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   builder.addScale({
     scaleKey: 'x',
     isTime: false,
+    range: config.xRange,
     distribution: ScaleDistribution.Ordinal,
     orientation: vizOrientation.xOri,
     direction: vizOrientation.xDir,

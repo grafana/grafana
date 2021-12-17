@@ -1,4 +1,4 @@
-import uPlot, { Axis, AlignedData } from 'uplot';
+import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
@@ -12,6 +12,7 @@ import {
   VizLegendOptions,
 } from '@grafana/schema';
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -45,6 +46,7 @@ export interface BarsOptions {
   stacking: StackingMode;
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
   getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
+  fillOpacity?: number;
   formatValue: (seriesIdx: number, value: any) => string;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
@@ -57,7 +59,7 @@ export interface BarsOptions {
  * @internal
  */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
-  const { xOri, xDir: dir, rawValue, getColor, formatValue, showValue, xSpacing = 0 } = opts;
+  const { xOri, xDir: dir, rawValue, getColor, formatValue, fillOpacity = 1, showValue, xSpacing = 0 } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   const isStacked = opts.stacking !== StackingMode.None;
@@ -81,8 +83,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     const dim = isXHorizontal ? u.bbox.width : u.bbox.height;
     const _dir = dir * (isXHorizontal ? 1 : -1);
 
-    let splits: number[] = [];
-
     let dataLen = u.data[0].length;
     let lastIdx = dataLen - 1;
 
@@ -95,24 +95,48 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       skipMod = dataLen < maxTicks ? 0 : Math.ceil(dataLen / maxTicks);
     }
 
-    distribute(dataLen, groupWidth, groupDistr, null, (di, leftPct, widPct) => {
-      let groupLftPx = (dim * leftPct) / devicePixelRatio;
-      let groupWidPx = (dim * widPct) / devicePixelRatio;
+    let splits: number[] = [];
 
-      let groupCenterPx = groupLftPx + groupWidPx / 2;
+    // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
+    u.data[0].forEach((v, i) => {
+      let shouldSkip = skipMod !== 0 && (xSpacing > 0 ? i : lastIdx - i) % skipMod > 0;
 
-      let shouldSkip = skipMod !== 0 && (xSpacing > 0 ? di : lastIdx - di) % skipMod > 0;
-
-      // the splits array is % offsets (0..1) of the x dimension
-      // -1 is a temp reserved magic number used here indicate a skip and not upset TS
-      // we need to push all splits to maintain ordinal positions with u.data[0] for value lookup during xValues formatting below
-      splits.push(shouldSkip ? -1 : u.posToVal(groupCenterPx, 'x'));
+      if (!shouldSkip) {
+        splits.push(i);
+      }
     });
 
     return _dir === 1 ? splits : splits.reverse();
   };
 
-  const xValues: Axis.Values = (u, splits) => splits.map((s, i) => (s === -1 ? null : formatValue(0, u.data[0][i])));
+  // the splits passed into here are data[0] values looked up by the indices returned from splits()
+  const xValues: Axis.Values = (u, splits) => {
+    return splits.map((v) => formatValue(0, v));
+  };
+
+  // this expands the distr: 2 scale so that the indicies of each data[0] land at the proper justified positions
+  const xRange: Scale.Range = (u, min, max) => {
+    min = 0;
+    max = u.data[0].length - 1;
+
+    let pctOffset = 0;
+
+    // how far in is the first tick in % of full dimension
+    distribute(u.data[0].length, groupWidth, groupDistr, 0, (di, lftPct, widPct) => {
+      pctOffset = lftPct + widPct / 2;
+    });
+
+    // expand scale range by equal amounts on both ends
+    let rn = max - min; // TODO: clamp to 1?
+
+    let upScale = 1 / (1 - pctOffset * 2);
+    let offset = (upScale * rn - rn) / 2;
+
+    min -= offset;
+    max += offset;
+
+    return [min, max];
+  };
 
   let distrTwo = (groupCount: number, barCount: number) => {
     let out = Array.from({ length: barCount }, () => ({
@@ -245,8 +269,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         });
 
         barsColors.push({
-          fill: colors,
-          stroke: Array(u.data[i].length).fill(null),
+          fill: fillOpacity < 1 ? colors.map((c) => (c != null ? alpha(c, fillOpacity) : null)) : colors,
+          stroke: colors,
         });
       }
     }
@@ -394,6 +418,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       points: { show: false },
     },
     // scale & axis opts
+    xRange,
     xValues,
     xSplits,
 

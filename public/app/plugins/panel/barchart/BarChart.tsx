@@ -83,18 +83,15 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
 
   // Color by value
   let getColor: ((seriesIdx: number, valueIdx: number) => string) | undefined = undefined;
+
+  let fillOpacity = 1;
+
   if (props.data.colorByField) {
     const colorByField = props.data.colorByField;
     const disp = colorByField.display!;
-    const fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100.0;
+    fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100;
     // gradientMode? ignore?
-    getColor = (seriesIdx: number, valueIdx: number) => {
-      const v = disp(colorByField.values.get(valueIdx)).color!;
-      if (fillOpacity < 1) {
-        return alpha(v, fillOpacity);
-      }
-      return v;
-    };
+    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByField.values.get(valueIdx)).color!;
   }
 
   const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
@@ -134,6 +131,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       text,
       rawValue,
       getColor,
+      fillOpacity,
       allFrames: props.frames,
     });
   };
