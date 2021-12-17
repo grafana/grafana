@@ -13,11 +13,13 @@ import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { measureDataRenderDelay } from './measureDataRenderDelay';
+import { LivePerformance } from 'app/core/services/LivePerformance';
 
-export const createOnDataRenderDelay: (data: TimeSeriesPanelProps['data']) => GraphNGProps['onBeforeRerender'] = (
-  data
-) => {
-  if (!config.livePerformance.measureDataRenderDelay || data.state !== LoadingState.Streaming) {
+export const createOnDataRenderDelay: (
+  isLivePerfRunning: boolean,
+  state: TimeSeriesPanelProps['data']['state']
+) => GraphNGProps['onBeforeRerender'] = (isLivePerfRunning, state) => {
+  if (!isLivePerfRunning || state !== LoadingState.Streaming) {
     return undefined;
   }
 
@@ -39,7 +41,12 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   id,
 }) => {
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
-  const onBeforeRerender = createOnDataRenderDelay(data);
+
+  const isLivePerfRunning = LivePerformance.instance().isRunning();
+  const onBeforeRerender = useMemo(() => createOnDataRenderDelay(isLivePerfRunning, data.state), [
+    isLivePerfRunning,
+    data.state,
+  ]);
 
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
