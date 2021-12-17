@@ -115,7 +115,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
       userEvent.click(screen.getByRole('button', { name: 'host2' }));
     });
 
-    // very `getTagValues` was called once, and in the tags-param we did not receive `field1`
+    // verify `getTagValues` was called once, and in the tags-param we did not receive `field1`
     expect(mockedMeta.getTagValues).toHaveBeenCalledTimes(1);
     // need to ts-ignore the `.mock` part
     // @ts-ignore
@@ -126,7 +126,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
       userEvent.click(screen.getByRole('button', { name: 'cpudata' }));
     });
 
-    // very `getTagValues` was called once, and in the tags-param we did not receive `field1`
+    // verify `getTagValues` was called once, and in the tags-param we did not receive `field1`
     expect(mockedMeta.getAllMeasurementsForTags).toHaveBeenCalledTimes(1);
     // need to ts-ignore the `.mock` part
     // @ts-ignore
