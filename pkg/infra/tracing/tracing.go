@@ -14,7 +14,6 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	ol "github.com/opentracing/opentracing-go/log"
-	tlog "github.com/opentracing/opentracing-go/log"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/zipkin"
 	"go.opentelemetry.io/otel/attribute"
@@ -216,16 +215,6 @@ func (s OpentracingSpan) RecordError(err error, options ...trace.EventOption) {
 }
 
 func (s OpentracingSpan) AddEvents(keys []string, values []EventValue) {
-	if len(keys) > 1 {
-		if keys[1] == "message" {
-			s.span.LogFields(
-				tlog.Error(fmt.Errorf("%v", values[1].Str)),
-				tlog.String(keys[1], values[1].Str),
-			)
-			return
-		}
-	}
-
 	fields := []ol.Field{}
 	for i, v := range values {
 		if v.Str != "" {
