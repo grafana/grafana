@@ -119,7 +119,7 @@ func (ng *AlertNG) init() error {
 		BaseInterval:            baseInterval,
 		Logger:                  ng.Log,
 		MaxAttempts:             ng.Cfg.UnifiedAlerting.MaxAttempts,
-		Evaluator:               eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log},
+		Evaluator:               eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log, DataSourceCache: ng.DataSourceCache},
 		InstanceStore:           store,
 		RuleStore:               store,
 		AdminConfigStore:        store,

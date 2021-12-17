@@ -62,6 +62,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -322,11 +323,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -334,6 +339,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -391,6 +399,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on: []
 kind: pipeline
@@ -402,11 +416,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -414,6 +432,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -479,6 +500,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -805,6 +827,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on:
 - build-main
@@ -985,11 +1013,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -997,6 +1029,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -1046,6 +1081,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -1296,7 +1332,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads/${DRONE_TAG}
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -1357,6 +1393,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on:
 - oss-build-release
@@ -1429,11 +1471,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -1441,6 +1487,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.1-alpine
   name: redis
@@ -1518,6 +1567,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -1812,7 +1862,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads/${DRONE_TAG}
   depends_on:
   - package
   - redis-integration-tests
@@ -1858,7 +1908,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets-enterprise2
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2
+  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2/${DRONE_TAG}
   depends_on:
   - package-enterprise2
   - redis-integration-tests
@@ -1883,6 +1933,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -1975,11 +2031,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -1987,6 +2047,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -2036,6 +2099,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -2275,7 +2339,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: build-storybook
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -2324,6 +2388,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on:
 - oss-build-test-release
@@ -2394,11 +2464,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -2406,6 +2480,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.1-alpine
   name: redis
@@ -2482,6 +2559,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -2765,7 +2843,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: memcached-integration-tests
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
   depends_on:
   - package
   environment:
@@ -2811,7 +2889,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
   depends_on:
   - package-enterprise2
   environment:
@@ -2844,6 +2922,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -3045,11 +3129,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -3057,6 +3145,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -3105,6 +3196,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -3342,7 +3434,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: build-storybook
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   depends_on:
   - end-to-end-tests-server
   environment:
@@ -3353,7 +3445,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -3376,6 +3468,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 depends_on:
 - oss-build-release-branch
@@ -3441,11 +3539,15 @@ platform:
   os: linux
 services:
 - environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
     POSTGRES_DB: grafanatest
     POSTGRES_PASSWORD: grafanatest
     POSTGRES_USER: grafanatest
   image: postgres:12.3-alpine
   name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
 - environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
@@ -3453,6 +3555,9 @@ services:
     MYSQL_USER: grafana
   image: mysql:5.6.48
   name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.1-alpine
   name: redis
@@ -3528,6 +3633,7 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
+  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - initialize
@@ -3816,7 +3922,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: memcached-integration-tests
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
   depends_on:
   - package
   environment:
@@ -3827,7 +3933,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads
   depends_on:
   - package
   - redis-integration-tests
@@ -3862,7 +3968,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
   depends_on:
   - package-enterprise2
   environment:
@@ -3873,7 +3979,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets-enterprise2
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2
+  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-enterprise2
   depends_on:
   - package-enterprise2
   - redis-integration-tests
@@ -3895,6 +4001,12 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -4109,6 +4221,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: e84ccb068a1b18aa34aaee36b44d2372d6c97bac8becd42261661952ca847b0c
+hmac: 4a5d47ae5989a19e3a5f204853c7c61f7af67e0f712138b92afc4770f61d4223
 
 ...

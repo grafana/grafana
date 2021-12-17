@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -15,12 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type PreloadPlugin struct {
-	Path    string `json:"path"`
-	Version string `json:"version"`
-}
-
-func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]interface{}, error) {
+func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*models.DataSource, 0)
 
 	if c.OrgId != 0 {
@@ -47,7 +41,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 		}
 	}
 
-	dataSources := make(map[string]interface{})
+	dataSources := make(map[string]plugins.DataSourceDTO)
 
 	for _, ds := range orgDataSources {
 		url := ds.Url
@@ -56,81 +50,81 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
 		}
 
-		dsMap := map[string]interface{}{
-			"id":        ds.Id,
-			"uid":       ds.Uid,
-			"type":      ds.Type,
-			"name":      ds.Name,
-			"url":       url,
-			"isDefault": ds.IsDefault,
-			"access":    ds.Access,
+		dsDTO := plugins.DataSourceDTO{
+			ID:        ds.Id,
+			UID:       ds.Uid,
+			Type:      ds.Type,
+			Name:      ds.Name,
+			URL:       url,
+			IsDefault: ds.IsDefault,
+			Access:    string(ds.Access),
 		}
 
-		meta, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
+		plugin, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
 		if !exists {
 			c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
 			continue
 		}
-		dsMap["preload"] = meta.Preload
-		dsMap["module"] = meta.Module
-		dsMap["meta"] = &plugins.PluginMetaDTO{
-			JSONData:  meta.JSONData,
-			Signature: meta.Signature,
-			Module:    meta.Module,
-			BaseURL:   meta.BaseURL,
+		dsDTO.Preload = plugin.Preload
+		dsDTO.Module = plugin.Module
+		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
+			JSONData:  plugin.JSONData,
+			Signature: plugin.Signature,
+			Module:    plugin.Module,
+			BaseURL:   plugin.BaseURL,
 		}
 
-		jsonData := ds.JsonData
-		if jsonData == nil {
-			jsonData = simplejson.New()
+		if ds.JsonData == nil {
+			dsDTO.JSONData = make(map[string]interface{})
+		} else {
+			dsDTO.JSONData = ds.JsonData.MustMap()
 		}
-
-		dsMap["jsonData"] = jsonData
 
 		if ds.Access == models.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
-				dsMap["basicAuth"] = util.GetBasicAuthHeader(
+				dsDTO.BasicAuth = util.GetBasicAuthHeader(
 					ds.BasicAuthUser,
 					hs.DataSourcesService.DecryptedBasicAuthPassword(ds),
 				)
 			}
 			if ds.WithCredentials {
-				dsMap["withCredentials"] = ds.WithCredentials
+				dsDTO.WithCredentials = ds.WithCredentials
 			}
 
 			if ds.Type == models.DS_INFLUXDB_08 {
-				dsMap["username"] = ds.User
-				dsMap["password"] = hs.DataSourcesService.DecryptedPassword(ds)
-				dsMap["url"] = url + "/db/" + ds.Database
+				dsDTO.Username = ds.User
+				dsDTO.Password = hs.DataSourcesService.DecryptedPassword(ds)
+				dsDTO.URL = url + "/db/" + ds.Database
 			}
 
 			if ds.Type == models.DS_INFLUXDB {
-				dsMap["username"] = ds.User
-				dsMap["password"] = hs.DataSourcesService.DecryptedPassword(ds)
-				dsMap["url"] = url
+				dsDTO.Username = ds.User
+				dsDTO.Password = hs.DataSourcesService.DecryptedPassword(ds)
+				dsDTO.URL = url
 			}
 		}
 
 		if (ds.Type == models.DS_INFLUXDB) || (ds.Type == models.DS_ES) {
-			dsMap["database"] = ds.Database
+			dsDTO.Database = ds.Database
 		}
 
 		if ds.Type == models.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
-			jsonData.Set("directUrl", ds.Url)
+			ds.JsonData.Set("directUrl", ds.Url)
 		}
 
-		dataSources[ds.Name] = dsMap
+		dataSources[ds.Name] = dsDTO
 	}
 
 	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
 	// the datasource table)
 	for _, ds := range hs.pluginStore.Plugins(c.Req.Context(), plugins.DataSource) {
 		if ds.BuiltIn {
-			info := map[string]interface{}{
-				"type": ds.Type,
-				"name": ds.Name,
-				"meta": &plugins.PluginMetaDTO{
+			dto := plugins.DataSourceDTO{
+				Type:     string(ds.Type),
+				Name:     ds.Name,
+				JSONData: make(map[string]interface{}),
+				PluginMeta: &plugins.PluginMetaDTO{
 					JSONData:  ds.JSONData,
 					Signature: ds.Signature,
 					Module:    ds.Module,
@@ -138,10 +132,10 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 				},
 			}
 			if ds.Name == grafanads.DatasourceName {
-				info["id"] = grafanads.DatasourceID
-				info["uid"] = grafanads.DatasourceUID
+				dto.ID = grafanads.DatasourceID
+				dto.UID = grafanads.DatasourceUID
 			}
-			dataSources[ds.Name] = info
+			dataSources[ds.Name] = dto
 		}
 	}
 
@@ -155,10 +149,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		return nil, err
 	}
 
-	pluginsToPreload := make([]*PreloadPlugin, 0)
+	pluginsToPreload := make([]*plugins.PreloadPlugin, 0)
 	for _, app := range enabledPlugins[plugins.App] {
 		if app.Preload {
-			pluginsToPreload = append(pluginsToPreload, &PreloadPlugin{
+			pluginsToPreload = append(pluginsToPreload, &plugins.PreloadPlugin{
 				Path:    app.Module,
 				Version: app.Info.Version,
 			})
@@ -172,29 +166,28 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 
 	defaultDS := "-- Grafana --"
 	for n, ds := range dataSources {
-		dsM := ds.(map[string]interface{})
-		if isDefault, _ := dsM["isDefault"].(bool); isDefault {
+		if ds.IsDefault {
 			defaultDS = n
 		}
 	}
 
-	panels := map[string]interface{}{}
+	panels := make(map[string]plugins.PanelDTO)
 	for _, panel := range enabledPlugins[plugins.Panel] {
 		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 
-		panels[panel.ID] = map[string]interface{}{
-			"id":            panel.ID,
-			"module":        panel.Module,
-			"baseUrl":       panel.BaseURL,
-			"name":          panel.Name,
-			"info":          panel.Info,
-			"hideFromList":  panel.HideFromList,
-			"sort":          getPanelSort(panel.ID),
-			"skipDataQuery": panel.SkipDataQuery,
-			"state":         panel.State,
-			"signature":     panel.Signature,
+		panels[panel.ID] = plugins.PanelDTO{
+			ID:            panel.ID,
+			Name:          panel.Name,
+			Info:          panel.Info,
+			Module:        panel.Module,
+			BaseURL:       panel.BaseURL,
+			SkipDataQuery: panel.SkipDataQuery,
+			HideFromList:  panel.HideFromList,
+			ReleaseState:  string(panel.State),
+			Signature:     string(panel.Signature),
+			Sort:          getPanelSort(panel.ID),
 		}
 	}
 
