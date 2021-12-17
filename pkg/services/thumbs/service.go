@@ -51,24 +51,24 @@ func ProvideService(cfg *setting.Cfg, renderService rendering.Service) Service {
 	tempdir := filepath.Join(cfg.DataPath, "temp")
 	_ = os.MkdirAll(tempdir, 0700)
 
-	return &previewService{
+	return &thumbService{
 		renderer: renderer,
 		root:     root,
 		tempdir:  tempdir,
 	}
 }
 
-type previewService struct {
+type thumbService struct {
 	renderer dashRenderer
 	root     string
 	tempdir  string
 }
 
-func (hs *previewService) Enabled() bool {
+func (hs *thumbService) Enabled() bool {
 	return true
 }
 
-func (hs *previewService) parseImageReq(c *models.ReqContext, checkSave bool) *previewRequest {
+func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *previewRequest {
 	params := web.Params(c.Req)
 
 	size, ok := getPreviewSize(params[":size"])
@@ -105,7 +105,7 @@ func (hs *previewService) parseImageReq(c *models.ReqContext, checkSave bool) *p
 	return req
 }
 
-func (hs *previewService) GetImage(c *models.ReqContext) {
+func (hs *thumbService) GetImage(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
@@ -137,7 +137,7 @@ func (hs *previewService) GetImage(c *models.ReqContext) {
 	c.JSON(500, map[string]string{"path": rsp.Path, "error": "unknown!"})
 }
 
-func (hs *previewService) SetImage(c *models.ReqContext) {
+func (hs *thumbService) SetImage(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
@@ -203,7 +203,7 @@ func (hs *previewService) SetImage(c *models.ReqContext) {
 	c.JSON(200, map[string]int{"OK": len(fileBytes)})
 }
 
-func (hs *previewService) StartCrawler(c *models.ReqContext) response.Response {
+func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
@@ -225,7 +225,7 @@ func (hs *previewService) StartCrawler(c *models.ReqContext) response.Response {
 	return response.CreateNormalResponse(header, msg, 200)
 }
 
-func (hs *previewService) StopCrawler(c *models.ReqContext) response.Response {
+func (hs *thumbService) StopCrawler(c *models.ReqContext) response.Response {
 	_, err := hs.renderer.CrawlerCmd(&crawlCmd{
 		Action: "stop",
 	})
@@ -239,7 +239,7 @@ func (hs *previewService) StopCrawler(c *models.ReqContext) response.Response {
 }
 
 // Ideally this service would not require first looking up the full dashboard just to bet the id!
-func (hs *previewService) getStatus(c *models.ReqContext, uid string, checkSave bool) int {
+func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bool) int {
 	query := models.GetDashboardQuery{Uid: uid, OrgId: c.OrgId}
 
 	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {

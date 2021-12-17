@@ -327,9 +327,9 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Get("/uid/:uid", routing.Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/uid/:uid", routing.Wrap(hs.DeleteDashboardByUID))
 
-			if hs.PreviewService != nil {
-				dashboardRoute.Get("/uid/:uid/img/:size/:theme", hs.PreviewService.GetImage)
-				dashboardRoute.Post("/uid/:uid/img/:size/:theme", hs.PreviewService.SetImage)
+			if hs.ThumbService != nil {
+				dashboardRoute.Get("/uid/:uid/img/:size/:theme", hs.ThumbService.GetImage)
+				dashboardRoute.Post("/uid/:uid/img/:size/:theme", hs.ThumbService.SetImage)
 			}
 
 			dashboardRoute.Post("/calculate-diff", routing.Wrap(CalculateDashboardDiff))
@@ -459,11 +459,6 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetSettings))
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(PauseAllAlerts))
-
-		if hs.PreviewService != nil {
-			adminRoute.Post("/crawler/start", reqGrafanaAdmin, routing.Wrap(hs.PreviewService.StartCrawler))
-			adminRoute.Post("/crawler/stop", reqGrafanaAdmin, routing.Wrap(hs.PreviewService.StopCrawler))
-		}
 
 		adminRoute.Post("/provisioning/dashboards/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDashboards)), routing.Wrap(hs.AdminProvisioningReloadDashboards))
 		adminRoute.Post("/provisioning/plugins/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersPlugins)), routing.Wrap(hs.AdminProvisioningReloadPlugins))

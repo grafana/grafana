@@ -95,7 +95,7 @@ type HTTPServer struct {
 	ShortURLService           shorturls.Service
 	Live                      *live.GrafanaLive
 	LivePushGateway           *pushhttp.Gateway
-	PreviewService            thumbs.Service
+	ThumbService              thumbs.Service
 	ContextHandler            *contexthandler.ContextHandler
 	SQLStore                  *sqlstore.SQLStore
 	AlertEngine               *alerting.AlertEngine
@@ -126,7 +126,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginDashboardManager plugins.PluginDashboardManager, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
-	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, previewService thumbs.Service,
+	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, thumbService thumbs.Service,
 	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	loginService login.Service, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
@@ -163,7 +163,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AuthTokenService:          userTokenService,
 		cleanUpService:            cleanUpService,
 		ShortURLService:           shortURLService,
-		PreviewService:            previewService,
+		ThumbService:              thumbService,
 		RemoteCacheService:        remoteCache,
 		ProvisioningService:       provisioningService,
 		Login:                     loginService,
