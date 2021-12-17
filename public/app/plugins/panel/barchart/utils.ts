@@ -108,6 +108,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   builder.addScale({
     scaleKey: 'x',
     isTime: false,
+    range: config.xRange,
     distribution: ScaleDistribution.Ordinal,
     orientation: vizOrientation.xOri,
     direction: vizOrientation.xDir,
