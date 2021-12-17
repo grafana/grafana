@@ -6,6 +6,7 @@ import { StoreState } from 'app/types';
 import { connect, ConnectedProps } from 'react-redux';
 import { getNavModel } from '../../core/selectors/navModel';
 import { createOrganization } from './state/actions';
+import { getConfig } from 'app/core/config';
 
 const validateOrg = async (orgName: string) => {
   try {
@@ -37,8 +38,9 @@ interface CreateOrgFormDTO {
 }
 
 export const NewOrgPage: FC<Props> = ({ navModel, createOrganization }) => {
-  const createOrg = (newOrg: { name: string }) => {
-    createOrganization(newOrg);
+  const createOrg = async (newOrg: { name: string }) => {
+    await createOrganization(newOrg);
+    window.location.href = getConfig().appSubUrl + '/org';
   };
 
   return (
