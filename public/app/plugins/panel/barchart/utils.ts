@@ -391,12 +391,18 @@ export function prepareBarChartDisplayValues(
     } as BarChartDisplayValues;
   }
 
-  if (firstField.type === FieldType.time) {
+  if (firstField.type === FieldType.time && !firstField.config.unit) {
+    firstField.config.unit = 'time:YYYY-MM-DD';
+    firstField.display = getDisplayProcessor({
+      field: firstField,
+      theme,
+    });
     // TODO: make sure a reasonable format is configured
+    console.log('TIME FIELD', firstField.config.unit);
   }
 
   if (colorByField && fields.length > 1) {
-    fields = [fields[0]];
+    fields = [fields.filter((f) => f === colorByField)[0]];
   }
 
   if (isLegendOrdered(options.legend)) {
