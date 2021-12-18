@@ -6,9 +6,9 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   getFieldColorModeForField,
+  getFieldDisplayName,
   getFieldSeriesColor,
   GrafanaTheme2,
-  MutableDataFrame,
   outerJoinDataFrames,
   VizOrientation,
 } from '@grafana/data';
@@ -289,34 +289,6 @@ function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLengt
 }
 
 /** @internal */
-export function preparePlotFrame(data: DataFrame[]) {
-  const firstFrame = data[0];
-
-  // find first string field (x labels)
-  let xField = firstFrame.fields.find((f) => f.type === FieldType.string);
-
-  if (!xField) {
-    // fall back to first time field
-    xField = firstFrame.fields.find((f) => f.type === FieldType.time);
-
-    if (!xField) {
-      throw new Error('No string or time fields found');
-    }
-  }
-
-  const resultFrame = new MutableDataFrame();
-  resultFrame.addField(xField);
-
-  for (const f of firstFrame.fields) {
-    if (f.type === FieldType.number) {
-      resultFrame.addField(f);
-    }
-  }
-
-  return resultFrame;
-}
-
-/** @internal */
 export function prepareBarChartDisplayValues(
   series: DataFrame[],
   theme: GrafanaTheme2,
@@ -333,41 +305,25 @@ export function prepareBarChartDisplayValues(
   }
 
   // Color by a field different than the input
+  let colorByField: Field | undefined = undefined;
   if (options.colorByField) {
-    const colorByField = findField(frame, options.colorByField);
+    colorByField = findField(frame, options.colorByField);
     if (!colorByField) {
       return { warn: 'Color field not found' } as BarChartDisplayValues;
     }
-    // find first string field
-    let xField = frame.fields.find((f) => f !== colorByField && f.type === FieldType.string);
-    if (!xField) {
-      // or first time field
-      xField = frame.fields.find((f) => f !== colorByField && f.type === FieldType.time);
-    }
-    if (!xField) {
-      return { aligned: frame, colorByField, warn: 'Missing X field' } as BarChartDisplayValues;
-    }
-
-    // Single Y field
-    const yField = frame.fields.find((f) => f.type === FieldType.number && f !== colorByField && f !== xField);
-    if (!yField) {
-      return { aligned: frame, colorByField, warn: 'Missing Y field' } as BarChartDisplayValues;
-    }
-
-    return {
-      aligned: frame,
-      colorByField,
-      display: {
-        fields: [xField, yField],
-        length: xField.values.length,
-      },
-    };
   }
 
+  let xField: Field | undefined = undefined;
   let stringField: Field | undefined = undefined;
   let timeField: Field | undefined = undefined;
   let fields: Field[] = [];
   for (const field of frame.fields) {
+    // Check for explicit x axis configuration
+    if (options.xField && !xField && options.xField === getFieldDisplayName(field, frame)) {
+      xField = field;
+      continue;
+    }
+
     switch (field.type) {
       case FieldType.string:
         if (!stringField) {
@@ -418,7 +374,10 @@ export function prepareBarChartDisplayValues(
     }
   }
 
-  const firstField = stringField || timeField;
+  let firstField = xField;
+  if (!firstField) {
+    firstField = stringField || timeField;
+  }
 
   if (!firstField) {
     return {
@@ -430,6 +389,14 @@ export function prepareBarChartDisplayValues(
     return {
       warn: 'No numeric fields found',
     } as BarChartDisplayValues;
+  }
+
+  if (firstField.type === FieldType.time) {
+    // TODO: make sure a reasonable format is configured
+  }
+
+  if (colorByField && fields.length > 1) {
+    fields = [fields[0]];
   }
 
   if (isLegendOrdered(options.legend)) {
@@ -447,6 +414,7 @@ export function prepareBarChartDisplayValues(
 
   return {
     aligned: frame,
+    colorByField,
     display: {
       fields,
       length: firstField.values.length,

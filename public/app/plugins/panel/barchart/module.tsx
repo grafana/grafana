@@ -64,6 +64,13 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
   })
   .setPanelOptions((builder) => {
     builder
+      .addFieldNamePicker({
+        path: 'xField',
+        name: 'X Axis',
+        settings: {
+          placeholderText: 'First string or time field',
+        },
+      })
       .addRadio({
         path: 'orientation',
         name: 'Orientation',
