@@ -6,7 +6,6 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   getFieldColorModeForField,
-  getFieldDisplayName,
   getFieldSeriesColor,
   GrafanaTheme2,
   outerJoinDataFrames,
@@ -314,13 +313,18 @@ export function prepareBarChartDisplayValues(
   }
 
   let xField: Field | undefined = undefined;
+  if (options.xField) {
+    xField = findField(frame, options.xField);
+    if (!xField) {
+      return { warn: 'Configured x field not found' } as BarChartDisplayValues;
+    }
+  }
+
   let stringField: Field | undefined = undefined;
   let timeField: Field | undefined = undefined;
   let fields: Field[] = [];
   for (const field of frame.fields) {
-    // Check for explicit x axis configuration
-    if (options.xField && !xField && options.xField === getFieldDisplayName(field, frame)) {
-      xField = field;
+    if (field === xField) {
       continue;
     }
 
@@ -391,18 +395,21 @@ export function prepareBarChartDisplayValues(
     } as BarChartDisplayValues;
   }
 
+  // Pick a shorter date format unless configured explicitly
   if (firstField.type === FieldType.time && !firstField.config.unit) {
     firstField.config.unit = 'time:YYYY-MM-DD';
     firstField.display = getDisplayProcessor({
       field: firstField,
       theme,
     });
-    // TODO: make sure a reasonable format is configured
-    console.log('TIME FIELD', firstField.config.unit);
   }
 
+  // Show the first number value
   if (colorByField && fields.length > 1) {
-    fields = [fields.filter((f) => f === colorByField)[0]];
+    const firstNumber = fields.find((f) => f !== colorByField);
+    if (firstNumber) {
+      fields = [firstNumber];
+    }
   }
 
   if (isLegendOrdered(options.legend)) {
