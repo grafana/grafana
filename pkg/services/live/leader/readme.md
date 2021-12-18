@@ -31,7 +31,7 @@ How to solve:
 * Acquired leadership contains leadership ID and expiration time 
 * While the leader is alive it prolongs entry in Redis periodically
 * Each subscription on each node checks entry state and if the entry disappeared or leadership ID changed we consider the leader gone – thus we disconnect a client to let it re-initialize streams. 
-* Upon reconnect we whether have an existing leader or can acquire leadership.
+* Upon reconnect we check whether we have an existing leader or can acquire leadership.
 
 ### Failure scenario #2: Channel leader node does not respond on subscribe
 
@@ -49,6 +49,8 @@ How to solve:
 
 Expiration should be several touches.
 Expiration should be several survey timeouts.
+
+Request to Redis timeout (200ms) + touch interval (3 secs) ~ leadership entry expiration (10 secs) 
 
 We can count failure count, at some point close stream. We can make retries at this point.
 
@@ -75,8 +77,7 @@ client.OnTransportWrite(TransportWriteEvent)
 
 type TransportWriteEvent struct {
   Data []byte
-  Channel string
-  Publication *protocol.Publication
+  Reply *protocol.Reply
 }
 ```
 
@@ -88,10 +89,22 @@ several leader check in a row.
 Need to re-check that leadership ID is still the same (and prolong it on expiration time atomically).
 Otherwise - return an error.
 
-### Failure scenario #7: Stream is terminated
+Think about timeouts more!
+
+### Failure scenario #7: Stream is terminated with error
 
 At this moment we re-establishing it immediately. Same user and same data which was used initially.
 
 This means some events can be lost? Should we notify subscribers that it's time to resubscribe from scratch?
 
-Maybe we should restart stream with a new leadershipID? This will allow re-establishing existing subs.
+Close RunStream and exit from RunStream manager, nothing will touch leadership.
+
+Call Clean leader! If it fails leadership will expire anyway.
+
+### Failure scenario #8: Stream is cleanly finished
+
+Possible solutions:
+
+* Unsubscribe all channels? In Centrifuge is it possible to do?
+* Send empty message?
+* Send special frame field?

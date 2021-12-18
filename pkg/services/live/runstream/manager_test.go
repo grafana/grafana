@@ -31,7 +31,7 @@ func TestStreamManager_Run(t *testing.T) {
 	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockChannelPublisher, mockNumSubscribersGetter, mockContextGetter)
+	manager := NewManager(mockChannelPublisher, mockNumSubscribersGetter, mockContextGetter, nil, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -52,7 +52,7 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter, nil, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -94,12 +94,12 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 		return ctx.Err()
 	}).Times(1)
 
-	result, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "1/test", "test", nil, testPluginContext, mockStreamRunner, false)
+	result, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "1/test", "test", nil, testPluginContext, mockStreamRunner, "", false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 
 	// try submit the same.
-	result, err = manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "1/test", "test", nil, backend.PluginContext{}, mockStreamRunner, false)
+	result, err = manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "1/test", "test", nil, backend.PluginContext{}, mockStreamRunner, "", false)
 	require.NoError(t, err)
 	require.True(t, result.StreamExists)
 
@@ -117,7 +117,7 @@ func TestStreamManager_SubmitStream_DifferentOrgID(t *testing.T) {
 	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter, nil, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -163,12 +163,12 @@ func TestStreamManager_SubmitStream_DifferentOrgID(t *testing.T) {
 		return ctx.Err()
 	}).Times(1)
 
-	result, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "1/test", "test", nil, backend.PluginContext{}, mockStreamRunner1, false)
+	result, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "1/test", "test", nil, backend.PluginContext{}, mockStreamRunner1, "", false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 
 	// try submit the same channel but different orgID.
-	result, err = manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 2}, "2/test", "test", nil, backend.PluginContext{}, mockStreamRunner2, false)
+	result, err = manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 2}, "2/test", "test", nil, backend.PluginContext{}, mockStreamRunner2, "", false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 
@@ -193,6 +193,7 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 		mockPacketSender,
 		mockNumSubscribersGetter,
 		mockContextGetter,
+		nil, nil,
 		WithCheckConfig(10*time.Millisecond, 3),
 	)
 
@@ -219,7 +220,7 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 		return ctx.Err()
 	}).Times(1)
 
-	_, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "1/test", "test", nil, backend.PluginContext{}, mockStreamRunner, false)
+	_, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "1/test", "test", nil, backend.PluginContext{}, mockStreamRunner, "", false)
 	require.NoError(t, err)
 
 	waitWithTimeout(t, startedCh, time.Second)
@@ -235,7 +236,7 @@ func TestStreamManager_SubmitStream_ErrorRestartsRunStream(t *testing.T) {
 	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter, nil, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -273,7 +274,7 @@ func TestStreamManager_SubmitStream_ErrorRestartsRunStream(t *testing.T) {
 		return errors.New("boom")
 	}).Times(numErrors + 1)
 
-	result, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "test", "test", nil, testPluginContext, mockStreamRunner, false)
+	result, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "test", "test", nil, testPluginContext, mockStreamRunner, "", false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 
@@ -288,7 +289,7 @@ func TestStreamManager_SubmitStream_NilErrorStopsRunStream(t *testing.T) {
 	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter, nil, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -307,7 +308,7 @@ func TestStreamManager_SubmitStream_NilErrorStopsRunStream(t *testing.T) {
 		return nil
 	}).Times(1)
 
-	result, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "test", "test", nil, backend.PluginContext{}, mockStreamRunner, false)
+	result, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "test", "test", nil, backend.PluginContext{}, mockStreamRunner, "", false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 	waitWithTimeout(t, result.CloseNotify, time.Second)
@@ -321,7 +322,7 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter, nil, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -366,7 +367,7 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 		return nil
 	}).Times(2)
 
-	result, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "test", "test", nil, testPluginContext, mockStreamRunner, false)
+	result, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "test", "test", nil, testPluginContext, mockStreamRunner, "", false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 
@@ -387,7 +388,7 @@ func TestStreamManager_HandleDatasourceDelete(t *testing.T) {
 	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter, nil, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -422,7 +423,7 @@ func TestStreamManager_HandleDatasourceDelete(t *testing.T) {
 		return ctx.Err()
 	}).Times(1)
 
-	result, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "test", "test", nil, testPluginContext, mockStreamRunner, false)
+	result, err := manager.SubmitStream(context.Background(), &models.SignedInUser{UserId: 2, OrgId: 1}, "test", "test", nil, testPluginContext, mockStreamRunner, "", false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 

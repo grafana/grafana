@@ -47,4 +47,11 @@ func TestRedisCacheStorage(t *testing.T) {
 	ok, err = m.TouchLeader(ctx, "test", "leadershipID2")
 	require.NoError(t, err)
 	require.False(t, ok)
+
+	err = m.CleanLeader(ctx, "test")
+	require.NoError(t, err)
+
+	ok, err = m.TouchLeader(ctx, "test", "leadershipID")
+	require.NoError(t, err)
+	require.False(t, ok)
 }
