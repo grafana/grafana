@@ -109,28 +109,28 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           }
 
           // Support dynamic values
-          if( check.state.fields ) {
-            const values = { ...check.state.base }; 
-            for(const [key, val] of Object.entries(check.state.fields)) {
-              if(val) {
-                (values as any)[key] = feature.get(val);
+          if (check.state.fields) {
+            const values = { ...check.state.base };
+            for (const [key, val] of Object.entries(check.state.fields)) {
+              if (val) {
+                values[key] = feature.get(val);
               }
             }
-            if(isPoint) {
+            if (isPoint) {
               return check.state.maker(values);
             }
             return polyStyle(values);
           }
 
           // Lazy create the style object
-          if(isPoint) {
-            if(!check.point) {
+          if (isPoint) {
+            if (!check.point) {
               check.point = check.state.maker(check.state.base);
             }
             return check.point;
           }
 
-          if(!check.poly) {
+          if (!check.poly) {
             check.poly = polyStyle(check.state.base);
           }
           return check.poly;
