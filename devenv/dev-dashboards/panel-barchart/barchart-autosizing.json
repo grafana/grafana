@@ -194,25 +194,7 @@
               "type": "linear"
             }
           },
-          "mappings": [
-            {
-              "options": {
-                "ERROR": {
-                  "color": "red",
-                  "index": 2
-                },
-                "OK": {
-                  "color": "green",
-                  "index": 0
-                },
-                "WARN": {
-                  "color": "yellow",
-                  "index": 1
-                }
-              },
-              "type": "value"
-            }
-          ],
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -233,7 +215,30 @@
               "id": "byName",
               "options": "Status"
             },
-            "properties": []
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "ERROR": {
+                        "color": "red",
+                        "index": 2
+                      },
+                      "OK": {
+                        "color": "green",
+                        "index": 0
+                      },
+                      "WARN": {
+                        "color": "orange",
+                        "index": 1
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -645,7 +650,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 33,
+  "schemaVersion": 34,
   "style": "dark",
   "tags": [
     "gdev",
