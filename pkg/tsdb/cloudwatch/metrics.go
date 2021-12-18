@@ -317,7 +317,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/CodeGuruProfiler":        {},
 	"AWS/Cognito":                 {"Operation", "RiskLevel", "UserPoolId", "UserPool", "UserPoolClient", "IdentityProvider"},
 	"AWS/Connect":                 {"InstanceId", "MetricGroup", "ContactFlowName", "SigningKeyId", "TypeOfConnection", "Participant", "QueueName", "StreamType"},
-	"AWS/DataLifecycleManager":    {"DLMPolicyId"}, 
+	"AWS/DataLifecycleManager":    {"DLMPolicyId"},
 	"AWS/DataSync":                {"AgentId", "TaskId"},
 	"AWS/DDoSProtection":          {"ResourceArn", "AttackVector", "MitigationAction", "Protocol", "SourcePort", "DestinationPort", "SourceIp", "SourceAsn", "TcpFlags"},
 	"AWS/DMS":                     {"ReplicationInstanceIdentifier", "ReplicationTaskIdentifier"},
