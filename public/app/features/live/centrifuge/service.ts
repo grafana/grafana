@@ -53,6 +53,7 @@ export class CentrifugeService implements CentrifugeSrv {
   constructor(private deps: CentrifugeSrvDeps) {
     this.dataStreamSubscriberReadiness = deps.dataStreamSubscriberReadiness.pipe(share(), startWith(true));
     const liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
+    // TODO: manually set grafana_session cookie
     this.centrifuge = new Centrifuge(liveUrl, {});
     this.centrifuge.setConnectData({
       sessionId: deps.sessionId,

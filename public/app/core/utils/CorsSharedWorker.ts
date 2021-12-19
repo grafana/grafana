@@ -11,13 +11,7 @@ export class CorsSharedWorker extends SharedWorker {
     urlParts.pop();
     const scriptsBasePathUrl = `${urlParts.join('/')}/`;
 
-    const importScripts = `importScripts('${scriptUrl}');`;
-    const objectURL = URL.createObjectURL(
-      new Blob([`__webpack_worker_public_path__ = '${scriptsBasePathUrl}'; ${importScripts}`], {
-        type: 'application/javascript',
-      })
-    );
-    console.log('objectUrl:' + objectURL);
-    super(objectURL, options);
+    const source = `__webpack_worker_public_path__ = '${scriptsBasePathUrl}'; importScripts('${scriptUrl}');`;
+    super(`data:application/javascript;base64,${btoa(source)}`, options);
   }
 }
