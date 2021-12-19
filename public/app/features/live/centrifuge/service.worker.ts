@@ -47,6 +47,9 @@ export type RemoteCentrifugeService = typeof workObj;
 
 comlink.expose(workObj);
 
+// @ts-ignore
+self.onconnect = (e: { ports: comlink.Endpoint[] }) => comlink.expose(workObj, e.ports[0]);
+
 export default class {
   constructor() {}
 }

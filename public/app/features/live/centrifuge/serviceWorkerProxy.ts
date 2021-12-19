@@ -7,12 +7,16 @@ import { asyncScheduler, Observable, observeOn } from 'rxjs';
 import { LiveChannelAddress, LiveChannelEvent } from '@grafana/data';
 import { promiseWithRemoteObservableAsObservable } from './remoteObservable';
 import { createWorker } from './createCentrifugeServiceWorker';
+import { createWorker as createSharedWorker } from './createCentrifugeServiceSharedWorker';
 
 export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
   private centrifugeWorker;
 
   constructor(deps: CentrifugeSrvDeps) {
-    this.centrifugeWorker = comlink.wrap<RemoteCentrifugeService>(createWorker() as comlink.Endpoint);
+    this.centrifugeWorker = window.SharedWorker
+      ? comlink.wrap<RemoteCentrifugeService>(createSharedWorker())
+      : comlink.wrap<RemoteCentrifugeService>(createWorker());
+
     this.centrifugeWorker.initialize(deps, comlink.proxy(deps.dataStreamSubscriberReadiness));
   }
 
