@@ -176,24 +176,27 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
             };
           }
 
-          const seriesList = [];
+          const seriesList: any[] = [];
 
           if (res.data && res.data.length > 0) {
-            switch (request.targets[0].resultFormat) {
-              case 'logs':
-                seriesList.push(this.getTable(res.data, filteredRequest, { preferredVisualisationType: 'logs' }));
-                break;
-              case 'table': {
-                seriesList.push(this.getTable(res.data, filteredRequest, {}));
-                break;
-              }
-              default: {
-                for (let i = 0; i < res.data.length; i++) {
-                  seriesList.push(this.getSeries(res.data[i], request.targets[0].resultFormat));
+            filteredRequest.targets.forEach((target) => {
+              const filteredFrames = res.data.filter((t) => t.refId === target.refId);
+              switch (target.resultFormat) {
+                case 'logs':
+                  seriesList.push(this.getTable(filteredFrames, target, { preferredVisualisationType: 'logs' }));
+                  break;
+                case 'table': {
+                  seriesList.push(this.getTable(filteredFrames, target, {}));
+                  break;
                 }
-                break;
+                default: {
+                  for (let i = 0; i < filteredFrames.length; i++) {
+                    seriesList.push(this.getSeries(filteredFrames[i]));
+                  }
+                  break;
+                }
               }
-            }
+            });
           }
 
           return { data: seriesList };
@@ -205,42 +208,44 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this.classicQuery(request);
   }
 
-  getSeries(frame: DataFrame, resultFormat: any) {
+  getSeries(frame: DataFrame) {
     return {
       ...frame,
       meta: {
         ...frame.meta,
-        preferredVisualisationType: resultFormat,
+        executedQueryString: frame.meta?.executedQueryString,
       },
     };
   }
 
-  getTable(dfs: DataFrame[], request: DataQueryRequest<InfluxQuery>, meta: QueryResultMeta): TableModel {
+  getTable(dfs: DataFrame[], target: any, meta: QueryResultMeta): TableModel {
     let table = new TableModel();
-    table.meta = {
-      ...meta,
-      // executedQueryString: request.targets[0].query,
-    };
 
-    request.targets.forEach((target) => {
-      if (dfs.length > 0) {
-        table.refId = dfs[0].refId;
-        table = this.getTableCols(dfs, table, target);
+    if (dfs.length > 0) {
+      table.meta = {
+        ...meta,
+        executedQueryString: dfs[0].meta?.executedQueryString,
+        preferredVisualisationType: 'table',
+      };
 
-        // if group by tag(s) added
-        if (dfs[0].fields[1].labels) {
-          let dfsByLabels: any = groupBy(dfs, (df: DataFrame) => Object.values(df.fields[1].labels!));
-          const labels = Object.keys(dfsByLabels);
-          dfsByLabels = Object.values(dfsByLabels);
+      table.refId = target.refId;
+      table = this.getTableCols(dfs, table, target);
 
-          for (let i = 0; i < dfsByLabels.length; i++) {
-            table = this.getTableRows(dfsByLabels[i], table, [...labels[i].split(',')]);
-          }
-        } else {
-          table = this.getTableRows(dfs, table, []);
+      // if group by tag(s) added
+      if (dfs[0].fields[1].labels) {
+        let dfsByLabels: any = groupBy(dfs, (df: DataFrame) =>
+          df.fields[1].labels ? Object.values(df.fields[1].labels!) : null
+        );
+        const labels = Object.keys(dfsByLabels);
+        dfsByLabels = Object.values(dfsByLabels);
+
+        for (let i = 0; i < dfsByLabels.length; i++) {
+          table = this.getTableRows(dfsByLabels[i], table, [...labels[i].split(',')]);
         }
+      } else {
+        table = this.getTableRows(dfs, table, []);
       }
-    });
+    }
 
     return table;
   }

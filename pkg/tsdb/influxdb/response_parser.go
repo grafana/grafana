@@ -19,7 +19,7 @@ var (
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$(\s*([\@\w-]+?))*`)
 )
 
-func (rp *ResponseParser) Parse(buf io.ReadCloser, query *Query) *backend.QueryDataResponse {
+func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.QueryDataResponse {
 	resp := backend.NewQueryDataResponse()
 	queryRes := backend.DataResponse{}
 
@@ -36,15 +36,17 @@ func (rp *ResponseParser) Parse(buf io.ReadCloser, query *Query) *backend.QueryD
 		return resp
 	}
 
-	frames := data.Frames{}
-	for _, result := range response.Results {
-		frames = append(frames, transformRows(result.Series, query)...)
+	for i, result := range response.Results {
 		if result.Error != "" {
 			queryRes.Error = fmt.Errorf(result.Error)
+			resp.Responses["A"] = queryRes
+			return resp
 		}
+		frames := data.Frames{}
+		frames = append(frames, transformRows(result.Series, queries[i])...)
+		queryRes.Frames = frames
+		resp.Responses[queries[i].RefID] = queryRes
 	}
-	queryRes.Frames = frames
-	resp.Responses["A"] = queryRes
 
 	return resp
 }
@@ -58,7 +60,7 @@ func parseJSON(buf io.ReadCloser) (Response, error) {
 	return response, err
 }
 
-func transformRows(rows []Row, query *Query) data.Frames {
+func transformRows(rows []Row, query Query) data.Frames {
 	frames := data.Frames{}
 	for _, row := range rows {
 		for columnIndex, column := range row.Columns {
@@ -86,14 +88,25 @@ func transformRows(rows []Row, query *Query) data.Frames {
 			// set a nice name on the value-field
 			valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 
-			frames = append(frames, data.NewFrame(name, timeField, valueField))
+			frames = append(frames, newDataFrame(name, query.RawQuery, *timeField, *valueField))
 		}
 	}
 
 	return frames
 }
 
-func formatFrameName(row Row, column string, query *Query) string {
+func newDataFrame(name string, queryString string, timeField data.Field, valueField data.Field) *data.Frame {
+	frame := data.NewFrame(name, &timeField, &valueField)
+	if queryString != "" {
+		frame.Meta = &data.FrameMeta{
+			ExecutedQueryString: queryString,
+		}
+	}
+
+	return frame
+}
+
+func formatFrameName(row Row, column string, query Query) string {
 	if query.Alias == "" {
 		return buildFrameNameFromQuery(row, column)
 	}
