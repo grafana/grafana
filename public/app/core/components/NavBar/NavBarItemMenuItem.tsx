@@ -17,7 +17,7 @@ export interface NavBarItemMenuItemProps {
 }
 
 export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuItemProps): ReactElement {
-  const { onClose } = useNavBarItemMenuContext();
+  const { onClose, onLeft } = useNavBarItemMenuContext();
   const { key, rendered } = item;
   const ref = useRef<HTMLLIElement>(null);
   const isDisabled = state.disabledKeys.has(key);
@@ -48,7 +48,7 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
   const { keyboardProps } = useKeyboard({
     onKeyDown: (e) => {
       if (e.key === 'ArrowLeft') {
-        onClose();
+        onLeft();
       }
       e.continuePropagation();
     },

@@ -29,7 +29,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   const state = useMenuTriggerState({ ...rest });
 
   // Get props for the menu trigger and menu elements
-  const ref = React.useRef(null);
+  const ref = React.useRef<HTMLButtonElement>(null);
   const { menuTriggerProps, menuProps } = useMenuTrigger({}, state, ref);
 
   // style to the focused menu item
@@ -132,7 +132,6 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   const { overlayProps } = useOverlay(
     {
       onClose: () => state.close(),
-      shouldCloseOnBlur: true,
       isOpen: state.isOpen,
       isDismissable: true,
     },
@@ -143,7 +142,17 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     <div className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
       {element}
       {state.isOpen && (
-        <NavBarItemMenuContext.Provider value={{ menuProps, menuHasFocus, onClose: () => state.close() }}>
+        <NavBarItemMenuContext.Provider
+          value={{
+            menuProps,
+            menuHasFocus,
+            onClose: () => state.close(),
+            onLeft: () => {
+              setMenuHasFocus(false);
+              ref.current?.focus();
+            },
+          }}
+        >
           <FocusScope restoreFocus>
             <div {...overlayProps} ref={overlayRef}>
               <DismissButton onDismiss={() => state.close()} />
