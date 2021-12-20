@@ -1,4 +1,4 @@
-import uPlot, { Axis, AlignedData } from 'uplot';
+import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
@@ -75,24 +75,42 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   barMark.style.background = 'rgba(255,255,255,0.4)';
 
   const xSplits: Axis.Splits = (u: uPlot) => {
-    const dim = isXHorizontal ? u.bbox.width : u.bbox.height;
     const _dir = dir * (isXHorizontal ? 1 : -1);
 
-    let splits: number[] = [];
-
-    distribute(u.data[0].length, groupWidth, groupDistr, null, (di, leftPct, widPct) => {
-      let groupLftPx = (dim * leftPct) / devicePixelRatio;
-      let groupWidPx = (dim * widPct) / devicePixelRatio;
-
-      let groupCenterPx = groupLftPx + groupWidPx / 2;
-
-      splits.push(u.posToVal(groupCenterPx, 'x'));
-    });
+    // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
+    let splits = u.data[0].map((v, i) => i);
 
     return _dir === 1 ? splits : splits.reverse();
   };
 
-  const xValues: Axis.Values = (u) => u.data[0].map((x) => formatValue(0, x));
+  // the splits passed into here are data[0] values looked up by the indices returned from splits()
+  const xValues: Axis.Values = (u, splits) => {
+    return splits.map((v) => formatValue(0, v));
+  };
+
+  // this expands the distr: 2 scale so that the indicies of each data[0] land at the proper justified positions
+  const xRange: Scale.Range = (u, min, max) => {
+    min = 0;
+    max = u.data[0].length - 1;
+
+    let pctOffset = 0;
+
+    // how far in is the first tick in % of full dimension
+    distribute(u.data[0].length, groupWidth, groupDistr, 0, (di, lftPct, widPct) => {
+      pctOffset = lftPct + widPct / 2;
+    });
+
+    // expand scale range by equal amounts on both ends
+    let rn = max - min; // TODO: clamp to 1?
+
+    let upScale = 1 / (1 - pctOffset * 2);
+    let offset = (upScale * rn - rn) / 2;
+
+    min -= offset;
+    max += offset;
+
+    return [min, max];
+  };
 
   let distrTwo = (groupCount: number, barCount: number) => {
     let out = Array.from({ length: barCount }, () => ({
@@ -335,6 +353,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       points: { show: false },
     },
     // scale & axis opts
+    xRange,
     xValues,
     xSplits,
 
