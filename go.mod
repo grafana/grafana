@@ -261,6 +261,7 @@ require (
 require (
 	github.com/containerd/containerd v1.5.8 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
+	github.com/opencontainers/image-spec v1.0.2 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
