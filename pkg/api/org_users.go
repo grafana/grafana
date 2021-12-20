@@ -8,11 +8,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+var orgUserLogger = log.New("users")
 
 // POST /api/org/users
 func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Response {
@@ -67,7 +70,7 @@ func (hs *HTTPServer) addOrgUserHelper(ctx context.Context, cmd models.AddOrgUse
 
 // GET /api/org/users
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(c.Req.Context(), &dtos.GetOrgUsersQuery{
+	result, err := hs.getOrgUsersHelper(c, &dtos.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
@@ -82,7 +85,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 
 // GET /api/org/users/lookup
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
-	orgUsers, err := hs.getOrgUsersHelper(c.Req.Context(), &dtos.GetOrgUsersQuery{
+	orgUsers, err := hs.getOrgUsersHelper(c, &dtos.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
@@ -128,7 +131,7 @@ func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, dsID in
 
 // GET /api/orgs/:orgId/users
 func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(c.Req.Context(), &dtos.GetOrgUsersQuery{
+	result, err := hs.getOrgUsersHelper(c, &dtos.GetOrgUsersQuery{
 		OrgId: c.ParamsInt64(":orgId"),
 		Query: "",
 		Limit: 0,
@@ -141,8 +144,8 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	return response.JSON(200, result)
 }
 
-func (hs *HTTPServer) getOrgUsersHelper(ctx context.Context, query *dtos.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*dtos.OrgUserDTO, error) {
-	if err := hs.SQLStore.GetOrgUsers(ctx, query); err != nil {
+func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *dtos.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*dtos.OrgUserDTO, error) {
+	if err := hs.SQLStore.GetOrgUsers(c.Req.Context(), query); err != nil {
 		return nil, err
 	}
 
@@ -152,6 +155,12 @@ func (hs *HTTPServer) getOrgUsersHelper(ctx context.Context, query *dtos.GetOrgU
 			continue
 		}
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+
+		var errAC error
+		user.AccessControl, errAC = hs.getUserAccessControlMetadata(c, user.UserId)
+		if errAC != nil {
+			orgUserLogger.Error("Failed to get access control metadata", "error", errAC)
+		}
 
 		filteredUsers = append(filteredUsers, user)
 	}
