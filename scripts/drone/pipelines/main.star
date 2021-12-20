@@ -179,7 +179,7 @@ def main_pipelines(edition):
             volumes=volumes,
         ),
         pipeline(
-            name='main-integration-tests', edition=edition, trigger=trigger, services=[],
+            name='main-integration-tests', edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps,
             volumes=volumes,
         ),
