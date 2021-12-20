@@ -5,7 +5,7 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { MenuTriggerProps } from '@react-types/menu';
 import { useMenuTriggerState } from '@react-stately/menu';
 import { useMenuTrigger } from '@react-aria/menu';
-import { useFocusVisible, useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
+import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
 import { useButton } from '@react-aria/button';
 import { DismissButton, useOverlay } from '@react-aria/overlays';
 import { FocusScope } from '@react-aria/focus';
@@ -32,9 +32,6 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   const ref = React.useRef<HTMLButtonElement>(null);
   const { menuTriggerProps, menuProps } = useMenuTrigger({}, state, ref);
 
-  // style to the focused menu item
-  let { isFocusVisible } = useFocusVisible({ isTextInput: false });
-
   const { hoverProps } = useHover({
     onHoverChange: (isHovering) => {
       if (isHovering) {
@@ -47,7 +44,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
 
   const { focusWithinProps } = useFocusWithin({
     onFocusWithinChange: (isFocused) => {
-      if (isFocused && isFocusVisible) {
+      if (isFocused) {
         state.open();
       }
       if (!isFocused) {
