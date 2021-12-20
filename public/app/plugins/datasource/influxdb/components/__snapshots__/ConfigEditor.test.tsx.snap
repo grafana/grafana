@@ -169,6 +169,7 @@ exports[`Render should disable basic auth password input 1`] = `
         className="gf-form"
       >
         <SecretFormField
+          aria-label="Password"
           inputWidth={20}
           label="Password"
           labelWidth={10}
@@ -435,6 +436,7 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
         className="gf-form"
       >
         <SecretFormField
+          aria-label="Password"
           inputWidth={20}
           label="Password"
           labelWidth={10}
@@ -701,6 +703,7 @@ exports[`Render should hide white listed cookies input when browser access chose
         className="gf-form"
       >
         <SecretFormField
+          aria-label="Password"
           inputWidth={20}
           label="Password"
           labelWidth={10}
@@ -967,6 +970,7 @@ exports[`Render should render component 1`] = `
         className="gf-form"
       >
         <SecretFormField
+          aria-label="Password"
           inputWidth={20}
           label="Password"
           labelWidth={10}
