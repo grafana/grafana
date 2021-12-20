@@ -28,8 +28,8 @@ The instant effect here:
 
 How to solve:
 
-* Acquired leadership contains leadership ID and expiration time 
-* While the leader is alive it prolongs entry in Redis periodically
+* Acquired leadership contains leadership ID and expiration time 10s
+* While the leader is alive it prolongs entry in Redis periodically 3s
 * Each subscription on each node checks entry state and if the entry disappeared or leadership ID changed we consider the leader gone – thus we disconnect a client to let it re-initialize streams. 
 * Upon reconnect we check whether we have an existing leader or can acquire leadership.
 
@@ -39,18 +39,22 @@ This may be persistent Redis failure, single timeout.
 
 How to solve:
 
-Return an error to subscription request
+Do retries. Return an error to subscription request - we need to support re-issuing queries on frontend side.
 
-### Failure scenario #3: Can't touch leadership
+In MVP we can also disconnect client.
+
+### Failure scenario #3: Can't touch/refresh leadership
 
 May be persistent Redis error, single timeout.
 
 How to solve:
 
-Expiration should be several touches.
-Expiration should be several survey timeouts.
+Leadership expiration duration should be several refresh timeouts.
 
-Request to Redis timeout (200ms) + touch interval (3 secs) ~ leadership entry expiration (10 secs) 
+Note:
+  Also leadership expiration should be several survey timeouts.
+
+Request to Redis timeout (200ms) + refresh interval (3 secs) ~ leadership entry expiration (10 secs)
 
 We can count failure count, at some point close stream. We can make retries at this point.
 
@@ -62,7 +66,13 @@ If we touch - but there is entry with another leadership ID (or node ID?) – th
 Redis should be available – for now we can disconnect client, this should not be often,
 but can make retries to Redis at this point.
 
-### Failure scenario #5: Existing subscription consumes events from another leadershipID stream
+### Failure scenario #5: Existing subscription consumes events from a stream with another leadershipID 
+
+0s
+...
+message
+message
+10s
 
 But what if we are getting messages from another acquired leadership? Maybe attach leadership ID to publications?
 
@@ -81,6 +91,24 @@ type TransportWriteEvent struct {
 }
 ```
 
+Reply {
+  Data bytes
+}
+
+Reply {
+ Push {
+   Publication:
+    - meta
+   Join
+   Leave
+ }
+}
+
+Centrifuge:
+
+Pub -> Redis -> Node1 -> Broadcast -> Put msg into client queue -> Consume queue (OnTransportWrite)
+--------------> Node2 -> Broadcast -> Put msg into client queue -> Consume queue (OnTransportWrite).
+
 Having this implemented makes #4 possible to avoid an immediate disconnect and let client fail
 several leader check in a row.
 
@@ -91,15 +119,17 @@ Otherwise - return an error.
 
 Think about timeouts more!
 
+Is it actually a valid failure scenario? Maybe with all other mechanics things will work automatically?
+
 ### Failure scenario #7: Stream is terminated with error
 
 At this moment we re-establishing it immediately. Same user and same data which was used initially.
 
 This means some events can be lost? Should we notify subscribers that it's time to resubscribe from scratch?
 
-Close RunStream and exit from RunStream manager, nothing will touch leadership.
+Close RunStream and exit from RunStream manager => nothing will refresh leadership.
 
-Call Clean leader! If it fails leadership will expire anyway.
+Call Clean leadership! If it fails leadership will expire anyway. Maybe we should notify subscriptions that leadership gone? 
 
 ### Failure scenario #8: Stream is cleanly finished
 
@@ -108,3 +138,7 @@ Possible solutions:
 * Unsubscribe all channels? In Centrifuge is it possible to do?
 * Send empty message?
 * Send special frame field?
+
+### TODO
+
+1. Draw a diagram where we can find more failing points
