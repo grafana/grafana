@@ -25,7 +25,7 @@ import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasour
 import { DataSourceApi } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromOptions } from 'app/plugins/datasource/prometheus/types';
-import { ExpressionDatasourceRef } from '../../../../../packages/grafana-runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
