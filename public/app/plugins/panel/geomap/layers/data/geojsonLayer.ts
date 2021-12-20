@@ -111,10 +111,10 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           // Support dynamic values
           if (check.state.fields) {
             const values = { ...check.state.base };
-            for (const [key, val] of Object.entries(check.state.fields)) {
-              if (val) {
-                values[key] = feature.get(val);
-              }
+            const { text } = check.state.fields;
+
+            if (text) {
+              values.text = `${feature.get(text)}`;
             }
             if (isPoint) {
               return check.state.maker(values);

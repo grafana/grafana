@@ -93,7 +93,6 @@ export interface TextStyleConfig {
 
 // Applying the config to real data gives the values
 export interface StyleConfigValues {
-  [index: string]: string | number | TextStyleConfig | undefined;
   color: string;
   opacity?: number;
   lineWidth?: number;
