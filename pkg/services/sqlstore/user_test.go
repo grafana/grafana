@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -254,7 +255,7 @@ func TestUserDataAccess(t *testing.T) {
 		err = DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
 		require.Nil(t, err)
 
-		query1 := &models.GetOrgUsersQuery{OrgId: users[0].OrgId}
+		query1 := &dtos.GetOrgUsersQuery{OrgId: users[0].OrgId}
 		err = GetOrgUsersForTest(query1)
 		require.Nil(t, err)
 
@@ -340,7 +341,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		// delete connected org users and permissions
-		query2 := &models.GetOrgUsersQuery{OrgId: users[0].OrgId}
+		query2 := &dtos.GetOrgUsersQuery{OrgId: users[0].OrgId}
 		err = GetOrgUsersForTest(query2)
 		require.Nil(t, err)
 
@@ -507,8 +508,8 @@ func TestUserDataAccess(t *testing.T) {
 	})
 }
 
-func GetOrgUsersForTest(query *models.GetOrgUsersQuery) error {
-	query.Result = make([]*models.OrgUserDTO, 0)
+func GetOrgUsersForTest(query *dtos.GetOrgUsersQuery) error {
+	query.Result = make([]*dtos.OrgUserDTO, 0)
 	sess := x.Table("org_user")
 	sess.Join("LEFT ", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
 	sess.Where("org_user.org_id=?", query.OrgId)

@@ -109,7 +109,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 }
 
 func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, dsID int64) (accesscontrol.Metadata, error) {
-	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
+	if hs.AccessControl == nil || hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
 		return nil, nil
 	}
 

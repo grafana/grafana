@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -112,7 +113,7 @@ func TestAccountDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("Can get organization users paginated with query", func(t *testing.T) {
-				query := models.SearchOrgUsersQuery{
+				query := dtos.SearchOrgUsersQuery{
 					OrgID: ac1.OrgId,
 					Page:  1,
 				}
@@ -123,7 +124,7 @@ func TestAccountDataAccess(t *testing.T) {
 			})
 
 			t.Run("Can get organization users paginated and limited", func(t *testing.T) {
-				query := models.SearchOrgUsersQuery{
+				query := dtos.SearchOrgUsersQuery{
 					OrgID: ac1.OrgId,
 					Limit: 1,
 					Page:  1,
@@ -186,7 +187,7 @@ func TestAccountDataAccess(t *testing.T) {
 					err = sqlStore.UpdateOrgUser(context.Background(), &updateCmd)
 					require.NoError(t, err)
 
-					orgUsersQuery := models.GetOrgUsersQuery{OrgId: ac1.OrgId}
+					orgUsersQuery := dtos.GetOrgUsersQuery{OrgId: ac1.OrgId}
 					err = sqlStore.GetOrgUsers(context.Background(), &orgUsersQuery)
 					require.NoError(t, err)
 
@@ -216,7 +217,7 @@ func TestAccountDataAccess(t *testing.T) {
 				})
 
 				t.Run("Can get organization users", func(t *testing.T) {
-					query := models.GetOrgUsersQuery{OrgId: ac1.OrgId}
+					query := dtos.GetOrgUsersQuery{OrgId: ac1.OrgId}
 					err := sqlStore.GetOrgUsers(context.Background(), &query)
 
 					require.NoError(t, err)
@@ -225,7 +226,7 @@ func TestAccountDataAccess(t *testing.T) {
 				})
 
 				t.Run("Can get organization users with query", func(t *testing.T) {
-					query := models.GetOrgUsersQuery{
+					query := dtos.GetOrgUsersQuery{
 						OrgId: ac1.OrgId,
 						Query: "ac1",
 					}
@@ -237,7 +238,7 @@ func TestAccountDataAccess(t *testing.T) {
 				})
 
 				t.Run("Can get organization users with query and limit", func(t *testing.T) {
-					query := models.GetOrgUsersQuery{
+					query := dtos.GetOrgUsersQuery{
 						OrgId: ac1.OrgId,
 						Query: "ac",
 						Limit: 1,
@@ -321,7 +322,7 @@ func TestAccountDataAccess(t *testing.T) {
 					err = sqlStore.AddOrgUser(context.Background(), &orgUserCmd)
 					require.NoError(t, err)
 
-					query := models.GetOrgUsersQuery{OrgId: ac1.OrgId}
+					query := dtos.GetOrgUsersQuery{OrgId: ac1.OrgId}
 					err = sqlStore.GetOrgUsers(context.Background(), &query)
 					require.NoError(t, err)
 					// require.Equal(t, len(query.Result), 3)
