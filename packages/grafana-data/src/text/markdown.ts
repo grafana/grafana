@@ -7,15 +7,17 @@ export interface RenderMarkdownOptions {
   noSanitize?: boolean;
 }
 
+const markdownOptions = {
+  pedantic: false,
+  gfm: true,
+  smartLists: true,
+  smartypants: false,
+  xhtml: false,
+};
+
 export function renderMarkdown(str?: string, options?: RenderMarkdownOptions): string {
   if (!hasInitialized) {
-    marked.setOptions({
-      pedantic: false,
-      gfm: true,
-      smartLists: true,
-      smartypants: false,
-      xhtml: false,
-    });
+    marked.setOptions({ ...markdownOptions });
     hasInitialized = true;
   }
 
@@ -29,13 +31,7 @@ export function renderMarkdown(str?: string, options?: RenderMarkdownOptions): s
 
 export function renderTextPanelMarkdown(str?: string, options?: RenderMarkdownOptions): string {
   if (!hasInitialized) {
-    marked.setOptions({
-      pedantic: false,
-      gfm: true,
-      smartLists: true,
-      smartypants: false,
-      xhtml: false,
-    });
+    marked.setOptions({ ...markdownOptions });
     hasInitialized = true;
   }
 
