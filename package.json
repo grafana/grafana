@@ -167,7 +167,7 @@
     "enzyme-to-json": "3.6.2",
     "eslint": "7.28.0",
     "eslint-config-prettier": "8.3.0",
-    "eslint-plugin-jsdoc": "37.2.2",
+    "eslint-plugin-jsdoc": "37.4.0",
     "eslint-plugin-lodash": "^7.2.0",
     "eslint-plugin-no-only-tests": "2.6.0",
     "eslint-plugin-prettier": "4.0.0",
