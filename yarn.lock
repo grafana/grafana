@@ -18452,6 +18452,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fork-ts-checker-webpack-plugin@npm:6.5.0":
+  version: 6.5.0
+  resolution: "fork-ts-checker-webpack-plugin@npm:6.5.0"
+  dependencies:
+    "@babel/code-frame": ^7.8.3
+    "@types/json-schema": ^7.0.5
+    chalk: ^4.1.0
+    chokidar: ^3.4.2
+    cosmiconfig: ^6.0.0
+    deepmerge: ^4.2.2
+    fs-extra: ^9.0.0
+    glob: ^7.1.6
+    memfs: ^3.1.2
+    minimatch: ^3.0.4
+    schema-utils: 2.7.0
+    semver: ^7.3.2
+    tapable: ^1.0.0
+  peerDependencies:
+    eslint: ">= 6"
+    typescript: ">= 2.7"
+    vue-template-compiler: "*"
+    webpack: ">= 4"
+  peerDependenciesMeta:
+    eslint:
+      optional: true
+    vue-template-compiler:
+      optional: true
+  checksum: 95d145ab7936445f3a9bfa4116ef73537f97196cfaa3f5b24473dff36d034e839d3b0e034a23beefc9619eceb7a9866816bfd55afd1968e955eb3b3f8cfc35ed
+  languageName: node
+  linkType: hard
+
 "form-data@npm:^3.0.0":
   version: 3.0.1
   resolution: "form-data@npm:3.0.1"
@@ -19509,7 +19540,7 @@ __metadata:
     fast-json-patch: 3.1.0
     file-loader: 6.2.0
     file-saver: 2.0.2
-    fork-ts-checker-webpack-plugin: 6.4.0
+    fork-ts-checker-webpack-plugin: 6.5.0
     fs-extra: 10.0.0
     glob: 7.1.6
     history: 4.10.1
