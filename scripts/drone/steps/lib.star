@@ -251,7 +251,7 @@ def build_storybook_step(edition, ver_mode):
     }
 
 
-def publish_storybook_step(edition, ver_mode):
+def store_storybook_step(edition, ver_mode):
     if edition in ('enterprise', 'enterprise2'):
         return None
 
@@ -275,7 +275,7 @@ def publish_storybook_step(edition, ver_mode):
                         ])
 
     return {
-        'name': 'publish-storybook',
+        'name': 'store-storybook',
         'image': publish_image,
         'depends_on': [
             'build-storybook',
@@ -968,15 +968,15 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     }
 
 
-def publish_packages_step(edition, ver_mode, is_downstream=False):
+def store_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'test-release':
-        cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json '.format(edition) + \
+        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json '.format(edition) + \
               '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
               'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release {}'.format(
                   test_release_ver,
               )
     elif ver_mode == 'release':
-        cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
+        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,
         )
     elif ver_mode == 'main':
@@ -984,14 +984,14 @@ def publish_packages_step(edition, ver_mode, is_downstream=False):
             build_no = '${DRONE_BUILD_NUMBER}'
         else:
             build_no = '$${SOURCE_BUILD_NUMBER}'
-        cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
             edition, build_no,
         )
     else:
         fail('Unexpected version mode {}'.format(ver_mode))
 
     return {
-        'name': 'publish-packages-{}'.format(edition),
+        'name': 'store-packages-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
             'initialize',

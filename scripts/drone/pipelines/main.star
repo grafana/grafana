@@ -29,10 +29,10 @@ load(
     'benchmark_ldap_step',
     'enterprise_downstream_step',
     'frontend_metrics_step',
-    'publish_storybook_step',
+    'store_storybook_step',
     'release_canary_npm_packages_step',
     'upload_packages_step',
-    'publish_packages_step',
+    'store_packages_step',
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
@@ -106,7 +106,7 @@ def get_steps(edition, is_downstream=False):
         e2e_tests_step('panels-suite', edition=edition),
         e2e_tests_step('various-suite', edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
-        publish_storybook_step(edition=edition, ver_mode=ver_mode),
+        store_storybook_step(edition=edition, ver_mode=ver_mode),
         test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
         frontend_metrics_step(edition=edition),
         build_frontend_docs_step(edition=edition),
@@ -137,7 +137,7 @@ def get_steps(edition, is_downstream=False):
         publish_steps = []
     else:
         publish_steps = [
-            publish_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
+            store_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         ]
 
     return test_steps, build_steps, integration_test_steps, windows_steps, publish_steps
