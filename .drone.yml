@@ -261,8 +261,9 @@ steps:
   - gsutil cp e2e/videos.zip gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
   - export E2E_ARTIFACTS_VIDEO_ZIP=https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
   - 'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"'
-  - 'curl -H "Authorization: token ${GITHUB_TOKEN}" -d "{\"state\":\"success\",\"target_url\":\"$${E2E_ARTIFACTS_VIDEO_ZIP}\",
-    \"description\": \"E2E Tests Artifacts\", \"context\": \"e2e_artifacts\"}" https://api.github.com/repos/${DRONE_REPO_NAME}/statuses/${DRONE_COMMIT_SHA}'
+  - 'curl -X POST https://api.github.com/repos/${DRONE_REPO_NAME}/statuses/${DRONE_COMMIT_SHA}
+    -H "Authorization: token ${GITHUB_TOKEN}" -d "{\"state\":\"success\",\"target_url\":\"$${E2E_ARTIFACTS_VIDEO_ZIP}\",
+    \"description\": \"E2E Tests Artifacts\", \"context\": \"e2e_artifacts\"}"'
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -4341,6 +4342,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 9c1f8047e1d75054cd87525ef1f3e7e143ab83ae19cfaa5c584ea817d037d761
+hmac: 23f333e58db268a3bdd1dbdf84746c891f7002d5cc75176084b340b8baf366c8
 
 ...
