@@ -17,7 +17,7 @@ jobs:
   #     version_call: ${{ github.event.inputs.version_input }}
   #   needs: call-remove-milestone
   call-bump-version:
-    uses: grafana/grafana/.github/workflows/bump-version.yml@main
+    uses: grafana/grafana/.github/workflows/bump-version.yml@mob/prepare-release-test
     with:
       version_call: ${{ github.event.inputs.version_input }}
   #   needs: call-close-milestone
