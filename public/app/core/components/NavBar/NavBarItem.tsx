@@ -123,7 +123,6 @@ const getStyles = (
 ) => ({
   ...getNavBarItemWithoutMenuStyles(theme, isActive),
   header: css`
-    background-color: ${theme.colors.background.secondary};
     color: ${theme.colors.text.primary};
     height: ${theme.components.sidemenu.width - (adjustHeightForBorder ? 2 : 1)}px;
     font-size: ${theme.typography.h4.fontSize};

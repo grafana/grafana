@@ -50,7 +50,13 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
   const menuSubTitle = section.value.subTitle;
 
   const sectionComponent = (
-    <NavBarItemMenuItem key={section.key} item={section} state={state} onNavigate={onNavigate} />
+    <NavBarItemMenuItem
+      className={styles.section}
+      key={section.key}
+      item={section}
+      state={state}
+      onNavigate={onNavigate}
+    />
   );
 
   const subTitleComponent = (
@@ -123,6 +129,9 @@ function getStyles(
       font-weight: ${theme.typography.bodySmall.fontWeight};
       padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
       white-space: nowrap;
+    `,
+    section: css`
+      background-color: ${theme.colors.background.secondary};
     `,
   };
 }
