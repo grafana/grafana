@@ -1,6 +1,7 @@
 import { ClassicCondition, ExpressionQuery } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { queriesWithUpdatedReferences, updateMathExpressionRefs } from './util';
+import { ExpressionDatasourceRef } from '../../../../../../../packages/grafana-runtime/src/utils/DataSourceWithBackend';
 
 describe('rule-editor', () => {
   const dataSource: AlertQuery = {
@@ -25,7 +26,7 @@ describe('rule-editor', () => {
       type: 'classic_conditions',
       datasource: {
         uid: '-100',
-        type: 'grafana-expression',
+        type: ExpressionDatasourceRef.type,
       },
       conditions: [
         {
@@ -58,7 +59,7 @@ describe('rule-editor', () => {
       type: 'math',
       datasource: {
         uid: '-100',
-        type: 'grafana-expression',
+        type: ExpressionDatasourceRef.type,
       },
       conditions: [],
       expression: 'abs($A) + $A',
@@ -74,7 +75,7 @@ describe('rule-editor', () => {
       type: 'reduce',
       datasource: {
         uid: '-100',
-        type: 'grafana-expression',
+        type: ExpressionDatasourceRef.type,
       },
       conditions: [],
       reducer: 'mean',
