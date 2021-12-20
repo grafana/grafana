@@ -58,7 +58,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: main
+          ref: mob/bump-version-update-user-essentials
       - uses: actions/setup-node@v2.4.1
         with:
           node-version: '14'
@@ -75,6 +75,6 @@ jobs:
         if: ${{ inputs.version_call != '' }}
         uses: ./actions/bump-version
         with:
-          version: ${{ inputs.version_call }}
+          version_call: ${{ inputs.version_call }}
           token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
           metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
