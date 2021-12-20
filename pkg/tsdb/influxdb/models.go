@@ -16,6 +16,7 @@ type Query struct {
 	Limit       string
 	Slimit      string
 	OrderByTime string
+	RefID       string
 }
 
 type Tag struct {
