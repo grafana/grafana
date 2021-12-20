@@ -260,6 +260,9 @@ steps:
   - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
   - gsutil cp e2e/videos.zip gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
   - 'echo "E2E Test artifacts uploaded to: https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip"'
+  - 'curl -H "Authorization: token $GRAFANA_BOT" -H "Content-Type: application/json"
+    -d {"state":"success","target_url":"https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip",
+    "description": "E2E Tests Artifacts", "context": "e2e_artifacts"}https://api.github.com/repos/${DRONE_REPO_NAME}/statuses/${DRONE_COMMIT_SHA}'
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -4338,6 +4341,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 98d58643c8cd69ff4ff42c523e0a01e81cc41bdd2ac23d80f4a327448a98de11
+hmac: d263c3e0ad6a3da1975d22806a014b8fa429a0d0a6c83c21ead418000098c9a4
 
 ...
