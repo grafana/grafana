@@ -24,7 +24,7 @@ jobs:
           regex: '^(\d+.\d+).\d+(?:-beta.\d+)?$'
       - uses: actions-ecosystem/action-regex-match@v2.0.2
         if: ${{ inputs.version_call != '' }}
-        id: regex-match
+        id: regex-match-version-call
         with:
           text: ${{ inputs.version_call }}
           regex: '^(\d+.\d+).\d+(?:-beta.\d+)?$'
