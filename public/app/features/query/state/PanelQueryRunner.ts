@@ -73,6 +73,7 @@ export class PanelQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
+  private lastRequest?: DataQueryRequest;
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
@@ -251,6 +252,8 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
+      this.lastRequest = request;
+
       this.pipeToSubject(runRequest(ds, request), panelId);
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
@@ -332,6 +335,10 @@ export class PanelQueryRunner {
 
   getLastResult(): PanelData | undefined {
     return this.lastResult;
+  }
+
+  getLastRequest(): DataQueryRequest | undefined {
+    return this.lastRequest;
   }
 }
 

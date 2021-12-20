@@ -1815,8 +1815,8 @@ describe('DashboardModel', () => {
       });
     });
 
-    it('should update variable datasource props to refs', () => {
-      expect(model.templating.list[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    it('should not update variable datasource props to refs', () => {
+      expect(model.templating.list[0].datasource).toEqual('prom');
     });
 
     it('should update panel datasource props to refs for named data source', () => {
