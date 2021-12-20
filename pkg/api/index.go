@@ -280,7 +280,13 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	}
 
 	if c.OrgRole == models.ROLE_ADMIN {
-		// TODO: add service accounts here
+
+		/*
+			TODO: add service accounts here
+
+			if: feature tooggle serviceaccounts and not migrated service accounts
+			show migration button
+		*/
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "API keys",
 			Id:          "apikeys",
@@ -288,6 +294,11 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Icon:        "key-skeleton-alt",
 			Url:         hs.Cfg.AppSubURL + "/org/apikeys",
 		})
+		/*
+			TODO: add service accounts here
+			// check: serviceaccount has migrated
+			// endpoint needed and cache
+		*/
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Service accounts",
 			Id:          "serviceaccounts",
