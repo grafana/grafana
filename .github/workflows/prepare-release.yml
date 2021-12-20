@@ -25,4 +25,4 @@ jobs:
     uses: grafana/grafana/.github/workflows/update-changelog.yml@main
     with:
       version_call: ${{ github.event.inputs.version_input }}
-    needs: call-bump-version    
+    needs: call-bump-version
