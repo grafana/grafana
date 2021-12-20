@@ -7,24 +7,24 @@ import kbn from 'app/core/utils/kbn';
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
 import {
+  AnnotationQuery,
   DataLink,
   DataLinkBuiltInVars,
+  DataQuery,
   DataSourceRef,
+  DataTransformerConfig,
+  getActiveThreshold,
+  getDataSourceRef,
+  isDataSourceRef,
   MappingType,
-  SpecialValueMatch,
   PanelPlugin,
+  SpecialValueMatch,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   ThresholdsConfig,
   urlUtil,
   ValueMap,
   ValueMapping,
-  getActiveThreshold,
-  DataTransformerConfig,
-  AnnotationQuery,
-  DataQuery,
-  getDataSourceRef,
-  isDataSourceRef,
 } from '@grafana/data';
 // Constants
 import {
@@ -46,11 +46,11 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
 import {
-  migrateMultipleStatsMetricsQuery,
-  migrateMultipleStatsAnnotationQuery,
   migrateCloudWatchQuery,
+  migrateMultipleStatsAnnotationQuery,
+  migrateMultipleStatsMetricsQuery,
 } from 'app/plugins/datasource/cloudwatch/migrations';
-import { CloudWatchMetricsQuery, CloudWatchAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
+import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/types';
 
 standardEditorsRegistry.setInit(getStandardOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
@@ -697,13 +697,6 @@ export class DashboardMigrator {
 
     // Replace datasource name with reference, uid and type
     if (oldVersion < 33) {
-      for (const variable of this.dashboard.templating.list) {
-        if (variable.type !== 'query') {
-          continue;
-        }
-        variable.datasource = migrateDatasourceNameToRef(variable.datasource);
-      }
-
       panelUpgrades.push((panel) => {
         panel.datasource = migrateDatasourceNameToRef(panel.datasource);
 
