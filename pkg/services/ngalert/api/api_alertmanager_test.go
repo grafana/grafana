@@ -2,14 +2,22 @@ package api
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -149,7 +157,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		rc := models.ReqContext{
 			SignedInUser: &models.SignedInUser{
 				OrgRole: models.ROLE_EDITOR,
-				OrgId:   5,
+				OrgId:   12,
 			},
 		}
 		request := apimodels.PostableUserConfig{}
@@ -183,6 +191,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			},
 		}
 		request := apimodels.PostableUserConfig{}
+		request.UnmarshalJSON([]byte(validConfig))
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -190,14 +199,15 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 
 	t.Run("assert 202 when alertmanager to configure is not ready", func(t *testing.T) {
-		sut := createSutWithNonReadyAlertmanager(t)
+		sut := createSut(t)
 		rc := models.ReqContext{
 			SignedInUser: &models.SignedInUser{
 				OrgRole: models.ROLE_EDITOR,
-				OrgId:   1,
+				OrgId:   3, // Org 3 was initialized with broken config.
 			},
 		}
 		request := apimodels.PostableUserConfig{}
+		request.UnmarshalJSON([]byte(validConfig))
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -208,40 +218,71 @@ func TestAlertmanagerConfig(t *testing.T) {
 func createSut(t *testing.T) AlertmanagerSrv {
 	t.Helper()
 
-	mam := newAlertmanagerProvider(t)
+	mam := createMultiOrgAlertmanager(t)
 	store := newFakeAlertingStore(t)
-	mam.Setup(1)
-	mam.Setup(2)
 	store.Setup(1)
 	store.Setup(2)
+	store.Setup(3)
 	secrets := fakes.NewFakeSecretsService()
 	return AlertmanagerSrv{mam: mam, store: store, secrets: secrets}
 }
 
-func createSutWithNonReadyAlertmanager(t *testing.T) AlertmanagerSrv {
+func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	t.Helper()
 
-	mam := NonReadyAlertmanagerProvider{
-		alertmanagers: map[int64]Alertmanager{},
+	configs := map[int64]*ngmodels.AlertConfiguration{
+		1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
+		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
+		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
 	}
-	store := newFakeAlertingStore(t)
-	secrets := fakes.NewFakeSecretsService()
-	mam.Setup(1)
-	store.Setup(1)
-	return AlertmanagerSrv{mam: mam, store: store, secrets: secrets}
-}
-
-type NonReadyAlertmanagerProvider struct {
-	alertmanagers map[int64]Alertmanager
-}
-
-func (f NonReadyAlertmanagerProvider) Setup(orgID int64) {
-	f.alertmanagers[orgID] = &FakeAlertmanager{}
-}
-
-func (f NonReadyAlertmanagerProvider) AlertmanagerFor(orgID int64) (Alertmanager, error) {
-	if am, ok := f.alertmanagers[orgID]; ok {
-		return am, notifier.ErrAlertmanagerNotReady
+	configStore := notifier.NewFakeConfigStore(t, configs)
+	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
+	tmpDir, err := ioutil.TempDir("", "test")
+	require.NoError(t, err)
+	kvStore := notifier.NewFakeKVStore(t)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	reg := prometheus.NewPedanticRegistry()
+	m := metrics.NewNGAlert(reg)
+	decryptFn := secretsService.GetDecryptedValue
+	cfg := &setting.Cfg{
+		DataPath: tmpDir,
+		UnifiedAlerting: setting.UnifiedAlertingSettings{
+			AlertmanagerConfigPollInterval: 3 * time.Minute,
+			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
+			DisabledOrgs:                   map[int64]struct{}{5: {}},
+		}, // do not poll in tests.
 	}
-	return nil, notifier.ErrNoAlertmanagerForOrg
+
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	require.NoError(t, err)
+	t.Cleanup(cleanOrgDirectories(tmpDir, t))
+	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
+	require.NoError(t, err)
+	return mam
 }
+
+func cleanOrgDirectories(path string, t *testing.T) func() {
+	return func() {
+		require.NoError(t, os.RemoveAll(path))
+	}
+}
+
+var validConfig = setting.GetAlertmanagerDefaultConfiguration()
+
+var brokenConfig = `
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "abc",
+				"name": "default-email",
+				"type": "email",
+				"isDefault": true,
+				"settings": {}
+			}]
+		}]
+	}
+}`

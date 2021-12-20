@@ -50,18 +50,6 @@ type Alertmanager interface {
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
 }
 
-type MultiOrgAlertmanager interface {
-	AlertmanagerFor(orgID int64) (Alertmanager, error)
-}
-
-type AlertmanagerProvider struct {
-	*notifier.MultiOrgAlertmanager
-}
-
-func (mam AlertmanagerProvider) AlertmanagerFor(orgID int64) (Alertmanager, error) {
-	return mam.MultiOrgAlertmanager.AlertmanagerFor(orgID)
-}
-
 type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error
 }
@@ -79,7 +67,7 @@ type API struct {
 	AlertingStore        AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
-	MultiOrgAlertmanager MultiOrgAlertmanager
+	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
 	SecretsService       secrets.Service
 }
