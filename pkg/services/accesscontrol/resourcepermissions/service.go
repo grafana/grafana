@@ -73,7 +73,7 @@ func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID st
 }
 
 func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
-	if !s.options.Assignments.Teams {
+	if !s.options.Assignments.Users {
 		return nil, ErrInvalidAssignment
 	}
 
@@ -143,13 +143,13 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 	})
 }
 
-func (s *Service) MapActions(permission accesscontrol.ResourcePermission) (string, bool) {
+func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {
 	for _, p := range s.permissions {
 		if permission.Contains(s.options.PermissionsToActions[p]) {
-			return p, true
+			return p
 		}
 	}
-	return "", false
+	return ""
 }
 
 func (s *Service) MapPermission(permission string) []string {
@@ -202,8 +202,10 @@ func (s *Service) declareFixedRoles() error {
 	scopeAll := accesscontrol.Scope(s.options.Resource, "*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version: 5,
-			Name:    fmt.Sprintf("fixed:%s.permissions:reader", s.options.Resource),
+			Version:     5,
+			Name:        fmt.Sprintf("fixed:%s.permissions:reader", s.options.Resource),
+			DisplayName: s.options.ReaderRoleName,
+			Group:       s.options.RoleGroup,
 			Permissions: []accesscontrol.Permission{
 				{Action: fmt.Sprintf("%s.permissions:read", s.options.Resource), Scope: scopeAll},
 			},
@@ -213,8 +215,10 @@ func (s *Service) declareFixedRoles() error {
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version: 5,
-			Name:    fmt.Sprintf("fixed:%s.permissions:writer", s.options.Resource),
+			Version:     5,
+			Name:        fmt.Sprintf("fixed:%s.permissions:writer", s.options.Resource),
+			DisplayName: s.options.WriterRoleName,
+			Group:       s.options.RoleGroup,
 			Permissions: accesscontrol.ConcatPermissions(readerRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: fmt.Sprintf("%s.permissions:write", s.options.Resource), Scope: scopeAll},
 			}),

@@ -206,7 +206,7 @@ type ResourcePermission struct {
 	Updated     time.Time
 }
 
-func (p *ResourcePermission) Managed() bool {
+func (p *ResourcePermission) IsManaged() bool {
 	return strings.HasPrefix(p.RoleName, "managed:")
 }
 

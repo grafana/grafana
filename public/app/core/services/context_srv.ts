@@ -1,6 +1,6 @@
 import config from '../../core/config';
 import { extend } from 'lodash';
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil, WithAccessControlMetadata } from '@grafana/data';
 import { AccessControlAction, UserPermission } from 'app/types';
 
 export class User {
@@ -83,6 +83,16 @@ export class ContextSrv {
 
   accessControlEnabled(): boolean {
     return config.licenseInfo.hasLicense && config.featureToggles['accesscontrol'];
+  }
+
+  // Checks whether user has required permission
+  hasPermissionInMetadata(action: AccessControlAction | string, object: WithAccessControlMetadata): boolean {
+    // Fallback if access control disabled
+    if (!config.featureToggles['accesscontrol']) {
+      return true;
+    }
+
+    return !!object.accessControl?.[action];
   }
 
   // Checks whether user has required permission

@@ -84,7 +84,7 @@ func TestAccessControlStore_SetUserResourcePermission(t *testing.T) {
 				assert.Equal(t, accesscontrol.ResourcePermission{}, *added)
 			} else {
 				assert.Len(t, added.Actions, len(test.actions))
-				assert.Equal(t, getResourceScope(test.resource, test.resourceID), added.Scope)
+				assert.Equal(t, accesscontrol.GetResourceScope(test.resource, test.resourceID), added.Scope)
 			}
 		})
 	}
@@ -162,7 +162,7 @@ func TestAccessControlStore_SetTeamResourcePermission(t *testing.T) {
 				assert.Equal(t, accesscontrol.ResourcePermission{}, *added)
 			} else {
 				assert.Len(t, added.Actions, len(test.actions))
-				assert.Equal(t, getResourceScope(test.resource, test.resourceID), added.Scope)
+				assert.Equal(t, accesscontrol.GetResourceScope(test.resource, test.resourceID), added.Scope)
 			}
 		})
 	}
@@ -240,7 +240,7 @@ func TestAccessControlStore_SetBuiltInResourcePermission(t *testing.T) {
 				assert.Equal(t, accesscontrol.ResourcePermission{}, *added)
 			} else {
 				assert.Len(t, added.Actions, len(test.actions))
-				assert.Equal(t, getResourceScope(test.resource, test.resourceID), added.Scope)
+				assert.Equal(t, accesscontrol.GetResourceScope(test.resource, test.resourceID), added.Scope)
 			}
 		})
 	}

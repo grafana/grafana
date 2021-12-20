@@ -409,7 +409,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version, plugins.AddOpts{})
+	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version)
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {

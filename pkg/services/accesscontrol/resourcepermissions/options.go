@@ -14,7 +14,14 @@ type Options struct {
 	ResourceValidator ResourceValidator
 	// Assignments decides what we can assign permissions to (users/teams/builtInRoles)
 	Assignments Assignments
-	// PermissionsToAction is a map of friend named permissions and what access control actions they should generate.
+	// PermissionsToAction is a map of friendly named permissions and what access control actions they should generate.
 	// E.g. Edit permissions should generate dashboards:read, dashboards:write and dashboards:delete
 	PermissionsToActions map[string][]string
+
+	// ReaderRoleName is the display name for the generated fixed reader role
+	ReaderRoleName string
+	// WriterRoleName is the display name for the generated fixed writer role
+	WriterRoleName string
+	// RoleGroup is the group name for the generated fixed roles
+	RoleGroup string
 }

@@ -65,7 +65,7 @@ type resourcePermissionDTO struct {
 	ID            int64    `json:"id"`
 	ResourceID    string   `json:"resourceId"`
 	RoleName      string   `json:"roleName"`
-	Managed       bool     `json:"managed"`
+	IsManaged     bool     `json:"isManaged"`
 	UserID        int64    `json:"userId,omitempty"`
 	UserLogin     string   `json:"userLogin,omitempty"`
 	UserAvatarUrl string   `json:"userAvatarUrl,omitempty"`
@@ -87,7 +87,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 
 	dto := make([]resourcePermissionDTO, 0, len(permissions))
 	for _, p := range permissions {
-		if permission, ok := a.service.MapActions(p); ok {
+		if permission := a.service.MapActions(p); permission != "" {
 			teamAvatarUrl := ""
 			if p.TeamId != 0 {
 				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(p.TeamEmail, p.Team)
@@ -97,7 +97,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 				ID:            p.ID,
 				ResourceID:    p.ResourceID,
 				RoleName:      p.RoleName,
-				Managed:       p.Managed(),
+				IsManaged:     p.IsManaged(),
 				UserID:        p.UserId,
 				UserLogin:     p.UserLogin,
 				UserAvatarUrl: dtos.GetGravatarUrl(p.UserEmail),

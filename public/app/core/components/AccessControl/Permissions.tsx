@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { sortBy } from 'lodash';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 import { Button } from '@grafana/ui';
@@ -36,12 +37,10 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
   }, [resource, resourceId]);
 
   useEffect(() => {
-    getDescription(resource)
-      .then((r) => {
-        setDesc(r);
-        return fetchItems();
-      })
-      .catch((e) => {});
+    getDescription(resource).then((r) => {
+      setDesc(r);
+      return fetchItems();
+    });
   }, [resource, resourceId, fetchItems]);
 
   const onAdd = (state: SetPermission) => {
@@ -87,9 +86,30 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
     }
   };
 
-  const teams = useMemo(() => items.filter((i) => i.teamId).sort(sortOn('team')), [items]);
-  const users = useMemo(() => items.filter((i) => i.userId).sort(sortOn('userLogin')), [items]);
-  const builtInRoles = useMemo(() => items.filter((i) => i.builtInRole).sort(sortOn('builtInRole')), [items]);
+  const teams = useMemo(
+    () =>
+      sortBy(
+        items.filter((i) => i.teamId),
+        ['team']
+      ),
+    [items]
+  );
+  const users = useMemo(
+    () =>
+      sortBy(
+        items.filter((i) => i.userId),
+        ['userLogin']
+      ),
+    [items]
+  );
+  const builtInRoles = useMemo(
+    () =>
+      sortBy(
+        items.filter((i) => i.builtInRole),
+        ['builtInRole']
+      ),
+    [items]
+  );
 
   return (
     <div>
@@ -142,41 +162,32 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
   );
 };
 
-const getDescription = (resource: string): Promise<Description> => {
-  return getBackendSrv().get(`/api/access-control/${resource}/description`);
+const getDescription = async (resource: string): Promise<Description> => {
+  try {
+    return await getBackendSrv().get(`/api/access-control/${resource}/description`);
+  } catch (e) {
+    console.error('failed to load resource description: ', e);
+    return INITIAL_DESCRIPTION;
+  }
 };
 
-const getPermissions = (resource: string, datasourceId: number): Promise<ResourcePermission[]> => {
-  return getBackendSrv().get(`/api/access-control/${resource}/${datasourceId}`);
-};
+const getPermissions = (resource: string, datasourceId: number): Promise<ResourcePermission[]> =>
+  getBackendSrv().get(`/api/access-control/${resource}/${datasourceId}`);
 
-const setUserPermission = (resource: string, resourceId: number, userId: number, permission: string): Promise<void> => {
-  return getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/users/${userId}`, { permission });
-};
+const setUserPermission = (resource: string, resourceId: number, userId: number, permission: string) =>
+  setPermission(resource, resourceId, 'users', userId, permission);
 
-const setTeamPermission = (resource: string, resourceId: number, teamId: number, permission: string): Promise<void> => {
-  return getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/teams/${teamId}`, { permission });
-};
+const setTeamPermission = (resource: string, resourceId: number, teamId: number, permission: string) =>
+  setPermission(resource, resourceId, 'teams', teamId, permission);
 
-const setBuiltInRolePermission = (
+const setBuiltInRolePermission = (resource: string, resourceId: number, builtInRole: string, permission: string) =>
+  setPermission(resource, resourceId, 'builtInRoles', builtInRole, permission);
+
+const setPermission = (
   resource: string,
   resourceId: number,
-  builtInRole: string,
+  type: 'users' | 'teams' | 'builtInRoles',
+  typeId: number | string,
   permission: string
-): Promise<void> => {
-  return getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/builtInRoles/${builtInRole}`, {
-    permission,
-  });
-};
-
-const sortOn = (key: 'userLogin' | 'team' | 'builtInRole') => {
-  return (a: ResourcePermission, b: ResourcePermission): number => {
-    if (a[key]! > b[key]!) {
-      return 1;
-    }
-    if (a[key]! < b[key]!) {
-      return -1;
-    }
-    return 0;
-  };
-};
+): Promise<void> =>
+  getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/${type}/${typeId}/`, { permission });

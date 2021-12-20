@@ -173,7 +173,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			pm.pluginLoader = l
 		})
 
-		err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.AddOpts{})
+		err := pm.Add(context.Background(), testPluginID, "1.0.0")
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, i.installCount)
@@ -196,7 +196,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.Len(t, pm.Plugins(context.Background()), 1)
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
-			err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.AddOpts{})
+			err := pm.Add(context.Background(), testPluginID, "1.0.0")
 			assert.Equal(t, plugins.DuplicateError{
 				PluginID:          p.ID,
 				ExistingPluginDir: p.PluginDir,
@@ -211,7 +211,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			}
 			pm.pluginLoader = l
 
-			err = pm.Add(context.Background(), testPluginID, "1.2.0", plugins.AddOpts{})
+			err = pm.Add(context.Background(), testPluginID, "1.2.0")
 			assert.NoError(t, err)
 
 			assert.Equal(t, 2, i.installCount)
@@ -272,7 +272,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Add(context.Background(), testPluginID, "", plugins.AddOpts{})
+		err = pm.Add(context.Background(), testPluginID, "")
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall core plugin", func(t *testing.T) {
@@ -306,7 +306,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Add(context.Background(), testPluginID, "", plugins.AddOpts{})
+		err = pm.Add(context.Background(), testPluginID, "")
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall bundled plugin", func(t *testing.T) {
