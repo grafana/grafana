@@ -6332,7 +6332,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/utils@npm:3.10.0, @react-aria/utils@npm:^3.10.0":
+"@react-aria/utils@npm:3.11.0":
+  version: 3.11.0
+  resolution: "@react-aria/utils@npm:3.11.0"
+  dependencies:
+    "@babel/runtime": ^7.6.2
+    "@react-aria/ssr": ^3.1.0
+    "@react-stately/utils": ^3.3.0
+    "@react-types/shared": ^3.10.1
+    clsx: ^1.1.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 9ae1d8fdc0c6eff43accd1260da9db6b07c6cd7d98720391aedc6b47e41e715139dbb29a29ae89a841a63bfb1b9d65a10684c0dfb885d38b7b99bd4645ca074a
+  languageName: node
+  linkType: hard
+
+"@react-aria/utils@npm:^3.10.0":
   version: 3.10.0
   resolution: "@react-aria/utils@npm:3.10.0"
   dependencies:
@@ -6532,6 +6547,15 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1
   checksum: f3a5648cc4514915571eb648ecba383dc30d0d3c95d2991193dc4a57730c826dcc3effd4c48c21704adc31756d3d6d75dfe1f4e20c40df29a5e99079876e4a7f
+  languageName: node
+  linkType: hard
+
+"@react-types/shared@npm:^3.10.1":
+  version: 3.10.1
+  resolution: "@react-types/shared@npm:3.10.1"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 6c4b7c6d43f84994521c4780f3b969a70c6b2ce69892f03c309f88b5d5d3c862a1a0d07f6060f9f650dbdd834cd16568db957c03543028eb8e52eb7dc97c58ea
   languageName: node
   linkType: hard
 
@@ -18452,6 +18476,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fork-ts-checker-webpack-plugin@npm:6.5.0":
+  version: 6.5.0
+  resolution: "fork-ts-checker-webpack-plugin@npm:6.5.0"
+  dependencies:
+    "@babel/code-frame": ^7.8.3
+    "@types/json-schema": ^7.0.5
+    chalk: ^4.1.0
+    chokidar: ^3.4.2
+    cosmiconfig: ^6.0.0
+    deepmerge: ^4.2.2
+    fs-extra: ^9.0.0
+    glob: ^7.1.6
+    memfs: ^3.1.2
+    minimatch: ^3.0.4
+    schema-utils: 2.7.0
+    semver: ^7.3.2
+    tapable: ^1.0.0
+  peerDependencies:
+    eslint: ">= 6"
+    typescript: ">= 2.7"
+    vue-template-compiler: "*"
+    webpack: ">= 4"
+  peerDependenciesMeta:
+    eslint:
+      optional: true
+    vue-template-compiler:
+      optional: true
+  checksum: 95d145ab7936445f3a9bfa4116ef73537f97196cfaa3f5b24473dff36d034e839d3b0e034a23beefc9619eceb7a9866816bfd55afd1968e955eb3b3f8cfc35ed
+  languageName: node
+  linkType: hard
+
 "form-data@npm:^3.0.0":
   version: 3.0.1
   resolution: "form-data@npm:3.0.1"
@@ -19066,20 +19121,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:7.1.6":
-  version: 7.1.6
-  resolution: "glob@npm:7.1.6"
-  dependencies:
-    fs.realpath: ^1.0.0
-    inflight: ^1.0.4
-    inherits: 2
-    minimatch: ^3.0.4
-    once: ^1.3.0
-    path-is-absolute: ^1.0.0
-  checksum: 351d549dd90553b87c2d3f90ce11aed9e1093c74130440e7ae0592e11bbcd2ce7f0ebb8ba6bfe63aaf9b62166a7f4c80cb84490ae5d78408bb2572bf7d4ee0a6
-  languageName: node
-  linkType: hard
-
 "glob@npm:7.1.7":
   version: 7.1.7
   resolution: "glob@npm:7.1.7"
@@ -19094,7 +19135,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:^7.1.1, glob@npm:^7.1.2, glob@npm:^7.1.3, glob@npm:^7.1.4, glob@npm:^7.1.6":
+"glob@npm:7.2.0, glob@npm:^7.1.1, glob@npm:^7.1.2, glob@npm:^7.1.3, glob@npm:^7.1.4, glob@npm:^7.1.6":
   version: 7.2.0
   resolution: "glob@npm:7.2.0"
   dependencies:
@@ -19379,7 +19420,7 @@ __metadata:
     "@react-aria/interactions": 3.7.0
     "@react-aria/menu": 3.3.0
     "@react-aria/overlays": 3.7.2
-    "@react-aria/utils": 3.10.0
+    "@react-aria/utils": 3.11.0
     "@react-stately/collections": 3.3.4
     "@react-stately/menu": 3.2.3
     "@react-stately/tree": 3.2.0
@@ -19509,9 +19550,9 @@ __metadata:
     fast-json-patch: 3.1.0
     file-loader: 6.2.0
     file-saver: 2.0.2
-    fork-ts-checker-webpack-plugin: 6.4.0
+    fork-ts-checker-webpack-plugin: 6.5.0
     fs-extra: 10.0.0
-    glob: 7.1.6
+    glob: 7.2.0
     history: 4.10.1
     hoist-non-react-statics: 3.3.2
     html-loader: 3.0.1

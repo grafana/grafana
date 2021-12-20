@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import { cloneDeep } from 'lodash';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { GraphNG, GraphNGProps, PlotLegend, UPlotConfigBuilder, usePanelContext, useTheme2 } from '@grafana/ui';
 import { LegendDisplayMode } from '@grafana/schema';
@@ -91,8 +90,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
 
   return (
     <GraphNG
-      // My heart is bleeding with the clone deep here, but nested options...
-      {...cloneDeep(props)}
+      {...props}
       theme={theme}
       frames={props.frames}
       prepConfig={prepConfig}
