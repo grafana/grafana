@@ -6332,7 +6332,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/utils@npm:3.10.0, @react-aria/utils@npm:^3.10.0":
+"@react-aria/utils@npm:3.11.0":
+  version: 3.11.0
+  resolution: "@react-aria/utils@npm:3.11.0"
+  dependencies:
+    "@babel/runtime": ^7.6.2
+    "@react-aria/ssr": ^3.1.0
+    "@react-stately/utils": ^3.3.0
+    "@react-types/shared": ^3.10.1
+    clsx: ^1.1.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 9ae1d8fdc0c6eff43accd1260da9db6b07c6cd7d98720391aedc6b47e41e715139dbb29a29ae89a841a63bfb1b9d65a10684c0dfb885d38b7b99bd4645ca074a
+  languageName: node
+  linkType: hard
+
+"@react-aria/utils@npm:^3.10.0":
   version: 3.10.0
   resolution: "@react-aria/utils@npm:3.10.0"
   dependencies:
@@ -6532,6 +6547,15 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1
   checksum: f3a5648cc4514915571eb648ecba383dc30d0d3c95d2991193dc4a57730c826dcc3effd4c48c21704adc31756d3d6d75dfe1f4e20c40df29a5e99079876e4a7f
+  languageName: node
+  linkType: hard
+
+"@react-types/shared@npm:^3.10.1":
+  version: 3.10.1
+  resolution: "@react-types/shared@npm:3.10.1"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 6c4b7c6d43f84994521c4780f3b969a70c6b2ce69892f03c309f88b5d5d3c862a1a0d07f6060f9f650dbdd834cd16568db957c03543028eb8e52eb7dc97c58ea
   languageName: node
   linkType: hard
 
@@ -19410,7 +19434,7 @@ __metadata:
     "@react-aria/interactions": 3.7.0
     "@react-aria/menu": 3.3.0
     "@react-aria/overlays": 3.7.2
-    "@react-aria/utils": 3.10.0
+    "@react-aria/utils": 3.11.0
     "@react-stately/collections": 3.3.4
     "@react-stately/menu": 3.2.3
     "@react-stately/tree": 3.2.0
