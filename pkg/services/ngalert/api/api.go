@@ -66,11 +66,6 @@ type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error
 }
 
-type SecretsProvider interface {
-	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
-	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
-}
-
 // API handlers.
 type API struct {
 	Cfg                  *setting.Cfg
@@ -86,7 +81,7 @@ type API struct {
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager MultiOrgAlertmanager
 	StateManager         *state.Manager
-	SecretsService       SecretsProvider
+	SecretsService       secrets.Service
 }
 
 // RegisterAPIEndpoints registers API handlers
