@@ -37,8 +37,9 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
     if (menuHasFocus && !state.selectionManager.isFocused) {
       state.selectionManager.setFocusedKey(section?.key ?? '');
       state.selectionManager.setFocused(true);
-    } else if (!menuHasFocus && state.selectionManager.isFocused) {
+    } else if (!menuHasFocus) {
       state.selectionManager.setFocused(false);
+      state.selectionManager.setFocusedKey('');
       state.selectionManager.clearSelection();
     }
   }, [menuHasFocus, state.selectionManager, reverseMenuDirection, section?.key]);

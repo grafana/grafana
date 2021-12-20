@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { useMenuItem } from '@react-aria/menu';
-import { useFocus } from '@react-aria/interactions';
+import { useFocus, useKeyboard } from '@react-aria/interactions';
 import { TreeState } from '@react-stately/tree';
 import { mergeProps } from '@react-aria/utils';
 import { Node } from '@react-types/shared';
@@ -19,7 +19,7 @@ export interface NavBarItemMenuItemProps {
 }
 
 export function NavBarItemMenuItem({ className, item, state, onNavigate }: NavBarItemMenuItemProps): ReactElement {
-  const { onClose } = useNavBarItemMenuContext();
+  const { onClose, onLeft } = useNavBarItemMenuContext();
   const { key, rendered } = item;
   const ref = useRef<HTMLLIElement>(null);
   const isDisabled = state.disabledKeys.has(key);
@@ -47,8 +47,21 @@ export function NavBarItemMenuItem({ className, item, state, onNavigate }: NavBa
     ref
   );
 
+  const { keyboardProps } = useKeyboard({
+    onKeyDown: (e) => {
+      if (e.key === 'ArrowLeft') {
+        onLeft();
+      }
+      e.continuePropagation();
+    },
+  });
+
   return (
-    <li {...mergeProps(menuItemProps, focusProps)} ref={ref} className={classNames(styles.menuItem, className)}>
+    <li
+      {...mergeProps(menuItemProps, focusProps, keyboardProps)}
+      ref={ref}
+      className={classNames(styles.menuItem, className)}
+    >
       {rendered}
     </li>
   );
