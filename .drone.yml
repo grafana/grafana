@@ -251,6 +251,8 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get update
+  - apt-get install -yq zip
   - ls -lah ./e2e
   - find ./e2e -type f -name "*.mp4"
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
@@ -4336,6 +4338,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: b26ce1ac7f7711db941a1c2bd51dd2dcc7c13d26b28cd23cd6b464ca7c8ff75c
+hmac: 98d58643c8cd69ff4ff42c523e0a01e81cc41bdd2ac23d80f4a327448a98de11
 
 ...

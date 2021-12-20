@@ -306,7 +306,9 @@ def e2e_test_artifacts(edition):
             'E2E_TEST_ARTIFACTS_BUCKET': 'releng-pipeline-artifacts-dev',
             'GITHUB_TOKEN': from_secret('github_token'),
         },
-        'commands': [     
+        'commands': [
+            'apt-get update',
+            'apt-get install -yq zip',     
             'ls -lah ./e2e',
             'find ./e2e -type f -name "*.mp4"',
             'printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json',
