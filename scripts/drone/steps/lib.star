@@ -317,7 +317,7 @@ def e2e_test_artifacts(edition):
             'find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@',
             'gsutil cp e2e/videos.zip gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip',
             'echo "E2E Test artifacts uploaded to: https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip"',
-            'curl -H "Authorization: token $GRAFANA_BOT" -H "Content-Type: application/json" -d ' + \
+            'curl -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" -d ' + \
             '{"state":"success","target_url":"https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip", "description": "E2E Tests Artifacts", "context": "e2e_artifacts"}' + \
             'https://api.github.com/repos/${DRONE_REPO_NAME}/statuses/${DRONE_COMMIT_SHA}'
         ],
