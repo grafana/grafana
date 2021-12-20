@@ -8,7 +8,6 @@ import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-aler
 import { UnifiedAlertListOptions } from './types';
 import { AlertInstancesTable } from 'app/features/alerting/unified/components/rules/AlertInstancesTable';
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
-import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 
 interface Props {
   ruleWithLocation: PromRuleWithLocation;
@@ -44,23 +43,22 @@ export const AlertInstances = ({ ruleWithLocation, options }: Props) => {
 };
 
 function filterAlerts(options: PanelProps<UnifiedAlertListOptions>['options'], alerts: Alert[]): Alert[] {
+  const hasAlertState = Object.values(options.stateFilter).some((value) => value);
   let filteredAlerts = [...alerts];
-  if (options.alertInstanceLabelFilter) {
-    const matchers = parseMatchers(options.alertInstanceLabelFilter || '');
-    filteredAlerts = filteredAlerts.filter(({ labels }) => labelsMatchMatchers(labels, matchers));
-  }
-  if (Object.values(options.alertInstanceStateFilter).some((value) => value)) {
+  if (hasAlertState) {
     filteredAlerts = filteredAlerts.filter((alert) => {
       return (
-        (options.alertInstanceStateFilter.Alerting && alert.state === GrafanaAlertState.Alerting) ||
-        (options.alertInstanceStateFilter.Pending && alert.state === GrafanaAlertState.Pending) ||
-        (options.alertInstanceStateFilter.NoData && alert.state === GrafanaAlertState.NoData) ||
-        (options.alertInstanceStateFilter.Normal && alert.state === GrafanaAlertState.Normal) ||
-        (options.alertInstanceStateFilter.Error && alert.state === GrafanaAlertState.Error)
+        (options.stateFilter.firing &&
+          (alert.state === GrafanaAlertState.Alerting || alert.state === PromAlertingRuleState.Firing)) ||
+        (options.stateFilter.pending &&
+          (alert.state === GrafanaAlertState.Pending || alert.state === PromAlertingRuleState.Pending)) ||
+        (options.stateFilter.noData && alert.state === GrafanaAlertState.NoData) ||
+        (options.stateFilter.normal && alert.state === GrafanaAlertState.Normal) ||
+        (options.stateFilter.error && alert.state === GrafanaAlertState.Error) ||
+        (options.stateFilter.inactive && alert.state === PromAlertingRuleState.Inactive)
       );
     });
   }
-
   return filteredAlerts;
 }
 

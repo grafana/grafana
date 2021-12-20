@@ -29,15 +29,28 @@ type PermissionsProvider interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
-type ResourceStore interface {
-	// SetUserResourcePermissions sets permissions for managed user role on a resource
-	SetUserResourcePermissions(ctx context.Context, orgID, userID int64, cmd SetResourcePermissionsCommand) ([]ResourcePermission, error)
-	// SetTeamResourcePermissions sets permissions for managed team role on a resource
-	SetTeamResourcePermissions(ctx context.Context, orgID, teamID int64, cmd SetResourcePermissionsCommand) ([]ResourcePermission, error)
-	// SetBuiltinResourcePermissions sets permissions for managed builtin role on a resource
-	SetBuiltinResourcePermissions(ctx context.Context, orgID int64, builtinRole string, cmd SetResourcePermissionsCommand) ([]ResourcePermission, error)
-	// RemoveResourcePermission remove permission for resource
-	RemoveResourcePermission(ctx context.Context, orgID int64, cmd RemoveResourcePermissionCommand) error
+type ResourcePermissionsService interface {
+	// GetPermissions returns all permissions for given resourceID
+	GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]ResourcePermission, error)
+	// SetUserPermission sets permission on resource for a user
+	SetUserPermission(ctx context.Context, orgID, userID int64, resourceID string, actions []string) (*ResourcePermission, error)
+	// SetTeamPermission sets permission on resource for a team
+	SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID string, actions []string) (*ResourcePermission, error)
+	// SetBuiltInRolePermission sets permission on resource for a built-in role (Admin, Editor, Viewer)
+	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, actions []string) (*ResourcePermission, error)
+	// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
+	MapActions(permission ResourcePermission) string
+	// MapPermission will map a friendly named permission to it's corresponding actions configured in PermissionsToAction map.
+	MapPermission(permission string) []string
+}
+
+type ResourcePermissionsStore interface {
+	// SetUserResourcePermission sets permission for managed user role on a resource
+	SetUserResourcePermission(ctx context.Context, orgID, userID int64, cmd SetResourcePermissionCommand) (*ResourcePermission, error)
+	// SetTeamResourcePermission sets permission for managed team role on a resource
+	SetTeamResourcePermission(ctx context.Context, orgID, teamID int64, cmd SetResourcePermissionCommand) (*ResourcePermission, error)
+	// SetBuiltinResourcePermission sets permissions for managed builtin role on a resource
+	SetBuiltInResourcePermission(ctx context.Context, orgID int64, builtinRole string, cmd SetResourcePermissionCommand) (*ResourcePermission, error)
 	// GetResourcesPermissions will return all permission for all supplied resource ids
 	GetResourcesPermissions(ctx context.Context, orgID int64, query GetResourcesPermissionsQuery) ([]ResourcePermission, error)
 }

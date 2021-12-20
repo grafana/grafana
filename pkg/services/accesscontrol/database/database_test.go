@@ -60,7 +60,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			user, team := createUserAndTeam(t, sql, tt.orgID)
 
 			for _, id := range tt.userPermissions {
-				_, err := store.SetUserResourcePermissions(context.Background(), tt.orgID, user.Id, accesscontrol.SetResourcePermissionsCommand{
+				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, user.Id, accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
@@ -69,7 +69,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			for _, id := range tt.teamPermissions {
-				_, err := store.SetTeamResourcePermissions(context.Background(), tt.orgID, team.Id, accesscontrol.SetResourcePermissionsCommand{
+				_, err := store.SetTeamResourcePermission(context.Background(), tt.orgID, team.Id, accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
@@ -78,7 +78,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			for _, id := range tt.builtinPermissions {
-				_, err := store.SetBuiltinResourcePermissions(context.Background(), tt.orgID, "Admin", accesscontrol.SetResourcePermissionsCommand{
+				_, err := store.SetBuiltInResourcePermission(context.Background(), tt.orgID, "Admin", accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,

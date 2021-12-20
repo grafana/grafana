@@ -32,6 +32,30 @@ func (ss *SQLStore) GetProvisionedDataByDashboardID(dashboardID int64) (*models.
 	return nil, nil
 }
 
+func (ss *SQLStore) GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
+	var provisionedDashboard models.DashboardProvisioning
+	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		var dashboard models.Dashboard
+		exists, err := sess.Where("org_id = ? AND uid = ?", orgID, dashboardUID).Get(&dashboard)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return models.
+				ErrDashboardNotFound
+		}
+		exists, err = sess.Where("dashboard_id = ?", dashboard.Id).Get(&provisionedDashboard)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return models.ErrProvisionedDashboardNotFound
+		}
+		return nil
+	})
+	return &provisionedDashboard, err
+}
+
 func (ss *SQLStore) SaveProvisionedDashboard(cmd models.SaveDashboardCommand,
 	provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
