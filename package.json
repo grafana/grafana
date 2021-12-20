@@ -178,7 +178,7 @@
     "file-loader": "6.2.0",
     "fork-ts-checker-webpack-plugin": "6.5.0",
     "fs-extra": "10.0.0",
-    "glob": "7.1.6",
+    "glob": "7.2.0",
     "html-loader": "3.0.1",
     "html-webpack-plugin": "5.5.0",
     "http-server": "14.0.0",
