@@ -18,85 +18,19 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 		return &http.Response{StatusCode: http.StatusOK}, nil
 	})
 
-	t.Run("Without custom query parameters set should not apply middleware", func(t *testing.T) {
-		mw := customQueryParametersMiddleware(log.New("test"))
+	t.Run("Name should be correct", func(t *testing.T) {
+		mw := customQueryParametersMiddleware(log.New("test"), "custom=%%abc&test=abc")
 		rt := mw.CreateMiddleware(httpclient.Options{}, finalRoundTripper)
 		require.NotNil(t, rt)
 		middlewareName, ok := mw.(httpclient.MiddlewareName)
 		require.True(t, ok)
 		require.Equal(t, customQueryParametersMiddlewareName, middlewareName.MiddlewareName())
-
-		req, err := http.NewRequest(http.MethodGet, "http://test.com/query?hello=name", nil)
-		require.NoError(t, err)
-		res, err := rt.RoundTrip(req)
-		require.NoError(t, err)
-		require.NotNil(t, res)
-		if res.Body != nil {
-			require.NoError(t, res.Body.Close())
-		}
-
-		require.Equal(t, "http://test.com/query?hello=name", req.URL.String())
-	})
-
-	t.Run("Without custom query parameters set as string should not apply middleware", func(t *testing.T) {
-		mw := customQueryParametersMiddleware(log.New("test"))
-		rt := mw.CreateMiddleware(httpclient.Options{
-			CustomOptions: map[string]interface{}{
-				customQueryParametersKey: 64,
-			},
-		}, finalRoundTripper)
-		require.NotNil(t, rt)
-		middlewareName, ok := mw.(httpclient.MiddlewareName)
-		require.True(t, ok)
-		require.Equal(t, customQueryParametersMiddlewareName, middlewareName.MiddlewareName())
-
-		req, err := http.NewRequest(http.MethodGet, "http://test.com/query?hello=name", nil)
-		require.NoError(t, err)
-		res, err := rt.RoundTrip(req)
-		require.NoError(t, err)
-		require.NotNil(t, res)
-		if res.Body != nil {
-			require.NoError(t, res.Body.Close())
-		}
-
-		require.Equal(t, "http://test.com/query?hello=name", req.URL.String())
-	})
-
-	t.Run("With custom query parameters set as empty string should not apply middleware", func(t *testing.T) {
-		mw := customQueryParametersMiddleware(log.New("test"))
-		rt := mw.CreateMiddleware(httpclient.Options{
-			CustomOptions: map[string]interface{}{
-				customQueryParametersKey: "",
-			},
-		}, finalRoundTripper)
-		require.NotNil(t, rt)
-		middlewareName, ok := mw.(httpclient.MiddlewareName)
-		require.True(t, ok)
-		require.Equal(t, customQueryParametersMiddlewareName, middlewareName.MiddlewareName())
-
-		req, err := http.NewRequest(http.MethodGet, "http://test.com/query?hello=name", nil)
-		require.NoError(t, err)
-		res, err := rt.RoundTrip(req)
-		require.NoError(t, err)
-		require.NotNil(t, res)
-		if res.Body != nil {
-			require.NoError(t, res.Body.Close())
-		}
-
-		require.Equal(t, "http://test.com/query?hello=name", req.URL.String())
 	})
 
 	t.Run("With custom query parameters set as invalid query string should not apply middleware", func(t *testing.T) {
-		mw := customQueryParametersMiddleware(log.New("test"))
-		rt := mw.CreateMiddleware(httpclient.Options{
-			CustomOptions: map[string]interface{}{
-				customQueryParametersKey: "custom=%%abc&test=abc",
-			},
-		}, finalRoundTripper)
+		mw := customQueryParametersMiddleware(log.New("test"), "custom=%%abc&test=abc")
+		rt := mw.CreateMiddleware(httpclient.Options{}, finalRoundTripper)
 		require.NotNil(t, rt)
-		middlewareName, ok := mw.(httpclient.MiddlewareName)
-		require.True(t, ok)
-		require.Equal(t, customQueryParametersMiddlewareName, middlewareName.MiddlewareName())
 
 		req, err := http.NewRequest(http.MethodGet, "http://test.com/query?hello=name", nil)
 		require.NoError(t, err)
@@ -111,18 +45,8 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("With custom query parameters set should apply middleware for request URL containing query parameters ", func(t *testing.T) {
-		mw := customQueryParametersMiddleware(log.New("test"))
-		rt := mw.CreateMiddleware(httpclient.Options{
-			CustomOptions: map[string]interface{}{
-				grafanaDataKey: map[string]interface{}{
-					customQueryParametersKey: "custom=par/am&second=f oo",
-				},
-			},
-		}, finalRoundTripper)
-		require.NotNil(t, rt)
-		middlewareName, ok := mw.(httpclient.MiddlewareName)
-		require.True(t, ok)
-		require.Equal(t, customQueryParametersMiddlewareName, middlewareName.MiddlewareName())
+		mw := customQueryParametersMiddleware(log.New("test"), "custom=par/am&second=f oo")
+		rt := mw.CreateMiddleware(httpclient.Options{}, finalRoundTripper)
 
 		req, err := http.NewRequest(http.MethodGet, "http://test.com/query?hello=name", nil)
 		require.NoError(t, err)
@@ -143,18 +67,9 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("With custom query parameters set should apply middleware for request URL not containing query parameters", func(t *testing.T) {
-		mw := customQueryParametersMiddleware(log.New("test"))
-		rt := mw.CreateMiddleware(httpclient.Options{
-			CustomOptions: map[string]interface{}{
-				grafanaDataKey: map[string]interface{}{
-					customQueryParametersKey: "custom=par/am&second=f oo",
-				},
-			},
-		}, finalRoundTripper)
+		mw := customQueryParametersMiddleware(log.New("test"), "custom=par/am&second=f oo")
+		rt := mw.CreateMiddleware(httpclient.Options{}, finalRoundTripper)
 		require.NotNil(t, rt)
-		middlewareName, ok := mw.(httpclient.MiddlewareName)
-		require.True(t, ok)
-		require.Equal(t, customQueryParametersMiddlewareName, middlewareName.MiddlewareName())
 
 		req, err := http.NewRequest(http.MethodGet, "http://test.com/query", nil)
 		require.NoError(t, err)

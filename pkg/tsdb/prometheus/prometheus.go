@@ -35,6 +35,12 @@ type Service struct {
 	im                 instancemgmt.InstanceManager
 }
 
+type DatasourceJSON struct {
+	TimeInterval          string `json:"timeInterval"`
+	HttpMethod            string `json:"httpMethod"`
+	CustomQueryParameters string `json:"customQueryParameters"`
+}
+
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
 	plog.Debug("initializing")
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
@@ -56,27 +62,9 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pl
 	return s, nil
 }
 
-func forceHttpGet(settingsJson map[string]interface{}) bool {
-	methodInterface, exists := settingsJson["httpMethod"]
-	if !exists {
-		return false
-	}
-
-	method, ok := methodInterface.(string)
-	if !ok {
-		return false
-	}
-
-	if strings.ToLower(method) != "get" {
-		return false
-	}
-
-	return true
-}
-
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		jsonData := map[string]interface{}{}
+		var jsonData DatasourceJSON
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
@@ -91,21 +79,9 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			httpCliOpts.SigV4.Service = "aps"
 		}
 
-		// timeInterval can be a string or can be missing.
-		// if it is missing, we set it to empty-string
-		timeInterval := ""
+		forceHttpGet := strings.ToLower(jsonData.HttpMethod) == "get"
 
-		timeIntervalJson := jsonData["timeInterval"]
-		if timeIntervalJson != nil {
-			// if it is not nil, it must be a string
-			var ok bool
-			timeInterval, ok = timeIntervalJson.(string)
-			if !ok {
-				return nil, errors.New("invalid time-interval provided")
-			}
-		}
-
-		client, err := createClient(settings.URL, httpCliOpts, httpClientProvider, forceHttpGet(jsonData))
+		client, err := createClient(settings.URL, httpCliOpts, httpClientProvider, jsonData.CustomQueryParameters, forceHttpGet)
 		if err != nil {
 			return nil, err
 		}
@@ -113,7 +89,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		mdl := DatasourceInfo{
 			ID:           settings.ID,
 			URL:          settings.URL,
-			TimeInterval: timeInterval,
+			TimeInterval: jsonData.TimeInterval,
 			promClient:   client,
 		}
 
@@ -143,9 +119,12 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return result, err
 }
 
-func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider, forceHttpGet bool) (apiv1.API, error) {
-	customParamsMiddleware := customQueryParametersMiddleware(plog)
-	middlewares := []sdkhttpclient.Middleware{customParamsMiddleware}
+func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider, customQueryParams string, forceHttpGet bool) (apiv1.API, error) {
+	var middlewares []sdkhttpclient.Middleware
+	if customQueryParams != "" {
+		middlewares = append(middlewares, customQueryParametersMiddleware(plog, customQueryParams))
+
+	}
 	if forceHttpGet {
 		middlewares = append(middlewares, forceHttpGetMiddleware(plog))
 	}

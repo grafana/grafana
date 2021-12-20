@@ -14,26 +14,8 @@ const (
 	grafanaDataKey                      = "grafanaData"
 )
 
-func customQueryParametersMiddleware(logger log.Logger) sdkhttpclient.Middleware {
+func customQueryParametersMiddleware(logger log.Logger, customQueryParams string) sdkhttpclient.Middleware {
 	return sdkhttpclient.NamedMiddlewareFunc(customQueryParametersMiddlewareName, func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
-		grafanaData, exists := opts.CustomOptions[grafanaDataKey]
-		if !exists {
-			return next
-		}
-
-		data, ok := grafanaData.(map[string]interface{})
-		if !ok {
-			return next
-		}
-		customQueryParamsVal, exists := data[customQueryParametersKey]
-		if !exists {
-			return next
-		}
-
-		customQueryParams, ok := customQueryParamsVal.(string)
-		if !ok || customQueryParams == "" {
-			return next
-		}
 
 		values, err := url.ParseQuery(customQueryParams)
 		if err != nil {
