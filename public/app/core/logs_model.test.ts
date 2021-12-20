@@ -20,6 +20,7 @@ import {
   dedupLogRows,
   filterLogLevels,
   getSeriesProperties,
+  hasLogsVolumeMeta,
   LIMIT_LABEL,
   logSeriesToLogsModel,
   queryLogVolume,
@@ -1078,6 +1079,7 @@ describe('logs volume', () => {
           data: [{ meta }, { meta }],
         },
       ]);
+      expect(hasLogsVolumeMeta(received[1].data[0].meta.custom)).toBeTruthy();
     });
   });
 
