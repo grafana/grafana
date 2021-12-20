@@ -10,7 +10,7 @@ Yarn >= 1.22.4
 ## Build the doc site
 
 1. On the command line, first change to the docs folder: `cd docs`.
-1. Run `make docs-quick`. This launches a preview of the website with the current grafana docs at `http://localhost:3002/docs/grafana/next/` which will refresh automatically when changes are made to content in the `sources` directory.
+1. Run `make docs`. This launches a preview of the website with the current grafana docs at `http://localhost:3002/docs/grafana/next/` which will refresh automatically when changes are made to content in the `sources` directory.
 
 If you have the grafana/website repo checked out in the same directory as the grafana repo, then you can run `make docs-local-static` to use local assets (such as images).
 
