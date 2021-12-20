@@ -830,7 +830,27 @@ node:
 platform:
   arch: amd64
   os: linux
-services: []
+services:
+- environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.6.48
+  name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -4289,6 +4309,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: f551ccae0072c77a25a540bcc61f49946d972a60d67a2987b40cfdf3e6c87e04
+hmac: e9f0799a3d0a25a5a7caa6bca1e09ee7590d0877c7d56c680b64e6e601d17f3a
 
 ...
