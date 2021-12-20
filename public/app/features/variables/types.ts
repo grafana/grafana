@@ -154,15 +154,12 @@ export type VariableQueryEditorType<
 > = ComponentType<VariableQueryProps> | ComponentType<QueryEditorProps<any, TQuery, TOptions, any>> | null;
 
 export interface VariablesChangedEvent {
-  panelIds?: number[];
+  refreshAll: boolean;
+  panelIds: number[];
 }
 
 export class VariablesChanged extends BusEventWithPayload<VariablesChangedEvent> {
   static type = 'variables-changed';
-}
-
-export class VariablesFinishedProcessingTimeRangeChange extends BusEventWithPayload<VariablesChangedEvent> {
-  static type = 'variables-finished-processing-time-range-change';
 }
 
 export class VariablesChangedInUrl extends BusEventWithPayload<VariablesChangedEvent> {

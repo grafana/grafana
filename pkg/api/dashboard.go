@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"gopkg.in/macaron.v1"
 )
 
 const (
@@ -320,9 +319,19 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	svc := dashboards.NewProvisioningService(hs.SQLStore)
-	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
-	if err != nil {
-		return response.Error(500, "Error while checking if dashboard is provisioned", err)
+	var provisioningData *models.DashboardProvisioning
+	if dash.Id != 0 {
+		data, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
+		if err != nil {
+			return response.Error(500, "Error while checking if dashboard is provisioned", err)
+		}
+		provisioningData = data
+	} else if dash.Uid != "" {
+		data, err := svc.GetProvisionedDashboardDataByDashboardUID(dash.OrgId, dash.Uid)
+		if err != nil && !errors.Is(err, models.ErrProvisionedDashboardNotFound) {
+			return response.Error(500, "Error while checking if dashboard is provisioned", err)
+		}
+		provisioningData = data
 	}
 
 	allowUiUpdate := true
@@ -566,7 +575,7 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	version, _ := strconv.ParseInt(macaron.Params(c.Req)[":id"], 10, 32)
+	version, _ := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 32)
 	query := models.GetDashboardVersionQuery{
 		OrgId:       c.OrgId,
 		DashboardId: dashID,

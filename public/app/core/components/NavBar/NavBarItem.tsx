@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Item } from '@react-stately/collections';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2, locationUtil, NavMenuItemType, NavModelItem } from '@grafana/data';
 import { IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
 
@@ -50,7 +50,7 @@ const NavBarItem = ({
     }
 
     if (!target && url.startsWith('/')) {
-      locationService.push(url);
+      locationService.push(locationUtil.stripBaseFromUrl(url));
     } else {
       window.open(url, target);
     }

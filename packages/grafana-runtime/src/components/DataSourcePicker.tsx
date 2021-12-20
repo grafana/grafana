@@ -38,6 +38,7 @@ export interface DataSourcePickerProps {
   // If set to true and there is no value select will be empty, otherwise it will preselect default data source
   noDefault?: boolean;
   width?: number;
+  inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
 }
@@ -147,7 +148,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   render() {
-    const { autoFocus, onBlur, onClear, openMenuOnFocus, placeholder, width } = this.props;
+    const { autoFocus, onBlur, onClear, openMenuOnFocus, placeholder, width, inputId } = this.props;
     const { error } = this.state;
     const options = this.getDataSourceOptions();
     const value = this.getCurrentValue();
@@ -157,7 +158,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       <div aria-label={selectors.components.DataSourcePicker.container}>
         <Select
           aria-label={selectors.components.DataSourcePicker.inputV2}
-          inputId="data-source-picker"
+          inputId={inputId || 'data-source-picker'}
           menuShouldPortal
           className="ds-picker select-container"
           isMulti={false}

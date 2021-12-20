@@ -150,6 +150,12 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
       if (layer.showOpacity) {
         // TODO -- add opacity check
       }
+      builder.addBooleanSwitch({
+        path: 'tooltip',
+        name: 'Display tooltip',
+        description: 'Show the tooltip for layer',
+        defaultValue: true,
+      });
     },
   };
 }
