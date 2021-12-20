@@ -65,6 +65,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: ${theme.spacing(1)};
       align-items: center;
       justify-content: space-around;
+      flex-direction: row-reverse;
     `,
   };
 };
