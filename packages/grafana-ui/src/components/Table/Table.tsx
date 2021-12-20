@@ -20,6 +20,7 @@ import {
   FooterItem,
   TableSortByActionCallback,
   TableSortByFieldState,
+  GrafanaTableColumn,
 } from './types';
 import { getTableStyles } from './styles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
@@ -175,29 +176,30 @@ export const Table: FC<Props> = memo((props: Props) => {
     useResizeColumns
   );
 
-  const { fields } = data;
-
   const RenderRow = React.useCallback(
     ({ index: rowIndex, style }) => {
       const row = rows[rowIndex];
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
-          {row.cells.map((cell: Cell, index: number) => (
-            <TableCell
-              key={index}
-              field={fields[index]}
-              tableStyles={tableStyles}
-              cell={cell}
-              onCellFilterAdded={onCellFilterAdded}
-              columnIndex={index}
-              columnCount={row.cells.length}
-            />
-          ))}
+          {row.cells.map((cell: Cell, index: number) => {
+            const column = (cell.column as any) as GrafanaTableColumn;
+            return (
+              <TableCell
+                key={index}
+                field={column.grafanaField}
+                tableStyles={tableStyles}
+                cell={cell}
+                onCellFilterAdded={onCellFilterAdded}
+                columnIndex={index}
+                columnCount={row.cells.length}
+              />
+            );
+          })}
         </div>
       );
     },
-    [fields, onCellFilterAdded, prepareRow, rows, tableStyles]
+    [onCellFilterAdded, prepareRow, rows, tableStyles]
   );
 
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
