@@ -160,7 +160,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgId:   12,
 			},
 		}
-		request := apimodels.PostableUserConfig{}
+		request := createAmConfigRequest(t)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -175,7 +175,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgId:   1,
 			},
 		}
-		request := apimodels.PostableUserConfig{}
+		request := createAmConfigRequest(t)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -190,8 +190,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgId:   1,
 			},
 		}
-		request := apimodels.PostableUserConfig{}
-		request.UnmarshalJSON([]byte(validConfig))
+		request := createAmConfigRequest(t)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -206,8 +205,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgId:   3, // Org 3 was initialized with broken config.
 			},
 		}
-		request := apimodels.PostableUserConfig{}
-		request.UnmarshalJSON([]byte(validConfig))
+		request := createAmConfigRequest(t)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -225,6 +223,16 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	store.Setup(3)
 	secrets := fakes.NewFakeSecretsService()
 	return AlertmanagerSrv{mam: mam, store: store, secrets: secrets}
+}
+
+func createAmConfigRequest(t *testing.T) apimodels.PostableUserConfig {
+	t.Helper()
+
+	request := apimodels.PostableUserConfig{}
+	err := request.UnmarshalJSON([]byte(validConfig))
+	require.NoError(t, err)
+
+	return request
 }
 
 func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
