@@ -92,7 +92,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff
-	github.com/ua-parser/uap-go v0.0.0-20190826212731-daf92ba38329
+	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/unknwon/com v1.0.1
 	github.com/urfave/cli/v2 v2.3.0
@@ -258,7 +258,9 @@ require github.com/grafana/grafana/smithy v0.0.0-00010101000000-000000000000
 
 require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.15 // indirect
+	github.com/containerd/containerd v1.5.8 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
+	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/segmentio/asm v1.1.1 // indirect
 )
 
