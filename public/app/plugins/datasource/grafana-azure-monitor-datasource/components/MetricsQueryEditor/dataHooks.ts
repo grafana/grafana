@@ -282,7 +282,7 @@ function formatOptions(
     text: string;
     value: string;
   }>,
-  selectedValue: string | undefined
+  selectedValue?: string
 ) {
   const options = rawResults.map(toOption);
 
