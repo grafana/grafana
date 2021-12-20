@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -32,6 +33,8 @@ func TestDashboardQuota(t *testing.T) {
 		EnableQuota:       true,
 		DashboardOrgQuota: &dashboardQuota,
 	})
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
 	createUser(t, store, models.CreateUserCommand{

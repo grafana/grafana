@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
@@ -70,6 +71,8 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	err = svc.RemoteCache.Set(context.Background(), key, int64(33), 0)
 	require.NoError(t, err)
 
+	err = tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)
 	require.True(t, authEnabled)
 

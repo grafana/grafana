@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -44,7 +45,9 @@ func TestDatasourceAsConfig(t *testing.T) {
 		t.Run("should apply default on insert", func(t *testing.T) {
 			setup()
 			dc := newDatasourceProvisioner(logger)
-			err := dc.applyChanges(context.Background(), withoutDefaults)
+			err := tracing.InitializeTracerForTest()
+			require.NoError(t, err)
+			err = dc.applyChanges(context.Background(), withoutDefaults)
 			if err != nil {
 				t.Fatalf("applyChanges return an error %v", err)
 			}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +24,9 @@ func TestDispatch(t *testing.T) {
 		return nil
 	})
 
-	err := bus.Dispatch(context.Background(), &testQuery{})
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+	err = bus.Dispatch(context.Background(), &testQuery{})
 	require.NoError(t, err)
 
 	require.True(t, invoked, "expected handler to be called")

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -65,6 +66,8 @@ func TestService(t *testing.T) {
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
 
+	err = tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	res, err := s.ExecutePipeline(context.Background(), pl)
 	require.NoError(t, err)
 

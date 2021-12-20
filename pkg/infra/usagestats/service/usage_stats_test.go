@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -273,7 +274,9 @@ func TestMetrics(t *testing.T) {
 			})
 			usageStatsURL = ts.URL
 
-			err := uss.sendUsageStats(context.Background())
+			err := tracing.InitializeTracerForTest()
+			require.NoError(t, err)
+			err = uss.sendUsageStats(context.Background())
 			require.NoError(t, err)
 
 			// Wait for fake HTTP server to receive a request

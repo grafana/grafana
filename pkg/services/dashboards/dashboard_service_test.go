@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -237,7 +238,9 @@ func TestDashboardService(t *testing.T) {
 		t.Run("Given provisioned dashboard", func(t *testing.T) {
 			t.Run("DeleteProvisionedDashboard should delete it", func(t *testing.T) {
 				result := setupDeleteHandlers(t, &fakeStore, true)
-				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
+				err := tracing.InitializeTracerForTest()
+				require.NoError(t, err)
+				err = service.DeleteProvisionedDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 				require.True(t, result.deleteWasCalled)
 			})

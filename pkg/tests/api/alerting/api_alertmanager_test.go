@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
@@ -34,6 +35,8 @@ func TestAMConfigAccess(t *testing.T) {
 		DisableAnonymous:      true,
 	})
 
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
@@ -314,7 +317,7 @@ func TestAMConfigAccess(t *testing.T) {
 	})
 
 	var silences apimodels.GettableSilences
-	err := json.Unmarshal(blob, &silences)
+	err = json.Unmarshal(blob, &silences)
 	require.NoError(t, err)
 	assert.Len(t, silences, 2)
 	silenceIDs := make([]string, 0, len(silences))
@@ -393,6 +396,8 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 		DisableAnonymous:      true,
 	})
 
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()

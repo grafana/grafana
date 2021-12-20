@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -62,7 +63,9 @@ func TestValidateLoginAttempts(t *testing.T) {
 			withLoginAttempts(t, tc.loginAttempts)
 
 			query := &models.LoginUserQuery{Username: "user", Cfg: tc.cfg}
-			err := validateLoginAttempts(context.Background(), query)
+			err := tracing.InitializeTracerForTest()
+			require.NoError(t, err)
+			err = validateLoginAttempts(context.Background(), query)
 			require.Equal(t, tc.expected, err)
 		})
 	}

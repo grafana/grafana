@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -49,6 +50,8 @@ func TestGetPluginDashboards(t *testing.T) {
 		return nil
 	})
 
+	err = tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	dashboards, err := pm.GetPluginDashboards(context.Background(), 1, "test-app")
 	require.NoError(t, err)
 

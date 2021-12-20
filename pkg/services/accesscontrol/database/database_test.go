@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -57,6 +58,8 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			store, sql := setupTestEnv(t)
 
+			err := tracing.InitializeTracerForTest()
+			require.NoError(t, err)
 			user, team := createUserAndTeam(t, sql, tt.orgID)
 
 			for _, id := range tt.userPermissions {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -31,8 +32,10 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
+			err := tracing.InitializeTracerForTest()
+			require.NoError(t, err)
 			user := tests.SetupUserServiceAccount(t, db, c.user)
-			err := store.DeleteServiceAccount(context.Background(), user.OrgId, user.Id)
+			err = store.DeleteServiceAccount(context.Background(), user.OrgId, user.Id)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/alerting/notifiers"
@@ -37,6 +38,8 @@ func TestNotificationAsConfig(t *testing.T) {
 	t.Run("Testing notification as configuration", func(t *testing.T) {
 		setup := func() {
 			sqlStore = sqlstore.InitTestDB(t)
+			err := tracing.InitializeTracerForTest()
+			require.NoError(t, err)
 			setupBusHandlers(sqlStore)
 
 			for i := 1; i < 5; i++ {

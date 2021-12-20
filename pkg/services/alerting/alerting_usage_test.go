@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 )
@@ -56,6 +57,8 @@ func TestAlertingUsageStats(t *testing.T) {
 		return nil
 	})
 
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	result, err := ae.QueryUsageStats(context.Background())
 	require.NoError(t, err, "getAlertingUsage should not return error")
 

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -44,7 +45,9 @@ func TestService(t *testing.T) {
 		sjd := map[string]string{"password": "12345"}
 		cmd := models.AddDataSourceCommand{SecureJsonData: sjd}
 
-		err := s.AddDataSource(ctx, &cmd)
+		err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
+		err = s.AddDataSource(ctx, &cmd)
 		require.NoError(t, err)
 
 		ds = cmd.Result

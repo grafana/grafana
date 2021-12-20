@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -30,6 +31,8 @@ import (
 
 func TestQueryCloudWatchMetrics(t *testing.T) {
 	grafDir, cfgPath := testinfra.CreateGrafDir(t)
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	addr, sqlStore := testinfra.StartGrafana(t, grafDir, cfgPath)
 	setUpDatabase(t, sqlStore)
 

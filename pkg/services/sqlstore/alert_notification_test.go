@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/stretchr/testify/require"
@@ -472,6 +473,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				OrgId: 1,
 			}
 
+			err = tracing.InitializeTracerForTest()
+			require.NoError(t, err)
 			err = sqlStore.DeleteAlertNotificationWithUid(context.Background(), deleteWithUidCmd)
 			require.Nil(t, err)
 			require.Equal(t, cmd.Result.Id, deleteWithUidCmd.DeletedAlertNotificationId)

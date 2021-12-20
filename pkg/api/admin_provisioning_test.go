@@ -6,10 +6,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type reloadProvisioningTestCase struct {
@@ -152,6 +154,8 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			sc.req, err = http.NewRequest(http.MethodPost, test.url, nil)
 			assert.NoError(t, err)
 
+			err = tracing.InitializeTracerForTest()
+			require.NoError(t, err)
 			sc.exec()
 
 			// Check return code
