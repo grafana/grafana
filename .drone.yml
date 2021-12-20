@@ -263,7 +263,8 @@ steps:
   - 'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"'
   - 'curl -X POST https://api.github.com/repos/${DRONE_REPO}/statuses/${DRONE_COMMIT_SHA}
     -H "Authorization: token $${GITHUB_TOKEN}" -d "{\"state\":\"success\",\"target_url\":\"$${E2E_ARTIFACTS_VIDEO_ZIP}\",
-    \"description\": \"E2E Tests Artifacts\", \"context\": \"e2e_artifacts\"}"'
+    \"description\": \"Click on the details to download e2e recording videos\", \"context\":
+    \"e2e_artifacts\"}"'
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -4342,6 +4343,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 18142d316425445115614a92bde6a31e436f40c0ae0b65de374ee1e6ac7ec437
+hmac: 9ed7209784afb0da24a611aef9241fa863030717870ae66ebb46fce2b0215b04
 
 ...
