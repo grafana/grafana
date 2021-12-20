@@ -24,10 +24,7 @@ describe('rule-editor', () => {
     model: {
       refId: 'B',
       type: 'classic_conditions',
-      datasource: {
-        uid: '-100',
-        type: ExpressionDatasourceRef.type,
-      },
+      datasource: ExpressionDatasourceRef,
       conditions: [
         {
           type: 'query',
@@ -57,10 +54,7 @@ describe('rule-editor', () => {
     model: {
       refId: 'B',
       type: 'math',
-      datasource: {
-        uid: '-100',
-        type: ExpressionDatasourceRef.type,
-      },
+      datasource: ExpressionDatasourceRef,
       conditions: [],
       expression: 'abs($A) + $A',
     },
@@ -73,10 +67,7 @@ describe('rule-editor', () => {
     model: {
       refId: 'B',
       type: 'reduce',
-      datasource: {
-        uid: '-100',
-        type: ExpressionDatasourceRef.type,
-      },
+      datasource: ExpressionDatasourceRef,
       conditions: [],
       reducer: 'mean',
       expression: 'A',
