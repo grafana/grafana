@@ -1,5 +1,5 @@
 import { marked } from 'marked';
-import { sanitize } from './sanitize';
+import { sanitize, sanitizeTextPanelContent } from './sanitize';
 
 let hasInitialized = false;
 
@@ -25,4 +25,24 @@ export function renderMarkdown(str?: string, options?: RenderMarkdownOptions): s
   }
 
   return sanitize(html);
+}
+
+export function renderTextPanelMarkdown(str?: string, options?: RenderMarkdownOptions): string {
+  if (!hasInitialized) {
+    marked.setOptions({
+      pedantic: false,
+      gfm: true,
+      smartLists: true,
+      smartypants: false,
+      xhtml: false,
+    });
+    hasInitialized = true;
+  }
+
+  const html = marked(str || '');
+  if (options?.noSanitize) {
+    return html;
+  }
+
+  return sanitizeTextPanelContent(html);
 }
