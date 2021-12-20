@@ -28,7 +28,7 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (*RemoteCache, error) {
-	client, err := createClient(context.Background(), cfg.RemoteCacheOptions, sqlStore)
+	client, err := createClient(cfg.RemoteCacheOptions, sqlStore)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(ctx context.Context, opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SQLStore) (CacheStorage, error) {
+func createClient(opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SQLStore) (CacheStorage, error) {
 	if opts.Name == redisCacheType {
 		return newRedisStorage(opts)
 	}

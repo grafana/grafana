@@ -171,7 +171,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			// To export them, we need to translate the metrics from each individual registry and,
 			// then aggregate them on the main registry.
 			m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
-			am, err := newAlertmanager(orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, m)
+			am, err := newAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, m)
 			if err != nil {
 				moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "err", err)
 			}

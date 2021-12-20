@@ -159,11 +159,7 @@ func (m *MockPluginContextGetter) GetPluginContext(ctx context.Context, arg0 *mo
 }
 
 // GetPluginContext indicates an expected call of GetPluginContext.
-<<<<<<< HEAD
 func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(ctx, arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-=======
-func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(ctx context.Context, arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
->>>>>>> 374df028ed (Remove context.TODO() from services)
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPluginContext", reflect.TypeOf((*MockPluginContextGetter)(nil).GetPluginContext), ctx, arg0, arg1, arg2, arg3)
 }
