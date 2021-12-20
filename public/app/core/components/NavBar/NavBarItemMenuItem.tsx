@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { useMenuItem } from '@react-aria/menu';
-import { useFocus } from '@react-aria/interactions';
+import { useFocus, useKeyboard } from '@react-aria/interactions';
 import { TreeState } from '@react-stately/tree';
 import { mergeProps } from '@react-aria/utils';
 import { Node } from '@react-types/shared';
@@ -45,8 +45,17 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
     ref
   );
 
+  const { keyboardProps } = useKeyboard({
+    onKeyDown: (e) => {
+      if (e.key === 'ArrowLeft') {
+        onClose();
+      }
+      e.continuePropagation();
+    },
+  });
+
   return (
-    <li {...mergeProps(menuItemProps, focusProps)} ref={ref} className={styles.menuItem}>
+    <li {...mergeProps(menuItemProps, focusProps, keyboardProps)} ref={ref} className={styles.menuItem}>
       {rendered}
     </li>
   );
