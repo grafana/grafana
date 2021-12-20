@@ -108,6 +108,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   builder.addScale({
     scaleKey: 'x',
     isTime: false,
+    range: config.xRange,
     distribution: ScaleDistribution.Ordinal,
     orientation: vizOrientation.xOri,
     direction: vizOrientation.xDir,
@@ -182,6 +183,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       softMax: customConfig.axisSoftMax,
       orientation: vizOrientation.yOri,
       direction: vizOrientation.yDir,
+      distribution: customConfig.scaleDistribution?.type,
+      log: customConfig.scaleDistribution?.log,
     });
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
@@ -213,7 +216,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   }
 
   if (stackingGroups.size !== 0) {
-    builder.setStacking(true);
     for (const [_, seriesIds] of stackingGroups.entries()) {
       const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
       for (let j = seriesIdxs.length - 1; j > 0; j--) {

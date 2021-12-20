@@ -16,8 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
+
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 )
 
 var (
@@ -30,7 +32,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	svcmock := tests.ServiceAccountMock{}
 
-	var requestResponse = func(server *macaron.Macaron, httpMethod, requestpath string) *httptest.ResponseRecorder {
+	var requestResponse = func(server *web.Mux, httpMethod, requestpath string) *httptest.ResponseRecorder {
 		req, err := http.NewRequest(httpMethod, requestpath, nil)
 		require.NoError(t, err)
 		recorder := httptest.NewRecorder()
@@ -92,21 +94,18 @@ func serviceAccountDeletionScenario(t *testing.T, httpMethod string, endpoint st
 	fn(httpMethod, endpoint, user)
 }
 
-func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock, routerRegister routing.RouteRegister, acmock *accesscontrolmock.Mock) *macaron.Macaron {
-	a := NewServiceAccountsAPI(
-		svc,
-		acmock,
-		routerRegister,
-	)
+func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock, routerRegister routing.RouteRegister, acmock *accesscontrolmock.Mock) *web.Mux {
+	store := sqlstore.InitTestDB(t)
+	a := NewServiceAccountsAPI(svc, acmock, routerRegister, database.NewServiceAccountsStore(store))
 	a.RegisterAPIEndpoints(&setting.Cfg{FeatureToggles: map[string]bool{"service-accounts": true}})
 
-	m := macaron.New()
+	m := web.New()
 	signedUser := &models.SignedInUser{
 		OrgId:   1,
 		OrgRole: models.ROLE_ADMIN,
 	}
 
-	m.Use(func(c *macaron.Context) {
+	m.Use(func(c *web.Context) {
 		ctx := &models.ReqContext{
 			Context:      c,
 			IsSignedIn:   true,

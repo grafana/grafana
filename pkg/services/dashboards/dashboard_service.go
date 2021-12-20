@@ -32,6 +32,7 @@ type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
+	GetProvisionedDashboardDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
 	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
@@ -79,6 +80,10 @@ var GetProvisionedData = func(store dashboards.Store, dashboardID int64) (*model
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
 	return GetProvisionedData(dr.dashboardStore, dashboardID)
+}
+
+func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
+	return dr.dashboardStore.GetProvisionedDataByDashboardUID(orgID, dashboardUID)
 }
 
 func (dr *dashboardServiceImpl) buildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool,
