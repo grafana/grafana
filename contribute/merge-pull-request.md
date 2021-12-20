@@ -25,7 +25,6 @@ Before actually merging a pull request there's a couple of things to take into c
 
 Before you can merge a pull request, it must have a review approval, and all the required status checks must pass.
 
-
 ### Format the pull request title
 
 The pull request title should be formatted according to `<Area>: <Summary>`. Keep the summary short and understandable for the community as a whole.
