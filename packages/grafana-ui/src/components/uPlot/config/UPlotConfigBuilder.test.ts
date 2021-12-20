@@ -548,7 +548,6 @@ describe('UPlotConfigBuilder', () => {
   describe('Stacking', () => {
     it('allows stacking config', () => {
       const builder = new UPlotConfigBuilder();
-      builder.setStacking();
       builder.addSeries({
         drawStyle: GraphDrawStyle.Line,
         scaleKey: 'scale-x',
