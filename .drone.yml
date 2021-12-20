@@ -259,10 +259,10 @@ steps:
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
   - find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@
   - gsutil cp e2e/videos.zip gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
-  - 'echo "E2E Test artifacts uploaded to: https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip"'
-  - 'curl -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json"
-    -d {"state":"success","target_url":"https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip",
-    "description": "E2E Tests Artifacts", "context": "e2e_artifacts"}https://api.github.com/repos/${DRONE_REPO_NAME}/statuses/${DRONE_COMMIT_SHA}'
+  - export E2E_ARTIFACTS_VIDEO_ZIP=https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
+  - 'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"'
+  - 'curl -H "Authorization: token ${GITHUB_TOKEN}" -d "{\"state\":\"success\",\"target_url\":\"$${E2E_ARTIFACTS_VIDEO_ZIP}\",
+    \"description\": \"E2E Tests Artifacts\", \"context\": \"e2e_artifacts\"}" https://api.github.com/repos/${DRONE_REPO_NAME}/statuses/${DRONE_COMMIT_SHA}'
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -4341,6 +4341,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: ef5b5c32e0695956cde2034b7b267474e86434512ec5983b3631e774aa12e3a7
+hmac: ea57ea48a15527be643a789c071bef313ec2363a99c042ee9d81fcaece1a2da7
 
 ...
