@@ -291,9 +291,9 @@ def store_storybook_step(edition, ver_mode):
         'commands': commands,
     }
 
-def e2e_test_artifacts(edition):
+def e2e_tests_artifacts(edition):
     return {
-        'name': 'e2e_test_artifacts_upload' + enterprise2_suffix(edition),
+        'name': 'e2e_tests_artifacts_upload' + enterprise2_suffix(edition),
         'image': 'google/cloud-sdk',
         'depends_on': [            
             'end-to-end-tests-dashboards-suite',
