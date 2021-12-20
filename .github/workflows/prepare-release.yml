@@ -1,4 +1,4 @@
-name: Prepare release for tag
+name: Prepare release
 on:
   workflow_dispatch:
     inputs:
