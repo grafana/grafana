@@ -81,6 +81,6 @@ jobs:
         if: ${{ inputs.version_call != '' }}
         uses: ./actions/bump-version
         with:
-          version: ${{ inputs.version_call }}
+          version_call: ${{ inputs.version_call }}
           token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
           metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
