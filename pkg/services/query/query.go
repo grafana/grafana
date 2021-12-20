@@ -59,7 +59,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 // QueryData can process queries and return query responses.
 func (s *Service) QueryData(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
-	parsedReq, err := s.parseMetricRequest(user, skipCache, reqDTO)
+	parsedReq, err := s.parseMetricRequest(ctx, user, skipCache, reqDTO)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ type parsedRequest struct {
 	parsedQueries []parsedQuery
 }
 
-func (s *Service) parseMetricRequest(user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
+func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
 		return nil, NewErrBadQuery("no queries found")
 	}
@@ -166,7 +166,7 @@ func (s *Service) parseMetricRequest(user *models.SignedInUser, skipCache bool, 
 	// Parse the queries
 	datasourcesByUid := map[string]*models.DataSource{}
 	for _, query := range reqDTO.Queries {
-		ds, err := s.getDataSourceFromQuery(user, skipCache, query, datasourcesByUid)
+		ds, err := s.getDataSourceFromQuery(ctx, user, skipCache, query, datasourcesByUid)
 		if err != nil {
 			return nil, err
 		}
@@ -212,7 +212,7 @@ func (s *Service) parseMetricRequest(user *models.SignedInUser, skipCache bool, 
 	return req, nil
 }
 
-func (s *Service) getDataSourceFromQuery(user *models.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*models.DataSource) (*models.DataSource, error) {
+func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*models.DataSource) (*models.DataSource, error) {
 	var err error
 	uid := query.Get("datasource").Get("uid").MustString()
 
@@ -246,7 +246,7 @@ func (s *Service) getDataSourceFromQuery(user *models.SignedInUser, skipCache bo
 	}
 
 	if uid != "" {
-		ds, err = s.dataSourceCache.GetDatasourceByUID(uid, user, skipCache)
+		ds, err = s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipCache)
 		if err != nil {
 			return nil, err
 		}
