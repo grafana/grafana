@@ -17,6 +17,7 @@ type ServiceAccountsAPI struct {
 	service        serviceaccounts.Service
 	accesscontrol  accesscontrol.AccessControl
 	RouterRegister routing.RouteRegister
+	hasMigrated    bool
 }
 
 func NewServiceAccountsAPI(
@@ -24,10 +25,13 @@ func NewServiceAccountsAPI(
 	accesscontrol accesscontrol.AccessControl,
 	routerRegister routing.RouteRegister,
 ) *ServiceAccountsAPI {
+	// TODO: call db and update cache
+	hasMigrated := true
 	return &ServiceAccountsAPI{
 		service:        service,
 		accesscontrol:  accesscontrol,
 		RouterRegister: routerRegister,
+		hasMigrated:    hasMigrated,
 	}
 }
 
@@ -50,4 +54,11 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) resp
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
 	return response.Success("service account deleted")
+}
+
+func (api *ServiceAccountsAPI) hasMigratedServiceAccounts(ctx *models.ReqContext) response.Response {
+	if api.hasMigrated {
+		return response.Success("service accounts migrated")
+	}
+	return response.Error(http.StatusForbidden, "Service accounts not available because of no migration", nil)
 }
