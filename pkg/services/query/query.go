@@ -87,10 +87,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUs
 			RefID:         pq.query.RefID,
 			MaxDataPoints: pq.query.MaxDataPoints,
 			QueryType:     pq.query.QueryType,
-			Datasource: expr.DataSourceRef{
-				Type: pq.datasource.Type,
-				UID:  pq.datasource.Uid,
-			},
+			DataSource:    pq.datasource,
 			TimeRange: expr.TimeRange{
 				From: pq.query.TimeRange.From,
 				To:   pq.query.TimeRange.To,
@@ -130,6 +127,11 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
 		if token := s.oAuthTokenService.GetCurrentOAuthToken(ctx, user); token != nil {
 			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+
+			idToken, ok := token.Extra("id_token").(string)
+			if ok && idToken != "" {
+				req.Headers["X-ID-Token"] = idToken
+			}
 		}
 	}
 
