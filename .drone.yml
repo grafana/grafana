@@ -408,33 +408,13 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
-name: build-main
+name: main-test
 node:
   type: no-parallel
 platform:
   arch: amd64
   os: linux
-services:
-- environment:
-    PGDATA: /var/lib/postgresql/data/pgdata
-    POSTGRES_DB: grafanatest
-    POSTGRES_PASSWORD: grafanatest
-    POSTGRES_USER: grafanatest
-  image: postgres:12.3-alpine
-  name: postgres
-  volumes:
-  - name: postgres
-    path: /var/lib/postgresql/data/pgdata
-- environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.6.48
-  name: mysql
-  volumes:
-  - name: mysql
-    path: /var/lib/mysql
+services: []
 steps:
 - commands:
   - mkdir -p bin
@@ -458,17 +438,6 @@ steps:
   - grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: lint-drone
-- image: grafana/drone-downstream
-  name: trigger-enterprise-downstream
-  settings:
-    params:
-    - SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    - SOURCE_COMMIT=${DRONE_COMMIT}
-    repositories:
-    - grafana/grafana-enterprise@main
-    server: https://drone.grafana.net
-    token:
-      from_secret: drone_token
 - commands:
   - |-
     echo -e "unknwon
@@ -528,36 +497,55 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.8
   name: test-frontend
+trigger:
+  branch: main
+  event:
+  - push
+type: docker
+volumes:
+- name: cypress_cache
+  temp: {}
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on: []
+kind: pipeline
+name: main-build-e2e-publish
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
 - commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
-  depends_on:
-  - grabpl
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.4.8
-  name: postgres-integration-tests
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
 - commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
-  depends_on:
-  - grabpl
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.3
+  name: identify-runner
+- commands:
+  - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - yarn install --immutable
   image: grafana/build-container:1.4.8
-  name: mysql-integration-tests
+  name: initialize
+- image: grafana/drone-downstream
+  name: trigger-enterprise-downstream
+  settings:
+    params:
+    - SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    - SOURCE_COMMIT=${DRONE_COMMIT}
+    repositories:
+    - grafana/grafana-enterprise@main
+    server: https://drone.grafana.net
+    token:
+      from_secret: drone_token
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise
@@ -834,8 +822,84 @@ volumes:
   temp:
     medium: memory
 ---
+depends_on: []
+kind: pipeline
+name: main-integration-tests
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.7.5/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.3
+  name: identify-runner
+- commands:
+  - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - yarn install --immutable
+  image: grafana/build-container:1.4.8
+  name: initialize
+- commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - grabpl
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.8
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - grabpl
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.8
+  name: mysql-integration-tests
+trigger:
+  branch: main
+  event:
+  - push
+type: docker
+volumes:
+- name: cypress_cache
+  temp: {}
+- host:
+    path: /var/run/docker.sock
+  name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
+---
 depends_on:
-- build-main
+- main-test
+- main-build-e2e-publish
+- main-integration-tests
 kind: pipeline
 name: windows-main
 platform:
@@ -919,7 +983,9 @@ trigger:
 type: docker
 ---
 depends_on:
-- build-main
+- main-test
+- main-build-e2e-publish
+- main-integration-tests
 - windows-main
 kind: pipeline
 name: publish-main
@@ -976,7 +1042,9 @@ volumes:
   name: docker
 ---
 depends_on:
-- build-main
+- main-test
+- main-build-e2e-publish
+- main-integration-tests
 - windows-main
 - publish-main
 kind: pipeline
@@ -4221,6 +4289,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 4a5d47ae5989a19e3a5f204853c7c61f7af67e0f712138b92afc4770f61d4223
+hmac: f551ccae0072c77a25a540bcc61f49946d972a60d67a2987b40cfdf3e6c87e04
 
 ...
