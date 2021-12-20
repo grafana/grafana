@@ -262,7 +262,7 @@ steps:
   - export E2E_ARTIFACTS_VIDEO_ZIP=https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip
   - 'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"'
   - 'curl -X POST https://api.github.com/repos/${DRONE_REPO_NAME}/statuses/${DRONE_COMMIT_SHA}
-    -H "Authorization: token ${GITHUB_TOKEN}" -d"{\"state\":\"success\",\"target_url\":\"$${E2E_ARTIFACTS_VIDEO_ZIP}\",
+    -H "Authorization: token $${GITHUB_TOKEN}" -d "{\"state\":\"success\",\"target_url\":\"$${E2E_ARTIFACTS_VIDEO_ZIP}\",
     \"description\": \"E2E Tests Artifacts\", \"context\": \"e2e_artifacts\"}"'
   depends_on:
   - end-to-end-tests-dashboards-suite
@@ -4342,6 +4342,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 540d65d8e41c17f1b6dcc3e9ae0d073a66c37971ba85c016347b28932471a2d6
+hmac: 68177ee26420d41ad1866b950e50899b7ed465efdcace2ba32be6eb92f577db2
 
 ...
