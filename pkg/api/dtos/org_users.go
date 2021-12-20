@@ -1,6 +1,10 @@
 package dtos
 
-import "time"
+import (
+	"time"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+)
 
 // ----------------------
 // QUERIES
@@ -33,13 +37,14 @@ type SearchOrgUsersQueryResult struct {
 // Projections and DTOs
 
 type OrgUserDTO struct {
-	OrgId         int64     `json:"orgId"`
-	UserId        int64     `json:"userId"`
-	Email         string    `json:"email"`
-	Name          string    `json:"name"`
-	AvatarUrl     string    `json:"avatarUrl"`
-	Login         string    `json:"login"`
-	Role          string    `json:"role"`
-	LastSeenAt    time.Time `json:"lastSeenAt"`
-	LastSeenAtAge string    `json:"lastSeenAtAge"`
+	OrgId         int64                  `json:"orgId"`
+	UserId        int64                  `json:"userId"`
+	Email         string                 `json:"email"`
+	Name          string                 `json:"name"`
+	AvatarUrl     string                 `json:"avatarUrl"`
+	Login         string                 `json:"login"`
+	Role          string                 `json:"role"`
+	LastSeenAt    time.Time              `json:"lastSeenAt"`
+	LastSeenAtAge string                 `json:"lastSeenAtAge"`
+	AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
 }
