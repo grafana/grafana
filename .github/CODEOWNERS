@@ -83,7 +83,7 @@ go.sum @grafana/backend-platform
 /packages/grafana-ui/src/utils/storybook @grafana/plugins-platform-frontend
 /packages/jaeger-ui-components/ @grafana/observability-squad
 /plugins-bundled @grafana/plugins-platform-frontend
-/public @grafana/user-essentials
+# public folder
 /public/app/core/components/TimePicker @grafana/grafana-bi-squad
 /public/app/core/components/Layers @grafana/grafana-edge-squad
 /public/app/features/canvas/ @grafana/grafana-edge-squad
