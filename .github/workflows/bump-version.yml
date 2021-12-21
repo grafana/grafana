@@ -39,7 +39,7 @@ jobs:
           echo "The input version format is not correct, please respect:\
           major.minor.patch or major.minor.patch-beta.number format. \
           example: 7.4.3 or 7.4.3-beta.1"
-          exit 1    
+          exit 1
       - uses: actions/checkout@v2
 
       - name: Set intermedia variables
