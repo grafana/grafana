@@ -12,9 +12,15 @@ export class CorsSharedWorker extends SharedWorker {
     const scriptsBasePathUrl = `${urlParts.join('/')}/`;
 
     // DOES NOT WORK
-    // Worker created using "data:application/javascript" will have a null origin https://stackoverflow.com/questions/42239643/when-do-browsers-send-the-origin-header-when-do-browsers-set-the-origin-to-null/42242802#42242802
-    //  => grafana_session cookie will not be sent on Centrifuge.connect()
-    const source = `__webpack_worker_public_path__ = '${scriptsBasePathUrl}'; importScripts('${scriptUrl}');`;
-    super(`data:application/javascript;base64,${btoa(source)}`, options);
+    // Blob URLs are unique and are tied to the lifecycle of the web app - https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL
+    //  => each new browsing context will create its own unique URL and therefore its own unique shared worker
+    const importScripts = `importScripts('${scriptUrl}');`;
+    const objectURL = URL.createObjectURL(
+      new Blob([`__webpack_worker_public_path__ = '${scriptsBasePathUrl}'; ${importScripts}`], {
+        type: 'application/javascript',
+      })
+    );
+    super(objectURL, options);
+    URL.revokeObjectURL(objectURL);
   }
 }
