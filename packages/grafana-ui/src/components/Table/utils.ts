@@ -93,7 +93,7 @@ export function getColumns(
     });
   }
 
-  // set columns that are at minimum widthya
+  // set columns that are at minimum width
   let sharedWidth = availableWidth / fieldCountWithoutWidth;
   for (let i = fieldCountWithoutWidth; i > 0; i--) {
     for (const column of columns) {
