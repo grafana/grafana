@@ -2,7 +2,7 @@ import { DataFrame, SelectableValue } from '@grafana/data';
 import { Feature } from 'ol';
 import { FeatureLike } from 'ol/Feature';
 import { Point } from 'ol/geom';
-import { GeometryTypeId, StyleConfigState } from '../style/types';
+import { defaultStyleConfig, GeometryTypeId, StyleConfigState, StyleConfigValues } from '../style/types';
 import { LocationInfo } from './location';
 
 export const getFeatures = (
@@ -12,34 +12,36 @@ export const getFeatures = (
 ): Array<Feature<Point>> | undefined => {
   const features: Array<Feature<Point>> = [];
   const { dims } = style;
-  const values = { ...style.base };
 
   // Map each data value into new points
   for (let i = 0; i < frame.length; i++) {
-    // Create a new Feature for each point returned from dataFrameToPoints
+    const dynamic: StyleConfigValues = {
+      color: defaultStyleConfig.color.fixed,
+    };
     const dot = new Feature(info.points[i]);
+
+    // Update dynamic used in dynamic styles
+    if (dims) {
+      if (dims.color) {
+        dynamic.color = dims.color.get(i);
+      }
+      if (dims.size) {
+        dynamic.size = dims.size.get(i);
+      }
+      if (dims.rotation) {
+        dynamic.rotation = dims.rotation.get(i);
+      }
+      if (dims.text) {
+        dynamic.text = dims.text.get(i);
+      }
+    }
+
     dot.setProperties({
       frame,
       rowIndex: i,
+      dynamic,
     });
 
-    // Update values used in dynamic styles
-    if (dims) {
-      if (dims.color) {
-        values.color = dims.color.get(i);
-      }
-      if (dims.size) {
-        values.size = dims.size.get(i);
-      }
-      if (dims.rotation) {
-        values.rotation = dims.rotation.get(i);
-      }
-      if (dims.text) {
-        values.text = dims.text.get(i);
-      }
-
-      dot.setStyle(style.maker(values));
-    }
     features.push(dot);
   }
 

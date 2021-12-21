@@ -7,9 +7,8 @@ import {
   FrameGeometrySourceMode,
 } from '@grafana/data';
 import Map from 'ol/Map';
-import Feature from 'ol/Feature';
+import Feature, { FeatureLike } from 'ol/Feature';
 import { Point } from 'ol/geom';
-import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import { getScaledDimension, getColorDimension, getTextDimension, getScalarDimension } from 'app/features/dimensions';
@@ -20,6 +19,7 @@ import { getFeatures } from '../../utils/getFeatures';
 import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
 import { StyleEditor } from './StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
+import VectorLayer from 'ol/layer/Vector';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -61,7 +61,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    */
   create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2) => {
     const matchers = await getLocationMatchers(options.location);
-    const vectorLayer = new layer.Vector({});
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -74,12 +73,33 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
 
-    // Set the default style
     const style = await getStyleConfigState(config.style);
-    if (!style.fields) {
-      vectorLayer.setStyle(style.maker(style.base));
-    }
 
+    // eventually can also use resolution for dynamic style
+    const vectorLayer = new VectorLayer({
+      style: (feature: FeatureLike) => {
+      // Set the default style
+      if (!style.fields) {
+        return style.maker(style.base);
+      }
+
+      const values = {...style.base};
+
+      if (style.fields.color) {
+        values.color = feature.get('dynamic').color;
+      }
+      if (style.fields.size) {
+        values.size = feature.get('dynamic').size;
+      }
+      if (style.fields.text) {
+        values.text = feature.get('dynamic').text;
+      }
+      if (style.fields.rotation) {
+        values.rotation = feature.get('dynamic').rotation;
+      }
+      return style.maker(values)
+    }});
+    
     return {
       init: () => vectorLayer,
       legend: legend,
