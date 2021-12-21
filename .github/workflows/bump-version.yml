@@ -16,7 +16,6 @@ on:
           required: true
         metricsWriteAPIKey:
           required: true
-
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -70,7 +69,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: mob/bump-version-update-user-essentials
+          ref: main
       - uses: actions/setup-node@v2.4.1
         with:
           node-version: '14'
