@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   HorizontalGroup,
   Button,
@@ -22,6 +22,11 @@ const roles = [
   { label: 'Admin', value: OrgRole.Admin },
 ];
 
+const onSubmit = async (formData: FormModel) => {
+  await userInviteSubmit(formData);
+  locationService.push('/org/users/');
+};
+
 export interface FormModel {
   role: OrgRole;
   name: string;
@@ -30,14 +35,7 @@ export interface FormModel {
   email: string;
 }
 
-interface Props {}
-
-export const UserInviteForm: FC<Props> = ({}) => {
-  const onSubmit = async (formData: FormModel) => {
-    await userInviteSubmit(formData);
-    locationService.push('/org/users/');
-  };
-
+export const UserInviteForm = () => {
   const defaultValues: FormModel = {
     name: '',
     email: '',
