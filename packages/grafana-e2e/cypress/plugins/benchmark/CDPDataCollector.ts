@@ -3,7 +3,7 @@ import Tracelib, { TraceEvent } from 'tracelib';
 
 import { countBy, mean } from 'lodash';
 import ProtocolProxyApi from 'devtools-protocol/types/protocol-proxy-api';
-import { CollectedData, DataCollector } from './DataCollector';
+import { CollectedData, DataCollector, DataCollectorName } from './DataCollector';
 
 type CDPDataCollectorDeps = {
   port: number;
@@ -35,7 +35,7 @@ export class CDPDataCollector implements DataCollector {
     ];
   }
 
-  getName = () => 'CDP';
+  getName = () => DataCollectorName.CDP;
 
   private resetState = async () => {
     if (this.state.client) {

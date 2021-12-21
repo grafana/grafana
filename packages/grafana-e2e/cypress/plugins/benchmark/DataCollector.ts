@@ -1,6 +1,8 @@
 export type CollectedData = Record<string, unknown>;
 
-type DataCollectorName = string;
+export enum DataCollectorName {
+  CDP = 'CDP',
+}
 
 type DataCollectorRequest = { id: string };
 

@@ -1,9 +1,9 @@
 import { CollectedData, DataCollector } from './DataCollector';
 import { CDPDataCollector } from './CDPDataCollector';
-import { fromPairs, mapValues } from 'lodash';
+import { fromPairs } from 'lodash';
 import fs from 'fs';
+import { formatResults } from './formatting';
 const remoteDebuggingPortOptionPrefix = '--remote-debugging-port=';
-import { json2csvAsync } from 'json-2-csv';
 
 const getOrAddRemoteDebuggingPort = (args: string[]) => {
   const existing = args.find((arg) => arg.startsWith(remoteDebuggingPortOptionPrefix));
@@ -18,7 +18,7 @@ const getOrAddRemoteDebuggingPort = (args: string[]) => {
 };
 
 let collectors: DataCollector[] = [];
-let results: CollectedData[] = [];
+let results: Array<{ appStats: CollectedData; collectorsData: CollectedData }> = [];
 
 const startBenchmarking = async ({ testName }: { testName: string }) => {
   await Promise.all(collectors.map((coll) => coll.start({ id: testName })));
@@ -26,17 +26,12 @@ const startBenchmarking = async ({ testName }: { testName: string }) => {
   return true;
 };
 
-// TODO: find a better way to represent these stats
-const formatLiveStats = (stats: CollectedData) =>
-  mapValues(stats, (v) => (Array.isArray(v) && v.length ? v[v.length - 1] : v));
-
 const stopBenchmarking = async ({ testName, appStats }: { testName: string; appStats: CollectedData }) => {
   const data = await Promise.all(collectors.map(async (coll) => [coll.getName(), await coll.stop({ id: testName })]));
 
-  console.log(JSON.stringify({ appstats: true, appStats }));
   results.push({
-    ...fromPairs(data),
-    ...formatLiveStats(appStats),
+    collectorsData: fromPairs(data),
+    appStats: appStats,
   });
 
   return true;
@@ -48,7 +43,7 @@ const afterRun = async () => {
 };
 
 const afterSpec = (resultsFolder: string) => async (spec: { name: string }) => {
-  fs.writeFileSync(`${resultsFolder}/${spec.name}-${Date.now()}.csv`, await json2csvAsync(results));
+  fs.writeFileSync(`${resultsFolder}/${spec.name}-${Date.now()}.json`, JSON.stringify(formatResults(results), null, 2));
 
   results = [];
 };
