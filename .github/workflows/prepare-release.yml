@@ -2,7 +2,7 @@ name: Prepare release
 on:
   workflow_dispatch:
     inputs:
-      version_input:
+      version:
         description: 'The version to be released please respect: major.minor.patch or major.minor.patch-beta.number format. example: 7.4.3 or 7.4.3-beta.1'
         required: true
 
@@ -18,8 +18,8 @@ jobs:
   #   needs: call-remove-milestone
   call-bump-version:
     runs-on: ubuntu-latest
-      steps:
-        name: Checkout Actions
+    steps:
+      - name: Checkout Actions
         uses: actions/checkout@v2
         with:
           repository: "grafana/grafana-github-actions"
