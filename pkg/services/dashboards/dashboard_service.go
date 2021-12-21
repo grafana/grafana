@@ -129,7 +129,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if isParentFolderChanged {
-		folderGuardian := guardian.New(context.TODO(), dash.FolderId, dto.OrgId, dto.User)
+		folderGuardian := guardian.New(ctx, dash.FolderId, dto.OrgId, dto.User)
 		if canSave, err := folderGuardian.CanSave(); err != nil || !canSave {
 			if err != nil {
 				return nil, err
@@ -149,7 +149,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(ctx context.Context, d
 		}
 	}
 
-	guard := guardian.New(context.TODO(), dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
+	guard := guardian.New(ctx, dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
 	if canSave, err := guard.CanSave(); err != nil || !canSave {
 		if err != nil {
 			return nil, err
