@@ -17,9 +17,24 @@ jobs:
   #     version_call: ${{ github.event.inputs.version_input }}
   #   needs: call-remove-milestone
   call-bump-version:
-    uses: grafana/grafana/.github/workflows/bump-version.yml@prepare-release-test
-    with:
-      version_call: ${{ github.event.inputs.version_input }}
+    runs-on: ubuntu-latest
+      steps:
+        name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+          repository: "grafana/grafana-github-actions"
+          path: ./actions
+          ref: mob/bump-version-update-user-essentials
+      - uses: actions/setup-node@v2.4.1
+        with:
+          node-version: '14'
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+      - name: Run bump version
+        uses: ./actions/bump-version
+        with:
+          token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+          metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
   #   needs: call-close-milestone
   # call-update-changelog:
   #   uses: grafana/grafana/.github/workflows/update-changelog.yml@main
