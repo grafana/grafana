@@ -10,6 +10,29 @@ const sanitizeXSS = new FilterXSS({
   whiteList: XSSWL,
 });
 
+const sanitizeTextPanelWhitelist = new xss.FilterXSS({
+  whiteList: XSSWL,
+  css: {
+    whiteList: {
+      ...xss.getDefaultCSSWhiteList(),
+      'flex-direction': true,
+      'flex-wrap': true,
+      'flex-basis': true,
+      'flex-grow': true,
+      'flex-shrink': true,
+      'flex-flow': true,
+      gap: true,
+      order: true,
+      'justify-content': true,
+      'justify-items': true,
+      'justify-self': true,
+      'align-items': true,
+      'align-content': true,
+      'align-self': true,
+    },
+  },
+});
+
 /**
  * Returns string safe from XSS attacks.
  *
@@ -23,6 +46,15 @@ export function sanitize(unsanitizedString: string): string {
   } catch (error) {
     console.error('String could not be sanitized', unsanitizedString);
     return unsanitizedString;
+  }
+}
+
+export function sanitizeTextPanelContent(unsanitizedString: string): string {
+  try {
+    return sanitizeTextPanelWhitelist.process(unsanitizedString);
+  } catch (error) {
+    console.error('String could not be sanitized', unsanitizedString);
+    return 'Text string could not be sanitized';
   }
 }
 
