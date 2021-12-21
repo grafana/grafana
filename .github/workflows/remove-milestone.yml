@@ -23,7 +23,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: mob/bump-version-update-user-essentials
+          ref: main
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Remove milestone from open issues (manually invoked)

@@ -47,7 +47,7 @@ jobs:
           major.minor.patch or major.minor.patch-beta<number> format. \
           example: 7.4.3 or 7.4.3-beta1"
           exit 1
-          
+
       - uses: actions/checkout@v2
 
       - name: Set intermedia variables
@@ -77,7 +77,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: mob/bump-version-update-user-essentials
+          ref: main
       - uses: actions/setup-node@v2.4.1
         with:
           node-version: '14'
