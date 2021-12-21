@@ -38,5 +38,6 @@ jobs:
         if: ${{ inputs.version_call != '' }}
         uses: ./actions/update-changelog
         with:
+          version_call: ${{ inputs.version_call }}
           token: ${{ secrets.token }}
           metricsWriteAPIKey: ${{ secrets.metricsWriteAPIKey }}
