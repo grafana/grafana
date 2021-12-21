@@ -11,6 +11,7 @@ import { config } from 'app/core/config';
 import { contextSrv, User } from 'app/core/services/context_srv';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 import { setSearchQuery } from './state/reducers';
+import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 
 export interface Props {
   navModel: NavModel;
@@ -66,6 +67,9 @@ export class TeamList extends PureComponent<Props, any> {
         <td className="link-td">
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
+        <td>
+          <TeamRolePicker teamId={team.id} />
+        </td>
         <td className="text-right">
           <DeleteButton
             aria-label="Delete team"
@@ -119,6 +123,7 @@ export class TeamList extends PureComponent<Props, any> {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Members</th>
+                <th>Roles</th>
                 <th style={{ width: '1%' }} />
               </tr>
             </thead>
