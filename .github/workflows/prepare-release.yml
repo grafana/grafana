@@ -7,17 +7,19 @@ on:
         required: true
 
 jobs:
-  # call-remove-milestone:
-  #   uses: grafana/grafana/.github/workflows/remove-milestone.yml@main
-  #   with:
-  #     version_call: ${{ github.event.inputs.version_input }}
+  call-remove-milestone:
+    uses: grafana/grafana/.github/workflows/remove-milestone.yml@prepare-release-test
+    with:
+      version_call: ${{ github.event.inputs.version_input }}
+    secrets:
+      token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
   call-close-milestone:
     uses: grafana/grafana/.github/workflows/close-milestone.yml@prepare-release-test
     with:
       version_call: ${{ github.event.inputs.version_input }}
     secrets:
       token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
-  #   needs: call-remove-milestone
+    needs: call-remove-milestone
   call-bump-version:
     uses: grafana/grafana/.github/workflows/bump-version.yml@prepare-release-test
     with:
