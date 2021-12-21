@@ -3,14 +3,19 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        required: true        
+        required: true
         description: Needs to match, exactly, the name of a milestone
   workflow_call:
     inputs:
       version_call:
         description: Needs to match, exactly, the name of a milestone
         required: true
-        type: string        
+        type: string
+    secrets:
+        token:
+          required: true
+        metricsWriteAPIKey:
+          required: true
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -20,20 +25,19 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: main      
+          ref: main
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run update changelog (manually invoked)
         if: ${{ github.event.inputs.version != '' }}
         uses: ./actions/update-changelog
         with:
-          version: ${{ github.event.inputs.version }}
-          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+          metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
       - name: Run update changelog (workflow invoked)
         if: ${{ inputs.version_call != '' }}
         uses: ./actions/update-changelog
         with:
-          version: ${{ inputs.version_call }}
-          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          version_call: ${{ inputs.version_call }}
+          token: ${{ secrets.token }}
+          metricsWriteAPIKey: ${{ secrets.metricsWriteAPIKey }}
