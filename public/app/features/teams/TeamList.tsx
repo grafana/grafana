@@ -3,7 +3,7 @@ import Page from 'app/core/components/Page/Page';
 import { DeleteButton, LinkButton, FilterInput } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { OrgRole, StoreState, Team } from 'app/types';
+import { OrgRole, Role, StoreState, Team } from 'app/types';
 import { deleteTeam, loadTeams } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount, isPermissionTeamAdmin } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -11,7 +11,7 @@ import { config } from 'app/core/config';
 import { contextSrv, User } from 'app/core/services/context_srv';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 import { setSearchQuery } from './state/reducers';
-import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
+import { TeamRolePicker, fetchRoleOptions } from 'app/core/components/RolePicker/TeamRolePicker';
 
 export interface Props {
   navModel: NavModel;
@@ -26,13 +26,28 @@ export interface Props {
   signedInUser: User;
 }
 
-export class TeamList extends PureComponent<Props, any> {
+export interface State {
+  roleOptions: Role[];
+}
+
+export class TeamList extends PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { roleOptions: [] };
+  }
+
   componentDidMount() {
     this.fetchTeams();
+    this.fetchRoleOptions();
   }
 
   async fetchTeams() {
     await this.props.loadTeams();
+  }
+
+  async fetchRoleOptions() {
+    const roleOptions = await fetchRoleOptions();
+    this.setState({ roleOptions });
   }
 
   deleteTeam = (team: Team) => {
@@ -68,7 +83,7 @@ export class TeamList extends PureComponent<Props, any> {
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
         <td>
-          <TeamRolePicker teamId={team.id} />
+          <TeamRolePicker teamId={team.id} getRoleOptions={async () => this.state.roleOptions} />
         </td>
         <td className="text-right">
           <DeleteButton
