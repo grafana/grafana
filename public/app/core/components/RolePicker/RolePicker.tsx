@@ -5,15 +5,16 @@ import { RolePickerInput } from './RolePickerInput';
 import { Role, OrgRole } from 'app/types';
 
 export interface Props {
-  builtInRole: OrgRole;
+  builtInRole?: OrgRole;
   appliedRoles: Role[];
   roleOptions: Role[];
-  builtInRoles: Record<string, Role[]>;
+  builtInRoles?: Record<string, Role[]>;
   isLoading?: boolean;
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
+  showBuiltInRole?: boolean;
   onRolesChange: (newRoles: string[]) => void;
-  onBuiltinRoleChange: (newRole: OrgRole) => void;
+  onBuiltinRoleChange?: (newRole: OrgRole) => void;
 }
 
 export const RolePicker = ({
@@ -24,12 +25,13 @@ export const RolePicker = ({
   disabled,
   isLoading,
   builtinRolesDisabled,
+  showBuiltInRole,
   onRolesChange,
   onBuiltinRoleChange,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
-  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole>(builtInRole);
+  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(builtInRole);
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -73,8 +75,10 @@ export const RolePicker = ({
     setSelectedBuiltInRole(role);
   };
 
-  const onUpdate = (newBuiltInRole: OrgRole, newRoles: string[]) => {
-    onBuiltinRoleChange(newBuiltInRole);
+  const onUpdate = (newRoles: string[], newBuiltInRole?: OrgRole) => {
+    if (onBuiltinRoleChange && newBuiltInRole) {
+      onBuiltinRoleChange(newBuiltInRole);
+    }
     onRolesChange(newRoles);
     setOpen(false);
     setQuery('');
@@ -108,6 +112,7 @@ export const RolePicker = ({
           onClose={onClose}
           isFocused={isOpen}
           disabled={disabled}
+          showBuiltInRole={showBuiltInRole}
         />
         {isOpen && (
           <RolePickerMenu
@@ -120,6 +125,7 @@ export const RolePicker = ({
             onUpdate={onUpdate}
             showGroups={query.length === 0 || query.trim() === ''}
             builtinRolesDisabled={builtinRolesDisabled}
+            showBuiltInRole={showBuiltInRole}
           />
         )}
       </ClickOutsideWrapper>

@@ -9,8 +9,9 @@ const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopP
 
 interface InputProps extends HTMLProps<HTMLInputElement> {
   appliedRoles: Role[];
-  builtInRole: string;
+  builtInRole?: string;
   query: string;
+  showBuiltInRole?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
   onQueryChange: (query?: string) => void;
@@ -24,6 +25,7 @@ export const RolePickerInput = ({
   disabled,
   isFocused,
   query,
+  showBuiltInRole,
   onOpen,
   onClose,
   onQueryChange,
@@ -47,8 +49,8 @@ export const RolePickerInput = ({
 
   return !isFocused ? (
     <div className={styles.selectedRoles} onMouseDown={onOpen}>
-      <ValueContainer>{builtInRole}</ValueContainer>
-      {!!numberOfRoles && (
+      {showBuiltInRole && <ValueContainer>{builtInRole}</ValueContainer>}
+      {!!numberOfRoles ? (
         <Tooltip
           content={
             <div className={styles.tooltip}>
@@ -59,14 +61,22 @@ export const RolePickerInput = ({
           }
         >
           <div>
-            <ValueContainer>{`+${numberOfRoles} role${numberOfRoles > 1 ? 's' : ''}`}</ValueContainer>
+            <ValueContainer>{`${showBuiltInRole ? '+' : ''}${numberOfRoles} role${
+              numberOfRoles > 1 ? 's' : ''
+            }`}</ValueContainer>
           </div>
         </Tooltip>
+      ) : (
+        !showBuiltInRole && (
+          <div>
+            <ValueContainer>No roles assigned</ValueContainer>
+          </div>
+        )
       )}
     </div>
   ) : (
     <div className={styles.wrapper}>
-      <ValueContainer>{builtInRole}</ValueContainer>
+      {showBuiltInRole && <ValueContainer>{builtInRole}</ValueContainer>}
       {appliedRoles.map((role) => (
         <ValueContainer key={role.uid}>{role.displayName}</ValueContainer>
       ))}

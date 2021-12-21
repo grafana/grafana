@@ -62,6 +62,7 @@ export const UserRolePicker: FC<Props> = ({
       isLoading={isLoading}
       disabled={disabled}
       builtinRolesDisabled={builtinRolesDisabled}
+      showBuiltInRole
     />
   );
 };
