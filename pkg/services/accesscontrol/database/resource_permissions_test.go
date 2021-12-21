@@ -312,6 +312,7 @@ func TestAccessControlStore_GetResourcesPermissions(t *testing.T) {
 
 				return nil
 			})
+			require.NoError(t, err)
 
 			for _, id := range test.resourceIDs {
 				seedResourcePermissions(t, store, sql, test.actions, test.resource, id, test.numUsers)
