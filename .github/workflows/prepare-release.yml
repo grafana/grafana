@@ -2,7 +2,7 @@ name: Prepare release
 on:
   workflow_dispatch:
     inputs:
-      version:
+      version_input:
         description: 'The version to be released please respect: major.minor.patch or major.minor.patch-beta.number format. example: 7.4.3 or 7.4.3-beta.1'
         required: true
 
@@ -22,7 +22,6 @@ jobs:
       version_call: ${{ github.event.inputs.version_input }}
       token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
       metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
-
   #   needs: call-close-milestone
   # call-update-changelog:
   #   uses: grafana/grafana/.github/workflows/update-changelog.yml@main
