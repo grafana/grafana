@@ -1,60 +1,67 @@
-import { mount } from 'enzyme';
 import React from 'react';
-import { dataTestId } from '@percona/platform-core';
+import { render, screen, fireEvent } from '@testing-library/react';
 import AddRemoteInstance from './AddRemoteInstance';
 import { Databases } from 'app/percona/shared/core';
 import { InstanceTypesExtra } from '../../panel.types';
 
-xdescribe('Add remote instance:: ', () => {
-  it('should render correct for mysql and highlight empty mandatory fields on submit', async () => {
+jest.mock('@percona/platform-core', () => {
+  const originalModule = jest.requireActual('@percona/platform-core');
+  return {
+    ...originalModule,
+    logger: {
+      error: jest.fn(),
+    },
+  };
+});
+
+describe('Add remote instance:: ', () => {
+  it('should render correct for mysql and postgres and highlight empty mandatory fields on submit', async () => {
     const type = Databases.mysql;
+    render(<AddRemoteInstance instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
 
-    const root = mount(<AddRemoteInstance instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
+    expect(screen.getByTestId('address-text-input').classList.contains('invalid')).toBe(false);
+    expect(screen.getByTestId('username-text-input').classList.contains('invalid')).toBe(false);
+    expect(screen.getByTestId('password-password-input').classList.contains('invalid')).toBe(false);
 
-    expect(root.find('input[data-testid="address-text-input"].invalid').length).toBe(0);
-    expect(root.find('input[data-testid="username-text-input"].invalid').length).toBe(0);
-    expect(root.find('input[data-testid="password-password-input"].invalid').length).toBe(0);
+    fireEvent.submit(screen.getByTestId('add-remote-instance-form'), {});
 
-    root.find(dataTestId('add-remote-instance-form')).simulate('submit');
-
-    expect(root.find('input[data-testid="address-text-input"].invalid').length).toBe(1);
-    expect(root.find('input[data-testid="username-text-input"].invalid').length).toBe(1);
-    expect(root.find('input[data-testid="password-password-input"].invalid').length).toBe(1);
+    expect(screen.getByTestId('address-text-input').classList.contains('invalid')).toBe(true);
+    expect(screen.getByTestId('username-text-input').classList.contains('invalid')).toBe(true);
+    expect(screen.getByTestId('password-password-input').classList.contains('invalid')).toBe(true);
   });
 
-  it('should render for external service and highlight empty mandatory fields on submit', () => {
+  it('should render for external service and highlight empty mandatory fields on submit', async () => {
     const type = InstanceTypesExtra.external;
+    render(<AddRemoteInstance instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
 
-    const root = mount(<AddRemoteInstance instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
+    expect(screen.getByTestId('address-text-input').classList.contains('invalid')).toBe(false);
+    expect(screen.getByTestId('metrics_path-text-input').classList.contains('invalid')).toBe(false);
+    expect(screen.getByTestId('port-text-input').classList.contains('invalid')).toBe(false);
+    expect(screen.getByTestId('username-text-input').classList.contains('invalid')).toBe(false);
+    expect(screen.getByTestId('password-password-input').classList.contains('invalid')).toBe(false);
 
-    expect(root.find('input[data-testid="address-text-input"].invalid').length).toBe(0);
-    expect(root.find('input[data-testid="metrics_path-text-input"].invalid').length).toBe(0);
-    expect(root.find('input[data-testid="port-text-input"].invalid').length).toBe(0);
-    expect(root.find('input[data-testid="username-text-input"].invalid').length).toBe(0);
-    expect(root.find('input[data-testid="password-password-input"].invalid').length).toBe(0);
+    fireEvent.submit(screen.getByTestId('add-remote-instance-form'), {});
 
-    root.find(dataTestId('add-remote-instance-form')).simulate('submit');
-
-    expect(root.find('input[data-testid="address-text-input"].invalid').length).toBe(1);
-    expect(root.find('input[data-testid="metrics_path-text-input"].invalid').length).toBe(0);
-    expect(root.find('input[data-testid="port-text-input"].invalid').length).toBe(0);
-    expect(root.find('input[data-testid="username-text-input"].invalid').length).toBe(0);
-    expect(root.find('input[data-testid="password-password-input"].invalid').length).toBe(0);
+    expect(screen.getByTestId('address-text-input').classList.contains('invalid')).toBe(true);
+    expect(screen.getByTestId('metrics_path-text-input').classList.contains('invalid')).toBe(false);
+    expect(screen.getByTestId('port-text-input').classList.contains('invalid')).toBe(false);
+    expect(screen.getByTestId('username-text-input').classList.contains('invalid')).toBe(false);
+    expect(screen.getByTestId('password-password-input').classList.contains('invalid')).toBe(false);
   });
 
   it('should render correct for HAProxy and highlight empty mandatory fields on submit', async () => {
     const type = Databases.haproxy;
 
-    const root = mount(<AddRemoteInstance instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
+    render(<AddRemoteInstance instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
 
-    expect(root.find('input[data-testid="address-text-input"].invalid').length).toBe(0);
-    expect(root.find('input[data-testid="username-text-input"].invalid').length).toBe(0);
-    expect(root.find('input[data-testid="password-password-input"].invalid').length).toBe(0);
+    expect(screen.getByTestId('address-text-input').classList.contains('invalid')).toBe(false);
+    expect(screen.getByTestId('username-text-input').classList.contains('invalid')).toBe(false);
+    expect(screen.getByTestId('password-password-input').classList.contains('invalid')).toBe(false);
 
-    root.find(dataTestId('add-remote-instance-form')).simulate('submit');
+    fireEvent.submit(screen.getByTestId('add-remote-instance-form'), {});
 
-    expect(root.find('input[data-testid="address-text-input"].invalid').length).toBe(1);
-    expect(root.find('input[data-testid="username-text-input"].invalid').length).toBe(0);
-    expect(root.find('input[data-testid="password-password-input"].invalid').length).toBe(0);
+    expect(screen.getByTestId('address-text-input').classList.contains('invalid')).toBe(true);
+    expect(screen.getByTestId('username-text-input').classList.contains('invalid')).toBe(false);
+    expect(screen.getByTestId('password-password-input').classList.contains('invalid')).toBe(false);
   });
 });

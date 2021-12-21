@@ -1,12 +1,11 @@
-import { mount } from 'enzyme';
 import React from 'react';
-import { dataTestId } from '@percona/platform-core';
+import { render, fireEvent, screen } from '@testing-library/react';
 import { Form } from 'react-final-form';
 import { ExternalServiceConnectionDetails } from './ExternalServiceConnectionDetails';
 
-xdescribe('Add remote instance:: ', () => {
-  it('should render correct for mysql and highlight empty mandatory fields on submit', async () => {
-    const root = mount(
+describe('Add remote instance:: ', () => {
+  it('should render correct for mysql and postgres and highlight empty mandatory fields on submit', async () => {
+    render(
       <Form
         onSubmit={jest.fn()}
         mutators={{
@@ -18,24 +17,18 @@ xdescribe('Add remote instance:: ', () => {
       />
     );
 
-    root.find(dataTestId('metricsParameters-radio-state')).simulate('change', { target: { value: 'parsed' } });
+    const metricsParametrsRadioState = screen.getByTestId('metricsParameters-radio-state');
+    fireEvent.change(metricsParametrsRadioState, { target: { value: 'parsed' } });
 
-    root.update();
+    const urlTextInput = screen.getByTestId('url-text-input');
+    fireEvent.change(urlTextInput, { target: { value: 'https://admin:admin@localhost/metrics' } });
 
-    root
-      .find(dataTestId('url-text-input'))
-      .simulate('change', { target: { value: 'https://admin:admin@localhost/metrics' } });
+    fireEvent.change(metricsParametrsRadioState, { target: { value: 'manually' } });
 
-    root.update();
-
-    root.find(dataTestId('metricsParameters-radio-state')).simulate('change', { target: { value: 'manually' } });
-
-    root.update();
-
-    expect(root.find(dataTestId('address-text-input')).props().value).toEqual('localhost');
-    expect(root.find(dataTestId('metrics_path-text-input')).props().value).toEqual('/metrics');
-    expect(root.find(dataTestId('port-text-input')).props().value).toEqual('443');
-    expect(root.find(dataTestId('username-text-input')).props().value).toEqual('admin');
-    expect(root.find(dataTestId('password-password-input')).props().value).toEqual('admin');
+    expect((screen.getByTestId('address-text-input') as HTMLInputElement).value).toEqual('localhost');
+    expect((screen.getByTestId('metrics_path-text-input') as HTMLInputElement).value).toEqual('/metrics');
+    expect((screen.getByTestId('port-text-input') as HTMLInputElement).value).toEqual('443');
+    expect((screen.getByTestId('username-text-input') as HTMLInputElement).value).toEqual('admin');
+    expect((screen.getByTestId('password-password-input') as HTMLInputElement).value).toEqual('admin');
   });
 });

@@ -1,94 +1,91 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { Form } from 'react-final-form';
+import { render, screen } from '@testing-library/react';
 import { FormApi, FormState } from 'final-form';
-import { trackingOptions } from './FormParts.constants';
+import { trackingOptions, rdsTrackingOptions } from './FormParts.constants';
 import { AdditionalOptionsFormPart, getAdditionalOptions } from './AdditionalOptions/AdditionalOptions';
 import { LabelsFormPart } from './Labels/Labels';
 import { MainDetailsFormPart } from './MainDetails/MainDetails';
 import { ExternalServiceConnectionDetails } from './ExternalServiceConnectionDetails/ExternalServiceConnectionDetails';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { Databases } from 'app/percona/shared/core';
-import { dataTestId } from '@percona/platform-core';
 
 const form: Partial<FormApi> = {
   change: jest.fn(),
   getState: () => ({} as FormState<any>),
 };
 
-xdescribe('MainDetailsFormPart ::', () => {
+describe('MainDetailsFormPart ::', () => {
   it('should disable fields with sat isRDS flag', async () => {
-    const root = mount(
+    const { container } = render(
       <Form
         onSubmit={jest.fn()}
         render={({ form }) => <MainDetailsFormPart form={form} remoteInstanceCredentials={{ isRDS: true }} />}
       />
     );
 
-    const fields = root.find('input');
-
+    const fields = container.querySelectorAll('input');
     expect(fields.length).toBe(5);
-    expect(root.find('input[name="address"]').prop('disabled')).toBeTruthy();
-    expect(root.find('input[name="serviceName"]').prop('disabled')).toBeFalsy();
-    expect(root.find('input[name="port"]').prop('disabled')).toBeFalsy();
-    expect(root.find('input[name="username"]').prop('disabled')).toBeFalsy();
-    expect(root.find('input[name="password"]').prop('disabled')).toBeFalsy();
+
+    expect(screen.getByTestId('address-text-input')).toBeDisabled();
+    expect(screen.getByTestId('serviceName-text-input')).not.toBeDisabled();
+    expect(screen.getByTestId('port-text-input')).not.toBeDisabled();
+    expect(screen.getByTestId('username-text-input')).not.toBeDisabled();
+    expect(screen.getByTestId('password-password-input')).not.toBeDisabled();
   });
 
   it('should disable fields with not sat isRDS flag', async () => {
-    const root = mount(
+    const { container } = render(
       <Form
         onSubmit={jest.fn()}
         render={({ form }) => <MainDetailsFormPart form={form} remoteInstanceCredentials={{ isRDS: false }} />}
       />
     );
 
-    const fields = root.find('input');
-
+    const fields = container.querySelectorAll('input');
     expect(fields.length).toBe(5);
-    expect(root.find('input[name="address"]').prop('disabled')).toBeFalsy();
-    expect(root.find('input[name="serviceName"]').prop('disabled')).toBeFalsy();
-    expect(root.find('input[name="port"]').prop('disabled')).toBeFalsy();
-    expect(root.find('input[name="username"]').prop('disabled')).toBeFalsy();
-    expect(root.find('input[name="password"]').prop('disabled')).toBeFalsy();
+
+    expect(screen.getByTestId('address-text-input')).not.toBeDisabled();
+    expect(screen.getByTestId('serviceName-text-input')).not.toBeDisabled();
+    expect(screen.getByTestId('port-text-input')).not.toBeDisabled();
+    expect(screen.getByTestId('username-text-input')).not.toBeDisabled();
+    expect(screen.getByTestId('password-password-input')).not.toBeDisabled();
   });
 });
 
-xdescribe('ExternalServiceConnectionDetails ::', () => {
+describe('ExternalServiceConnectionDetails ::', () => {
   it('should render', async () => {
-    const root = mount(
+    const { container } = render(
       <Form
         onSubmit={jest.fn()}
         render={() => <ExternalServiceConnectionDetails form={(form as unknown) as FormApi} />}
       />
     );
 
-    const fields = root.find('input');
-
+    const fields = container.querySelectorAll('input');
     expect(fields.length).toBe(5);
   });
 });
 
-xdescribe('LabelsFormPart ::', () => {
+describe('LabelsFormPart ::', () => {
   it('should render correct fields with empty props', async () => {
-    const root = mount(<Form onSubmit={jest.fn()} render={() => <LabelsFormPart />} />);
+    const { container } = render(<Form onSubmit={jest.fn()} render={() => <LabelsFormPart />} />);
 
-    const fields = root.find('input');
-    const textArea = root.find('textarea');
+    const fields = container.querySelectorAll('input');
+    const textArea = container.querySelectorAll('textarea');
 
     expect(fields.length).toBe(5);
     expect(textArea.length).toBe(1);
   });
 });
 
-xdescribe('AdditionalOptionsFormPart ::', () => {
+describe('AdditionalOptionsFormPart ::', () => {
   it('should render correct for PostgreSQL instance', async () => {
     const type = Databases.postgresql;
     const remoteInstanceCredentials = {
       isRDS: false,
     };
 
-    const root = await getMount(
+    render(
       <Form
         onSubmit={jest.fn()}
         render={() => (
@@ -102,86 +99,103 @@ xdescribe('AdditionalOptionsFormPart ::', () => {
       />
     );
 
-    expect(root.find('input[name="skip_connection_check"]').length).toBe(1);
-    expect(root.find('input[name="tls"]').length).toBe(1);
-    expect(root.find('input[name="tls_skip_verify"]').length).toBe(1);
+    expect(screen.getByTestId('skip_connection_check-checkbox-input')).toBeInTheDocument();
+    expect(screen.getByTestId('tls-checkbox-input')).toBeInTheDocument();
+    expect(screen.getByTestId('tls_skip_verify-checkbox-input')).toBeInTheDocument();
   });
 });
 
-xdescribe('getAdditionalOptions ::', () => {
+describe('getAdditionalOptions ::', () => {
   it('should render correct for MongoDB', async () => {
     const type = Databases.mongodb;
     const remoteInstanceCredentials = {
       isRDS: false,
     };
 
-    const root = await getMount(
+    const { container } = render(
       <Form
         onSubmit={jest.fn()}
         render={() => getAdditionalOptions(type, remoteInstanceCredentials, form as FormApi)}
       />
     );
-    const fields = root.find('input');
+    const fields = container.querySelectorAll('input');
 
-    expect(root.find(dataTestId('qan-mongodb-profiler-checkbox')).length).toBe(1);
-    expect(root.find(dataTestId('disable-collectors-input-field')).length).toBe(1);
-    expect(root.find(dataTestId('collections-limit-input-field')).length).toBe(1);
-    expect(root.find(dataTestId('stats_collections-input-field')).length).toBe(1);
-    expect(fields.length).toBe(3);
+    expect(screen.getByTestId('tls-checkbox-input')).toBeInTheDocument();
+    expect(screen.getByTestId('tls_skip_verify-checkbox-input')).toBeInTheDocument();
+    expect(screen.getByTestId('qan_mongodb_profiler-checkbox-input')).toBeInTheDocument();
+    expect(screen.getByTestId('disable_collectors-text-input')).toBeInTheDocument();
+    expect(screen.getByTestId('collections_limit-number-input')).toBeInTheDocument();
+    expect(screen.getByTestId('stats_collections-text-input')).toBeInTheDocument();
+
+    expect(fields.length).toBe(6);
   });
-
   it('should render correct for MySQL', async () => {
     const type = Databases.mysql;
     const remoteInstanceCredentials = {
       isRDS: false,
     };
 
-    const root = await getMount(
+    const { container } = render(
       <Form
         onSubmit={jest.fn()}
         render={() => getAdditionalOptions(type, remoteInstanceCredentials, form as FormApi)}
       />
     );
-    const fields = root.find('input');
+    const fields = container.querySelectorAll('input');
 
-    expect(root.find('input[name="qan_mysql_perfschema"]').length).toBe(1);
+    expect(screen.getByTestId('qan_mysql_perfschema-checkbox-input')).toBeInTheDocument();
     expect(fields.length).toBe(8);
   });
-
   it('should render correct for RDS MySQL', async () => {
     const type = Databases.mysql;
     const remoteInstanceCredentials = {
       isRDS: true,
     };
 
-    const root = await getMount(
+    const { container } = render(
       <Form
         onSubmit={jest.fn()}
         render={() => getAdditionalOptions(type, remoteInstanceCredentials, form as FormApi)}
       />
     );
-    const fields = root.find('input');
-    expect(root.find('input[name="qan_mysql_perfschema"]').length).toBe(1);
-    expect(root.find('input[name="disable_basic_metrics"]').length).toBe(1);
-    expect(root.find('input[name="disable_enhanced_metrics"]').length).toBe(1);
+    const fields = container.querySelectorAll('input');
+    expect(screen.getByTestId('qan_mysql_perfschema-checkbox-input')).toBeInTheDocument();
+    expect(screen.getByTestId('disable_basic_metrics-checkbox-input')).toBeInTheDocument();
+    expect(screen.getByTestId('disable_enhanced_metrics-checkbox-input')).toBeInTheDocument();
     expect(fields.length).toBe(10);
   });
-
   it('should render correct for PostgreSQL', async () => {
+    const type = Databases.postgresql;
+    const remoteInstanceCredentials = {
+      isRDS: false,
+    };
+
+    const { container } = render(
+      <Form
+        onSubmit={jest.fn()}
+        render={() => getAdditionalOptions(type, remoteInstanceCredentials, form as FormApi)}
+      />
+    );
+    const fields = container.querySelectorAll('input');
+    const trakingFields = screen.getAllByTestId('tracking-radio-button');
+    expect(trakingFields.length).toBe(trackingOptions.length);
+    expect(fields.length).toBe(6);
+  });
+  it('should render correct for RDS PostgreSQL', async () => {
     const type = Databases.postgresql;
     const remoteInstanceCredentials = {
       isRDS: true,
     };
 
-    const root = await getMount(
+    const { container } = render(
       <Form
         onSubmit={jest.fn()}
         render={() => getAdditionalOptions(type, remoteInstanceCredentials, form as FormApi)}
       />
     );
-    const fields = root.find('input');
-
-    expect(root.find('input[name="tracking"]').length).toBe(trackingOptions.length);
+    const fields = container.querySelectorAll('input');
+    const trakingFields = screen.getAllByTestId('tracking-radio-button');
+    expect(trakingFields.length).toBe(rdsTrackingOptions.length);
     expect(fields.length).toBe(7);
   });
 });

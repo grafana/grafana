@@ -1,27 +1,29 @@
 import React from 'react';
-import { ReactWrapper, shallow, ShallowWrapper } from 'enzyme';
-import { AddInstance, SelectInstance } from './AddInstance';
+import { AddInstance } from './AddInstance';
 import { instanceList } from './AddInstance.constants';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 jest.mock('app/percona/settings/Settings.service');
 
 describe('AddInstance page::', () => {
-  it('should render a given number of links', () => {
-    const wrapper: ShallowWrapper = shallow(<AddInstance onSelectInstanceType={() => {}} />);
+  it('should render a given number of links', async () => {
+    await waitFor(() => render(<AddInstance onSelectInstanceType={() => {}} />));
 
-    expect(wrapper.find(SelectInstance).length).toEqual(instanceList.length);
+    expect(screen.getAllByRole('button').length).toEqual(instanceList.length);
+    instanceList.forEach((item) => {
+      expect(screen.getByTestId(`${item.type}-instance`)).toBeInTheDocument();
+    });
   });
 
   it('should invoke a callback with a proper instance type', async () => {
     const onSelectInstanceType = jest.fn();
 
-    const wrapper: ReactWrapper = await getMount(<AddInstance onSelectInstanceType={onSelectInstanceType} />);
+    render(<AddInstance onSelectInstanceType={onSelectInstanceType} />);
 
     expect(onSelectInstanceType).toBeCalledTimes(0);
 
-    wrapper.update();
-    wrapper.find('[data-testid="rds-instance"]').simulate('click');
+    const button = await screen.findByTestId('rds-instance');
+    fireEvent.click(button);
 
     expect(onSelectInstanceType).toBeCalledTimes(1);
     expect(onSelectInstanceType.mock.calls[0][0]).toStrictEqual({ type: 'rds' });
