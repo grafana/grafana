@@ -258,6 +258,7 @@ require (
 	github.com/containerd/containerd v1.5.8 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
+	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/segmentio/asm v1.1.1 // indirect
 )
 

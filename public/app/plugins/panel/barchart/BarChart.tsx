@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import { cloneDeep } from 'lodash';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import {
   GraphNG,
@@ -138,8 +137,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
 
   return (
     <GraphNG
-      // My heart is bleeding with the clone deep here, but nested options...
-      {...cloneDeep(props)}
+      {...props}
       theme={theme}
       prepConfig={prepConfig}
       propsToDiff={propsToDiff}
