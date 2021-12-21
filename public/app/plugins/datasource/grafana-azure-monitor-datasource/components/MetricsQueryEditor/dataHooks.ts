@@ -2,14 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import { hasOption, toOption } from '../../utils/common';
-import {
-  setMetricName,
-  setMetricNamespace,
-  setResourceGroup,
-  setResourceName,
-  setResourceType,
-  setSubscriptionID,
-} from './setQueryValue';
+import { setMetricNamespace, setSubscriptionID } from './setQueryValue';
 
 export interface MetricMetadata {
   aggOptions: AzureMonitorOption[];
@@ -88,11 +81,14 @@ export const updateSubscriptions = (
 
 export const useSubscriptions: DataHook = (query, datasource, onChange, setError) => {
   const defaultSubscription = datasource.azureMonitorDatasource.defaultSubscriptionId;
+  const { subscription } = query;
 
   const subscriptionOptions = useAsyncState(
     async () => {
       const results = await datasource.azureMonitorDatasource.getSubscriptions();
-      return results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
+      const options = formatOptions(results, subscription);
+
+      return options;
     },
     setError,
     []
@@ -116,11 +112,7 @@ export const useResourceGroups: DataHook = (query, datasource, onChange, setErro
       }
 
       const results = await datasource.getResourceGroups(subscription);
-      const options = results.map(toOption);
-
-      if (isInvalidOption(resourceGroup, options, datasource.getVariables())) {
-        onChange(setResourceGroup(query, undefined));
-      }
+      const options = formatOptions(results, resourceGroup);
 
       return options;
     },
@@ -140,11 +132,7 @@ export const useResourceTypes: DataHook = (query, datasource, onChange, setError
       }
 
       const results = await datasource.getMetricDefinitions(subscription, resourceGroup);
-      const options = results.map(toOption);
-
-      if (isInvalidOption(metricDefinition, options, datasource.getVariables())) {
-        onChange(setResourceType(query, undefined));
-      }
+      const options = formatOptions(results, metricDefinition);
 
       return options;
     },
@@ -164,11 +152,7 @@ export const useResourceNames: DataHook = (query, datasource, onChange, setError
       }
 
       const results = await datasource.getResourceNames(subscription, resourceGroup, metricDefinition);
-      const options = results.map(toOption);
-
-      if (isInvalidOption(resourceName, options, datasource.getVariables())) {
-        onChange(setResourceName(query, undefined));
-      }
+      const options = formatOptions(results, resourceName);
 
       return options;
     },
@@ -188,7 +172,7 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
       }
 
       const results = await datasource.getMetricNamespaces(subscription, resourceGroup, metricDefinition, resourceName);
-      const options = results.map(toOption);
+      const options = formatOptions(results, metricNamespace);
 
       // Do some cleanup of the query state if need be
       if (!metricNamespace && options.length) {
@@ -222,11 +206,7 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
         metricNamespace
       );
 
-      const options = results.map(toOption);
-
-      if (isInvalidOption(metricName, options, datasource.getVariables())) {
-        onChange(setMetricName(query, undefined));
-      }
+      const options = formatOptions(results, metricName);
 
       return options;
     },
@@ -297,6 +277,19 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
   return metricMetadata;
 };
 
-function isInvalidOption(value: string | undefined, options: AzureMonitorOption[], templateVariables: string[]) {
-  return value && !templateVariables.includes(value) && !hasOption(options, value);
+function formatOptions(
+  rawResults: Array<{
+    text: string;
+    value: string;
+  }>,
+  selectedValue?: string
+) {
+  const options = rawResults.map(toOption);
+
+  // account for custom values that might have been set in json file like ones crafted with a template variable (ex: "cloud-datasource-resource-$Environment")
+  if (selectedValue && !options.find((option) => option.value === selectedValue)) {
+    options.push({ label: selectedValue, value: selectedValue });
+  }
+
+  return options;
 }
