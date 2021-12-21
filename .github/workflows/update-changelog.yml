@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        required: true        
+        required: true
         description: Needs to match, exactly, the name of a milestone
   workflow_call:
     inputs:
@@ -15,7 +15,7 @@ on:
         token:
           required: true
         metricsWriteAPIKey:
-          required: true        
+          required: true
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -25,7 +25,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: main      
+          ref: mob/bump-version-update-user-essentials
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run update changelog (manually invoked)

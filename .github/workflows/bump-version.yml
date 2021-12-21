@@ -69,7 +69,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: main
+          ref: mob/bump-version-update-user-essentials
       - uses: actions/setup-node@v2.4.1
         with:
           node-version: '14'

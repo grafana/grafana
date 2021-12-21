@@ -10,7 +10,7 @@ on:
       version_call:
         description: Needs to match, exactly, the name of a milestone
         required: true
-        type: string    
+        type: string
     secrets:
       token:
         required: true
@@ -23,7 +23,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: main
+          ref: mob/bump-version-update-user-essentials
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Close milestone (manually invoked)
