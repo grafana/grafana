@@ -3549,14 +3549,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:canary":
-  version: 0.0.1-pre-ba33f35900
-  resolution: "@grafana/experimental@npm:0.0.1-pre-ba33f35900"
+"@grafana/experimental@npm:^0.0.2-canary.10":
+  version: 0.0.2-canary.10
+  resolution: "@grafana/experimental@npm:0.0.2-canary.10"
+  dependencies:
+    "@types/uuid": ^8.3.3
+    uuid: ^8.3.2
   peerDependencies:
     "@emotion/css": 11.1.3
     react: 17.0.1
     react-select: 5.2.1
-  checksum: 610482f4d5b9be408e029ade6c6434232a1e67f12ccd8c71ad35bc99b87ff2be74befcabf75e0ef61261ba6055db19395478ab208c7c5454f0b9af209f1d7167
+  checksum: 80b82b15bdfdd664a7e83d753d6441b1e9733ff8fb31ed90d712012f81962703fc949e7bf880fba9f4f8e18dab5fc1443a9ac7579a6b9489fdab7191ff54b87e
   languageName: node
   linkType: hard
 
@@ -10193,6 +10196,13 @@ __metadata:
   version: 8.3.0
   resolution: "@types/uuid@npm:8.3.0"
   checksum: 0f46b15020b9c252473fb327a6491fd7d238c7b5bbaebd32195a0de178db040f6abb96902507ba25dd4a673cdd9cc28b8880512dba54561e8bc60d8f326c1e30
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:^8.3.3":
+  version: 8.3.3
+  resolution: "@types/uuid@npm:8.3.3"
+  checksum: 3f340155bb1161f9ffa7163926d6222fea8f3505c23619b72bcc230883354926672c08a06510c7a543f73553c792a84444cc1744cff631b4ba988763e4bd7a8f
   languageName: node
   linkType: hard
 
@@ -19420,7 +19430,7 @@ __metadata:
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 2.5.1
-    "@grafana/experimental": canary
+    "@grafana/experimental": ^0.0.2-canary.10
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
