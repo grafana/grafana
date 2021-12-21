@@ -3472,7 +3472,7 @@ __metadata:
     tslib: 2.3.1
     typescript: 4.4.3
     uplot: 1.6.16
-    xss: 1.0.6
+    xss: 1.0.10
   languageName: unknown
   linkType: soft
 
@@ -14181,7 +14181,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:2, commander@npm:^2.19.0, commander@npm:^2.20.0, commander@npm:^2.7.1, commander@npm:^2.9.0":
+"commander@npm:2, commander@npm:^2.19.0, commander@npm:^2.20.0, commander@npm:^2.20.3, commander@npm:^2.7.1, commander@npm:^2.9.0":
   version: 2.20.3
   resolution: "commander@npm:2.20.3"
   checksum: ab8c07884e42c3a8dbc5dd9592c606176c7eb5c1ca5ff274bcf907039b2c41de3626f684ea75ccf4d361ba004bbaff1f577d5384c155f3871e456bdf27becf9e
@@ -36112,15 +36112,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xss@npm:1.0.6":
-  version: 1.0.6
-  resolution: "xss@npm:1.0.6"
+"xss@npm:1.0.10":
+  version: 1.0.10
+  resolution: "xss@npm:1.0.10"
   dependencies:
-    commander: ^2.9.0
+    commander: ^2.20.3
     cssfilter: 0.0.10
   bin:
-    xss: ./bin/xss
-  checksum: 529baa20ee4cd82e45e0aca26d0069e2b80ae82c9eaff06b39cd2e3d1320031e53b8f001e5024e880796927e0bb450bc36d47607d44e25aa0c86f2ee049b76db
+    xss: bin/xss
+  checksum: 0dbc70a716020d854569610d5bc949ba9d3b7f530b7af5508ffe84edaea228c34a4e1227f71cb3a4741373b1c49c3cb691f69dddefda45a594a31f112ae6a738
   languageName: node
   linkType: hard
 
