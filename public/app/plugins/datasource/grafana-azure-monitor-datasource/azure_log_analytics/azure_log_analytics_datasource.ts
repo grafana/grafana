@@ -123,15 +123,17 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     // Complete the path for the selected resource if necessary
     const resourceVar = allVars.find((var_: any) => var_.id === item.resource?.substring(1));
     const resourceVarRawQuery = (resourceVar as any)?.query?.grafanaTemplateVariableFn.rawQuery;
-    var subscription = (resourceVar as any)?.query?.subscription;
+    var subscription = (allVars.find((var_: any) =>
+      var_.query.grafanaTemplateVariableFn.rawQuery.includes('Subscriptions(')
+    ) as any)?.current.value;
 
-    if (resourceVarRawQuery.includes('Subscriptions(')) {
+    if (resourceVarRawQuery?.includes('Subscriptions(')) {
       resPath = '/subscriptions/' + resource;
       resource = resPath;
-    } else if (resourceVarRawQuery.includes('ResourceGroups(')) {
+    } else if (resourceVarRawQuery?.includes('ResourceGroups(')) {
       resPath = '/subscriptions/' + subscription + '/resourceGroups/' + resource;
       resource = resPath;
-    } else if (resourceVarRawQuery.includes('ResourceNames(')) {
+    } else if (resourceVarRawQuery?.includes('ResourceNames(')) {
       var resGroup = allVars.find(
         (var_: any) => var_.id === (resourceVar as any)?.query?.grafanaTemplateVariableFn.resourceGroup.substring(1)
       );
@@ -145,6 +147,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         (resGroup as any).current.value +
         '/providers/' +
         (namespaceVar as any).current.value +
+        '/' +
         resource;
       resource = resPath;
     }
