@@ -29,6 +29,10 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 // create mock for serviceaccountservice
 type ServiceAccountMock struct{}
 
+func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
+	return nil, nil
+}
+
 func (s *ServiceAccountMock) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	return nil
 
@@ -54,10 +58,18 @@ var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 type Calls struct {
 	HasMigratedServiceAccounts []interface{}
 	DeleteServiceAccount       []interface{}
+	CreateServiceAccount       []interface{}
+	UpgradeServiceAccounts     []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
 	Calls Calls
+}
+
+func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, cmd *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
+	// now we can test that the mock has these calls when we call the function
+	s.Calls.CreateServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, cmd})
+	return nil, nil
 }
 
 func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
@@ -69,5 +81,9 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 func (s *ServiceAccountsStoreMock) HasMigrated(ctx context.Context, orgID int64) error {
 	// now we can test that the mock has these calls when we call the function
 	s.Calls.HasMigratedServiceAccounts = append(s.Calls.DeleteServiceAccount, []interface{}{ctx, orgID})
+	return nil
+}
+func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
+	s.Calls.DeleteServiceAccount = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
 	return nil
 }

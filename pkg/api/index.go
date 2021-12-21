@@ -126,6 +126,10 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		}
 
 		if len(appLink.Children) > 0 {
+			// If we only have one child and it's the app default nav then remove it from children
+			if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
+				appLink.Children = []*dtos.NavLink{}
+			}
 			appLinks = append(appLinks, appLink)
 		}
 	}

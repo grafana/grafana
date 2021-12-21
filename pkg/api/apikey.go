@@ -85,6 +85,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 			//Create a new service account for the new API key
 			serviceAccount, err := hs.SQLStore.CloneUserToServiceAccount(c.Req.Context(), c.SignedInUser)
 			if err != nil {
+				hs.log.Warn("Unable to clone user to service account", "err", err)
 				return response.Error(500, "Unable to clone user to service account", err)
 			}
 			cmd.ServiceAccountId = serviceAccount.Id
@@ -95,10 +96,12 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 			query := models.GetUserByIdQuery{Id: cmd.ServiceAccountId}
 			err = bus.DispatchCtx(c.Req.Context(), &query)
 			if err != nil {
-				return response.Error(500, "Unable to clone user to service account", err)
+				hs.log.Warn("Unable to link new API key to existing service account", "err", err, "query", query)
+				return response.Error(500, "Unable to link new API key to existing service account", err)
 			}
 			serviceAccountDetails := query.Result
 			if serviceAccountDetails.OrgId != c.OrgId || serviceAccountDetails.OrgId != cmd.OrgId {
+				hs.log.Warn("Target service is not in the same organisation as requesting user or api key", "err", err, "reqOrg", cmd.OrgId, "serviceAccId", serviceAccountDetails.OrgId, "userOrgId", c.OrgId)
 				return response.Error(403, "Target service is not in the same organisation as requesting user or api key", err)
 			}
 		}

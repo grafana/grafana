@@ -35,6 +35,7 @@ load(
 load(
     'scripts/drone/services/services.star',
     'integration_test_services',
+    'integration_test_services_volumes',
     'ldap_service',
 )
 
@@ -50,6 +51,7 @@ ver_mode = 'pr'
 
 def pr_pipelines(edition):
     services = integration_test_services(edition)
+    volumes = integration_test_services_volumes()
     variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
     test_steps = [
@@ -125,6 +127,8 @@ def pr_pipelines(edition):
             name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
                 + build_steps,
         ), pipeline(
-            name='pr-integration-tests', edition=edition, trigger=trigger, services=services, steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps,
+            name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps,
+            volumes=volumes,
         ),
     ]

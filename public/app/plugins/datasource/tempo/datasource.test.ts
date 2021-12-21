@@ -147,9 +147,7 @@ describe('Tempo data source', () => {
     };
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
-      'service.name': 'frontend',
-      name: '/config',
-      'root.http.status_code': '500',
+      tags: 'root.http.status_code=500 service.name="frontend" name="/config"',
       minDuration: '1ms',
       maxDuration: '100s',
       limit: 10,
@@ -166,22 +164,8 @@ describe('Tempo data source', () => {
     };
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
+      tags: '',
       limit: DEFAULT_LIMIT,
-    });
-  });
-
-  it('should ignore incomplete tag queries', () => {
-    const ds = new TempoDatasource(defaultSettings);
-    const tempoQuery: TempoQuery = {
-      queryType: 'search',
-      refId: 'A',
-      query: '',
-      search: 'root.ip root.http.status_code=500',
-    };
-    const builtQuery = ds.buildSearchQuery(tempoQuery);
-    expect(builtQuery).toStrictEqual({
-      limit: DEFAULT_LIMIT,
-      'root.http.status_code': '500',
     });
   });
 
