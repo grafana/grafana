@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
 )
@@ -86,6 +87,35 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
+	})
+
+	t.Run("Influxdb response parser should parse two responses with different refIDs", func(t *testing.T) {
+		parser := &ResponseParser{}
+
+		response := `
+		{
+			"results": [
+				{
+					"series": [{}]
+				},
+				{
+					"series": [{}]
+				}
+			]
+		}
+		`
+
+		query := &Query{}
+		var queries = addQueryToQueries(*query)
+		queryB := &Query{}
+		queryB.RefID = "B"
+		queries = append(queries, *queryB)
+		result := parser.Parse(prepare(response), queries)
+
+		assert.Len(t, result.Responses, 2)
+		assert.Contains(t, result.Responses, "A")
+		assert.Contains(t, result.Responses, "B")
+		assert.NotContains(t, result.Responses, "C")
 	})
 
 	t.Run("Influxdb response parser with invalid value-format", func(t *testing.T) {
