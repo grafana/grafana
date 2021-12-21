@@ -75,12 +75,12 @@ jobs:
         uses: ./actions/bump-version
         with:
           version: ${{ github.event.inputs.version }}
-          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+          metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
       - name: Run bump version (workflow invoked)
         if: ${{ inputs.version_call != '' }}
         uses: ./actions/bump-version
         with:
           version_call: ${{ inputs.version_call }}
-          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+          metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
