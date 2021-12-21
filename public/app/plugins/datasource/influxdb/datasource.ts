@@ -186,7 +186,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
                   seriesList.push(this.getTable(filteredFrames, target, { preferredVisualisationType: 'logs' }));
                   break;
                 case 'table': {
-                  seriesList.push(this.getTable(filteredFrames, target, {}));
+                  seriesList.push(this.getTable(filteredFrames, target, { preferredVisualisationType: 'table' }));
                   break;
                 }
                 default: {
@@ -225,7 +225,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       table.meta = {
         ...meta,
         executedQueryString: dfs[0].meta?.executedQueryString,
-        preferredVisualisationType: 'table',
       };
 
       table.refId = target.refId;
