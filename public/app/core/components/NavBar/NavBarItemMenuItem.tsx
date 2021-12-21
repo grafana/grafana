@@ -72,7 +72,7 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean)
   return {
     menuItem: css`
       background-color: ${backgroundColor};
-      color: ${isFocused ? 'white' : theme.colors.text.primary};
+      color: ${theme.colors.text.primary};
 
       &:focus-visible {
         background-color: ${theme.colors.action.hover};

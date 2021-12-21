@@ -25,7 +25,7 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
   };
   const { menuHasFocus, menuProps: contextMenuProps = {} } = contextProps;
   const theme = useTheme2();
-  const styles = getStyles(theme, adjustHeightForBorder, reverseMenuDirection);
+  const styles = getStyles(theme, reverseMenuDirection);
   const state = useTreeState<NavModelItem>({ ...rest, disabledKeys });
   const ref = useRef(null);
   const { menuProps } = useMenu(completeProps, { ...state }, ref);
@@ -54,38 +54,26 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
     <NavBarItemMenuItem key={section.key} item={section} state={state} onNavigate={onNavigate} />
   );
 
-  const subTitleComponent = (
-    <li key={menuSubTitle} className={styles.menuItem}>
-      <div className={styles.subtitle}>{menuSubTitle}</div>
+  const itemComponents = items.map((item) => (
+    <NavBarItemMenuItem key={getNavModelItemKey(item.value)} item={item} state={state} onNavigate={onNavigate} />
+  ));
+
+  const subTitleComponent = menuSubTitle && (
+    <li key={menuSubTitle} className={styles.subtitle}>
+      {menuSubTitle}
     </li>
   );
 
+  const menu = [sectionComponent, itemComponents, subTitleComponent];
+
   return (
-    <ul
-      className={`${styles.menu} navbar-dropdown`}
-      ref={ref}
-      {...mergeProps(menuProps, contextMenuProps)}
-      tabIndex={menuHasFocus ? 0 : -1}
-    >
-      {!reverseMenuDirection ? sectionComponent : null}
-      {menuSubTitle && reverseMenuDirection ? subTitleComponent : null}
-      {items.map((item, index) => {
-        return (
-          <NavBarItemMenuItem key={getNavModelItemKey(item.value)} item={item} state={state} onNavigate={onNavigate} />
-        );
-      })}
-      {reverseMenuDirection ? sectionComponent : null}
-      {menuSubTitle && !reverseMenuDirection ? subTitleComponent : null}
+    <ul className={styles.menu} ref={ref} {...mergeProps(menuProps, contextMenuProps)} tabIndex={menuHasFocus ? 0 : -1}>
+      {reverseMenuDirection ? menu.reverse() : menu}
     </ul>
   );
 }
 
-function getStyles(
-  theme: GrafanaTheme2,
-  adjustHeightForBorder: boolean,
-  reverseDirection?: boolean,
-  isFocused?: boolean
-) {
+function getStyles(theme: GrafanaTheme2, reverseDirection?: boolean) {
   return {
     menu: css`
       background-color: ${theme.colors.background.primary};
@@ -103,26 +91,14 @@ function getStyles(
       z-index: ${theme.zIndex.sidemenu};
       list-style: none;
     `,
-    menuItem: css`
-      background-color: ${isFocused ? theme.colors.action.hover : 'transparent'};
-      color: ${isFocused ? 'white' : theme.colors.text.primary};
-
-      &:focus-visible {
-        background-color: ${theme.colors.action.hover};
-        box-shadow: none;
-        color: ${theme.colors.text.primary};
-        outline: 2px solid ${theme.colors.primary.main};
-        // Need to add condition, header is 0, otherwise -2
-        outline-offset: -0px;
-        transition: none;
-      }
-    `,
     subtitle: css`
+      background-color: transparent;
       border-${reverseDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
       font-weight: ${theme.typography.bodySmall.fontWeight};
       padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
+      text-align: left;
       white-space: nowrap;
     `,
   };
