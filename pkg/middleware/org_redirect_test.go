@@ -30,7 +30,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		}
 
 		sc.m.Get("/", sc.defaultHandler)
-		sc.fakeReq("GET", "/?orgId=3").exec()
+		sc.fakeReq("GET", "/?orgId=3&kiosk").exec()
 
 		assert.Equal(t, 302, sc.resp.Code)
 	})
