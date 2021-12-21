@@ -12,6 +12,7 @@ import {
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole } from 'app/types';
+import { locationService } from '@grafana/runtime';
 import { locationUtil } from '@grafana/data';
 import { userInviteSubmit } from './api';
 
@@ -32,6 +33,11 @@ export interface FormModel {
 interface Props {}
 
 export const UserInviteForm: FC<Props> = ({}) => {
+  const onSubmit = async (formData: FormModel) => {
+    await userInviteSubmit(formData);
+    locationService.push('/org/users/');
+  };
+
   const defaultValues: FormModel = {
     name: '',
     email: '',
@@ -40,7 +46,7 @@ export const UserInviteForm: FC<Props> = ({}) => {
   };
 
   return (
-    <Form defaultValues={defaultValues} onSubmit={userInviteSubmit}>
+    <Form defaultValues={defaultValues} onSubmit={onSubmit}>
       {({ register, control, errors }) => {
         return (
           <>
