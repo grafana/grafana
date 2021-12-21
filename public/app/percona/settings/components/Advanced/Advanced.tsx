@@ -247,7 +247,7 @@ export const Advanced: FC<AdvancedProps> = ({
                   type="button"
                   variant="secondary"
                   data-testid="public-address-button"
-                  onClick={() => change('publicAddress', window.location.hostname)}
+                  onClick={() => change('publicAddress', window.location.host)}
                 >
                   <Icon name="link" />
                   {publicAddressButton}
