@@ -48,7 +48,7 @@ export const AlertsActions: FC<AlertsActionsProps> = ({ alert, getAlerts }) => {
       {pendingRequest ? (
         <Spinner />
       ) : (
-        <Tooltip placement="top" content="Toggle">
+        <Tooltip placement="top" content={title}>
           <button data-testid="silence-alert-button" onClick={toggleAlert} className={styles.button} title={title}>
             <ToggleIcon />
           </button>
