@@ -5,7 +5,6 @@ on:
       version_input:
         description: 'The version to be released please respect: major.minor.patch or major.minor.patch-beta.number format. example: 7.4.3 or 7.4.3-beta.1'
         required: true
-
 jobs:
   call-remove-milestone:
     uses: grafana/grafana/.github/workflows/remove-milestone.yml@prepare-release-test
@@ -28,8 +27,11 @@ jobs:
       token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
       metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
     needs: call-close-milestone
-  # call-update-changelog:
-  #   uses: grafana/grafana/.github/workflows/update-changelog.yml@main
-  #   with:
-  #     version_call: ${{ github.event.inputs.version_input }}
-  #   needs: call-bump-version
+  call-update-changelog:
+    uses: grafana/grafana/.github/workflows/update-changelog.yml@main
+    with:
+      version_call: ${{ github.event.inputs.version_input }}
+    secrets:
+      token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+      metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+    needs: call-bump-version
