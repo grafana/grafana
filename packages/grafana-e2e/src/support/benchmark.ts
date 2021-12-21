@@ -2,16 +2,16 @@ import { e2e } from '../';
 
 export interface BenchmarkArguments {
   name: string;
-  benchmarkingOptions: {
+  dashboard: {
+    folder: string;
+    delayAfterOpening: number;
     skipPanelValidation: boolean;
-    dashboardFolder: string;
-    repeat: number;
-    delayAfterOpeningDashboard: number;
-    duration: number;
-    appStats?: {
-      startCollecting?: (window: Window) => void;
-      collect: (window: Window) => Record<string, unknown>;
-    };
+  };
+  repeat: number;
+  duration: number;
+  appStats?: {
+    startCollecting?: (window: Window) => void;
+    collect: (window: Window) => Record<string, unknown>;
   };
   skipScenario?: boolean;
 }
@@ -19,7 +19,10 @@ export interface BenchmarkArguments {
 export const benchmark = ({
   name,
   skipScenario = false,
-  benchmarkingOptions: { duration, delayAfterOpeningDashboard, repeat, dashboardFolder, appStats, skipPanelValidation },
+  repeat,
+  duration,
+  appStats,
+  dashboard,
 }: BenchmarkArguments) => {
   if (skipScenario) {
     describe(name, () => {
@@ -33,7 +36,7 @@ export const benchmark = ({
     });
 
     beforeEach(() => {
-      e2e.flows.importDashboards(dashboardFolder, 1000, skipPanelValidation);
+      e2e.flows.importDashboards(dashboard.folder, 1000, dashboard.skipPanelValidation);
       Cypress.Cookies.preserveOnce('grafana_session');
     });
 
@@ -49,7 +52,7 @@ export const benchmark = ({
         return it(testName, () => {
           e2e.flows.openDashboard();
 
-          e2e().wait(delayAfterOpeningDashboard);
+          e2e().wait(dashboard.delayAfterOpening);
 
           if (appStats) {
             const startCollecting = appStats.startCollecting;

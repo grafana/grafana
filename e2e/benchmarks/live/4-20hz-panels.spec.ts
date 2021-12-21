@@ -15,28 +15,27 @@ const hasGrafanaRuntime = <T>(obj: T): obj is WithGrafanaRuntime<T> => {
 
 e2e.benchmark({
   name: 'Live performance benchmarking - 6x20hz panels',
-  benchmarkingOptions: {
+  dashboard: {
+    folder: '/dashboards/live',
+    delayAfterOpening: 30000,
     skipPanelValidation: true,
-    dashboardFolder: '/dashboards/live',
-    repeat: 5,
-    delayAfterOpeningDashboard: 30000,
-    duration: 40000,
+  },
+  repeat: 5,
+  duration: 40000,
+  appStats: {
+    startCollecting: (window) => {
+      if (!hasGrafanaRuntime(window)) {
+        return;
+      }
 
-    appStats: {
-      startCollecting: (window) => {
-        if (!hasGrafanaRuntime(window)) {
-          return;
-        }
+      return window.grafanaRuntime.livePerformance.start();
+    },
+    collect: (window) => {
+      if (!hasGrafanaRuntime(window)) {
+        return {};
+      }
 
-        return window.grafanaRuntime.livePerformance.start();
-      },
-      collect: (window) => {
-        if (!hasGrafanaRuntime(window)) {
-          return {};
-        }
-
-        return window.grafanaRuntime.livePerformance.getStats() ?? {};
-      },
+      return window.grafanaRuntime.livePerformance.getStats() ?? {};
     },
   },
 });
