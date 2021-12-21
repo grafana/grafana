@@ -1,6 +1,7 @@
 package remotecache
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -43,7 +44,7 @@ func TestCachedBasedOnConfig(t *testing.T) {
 }
 
 func TestInvalidCacheTypeReturnsError(t *testing.T) {
-	_, err := createClient(&setting.RemoteCacheOptions{Name: "invalid"}, nil)
+	_, err := createClient(context.Background(), &setting.RemoteCacheOptions{Name: "invalid"}, nil)
 	assert.Equal(t, err, ErrInvalidCacheType)
 }
 
@@ -55,10 +56,10 @@ func runTestsForClient(t *testing.T, client CacheStorage) {
 func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
-	err := client.Set("key1", cacheableStruct, 0)
+	err := client.Set(context.Background(), "key1", cacheableStruct, 0)
 	assert.Equal(t, err, nil, "expected nil. got: ", err)
 
-	data, err := client.Get("key1")
+	data, err := client.Get(context.Background(), "key1")
 	assert.Equal(t, err, nil)
 	s, ok := data.(CacheableStruct)
 
@@ -66,23 +67,23 @@ func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
 	assert.Equal(t, s.String, "hej")
 	assert.Equal(t, s.Int64, int64(2000))
 
-	err = client.Delete("key1")
+	err = client.Delete(context.Background(), "key1")
 	assert.Equal(t, err, nil)
 
-	_, err = client.Get("key1")
+	_, err = client.Get(context.Background(), "key1")
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
 func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
-	err := client.Set("key1", cacheableStruct, time.Second)
+	err := client.Set(context.Background(), "key1", cacheableStruct, time.Second)
 	assert.Equal(t, err, nil)
 
 	// not sure how this can be avoided when testing redis/memcached :/
 	<-time.After(time.Second + time.Millisecond)
 
 	// should not be able to read that value since its expired
-	_, err = client.Get("key1")
+	_, err = client.Get(context.Background(), "key1")
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }

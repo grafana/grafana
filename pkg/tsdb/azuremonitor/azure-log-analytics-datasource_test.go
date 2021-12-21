@@ -223,7 +223,7 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 			"azureLogAnalyticsSameAs": false,
 		},
 	}
-	ctx := context.TODO()
+	ctx := context.Background()
 	query := &AzureLogAnalyticsQuery{
 		Params:    url.Values{},
 		TimeRange: backend.TimeRange{},
