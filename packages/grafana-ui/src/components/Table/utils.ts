@@ -1,4 +1,4 @@
-import { Column, Row } from 'react-table';
+import { Row } from 'react-table';
 import memoizeOne from 'memoize-one';
 import { Property } from 'csstype';
 import {

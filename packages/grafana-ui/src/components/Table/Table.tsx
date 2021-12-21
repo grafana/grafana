@@ -20,7 +20,6 @@ import {
   FooterItem,
   TableSortByActionCallback,
   TableSortByFieldState,
-  GrafanaTableColumn,
 } from './types';
 import { getTableStyles } from './styles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
@@ -182,20 +181,16 @@ export const Table: FC<Props> = memo((props: Props) => {
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
-          {row.cells.map((cell: Cell, index: number) => {
-            const column = (cell.column as any) as GrafanaTableColumn;
-            return (
-              <TableCell
-                key={index}
-                field={column.grafanaField}
-                tableStyles={tableStyles}
-                cell={cell}
-                onCellFilterAdded={onCellFilterAdded}
-                columnIndex={index}
-                columnCount={row.cells.length}
-              />
-            );
-          })}
+          {row.cells.map((cell: Cell, index: number) => (
+            <TableCell
+              key={index}
+              tableStyles={tableStyles}
+              cell={cell}
+              onCellFilterAdded={onCellFilterAdded}
+              columnIndex={index}
+              columnCount={row.cells.length}
+            />
+          ))}
         </div>
       );
     },
