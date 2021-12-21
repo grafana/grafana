@@ -102,6 +102,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     showValue,
     legend,
     xSpacing: xTickLabelSpacing,
+    xTimeAuto: frame.fields[0].type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
   };
 
   const config = getConfig(opts, theme);
@@ -398,13 +399,13 @@ export function prepareBarChartDisplayValues(
   }
 
   // Pick a shorter date format unless configured explicitly
-  if (firstField.type === FieldType.time && !firstField.config.unit) {
-    firstField.config.unit = 'time:YYYY-MM-DD';
-    firstField.display = getDisplayProcessor({
-      field: firstField,
-      theme,
-    });
-  }
+  // if (firstField.type === FieldType.time && !firstField.config.unit) {
+  //   firstField.config.unit = 'time:YYYY-MM-DD';
+  //   firstField.display = getDisplayProcessor({
+  //     field: firstField,
+  //     theme,
+  //   });
+  // }
 
   // Show the first number value
   if (colorByField && fields.length > 1) {
