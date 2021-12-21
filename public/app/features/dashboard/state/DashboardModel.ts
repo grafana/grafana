@@ -556,7 +556,6 @@ export class DashboardModel {
     pull(this.panels, ...panelsToRemove);
     panelsToRemove.map((p) => p.destroy());
     this.sortPanelsByGridPos();
-    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   processRepeats() {
