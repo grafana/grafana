@@ -3,6 +3,7 @@ import { e2e } from '../';
 export interface BenchmarkArguments {
   name: string;
   benchmarkingOptions: {
+    skipPanelValidation: boolean;
     dashboardFolder: string;
     repeat: number;
     delayAfterOpeningDashboard: number;
@@ -18,7 +19,7 @@ export interface BenchmarkArguments {
 export const benchmark = ({
   name,
   skipScenario = false,
-  benchmarkingOptions: { duration, delayAfterOpeningDashboard, repeat, dashboardFolder, appStats },
+  benchmarkingOptions: { duration, delayAfterOpeningDashboard, repeat, dashboardFolder, appStats, skipPanelValidation },
 }: BenchmarkArguments) => {
   if (skipScenario) {
     describe(name, () => {
@@ -32,7 +33,7 @@ export const benchmark = ({
     });
 
     beforeEach(() => {
-      e2e.flows.importDashboards(dashboardFolder, 1000);
+      e2e.flows.importDashboards(dashboardFolder, 1000, skipPanelValidation);
       Cypress.Cookies.preserveOnce('grafana_session');
     });
 
