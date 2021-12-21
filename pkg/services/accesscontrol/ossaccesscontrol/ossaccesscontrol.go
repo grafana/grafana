@@ -37,9 +37,7 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 	if ac.Cfg == nil {
 		return true
 	}
-
-	_, exists := ac.Cfg.FeatureToggles["accesscontrol"]
-	return !exists
+	return !ac.Cfg.FeatureToggles["accesscontrol"]
 }
 
 func (ac *OSSAccessControlService) registerUsageMetrics() {
