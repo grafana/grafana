@@ -1,0 +1,24 @@
+{
+  "scanSettings": {
+    "configMode": "AUTO",
+    "configExternalURL": "",
+    "projectToken": "",
+    "baseBranches": [],
+    "enableLicenseViolations": true
+  },
+  "checkRunSettings": {
+    "vulnerableCheckRunConclusionLevel": "failure",
+    "displayMode": "diff"
+  },
+  "issueSettings": {
+    "minSeverityLevel": "NONE"
+  },
+  "remediateSettings": {
+    "enableRenovate": false,
+    "dependencyDashboard": true,
+    "extends": [
+      "github>whitesource/merge-confidence:beta",
+      "github>samq-ghdemo/renovate:demo"
+      ]
+  }
+}
