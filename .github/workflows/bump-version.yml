@@ -5,6 +5,12 @@ on:
       version:
         required: true
         default: '7.x.x'
+  workflow_call:
+    inputs:
+      version_call:
+        description: Needs to match, exactly, the name of a version
+        required: true
+        type: string
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -34,13 +40,13 @@ jobs:
           echo "::set-output name=branch_exist::$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)"
 
       - name: Check input version is aligned with branch(not main)
-        if: steps.intermedia.outputs.branch_exist != '0' && !contains(steps.intermedia.outputs.short_ref, steps.intermedia.outputs.branch_name)
+        if: ${{ github.event.inputs.version != '' }} && steps.intermedia.outputs.branch_exist != '0' && !contains(steps.intermedia.outputs.short_ref, steps.intermedia.outputs.branch_name)
         run: |
           echo " You need to run the workflow on branch v${{steps.regex-match.outputs.group1}}.x
           exit 1
 
       - name: Check input version is aligned with branch(main)
-        if: steps.intermedia.outputs.branch_exist == '0' && !contains(steps.intermedia.outputs.short_ref, 'main')
+        if: ${{ github.event.inputs.version != '' }} && steps.intermedia.outputs.branch_exist == '0' && !contains(steps.intermedia.outputs.short_ref, 'main')
         run: |
           echo "When you want to deliver a new new minor version, you might want to create a new branch first \
           with naming convention v[major].[minor].x, and just run the workflow on that branch. \
@@ -58,8 +64,17 @@ jobs:
           node-version: '14'
       - name: Install Actions
         run: npm install --production --prefix ./actions
-      - name: Run bump version
+      - name: Run bump version (manually invoked)
+        if: ${{ github.event.inputs.version != '' }}
         uses: ./actions/bump-version
         with:
+          version: ${{ github.event.inputs.version }}
+          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
+          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+      - name: Run bump version (workflow invoked)
+        if: ${{ inputs.version_call != '' }}
+        uses: ./actions/bump-version
+        with:
+          version: ${{ inputs.version_call }}
           token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
           metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
