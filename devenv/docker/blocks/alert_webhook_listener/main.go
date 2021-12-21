@@ -16,7 +16,9 @@ func hello(w http.ResponseWriter, r *http.Request) {
 	}
 
 	safeBody := strings.Replace(string(body), "\n", "", -1)
-	line := fmt.Sprintf("webbhook: -> %s", safeBody)
+	safeBody = strings.Replace(string(safeBody), "\r", "", -1)
+
+	line := fmt.Sprintf("webhook: -> %s", safeBody)
 	fmt.Println(line)
 	if _, err := io.WriteString(w, line); err != nil {
 		log.Printf("Failed to write: %v", err)
