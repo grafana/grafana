@@ -1,6 +1,6 @@
 export const Messages = {
   titles: {
-    rds: 'AWS RDS MySQL or Aurora MySQL',
+    rds: 'Amazon RDS',
     azure: 'Microsoft Azure MySQL or PostgreSQL',
     postgresql: 'PostgreSQL',
     mysql: 'MySQL',
