@@ -97,12 +97,13 @@ function getStyles(theme: GrafanaTheme2, reverseDirection?: boolean) {
       list-style: none;
     `,
     subtitle: css`
-      background-color: 'transparent';
+      background-color: transparent;
       border-${reverseDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
       font-weight: ${theme.typography.bodySmall.fontWeight};
       padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
+      text-align: left;
       white-space: nowrap;
     `,
   };
