@@ -1,4 +1,5 @@
 import { dateMath, dateTime, TimeRange } from '@grafana/data';
+import { LivePerformance, MeasurementName } from 'app/core/services/LivePerformance';
 import { BehaviorSubject } from 'rxjs';
 import { PanelChrome } from './PanelChrome';
 
@@ -11,12 +12,16 @@ interface LiveListener {
   panel: PanelChrome;
 }
 
+const livePerformance = LivePerformance.instance();
+
 class LiveTimer {
   listeners: LiveListener[] = [];
 
   budget = 1;
   threshold = 1.5; // trial and error appears about right
   ok = new BehaviorSubject(true);
+  private lastPublishHr = performance.now();
+
   lastUpdate = Date.now();
 
   isLive = false; // the dashboard time range ends in "now"
@@ -69,12 +74,18 @@ class LiveTimer {
   // Called at the consistent dashboard interval
   measure = () => {
     const now = Date.now();
+
     this.budget = (now - this.lastUpdate) / interval;
 
     const oldOk = this.ok.getValue();
     const newOk = this.budget <= this.threshold;
     if (oldOk !== newOk) {
+      const prevPublishHr = this.lastPublishHr;
+      this.lastPublishHr = performance.now();
       this.ok.next(newOk);
+      if (livePerformance.isRunning() && !oldOk) {
+        livePerformance.add(MeasurementName.DashboardRenderBudgetExceeded, this.lastPublishHr - prevPublishHr);
+      }
     }
     this.lastUpdate = now;
 

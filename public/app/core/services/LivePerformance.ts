@@ -14,6 +14,7 @@ type LivePerformanceOptions = { maxIntervalsToKeep: number; intervalDuration: nu
 
 export enum MeasurementName {
   DataRenderDelay = 'DataRenderDelay',
+  DashboardRenderBudgetExceeded = 'DashboardRenderBudgetExceeded',
 }
 
 const measurementNames = Object.keys(MeasurementName);
@@ -62,7 +63,6 @@ export class LivePerformance {
 
     clearInterval(this.state.intervalId);
 
-    this.calculateStatsForCurrentInterval();
     const stats = mapValues(this.state.livePerformanceStats, (stats) => sortBy(stats, (v) => v.time));
     this.state = LivePerformance.emptyState();
     return stats;
