@@ -19,7 +19,7 @@ e2e.benchmark({
     skipPanelValidation: true,
     dashboardFolder: '/dashboards/live',
     repeat: 5,
-    delayAfterOpeningDashboard: 5000,
+    delayAfterOpeningDashboard: 30000,
     duration: 40000,
 
     appStats: {
