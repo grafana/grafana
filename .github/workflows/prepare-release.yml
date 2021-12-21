@@ -17,7 +17,6 @@ jobs:
       version_call: ${{ github.event.inputs.version_input }}
     secrets:
       token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
-      metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
   #   needs: call-remove-milestone
   call-bump-version:
     uses: grafana/grafana/.github/workflows/bump-version.yml@prepare-release-test
