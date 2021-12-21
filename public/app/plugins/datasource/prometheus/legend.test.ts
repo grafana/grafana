@@ -18,13 +18,31 @@ describe('renderLegendFormat()', () => {
 
     // not sure if this is expected... but current behavior
     expect(renderLegendFormat('{{ a }}', labels)).toEqual('AAA');
+    expect(renderLegendFormat('{{             a                        }}', labels)).toEqual('AAA');
+  });
+
+  it('Missing label', () => {
+    expect(renderLegendFormat('value: {{c}}', labels)).toEqual('value: c');
+  });
+
+  it('Nested brackets', () => {
+    expect(renderLegendFormat('{{{a}}}', labels)).toEqual('{AAA}');
+    expect(renderLegendFormat('{{{{a}}}}', labels)).toEqual('{{AAA}}');
+    expect(renderLegendFormat('{{ {{ a }} }}', labels)).toEqual('{{ AAA }}');
   });
 
   it('Bad syntax', () => {
+    expect(renderLegendFormat('value: {{{a}', labels)).toEqual('value: {{{a}');
     expect(renderLegendFormat('value: {{a}', labels)).toEqual('value: {{a}');
+    expect(renderLegendFormat('value: {a}', labels)).toEqual('value: {a}');
     expect(renderLegendFormat('value: {a}}}', labels)).toEqual('value: {a}}}');
-
-    // Current behavior -- not sure if expected or not
-    expect(renderLegendFormat('value: {{{a}}}', labels)).toEqual('value: {a}');
+    expect(renderLegendFormat('value: {a}}', labels)).toEqual('value: {a}}');
+    expect(renderLegendFormat('value: { {a} }', labels)).toEqual('value: { {a} }');
+    expect(renderLegendFormat('value: { {a}}}', labels)).toEqual('value: { {a}}}');
+    expect(renderLegendFormat('{{        }}', labels)).toEqual('{{        }}');
+    expect(renderLegendFormat('{{}}', labels)).toEqual('{{}}');
+    expect(renderLegendFormat('{{{}} }', labels)).toEqual('{{{}} }');
+    expect(renderLegendFormat('{{{}}}', labels)).toEqual('{{{}}}');
+    expect(renderLegendFormat('{{a}d}}', labels)).toEqual('a}d');
   });
 });
