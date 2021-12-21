@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -20,7 +21,8 @@ func (ss *SQLStore) HasMigratedServiceAccounts(ctx context.Context, orgID int64)
 			return errors.New("org not found")
 		}
 		hasMigratedServiceAccounts := 0
-		results, err := sess.Query(&hasMigratedServiceAccounts, `SELECT count(*) FROM migration_log WHERE sql = ?`, orgID)
+		queryWithWildcards := "%" + fmt.Sprint(orgID) + "%"
+		results, err := sess.Query(&hasMigratedServiceAccounts, `SELECT count(*) FROM migration_log WHERE sql = ?`, queryWithWildcards)
 		if err != nil {
 			return err
 		}

@@ -43,5 +43,5 @@ func deleteServiceAccountInTransaction(sess *sqlstore.DBSession, orgID, serviceA
 }
 
 func (s *ServiceAccountsStoreImpl) HasMigrated(ctx context.Context, orgID int64) error {
-	return s.sqlStore.HasMigratedServiceaccounts(ctx, orgID)
+	return s.sqlStore.HasMigratedServiceAccounts(ctx, orgID)
 }
