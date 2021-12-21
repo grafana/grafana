@@ -284,7 +284,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
 		"featureHighlights": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("feature_highlights").Key("enabled").MustBool(false),
+			"enabled": hs.SettingsProvider.Section("feature_highlights").KeyValue("enabled").MustBool(false),
 		},
 	}
 
