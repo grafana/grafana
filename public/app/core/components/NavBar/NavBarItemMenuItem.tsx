@@ -7,18 +7,16 @@ import { useFocus, useKeyboard } from '@react-aria/interactions';
 import { TreeState } from '@react-stately/tree';
 import { mergeProps } from '@react-aria/utils';
 import { Node } from '@react-types/shared';
-import classNames from 'classnames';
 
 import { useNavBarItemMenuContext } from './context';
 
 export interface NavBarItemMenuItemProps {
-  className?: string;
   item: Node<NavModelItem>;
   state: TreeState<NavModelItem>;
   onNavigate: (item: NavModelItem) => void;
 }
 
-export function NavBarItemMenuItem({ className, item, state, onNavigate }: NavBarItemMenuItemProps): ReactElement {
+export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuItemProps): ReactElement {
   const { onClose, onLeft } = useNavBarItemMenuContext();
   const { key, rendered } = item;
   const ref = useRef<HTMLLIElement>(null);
@@ -28,7 +26,8 @@ export function NavBarItemMenuItem({ className, item, state, onNavigate }: NavBa
   const [isFocused, setFocused] = useState(false);
   const { focusProps } = useFocus({ onFocusChange: setFocused, isDisabled });
   const theme = useTheme2();
-  const styles = getStyles(theme, isFocused);
+  const isSection = item.value.menuItemType === 'section';
+  const styles = getStyles(theme, isFocused, isSection);
   const onAction = () => {
     onNavigate(item.value);
     onClose();
@@ -57,20 +56,22 @@ export function NavBarItemMenuItem({ className, item, state, onNavigate }: NavBa
   });
 
   return (
-    <li
-      {...mergeProps(menuItemProps, focusProps, keyboardProps)}
-      ref={ref}
-      className={classNames(styles.menuItem, className)}
-    >
+    <li {...mergeProps(menuItemProps, focusProps, keyboardProps)} ref={ref} className={styles.menuItem}>
       {rendered}
     </li>
   );
 }
 
-function getStyles(theme: GrafanaTheme2, isFocused: boolean) {
+function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean) {
+  let backgroundColor = 'transparent';
+  if (isFocused) {
+    backgroundColor = theme.colors.action.hover;
+  } else if (isSection) {
+    backgroundColor = theme.colors.background.secondary;
+  }
   return {
     menuItem: css`
-      background-color: ${isFocused ? theme.colors.action.hover : 'transparent'};
+      background-color: ${backgroundColor};
       color: ${isFocused ? 'white' : theme.colors.text.primary};
 
       &:focus-visible {
@@ -78,8 +79,7 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean) {
         box-shadow: none;
         color: ${theme.colors.text.primary};
         outline: 2px solid ${theme.colors.primary.main};
-        // Need to add condition, header is 0, otherwise -2
-        outline-offset: -0px;
+        outline-offset: -2px;
         transition: none;
       }
     `,
