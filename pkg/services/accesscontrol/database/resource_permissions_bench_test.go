@@ -51,7 +51,7 @@ func benchmarkDSPermissions(b *testing.B, dsNum, usersNum int) {
 	}
 }
 
-func getDSPermissions(b *testing.B, store accesscontrol.ResourceStore, dataSources []int64) {
+func getDSPermissions(b *testing.B, store accesscontrol.ResourcePermissionsStore, dataSources []int64) {
 	dsId := dataSources[0]
 
 	permissions, err := store.GetResourcesPermissions(context.Background(), accesscontrol.GlobalOrgID, accesscontrol.GetResourcesPermissionsQuery{
@@ -90,11 +90,11 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 		// Add DS permissions for the users
 		maxPermissions := int(math.Min(float64(permissionsPerDs), float64(len(userIds))))
 		for i := 0; i < maxPermissions; i++ {
-			_, err := ac.SetUserResourcePermissions(
+			_, err := ac.SetUserResourcePermission(
 				context.Background(),
 				accesscontrol.GlobalOrgID,
 				userIds[i],
-				accesscontrol.SetResourcePermissionsCommand{
+				accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{dsAction},
 					Resource:   dsResource,
 					ResourceID: strconv.Itoa(int(dsID)),
@@ -106,11 +106,11 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 		// Add DS permissions for the teams
 		maxPermissions = int(math.Min(float64(permissionsPerDs), float64(len(teamIds))))
 		for i := 0; i < maxPermissions; i++ {
-			_, err := ac.SetTeamResourcePermissions(
+			_, err := ac.SetTeamResourcePermission(
 				context.Background(),
 				accesscontrol.GlobalOrgID,
 				teamIds[i],
-				accesscontrol.SetResourcePermissionsCommand{
+				accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{"datasources:query"},
 					Resource:   "datasources",
 					ResourceID: strconv.Itoa(int(dsID)),
