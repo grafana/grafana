@@ -16,10 +16,11 @@ const hasGrafanaRuntime = <T>(obj: T): obj is WithGrafanaRuntime<T> => {
 e2e.benchmark({
   name: 'Live performance benchmarking - 6x20hz panels',
   benchmarkingOptions: {
+    skipPanelValidation: true,
     dashboardFolder: '/dashboards/live',
     repeat: 5,
-    delayAfterOpeningDashboard: 1000,
-    duration: 30000,
+    delayAfterOpeningDashboard: 5000,
+    duration: 40000,
 
     appStats: {
       startCollecting: (window) => {
