@@ -20,8 +20,8 @@ e2e.benchmark({
     delayAfterOpening: 30000,
     skipPanelValidation: true,
   },
-  repeat: 5,
-  duration: 40000,
+  repeat: 10,
+  duration: 120000,
   appStats: {
     startCollecting: (window) => {
       if (!hasGrafanaRuntime(window)) {
