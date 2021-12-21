@@ -2,7 +2,7 @@ name: Prepare release
 on:
   workflow_dispatch:
     inputs:
-      version_prepare:
+      version:
         description: 'The version to be released please respect: major.minor.patch or major.minor.patch-beta.number format. example: 7.4.3 or 7.4.3-beta.1'
         required: true
 
@@ -17,24 +17,11 @@ jobs:
   #     version_call: ${{ github.event.inputs.version_input }}
   #   needs: call-remove-milestone
   call-bump-version:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Actions
-        uses: actions/checkout@v2
-        with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: mob/bump-version-update-user-essentials
-      - uses: actions/setup-node@v2.4.1
-        with:
-          node-version: '14'
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
-      - name: Run bump version
-        uses: ./actions/bump-version
-        with:
-          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+    uses: grafana/grafana/.github/workflows/bump-version.yml@prepare-release-test
+    with:
+      version_call: ${{ github.event.inputs.version_input }}
+      token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+      metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
 
   #   needs: call-close-milestone
   # call-update-changelog:
