@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -21,6 +22,9 @@ import (
 )
 
 func TestPrometheusRules(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -32,7 +36,7 @@ func TestPrometheusRules(t *testing.T) {
 	store.Bus = bus.GetBus()
 
 	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
-	_, err := createFolder(t, store, 0, "default")
+	_, err = createFolder(t, store, 0, "default")
 	require.NoError(t, err)
 
 	// Create a user to make authenticated requests
@@ -615,6 +619,9 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 }
 
 func TestPrometheusRulesPermissions(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -633,7 +640,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	})
 
 	// Create a namespace under default organisation (orgID = 1) where we'll save some alerts.
-	_, err := createFolder(t, store, 0, "folder1")
+	_, err = createFolder(t, store, 0, "folder1")
 	require.NoError(t, err)
 
 	// Create another namespace under default organisation (orgID = 1) where we'll save some alerts.
