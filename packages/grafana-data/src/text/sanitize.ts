@@ -1,12 +1,12 @@
-import { FilterXSS, whiteList, IWhiteList } from 'xss';
+import * as xss from 'xss';
 import { sanitizeUrl as braintreeSanitizeUrl } from '@braintree/sanitize-url';
 
-const XSSWL = Object.keys(whiteList).reduce((acc, element) => {
-  acc[element] = whiteList[element]?.concat(['class', 'style']);
+const XSSWL = Object.keys(xss.whiteList).reduce((acc, element) => {
+  acc[element] = xss.whiteList[element]?.concat(['class', 'style']);
   return acc;
-}, {} as IWhiteList);
+}, {} as xss.IWhiteList);
 
-const sanitizeXSS = new FilterXSS({
+const sanitizeXSS = new xss.FilterXSS({
   whiteList: XSSWL,
 });
 
