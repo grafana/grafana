@@ -32,14 +32,22 @@ jobs:
         id: regex-match-version-call
         with:
           text: ${{ inputs.version_call }}
-          regex: '^(\d+.\d+).\d+(?:-beta.\d+)?$'
+          regex: '^(\d+.\d+).\d+(?:-beta\d+)?$'
       - name: Validate input version
-        if: ${{ steps.regex-match.outputs.match == '' && steps.regex-match-version-call.outputs.match == '' }}
+        if: ${{ steps.regex-match.outputs.match == '' && github.event.inputs.version != '' }}
         run: |
           echo "The input version format is not correct, please respect:\
           major.minor.patch or major.minor.patch-beta.number format. \
           example: 7.4.3 or 7.4.3-beta.1"
           exit 1
+      - name: Validate input version call
+        if: ${{ inputs.version_call != '' && steps.regex-match-version-call.outputs.match == '' }}
+        run: |
+          echo "The input version format is not correct, please respect:\
+          major.minor.patch or major.minor.patch-beta<number> format. \
+          example: 7.4.3 or 7.4.3-beta1"
+          exit 1
+          
       - uses: actions/checkout@v2
 
       - name: Set intermedia variables
