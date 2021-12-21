@@ -33,8 +33,9 @@ jobs:
       - name: Run bump version
         uses: ./actions/bump-version
         with:
-          token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
-          metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
+          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          
   #   needs: call-close-milestone
   # call-update-changelog:
   #   uses: grafana/grafana/.github/workflows/update-changelog.yml@main
