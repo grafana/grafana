@@ -14,8 +14,8 @@ on:
     secrets:
         token:
           required: true
-        token:
-          metricsWriteAPIKey: true
+        metricsWriteAPIKey:
+          required: true
 
 jobs:
   main:
