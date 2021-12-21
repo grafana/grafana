@@ -271,9 +271,9 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceID)), routing.Wrap(hs.DeleteDataSourceById))
 			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceUID)), routing.Wrap(hs.DeleteDataSourceByUID))
 			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceName)), routing.Wrap(hs.DeleteDataSourceByName))
-			datasourceRoute.Get("/:id", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceID)), routing.Wrap(hs.GetDataSourceById))
-			datasourceRoute.Get("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceUID)), routing.Wrap(hs.GetDataSourceByUID))
-			datasourceRoute.Get("/name/:name", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceName)), routing.Wrap(GetDataSourceByName))
+			datasourceRoute.Get("/:id", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceById))
+			datasourceRoute.Get("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceByUID))
+			datasourceRoute.Get("/name/:name", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(GetDataSourceByName))
 		})
 
 		apiRoute.Get("/datasources/id/:name", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesIDRead, ScopeDatasourceName)), routing.Wrap(GetDataSourceIdByName))
