@@ -218,7 +218,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     };
   }
 
-  getTable(dfs: DataFrame[], target: any, meta: QueryResultMeta): TableModel {
+  getTable(dfs: DataFrame[], target: InfluxQuery, meta: QueryResultMeta): TableModel {
     let table = new TableModel();
 
     if (dfs.length > 0) {
@@ -250,10 +250,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return table;
   }
 
-  getTableCols(dfs: DataFrame[], table: TableModel, target: any): TableModel {
+  getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery): TableModel {
     const selectedParams = this.getSelectedParams(target);
 
-    dfs[0].fields.forEach((field: any) => {
+    dfs[0].fields.forEach((field) => {
       // Time col
       if (field.name === 'time') {
         table.columns.push(field.name === 'time' ? { text: 'Time', type: FieldType.time } : { text: field.name });
@@ -277,7 +277,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return table;
   }
 
-  getTableRows(dfs: DataFrame[], table: TableModel, labels: any): TableModel {
+  getTableRows(dfs: DataFrame[], table: TableModel, labels: string[]): TableModel {
     const values = dfs[0].fields[0].values.toArray();
 
     for (let j = 0; j < values.length; j++) {
