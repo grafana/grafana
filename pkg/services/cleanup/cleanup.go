@@ -47,7 +47,7 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			defer cancelFn()
 
 			srv.cleanUpTmpFiles()
-			srv.deleteExpiredSnapshots()
+			srv.deleteExpiredSnapshots(ctx)
 			srv.deleteExpiredDashboardVersions(ctx)
 			srv.cleanUpOldAnnotations(ctxWithTimeout)
 			srv.expireOldUserInvites(ctx)
@@ -125,9 +125,9 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 	return filemtime.Add(srv.Cfg.TempDataLifetime).Before(now)
 }
 
-func (srv *CleanUpService) deleteExpiredSnapshots() {
+func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
 	cmd := models.DeleteExpiredSnapshotsCommand{}
-	if err := bus.DispatchCtx(context.TODO(), &cmd); err != nil {
+	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
 		srv.log.Error("Failed to delete expired snapshots", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
