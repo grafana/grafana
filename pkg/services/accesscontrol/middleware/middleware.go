@@ -138,6 +138,16 @@ func UseGlobalOrg(c *models.ReqContext) (int64, error) {
 	return accesscontrol.GlobalOrgID, nil
 }
 
+// Disable returns http 404 if shouldDisable is set to true
+func Disable(shouldDisable bool) web.Handler {
+	return func(c *models.ReqContext) {
+		if shouldDisable {
+			c.Resp.WriteHeader(http.StatusNotFound)
+			return
+		}
+	}
+}
+
 func LoadPermissionsMiddleware(ac accesscontrol.AccessControl) web.Handler {
 	return func(c *models.ReqContext) {
 		if ac.IsDisabled() {

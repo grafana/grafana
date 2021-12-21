@@ -14,13 +14,12 @@ Grafana ships with built-in support for Google Cloud Monitoring. Add it as a dat
 
 ## Google Cloud Monitoring settings
 
-To access Google Cloud Monitoring settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Google Cloud Monitoring data source.
+To access Google Cloud Monitoring settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and click **Add data source**, then click the Google Cloud Monitoring data source.
 
-| Name                  | Description                                                                                                                                                                            |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`                | The data source name. This is how you refer to the data source in panels and queries.                                                                                                  |
-| `Default`             | Default data source means that it is pre-selected for new panels.                                                                                                                      |
-| `Service Account Key` | Upload or paste in the Service Account Key file for a GCP Project. For more information, refer to [Using a Google Service Account Key File](#using-a-google-service-account-key-file). |
+| Name      | Description                                                                           |
+| --------- | ------------------------------------------------------------------------------------- |
+| `Name`    | The data source name. This is how you refer to the data source in panels and queries. |
+| `Default` | Default data source means that it is pre-selected for new panels.                     |
 
 ## Authentication
 
@@ -44,26 +43,17 @@ Click on the links above and click the `Enable` button:
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
-1. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
+1. Click on the **Create credentials** dropdown/button and select the **Service account** option.
+1. In **Service account name**, enter a name for the account.
+1. From the **Role** dropdown, choose the **Monitoring Viewer** role as shown in the image below:
 
-   {{< figure src="/static/img/docs/v71/cloudmonitoring_create_service_account_button.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account button" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
-1. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
-
-   {{< figure src="/static/img/docs/v71/cloudmonitoring_create_service_account_key.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account key" >}}
-
-1. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
-
-   {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
-
-1. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
-1. Upload it to Grafana on the data source Configuration page. You can either upload the file or paste in the contents of the file.
-
-   {{< figure src="/static/img/docs/v71/cloudmonitoring_grafana_upload_key.png" max-width="550px" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
-
-1. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
-
-   {{< figure src="/static/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" max-width="600px" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
+1. Click **Done**.
+1. Use the newly created account to [create a service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-service-account-keys-create-console). A JSON key file is created and downloaded to your computer.
+1. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
+1. Upload the key to Grafana via the data source configuration page.
+   The file contents will be encrypted and saved in the Grafana database. Don't forget to save the file after uploading!
 
 ### Using GCE Default Service Account
 
@@ -150,7 +140,7 @@ The option is called `cloud monitoring auto` and the defaults are:
 - 5m for time ranges >= 23 hours and < 6 days
 - 1h for time ranges >= 6 days
 
-The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
+The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable]({{< relref "../../variables/variable-types/add-interval-variable.md" >}}).
 
 You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -220,7 +210,7 @@ To create an SLO query, follow these steps:
 1. Choose a project from the **Project** dropdown.
 1. Choose an [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** dropdown.
 1. Choose an [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** dropdown.
-1. Choose a [time series selector](https://cloud.google.com/monitoring/service-monitoring/timeseries-selectors#ts-selector-list) from the **Selector** dropdown.
+1. Choose a [time series selector](https://cloud.google.com/stackdriver/docs/solutions/slo-monitoring/api/timeseries-selectors#ts-selector-list) from the **Selector** dropdown.
 
 The friendly names for the time series selectors are shown in Grafana. Here is the mapping from the friendly name to the system name that is used in the Service Monitoring documentation:
 
@@ -294,12 +284,7 @@ Variable of the type _Query_ allows you to query Google Cloud Monitoring for var
 
 ### Using variables in queries
 
-There are two syntaxes:
-
-- `$<varname>` Example: `metric.label.$metric_label`
-- `[[varname]]` Example: `metric.label.[[metric_label]]`
-
-Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the _Multi-value_ or _Include all value_ options are enabled, Grafana converts the labels from plain text to a regex compatible string, which means you have to use `=~` instead of `=`.
+Refer to the [variable syntax documentation]({{< relref "../../variables/syntax.md" >}}).
 
 ## Annotations
 
@@ -327,7 +312,7 @@ Example Result: `monitoring.googleapis.com/uptime_check/http_status has this val
 
 ## Configure the data source with provisioning
 
-You can configure data sources using config files with Grafana's provisioning system. Read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
+You can provision CloudWatch data source by modifying Grafana's configuration files. To learn more about provisioning and all the settings you can set, see the [provisioning documentation]({{< relref "../../administration/provisioning/#data-sources" >}})
 
 Here is a provisioning example using the JWT (Service Account key file) authentication type.
 
