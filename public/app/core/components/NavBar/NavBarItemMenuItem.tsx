@@ -3,21 +3,23 @@ import { css } from '@emotion/css';
 import { useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { useMenuItem } from '@react-aria/menu';
-import { useFocus } from '@react-aria/interactions';
+import { useFocus, useKeyboard } from '@react-aria/interactions';
 import { TreeState } from '@react-stately/tree';
 import { mergeProps } from '@react-aria/utils';
 import { Node } from '@react-types/shared';
+import classNames from 'classnames';
 
 import { useNavBarItemMenuContext } from './context';
 
 export interface NavBarItemMenuItemProps {
+  className?: string;
   item: Node<NavModelItem>;
   state: TreeState<NavModelItem>;
   onNavigate: (item: NavModelItem) => void;
 }
 
-export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuItemProps): ReactElement {
-  const { onClose } = useNavBarItemMenuContext();
+export function NavBarItemMenuItem({ className, item, state, onNavigate }: NavBarItemMenuItemProps): ReactElement {
+  const { onClose, onLeft } = useNavBarItemMenuContext();
   const { key, rendered } = item;
   const ref = useRef<HTMLLIElement>(null);
   const isDisabled = state.disabledKeys.has(key);
@@ -45,8 +47,21 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
     ref
   );
 
+  const { keyboardProps } = useKeyboard({
+    onKeyDown: (e) => {
+      if (e.key === 'ArrowLeft') {
+        onLeft();
+      }
+      e.continuePropagation();
+    },
+  });
+
   return (
-    <li {...mergeProps(menuItemProps, focusProps)} ref={ref} className={styles.menuItem}>
+    <li
+      {...mergeProps(menuItemProps, focusProps, keyboardProps)}
+      ref={ref}
+      className={classNames(styles.menuItem, className)}
+    >
       {rendered}
     </li>
   );

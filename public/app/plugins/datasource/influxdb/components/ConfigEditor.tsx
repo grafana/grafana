@@ -112,6 +112,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               isConfigured={(secureJsonFields && secureJsonFields.token) as boolean}
               value={secureJsonData.token || ''}
               label="Token"
+              aria-label="Token"
               labelWidth={10}
               inputWidth={20}
               onReset={this.onResetToken}
@@ -212,6 +213,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               isConfigured={(secureJsonFields && secureJsonFields.password) as boolean}
               value={secureJsonData.password || ''}
               label="Password"
+              aria-label="Password"
               labelWidth={10}
               inputWidth={20}
               onReset={this.onResetPassword}
