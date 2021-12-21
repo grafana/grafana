@@ -36,4 +36,4 @@ jobs:
         uses: ./actions/close-milestone
         with:
           version_call: ${{ inputs.version_call }}
-          token: ${{secrets.token}}
+          token: ${{ secrets.token }}

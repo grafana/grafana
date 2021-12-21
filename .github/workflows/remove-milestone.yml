@@ -5,6 +5,15 @@ on:
       version:
         required: true
         description: Needs to match, exactly, the name of a milestone
+  workflow_call:
+    inputs:
+      version_call:
+        description: Needs to match, exactly, the name of a milestone
+        required: true
+        type: string    
+    secrets:
+      token:
+        required: true        
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -14,10 +23,17 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: main
+          ref: mob/bump-version-update-user-essentials
       - name: Install Actions
         run: npm install --production --prefix ./actions
-      - name: Remove milestone from open issues
+      - name: Remove milestone from open issues (manually invoked)
+        if: ${{ github.event.inputs.version != '' }}
         uses: ./actions/remove-milestone
         with:
-          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
+          token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+      - name: Remove milestone from open issues (workflow invoked)
+        if: ${{ inputs.version_call != '' }}
+        uses: ./actions/remove-milestone
+        with:
+          version_call: ${{ inputs.version_call }}
+          token: ${{ secrets.token }}
