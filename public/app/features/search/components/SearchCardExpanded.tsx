@@ -15,29 +15,10 @@ export interface Props {
 }
 
 export function SearchCardExpanded({ className, imageHeight, imageWidth, item, lastUpdated }: Props) {
-  const NUM_IMAGE_RETRIES = 5;
-  const IMAGE_RETRY_DELAY = 10000;
-
   const theme = useTheme2();
   const [hasImage, setHasImage] = useState(true);
   const imageSrc = getThumbnailURL(item.uid!, theme.isLight);
   const styles = getStyles(theme, imageHeight, imageWidth);
-
-  const retryImage = (remainingRetries: number) => {
-    return () => {
-      if (remainingRetries > 0) {
-        if (hasImage) {
-          setHasImage(false);
-        }
-        window.setTimeout(() => {
-          const img = new Image();
-          img.onload = () => setHasImage(true);
-          img.onerror = retryImage(remainingRetries - 1);
-          img.src = imageSrc;
-        }, IMAGE_RETRY_DELAY);
-      }
-    };
-  };
 
   const folderTitle = item.folderTitle || 'General';
 
@@ -50,7 +31,7 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
             className={styles.image}
             src={imageSrc}
             onLoad={() => setHasImage(true)}
-            onError={retryImage(NUM_IMAGE_RETRIES)}
+            onError={() => setHasImage(false)}
           />
         ) : (
           <div className={styles.imagePlaceholder}>

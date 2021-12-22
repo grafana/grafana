@@ -9,6 +9,8 @@ import { usePopper } from 'react-popper';
 import { SearchCardExpanded } from './SearchCardExpanded';
 import { backendSrv } from 'app/core/services/backend_srv';
 
+const DELAY_BEFORE_EXPANDING = 500;
+
 export interface Props {
   editable?: boolean;
   item: DashboardSectionItem;
@@ -21,10 +23,6 @@ export function getThumbnailURL(uid: string, isLight?: boolean) {
 }
 
 export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
-  const NUM_IMAGE_RETRIES = 5;
-  const IMAGE_RETRY_DELAY = 10000;
-  const DELAY_BEFORE_EXPANDING = 500;
-
   const [hasImage, setHasImage] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>();
   const [showExpandedView, setShowExpandedView] = useState(false);
@@ -88,22 +86,6 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
     setShowExpandedView(false);
   };
 
-  const retryImage = (remainingRetries: number) => {
-    return () => {
-      if (remainingRetries > 0) {
-        if (hasImage) {
-          setHasImage(false);
-        }
-        window.setTimeout(() => {
-          const img = new Image();
-          img.onload = () => setHasImage(true);
-          img.onerror = retryImage(remainingRetries - 1);
-          img.src = imageSrc;
-        }, IMAGE_RETRY_DELAY);
-      }
-    };
-  };
-
   const onCheckboxClick = (ev: React.MouseEvent) => {
     ev.stopPropagation();
     ev.preventDefault();
@@ -138,13 +120,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
           onClick={onCheckboxClick}
         />
         {hasImage ? (
-          <img
-            loading="lazy"
-            className={styles.image}
-            src={imageSrc}
-            onLoad={() => setHasImage(true)}
-            onError={retryImage(NUM_IMAGE_RETRIES)}
-          />
+          <img loading="lazy" className={styles.image} src={imageSrc} onError={() => setHasImage(false)} />
         ) : (
           <div className={styles.imagePlaceholder}>
             <Icon name="apps" size="xl" />
