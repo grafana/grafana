@@ -8,6 +8,7 @@ import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 import { css } from '@emotion/css';
 import { withTheme2, stylesFactory } from '../../themes';
 import { ColorSwatch } from './ColorSwatch';
+import { closePopover } from 'src/utils/closePopover';
 
 /**
  * If you need custom trigger for the color picker you can do that with a render prop pattern and supply a function
@@ -72,7 +73,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     wrapperClassName={styles.colorPicker}
                     onMouseLeave={hidePopper}
                     onMouseEnter={showPopper}
-                    onKeyDown={(event) => this.stopPropagation(event, hidePopper)}
+                    onKeyDown={(event) => closePopover(event, hidePopper)}
                   />
                 )}
 
