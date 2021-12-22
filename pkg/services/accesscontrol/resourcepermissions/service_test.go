@@ -42,6 +42,7 @@ func TestService_SetUserPermission(t *testing.T) {
 
 			// seed user
 			user, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
+			require.NoError(t, err)
 
 			var hookCalled bool
 			if tt.callHook {
