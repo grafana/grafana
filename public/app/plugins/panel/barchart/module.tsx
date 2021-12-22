@@ -3,7 +3,6 @@ import {
   FieldColorModeId,
   FieldConfigProperty,
   FieldType,
-  getFieldColorModeForField,
   getFieldDisplayName,
   PanelPlugin,
   VizOrientation,
@@ -188,19 +187,10 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
       });
 
-    let colorDescr = 'Use the color value for a sibling field to color each bar value.';
-    if (disp.colorByField) {
-      const mode = getFieldColorModeForField(disp.colorByField);
-      if (mode.isByValue) {
-        colorDescr += ' (' + mode.id + ')';
-      } else {
-        colorDescr += '  NOTE not by value!';
-      }
-    }
     builder.addFieldNamePicker({
       path: 'colorByField',
       name: 'Color by field',
-      description: colorDescr,
+      description: 'Use the color value for a sibling field to color each bar value.',
     });
 
     commonOptionsBuilder.addTooltipOptions(builder);
