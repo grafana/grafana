@@ -9,12 +9,13 @@
       "pluginName": "TestData DB"
     }
   ],
+  "__elements": [],
   "__requires": [
     {
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "8.2.5"
+      "version": "8.3.3"
     },
     {
       "type": "datasource",
@@ -50,16 +51,14 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1638354357847,
+  "iteration": 1640181211838,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "collapsed": false,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -73,7 +72,10 @@
       "type": "row"
     },
     {
-      "datasource": null,
+      "datasource": {
+        "type": "testdata",
+        "uid": "${DS_GDEV-TESTDATA}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -148,13 +150,12 @@
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 32,
+  "schemaVersion": 34,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
-        "allValue": null,
         "current": {
           "selected": false,
           "text": [
@@ -164,11 +165,8 @@
             "$__all"
           ]
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": true,
-        "label": null,
         "multi": true,
         "name": "vertical",
         "options": [
@@ -199,7 +197,6 @@
         "type": "custom"
       },
       {
-        "allValue": null,
         "current": {
           "selected": false,
           "text": [
@@ -209,11 +206,8 @@
             "$__all"
           ]
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": true,
-        "label": null,
         "multi": true,
         "name": "horizontal",
         "options": [
@@ -244,7 +238,6 @@
         "type": "custom"
       },
       {
-        "allValue": null,
         "current": {
           "selected": true,
           "text": [
@@ -254,11 +247,8 @@
             "$__all"
           ]
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": true,
-        "label": null,
         "multi": true,
         "name": "row",
         "options": [
@@ -298,5 +288,6 @@
   "timezone": "utc",
   "title": "Repeating a row with a repeating horizontal panel",
   "uid": "0OmtTCtnk",
-  "version": 3
+  "version": 3,
+  "weekStart": ""
 }

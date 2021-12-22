@@ -9,12 +9,13 @@
       "pluginName": "TestData DB"
     }
   ],
+  "__elements": [],
   "__requires": [
     {
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "8.2.5"
+      "version": "8.3.3"
     },
     {
       "type": "datasource",
@@ -50,15 +51,17 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1638354090968,
+  "iteration": 1640181132304,
   "links": [],
   "liveNow": false,
   "panels": [
     {
-      "datasource": null,
+      "datasource": {
+        "type": "testdata",
+        "uid": "${DS_GDEV-TESTDATA}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -132,13 +135,12 @@
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 32,
+  "schemaVersion": 34,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
-        "allValue": null,
         "current": {
           "selected": true,
           "text": [
@@ -148,11 +150,8 @@
             "$__all"
           ]
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": true,
-        "label": null,
         "multi": true,
         "name": "vertical",
         "options": [
@@ -183,7 +182,6 @@
         "type": "custom"
       },
       {
-        "allValue": null,
         "current": {
           "selected": true,
           "text": [
@@ -193,11 +191,8 @@
             "1"
           ]
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": true,
-        "label": null,
         "multi": true,
         "name": "horizontal",
         "options": [
@@ -236,5 +231,6 @@
   "timezone": "utc",
   "title": "Repeating a panel vertically",
   "uid": "OY8Ghjt7k",
-  "version": 7
+  "version": 7,
+  "weekStart": ""
 }
