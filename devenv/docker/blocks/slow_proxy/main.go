@@ -6,6 +6,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -31,7 +32,17 @@ func main() {
 	proxy := httputil.NewSingleHostReverseProxy(originURL)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("sleeping for %s then proxying request: url '%s', headers: '%v'", sleep.String(), r.RequestURI, r.Header)
+		safeSleep := strings.Replace(sleep.String(), "\n", "", -1)
+		safeRequestUri := strings.Replace(r.RequestURI, "\n", "", -1)
+		log.Printf("sleeping for %s then proxying request: url '%s'", safeSleep, safeRequestUri)
+
+		// This is commented out as CodeQL flags this as vulnerability CWE-117 (https://cwe.mitre.org/data/definitions/117.html)
+		// If you need to debug and log the headers then use the line below instead of the log.Printf statement above
+		// The docker container will then need to be rebuilt after the change is made:
+		// Run `make devenv sources=slow_proxy`
+		// or run `docker-compose build` in the devenv folder
+		//
+		// log.Printf("sleeping for %s then proxying request: url '%s', headers: '%v'", safeSleep, safeRequestUri, r.Header)
 		<-time.After(sleep)
 		proxy.ServeHTTP(w, r)
 	})

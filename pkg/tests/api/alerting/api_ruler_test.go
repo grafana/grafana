@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -174,7 +175,7 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 
 		// remove permissions from folder2
-		require.NoError(t, store.UpdateDashboardACL(2, nil))
+		require.NoError(t, store.UpdateDashboardACL(context.Background(), 2, nil))
 
 		// make sure that folder2 is not included in the response
 		// nolint:gosec
@@ -247,7 +248,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	}
 
 	// Remove permissions from ALL folders.
-	require.NoError(t, store.UpdateDashboardACL(1, nil))
+	require.NoError(t, store.UpdateDashboardACL(context.Background(), 1, nil))
 	{
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
