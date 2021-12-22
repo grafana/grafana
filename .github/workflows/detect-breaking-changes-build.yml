@@ -4,13 +4,13 @@ on: pull_request
 
 jobs:
   build:
-    name: Build
+    name: Detect
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install Node.js
+    - name: Setup environment
       uses: actions/setup-node@v2
       with:
         node-version: '16'
@@ -34,13 +34,13 @@ jobs:
       run: ./scripts/check-breaking-changes.sh 
       env:
         FORCE_COLOR: 3
-        GITHUB_JOB_LINK: ${{steps.job.outputs.link}}
+        GITHUB_JOB_LINK: ${{ steps.job.outputs.link }}
         GITHUB_STEP_NUMBER: 7
 
     - name: Persisting the check output
       run: |
           mkdir -p ./levitate
-          echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.mesage }}\", \"pr_number\": "${{ github.event.number }}" }" > ./levitate/result.json
+          echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.mesage }}\", \"job_link\": \"${{ steps.job.outputs.link }}\" }" > ./levitate/result.json
 
     - name: Upload check output as artifact
       uses: actions/upload-artifact@v2
