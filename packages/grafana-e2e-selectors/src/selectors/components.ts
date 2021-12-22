@@ -318,6 +318,6 @@ export const Components = {
     name: `data-testid-colorswatch`,
   },
   DashboardRow: {
-    title: (title: string) => `data-testid dashboard-row-${title}`,
+    title: (title: string) => `data-testid dashboard-row-title-${title}`,
   },
 };

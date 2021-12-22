@@ -1,24 +1,19 @@
 import { e2e } from '@grafana/e2e';
 const PAGE_UNDER_TEST = 'dtpl2Ctnk/repeating-an-empty-row';
 
-describe('Repeating an empty row', () => {
-  it('should be able to repeat a panel vertically', () => {
+describe('Repeating empty rows', () => {
+  it('should be able to repeat empty rows vertically', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
 
     let prevTop = Number.NEGATIVE_INFINITY;
-    let prevLeft = null;
-    const panelTitles = ['Panel Title 1', 'Panel Title 2', 'Panel Title 3'];
-    panelTitles.forEach((title) => {
-      e2e.components.Panels.Panel.title(title)
+    const rowTitles = ['Row title 1', 'Row title 2', 'Row title 3'];
+    rowTitles.forEach((title) => {
+      e2e.components.DashboardRow.title(title)
         .should('be.visible')
         .then(($el) => {
-          const { left, top } = $el[0].getBoundingClientRect();
+          const { top } = $el[0].getBoundingClientRect();
           expect(top).to.be.greaterThan(prevTop);
-          if (prevLeft !== null) {
-            expect(left).to.be.equal(prevLeft);
-          }
-          prevLeft = left;
           prevTop = top;
         });
     });
