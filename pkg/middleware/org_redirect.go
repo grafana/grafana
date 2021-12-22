@@ -45,12 +45,14 @@ func OrgRedirect(cfg *setting.Cfg) web.Handler {
 		}
 
 		urlParams := c.Req.URL.Query()
+		qs := urlParams.Encode()
 
 		if urlParams.Has("kiosk") && urlParams.Get("kiosk") == "" {
-			urlParams.Set("kiosk", "true")
+			urlParams.Del("kiosk")
+			qs = fmt.Sprintf("%s&kiosk", urlParams.Encode())
 		}
 
-		newURL := fmt.Sprintf("%s%s?%s", cfg.AppURL, strings.TrimPrefix(c.Req.URL.Path, "/"), urlParams.Encode())
+		newURL := fmt.Sprintf("%s%s?%s", cfg.AppURL, strings.TrimPrefix(c.Req.URL.Path, "/"), qs)
 
 		c.Redirect(newURL, 302)
 	}
