@@ -212,7 +212,7 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => {
       display: flex;
       justify-content: center;
       margin: ${theme.spacing(1)} ${IMAGE_HORIZONTAL_MARGIN} 0;
-      width: calc(100% - 64px);
+      width: calc(100% - (2 * ${IMAGE_HORIZONTAL_MARGIN}));
     `,
     info: css`
       align-items: center;
