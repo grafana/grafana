@@ -141,6 +141,8 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
   );
 });
 
+ManageDashboards.displayName = 'ManageDashboards';
+
 export default ManageDashboards;
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
