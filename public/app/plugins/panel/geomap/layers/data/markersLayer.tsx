@@ -20,6 +20,7 @@ import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/ty
 import { StyleEditor } from './StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
 import VectorLayer from 'ol/layer/Vector';
+import { isNumber } from 'lodash';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -76,29 +77,37 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     const style = await getStyleConfigState(config.style);
 
     // eventually can also use resolution for dynamic style
-    const vectorLayer = new VectorLayer({
-      style: (feature: FeatureLike) => {
-      // Set the default style
-      if (!style.fields) {
-        return style.maker(style.base);
-      }
+    const vectorLayer = new VectorLayer();
 
-      const values = {...style.base};
+    if(!style.fields) {
+      // Set a global style
+      vectorLayer.setStyle(style.maker(style.base));
+    } else {
+      vectorLayer.setStyle((feature: FeatureLike) => {
+        const idx = feature.get("rowIndex") as number;
+        const dims = style.dims;
+        if(!dims || !(isNumber(idx))) {
+          return style.maker(style.base);
+        }
 
-      if (style.fields.color) {
-        values.color = feature.get('dynamic').color;
+        const values = {...style.base};
+
+        if (dims.color) {
+          values.color = dims.color.get(idx);
+        }
+        if (dims.size) {
+          values.size = dims.size.get(idx);
+        }
+        if (dims.text) {
+          values.text = dims.text.get(idx);
+        }
+        if (dims.rotation) {
+          values.rotation = dims.rotation.get(idx);
+        }
+        return style.maker(values)
       }
-      if (style.fields.size) {
-        values.size = feature.get('dynamic').size;
-      }
-      if (style.fields.text) {
-        values.text = feature.get('dynamic').text;
-      }
-      if (style.fields.rotation) {
-        values.rotation = feature.get('dynamic').rotation;
-      }
-      return style.maker(values)
-    }});
+      );
+    }
     
     return {
       init: () => vectorLayer,
@@ -134,7 +143,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             style.dims = dims;
           }
 
-          const frameFeatures = getFeatures(frame, info, style);
+          const frameFeatures = getFeatures(frame, info);
 
           if (frameFeatures) {
             features.push(...frameFeatures);
