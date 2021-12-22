@@ -3456,7 +3456,7 @@ __metadata:
     marked: 4.0.5
     moment: 2.29.1
     moment-timezone: 0.5.33
-    ol: 6.7.0
+    ol: 6.9.0
     papaparse: 5.3.0
     react: 17.0.1
     react-dom: 17.0.1
@@ -18860,9 +18860,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"geotiff@npm:^1.0.5":
-  version: 1.0.8
-  resolution: "geotiff@npm:1.0.8"
+"geotiff@npm:^1.0.8":
+  version: 1.0.9
+  resolution: "geotiff@npm:1.0.9"
   dependencies:
     "@petamoriken/float16": ^3.4.7
     lerc: ^3.0.0
@@ -18871,7 +18871,7 @@ __metadata:
     parse-headers: ^2.0.2
     threads: ^1.7.0
     xml-utils: ^1.0.2
-  checksum: 5f9f4baec2ee6757bb6a6559ddab61cbfa3df5f0566562fb5897588429104f4ce32ed676e0c209bf14676f7d0bcec29a0049f271ae8f5d2c927374eaec2fb611
+  checksum: 27eabb360cfd67ef19bed1bfe6562842c64f93fa0d446dfddcd3191b41379a1ff7d4609b9bb792fb257e31a14c5a272a2b7c3033af1a140b6c8eeda466f3255b
   languageName: node
   linkType: hard
 
@@ -19625,7 +19625,7 @@ __metadata:
     ngtemplate-loader: 2.1.0
     node-notifier: ^10.0.0
     nodemon: 2.0.2
-    ol: 6.7.0
+    ol: 6.9.0
     papaparse: 5.3.0
     pluralize: ^8.0.0
     postcss: 8.3.6
@@ -26129,26 +26129,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-mapbox-style@npm:^6.4.1":
-  version: 6.5.1
-  resolution: "ol-mapbox-style@npm:6.5.1"
+"ol-mapbox-style@npm:^6.5.1":
+  version: 6.8.1
+  resolution: "ol-mapbox-style@npm:6.8.1"
   dependencies:
     "@mapbox/mapbox-gl-style-spec": ^13.20.1
     mapbox-to-css-font: ^2.4.0
     webfont-matcher: ^1.1.0
-  checksum: b022fb7a317366d95df82050981b7302eae9ac8b2fb3e21250dadc5b432ab4df91c0657259beac8794e1ca6ec3790aa23029bcff1b58d4171b986a362c1898c2
+  checksum: 1202f77de603f929f56d30ec28656f110c4b2e0829aa0bc5ff11e4a3badd8def7a01d88529c59907ae7795839e0669ec9bf60401df51c247c226d4d3a5547333
   languageName: node
   linkType: hard
 
-"ol@npm:6.7.0":
-  version: 6.7.0
-  resolution: "ol@npm:6.7.0"
+"ol@npm:6.9.0":
+  version: 6.9.0
+  resolution: "ol@npm:6.9.0"
   dependencies:
-    geotiff: ^1.0.5
-    ol-mapbox-style: ^6.4.1
+    geotiff: ^1.0.8
+    ol-mapbox-style: ^6.5.1
     pbf: 3.2.1
     rbush: ^3.0.1
-  checksum: 4437ebd5db4bf0fb4e650ce7f8005908283fa64839279cae22b47fd3c79a034cc0e2bcf9f7d22021be65751223d2fcb49ea85761f40a9cacacba87bc5dfa8ca4
+  checksum: 79872ea243e5d40515e9a52f9ad3405d67672ab617b3bd2e721d088cd1673cd2c7c1d9cc57f64617a28ed47a1102aaae9e1599cbeb6ba4c453b9fb4a3995e273
   languageName: node
   linkType: hard
 
