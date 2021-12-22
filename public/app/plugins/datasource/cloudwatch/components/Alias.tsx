@@ -1,7 +1,6 @@
 import React, { FunctionComponent, useState } from 'react';
 import { debounce } from 'lodash';
-import { LegacyForms } from '@grafana/ui';
-const { Input } = LegacyForms;
+import { Input } from '@grafana/ui';
 
 export interface Props {
   onChange: (alias: any) => void;
@@ -18,5 +17,5 @@ export const Alias: FunctionComponent<Props> = ({ value = '', onChange }) => {
     propagateOnChange(e.target.value);
   };
 
-  return <Input type="text" className="gf-form-input width-16" value={alias} onChange={onChange} />;
+  return <Input type="text" value={alias} onChange={onChange} />;
 };

@@ -70,7 +70,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
   setDashboardTimeRange(timeRange);
 
   e2e.components.PageToolbar.item('Save dashboard').click();
-  e2e.pages.SaveDashboardAsModal.newName().clear().type(title);
+  e2e.pages.SaveDashboardAsModal.newName().clear().type(title, { force: true });
   e2e.pages.SaveDashboardAsModal.save().click();
   e2e.flows.assertSuccessNotification();
 

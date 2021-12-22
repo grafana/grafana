@@ -33,6 +33,7 @@ const defaultInitialState = {
       eventBridge: {} as EventBusExtended,
       queries: [] as DataQuery[],
       range: testRange,
+      history: [],
       refreshInterval: {
         label: 'Off',
         value: 0,

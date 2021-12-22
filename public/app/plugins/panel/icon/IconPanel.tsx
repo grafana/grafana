@@ -8,9 +8,11 @@ import {
   DimensionContext,
   getColorDimensionFromData,
   getResourceDimensionFromData,
+  getScalarDimensionFromData,
   getScaleDimensionFromData,
   getTextDimensionFromData,
   ResourceDimensionConfig,
+  ScalarDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
 } from 'app/features/dimensions';
@@ -50,6 +52,7 @@ export class IconPanel extends Component<Props> {
   dims: DimensionContext = {
     getColor: (color: ColorDimensionConfig) => getColorDimensionFromData(this.props.data, color),
     getScale: (scale: ScaleDimensionConfig) => getScaleDimensionFromData(this.props.data, scale),
+    getScalar: (scalar: ScalarDimensionConfig) => getScalarDimensionFromData(this.props.data, scalar),
     getText: (text: TextDimensionConfig) => getTextDimensionFromData(this.props.data, text),
     getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.props.data, res),
   };

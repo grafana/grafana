@@ -11,6 +11,7 @@ import {
   promptPluginType,
   removeGitFiles,
   verifyGitExists,
+  removeLockFile,
 } from './plugin/create';
 import { Task, TaskRunner } from './task';
 
@@ -40,10 +41,14 @@ const pluginCreateRunner: TaskRunner<PluginCreateOptions> = async ({ name }) => 
   // 5. Update json files (package.json, src/plugin.json)
   await prepareJsonFiles({ type: type, pluginDetails, pluginPath: destPath });
 
-  // 6. Remove cloned repository .git dir
+  // 6. Starter templates include `yarn.lock` files which will rarely (if ever) be in sync with `latest` dist-tag
+  // so best to remove it after cloning.
+  removeLockFile({ pluginPath: destPath });
+
+  // 7. Remove cloned repository .git dir
   await removeGitFiles(destPath);
 
-  // 7. Promote Grafana Tutorials :)
+  // 8. Promote Grafana Tutorials :)
   printGrafanaTutorialsDetails(type);
 };
 

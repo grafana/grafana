@@ -95,8 +95,7 @@ describe('Live Stream Tests', () => {
     fakeSocket = new Observable(() => {
       return () => (unsubscribed = true);
     }) as any;
-    const spy = spyOn(rxJsWebSocket, 'webSocket');
-    spy.and.returnValue(fakeSocket);
+    jest.spyOn(rxJsWebSocket, 'webSocket').mockReturnValue(fakeSocket as rxJsWebSocket.WebSocketSubject<unknown>);
 
     const liveStreams = new LiveStreams();
     const stream1 = liveStreams.getStream(makeTarget('url_to_match'));
@@ -139,6 +138,7 @@ describe('Live Stream Tests', () => {
         return logStreamAfterError;
       })
     ) as any;
+    jest.spyOn(rxJsWebSocket, 'webSocket').mockReturnValue(fakeSocket as rxJsWebSocket.WebSocketSubject<unknown>);
     const liveStreams = new LiveStreams();
     await expect(liveStreams.getStream(makeTarget('url_to_match'), 100)).toEmitValuesWith((received) => {
       const data = received[0];

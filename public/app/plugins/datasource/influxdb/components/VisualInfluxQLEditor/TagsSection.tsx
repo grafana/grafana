@@ -40,10 +40,20 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
   const condition = getCondition(tag, isFirst);
 
   const getTagKeySegmentOptions = () => {
-    return getTagKeyOptions().then((tags) => [
-      { label: '-- remove filter --', value: undefined },
-      ...tags.map(toSelectableValue),
-    ]);
+    return getTagKeyOptions()
+      .catch((err) => {
+        // in this UI element we add a special item to the list of options,
+        // that is used to remove the element.
+        // this causes a problem: if `getTagKeyOptions` fails with an error,
+        // the remove-filter option is never added to the list,
+        // and the UI element can not be removed.
+        // to avoid it, we catch any potential errors coming from `getTagKeyOptions`,
+        // log the error, and pretend that the list of options is an empty list.
+        // this way the remove-item option can always be added to the list.
+        console.error(err);
+        return [];
+      })
+      .then((tags) => [{ label: '-- remove filter --', value: undefined }, ...tags.map(toSelectableValue)]);
   };
 
   const getTagValueSegmentOptions = () => {

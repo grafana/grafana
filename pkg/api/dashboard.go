@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"gopkg.in/macaron.v1"
 )
 
 const (
@@ -223,7 +222,7 @@ func getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) 
 func (hs *HTTPServer) DeleteDashboardBySlug(c *models.ReqContext) response.Response {
 	query := models.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: web.Params(c.Req)[":slug"]}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to retrieve dashboards by slug", err)
 	}
 
@@ -320,9 +319,19 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	svc := dashboards.NewProvisioningService(hs.SQLStore)
-	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
-	if err != nil {
-		return response.Error(500, "Error while checking if dashboard is provisioned", err)
+	var provisioningData *models.DashboardProvisioning
+	if dash.Id != 0 {
+		data, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
+		if err != nil {
+			return response.Error(500, "Error while checking if dashboard is provisioned", err)
+		}
+		provisioningData = data
+	} else if dash.Uid != "" {
+		data, err := svc.GetProvisionedDashboardDataByDashboardUID(dash.OrgId, dash.Uid)
+		if err != nil && !errors.Is(err, models.ErrProvisionedDashboardNotFound) {
+			return response.Error(500, "Error while checking if dashboard is provisioned", err)
+		}
+		provisioningData = data
 	}
 
 	allowUiUpdate := true
@@ -345,7 +354,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	dashSvc := dashboards.NewService(hs.SQLStore)
-	dashboard, err := dashSvc.SaveDashboard(ctx, dashItem, allowUiUpdate)
+	dashboard, err := dashSvc.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
 
 	if hs.Live != nil {
 		// Tell everyone listening that the dashboard changed
@@ -566,7 +575,7 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	version, _ := strconv.ParseInt(macaron.Params(c.Req)[":id"], 10, 32)
+	version, _ := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 32)
 	query := models.GetDashboardVersionQuery{
 		OrgId:       c.OrgId,
 		DashboardId: dashID,

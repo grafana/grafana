@@ -49,7 +49,7 @@ func TestGetPluginDashboards(t *testing.T) {
 		return nil
 	})
 
-	dashboards, err := pm.GetPluginDashboards(1, "test-app")
+	dashboards, err := pm.GetPluginDashboards(context.Background(), 1, "test-app")
 	require.NoError(t, err)
 
 	require.Len(t, dashboards, 2)

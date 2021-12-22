@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
+	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,6 +21,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -271,11 +274,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), evalState)
 
 			go func() {
-				stop := make(chan struct{})
-				t.Cleanup(func() {
-					close(stop)
-				})
-				_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
+				ctx, cancel := context.WithCancel(context.Background())
+				t.Cleanup(cancel)
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
@@ -366,35 +367,19 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	}
 
 	t.Run("should exit", func(t *testing.T) {
-		t.Run("when we signal it to stop", func(t *testing.T) {
-			stopChan := make(chan struct{})
-			stoppedChan := make(chan error)
-
-			sch, _, _, _, _ := createSchedule(make(chan time.Time))
-
-			go func() {
-				err := sch.ruleRoutine(context.Background(), models.AlertRuleKey{}, make(chan *evalContext), stopChan)
-				stoppedChan <- err
-			}()
-
-			stopChan <- struct{}{}
-			err := waitForErrChannel(t, stoppedChan)
-			require.NoError(t, err)
-		})
-
 		t.Run("when context is cancelled", func(t *testing.T) {
 			stoppedChan := make(chan error)
 			sch, _, _, _, _ := createSchedule(make(chan time.Time))
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go func() {
-				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evalContext), make(chan struct{}))
+				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evalContext))
 				stoppedChan <- err
 			}()
 
 			cancel()
 			err := waitForErrChannel(t, stoppedChan)
-			require.ErrorIs(t, err, context.Canceled)
+			require.NoError(t, err)
 		})
 	})
 
@@ -407,11 +392,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
 		go func() {
-			stop := make(chan struct{})
-			t.Cleanup(func() {
-				close(stop)
-			})
-			_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(cancel)
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
 		}()
 
 		expectedTime := time.UnixMicro(rand.Int63())
@@ -461,11 +444,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
 		go func() {
-			stop := make(chan struct{})
-			t.Cleanup(func() {
-				close(stop)
-			})
-			_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(cancel)
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
 		}()
 
 		expectedTime := time.UnixMicro(rand.Int63())
@@ -546,11 +527,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			rule := CreateTestAlertRule(t, ruleStore, 10, orgID, eval.Alerting)
 
 			go func() {
-				stop := make(chan struct{})
-				t.Cleanup(func() {
-					close(stop)
-				})
-				_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, stop)
+				ctx, cancel := context.WithCancel(context.Background())
+				t.Cleanup(cancel)
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
 			}()
 
 			evalChan <- &evalContext{
@@ -573,9 +552,95 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	})
 }
 
+func TestSchedule_alertRuleInfo(t *testing.T) {
+	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
+		t.Run("eval should send to evalCh", func(t *testing.T) {
+			r := newAlertRuleInfo(context.Background())
+			expected := time.Now()
+			resultCh := make(chan bool)
+			version := rand.Int63()
+			go func() {
+				resultCh <- r.eval(expected, version)
+			}()
+			select {
+			case ctx := <-r.evalCh:
+				require.Equal(t, version, ctx.version)
+				require.Equal(t, expected, ctx.now)
+				require.True(t, <-resultCh)
+			case <-time.After(5 * time.Second):
+				t.Fatal("No message was received on eval channel")
+			}
+		})
+		t.Run("eval should exit when context is cancelled", func(t *testing.T) {
+			r := newAlertRuleInfo(context.Background())
+			resultCh := make(chan bool)
+			go func() {
+				resultCh <- r.eval(time.Now(), rand.Int63())
+			}()
+			runtime.Gosched()
+			r.stop()
+			select {
+			case result := <-resultCh:
+				require.False(t, result)
+			case <-time.After(5 * time.Second):
+				t.Fatal("No message was received on eval channel")
+			}
+		})
+	})
+	t.Run("when rule evaluation is stopped", func(t *testing.T) {
+		t.Run("eval should do nothing", func(t *testing.T) {
+			r := newAlertRuleInfo(context.Background())
+			r.stop()
+			require.False(t, r.eval(time.Now(), rand.Int63()))
+		})
+		t.Run("stop should do nothing", func(t *testing.T) {
+			r := newAlertRuleInfo(context.Background())
+			r.stop()
+			r.stop()
+		})
+	})
+	t.Run("should be thread-safe", func(t *testing.T) {
+		r := newAlertRuleInfo(context.Background())
+		wg := sync.WaitGroup{}
+		go func() {
+			for {
+				select {
+				case <-r.evalCh:
+					time.Sleep(time.Millisecond)
+				case <-r.ctx.Done():
+					return
+				}
+			}
+		}()
+
+		for i := 0; i < 10; i++ {
+			wg.Add(1)
+			go func() {
+				for i := 0; i < 20; i++ {
+					max := 2
+					if i <= 10 {
+						max = 1
+					}
+					switch rand.Intn(max) + 1 {
+					case 1:
+						r.eval(time.Now(), rand.Int63())
+					case 2:
+						r.stop()
+					}
+				}
+				wg.Done()
+			}()
+		}
+
+		wg.Wait()
+	})
+}
+
 func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore, registry *prometheus.Registry) (*schedule, *clock.Mock) {
 	t.Helper()
 
+	fakeAnnoRepo := NewFakeAnnotationsRepo()
+	annotations.SetRepository(fakeAnnoRepo)
 	mockedClock := clock.NewMock()
 	logger := log.New("ngalert schedule test")
 	if registry == nil {

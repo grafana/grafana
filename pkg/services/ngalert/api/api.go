@@ -46,7 +46,7 @@ type Alertmanager interface {
 	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 
 	// Testing
-	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigParams) (*notifier.TestReceiversResult, error)
+	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
 }
 
 // API handlers.
@@ -92,16 +92,19 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		NewLotexRuler(proxy, logger),
 		RulerSrv{DatasourceCache: api.DatasourceCache, QuotaService: api.QuotaService, manager: api.StateManager, store: api.RuleStore, log: logger},
 	), m)
-	api.RegisterTestingApiEndpoints(TestingApiSrv{
-		AlertingProxy:     proxy,
-		Cfg:               api.Cfg,
-		ExpressionService: api.ExpressionService,
-		DatasourceCache:   api.DatasourceCache,
-		log:               logger,
-	}, m)
-	api.RegisterConfigurationApiEndpoints(AdminSrv{
-		store:     api.AdminConfigStore,
-		log:       logger,
-		scheduler: api.Schedule,
-	}, m)
+	api.RegisterTestingApiEndpoints(NewForkedTestingApi(
+		TestingApiSrv{
+			AlertingProxy:     proxy,
+			Cfg:               api.Cfg,
+			ExpressionService: api.ExpressionService,
+			DatasourceCache:   api.DatasourceCache,
+			log:               logger,
+		}), m)
+	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
+		AdminSrv{
+			store:     api.AdminConfigStore,
+			log:       logger,
+			scheduler: api.Schedule,
+		},
+	), m)
 }
