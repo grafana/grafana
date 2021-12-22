@@ -42,15 +42,15 @@ Versions of Grafana before 8.3.0 do not support licenses granted through AWS Mar
    
    Within the new revision:
 
-  1. Update the Task Role of your ECS Task to the role that you created above, which has permission to access license information.
+   1. Update the Task Role of your ECS Task to the role that you created above, which has permission to access license information.
 
-  2. Edit the Grafana Enterprise container for this task, and add the following environment variable to the container:
+   2. Edit the Grafana Enterprise container for this task, and add the following environment variable to the container:
 
-     ```
-     GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
-     ```
+      ```
+      GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
+      ```
 
-     > For more information about how to update your ECS service with an environment variable, refer to [Updating a service using the new console](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-service-console-v2.html).
+      > For more information about how to update your ECS service with an environment variable, refer to [Updating a service using the new console](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-service-console-v2.html).
 
 ### Task 3: Start or restart Grafana
 
