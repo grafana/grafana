@@ -10,8 +10,6 @@
 #
 name: Github issue metrics collection
 on:
-  schedule:
-    - cron: "*/10 * * * *"
   issues:
     types: [opened, closed]
 

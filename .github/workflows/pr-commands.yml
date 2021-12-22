@@ -1,9 +1,5 @@
 name: PR automation
-on:
-  pull_request_target:
-    types:
-      - opened
-      - synchronize
+on: workflow_dispatch
 
 jobs:
   main:

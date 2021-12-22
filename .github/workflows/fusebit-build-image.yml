@@ -1,0 +1,32 @@
+name: Fusebit - Publish
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: Needs to match, exactly, the tag to publish
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.17.2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_PROFILE_321_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_PROFILE_321_SECRET_ACCESS_KEY_ID }}
+          aws-region: us-west-2
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.version }}
+      - name: Load dependencies
+        run: make deps
+      - name: Build docker container
+        run: docker build --tag fusebit/grafana:${{ github.event.inputs.version }} .
+      - name: Publish docker image
+        run: ./tools/publish_to_ecr.sh ${{ github.event.inputs.version }}

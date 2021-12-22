@@ -1,9 +1,5 @@
 name: PR Checks
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
   issues:
     types:
       - milestoned

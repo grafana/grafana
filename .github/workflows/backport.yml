@@ -1,9 +1,5 @@
 name: Backport PR Creator
-on:
-  pull_request_target:
-    types:
-      - closed
-      - labeled
+on: workflow_dispatch
 
 jobs:
   main:
