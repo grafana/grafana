@@ -373,7 +373,7 @@ func TestMiddlewareContext(t *testing.T) {
 			h, err := authproxy.HashCacheKey(hdrName + "-" + group)
 			require.NoError(t, err)
 			key := fmt.Sprintf(authproxy.CachePrefix, h)
-			err = sc.remoteCacheService.Set(key, userID, 0)
+			err = sc.remoteCacheService.Set(context.Background(), key, userID, 0)
 			require.NoError(t, err)
 			sc.fakeReq("GET", "/")
 

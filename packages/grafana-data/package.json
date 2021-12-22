@@ -39,7 +39,7 @@
     "rxjs": "7.3.0",
     "tslib": "2.3.1",
     "uplot": "1.6.16",
-    "xss": "1.0.6"
+    "xss": "1.0.10"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.0.0-rc1",

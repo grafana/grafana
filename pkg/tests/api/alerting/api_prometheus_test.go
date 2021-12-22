@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -716,7 +717,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from folder2
-	require.NoError(t, store.UpdateDashboardACL(2, nil))
+	require.NoError(t, store.UpdateDashboardACL(context.Background(), 2, nil))
 
 	// make sure that folder2 is not included in the response
 	{
@@ -765,7 +766,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from _ALL_ folders
-	require.NoError(t, store.UpdateDashboardACL(1, nil))
+	require.NoError(t, store.UpdateDashboardACL(context.Background(), 1, nil))
 
 	// make sure that no folders are included in the response
 	{
