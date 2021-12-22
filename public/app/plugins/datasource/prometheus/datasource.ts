@@ -674,7 +674,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
           data: {
             from: (this.getPrometheusTime(options.range.from, false) * 1000).toString(),
             to: (this.getPrometheusTime(options.range.to, true) * 1000).toString(),
-            queries: [queryModel],
+            queries: [this.applyTemplateVariables(queryModel, {})],
           },
           requestId: `prom-query-${annotation.name}`,
         })
