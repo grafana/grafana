@@ -25,6 +25,8 @@ import (
 )
 
 func TestDashboardQuota(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	// enable quota and set low dashboard quota
 	// Setup Grafana and its Database
 	dashboardQuota := int64(1)
@@ -33,8 +35,7 @@ func TestDashboardQuota(t *testing.T) {
 		EnableQuota:       true,
 		DashboardOrgQuota: &dashboardQuota,
 	})
-	err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
 	createUser(t, store, models.CreateUserCommand{

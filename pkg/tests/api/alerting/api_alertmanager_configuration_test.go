@@ -18,14 +18,16 @@ import (
 )
 
 func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:                 true,
 		EnableUnifiedAlerting:                 true,
 		NGAlertAlertmanagerConfigPollInterval: 2 * time.Second,
 		DisableAnonymous:                      true,
 	})
-	err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// editor from main organisation requests configuration
@@ -129,14 +131,15 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 }
 
 func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 	})
 
-	err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 

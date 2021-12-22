@@ -29,14 +29,15 @@ import (
 )
 
 func TestAMConfigAccess(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 	})
 
-	err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
@@ -390,14 +391,15 @@ func TestAMConfigAccess(t *testing.T) {
 }
 
 func TestAlertAndGroupsQuery(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 	})
 
-	err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
@@ -557,6 +559,8 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 }
 
 func TestRulerAccess(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -571,7 +575,7 @@ func TestRulerAccess(t *testing.T) {
 	store.Bus = bus.GetBus()
 
 	// Create the namespace we'll save our alerts to.
-	_, err := createFolder(t, store, 0, "default")
+	_, err = createFolder(t, store, 0, "default")
 	require.NoError(t, err)
 
 	// Create a users to make authenticated requests
@@ -684,6 +688,8 @@ func TestRulerAccess(t *testing.T) {
 }
 
 func TestDeleteFolderWithRules(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -844,6 +850,8 @@ func TestDeleteFolderWithRules(t *testing.T) {
 }
 
 func TestAlertRuleCRUD(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -863,7 +871,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	_, err := createFolder(t, store, 0, "default")
+	_, err = createFolder(t, store, 0, "default")
 	require.NoError(t, err)
 
 	interval, err := model.ParseDuration("1m")
@@ -1974,6 +1982,8 @@ func TestAlertmanagerStatus(t *testing.T) {
 }
 
 func TestQuota(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -1987,7 +1997,7 @@ func TestQuota(t *testing.T) {
 	store.Bus = bus.GetBus()
 
 	// Create the namespace we'll save our alerts to.
-	_, err := createFolder(t, store, 0, "default")
+	_, err = createFolder(t, store, 0, "default")
 	require.NoError(t, err)
 
 	// Create a user to make authenticated requests
@@ -2217,6 +2227,8 @@ func TestQuota(t *testing.T) {
 }
 
 func TestEval(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -2236,7 +2248,7 @@ func TestEval(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	_, err := createFolder(t, store, 0, "default")
+	_, err = createFolder(t, store, 0, "default")
 	require.NoError(t, err)
 
 	// test eval conditions

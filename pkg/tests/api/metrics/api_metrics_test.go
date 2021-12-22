@@ -30,9 +30,10 @@ import (
 )
 
 func TestQueryCloudWatchMetrics(t *testing.T) {
-	grafDir, cfgPath := testinfra.CreateGrafDir(t)
 	err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
+	grafDir, cfgPath := testinfra.CreateGrafDir(t)
+
 	addr, sqlStore := testinfra.StartGrafana(t, grafDir, cfgPath)
 	setUpDatabase(t, sqlStore)
 

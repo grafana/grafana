@@ -324,6 +324,8 @@ func TestPrometheusRules(t *testing.T) {
 }
 
 func TestPrometheusRulesFilterByDashboard(t *testing.T) {
+	err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
