@@ -3510,7 +3510,7 @@ __metadata:
     babel-loader: 8.2.2
     blink-diff: 1.0.13
     commander: 8.3.0
-    cypress: 9.1.1
+    cypress: 9.2.0
     cypress-file-upload: 5.0.8
     execa: 5.1.1
     mocha: 9.1.3
@@ -15399,9 +15399,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress@npm:9.1.1":
-  version: 9.1.1
-  resolution: "cypress@npm:9.1.1"
+"cypress@npm:9.2.0":
+  version: 9.2.0
+  resolution: "cypress@npm:9.2.0"
   dependencies:
     "@cypress/request": ^2.88.10
     "@cypress/xvfb": ^1.2.4
@@ -15446,7 +15446,7 @@ __metadata:
     yauzl: ^2.10.0
   bin:
     cypress: bin/cypress
-  checksum: fe8619a7f012b20dd1239275de019a78393bbbec39d21a3a9a1f44add27596f689db36d4f753db4b517838337cd4610d35cc2d7c45f22b93abfb67c16bb55f66
+  checksum: 1378c4d0822c52505cdd71b3bd567c0399bac054a1f99f5e8d9adfb3f6991a0dcbb58de7662b7dbfd2b302bb94dc924c22047152ea8777661fa9b8819308d69f
   languageName: node
   linkType: hard
 
@@ -19559,7 +19559,7 @@ __metadata:
     core-js: 3.20.0
     css-loader: 6.5.1
     css-minimizer-webpack-plugin: 3.3.0
-    cypress: 9.1.1
+    cypress: 9.2.0
     d3: 5.15.0
     d3-force: ^2.1.1
     d3-scale-chromatic: 1.5.0
