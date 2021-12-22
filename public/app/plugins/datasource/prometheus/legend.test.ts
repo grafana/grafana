@@ -20,11 +20,25 @@ describe('renderLegendFormat()', () => {
     expect(renderLegendFormat('{{ a }}', labels)).toEqual('AAA');
   });
 
+  it('Missing label', () => {
+    // it's unclear if this is expected behavior
+    expect(renderLegendFormat('value: {{c}}', labels)).toEqual('value: c');
+    expect(renderLegendFormat('{{        }}', labels)).toEqual('');
+  });
+
+  it('Nested brackets', () => {
+    // it's unclear if this is expected behavior
+    expect(renderLegendFormat('{{{a}}}', labels)).toEqual('{AAA}');
+    expect(renderLegendFormat('{{{{a}}}}', labels)).toEqual('{{AAA}}');
+    expect(renderLegendFormat('{{ {{ a }} }}', labels)).toEqual('{{ AAA }}');
+  });
+
   it('Bad syntax', () => {
     expect(renderLegendFormat('value: {{a}', labels)).toEqual('value: {{a}');
     expect(renderLegendFormat('value: {a}}}', labels)).toEqual('value: {a}}}');
-
-    // Current behavior -- not sure if expected or not
-    expect(renderLegendFormat('value: {{{a}}}', labels)).toEqual('value: {a}');
+    expect(renderLegendFormat('{{}}', labels)).toEqual('{{}}');
+    expect(renderLegendFormat('{{{}} }', labels)).toEqual('{{{}} }');
+    expect(renderLegendFormat('{{{}}}', labels)).toEqual('{{{}}}');
+    expect(renderLegendFormat('{{a}d}}', labels)).toEqual('{{a}d}}');
   });
 });
