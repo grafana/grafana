@@ -204,7 +204,7 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => ({
   `,
   image: css`
     aspect-ratio: 4 / 3;
-    box-shadow: ${theme.shadows.z2};
+    box-shadow: ${theme.shadows.z1};
     margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
     width: calc(100% - 64px);
   `,
@@ -241,6 +241,7 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => ({
     height: ${theme.spacing(7)};
     gap: ${theme.spacing(1)};
     padding: 0 ${theme.spacing(2)};
+    z-index: 1;
   `,
   portal: css`
     pointer-events: none;

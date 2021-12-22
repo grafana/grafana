@@ -100,7 +100,7 @@ const getStyles = (theme: GrafanaTheme2, imageHeight: Props['imageHeight'], imag
     gap: ${theme.spacing(0.5)};
   `,
   image: css`
-    box-shadow: ${theme.shadows.z3};
+    box-shadow: ${theme.shadows.z2};
     height: ${imageHeight}px;
     margin: ${theme.spacing(1)} calc(${theme.spacing(4)} - 1px) 0;
     width: ${imageWidth}px;
@@ -138,6 +138,7 @@ const getStyles = (theme: GrafanaTheme2, imageHeight: Props['imageHeight'], imag
     min-height: ${theme.spacing(7)};
     gap: ${theme.spacing(1)};
     padding: ${theme.spacing(1)} ${theme.spacing(2)};
+    z-index: 1;
   `,
   infoHeader: css`
     display: flex;
