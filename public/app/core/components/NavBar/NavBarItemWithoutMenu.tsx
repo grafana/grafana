@@ -100,7 +100,7 @@ export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: 
         box-shadow: none;
         color: ${theme.colors.text.primary};
         outline: 2px solid ${theme.colors.primary.main};
-        outline-offset: 2px;
+        outline-offset: -2px;
         transition: none;
       }
     `,

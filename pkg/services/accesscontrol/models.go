@@ -187,11 +187,13 @@ type ScopeParams struct {
 	URLParams map[string]string
 }
 
+// ResourcePermission is structure that holds all actions that either a team / user / builtin-role
+// can perform against specific resource.
 type ResourcePermission struct {
-	ID          int64  `xorm:"id"`
-	ResourceID  string `xorm:"resource_id"`
+	ID          int64
+	ResourceID  string
 	RoleName    string
-	Action      string
+	Actions     []string
 	Scope       string
 	UserId      int64
 	UserLogin   string
@@ -204,21 +206,37 @@ type ResourcePermission struct {
 	Updated     time.Time
 }
 
-func (p *ResourcePermission) Managed() bool {
+func (p *ResourcePermission) IsManaged() bool {
 	return strings.HasPrefix(p.RoleName, "managed:")
 }
 
-type SetResourcePermissionsCommand struct {
+func (p *ResourcePermission) Contains(targetActions []string) bool {
+	if len(p.Actions) < len(targetActions) {
+		return false
+	}
+
+	var contain = func(arr []string, s string) bool {
+		for _, item := range arr {
+			if item == s {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, a := range targetActions {
+		if !contain(p.Actions, a) {
+			return false
+		}
+	}
+
+	return true
+}
+
+type SetResourcePermissionCommand struct {
 	Actions    []string
 	Resource   string
 	ResourceID string
-}
-
-type RemoveResourcePermissionCommand struct {
-	Resource     string
-	Actions      []string
-	ResourceID   string
-	PermissionID int64
 }
 
 type GetResourcesPermissionsQuery struct {

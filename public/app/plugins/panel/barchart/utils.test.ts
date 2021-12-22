@@ -1,4 +1,4 @@
-import { BarChartOptionsEX, prepareBarChartDisplayValues, preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { BarChartOptionsEX, prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 import {
   LegendDisplayMode,
   TooltipDisplayMode,
@@ -65,7 +65,7 @@ function mockDataFrame() {
     state: {},
   });
 
-  return preparePlotFrame([df1, df2]);
+  return prepareBarChartDisplayValues([df1], createTheme(), {} as any).aligned;
 }
 
 jest.mock('@grafana/data', () => ({

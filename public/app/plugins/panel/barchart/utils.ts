@@ -8,7 +8,6 @@ import {
   getFieldColorModeForField,
   getFieldSeriesColor,
   GrafanaTheme2,
-  MutableDataFrame,
   outerJoinDataFrames,
   VizOrientation,
 } from '@grafana/data';
@@ -103,6 +102,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     showValue,
     legend,
     xSpacing: xTickLabelSpacing,
+    xTimeAuto: frame.fields[0].type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
   };
 
   const config = getConfig(opts, theme);
@@ -199,6 +199,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       softMax: customConfig.axisSoftMax,
       orientation: vizOrientation.yOri,
       direction: vizOrientation.yDir,
+      distribution: customConfig.scaleDistribution?.type,
+      log: customConfig.scaleDistribution?.log,
     });
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
@@ -289,34 +291,6 @@ function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLengt
 }
 
 /** @internal */
-export function preparePlotFrame(data: DataFrame[]) {
-  const firstFrame = data[0];
-
-  // find first string field (x labels)
-  let xField = firstFrame.fields.find((f) => f.type === FieldType.string);
-
-  if (!xField) {
-    // fall back to first time field
-    xField = firstFrame.fields.find((f) => f.type === FieldType.time);
-
-    if (!xField) {
-      throw new Error('No string or time fields found');
-    }
-  }
-
-  const resultFrame = new MutableDataFrame();
-  resultFrame.addField(xField);
-
-  for (const f of firstFrame.fields) {
-    if (f.type === FieldType.number) {
-      resultFrame.addField(f);
-    }
-  }
-
-  return resultFrame;
-}
-
-/** @internal */
 export function prepareBarChartDisplayValues(
   series: DataFrame[],
   theme: GrafanaTheme2,
@@ -333,41 +307,30 @@ export function prepareBarChartDisplayValues(
   }
 
   // Color by a field different than the input
+  let colorByField: Field | undefined = undefined;
   if (options.colorByField) {
-    const colorByField = findField(frame, options.colorByField);
+    colorByField = findField(frame, options.colorByField);
     if (!colorByField) {
       return { warn: 'Color field not found' } as BarChartDisplayValues;
     }
-    // find first string field
-    let xField = frame.fields.find((f) => f !== colorByField && f.type === FieldType.string);
-    if (!xField) {
-      // or first time field
-      xField = frame.fields.find((f) => f !== colorByField && f.type === FieldType.time);
-    }
-    if (!xField) {
-      return { aligned: frame, colorByField, warn: 'Missing X field' } as BarChartDisplayValues;
-    }
+  }
 
-    // Single Y field
-    const yField = frame.fields.find((f) => f.type === FieldType.number && f !== colorByField && f !== xField);
-    if (!yField) {
-      return { aligned: frame, colorByField, warn: 'Missing Y field' } as BarChartDisplayValues;
+  let xField: Field | undefined = undefined;
+  if (options.xField) {
+    xField = findField(frame, options.xField);
+    if (!xField) {
+      return { warn: 'Configured x field not found' } as BarChartDisplayValues;
     }
-
-    return {
-      aligned: frame,
-      colorByField,
-      display: {
-        fields: [xField, yField],
-        length: xField.values.length,
-      },
-    };
   }
 
   let stringField: Field | undefined = undefined;
   let timeField: Field | undefined = undefined;
   let fields: Field[] = [];
   for (const field of frame.fields) {
+    if (field === xField) {
+      continue;
+    }
+
     switch (field.type) {
       case FieldType.string:
         if (!stringField) {
@@ -418,7 +381,10 @@ export function prepareBarChartDisplayValues(
     }
   }
 
-  const firstField = stringField || timeField;
+  let firstField = xField;
+  if (!firstField) {
+    firstField = stringField || timeField;
+  }
 
   if (!firstField) {
     return {
@@ -430,6 +396,23 @@ export function prepareBarChartDisplayValues(
     return {
       warn: 'No numeric fields found',
     } as BarChartDisplayValues;
+  }
+
+  // Pick a shorter date format unless configured explicitly
+  // if (firstField.type === FieldType.time && !firstField.config.unit) {
+  //   firstField.config.unit = 'time:YYYY-MM-DD';
+  //   firstField.display = getDisplayProcessor({
+  //     field: firstField,
+  //     theme,
+  //   });
+  // }
+
+  // Show the first number value
+  if (colorByField && fields.length > 1) {
+    const firstNumber = fields.find((f) => f !== colorByField);
+    if (firstNumber) {
+      fields = [firstNumber];
+    }
   }
 
   if (isLegendOrdered(options.legend)) {
@@ -447,6 +430,7 @@ export function prepareBarChartDisplayValues(
 
   return {
     aligned: frame,
+    colorByField,
     display: {
       fields,
       length: firstField.values.length,

@@ -13,6 +13,7 @@ import {
 } from '@grafana/schema';
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
+import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -53,6 +54,7 @@ export interface BarsOptions {
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
   legend?: VizLegendOptions;
   xSpacing?: number;
+  xTimeAuto?: boolean;
 }
 
 /**
@@ -110,7 +112,26 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 
   // the splits passed into here are data[0] values looked up by the indices returned from splits()
-  const xValues: Axis.Values = (u, splits) => {
+  const xValues: Axis.Values = (u, splits, axisIdx, foundSpace, foundIncr) => {
+    if (opts.xTimeAuto) {
+      // bit of a hack:
+      // temporarily set x scale range to temporal (as expected by formatTime()) rather than ordinal
+      let xScale = u.scales.x;
+      let oMin = xScale.min;
+      let oMax = xScale.max;
+
+      xScale.min = u.data[0][0];
+      xScale.max = u.data[0][u.data[0].length - 1];
+
+      let vals = formatTime(u, splits, axisIdx, foundSpace, foundIncr);
+
+      // revert
+      xScale.min = oMin;
+      xScale.max = oMax;
+
+      return vals;
+    }
+
     return splits.map((v) => formatValue(0, v));
   };
 

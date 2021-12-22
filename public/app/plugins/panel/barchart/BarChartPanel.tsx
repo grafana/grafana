@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import { TooltipDisplayMode, StackingMode } from '@grafana/schema';
-import { PanelProps, TimeRange, VizOrientation } from '@grafana/data';
+import { DataFrame, PanelProps, TimeRange, VizOrientation } from '@grafana/data';
 import { measureText, TooltipPlugin, UPLOT_AXIS_FONT_SIZE, useTheme2 } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
 import { prepareBarChartDisplayValues } from './utils';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { DataHoverView } from '../geomap/components/DataHoverView';
 
 interface Props extends PanelProps<BarChartOptions> {}
 
@@ -53,6 +54,10 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     return <PanelDataErrorView panelId={id} data={data} message={info.warn} needsNumberField={true} />;
   }
 
+  const renderTooltip = (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
+    return <DataHoverView data={info.aligned} rowIndex={datapointIdx} columnIndex={seriesIdx} />;
+  };
+
   return (
     <BarChart
       frames={[info.display]}
@@ -67,7 +72,15 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       xTickLabelMaxLength={xTickLabelMaxLength}
     >
       {(config, alignedFrame) => {
-        return <TooltipPlugin data={alignedFrame} config={config} mode={tooltip.mode} timeZone={timeZone} />;
+        return (
+          <TooltipPlugin
+            data={alignedFrame}
+            config={config}
+            mode={tooltip.mode}
+            timeZone={timeZone}
+            renderTooltip={renderTooltip}
+          />
+        );
       }}
     </BarChart>
   );

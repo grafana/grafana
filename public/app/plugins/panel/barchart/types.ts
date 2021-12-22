@@ -17,6 +17,7 @@ import { DataFrame, Field, VizOrientation } from '@grafana/data';
  * @alpha
  */
 export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, OptionsWithTextFormatting {
+  xField?: string;
   orientation: VizOrientation;
   stacking: StackingMode;
   showValue: VisibilityMode;

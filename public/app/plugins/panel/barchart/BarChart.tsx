@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import { cloneDeep } from 'lodash';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import {
   GraphNG,
@@ -13,7 +12,7 @@ import {
 } from '@grafana/ui';
 import { LegendDisplayMode } from '@grafana/schema';
 import { BarChartDisplayValues, BarChartOptions } from './types';
-import { isLegendOrdered, preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { isLegendOrdered, preparePlotConfigBuilder } from './utils';
 import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
 import { getFieldLegendItem } from '../state-timeline/utils';
 
@@ -36,6 +35,7 @@ const propsToDiff: Array<string | PropDiffFn> = [
   'groupWidth',
   'stacking',
   'showValue',
+  'xField',
   'colorField',
   'legend',
   (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
@@ -137,12 +137,11 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
 
   return (
     <GraphNG
-      // My heart is bleeding with the clone deep here, but nested options...
-      {...cloneDeep(props)}
+      {...props}
       theme={theme}
       prepConfig={prepConfig}
       propsToDiff={propsToDiff}
-      preparePlotFrame={preparePlotFrame}
+      preparePlotFrame={(f) => f[0]} // already processed in by the panel above!
       renderLegend={renderLegend}
     />
   );
