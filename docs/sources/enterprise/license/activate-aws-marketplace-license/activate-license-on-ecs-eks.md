@@ -13,7 +13,7 @@ If you have purchased a Grafana Enterprise subscription through AWS Marketplace,
 ## Before you begin:
 
 - Purchase a subscription to [Grafana Enterprise from AWS Marketplace](https://aws.amazon.com/marketplace/pp/prodview-dlncd4kzt5kx6).
-- Be sure that the IAM user that was used to purchase Grafana Enterprise has permission to manage subscriptions, create new IAM users, and create access policies.
+- Be sure that the IAM user that was used to purchase Grafana Enterprise has permission to manage subscriptions, create new IAM users and roles, and create access policies.
 
 To activate your license, complete the following tasks:
 
