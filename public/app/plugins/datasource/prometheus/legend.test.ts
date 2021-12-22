@@ -26,6 +26,7 @@ describe('renderLegendFormat()', () => {
   });
 
   it('Nested brackets', () => {
+    // it's unclear if this is expected behavior
     expect(renderLegendFormat('{{{a}}}', labels)).toEqual('{AAA}');
     expect(renderLegendFormat('{{{{a}}}}', labels)).toEqual('{{AAA}}');
     expect(renderLegendFormat('{{ {{ a }} }}', labels)).toEqual('{{ AAA }}');
