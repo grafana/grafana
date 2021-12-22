@@ -17,9 +17,9 @@ If you have purchased a Grafana Enterprise subscription through AWS Marketplace,
 
 To activate your license, complete the following tasks:
 
-## Task 1: Install Grafana Enterprise on Amazon ECS
+## Task 1: Deploy Grafana Enterprise on Amazon ECS
 
-If you do not have Grafana Enterprise running in EC2 already, you must deploy it. Follow Amazon's documentation to [Create an Amazon ECS service](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-service.html). While creating the service, use the container image for Grafana Enterprise version 8.3.0 or higher. For example, use `grafana/grafana-enterprise:8.3.3`.
+If you do not have Grafana Enterprise running in ECS already, you must deploy it. Follow Amazon's documentation to [Create an Amazon ECS service](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-service.html). While creating the service, use the container image for Grafana Enterprise version 8.3.0 or higher. For example, use `grafana/grafana-enterprise:8.3.3`.
 
 Versions of Grafana before 8.3.0 do not support licenses granted through AWS Marketplace.
 
@@ -36,19 +36,21 @@ Versions of Grafana before 8.3.0 do not support licenses granted through AWS Mar
 
    For more information about AWS license permissions, refer to [Actions, resources, and condition keys for AWS License Manager](​​https://docs.aws.amazon.com/service-authorization/latest/reference/list_awslicensemanager.html).
 
-1. Follow the AWS documentation to [create a new Elastic Container Service Task Role](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html) and attach the policy you created in the previous step to this new role.
+2. Follow the AWS documentation to [create a new Elastic Container Service Task Role](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html) and attach the policy you created in the previous step to this new role.
 
-1. Navigate to the revision of the Task Definition for the ECS Task that runs Grafana Enterprise. For details, refer to the [AWS documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-task-definition.html).
+3. Create a new revision of the Task Definition for the ECS Task that runs Grafana Enterprise. For details, refer to the AWS documentation on [updating a task definition](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-task-definition.html).
+   
+   Within the new revision:
 
-  1. Within the new revision, update the Task Role of your ECS Task to the role that you created above, which has permissions to access license information.
+  1. Update the Task Role of your ECS Task to the role that you created above, which has permission to access license information.
 
-  1. While still editing the new revision of the task definition, edit the Grafana Enterprise container for this task, and add the following environment variable to the container:
+  2. Edit the Grafana Enterprise container for this task, and add the following environment variable to the container:
 
-   ```
-   GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
-   ```
+     ```
+     GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
+     ```
 
-   > For more information about how to update your ECS service with an environment variable, refer to [Updating a service using the new console](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-service-console-v2.html).
+     > For more information about how to update your ECS service with an environment variable, refer to [Updating a service using the new console](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-service-console-v2.html).
 
 ### Task 3: Start or restart Grafana
 
