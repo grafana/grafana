@@ -2,7 +2,6 @@ package channels
 
 import (
 	"context"
-	"io/ioutil"
 	"net/url"
 	"testing"
 
@@ -248,9 +247,6 @@ func TestEmailNotifierIntegration(t *testing.T) {
 			for _, s := range c.expSnippets {
 				require.Contains(t, html, s)
 			}
-
-			err = ioutil.WriteFile("/tmp/test_email2.html", []byte(sentMsg.Body["text/html"]), 0777)
-			require.NoError(t, err)
 		})
 	}
 }
