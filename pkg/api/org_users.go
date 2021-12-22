@@ -8,14 +8,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
-
-var orgUserLogger = log.New("users")
 
 // POST /api/org/users
 func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Response {
@@ -108,7 +105,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 	return response.JSON(200, result)
 }
 
-func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, dsID int64) (accesscontrol.Metadata, error) {
+func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, userID int64) (accesscontrol.Metadata, error) {
 	if hs.AccessControl == nil || hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
 		return nil, nil
 	}
@@ -118,10 +115,10 @@ func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, dsID in
 		return nil, err
 	}
 
-	key := fmt.Sprintf("%d", dsID)
-	dsIDs := map[string]bool{key: true}
+	key := fmt.Sprintf("%d", userID)
+	userIDs := map[string]bool{key: true}
 
-	metadata, err := accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "users", dsIDs)
+	metadata, err := accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "users", userIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +155,7 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetO
 
 		accessControlMetadata, errAC := hs.getUserAccessControlMetadata(c, user.UserId)
 		if errAC != nil {
-			orgUserLogger.Error("Failed to get access control metadata", "error", errAC)
+			hs.log.Error("Failed to get access control metadata", "error", errAC)
 		}
 
 		user.AccessControl = accessControlMetadata
