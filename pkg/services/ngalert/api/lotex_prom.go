@@ -76,7 +76,7 @@ func (p *LotexProm) RouteGetRuleStatuses(ctx *models.ReqContext) response.Respon
 }
 
 func (p *LotexProm) getEndpoints(ctx *models.ReqContext) (*promEndpoints, error) {
-	ds, err := p.DataProxy.DataSourceCache.GetDatasource(ctx.ParamsInt64(":Recipient"), ctx.SignedInUser, ctx.SkipCache)
+	ds, err := p.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), ctx.ParamsInt64(":Recipient"), ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		return nil, err
 	}

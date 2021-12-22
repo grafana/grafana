@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -252,6 +253,7 @@ type getResourcesPermissionsTest struct {
 	actions     []string
 	resource    string
 	resourceIDs []string
+	onlyManaged bool
 }
 
 func TestAccessControlStore_GetResourcesPermissions(t *testing.T) {
@@ -263,11 +265,54 @@ func TestAccessControlStore_GetResourcesPermissions(t *testing.T) {
 			resource:    "datasources",
 			resourceIDs: []string{"1", "2"},
 		},
+		{
+			desc:        "should return manage permissions for all resource ids",
+			numUsers:    3,
+			actions:     []string{"datasources:query"},
+			resource:    "datasources",
+			resourceIDs: []string{"1", "2"},
+			onlyManaged: true,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			store, sql := setupTestEnv(t)
+
+			err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				role := &accesscontrol.Role{
+					OrgID:   1,
+					UID:     "seeded",
+					Name:    "seeded",
+					Updated: time.Now(),
+					Created: time.Now(),
+				}
+				_, err := sess.Insert(role)
+				require.NoError(t, err)
+
+				permission := &accesscontrol.Permission{
+					RoleID:  role.ID,
+					Action:  "datasources:query",
+					Scope:   "datasources:*",
+					Updated: time.Now(),
+					Created: time.Now(),
+				}
+				_, err = sess.Insert(permission)
+				require.NoError(t, err)
+
+				builtInRole := &accesscontrol.BuiltinRole{
+					RoleID:  role.ID,
+					OrgID:   1,
+					Role:    "Viewer",
+					Updated: time.Now(),
+					Created: time.Now(),
+				}
+				_, err = sess.Insert(builtInRole)
+				require.NoError(t, err)
+
+				return nil
+			})
+			require.NoError(t, err)
 
 			for _, id := range test.resourceIDs {
 				seedResourcePermissions(t, store, sql, test.actions, test.resource, id, test.numUsers)
@@ -277,10 +322,14 @@ func TestAccessControlStore_GetResourcesPermissions(t *testing.T) {
 				Actions:     test.actions,
 				Resource:    test.resource,
 				ResourceIDs: test.resourceIDs,
+				OnlyManaged: test.onlyManaged,
 			})
 			require.NoError(t, err)
 
 			expectedLen := test.numUsers * len(test.resourceIDs)
+			if !test.onlyManaged {
+				expectedLen += len(test.resourceIDs)
+			}
 			assert.Len(t, permissions, expectedLen)
 		})
 	}

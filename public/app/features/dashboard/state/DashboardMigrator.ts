@@ -1106,7 +1106,6 @@ function isCloudWatchQuery(target: DataQuery): target is CloudWatchMetricsQuery 
     target.hasOwnProperty('dimensions') &&
     target.hasOwnProperty('namespace') &&
     target.hasOwnProperty('region') &&
-    target.hasOwnProperty('period') &&
     target.hasOwnProperty('metricName')
   );
 }
