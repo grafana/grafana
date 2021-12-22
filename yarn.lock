@@ -5543,14 +5543,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@microsoft/api-extractor-model@npm:7.13.13":
-  version: 7.13.13
-  resolution: "@microsoft/api-extractor-model@npm:7.13.13"
+"@microsoft/api-extractor-model@npm:7.15.1":
+  version: 7.15.1
+  resolution: "@microsoft/api-extractor-model@npm:7.15.1"
   dependencies:
     "@microsoft/tsdoc": 0.13.2
     "@microsoft/tsdoc-config": ~0.15.2
-    "@rushstack/node-core-library": 3.42.3
-  checksum: b3043f561f1a8fbe80806c4f6714afc40a16ba8d2e20cdfbd64164ccfbebfadd82f5bba37bc97746ee22baf891517920990590de3d887f37149fd2d5e4922ac4
+    "@rushstack/node-core-library": 3.44.2
+  checksum: cb1d565c87353885265d04fd41d0f26161e31c130b4e25e8037d31f7db33c214109001373e442b44437b8db93863d6f1de550c803c5255fa842ee955a5a9bc9c
   languageName: node
   linkType: hard
 
