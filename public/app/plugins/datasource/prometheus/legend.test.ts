@@ -44,6 +44,6 @@ describe('renderLegendFormat()', () => {
     expect(renderLegendFormat('{{}}', labels)).toEqual('{{}}');
     expect(renderLegendFormat('{{{}} }', labels)).toEqual('{{{}} }');
     expect(renderLegendFormat('{{{}}}', labels)).toEqual('{{{}}}');
-    expect(renderLegendFormat('{{a}d}}', labels)).toEqual('a}d');
+    expect(renderLegendFormat('{{a}d}}', labels)).toEqual('{{a}d}}');
   });
 });
