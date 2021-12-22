@@ -170,7 +170,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       theme,
       colorMode,
       pathBuilder: config.barsBuilder,
-      show: !customConfig.hideFrom?.viz,
+      show: !customConfig.hideFrom?.viz, // Not necessary
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
       hardMin: field.config.min,
@@ -327,7 +327,7 @@ export function prepareBarChartDisplayValues(
   let timeField: Field | undefined = undefined;
   let fields: Field[] = [];
   for (const field of frame.fields) {
-    if (field === xField || field.config.custom?.hideFrom?.viz) {
+    if (field === xField) {
       continue;
     }
 

@@ -1,12 +1,20 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { TooltipDisplayMode, StackingMode } from '@grafana/schema';
-import { DataFrame, PanelProps, TimeRange, VizOrientation } from '@grafana/data';
+import {
+  compareDataFrameStructures,
+  DataFrame,
+  getFieldDisplayName,
+  PanelProps,
+  TimeRange,
+  VizOrientation,
+} from '@grafana/data';
 import { measureText, TooltipPlugin, UPLOT_AXIS_FONT_SIZE, useTheme2 } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
 import { prepareBarChartDisplayValues } from './utils';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { DataHoverView } from '../geomap/components/DataHoverView';
+import { usePrevious } from 'react-use';
 
 interface Props extends PanelProps<BarChartOptions> {}
 
@@ -17,6 +25,17 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   const theme = useTheme2();
 
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
+  const prevInfo = usePrevious(info);
+  const structureRef = useRef(10000);
+  const structureRev = useMemo(() => {
+    const f0 = info.display;
+    const f1 = prevInfo?.display;
+    if (!(f0 && f1 && compareDataFrameStructures(f0, f1, true))) {
+      structureRef.current++;
+    }
+    return (data.structureRev ?? 0) + structureRef.current;
+  }, [info, prevInfo, data.structureRev]);
+
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
       return width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;
@@ -55,6 +74,12 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   }
 
   const renderTooltip = (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
+    const field = seriesIdx == null ? null : alignedFrame.fields[seriesIdx];
+    if (field) {
+      const disp = getFieldDisplayName(field, alignedFrame);
+      seriesIdx = info.aligned.fields.findIndex((f) => disp === getFieldDisplayName(f, info.aligned));
+    }
+
     return <DataHoverView data={info.aligned} rowIndex={datapointIdx} columnIndex={seriesIdx} />;
   };
 
@@ -64,7 +89,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       data={info}
       timeZone={timeZone}
       timeRange={({ from: 1, to: 1 } as unknown) as TimeRange} // HACK
-      structureRev={data.structureRev}
+      structureRev={structureRev}
       width={width}
       height={height}
       {...options}
