@@ -1,1 +1,0 @@
-/*eslint-disable*/module.exports={messages:{"edit-user-profile.title":"Editar perfil"}};
