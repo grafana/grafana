@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -302,8 +303,11 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			var raw string
 			if tt.claims != nil {
 				if tt.claims.ClaimNames.Groups != "" {
-					// Capture requests
 					server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+						tokenParts := strings.Split(request.Header.Get("Authorization"), " ")
+						require.Len(t, tokenParts, 2)
+						require.Equal(t, "fake_token", tokenParts[1])
+
 						writer.WriteHeader(http.StatusOK)
 
 						type response struct {
