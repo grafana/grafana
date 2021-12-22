@@ -51,9 +51,9 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.viewers.count"] = statsQuery.Result.Viewers
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
 	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
-	metrics["stats.plugins.apps.count"] = uss.appCount()
-	metrics["stats.plugins.panels.count"] = uss.panelCount()
-	metrics["stats.plugins.datasources.count"] = uss.dataSourceCount()
+	metrics["stats.plugins.apps.count"] = uss.appCount(ctx)
+	metrics["stats.plugins.panels.count"] = uss.panelCount(ctx)
+	metrics["stats.plugins.datasources.count"] = uss.dataSourceCount(ctx)
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.active_admins.count"] = statsQuery.Result.ActiveAdmins
@@ -366,14 +366,14 @@ func (uss *UsageStats) GetUsageStatsId(ctx context.Context) string {
 	return anonId
 }
 
-func (uss *UsageStats) appCount() int {
-	return len(uss.pluginStore.Plugins(context.TODO(), plugins.App))
+func (uss *UsageStats) appCount(ctx context.Context) int {
+	return len(uss.pluginStore.Plugins(ctx, plugins.App))
 }
 
-func (uss *UsageStats) panelCount() int {
-	return len(uss.pluginStore.Plugins(context.TODO(), plugins.Panel))
+func (uss *UsageStats) panelCount(ctx context.Context) int {
+	return len(uss.pluginStore.Plugins(ctx, plugins.Panel))
 }
 
-func (uss *UsageStats) dataSourceCount() int {
-	return len(uss.pluginStore.Plugins(context.TODO(), plugins.DataSource))
+func (uss *UsageStats) dataSourceCount(ctx context.Context) int {
+	return len(uss.pluginStore.Plugins(ctx, plugins.DataSource))
 }
