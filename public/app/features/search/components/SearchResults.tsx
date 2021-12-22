@@ -23,7 +23,7 @@ export interface Props {
   layout?: string;
 }
 
-const { sectionV2: sectionLabel, itemsV2: itemsLabel } = selectors.components.Search;
+const { sectionV2: sectionLabel, itemsV2: itemsLabel, cards: cardsLabel } = selectors.components.Search;
 
 export const SearchResults: FC<Props> = memo(
   ({ editable, loading, onTagSelected, onToggleChecked, onToggleSection, results, showPreviews, layout }) => {
@@ -41,7 +41,7 @@ export const SearchResults: FC<Props> = memo(
                 )}
                 {section.expanded &&
                   (showPreviews ? (
-                    <div className={classNames(styles.sectionItems, styles.gridContainer)}>
+                    <div data-testid={cardsLabel} className={classNames(styles.sectionItems, styles.gridContainer)}>
                       {section.items.map((item) => (
                         <SearchCard {...itemProps} key={item.uid} item={item} />
                       ))}

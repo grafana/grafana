@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { usePopper } from 'react-popper';
@@ -22,6 +23,7 @@ export function getThumbnailURL(uid: string, isLight?: boolean) {
 export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
   const NUM_IMAGE_RETRIES = 5;
   const IMAGE_RETRY_DELAY = 10000;
+  const DELAY_BEFORE_EXPANDING = 500;
 
   const [hasImage, setHasImage] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>();
@@ -69,14 +71,14 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   };
 
   const onMouseEnter = () => {
-    timeout.current = window.setTimeout(onShowExpandedView, 500);
+    timeout.current = window.setTimeout(onShowExpandedView, DELAY_BEFORE_EXPANDING);
   };
 
   const onMouseMove = () => {
     if (timeout.current) {
       window.clearTimeout(timeout.current);
     }
-    timeout.current = window.setTimeout(onShowExpandedView, 500);
+    timeout.current = window.setTimeout(onShowExpandedView, DELAY_BEFORE_EXPANDING);
   };
 
   const onMouseLeave = () => {
@@ -118,6 +120,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
 
   return (
     <a
+      data-testid={selectors.components.Search.dashboardCard(item.title)}
       className={styles.card}
       key={item.uid}
       href={item.url}
