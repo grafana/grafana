@@ -24,4 +24,6 @@ describe('Repeating a panel horizontally', () => {
         });
     });
   });
+
+  // TODO: Add test for the case when we pass variables in the url
 });

@@ -23,4 +23,6 @@ describe('Repeating a panel vertically', () => {
         });
     });
   });
+
+  // TODO: Add test for the case when we pass variables in the url
 });
