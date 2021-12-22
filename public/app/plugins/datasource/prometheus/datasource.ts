@@ -663,6 +663,7 @@ export class PrometheusDatasource
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
     const annotation = options.annotation;
     const { expr = '' } = annotation;
+    const variables = cloneDeep(options.dashboard.getVariables());
 
     if (!expr) {
       return Promise.resolve([]);
@@ -670,7 +671,7 @@ export class PrometheusDatasource
 
     const step = options.annotation.step || ANNOTATION_QUERY_STEP_DEFAULT;
     const queryModel = {
-      expr,
+      expr: this.templateSrv.replace(expr, variables, this.interpolateQueryExpr),
       range: true,
       instant: false,
       exemplar: false,
