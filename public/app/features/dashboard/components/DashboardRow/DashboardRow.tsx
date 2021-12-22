@@ -84,7 +84,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
 
     return (
       <div className={classes}>
-        <a className="dashboard-row__title pointer" onClick={this.onToggle}>
+        <a className="dashboard-row__title pointer" data-testid={} onClick={this.onToggle}>
           <Icon name={this.state.collapsed ? 'angle-right' : 'angle-down'} />
           {title}
           <span className="dashboard-row__panel_count">
