@@ -11,7 +11,7 @@ interface Props {
 export const PanelHeaderLoadingIndicator: FC<Props> = ({ state, onClick }) => {
   const styles = useStyles(getStyles);
 
-  if (state === LoadingState.Loading) {
+  if (state === LoadingState.Loading && styles.showLoadingTooltip) {
     return (
       <div className="panel-loading" onClick={onClick}>
         <Tooltip content="Cancel query">
@@ -44,5 +44,6 @@ function getStyles(theme: GrafanaTheme) {
       top: 6px;
       right: 1px;
     `,
+    showLoadingTooltip: false,
   };
 }

@@ -57,7 +57,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
           });
         }
       : undefined,
-    target: '_self',
+    target: '_blank',
     origin: field,
   };
 }
