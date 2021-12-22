@@ -368,7 +368,7 @@ export class DashboardModel {
     dispatch(onTimeRangeUpdated(timeRange));
   }
 
-  startRefresh(event: VariablesChangedEvent = { refreshAll: true, panelIds: [] }) {
+  startRefresh(event: VariablesChangedEvent = { refreshAll: true, panelIds: [], processRepeats: false }) {
     this.events.publish(new RefreshEvent());
     this.lastRefresh = Date.now();
 
@@ -436,7 +436,7 @@ export class DashboardModel {
       return;
     }
 
-    this.startRefresh({ panelIds: this.panelsAffectedByVariableChange, refreshAll: false });
+    this.startRefresh({ panelIds: this.panelsAffectedByVariableChange, refreshAll: false, processRepeats: true });
     this.panelsAffectedByVariableChange = null;
   }
 
@@ -1211,10 +1211,12 @@ export class DashboardModel {
   }
 
   private variablesChangedHandler(event: VariablesChanged) {
-    this.processRepeats();
+    if (event.payload.processRepeats) {
+      this.processRepeats();
+    }
 
     if (event.payload.refreshAll || getTimeSrv().isRefreshOutsideThreshold(this.lastRefresh)) {
-      this.startRefresh({ refreshAll: true, panelIds: [] });
+      this.startRefresh({ refreshAll: true, panelIds: [], processRepeats: false });
       return;
     }
 

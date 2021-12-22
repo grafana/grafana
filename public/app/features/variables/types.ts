@@ -156,6 +156,7 @@ export type VariableQueryEditorType<
 export interface VariablesChangedEvent {
   refreshAll: boolean;
   panelIds: number[];
+  processRepeats: boolean;
 }
 
 export class VariablesChanged extends BusEventWithPayload<VariablesChangedEvent> {
