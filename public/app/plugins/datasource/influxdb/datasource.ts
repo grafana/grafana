@@ -1,4 +1,4 @@
-import { cloneDeep, extend, get, has, isString, map as _map, omit, pick, reduce, groupBy } from 'lodash';
+import { cloneDeep, extend, get, has, isString, map as _map, omit, pick, reduce } from 'lodash';
 import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
@@ -24,7 +24,6 @@ import {
   TimeSeries,
   CoreApp,
 } from '@grafana/data';
-import TableModel from 'app/core/table_model';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
@@ -183,15 +182,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
               const filteredFrames = res.data.filter((t) => t.refId === target.refId);
               switch (target.resultFormat) {
                 case 'logs':
-                  seriesList.push(this.getTable(filteredFrames, target, { preferredVisualisationType: 'logs' }));
+                  seriesList.push(
+                    this.responseParser.getTable(filteredFrames, target, { preferredVisualisationType: 'logs' })
+                  );
                   break;
                 case 'table': {
-                  seriesList.push(this.getTable(filteredFrames, target, { preferredVisualisationType: 'table' }));
+                  seriesList.push(
+                    this.responseParser.getTable(filteredFrames, target, { preferredVisualisationType: 'table' })
+                  );
                   break;
                 }
                 default: {
                   for (let i = 0; i < filteredFrames.length; i++) {
-                    seriesList.push(this.getSeries(filteredFrames[i]));
+                    seriesList.push(this.responseParser.getSeries(filteredFrames[i]));
                   }
                   break;
                 }
@@ -206,116 +209,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     // Fallback to classic query support
     return this.classicQuery(request);
-  }
-
-  getSeries(frame: DataFrame) {
-    return {
-      ...frame,
-      meta: {
-        ...frame.meta,
-        executedQueryString: frame.meta?.executedQueryString,
-      },
-    };
-  }
-
-  getTable(dfs: DataFrame[], target: InfluxQuery, meta: QueryResultMeta): TableModel {
-    let table = new TableModel();
-
-    if (dfs.length > 0) {
-      table.meta = {
-        ...meta,
-        executedQueryString: dfs[0].meta?.executedQueryString,
-      };
-
-      table.refId = target.refId;
-      table = this.getTableCols(dfs, table, target);
-
-      // if group by tag(s) added
-      if (dfs[0].fields[1].labels) {
-        let dfsByLabels: any = groupBy(dfs, (df: DataFrame) =>
-          df.fields[1].labels ? Object.values(df.fields[1].labels!) : null
-        );
-        const labels = Object.keys(dfsByLabels);
-        dfsByLabels = Object.values(dfsByLabels);
-
-        for (let i = 0; i < dfsByLabels.length; i++) {
-          table = this.getTableRows(dfsByLabels[i], table, [...labels[i].split(',')]);
-        }
-      } else {
-        table = this.getTableRows(dfs, table, []);
-      }
-    }
-
-    return table;
-  }
-
-  getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery): TableModel {
-    const selectedParams = this.getSelectedParams(target);
-
-    dfs[0].fields.forEach((field) => {
-      // Time col
-      if (field.name === 'time') {
-        table.columns.push(field.name === 'time' ? { text: 'Time', type: FieldType.time } : { text: field.name });
-      }
-
-      if (field.name === 'value') {
-        // Group by (label) column(s)
-        if (field.labels) {
-          Object.keys(field.labels).forEach((key) => {
-            table.columns.push({ text: key });
-          });
-        }
-      }
-    });
-
-    // Select (metric) column(s)
-    for (let i = 0; i < selectedParams.length; i++) {
-      table.columns.push({ text: selectedParams[i] });
-    }
-
-    return table;
-  }
-
-  getTableRows(dfs: DataFrame[], table: TableModel, labels: string[]): TableModel {
-    const values = dfs[0].fields[0].values.toArray();
-
-    for (let j = 0; j < values.length; j++) {
-      const time = values[j];
-      const metrics = dfs.map((df: DataFrame) => {
-        return df.fields[1].values.toArray()[j];
-      });
-      table.rows.push([time, ...labels, ...metrics]);
-    }
-    return table;
-  }
-
-  getSelectedParams(target: InfluxQuery): string[] {
-    let allParams: string[] = [];
-    target.select?.forEach((select) => {
-      const selector = select.filter((x) => x.type !== 'field');
-      if (selector.length > 0) {
-        allParams.push(selector[0].type);
-      } else {
-        if (select[0] && select[0].params && select[0].params[0]) {
-          allParams.push(select[0].params[0].toString());
-        }
-      }
-    });
-
-    let uniqueParams: string[] = [];
-    allParams.forEach((param) => {
-      uniqueParams.push(this.incrementName(param, param, uniqueParams, 0));
-    });
-
-    return uniqueParams;
-  }
-
-  incrementName(name: string, nameIncremenet: string, params: string[], index: number): string {
-    if (params.indexOf(nameIncremenet) > -1) {
-      index++;
-      return this.incrementName(name, name + '_' + index, params, index);
-    }
-    return nameIncremenet;
   }
 
   getQueryDisplayText(query: InfluxQuery) {

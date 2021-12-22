@@ -1,4 +1,7 @@
-import { each, isArray } from 'lodash';
+import { DataFrame, FieldType, QueryResultMeta } from '@grafana/data';
+import TableModel from 'app/core/table_model';
+import { each, groupBy, isArray } from 'lodash';
+import { InfluxQuery } from './types';
 
 export default class ResponseParser {
   parse(query: string, results: { results: any }) {
@@ -49,6 +52,116 @@ export default class ResponseParser {
     // we use a `Set` to collect the unique-results, and `Set` iteration
     // order is insertion-order, so this should be ok.
     return Array.from(res).map((v) => ({ text: v }));
+  }
+
+  getSeries(frame: DataFrame) {
+    return {
+      ...frame,
+      meta: {
+        ...frame.meta,
+        executedQueryString: frame.meta?.executedQueryString,
+      },
+    };
+  }
+
+  getTable(dfs: DataFrame[], target: InfluxQuery, meta: QueryResultMeta): TableModel {
+    let table = new TableModel();
+
+    if (dfs.length > 0) {
+      table.meta = {
+        ...meta,
+        executedQueryString: dfs[0].meta?.executedQueryString,
+      };
+
+      table.refId = target.refId;
+      table = this.getTableCols(dfs, table, target);
+
+      // if group by tag(s) added
+      if (dfs[0].fields[1].labels) {
+        let dfsByLabels: any = groupBy(dfs, (df: DataFrame) =>
+          df.fields[1].labels ? Object.values(df.fields[1].labels!) : null
+        );
+        const labels = Object.keys(dfsByLabels);
+        dfsByLabels = Object.values(dfsByLabels);
+
+        for (let i = 0; i < dfsByLabels.length; i++) {
+          table = this.getTableRows(dfsByLabels[i], table, [...labels[i].split(',')]);
+        }
+      } else {
+        table = this.getTableRows(dfs, table, []);
+      }
+    }
+
+    return table;
+  }
+
+  getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery): TableModel {
+    const selectedParams = this.getSelectedParams(target);
+
+    dfs[0].fields.forEach((field) => {
+      // Time col
+      if (field.name === 'time') {
+        table.columns.push(field.name === 'time' ? { text: 'Time', type: FieldType.time } : { text: field.name });
+      }
+
+      if (field.name === 'value') {
+        // Group by (label) column(s)
+        if (field.labels) {
+          Object.keys(field.labels).forEach((key) => {
+            table.columns.push({ text: key });
+          });
+        }
+      }
+    });
+
+    // Select (metric) column(s)
+    for (let i = 0; i < selectedParams.length; i++) {
+      table.columns.push({ text: selectedParams[i] });
+    }
+
+    return table;
+  }
+
+  getTableRows(dfs: DataFrame[], table: TableModel, labels: string[]): TableModel {
+    const values = dfs[0].fields[0].values.toArray();
+
+    for (let j = 0; j < values.length; j++) {
+      const time = values[j];
+      const metrics = dfs.map((df: DataFrame) => {
+        return df.fields[1].values.toArray()[j];
+      });
+      table.rows.push([time, ...labels, ...metrics]);
+    }
+    return table;
+  }
+
+  getSelectedParams(target: InfluxQuery): string[] {
+    let allParams: string[] = [];
+    target.select?.forEach((select) => {
+      const selector = select.filter((x) => x.type !== 'field');
+      if (selector.length > 0) {
+        allParams.push(selector[0].type);
+      } else {
+        if (select[0] && select[0].params && select[0].params[0]) {
+          allParams.push(select[0].params[0].toString());
+        }
+      }
+    });
+
+    let uniqueParams: string[] = [];
+    allParams.forEach((param) => {
+      uniqueParams.push(this.incrementName(param, param, uniqueParams, 0));
+    });
+
+    return uniqueParams;
+  }
+
+  incrementName(name: string, nameIncremenet: string, params: string[], index: number): string {
+    if (params.indexOf(nameIncremenet) > -1) {
+      index++;
+      return this.incrementName(name, name + '_' + index, params, index);
+    }
+    return nameIncremenet;
   }
 }
 
