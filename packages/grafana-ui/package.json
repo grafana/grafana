@@ -160,7 +160,7 @@
     "expose-loader": "3.1.0",
     "mock-raf": "1.0.1",
     "postcss": "8.4.5",
-    "postcss-loader": "6.1.1",
+    "postcss-loader": "6.2.1",
     "raw-loader": "4.0.2",
     "react-docgen-typescript-loader": "3.7.2",
     "react-test-renderer": "17.0.1",
