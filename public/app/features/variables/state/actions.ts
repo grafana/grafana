@@ -23,6 +23,7 @@ import {
   VariablesChanged,
   VariablesChangedEvent,
   VariablesChangedInUrl,
+  VariablesTimeRangeProcessDone,
   VariableWithMultiSupport,
   VariableWithOptions,
 } from '../types';
@@ -527,12 +528,8 @@ export const variableUpdated = (
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
     const event: VariablesChangedEvent = isAdHoc(variableInState)
-      ? { refreshAll: true, panelIds: [], processRepeats: true } // for adhoc variables we don't know which panels that will be impacted
-      : {
-          refreshAll: false,
-          panelIds: getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels),
-          processRepeats: true,
-        };
+      ? { refreshAll: true, panelIds: [] } // for adhoc variables we don't know which panels that will be impacted
+      : { refreshAll: false, panelIds: getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels) };
 
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
@@ -575,14 +572,14 @@ export const onTimeRangeUpdated = (
     return false;
   }) as VariableWithOptions[];
 
+  const variableIds = variablesThatNeedRefresh.map((variable) => variable.id);
   const promises = variablesThatNeedRefresh.map((variable: VariableWithOptions) =>
     dispatch(timeRangeUpdated(toVariableIdentifier(variable)))
   );
 
   try {
-    const processRepeats = promises.length > 0;
     await Promise.all(promises);
-    dependencies.events.publish(new VariablesChanged({ panelIds: [], refreshAll: true, processRepeats }));
+    dependencies.events.publish(new VariablesTimeRangeProcessDone({ variableIds }));
   } catch (error) {
     console.error(error);
     dispatch(notifyApp(createVariableErrorNotification('Template variable service failed', error)));
@@ -638,7 +635,7 @@ export const templateVarsChangedInUrl = (
 
   if (update.length) {
     await Promise.all(update);
-    events.publish(new VariablesChangedInUrl({ panelIds: [], refreshAll: true, processRepeats: true }));
+    events.publish(new VariablesChangedInUrl({ panelIds: [], refreshAll: true }));
   }
 };
 

@@ -27,7 +27,7 @@ function getTestContext({
     panelIds.push(panelInView.id);
   }
 
-  appEvents.publish(new VariablesChanged({ panelIds, refreshAll, processRepeats: false }));
+  appEvents.publish(new VariablesChanged({ panelIds, refreshAll }));
 
   return { dashboard, startRefreshMock, panelInEdit, panelInView };
 }
@@ -38,11 +38,7 @@ describe('Strict panel refresh', () => {
       const { startRefreshMock } = getTestContext();
 
       expect(startRefreshMock).toHaveBeenCalledTimes(1);
-      expect(startRefreshMock).toHaveBeenLastCalledWith({
-        panelIds: [1, 2, 3],
-        refreshAll: false,
-        processRepeats: false,
-      });
+      expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [1, 2, 3], refreshAll: false });
     });
   });
 
@@ -51,7 +47,7 @@ describe('Strict panel refresh', () => {
       const { startRefreshMock } = getTestContext({ refreshAll: true });
 
       expect(startRefreshMock).toHaveBeenCalledTimes(1);
-      expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [], refreshAll: true, processRepeats: false });
+      expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [], refreshAll: true });
     });
   });
 
@@ -75,7 +71,7 @@ describe('Strict panel refresh', () => {
         const { startRefreshMock } = getTestContext();
 
         expect(startRefreshMock).toHaveBeenCalledTimes(1);
-        expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [], refreshAll: true, processRepeats: false });
+        expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [], refreshAll: true });
       });
     });
 
@@ -85,11 +81,7 @@ describe('Strict panel refresh', () => {
         const { startRefreshMock } = getTestContext();
 
         expect(startRefreshMock).toHaveBeenCalledTimes(1);
-        expect(startRefreshMock).toHaveBeenLastCalledWith({
-          panelIds: [1, 2, 3],
-          refreshAll: false,
-          processRepeats: false,
-        });
+        expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [1, 2, 3], refreshAll: false });
       });
     });
 
@@ -99,7 +91,7 @@ describe('Strict panel refresh', () => {
         const { startRefreshMock } = getTestContext({ refreshAll: true });
 
         expect(startRefreshMock).toHaveBeenCalledTimes(1);
-        expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [], refreshAll: true, processRepeats: false });
+        expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [], refreshAll: true });
       });
     });
   });
@@ -109,11 +101,7 @@ describe('Strict panel refresh', () => {
       const { panelInView, startRefreshMock } = getTestContext({ usePanelInView: true });
 
       expect(startRefreshMock).toHaveBeenCalledTimes(1);
-      expect(startRefreshMock).toHaveBeenLastCalledWith({
-        panelIds: [1, 2, 3, panelInView.id],
-        refreshAll: false,
-        processRepeats: false,
-      });
+      expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [1, 2, 3, panelInView.id], refreshAll: false });
     });
 
     describe('and when exitViewPanel is called', () => {
@@ -124,11 +112,7 @@ describe('Strict panel refresh', () => {
         dashboard.exitViewPanel(panelInView);
 
         expect(startRefreshMock).toHaveBeenCalledTimes(1);
-        expect(startRefreshMock).toHaveBeenLastCalledWith({
-          panelIds: [1, 2, 3],
-          refreshAll: false,
-          processRepeats: true,
-        });
+        expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [1, 2, 3], refreshAll: false });
         expect(dashboard['panelsAffectedByVariableChange']).toBeNull();
       });
     });
@@ -138,11 +122,7 @@ describe('Strict panel refresh', () => {
     it('then all affected panels should be refreshed', () => {
       const { panelInEdit, startRefreshMock } = getTestContext({ usePanelInEdit: true });
       expect(startRefreshMock).toHaveBeenCalledTimes(1);
-      expect(startRefreshMock).toHaveBeenLastCalledWith({
-        panelIds: [1, 2, 3, panelInEdit.id],
-        refreshAll: false,
-        processRepeats: false,
-      });
+      expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [1, 2, 3, panelInEdit.id], refreshAll: false });
     });
 
     describe('and when exitViewPanel is called', () => {
@@ -153,11 +133,7 @@ describe('Strict panel refresh', () => {
         dashboard.exitPanelEditor();
 
         expect(startRefreshMock).toHaveBeenCalledTimes(1);
-        expect(startRefreshMock).toHaveBeenLastCalledWith({
-          panelIds: [1, 2, 3],
-          refreshAll: false,
-          processRepeats: true,
-        });
+        expect(startRefreshMock).toHaveBeenLastCalledWith({ panelIds: [1, 2, 3], refreshAll: false });
         expect(dashboard['panelsAffectedByVariableChange']).toBeNull();
       });
     });
