@@ -1,6 +1,8 @@
 package social
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -20,19 +22,29 @@ type SocialAzureAD struct {
 }
 
 type azureClaims struct {
-	Email             string   `json:"email"`
-	PreferredUsername string   `json:"preferred_username"`
-	Roles             []string `json:"roles"`
-	Groups            []string `json:"groups"`
-	Name              string   `json:"name"`
-	ID                string   `json:"oid"`
+	Email             string                 `json:"email"`
+	PreferredUsername string                 `json:"preferred_username"`
+	Roles             []string               `json:"roles"`
+	Groups            []string               `json:"groups"`
+	Name              string                 `json:"name"`
+	ID                string                 `json:"oid"`
+	ClaimNames        claimNames             `json:"_claim_names,omitempty"`
+	ClaimSources      map[string]claimSource `json:"_claim_sources,omitempty"`
+}
+
+type claimNames struct {
+	Groups string `json:"groups"`
+}
+
+type claimSource struct {
+	Endpoint string `json:"endpoint"`
 }
 
 func (s *SocialAzureAD) Type() int {
 	return int(models.AZUREAD)
 }
 
-func (s *SocialAzureAD) UserInfo(_ *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, fmt.Errorf("no id_token found")
@@ -56,7 +68,12 @@ func (s *SocialAzureAD) UserInfo(_ *http.Client, token *oauth2.Token) (*BasicUse
 	role := extractRole(claims, s.autoAssignOrgRole)
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
-	groups := extractGroups(claims)
+	groups, err := extractGroups(client, claims)
+	if err != nil {
+		logger.Error("AzureAD OAuth: failed to extract groups", "error", err)
+		return nil, err
+	}
+
 	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", groups)
 	if !s.IsGroupMember(groups) {
 		return nil, errMissingGroupMembership
@@ -127,8 +144,48 @@ func hasRole(roles []string, role models.RoleType) bool {
 	return false
 }
 
-func extractGroups(claims azureClaims) []string {
-	groups := make([]string, 0)
-	groups = append(groups, claims.Groups...)
-	return groups
+type getAzureGroupRequest struct {
+	SecurityEnabledOnly bool `json:"securityEnabledOnly"`
+}
+
+type getAzureGroupResponse struct {
+	Value []string `json:"value"`
+}
+
+func extractGroups(client *http.Client, claims azureClaims) ([]string, error) {
+	if len(claims.Groups) > 0 {
+		return claims.Groups, nil
+	} else if claims.ClaimNames.Groups != "" {
+		// If user groups exceeds 200 no groups will be found in claims.
+		// See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
+		endpoint := claims.ClaimSources[claims.ClaimNames.Groups].Endpoint
+
+		data, err := json.Marshal(&getAzureGroupRequest{SecurityEnabledOnly: false})
+		if err != nil {
+			return nil, err
+		}
+
+		req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(data))
+		if err != nil {
+			return nil, err
+		}
+
+		res, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+
+		if res.StatusCode != http.StatusOK {
+			return nil, errors.New("failed to get member groups")
+		}
+
+		var body getAzureGroupResponse
+		if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+			return nil, err
+		}
+
+		return body.Value, nil
+	}
+
+	return []string{}, nil
 }
