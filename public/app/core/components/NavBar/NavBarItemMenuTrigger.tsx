@@ -164,22 +164,6 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
 }
 
 const getStyles = (theme: GrafanaTheme2, isActive?: boolean) => ({
-  container: css`
-    position: relative;
-    color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
-    list-style: none;
-
-    &:hover {
-      background-color: ${theme.colors.action.hover};
-      color: ${theme.colors.text.primary};
-
-      // TODO don't use a hardcoded class here, use isVisible in NavBarDropdown
-      .navbar-dropdown {
-        opacity: 1;
-        visibility: visible;
-      }
-    }
-  `,
   element: css`
     background-color: transparent;
     border: none;

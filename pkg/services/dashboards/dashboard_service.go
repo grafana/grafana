@@ -376,7 +376,7 @@ func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *SaveDashb
 }
 
 func (s *FakeDashboardService) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error) {
-	return s.SaveDashboard(context.Background(), dto, true)
+	return s.SaveDashboard(ctx, dto, true)
 }
 
 func (s *FakeDashboardService) DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error {

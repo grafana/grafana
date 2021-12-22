@@ -169,7 +169,7 @@ func (s *AccessControlStore) GetResourcesPermissions(ctx context.Context, orgID 
 
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
-		result, err = getResourcesPermissions(sess, orgID, query, false)
+		result, err = getResourcesPermissions(sess, orgID, query)
 		return err
 	})
 
@@ -214,7 +214,7 @@ func createResourcePermission(sess *sqlstore.DBSession, roleID int64, action, re
 	return p, nil
 }
 
-func getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query accesscontrol.GetResourcesPermissionsQuery, managed bool) ([]accesscontrol.ResourcePermission, error) {
+func getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query accesscontrol.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
 	if len(query.Actions) == 0 {
 		return nil, nil
 	}
@@ -281,7 +281,7 @@ func getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query access
 		AND p.action IN (?` + strings.Repeat(",?", len(query.Actions)-1) + `)
 	`
 
-	if managed {
+	if query.OnlyManaged {
 		where += `AND r.name LIKE 'managed:%'`
 	}
 
