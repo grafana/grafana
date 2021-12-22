@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -96,8 +95,8 @@ func (ss *SQLStore) UpdateOrgUser(ctx context.Context, cmd *models.UpdateOrgUser
 	})
 }
 
-func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *dtos.GetOrgUsersQuery) error {
-	query.Result = make([]*dtos.OrgUserDTO, 0)
+func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error {
+	query.Result = make([]*models.OrgUserDTO, 0)
 
 	sess := x.Table("org_user")
 	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
@@ -148,9 +147,9 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *dtos.GetOrgUsersQuer
 	return nil
 }
 
-func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *dtos.SearchOrgUsersQuery) error {
-	query.Result = dtos.SearchOrgUsersQueryResult{
-		OrgUsers: make([]*dtos.OrgUserDTO, 0),
+func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error {
+	query.Result = models.SearchOrgUsersQueryResult{
+		OrgUsers: make([]*models.OrgUserDTO, 0),
 	}
 
 	sess := x.Table("org_user")

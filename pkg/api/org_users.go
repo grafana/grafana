@@ -70,7 +70,7 @@ func (hs *HTTPServer) addOrgUserHelper(ctx context.Context, cmd models.AddOrgUse
 
 // GET /api/org/users
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(c, &dtos.GetOrgUsersQuery{
+	result, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
@@ -85,7 +85,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 
 // GET /api/org/users/lookup
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
-	orgUsers, err := hs.getOrgUsersHelper(c, &dtos.GetOrgUsersQuery{
+	orgUsers, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
@@ -131,7 +131,7 @@ func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, dsID in
 
 // GET /api/orgs/:orgId/users
 func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(c, &dtos.GetOrgUsersQuery{
+	result, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
 		OrgId: c.ParamsInt64(":orgId"),
 		Query: "",
 		Limit: 0,
@@ -144,23 +144,24 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	return response.JSON(200, result)
 }
 
-func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *dtos.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*dtos.OrgUserDTO, error) {
+func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
 	if err := hs.SQLStore.GetOrgUsers(c.Req.Context(), query); err != nil {
 		return nil, err
 	}
 
-	filteredUsers := make([]*dtos.OrgUserDTO, 0, len(query.Result))
+	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result))
 	for _, user := range query.Result {
 		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
 			continue
 		}
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
 
-		var errAC error
-		user.AccessControl, errAC = hs.getUserAccessControlMetadata(c, user.UserId)
+		accessControlMetadata, errAC := hs.getUserAccessControlMetadata(c, user.UserId)
 		if errAC != nil {
 			orgUserLogger.Error("Failed to get access control metadata", "error", errAC)
 		}
+
+		user.AccessControl = accessControlMetadata
 
 		filteredUsers = append(filteredUsers, user)
 	}
@@ -182,7 +183,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 		page = 1
 	}
 
-	query := &dtos.SearchOrgUsersQuery{
+	query := &models.SearchOrgUsersQuery{
 		OrgID: c.OrgId,
 		Query: c.Query("query"),
 		Limit: perPage,
@@ -193,7 +194,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 		return response.Error(500, "Failed to get users for current organization", err)
 	}
 
-	filteredUsers := make([]*dtos.OrgUserDTO, 0, len(query.Result.OrgUsers))
+	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result.OrgUsers))
 	for _, user := range query.Result.OrgUsers {
 		if dtos.IsHiddenUser(user.Login, c.SignedInUser, hs.Cfg) {
 			continue
