@@ -9,6 +9,7 @@ import {
   getFieldSeriesColor,
   GrafanaTheme2,
   outerJoinDataFrames,
+  reduceField,
   VizOrientation,
 } from '@grafana/data';
 import { BarChartDisplayValues, BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
@@ -407,10 +408,12 @@ export function prepareBarChartDisplayValues(
   }
 
   if (isLegendOrdered(options.legend)) {
+    const sortKey = options.legend.sortBy!.toLowerCase();
+    const reducers = options.legend.calcs ?? [sortKey];
     fields = orderBy(
       fields,
-      ({ state }) => {
-        return state?.calcs?.[options.legend.sortBy!.toLowerCase()];
+      (field) => {
+        return reduceField({ field, reducers })[sortKey];
       },
       options.legend.sortDesc ? 'desc' : 'asc'
     );
