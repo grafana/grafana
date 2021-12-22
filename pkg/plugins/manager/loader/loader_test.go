@@ -80,6 +80,7 @@ func TestLoader_Load(t *testing.T) {
 						Metrics:      true,
 						Alerting:     true,
 						Logs:         true,
+						Backend:      true,
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
 					Module:    "app/plugins/datasource/cloudwatch/module",

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   HorizontalGroup,
   Button,
@@ -12,9 +12,9 @@ import {
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole } from 'app/types';
-import { getBackendSrv, locationService } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
-import { AppEvents, locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { locationUtil } from '@grafana/data';
+import { userInviteSubmit } from './api';
 
 const roles = [
   { label: 'Viewer', value: OrgRole.Viewer },
@@ -22,7 +22,12 @@ const roles = [
   { label: 'Admin', value: OrgRole.Admin },
 ];
 
-interface FormModel {
+const onSubmit = async (formData: FormModel) => {
+  await userInviteSubmit(formData);
+  locationService.push('/org/users/');
+};
+
+export interface FormModel {
   role: OrgRole;
   name: string;
   loginOrEmail?: string;
@@ -30,18 +35,7 @@ interface FormModel {
   email: string;
 }
 
-interface Props {}
-
-export const UserInviteForm: FC<Props> = ({}) => {
-  const onSubmit = async (formData: FormModel) => {
-    try {
-      await getBackendSrv().post('/api/org/invites', formData);
-    } catch (err) {
-      appEvents.emit(AppEvents.alertError, ['Failed to send invitation.', err.message]);
-    }
-    locationService.push('/org/users/');
-  };
-
+export const UserInviteForm = () => {
   const defaultValues: FormModel = {
     name: '',
     email: '',

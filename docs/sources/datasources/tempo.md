@@ -146,3 +146,36 @@ Click on the service to see a context menu with additional links for quick navig
 ## Linking Trace ID from logs
 
 You can link to Tempo trace from logs in Loki or Elastic by configuring an internal link. See the [Derived fields]({{< relref "loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "loki.md" >}}) or [Data links]({{< relref "elasticsearch.md#data-links" >}}) section in the [Elastic data source]({{< relref "elasticsearch.md" >}}) for configuration instructions.
+
+## Provision the Tempo data source
+
+You can modify the Grafana configuration files to provision the Tempo data source. Read more about how it works and all the settings you can set for data sources on the [provisioning]({{< relref "../administration/provisioning/#datasources" >}}) topic.
+
+Here is an example config:
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Tempo
+    type: tempo
+    # Access mode - proxy (server in the UI) or direct (browser in the UI).
+    access: proxy
+    url: http://localhost:3200
+    jsonData:
+      httpMethod: GET
+      tracesToLogs:
+        datasourceUid: 'loki'
+        tags: ['job', 'instance', 'pod', 'namespace']
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '1h'
+        filterByTraceID: false
+        filterBySpanID: false
+        lokiSearch: true
+      serviceMap:
+        datasourceUid: 'prometheus'
+      search:
+        hide: false
+      nodeGraph:
+        enabled: true
+```

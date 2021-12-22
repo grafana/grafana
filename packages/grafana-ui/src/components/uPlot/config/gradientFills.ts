@@ -6,9 +6,33 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
+import { ScaleOrientation } from '@grafana/schema';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 import { getCanvasContext } from '../../../utils/measureText';
+
+function makeDirectionalGradient(direction: GradientDirection, bbox: uPlot.BBox, ctx: CanvasRenderingContext2D) {
+  let x0 = 0,
+    y0 = 0,
+    x1 = 0,
+    y1 = 0;
+
+  if (direction === GradientDirection.Down) {
+    y0 = bbox.top;
+    y1 = bbox.top + bbox.height;
+  } else if (direction === GradientDirection.Left) {
+    x0 = bbox.left + bbox.width;
+    x1 = bbox.left;
+  } else if (direction === GradientDirection.Up) {
+    y0 = bbox.top + bbox.height;
+    y1 = bbox.top;
+  } else if (direction === GradientDirection.Right) {
+    x0 = bbox.left;
+    x1 = bbox.left + bbox.width;
+  }
+
+  return ctx.createLinearGradient(x0, y0, x1, y1);
+}
 
 export function getOpacityGradientFn(
   color: string,
@@ -16,7 +40,11 @@ export function getOpacityGradientFn(
 ): (self: uPlot, seriesIdx: number) => CanvasGradient {
   return (plot: uPlot, seriesIdx: number) => {
     const ctx = getCanvasContext();
-    const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
+    const gradient = makeDirectionalGradient(
+      plot.scales.x!.ori === ScaleOrientation.Horizontal ? GradientDirection.Down : GradientDirection.Left,
+      plot.bbox,
+      ctx
+    );
 
     gradient.addColorStop(0, colorManipulator.alpha(color, opacity));
     gradient.addColorStop(1, colorManipulator.alpha(color, 0));
@@ -24,6 +52,7 @@ export function getOpacityGradientFn(
     return gradient;
   };
 }
+
 export function getHueGradientFn(
   color: string,
   opacity: number,
@@ -31,7 +60,12 @@ export function getHueGradientFn(
 ): (self: uPlot, seriesIdx: number) => CanvasGradient {
   return (plot: uPlot, seriesIdx: number) => {
     const ctx = getCanvasContext();
-    const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
+    const gradient = makeDirectionalGradient(
+      plot.scales.x!.ori === ScaleOrientation.Horizontal ? GradientDirection.Down : GradientDirection.Left,
+      plot.bbox,
+      ctx
+    );
+
     const color1 = tinycolor(color).spin(-15);
     const color2 = tinycolor(color).spin(15);
 
@@ -48,21 +82,17 @@ export function getHueGradientFn(
 }
 
 export enum GradientDirection {
-  'Right' = 0,
-  'Up' = 1,
+  Right = 0,
+  Up = 1,
+  Left = 2,
+  Down = 3,
 }
 
 type ValueStop = [value: number, color: string];
 
 type ScaleValueStops = ValueStop[];
 
-export function scaleGradient(
-  u: uPlot,
-  scaleKey: string,
-  dir: GradientDirection,
-  scaleStops: ScaleValueStops,
-  discrete = false
-) {
+export function scaleGradient(u: uPlot, scaleKey: string, scaleStops: ScaleValueStops, discrete = false) {
   let scale = u.scales[scaleKey];
 
   // we want the stop below or at the scaleMax
@@ -106,7 +136,7 @@ export function scaleGradient(
 
   let x0, y0, x1, y1;
 
-  if (dir === GradientDirection.Up) {
+  if (u.scales.x!.ori === ScaleOrientation.Horizontal) {
     x0 = x1 = 0;
     y0 = minStopPos;
     y1 = maxStopPos;
@@ -222,7 +252,7 @@ export function getScaleGradientFn(
           (step) =>
             [step.value, colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity)] as ValueStop
         );
-        gradient = scaleGradient(plot, scaleKey, GradientDirection.Up, valueStops, true);
+        gradient = scaleGradient(plot, scaleKey, valueStops, true);
       } else {
         const [min, max] = getGradientRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
         const range = max - min;
@@ -233,7 +263,7 @@ export function getScaleGradientFn(
               colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity),
             ] as ValueStop
         );
-        gradient = scaleGradient(plot, scaleKey, GradientDirection.Up, valueStops, true);
+        gradient = scaleGradient(plot, scaleKey, valueStops, true);
       }
     } else if (colorMode.getColors) {
       const colors = colorMode.getColors(theme);
@@ -246,7 +276,7 @@ export function getScaleGradientFn(
             colorManipulator.alpha(theme.visualization.getColorByName(color), opacity),
           ] as ValueStop
       );
-      gradient = scaleGradient(plot, scaleKey, GradientDirection.Up, valueStops, false);
+      gradient = scaleGradient(plot, scaleKey, valueStops, false);
     }
 
     return gradient;

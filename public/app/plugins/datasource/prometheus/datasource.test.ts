@@ -1062,6 +1062,31 @@ describe('PrometheusDatasource', () => {
         expect(results.map((result) => [result.time, result.timeEnd])).toEqual([[120000, 120000]]);
       });
     });
+    describe('with template variables', () => {
+      const originalReplaceMock = jest.fn((a: string, ...rest: any) => a);
+      afterAll(() => {
+        templateSrvStub.replace = originalReplaceMock;
+      });
+
+      it('should interpolate variables in query expr', () => {
+        const query = {
+          ...options,
+          annotation: {
+            ...options.annotation,
+            expr: '$variable',
+          },
+          range: {
+            from: time({ seconds: 1 }),
+            to: time({ seconds: 2 }),
+          },
+        };
+        const interpolated = 'interpolated_expr';
+        templateSrvStub.replace.mockReturnValue(interpolated);
+        ds.annotationQuery(query);
+        const req = fetchMock.mock.calls[0][0];
+        expect(req.data.queries[0].expr).toBe(interpolated);
+      });
+    });
   });
 
   describe('When resultFormat is table and instant = true', () => {
@@ -1666,6 +1691,35 @@ describe('PrometheusDatasource', () => {
       expect(templateSrvStub.replace.mock.calls).toHaveLength(3);
       templateSrvStub.replace = jest.fn((a: string) => a);
     });
+  });
+
+  it('should give back 1 exemplar target when multiple queries with exemplar enabled and same metric', () => {
+    const targetA: PromQuery = {
+      refId: 'A',
+      expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+      exemplar: true,
+    };
+    const targetB: PromQuery = {
+      refId: 'B',
+      expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+      exemplar: true,
+    };
+
+    ds.languageProvider = {
+      histogramMetrics: ['tns_request_duration_seconds_bucket'],
+    } as any;
+
+    const request = ({
+      targets: [targetA, targetB],
+      interval: '1s',
+      panelId: '',
+    } as any) as DataQueryRequest<PromQuery>;
+
+    const Aexemplars = ds.shouldRunExemplarQuery(targetA, request);
+    const BExpemplars = ds.shouldRunExemplarQuery(targetB, request);
+
+    expect(Aexemplars).toBe(true);
+    expect(BExpemplars).toBe(false);
   });
 });
 

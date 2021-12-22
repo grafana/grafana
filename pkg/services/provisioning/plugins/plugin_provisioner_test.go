@@ -91,6 +91,6 @@ type testConfigReader struct {
 	err    error
 }
 
-func (tcr *testConfigReader) readConfig(path string) ([]*pluginsAsConfig, error) {
+func (tcr *testConfigReader) readConfig(ctx context.Context, path string) ([]*pluginsAsConfig, error) {
 	return tcr.result, tcr.err
 }

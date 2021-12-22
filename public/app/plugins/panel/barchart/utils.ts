@@ -108,6 +108,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   builder.addScale({
     scaleKey: 'x',
     isTime: false,
+    range: config.xRange,
     distribution: ScaleDistribution.Ordinal,
     orientation: vizOrientation.xOri,
     direction: vizOrientation.xDir,
@@ -182,6 +183,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       softMax: customConfig.axisSoftMax,
       orientation: vizOrientation.yOri,
       direction: vizOrientation.yDir,
+      distribution: customConfig.scaleDistribution?.type,
+      log: customConfig.scaleDistribution?.log,
     });
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
@@ -213,7 +216,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   }
 
   if (stackingGroups.size !== 0) {
-    builder.setStacking(true);
     for (const [_, seriesIds] of stackingGroups.entries()) {
       const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
       for (let j = seriesIdxs.length - 1; j > 0; j--) {
@@ -298,24 +300,20 @@ export function prepareGraphableFrames(
   series: DataFrame[],
   theme: GrafanaTheme2,
   options: BarChartOptions
-): { frames?: DataFrame[]; warn?: string } {
+): DataFrame[] | null {
   if (!series?.length) {
-    return { warn: 'No data in response' };
+    return null;
   }
 
   const frames: DataFrame[] = [];
   const firstFrame = series[0];
 
   if (!firstFrame.fields.some((f) => f.type === FieldType.string)) {
-    return {
-      warn: 'Bar charts requires a string field',
-    };
+    return null;
   }
 
   if (!firstFrame.fields.some((f) => f.type === FieldType.number)) {
-    return {
-      warn: 'No numeric fields found',
-    };
+    return null;
   }
 
   const legendOrdered = isLegendOrdered(options.legend);
@@ -384,7 +382,7 @@ export function prepareGraphableFrames(
     });
   }
 
-  return { frames };
+  return frames;
 }
 
 export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);
