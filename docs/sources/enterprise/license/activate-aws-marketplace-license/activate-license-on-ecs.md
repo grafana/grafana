@@ -34,7 +34,7 @@ Versions of Grafana before 8.3.0 do not support licenses granted through AWS Mar
 
    For more detailed steps to create an access policy, refer to the AWS documentation on [creating IAM policies](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create-console.html).
 
-   For more information about AWS license permissions, refer to [Actions, resources, and condition keys for AWS License Manager](​​https://docs.aws.amazon.com/service-authorization/latest/reference/list_awslicensemanager.html).
+   For more information about AWS license permissions, refer to [Actions, resources, and condition keys for AWS License Manager](https://docs.aws.amazon.com/service-authorization/latest/reference/list_awslicensemanager.html).
 
 2. Follow the AWS documentation to [create a new Elastic Container Service Task Role](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html) and attach the policy you created in the previous step to this new role.
 
