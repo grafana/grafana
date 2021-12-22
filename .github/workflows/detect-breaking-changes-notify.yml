@@ -5,8 +5,7 @@ name: Levitate / Notify PR with result
 on:
   workflow_run:
     workflows: ["Levitate / Detect breaking changes"]
-    types:
-      - completed
+    types: [completed]
 
 jobs:
   notify:
