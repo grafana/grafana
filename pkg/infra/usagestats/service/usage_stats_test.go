@@ -79,7 +79,7 @@ func TestMetrics(t *testing.T) {
 				DashboardsViewersCanEdit:  2,
 				FoldersViewersCanAdmin:    1,
 				FoldersViewersCanEdit:     5,
-				ApiKeys:                   2,
+				APIKeys:                   2,
 			}
 			getSystemStatsQuery = query
 			return nil
