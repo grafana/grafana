@@ -1,11 +1,10 @@
-name: Notify breaking frontend changes
+name: Levitate / Notify PR with result
 
 # read-write repo token
 # access to secrets
 on:
-  workflow_dispatch:
   workflow_run:
-    workflows: ["Detect breaking frontend changes"]
+    workflows: ["Levitate / Detect breaking changes"]
     types:
       - completed
 
