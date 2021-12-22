@@ -118,6 +118,32 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		assert.NotContains(t, result.Responses, "C")
 	})
 
+	t.Run("Influxdb response parser populates the RawQuery in the response meta ExecutedQueryString", func(t *testing.T) {
+		parser := &ResponseParser{}
+
+		response := `
+		{
+			"results": [
+				{
+					"series": [
+						{
+							"name": "cpu",
+							"columns": ["time","mean"]
+						}
+					]
+				}
+			]
+		}
+		`
+
+		query := &Query{}
+		query.RawQuery = "Test raw query"
+		result := parser.Parse(prepare(response), addQueryToQueries(*query))
+
+		frame := result.Responses["A"]
+		assert.Equal(t, frame.Frames[0].Meta.ExecutedQueryString, "Test raw query")
+	})
+
 	t.Run("Influxdb response parser with invalid value-format", func(t *testing.T) {
 		parser := &ResponseParser{}
 
