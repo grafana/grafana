@@ -136,14 +136,37 @@ describe('NavBarItem', () => {
         getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } });
 
         userEvent.tab();
+        expect(screen.getAllByRole('link')[0]).toHaveFocus();
         expect(screen.getAllByRole('menuitem')).toHaveLength(3);
         expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
 
         userEvent.keyboard('{arrowright}');
+        expect(screen.getAllByRole('link')[0]).not.toHaveFocus();
         expect(screen.getAllByRole('menuitem')).toHaveLength(3);
         expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '0');
+        expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
+        expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
+      });
+    });
+
+    describe('and pressing arrow left on a menu item', () => {
+      it('then the nav bar item should receive focus', () => {
+        getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } });
+
+        userEvent.tab();
+        userEvent.keyboard('{arrowright}');
+        expect(screen.getAllByRole('link')[0]).not.toHaveFocus();
+        expect(screen.getAllByRole('menuitem')).toHaveLength(3);
+        expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '0');
+        expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
+        expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
+
+        userEvent.keyboard('{arrowleft}');
+        expect(screen.getAllByRole('link')[0]).toHaveFocus();
+        expect(screen.getAllByRole('menuitem')).toHaveLength(3);
+        expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
       });

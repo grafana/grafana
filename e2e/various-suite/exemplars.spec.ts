@@ -21,7 +21,7 @@ describe('Exemplars', () => {
     e2e.flows.login('admin', 'admin');
 
     e2e()
-      .request({ url: `/api/datasources/name/${dataSourceName}`, failOnStatusCode: false })
+      .request({ url: `${e2e.env('BASE_URL')}/api/datasources/name/${dataSourceName}`, failOnStatusCode: false })
       .then((response) => {
         if (response.isOkStatusCode) {
           return;

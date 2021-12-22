@@ -12,7 +12,7 @@ import {
 import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 
 // Types
-import { LokiQuery } from './types';
+import { LokiQuery, LokiQueryType } from './types';
 import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
 
 import LokiDatasource from './datasource';
@@ -332,7 +332,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   importFromAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
-    return toPromLikeQuery(labelBasedQuery);
+    const q = toPromLikeQuery(labelBasedQuery);
+    q.queryType = LokiQueryType.Range;
+    return q as LokiQuery;
   }
 
   exportToAbstractQuery(query: LokiQuery): AbstractQuery {

@@ -1,23 +1,21 @@
 import Centrifuge from 'centrifuge/dist/centrifuge';
-import { LiveDataStreamOptions } from '@grafana/runtime';
-import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
-import { BehaviorSubject, Observable } from 'rxjs';
 import {
-  DataFrame,
-  DataFrameJSON,
-  dataFrameToJSON,
+  GrafanaLiveSrv,
+  LiveDataStreamOptions,
+  StreamingFrameAction,
+  StreamingFrameOptions,
+} from '@grafana/runtime/src/services/live';
+import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
+import {
   DataQueryResponse,
-  isLiveChannelMessageEvent,
-  isLiveChannelStatusEvent,
   LiveChannelAddress,
   LiveChannelConnectionState,
-  LiveChannelEvent,
-  LiveChannelPresenceStatus,
-  LoadingState,
-  StreamingDataFrame,
-  toDataFrameDTO,
+  LiveChannelId,
+  toLiveChannelId,
 } from '@grafana/data';
 import { CentrifugeLiveChannel } from './channel';
+import { LiveDataStream } from './LiveDataStream';
+import { StreamingResponseData } from '../data/utils';
 
 export type CentrifugeSrvDeps = {
   appUrl: string;
@@ -28,39 +26,32 @@ export type CentrifugeSrvDeps = {
   dataStreamSubscriberReadiness: Observable<boolean>;
 };
 
-export interface CentrifugeSrv {
-  /**
-   * Listen for changes to the connection state
-   */
-  getConnectionState(): Observable<boolean>;
+export type StreamingDataQueryResponse = Omit<DataQueryResponse, 'data'> & { data: [StreamingResponseData] };
 
-  /**
-   * Watch for messages in a channel
-   */
-  getStream<T>(address: LiveChannelAddress): Observable<LiveChannelEvent<T>>;
+export type CentrifugeSrv = Omit<GrafanaLiveSrv, 'publish' | 'getDataStream'> & {
+  getDataStream: (options: LiveDataStreamOptions) => Observable<StreamingDataQueryResponse>;
+};
 
-  /**
-   * Connect to a channel and return results as DataFrames
-   */
-  getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse>;
+export type DataStreamSubscriptionKey = string;
 
-  /**
-   * For channels that support presence, this will request the current state from the server.
-   *
-   * Join and leave messages will be sent to the open stream
-   */
-  getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus>;
-}
+const defaultStreamingFrameOptions: Readonly<StreamingFrameOptions> = {
+  maxLength: 100,
+  maxDelta: Infinity,
+  action: StreamingFrameAction.Append,
+};
+
+const dataStreamShutdownDelayInMs = 5000;
 
 export class CentrifugeService implements CentrifugeSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
+  private readonly liveDataStreamByChannelId: Record<LiveChannelId, LiveDataStream> = {};
   readonly centrifuge: Centrifuge;
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
-  private dataStreamSubscriberReady = true;
+  private readonly dataStreamSubscriberReadiness: Observable<boolean>;
 
   constructor(private deps: CentrifugeSrvDeps) {
-    deps.dataStreamSubscriberReadiness.subscribe((next) => (this.dataStreamSubscriberReady = next));
+    this.dataStreamSubscriberReadiness = deps.dataStreamSubscriberReadiness.pipe(share(), startWith(true));
     const liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
     this.centrifuge = new Centrifuge(liveUrl, {});
     this.centrifuge.setConnectData({
@@ -154,130 +145,59 @@ export class CentrifugeService implements CentrifugeSrv {
   /**
    * Listen for changes to the connection state
    */
-  getConnectionState() {
+  getConnectionState = () => {
     return this.connectionState.asObservable();
-  }
+  };
 
   /**
    * Watch for messages in a channel
    */
-  getStream<T>(address: LiveChannelAddress): Observable<LiveChannelEvent<T>> {
+  getStream: CentrifugeSrv['getStream'] = <T>(address: LiveChannelAddress) => {
     return this.getChannel<T>(address).getStream();
-  }
+  };
 
+  private createSubscriptionKey = (options: LiveDataStreamOptions): DataStreamSubscriptionKey =>
+    options.key ?? `xstr/${streamCounter++}`;
+
+  private getLiveDataStream = (options: LiveDataStreamOptions): LiveDataStream => {
+    const channelId = toLiveChannelId(options.addr);
+    const existingStream = this.liveDataStreamByChannelId[channelId];
+
+    if (existingStream) {
+      return existingStream;
+    }
+
+    const channel = this.getChannel(options.addr);
+    this.liveDataStreamByChannelId[channelId] = new LiveDataStream({
+      channelId,
+      onShutdown: () => {
+        delete this.liveDataStreamByChannelId[channelId];
+      },
+      liveEventsObservable: channel.getStream(),
+      subscriberReadiness: this.dataStreamSubscriberReadiness,
+      defaultStreamingFrameOptions,
+      shutdownDelayInMs: dataStreamShutdownDelayInMs,
+    });
+    return this.liveDataStreamByChannelId[channelId];
+  };
   /**
    * Connect to a channel and return results as DataFrames
    */
-  getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse> {
-    return new Observable<DataQueryResponse>((subscriber) => {
-      const channel = this.getChannel(options.addr);
-      const key = options.key ?? `xstr/${streamCounter++}`;
-      let data: StreamingDataFrame | undefined = undefined;
-      let filtered: DataFrame | undefined = undefined;
-      let state = LoadingState.Streaming;
-      let lastWidth = -1;
+  getDataStream: CentrifugeSrv['getDataStream'] = (options) => {
+    const subscriptionKey = this.createSubscriptionKey(options);
 
-      const process = (msg: DataFrameJSON) => {
-        if (!data) {
-          data = new StreamingDataFrame(msg, options.buffer);
-        } else {
-          data.push(msg);
-        }
-        state = LoadingState.Streaming;
-        const sameWidth = lastWidth === data.fields.length;
-        lastWidth = data.fields.length;
-
-        // Filter out fields
-        if (!filtered || msg.schema || !sameWidth) {
-          filtered = data;
-          if (options.filter) {
-            const { fields } = options.filter;
-            if (fields?.length) {
-              filtered = {
-                ...data,
-                fields: data.fields.filter((f) => fields.includes(f.name)),
-              };
-            }
-          }
-        }
-
-        if (this.dataStreamSubscriberReady) {
-          filtered.length = data.length; // make sure they stay up-to-date
-          subscriber.next({
-            state,
-            data: [
-              // workaround for serializing issues when sending DataFrame from web worker to the main thread
-              // DataFrame is making use of ArrayVectors which are es6 classes and thus not cloneable out of the box
-              // `toDataFrameDTO` converts ArrayVectors into native arrays.
-              toDataFrameDTO(filtered),
-            ],
-            key,
-          });
-        }
-      };
-
-      if (options.frame) {
-        process(dataFrameToJSON(options.frame));
-      } else if (channel.lastMessageWithSchema) {
-        process(channel.lastMessageWithSchema);
-      }
-
-      const sub = channel.getStream().subscribe({
-        error: (err: any) => {
-          console.log('LiveQuery [error]', { err }, options.addr);
-          state = LoadingState.Error;
-          subscriber.next({ state, data: [data], key, error: toDataQueryError(err) });
-          sub.unsubscribe(); // close after error
-        },
-        complete: () => {
-          console.log('LiveQuery [complete]', options.addr);
-          if (state !== LoadingState.Error) {
-            state = LoadingState.Done;
-          }
-          // or track errors? subscriber.next({ state, data: [data], key });
-          subscriber.complete();
-          sub.unsubscribe();
-        },
-        next: (evt: LiveChannelEvent) => {
-          if (isLiveChannelMessageEvent(evt)) {
-            process(evt.message);
-            return;
-          }
-          if (isLiveChannelStatusEvent(evt)) {
-            if (evt.error) {
-              let error = toDataQueryError(evt.error);
-              error.message = `Streaming channel error: ${error.message}`;
-              state = LoadingState.Error;
-              subscriber.next({ state, data: [data], key, error });
-              return;
-            } else if (
-              evt.state === LiveChannelConnectionState.Connected ||
-              evt.state === LiveChannelConnectionState.Pending
-            ) {
-              if (evt.message) {
-                process(evt.message);
-              }
-              return;
-            }
-            console.log('ignore state', evt);
-          }
-        },
-      });
-
-      return () => {
-        sub.unsubscribe();
-      };
-    });
-  }
+    const stream = this.getLiveDataStream(options);
+    return stream.get(options, subscriptionKey);
+  };
 
   /**
    * For channels that support presence, this will request the current state from the server.
    *
    * Join and leave messages will be sent to the open stream
    */
-  getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus> {
+  getPresence: CentrifugeSrv['getPresence'] = (address) => {
     return this.getChannel(address).getPresence();
-  }
+  };
 }
 
 // This is used to give a unique key for each stream.  The actual value does not matter

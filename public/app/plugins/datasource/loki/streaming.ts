@@ -1,16 +1,10 @@
-import {
-  DataFrameJSON,
-  DataQueryResponse,
-  LiveChannelScope,
-  LoadingState,
-  StreamingDataFrame,
-  TimeRange,
-} from '@grafana/data';
+import { DataFrameJSON, DataQueryResponse, LiveChannelScope, LoadingState, TimeRange } from '@grafana/data';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 import { map, Observable } from 'rxjs';
 import LokiDatasource from './datasource';
 import { LokiQuery } from './types';
 import sha1 from 'tiny-hashes/sha1';
+import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 /**
  * Calculate a unique key for the query.  The key is used to pick a channel and should
@@ -36,7 +30,7 @@ export function doLokiChannelStream(
     if (msg?.message) {
       const p = msg.message as DataFrameJSON;
       if (!frame) {
-        frame = new StreamingDataFrame(p, {
+        frame = StreamingDataFrame.fromDataFrameJSON(p, {
           maxLength: 5000, // hardcoded max buffer size?
           maxDelta,
           legendFormat: query.legendFormat,

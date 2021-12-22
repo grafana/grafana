@@ -257,7 +257,7 @@ func TestSendSlackRequest(t *testing.T) {
 			require.NoError(t, err)
 			slackNotifier := not.(*SlackNotifier)
 
-			err = slackNotifier.sendRequest(context.TODO(), []byte("test"))
+			err = slackNotifier.sendRequest(context.Background(), []byte("test"))
 			if !test.expectError {
 				require.NoError(tt, err)
 			} else {

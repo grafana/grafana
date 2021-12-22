@@ -17,7 +17,6 @@ import {
   QueryResultMeta,
   TimeSeriesValue,
   ScopedVars,
-  renderLabelsTemplate,
 } from '@grafana/data';
 
 import { getTemplateSrv, getDataSourceSrv } from '@grafana/runtime';
@@ -38,6 +37,7 @@ import {
   LokiStreamResponse,
   LokiStats,
 } from './types';
+import { renderLegendFormat } from '../prometheus/legend';
 
 const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
 
@@ -283,7 +283,7 @@ export function createMetricLabel(labelData: { [key: string]: string }, options?
   let label =
     options === undefined || isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
-      : renderLabelsTemplate(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
+      : renderLegendFormat(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
 
   if (!label && options) {
     label = options.query;

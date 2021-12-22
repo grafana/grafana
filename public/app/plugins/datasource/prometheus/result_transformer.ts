@@ -17,7 +17,6 @@ import {
   DataQueryRequest,
   PreferredVisualisationType,
   CoreApp,
-  renderLabelsTemplate,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { partition, groupBy } from 'lodash';
@@ -34,6 +33,7 @@ import {
   PromValue,
   TransformOptions,
 } from './types';
+import { renderLegendFormat } from './legend';
 
 const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
 const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
@@ -505,7 +505,7 @@ function getValueField({
 
 function createLabelInfo(labels: { [key: string]: string }, options: TransformOptions) {
   if (options?.legendFormat) {
-    const title = renderLabelsTemplate(getTemplateSrv().replace(options.legendFormat, options?.scopedVars), labels);
+    const title = renderLegendFormat(getTemplateSrv().replace(options.legendFormat, options?.scopedVars), labels);
     return { name: title, labels };
   }
 

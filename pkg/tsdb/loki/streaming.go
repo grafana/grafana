@@ -28,7 +28,7 @@ func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStrea
 		}, fmt.Errorf("expected tail in channel path")
 	}
 
-	query, err := parseQueryModel(req.Query)
+	query, err := parseQueryModel(req.Data)
 	if query.Expr == "" {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
@@ -50,7 +50,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		return err
 	}
 
-	query, err := parseQueryModel(req.Query)
+	query, err := parseQueryModel(req.Data)
 	if err != nil {
 		return err
 	}

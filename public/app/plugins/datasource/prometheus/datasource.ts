@@ -20,7 +20,6 @@ import {
   TimeRange,
   DataFrame,
   dateTime,
-  renderLabelsTemplate,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -55,6 +54,7 @@ import {
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
+import { renderLegendFormat } from './legend';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
@@ -688,7 +688,7 @@ export class PrometheusDatasource
           data: {
             from: (this.getPrometheusTime(options.range.from, false) * 1000).toString(),
             to: (this.getPrometheusTime(options.range.to, true) * 1000).toString(),
-            queries: [queryModel],
+            queries: [this.applyTemplateVariables(queryModel, {})],
           },
           requestId: `prom-query-${annotation.name}`,
         })
@@ -766,9 +766,9 @@ export class PrometheusDatasource
         time: timestamp,
         timeEnd: timestamp,
         annotation,
-        title: renderLabelsTemplate(titleFormat, labels),
+        title: renderLegendFormat(titleFormat, labels),
         tags,
-        text: renderLabelsTemplate(textFormat, labels),
+        text: renderLegendFormat(textFormat, labels),
       };
     }
 
