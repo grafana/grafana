@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Tooltip, useStyles2 } from '@grafana/ui';
-import { right } from '@popperjs/core';
 import { SerializedError } from '@reduxjs/toolkit';
 import pluralize from 'pluralize';
 import React, { useMemo, ReactElement, useState, FC } from 'react';
@@ -103,16 +102,26 @@ interface ErrorSummaryProps {
   onClick: () => void;
 }
 
-const ErrorSummaryButton: FC<ErrorSummaryProps> = ({ count, onClick }) => (
-  <Tooltip content="Show all errors">
-    <Button fill="text" style={{ float: right }} variant="destructive" icon="exclamation-triangle" onClick={onClick}>
-      {count > 1 ? <>{count} errors</> : <>1 error</>}
-    </Button>
-  </Tooltip>
-);
+const ErrorSummaryButton: FC<ErrorSummaryProps> = ({ count, onClick }) => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.floatRight}>
+      <Tooltip content="Show all errors">
+        <Button fill="text" variant="destructive" icon="exclamation-triangle" onClick={onClick}>
+          {count > 1 ? <>{count} errors</> : <>1 error</>}
+        </Button>
+      </Tooltip>
+    </div>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   moreButton: css`
     padding: 0;
+  `,
+  floatRight: css`
+    display: flex;
+    justify-content: flex-end;
   `,
 });
