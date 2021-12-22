@@ -1462,7 +1462,7 @@ func updateFolderACL(t *testing.T, sqlStore *sqlstore.SQLStore, folderID int64, 
 		})
 	}
 
-	err := sqlStore.UpdateDashboardACL(folderID, aclItems)
+	err := sqlStore.UpdateDashboardACL(context.Background(), folderID, aclItems)
 	require.NoError(t, err)
 }
 

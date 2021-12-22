@@ -162,7 +162,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 			Updated:     time.Now(),
 		},
 	}
-	err = sc.db.UpdateDashboardACL(folder.Id, acls)
+	err = sc.db.UpdateDashboardACL(context.Background(), folder.Id, acls)
 	require.NoError(t, err)
 
 	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)
@@ -629,7 +629,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 					UserId: tc.targetUserId,
 					OrgId:  tc.targetOrg,
 				}
-				err = sqlstore.GetSignedInUser(context.TODO(), &getUserQuery)
+				err = sqlstore.GetSignedInUser(context.Background(), &getUserQuery)
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedUserRole, getUserQuery.Result.OrgRole)
 			}
