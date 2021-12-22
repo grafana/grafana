@@ -130,6 +130,8 @@ const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: bool
     content: css`
       color: ${theme.colors.text.secondary};
       padding-top: ${theme.spacing(1)};
+      max-height: 50vh;
+      overflow-y: scroll;
     `,
     buttonWrapper: css`
       padding: ${theme.spacing(1)};
