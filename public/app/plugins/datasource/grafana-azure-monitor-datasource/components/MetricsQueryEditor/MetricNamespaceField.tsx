@@ -44,6 +44,7 @@ const MetricNamespaceField: React.FC<MetricNamespaceFieldProps> = ({
         onChange={handleChange}
         options={options}
         width={38}
+        allowCustomValue
       />
     </Field>
   );

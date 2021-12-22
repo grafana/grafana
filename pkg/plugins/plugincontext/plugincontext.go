@@ -86,7 +86,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, datasourceUID strin
 	}
 
 	if datasourceUID != "" {
-		ds, err := p.DataSourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
+		ds, err := p.DataSourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to get datasource", err)
 		}
