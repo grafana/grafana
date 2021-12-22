@@ -3,7 +3,6 @@ import { TooltipDisplayMode, StackingMode, LegendDisplayMode } from '@grafana/sc
 import {
   compareDataFrameStructures,
   DataFrame,
-  FieldType,
   getFieldDisplayName,
   PanelProps,
   TimeRange,
@@ -23,7 +22,7 @@ import {
   VizLegend,
 } from '@grafana/ui';
 import { BarChartOptions } from './types';
-import { isLegendOrdered, prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
+import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { DataHoverView } from '../geomap/components/DataHoverView';
 import { getFieldLegendItem } from '../state-timeline/utils';
@@ -141,15 +140,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {
-    // When sorted by legend state.seriesIndex is not changed and is not equal to the sorted index of the field
-    if (isLegendOrdered(options.legend)) {
-      return frame0Ref.current!.fields[seriesIdx].values.get(valueIdx);
-    }
-
-    let field = frame0Ref.current!.fields.find(
-      (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIdx - 1
-    );
-    return field!.values.get(valueIdx);
+    return frame0Ref.current!.fields[seriesIdx].values.get(valueIdx);
   };
 
   // Color by value
