@@ -1,13 +1,13 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import { usePopper } from 'react-popper';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
-import { usePopper } from 'react-popper';
 import { SearchCardExpanded } from './SearchCardExpanded';
-import { backendSrv } from 'app/core/services/backend_srv';
 
 const DELAY_BEFORE_EXPANDING = 500;
 
@@ -148,87 +148,91 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => ({
-  card: css`
-    background-color: ${theme.colors.background.secondary};
-    border: 1px solid ${theme.colors.border.medium};
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
+const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => {
+  const IMAGE_HORIZONTAL_MARGIN = theme.spacing(4);
 
-    &:hover {
-      background-color: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
-    }
-  `,
-  checkbox: css`
-    left: 0;
-    margin: ${theme.spacing(1)};
-    position: absolute;
-    top: 0;
-  `,
-  expandedView: css`
-    @keyframes expand {
-      0% {
-        transform: scale(${markerWidth / popperWidth});
+  return {
+    card: css`
+      background-color: ${theme.colors.background.secondary};
+      border: 1px solid ${theme.colors.border.medium};
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+
+      &:hover {
+        background-color: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
       }
-      100% {
-        transform: scale(1);
-      }
-    }
-
-    animation: expand ${theme.transitions.duration.shortest}ms ease-in-out 0s 1 normal;
-    background-color: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
-  `,
-  image: css`
-    aspect-ratio: 4 / 3;
-    box-shadow: ${theme.shadows.z1};
-    margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
-    width: calc(100% - 64px);
-  `,
-  imageContainer: css`
-    flex: 1;
-    position: relative;
-
-    &:after {
-      background: linear-gradient(180deg, rgba(196, 196, 196, 0) 0%, rgba(127, 127, 127, 0.25) 100%);
-      bottom: 0;
-      content: '';
+    `,
+    checkbox: css`
       left: 0;
-      margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
+      margin: ${theme.spacing(1)};
       position: absolute;
-      right: 0;
       top: 0;
-    }
-  `,
-  imagePlaceholder: css`
-    align-items: center;
-    aspect-ratio: 4 / 3;
-    color: ${theme.colors.text.secondary};
-    display: flex;
-    justify-content: center;
-    margin: ${theme.spacing(1)} ${theme.spacing(4)} 0;
-    width: calc(100% - 64px);
-  `,
-  info: css`
-    align-items: center;
-    background-color: ${theme.colors.background.canvas};
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
-    display: flex;
-    height: ${theme.spacing(7)};
-    gap: ${theme.spacing(1)};
-    padding: 0 ${theme.spacing(2)};
-    z-index: 1;
-  `,
-  portal: css`
-    pointer-events: none;
-  `,
-  title: css`
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  `,
-});
+    `,
+    expandedView: css`
+      @keyframes expand {
+        0% {
+          transform: scale(${markerWidth / popperWidth});
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      animation: expand ${theme.transitions.duration.shortest}ms ease-in-out 0s 1 normal;
+      background-color: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
+    `,
+    image: css`
+      aspect-ratio: 4 / 3;
+      box-shadow: ${theme.shadows.z1};
+      margin: ${theme.spacing(1)} ${IMAGE_HORIZONTAL_MARGIN} 0;
+      width: calc(100% - (2 * ${IMAGE_HORIZONTAL_MARGIN}));
+    `,
+    imageContainer: css`
+      flex: 1;
+      position: relative;
+
+      &:after {
+        background: linear-gradient(180deg, rgba(196, 196, 196, 0) 0%, rgba(127, 127, 127, 0.25) 100%);
+        bottom: 0;
+        content: '';
+        left: 0;
+        margin: ${theme.spacing(1)} ${IMAGE_HORIZONTAL_MARGIN} 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+    `,
+    imagePlaceholder: css`
+      align-items: center;
+      aspect-ratio: 4 / 3;
+      color: ${theme.colors.text.secondary};
+      display: flex;
+      justify-content: center;
+      margin: ${theme.spacing(1)} ${IMAGE_HORIZONTAL_MARGIN} 0;
+      width: calc(100% - 64px);
+    `,
+    info: css`
+      align-items: center;
+      background-color: ${theme.colors.background.canvas};
+      border-bottom-left-radius: 4px;
+      border-bottom-right-radius: 4px;
+      display: flex;
+      height: ${theme.spacing(7)};
+      gap: ${theme.spacing(1)};
+      padding: 0 ${theme.spacing(2)};
+      z-index: 1;
+    `,
+    portal: css`
+      pointer-events: none;
+    `,
+    title: css`
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    `,
+  };
+};
