@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -55,6 +56,24 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pl
 	return s, nil
 }
 
+func forceHttpGet(settingsJson map[string]interface{}) bool {
+	methodInterface, exists := settingsJson["httpMethod"]
+	if !exists {
+		return false
+	}
+
+	method, ok := methodInterface.(string)
+	if !ok {
+		return false
+	}
+
+	if strings.ToLower(method) != "get" {
+		return false
+	}
+
+	return true
+}
+
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]interface{}{}
@@ -86,7 +105,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			}
 		}
 
-		client, err := createClient(settings.URL, httpCliOpts, httpClientProvider)
+		client, err := createClient(settings.URL, httpCliOpts, httpClientProvider, forceHttpGet(jsonData))
 		if err != nil {
 			return nil, err
 		}
@@ -124,9 +143,13 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return result, err
 }
 
-func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider) (apiv1.API, error) {
-	customMiddlewares := customQueryParametersMiddleware(plog)
-	httpOpts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
+func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider, forceHttpGet bool) (apiv1.API, error) {
+	customParamsMiddleware := customQueryParametersMiddleware(plog)
+	middlewares := []sdkhttpclient.Middleware{customParamsMiddleware}
+	if forceHttpGet {
+		middlewares = append(middlewares, forceHttpGetMiddleware(plog))
+	}
+	httpOpts.Middlewares = middlewares
 
 	roundTripper, err := clientProvider.GetTransport(httpOpts)
 	if err != nil {

@@ -69,6 +69,7 @@ func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID st
 		Actions:     s.actions,
 		Resource:    s.options.Resource,
 		ResourceIDs: []string{resourceID},
+		OnlyManaged: s.options.OnlyManaged,
 	})
 }
 

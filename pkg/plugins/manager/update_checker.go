@@ -20,7 +20,7 @@ type gcomPlugin struct {
 	Version string `json:"version"`
 }
 
-func (m *PluginManager) checkForUpdates() {
+func (m *PluginManager) checkForUpdates(ctx context.Context) {
 	if !m.cfg.CheckForUpdates {
 		return
 	}
@@ -52,7 +52,7 @@ func (m *PluginManager) checkForUpdates() {
 		return
 	}
 
-	for _, localP := range m.Plugins(context.TODO()) {
+	for _, localP := range m.Plugins(ctx) {
 		for _, gcomP := range gcomPlugins {
 			if gcomP.Slug == localP.ID {
 				localP.GrafanaComVersion = gcomP.Version

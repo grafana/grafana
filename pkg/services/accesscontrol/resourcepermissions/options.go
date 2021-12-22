@@ -9,6 +9,8 @@ type ResourceValidator func(ctx context.Context, orgID int64, resourceID string)
 type Options struct {
 	// Resource is the action and scope prefix that is generated
 	Resource string
+	// OnlyManaged will tell the service to return all permissions if set to false and only managed permissions if set to true
+	OnlyManaged bool
 	// ResourceValidator is a validator function that will be called before each assignment.
 	// If set to nil the validator will be skipped
 	ResourceValidator ResourceValidator

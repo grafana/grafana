@@ -30,9 +30,9 @@ load(
     'get_windows_steps',
     'benchmark_ldap_step',
     'frontend_metrics_step',
-    'publish_storybook_step',
+    'store_storybook_step',
     'upload_packages_step',
-    'publish_packages_step',
+    'store_packages_step',
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step'
@@ -62,8 +62,8 @@ def build_npm_packages_step(edition, ver_mode):
         'name': 'build-npm-packages',
         'image': build_image,
         'depends_on': [
-            # Has to run after publish-storybook since this step cleans the files publish-storybook depends on
-            'publish-storybook',
+            # Has to run after store-storybook since this step cleans the files publish-storybook depends on
+            'store-storybook',
         ],
         'commands': ['./scripts/build/build-npm-packages.sh ${DRONE_TAG}'],
     }
@@ -93,8 +93,8 @@ def retrieve_npm_packages_step(edition, ver_mode):
         'name': 'retrieve-npm-packages',
         'image': publish_image,
         'depends_on': [
-            # Has to run after publish-storybook since this step cleans the files publish-storybook depends on
-            'publish-storybook',
+            # Has to run after store-storybook since this step cleans the files publish-storybook depends on
+            'store-storybook',
         ],
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
@@ -181,7 +181,7 @@ def get_steps(edition, ver_mode):
         publish_steps.append(upload_cdn_step(edition=edition, ver_mode=ver_mode))
         publish_steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode))
     if should_publish:
-        publish_step = publish_storybook_step(edition=edition, ver_mode=ver_mode)
+        publish_step = store_storybook_step(edition=edition, ver_mode=ver_mode)
         build_npm_step = build_npm_packages_step(edition=edition, ver_mode=ver_mode)
         store_npm_step = store_npm_packages_step(edition=edition, ver_mode=ver_mode)
         if publish_step:
@@ -263,8 +263,8 @@ def release_pipelines(ver_mode='release', trigger=None):
     pipelines = oss_pipelines + enterprise_pipelines
     if should_publish:
         steps = [
-            publish_packages_step(edition='oss', ver_mode=ver_mode),
-            publish_packages_step(edition='enterprise', ver_mode=ver_mode),
+            store_packages_step(edition='oss', ver_mode=ver_mode),
+            store_packages_step(edition='enterprise', ver_mode=ver_mode),
         ]
         publish_pipeline = pipeline(
             name='publish-{}'.format(ver_mode), trigger=trigger, edition='oss',
@@ -290,11 +290,11 @@ def test_release_pipelines():
     oss_pipelines = get_oss_pipelines(ver_mode=ver_mode, trigger=trigger)
     enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger)
 
-    publish_cmd = './bin/grabpl publish-packages --edition {{}} --dry-run {}'.format(test_release_ver)
+    publish_cmd = './bin/grabpl store-packages --edition {{}} --dry-run {}'.format(test_release_ver)
 
     steps = [
-        publish_packages_step(edition='oss', ver_mode=ver_mode),
-        publish_packages_step(edition='enterprise', ver_mode=ver_mode),
+        store_packages_step(edition='oss', ver_mode=ver_mode),
+        store_packages_step(edition='enterprise', ver_mode=ver_mode),
     ]
 
     publish_pipeline = pipeline(

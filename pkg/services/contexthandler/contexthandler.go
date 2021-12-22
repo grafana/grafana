@@ -399,7 +399,7 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 	span, _ := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithRenderAuth")
 	defer span.Finish()
 
-	renderUser, exists := h.RenderService.GetRenderUser(key)
+	renderUser, exists := h.RenderService.GetRenderUser(reqContext.Req.Context(), key)
 	if !exists {
 		reqContext.JsonApiErr(401, "Invalid Render Key", nil)
 		return true

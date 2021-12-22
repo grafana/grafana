@@ -920,7 +920,7 @@ func (g *GrafanaLive) handleStreamScope(u *models.SignedInUser, namespace string
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	ds, err := g.DataSourceCache.GetDatasourceByUID(namespace, user, false)
+	ds, err := g.DataSourceCache.GetDatasourceByUID(context.TODO(), namespace, user, false)
 	if err != nil {
 		return nil, fmt.Errorf("error getting datasource: %w", err)
 	}
