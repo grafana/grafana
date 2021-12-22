@@ -5554,25 +5554,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@microsoft/api-extractor@npm:7.18.16":
-  version: 7.18.16
-  resolution: "@microsoft/api-extractor@npm:7.18.16"
+"@microsoft/api-extractor@npm:7.19.2":
+  version: 7.19.2
+  resolution: "@microsoft/api-extractor@npm:7.19.2"
   dependencies:
-    "@microsoft/api-extractor-model": 7.13.13
+    "@microsoft/api-extractor-model": 7.15.1
     "@microsoft/tsdoc": 0.13.2
     "@microsoft/tsdoc-config": ~0.15.2
-    "@rushstack/node-core-library": 3.42.3
-    "@rushstack/rig-package": 0.3.3
-    "@rushstack/ts-command-line": 4.10.2
+    "@rushstack/node-core-library": 3.44.2
+    "@rushstack/rig-package": 0.3.6
+    "@rushstack/ts-command-line": 4.10.5
     colors: ~1.2.1
     lodash: ~4.17.15
     resolve: ~1.17.0
     semver: ~7.3.0
     source-map: ~0.6.1
-    typescript: ~4.4.2
+    typescript: ~4.5.2
   bin:
     api-extractor: bin/api-extractor
-  checksum: a4eed98bb325517f3bc0bb51fa6a01f4c635624bad01d3c0310734d3faa26baa44bd21b42ac7b2d55839bb5b7a5156f5c96f113cfc12f0716fc8b55140d525bf
+  checksum: 5696b1a02f9edace32c90f117256297e15ff841ffa7fe755d6600609c46079475669ed0fdcf973362186ef9668fd9372e0381f9f7439b270bc2df8ca718d2925
   languageName: node
   linkType: hard
 
@@ -19443,7 +19443,7 @@ __metadata:
     "@lingui/core": 3.12.1
     "@lingui/macro": 3.12.1
     "@lingui/react": 3.12.1
-    "@microsoft/api-extractor": 7.18.16
+    "@microsoft/api-extractor": 7.19.2
     "@opentelemetry/api": 1.0.2
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.0.0
@@ -34287,13 +34287,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:~4.4.2":
-  version: 4.4.4
-  resolution: "typescript@npm:4.4.4"
+"typescript@npm:~4.5.2":
+  version: 4.5.4
+  resolution: "typescript@npm:4.5.4"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 89ecb8436bb48ef5594d49289f5f89103071716b6e4844278f4fb3362856e31203e187a9c76d205c3f0b674d221a058fd28310dbcbcf5d95e9a57229bb5203f1
+  checksum: 59f3243f9cd6fe3161e6150ff6bf795fc843b4234a655dbd938a310515e0d61afd1ac942799e7415e4334255e41c2c49b7dd5d9fd38a17acd25a6779ca7e0961
   languageName: node
   linkType: hard
 
@@ -34317,13 +34317,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@~4.4.2#~builtin<compat/typescript>":
-  version: 4.4.4
-  resolution: "typescript@patch:typescript@npm%3A4.4.4#~builtin<compat/typescript>::version=4.4.4&hash=493e53"
+"typescript@patch:typescript@~4.5.2#~builtin<compat/typescript>":
+  version: 4.5.4
+  resolution: "typescript@patch:typescript@npm%3A4.5.4#~builtin<compat/typescript>::version=4.5.4&hash=493e53"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: bd629ad0da4a15d79aaad56baf3ee7d96f6a181760d430ae77f8c5325df7bffd9edee57544a3970e3651e8b796fe03a5838a7eb39c6d46cc3866c0b23d36a0dd
+  checksum: 2e488dde7d2c4a2fa2e79cf2470600f8ce81bc0563c276b72df8ff412d74456ae532ba824650ae936ce207440c79720ddcfaa25e3cb4477572b8534fa4e34d49
   languageName: node
   linkType: hard
 
