@@ -327,7 +327,7 @@ export function prepareBarChartDisplayValues(
   let timeField: Field | undefined = undefined;
   let fields: Field[] = [];
   for (const field of frame.fields) {
-    if (field === xField) {
+    if (field === xField || field.config.custom?.hideFrom?.viz) {
       continue;
     }
 
@@ -397,15 +397,6 @@ export function prepareBarChartDisplayValues(
       warn: 'No numeric fields found',
     } as BarChartDisplayValues;
   }
-
-  // Pick a shorter date format unless configured explicitly
-  // if (firstField.type === FieldType.time && !firstField.config.unit) {
-  //   firstField.config.unit = 'time:YYYY-MM-DD';
-  //   firstField.display = getDisplayProcessor({
-  //     field: firstField,
-  //     theme,
-  //   });
-  // }
 
   // Show the first number value
   if (colorByField && fields.length > 1) {

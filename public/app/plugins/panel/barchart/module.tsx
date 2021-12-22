@@ -3,6 +3,8 @@ import {
   FieldColorModeId,
   FieldConfigProperty,
   FieldType,
+  getFieldColorModeForField,
+  getFieldDisplayName,
   PanelPlugin,
   VizOrientation,
 } from '@grafana/data';
@@ -11,6 +13,8 @@ import { StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from 'app/plugins/panel/barchart/types';
 import { BarChartSuggestionsSupplier } from './suggestions';
+import { prepareBarChartDisplayValues } from './utils';
+import { config } from '@grafana/runtime';
 
 export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
@@ -62,13 +66,20 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
       commonOptionsBuilder.addHideFrom(builder);
     },
   })
-  .setPanelOptions((builder) => {
+  .setPanelOptions((builder, context) => {
+    const disp = prepareBarChartDisplayValues(context.data, config.theme2, context.options ?? ({} as any));
+    let xaxisPlaceholder = 'First string or time field';
+    if (disp.display?.fields?.length) {
+      const first = disp.display.fields[0];
+      xaxisPlaceholder += ` (${getFieldDisplayName(first, disp.display)})`;
+    }
+
     builder
       .addFieldNamePicker({
         path: 'xField',
         name: 'X Axis',
         settings: {
-          placeholderText: 'First string or time field',
+          placeholderText: xaxisPlaceholder,
         },
       })
       .addRadio({
@@ -175,12 +186,22 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           max: 0.5,
           step: 0.05,
         },
-      })
-      .addFieldNamePicker({
-        path: 'colorByField',
-        name: 'Color by field',
-        description: 'Use the color value for a sibling field to color each bar value.',
       });
+
+    let colorDescr = 'Use the color value for a sibling field to color each bar value.';
+    if (disp.colorByField) {
+      const mode = getFieldColorModeForField(disp.colorByField);
+      if (mode.isByValue) {
+        colorDescr += ' (' + mode.id + ')';
+      } else {
+        colorDescr += '  NOTE not by value!';
+      }
+    }
+    builder.addFieldNamePicker({
+      path: 'colorByField',
+      name: 'Color by field',
+      description: colorDescr,
+    });
 
     commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
