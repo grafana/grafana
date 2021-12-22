@@ -106,7 +106,7 @@ func TestApi_getDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _ := setupTestEnvironment(t, tt.permissions, testOptions)
+			service, _ := setupTestEnvironment(t, tt.permissions, tt.options)
 			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
 
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/description", tt.options.Resource), nil)
