@@ -3,6 +3,7 @@ import { useLocalStorage } from 'react-use';
 import { css } from '@emotion/css';
 import { useTheme2, CustomScrollbar, stylesFactory, IconButton } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
@@ -19,7 +20,8 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const [showPreviews, setShowPreviews] = useLocalStorage<boolean>(PREVIEWS_LOCAL_STORAGE_KEY, true);
+  const previewsEnabled = config.featureToggles.dashboardPreviews;
+  const [showPreviews, setShowPreviews] = useLocalStorage<boolean>(PREVIEWS_LOCAL_STORAGE_KEY, previewsEnabled);
   const onShowPreviewsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setShowPreviews(event.target.checked);
   };
