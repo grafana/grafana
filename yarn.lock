@@ -3833,7 +3833,7 @@ __metadata:
     expose-loader: 3.1.0
     hoist-non-react-statics: 3.3.2
     immutable: 4.0.0
-    is-hotkey: 0.1.6
+    is-hotkey: 0.2.0
     jquery: 3.5.1
     lodash: 4.17.21
     memoize-one: 6.0.0
@@ -21321,10 +21321,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-hotkey@npm:0.1.6":
-  version: 0.1.6
-  resolution: "is-hotkey@npm:0.1.6"
-  checksum: 7c8fb00bf6789325e97df6150ad64bc1b218b07d42551be8903f7bf609eecfb597ae17692945ecb188f903aea06e73bee7e80d9f226e3deca54dbbb9d77f83f8
+"is-hotkey@npm:0.2.0":
+  version: 0.2.0
+  resolution: "is-hotkey@npm:0.2.0"
+  checksum: 97d295cfd8c3eb2c9b218daee5bff0ddaf47210930e3eb1eff36d2e6ad74854028203c640f35ea2d183d0cba94ac4c4bcd291925bc3a343d8a4c7d2c5ab3e2a6
   languageName: node
   linkType: hard
 
