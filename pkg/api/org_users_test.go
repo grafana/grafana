@@ -303,7 +303,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 		name                string
 		enableAccessControl bool
 		expectedCode        int
-		expectedMetadata    accesscontrol.Metadata
+		expectedMetadata    map[string]bool
 		user                models.SignedInUser
 		targetOrg           int64
 	}
