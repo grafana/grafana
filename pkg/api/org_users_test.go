@@ -297,6 +297,63 @@ func setupOrgUsersDBForAccessControlTests(t *testing.T, db sqlstore.SQLStore) {
 	require.NoError(t, err)
 }
 
+func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
+	url := "/api/orgs/%v/users?accesscontrol=true"
+	type testCase struct {
+		name                string
+		enableAccessControl bool
+		expectedCode        int
+		expectedMetadata    map[string]bool
+		user                models.SignedInUser
+		targetOrg           int64
+	}
+
+	tests := []testCase{
+		{
+			name:                "access control metadata not requested",
+			enableAccessControl: false,
+			expectedCode:        http.StatusOK,
+			expectedMetadata:    nil,
+			user:                testServerAdminViewer,
+			targetOrg:           testServerAdminViewer.OrgId,
+		},
+		{
+			name:                "access control metadata requested",
+			enableAccessControl: true,
+			expectedCode:        http.StatusOK,
+			expectedMetadata: map[string]bool{
+				"org.users.role:update": true,
+				"org.users:add":         true,
+				"org.users:read":        true,
+				"org.users:remove":      true},
+			user:      testServerAdminViewer,
+			targetOrg: testServerAdminViewer.OrgId,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			sc := setupHTTPServer(t, false, tc.enableAccessControl)
+			setupOrgUsersDBForAccessControlTests(t, *sc.db)
+			setInitCtxSignedInUser(sc.initCtx, tc.user)
+
+			// Perform test
+			response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, tc.targetOrg), nil, t)
+			require.Equal(t, tc.expectedCode, response.Code)
+
+			var userList []*models.OrgUserDTO
+			err := json.NewDecoder(response.Body).Decode(&userList)
+			require.NoError(t, err)
+
+			if tc.expectedMetadata != nil {
+				assert.Equal(t, tc.expectedMetadata, userList[0].AccessControl)
+			} else {
+				assert.Nil(t, userList[0].AccessControl)
+			}
+		})
+	}
+}
+
 func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	url := "/api/orgs/%v/users/"
 	type testCase struct {
