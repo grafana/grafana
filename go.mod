@@ -27,7 +27,7 @@ require (
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v1.1.0
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
-	github.com/centrifugal/centrifuge v0.19.0
+	github.com/centrifugal/centrifuge v0.19.1-0.20211222140453-34c5ea4583cc
 	github.com/cortexproject/cortex v1.10.1-0.20211014125347-85c378182d0d
 	github.com/crewjam/saml v0.4.6-0.20210521115923-29c6295245bd
 	github.com/davecgh/go-spew v1.1.1
@@ -118,7 +118,6 @@ require (
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.62.0
 	gopkg.in/ldap.v3 v3.1.0
-	gopkg.in/macaron.v1 v1.4.0
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -150,7 +149,7 @@ require (
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20200112174442-28bbd4740fee // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
-	github.com/centrifugal/protocol v0.7.6 // indirect
+	github.com/centrifugal/protocol v0.7.7-0.20211220095654-956aec57883a // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
@@ -164,7 +163,7 @@ require (
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/emicklei/proto v1.6.15 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
-	github.com/go-kit/log v0.1.0 // indirect
+	github.com/go-kit/log v0.1.0
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-openapi/analysis v0.20.1 // indirect
 	github.com/go-openapi/errors v0.20.0 // indirect
