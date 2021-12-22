@@ -139,7 +139,7 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
         name: input.name,
         type: input.type,
         pluginId: input.pluginId,
-        value: dataSource.name,
+        value: dataSource.uid,
       });
     });
 

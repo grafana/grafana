@@ -124,7 +124,7 @@ export const ImportDashboardForm: FC<Props> = ({
                     noDefault={true}
                     placeholder={input.info}
                     pluginId={input.pluginId}
-                    current={current[index]?.name}
+                    current={current[index]?.uid}
                   />
                 )}
                 control={control}
