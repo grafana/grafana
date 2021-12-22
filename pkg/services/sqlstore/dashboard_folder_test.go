@@ -419,7 +419,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					err := sqlStore.SearchDashboards(context.Background(), &query)
 					require.NoError(t, err)
 
-					require.Equal(t, len(query.Result), 0)
+					require.Equal(t, 0, len(query.Result))
 				})
 
 				t.Run("should have view access to folders with default ACL", func(t *testing.T) {
@@ -451,8 +451,8 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					err = sqlStore.SearchDashboards(context.Background(), &query)
 					require.NoError(t, err)
 
-					require.Equal(t, len(query.Result), 1)
-					require.Equal(t, query.Result[0].ID, folder1.Id)
+					require.Equal(t, 1, len(query.Result))
+					require.Equal(t, folder1.Id, query.Result[0].ID)
 				})
 
 				t.Run("should not have edit permission in folders", func(t *testing.T) {
