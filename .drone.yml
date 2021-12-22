@@ -276,7 +276,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0-alpine
+  image: google/cloud-sdk:367.0.0
   name: e2e_tests_artifacts_upload
 - commands:
   - yarn storybook:build
@@ -735,7 +735,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0-alpine
+  image: google/cloud-sdk:367.0.0
   name: e2e_tests_artifacts_upload
 - commands:
   - yarn storybook:build
@@ -1446,7 +1446,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0-alpine
+  image: google/cloud-sdk:367.0.0
   name: e2e_tests_artifacts_upload
 - commands:
   - ls dist/*.tar.gz*
@@ -1995,7 +1995,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0-alpine
+  image: google/cloud-sdk:367.0.0
   name: e2e_tests_artifacts_upload
 - commands:
   - ls dist/*.tar.gz*
@@ -2520,7 +2520,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0-alpine
+  image: google/cloud-sdk:367.0.0
   name: e2e_tests_artifacts_upload
 - commands:
   - ls dist/*.tar.gz*
@@ -3043,7 +3043,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0-alpine
+  image: google/cloud-sdk:367.0.0
   name: e2e_tests_artifacts_upload
 - commands:
   - ls dist/*.tar.gz*
@@ -3671,7 +3671,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0-alpine
+  image: google/cloud-sdk:367.0.0
   name: e2e_tests_artifacts_upload
 - commands:
   - ls dist/*.tar.gz*
@@ -4169,7 +4169,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0-alpine
+  image: google/cloud-sdk:367.0.0
   name: e2e_tests_artifacts_upload
 - commands:
   - ls dist/*.tar.gz*
@@ -4539,6 +4539,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 5a31dd3fb1954c0d6af1a6c769cfb12d648deb5b2ddb124223ba0d39383c9fd5
+hmac: dd4acd4d9a3c87a66abc68a0fc815cf08d334507f9f5df7265a186df1a8410a9
 
 ...
