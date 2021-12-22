@@ -56,7 +56,10 @@ export interface BarChartDisplayValues {
   aligned: DataFrame;
 
   /** The fields we can display, first field is X axis */
-  display: DataFrame;
+  viz: DataFrame;
+
+  /** all viz fields without legend */
+  legend: DataFrame;
 
   /** Potentialy color by a field value */
   colorByField?: Field;

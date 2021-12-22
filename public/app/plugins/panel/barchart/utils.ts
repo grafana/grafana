@@ -102,7 +102,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     showValue,
     legend,
     xSpacing: xTickLabelSpacing,
-    xTimeAuto: frame.fields[0].type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
+    xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
   };
 
   const config = getConfig(opts, theme);
@@ -422,9 +422,13 @@ export function prepareBarChartDisplayValues(
   return {
     aligned: frame,
     colorByField,
-    display: {
-      fields,
+    viz: {
       length: firstField.values.length,
+      fields: fields, // ??? fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
+    },
+    legend: {
+      length: firstField.values.length,
+      fields: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.legend)),
     },
   };
 }

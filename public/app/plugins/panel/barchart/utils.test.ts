@@ -159,7 +159,7 @@ describe('BarChart utils', () => {
       });
       const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as any);
       expect(result.warn).toEqual('Bar charts requires a string or time field');
-      expect(result.display).toBeUndefined();
+      expect(result.viz).toBeUndefined();
     });
 
     it('will warn when there are no numeric fields in the response', () => {
@@ -171,7 +171,7 @@ describe('BarChart utils', () => {
       });
       const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as any);
       expect(result.warn).toEqual('No numeric fields found');
-      expect(result.display).toBeUndefined();
+      expect(result.viz).toBeUndefined();
     });
 
     it('will convert NaN and Infinty to nulls', () => {
@@ -183,7 +183,7 @@ describe('BarChart utils', () => {
       });
       const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as any);
 
-      const field = result.display.fields[1];
+      const field = result.viz.fields[1];
       expect(field!.values.toArray()).toMatchInlineSnapshot(`
       Array [
         -10,
@@ -208,18 +208,18 @@ describe('BarChart utils', () => {
       const resultAsc = prepareBarChartDisplayValues([frame], createTheme(), {
         legend: { sortBy: 'Min', sortDesc: false },
       } as any);
-      expect(resultAsc.display.fields[0].type).toBe(FieldType.string);
-      expect(resultAsc.display.fields[1].name).toBe('a');
-      expect(resultAsc.display.fields[2].name).toBe('c');
-      expect(resultAsc.display.fields[3].name).toBe('b');
+      expect(resultAsc.viz.fields[0].type).toBe(FieldType.string);
+      expect(resultAsc.viz.fields[1].name).toBe('a');
+      expect(resultAsc.viz.fields[2].name).toBe('c');
+      expect(resultAsc.viz.fields[3].name).toBe('b');
 
       const resultDesc = prepareBarChartDisplayValues([frame], createTheme(), {
         legend: { sortBy: 'Min', sortDesc: true },
       } as any);
-      expect(resultDesc.display.fields[0].type).toBe(FieldType.string);
-      expect(resultDesc.display.fields[1].name).toBe('b');
-      expect(resultDesc.display.fields[2].name).toBe('c');
-      expect(resultDesc.display.fields[3].name).toBe('a');
+      expect(resultDesc.viz.fields[0].type).toBe(FieldType.string);
+      expect(resultDesc.viz.fields[1].name).toBe('b');
+      expect(resultDesc.viz.fields[2].name).toBe('c');
+      expect(resultDesc.viz.fields[3].name).toBe('a');
     });
   });
 });

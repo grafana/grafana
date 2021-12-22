@@ -1,20 +1,56 @@
 import React, { useMemo, useRef } from 'react';
-import { TooltipDisplayMode, StackingMode } from '@grafana/schema';
+import { TooltipDisplayMode, StackingMode, LegendDisplayMode } from '@grafana/schema';
 import {
   compareDataFrameStructures,
   DataFrame,
+  FieldType,
   getFieldDisplayName,
   PanelProps,
   TimeRange,
   VizOrientation,
 } from '@grafana/data';
-import { measureText, TooltipPlugin, UPLOT_AXIS_FONT_SIZE, useTheme2 } from '@grafana/ui';
+import {
+  GraphNG,
+  GraphNGProps,
+  measureText,
+  PlotLegend,
+  TooltipPlugin,
+  UPlotConfigBuilder,
+  UPLOT_AXIS_FONT_SIZE,
+  usePanelContext,
+  useTheme2,
+  VizLayout,
+  VizLegend,
+} from '@grafana/ui';
 import { BarChartOptions } from './types';
-import { BarChart } from './BarChart';
-import { prepareBarChartDisplayValues } from './utils';
+import { isLegendOrdered, prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { DataHoverView } from '../geomap/components/DataHoverView';
-import { usePrevious } from 'react-use';
+import { getFieldLegendItem } from '../state-timeline/utils';
+import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
+
+/**
+ * @alpha
+ */
+export interface BarChartProps
+  extends BarChartOptions,
+    Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'> {}
+
+const propsToDiff: Array<string | PropDiffFn> = [
+  'orientation',
+  'barWidth',
+  'barRadius',
+  'xTickLabelRotation',
+  'xTickLabelMaxLength',
+  'xTickLabelSpacing',
+  'groupWidth',
+  'stacking',
+  'showValue',
+  'xField',
+  'colorField',
+  'legend',
+  (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
+];
 
 interface Props extends PanelProps<BarChartOptions> {}
 
@@ -23,24 +59,25 @@ interface Props extends PanelProps<BarChartOptions> {}
  */
 export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone, id }) => {
   const theme = useTheme2();
+  const { eventBus } = usePanelContext();
 
+  const frame0Ref = useRef<DataFrame>();
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
-  const prevInfo = usePrevious(info);
   const structureRef = useRef(10000);
   const structureRev = useMemo(() => {
-    const f0 = info.display;
-    const f1 = prevInfo?.display;
+    const f0 = info.viz;
+    const f1 = frame0Ref.current;
     if (!(f0 && f1 && compareDataFrameStructures(f0, f1, true))) {
       structureRef.current++;
     }
+    frame0Ref.current = f0;
     return (data.structureRev ?? 0) + structureRef.current;
-  }, [info, prevInfo, data.structureRev]);
+  }, [info, data.structureRev]);
 
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
       return width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;
     }
-
     return options.orientation;
   }, [width, height, options.orientation]);
 
@@ -69,7 +106,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     return options.tooltip;
   }, [options.tooltip, options.stacking]);
 
-  if (!info.display) {
+  if (!info.viz?.fields.length) {
     return <PanelDataErrorView panelId={id} data={data} message={info.warn} needsNumberField={true} />;
   }
 
@@ -83,18 +120,104 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     return <DataHoverView data={info.aligned} rowIndex={datapointIdx} columnIndex={seriesIdx} />;
   };
 
+  const renderLegend = (config: UPlotConfigBuilder) => {
+    const { legend } = options;
+    if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
+      return null;
+    }
+
+    if (info.colorByField) {
+      const items = getFieldLegendItem([info.colorByField], theme);
+      if (items?.length) {
+        return (
+          <VizLayout.Legend placement={legend.placement}>
+            <VizLegend placement={legend.placement} items={items} displayMode={legend.displayMode} />
+          </VizLayout.Legend>
+        );
+      }
+    }
+
+    return <PlotLegend data={[info.legend]} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
+  };
+
+  const rawValue = (seriesIdx: number, valueIdx: number) => {
+    // When sorted by legend state.seriesIndex is not changed and is not equal to the sorted index of the field
+    if (isLegendOrdered(options.legend)) {
+      return frame0Ref.current!.fields[seriesIdx].values.get(valueIdx);
+    }
+
+    let field = frame0Ref.current!.fields.find(
+      (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIdx - 1
+    );
+    return field!.values.get(valueIdx);
+  };
+
+  // Color by value
+  let getColor: ((seriesIdx: number, valueIdx: number) => string) | undefined = undefined;
+
+  let fillOpacity = 1;
+
+  if (info.colorByField) {
+    const colorByField = info.colorByField;
+    const disp = colorByField.display!;
+    fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100;
+    // gradientMode? ignore?
+    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByField.values.get(valueIdx)).color!;
+  }
+
+  const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
+    const {
+      barWidth,
+      barRadius = 0,
+      showValue,
+      groupWidth,
+      stacking,
+      legend,
+      tooltip,
+      text,
+      xTickLabelRotation,
+      xTickLabelSpacing,
+    } = options;
+
+    return preparePlotConfigBuilder({
+      frame: alignedFrame,
+      getTimeRange,
+      theme,
+      timeZone,
+      eventBus,
+      orientation,
+      barWidth,
+      barRadius,
+      showValue,
+      groupWidth,
+      xTickLabelRotation,
+      xTickLabelMaxLength,
+      xTickLabelSpacing,
+      stacking,
+      legend,
+      tooltip,
+      text,
+      rawValue,
+      getColor,
+      fillOpacity,
+      allFrames: [info.viz],
+    });
+  };
+
   return (
-    <BarChart
-      frames={[info.display]}
-      data={info}
+    <GraphNG
+      theme={theme}
+      frames={[info.viz]}
+      prepConfig={prepConfig}
+      propsToDiff={propsToDiff}
+      preparePlotFrame={(f) => f[0]} // already processed in by the panel above!
+      renderLegend={renderLegend}
+      legend={options.legend}
       timeZone={timeZone}
       timeRange={({ from: 1, to: 1 } as unknown) as TimeRange} // HACK
       structureRev={structureRev}
       width={width}
       height={height}
-      {...options}
-      orientation={orientation}
-      xTickLabelMaxLength={xTickLabelMaxLength}
     >
       {(config, alignedFrame) => {
         return (
@@ -107,6 +230,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
           />
         );
       }}
-    </BarChart>
+    </GraphNG>
   );
 };
