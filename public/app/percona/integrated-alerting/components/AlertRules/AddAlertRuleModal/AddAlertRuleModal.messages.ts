@@ -37,4 +37,5 @@ export const Messages = {
   activateSwitch: 'Activate',
   templateExpression: 'Template Expression',
   ruleAlert: 'Rule Alert',
+  advanced: 'Advanced details',
 };

@@ -32,6 +32,7 @@ import { AlertRuleTemplateService } from '../../AlertRuleTemplate/AlertRuleTempl
 import { Template, TemplateParamType } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
 import { NotificationChannelService } from '../../NotificationChannel/NotificationChannel.service';
 import { appEvents } from 'app/core/core';
+import { AdvancedRuleSection } from './AdvancedRuleSection/AdvancedRuleSection';
 import { AlertRuleParamField } from '../AlertRuleParamField';
 
 const { required } = validators;
@@ -217,27 +218,23 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
               )}
             </Field>
 
-            {currentTemplate && (
-              <>
-                <div data-testid="template-expression" className={styles.templateParsedField}>
-                  <Label label={Messages.templateExpression} />
-                  <pre>{currentTemplate.expr}</pre>
-                </div>
-                {currentTemplate.annotations?.summary && (
-                  <div data-testid="template-alert" className={styles.templateParsedField}>
-                    <Label label={Messages.ruleAlert} />
-                    <pre>{currentTemplate.annotations?.summary}</pre>
-                  </div>
-                )}
-              </>
+            {currentTemplate ? (
+              <AdvancedRuleSection expression={currentTemplate.expr} summary={currentTemplate.annotations?.summary} />
+            ) : (
+              alertRule && (
+                <AdvancedRuleSection
+                  expression={alertRule.rawValues.expr_template}
+                  summary={alertRule.rawValues.annotations?.summary}
+                />
+              )
             )}
 
             <Field name="enabled" type="checkbox" defaultValue={true}>
               {({ input }) => (
-                <>
+                <div className={styles.toogleField}>
                   <Label label={Messages.activateSwitch} dataTestId="enabled-toggle-label" />
                   <Switch {...input} value={input.checked} data-testid="enabled-toggle-input" />
-                </>
+                </div>
               )}
             </Field>
 

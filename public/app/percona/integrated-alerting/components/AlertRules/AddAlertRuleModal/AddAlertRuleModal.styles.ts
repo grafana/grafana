@@ -8,7 +8,7 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
   form: css`
     width: 100%;
   `,
-  templateParsedField: css`
-    margin-bottom: ${spacing.formInputMargin};
+  toogleField: css`
+    margin-top: ${spacing.formInputMargin};
   `,
 });
