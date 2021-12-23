@@ -14,6 +14,7 @@ import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig, defaultP
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { prepareBarChartDisplayValues } from './utils';
 import { config } from '@grafana/runtime';
+import { addPointAndLineStyles } from '../timeseries/config';
 
 export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
@@ -61,6 +62,8 @@ export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChar
           },
         });
 
+      // Support points and lines as override options
+      addPointAndLineStyles(cfg, builder, true, true);
       commonOptionsBuilder.addAxisConfig(builder, cfg, false);
       commonOptionsBuilder.addHideFrom(builder);
     },
