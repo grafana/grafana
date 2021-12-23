@@ -53,6 +53,8 @@ func TestMatrixToDataFrames(t *testing.T) {
 }
 
 func loadTestData(path string, res interface{}) error {
+	// Ignore gosec warning G304 since it's a test
+	// nolint:gosec
 	bytes, err := ioutil.ReadFile("./testdata/" + path)
 	if err != nil {
 		return err

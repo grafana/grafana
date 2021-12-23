@@ -572,7 +572,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
-		require.Equal(t, res[0].Name, "legend Application")
+		require.Equal(t, res[0].Name, "")
 		require.Len(t, res[0].Fields, 2)
 		require.Len(t, res[0].Fields[0].Labels, 0)
 		require.Equal(t, res[0].Fields[0].Name, "Time")
