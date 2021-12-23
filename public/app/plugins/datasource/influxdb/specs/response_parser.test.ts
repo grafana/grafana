@@ -209,7 +209,6 @@ describe('influxdb response parser', () => {
     it('when there are no duplicates', () => {
       const query = new InfluxQueryModel({
         refId: 'A',
-        measurement: 'cpu',
         select: [[{ type: 'field', params: ['usage_iowait'] }], [{ type: 'field', params: ['usage_idle'] }]],
       });
 
@@ -223,7 +222,6 @@ describe('influxdb response parser', () => {
     it('when there are duplicates', () => {
       const query = new InfluxQueryModel({
         refId: 'A',
-        measurement: 'cpu',
         select: [
           [{ type: 'field', params: ['usage_iowait'] }],
           [{ type: 'field', params: ['usage_iowait'] }],
@@ -244,7 +242,6 @@ describe('influxdb response parser', () => {
 
   describe('Should get the table', () => {
     const dataFrame = new MutableDataFrame({
-      refId: 'A',
       fields: [
         { name: 'time', type: FieldType.time, values: [1640257340000] },
         { name: 'value', type: FieldType.number, values: [3234232323] },
@@ -253,7 +250,6 @@ describe('influxdb response parser', () => {
 
     const query = new InfluxQueryModel({
       refId: 'A',
-      measurement: 'cpu',
       select: [[{ type: 'field', params: ['usage_iowait'] }], [{ type: 'field', params: ['usage_idle'] }]],
     });
 
