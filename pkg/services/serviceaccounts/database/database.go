@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -61,8 +62,35 @@ func deleteServiceAccountInTransaction(sess *sqlstore.DBSession, orgID, serviceA
 	return nil
 }
 
-func (s *ServiceAccountsStoreImpl) HasMigrated(ctx context.Context, orgID int64) error {
-	return s.sqlStore.HasMigratedServiceAccounts(ctx, orgID)
+func (s *ServiceAccountsStoreImpl) HasMigrated(ctx context.Context, orgID int64) (bool, error) {
+	// performace: might want to check how to implement a cache here
+	err := s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Try and find the user by login first.
+		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
+		org := &models.Org{Id: orgID}
+		has, err := sess.Get(org)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return errors.New("org not found")
+		}
+		rawSQL := "SELECT count(*) FROM migration_log WHERE migration_id = ?"
+		/* queryWithWildcards := "service accounts org:" + fmt.Sprint(orgID) */
+		queryWithWildcards := "Update user table charset"
+		results, err := sess.SQL(rawSQL, queryWithWildcards).Count()
+		if err != nil {
+			return err
+		}
+		if results != 1 {
+			return errors.New("invalid result set")
+		}
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) error {
@@ -84,6 +112,7 @@ func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) e
 				}
 				s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", sa.Id)
 			}
+			// TODO: create migration_log in the migration_log table
 		}()
 	}
 	return nil

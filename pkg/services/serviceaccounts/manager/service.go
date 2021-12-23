@@ -60,11 +60,12 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
 }
 
-func (sa *ServiceAccountsService) HasMigrated(ctx context.Context, ordID int64) bool {
-	err := sa.store.HasMigrated(ctx, ordID)
+func (sa *ServiceAccountsService) HasServiceAccountsMigrated(ctx context.Context, orgID int64) bool {
+	sa.log.Info("Checking if service accounts have been migrated")
+	migrated, err := sa.store.HasMigrated(ctx, orgID)
 	if err != nil {
-		sa.log.Error("failed to check if service accounts have been migrated", "err", err)
+		sa.log.Error("Failed to check if service accounts have been migrated", "org_id", orgID, "error", err)
 		return false
 	}
-	return true
+	return migrated
 }

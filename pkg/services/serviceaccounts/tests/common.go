@@ -35,9 +35,9 @@ func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, saForm *s
 
 func (s *ServiceAccountMock) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	return nil
-
 }
-func (s *ServiceAccountMock) HasMigrated(ctx context.Context, orgID int64) bool {
+
+func (s *ServiceAccountMock) HasServiceAccountsMigrated(ctx context.Context, orgID int64) bool {
 	return false
 }
 
@@ -78,10 +78,10 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) HasMigrated(ctx context.Context, orgID int64) error {
+func (s *ServiceAccountsStoreMock) HasMigrated(ctx context.Context, orgID int64) (bool, error) {
 	// now we can test that the mock has these calls when we call the function
 	s.Calls.HasMigratedServiceAccounts = append(s.Calls.DeleteServiceAccount, []interface{}{ctx, orgID})
-	return nil
+	return false, nil
 }
 func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
 	s.Calls.DeleteServiceAccount = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})

@@ -45,8 +45,11 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
+		// create issue: for the refactoring of the service account api structure
+		// FIXME:
+		// CHECK: insure that each created serviceaccounts has the previous permission as the linked apikey
 		serviceAccountsRoute.Get("/upgrade", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.UpgradeServiceAccounts))
-		serviceAccountsRoute.Get("/upgraded", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.UpgradeServiceAccounts))
+		// FIXME: remove the scope , scopeID from the Evapermission, only use action
 		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.CreateServiceAccount))
 	})
 }
@@ -75,14 +78,6 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) resp
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
 	return response.Success("service account deleted")
-}
-
-func (api *ServiceAccountsAPI) HasMigratedServiceAccounts(ctx *models.ReqContext, orgID int64) response.Response {
-	if err := api.store.HasMigrated(ctx.Req.Context(), orgID); err == nil {
-		return response.Success("service accounts has migrated")
-	} else {
-		return response.Error(500, "Internal server error", err)
-	}
 }
 
 func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) response.Response {

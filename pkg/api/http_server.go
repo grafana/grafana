@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -111,6 +112,7 @@ type HTTPServer struct {
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
 	queryDataService          *query.Service
+	serviceAccountsService    serviceaccounts.Service
 }
 
 type ServerOptions struct {
@@ -135,7 +137,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	quotaService *quota.QuotaService, socialService social.Service, tracingService tracing.Tracer,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service,
-	queryDataService *query.Service) (*HTTPServer, error) {
+	queryDataService *query.Service, serviceaccountsService serviceaccounts.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -186,6 +188,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
 		queryDataService:          queryDataService,
+		serviceAccountsService:    serviceaccountsService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

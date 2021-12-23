@@ -303,13 +303,15 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			// check: serviceaccount has migrated
 			// endpoint needed and cache
 		*/
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Service accounts",
-			Id:          "serviceaccounts",
-			Description: "Create & manage Service accounts",
-			Icon:        "key-skeleton-alt",
-			Url:         hs.Cfg.AppSubURL + "/org/serviceaccounts",
-		})
+		if hs.serviceAccountsService.HasServiceAccountsMigrated(c.Req.Context(), c.OrgId) {
+			configNodes = append(configNodes, &dtos.NavLink{
+				Text:        "Service accounts",
+				Id:          "serviceaccounts",
+				Description: "Create & manage Service accounts",
+				Icon:        "key-skeleton-alt",
+				Url:         hs.Cfg.AppSubURL + "/org/serviceaccounts",
+			})
+		}
 	}
 
 	if hs.Cfg.FeatureToggles["live-pipeline"] {
