@@ -34,7 +34,12 @@ side to be valid for a different number of users or a new duration,
 your Grafana instance will be updated with the new terms
 automatically. Defaults to `true`.
 
-## [white_labeling]
+### license_validation_type
+> **Note:** Available in Grafana Enterprise v8.3+.
+
+When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details on licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "./activate-aws-marketplace-license/_index.md" >}})
+
+## [white_labeling] 
 
 ### app_title
 
