@@ -54,16 +54,6 @@ export default class ResponseParser {
     return Array.from(res).map((v) => ({ text: v }));
   }
 
-  getSeries(frame: DataFrame) {
-    return {
-      ...frame,
-      meta: {
-        ...frame.meta,
-        executedQueryString: frame.meta?.executedQueryString,
-      },
-    };
-  }
-
   getTable(dfs: DataFrame[], target: InfluxQuery, meta: QueryResultMeta): TableModel {
     let table = new TableModel();
 

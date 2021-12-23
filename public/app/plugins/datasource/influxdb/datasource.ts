@@ -191,7 +191,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
                   break;
                 default: {
                   for (let i = 0; i < filteredFrames.length; i++) {
-                    seriesList.push(this.responseParser.getSeries(filteredFrames[i]));
+                    seriesList.push(filteredFrames[i]);
                   }
                   break;
                 }
