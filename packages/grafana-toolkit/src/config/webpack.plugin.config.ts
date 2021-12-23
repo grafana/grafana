@@ -170,6 +170,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
 
     performance: { hints: false },
     externals: [
+      'tslib',
       'lodash',
       'jquery',
       'moment',

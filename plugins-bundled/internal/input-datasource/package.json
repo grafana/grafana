@@ -19,6 +19,9 @@
     "@grafana/toolkit": "8.0.7",
     "@grafana/ui": "8.0.7"
   },
+  "dependencies": {
+    "tslib": "2.3.1"
+  },
   "volta": {
     "node": "12.16.2"
   }
