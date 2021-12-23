@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -38,7 +39,7 @@ type Service interface {
 	CrawlerStatus(c *models.ReqContext) response.Response
 }
 
-func ProvideService(cfg *setting.Cfg, renderService rendering.Service) Service {
+func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.GrafanaLive) Service {
 	if !cfg.IsDashboardPreviesEnabled() {
 		return &dummyService{}
 	}
@@ -48,7 +49,7 @@ func ProvideService(cfg *setting.Cfg, renderService rendering.Service) Service {
 	_ = os.MkdirAll(root, 0700)
 	_ = os.MkdirAll(tempdir, 0700)
 
-	renderer := newSimpleCrawler(root, renderService)
+	renderer := newSimpleCrawler(root, renderService, gl)
 	return &thumbService{
 		renderer: renderer,
 		root:     root,

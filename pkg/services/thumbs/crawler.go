@@ -2,6 +2,7 @@ package thumbs
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
 )
@@ -26,17 +28,19 @@ type simpleCrawler struct {
 	renderService     rendering.Service
 	threadCount       int
 
+	glive  *live.GrafanaLive
 	opts   rendering.Opts
 	status crawlStatus
 	queue  []dashItem
 	mu     sync.Mutex
 }
 
-func newSimpleCrawler(folder string, renderService rendering.Service) dashRenderer {
+func newSimpleCrawler(folder string, renderService rendering.Service, gl *live.GrafanaLive) dashRenderer {
 	c := &simpleCrawler{
 		screenshotsFolder: folder,
 		renderService:     renderService,
-		threadCount:       1, // 2,
+		threadCount:       2,
+		glive:             gl,
 		status: crawlStatus{
 			State:    "init",
 			Complete: 0,
@@ -62,8 +66,19 @@ func (r *simpleCrawler) next() *dashItem {
 
 func (r *simpleCrawler) broadcastStatus() {
 	s, err := r.Status()
-	if err == nil {
-		tlog.Info("TODO, broadcast to live status", "ch", s)
+	if err != nil {
+		tlog.Warn("error reading status")
+		return
+	}
+	msg, err := json.Marshal(s)
+	if err != nil {
+		tlog.Warn("error making message")
+		return
+	}
+	err = r.glive.Publish(r.opts.OrgID, "grafana/broadcast/crawler", msg)
+	if err != nil {
+		tlog.Warn("error Publish message")
+		return
 	}
 }
 
@@ -160,6 +175,7 @@ func (r *simpleCrawler) Status() (crawlStatus, error) {
 		State:    r.status.State,
 		Started:  r.status.Started,
 		Complete: r.status.Complete,
+		Errors:   r.status.Errors,
 		Queue:    len(r.queue),
 		Last:     r.status.Last,
 	}
@@ -189,15 +205,18 @@ func (r *simpleCrawler) walk() {
 			UserID:            r.opts.UserID,
 			OrgRole:           r.opts.OrgRole,
 			Theme:             r.opts.Theme,
-			Timeout:           5 * time.Second, // while testing
+			Timeout:           10 * time.Second,
 			DeviceScaleFactor: 1,
 		})
 		if err != nil {
 			tlog.Warn("error getting image", "err", err)
+			r.status.Errors++
 		} else if res.FilePath == "" {
 			tlog.Warn("error getting image... no response")
+			r.status.Errors++
 		} else if strings.Contains(res.FilePath, "public/img") {
 			tlog.Warn("error getting image... internal result", "img", res.FilePath)
+			r.status.Errors++
 		} else {
 			p := getFilePath(r.screenshotsFolder, &previewRequest{
 				UID:   item.uid,
@@ -206,7 +225,13 @@ func (r *simpleCrawler) walk() {
 				Size:  PreviewSizeThumb,
 			})
 			err = os.Rename(res.FilePath, p)
-			tlog.Warn("error moving image", "err", err)
+			if err != nil {
+				r.status.Errors++
+				tlog.Warn("error moving image", "err", err)
+			} else {
+				r.status.Complete++
+				tlog.Info("saved thumbnail", "img", item.url)
+			}
 		}
 
 		time.Sleep(5 * time.Second)

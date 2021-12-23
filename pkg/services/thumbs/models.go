@@ -87,6 +87,7 @@ type crawlStatus struct {
 	Started  time.Time `json:"started,omitempty"`
 	Finished time.Time `json:"finished,omitempty"`
 	Complete int       `json:"complete"`
+	Errors   int       `json:"errors"`
 	Queue    int       `json:"queue"`
 	Last     time.Time `json:"last,omitempty"`
 }

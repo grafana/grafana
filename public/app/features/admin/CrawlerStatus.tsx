@@ -51,10 +51,8 @@ export const CrawlerStatus = () => {
 
   return (
     <div className={styles.wrap}>
-      {JSON.stringify(status)}
-      <br />
-      <CrawlerStartButton />
-
+      <pre>{JSON.stringify(status, null, 2)}</pre>
+      {status.state !== 'running' && <CrawlerStartButton />}
       <Button
         variant="secondary"
         onClick={() => {
