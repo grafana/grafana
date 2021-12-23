@@ -96,6 +96,62 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/97"
+    },
+    {
+      "type": "label",
+      "name": "oss-observability",
+      "action": "addToProject",
+      "addToProject": {
+        "url": "https://github.com/orgs/grafana/projects/54"
+    },
+    {
+      "type": "label",
+      "name": "datasource/Prometheus",
+      "action": "addToProject",
+      "addToProject": {
+        "url": "https://github.com/orgs/grafana/projects/54"
+    },
+    {
+      "type": "label",
+      "name": "datasource/InfluxDB",
+      "action": "addToProject",
+      "addToProject": {
+        "url": "https://github.com/orgs/grafana/projects/54"
+    },
+    {
+      "type": "label",
+      "name": "datasource/OpenSearch",
+      "action": "addToProject",
+      "addToProject": {
+        "url": "https://github.com/orgs/grafana/projects/54"
+    },
+    {
+      "type": "label",
+      "name": "datasource/Loki",
+      "action": "addToProject",
+      "addToProject": {
+        "url": "https://github.com/orgs/grafana/projects/54"
+    },
+    {
+      "type": "label",
+      "name": "datasource/Tempo",
+      "action": "addToProject",
+      "addToProject": {
+        "url": "https://github.com/orgs/grafana/projects/54"
+    },
+    {
+      "type": "label",
+      "name": "datasource/Elasticsearch",
+      "action": "addToProject",
+      "addToProject": {
+        "url": "https://github.com/orgs/grafana/projects/54"
+    },
+    {
+      "type": "label",
+      "name": "area/explore",
+      "action": "addToProject",
+      "addToProject": {
+        "url": "https://github.com/orgs/grafana/projects/54"
     }
   }
 ]
