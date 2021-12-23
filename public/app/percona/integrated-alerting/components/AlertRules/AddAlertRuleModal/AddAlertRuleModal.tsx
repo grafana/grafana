@@ -35,7 +35,8 @@ import {
   getInitialValues,
   minValidator,
 } from './AddAlertRuleModal.utils';
-import { MINIMUM_DURATION_VALUE, SEVERITY_OPTIONS } from './AddAlertRulesModal.constants';
+import { MINIMUM_DURATION_VALUE } from './AddAlertRulesModal.constants';
+import { AdvancedRuleSection } from './AdvancedRuleSection/AdvancedRuleSection';
 
 const { required } = validators;
 const durationValidators = [required, minValidator(MINIMUM_DURATION_VALUE)];
@@ -220,27 +221,23 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
               )}
             </Field>
 
-            {currentTemplate && (
-              <>
-                <div data-testid="template-expression" className={styles.templateParsedField}>
-                  <Label label={Messages.templateExpression} />
-                  <pre>{currentTemplate.expr}</pre>
-                </div>
-                {currentTemplate.annotations?.summary && (
-                  <div data-testid="template-alert" className={styles.templateParsedField}>
-                    <Label label={Messages.ruleAlert} />
-                    <pre>{currentTemplate.annotations?.summary}</pre>
-                  </div>
-                )}
-              </>
+            {currentTemplate ? (
+              <AdvancedRuleSection expression={currentTemplate.expr} summary={currentTemplate.annotations?.summary} />
+            ) : (
+              alertRule && (
+                <AdvancedRuleSection
+                  expression={alertRule.rawValues.expr_template}
+                  summary={alertRule.rawValues.annotations?.summary}
+                />
+              )
             )}
 
             <Field name="enabled" type="checkbox" defaultValue={true}>
               {({ input }) => (
-                <>
+                <div className={styles.toogleField}>
                   <Label label={Messages.activateSwitch} dataTestId="enabled-toggle-label" />
                   <Switch {...input} value={input.checked} data-testid="enabled-toggle-input" />
-                </>
+                </div>
               )}
             </Field>
 
