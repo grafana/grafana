@@ -187,7 +187,7 @@ func (c *Caller) CallPluginSubscribeStream(ctx context.Context, user *models.Sig
 		return models.SubscribeReply{}, 0, err
 	}
 
-	resp, err := c.node.Survey(ctx, pluginSubscribeStream, jsonData)
+	resp, err := c.node.Survey(ctx, pluginSubscribeStream, jsonData, leaderNodeID)
 	if err != nil {
 		return models.SubscribeReply{}, 0, err
 	}
@@ -219,7 +219,7 @@ func (c *Caller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChanne
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	resp, err := c.node.Survey(ctx, managedStreamsCall, jsonData)
+	resp, err := c.node.Survey(ctx, managedStreamsCall, jsonData, "")
 	if err != nil {
 		return nil, err
 	}
