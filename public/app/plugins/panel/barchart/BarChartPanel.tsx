@@ -53,9 +53,6 @@ const propsToDiff: Array<string | PropDiffFn> = [
 
 interface Props extends PanelProps<BarChartOptions> {}
 
-/**
- * @alpha
- */
 export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone, id }) => {
   const theme = useTheme2();
   const { eventBus } = usePanelContext();
@@ -63,6 +60,11 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   const frame0Ref = useRef<DataFrame>();
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
   const structureRef = useRef(10000);
+  useMemo(() => {
+    structureRef.current++;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options]); // change every time the options object changes (while editing)
+
   const structureRev = useMemo(() => {
     const f0 = info.viz;
     const f1 = frame0Ref.current;
