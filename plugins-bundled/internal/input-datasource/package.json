@@ -19,6 +19,9 @@
     "@grafana/toolkit": "8.1.8",
     "@grafana/ui": "8.1.8"
   },
+  "dependencies": {
+    "tslib": "2.3.1"
+  },
   "volta": {
     "extends": "../../../package.json"
   }
