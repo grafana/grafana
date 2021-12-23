@@ -124,7 +124,7 @@ func TestEngineProcessJob(t *testing.T) {
 			evalHandler := NewFakeEvalHandler(0)
 			engine.evalHandler = evalHandler
 
-			err := engine.processJobWithRetry(context.TODO(), job)
+			err := engine.processJobWithRetry(context.Background(), job)
 			require.Nil(t, err)
 			require.Equal(t, expectedAttempts, evalHandler.CallNb)
 		})
@@ -134,7 +134,7 @@ func TestEngineProcessJob(t *testing.T) {
 			evalHandler := NewFakeEvalHandler(1)
 			engine.evalHandler = evalHandler
 
-			err := engine.processJobWithRetry(context.TODO(), job)
+			err := engine.processJobWithRetry(context.Background(), job)
 			require.Nil(t, err)
 			require.Equal(t, expectedAttempts, evalHandler.CallNb)
 		})
@@ -144,7 +144,7 @@ func TestEngineProcessJob(t *testing.T) {
 			evalHandler := NewFakeEvalHandler(expectedAttempts)
 			engine.evalHandler = evalHandler
 
-			err := engine.processJobWithRetry(context.TODO(), job)
+			err := engine.processJobWithRetry(context.Background(), job)
 			require.Nil(t, err)
 			require.Equal(t, expectedAttempts, evalHandler.CallNb)
 		})

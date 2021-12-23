@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Select, FieldSet, InlineField, Alert } from '@grafana/ui';
+import { Select, InlineField, Alert } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps, onUpdateDatasourceJsonDataOptionSelect } from '@grafana/data';
 import { AuthType, authTypes, CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types';
 import { JWTConfig } from './JWTConfig';
@@ -17,59 +17,9 @@ export class ConfigEditor extends PureComponent<Props> {
 
     return (
       <>
-        <div className="gf-form-group">
-          <div className="grafana-info-box">
-            <h4>Google Cloud Monitoring Authentication</h4>
-            <p>
-              There are two ways to authenticate the Google Cloud Monitoring plugin - either by uploading a Service
-              Account key file or by automatically retrieving credentials from the Google metadata server. The latter
-              option is only available when running Grafana on a GCE virtual machine.
-            </p>
-
-            <h5>Uploading a Service Account Key File</h5>
-            <p>
-              There are two ways to authenticate the Google Cloud Monitoring plugin. You can upload a Service Account
-              key file or automatically retrieve credentials from the Google metadata server. The latter option is only
-              available when running Grafana on a GCE virtual machine.
-            </p>
-            <p>
-              The <strong>Monitoring Viewer</strong> role provides all the permissions that Grafana needs. The following
-              API needs to be enabled on GCP for the data source to work:{' '}
-              <a
-                className="external-link"
-                target="_blank"
-                rel="noopener noreferrer"
-                href="https://console.cloud.google.com/apis/library/monitoring.googleapis.com"
-              >
-                Monitoring API
-              </a>
-            </p>
-
-            <h5>GCE Default Service Account</h5>
-            <p>
-              If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to
-              automatically retrieve the default project id and authentication token from the metadata server. In order
-              for this to work, you need to make sure that you have a service account that is setup as the default
-              account for the virtual machine and that the service account has been given read access to the Google
-              Cloud Monitoring Monitoring API.
-            </p>
-
-            <p>
-              Detailed instructions on how to create a Service Account can be found{' '}
-              <a
-                className="external-link"
-                target="_blank"
-                rel="noopener noreferrer"
-                href="https://grafana.com/docs/grafana/latest/datasources/google-cloud-monitoring/"
-              >
-                in the documentation.
-              </a>
-            </p>
-          </div>
-        </div>
-
-        <FieldSet>
-          <InlineField label="Authentication type" labelWidth={20}>
+        <h3 className="page-heading">Authentication</h3>
+        <div>
+          <InlineField label="Type" labelWidth={20}>
             <Select
               menuShouldPortal
               width={40}
@@ -99,7 +49,20 @@ export class ConfigEditor extends PureComponent<Props> {
               }}
             ></JWTConfig>
           )}
-        </FieldSet>
+          <div className="grafana-info-box" style={{ marginTop: '16px' }}>
+            <p>
+              Don’t know how to get a service account key file or create a service account? Read more{' '}
+              <a
+                className="external-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                href="https://grafana.com/docs/grafana/latest/datasources/google-cloud-monitoring/"
+              >
+                in the documentation.
+              </a>
+            </p>
+          </div>
+        </div>
         {jsonData.authenticationType === AuthType.GCE && (
           <Alert title="" severity="info">
             Verify GCE default service account by clicking Save & Test

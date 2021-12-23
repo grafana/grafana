@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -201,7 +202,7 @@ func TestPrometheusRules(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 400, resp.StatusCode)
-		require.JSONEq(t, `{"message":"failed to update rule group: invalid alert rule: cannot have Panel ID without a Dashboard UID"}`, string(b))
+		require.JSONEq(t, `{"message": "API error","error":"failed to update rule group: invalid alert rule: cannot have Panel ID without a Dashboard UID"}`, string(b))
 	}
 
 	// Now, let's see how this looks like.
@@ -593,7 +594,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message":"invalid panel_id: strconv.ParseInt: parsing \"invalid\": invalid syntax"}`, string(b))
+		require.JSONEq(t, `{"message": "API error","error":"invalid panel_id: strconv.ParseInt: parsing \"invalid\": invalid syntax"}`, string(b))
 	}
 
 	// Now, let's check a panel_id without dashboard_uid returns a 400 Bad Request response
@@ -609,7 +610,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message":"panel_id must be set with dashboard_uid"}`, string(b))
+		require.JSONEq(t, `{"message": "API error","error":"panel_id must be set with dashboard_uid"}`, string(b))
 	}
 }
 
@@ -716,7 +717,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from folder2
-	require.NoError(t, store.UpdateDashboardACL(2, nil))
+	require.NoError(t, store.UpdateDashboardACL(context.Background(), 2, nil))
 
 	// make sure that folder2 is not included in the response
 	{
@@ -765,7 +766,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from _ALL_ folders
-	require.NoError(t, store.UpdateDashboardACL(1, nil))
+	require.NoError(t, store.UpdateDashboardACL(context.Background(), 1, nil))
 
 	// make sure that no folders are included in the response
 	{

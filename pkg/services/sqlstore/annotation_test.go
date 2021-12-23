@@ -253,6 +253,36 @@ func TestAnnotations(t *testing.T) {
 			assert.Empty(t, items)
 		})
 
+		t.Run("Can delete annotation using dashboard id and panel id", func(t *testing.T) {
+			annotation3 := &annotations.Item{
+				OrgId:       1,
+				UserId:      1,
+				DashboardId: 3,
+				Text:        "toBeDeletedWithPanelId",
+				Type:        "alert",
+				Epoch:       11,
+				Tags:        []string{"test"},
+			}
+			err = repo.Save(annotation3)
+			require.NoError(t, err)
+
+			query := &annotations.ItemQuery{
+				OrgId:        1,
+				AnnotationId: annotation3.Id,
+			}
+			items, err := repo.Find(query)
+			require.NoError(t, err)
+
+			dashboardId := items[0].DashboardId
+			panelId := items[0].PanelId
+			err = repo.Delete(&annotations.DeleteParams{DashboardId: dashboardId, PanelId: panelId, OrgId: 1})
+			require.NoError(t, err)
+
+			items, err = repo.Find(query)
+			require.NoError(t, err)
+			assert.Empty(t, items)
+		})
+
 		t.Run("Should find tags by key", func(t *testing.T) {
 			result, err := repo.FindTags(&annotations.TagsQuery{
 				OrgID: 1,

@@ -1407,17 +1407,6 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	return nil
 }
 
-func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
-	// Read and populate feature toggles list
-	featureTogglesSection := iniFile.Section("feature_toggles")
-	cfg.FeatureToggles = make(map[string]bool)
-	featuresTogglesStr := valueAsString(featureTogglesSection, "enable", "")
-	for _, feature := range util.SplitString(featuresTogglesStr) {
-		cfg.FeatureToggles[feature] = true
-	}
-	return nil
-}
-
 func readAlertingSettings(iniFile *ini.File) error {
 	alerting := iniFile.Section("alerting")
 	enabled, err := alerting.Key("enabled").Bool()

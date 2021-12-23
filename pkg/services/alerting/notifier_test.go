@@ -373,7 +373,7 @@ func (s *testRenderService) RenderErrorImage(theme rendering.Theme, err error) (
 	return &rendering.RenderResult{FilePath: "image.png"}, nil
 }
 
-func (s *testRenderService) GetRenderUser(key string) (*rendering.RenderUser, bool) {
+func (s *testRenderService) GetRenderUser(ctx context.Context, key string) (*rendering.RenderUser, bool) {
 	return nil, false
 }
 
