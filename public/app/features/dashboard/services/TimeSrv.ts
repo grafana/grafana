@@ -296,7 +296,10 @@ export class TimeSrv {
       urlParams.from = urlRange.from.toString();
       urlParams.to = urlRange.to.toString();
 
-      locationService.partial(urlParams);
+      locationService.push({
+        ...locationService.getLocation(),
+        search: urlParams.get('kiosk') === '' ? urlParams.toString().replace(/kiosk=/, 'kiosk') : urlParams.toString(),
+      });
     }
 
     this.refreshDashboard();
