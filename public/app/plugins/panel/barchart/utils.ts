@@ -12,7 +12,8 @@ import {
   reduceField,
   VizOrientation,
 } from '@grafana/data';
-import { BarChartDisplayValues, BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
+import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig } from './models.gen';
+import { BarChartDisplayValues } from './types';
 import { BarsOptions, getConfig } from './bars';
 import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
 import { Padding } from 'uplot';
@@ -28,7 +29,6 @@ import { collectStackingGroups, orderIdsByCalcs } from '../../../../../packages/
 import { orderBy } from 'lodash';
 import { findField } from 'app/features/dimensions';
 
-/** @alpha */
 function getBarCharScaleOrientation(orientation: VizOrientation) {
   if (orientation === VizOrientation.Vertical) {
     return {
@@ -47,7 +47,7 @@ function getBarCharScaleOrientation(orientation: VizOrientation) {
   };
 }
 
-export interface BarChartOptionsEX extends BarChartOptions {
+export interface BarChartOptionsEX extends PanelOptions {
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
   getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
   fillOpacity?: number;
@@ -171,7 +171,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       theme,
       colorMode,
       pathBuilder: config.barsBuilder,
-      show: !customConfig.hideFrom?.viz, // Not necessary
+      show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
       hardMin: field.config.min,
@@ -295,7 +295,7 @@ function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLengt
 export function prepareBarChartDisplayValues(
   series: DataFrame[],
   theme: GrafanaTheme2,
-  options: BarChartOptions
+  options: PanelOptions
 ): BarChartDisplayValues {
   if (!series?.length) {
     return { warn: 'No data in response' } as BarChartDisplayValues;
@@ -427,11 +427,7 @@ export function prepareBarChartDisplayValues(
     colorByField,
     viz: {
       length: firstField.values.length,
-      fields: fields, // ??? fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
-    },
-    legend: {
-      length: firstField.values.length,
-      fields: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.legend)),
+      fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
     },
   };
 }

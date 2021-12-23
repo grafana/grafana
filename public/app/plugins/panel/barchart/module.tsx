@@ -10,12 +10,12 @@ import {
 import { BarChartPanel } from './BarChartPanel';
 import { StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
-import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from 'app/plugins/panel/barchart/types';
+import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig, defaultPanelOptions } from './models.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { prepareBarChartDisplayValues } from './utils';
 import { config } from '@grafana/runtime';
 
-export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
+export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -91,12 +91,12 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
             { value: VizOrientation.Vertical, label: 'Vertical' },
           ],
         },
-        defaultValue: VizOrientation.Auto,
+        defaultValue: defaultPanelOptions.orientation,
       })
       .addSliderInput({
         path: 'xTickLabelRotation',
         name: 'Rotate bar labels',
-        defaultValue: 0,
+        defaultValue: defaultPanelOptions.xTickLabelRotation,
         settings: {
           min: -90,
           max: 90,
@@ -140,7 +140,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
             { value: VisibilityMode.Never, label: 'Never' },
           ],
         },
-        defaultValue: VisibilityMode.Auto,
+        defaultValue: defaultPanelOptions.showValue,
       })
       .addRadio({
         path: 'stacking',
@@ -148,12 +148,12 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         settings: {
           options: graphFieldOptions.stacking,
         },
-        defaultValue: StackingMode.None,
+        defaultValue: defaultPanelOptions.stacking,
       })
       .addSliderInput({
         path: 'groupWidth',
         name: 'Group width',
-        defaultValue: 0.7,
+        defaultValue: defaultPanelOptions.groupWidth,
         settings: {
           min: 0,
           max: 1,
@@ -169,7 +169,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
       .addSliderInput({
         path: 'barWidth',
         name: 'Bar width',
-        defaultValue: 0.97,
+        defaultValue: defaultPanelOptions.barWidth,
         settings: {
           min: 0,
           max: 1,
@@ -179,7 +179,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
       .addSliderInput({
         path: 'barRadius',
         name: 'Bar radius',
-        defaultValue: 0,
+        defaultValue: defaultPanelOptions.barRadius,
         settings: {
           min: 0,
           max: 0.5,

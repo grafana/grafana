@@ -21,7 +21,7 @@ import {
   VizLayout,
   VizLegend,
 } from '@grafana/ui';
-import { BarChartOptions } from './types';
+import { PanelOptions } from './models.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { DataHoverView } from '../geomap/components/DataHoverView';
@@ -32,7 +32,7 @@ import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
  * @alpha
  */
 export interface BarChartProps
-  extends BarChartOptions,
+  extends PanelOptions,
     Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'> {}
 
 const propsToDiff: Array<string | PropDiffFn> = [
@@ -51,7 +51,7 @@ const propsToDiff: Array<string | PropDiffFn> = [
   (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
 ];
 
-interface Props extends PanelProps<BarChartOptions> {}
+interface Props extends PanelProps<PanelOptions> {}
 
 export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone, id }) => {
   const theme = useTheme2();
@@ -138,7 +138,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       }
     }
 
-    return <PlotLegend data={[info.legend]} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
+    return <PlotLegend data={[info.viz]} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {

@@ -16,7 +16,7 @@ import {
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
-import { BarChartFieldConfig } from './types';
+import { BarChartFieldConfig } from './models.gen';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({
