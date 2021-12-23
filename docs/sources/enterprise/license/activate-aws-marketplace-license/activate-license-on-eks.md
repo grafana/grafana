@@ -17,45 +17,82 @@ If you have purchased a Grafana Enterprise subscription through AWS Marketplace,
 
 To activate your license, complete the following tasks:
 
-## Task 1: Install Grafana Enterprise on Amazon EKS
+## Task 1: Deploy Grafana Enterprise on Amazon EKS
 
-To install Grafana Enterprise on Amazon EKS, refer to the following Amazon documentation:
+If you do not have Grafana Enterprise running in EKS already, you must deploy it. Follow Amazon's documentation to [create an Amazon EKS cluster](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-console.html) and [install Grafana on Kubernetes using the Helm Chart](https://github.com/grafana/helm-charts/tree/main/charts/grafana).
 
-- [Create an Amazon EKS cluster](https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html)
-
-> **Note:** Use the container image for Grafana Enterprise version 8.3.0 or higher. For example, use `grafana/grafana-enterprise:8.3.3`.
+Update the deployment configuration to use Grafana Enterprise. Use `kubectl set image deployment/my-release grafana=grafana/grafana-enterprise:<version>` to update the container image to Grafana Enterprise version 8.3.0 or higher. For example, use `grafana/grafana-enterprise:8.3.3`.
 
 Versions of Grafana before 8.3.0 do not support licenses granted through AWS Marketplace.
 
-## Task 2: Configure Grafana Enterprise to validate the license with AWS
+## Task 2: Setup Grafana for high-availability
 
-Update the following settings in EKS so that Grafana Enterprise validates the license with AWS instead of Grafana Labs.
+Update the [database]({{< relref "../../../../../administration/configuration.md#database" >}}) configuration section, so that Grafana use a shared database for storing dashboard, users, and other persistent data.
 
-1. In Amazon EKS, create a role and assign the following permissions:
+> If you do not have a MySQL database already, [create an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html) and check the information needed to [connect to your RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_CommonTasks.Connect.html).
+
+You can do this in one of two ways:
+
+**Option 1:** Use `kubectl edit configmap grafana` to edit the Grafana configuration file. Under `grafana.ini` add the following section to your config:
+
+```
+[database]
+type = mysql
+host = localhost:3306
+name = grafana
+user = [mysql database username]
+password = [mysql database password]
+```
+
+**Option 2:** Use `kubectl edit deployment my-release` to edit the pod environment variables. Under `env` add the following variables:
+
+```
+- name: GF_DATABASE_TYPE
+  value: mysql
+- name: GF_DATABASE_HOST
+  value: localhost:3306
+- name: GF_DATABASE_NAME
+  value: grafana
+- name: GF_DATABASE_USER
+  value: [mysql database username]
+- name: GF_DATABASE_PASSWORD
+  value: [mysql database password]
+```
+
+## Task 3: Configure Grafana Enterprise to validate its license with AWS
+
+1. In AWS IAM, assign the following permissions to your Node IAM Role if you are using a Node Group, or Pod execution role if you are using a Fargate profile:
 
    - `"license-manager:CheckoutLicense"`
    - `"license-manager:ListReceivedLicenses"`
    - `"license-manager:GetLicenseUsage"`
    - `"license-manager:CheckInLicense"`
 
+   For more detailed steps to create an access policy, refer to the AWS documentation on [creating IAM policies](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create-console.html).
+
    For more information about AWS license permissions, refer to [Actions, resources, and condition keys for AWS License Manager](​​https://docs.aws.amazon.com/service-authorization/latest/reference/list_awslicensemanager.html).
 
-2. Enter an image name according to the following convention: `grafana/grafana-enterprise:[VERSION]`, where [VERSION] is the Grafana Enterprise version number.
-
-   > A Grafana Enterprise license purchased through AWS Marketplace supports Grafana Enterprise version 8.3 or higher.
-
-3. Add the following environment variable to the container:
+2. Update the [license_validation_type]({{< relref "../../enterprise-configuration.md#license_validation_type" >}}) configuration to `aws`, so that Grafana Enterprise validates the license with AWS instead of Grafana Labs.
+   **Option 1:** Use `kubectl edit configmap grafana` to edit the Grafana configuration file. Under `grafana.ini` add the following section to your config:
 
    ```
-   GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
+   [enterprise]
+   license_validation_type=aws
    ```
 
-   > For more information about EKS, refer to [Cluster management](https://docs.aws.amazon.com/eks/latest/userguide/eks-managing.html).
+   **Option 2:** Use `kubectl edit deployment my-release` to edit the pod environment variables. Under `env` add the following variable:
 
-### Task 3: Start or restart Grafana
+   ```
+   - name: GF_ENTERPRISE_LICENSE_VALIDATION_TYPE
+     value: aws
+   ```
+
+### Task 4: Start or restart Grafana
 
 To activate Grafana Enterprise features, start (or restart) Grafana.
 
-For information about restarting Grafana, refer to [Restart Grafana]({{< relref "../../../installation/restart-grafana" >}}).
+To restart Grafana on a Kubernetes cluster, use `kubectl rollout restart deployment my-release`.
+
+For more information about restarting Grafana, refer to [Restart Grafana]({{< relref "../../../installation/restart-grafana" >}}).
 
 > If you experience issues when you update the EKS cluster, refer to [Amazon EKS troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html).
