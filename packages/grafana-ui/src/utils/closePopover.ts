@@ -1,4 +1,4 @@
-export const closePopover = (event: React.KeyboardEvent<HTMLDivElement>, hidePopper: () => void) => {
+export const closePopover = (event: React.KeyboardEvent, hidePopper: () => void) => {
   if (event.key === 'Tab' || event.altKey || event.ctrlKey || event.metaKey) {
     return;
   }
