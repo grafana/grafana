@@ -246,6 +246,9 @@ describe('influxdb response parser', () => {
         { name: 'time', type: FieldType.time, values: [1640257340000] },
         { name: 'value', type: FieldType.number, values: [3234232323] },
       ],
+      meta: {
+        executedQueryString: 'SELECT everything!',
+      },
     });
 
     const query = new InfluxQueryModel({
@@ -273,6 +276,10 @@ describe('influxdb response parser', () => {
 
     it('preferredVisualisationType correctly', () => {
       expect(table.meta?.preferredVisualisationType).toBe('table');
+    });
+
+    it('executedQueryString correctly', () => {
+      expect(table.meta?.executedQueryString).toBe('SELECT everything!');
     });
   });
 });
