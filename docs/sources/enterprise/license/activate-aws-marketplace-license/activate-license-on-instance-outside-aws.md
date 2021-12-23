@@ -87,7 +87,7 @@ Update the [license_validation_type]({{< relref "../../enterprise-configuration.
    
 You can do this in one of two ways:
 
-**Option 1:** In the [enterprise] section of the grafana.ini configuration file, add a `license_validation_type` configuration value to `aws`.
+**Option 1:** In the `[enterprise]` section of the grafana.ini configuration file, add a `license_validation_type` configuration value to `aws`.
 
 ```
 [enterprise]
