@@ -7,6 +7,10 @@ export interface ConnectProps {
   getSettings: () => void;
 }
 
+export interface ConnectedProps {
+  getSettings: () => void;
+}
+
 export interface ConnectRenderProps {
   pmmServerName: string;
   email: string;
