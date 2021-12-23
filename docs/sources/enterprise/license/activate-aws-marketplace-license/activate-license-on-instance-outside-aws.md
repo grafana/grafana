@@ -78,7 +78,7 @@ To retrieve your license, Grafana Enterprise requires access to your AWS account
    ```
    AWS_ACCESS_KEY_ID=ABCD5E75FGHIJKTM7
    AWS_SECRET_ACCESS_KEY=k8fhYAQVy+5NhCejhe6HeSjSphjRuy+12C06
-   AWS_DEFAULT_REGION=us-east1
+   AWS_DEFAULT_REGION=us-east-1
    ```
 
 ## Task 3: Configure Grafana Enterprise to validate its license with AWS
