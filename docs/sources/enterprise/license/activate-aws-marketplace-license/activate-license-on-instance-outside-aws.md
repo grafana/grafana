@@ -71,25 +71,36 @@ To retrieve your license, Grafana Enterprise requires access to your AWS account
 
 3. Create an [IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html) with [access key credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html), and attach the policy you created to the user.
 
-4. Retrieve the IAM user's Access Key ID and Secret Access Key, which you will use in the next step.
+4. Add the IAM user's Access Key ID and Secret Access Key, along with your default AWS region, as environment variables to the host or container where you are running Grafana. This will allow Grafana to retrieve license details from AWS using these credentials.
+
+   Your environment variables should look like this:
+
+   ```
+   AWS_ACCESS_KEY_ID=ABCD5E75FGHIJKTM7
+   AWS_SECRET_ACCESS_KEY=k8fhYAQVy+5NhCejhe6HeSjSphjRuy+12C06
+   AWS_DEFAULT_REGION=us-east1
+   ```
 
 ## Task 3: Configure Grafana Enterprise to validate its license with AWS
 
-1. Update the [license_validation_type]({{< relref "../../enterprise-configuration.md#license_validation_type" >}}) configuration to `aws`, so that Grafana Enterprise validates the license with AWS instead of Grafana Labs. 
+Update the [license_validation_type]({{< relref "../../enterprise-configuration.md#license_validation_type" >}}) configuration to `aws`, so that Grafana Enterprise validates the license with AWS instead of Grafana Labs. 
    
-   You can do this in one of two ways:
+You can do this in one of two ways:
 
-   Option 1: In the grafana.ini configuration file, update the license_validation_type configuration value to `aws`.
-   
-   Option 2: Add the following environment variable to the container:
+**Option 1:** In the [enterprise] section of the grafana.ini configuration file, add a `license_validation_type` configuration value to `aws`.
 
-   ```
-   GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
-   ```
+```
+[enterprise]
+license_validation_type=aws
+```
 
-## Task 4: 
+**Option 2:** Add the following environment variable to the container:
 
-## Task 5: Start or restart Grafana
+```
+GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
+```
+
+## Task 4: Start or restart Grafana
 
 To activate Grafana Enterprise features, start (or restart) Grafana.
 
