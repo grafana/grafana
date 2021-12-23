@@ -263,5 +263,12 @@ describe('influxdb response parser', () => {
       expect(table.columns[1].text).toBe('usage_iowait');
       expect(table.columns[2].text).toBe('usage_idle');
     });
+
+    it('rows correctly', () => {
+      expect(table.rows.length).toBe(1);
+      expect(table.rows[0].length).toBe(2);
+      expect(table.rows[0][0]).toBe(1640257340000);
+      expect(table.rows[0][1]).toBe(3234232323);
+    });
   });
 });
