@@ -119,32 +119,6 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	return &result, nil
 }
 
-func formatLegend(metric model.Metric, query *PrometheusQuery) string {
-	var legend string
-
-	if query.LegendFormat == "" {
-		legend = metric.String()
-	} else {
-		result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
-			labelName := strings.Replace(string(in), "{{", "", 1)
-			labelName = strings.Replace(labelName, "}}", "", 1)
-			labelName = strings.TrimSpace(labelName)
-			if val, exists := metric[model.LabelName(labelName)]; exists {
-				return []byte(val)
-			}
-			return []byte{}
-		})
-		legend = string(result)
-	}
-
-	// If legend is empty brackets, use query expression
-	if legend == "{}" {
-		legend = query.Expr
-	}
-
-	return legend
-}
-
 func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, dsInfo *DatasourceInfo) ([]*PrometheusQuery, error) {
 	qs := []*PrometheusQuery{}
 	for _, query := range queryContext.Queries {

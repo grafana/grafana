@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -12,33 +13,51 @@ import (
 )
 
 func MatrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
+	currentIdx := 0
+	length := 0
+
+	for _, v := range matrix {
+		if len(v.Values) > length {
+			length = len(v.Values)
+		}
+	}
+
+	timeMap := make(map[int64]*int, length)
+	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, length))
+	fields := []*data.Field{timeField}
+
 	for _, v := range matrix {
 		tags := make(map[string]string, len(v.Metric))
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
 
-		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(v.Values))
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(v.Values))
+		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, length)
 
-		for i, k := range v.Values {
-			timeField.Set(i, time.Unix(k.Timestamp.Unix(), 0).UTC())
+		for _, k := range v.Values {
+			timeKey := k.Timestamp.Unix()
 			value := float64(k.Value)
+			valueIdx := timeMap[timeKey]
+			if valueIdx == nil {
+				timeField.Set(currentIdx, time.Unix(timeKey, 0).UTC())
+				lastIdx := currentIdx
+				timeMap[timeKey] = &lastIdx
+				valueIdx = &lastIdx
+				currentIdx += 1
+			}
 			if !math.IsNaN(value) {
-				valueField.Set(i, &value)
+				valueField.Set(*valueIdx, &value)
 			}
 		}
 
 		name := formatLegend(v.Metric, query)
-		timeField.Name = data.TimeSeriesTimeFieldName
 		valueField.Name = data.TimeSeriesValueFieldName
 		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
 		valueField.Labels = tags
-
-		frames = append(frames, newDataFrame(name, "matrix", timeField, valueField))
+		fields = append(fields, valueField)
 	}
 
-	return frames
+	return append(frames, newDataFrame("", "matrix", fields...))
 }
 
 func ScalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, frames data.Frames) data.Frames {
@@ -221,4 +240,30 @@ func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
 	}
 
 	return frame
+}
+
+func formatLegend(metric model.Metric, query *PrometheusQuery) string {
+	var legend string
+
+	if query.LegendFormat == "" {
+		legend = metric.String()
+	} else {
+		result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
+			labelName := strings.Replace(string(in), "{{", "", 1)
+			labelName = strings.Replace(labelName, "}}", "", 1)
+			labelName = strings.TrimSpace(labelName)
+			if val, exists := metric[model.LabelName(labelName)]; exists {
+				return []byte(val)
+			}
+			return []byte{}
+		})
+		legend = string(result)
+	}
+
+	// If legend is empty brackets, use query expression
+	if legend == "{}" {
+		legend = query.Expr
+	}
+
+	return legend
 }

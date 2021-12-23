@@ -18,7 +18,7 @@ func BenchmarkMatrixToDataFrames(b *testing.B) {
 		LegendFormat: "",
 	}
 	var m model.Matrix
-	if err := loadTestData("matrix_range.json", &m); err != nil {
+	if err := loadTestData("matrix_range_bench.json", &m); err != nil {
 		b.Fatal("failed to load test data", err)
 	}
 	for i := 0; i < b.N; i++ {
@@ -27,14 +27,18 @@ func BenchmarkMatrixToDataFrames(b *testing.B) {
 		if len(frames) != 1 {
 			b.Fatal("wrong frame count", len(frames))
 		}
+		if frames[0].Rows() != 418 {
+			b.Fatal("wrong row count", frames[0].Rows())
+		}
 	}
 }
 
 func TestMatrixToDataFrames(t *testing.T) {
-	t.Run("test", func(t *testing.T) {
+	t.Run("matrix_range.json golden response", func(t *testing.T) {
 		var m model.Matrix
-		err := loadTestData("matrix_range.json", &m)
+		err := loadTestData("matrix_range_golden.json", &m)
 		require.NoError(t, err)
+		require.Equal(t, 3, m.Len())
 
 		query := &prometheus.PrometheusQuery{
 			LegendFormat: "",
@@ -43,7 +47,7 @@ func TestMatrixToDataFrames(t *testing.T) {
 		frames = prometheus.MatrixToDataFrames(m, query, frames)
 		res := &backend.DataResponse{Frames: frames}
 
-		err = experimental.CheckGoldenDataResponse("./testdata/matrix_range.txt", res, false)
+		err = experimental.CheckGoldenDataResponse("./testdata/matrix_range_golden.txt", res, false)
 		require.NoError(t, err)
 	})
 }
