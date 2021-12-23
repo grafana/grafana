@@ -162,13 +162,6 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		timestamps := []*time.Time{}
 		points := []*float64{}
 		for j, t := range metric.Timestamps {
-			if j > 0 {
-				expectedTimestamp := metric.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
-				if expectedTimestamp.Before(*t) {
-					timestamps = append(timestamps, &expectedTimestamp)
-					points = append(points, nil)
-				}
-			}
 			val := metric.Values[j]
 			timestamps = append(timestamps, t)
 			points = append(points, val)
