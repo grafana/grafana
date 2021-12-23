@@ -270,5 +270,9 @@ describe('influxdb response parser', () => {
       expect(table.rows[0][0]).toBe(1640257340000);
       expect(table.rows[0][1]).toBe(3234232323);
     });
+
+    it('preferredVisualisationType correctly', () => {
+      expect(table.meta?.preferredVisualisationType).toBe('table');
+    });
   });
 });
