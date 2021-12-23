@@ -94,7 +94,7 @@ You can do this in one of two ways:
 license_validation_type=aws
 ```
 
-**Option 2:** Add the following environment variable to the container:
+**Option 2:** Add the following environment variable to the container or host:
 
 ```
 GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
