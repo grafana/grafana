@@ -174,6 +174,7 @@ func extractGroups(client *http.Client, claims azureClaims) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
+		defer res.Body.Close()
 
 		if res.StatusCode != http.StatusOK {
 			return nil, errors.New("failed to get member groups")
