@@ -212,7 +212,7 @@ describe('influxdb response parser', () => {
         select: [[{ type: 'field', params: ['usage_iowait'] }], [{ type: 'field', params: ['usage_idle'] }]],
       });
 
-      var selectedParams = getSelectedParams(query.target);
+      const selectedParams = getSelectedParams(query.target);
 
       expect(selectedParams.length).toBe(2);
       expect(selectedParams[0]).toBe('usage_iowait');
@@ -231,7 +231,7 @@ describe('influxdb response parser', () => {
         ],
       });
 
-      var selectedParams = getSelectedParams(query.target);
+      const selectedParams = getSelectedParams(query.target);
 
       expect(selectedParams.length).toBe(4);
       expect(selectedParams[0]).toBe('usage_iowait');
