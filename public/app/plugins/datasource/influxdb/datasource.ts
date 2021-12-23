@@ -182,16 +182,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
               const filteredFrames = res.data.filter((t) => t.refId === target.refId);
               switch (target.resultFormat) {
                 case 'logs':
+                case 'table':
                   seriesList.push(
-                    this.responseParser.getTable(filteredFrames, target, { preferredVisualisationType: 'logs' })
+                    this.responseParser.getTable(filteredFrames, target, {
+                      preferredVisualisationType: target.resultFormat,
+                    })
                   );
                   break;
-                case 'table': {
-                  seriesList.push(
-                    this.responseParser.getTable(filteredFrames, target, { preferredVisualisationType: 'table' })
-                  );
-                  break;
-                }
                 default: {
                   for (let i = 0; i < filteredFrames.length; i++) {
                     seriesList.push(this.responseParser.getSeries(filteredFrames[i]));
