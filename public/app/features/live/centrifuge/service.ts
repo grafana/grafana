@@ -62,7 +62,7 @@ export class CentrifugeService implements CentrifugeSrv {
   constructor(private deps: CentrifugeSrvDeps) {
     deps.dataStreamSubscriberReadiness.subscribe((next) => (this.dataStreamSubscriberReady = next));
     const liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
-    this.centrifuge = new Centrifuge(liveUrl, {});
+    this.centrifuge = new Centrifuge(liveUrl, { protocolVersion: 'v2' });
     this.centrifuge.setConnectData({
       sessionId: deps.sessionId,
       orgId: deps.orgId,

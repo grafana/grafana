@@ -23,7 +23,7 @@ func NewChannelLocalPublisher(node *centrifuge.Node, pipeline *pipeline.Pipeline
 	return &ChannelLocalPublisher{node: node, pipeline: pipeline, channelLeaderMode: channelLeaderMode}
 }
 
-func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte) error {
+func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte, leadershipID string) error {
 	if p.pipeline != nil {
 		orgID, channelID, err := orgchannel.StripOrgID(channel)
 		if err != nil {
@@ -40,7 +40,13 @@ func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte) error 
 	}
 	var err error
 	if p.channelLeaderMode {
-		_, err = p.node.Publish(channel, data)
+		var meta map[string]string
+		if leadershipID != "" {
+			meta = map[string]string{
+				"lid": leadershipID,
+			}
+		}
+		_, err = p.node.Publish(channel, data, centrifuge.WithMeta(meta))
 	} else {
 		pub := &centrifuge.Publication{
 			Data: data,

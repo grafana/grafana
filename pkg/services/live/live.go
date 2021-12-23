@@ -257,6 +257,9 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	// different goroutines (belonging to different client connections). This is also
 	// true for other event handlers.
 	node.OnConnect(func(client *centrifuge.Client) {
+		var leaderSubsMu sync.RWMutex
+		leaderSubs := make(map[string]string)
+
 		numConnections := g.node.Hub().NumClients()
 		if g.Cfg.LiveMaxConnections >= 0 && numConnections > g.Cfg.LiveMaxConnections {
 			logger.Warn(
@@ -273,6 +276,22 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		logger.Debug("Client connected", "user", client.UserID(), "client", client.ID())
 		connectedAt := time.Now()
 
+		client.OnTransportWrite(func(e centrifuge.TransportWriteEvent) bool {
+			if e.Reply.Push != nil && e.Reply.Push.Pub != nil {
+				leaderSubsMu.RLock()
+				defer leaderSubsMu.RUnlock()
+				if expectedLeadershipID, ok := leaderSubs[e.Reply.Push.Channel]; ok {
+					currentLeadershipId := e.Reply.Push.Pub.Meta["lid"]
+					if currentLeadershipId != expectedLeadershipID {
+						logger.Debug("Leadership ID changed for a subscription", "channel", e.Reply.Push.Channel, "expectedLeadershipId", expectedLeadershipID, "currentLeadershipId", currentLeadershipId)
+						client.Disconnect(centrifuge.DisconnectForceReconnect)
+						return false
+					}
+				}
+			}
+			return true
+		})
+
 		// Called when client issues RPC (async request over Live connection).
 		client.OnRPC(func(e centrifuge.RPCEvent, cb centrifuge.RPCCallback) {
 			err := runConcurrentlyIfNeeded(client.Context(), semaphore, func() {
@@ -283,10 +302,26 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			}
 		})
 
+		client.OnUnsubscribe(func(event centrifuge.UnsubscribeEvent) {
+			leaderSubsMu.Lock()
+			delete(leaderSubs, event.Channel)
+			leaderSubsMu.Unlock()
+		})
+
 		// Called when client subscribes to the channel.
 		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
 			err := runConcurrentlyIfNeeded(client.Context(), semaphore, func() {
-				cb(g.handleOnSubscribe(client, e))
+				reply, leadershipID, err := g.handleOnSubscribe(client, e)
+				if err != nil {
+					cb(reply, err)
+					return
+				}
+				if leadershipID != "" {
+					leaderSubsMu.Lock()
+					leaderSubs[e.Channel] = leadershipID
+					leaderSubsMu.Unlock()
+				}
+				cb(reply, err)
 			})
 			if err != nil {
 				cb(centrifuge.SubscribeReply{}, err)
@@ -333,6 +368,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	// Use a pure websocket transport.
 	wsHandler := centrifuge.NewWebsocketHandler(node, centrifuge.WebsocketConfig{
+		ProtocolVersion: centrifuge.ProtocolVersion2,
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin:     checkOrigin,
@@ -618,25 +654,25 @@ func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEve
 	}, nil
 }
 
-func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, string, error) {
 	logger.Debug("Client wants to subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 
 	user, ok := livecontext.GetContextSignedUser(client.Context())
 	if !ok {
 		logger.Error("No user found in context", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		return centrifuge.SubscribeReply{}, "", centrifuge.ErrorInternal
 	}
 
 	// See a detailed comment for StripOrgID about orgID management in Live.
 	orgID, channel, err := orgchannel.StripOrgID(e.Channel)
 	if err != nil {
 		logger.Error("Error parsing channel", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		return centrifuge.SubscribeReply{}, "", centrifuge.ErrorInternal
 	}
 
 	if user.OrgId != orgID {
 		logger.Info("Error subscribing: wrong orgId", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
+		return centrifuge.SubscribeReply{}, "", centrifuge.ErrorPermissionDenied
 	}
 
 	var reply models.SubscribeReply
@@ -647,7 +683,7 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
 		if err != nil {
 			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+			return centrifuge.SubscribeReply{}, "", centrifuge.ErrorInternal
 		}
 		ruleFound = ok
 		if ok {
@@ -655,12 +691,12 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 				ok, err := rule.SubscribeAuth.CanSubscribe(client.Context(), user)
 				if err != nil {
 					logger.Error("Error checking subscribe permissions", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-					return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+					return centrifuge.SubscribeReply{}, "", centrifuge.ErrorInternal
 				}
 				if !ok {
 					// using HTTP error codes for WS errors too.
 					code, text := subscribeStatusToHTTPError(backend.SubscribeStreamStatusPermissionDenied)
-					return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+					return centrifuge.SubscribeReply{}, "", &centrifuge.Error{Code: uint32(code), Message: text}
 				}
 			}
 			if len(rule.Subscribers) > 0 {
@@ -672,7 +708,7 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 					}, e.Data)
 					if err != nil {
 						logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-						return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+						return centrifuge.SubscribeReply{}, "", centrifuge.ErrorInternal
 					}
 					if status != backend.SubscribeStreamStatusOK {
 						break
@@ -686,10 +722,10 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 		if err != nil {
 			if errors.Is(err, live.ErrInvalidChannelID) {
 				logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-				return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
+				return centrifuge.SubscribeReply{}, "", &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
 			}
 			logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+			return centrifuge.SubscribeReply{}, "", centrifuge.ErrorInternal
 		}
 		reply, status, err = handler.OnSubscribe(client.Context(), user, models.SubscribeEvent{
 			Channel: channel,
@@ -698,14 +734,14 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 		})
 		if err != nil {
 			logger.Error("Error calling channel handler subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+			return centrifuge.SubscribeReply{}, "", centrifuge.ErrorInternal
 		}
 	}
 	if status != backend.SubscribeStreamStatusOK {
 		// using HTTP error codes for WS errors too.
 		code, text := subscribeStatusToHTTPError(status)
 		logger.Debug("Return custom subscribe error", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "code", code)
-		return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+		return centrifuge.SubscribeReply{}, "", &centrifuge.Error{Code: uint32(code), Message: text}
 	}
 	logger.Debug("Client subscribed", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 
@@ -713,7 +749,7 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 	if g.leaderManager != nil && (parsedChannel.Scope == live.ScopePlugin || parsedChannel.Scope == live.ScopeDatasource) {
 		if reply.LeadershipID == "" {
 			logger.Error("No leadership ID found in subscribe reply", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+			return centrifuge.SubscribeReply{}, "", centrifuge.ErrorInternal
 		}
 		go g.watchChannelLeader(client, e.Channel, reply.LeadershipID)
 	}
@@ -725,7 +761,7 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 			Recover:   reply.Recover,
 			Data:      reply.Data,
 		},
-	}, nil
+	}, reply.LeadershipID, nil
 }
 
 func (g *GrafanaLive) watchChannelLeader(client *centrifuge.Client, orgChannel string, leadershipID string) {
@@ -734,11 +770,14 @@ func (g *GrafanaLive) watchChannelLeader(client *centrifuge.Client, orgChannel s
 		case <-client.Context().Done():
 			return
 		case <-time.After(10 * time.Second):
-			ok, _, currentLeadershipID, err := g.leaderManager.GetLeader(client.Context(), orgChannel)
+			ctx, cancel := context.WithTimeout(client.Context(), 250*time.Millisecond)
+			ok, _, currentLeadershipID, err := g.leaderManager.GetLeader(ctx, orgChannel)
 			if err != nil {
+				cancel()
 				logger.Error("Error getting leader", "error", err, "channel", orgChannel)
 				continue
 			}
+			cancel()
 			if !ok {
 				logger.Debug("Subscription leader not found", "channel", orgChannel)
 				client.Disconnect(centrifuge.DisconnectForceReconnect)
@@ -749,7 +788,7 @@ func (g *GrafanaLive) watchChannelLeader(client *centrifuge.Client, orgChannel s
 				client.Disconnect(centrifuge.DisconnectForceReconnect)
 				return
 			}
-			logger.Debug("Subscription leader OK", "channel", orgChannel)
+			logger.Debug("Periodic subscription leader check OK", "channel", orgChannel)
 		}
 	}
 }

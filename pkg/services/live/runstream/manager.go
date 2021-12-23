@@ -22,7 +22,7 @@ var (
 //go:generate mockgen -destination=mock.go -package=runstream github.com/grafana/grafana/pkg/services/live/runstream ChannelLocalPublisher,NumLocalSubscribersGetter,StreamRunner,PluginContextGetter
 
 type ChannelLocalPublisher interface {
-	PublishLocal(channel string, data []byte) error
+	PublishLocal(channel string, data []byte, leadershipID string) error
 }
 
 type PluginContextGetter interface {
@@ -41,10 +41,11 @@ type StreamRunner interface {
 type packetSender struct {
 	channelLocalPublisher ChannelLocalPublisher
 	channel               string
+	leadershipID          string
 }
 
 func (p *packetSender) Send(packet *backend.StreamPacket) error {
-	return p.channelLocalPublisher.PublishLocal(p.channel, packet.Data)
+	return p.channelLocalPublisher.PublishLocal(p.channel, packet.Data, p.leadershipID)
 }
 
 type NodeIDGetter interface {
@@ -199,23 +200,27 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 			if s.leaderManager == nil {
 				continue
 			}
-			ok, err := s.leaderManager.TouchLeader(ctx, sr.Channel, sr.leadershipID)
+			refreshCtx, refreshCtxCancel := context.WithTimeout(ctx, 250*time.Millisecond)
+			ok, err := s.leaderManager.RefreshLeader(refreshCtx, sr.Channel, sr.leadershipID)
 			if err != nil {
-				logger.Error("Error touching leader entry", "channel", sr.Channel, "path", sr.Path, "error", err)
+				refreshCtxCancel()
+				logger.Error("Error refreshing leader entry", "channel", sr.Channel, "error", err)
 				currentLeaderCheckFailures++
 				if currentLeaderCheckFailures == maxLeaderCheckFailures {
-					logger.Error("Stop stream as we can't touch it for a long time", "channel", sr.Channel, "path", sr.Path)
+					logger.Error("Stop stream as we can't refresh leadership for a long time", "channel", sr.Channel)
 					s.stopStream(sr, cancelFn)
 					return
 				}
 				continue
 			}
+			refreshCtxCancel()
+
 			if !ok {
-				logger.Error("Leader changed", "channel", sr.Channel, "path", sr.Path)
+				logger.Error("Channel leader changed", "channel", sr.Channel)
 				s.stopStream(sr, cancelFn)
 				return
 			}
-			logger.Debug("Leader touch ok", "channel", sr.Channel, "path", sr.Path)
+			logger.Debug("Periodic channel leader refresh OK", "channel", sr.Channel)
 		case <-datasourceTicker.C:
 			if sr.PluginContext.DataSourceInstanceSettings != nil {
 				dsUID := sr.PluginContext.DataSourceInstanceSettings.UID
@@ -322,12 +327,12 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 			}
 			newPluginCtx, ok, err := s.pluginContextGetter.GetPluginContext(sr.user, pluginCtx.PluginID, datasourceUID, false)
 			if err != nil {
-				logger.Error("Error getting plugin context", "path", sr.Path, "error", err)
+				logger.Error("Error getting plugin context", "channel", sr.Channel, "error", err)
 				isReconnect = true
 				continue
 			}
 			if !ok {
-				logger.Info("No plugin context found, stopping stream", "path", sr.Path)
+				logger.Info("No plugin context found, stopping stream", "channel", sr.Channel)
 				return
 			}
 			pluginCtx = newPluginCtx
@@ -340,18 +345,34 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 				Path:          sr.Path,
 				Data:          sr.Data,
 			},
-			backend.NewStreamSender(&packetSender{channelLocalPublisher: s.channelSender, channel: sr.Channel}),
+			backend.NewStreamSender(&packetSender{
+				channelLocalPublisher: s.channelSender,
+				channel:               sr.Channel,
+				leadershipID:          sr.leadershipID,
+			}),
 		)
 		if err != nil {
 			if errors.Is(ctx.Err(), context.Canceled) {
-				logger.Debug("Stream cleanly finished", "path", sr.Path)
+				logger.Debug("Stream cleanly finished", "channel", sr.Channel)
 				return
 			}
-			logger.Error("Error running stream, re-establishing", "path", sr.Path, "error", err, "wait", delay)
+			if s.leaderManager != nil {
+				logger.Error("Error running stream, closing", "channel", sr.Channel, "error", err, "wait", delay)
+				// Return from a stream and let it be re-initialized eventually.
+				cleanLeaderCtx, cleanLeaderCtxCancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+				err := s.leaderManager.CleanLeader(cleanLeaderCtx, sr.Channel)
+				if err != nil {
+					cleanLeaderCtxCancel()
+					logger.Error("Error cleaning up channel leadership", "error", err)
+				}
+				cleanLeaderCtxCancel()
+				return
+			}
+			logger.Error("Error running stream, re-establishing", "channel", sr.Channel, "error", err, "wait", delay)
 			isReconnect = true
 			continue
 		}
-		logger.Debug("Stream finished without error, stopping it", "path", sr.Path)
+		logger.Debug("Stream finished without error, stopping it", "channel", sr.Channel)
 		return
 	}
 }

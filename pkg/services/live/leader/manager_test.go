@@ -40,18 +40,18 @@ func TestRedisCacheStorage(t *testing.T) {
 	require.Equal(t, "nodeID", leaderNodeID)
 	require.Equal(t, "leadershipID", leadershipID)
 
-	ok, err := m.TouchLeader(ctx, "test", "leadershipID")
+	ok, err := m.RefreshLeader(ctx, "test", "leadershipID")
 	require.NoError(t, err)
 	require.True(t, ok)
 
-	ok, err = m.TouchLeader(ctx, "test", "leadershipID2")
+	ok, err = m.RefreshLeader(ctx, "test", "leadershipID2")
 	require.NoError(t, err)
 	require.False(t, ok)
 
 	err = m.CleanLeader(ctx, "test")
 	require.NoError(t, err)
 
-	ok, err = m.TouchLeader(ctx, "test", "leadershipID")
+	ok, err = m.RefreshLeader(ctx, "test", "leadershipID")
 	require.NoError(t, err)
 	require.False(t, ok)
 }

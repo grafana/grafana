@@ -134,7 +134,9 @@ func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStrea
 		return &PluginSubscribeStreamResponse{}, nil
 	}
 
-	ok, _, currentLeadershipID, err := c.leaderManager.GetLeader(context.Background(), orgchannel.PrependOrgID(req.OrgID, req.Channel))
+	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+	ok, _, currentLeadershipID, err := c.leaderManager.GetLeader(ctx, orgchannel.PrependOrgID(req.OrgID, req.Channel))
 	if err != nil {
 		// TODO: better handling of non-leader error.
 		return nil, errors.New("error checking leader")

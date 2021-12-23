@@ -44,7 +44,7 @@ type Runner struct {
 }
 
 type LocalPublisher interface {
-	PublishLocal(channel string, data []byte) error
+	PublishLocal(channel string, data []byte, leadershipID string) error
 }
 
 // NewRunner creates new Runner.
@@ -196,7 +196,7 @@ func (s *NamespaceStream) Push(path string, frame *data.Frame) error {
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	s.incRate(path, time.Now().Unix())
 	if s.scope == live.ScopeDatasource || s.scope == live.ScopePlugin {
-		return s.localPublisher.PublishLocal(orgchannel.PrependOrgID(s.orgID, channel), frameJSON)
+		return s.localPublisher.PublishLocal(orgchannel.PrependOrgID(s.orgID, channel), frameJSON, "")
 	}
 	return s.publisher(s.orgID, channel, frameJSON)
 }

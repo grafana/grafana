@@ -2,6 +2,9 @@ package features
 
 import (
 	"context"
+	"time"
+
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/leader"
@@ -9,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 
 	"github.com/centrifugal/centrifuge"
-	"github.com/gofrs/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
@@ -134,22 +136,33 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 	return reply, backend.SubscribeStreamStatusOK, nil
 }
 
+const (
+	getOrCreateLeaderTimeout = 250 * time.Millisecond
+	proxySubscribeTimeout    = 250 * time.Millisecond
+)
+
 func (r *PluginPathRunner) handleHASubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	logger.Debug("Handle ha subscribe", "path", r.path, "currentNodeId", r.nodeIDGetter.GetNodeID())
-	uid, err := uuid.NewV4()
+	newLeadershipID, err := util.GetRandomString(8)
 	if err != nil {
 		logger.Error("Error generating uuid v4", "error", err, "path", r.path)
 		return models.SubscribeReply{}, 0, err
 	}
-	// TODO: support OrgID!!!
+
 	orgChannel := orgchannel.PrependOrgID(user.OrgId, e.Channel)
-	leaderNodeID, leadershipID, err := r.leaderManager.GetOrCreateLeader(ctx, orgChannel, r.nodeIDGetter.GetNodeID(), uid.String())
+
+	getOrCreateCtx, getOrCreateCancel := context.WithTimeout(ctx, getOrCreateLeaderTimeout)
+	defer getOrCreateCancel()
+	leaderNodeID, leadershipID, err := r.leaderManager.GetOrCreateLeader(getOrCreateCtx, orgChannel, r.nodeIDGetter.GetNodeID(), newLeadershipID)
 	if err != nil {
 		logger.Error("Error on upsert channel leader", "error", err, "path", r.path, "orgChannel", orgChannel)
 		return models.SubscribeReply{}, 0, err
 	}
 	logger.Debug("Channel leader found", "leaderNodeId", leaderNodeID)
-	reply, status, err := r.subscribeStreamCaller.CallPluginSubscribeStream(ctx, user, e.Channel, leaderNodeID, leadershipID)
+
+	proxySubscribeCtx, proxySubscribeCancel := context.WithTimeout(ctx, proxySubscribeTimeout)
+	defer proxySubscribeCancel()
+	reply, status, err := r.subscribeStreamCaller.CallPluginSubscribeStream(proxySubscribeCtx, user, e.Channel, leaderNodeID, leadershipID)
 	if err != nil {
 		logger.Error("Call plugin subscribe stream survey error", "error", err, "path", r.path)
 		return models.SubscribeReply{}, 0, err
