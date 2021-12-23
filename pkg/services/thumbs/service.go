@@ -135,7 +135,7 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	c.JSON(500, map[string]string{"path": rsp.Path, "error": "unknown!"})
 }
 
-// Hack for now -- lets you upload images explicilty
+// Hack for now -- lets you upload images explicitly
 func (hs *thumbService) SetImage(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
