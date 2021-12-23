@@ -292,10 +292,15 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	return expr
 }
 
+// MatrixToDataFrames marshals a matrix result to data frames
 func MatrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
-	currentIdx := 0
-	length := 0
+	var (
+		rowIdx = 0
+		length = 0
+	)
 
+	// it's faster to get the length of the longest column first
+	// so we can allocate fields without the need to expand
 	for _, v := range matrix {
 		if len(v.Values) > length {
 			length = len(v.Values)
@@ -318,13 +323,17 @@ func MatrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 			timeKey := k.Timestamp.Unix()
 			value := float64(k.Value)
 			valueIdx := timeMap[timeKey]
+
+			// we haven't seen this timestamp yet, so we will need to add it to the map,
+			// and increment the row index
 			if valueIdx == nil {
-				timeField.Set(currentIdx, time.Unix(timeKey, 0).UTC())
-				lastIdx := currentIdx
+				timeField.Set(rowIdx, time.Unix(timeKey, 0).UTC())
+				lastIdx := rowIdx
 				timeMap[timeKey] = &lastIdx
 				valueIdx = &lastIdx
-				currentIdx += 1
+				rowIdx += 1
 			}
+
 			if !math.IsNaN(value) {
 				valueField.Set(*valueIdx, &value)
 			}
