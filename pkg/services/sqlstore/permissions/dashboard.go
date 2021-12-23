@@ -76,18 +76,18 @@ func (d DashboardPermissionFilter) Where() (string, []interface{}) {
                                                                           ((dashboards.has_folder = 1 AND dashboards.folder_has_acl = ` + falseStr + `) OR
                                                                            (dashboards.has_folder = 0 AND dashboards.has_acl = ` + falseStr + `)))
                               ) AS perm
-                         WHERE (is_folder = 0 AND has_acl = ` + falseStr + ` AND has_folder = 0 AND is_default_allowed = 1)
-                            OR (is_folder = 0 AND has_acl = ` + falseStr + ` AND has_folder = 1 AND folder_has_acl = ` + trueStr + ` AND
+                         WHERE (is_folder = 0 AND has_folder = 0 AND is_default_allowed = 1)
+                            OR (is_folder = 0 AND has_folder = 1 AND folder_has_acl = ` + trueStr + ` AND
                                 is_folder_allowed = 1)
-                            OR (is_folder = 0 AND has_acl = ` + falseStr + ` AND has_folder = 1 AND folder_has_acl = ` + falseStr + ` AND
+                            OR (is_folder = 0 AND has_folder = 1 AND folder_has_acl = ` + falseStr + ` AND
                                 is_default_allowed = 1)
-                            OR (is_folder = 0 AND has_acl = ` + trueStr + ` AND has_folder = 0 AND is_dashboard_allowed)
-                            OR (is_folder = 0 AND has_acl = ` + trueStr + ` AND has_folder = 1 AND folder_has_acl = ` + trueStr + ` AND
+                            OR (is_folder = 0 AND has_folder = 0 AND is_dashboard_allowed)
+                            OR (is_folder = 0 AND has_folder = 1 AND folder_has_acl = ` + trueStr + ` AND
                                 (is_dashboard_allowed = 1 OR is_folder_allowed = 1))
-                            OR (is_folder = 0 AND has_acl = ` + trueStr + ` AND has_folder = 1 AND folder_has_acl = ` + falseStr + ` AND
+                            OR (is_folder = 0 AND has_folder = 1 AND folder_has_acl = ` + falseStr + ` AND
                                 (is_dashboard_allowed = 1 OR is_default_allowed = 1))
-                            OR (is_folder = ` + trueStr + ` AND has_acl = ` + trueStr + ` AND is_dashboard_allowed = 1)
-                            OR (is_folder = ` + trueStr + ` AND has_acl = ` + falseStr + ` AND is_default_allowed = 1)
+                            OR (is_folder = ` + trueStr + ` AND is_dashboard_allowed = 1)
+                            OR (is_folder = ` + trueStr + ` AND is_default_allowed = 1)
                         ) AS a
     )
 )`
