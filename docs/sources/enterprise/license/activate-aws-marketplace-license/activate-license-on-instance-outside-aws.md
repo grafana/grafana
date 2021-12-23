@@ -26,33 +26,70 @@ To install Grafana, refer to the documentation specific to your implementation.
 - [Run Grafana Docker image]({{< relref "../../../installation/docker" >}})
 - [Deploy Grafana on Kubernetes]({{< relref "../../../installation/kubernetes/#deploy-grafana-enterprise-on-kubernetes" >}}).
 
-## Task 2: Install the Amazon command line interface
+## Task 2: Create an AWS IAM user with access to your Grafana Enterprise license
 
-To retrieve your license, Grafana Enterprise requires access to your AWS account and license information. You grant access using the AWS command line interface (CLI).
+To retrieve your license, Grafana Enterprise requires access to your AWS account and license information. Grant access by creating an IAM user in AWS with access to the license, and passing its credentials as environment variables on the host or container where Grafana is running.
 
-1. To install the AWS CLI, refer to [Getting started with the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html).
-
-1. Configure Grafana with the credentials of an IAM user granted the following permissions:
+1. In AWS, create an IAM policy with the following permissions for the **License Manager** service:
 
    - `"license-manager:CheckoutLicense"`
    - `"license-manager:ListReceivedLicenses"`
    - `"license-manager:GetLicenseUsage"`
    - `"license-manager:CheckInLicense"`
 
+   For details on creating a policy in AWS, refer to the AWS documentation on [creating IAM policies](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create.html).
+
    For more information about AWS Identity and Access Management, refer to [IAM users](​​https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html).
+
+2. In the **Resources** section of the policy, specify your license ARN in order to limit the policy to get usage data for only the license granted to Grafana Enterprise. You can find your license ID in the **Granted Licenses** section of [AWS License Manager](https://console.aws.amazon.com/license-manager/home).  
+   
+   Your policy JSON should look like this:
+
+   ```
+   {
+      "Version": "2012-10-17",
+      "Statement": [
+         {
+               "Sid": "VisualEditor0",
+               "Effect": "Allow",
+               "Action": "license-manager:GetLicenseUsage",
+               "Resource": "arn:aws:license-manager::[YOUR_ACCOUNT]:license:[YOUR_LICENSE_ID]"
+         },
+         {
+               "Sid": "VisualEditor1",
+               "Effect": "Allow",
+               "Action": [
+                  "license-manager:CheckoutLicense",
+                  "license-manager:ListReceivedLicenses",
+                  "license-manager:CheckInLicense"
+               ],
+               "Resource": "*"
+         }
+      ]
+   }
+   ```
+
+3. Create an [IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html) with [access key credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html), and attach the policy you created to the user.
+
+4. Retrieve the IAM user's Access Key ID and Secret Access Key, which you will use in the next step.
 
 ## Task 3: Configure Grafana Enterprise to validate its license with AWS
 
-Update one of the following settings so that Grafana Enterprise validates the license with AWS instead of Grafana Labs.
+1. Update the [license_validation_type]({{< relref "../../enterprise-configuration.md#license_validation_type" >}}) configuration to `aws`, so that Grafana Enterprise validates the license with AWS instead of Grafana Labs. 
+   
+   You can do this in one of two ways:
 
-- In the grafana.ini configuration file, update the license_validation_type configuration value to `aws`.
-- Add the following environment variable to the container:
+   Option 1: In the grafana.ini configuration file, update the license_validation_type configuration value to `aws`.
+   
+   Option 2: Add the following environment variable to the container:
 
-```
-GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
-```
+   ```
+   GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
+   ```
 
-## Task 4: Start or restart Grafana
+## Task 4: 
+
+## Task 5: Start or restart Grafana
 
 To activate Grafana Enterprise features, start (or restart) Grafana.
 
