@@ -117,19 +117,19 @@ export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChar
           min: 0,
         },
       })
-      // .addSliderInput({
-      //   path: 'xTickLabelSpacing',
-      //   name: 'Bar label minimum spacing',
-      //   description: 'Bar labels will be skipped to maintain this distance',
-      //   defaultValue: 0,
-      //   settings: {
-      //     min: -300,
-      //     max: 300,
-      //     step: 10,
-      //     marks: { '-300': 'Backward', 0: 'None', 300: 'Forward' },
-      //     included: false,
-      //   },
-      // })
+      .addSliderInput({
+        path: 'xTickLabelSpacing',
+        name: 'Bar label minimum spacing',
+        description: 'Bar labels will be skipped to maintain this distance',
+        defaultValue: 0,
+        settings: {
+          min: -300,
+          max: 300,
+          step: 10,
+          marks: { '-300': 'LTR', 0: 'None', 300: 'RTL' },
+          included: false,
+        },
+      })
       .addRadio({
         path: 'showValue',
         name: 'Show values',
