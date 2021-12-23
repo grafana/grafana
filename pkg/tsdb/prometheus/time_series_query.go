@@ -3,7 +3,9 @@ package prometheus
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -119,6 +121,32 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	return &result, nil
 }
 
+func formatLegend(metric model.Metric, query *PrometheusQuery) string {
+	var legend string
+
+	if query.LegendFormat == "" {
+		legend = metric.String()
+	} else {
+		result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
+			labelName := strings.Replace(string(in), "{{", "", 1)
+			labelName = strings.Replace(labelName, "}}", "", 1)
+			labelName = strings.TrimSpace(labelName)
+			if val, exists := metric[model.LabelName(labelName)]; exists {
+				return []byte(val)
+			}
+			return []byte{}
+		})
+		legend = string(result)
+	}
+
+	// If legend is empty brackets, use query expression
+	if legend == "{}" {
+		legend = query.Expr
+	}
+
+	return legend
+}
+
 func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, dsInfo *DatasourceInfo) ([]*PrometheusQuery, error) {
 	qs := []*PrometheusQuery{}
 	for _, query := range queryContext.Queries {
@@ -212,11 +240,11 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 		case model.Matrix:
 			nextFrames = MatrixToDataFrames(v, query, nextFrames)
 		case model.Vector:
-			nextFrames = VectorToDataFrames(v, query, nextFrames)
+			nextFrames = vectorToDataFrames(v, query, nextFrames)
 		case *model.Scalar:
-			nextFrames = ScalarToDataFrames(v, query, nextFrames)
+			nextFrames = scalarToDataFrames(v, query, nextFrames)
 		case []apiv1.ExemplarQueryResult:
-			nextFrames = ExemplarToDataFrames(v, query, nextFrames)
+			nextFrames = exemplarToDataFrames(v, query, nextFrames)
 		default:
 			plog.Error("Query returned unexpected result type", "type", v, "query", query.Expr)
 			continue
@@ -262,4 +290,234 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
 	expr = strings.ReplaceAll(expr, varRateIntervalAlt, intervalv2.FormatDuration(calculateRateInterval(interval, timeInterval, intervalCalculator)))
 	return expr
+}
+
+func MatrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
+	currentIdx := 0
+	length := 0
+
+	for _, v := range matrix {
+		if len(v.Values) > length {
+			length = len(v.Values)
+		}
+	}
+
+	timeMap := make(map[int64]*int, length)
+	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, length))
+	fields := []*data.Field{timeField}
+
+	for _, v := range matrix {
+		tags := make(map[string]string, len(v.Metric))
+		for k, v := range v.Metric {
+			tags[string(k)] = string(v)
+		}
+
+		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, length)
+
+		for _, k := range v.Values {
+			timeKey := k.Timestamp.Unix()
+			value := float64(k.Value)
+			valueIdx := timeMap[timeKey]
+			if valueIdx == nil {
+				timeField.Set(currentIdx, time.Unix(timeKey, 0).UTC())
+				lastIdx := currentIdx
+				timeMap[timeKey] = &lastIdx
+				valueIdx = &lastIdx
+				currentIdx += 1
+			}
+			if !math.IsNaN(value) {
+				valueField.Set(*valueIdx, &value)
+			}
+		}
+
+		name := formatLegend(v.Metric, query)
+		valueField.Name = data.TimeSeriesValueFieldName
+		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
+		valueField.Labels = tags
+		fields = append(fields, valueField)
+	}
+
+	return append(frames, newDataFrame("", "matrix", fields...))
+}
+
+func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, frames data.Frames) data.Frames {
+	timeVector := []time.Time{time.Unix(scalar.Timestamp.Unix(), 0).UTC()}
+	values := []float64{float64(scalar.Value)}
+	name := fmt.Sprintf("%g", values[0])
+
+	return append(
+		frames,
+		newDataFrame(
+			name,
+			"scalar",
+			data.NewField("Time", nil, timeVector),
+			data.NewField("Value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}),
+		),
+	)
+}
+
+func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, frames data.Frames) data.Frames {
+	for _, v := range vector {
+		name := formatLegend(v.Metric, query)
+		tags := make(map[string]string, len(v.Metric))
+		timeVector := []time.Time{time.Unix(v.Timestamp.Unix(), 0).UTC()}
+		values := []float64{float64(v.Value)}
+
+		for k, v := range v.Metric {
+			tags[string(k)] = string(v)
+		}
+
+		frames = append(
+			frames,
+			newDataFrame(
+				name,
+				"vector",
+				data.NewField("Time", nil, timeVector),
+				data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}),
+			),
+		)
+	}
+
+	return frames
+}
+
+func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery, frames data.Frames) data.Frames {
+	// TODO: this preallocation is very naive.
+	// We should figure out a better approximation here.
+	events := make([]ExemplarEvent, 0, len(response)*2)
+
+	for _, exemplarData := range response {
+		for _, exemplar := range exemplarData.Exemplars {
+			event := ExemplarEvent{}
+			exemplarTime := time.Unix(exemplar.Timestamp.Unix(), 0).UTC()
+			event.Time = exemplarTime
+			event.Value = float64(exemplar.Value)
+			event.Labels = make(map[string]string)
+
+			for label, value := range exemplar.Labels {
+				event.Labels[string(label)] = string(value)
+			}
+
+			for seriesLabel, seriesValue := range exemplarData.SeriesLabels {
+				event.Labels[string(seriesLabel)] = string(seriesValue)
+			}
+
+			events = append(events, event)
+		}
+	}
+
+	// Sampling of exemplars
+	bucketedExemplars := make(map[string][]ExemplarEvent)
+	values := make([]float64, 0, len(events))
+
+	// Create bucketed exemplars based on aligned timestamp
+	for _, event := range events {
+		alignedTs := fmt.Sprintf("%.0f", math.Floor(float64(event.Time.Unix())/query.Step.Seconds())*query.Step.Seconds())
+		_, ok := bucketedExemplars[alignedTs]
+		if !ok {
+			bucketedExemplars[alignedTs] = make([]ExemplarEvent, 0)
+		}
+
+		bucketedExemplars[alignedTs] = append(bucketedExemplars[alignedTs], event)
+		values = append(values, event.Value)
+	}
+
+	// Calculate standard deviation
+	standardDeviation := deviation(values)
+
+	// Create slice with all of the bucketed exemplars
+	sampledBuckets := make([]string, len(bucketedExemplars))
+	for bucketTimes := range bucketedExemplars {
+		sampledBuckets = append(sampledBuckets, bucketTimes)
+	}
+	sort.Strings(sampledBuckets)
+
+	// Sample exemplars based ona value, so we are not showing too many of them
+	sampleExemplars := make([]ExemplarEvent, 0, len(sampledBuckets))
+	for _, bucket := range sampledBuckets {
+		exemplarsInBucket := bucketedExemplars[bucket]
+		if len(exemplarsInBucket) == 1 {
+			sampleExemplars = append(sampleExemplars, exemplarsInBucket[0])
+		} else {
+			bucketValues := make([]float64, len(exemplarsInBucket))
+			for _, exemplar := range exemplarsInBucket {
+				bucketValues = append(bucketValues, exemplar.Value)
+			}
+			sort.Slice(bucketValues, func(i, j int) bool {
+				return bucketValues[i] > bucketValues[j]
+			})
+
+			sampledBucketValues := make([]float64, 0)
+			for _, value := range bucketValues {
+				if len(sampledBucketValues) == 0 {
+					sampledBucketValues = append(sampledBucketValues, value)
+				} else {
+					// Then take values only when at least 2 standard deviation distance to previously taken value
+					prev := sampledBucketValues[len(sampledBucketValues)-1]
+					if standardDeviation != 0 && prev-value >= float64(2)*standardDeviation {
+						sampledBucketValues = append(sampledBucketValues, value)
+					}
+				}
+			}
+			for _, valueBucket := range sampledBucketValues {
+				for _, exemplar := range exemplarsInBucket {
+					if exemplar.Value == valueBucket {
+						sampleExemplars = append(sampleExemplars, exemplar)
+					}
+				}
+			}
+		}
+	}
+
+	// Create DF from sampled exemplars
+	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(sampleExemplars))
+	timeField.Name = "Time"
+	valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, len(sampleExemplars))
+	valueField.Name = "Value"
+	labelsVector := make(map[string][]string, len(sampleExemplars))
+
+	for i, exemplar := range sampleExemplars {
+		timeField.Set(i, exemplar.Time)
+		valueField.Set(i, exemplar.Value)
+
+		for label, value := range exemplar.Labels {
+			if labelsVector[label] == nil {
+				labelsVector[label] = make([]string, 0)
+			}
+
+			labelsVector[label] = append(labelsVector[label], value)
+		}
+	}
+
+	dataFields := make([]*data.Field, 0, len(labelsVector)+2)
+	dataFields = append(dataFields, timeField, valueField)
+	for label, vector := range labelsVector {
+		dataFields = append(dataFields, data.NewField(label, nil, vector))
+	}
+
+	return append(frames, newDataFrame("exemplar", "exemplar", dataFields...))
+}
+
+func deviation(values []float64) float64 {
+	var sum, mean, sd float64
+	valuesLen := float64(len(values))
+	for _, value := range values {
+		sum += value
+	}
+	mean = sum / valuesLen
+	for j := 0; j < len(values); j++ {
+		sd += math.Pow(values[j]-mean, 2)
+	}
+	return math.Sqrt(sd / (valuesLen - 1))
+}
+
+func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
+	frame := data.NewFrame(name, fields...)
+	frame.Meta = &data.FrameMeta{
+		Custom: map[string]string{
+			"resultType": typ,
+		},
+	}
+
+	return frame
 }
