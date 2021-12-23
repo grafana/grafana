@@ -79,6 +79,7 @@ func TestMetrics(t *testing.T) {
 				DashboardsViewersCanEdit:  2,
 				FoldersViewersCanAdmin:    1,
 				FoldersViewersCanEdit:     5,
+				APIKeys:                   2,
 			}
 			getSystemStatsQuery = query
 			return nil
@@ -344,6 +345,7 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, getSystemStatsQuery.Result.FoldersViewersCanEdit, metrics.Get("stats.folders_viewers_can_edit.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.FoldersViewersCanAdmin, metrics.Get("stats.folders_viewers_can_admin.count").MustInt64())
 			assert.Equal(t, 15, metrics.Get("stats.total_auth_token.count").MustInt())
+			assert.Equal(t, 2, metrics.Get("stats.api_keys.count").MustInt())
 			assert.Equal(t, 5, metrics.Get("stats.avg_auth_token_per_user.count").MustInt())
 			assert.Equal(t, 16, metrics.Get("stats.dashboard_versions.count").MustInt())
 			assert.Equal(t, 17, metrics.Get("stats.annotations.count").MustInt())

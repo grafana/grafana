@@ -75,6 +75,7 @@ export const circleMarker = (cfg: StyleConfigValues) => {
   });
 };
 
+// Does not have image
 export const polyStyle = (cfg: StyleConfigValues) => {
   return new Style({
     fill: getFillColor(cfg),

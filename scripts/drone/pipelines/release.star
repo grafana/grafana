@@ -115,7 +115,6 @@ def release_npm_packages_step(edition, ver_mode):
         ],
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
-            'GITHUB_PACKAGE_TOKEN': from_secret('github_package_token'),
         },
         'commands': ['./scripts/build/release-npm-packages.sh ${DRONE_TAG}'],
     }
