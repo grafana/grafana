@@ -1,5 +1,6 @@
 import { size } from 'lodash';
-import ResponseParser from '../response_parser';
+import ResponseParser, { getSelectedParams } from '../response_parser';
+import InfluxQueryModel from '../influx_query_model';
 
 describe('influxdb response parser', () => {
   const parser = new ResponseParser();
@@ -200,6 +201,43 @@ describe('influxdb response parser', () => {
         expect(size(result)).toBe(1);
         expect(result[0].text).toBe('time');
       });
+    });
+  });
+
+  describe('Should name the selected params correctly', () => {
+    it('when there are no duplicates', () => {
+      const query = new InfluxQueryModel({
+        refId: 'A',
+        measurement: 'cpu',
+        select: [[{ type: 'field', params: ['usage_iowait'] }], [{ type: 'field', params: ['usage_idle'] }]],
+      });
+
+      var selectedParams = getSelectedParams(query.target);
+
+      expect(selectedParams.length).toBe(2);
+      expect(selectedParams[0]).toBe('usage_iowait');
+      expect(selectedParams[1]).toBe('usage_idle');
+    });
+
+    it('when there are duplicates', () => {
+      const query = new InfluxQueryModel({
+        refId: 'A',
+        measurement: 'cpu',
+        select: [
+          [{ type: 'field', params: ['usage_iowait'] }],
+          [{ type: 'field', params: ['usage_iowait'] }],
+          [{ type: 'field', params: ['usage_iowait'] }],
+          [{ type: 'field', params: ['usage_idle'] }],
+        ],
+      });
+
+      var selectedParams = getSelectedParams(query.target);
+
+      expect(selectedParams.length).toBe(4);
+      expect(selectedParams[0]).toBe('usage_iowait');
+      expect(selectedParams[1]).toBe('usage_iowait_1');
+      expect(selectedParams[2]).toBe('usage_iowait_2');
+      expect(selectedParams[3]).toBe('usage_idle');
     });
   });
 });

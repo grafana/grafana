@@ -136,7 +136,7 @@ function getTableRows(dfs: DataFrame[], table: TableModel, labels: string[]): Ta
   return table;
 }
 
-function getSelectedParams(target: InfluxQuery): string[] {
+export function getSelectedParams(target: InfluxQuery): string[] {
   let allParams: string[] = [];
   target.select?.forEach((select) => {
     const selector = select.filter((x) => x.type !== 'field');
