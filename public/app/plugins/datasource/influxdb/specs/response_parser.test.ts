@@ -1,6 +1,7 @@
 import { size } from 'lodash';
 import ResponseParser, { getSelectedParams } from '../response_parser';
 import InfluxQueryModel from '../influx_query_model';
+import { FieldType, MutableDataFrame } from '@grafana/data';
 
 describe('influxdb response parser', () => {
   const parser = new ResponseParser();
@@ -238,6 +239,33 @@ describe('influxdb response parser', () => {
       expect(selectedParams[1]).toBe('usage_iowait_1');
       expect(selectedParams[2]).toBe('usage_iowait_2');
       expect(selectedParams[3]).toBe('usage_idle');
+    });
+  });
+
+  describe('Should get the table', () => {
+    const dataFrame = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1640257340000] },
+        { name: 'value', type: FieldType.number, values: [3234232323] },
+      ],
+    });
+
+    const query = new InfluxQueryModel({
+      refId: 'A',
+      measurement: 'cpu',
+      select: [[{ type: 'field', params: ['usage_iowait'] }], [{ type: 'field', params: ['usage_idle'] }]],
+    });
+
+    const table = parser.getTable([dataFrame], query.target, {
+      preferredVisualisationType: 'table',
+    });
+
+    it('columns correctly', () => {
+      expect(table.columns.length).toBe(3);
+      expect(table.columns[0].text).toBe('Time');
+      expect(table.columns[1].text).toBe('usage_iowait');
+      expect(table.columns[2].text).toBe('usage_idle');
     });
   });
 });
