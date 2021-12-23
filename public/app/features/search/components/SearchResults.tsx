@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
+import { Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
 import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
@@ -20,7 +20,7 @@ export interface Props {
   layout?: string;
 }
 
-const { section: sectionLabel, items: itemsLabel } = selectors.components.Search;
+const { sectionV2: sectionLabel, itemsV2: itemsLabel } = selectors.components.Search;
 
 export const SearchResults: FC<Props> = memo(
   ({ editable, loading, onTagSelected, onToggleChecked, onToggleSection, results, layout }) => {
@@ -32,12 +32,12 @@ export const SearchResults: FC<Props> = memo(
         <div className={styles.wrapper}>
           {results.map((section) => {
             return (
-              <div aria-label={sectionLabel} className={styles.section} key={section.id || section.title}>
+              <div data-testid={sectionLabel} className={styles.section} key={section.id || section.title}>
                 {section.title && (
                   <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
                 )}
                 {section.expanded && (
-                  <div aria-label={itemsLabel} className={styles.sectionItems}>
+                  <div data-testid={itemsLabel} className={styles.sectionItems}>
                     {section.items.map((item) => (
                       <SearchItem key={item.id} {...itemProps} item={item} />
                     ))}
@@ -56,7 +56,6 @@ export const SearchResults: FC<Props> = memo(
           <AutoSizer disableWidth>
             {({ height }) => (
               <FixedSizeList
-                aria-label="Search items"
                 className={styles.wrapper}
                 innerElementType="ul"
                 itemSize={SEARCH_ITEM_HEIGHT + SEARCH_ITEM_MARGIN}

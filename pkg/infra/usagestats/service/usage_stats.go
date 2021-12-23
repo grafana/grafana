@@ -51,9 +51,9 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.viewers.count"] = statsQuery.Result.Viewers
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
 	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
-	metrics["stats.plugins.apps.count"] = uss.appCount()
-	metrics["stats.plugins.panels.count"] = uss.panelCount()
-	metrics["stats.plugins.datasources.count"] = uss.dataSourceCount()
+	metrics["stats.plugins.apps.count"] = uss.appCount(ctx)
+	metrics["stats.plugins.panels.count"] = uss.panelCount(ctx)
+	metrics["stats.plugins.datasources.count"] = uss.dataSourceCount(ctx)
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.active_admins.count"] = statsQuery.Result.ActiveAdmins
@@ -84,6 +84,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.dashboards_viewers_can_admin.count"] = statsQuery.Result.DashboardsViewersCanAdmin
 	metrics["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
 	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
+	metrics["stats.api_keys.count"] = statsQuery.Result.APIKeys
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -122,7 +123,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	// as sending that name could be sensitive information
 	dsOtherCount := 0
 	for _, dsStat := range dsStats.Result {
-		if uss.ShouldBeReported(dsStat.Type) {
+		if uss.ShouldBeReported(ctx, dsStat.Type) {
 			metrics["stats.ds."+dsStat.Type+".count"] = dsStat.Count
 		} else {
 			dsOtherCount += dsStat.Count
@@ -131,7 +132,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.ds.other.count"] = dsOtherCount
 
 	esDataSourcesQuery := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
-	if err := uss.Bus.Dispatch(&esDataSourcesQuery); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &esDataSourcesQuery); err != nil {
 		uss.log.Error("Failed to get elasticsearch json data", "error", err)
 		return report, err
 	}
@@ -170,7 +171,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 
 		access := strings.ToLower(dsAccessStat.Access)
 
-		if uss.ShouldBeReported(dsAccessStat.Type) {
+		if uss.ShouldBeReported(ctx, dsAccessStat.Type) {
 			metrics["stats.ds_access."+dsAccessStat.Type+"."+access+".count"] = dsAccessStat.Count
 		} else {
 			old := dsAccessOtherCount[access]
@@ -329,9 +330,9 @@ func (uss *UsageStats) updateTotalStats(ctx context.Context) {
 	}
 }
 
-func (uss *UsageStats) ShouldBeReported(dsType string) bool {
-	ds := uss.pluginStore.Plugin(dsType)
-	if ds == nil {
+func (uss *UsageStats) ShouldBeReported(ctx context.Context, dsType string) bool {
+	ds, exists := uss.pluginStore.Plugin(ctx, dsType)
+	if !exists {
 		return false
 	}
 
@@ -366,14 +367,14 @@ func (uss *UsageStats) GetUsageStatsId(ctx context.Context) string {
 	return anonId
 }
 
-func (uss *UsageStats) appCount() int {
-	return len(uss.pluginStore.Plugins(plugins.App))
+func (uss *UsageStats) appCount(ctx context.Context) int {
+	return len(uss.pluginStore.Plugins(ctx, plugins.App))
 }
 
-func (uss *UsageStats) panelCount() int {
-	return len(uss.pluginStore.Plugins(plugins.Panel))
+func (uss *UsageStats) panelCount(ctx context.Context) int {
+	return len(uss.pluginStore.Plugins(ctx, plugins.Panel))
 }
 
-func (uss *UsageStats) dataSourceCount() int {
-	return len(uss.pluginStore.Plugins(plugins.DataSource))
+func (uss *UsageStats) dataSourceCount(ctx context.Context) int {
+	return len(uss.pluginStore.Plugins(ctx, plugins.DataSource))
 }

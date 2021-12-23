@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 
 	gocontext "context"
@@ -47,8 +47,8 @@ type AlertQuery struct {
 }
 
 // Eval evaluates the `QueryCondition`.
-func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler plugins.DataRequestHandler) (*alerting.ConditionResult, error) {
-	timeRange := plugins.NewDataTimeRange(c.Query.From, c.Query.To)
+func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler legacydata.RequestHandler) (*alerting.ConditionResult, error) {
+	timeRange := legacydata.NewDataTimeRange(c.Query.From, c.Query.To)
 
 	seriesList, err := c.executeQuery(context, timeRange, requestHandler)
 	if err != nil {
@@ -109,7 +109,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler plug
 	}, nil
 }
 
-func calculateInterval(timeRange plugins.DataTimeRange, model *simplejson.Json, dsInfo *models.DataSource) (time.Duration, error) {
+func calculateInterval(timeRange legacydata.DataTimeRange, model *simplejson.Json, dsInfo *models.DataSource) (time.Duration, error) {
 	// if there is no min-interval specified in the datasource or in the dashboard-panel,
 	// the value of 1ms is used (this is how it is done in the dashboard-interval-calculation too,
 	// see https://github.com/grafana/grafana/blob/9a0040c0aeaae8357c650cec2ee644a571dddf3d/packages/grafana-data/src/datetime/rangeutil.ts#L264)
@@ -133,8 +133,8 @@ func calculateInterval(timeRange plugins.DataTimeRange, model *simplejson.Json, 
 	return interval.Value, nil
 }
 
-func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange plugins.DataTimeRange,
-	requestHandler plugins.DataRequestHandler) (plugins.DataTimeSeriesSlice, error) {
+func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange legacydata.DataTimeRange,
+	requestHandler legacydata.RequestHandler) (legacydata.DataTimeSeriesSlice, error) {
 	getDsInfo := &models.GetDataSourceQuery{
 		Id:    c.Query.DatasourceID,
 		OrgId: context.Rule.OrgID,
@@ -153,7 +153,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange p
 	if err != nil {
 		return nil, fmt.Errorf("interval calculation failed: %w", err)
 	}
-	result := make(plugins.DataTimeSeriesSlice, 0)
+	result := make(legacydata.DataTimeSeriesSlice, 0)
 
 	if context.IsDebug {
 		data := simplejson.New()
@@ -247,18 +247,18 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange p
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange plugins.DataTimeRange,
-	debug bool) (plugins.DataQuery, error) {
+func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange legacydata.DataTimeRange,
+	debug bool) (legacydata.DataQuery, error) {
 	queryModel := c.Query.Model
 
 	calculatedInterval, err := calculateInterval(timeRange, queryModel, datasource)
 	if err != nil {
-		return plugins.DataQuery{}, err
+		return legacydata.DataQuery{}, err
 	}
 
-	req := plugins.DataQuery{
+	req := legacydata.DataQuery{
 		TimeRange: &timeRange,
-		Queries: []plugins.DataSubQuery{
+		Queries: []legacydata.DataSubQuery{
 			{
 				RefID:         "A",
 				Model:         queryModel,
@@ -340,21 +340,21 @@ func validateToValue(to string) error {
 
 // FrameToSeriesSlice converts a frame that is a valid time series as per data.TimeSeriesSchema()
 // to a DataTimeSeriesSlice.
-func FrameToSeriesSlice(frame *data.Frame) (plugins.DataTimeSeriesSlice, error) {
+func FrameToSeriesSlice(frame *data.Frame) (legacydata.DataTimeSeriesSlice, error) {
 	tsSchema := frame.TimeSeriesSchema()
 	if tsSchema.Type == data.TimeSeriesTypeNot {
 		// If no fields, or only a time field, create an empty plugins.DataTimeSeriesSlice with a single
 		// time series in order to trigger "no data" in alerting.
 		if frame.Rows() == 0 || (len(frame.Fields) == 1 && frame.Fields[0].Type().Time()) {
-			return plugins.DataTimeSeriesSlice{{
+			return legacydata.DataTimeSeriesSlice{{
 				Name:   frame.Name,
-				Points: make(plugins.DataTimeSeriesPoints, 0),
+				Points: make(legacydata.DataTimeSeriesPoints, 0),
 			}}, nil
 		}
 		return nil, fmt.Errorf("input frame is not recognized as a time series")
 	}
 	seriesCount := len(tsSchema.ValueIndices)
-	seriesSlice := make(plugins.DataTimeSeriesSlice, 0, seriesCount)
+	seriesSlice := make(legacydata.DataTimeSeriesSlice, 0, seriesCount)
 	timeField := frame.Fields[tsSchema.TimeIndex]
 	timeNullFloatSlice := make([]null.Float, timeField.Len())
 
@@ -368,8 +368,8 @@ func FrameToSeriesSlice(frame *data.Frame) (plugins.DataTimeSeriesSlice, error) 
 
 	for _, fieldIdx := range tsSchema.ValueIndices { // create a TimeSeries for each value Field
 		field := frame.Fields[fieldIdx]
-		ts := plugins.DataTimeSeries{
-			Points: make(plugins.DataTimeSeriesPoints, field.Len()),
+		ts := legacydata.DataTimeSeries{
+			Points: make(legacydata.DataTimeSeriesPoints, field.Len()),
 		}
 
 		if len(field.Labels) > 0 {
@@ -395,7 +395,7 @@ func FrameToSeriesSlice(frame *data.Frame) (plugins.DataTimeSeriesSlice, error) 
 				return nil, errutil.Wrapf(err,
 					"failed to convert frame to DataTimeSeriesSlice, can not convert value %v to float", field.At(rowIdx))
 			}
-			ts.Points[rowIdx] = plugins.DataTimePoint{
+			ts.Points[rowIdx] = legacydata.DataTimePoint{
 				null.FloatFrom(val),
 				timeNullFloatSlice[rowIdx],
 			}

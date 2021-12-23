@@ -95,6 +95,10 @@ func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
 			Data:       frameJSON,
 			MinuteRate: 150,
 		}, &ManagedChannel{
+			Channel:    "plugin/testdata/random-labeled-stream",
+			Data:       frameJSON,
+			MinuteRate: 250,
+		}, &ManagedChannel{
 			Channel:    "plugin/testdata/random-20Hz-stream",
 			Data:       frameJSON,
 			MinuteRate: 1200,

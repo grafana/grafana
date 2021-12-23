@@ -1,10 +1,11 @@
 import React, { FC } from 'react';
 import { connect } from 'react-redux';
 import UserInviteForm from './UserInviteForm';
-import { contextSrv, NavModel } from 'app/core/core';
+import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types/store';
 import Page from 'app/core/components/Page/Page';
+import { NavModel } from '@grafana/data';
 
 interface Props {
   navModel: NavModel;

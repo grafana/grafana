@@ -49,7 +49,7 @@ export function getColumns(
   footerValues?: FooterItem[]
 ): Column[] {
   const columns: any[] = [];
-  let fieldCountWithoutWidth = data.fields.length;
+  let fieldCountWithoutWidth = 0;
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
@@ -60,7 +60,8 @@ export function getColumns(
 
     if (fieldTableOptions.width) {
       availableWidth -= fieldTableOptions.width;
-      fieldCountWithoutWidth -= 1;
+    } else {
+      fieldCountWithoutWidth++;
     }
 
     const selectSortType = (type: FieldType): string => {

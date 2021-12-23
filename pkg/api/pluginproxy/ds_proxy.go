@@ -251,7 +251,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	secureJsonData, err := proxy.dataSourcesService.EncryptionService.DecryptJsonData(req.Context(), proxy.ds.SecureJsonData, setting.SecretKey)
+	secureJsonData, err := proxy.dataSourcesService.SecretsService.DecryptJsonData(req.Context(), proxy.ds.SecureJsonData)
 	if err != nil {
 		logger.Error("Error interpolating proxy url", "error", err)
 		return
@@ -269,6 +269,11 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
 		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
+
+			idToken, ok := token.Extra("id_token").(string)
+			if ok && idToken != "" {
+				req.Header.Set("X-ID-Token", idToken)
+			}
 		}
 	}
 }

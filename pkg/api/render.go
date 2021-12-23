@@ -65,6 +65,7 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,
 		DeviceScaleFactor: scale,
 		Headers:           headers,
+		Theme:             rendering.ThemeDark,
 	})
 	if err != nil {
 		if errors.Is(err, rendering.ErrTimeout) {

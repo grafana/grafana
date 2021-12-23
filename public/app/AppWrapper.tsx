@@ -15,6 +15,8 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import { AngularRoot } from './angular/AngularRoot';
+import { I18nProvider } from './core/localisation';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -57,6 +59,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   bootstrapNgApp() {
     const injector = this.props.app.angularApp.bootstrap();
     this.setState({ ngInjector: injector });
+    $('.preloader').remove();
   }
 
   renderRoute = (route: RouteDescriptor) => {
@@ -89,48 +92,41 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   render() {
     navigationLogger('AppWrapper', false, 'rendering');
 
-    // @ts-ignore
-    const appSeed = `<grafana-app ng-cloak></app-notifications-list></grafana-app>`;
     const newNavigationEnabled = config.featureToggles.newNavigation;
 
     return (
       <Provider store={store}>
-        <ErrorBoundaryAlert style="page">
-          <ConfigContext.Provider value={config}>
-            <ThemeProvider>
-              <ModalsProvider>
-                <GlobalStyles />
-                <div className="grafana-app">
-                  <Router history={locationService.getHistory()}>
-                    {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
-                    <main className="main-view">
-                      {pageBanners.map((Banner, index) => (
-                        <Banner key={index.toString()} />
-                      ))}
+        <I18nProvider>
+          <ErrorBoundaryAlert style="page">
+            <ConfigContext.Provider value={config}>
+              <ThemeProvider>
+                <ModalsProvider>
+                  <GlobalStyles />
+                  <div className="grafana-app">
+                    <Router history={locationService.getHistory()}>
+                      {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
+                      <main className="main-view">
+                        {pageBanners.map((Banner, index) => (
+                          <Banner key={index.toString()} />
+                        ))}
 
-                      <div
-                        id="ngRoot"
-                        ref={this.container}
-                        dangerouslySetInnerHTML={{
-                          __html: appSeed,
-                        }}
-                      />
-
-                      <AppNotificationList />
-                      <SearchWrapper />
-                      {this.state.ngInjector && this.container && this.renderRoutes()}
-                      {bodyRenderHooks.map((Hook, index) => (
-                        <Hook key={index.toString()} />
-                      ))}
-                    </main>
-                  </Router>
-                </div>
-                <LiveConnectionWarning />
-                <ModalRoot />
-              </ModalsProvider>
-            </ThemeProvider>
-          </ConfigContext.Provider>
-        </ErrorBoundaryAlert>
+                        <AngularRoot ref={this.container} />
+                        <AppNotificationList />
+                        <SearchWrapper />
+                        {this.state.ngInjector && this.renderRoutes()}
+                        {bodyRenderHooks.map((Hook, index) => (
+                          <Hook key={index.toString()} />
+                        ))}
+                      </main>
+                    </Router>
+                  </div>
+                  <LiveConnectionWarning />
+                  <ModalRoot />
+                </ModalsProvider>
+              </ThemeProvider>
+            </ConfigContext.Provider>
+          </ErrorBoundaryAlert>
+        </I18nProvider>
       </Provider>
     );
   }

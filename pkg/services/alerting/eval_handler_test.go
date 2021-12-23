@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ type conditionStub struct {
 	noData   bool
 }
 
-func (c *conditionStub) Eval(context *EvalContext, reqHandler plugins.DataRequestHandler) (*ConditionResult, error) {
+func (c *conditionStub) Eval(context *EvalContext, reqHandler legacydata.RequestHandler) (*ConditionResult, error) {
 	return &ConditionResult{Firing: c.firing, EvalMatches: c.matches, Operator: c.operator, NoDataFound: c.noData}, nil
 }
 
@@ -25,7 +25,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	handler := NewEvalHandler(nil)
 
 	t.Run("Show return triggered with single passing condition", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{&conditionStub{
 				firing: true,
 			}},
@@ -37,7 +37,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	})
 
 	t.Run("Show return triggered with single passing condition2", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{&conditionStub{firing: true, operator: "and"}},
 		}, &validations.OSSPluginRequestValidator{})
 
@@ -47,7 +47,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	})
 
 	t.Run("Show return false with not passing asdf", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{firing: true, operator: "and", matches: []*EvalMatch{{}, {}}},
 				&conditionStub{firing: false, operator: "and"},
@@ -60,7 +60,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	})
 
 	t.Run("Show return true if any of the condition is passing with OR operator", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{firing: true, operator: "and"},
 				&conditionStub{firing: false, operator: "or"},
@@ -73,7 +73,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	})
 
 	t.Run("Show return false if any of the condition is failing with AND operator", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{firing: true, operator: "and"},
 				&conditionStub{firing: false, operator: "and"},
@@ -86,7 +86,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	})
 
 	t.Run("Show return true if one condition is failing with nested OR operator", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{firing: true, operator: "and"},
 				&conditionStub{firing: true, operator: "and"},
@@ -100,7 +100,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	})
 
 	t.Run("Show return false if one condition is passing with nested OR operator", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{firing: true, operator: "and"},
 				&conditionStub{firing: false, operator: "and"},
@@ -114,7 +114,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	})
 
 	t.Run("Show return false if a condition is failing with nested AND operator", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{firing: true, operator: "and"},
 				&conditionStub{firing: false, operator: "and"},
@@ -128,7 +128,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	})
 
 	t.Run("Show return true if a condition is passing with nested OR operator", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{firing: true, operator: "and"},
 				&conditionStub{firing: false, operator: "or"},
@@ -142,7 +142,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	})
 
 	t.Run("Should return false if no condition is firing using OR operator", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{firing: false, operator: "or"},
 				&conditionStub{firing: false, operator: "or"},
@@ -157,7 +157,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 
 	// FIXME: What should the actual test case name be here?
 	t.Run("Should not return NoDataFound if all conditions have data and using OR", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{operator: "or", noData: false},
 				&conditionStub{operator: "or", noData: false},
@@ -170,7 +170,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	})
 
 	t.Run("Should return NoDataFound if one condition has no data", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{operator: "and", noData: true},
 			},
@@ -181,8 +181,8 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		require.True(t, context.NoDataFound)
 	})
 
-	t.Run("Should not return no data if at least one condition has no data and using AND", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+	t.Run("Should return no data if at least one condition has no data and using AND", func(t *testing.T) {
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{operator: "and", noData: true},
 				&conditionStub{operator: "and", noData: false},
@@ -190,11 +190,11 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		}, &validations.OSSPluginRequestValidator{})
 
 		handler.Eval(context)
-		require.False(t, context.NoDataFound)
+		require.True(t, context.NoDataFound)
 	})
 
 	t.Run("Should return no data if at least one condition has no data and using OR", func(t *testing.T) {
-		context := NewEvalContext(context.TODO(), &Rule{
+		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{
 				&conditionStub{operator: "or", noData: true},
 				&conditionStub{operator: "or", noData: false},

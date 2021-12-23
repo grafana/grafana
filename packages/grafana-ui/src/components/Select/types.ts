@@ -1,7 +1,9 @@
 import { SelectableValue } from '@grafana/data';
 import React from 'react';
+import { ActionMeta as SelectActionMeta, GroupBase, OptionsOrGroups } from 'react-select';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
+export type ActionMeta = SelectActionMeta<{}>;
 export type InputActionMeta = {
   action: 'set-value' | 'input-change' | 'input-blur' | 'menu-close';
 };
@@ -52,7 +54,7 @@ export interface SelectCommonProps<T> {
   /** The message to display when no options could be found */
   noOptionsMessage?: string;
   onBlur?: () => void;
-  onChange: (value: SelectableValue<T>) => {} | void;
+  onChange: (value: SelectableValue<T>, actionMeta: ActionMeta) => {} | void;
   onCloseMenu?: () => void;
   /** allowCustomValue must be enabled. Function decides what to do with that custom value. */
   onCreateOption?: (value: string) => void;
@@ -75,7 +77,7 @@ export interface SelectCommonProps<T> {
   isValidNewOption?: (
     inputValue: string,
     value: SelectableValue<T> | null,
-    options: Readonly<Array<SelectableValue<T>>>
+    options: OptionsOrGroups<unknown, GroupBase<unknown>>
   ) => boolean;
 }
 

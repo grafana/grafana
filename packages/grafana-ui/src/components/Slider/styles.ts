@@ -3,7 +3,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css as cssCore } from '@emotion/react';
 import { css } from '@emotion/css';
 
-export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: boolean) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: boolean, hasMarks = false) => {
   const { spacing } = theme;
   const railColor = theme.colors.border.strong;
   const trackColor = theme.colors.primary.main;
@@ -14,7 +14,8 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
   return {
     container: css`
       width: 100%;
-      margin: ${isHorizontal ? 'none' : `${spacing(1, 3, 1, 1)}`};
+      margin: ${isHorizontal ? 'inherit' : `${spacing(1, 3, 1, 1)}`};
+      padding-bottom: ${isHorizontal && hasMarks ? theme.spacing(1) : 'inherit'};
       height: ${isHorizontal ? 'auto' : '100%'};
     `,
     slider: css`

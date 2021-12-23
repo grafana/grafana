@@ -365,7 +365,7 @@ func (s *testRenderService) RenderCSV(ctx context.Context, opts rendering.CSVOpt
 	return nil, nil
 }
 
-func (s *testRenderService) RenderErrorImage(err error) (*rendering.RenderResult, error) {
+func (s *testRenderService) RenderErrorImage(theme rendering.Theme, err error) (*rendering.RenderResult, error) {
 	if s.renderErrorImageProvider != nil {
 		return s.renderErrorImageProvider(err)
 	}
@@ -373,7 +373,7 @@ func (s *testRenderService) RenderErrorImage(err error) (*rendering.RenderResult
 	return &rendering.RenderResult{FilePath: "image.png"}, nil
 }
 
-func (s *testRenderService) GetRenderUser(key string) (*rendering.RenderUser, bool) {
+func (s *testRenderService) GetRenderUser(ctx context.Context, key string) (*rendering.RenderUser, bool) {
 	return nil, false
 }
 

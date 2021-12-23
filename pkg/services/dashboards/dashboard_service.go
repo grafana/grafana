@@ -22,8 +22,8 @@ import (
 // DashboardService is a service for operating on dashboards.
 type DashboardService interface {
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
-	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
-	DeleteDashboard(dashboardId int64, orgId int64) error
+	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error)
+	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 }
 
@@ -32,9 +32,10 @@ type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
+	GetProvisionedDashboardDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
-	UnprovisionDashboard(dashboardID int64) error
-	DeleteProvisionedDashboard(dashboardID int64, orgID int64) error
+	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
+	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
 }
 
 // NewService is a factory for creating a new dashboard service.
@@ -81,7 +82,11 @@ func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(dashboa
 	return GetProvisionedData(dr.dashboardStore, dashboardID)
 }
 
-func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO, shouldValidateAlerts bool,
+func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
+	return dr.dashboardStore.GetProvisionedDataByDashboardUID(orgID, dashboardUID)
+}
+
+func (dr *dashboardServiceImpl) buildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool,
 	validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
@@ -113,7 +118,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	}
 
 	if shouldValidateAlerts {
-		if err := validateAlerts(dash, dto.User); err != nil {
+		if err := validateAlerts(ctx, dash, dto.User); err != nil {
 			return nil, err
 		}
 	}
@@ -124,7 +129,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	}
 
 	if isParentFolderChanged {
-		folderGuardian := guardian.New(context.TODO(), dash.FolderId, dto.OrgId, dto.User)
+		folderGuardian := guardian.New(ctx, dash.FolderId, dto.OrgId, dto.User)
 		if canSave, err := folderGuardian.CanSave(); err != nil || !canSave {
 			if err != nil {
 				return nil, err
@@ -144,7 +149,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		}
 	}
 
-	guard := guardian.New(context.TODO(), dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
+	guard := guardian.New(ctx, dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
 	if canSave, err := guard.CanSave(); err != nil || !canSave {
 		if err != nil {
 			return nil, err
@@ -170,9 +175,9 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	return cmd, nil
 }
 
-var validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
+var validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
 	extractor := alerting.NewDashAlertExtractor(dash, dash.OrgId, user)
-	return extractor.ValidateAlerts()
+	return extractor.ValidateAlerts(ctx)
 }
 
 func validateDashboardRefreshInterval(dash *models.Dashboard) error {
@@ -207,7 +212,7 @@ func validateDashboardRefreshInterval(dash *models.Dashboard) error {
 // Stubbable by tests.
 var UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
 	extractor := alerting.NewDashAlertExtractor(dashboard, orgID, user)
-	alerts, err := extractor.GetAlerts()
+	alerts, err := extractor.GetAlerts(ctx)
 	if err != nil {
 		return err
 	}
@@ -229,7 +234,7 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		OrgId:   dto.OrgId,
 	}
 
-	cmd, err := dr.buildSaveDashboardCommand(dto, true, false)
+	cmd, err := dr.buildSaveDashboardCommand(ctx, dto, true, false)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +258,7 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
 	}
-	cmd, err := dr.buildSaveDashboardCommand(dto, false, false)
+	cmd, err := dr.buildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +284,7 @@ func (dr *dashboardServiceImpl) SaveDashboard(ctx context.Context, dto *SaveDash
 		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
 	}
 
-	cmd, err := dr.buildSaveDashboardCommand(dto, true, !allowUiUpdate)
+	cmd, err := dr.buildSaveDashboardCommand(ctx, dto, true, !allowUiUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -298,16 +303,16 @@ func (dr *dashboardServiceImpl) SaveDashboard(ctx context.Context, dto *SaveDash
 
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
 // operations by the user where we want to make sure user does not delete provisioned dashboard.
-func (dr *dashboardServiceImpl) DeleteDashboard(dashboardId int64, orgId int64) error {
-	return dr.deleteDashboard(dashboardId, orgId, true)
+func (dr *dashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
+	return dr.deleteDashboard(ctx, dashboardId, orgId, true)
 }
 
 // DeleteProvisionedDashboard removes dashboard from the DB even if it is provisioned.
-func (dr *dashboardServiceImpl) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
-	return dr.deleteDashboard(dashboardId, orgId, false)
+func (dr *dashboardServiceImpl) DeleteProvisionedDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
+	return dr.deleteDashboard(ctx, dashboardId, orgId, false)
 }
 
-func (dr *dashboardServiceImpl) deleteDashboard(dashboardId int64, orgId int64, validateProvisionedDashboard bool) error {
+func (dr *dashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId int64, orgId int64, validateProvisionedDashboard bool) error {
 	if validateProvisionedDashboard {
 		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardID(dashboardId)
 		if err != nil {
@@ -319,10 +324,10 @@ func (dr *dashboardServiceImpl) deleteDashboard(dashboardId int64, orgId int64, 
 		}
 	}
 	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
-	return bus.Dispatch(cmd)
+	return bus.DispatchCtx(ctx, cmd)
 }
 
-func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (
+func (dr *dashboardServiceImpl) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (
 	*models.Dashboard, error) {
 	if err := validateDashboardRefreshInterval(dto.Dashboard); err != nil {
 		dr.log.Warn("Changing refresh interval for imported dashboard to minimum refresh interval",
@@ -331,7 +336,7 @@ func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (
 		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
 	}
 
-	cmd, err := dr.buildSaveDashboardCommand(dto, false, true)
+	cmd, err := dr.buildSaveDashboardCommand(ctx, dto, false, true)
 	if err != nil {
 		return nil, err
 	}
@@ -346,9 +351,9 @@ func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (
 
 // UnprovisionDashboard removes info about dashboard being provisioned. Used after provisioning configs are changed
 // and provisioned dashboards are left behind but not deleted.
-func (dr *dashboardServiceImpl) UnprovisionDashboard(dashboardId int64) error {
+func (dr *dashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashboardId int64) error {
 	cmd := &models.UnprovisionDashboardCommand{Id: dashboardId}
-	return bus.Dispatch(cmd)
+	return bus.DispatchCtx(ctx, cmd)
 }
 
 type FakeDashboardService struct {
@@ -370,11 +375,11 @@ func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *SaveDashb
 	return s.SaveDashboardResult, s.SaveDashboardError
 }
 
-func (s *FakeDashboardService) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
-	return s.SaveDashboard(context.Background(), dto, true)
+func (s *FakeDashboardService) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error) {
+	return s.SaveDashboard(ctx, dto, true)
 }
 
-func (s *FakeDashboardService) DeleteDashboard(dashboardId int64, orgId int64) error {
+func (s *FakeDashboardService) DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
 	for index, dash := range s.SavedDashboards {
 		if dash.Dashboard.Id == dashboardId && dash.OrgId == orgId {
 			s.SavedDashboards = append(s.SavedDashboards[:index], s.SavedDashboards[index+1:]...)

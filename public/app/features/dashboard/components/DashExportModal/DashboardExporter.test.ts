@@ -75,7 +75,7 @@ describe('given dashboard with repeated panels', () => {
         list: [
           {
             name: 'logs',
-            datasource: { uid: 'gfdb', type: 'testdb' },
+            datasource: 'gfdb',
           },
         ],
       },
@@ -167,16 +167,16 @@ describe('given dashboard with repeated panels', () => {
 
   it('should replace datasource refs', () => {
     const panel = exported.panels[0];
-    expect(panel.datasource).toBe('${DS_GFDB}');
+    expect(panel.datasource.uid).toBe('${DS_GFDB}');
   });
 
   it('should replace datasource refs in collapsed row', () => {
     const panel = exported.panels[6].panels[0];
-    expect(panel.datasource).toBe('${DS_GFDB}');
+    expect(panel.datasource.uid).toBe('${DS_GFDB}');
   });
 
   it('should replace datasource in variable query', () => {
-    expect(exported.templating.list[0].datasource).toBe('${DS_GFDB}');
+    expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
     expect(exported.templating.list[0].options.length).toBe(0);
     expect(exported.templating.list[0].current.value).toBe(undefined);
     expect(exported.templating.list[0].current.text).toBe(undefined);
@@ -267,12 +267,8 @@ describe('given dashboard with repeated panels', () => {
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({
       id: 17,
-      datasource: '${DS_OTHER2}',
+      datasource: { type: 'other2', uid: '$ds' },
       type: 'graph',
-      fieldConfig: {
-        defaults: {},
-        overrides: [],
-      },
     });
   });
 
@@ -284,8 +280,11 @@ describe('given dashboard with repeated panels', () => {
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({
       id: 16,
-      datasource: '${DS_GFDB}',
       type: 'graph',
+      datasource: {
+        type: 'testdb',
+        uid: '${DS_GFDB}',
+      },
     });
   });
 });

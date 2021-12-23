@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import { cloneDeep } from 'lodash';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { GraphNG, GraphNGProps, PlotLegend, UPlotConfigBuilder, usePanelContext, useTheme2 } from '@grafana/ui';
 import { LegendDisplayMode } from '@grafana/schema';
@@ -17,8 +16,8 @@ export interface BarChartProps
 const propsToDiff: Array<string | PropDiffFn> = [
   'orientation',
   'barWidth',
-  'valueRotation',
-  'valueMaxLength',
+  'xTickLabelRotation',
+  'xTickLabelMaxLength',
   'groupWidth',
   'stacking',
   'showValue',
@@ -64,8 +63,8 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       legend,
       tooltip,
       text,
-      valueRotation,
-      valueMaxLength,
+      xTickLabelRotation,
+      xTickLabelMaxLength,
     } = props;
 
     return preparePlotConfigBuilder({
@@ -78,8 +77,8 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       barWidth,
       showValue,
       groupWidth,
-      valueRotation,
-      valueMaxLength,
+      xTickLabelRotation,
+      xTickLabelMaxLength,
       stacking,
       legend,
       tooltip,
@@ -91,8 +90,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
 
   return (
     <GraphNG
-      // My heart is bleeding with the clone deep here, but nested options...
-      {...cloneDeep(props)}
+      {...props}
       theme={theme}
       frames={props.frames}
       prepConfig={prepConfig}

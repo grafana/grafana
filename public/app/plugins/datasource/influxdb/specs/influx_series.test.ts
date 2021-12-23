@@ -201,6 +201,14 @@ describe('when generating timeseries from influxdb response', () => {
 
       expect(result[0].target).toBe('alias: prod -> count');
     });
+
+    it('should handle too large indexes', () => {
+      options.alias = 'alias: $0 $1 $2 $3 $4 $5';
+      const series = new InfluxSeries(options);
+      const result = series.getTimeSeries();
+
+      expect(result[0].target).toBe('alias: app prod server1 count $4 $5');
+    });
   });
 
   describe('given table response', () => {

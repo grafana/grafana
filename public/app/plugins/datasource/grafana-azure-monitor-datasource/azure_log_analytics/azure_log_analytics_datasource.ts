@@ -8,7 +8,13 @@ import {
   AzureQueryType,
   DatasourceValidationResult,
 } from '../types';
-import { DataQueryRequest, DataQueryResponse, ScopedVars, DataSourceInstanceSettings } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataQueryResponse,
+  ScopedVars,
+  DataSourceInstanceSettings,
+  DataSourceRef,
+} from '@grafana/data';
 import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
@@ -17,7 +23,7 @@ import { isGUIDish } from '../components/ResourcePicker/utils';
 import { interpolateVariable, routeNames } from '../utils/common';
 
 interface AdhocQuery {
-  datasourceId: number;
+  datasource: DataSourceRef;
   path: string;
   resultFormat: string;
 }
@@ -234,7 +240,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     const queries = [
       {
-        datasourceId: this.id,
+        datasource: this.getRef(),
         path: path,
         resultFormat: 'table',
       },

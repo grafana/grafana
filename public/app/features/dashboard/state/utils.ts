@@ -15,3 +15,14 @@ export function isOnTheSameGridRow(sourcePanel: PanelModel, otherPanel: PanelMod
 
   return false;
 }
+
+export function deleteScopeVars(panels: PanelModel[]) {
+  for (const panel of panels) {
+    delete panel.scopedVars;
+    if (panel.panels?.length) {
+      for (const collapsedPanel of panel.panels) {
+        delete collapsedPanel.scopedVars;
+      }
+    }
+  }
+}

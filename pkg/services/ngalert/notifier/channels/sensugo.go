@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -35,13 +33,15 @@ func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template, 
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
-
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find URL property in settings"}
 	}
 
-	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString(), setting.SecretKey)
+	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString())
 	if apikey == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find the API key property in settings"}
 	}
@@ -119,7 +119,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 				},
 			},
 			"output":   tmpl(sn.Message),
-			"issued":   time.Now().Unix(),
+			"issued":   timeNow().Unix(),
 			"interval": 86400,
 			"status":   status,
 			"handlers": handlers,

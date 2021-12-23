@@ -47,13 +47,13 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       <div
         ref={ref}
         className={cx(styles.alert, className)}
-        aria-label={selectors.components.Alert.alert(severity)}
+        data-testid={selectors.components.Alert.alertV2(severity)}
         {...restProps}
       >
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
-        <div className={styles.body}>
+        <div className={styles.body} role="alert">
           <div className={styles.title}>{title}</div>
           {children && <div className={styles.content}>{children}</div>}
         </div>
@@ -65,7 +65,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         )}
         {onRemove && buttonContent && (
           <div className={styles.buttonWrapper}>
-            <Button variant="secondary" onClick={onRemove} type="button">
+            <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">
               {buttonContent}
             </Button>
           </div>
@@ -130,6 +130,8 @@ const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: bool
     content: css`
       color: ${theme.colors.text.secondary};
       padding-top: ${theme.spacing(1)};
+      max-height: 50vh;
+      overflow-y: scroll;
     `,
     buttonWrapper: css`
       padding: ${theme.spacing(1)};

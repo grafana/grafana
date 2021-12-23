@@ -1,6 +1,7 @@
 package loginservice
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -19,24 +20,24 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 
 	bus.ClearBusHandlers()
 	defer bus.ClearBusHandlers()
-	bus.AddHandler("test", func(q *models.GetUserOrgListQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
 		q.Result = createUserOrgDTO()
 
 		return nil
 	})
 
-	bus.AddHandler("test", func(cmd *models.RemoveOrgUserCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
 		testData := remResp[0]
 		remResp = remResp[1:]
 
 		require.Equal(t, testData.orgId, cmd.OrgId)
 		return testData.response
 	})
-	bus.AddHandler("test", func(cmd *models.SetUsingOrgCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 		return nil
 	})
 
-	err := syncOrgRoles(&user, &externalUser)
+	err := syncOrgRoles(context.Background(), &user, &externalUser)
 	require.Empty(t, remResp)
 	require.NoError(t, err)
 }
@@ -54,24 +55,24 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 
 	bus.ClearBusHandlers()
 	defer bus.ClearBusHandlers()
-	bus.AddHandler("test", func(q *models.GetUserOrgListQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
 		q.Result = createUserOrgDTO()
 
 		return nil
 	})
 
-	bus.AddHandler("test", func(cmd *models.RemoveOrgUserCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
 		testData := remResp[0]
 		remResp = remResp[1:]
 
 		require.Equal(t, testData.orgId, cmd.OrgId)
 		return testData.response
 	})
-	bus.AddHandler("test", func(cmd *models.SetUsingOrgCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 		return nil
 	})
 
-	err := syncOrgRoles(&user, &externalUser)
+	err := syncOrgRoles(context.Background(), &user, &externalUser)
 	require.NoError(t, err)
 	assert.Contains(t, logs, models.ErrLastOrgAdmin.Error())
 }
@@ -81,7 +82,7 @@ type authInfoServiceMock struct {
 	err  error
 }
 
-func (a *authInfoServiceMock) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (*models.User, error) {
+func (a *authInfoServiceMock) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
 	return a.user, a.err
 }
 
@@ -109,7 +110,7 @@ func Test_teamSync(t *testing.T) {
 	var actualExternalUser *models.ExternalUserInfo
 
 	t.Run("login.TeamSync should not be called when  nil", func(t *testing.T) {
-		err := login.UpsertUser(upserCmd)
+		err := login.UpsertUser(context.Background(), upserCmd)
 		require.Nil(t, err)
 		assert.Nil(t, actualUser)
 		assert.Nil(t, actualExternalUser)
@@ -121,7 +122,7 @@ func Test_teamSync(t *testing.T) {
 				return nil
 			}
 			login.TeamSync = teamSyncFunc
-			err := login.UpsertUser(upserCmd)
+			err := login.UpsertUser(context.Background(), upserCmd)
 			require.Nil(t, err)
 			assert.Equal(t, actualUser, expectedUser)
 			assert.Equal(t, actualExternalUser, upserCmd.ExternalUser)
@@ -132,7 +133,7 @@ func Test_teamSync(t *testing.T) {
 				return errors.New("teamsync test error")
 			}
 			login.TeamSync = teamSyncFunc
-			err := login.UpsertUser(upserCmd)
+			err := login.UpsertUser(context.Background(), upserCmd)
 			require.Error(t, err)
 		})
 	})

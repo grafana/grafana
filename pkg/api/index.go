@@ -126,6 +126,10 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		}
 
 		if len(appLink.Children) > 0 {
+			// If we only have one child and it's the app default nav then remove it from children
+			if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
+				appLink.Children = []*dtos.NavLink{}
+			}
 			appLinks = append(appLinks, appLink)
 		}
 	}
@@ -205,9 +209,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	}
 
 	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
-	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.Enabled && !uaIsDisabledForOrg
+	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
-	if setting.AlertingEnabled || uaVisibleForOrg {
+	if setting.AlertingEnabled != nil && *setting.AlertingEnabled || uaVisibleForOrg {
 		alertChildNavs := hs.buildAlertNavLinks(c, uaVisibleForOrg)
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Alerting",
@@ -267,7 +271,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Icon:        "plug",
 			Url:         hs.Cfg.AppSubURL + "/plugins",
 		})
+	}
 
+	if hasAccess(ac.ReqOrgAdmin, orgPreferencesAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Preferences",
 			Id:          "org-settings",
@@ -275,6 +281,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Icon:        "sliders-v-alt",
 			Url:         hs.Cfg.AppSubURL + "/org",
 		})
+	}
+
+	if c.OrgRole == models.ROLE_ADMIN {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "API keys",
 			Id:          "apikeys",
@@ -329,12 +338,11 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	adminNavLinks := hs.buildAdminNavLinks(c)
 
 	if len(adminNavLinks) > 0 {
-		serverAdminNode := navlinks.GetServerAdminNode(adminNavLinks)
+		navSection := dtos.NavSectionCore
 		if hs.Cfg.IsNewNavigationEnabled() {
-			serverAdminNode.Section = dtos.NavSectionConfig
-		} else {
-			serverAdminNode.Section = dtos.NavSectionCore
+			navSection = dtos.NavSectionConfig
 		}
+		serverAdminNode := navlinks.GetServerAdminNode(adminNavLinks, navSection)
 		navTree = append(navTree, serverAdminNode)
 	}
 
@@ -415,10 +423,7 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext, uaVisibleForOrg b
 	alertChildNavs := []*dtos.NavLink{
 		{Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul"},
 	}
-	if uaVisibleForOrg {
-		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Alert groups", Id: "groups", Url: hs.Cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
-		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
-	}
+
 	if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
 		if uaVisibleForOrg {
 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
@@ -432,6 +437,10 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext, uaVisibleForOrg b
 				Icon: "comment-alt-share",
 			})
 		}
+	}
+	if uaVisibleForOrg {
+		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
+		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Alert groups", Id: "groups", Url: hs.Cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
 	if c.OrgRole == models.ROLE_ADMIN && uaVisibleForOrg {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
@@ -458,9 +467,9 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 	})
 
 	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
-	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.Enabled && !uaIsDisabledForOrg
+	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
-	if setting.AlertingEnabled || uaVisibleForOrg {
+	if setting.AlertingEnabled != nil && *setting.AlertingEnabled || uaVisibleForOrg {
 		children = append(children, &dtos.NavLink{
 			Text: "Alert rule", SubTitle: "Create an alert rule", Id: "alert",
 			Icon: "bell", Url: hs.Cfg.AppSubURL + "/alerting/new",
@@ -472,6 +481,7 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 
 func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	hasGlobalAccess := ac.HasGlobalAccess(hs.AccessControl, c)
 	adminNavLinks := []*dtos.NavLink{}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
@@ -480,7 +490,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		})
 	}
 
-	if c.IsGrafanaAdmin {
+	if hasGlobalAccess(ac.ReqGrafanaAdmin, orgsAccessEvaluator) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Orgs", Id: "global-orgs", Url: hs.Cfg.AppSubURL + "/admin/orgs", Icon: "building",
 		})

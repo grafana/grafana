@@ -27,6 +27,7 @@ export function filterPluginList(
   const query = searchQuery.toLowerCase();
   const first: PanelPluginMeta[] = [];
   const match: PanelPluginMeta[] = [];
+  const isGraphQuery = 'graph'.startsWith(query);
 
   for (const item of pluginsList) {
     if (item.state === PluginState.deprecated && current.id !== item.id) {
@@ -40,6 +41,8 @@ export function filterPluginList(
       first.push(item);
     } else if (idx > 0) {
       match.push(item);
+    } else if (isGraphQuery && item.id === 'timeseries') {
+      first.push(item);
     }
   }
 

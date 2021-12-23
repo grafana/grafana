@@ -40,7 +40,7 @@ func TestDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		query := models.GetDataSourcesQuery{OrgId: 10}
-		err = sqlStore.GetDataSources(&query)
+		err = sqlStore.GetDataSources(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(query.Result))
 
@@ -63,7 +63,7 @@ func TestDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			query := models.GetDataSourcesQuery{OrgId: 10}
-			err = sqlStore.GetDataSources(&query)
+			err = sqlStore.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
 			require.Equal(t, 1, len(query.Result))
@@ -97,7 +97,7 @@ func TestDataAccess(t *testing.T) {
 			sqlStore := InitTestDB(t)
 
 			var created *events.DataSourceCreated
-			bus.AddEventListener(func(e *events.DataSourceCreated) error {
+			bus.AddEventListenerCtx(func(ctx context.Context, e *events.DataSourceCreated) error {
 				created = e
 				return nil
 			})
@@ -110,7 +110,7 @@ func TestDataAccess(t *testing.T) {
 			}, time.Second, time.Millisecond)
 
 			query := models.GetDataSourcesQuery{OrgId: 10}
-			err = sqlStore.GetDataSources(&query)
+			err = sqlStore.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 			require.Equal(t, 1, len(query.Result))
 
@@ -216,7 +216,7 @@ func TestDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			query := models.GetDataSourcesQuery{OrgId: 10}
-			err = sqlStore.GetDataSources(&query)
+			err = sqlStore.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
 			require.Equal(t, 0, len(query.Result))
@@ -229,7 +229,7 @@ func TestDataAccess(t *testing.T) {
 			err := sqlStore.DeleteDataSource(context.Background(), &models.DeleteDataSourceCommand{ID: ds.Id, OrgID: 123123})
 			require.NoError(t, err)
 			query := models.GetDataSourcesQuery{OrgId: 10}
-			err = sqlStore.GetDataSources(&query)
+			err = sqlStore.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
 			require.Equal(t, 1, len(query.Result))
@@ -241,7 +241,7 @@ func TestDataAccess(t *testing.T) {
 		ds := initDatasource(sqlStore)
 
 		var deleted *events.DataSourceDeleted
-		bus.AddEventListener(func(e *events.DataSourceDeleted) error {
+		bus.AddEventListenerCtx(func(ctx context.Context, e *events.DataSourceDeleted) error {
 			deleted = e
 			return nil
 		})
@@ -267,7 +267,7 @@ func TestDataAccess(t *testing.T) {
 		err := sqlStore.DeleteDataSource(context.Background(), &models.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgId})
 		require.NoError(t, err)
 
-		err = sqlStore.GetDataSources(&query)
+		err = sqlStore.GetDataSources(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, 0, len(query.Result))
@@ -291,7 +291,7 @@ func TestDataAccess(t *testing.T) {
 			}
 			query := models.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: datasourceLimit}
 
-			err := sqlStore.GetDataSources(&query)
+			err := sqlStore.GetDataSources(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, datasourceLimit, len(query.Result))
@@ -314,7 +314,7 @@ func TestDataAccess(t *testing.T) {
 			}
 			query := models.GetDataSourcesQuery{OrgId: 10}
 
-			err := sqlStore.GetDataSources(&query)
+			err := sqlStore.GetDataSources(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, numberOfDatasource, len(query.Result))
@@ -337,7 +337,7 @@ func TestDataAccess(t *testing.T) {
 			}
 			query := models.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: -1}
 
-			err := sqlStore.GetDataSources(&query)
+			err := sqlStore.GetDataSources(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, numberOfDatasource, len(query.Result))
@@ -372,7 +372,7 @@ func TestDataAccess(t *testing.T) {
 
 			query := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
 
-			err = sqlStore.GetDataSourcesByType(&query)
+			err = sqlStore.GetDataSourcesByType(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, 1, len(query.Result))
@@ -383,7 +383,7 @@ func TestDataAccess(t *testing.T) {
 
 			query := models.GetDataSourcesByTypeQuery{}
 
-			err := sqlStore.GetDataSourcesByType(&query)
+			err := sqlStore.GetDataSourcesByType(context.Background(), &query)
 
 			require.Error(t, err)
 		})
@@ -408,7 +408,7 @@ func TestGetDefaultDataSource(t *testing.T) {
 		require.NoError(t, err)
 
 		query := models.GetDefaultDataSourceQuery{OrgId: 10}
-		err = sqlStore.GetDefaultDataSource(&query)
+		err = sqlStore.GetDefaultDataSource(context.Background(), &query)
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, models.ErrDataSourceNotFound))
 	})
@@ -429,7 +429,7 @@ func TestGetDefaultDataSource(t *testing.T) {
 		require.NoError(t, err)
 
 		query := models.GetDefaultDataSourceQuery{OrgId: 10}
-		err = sqlStore.GetDefaultDataSource(&query)
+		err = sqlStore.GetDefaultDataSource(context.Background(), &query)
 		require.NoError(t, err)
 		assert.Equal(t, "default datasource", query.Result.Name)
 	})
@@ -437,7 +437,7 @@ func TestGetDefaultDataSource(t *testing.T) {
 	t.Run("should not return default datasource of other organisation", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 		query := models.GetDefaultDataSourceQuery{OrgId: 1}
-		err := sqlStore.GetDefaultDataSource(&query)
+		err := sqlStore.GetDefaultDataSource(context.Background(), &query)
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, models.ErrDataSourceNotFound))
 	})

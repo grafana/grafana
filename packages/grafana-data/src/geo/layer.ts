@@ -49,7 +49,7 @@ export interface FrameGeometrySource {
  */
 export interface MapLayerOptions<TConfig = any> {
   type: string;
-  name?: string; // configured display name
+  name: string; // configured unique display name
 
   // Custom options depending on the type
   config?: TConfig;
@@ -61,6 +61,9 @@ export interface MapLayerOptions<TConfig = any> {
   // https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
   // Layer opacity (0-1)
   opacity?: number;
+
+  //Check tooltip
+  tooltip?: boolean;
 }
 
 /**

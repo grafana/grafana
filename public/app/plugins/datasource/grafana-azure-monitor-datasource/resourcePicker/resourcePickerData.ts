@@ -45,8 +45,8 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         | join kind=leftouter (
           ResourceContainers
             | where type == 'microsoft.resources/subscriptions/resourcegroups'
-            | project resourceGroupURI=id, resourceGroupName=name, resourceGroup
-          ) on resourceGroup
+            | project resourceGroupURI=id, resourceGroupName=name, resourceGroup, subscriptionId
+          ) on resourceGroup, subscriptionId
 
         | where type in (${logsSupportedResourceTypesKusto})
 

@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Candlestick",
+  "id": "candlestick",
+  "state": "beta",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/candlestick.svg",
+      "large": "img/candlestick.svg"
+    }
+  }
+}

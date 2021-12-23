@@ -79,6 +79,7 @@ const ui = {
   editRouteButton: byLabelText('Edit route'),
   deleteRouteButton: byLabelText('Delete route'),
   newPolicyButton: byRole('button', { name: /New policy/ }),
+  newPolicyCTAButton: byRole('button', { name: /New specific policy/ }),
 
   receiverSelect: byTestId('am-receiver-select'),
   groupSelect: byTestId('am-group-select'),
@@ -257,7 +258,7 @@ describe('AmRoutes', () => {
     await clickSelectOption(receiverSelect, 'critical');
 
     const groupSelect = ui.groupSelect.get();
-    userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
+    userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
 
     // configure timing intervals
     userEvent.click(byText('Timing options').get(rootRouteContainer));
@@ -316,8 +317,8 @@ describe('AmRoutes', () => {
     await clickSelectOption(receiverSelect, 'default');
 
     const groupSelect = ui.groupSelect.get();
-    userEvent.type(byRole('textbox').get(groupSelect), 'severity{enter}');
-    userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
+    userEvent.type(byRole('combobox').get(groupSelect), 'severity{enter}');
+    userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
     //save
     userEvent.click(ui.saveButton.get(rootRouteContainer));
 
@@ -508,17 +509,36 @@ describe('AmRoutes', () => {
     expect(mocks.api.fetchAlertManagerConfig).not.toHaveBeenCalled();
     expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
   });
+
+  it('Prometheus Alertmanager has no CTA button if there are no specific policies', async () => {
+    mocks.api.fetchStatus.mockResolvedValue({
+      ...someCloudAlertManagerStatus,
+      config: {
+        ...someCloudAlertManagerConfig.alertmanager_config,
+        route: {
+          ...someCloudAlertManagerConfig.alertmanager_config.route,
+          routes: undefined,
+        },
+      },
+    });
+    await renderAmRoutes(dataSources.promAlertManager.name);
+    const rootRouteContainer = await ui.rootRouteContainer.find();
+    expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
+    expect(ui.newPolicyCTAButton.query()).not.toBeInTheDocument();
+    expect(mocks.api.fetchAlertManagerConfig).not.toHaveBeenCalled();
+    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
+  });
 });
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
-  userEvent.click(byRole('textbox').get(selectElement));
+  userEvent.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText);
 };
 
 const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
-  const inputs = byRole('textbox').queryAll(selectElement);
-  expect(inputs).toHaveLength(2);
-  userEvent.type(inputs[0], value);
-  userEvent.click(inputs[1]);
+  const input = byRole('textbox').get(selectElement);
+  const select = byRole('combobox').get(selectElement);
+  userEvent.type(input, value);
+  userEvent.click(select);
   await selectOptionInTest(selectElement, timeUnit);
 };

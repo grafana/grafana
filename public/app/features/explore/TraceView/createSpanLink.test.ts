@@ -3,7 +3,7 @@ import { setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { createSpanLinkFactory } from './createSpanLink';
 import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsOptions } from '../../../core/components/TraceToLogsSettings';
-import { LinkSrv, setLinkSrv } from '../../../angular/panel/panellinks/link_srv';
+import { LinkSrv, setLinkSrv } from '../../panel/panellinks/link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 
 describe('createSpanLinkFactory', () => {

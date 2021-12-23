@@ -14,7 +14,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { forkJoin, Observable, of } from 'rxjs';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
 import { datasourceMigrations } from './utils/migrateQuery';
 import { map } from 'rxjs/operators';
@@ -75,6 +75,14 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     this.variables = new VariableSupport(this);
   }
 
+  filterQuery(item: AzureMonitorQuery): boolean {
+    if (!item.queryType) {
+      return true;
+    }
+    const ds = this.pseudoDatasource[item.queryType];
+    return ds?.filterQuery?.(item) ?? true;
+  }
+
   query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
     const byType = new Map<AzureQueryType, DataQueryRequest<AzureMonitorQuery>>();
 
@@ -129,6 +137,23 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     }
 
     return of({ state: LoadingState.Done, data: [] });
+  }
+
+  targetContainsTemplate(query: AzureMonitorQuery) {
+    if (query.subscription && this.templateSrv.variableExists(query.subscription)) {
+      return true;
+    }
+
+    let subQuery;
+    if (query.queryType === AzureQueryType.AzureMonitor) {
+      subQuery = JSON.stringify(query.azureMonitor);
+    } else if (query.queryType === AzureQueryType.LogAnalytics) {
+      subQuery = JSON.stringify(query.azureLogAnalytics);
+    } else if (query.queryType === AzureQueryType.AzureResourceGraph) {
+      subQuery = JSON.stringify([query.azureResourceGraph, query.subscriptions]);
+    }
+
+    return !!subQuery && this.templateSrv.variableExists(subQuery);
   }
 
   async annotationQuery(options: any) {

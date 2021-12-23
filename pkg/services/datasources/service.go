@@ -14,16 +14,16 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 type Service struct {
-	Bus               bus.Bus
-	SQLStore          *sqlstore.SQLStore
-	EncryptionService encryption.Service
+	Bus            bus.Bus
+	SQLStore       *sqlstore.SQLStore
+	SecretsService secrets.Service
 
 	ptc               proxyTransportCache
 	dsDecryptionCache secureJSONDecryptionCache
@@ -49,11 +49,11 @@ type cachedDecryptedJSON struct {
 	json    map[string]string
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Service) *Service {
+func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service) *Service {
 	s := &Service{
-		Bus:               bus,
-		SQLStore:          store,
-		EncryptionService: encryptionService,
+		Bus:            bus,
+		SQLStore:       store,
+		SecretsService: secretsService,
 		ptc: proxyTransportCache{
 			cache: make(map[int64]cachedRoundTripper),
 		},
@@ -62,13 +62,13 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService enc
 		},
 	}
 
-	s.Bus.AddHandler(s.GetDataSources)
-	s.Bus.AddHandler(s.GetDataSourcesByType)
+	s.Bus.AddHandlerCtx(s.GetDataSources)
+	s.Bus.AddHandlerCtx(s.GetDataSourcesByType)
 	s.Bus.AddHandlerCtx(s.GetDataSource)
 	s.Bus.AddHandlerCtx(s.AddDataSource)
 	s.Bus.AddHandlerCtx(s.DeleteDataSource)
 	s.Bus.AddHandlerCtx(s.UpdateDataSource)
-	s.Bus.AddHandler(s.GetDefaultDataSource)
+	s.Bus.AddHandlerCtx(s.GetDefaultDataSource)
 
 	return s
 }
@@ -77,17 +77,17 @@ func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSource
 	return s.SQLStore.GetDataSource(ctx, query)
 }
 
-func (s *Service) GetDataSources(query *models.GetDataSourcesQuery) error {
-	return s.SQLStore.GetDataSources(query)
+func (s *Service) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
+	return s.SQLStore.GetDataSources(ctx, query)
 }
 
-func (s *Service) GetDataSourcesByType(query *models.GetDataSourcesByTypeQuery) error {
-	return s.SQLStore.GetDataSourcesByType(query)
+func (s *Service) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+	return s.SQLStore.GetDataSourcesByType(ctx, query)
 }
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureJsonData, setting.SecretKey)
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSo
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureJsonData, setting.SecretKey)
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
@@ -109,8 +109,8 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 	return s.SQLStore.UpdateDataSource(ctx, cmd)
 }
 
-func (s *Service) GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) error {
-	return s.SQLStore.GetDefaultDataSource(query)
+func (s *Service) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+	return s.SQLStore.GetDefaultDataSource(ctx, query)
 }
 
 func (s *Service) GetHTTPClient(ds *models.DataSource, provider httpclient.Provider) (*http.Client, error) {
@@ -170,7 +170,7 @@ func (s *Service) DecryptedValues(ds *models.DataSource) map[string]string {
 		return item.json
 	}
 
-	json, err := s.EncryptionService.DecryptJsonData(context.Background(), ds.SecureJsonData, setting.SecretKey)
+	json, err := s.SecretsService.DecryptJsonData(context.Background(), ds.SecureJsonData)
 	if err != nil {
 		return map[string]string{}
 	}

@@ -3,7 +3,7 @@ import cx from 'classnames';
 import { Field, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { NodeDatum } from './types';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 import { statToString } from './utils';
 
@@ -87,7 +87,7 @@ export const Node = memo(function Node(props: {
       {hovering && <circle className={styles.hoverCircle} r={nodeR - 3} cx={node.x} cy={node.y} strokeWidth={2} />}
       <ColorCircle node={node} />
       <g className={styles.text}>
-        <foreignObject x={node.x - (hovering ? 100 : 35)} y={node.y - 15} width={hovering ? '200' : '70'} height="30">
+        <foreignObject x={node.x - (hovering ? 100 : 35)} y={node.y - 15} width={hovering ? '200' : '70'} height="40">
           <div className={cx(styles.statsText, hovering && styles.textHovering)}>
             <span>{node.mainStat && statToString(node.mainStat, node.dataFrameRowIndex)}</span>
             <br />
@@ -98,7 +98,7 @@ export const Node = memo(function Node(props: {
           x={node.x - (hovering ? 100 : 50)}
           y={node.y + nodeR + 5}
           width={hovering ? '200' : '100'}
-          height="30"
+          height="40"
         >
           <div className={cx(styles.titleText, hovering && styles.textHovering)}>
             <span>{node.title}</span>

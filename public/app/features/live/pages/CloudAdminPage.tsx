@@ -15,9 +15,9 @@ export default function CloudAdminPage() {
 
   useEffect(() => {
     getBackendSrv()
-      .get(`api/live/remote-write-backends`)
+      .get(`api/live/write-configs`)
       .then((data) => {
-        setCloud(data.remoteWriteBackends);
+        setCloud(data.writeConfigs);
       })
       .catch((e) => {
         if (e.data) {

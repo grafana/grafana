@@ -12,9 +12,8 @@ type testBuilder struct{}
 func (t *testBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
-			OrgId:     1,
-			Pattern:   "stream/telegraf/cpu",
-			Converter: NewAutoJsonConverter(AutoJsonConverterConfig{}),
+			OrgId:   1,
+			Pattern: "stream/telegraf/cpu",
 		},
 		{
 			OrgId:   1,
@@ -23,14 +22,10 @@ func (t *testBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule
 		{
 			OrgId:   1,
 			Pattern: "stream/telegraf/:metric/:extra",
-			FrameOutputters: []FrameOutputter{
-				NewRedirectFrameOutput(RedirectOutputConfig{}),
-			},
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/boom:er",
-			Converter: NewExactJsonConverter(ExactJsonConverterConfig{}),
+			OrgId:   1,
+			Pattern: "stream/boom:er",
 		},
 	}, nil
 }
@@ -40,22 +35,22 @@ func TestStorage_Get(t *testing.T) {
 	rule, ok, err := s.Get(1, "stream/telegraf/cpu")
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.NotNil(t, rule.Converter)
+	require.Equal(t, "stream/telegraf/cpu", rule.Pattern)
 
 	rule, ok, err = s.Get(1, "stream/telegraf/mem")
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.Nil(t, rule.Converter)
+	require.Equal(t, "stream/telegraf/:metric", rule.Pattern)
 
 	rule, ok, err = s.Get(1, "stream/telegraf/mem/rss")
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.Equal(t, FrameOutputTypeRedirect, rule.FrameOutputters[0].Type())
+	require.Equal(t, "stream/telegraf/:metric/:extra", rule.Pattern)
 
 	rule, ok, err = s.Get(1, "stream/booms")
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.Equal(t, ConverterTypeJsonExact, rule.Converter.Type())
+	require.Equal(t, "stream/boom:er", rule.Pattern)
 }
 
 func BenchmarkRuleGet(b *testing.B) {

@@ -4,13 +4,14 @@ import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
+  ExternalAlertmanagersResponse,
   Receiver,
   Silence,
   SilenceCreatePayload,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
-import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
+import { RuleIdentifier, RuleNamespace, RuleWithLocation, StateHistoryItem } from 'app/types/unified-alerting';
 import {
   PostableRulerRuleGroupDTO,
   RulerGrafanaRuleDTO,
@@ -18,6 +19,7 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 import { fetchNotifiers } from '../api/grafana';
+import { fetchAnnotations } from '../api/annotations';
 import {
   expireSilence,
   fetchAlertManagerConfig,
@@ -29,6 +31,9 @@ import {
   fetchStatus,
   deleteAlertManagerConfig,
   testReceivers,
+  addAlertManagers,
+  fetchExternalAlertmanagers,
+  fetchExternalAlertmanagerConfig,
 } from '../api/alertmanager';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
@@ -105,6 +110,20 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
         });
       })()
     )
+);
+
+export const fetchExternalAlertmanagersAction = createAsyncThunk(
+  'unifiedAlerting/fetchExternalAlertmanagers',
+  (): Promise<ExternalAlertmanagersResponse> => {
+    return withSerializedError(fetchExternalAlertmanagers());
+  }
+);
+
+export const fetchExternalAlertmanagersConfigAction = createAsyncThunk(
+  'unifiedAlerting/fetchExternAlertmanagersConfig',
+  (): Promise<{ alertmanagers: string[] }> => {
+    return withSerializedError(fetchExternalAlertmanagerConfig());
+  }
 );
 
 export const fetchRulerRulesAction = createAsyncThunk(
@@ -428,6 +447,11 @@ export const fetchGrafanaNotifiersAction = createAsyncThunk(
   (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
 );
 
+export const fetchGrafanaAnnotationsAction = createAsyncThunk(
+  'unifiedalerting/fetchGrafanaAnnotations',
+  (alertId: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(alertId))
+);
+
 interface UpdateAlertManagerConfigActionOptions {
   alertManagerSourceName: string;
   oldConfig: AlertManagerCortexConfig; // it will be checked to make sure it didn't change in the meanwhile
@@ -728,6 +752,24 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
       {
         errorMessage: 'Failed to update namespace / group',
         successMessage: 'Update successful',
+      }
+    );
+  }
+);
+
+export const addExternalAlertmanagersAction = createAsyncThunk(
+  'unifiedAlerting/addExternalAlertmanagers',
+  async (alertManagerUrls: string[], thunkAPI): Promise<void> => {
+    return withAppEvents(
+      withSerializedError(
+        (async () => {
+          await addAlertManagers(alertManagerUrls);
+          thunkAPI.dispatch(fetchExternalAlertmanagersConfigAction());
+        })()
+      ),
+      {
+        errorMessage: 'Failed adding alertmanagers',
+        successMessage: 'Alertmanagers updated',
       }
     );
   }

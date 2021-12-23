@@ -23,8 +23,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		sqlStore := InitTestDB(t)
 
 		// Set up bus handlers
-		bus.AddHandler("deleteAlertNotification", func(cmd *models.DeleteAlertNotificationCommand) error {
-			return sqlStore.DeleteAlertNotification(cmd)
+		bus.AddHandlerCtx("deleteAlertNotification", func(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
+			return sqlStore.DeleteAlertNotification(ctx, cmd)
 		})
 	}
 
@@ -159,7 +159,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			Name:  "email",
 		}
 
-		err := sqlStore.GetAlertNotifications(cmd)
+		err := sqlStore.GetAlertNotifications(context.Background(), cmd)
 		require.Nil(t, err)
 		require.Nil(t, cmd.Result)
 	})
@@ -175,14 +175,14 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		}
 
 		t.Run("and missing frequency", func(t *testing.T) {
-			err := sqlStore.CreateAlertNotificationCommand(cmd)
+			err := sqlStore.CreateAlertNotificationCommand(context.Background(), cmd)
 			require.Equal(t, models.ErrNotificationFrequencyNotFound, err)
 		})
 
 		t.Run("invalid frequency", func(t *testing.T) {
 			cmd.Frequency = "invalid duration"
 
-			err := sqlStore.CreateAlertNotificationCommand(cmd)
+			err := sqlStore.CreateAlertNotificationCommand(context.Background(), cmd)
 			require.True(t, regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
 				err.Error()))
 		})
@@ -198,7 +198,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			Settings:     simplejson.New(),
 		}
 
-		err := sqlStore.CreateAlertNotificationCommand(cmd)
+		err := sqlStore.CreateAlertNotificationCommand(context.Background(), cmd)
 		require.Nil(t, err)
 
 		updateCmd := &models.UpdateAlertNotificationCommand{
@@ -207,14 +207,14 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		}
 
 		t.Run("and missing frequency", func(t *testing.T) {
-			err := sqlStore.UpdateAlertNotification(updateCmd)
+			err := sqlStore.UpdateAlertNotification(context.Background(), updateCmd)
 			require.Equal(t, models.ErrNotificationFrequencyNotFound, err)
 		})
 
 		t.Run("invalid frequency", func(t *testing.T) {
 			updateCmd.Frequency = "invalid duration"
 
-			err := sqlStore.UpdateAlertNotification(updateCmd)
+			err := sqlStore.UpdateAlertNotification(context.Background(), updateCmd)
 			require.Error(t, err)
 			require.True(t, regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
 				err.Error()))
@@ -232,7 +232,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			Settings:     simplejson.New(),
 		}
 
-		err := sqlStore.CreateAlertNotificationCommand(cmd)
+		err := sqlStore.CreateAlertNotificationCommand(context.Background(), cmd)
 		require.Nil(t, err)
 		require.NotEqual(t, 0, cmd.Result.Id)
 		require.NotEqual(t, 0, cmd.Result.OrgId)
@@ -242,7 +242,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		require.NotEmpty(t, cmd.Result.Uid)
 
 		t.Run("Cannot save Alert Notification with the same name", func(t *testing.T) {
-			err = sqlStore.CreateAlertNotificationCommand(cmd)
+			err = sqlStore.CreateAlertNotificationCommand(context.Background(), cmd)
 			require.Error(t, err)
 		})
 		t.Run("Cannot save Alert Notification with the same name and another uid", func(t *testing.T) {
@@ -255,7 +255,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Settings:     cmd.Settings,
 				Uid:          "notifier1",
 			}
-			err = sqlStore.CreateAlertNotificationCommand(anotherUidCmd)
+			err = sqlStore.CreateAlertNotificationCommand(context.Background(), anotherUidCmd)
 			require.Error(t, err)
 		})
 		t.Run("Can save Alert Notification with another name and another uid", func(t *testing.T) {
@@ -268,7 +268,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Settings:     cmd.Settings,
 				Uid:          "notifier2",
 			}
-			err = sqlStore.CreateAlertNotificationCommand(anotherUidCmd)
+			err = sqlStore.CreateAlertNotificationCommand(context.Background(), anotherUidCmd)
 			require.Nil(t, err)
 		})
 
@@ -283,7 +283,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Settings:              simplejson.New(),
 				Id:                    cmd.Result.Id,
 			}
-			err := sqlStore.UpdateAlertNotification(newCmd)
+			err := sqlStore.UpdateAlertNotification(context.Background(), newCmd)
 			require.Nil(t, err)
 			require.Equal(t, "NewName", newCmd.Result.Name)
 			require.Equal(t, 60*time.Second, newCmd.Result.Frequency)
@@ -299,7 +299,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Settings:     simplejson.New(),
 				Id:           cmd.Result.Id,
 			}
-			err := sqlStore.UpdateAlertNotification(newCmd)
+			err := sqlStore.UpdateAlertNotification(context.Background(), newCmd)
 			require.Nil(t, err)
 			require.False(t, newCmd.Result.SendReminder)
 		})
@@ -314,11 +314,11 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 		otherOrg := models.CreateAlertNotificationCommand{Name: "default", Type: "email", OrgId: 2, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
 
-		require.Nil(t, sqlStore.CreateAlertNotificationCommand(&cmd1))
-		require.Nil(t, sqlStore.CreateAlertNotificationCommand(&cmd2))
-		require.Nil(t, sqlStore.CreateAlertNotificationCommand(&cmd3))
-		require.Nil(t, sqlStore.CreateAlertNotificationCommand(&cmd4))
-		require.Nil(t, sqlStore.CreateAlertNotificationCommand(&otherOrg))
+		require.Nil(t, sqlStore.CreateAlertNotificationCommand(context.Background(), &cmd1))
+		require.Nil(t, sqlStore.CreateAlertNotificationCommand(context.Background(), &cmd2))
+		require.Nil(t, sqlStore.CreateAlertNotificationCommand(context.Background(), &cmd3))
+		require.Nil(t, sqlStore.CreateAlertNotificationCommand(context.Background(), &cmd4))
+		require.Nil(t, sqlStore.CreateAlertNotificationCommand(context.Background(), &otherOrg))
 
 		t.Run("search", func(t *testing.T) {
 			query := &models.GetAlertNotificationsWithUidToSendQuery{
@@ -326,7 +326,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				OrgId: 1,
 			}
 
-			err := sqlStore.GetAlertNotificationsWithUidToSend(query)
+			err := sqlStore.GetAlertNotificationsWithUidToSend(context.Background(), query)
 			require.Nil(t, err)
 			require.Equal(t, 3, len(query.Result))
 		})
@@ -336,7 +336,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				OrgId: 1,
 			}
 
-			err := sqlStore.GetAllAlertNotifications(query)
+			err := sqlStore.GetAllAlertNotifications(context.Background(), query)
 			require.Nil(t, err)
 			require.Equal(t, 4, len(query.Result))
 			require.Equal(t, cmd4.Name, query.Result[0].Name)
@@ -351,7 +351,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		ss := InitTestDB(t)
 
 		notification := &models.CreateAlertNotificationCommand{Uid: "aNotificationUid", OrgId: 1, Name: "aNotificationUid"}
-		err := sqlStore.CreateAlertNotificationCommand(notification)
+		err := sqlStore.CreateAlertNotificationCommand(context.Background(), notification)
 		require.Nil(t, err)
 
 		byUidQuery := &models.GetAlertNotificationsWithUidQuery{
@@ -359,7 +359,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			OrgId: notification.OrgId,
 		}
 
-		notificationByUidErr := sqlStore.GetAlertNotificationsWithUid(byUidQuery)
+		notificationByUidErr := sqlStore.GetAlertNotificationsWithUid(context.Background(), byUidQuery)
 		require.Nil(t, notificationByUidErr)
 
 		t.Run("Can cache notification Uid", func(t *testing.T) {
@@ -374,7 +374,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			require.False(t, foundBeforeCaching)
 			require.Nil(t, resultBeforeCaching)
 
-			notificationByIdErr := ss.GetAlertNotificationUidWithId(byIdQuery)
+			notificationByIdErr := ss.GetAlertNotificationUidWithId(context.Background(), byIdQuery)
 			require.Nil(t, notificationByIdErr)
 
 			resultAfterCaching, foundAfterCaching := ss.CacheService.Get(cacheKey)
@@ -390,7 +390,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
 			ss.CacheService.Set(cacheKey, "a-cached-uid", -1)
 
-			err := ss.GetAlertNotificationUidWithId(query)
+			err := ss.GetAlertNotificationUidWithId(context.Background(), query)
 			require.Nil(t, err)
 			require.Equal(t, "a-cached-uid", query.Result)
 		})
@@ -401,7 +401,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				OrgId: 100,
 			}
 
-			err := ss.GetAlertNotificationUidWithId(query)
+			err := ss.GetAlertNotificationUidWithId(context.Background(), query)
 			require.Equal(t, "", query.Result)
 			require.Error(t, err)
 			require.True(t, errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID))
@@ -425,7 +425,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			Settings:              simplejson.New(),
 			Id:                    1,
 		}
-		err := sqlStore.UpdateAlertNotification(updateCmd)
+		err := sqlStore.UpdateAlertNotification(context.Background(), updateCmd)
 		require.Equal(t, models.ErrAlertNotificationNotFound, err)
 
 		t.Run("using UID", func(t *testing.T) {
@@ -440,7 +440,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Uid:                   "uid",
 				NewUid:                "newUid",
 			}
-			err := sqlStore.UpdateAlertNotificationWithUid(updateWithUidCmd)
+			err := sqlStore.UpdateAlertNotificationWithUid(context.Background(), updateWithUidCmd)
 			require.Equal(t, models.ErrAlertNotificationNotFound, err)
 		})
 	})
@@ -455,18 +455,18 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			Settings:     simplejson.New(),
 		}
 
-		err := sqlStore.CreateAlertNotificationCommand(cmd)
+		err := sqlStore.CreateAlertNotificationCommand(context.Background(), cmd)
 		require.Nil(t, err)
 
 		deleteCmd := &models.DeleteAlertNotificationCommand{
 			Id:    cmd.Result.Id,
 			OrgId: 1,
 		}
-		err = sqlStore.DeleteAlertNotification(deleteCmd)
+		err = sqlStore.DeleteAlertNotification(context.Background(), deleteCmd)
 		require.Nil(t, err)
 
 		t.Run("using UID", func(t *testing.T) {
-			err := sqlStore.CreateAlertNotificationCommand(cmd)
+			err := sqlStore.CreateAlertNotificationCommand(context.Background(), cmd)
 			require.Nil(t, err)
 
 			deleteWithUidCmd := &models.DeleteAlertNotificationWithUidCommand{
@@ -474,7 +474,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				OrgId: 1,
 			}
 
-			err = sqlStore.DeleteAlertNotificationWithUid(deleteWithUidCmd)
+			err = sqlStore.DeleteAlertNotificationWithUid(context.Background(), deleteWithUidCmd)
 			require.Nil(t, err)
 			require.Equal(t, cmd.Result.Id, deleteWithUidCmd.DeletedAlertNotificationId)
 		})
@@ -486,7 +486,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			Id:    1,
 			OrgId: 1,
 		}
-		err := sqlStore.DeleteAlertNotification(deleteCmd)
+		err := sqlStore.DeleteAlertNotification(context.Background(), deleteCmd)
 		require.Equal(t, models.ErrAlertNotificationNotFound, err)
 
 		t.Run("using UID", func(t *testing.T) {
@@ -494,7 +494,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Uid:   "uid",
 				OrgId: 1,
 			}
-			err = sqlStore.DeleteAlertNotificationWithUid(deleteWithUidCmd)
+			err = sqlStore.DeleteAlertNotificationWithUid(context.Background(), deleteWithUidCmd)
 			require.Equal(t, models.ErrAlertNotificationNotFound, err)
 		})
 	})

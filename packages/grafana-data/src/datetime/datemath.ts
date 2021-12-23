@@ -1,9 +1,13 @@
 import { includes, isDate } from 'lodash';
-import { DateTime, dateTime, dateTimeForTimeZone, ISO_8601, isDateTime, DurationUnit } from './moment_wrapper';
+import { DateTime, dateTime, dateTimeForTimeZone, DurationUnit, isDateTime, ISO_8601 } from './moment_wrapper';
 import { TimeZone } from '../types/index';
 
 const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'];
 
+/**
+ * Determine if a string contains a relative date time.
+ * @param text
+ */
 export function isMathString(text: string | DateTime | Date): boolean {
   if (!text) {
     return false;

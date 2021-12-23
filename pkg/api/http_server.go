@@ -13,13 +13,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/query"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -41,19 +43,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/ngalert"
-	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
@@ -96,23 +96,21 @@ type HTTPServer struct {
 	LivePushGateway           *pushhttp.Gateway
 	ContextHandler            *contexthandler.ContextHandler
 	SQLStore                  *sqlstore.SQLStore
-	DataService               *tsdb.Service
 	AlertEngine               *alerting.AlertEngine
 	LoadSchemaService         *schemaloader.SchemaLoaderService
 	AlertNG                   *ngalert.AlertNG
 	LibraryPanelService       librarypanels.Service
 	LibraryElementService     libraryelements.Service
-	notificationService       *notifications.NotificationService
 	SocialService             social.Service
-	OAuthTokenService         oauthtoken.OAuthTokenService
 	Listener                  net.Listener
-	EncryptionService         encryption.Service
+	EncryptionService         encryption.Internal
+	SecretsService            secrets.Service
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
-	tracingService            *tracing.TracingService
-	internalMetricsSvc        *metrics.InternalMetricsService
+	tracingService            tracing.Tracer
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
+	queryDataService          *query.Service
 }
 
 type ServerOptions struct {
@@ -121,8 +119,7 @@ type ServerOptions struct {
 
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
-	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
-	dataService *tsdb.Service, alertEngine *alerting.AlertEngine,
+	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardManager plugins.PluginDashboardManager, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider,
@@ -135,11 +132,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	contextHandler *contexthandler.ContextHandler,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
-	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
-	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	encryptionService encryption.Service, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
-	dataSourcesService *datasources.Service) (*HTTPServer, error) {
+	quotaService *quota.QuotaService, socialService social.Service, tracingService tracing.Tracer,
+	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
+	dataSourcesService *datasources.Service, secretsService secrets.Service,
+	queryDataService *query.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -152,7 +148,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		HooksService:              hooksService,
 		CacheService:              cacheService,
 		SQLStore:                  sqlStore,
-		DataService:               dataService,
 		AlertEngine:               alertEngine,
 		PluginRequestValidator:    pluginRequestValidator,
 		pluginClient:              pluginClient,
@@ -181,17 +176,16 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		LibraryPanelService:       libraryPanelService,
 		LibraryElementService:     libraryElementService,
 		QuotaService:              quotaService,
-		notificationService:       notificationService,
 		tracingService:            tracingService,
-		internalMetricsSvc:        internalMetricsSvc,
 		log:                       log.New("http.server"),
 		web:                       m,
 		Listener:                  opts.Listener,
 		SocialService:             socialService,
-		OAuthTokenService:         oauthTokenService,
 		EncryptionService:         encryptionService,
+		SecretsService:            secretsService,
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
+		queryDataService:          queryDataService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -438,6 +432,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg))
+	m.Use(acmiddleware.LoadPermissionsMiddleware(hs.AccessControl))
 
 	// needs to be after context handler
 	if hs.Cfg.EnforceDomain {

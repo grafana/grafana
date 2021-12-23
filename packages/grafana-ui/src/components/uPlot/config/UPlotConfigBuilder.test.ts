@@ -349,6 +349,7 @@ describe('UPlotConfigBuilder', () => {
       Object {
         "axes": Array [
           Object {
+            "filter": undefined,
             "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
             "gap": 5,
             "grid": Object {
@@ -547,7 +548,6 @@ describe('UPlotConfigBuilder', () => {
   describe('Stacking', () => {
     it('allows stacking config', () => {
       const builder = new UPlotConfigBuilder();
-      builder.setStacking();
       builder.addSeries({
         drawStyle: GraphDrawStyle.Line,
         scaleKey: 'scale-x',

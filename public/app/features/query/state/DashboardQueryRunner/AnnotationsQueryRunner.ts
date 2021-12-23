@@ -4,7 +4,7 @@ import { AnnotationEvent, DataSourceApi } from '@grafana/data';
 
 import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
 import { PanelModel } from '../../../dashboard/state';
-import { executeAnnotationQuery } from '../../../annotations/annotations_srv';
+import { executeAnnotationQuery } from '../../../annotations/executeAnnotationQuery';
 import { handleAnnotationQueryRunnerError } from './utils';
 
 export class AnnotationsQueryRunner implements AnnotationQueryRunner {

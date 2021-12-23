@@ -80,7 +80,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
     const queryModel = new MySQLQueryModel(target, this.templateSrv, scopedVars);
     return {
       refId: target.refId,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: queryModel.render(this.interpolateVariable as any),
       format: target.format,
     };
@@ -95,7 +95,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
 
     const query = {
       refId: options.annotation.name,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
       format: 'table',
     };
@@ -135,7 +135,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
 
     const interpolatedQuery = {
       refId: refId,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql,
       format: 'table',
     };
@@ -179,7 +179,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
                 refId: 'A',
                 intervalMs: 1,
                 maxDataPoints: 1,
-                datasourceId: this.id,
+                datasource: this.getRef(),
                 rawSql: 'SELECT 1',
                 format: 'table',
               },

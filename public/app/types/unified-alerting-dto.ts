@@ -99,6 +99,7 @@ export enum GrafanaAlertStateDecision {
   NoData = 'NoData',
   KeepLastState = 'KeepLastState',
   OK = 'OK',
+  Error = 'Error',
 }
 
 interface AlertDataQuery extends DataQuery {
@@ -123,6 +124,7 @@ export interface PostableGrafanaRuleDefinition {
   data: AlertQuery[];
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
+  id?: string;
   uid: string;
   namespace_uid: string;
   namespace_id: number;

@@ -80,7 +80,7 @@ export default class InfluxSeries {
         return series.columns[index];
       }
       if (!isNaN(segIndex)) {
-        return segments[segIndex];
+        return segments[segIndex] ?? match;
       }
       if (group.indexOf('tag_') !== 0) {
         return match;

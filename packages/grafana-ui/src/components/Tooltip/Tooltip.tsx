@@ -16,6 +16,19 @@ export type PopoverContent = string | React.ReactElement<any> | ((props: Popover
 export const Tooltip: FC<TooltipProps> = React.memo(({ children, theme, ...controllerProps }: TooltipProps) => {
   const tooltipTriggerRef = createRef<HTMLElement | VirtualElement>();
   const popperBackgroundClassName = 'popper__background' + (theme ? ' popper__background--' + theme : '');
+  const closePopover = (event: React.KeyboardEvent<HTMLDivElement>, hidePopper: () => void) => {
+    if (event.key === 'Tab' || event.altKey || event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    event.stopPropagation();
+
+    if (event.key === 'Escape') {
+      hidePopper();
+    }
+
+    return;
+  };
 
   return (
     <PopoverController {...controllerProps}>
@@ -46,6 +59,9 @@ export const Tooltip: FC<TooltipProps> = React.memo(({ children, theme, ...contr
               ref: tooltipTriggerRef,
               onMouseEnter: showPopper,
               onMouseLeave: hidePopper,
+              onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => closePopover(event, hidePopper),
+              onFocus: showPopper,
+              onBlur: hidePopper,
             })}
           </>
         );

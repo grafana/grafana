@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -30,14 +31,18 @@ func GetPendingOrgInvites(c *models.ReqContext) response.Response {
 	return response.JSON(200, query.Result)
 }
 
-func AddOrgInvite(c *models.ReqContext, inviteDto dtos.AddInviteForm) response.Response {
+func AddOrgInvite(c *models.ReqContext) response.Response {
+	inviteDto := dtos.AddInviteForm{}
+	if err := web.Bind(c.Req, &inviteDto); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if !inviteDto.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
 
 	// first try get existing user
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &userQuery); err != nil {
 		if !errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(500, "Failed to query db for existing user check", err)
 		}
@@ -81,7 +86,7 @@ func AddOrgInvite(c *models.ReqContext, inviteDto dtos.AddInviteForm) response.R
 			},
 		}
 
-		if err := bus.Dispatch(&emailCmd); err != nil {
+		if err := bus.DispatchCtx(c.Req.Context(), &emailCmd); err != nil {
 			if errors.Is(err, models.ErrSmtpNotEnabled) {
 				return response.Error(412, err.Error(), err)
 			}
@@ -90,7 +95,7 @@ func AddOrgInvite(c *models.ReqContext, inviteDto dtos.AddInviteForm) response.R
 		}
 
 		emailSentCmd := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
-		if err := bus.Dispatch(&emailSentCmd); err != nil {
+		if err := bus.DispatchCtx(c.Req.Context(), &emailSentCmd); err != nil {
 			return response.Error(500, "Failed to update invite with email sent info", err)
 		}
 
@@ -121,7 +126,7 @@ func inviteExistingUserToOrg(c *models.ReqContext, user *models.User, inviteDto 
 			},
 		}
 
-		if err := bus.Dispatch(&emailCmd); err != nil {
+		if err := bus.DispatchCtx(c.Req.Context(), &emailCmd); err != nil {
 			return response.Error(500, "Failed to send email invited_to_org", err)
 		}
 	}
@@ -165,7 +170,11 @@ func GetInviteInfoByCode(c *models.ReqContext) response.Response {
 	})
 }
 
-func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.CompleteInviteForm) response.Response {
+func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
+	completeInvite := dtos.CompleteInviteForm{}
+	if err := web.Bind(c.Req, &completeInvite); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	query := models.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
 
 	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
@@ -197,7 +206,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.C
 		return response.Error(500, "failed to create user", err)
 	}
 
-	if err := bus.Publish(&events.SignUpCompleted{
+	if err := bus.PublishCtx(c.Req.Context(), &events.SignUpCompleted{
 		Name:  user.NameOrFallback(),
 		Email: user.Email,
 	}); err != nil {

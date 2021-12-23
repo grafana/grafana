@@ -58,7 +58,7 @@ export const VizLegendListItem = <T extends unknown = any>({
 
   return (
     <div
-      className={cx(styles.itemWrapper, className)}
+      className={cx(styles.itemWrapper, item.disabled && styles.itemDisabled, className)}
       aria-label={selectors.components.VizLegend.seriesName(item.label)}
     >
       <VizLegendSeriesIcon seriesName={item.label} color={item.color} gradient={item.gradient} readonly={readonly} />
@@ -66,7 +66,7 @@ export const VizLegendListItem = <T extends unknown = any>({
         onMouseEnter={onMouseEnter}
         onMouseOut={onMouseOut}
         onClick={!readonly ? onClick : undefined}
-        className={cx(styles.label, item.disabled && styles.labelDisabled, !readonly && styles.clickable)}
+        className={cx(styles.label, !readonly && styles.clickable)}
       >
         {item.label}
       </div>
@@ -87,7 +87,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     label: LegendClickabel;
     cursor: pointer;
   `,
-  labelDisabled: css`
+  itemDisabled: css`
     label: LegendLabelDisabled;
     color: ${theme.colors.linkDisabled};
   `,

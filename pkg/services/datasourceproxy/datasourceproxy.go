@@ -48,7 +48,7 @@ func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqContext, dsID int64) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
-	ds, err := p.DataSourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
+	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
@@ -69,8 +69,8 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 	}
 
 	// find plugin
-	plugin := p.pluginStore.Plugin(ds.Type)
-	if plugin == nil {
+	plugin, exists := p.pluginStore.Plugin(c.Req.Context(), ds.Type)
+	if !exists {
 		c.JsonApiErr(http.StatusNotFound, "Unable to find datasource plugin", err)
 		return
 	}

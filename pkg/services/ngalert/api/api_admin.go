@@ -70,6 +70,12 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 		OrgID:         c.OrgId,
 	}
 
+	if err := cfg.Validate(); err != nil {
+		msg := "failed to validate admin configuration"
+		srv.log.Error(msg, "err", err)
+		return ErrResp(http.StatusBadRequest, err, msg)
+	}
+
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: cfg}
 	if err := srv.store.UpdateAdminConfiguration(cmd); err != nil {
 		msg := "failed to save the admin configuration to the database"

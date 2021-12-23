@@ -6,6 +6,7 @@ import { selectOptionInTest } from '@grafana/ui';
 import { byRole } from 'testing-library-selector';
 import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
 import { DashboardModel } from '../../state';
+import { selectors } from '@grafana/e2e-selectors';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
@@ -34,11 +35,11 @@ const setupTestContext = (options: Partial<Props>) => {
 
 describe('General Settings', () => {
   describe('when component is mounted with timezone', () => {
-    it('should render correctly', () => {
+    it('should render correctly', async () => {
       setupTestContext({});
       screen.getByDisplayValue('test dashboard title');
       screen.getByDisplayValue('test dashboard description');
-      expect(screen.getByLabelText('Time zone picker select container')).toHaveTextContent(
+      expect(await screen.findByTestId(selectors.components.TimeZonePicker.containerV2)).toHaveTextContent(
         'Coordinated Universal Time'
       );
     });
@@ -47,9 +48,9 @@ describe('General Settings', () => {
   describe('when timezone is changed', () => {
     it('should call update function', async () => {
       const { props } = setupTestContext({});
-      userEvent.click(screen.getByLabelText('Time zone picker select container'));
-      const timeZonePicker = screen.getByLabelText('Time zone picker select container');
-      userEvent.click(byRole('textbox').get(timeZonePicker));
+      userEvent.click(screen.getByTestId(selectors.components.TimeZonePicker.containerV2));
+      const timeZonePicker = screen.getByTestId(selectors.components.TimeZonePicker.containerV2);
+      userEvent.click(byRole('combobox').get(timeZonePicker));
       await selectOptionInTest(timeZonePicker, 'Browser Time');
       expect(props.updateTimeZone).toHaveBeenCalledWith('browser');
       expect(props.dashboard.timezone).toBe('browser');

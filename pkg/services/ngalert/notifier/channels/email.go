@@ -29,7 +29,7 @@ type EmailNotifier struct {
 // for the EmailNotifier.
 func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*EmailNotifier, error) {
 	if model.Settings == nil {
-		return nil, receiverInitError{Reason: "no settings supplied", Cfg: *model}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	addressesString := model.Settings.Get("addresses").MustString()

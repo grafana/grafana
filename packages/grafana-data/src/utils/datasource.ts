@@ -17,7 +17,12 @@ export function getDataSourceRef(ds: DataSourceInstanceSettings): DataSourceRef 
   return { uid: ds.uid, type: ds.type };
 }
 
-function isDataSourceRef(ref: DataSourceRef | string | null): ref is DataSourceRef {
+/**
+ * Returns true if the argument is a DataSourceRef
+ *
+ * @public
+ */
+export function isDataSourceRef(ref: DataSourceRef | string | null): ref is DataSourceRef {
   return typeof ref === 'object' && (typeof ref?.uid === 'string' || typeof ref?.uid === 'undefined');
 }
 

@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -55,7 +57,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 	_, migrationRun := logs[migTitle]
 
 	switch {
-	case mg.Cfg.UnifiedAlerting.Enabled && !migrationRun:
+	case mg.Cfg.UnifiedAlerting.IsEnabled() && !migrationRun:
 		// Remove the migration entry that removes all unified alerting data. This is so when the feature
 		// flag is removed in future the "remove unified alerting data" migration will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, rmMigTitle), &clearMigrationEntry{
@@ -70,7 +72,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
 			silences:                  make(map[int64][]*pb.MeshSilence),
 		})
-	case !mg.Cfg.UnifiedAlerting.Enabled && migrationRun:
+	case !mg.Cfg.UnifiedAlerting.IsEnabled() && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, migTitle), &clearMigrationEntry{
@@ -95,7 +97,7 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 	cloneMigTitle := fmt.Sprintf("clone %s", migTitle)
 
 	_, migrationRun := logs[cloneMigTitle]
-	ngEnabled := mg.Cfg.UnifiedAlerting.Enabled
+	ngEnabled := mg.Cfg.UnifiedAlerting.IsEnabled()
 
 	switch {
 	case ngEnabled && !migrationRun:
@@ -115,7 +117,7 @@ func AddDashboardUIDPanelIDMigration(mg *migrator.Migrator) {
 
 	migrationID := "update dashboard_uid and panel_id from existing annotations"
 	_, migrationRun := logs[migrationID]
-	ngEnabled := mg.Cfg.UnifiedAlerting.Enabled
+	ngEnabled := mg.Cfg.UnifiedAlerting.IsEnabled()
 	undoMigrationID := "undo " + migrationID
 
 	if ngEnabled && !migrationRun {
@@ -460,9 +462,9 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 
 			// decryptFunc represents the legacy way of decrypting data. Before the migration, we don't need any new way,
 			// given that the previous alerting will never support it.
-			decryptFunc := func(_ context.Context, sjd map[string][]byte, key string, fallback string, secret string) string {
+			decryptFunc := func(_ context.Context, sjd map[string][]byte, key string, fallback string) string {
 				if value, ok := sjd[key]; ok {
-					decryptedData, err := util.Decrypt(value, secret)
+					decryptedData, err := util.Decrypt(value, setting.SecretKey)
 					if err != nil {
 						m.mg.Logger.Warn("unable to decrypt key '%s' for %s receiver with uid %s, returning fallback.", key, gr.Type, gr.UID)
 						return fallback
@@ -735,4 +737,46 @@ func (u *upgradeNgAlerting) updateAlertmanagerFiles(orgId int64, migrator *migra
 
 func (u *upgradeNgAlerting) SQL(migrator.Dialect) string {
 	return "code migration"
+}
+
+// CheckUnifiedAlertingEnabledByDefault determines the final status of unified alerting, if it is not enabled explicitly.
+// Checks table `alert` and if it is empty, then it changes UnifiedAlerting.Enabled to true. Otherwise, it sets the flag to false.
+// After this method is executed the status of alerting should be determined, i.e. both flags will not be nil.
+// Note: this is not a real migration but a step that other migrations depend on.
+// TODO Delete when unified alerting is enabled by default unconditionally (Grafana v9)
+func CheckUnifiedAlertingEnabledByDefault(migrator *migrator.Migrator) error {
+	// if [unified_alerting][enabled] is explicitly set, we've got nothing to do here.
+	if migrator.Cfg.UnifiedAlerting.Enabled != nil {
+		return nil
+	}
+	var ualertEnabled bool
+	// this duplicates the logic in setting.ReadUnifiedAlertingSettings, and is put here just for logical completeness.
+	if setting.AlertingEnabled != nil && !*setting.AlertingEnabled {
+		ualertEnabled = true
+		migrator.Cfg.UnifiedAlerting.Enabled = &ualertEnabled
+		migrator.Logger.Debug("Unified alerting is enabled because the legacy is disabled explicitly")
+		return nil
+	}
+
+	resp := &struct {
+		Count int64
+	}{}
+	exist, err := migrator.DBEngine.IsTableExist("alert")
+	if err != nil {
+		return fmt.Errorf("failed to verify if the 'alert' table exists: %w", err)
+	}
+	if exist {
+		if _, err := migrator.DBEngine.SQL("SELECT COUNT(1) as count FROM alert").Get(resp); err != nil {
+			return fmt.Errorf("failed to read 'alert' table: %w", err)
+		}
+	}
+	// if table does not exist then we treat it as absence of legacy alerting and therefore enable unified alerting.
+
+	ualertEnabled = resp.Count == 0
+	legacyEnabled := !ualertEnabled
+	migrator.Cfg.UnifiedAlerting.Enabled = &ualertEnabled
+	setting.AlertingEnabled = &legacyEnabled
+
+	migrator.Logger.Debug(fmt.Sprintf("Found %d legacy alerts in the database. Unified alerting enabled is %v", resp.Count, ualertEnabled))
+	return nil
 }

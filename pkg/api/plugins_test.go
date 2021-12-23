@@ -23,8 +23,12 @@ func Test_GetPluginAssets(t *testing.T) {
 	pluginDir := "."
 	tmpFile, err := ioutil.TempFile(pluginDir, "")
 	require.NoError(t, err)
+	tmpFileInParentDir, err := ioutil.TempFile("..", "")
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(tmpFile.Name())
+		assert.NoError(t, err)
+		err = os.RemoveAll(tmpFileInParentDir.Name())
 		assert.NoError(t, err)
 	})
 	expectedBody := "Plugin test"
@@ -34,7 +38,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	requestedFile := filepath.Clean(tmpFile.Name())
 
 	t.Run("Given a request for an existing plugin file that is listed as a signature covered file", func(t *testing.T) {
-		p := &plugins.Plugin{
+		p := plugins.PluginDTO{
 			JSONData: plugins.JSONData{
 				ID: pluginID,
 			},
@@ -43,8 +47,8 @@ func Test_GetPluginAssets(t *testing.T) {
 				requestedFile: {},
 			},
 		}
-		service := &pluginStore{
-			plugins: map[string]*plugins.Plugin{
+		service := &fakePluginStore{
+			plugins: map[string]plugins.PluginDTO{
 				pluginID: p,
 			},
 		}
@@ -61,15 +65,38 @@ func Test_GetPluginAssets(t *testing.T) {
 			})
 	})
 
-	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
-		p := &plugins.Plugin{
+	t.Run("Given a request for a relative path", func(t *testing.T) {
+		p := plugins.PluginDTO{
 			JSONData: plugins.JSONData{
 				ID: pluginID,
 			},
 			PluginDir: pluginDir,
 		}
-		service := &pluginStore{
-			plugins: map[string]*plugins.Plugin{
+		service := &fakePluginStore{
+			plugins: map[string]plugins.PluginDTO{
+				pluginID: p,
+			},
+		}
+		l := &logger{}
+
+		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, tmpFileInParentDir.Name())
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
+			func(sc *scenarioContext) {
+				callGetPluginAsset(sc)
+
+				require.Equal(t, 404, sc.resp.Code)
+			})
+	})
+
+	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
+		p := plugins.PluginDTO{
+			JSONData: plugins.JSONData{
+				ID: pluginID,
+			},
+			PluginDir: pluginDir,
+		}
+		service := &fakePluginStore{
+			plugins: map[string]plugins.PluginDTO{
 				pluginID: p,
 			},
 		}
@@ -87,14 +114,14 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
-		p := &plugins.Plugin{
+		p := plugins.PluginDTO{
 			JSONData: plugins.JSONData{
 				ID: pluginID,
 			},
 			PluginDir: pluginDir,
 		}
-		service := &pluginStore{
-			plugins: map[string]*plugins.Plugin{
+		service := &fakePluginStore{
+			plugins: map[string]plugins.PluginDTO{
 				pluginID: p,
 			},
 		}
@@ -116,8 +143,8 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin", func(t *testing.T) {
-		service := &pluginStore{
-			plugins: map[string]*plugins.Plugin{},
+		service := &fakePluginStore{
+			plugins: map[string]plugins.PluginDTO{},
 		}
 		l := &logger{}
 
@@ -137,8 +164,8 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
-		service := &pluginStore{
-			plugins: map[string]*plugins.Plugin{
+		service := &fakePluginStore{
+			plugins: map[string]plugins.PluginDTO{
 				pluginID: {
 					Class: plugins.Core,
 				},
@@ -183,16 +210,6 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 
 		fn(sc)
 	})
-}
-
-type pluginStore struct {
-	plugins.Store
-
-	plugins map[string]*plugins.Plugin
-}
-
-func (pm *pluginStore) Plugin(id string) *plugins.Plugin {
-	return pm.plugins[id]
 }
 
 type logger struct {

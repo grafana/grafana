@@ -9,7 +9,7 @@
 
   fake-elastic-data:
     image: grafana/fake-data-gen
-    network_mode: bridge
     environment:
-      FD_DATASOURCE: elasticsearch2
+      FD_SERVER: elasticsearch2
+      FD_DATASOURCE: elasticsearch
       FD_PORT: 9200

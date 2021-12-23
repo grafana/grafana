@@ -89,6 +89,24 @@ describe('situation', () => {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [{ name: 'one', value: 'val1', op: '=' }],
     });
+
+    // single-quoted label-values with escape
+    assertSituation("{one='val\\'1',^}", {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [{ name: 'one', value: "val'1", op: '=' }],
+    });
+
+    // double-quoted label-values with escape
+    assertSituation('{one="val\\"1",^}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [{ name: 'one', value: 'val"1', op: '=' }],
+    });
+
+    // backticked label-values with escape (the escape should not be interpreted)
+    assertSituation('{one=`val\\"1`,^}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [{ name: 'one', value: 'val\\"1', op: '=' }],
+    });
   });
 
   it('handles label values', () => {
@@ -96,6 +114,7 @@ describe('situation', () => {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       metricName: 'something',
       labelName: 'job',
+      betweenQuotes: false,
       otherLabels: [],
     });
 
@@ -103,6 +122,7 @@ describe('situation', () => {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       metricName: 'something',
       labelName: 'job',
+      betweenQuotes: false,
       otherLabels: [],
     });
 
@@ -110,6 +130,7 @@ describe('situation', () => {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       metricName: 'something',
       labelName: 'job',
+      betweenQuotes: false,
       otherLabels: [],
     });
 
@@ -117,6 +138,7 @@ describe('situation', () => {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       metricName: 'something',
       labelName: 'job',
+      betweenQuotes: false,
       otherLabels: [],
     });
 
@@ -124,12 +146,26 @@ describe('situation', () => {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       metricName: 'something',
       labelName: 'job',
+      betweenQuotes: false,
       otherLabels: [{ name: 'host', value: 'h1', op: '=' }],
     });
+
+    assertSituation('something{job="j1",host="^"}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      metricName: 'something',
+      labelName: 'host',
+      betweenQuotes: true,
+      otherLabels: [{ name: 'job', value: 'j1', op: '=' }],
+    });
+
+    assertSituation('something{job="j1"^}', null);
+    assertSituation('something{job="j1" ^ }', null);
+    assertSituation('something{job="j1" ^   ,   }', null);
 
     assertSituation('{job=^,host="h1"}', {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       labelName: 'job',
+      betweenQuotes: false,
       otherLabels: [{ name: 'host', value: 'h1', op: '=' }],
     });
 
@@ -137,6 +173,7 @@ describe('situation', () => {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
       metricName: 'something',
       labelName: 'three',
+      betweenQuotes: false,
       otherLabels: [
         { name: 'one', value: 'val1', op: '=' },
         { name: 'two', value: 'val2', op: '!=' },

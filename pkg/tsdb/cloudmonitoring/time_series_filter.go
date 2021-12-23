@@ -293,7 +293,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(dr *backend.DataResponse,
-	response cloudMonitoringResponse, title, text, tags string) error {
+	response cloudMonitoringResponse, title, text string) error {
 	frames := data.Frames{}
 	for _, series := range response.TimeSeries {
 		if len(series.Points) == 0 {
@@ -309,7 +309,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(dr *
 			annotation["time"] = append(annotation["time"], point.Interval.EndTime.UTC().Format(time.RFC3339))
 			annotation["title"] = append(annotation["title"], formatAnnotationText(title, value, series.Metric.Type,
 				series.Metric.Labels, series.Resource.Labels))
-			annotation["tags"] = append(annotation["tags"], tags)
+			annotation["tags"] = append(annotation["tags"], "")
 			annotation["text"] = append(annotation["text"], formatAnnotationText(text, value, series.Metric.Type,
 				series.Metric.Labels, series.Resource.Labels))
 		}

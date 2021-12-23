@@ -14,6 +14,8 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
+// Service must not be used for encryption,
+// use secrets.Service implementing envelope encryption instead.
 type Service struct{}
 
 func ProvideService() *Service {

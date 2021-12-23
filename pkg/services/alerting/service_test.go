@@ -57,7 +57,7 @@ func TestService(t *testing.T) {
 			Id:    cmd.Result.Id,
 			OrgId: cmd.Result.OrgId,
 		}
-		err = s.DeleteAlertNotification(&delCmd)
+		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
 	})
 
@@ -81,7 +81,7 @@ func TestService(t *testing.T) {
 			Id:    createCmd.Result.Id,
 			OrgId: createCmd.Result.OrgId,
 		}
-		err = s.DeleteAlertNotification(&delCmd)
+		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
 	})
 
@@ -109,7 +109,7 @@ func TestService(t *testing.T) {
 			Id:    createCmd.Result.Id,
 			OrgId: createCmd.Result.OrgId,
 		}
-		err = s.DeleteAlertNotification(&delCmd)
+		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
 	})
 }

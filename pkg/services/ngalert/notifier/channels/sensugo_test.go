@@ -7,19 +7,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestSensuGoNotifier(t *testing.T) {
+	constNow := time.Now()
+	defer mockTimeNow(constNow)()
+
 	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
@@ -59,8 +62,8 @@ func TestSensuGoNotifier(t *testing.T) {
 							"ruleURL": "http://localhost/alerting/list",
 						},
 					},
-					"output":   "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
-					"issued":   time.Now().Unix(),
+					"output":   "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+					"issued":   timeNow().Unix(),
 					"interval": 86400,
 					"status":   2,
 					"handlers": nil,
@@ -107,7 +110,7 @@ func TestSensuGoNotifier(t *testing.T) {
 						},
 					},
 					"output":   "2 alerts are firing, 0 are resolved",
-					"issued":   time.Now().Unix(),
+					"issued":   timeNow().Unix(),
 					"interval": 86400,
 					"status":   2,
 					"handlers": []string{"myhandler"},
@@ -134,14 +137,17 @@ func TestSensuGoNotifier(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
+			secureSettings := make(map[string][]byte)
 
 			m := &NotificationChannelConfig{
-				Name:     "Sensu Go",
-				Type:     "sensugo",
-				Settings: settingsJSON,
+				Name:           "Sensu Go",
+				Type:           "sensugo",
+				Settings:       settingsJSON,
+				SecureSettings: secureSettings,
 			}
 
-			decryptFn := ossencryption.ProvideService().GetDecryptedValue
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			decryptFn := secretsService.GetDecryptedValue
 			sn, err := NewSensuGoNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)

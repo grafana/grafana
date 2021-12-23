@@ -2,10 +2,12 @@ import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import {
   FieldConfigSource,
+  FieldType,
   LoadingState,
   PanelData,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  toDataFrame,
 } from '@grafana/data';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -15,6 +17,7 @@ import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './state/getOptionOverrides';
 
 standardEditorsRegistry.setInit(getStandardOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
@@ -240,5 +243,47 @@ describe('OptionsPaneOptions', () => {
     expect(
       within(thresholdsSection).getByLabelText(OptionsPaneSelector.fieldLabel('Thresholds CustomThresholdOption'))
     ).toBeInTheDocument();
+  });
+
+  it('should show data override info dot', async () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.panelData.series = [
+      toDataFrame({
+        fields: [
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [10, 200],
+            config: {
+              min: 100,
+            },
+          },
+        ],
+        refId: 'A',
+      }),
+    ];
+
+    scenario.render();
+
+    expect(screen.getByLabelText(dataOverrideTooltipDescription)).toBeInTheDocument();
+    expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+  });
+
+  it('should show override rule info dot', async () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.panel.fieldConfig.overrides = [
+      {
+        matcher: { id: 'byName', options: 'SeriesA' },
+        properties: [
+          {
+            id: 'decimals',
+            value: 2,
+          },
+        ],
+      },
+    ];
+
+    scenario.render();
+    expect(screen.getByLabelText(overrideRuleTooltipDescription)).toBeInTheDocument();
   });
 });

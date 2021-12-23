@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -62,7 +63,7 @@ type LDAPServerDTO struct {
 }
 
 // FetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
-func (user *LDAPUserDTO) FetchOrgs() error {
+func (user *LDAPUserDTO) FetchOrgs(ctx context.Context) error {
 	orgIds := []int64{}
 
 	for _, or := range user.OrgRoles {
@@ -72,7 +73,7 @@ func (user *LDAPUserDTO) FetchOrgs() error {
 	q := &models.SearchOrgsQuery{}
 	q.Ids = orgIds
 
-	if err := bus.Dispatch(q); err != nil {
+	if err := bus.DispatchCtx(ctx, q); err != nil {
 		return err
 	}
 
@@ -99,7 +100,7 @@ func (user *LDAPUserDTO) FetchOrgs() error {
 }
 
 // ReloadLDAPCfg reloads the LDAP configuration
-func (hs *HTTPServer) ReloadLDAPCfg() response.Response {
+func (hs *HTTPServer) ReloadLDAPCfg(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
@@ -176,7 +177,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.Id, AuthModule: models.AuthModuleLDAP}
 
-	if err := bus.Dispatch(authModuleQuery); err != nil { // validate the userId comes from LDAP
+	if err := bus.DispatchCtx(context.TODO(), authModuleQuery); err != nil { // validate the userId comes from LDAP
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -195,7 +196,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 			}
 
 			// Since the user was not in the LDAP server. Let's disable it.
-			err := login.DisableExternalUser(query.Result.Login)
+			err := login.DisableExternalUser(c.Req.Context(), query.Result.Login)
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to disable the user", err)
 			}
@@ -218,7 +219,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		SignupAllowed: hs.Cfg.LDAPAllowSignup,
 	}
 
-	err = bus.Dispatch(upsertCmd)
+	err = bus.DispatchCtx(c.Req.Context(), upsertCmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update the user", err)
 	}
@@ -301,13 +302,13 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 	u.OrgRoles = orgRoles
 
 	ldapLogger.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
-	err = u.FetchOrgs()
+	err = u.FetchOrgs(c.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
 
 	cmd := &models.GetTeamsForLDAPGroupCommand{Groups: user.Groups}
-	err = bus.Dispatch(cmd)
+	err = bus.DispatchCtx(c.Req.Context(), cmd)
 	if err != nil && !errors.Is(err, bus.ErrHandlerNotFound) {
 		return response.Error(http.StatusBadRequest, "Unable to find the teams for this user", err)
 	}

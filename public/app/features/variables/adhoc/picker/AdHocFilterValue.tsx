@@ -15,7 +15,7 @@ export const AdHocFilterValue: FC<Props> = ({ datasource, onChange, filterKey, f
   const loadValues = () => fetchFilterValues(datasource, filterKey);
 
   return (
-    <div className="gf-form">
+    <div className="gf-form" data-testid="AdHocFilterValue-value-wrapper">
       <SegmentAsync
         className="query-segment-value"
         placeholder={placeHolder}

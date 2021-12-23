@@ -151,6 +151,12 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
+	result := apimodels.NamespaceConfigResponse{}
+
+	if len(namespaceMap) == 0 {
+		srv.log.Debug("User has no access to any namespaces")
+		return response.JSON(http.StatusOK, result)
+	}
 
 	namespaceUIDs := make([]string, len(namespaceMap))
 	for k := range namespaceMap {
@@ -214,7 +220,6 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 		}
 	}
 
-	result := apimodels.NamespaceConfigResponse{}
 	for namespace, m := range configs {
 		for _, ruleGroupConfig := range m {
 			result[namespace] = append(result[namespace], ruleGroupConfig)
@@ -242,7 +247,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 			OrgID:     c.SignedInUser.OrgId,
 			Data:      r.GrafanaManagedAlert.Data,
 		}
-		if err := validateCondition(cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+		if err := validateCondition(c.Req.Context(), cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
 			return ErrResp(http.StatusBadRequest, err, "failed to validate alert rule %q", r.GrafanaManagedAlert.Title)
 		}
 		if r.GrafanaManagedAlert.UID != "" {

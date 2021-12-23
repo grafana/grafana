@@ -7,8 +7,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestPreferencesDataAccess(t *testing.T) {
@@ -114,5 +116,27 @@ func TestPreferencesDataAccess(t *testing.T) {
 		err = ss.GetPreferencesWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), query.Result.HomeDashboardId)
+	})
+
+	t.Run("SavePreferences for a user should store correct values", func(t *testing.T) {
+		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{UserId: models.SignedInUser{}.UserId, Theme: "dark", Timezone: "browser", HomeDashboardId: 5, WeekStart: "1"})
+		require.NoError(t, err)
+
+		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{}}
+		err = ss.GetPreferencesWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		expected := &models.Preferences{
+			Id:              query.Result.Id,
+			Version:         query.Result.Version,
+			HomeDashboardId: 5,
+			Timezone:        "browser",
+			WeekStart:       "1",
+			Theme:           "dark",
+			Created:         query.Result.Created,
+			Updated:         query.Result.Updated,
+		}
+		if diff := cmp.Diff(expected, query.Result); diff != "" {
+			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
 }

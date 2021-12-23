@@ -6,6 +6,10 @@ import { cacheStore } from 'react-inlinesvg';
 export let cacheInitialized = false;
 export let iconRoot = 'public/img/icons';
 
+function cacheItem(content: string, path: string) {
+  cacheStore[iconRoot + path] = { content, status: 'loaded', queue: [] };
+}
+
 import u1001 from '!!raw-loader!../../../../../public/img/icons/unicons/angle-double-down.svg';
 import u1002 from '!!raw-loader!../../../../../public/img/icons/unicons/angle-double-right.svg';
 import u1003 from '!!raw-loader!../../../../../public/img/icons/unicons/angle-down.svg';
@@ -127,25 +131,39 @@ import u1118 from '!!raw-loader!../../../../../public/img/icons/unicons/upload.s
 import u1119 from '!!raw-loader!../../../../../public/img/icons/unicons/user.svg';
 import u1120 from '!!raw-loader!../../../../../public/img/icons/unicons/users-alt.svg';
 import u1121 from '!!raw-loader!../../../../../public/img/icons/unicons/wrap-text.svg';
-import u1122 from '!!raw-loader!../../../../../public/img/icons/custom/gf-bar-alignment-after.svg';
-import u1123 from '!!raw-loader!../../../../../public/img/icons/custom/gf-bar-alignment-before.svg';
-import u1124 from '!!raw-loader!../../../../../public/img/icons/custom/gf-bar-alignment-center.svg';
-import u1125 from '!!raw-loader!../../../../../public/img/icons/custom/gf-interpolation-linear.svg';
-import u1126 from '!!raw-loader!../../../../../public/img/icons/custom/gf-interpolation-smooth.svg';
-import u1127 from '!!raw-loader!../../../../../public/img/icons/custom/gf-interpolation-step-after.svg';
-import u1128 from '!!raw-loader!../../../../../public/img/icons/custom/gf-interpolation-step-before.svg';
-import u1129 from '!!raw-loader!../../../../../public/img/icons/custom/gf-logs.svg';
-import u1130 from '!!raw-loader!../../../../../public/img/icons/mono/favorite.svg';
-import u1131 from '!!raw-loader!../../../../../public/img/icons/mono/grafana.svg';
-import u1132 from '!!raw-loader!../../../../../public/img/icons/mono/heart.svg';
-import u1133 from '!!raw-loader!../../../../../public/img/icons/mono/heart-break.svg';
-import u1134 from '!!raw-loader!../../../../../public/img/icons/mono/panel-add.svg';
-import u1135 from '!!raw-loader!../../../../../public/img/icons/mono/library-panel.svg';
+import u1122 from '!!raw-loader!../../../../../public/img/icons/unicons/cloud-upload.svg';
+import u1123 from '!!raw-loader!../../../../../public/img/icons/unicons/credit-card.svg';
+import u1124 from '!!raw-loader!../../../../../public/img/icons/unicons/file-copy-alt.svg';
+import u1125 from '!!raw-loader!../../../../../public/img/icons/unicons/fire.svg';
+import u1126 from '!!raw-loader!../../../../../public/img/icons/unicons/hourglass.svg';
+import u1127 from '!!raw-loader!../../../../../public/img/icons/unicons/layer-group.svg';
+import u1128 from '!!raw-loader!../../../../../public/img/icons/unicons/line-alt.svg';
+import u1129 from '!!raw-loader!../../../../../public/img/icons/unicons/list-ui-alt.svg';
+import u1130 from '!!raw-loader!../../../../../public/img/icons/unicons/message.svg';
+import u1131 from '!!raw-loader!../../../../../public/img/icons/unicons/palette.svg';
+import u1132 from '!!raw-loader!../../../../../public/img/icons/unicons/percentage.svg';
+import u1133 from '!!raw-loader!../../../../../public/img/icons/unicons/shield-exclamation.svg';
+import u1134 from '!!raw-loader!../../../../../public/img/icons/unicons/plus-square.svg';
+import u1135 from '!!raw-loader!../../../../../public/img/icons/unicons/x.svg';
 import u1136 from '!!raw-loader!../../../../../public/img/icons/unicons/capture.svg';
-
-function cacheItem(content: string, path: string) {
-  cacheStore[iconRoot + path] = { content, status: 'loaded', queue: [] };
-}
+import u1137 from '!!raw-loader!../../../../../public/img/icons/custom/gf-grid.svg';
+import u1138 from '!!raw-loader!../../../../../public/img/icons/custom/gf-landscape.svg';
+import u1139 from '!!raw-loader!../../../../../public/img/icons/custom/gf-layout-simple.svg';
+import u1140 from '!!raw-loader!../../../../../public/img/icons/custom/gf-portrait.svg';
+import u1141 from '!!raw-loader!../../../../../public/img/icons/custom/gf-bar-alignment-after.svg';
+import u1142 from '!!raw-loader!../../../../../public/img/icons/custom/gf-bar-alignment-before.svg';
+import u1143 from '!!raw-loader!../../../../../public/img/icons/custom/gf-bar-alignment-center.svg';
+import u1144 from '!!raw-loader!../../../../../public/img/icons/custom/gf-interpolation-linear.svg';
+import u1145 from '!!raw-loader!../../../../../public/img/icons/custom/gf-interpolation-smooth.svg';
+import u1146 from '!!raw-loader!../../../../../public/img/icons/custom/gf-interpolation-step-after.svg';
+import u1147 from '!!raw-loader!../../../../../public/img/icons/custom/gf-interpolation-step-before.svg';
+import u1148 from '!!raw-loader!../../../../../public/img/icons/custom/gf-logs.svg';
+import u1149 from '!!raw-loader!../../../../../public/img/icons/mono/favorite.svg';
+import u1150 from '!!raw-loader!../../../../../public/img/icons/mono/grafana.svg';
+import u1151 from '!!raw-loader!../../../../../public/img/icons/mono/heart.svg';
+import u1152 from '!!raw-loader!../../../../../public/img/icons/mono/heart-break.svg';
+import u1153 from '!!raw-loader!../../../../../public/img/icons/mono/panel-add.svg';
+import u1154 from '!!raw-loader!../../../../../public/img/icons/mono/library-panel.svg';
 
 export function initIconCache() {
   cacheInitialized = true;
@@ -156,7 +174,6 @@ export function initIconCache() {
   if (grafanaPublicPath) {
     iconRoot = grafanaPublicPath + 'img/icons/';
   }
-
   cacheItem(u1001, 'unicons/angle-double-down.svg');
   cacheItem(u1002, 'unicons/angle-double-right.svg');
   cacheItem(u1003, 'unicons/angle-down.svg');
@@ -278,19 +295,37 @@ export function initIconCache() {
   cacheItem(u1119, 'unicons/user.svg');
   cacheItem(u1120, 'unicons/users-alt.svg');
   cacheItem(u1121, 'unicons/wrap-text.svg');
-  cacheItem(u1122, 'custom/gf-bar-alignment-after.svg');
-  cacheItem(u1123, 'custom/gf-bar-alignment-before.svg');
-  cacheItem(u1124, 'custom/gf-bar-alignment-center.svg');
-  cacheItem(u1125, 'custom/gf-interpolation-linear.svg');
-  cacheItem(u1126, 'custom/gf-interpolation-smooth.svg');
-  cacheItem(u1127, 'custom/gf-interpolation-step-after.svg');
-  cacheItem(u1128, 'custom/gf-interpolation-step-before.svg');
-  cacheItem(u1129, 'custom/gf-logs.svg');
-  cacheItem(u1130, 'mono/favorite.svg');
-  cacheItem(u1131, 'mono/grafana.svg');
-  cacheItem(u1132, 'mono/heart.svg');
-  cacheItem(u1133, 'mono/heart-break.svg');
-  cacheItem(u1134, 'mono/panel-add.svg');
-  cacheItem(u1135, 'mono/library-panel.svg');
+  cacheItem(u1122, 'unicons/cloud-upload.svg');
+  cacheItem(u1123, 'unicons/credit-card.svg');
+  cacheItem(u1124, 'unicons/file-copy-alt.svg');
+  cacheItem(u1125, 'unicons/fire.svg');
+  cacheItem(u1126, 'unicons/hourglass.svg');
+  cacheItem(u1127, 'unicons/layer-group.svg');
+  cacheItem(u1128, 'unicons/line-alt.svg');
+  cacheItem(u1129, 'unicons/list-ui-alt.svg');
+  cacheItem(u1130, 'unicons/message.svg');
+  cacheItem(u1131, 'unicons/palette.svg');
+  cacheItem(u1132, 'unicons/percentage.svg');
+  cacheItem(u1133, 'unicons/shield-exclamation.svg');
+  cacheItem(u1134, 'unicons/plus-square.svg');
+  cacheItem(u1135, 'unicons/x.svg');
   cacheItem(u1136, 'unicons/capture.svg');
+  cacheItem(u1137, 'custom/gf-grid.svg');
+  cacheItem(u1138, 'custom/gf-landscape.svg');
+  cacheItem(u1139, 'custom/gf-layout-simple.svg');
+  cacheItem(u1140, 'custom/gf-portrait.svg');
+  cacheItem(u1141, 'custom/gf-bar-alignment-after.svg');
+  cacheItem(u1142, 'custom/gf-bar-alignment-before.svg');
+  cacheItem(u1143, 'custom/gf-bar-alignment-center.svg');
+  cacheItem(u1144, 'custom/gf-interpolation-linear.svg');
+  cacheItem(u1145, 'custom/gf-interpolation-smooth.svg');
+  cacheItem(u1146, 'custom/gf-interpolation-step-after.svg');
+  cacheItem(u1147, 'custom/gf-interpolation-step-before.svg');
+  cacheItem(u1148, 'custom/gf-logs.svg');
+  cacheItem(u1149, 'mono/favorite.svg');
+  cacheItem(u1150, 'mono/grafana.svg');
+  cacheItem(u1151, 'mono/heart.svg');
+  cacheItem(u1152, 'mono/heart-break.svg');
+  cacheItem(u1153, 'mono/panel-add.svg');
+  cacheItem(u1154, 'mono/library-panel.svg');
 }

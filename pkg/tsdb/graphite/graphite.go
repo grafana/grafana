@@ -20,13 +20,15 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/opentracing/opentracing-go"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 type Service struct {
@@ -34,7 +36,13 @@ type Service struct {
 	im     instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
+const (
+	pluginID             = "graphite"
+	TargetFullModelField = "targetFull"
+	TargetModelField     = "target"
+)
+
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
 	s := &Service{
 		logger: log.New("tsdb.graphite"),
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
@@ -44,7 +52,8 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.LoadAndRegister("graphite", factory); err != nil {
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		s.logger.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}
@@ -125,10 +134,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 		s.logger.Debug("graphite", "query", model)
 		currTarget := ""
-		if fullTarget, err := model.Get("targetFull").String(); err == nil {
+		if fullTarget, err := model.Get(TargetFullModelField).String(); err == nil {
 			currTarget = fullTarget
 		} else {
-			currTarget = model.Get("target").MustString()
+			currTarget = model.Get(TargetModelField).MustString()
 		}
 		if currTarget == "" {
 			s.logger.Debug("graphite", "empty query target", model)
@@ -297,7 +306,7 @@ func epochMStoGraphiteTime(tr backend.TimeRange) (string, string) {
 /**
  * Graphite should always return timestamp as a number but values might be nil when data is missing
  */
-func parseDataTimePoint(dataTimePoint plugins.DataTimePoint) (time.Time, *float64, error) {
+func parseDataTimePoint(dataTimePoint legacydata.DataTimePoint) (time.Time, *float64, error) {
 	if !dataTimePoint[1].Valid {
 		return time.Time{}, nil, errors.New("failed to parse data point timestamp")
 	}

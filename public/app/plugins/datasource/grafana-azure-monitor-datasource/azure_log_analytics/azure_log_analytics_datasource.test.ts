@@ -2,8 +2,10 @@ import AzureMonitorDatasource from '../datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
 import FakeSchemaData from './__mocks__/schema';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { AzureMonitorQuery, DatasourceValidationResult } from '../types';
+import { AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
 import { toUtc } from '@grafana/data';
+import createMockQuery from '../__mocks__/query';
+import { singleVariable } from '../__mocks__/variables';
 
 const templateSrv = new TemplateSrv();
 
@@ -224,6 +226,37 @@ describe('AzureLogAnalyticsDatasource', () => {
     it('should return the first workspace', async () => {
       const workspace = await ctx.ds.azureLogAnalyticsDatasource.getFirstWorkspace();
       expect(workspace).toEqual('foo');
+    });
+  });
+
+  describe('When performing targetContainsTemplate', () => {
+    it('should return false when no variable is being used', () => {
+      const query = createMockQuery();
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      query.queryType = AzureQueryType.LogAnalytics;
+      expect(ds.targetContainsTemplate(query)).toEqual(false);
+    });
+
+    it('should return true when resource field is using a variable', () => {
+      const templateSrv = new TemplateSrv();
+      const query = createMockQuery();
+      templateSrv.init([singleVariable]);
+
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+      query.queryType = AzureQueryType.LogAnalytics;
+      query.azureLogAnalytics = { resource: `$${singleVariable.name}` };
+      expect(ds.targetContainsTemplate(query)).toEqual(true);
+    });
+
+    it('should return false when a variable is used in a different part of the query', () => {
+      const templateSrv = new TemplateSrv();
+      const query = createMockQuery();
+      templateSrv.init([singleVariable]);
+
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+      query.queryType = AzureQueryType.LogAnalytics;
+      query.azureResourceGraph = { query: `$${singleVariable.name}` };
+      expect(ds.targetContainsTemplate(query)).toEqual(false);
     });
   });
 

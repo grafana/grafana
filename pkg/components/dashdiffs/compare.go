@@ -1,6 +1,7 @@
 package dashdiffs
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 
@@ -57,14 +58,14 @@ func ParseDiffType(diff string) DiffType {
 
 // CompareDashboardVersionsCommand computes the JSON diff of two versions,
 // assigning the delta of the diff to the `Delta` field.
-func CalculateDiff(options *Options) (*Result, error) {
+func CalculateDiff(ctx context.Context, options *Options) (*Result, error) {
 	baseVersionQuery := models.GetDashboardVersionQuery{
 		DashboardId: options.Base.DashboardId,
 		Version:     options.Base.Version,
 		OrgId:       options.OrgId,
 	}
 
-	if err := bus.Dispatch(&baseVersionQuery); err != nil {
+	if err := bus.DispatchCtx(ctx, &baseVersionQuery); err != nil {
 		return nil, err
 	}
 
@@ -74,7 +75,7 @@ func CalculateDiff(options *Options) (*Result, error) {
 		OrgId:       options.OrgId,
 	}
 
-	if err := bus.Dispatch(&newVersionQuery); err != nil {
+	if err := bus.DispatchCtx(ctx, &newVersionQuery); err != nil {
 		return nil, err
 	}
 

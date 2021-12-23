@@ -3,7 +3,7 @@ import { delay } from 'rxjs/operators';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { AlertState, AlertStateInfo } from '@grafana/data';
 
-import * as annotationsSrv from '../../../annotations/annotations_srv';
+import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
 import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
 import { backendSrv } from '../../../../core/services/backend_srv';
 import { DashboardQueryRunner, DashboardQueryRunnerResult } from './types';

@@ -96,9 +96,8 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	}
 }
 
-func (g *Gateway) HandlePath(ctx *models.ReqContext) {
-	streamID := web.Params(ctx.Req)[":streamId"]
-	path := web.Params(ctx.Req)[":path"]
+func (g *Gateway) HandlePipelinePush(ctx *models.ReqContext) {
+	channelID := web.Params(ctx.Req)["*"]
 
 	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
@@ -108,12 +107,9 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 	}
 	logger.Debug("Live channel push request",
 		"protocol", "http",
-		"streamId", streamID,
-		"path", path,
+		"channel", channelID,
 		"bodyLength", len(body),
 	)
-
-	channelID := "stream/" + streamID + "/" + path
 
 	ruleFound, err := g.GrafanaLive.Pipeline.ProcessInput(ctx.Req.Context(), ctx.OrgId, channelID, body)
 	if err != nil {

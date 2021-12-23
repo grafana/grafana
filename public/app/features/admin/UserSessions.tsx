@@ -16,12 +16,19 @@ interface State {
 }
 
 export class UserSessions extends PureComponent<Props, State> {
+  forceAllLogoutButton = React.createRef<HTMLButtonElement>();
   state: State = {
     showLogoutModal: false,
   };
 
-  showLogoutConfirmationModal = (show: boolean) => () => {
-    this.setState({ showLogoutModal: show });
+  showLogoutConfirmationModal = () => {
+    this.setState({ showLogoutModal: true });
+  };
+
+  dismissLogoutConfirmationModal = () => {
+    this.setState({ showLogoutModal: false }, () => {
+      this.forceAllLogoutButton.current?.focus();
+    });
   };
 
   onSessionRevoke = (id: number) => {
@@ -74,6 +81,7 @@ export class UserSessions extends PureComponent<Props, State> {
                               confirmText="Confirm logout"
                               confirmVariant="destructive"
                               onConfirm={this.onSessionRevoke(session.id)}
+                              autoFocus
                             >
                               Force logout
                             </ConfirmButton>
@@ -87,7 +95,7 @@ export class UserSessions extends PureComponent<Props, State> {
           </div>
           <div className={logoutFromAllDevicesClass}>
             {canLogout && sessions.length > 0 && (
-              <Button variant="secondary" onClick={this.showLogoutConfirmationModal(true)}>
+              <Button variant="secondary" onClick={this.showLogoutConfirmationModal} ref={this.forceAllLogoutButton}>
                 Force logout from all devices
               </Button>
             )}
@@ -97,7 +105,7 @@ export class UserSessions extends PureComponent<Props, State> {
               body="Are you sure you want to force logout from all devices?"
               confirmText="Force logout"
               onConfirm={this.onAllSessionsRevoke}
-              onDismiss={this.showLogoutConfirmationModal(false)}
+              onDismiss={this.dismissLogoutConfirmationModal}
             />
           </div>
         </div>

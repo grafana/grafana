@@ -40,6 +40,8 @@ type Avatar struct {
 	timestamp time.Time
 }
 
+var alog = log.New("avatar")
+
 func New(hash string) *Avatar {
 	return &Avatar{
 		hash: hash,
@@ -95,7 +97,7 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 	if avatar.Expired() {
 		// The cache item is either expired or newly created, update it from the server
 		if err := avatar.Update(); err != nil {
-			log.Debug("avatar update", "err", err)
+			ctx.Logger.Debug("avatar update", "err", err)
 			avatar = a.notFound
 		}
 	}
@@ -104,7 +106,7 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 		avatar = a.notFound
 	} else if !exists {
 		if err := a.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
-			log.Debug("add avatar to cache", "err", err)
+			ctx.Logger.Debug("add avatar to cache", "err", err)
 		}
 	}
 
@@ -117,7 +119,7 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 	ctx.Resp.Header().Set("Cache-Control", "private, max-age=3600")
 
 	if err := avatar.Encode(ctx.Resp); err != nil {
-		log.Warn("avatar encode error:", "err", err)
+		ctx.Logger.Warn("avatar encode error:", "err", err)
 		ctx.Resp.WriteHeader(500)
 	}
 }
@@ -142,7 +144,7 @@ func newNotFound(cfg *setting.Cfg) *Avatar {
 	// variable.
 	// nolint:gosec
 	if data, err := ioutil.ReadFile(path); err != nil {
-		log.Error("Failed to read user_profile.png", "path", path)
+		alog.Error("Failed to read user_profile.png", "path", path)
 	} else {
 		avatar.data = bytes.NewBuffer(data)
 	}
@@ -215,7 +217,7 @@ var client = &http.Client{
 func (a *thunderTask) fetch() error {
 	a.Avatar.timestamp = time.Now()
 
-	log.Debug("avatar.fetch(fetch new avatar)", "url", a.Url)
+	alog.Debug("avatar.fetch(fetch new avatar)", "url", a.Url)
 	req, err := http.NewRequest("GET", a.Url, nil)
 	if err != nil {
 		return err
@@ -232,7 +234,7 @@ func (a *thunderTask) fetch() error {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Warn("Failed to close response body", "err", err)
+			alog.Warn("Failed to close response body", "err", err)
 		}
 	}()
 

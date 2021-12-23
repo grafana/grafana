@@ -1,6 +1,7 @@
 package cloudmonitoring
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -43,10 +44,22 @@ func Test_parseResourcePath(t *testing.T) {
 }
 
 func Test_doRequest(t *testing.T) {
-	// test that it forwards the header and body
+	// test that it forwards the header and body over multiple calls
+	elements := []string{"1", "2", "3"}
+	index := 0
+
+	fakeResponseFn := func(input []byte) ([]json.RawMessage, string, error) {
+		results := []json.RawMessage{input}
+		if index < len(elements) {
+			return results, "token", nil
+		}
+		return results, "", nil
+	}
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("foo", "bar")
-		_, err := w.Write([]byte("result"))
+		_, err := w.Write([]byte(elements[index]))
+		index++
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -55,8 +68,9 @@ func Test_doRequest(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
 	rw := httptest.NewRecorder()
-	res := doRequest(rw, req, srv.Client())
+	res := getResources(rw, req, srv.Client(), fakeResponseFn)
 	if res.Header().Get("foo") != "bar" {
 		t.Errorf("Unexpected headers: %v", res.Header())
 	}
@@ -69,7 +83,7 @@ func Test_doRequest(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if string(body) != "result" {
+	if string(body) != "[1,2,3]" {
 		t.Errorf("Unexpected body: %v", string(body))
 	}
 }
@@ -110,5 +124,164 @@ func Test_setRequestVariables(t *testing.T) {
 	expectedURL := "https://monitoring.googleapis.com/v3/projects/bar/metricDescriptors"
 	if req.URL.String() != expectedURL {
 		t.Errorf("Unexpected result URL. Got %s, expecting %s", req.URL.String(), expectedURL)
+	}
+}
+
+func Test_processData_functions(t *testing.T) {
+	// metricDescriptors
+	metricDescriptorResp := metricDescriptorResponse{
+		Descriptors: []metricDescriptor{
+			{
+				ValueType:        "INT64",
+				MetricKind:       "DELTA",
+				Type:             "actions.googleapis.com/smarthome_action/local_event_count",
+				Unit:             "1",
+				Service:          "foo",
+				ServiceShortName: "bar",
+				DisplayName:      "Local event count",
+				Description:      "baz",
+			},
+		},
+		Token: "foo",
+	}
+	marshaledMDResponse, _ := json.Marshal(metricDescriptorResp)
+	metricDescriptorResult := []metricDescriptor{
+		{
+			ValueType:        "INT64",
+			MetricKind:       "DELTA",
+			Type:             "actions.googleapis.com/smarthome_action/local_event_count",
+			Unit:             "1",
+			Service:          "actions.googleapis.com",
+			ServiceShortName: "actions",
+			DisplayName:      "Local event count",
+			Description:      "baz",
+		},
+	}
+	marshaledMDResult, _ := json.Marshal(metricDescriptorResult)
+
+	// services
+	serviceResp := serviceResponse{
+		Services: []serviceDescription{
+			{
+				Name:        "blah/foo",
+				DisplayName: "bar",
+			},
+			{
+				Name:        "abc",
+				DisplayName: "",
+			},
+		},
+	}
+	marshaledServiceResponse, _ := json.Marshal(serviceResp)
+	serviceResult := []selectableValue{
+		{
+			Value: "foo",
+			Label: "bar",
+		},
+		{
+			Value: "abc",
+			Label: "abc",
+		},
+	}
+	marshaledServiceResult, _ := json.Marshal(serviceResult)
+
+	// slos
+	sloResp := sloResponse{
+		SLOs: []sloDescription{
+			{
+				Name:        "blah/foo",
+				DisplayName: "bar",
+				Goal:        0.1,
+			},
+			{
+				Name:        "abc",
+				DisplayName: "xyz",
+				Goal:        0.2,
+			},
+		},
+	}
+	marshaledSLOResponse, _ := json.Marshal(sloResp)
+	sloResult := []selectableValue{
+		{
+			Value: "foo",
+			Label: "bar",
+			Goal:  0.1,
+		},
+		{
+			Value: "abc",
+			Label: "xyz",
+			Goal:  0.2,
+		},
+	}
+	marshaledSLOResult, _ := json.Marshal(sloResult)
+
+	// cloudresourcemanager
+	cloudResourceResp := projectResponse{
+		Projects: []projectDescription{
+			{
+				ProjectID: "foo",
+				Name:      "bar",
+			},
+			{
+				ProjectID: "abc",
+				Name:      "abc",
+			},
+		},
+	}
+	marshaledCRResponse, _ := json.Marshal(cloudResourceResp)
+
+	tests := []struct {
+		name       string
+		responseFn processResponse
+		input      []byte
+		result     []byte
+		token      string
+	}{
+		{
+			"metricDescriptor",
+			processMetricDescriptors,
+			marshaledMDResponse,
+			marshaledMDResult,
+			"foo",
+		},
+		{
+			"services",
+			processServices,
+			marshaledServiceResponse,
+			marshaledServiceResult,
+			"",
+		},
+		{
+			"slos",
+			processSLOs,
+			marshaledSLOResponse,
+			marshaledSLOResult,
+			"",
+		},
+		{
+			"cloudresourcemanager",
+			processProjects,
+			marshaledCRResponse,
+			marshaledServiceResult,
+			"",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			results, token, err := test.responseFn(test.input)
+			if err != nil {
+				t.Errorf("Unexpected error %v", err)
+			}
+			if token != test.token {
+				t.Errorf("Unexpected token. Got %s, expecting %s", token, test.token)
+			}
+			res, err := json.Marshal(results)
+			if err != nil {
+				t.Errorf("Unexpected error %v", err)
+			}
+			if string(test.result) != string(res) {
+				t.Errorf("Unexpected result. Got %s, expecting %s", res, test.result)
+			}
+		})
 	}
 }

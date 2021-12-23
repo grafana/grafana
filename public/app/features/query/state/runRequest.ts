@@ -22,13 +22,10 @@ import {
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 import { emitDataRequestEvent } from './queryAnalytics';
-import {
-  dataSource as expressionDatasource,
-  ExpressionDatasourceID,
-  ExpressionDatasourceUID,
-} from 'app/features/expressions/ExpressionDatasource';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { cancelNetworkRequestsOnUnsubscribe } from './processing/canceler';
+import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -174,7 +171,7 @@ export function callQueryMethod(
 ) {
   // If any query has an expression, use the expression endpoint
   for (const target of request.targets) {
-    if (target.datasource === ExpressionDatasourceID || target.datasource === ExpressionDatasourceUID) {
+    if (isExpressionReference(target.datasource)) {
       return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);
     }
   }
@@ -182,6 +179,19 @@ export function callQueryMethod(
   // Otherwise it is a standard datasource request
   const returnVal = queryFunction ? queryFunction(request) : datasource.query(request);
   return from(returnVal);
+}
+
+function getProcessedDataFrame(data: DataQueryResponseData): DataFrame {
+  const dataFrame = guessFieldTypes(toDataFrame(data));
+
+  if (dataFrame.fields && dataFrame.fields.length) {
+    // clear out the cached info
+    for (const field of dataFrame.fields) {
+      field.state = null;
+    }
+  }
+
+  return dataFrame;
 }
 
 /**
@@ -194,22 +204,7 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
     return [];
   }
 
-  const dataFrames: DataFrame[] = [];
-
-  for (const result of results) {
-    const dataFrame = guessFieldTypes(toDataFrame(result));
-
-    if (dataFrame.fields && dataFrame.fields.length) {
-      // clear out the cached info
-      for (const field of dataFrame.fields) {
-        field.state = null;
-      }
-    }
-
-    dataFrames.push(dataFrame);
-  }
-
-  return dataFrames;
+  return results.map((data) => getProcessedDataFrame(data));
 }
 
 export function preProcessPanelData(data: PanelData, lastResult?: PanelData): PanelData {
@@ -230,7 +225,7 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
 
   // Make sure the data frames are properly formatted
   const STARTTIME = performance.now();
-  const processedDataFrames = getProcessedDataFrames(series);
+  const processedDataFrames = series.map((data) => getProcessedDataFrame(data));
   const annotationsProcessed = getProcessedDataFrames(annotations);
   const STOPTIME = performance.now();
 

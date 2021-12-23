@@ -74,7 +74,7 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
   applyTemplateVariables(target: MssqlQuery, scopedVars: ScopedVars): Record<string, any> {
     return {
       refId: target.refId,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: this.templateSrv.replace(target.rawSql, scopedVars, this.interpolateVariable),
       format: target.format,
     };
@@ -87,7 +87,7 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
 
     const query = {
       refId: options.annotation.name,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
       format: 'table',
     };
@@ -127,7 +127,7 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
 
     const interpolatedQuery = {
       refId: refId,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
       format: 'table',
     };
@@ -169,7 +169,7 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
                 refId: 'A',
                 intervalMs: 1,
                 maxDataPoints: 1,
-                datasourceId: this.id,
+                datasource: this.getRef(),
                 rawSql: 'SELECT 1',
                 format: 'table',
               },

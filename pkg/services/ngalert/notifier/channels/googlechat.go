@@ -25,6 +25,10 @@ type GoogleChatNotifier struct {
 }
 
 func NewGoogleChatNotifier(model *NotificationChannelConfig, t *template.Template) (*GoogleChatNotifier, error) {
+	if model.Settings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
+	}
+
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find url property in settings"}

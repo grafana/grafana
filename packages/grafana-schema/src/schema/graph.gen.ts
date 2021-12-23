@@ -274,6 +274,7 @@ export interface TableFieldOptions {
   hidden?: boolean;
   minWidth?: number;
   width?: number;
+  filterable?: boolean;
 }
 
 export const defaultTableFieldOptions: TableFieldOptions = {

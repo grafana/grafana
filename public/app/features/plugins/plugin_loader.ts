@@ -22,11 +22,12 @@ import * as redux from 'redux';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
-import { coreModule, appEvents, contextSrv } from 'app/core/core';
+import { coreModule } from 'app/angular/core_module';
+import { appEvents, contextSrv } from 'app/core/core';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
-import { promiseToDigest } from 'app/core/utils/promiseToDigest';
+import { promiseToDigest } from 'app/angular/promiseToDigest';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
@@ -35,6 +36,7 @@ import * as grafanaData from '@grafana/data';
 import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
 import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
+import { locateWithCache, registerPluginInCache } from './pluginCacheBuster';
 
 // Help the 6.4 to 6.5 migration
 // The base classes were moved from @grafana/ui to @grafana/data
@@ -51,13 +53,7 @@ import * as rxjsOperators from 'rxjs/operators';
 // routing
 import * as reactRouter from 'react-router-dom';
 
-// add cache busting
-const bust = `?_cache=${Date.now()}`;
-function locate(load: { address: string }) {
-  return load.address + bust;
-}
-
-grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locate }));
+grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
 
 grafanaRuntime.SystemJS.config({
   baseURL: 'public',
@@ -176,21 +172,25 @@ for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export async function importPluginModule(path: string): Promise<any> {
+export async function importPluginModule(path: string, version?: string): Promise<any> {
+  if (version) {
+    registerPluginInCache({ path, version });
+  }
+
   const builtIn = builtInPlugins[path];
   if (builtIn) {
     // for handling dynamic imports
     if (typeof builtIn === 'function') {
       return await builtIn();
     } else {
-      return Promise.resolve(builtIn);
+      return builtIn;
     }
   }
   return grafanaRuntime.SystemJS.import(path);
 }
 
 export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  return importPluginModule(meta.module).then((pluginExports) => {
+  return importPluginModule(meta.module, meta.info?.version).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
       dsPlugin.meta = meta;
@@ -213,7 +213,7 @@ export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): 
 }
 
 export function importAppPlugin(meta: grafanaData.PluginMeta): Promise<grafanaData.AppPlugin> {
-  return importPluginModule(meta.module).then((pluginExports) => {
+  return importPluginModule(meta.module, meta.info?.version).then((pluginExports) => {
     const plugin = pluginExports.plugin ? (pluginExports.plugin as grafanaData.AppPlugin) : new grafanaData.AppPlugin();
     plugin.init(meta);
     plugin.meta = meta;

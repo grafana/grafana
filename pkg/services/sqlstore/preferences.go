@@ -111,6 +111,7 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 			return err
 		}
 		prefs.HomeDashboardId = cmd.HomeDashboardId
+		prefs.Timezone = cmd.Timezone
 		prefs.WeekStart = cmd.WeekStart
 		prefs.Theme = cmd.Theme
 		prefs.Updated = time.Now()

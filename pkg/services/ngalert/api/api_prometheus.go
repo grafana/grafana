@@ -76,6 +76,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
 
+	if len(namespaceMap) == 0 {
+		srv.log.Debug("User does not have access to any namespaces")
+		return response.JSON(http.StatusOK, ruleResponse)
+	}
+
 	namespaceUIDs := make([]string, len(namespaceMap))
 	for k := range namespaceMap {
 		namespaceUIDs = append(namespaceUIDs, k)

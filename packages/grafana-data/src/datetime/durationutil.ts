@@ -35,19 +35,25 @@ export function intervalToAbbreviatedDurationString(interval: Interval, includeS
 /**
  * parseDuration parses duration string into datefns Duration object
  *
- * @param duration - string to convert. For example '2m', '5h 20s'
+ * @param durationString - string to convert. For example '2m', '5h 20s'
  *
  * @public
  */
-export function parseDuration(duration: string): Duration {
-  return duration.split(' ').reduce<Duration>((acc, value) => {
+export function parseDuration(durationString: string): Duration {
+  return durationString.split(' ').reduce<Duration>((acc, value) => {
     const match = value.match(/(\d+)(.+)/);
-    if (match === null || match.length !== 3) {
+
+    const rawLength = match?.[1];
+    const unit = match?.[2];
+
+    if (!(rawLength && unit)) {
       return acc;
     }
 
-    const key = Object.entries(durationMap).find(([_, abbreviations]) => abbreviations?.includes(match[2]))?.[0];
-    return !key ? acc : { ...acc, [key]: match[1] };
+    const mapping = Object.entries(durationMap).find(([_, abbreviations]) => abbreviations?.includes(match[2]));
+    const length = parseInt(rawLength, 10);
+
+    return mapping ? { ...acc, [mapping[0]]: length } : acc;
   }, {});
 }
 
@@ -124,7 +130,7 @@ export function isValidDuration(durationString: string): boolean {
 export function isValidGoDuration(durationString: string): boolean {
   const timeUnits = ['h', 'm', 's', 'ms', 'us', 'µs', 'ns'];
   for (const value of durationString.trim().split(' ')) {
-    const match = value.match(/(\d+)(.+)/);
+    const match = value.match(/([0-9]*[.]?[0-9]+)(.+)/);
     if (match === null || match.length !== 3) {
       return false;
     }

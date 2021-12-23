@@ -6,10 +6,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type KeepFieldsFrameProcessorConfig struct {
-	FieldNames []string `json:"fieldNames"`
-}
-
 // KeepFieldsFrameProcessor can keep specified fields in a data.Frame dropping all other fields.
 type KeepFieldsFrameProcessor struct {
 	config KeepFieldsFrameProcessorConfig

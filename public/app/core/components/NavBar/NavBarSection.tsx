@@ -15,15 +15,16 @@ export function NavBarSection({ children, className }: Props) {
   const styles = getStyles(theme, newNavigationEnabled);
 
   return (
-    <div data-testid="navbar-section" className={cx(styles.container, className)}>
+    <ul data-testid="navbar-section" className={cx(styles.container, className)}>
       {children}
-    </div>
+    </ul>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
   container: css`
     display: none;
+    list-style: none;
 
     ${theme.breakpoints.up('md')} {
       background-color: ${newNavigationEnabled ? theme.colors.background.primary : 'inherit'};
@@ -31,12 +32,6 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
       border-radius: 2px;
       display: flex;
       flex-direction: inherit;
-    }
-
-    .sidemenu-open--xs & {
-      display: flex;
-      flex-direction: column;
-      gap: ${theme.spacing(1)};
     }
   `,
 });

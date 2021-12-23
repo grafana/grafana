@@ -2,6 +2,8 @@ import { AppEvents, DataSourceInstanceSettings, locationUtil } from '@grafana/da
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import {
   clearDashboard,
+  fetchDashboard,
+  fetchFailed,
   ImportDashboardDTO,
   InputType,
   LibraryPanelInput,
@@ -23,11 +25,13 @@ import { LibraryElementExport } from '../../dashboard/components/DashExportModal
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async (dispatch) => {
     try {
+      dispatch(fetchDashboard());
       const dashboard = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
       dispatch(setGcomDashboard(dashboard));
       dispatch(processInputs(dashboard.json));
       dispatch(processElements(dashboard.json));
     } catch (error) {
+      dispatch(fetchFailed());
       appEvents.emit(AppEvents.alertError, [error.data.message || error]);
     }
   };
@@ -273,8 +277,8 @@ export function saveDashboard(options: SaveDashboardOptions) {
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().request({
     method: 'DELETE',
-    url: `/api/folders/${uid}?forceDeleteRules=true`,
-    showSuccessAlert: showSuccessAlert === true,
+    url: `/api/folders/${uid}?forceDeleteRules=false`,
+    showSuccessAlert: showSuccessAlert,
   });
 }
 
@@ -294,7 +298,7 @@ export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().request({
     method: 'DELETE',
     url: `/api/dashboards/uid/${uid}`,
-    showSuccessAlert: showSuccessAlert === true,
+    showSuccessAlert: showSuccessAlert,
   });
 }
 

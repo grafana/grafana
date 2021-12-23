@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/require"
 )
@@ -32,24 +33,47 @@ func TestDatasourceAsConfig(t *testing.T) {
 	setup := func() {
 		fakeRepo = &fakeRepository{}
 		bus.ClearBusHandlers()
-		bus.AddHandler("test", mockDelete)
-		bus.AddHandler("test", mockInsert)
-		bus.AddHandler("test", mockUpdate)
-		bus.AddHandler("test", mockGet)
-		bus.AddHandler("test", mockGetOrg)
+		bus.AddHandlerCtx("test", mockDelete)
+		bus.AddHandlerCtx("test", mockInsert)
+		bus.AddHandlerCtx("test", mockUpdate)
+		bus.AddHandlerCtx("test", mockGet)
+		bus.AddHandlerCtx("test", mockGetOrg)
 	}
 
-	t.Run("apply default values when missing", func(t *testing.T) {
-		setup()
-		dc := newDatasourceProvisioner(logger)
-		err := dc.applyChanges(context.Background(), withoutDefaults)
-		if err != nil {
-			t.Fatalf("applyChanges return an error %v", err)
-		}
+	t.Run("when some values missing", func(t *testing.T) {
+		t.Run("should apply default on insert", func(t *testing.T) {
+			setup()
+			dc := newDatasourceProvisioner(logger)
+			err := dc.applyChanges(context.Background(), withoutDefaults)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
 
-		require.Equal(t, len(fakeRepo.inserted), 1)
-		require.Equal(t, fakeRepo.inserted[0].OrgId, int64(1))
-		require.Equal(t, fakeRepo.inserted[0].Access, models.DsAccess("proxy"))
+			require.Equal(t, len(fakeRepo.inserted), 1)
+			require.Equal(t, fakeRepo.inserted[0].OrgId, int64(1))
+			require.Equal(t, fakeRepo.inserted[0].Access, models.DsAccess("proxy"))
+			require.Equal(t, fakeRepo.inserted[0].Name, "My datasource name")
+			require.Equal(t, fakeRepo.inserted[0].Uid, "P2AD1F727255C56BA")
+		})
+
+		t.Run("should not change UID when updates", func(t *testing.T) {
+			setup()
+
+			fakeRepo.loadAll = []*models.DataSource{
+				{Name: "My datasource name", OrgId: 1, Id: 1, Uid: util.GenerateShortUID()},
+			}
+
+			dc := newDatasourceProvisioner(logger)
+			err := dc.applyChanges(context.Background(), withoutDefaults)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
+
+			require.Equal(t, len(fakeRepo.deleted), 0)
+			require.Equal(t, len(fakeRepo.inserted), 0)
+			require.Equal(t, len(fakeRepo.updated), 1)
+			require.Equal(t, "", fakeRepo.updated[0].Uid) // XORM will not update the field if its value is default
+		})
 	})
 
 	t.Run("no datasource in database", func(t *testing.T) {
@@ -270,22 +294,22 @@ type fakeRepository struct {
 	loadAll []*models.DataSource
 }
 
-func mockDelete(cmd *models.DeleteDataSourceCommand) error {
+func mockDelete(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
 	fakeRepo.deleted = append(fakeRepo.deleted, cmd)
 	return nil
 }
 
-func mockUpdate(cmd *models.UpdateDataSourceCommand) error {
+func mockUpdate(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	fakeRepo.updated = append(fakeRepo.updated, cmd)
 	return nil
 }
 
-func mockInsert(cmd *models.AddDataSourceCommand) error {
+func mockInsert(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	fakeRepo.inserted = append(fakeRepo.inserted, cmd)
 	return nil
 }
 
-func mockGet(cmd *models.GetDataSourceQuery) error {
+func mockGet(ctx context.Context, cmd *models.GetDataSourceQuery) error {
 	for _, v := range fakeRepo.loadAll {
 		if cmd.Name == v.Name && cmd.OrgId == v.OrgId {
 			cmd.Result = v
@@ -296,6 +320,6 @@ func mockGet(cmd *models.GetDataSourceQuery) error {
 	return models.ErrDataSourceNotFound
 }
 
-func mockGetOrg(_ *models.GetOrgByIdQuery) error {
+func mockGetOrg(ctx context.Context, _ *models.GetOrgByIdQuery) error {
 	return nil
 }

@@ -100,14 +100,7 @@
     }
   }
 
-  &--navbar {
-    top: 100%;
-    min-width: 100%;
-  }
-
-  &--menu,
-  &--navbar,
-  &--sidemenu {
+  &--menu {
     background: $menu-dropdown-bg;
     box-shadow: $menu-dropdown-shadow;
     margin-top: 0px;

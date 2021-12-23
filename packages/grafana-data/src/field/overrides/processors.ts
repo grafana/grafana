@@ -1,4 +1,3 @@
-import { ComponentType } from 'react';
 import {
   DataLink,
   Field,
@@ -171,11 +170,6 @@ export interface StatsPickerConfigSettings {
   defaultStat?: string;
 }
 
-interface FieldNamePickerInfoProps {
-  name?: string;
-  field?: Field;
-}
-
 export interface FieldNamePickerConfigSettings {
   /**
    * Function is a predicate, to test each element of the array.
@@ -188,13 +182,7 @@ export interface FieldNamePickerConfigSettings {
    */
   noFieldsMessage?: string;
 
-  /**
-   * When a field is selected, this component can show aditional
-   * information, including validation etc
-   */
-  info?: ComponentType<FieldNamePickerInfoProps> | null;
-
-  /**
+  /**addFieldNamePicker
    * Sets the width to a pixel value.
    */
   width?: number;

@@ -18,7 +18,7 @@ import (
 )
 
 type configReader struct {
-	encryptionService encryption.Service
+	encryptionService encryption.Internal
 	log               log.Logger
 }
 

@@ -12,7 +12,7 @@ import { getFocusStyles } from '../../themes/mixins';
 
 export interface Props {
   pageIcon?: IconName;
-  title: string;
+  title?: string;
   parent?: string;
   onGoBack?: () => void;
   titleHref?: string;
@@ -80,7 +80,8 @@ export const PageToolbar: FC<Props> = React.memo(
               )}
             </>
           )}
-          {titleHref && (
+
+          {title && titleHref && (
             <h1 className={styles.h1Styles}>
               <Link
                 aria-label="Search dashboard by name"
@@ -91,7 +92,7 @@ export const PageToolbar: FC<Props> = React.memo(
               </Link>
             </h1>
           )}
-          {!titleHref && <h1 className={styles.titleText}>{title}</h1>}
+          {title && !titleHref && <h1 className={styles.titleText}>{title}</h1>}
         </nav>
         {leftItems?.map((child, index) => (
           <div className={styles.leftActionItem} key={index}>

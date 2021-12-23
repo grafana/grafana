@@ -239,22 +239,22 @@ func generateImageCaption(evalContext *alerting.EvalContext, ruleURL string, met
 
 	if len(ruleURL) > 0 {
 		urlLine := fmt.Sprintf("\nURL: %s", ruleURL)
-		message = appendIfPossible(message, urlLine, captionLengthLimit)
+		message = appendIfPossible(evalContext.Log, message, urlLine, captionLengthLimit)
 	}
 
 	if metrics != "" {
 		metricsLines := fmt.Sprintf("\n\nMetrics:%s", metrics)
-		message = appendIfPossible(message, metricsLines, captionLengthLimit)
+		message = appendIfPossible(evalContext.Log, message, metricsLines, captionLengthLimit)
 	}
 
 	return message
 }
 
-func appendIfPossible(message string, extra string, sizeLimit int) string {
+func appendIfPossible(tlog log.Logger, message string, extra string, sizeLimit int) string {
 	if len(extra)+len(message) <= sizeLimit {
 		return message + extra
 	}
-	log.Debug("Line too long for image caption.", "value", extra)
+	tlog.Debug("Line too long for image caption.", "value", extra)
 	return message
 }
 

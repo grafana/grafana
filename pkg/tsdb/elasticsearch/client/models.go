@@ -239,6 +239,7 @@ type HistogramAgg struct {
 type DateHistogramAgg struct {
 	Field          string          `json:"field"`
 	Interval       string          `json:"interval,omitempty"`
+	FixedInterval  string          `json:"fixed_interval,omitempty"`
 	MinDocCount    int             `json:"min_doc_count"`
 	Missing        *string         `json:"missing,omitempty"`
 	ExtendedBounds *ExtendedBounds `json:"extended_bounds"`

@@ -32,7 +32,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 
 	// XXX: These handlers have to be injected AFTER calling getContextHandler, since the latter
 	// creates a SQLStore which installs its own handlers.
-	upsertHandler := func(cmd *models.UpsertUserCommand) error {
+	upsertHandler := func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 		require.Equal(t, name, cmd.ExternalUser.Login)
 		cmd.Result = &models.User{Id: userID}
 		return nil
@@ -49,7 +49,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		}
 		return nil
 	}
-	bus.AddHandler("", upsertHandler)
+	bus.AddHandlerCtx("", upsertHandler)
 	bus.AddHandlerCtx("", getUserHandler)
 	t.Cleanup(func() {
 		bus.ClearBusHandlers()
@@ -67,7 +67,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	key := fmt.Sprintf(authproxy.CachePrefix, h)
 
 	t.Logf("Injecting stale user ID in cache with key %q", key)
-	err = svc.RemoteCache.Set(key, int64(33), 0)
+	err = svc.RemoteCache.Set(context.Background(), key, int64(33), 0)
 	require.NoError(t, err)
 
 	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)
@@ -76,7 +76,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	require.Equal(t, userID, ctx.SignedInUser.UserId)
 	require.True(t, ctx.IsSignedIn)
 
-	i, err := svc.RemoteCache.Get(key)
+	i, err := svc.RemoteCache.Get(context.Background(), key)
 	require.NoError(t, err)
 	require.Equal(t, userID, i.(int64))
 }

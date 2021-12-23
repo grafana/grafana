@@ -4,18 +4,22 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/secrets"
+	"gopkg.in/ini.v1"
 )
 
-func TestSecrets_EnvelopeEncryption(t *testing.T) {
+func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-	svc := setupTestService(t, store)
+	svc := SetupTestService(t, store)
 	ctx := context.Background()
 
 	t.Run("encrypting with no entity_id should create DEK", func(t *testing.T) {
@@ -32,6 +36,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
+
 	t.Run("encrypting another secret with no entity_id should use the same DEK", func(t *testing.T) {
 		plaintext := []byte("another very secret string")
 
@@ -46,6 +51,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
+
 	t.Run("encrypting with entity_id provided should create a new DEK", func(t *testing.T) {
 		plaintext := []byte("some test data")
 
@@ -74,6 +80,13 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 		decrypted, err := svc.Decrypt(context.Background(), encrypted)
 		require.NoError(t, err)
 		assert.Equal(t, expected, string(decrypted))
+	})
+
+	t.Run("usage stats should be registered", func(t *testing.T) {
+		reports, err := svc.usageStats.GetUsageReport(context.Background())
+		require.NoError(t, err)
+
+		assert.Equal(t, 1, reports.Metrics["stats.encryption.envelope_encryption_enabled.count"])
 	})
 }
 
@@ -141,4 +154,102 @@ func TestSecretsService_DataKeys(t *testing.T) {
 		assert.Equal(t, secrets.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
+}
+
+func TestSecretsService_UseCurrentProvider(t *testing.T) {
+	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
+		svc := SetupTestService(t, database.ProvideSecretsStore(sqlstore.InitTestDB(t)))
+		assert.Equal(t, "secretKey", svc.currentProvider)
+	})
+
+	t.Run("Should use encrypt/decrypt methods of the current encryption provider", func(t *testing.T) {
+		rawCfg := `
+		[security]
+		secret_key = sdDkslslld
+		encryption_provider = fakeProvider.v1
+		available_encryption_providers = fakeProvider.v1
+
+		[security.encryption.fakeProvider.v1]
+		`
+
+		raw, err := ini.Load([]byte(rawCfg))
+		require.NoError(t, err)
+
+		providerID := "fakeProvider.v1"
+		settings := &setting.OSSImpl{
+			Cfg: &setting.Cfg{
+				Raw:            raw,
+				FeatureToggles: map[string]bool{secrets.EnvelopeEncryptionFeatureToggle: true},
+			},
+		}
+		encr := ossencryption.ProvideService()
+		kms := newFakeKMS(osskmsproviders.ProvideService(encr, settings))
+		secretStore := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+
+		svcEncrypt, err := ProvideSecretsService(
+			secretStore,
+			&kms,
+			encr,
+			settings,
+			&usagestats.UsageStatsMock{T: t},
+		)
+		require.NoError(t, err)
+
+		assert.Equal(t, providerID, svcEncrypt.currentProvider)
+		assert.Equal(t, 2, len(svcEncrypt.GetProviders()))
+
+		encrypted, _ := svcEncrypt.Encrypt(context.Background(), []byte{}, secrets.WithoutScope())
+		assert.True(t, kms.fake.encryptCalled)
+
+		// secret service tries to find a DEK in a cache first before calling provider's decrypt
+		// to bypass the cache, we set up one more secrets service to test decrypting
+		svcDecrypt, err := ProvideSecretsService(
+			secretStore,
+			&kms,
+			encr,
+			settings,
+			&usagestats.UsageStatsMock{T: t},
+		)
+		require.NoError(t, err)
+
+		_, _ = svcDecrypt.Decrypt(context.Background(), encrypted)
+		assert.True(t, kms.fake.decryptCalled, "fake provider's decrypt should be called")
+	})
+}
+
+type fakeProvider struct {
+	encryptCalled bool
+	decryptCalled bool
+}
+
+func (p *fakeProvider) Encrypt(_ context.Context, _ []byte) ([]byte, error) {
+	p.encryptCalled = true
+	return []byte{}, nil
+}
+
+func (p *fakeProvider) Decrypt(_ context.Context, _ []byte) ([]byte, error) {
+	p.decryptCalled = true
+	return []byte{}, nil
+}
+
+type fakeKMS struct {
+	kms  osskmsproviders.Service
+	fake *fakeProvider
+}
+
+func newFakeKMS(kms osskmsproviders.Service) fakeKMS {
+	return fakeKMS{
+		kms:  kms,
+		fake: &fakeProvider{},
+	}
+}
+
+func (f *fakeKMS) Provide() (map[string]secrets.Provider, error) {
+	providers, err := f.kms.Provide()
+	if err != nil {
+		return providers, err
+	}
+
+	providers["fakeProvider.v1"] = f.fake
+	return providers, nil
 }

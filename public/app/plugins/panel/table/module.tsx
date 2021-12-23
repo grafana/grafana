@@ -7,12 +7,13 @@ import {
   standardEditorsRegistry,
 } from '@grafana/data';
 import { TablePanel } from './TablePanel';
-import { PanelOptions, PanelFieldConfig, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { TableFieldOptions } from '@grafana/schema';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { TableCellDisplayMode } from '@grafana/ui';
 import { TableSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel)
+export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
   .setNoPadding()
@@ -79,6 +80,12 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
           name: 'Column filter',
           description: 'Enables/disables field filters in table',
           defaultValue: defaultPanelFieldConfig.filterable,
+        })
+        .addBooleanSwitch({
+          path: 'hidden',
+          name: 'Hide in table',
+          defaultValue: undefined,
+          hideFromDefaults: true,
         });
     },
   })

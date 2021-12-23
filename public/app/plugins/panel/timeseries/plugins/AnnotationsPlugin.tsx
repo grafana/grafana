@@ -2,6 +2,7 @@ import { colorManipulator, DataFrame, DataFrameFieldIndex, DataFrameView, TimeZo
 import { EventsCanvas, UPlotConfigBuilder, useTheme2 } from '@grafana/ui';
 import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { AnnotationMarker } from './annotations/AnnotationMarker';
+import uPlot from 'uplot';
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;

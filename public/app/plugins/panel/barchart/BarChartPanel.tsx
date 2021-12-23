@@ -5,16 +5,17 @@ import { measureText, TooltipPlugin, UPLOT_AXIS_FONT_SIZE, useTheme2 } from '@gr
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
 import { prepareGraphableFrames } from './utils';
+import { PanelDataErrorView } from '@grafana/runtime';
 
 interface Props extends PanelProps<BarChartOptions> {}
 
 /**
  * @alpha
  */
-export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone }) => {
+export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone, id }) => {
   const theme = useTheme2();
 
-  const { frames, warn } = useMemo(() => prepareGraphableFrames(data?.series, theme, options), [data, theme, options]);
+  const frames = useMemo(() => prepareGraphableFrames(data?.series, theme, options), [data, theme, options]);
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
       return width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;
@@ -23,10 +24,10 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     return options.orientation;
   }, [width, height, options.orientation]);
 
-  const valueMaxLength = useMemo(() => {
+  const xTickLabelMaxLength = useMemo(() => {
     // If no max length is set, limit the number of characters to a length where it will use a maximum of half of the height of the viz.
-    if (!options.valueMaxLength) {
-      const rotationAngle = options.valueRotation;
+    if (!options.xTickLabelMaxLength) {
+      const rotationAngle = options.xTickLabelRotation;
       const textSize = measureText('M', UPLOT_AXIS_FONT_SIZE).width; // M is usually the widest character so let's use that as an aproximation.
       const maxHeightForValues = height / 2;
 
@@ -36,9 +37,9 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
         3 //Subtract 3 for the "..." added to the end.
       );
     } else {
-      return options.valueMaxLength;
+      return options.xTickLabelMaxLength;
     }
-  }, [height, options.valueRotation, options.valueMaxLength]);
+  }, [height, options.xTickLabelRotation, options.xTickLabelMaxLength]);
 
   // Force 'multi' tooltip setting or stacking mode
   const tooltip = useMemo(() => {
@@ -48,12 +49,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     return options.tooltip;
   }, [options.tooltip, options.stacking]);
 
-  if (!frames || warn) {
-    return (
-      <div className="panel-empty">
-        <p>{warn ?? 'No data found in response'}</p>
-      </div>
-    );
+  if (!frames) {
+    return <PanelDataErrorView panelId={id} data={data} needsStringField={true} needsNumberField={true} />;
   }
 
   return (
@@ -66,7 +63,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       height={height}
       {...options}
       orientation={orientation}
-      valueMaxLength={valueMaxLength}
+      xTickLabelMaxLength={xTickLabelMaxLength}
     >
       {(config, alignedFrame) => {
         return <TooltipPlugin data={alignedFrame} config={config} mode={tooltip.mode} timeZone={timeZone} />;
