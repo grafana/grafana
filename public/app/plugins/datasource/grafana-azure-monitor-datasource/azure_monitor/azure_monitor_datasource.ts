@@ -1,29 +1,29 @@
-import { filter, startsWith } from 'lodash';
-import UrlBuilder from './url_builder';
-import ResponseParser from './response_parser';
-import SupportedNamespaces from './supported_namespaces';
-import TimegrainConverter from '../time_grain_converter';
-import {
-  AzureMonitorQuery,
-  AzureDataSourceJsonData,
-  AzureMonitorMetricDefinitionsResponse,
-  AzureMonitorResourceGroupsResponse,
-  AzureQueryType,
-  DatasourceValidationResult,
-} from '../types';
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
-
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+import { filter, startsWith } from 'lodash';
+
 import { resourceTypeDisplayNames } from '../azureMetadata';
+import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+import TimegrainConverter from '../time_grain_converter';
+import {
+  AzureDataSourceJsonData,
+  AzureMonitorMetricDefinitionsResponse,
+  AzureMonitorQuery,
+  AzureMonitorResourceGroupsResponse,
+  DatasourceValidationResult,
+} from '../types';
 import { routeNames } from '../utils/common';
+import ResponseParser from './response_parser';
+import SupportedNamespaces from './supported_namespaces';
+import UrlBuilder from './url_builder';
 
 const defaultDropdownValue = 'select';
 
 export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   apiVersion = '2018-01-01';
   apiPreviewVersion = '2017-12-01-preview';
+  listByResourceGroupApiVersion = '2021-04-01';
   defaultSubscriptionId?: string;
   resourcePath: string;
   azurePortalUrl: string;
@@ -104,7 +104,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return {
       refId: target.refId,
       subscription: subscriptionId,
-      queryType: AzureQueryType.AzureMonitor,
+      queryType: undefined,
       azureMonitor: {
         resourceGroup,
         resourceName,
@@ -134,7 +134,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   getResourceGroups(subscriptionId: string) {
     return this.getResource(
-      `${this.resourcePath}/${subscriptionId}/resourceGroups?api-version=${this.apiVersion}`
+      `${this.resourcePath}/${subscriptionId}/resourceGroups?api-version=${this.listByResourceGroupApiVersion}`
     ).then((result: AzureMonitorResourceGroupsResponse) => {
       return ResponseParser.parseResponseValues(result, 'name', 'name');
     });
@@ -142,7 +142,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
     return this.getResource(
-      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`
+      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.listByResourceGroupApiVersion}`
     )
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
@@ -195,7 +195,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
     return this.getResource(
-      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`
+      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?$filter=resourceType eq '${metricDefinition}'&api-version=${this.listByResourceGroupApiVersion}`
     ).then((result: any) => {
       if (!startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
         return ResponseParser.parseResourceNames(result, metricDefinition);

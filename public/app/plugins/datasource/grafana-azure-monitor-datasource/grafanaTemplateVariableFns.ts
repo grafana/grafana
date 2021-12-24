@@ -121,6 +121,7 @@ const createGrafanaTemplateVariableQuery = (rawQuery: string, datasource: DataSo
         resourceGroup: matchesForQuery.resourceNamesWithSub[2],
         metricDefinition: matchesForQuery.resourceNamesWithSub[3],
       };
+      console.log('Subscription_? ', queryDetails.subscription);
       return queryDetails;
     }
 
