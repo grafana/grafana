@@ -643,15 +643,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -1358,15 +1349,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -1909,15 +1891,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -2440,15 +2413,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -2964,15 +2928,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.4.8
   name: package
-- commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - ./e2e/start-server
   depends_on:
@@ -3599,15 +3554,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -4099,15 +4045,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -4562,6 +4499,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: b48dc43d9a54a2876dcc82503574e7916d068cda018437c525a38103daebab51
+hmac: 0140292b5e609a2db7f55c930a9072d5bd1afa92ebd6043ed10314119413c331
 
 ...
