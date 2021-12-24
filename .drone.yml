@@ -204,7 +204,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -216,7 +216,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -228,7 +228,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -240,7 +240,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -667,7 +667,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -679,7 +679,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -691,7 +691,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -703,7 +703,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -1382,7 +1382,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -1394,7 +1394,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -1406,7 +1406,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -1418,7 +1418,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -1935,7 +1935,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -1947,7 +1947,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -1959,7 +1959,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -1971,7 +1971,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -2464,7 +2464,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -2476,7 +2476,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -2488,7 +2488,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -2500,7 +2500,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -2991,7 +2991,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -3003,7 +3003,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -3015,7 +3015,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -3027,7 +3027,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -3623,7 +3623,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -3635,7 +3635,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -3647,7 +3647,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -3659,7 +3659,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -4125,7 +4125,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
@@ -4137,7 +4137,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
@@ -4149,7 +4149,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
@@ -4161,7 +4161,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/browsers:chrome67
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -4562,6 +4562,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: a1d8988338351e6fb520a623e974ed40919ce3dd00921afd452f7a3f1f077a70
+hmac: b48dc43d9a54a2876dcc82503574e7916d068cda018437c525a38103daebab51
 
 ...
