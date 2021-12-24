@@ -240,7 +240,7 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 		case model.Matrix:
 			nextFrames = MatrixToDataFrames(v, query, nextFrames)
 		case model.Vector:
-			nextFrames = vectorToDataFrames(v, query, nextFrames)
+			nextFrames = VectorToDataFrames(v, query, nextFrames)
 		case *model.Scalar:
 			nextFrames = scalarToDataFrames(v, query, nextFrames)
 		case []apiv1.ExemplarQueryResult:
@@ -374,7 +374,7 @@ func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, frames dat
 	)
 }
 
-func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, frames data.Frames) data.Frames {
+func VectorToDataFrames(vector model.Vector, query *PrometheusQuery, frames data.Frames) data.Frames {
 	for _, v := range vector {
 		name := formatLegend(v.Metric, query)
 		tags := make(map[string]string, len(v.Metric))

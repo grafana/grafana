@@ -52,6 +52,45 @@ func TestMatrixToDataFrames(t *testing.T) {
 	})
 }
 
+func BenchmarkVectorToDataFrames(b *testing.B) {
+	query := &prometheus.PrometheusQuery{
+		LegendFormat: "",
+	}
+	var m model.Vector
+	if err := loadTestData("vector.json", &m); err != nil {
+		b.Fatal("failed to load test data", err)
+	}
+	for i := 0; i < b.N; i++ {
+		frames := make([]*data.Frame, 0)
+		frames = prometheus.VectorToDataFrames(m, query, frames)
+		if len(frames) != 6 {
+			b.Fatal("wrong frame count", len(frames))
+		}
+		if frames[0].Rows() != 1 {
+			b.Fatal("wrong row count", frames[0].Rows())
+		}
+	}
+}
+
+func TestVectorToDataFrames(t *testing.T) {
+	t.Run("vector.json golden response", func(t *testing.T) {
+		var m model.Vector
+		err := loadTestData("vector.json", &m)
+		require.NoError(t, err)
+		require.Equal(t, 6, m.Len())
+
+		query := &prometheus.PrometheusQuery{
+			LegendFormat: "",
+		}
+		frames := make(data.Frames, 0)
+		frames = prometheus.VectorToDataFrames(m, query, frames)
+		res := &backend.DataResponse{Frames: frames}
+
+		err = experimental.CheckGoldenDataResponse("./testdata/vector.txt", res, true)
+		require.NoError(t, err)
+	})
+}
+
 func loadTestData(path string, res interface{}) error {
 	// Ignore gosec warning G304 since it's a test
 	// nolint:gosec
