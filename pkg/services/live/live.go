@@ -68,6 +68,7 @@ type CoreGrafanaScope struct {
 	Dashboards models.DashboardActivityChannel
 }
 
+//nolint: gocyclo
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	logsService *cloudwatch.LogsService, pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
