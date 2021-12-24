@@ -200,6 +200,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -210,6 +212,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -220,6 +224,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -230,6 +236,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -655,6 +663,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -665,6 +675,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -675,6 +687,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -685,6 +699,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -1362,6 +1378,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -1372,6 +1390,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -1382,6 +1402,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -1392,6 +1414,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -1907,6 +1931,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -1917,6 +1943,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -1927,6 +1955,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -1937,6 +1967,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -2428,6 +2460,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -2438,6 +2472,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -2448,6 +2484,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -2458,6 +2496,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -2947,6 +2987,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -2957,6 +2999,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -2967,6 +3011,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -2977,6 +3023,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -3571,6 +3619,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -3581,6 +3631,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -3591,6 +3643,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -3601,6 +3655,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -4065,6 +4121,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -4075,6 +4133,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -4085,6 +4145,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -4095,6 +4157,8 @@ steps:
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
+  depends_on:
+  - package
   environment:
     HOST: end-to-end-tests-server
   image: cypress/browsers:chrome67
@@ -4498,6 +4562,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 8628b526c8b78ea87329aa815b915a51f1a397c48437c09843cd88b3d84fc243
+hmac: a1d8988338351e6fb520a623e974ed40919ce3dd00921afd452f7a3f1f077a70
 
 ...

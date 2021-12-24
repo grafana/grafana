@@ -730,9 +730,9 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
     return {
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
         'image': 'cypress/browsers:chrome67',
-        #'depends_on': [
-        #    'cypress',
-        #],
+        'depends_on': [
+            'package',
+        ],
         'environment': {
             'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
         },
