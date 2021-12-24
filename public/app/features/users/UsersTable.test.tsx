@@ -8,6 +8,7 @@ import { ConfirmModal } from '@grafana/ui';
 jest.mock('app/core/core', () => ({
   contextSrv: {
     hasPermission: () => true,
+    hasPermissionInMetadata: () => true,
     accessControlEnabled: () => false,
   },
 }));

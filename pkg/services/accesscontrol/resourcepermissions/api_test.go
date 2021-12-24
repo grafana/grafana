@@ -14,13 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -110,7 +106,9 @@ func TestApi_getDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			_, server, _ := setupTestEnvironment(t, &models.SignedInUser{}, tt.permissions, tt.options)
+			service, _ := setupTestEnvironment(t, tt.permissions, tt.options)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/description", tt.options.Resource), nil)
 			require.NoError(t, err)
 			recorder := httptest.NewRecorder()
@@ -151,7 +149,8 @@ func TestApi_getPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, server, sql := setupTestEnvironment(t, &models.SignedInUser{OrgId: 1}, tt.permissions, testOptions)
+			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
 
 			// seed team 1 with "Edit" permission on dashboard 1
 			team, err := sql.CreateTeam("test", "test@test.com", 1)
@@ -245,7 +244,8 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			_, server, _ := setupTestEnvironment(t, &models.SignedInUser{OrgId: 1}, tt.permissions, testOptions)
+			service, _ := setupTestEnvironment(t, tt.permissions, testOptions)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
 
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "builtInRoles", tt.builtInRole)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
@@ -318,7 +318,8 @@ func TestApi_setTeamPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			_, server, sql := setupTestEnvironment(t, &models.SignedInUser{OrgId: 1}, tt.permissions, testOptions)
+			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
 
 			// seed team
 			_, err := sql.CreateTeam("test", "test@test.com", 1)
@@ -396,9 +397,10 @@ func TestApi_setUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			_, server, sql := setupTestEnvironment(t, &models.SignedInUser{OrgId: 1}, tt.permissions, testOptions)
+			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
 
-			// seed team
+			// seed user
 			_, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
 			require.NoError(t, err)
 
@@ -416,19 +418,12 @@ func TestApi_setUserPermission(t *testing.T) {
 	}
 }
 
-func setupTestEnvironment(t *testing.T, user *models.SignedInUser, permissions []*accesscontrol.Permission, ops Options) (*Service, *web.Mux, *sqlstore.SQLStore) {
-	sql := sqlstore.InitTestDB(t)
-	store := database.ProvideService(sql)
-
-	service, err := New(ops, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store)
-	require.NoError(t, err)
-
+func setupTestServer(t *testing.T, user *models.SignedInUser, service *Service) *web.Mux {
 	server := web.New()
 	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
 	service.api.router.Register(server)
-
-	return service, server, sql
+	return server
 }
 
 type testContext struct {
