@@ -79,7 +79,7 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 		return testPluginContext, true, nil
 	}).Times(0)
 
-	mockPacketSender.EXPECT().PublishLocal("1/test", gomock.Any()).Times(1)
+	mockPacketSender.EXPECT().PublishLocal("1/test", gomock.Any(), "").Times(1)
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
@@ -130,8 +130,8 @@ func TestStreamManager_SubmitStream_DifferentOrgID(t *testing.T) {
 	doneCh1 := make(chan struct{})
 	doneCh2 := make(chan struct{})
 
-	mockPacketSender.EXPECT().PublishLocal("1/test", gomock.Any()).Times(1)
-	mockPacketSender.EXPECT().PublishLocal("2/test", gomock.Any()).Times(1)
+	mockPacketSender.EXPECT().PublishLocal("1/test", gomock.Any(), "").Times(1)
+	mockPacketSender.EXPECT().PublishLocal("2/test", gomock.Any(), "").Times(1)
 
 	mockContextGetter.EXPECT().GetPluginContext(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
 		return backend.PluginContext{}, true, nil
