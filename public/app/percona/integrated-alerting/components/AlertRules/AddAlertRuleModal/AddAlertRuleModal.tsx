@@ -218,14 +218,14 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
               )}
             </Field>
 
-            {currentTemplate ? (
-              <AdvancedRuleSection expression={currentTemplate.expr} summary={currentTemplate.annotations?.summary} />
+            {alertRule ? (
+              <AdvancedRuleSection
+                expression={alertRule.rawValues.expr_template}
+                summary={alertRule.rawValues.annotations?.summary}
+              />
             ) : (
-              alertRule && (
-                <AdvancedRuleSection
-                  expression={alertRule.rawValues.expr_template}
-                  summary={alertRule.rawValues.annotations?.summary}
-                />
+              currentTemplate && (
+                <AdvancedRuleSection expression={currentTemplate.expr} summary={currentTemplate.annotations?.summary} />
               )
             )}
 
