@@ -11,6 +11,7 @@ import {
   AzureMonitorMetricDefinitionsResponse,
   AzureMonitorQuery,
   AzureMonitorResourceGroupsResponse,
+  AzureQueryType,
   DatasourceValidationResult,
 } from '../types';
 import { routeNames } from '../utils/common';
@@ -104,7 +105,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return {
       refId: target.refId,
       subscription: subscriptionId,
-      queryType: undefined,
+      queryType: AzureQueryType.AzureMonitor,
       azureMonitor: {
         resourceGroup,
         resourceName,
