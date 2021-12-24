@@ -198,7 +198,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
   environment:
     HOST: end-to-end-tests-server
@@ -208,7 +208,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
   environment:
     HOST: end-to-end-tests-server
@@ -218,7 +218,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
   environment:
     HOST: end-to-end-tests-server
@@ -228,7 +228,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
   environment:
     HOST: end-to-end-tests-server
@@ -653,7 +653,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
   environment:
     HOST: end-to-end-tests-server
@@ -663,7 +663,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
   environment:
     HOST: end-to-end-tests-server
@@ -673,7 +673,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
   environment:
     HOST: end-to-end-tests-server
@@ -683,7 +683,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
   environment:
     HOST: end-to-end-tests-server
@@ -1360,7 +1360,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -1370,7 +1370,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -1380,7 +1380,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -1390,7 +1390,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -1905,7 +1905,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -1915,7 +1915,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -1925,7 +1925,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -1935,7 +1935,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -2426,7 +2426,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -2436,7 +2436,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -2446,7 +2446,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -2456,7 +2456,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -2945,7 +2945,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -2955,7 +2955,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -2965,7 +2965,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -2975,7 +2975,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -3569,7 +3569,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -3579,7 +3579,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -3589,7 +3589,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -3599,7 +3599,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -4063,7 +4063,7 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -4073,7 +4073,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -4083,7 +4083,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -4093,7 +4093,7 @@ steps:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
-  - apt-get install netcat
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -4498,6 +4498,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 83f0c0380414ae4ea8d1bba7e12212f650b95c8cea4ecb7e1db577d3e970027c
+hmac: 8628b526c8b78ea87329aa815b915a51f1a397c48437c09843cd88b3d84fc243
 
 ...
