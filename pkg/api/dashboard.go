@@ -307,6 +307,12 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	dash := cmd.GetDashboardModel()
+
+	err = hs.LibraryPanelService.ImportLibraryPanelsForDashboard(c.Req.Context(), c.SignedInUser, dash, cmd.FolderId)
+	if err != nil {
+		return response.Error(500, "Error while importing library panels", err)
+	}
+
 	newDashboard := dash.Id == 0
 	if newDashboard {
 		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
