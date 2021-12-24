@@ -5,6 +5,7 @@ package eval
 import (
 	"context"
 	"fmt"
+	"math"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -448,6 +449,8 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 			r.State = NoData
 		case *val == 0:
 			r.State = Normal
+		case math.IsNaN(*val):
+			r.State = NoData
 		default:
 			r.State = Alerting
 		}
