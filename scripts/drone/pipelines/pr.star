@@ -93,7 +93,7 @@ def pr_pipelines(edition):
     # Insert remaining build_steps
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=variants),
-        install_cypress_step(),
+        #install_cypress_step(),
         e2e_tests_server_step(edition=edition),
         e2e_tests_step('dashboards-suite', edition=edition),
         e2e_tests_step('smoke-tests-suite', edition=edition),
