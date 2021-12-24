@@ -741,6 +741,7 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
             'path': '/root/.cache/Cypress'
         }],
         'commands': [
+            'apt-get install netcat',
             cmd,
         ],
     }
