@@ -295,19 +295,18 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 // MatrixToDataFrames marshals a matrix result to data frames
 func MatrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
 	var (
-		rowIdx = 0
-		length = 0
+		rowIdx  = 0
+		length  = 0
+		timeMap = make(map[int64]*int)
 	)
 
-	// it's faster to get the length of the longest column first
-	// so we can allocate fields without the need to expand
+	// get the length of the longest column first so we can reduce the need to expand
 	for _, v := range matrix {
 		if len(v.Values) > length {
 			length = len(v.Values)
 		}
 	}
 
-	timeMap := make(map[int64]*int, length)
 	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, length))
 	fields := []*data.Field{timeField}
 
@@ -319,19 +318,29 @@ func MatrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 
 		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, length)
 
-		for _, k := range v.Values {
+		for i := 0; i < len(v.Values); i++ {
+			k := v.Values[i]
 			timeKey := k.Timestamp.Unix()
 			value := float64(k.Value)
 			valueIdx := timeMap[timeKey]
 
-			// we haven't seen this timestamp yet, so we will need to add it to the map,
-			// and increment the row index
+			// we haven't seen this timestamp yet, so we will need to add
+			// it to the map, and increment the row index
 			if valueIdx == nil {
+				for _, f := range fields {
+					if f.Len() <= rowIdx {
+						f.Extend(rowIdx - f.Len() + 1)
+					}
+				}
 				timeField.Set(rowIdx, time.Unix(timeKey, 0).UTC())
 				lastIdx := rowIdx
 				timeMap[timeKey] = &lastIdx
 				valueIdx = &lastIdx
 				rowIdx += 1
+			}
+
+			if valueField.Len() <= *valueIdx {
+				valueField.Extend(*valueIdx - valueField.Len() + 1)
 			}
 
 			if !math.IsNaN(value) {
