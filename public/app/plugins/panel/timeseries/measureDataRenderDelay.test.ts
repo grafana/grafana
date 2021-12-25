@@ -62,4 +62,28 @@ describe('measureDataRenderDelay', () => {
     expect(mockMeasurementFn).toHaveBeenCalledTimes(1);
     expect(mockMeasurementFn).toHaveBeenCalledWith(MeasurementName.DataRenderDelay, 500);
   });
+
+  it('should use the oldest packet', async () => {
+    const timeValues = [100, 200, 300];
+    const frame = frameWith(timeValues);
+
+    measureDataRenderDelay(frame, frame);
+
+    timeValues.push(400);
+    timeValues.push(500);
+    timeValues.push(600);
+    measureDataRenderDelay(frame, frame);
+
+    expect(mockMeasurementFn).toHaveBeenCalledTimes(3);
+
+    expect(mockMeasurementFn).toHaveBeenCalledWith(MeasurementName.DataRenderDelay, 600);
+    expect(mockMeasurementFn).toHaveBeenCalledWith(MeasurementName.DataRenderDelay, 500);
+    expect(mockMeasurementFn).toHaveBeenCalledWith(MeasurementName.DataRenderDelay, 400);
+
+    timeValues.push(700);
+    measureDataRenderDelay(frame, frame);
+
+    expect(mockMeasurementFn).toHaveBeenCalledTimes(4);
+    expect(mockMeasurementFn).toHaveBeenCalledWith(MeasurementName.DataRenderDelay, 300);
+  });
 });

@@ -32,8 +32,9 @@ const measureDataRenderDelayForFrame = (prevFrame: DataFrame, newFrame: DataFram
     const closest = closestIdx(lastSeenTime, newValues);
 
     const firstBiggerIndex = newValues[closest] > lastSeenTime ? closest : closest + 1;
-    if (newValues[firstBiggerIndex]) {
-      LivePerformance.instance().add(MeasurementName.DataRenderDelay, now - newValues[firstBiggerIndex]);
+
+    for (let i = firstBiggerIndex, val = newValues[i]; val; val = newValues[++i]) {
+      LivePerformance.instance().add(MeasurementName.DataRenderDelay, now - val);
     }
   }
 
