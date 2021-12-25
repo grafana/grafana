@@ -35,7 +35,7 @@ const NavBarItem = ({
     .filter((item) => !item.hideFromMenu)
     .map((i) => ({ ...i, menuItemType: NavMenuItemType.Item }));
   const adjustHeightForBorder = filteredItems.length === 0;
-  const styles = getStyles(theme, adjustHeightForBorder, isActive, reverseMenuDirection);
+  const styles = getStyles(theme, adjustHeightForBorder, isActive);
   const section: NavModelItem = {
     ...link,
     children: filteredItems,
@@ -115,12 +115,7 @@ const NavBarItem = ({
 
 export default NavBarItem;
 
-const getStyles = (
-  theme: GrafanaTheme2,
-  adjustHeightForBorder: boolean,
-  isActive?: boolean,
-  reverseMenuDirection?: boolean
-) => ({
+const getStyles = (theme: GrafanaTheme2, adjustHeightForBorder: boolean, isActive?: boolean) => ({
   ...getNavBarItemWithoutMenuStyles(theme, isActive),
   header: css`
     color: ${theme.colors.text.primary};
@@ -134,12 +129,4 @@ const getStyles = (
   item: css`
     color: ${theme.colors.text.primary};
   `,
-  subtitle: css`
-      border-${reverseMenuDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      font-weight: ${theme.typography.bodySmall.fontWeight};
-      padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
-      white-space: nowrap;
-    `,
 });

@@ -46,7 +46,7 @@ func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimod
 		return apimodels.GrafanaBackend, nil
 	}
 	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
-		if ds, err := cache.GetDatasource(datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
+		if ds, err := cache.GetDatasource(ctx.Req.Context(), datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
 			switch ds.Type {
 			case "loki", "prometheus":
 				return apimodels.LoTexRulerBackend, nil
