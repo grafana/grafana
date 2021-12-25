@@ -29,6 +29,7 @@ type simpleCrawler struct {
 	threadCount       int
 
 	glive  *live.GrafanaLive
+	mode   CrawlerMode
 	opts   rendering.Opts
 	status crawlStatus
 	queue  []dashItem
@@ -136,6 +137,7 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rend
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(queue), func(i, j int) { queue[i], queue[j] = queue[j], queue[i] })
 
+	r.mode = mode
 	r.opts = rendering.Opts{
 		OrgID:   c.OrgId,
 		UserID:  c.UserId,
@@ -183,6 +185,9 @@ func (r *simpleCrawler) Status() (crawlStatus, error) {
 }
 
 func (r *simpleCrawler) walk() {
+	headers := make(map[string][]string)
+	headers["x-grafana-crawler-mode"] = []string{string(r.mode)}
+
 	for {
 		if r.status.State == "stopping" {
 			break
@@ -206,6 +211,7 @@ func (r *simpleCrawler) walk() {
 			OrgRole:           r.opts.OrgRole,
 			Theme:             r.opts.Theme,
 			Timeout:           10 * time.Second,
+			Headers:           headers,
 			DeviceScaleFactor: 1,
 		})
 		if err != nil {

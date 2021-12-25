@@ -216,6 +216,9 @@ func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "error parsing bytes", err)
 	}
+	if cmd.Mode == "" {
+		cmd.Mode = CrawlerModeThumbs
+	}
 	msg, err := hs.renderer.Start(c, cmd.Mode, cmd.Theme)
 	if err != nil {
 		return response.Error(500, "error starting", err)
