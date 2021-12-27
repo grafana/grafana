@@ -43,7 +43,6 @@ func NewMatrixFramer(query *PrometheusQuery, matrix model.Matrix) Framer {
 		fields:       fields,
 		timeMap:      timeMap,
 	}
-
 }
 
 func NewVectorFramer(query *PrometheusQuery, vec model.Vector) Framer {
@@ -69,7 +68,6 @@ func NewVectorFramer(query *PrometheusQuery, vec model.Vector) Framer {
 		fields:       fields,
 		timeMap:      timeMap,
 	}
-
 }
 
 func (f *Framer) Frames() data.Frames {

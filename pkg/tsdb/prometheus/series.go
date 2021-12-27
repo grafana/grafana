@@ -33,16 +33,16 @@ func (s *MatrixSeries) Next() bool {
 	return s.rowIdx < s.Len()
 }
 
-func (r *MatrixSeries) Timestamp() int64 {
-	return r.stream.Values[r.rowIdx].Timestamp.Unix()
+func (s *MatrixSeries) Timestamp() int64 {
+	return s.stream.Values[s.rowIdx].Timestamp.Unix()
 }
 
-func (r *MatrixSeries) IsSet() bool {
-	return !math.IsNaN(float64(r.stream.Values[r.rowIdx].Value))
+func (s *MatrixSeries) IsSet() bool {
+	return !math.IsNaN(float64(s.stream.Values[s.rowIdx].Value))
 }
 
-func (r *MatrixSeries) Value() *float64 {
-	return func(f float64) *float64 { return &f }(float64(r.stream.Values[r.rowIdx].Value))
+func (s *MatrixSeries) Value() *float64 {
+	return func(f float64) *float64 { return &f }(float64(s.stream.Values[s.rowIdx].Value))
 }
 
 type VectorSeries struct {
@@ -63,14 +63,14 @@ func (s *VectorSeries) Next() bool {
 	return s.rowIdx < s.Len()
 }
 
-func (r *VectorSeries) Timestamp() int64 {
-	return r.sample.Timestamp.Unix()
+func (s *VectorSeries) Timestamp() int64 {
+	return s.sample.Timestamp.Unix()
 }
 
-func (r VectorSeries) IsSet() bool {
-	return !math.IsNaN(float64(r.sample.Value))
+func (s *VectorSeries) IsSet() bool {
+	return !math.IsNaN(float64(s.sample.Value))
 }
 
-func (r *VectorSeries) Value() *float64 {
-	return func(f float64) *float64 { return &f }(float64(r.sample.Value))
+func (s *VectorSeries) Value() *float64 {
+	return func(f float64) *float64 { return &f }(float64(s.sample.Value))
 }
