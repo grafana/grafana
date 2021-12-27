@@ -3,8 +3,8 @@ import { FieldType, toDataFrame } from '@grafana/data';
 import { MeasurementName } from 'app/features/live/LivePerformance';
 
 const mockMeasurementFn = jest.fn();
-jest.mock('app/core/services/LivePerformance', () => {
-  const originalModule = jest.requireActual('app/core/services/LivePerformance');
+jest.mock('app/features/live/LivePerformance', () => {
+  const originalModule = jest.requireActual('app/features/live/LivePerformance');
 
   return {
     ...originalModule,
