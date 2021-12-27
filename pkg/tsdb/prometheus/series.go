@@ -42,7 +42,7 @@ func (s *MatrixSeries) IsSet() bool {
 }
 
 func (s *MatrixSeries) Value() *float64 {
-	return func(f float64) *float64 { return &f }(float64(s.stream.Values[s.rowIdx].Value))
+	return (*float64)(&s.stream.Values[s.rowIdx].Value)
 }
 
 type VectorSeries struct {
@@ -72,5 +72,5 @@ func (s *VectorSeries) IsSet() bool {
 }
 
 func (s *VectorSeries) Value() *float64 {
-	return func(f float64) *float64 { return &f }(float64(s.sample.Value))
+	return (*float64)(&s.sample.Value)
 }

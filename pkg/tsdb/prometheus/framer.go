@@ -31,8 +31,7 @@ func NewMatrixFramer(query *PrometheusQuery, matrix model.Matrix) Framer {
 
 	timeMap := make(map[int64]*int, length)
 	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, length))
-	fields := make([]*data.Field, 1, len(matrix))
-	fields[0] = timeField
+	fields := []*data.Field{timeField}
 
 	return Framer{
 		rowIdx:       0,
@@ -56,8 +55,7 @@ func NewVectorFramer(query *PrometheusQuery, vec model.Vector) Framer {
 
 	timeMap := make(map[int64]*int, length)
 	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, length))
-	fields := make([]*data.Field, 1, len(vec))
-	fields[0] = timeField
+	fields := []*data.Field{timeField}
 
 	return Framer{
 		rowIdx:       0,
@@ -71,7 +69,11 @@ func NewVectorFramer(query *PrometheusQuery, vec model.Vector) Framer {
 }
 
 func (f *Framer) Frames() data.Frames {
-	frames := make(data.Frames, 0, 1)
+	frames := make(data.Frames, 0)
+
+	if len(f.series) == 0 {
+		return frames
+	}
 
 	for _, s := range f.series {
 		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, f.length)
