@@ -48,7 +48,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		Logger:          log.New("alertmanager-test"),
 	}
 
-	kvStore := newFakeKVStore(t)
+	kvStore := NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	decryptFn := secretsService.GetDecryptedValue
 	am, err := newAlertmanager(1, cfg, s, kvStore, &NilPeer{}, decryptFn, m)
