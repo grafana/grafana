@@ -116,11 +116,11 @@ Template to render entire notification message:
 {{ define "mymessage" }}
   {{ if gt (len .Alerts.Firing) 0 }}
     {{ len .Alerts.Firing }} firing:
-    {{ range .Alerts.Firing }} {{ template "alert" .}} {{ end }}
+    {{ range .Alerts.Firing }} {{ template "myalert" .}} {{ end }}
   {{ end }}
   {{ if gt (len .Alerts.Resolved) 0 }}
     {{ len .Alerts.Resolved }} resolved:
-    {{ range .Alerts.Resolved }} {{ template "alert" .}} {{ end }}
+    {{ range .Alerts.Resolved }} {{ template "myalert" .}} {{ end }}
   {{ end }}
 {{ end }}
 ```
