@@ -15,7 +15,12 @@ type Store interface {
 	CreateServiceAccount(ctx context.Context, saForm *CreateServiceaccountForm) (*models.User, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
 	HasMigrated(ctx context.Context, orgID int64) (bool, error)
-	UpgradeServiceAccounts(ctx context.Context) error
+	UpgradeServiceAccounts(ctx context.Context, orgID int64) error
 }
 
-// create issue: for the refactoring of the service account api structure
+// TODO:
+/*
+- during a upgrade/migration of service accounts, we need to be able to disable/show loader the button on the frontend
+
+-
+*/

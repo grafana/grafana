@@ -4,12 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
+
+const (
+	ServiceAccountsMigrationIdPrefix = "service accounts migration"
 )
 
 type ServiceAccountsStoreImpl struct {
@@ -65,8 +71,6 @@ func deleteServiceAccountInTransaction(sess *sqlstore.DBSession, orgID, serviceA
 func (s *ServiceAccountsStoreImpl) HasMigrated(ctx context.Context, orgID int64) (bool, error) {
 	// performace: might want to check how to implement a cache here
 	err := s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		// Try and find the user by login first.
-		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
 		org := &models.Org{Id: orgID}
 		has, err := sess.Get(org)
 		if err != nil {
@@ -75,10 +79,8 @@ func (s *ServiceAccountsStoreImpl) HasMigrated(ctx context.Context, orgID int64)
 		if !has {
 			return errors.New("org not found")
 		}
-		rawSQL := "SELECT count(*) FROM migration_log WHERE migration_id = ?"
-		/* queryWithWildcards := "service accounts org:" + fmt.Sprint(orgID) */
-		queryWithWildcards := "Update user table charset"
-		results, err := sess.SQL(rawSQL, queryWithWildcards).Count()
+		rawSQL := fmt.Sprintf("SELECT count(*) FROM migration_log WHERE migration_id = %s", getMigrationId(orgID))
+		results, err := sess.SQL(rawSQL).Count()
 		if err != nil {
 			return err
 		}
@@ -93,7 +95,7 @@ func (s *ServiceAccountsStoreImpl) HasMigrated(ctx context.Context, orgID int64)
 	return true, nil
 }
 
-func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) error {
+func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context, orgID int64) error {
 	basicKeys := s.sqlStore.GetNonServiceAccountAPIKeys(ctx)
 	if len(basicKeys) > 0 {
 		s.log.Info("Launching background thread to upgrade API keys to service accounts", "numberKeys", len(basicKeys))
@@ -112,8 +114,34 @@ func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) e
 				}
 				s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", sa.Id)
 			}
-			// TODO: create migration_log in the migration_log table
+			// adding to migration log so that we do not do this again
+			addMigrationLog(s, ctx, orgID)
 		}()
 	}
 	return nil
+}
+
+// addMigrationLog adds the migrationid for the migrated org
+func addMigrationLog(s *ServiceAccountsStoreImpl, ctx context.Context, orgID int64) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		migrationIdString := getMigrationId(orgID)
+		migration := migrator.MigrationLog{MigrationID: migrationIdString}
+		exists, _ := sess.Get(&migration)
+		if exists {
+			return errors.New("migration already exists")
+		}
+		m := migrator.MigrationLog{
+			MigrationID: migrationIdString,
+			Timestamp:   time.Now(),
+			SQL:         "service account code migration",
+		}
+		if _, err := sess.Insert(&m); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func getMigrationId(orgID int64) string {
+	return fmt.Sprintf("%s : %d", ServiceAccountsMigrationIdPrefix, orgID)
 }

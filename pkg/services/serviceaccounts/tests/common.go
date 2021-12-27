@@ -83,7 +83,7 @@ func (s *ServiceAccountsStoreMock) HasMigrated(ctx context.Context, orgID int64)
 	s.Calls.HasMigratedServiceAccounts = append(s.Calls.DeleteServiceAccount, []interface{}{ctx, orgID})
 	return false, nil
 }
-func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
-	s.Calls.DeleteServiceAccount = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
+func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context, orgID int64) error {
+	s.Calls.DeleteServiceAccount = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx, orgID})
 	return nil
 }
