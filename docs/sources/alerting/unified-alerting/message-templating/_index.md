@@ -14,7 +14,7 @@ Since most of the contact point fields can be templated, you can create reusable
 
 ### Using templates
 
-The following example shows the use of default templates to render an alert message in slack. The message title contains a count of firing or resolved alerts and the message body has a list of alerts with status.
+The following example shows the use of default templates to render an alert message in Slack. The message title contains a count of firing or resolved alerts and the message body has a list of alerts with status.
 
 <img  src="/static/img/docs/alerting/unified/contact-points-template-fields-8-0.png" width="450px">
 
@@ -52,12 +52,41 @@ The `define` tag in the Content section assigns the template name. This tag is o
 
 Use caution when deleting a template since Grafana does not prevent you from deleting templates that are in use.
 
+### Nested templates
+
+Templates may embed other templates.
+
+For example, a template fragment can be defined using the `define` keyword:
+
+```
+{{ define "mytemplate" }}
+  {{ len .Alerts.Firing }} firing. {{ len .Alerts.Resolved }} resolved.
+{{ end }}
+```
+
+Other custom templates may then embed the fragment using the `template` keyword:
+
+```
+Alert summary:
+{{ template "mytemplate" . }}
+```
+
+Grafana provides a few built-in templates, which can be embedded in custom templates:
+
+| Name                    | Notes                                                                 |
+| ----------------------- | --------------------------------------------------------------------- |
+| `default.title`         | Displays high-level status information.                               |
+| `default.message`       | Provides a formatted summary of firing and resolved alerts.           |
+| `teams.default.message` | Similar content to `default.messsage`, formatted for Microsoft Teams. |
+
 ### Custom template examples
+
+Below are some sample usages of custom templates.
 
 Template to render a single alert:
 
 ```
-{{ define "alert" }}
+{{ define "myalert" }}
   [{{.Status}}] {{ .Labels.alertname }}
 
   Labels:
@@ -84,7 +113,7 @@ Template to render a single alert:
 Template to render entire notification message:
 
 ```
-{{ define "message" }}
+{{ define "mymessage" }}
   {{ if gt (len .Alerts.Firing) 0 }}
     {{ len .Alerts.Firing }} firing:
     {{ range .Alerts.Firing }} {{ template "alert" .}} {{ end }}
@@ -95,3 +124,9 @@ Template to render entire notification message:
   {{ end }}
 {{ end }}
 ```
+
+### HTML in Message Templates
+
+HTML in Alerting message templates is escaped, and rendering of HTML in the resulting notification is not supported.
+
+Some notifiers which support rendered HTML (such as the body of emails) support alternative methods of changing the look and feel of the resulting notification. For example, the base template used in Alerting emails is installed to /usr/share/grafana/public/emails` on Linux.
