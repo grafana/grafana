@@ -283,6 +283,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(false),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
+		"featureHighlights": map[string]bool{
+			"enabled": hs.SettingsProvider.Section("feature_highlights").KeyValue("enabled").MustBool(false),
+		},
 	}
 
 	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {

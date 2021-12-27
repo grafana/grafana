@@ -291,6 +291,38 @@ def store_storybook_step(edition, ver_mode):
         'commands': commands,
     }
 
+def e2e_tests_artifacts(edition):
+    return {
+        'name': 'e2e_tests_artifacts_upload' + enterprise2_suffix(edition),
+        'image': 'google/cloud-sdk:367.0.0',
+        'depends_on': [            
+            'end-to-end-tests-dashboards-suite',
+            'end-to-end-tests-panels-suite',
+            'end-to-end-tests-smoke-tests-suite',
+            'end-to-end-tests-various-suite',
+        ],
+        'environment': {
+            'GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY': from_secret('gcp_upload_artifacts_key'),
+            'E2E_TEST_ARTIFACTS_BUCKET': 'releng-pipeline-artifacts-dev',
+            'GITHUB_TOKEN': from_secret('github_token'),
+        },
+        'commands': [
+            'apt-get update',
+            'apt-get install -yq zip',     
+            'ls -lah ./e2e',
+            'find ./e2e -type f -name "*.mp4"',
+            'printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json',
+            'gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json',
+            # we want to only include files in e2e folder that end with .spec.ts.mp4
+            'find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@',
+            'gsutil cp e2e/videos.zip gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip',
+            'export E2E_ARTIFACTS_VIDEO_ZIP=https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip',
+            'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"',
+            'curl -X POST https://api.github.com/repos/${DRONE_REPO}/statuses/${DRONE_COMMIT_SHA} -H "Authorization: token $${GITHUB_TOKEN}" -d ' +
+            '"{\\"state\\":\\"success\\",\\"target_url\\":\\"$${E2E_ARTIFACTS_VIDEO_ZIP}\\", \\"description\\": \\"Click on the details to download e2e recording videos\\", \\"context\\": \\"e2e_artifacts\\"}"',
+        ],
+    }
+
 
 def upload_cdn_step(edition, ver_mode):
     if ver_mode == "release":

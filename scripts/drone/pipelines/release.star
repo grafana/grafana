@@ -20,6 +20,7 @@ load(
     'install_cypress_step',
     'e2e_tests_server_step',
     'e2e_tests_step',
+    'e2e_tests_artifacts',
     'build_storybook_step',
     'copy_packages_for_docker_step',
     'package_docker_images_step',
@@ -115,7 +116,6 @@ def release_npm_packages_step(edition, ver_mode):
         ],
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
-            'GITHUB_PACKAGE_TOKEN': from_secret('github_package_token'),
         },
         'commands': ['./scripts/build/release-npm-packages.sh ${DRONE_TAG}'],
     }
@@ -165,6 +165,7 @@ def get_steps(edition, ver_mode):
         e2e_tests_step('smoke-tests-suite', edition=edition, tries=3),
         e2e_tests_step('panels-suite', edition=edition, tries=3),
         e2e_tests_step('various-suite', edition=edition, tries=3),
+        e2e_tests_artifacts(edition=edition),
         copy_packages_for_docker_step(),
         package_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
         package_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
