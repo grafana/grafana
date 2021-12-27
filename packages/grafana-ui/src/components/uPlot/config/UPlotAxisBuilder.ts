@@ -185,7 +185,13 @@ const timeUnitSize = {
 };
 
 /** Format time axis ticks */
-function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: number, foundIncr: number): string[] {
+export function formatTime(
+  self: uPlot,
+  splits: number[],
+  axisIdx: number,
+  foundSpace: number,
+  foundIncr: number
+): string[] {
   const timeZone = (self.axes[axisIdx] as any).timeZone;
   const scale = self.scales.x;
   const range = (scale?.max ?? 0) - (scale?.min ?? 0);
