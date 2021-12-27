@@ -66,7 +66,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 			SignupAllowed: h.Cfg.JWTAuthAutoSignUp,
 			ExternalUser:  extUser,
 		}
-		if err := bus.Dispatch(upsert); err != nil {
+		if err := bus.DispatchCtx(ctx.Req.Context(), upsert); err != nil {
 			ctx.Logger.Error("Failed to upsert JWT user", "error", err)
 			return false
 		}
