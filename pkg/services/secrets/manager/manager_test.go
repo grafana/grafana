@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
@@ -11,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -252,4 +252,64 @@ func (f *fakeKMS) Provide() (map[string]secrets.Provider, error) {
 
 	providers["fakeProvider.v1"] = f.fake
 	return providers, nil
+}
+
+func TestSecretsService_Run(t *testing.T) {
+	ctx := context.Background()
+	sql := sqlstore.InitTestDB(t)
+	store := database.ProvideSecretsStore(sql)
+	svc := SetupTestService(t, store)
+
+	t.Run("should stop with no error once the context's finished", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(ctx, time.Millisecond)
+		defer cancel()
+
+		err := svc.Run(ctx)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should trigger cache clean up", func(t *testing.T) {
+		// Encrypt to ensure there's a data encryption key generated
+		_, err := svc.Encrypt(ctx, []byte("grafana"), secrets.WithoutScope())
+		require.NoError(t, err)
+
+		// Data encryption key cache should contain one element
+		require.Len(t, svc.dataKeyCache, 1)
+
+		// Execute background process after key's TTL, to force
+		// clean up process, during a millisecond with gc ticker
+		// configured on every nanosecond, to ensure the ticker
+		// is triggered.
+		gcInterval = time.Nanosecond
+
+		t.Cleanup(func() { now = time.Now })
+		now = func() time.Time { return time.Now().Add(dekTTL) }
+
+		ctx, cancel := context.WithTimeout(ctx, time.Millisecond)
+		defer cancel()
+
+		err = svc.Run(ctx)
+		require.NoError(t, err)
+
+		// Then, once the ticker has been triggered,
+		// the cleanup process should have happened,
+		// therefore the cache should be empty.
+		require.Len(t, svc.dataKeyCache, 0)
+	})
+
+	t.Run("should update data key expiry after every use", func(t *testing.T) {
+		// Encrypt to generate data encryption key
+		withoutScope := secrets.WithoutScope()
+		_, err := svc.Encrypt(ctx, []byte("grafana"), withoutScope)
+		require.NoError(t, err)
+
+		// New call to Encrypt one minute later should update cache entry's expiry
+		t.Cleanup(func() { now = time.Now })
+		now = func() time.Time { return time.Now().Add(time.Minute) }
+		_, err = svc.Encrypt(ctx, []byte("grafana"), withoutScope)
+		require.NoError(t, err)
+
+		dataKeyID := svc.keyName(withoutScope())
+		assert.True(t, svc.dataKeyCache[dataKeyID].expiry.After(time.Now().Add(dekTTL)))
+	})
 }
