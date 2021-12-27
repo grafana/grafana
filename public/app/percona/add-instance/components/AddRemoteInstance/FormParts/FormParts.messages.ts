@@ -57,9 +57,6 @@ export const Messages = {
         disableEnchancedMetrics: 'Disable Enhanced Metrics',
         tablestatOptions: 'Table statistics limit',
         azureDatabaseExporter: 'Enable Monitoring by Azure Metrics Exporter',
-        disableCollectors: 'Disable collectors',
-        collectionsLimit: 'Collections limit',
-        statsCollections: 'Stats collections',
       },
     },
     placeholders: {
@@ -88,11 +85,7 @@ export const Messages = {
         cluster: 'Cluster',
         customLabels: '"Custom labels\n Format:\n      key1:value1\n      key2:value2"',
       },
-      additionalOptions: {
-        disableCollectors: 'getDiagnosticData, collStats, ..., indexStats',
-        collectionsLimit: '-1 = no limit',
-        statsCollections: 'db1.col1, db1.col2, ..., dbN.colM',
-      },
+      additionalOptions: {},
     },
     tooltips: {
       externalService: {
@@ -124,10 +117,6 @@ export const Messages = {
       labels: {
         region: 'Region',
         az: 'Availability Zone',
-      },
-      additionalOptions: {
-        statsCollections:
-          'Comma separated list of database.collection names to filter collStats and indexStats metrics',
       },
     },
     titles: {
