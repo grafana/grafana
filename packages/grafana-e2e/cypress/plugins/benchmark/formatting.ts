@@ -12,15 +12,14 @@ type Stats = {
 
 export enum MeasurementName {
   DataRenderDelay = 'DataRenderDelay',
-  DashboardRenderBudgetExceeded = 'DashboardRenderBudgetExceeded',
 }
 
 type LivePerformanceAppStats = Record<MeasurementName, Stats[]>;
 
 const isLivePerformanceAppStats = (data: CollectedData[]): data is LivePerformanceAppStats[] =>
-  data.every((st) => {
-    const dataRenderDelay = st?.[MeasurementName.DataRenderDelay];
-    return Array.isArray(dataRenderDelay) && Boolean(dataRenderDelay?.length);
+  data.some((st) => {
+    const stat = st?.[MeasurementName.DataRenderDelay];
+    return Array.isArray(stat) && Boolean(stat?.length);
   });
 
 type FormattedStats = {
