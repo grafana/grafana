@@ -81,7 +81,7 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) resp
 }
 
 func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) response.Response {
-	if err := api.store.UpgradeServiceAccounts(ctx.Req.Context(), ctx.OrgId); err == nil {
+	if err := api.store.UpgradeServiceAccounts(ctx.Req.Context()); err == nil {
 		return response.Success("service accounts upgraded")
 	} else {
 		return response.Error(500, "Internal server error", err)
