@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -56,9 +58,11 @@ type InProcBus struct {
 	listeners        map[string][]HandlerFunc
 	listenersWithCtx map[string][]HandlerFunc
 	txMng            TransactionManager
+	tracer           tracing.TracerService
 }
 
-func ProvideBus() *InProcBus {
+func ProvideBus(tracer tracing.TracerService) *InProcBus {
+	globalBus.tracer = tracer
 	return globalBus
 }
 
@@ -72,6 +76,26 @@ var globalBus = New()
 
 // New initialize the bus
 func New() *InProcBus {
+	bus := &InProcBus{
+		logger:           log.New("bus"),
+		handlers:         make(map[string]HandlerFunc),
+		handlersWithCtx:  make(map[string]HandlerFunc),
+		listeners:        make(map[string][]HandlerFunc),
+		listenersWithCtx: make(map[string][]HandlerFunc),
+		txMng:            &noopTransactionManager{},
+	}
+	tracer, err := tracing.InitializeTracerForBus()
+	if err != nil {
+		return bus
+	}
+	bus.tracer = tracer
+	return bus
+}
+
+// New initialize the bus for tests
+func NewTest(t *testing.T) *InProcBus {
+	tracer, err := tracing.InitializeTracerForBus()
+	require.NoError(t, err)
 	return &InProcBus{
 		logger:           log.New("bus"),
 		handlers:         make(map[string]HandlerFunc),
@@ -79,6 +103,7 @@ func New() *InProcBus {
 		listeners:        make(map[string][]HandlerFunc),
 		listenersWithCtx: make(map[string][]HandlerFunc),
 		txMng:            &noopTransactionManager{},
+		tracer:           tracer,
 	}
 }
 
@@ -96,7 +121,7 @@ func (b *InProcBus) SetTransactionManager(tm TransactionManager) {
 func (b *InProcBus) Dispatch(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
-	ctx, span := tracing.GlobalTracer.Start(ctx, "bus - "+msgName)
+	ctx, span := b.tracer.Start(ctx, "bus - "+msgName)
 	defer span.End()
 
 	span.SetAttributes(attribute.Key("msg").String(msgName))
@@ -149,8 +174,7 @@ func (b *InProcBus) Publish(ctx context.Context, msg Msg) error {
 			return err
 		}
 	}
-
-	_, span := tracing.GlobalTracer.Start(ctx, "bus - "+msgName)
+	_, span := b.tracer.Start(ctx, "bus - "+msgName)
 	defer span.End()
 
 	span.SetAttributes(attribute.Key("msg").String(msgName))
