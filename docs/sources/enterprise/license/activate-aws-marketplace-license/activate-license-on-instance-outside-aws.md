@@ -10,11 +10,11 @@ weight = 300
 
 While AWS Marketplace lists ECS and EKS as the supported environments for Grafana Enterprise, you can apply a Grafana Enterprise license from AWS Marketplace to any Grafana instance with network access to the AWS licensing service.
 
-## Before you begin:
+## Before you begin
 
 - Purchase a subscription to [Grafana Enterprise from AWS Marketplace](https://aws.amazon.com/marketplace/pp/prodview-dlncd4kzt5kx6).
 - Be sure that the IAM user that was used to purchase Grafana Enterprise has permission to manage subscriptions, create new IAM users, and create access policies.
-- Be sure there is network access between AWS and the environment where you intend to run Grafana. Network access is required because your Grafana instance communicates with the [AWS License Manager API endpoints](https://docs.aws.amazon.com/general/latest/gr/licensemanager.html) to retrieve license and subscription information.
+- Be sure there is network access between AWS and the environment where you intend to run Grafana. Network access is required because your Grafana instance communicates with the [AWS License Manager endpoints and quotas](https://docs.aws.amazon.com/general/latest/gr/licensemanager.html) to retrieve license and subscription information.
 
 To activate a Grafana Enterprise license from AWS on a Grafana Enterprise instance deployed outside of AWS, complete the following tasks.
 
@@ -23,27 +23,29 @@ To activate a Grafana Enterprise license from AWS on a Grafana Enterprise instan
 To install Grafana, refer to the documentation specific to your implementation.
 
 - [Install Grafana]({{< relref "../../../installation/" >}}).
-- [Run Grafana Docker image]({{< relref "../../../installation/docker" >}})
+- [Run Grafana Docker image]({{< relref "../../../installation/docker" >}}).
 - [Deploy Grafana on Kubernetes]({{< relref "../../../installation/kubernetes/#deploy-grafana-enterprise-on-kubernetes" >}}).
 
 ## Task 2: Create an AWS IAM user with access to your Grafana Enterprise license
 
-To retrieve your license, Grafana Enterprise requires access to your AWS account and license information. Grant access by creating an IAM user in AWS with access to the license, and passing its credentials as environment variables on the host or container where Grafana is running.
+To retrieve your license, Grafana Enterprise requires access to your AWS account and license information. To grant access, create an IAM user in AWS with access to the license, and pass its credentials as environment variables on the host or container where Grafana is running. These environment variables enables Grafana to retrieve license details from AWS.
 
-1. In AWS, create an IAM policy with the following permissions for the **License Manager** service:
+1. In the AWS License Manager service, create an IAM policy with the following permissions:
 
    - `"license-manager:CheckoutLicense"`
    - `"license-manager:ListReceivedLicenses"`
    - `"license-manager:GetLicenseUsage"`
    - `"license-manager:CheckInLicense"`
 
-   For details on creating a policy in AWS, refer to the AWS documentation on [creating IAM policies](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create.html).
+   For more information about creating a policy in AWS, refer to [Creating IAM policies](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create.html).
 
-   For more information about AWS Identity and Access Management, refer to [IAM users](​​https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html).
+   For more information about AWS Identity and Access Management, refer to [IAM users](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html).
 
-2. In the **Resources** section of the policy, specify your license ARN in order to limit the policy to get usage data for only the license granted to Grafana Enterprise. You can find your license ID in the **Granted Licenses** section of [AWS License Manager](https://console.aws.amazon.com/license-manager/home).
+1. To limit the policy to obtain usage data just for Grafana Enterprise, in the **Resources** section of the policy, specify your license ARN.
 
-   Your policy JSON should look like this:
+   You can find your license ID in the **Granted Licenses** section of [AWS License Manager](https://console.aws.amazon.com/license-manager/home).
+
+   The policy JSON should look similar to the following example:
 
    ```
    {
@@ -69,11 +71,21 @@ To retrieve your license, Grafana Enterprise requires access to your AWS account
    }
    ```
 
-3. Create an [IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html) with [access key credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html), and attach the policy you created to the user.
+1. Create an IAM user and assign access key credentials.
 
-4. Add the IAM user's Access Key ID and Secret Access Key, along with your default AWS region, as environment variables to the host or container where you are running Grafana. This will allow Grafana to retrieve license details from AWS using these credentials.
+   For more information about creating an IAM user, refer to [IAM users](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html).
 
-   Your environment variables should look like this:
+   For more information about access key credentials, refer to [Managing access keys for IAM users](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html).
+
+1. Attach the policy you created to the IAM user.
+
+1. Add the following values as environment variables to the host or container running Grafana:
+
+   - AWS region
+   - IAM user's access key ID
+   - IAM user's secret access key
+
+   The environment variables should look similiar to the following example:
 
    ```
    AWS_ACCESS_KEY_ID=ABCD5E75FGHIJKTM7
@@ -83,22 +95,24 @@ To retrieve your license, Grafana Enterprise requires access to your AWS account
 
 ## Task 3: Configure Grafana Enterprise to validate its license with AWS
 
-Update the [license_validation_type]({{< relref "../../enterprise-configuration.md#license_validation_type" >}}) configuration to `aws`, so that Grafana Enterprise validates the license with AWS instead of Grafana Labs.
+In this task you configure Grafana Enterprise to validate the license with AWS instead of Grafana Labs.
 
-You can do this in one of two ways:
+Perform one of the following steps to update the [license_validation_type]({{< relref "../../enterprise-configuration.md#license_validation_type" >}}) configuration to `aws`:
 
-**Option 1:** In the `[enterprise]` section of the grafana.ini configuration file, add a `license_validation_type` configuration value to `aws`.
+- In the `[enterprise]` section of the grafana.ini configuration file, add `license_validation_type=aws`.
 
-```
-[enterprise]
-license_validation_type=aws
-```
+  For example:
 
-**Option 2:** Add the following environment variable to the container or host:
+  ```
+  [enterprise]
+  license_validation_type=aws
+  ```
 
-```
-GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
-```
+- Add the following environment variable to the container or host:
+
+  ```
+  GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
+  ```
 
 ## Task 4: Start or restart Grafana
 

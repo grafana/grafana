@@ -17,6 +17,6 @@ To remove an Enterprise license from a Grafana Enterprise instance, perform one 
 - If you are using Amazon ECS or Amazon EKS, remove the `GF_ENTERPRISE_LICENSE_VALIDATION_TYPE` environment variable from the container.
 - If you have deployed Grafana Enterprise outside of AWS, remove the `aws` license_validation_type value from the grafana.ini configuration file.
 
-The system can take up to one hour to clear the license. After the system clears the license, you can apply the same license to another Grafana Enterprise instance.
+It can take the system up to one hour to clear the license. After the system clears the license, you can apply the same license to another Grafana Enterprise instance.
 
 To determine that the system has returned your license, check the license details in AWS License Manager.
