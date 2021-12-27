@@ -129,4 +129,4 @@ Template to render entire notification message:
 
 HTML in Alerting message templates is escaped, and rendering of HTML in the resulting notification is not supported.
 
-Some notifiers which support rendered HTML (such as the body of emails) support alternative methods of changing the look and feel of the resulting notification. For example, the base template used in Alerting emails is installed to /usr/share/grafana/public/emails` on Linux.
+Some notifiers which support rendered HTML (such as the body of emails) support alternative methods of changing the look and feel of the resulting notification. For example, the base template used in Alerting emails is installed to `/usr/share/grafana/public/emails` on Linux.
