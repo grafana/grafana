@@ -268,7 +268,7 @@ func TestSecretsService_Run(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("should trigger data encryption key cache clean up", func(t *testing.T) {
+	t.Run("should trigger cache clean up", func(t *testing.T) {
 		// Encrypt to ensure there's a data encryption key generated
 		_, err := svc.Encrypt(ctx, []byte("grafana"), secrets.WithoutScope())
 		require.NoError(t, err)
@@ -276,8 +276,10 @@ func TestSecretsService_Run(t *testing.T) {
 		// Data encryption key cache should contain one element
 		require.Len(t, svc.dataKeyCache, 1)
 
-		// Execute background process after ttl during a
-		// millisecond with gc ticker on every nanosecond.
+		// Execute background process after key's TTL, to force
+		// clean up process, during a millisecond with gc ticker
+		// configured on every nanosecond, to ensure the ticker
+		// is triggered.
 		gcInterval = time.Nanosecond
 
 		t.Cleanup(func() { now = time.Now })
@@ -289,7 +291,9 @@ func TestSecretsService_Run(t *testing.T) {
 		err = svc.Run(ctx)
 		require.NoError(t, err)
 
-		// Then the data encryption key cache should be empty
+		// Then, once the ticker has been triggered,
+		// the cleanup process should have happened,
+		// therefore the cache should be empty.
 		require.Len(t, svc.dataKeyCache, 0)
 	})
 
@@ -299,7 +303,7 @@ func TestSecretsService_Run(t *testing.T) {
 		_, err := svc.Encrypt(ctx, []byte("grafana"), withoutScope)
 		require.NoError(t, err)
 
-		// Reuse of data encryption key one minute later should update expiry
+		// New call to Encrypt one minute later should update cache entry's expiry
 		t.Cleanup(func() { now = time.Now })
 		now = func() time.Time { return time.Now().Add(time.Minute) }
 		_, err = svc.Encrypt(ctx, []byte("grafana"), withoutScope)
