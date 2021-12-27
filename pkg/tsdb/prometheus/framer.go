@@ -23,7 +23,7 @@ func NewMatrixFramer(query *PrometheusQuery, matrix model.Matrix) Framer {
 
 	// get the length of the longest column first so we can reduce the need to expand
 	for i, s := range matrix {
-		series[i] = &MatrixSeries{stream: s}
+		series[i] = &MatrixSeries{stream: s, rowIdx: -1}
 		if len(s.Values) > length {
 			length = len(s.Values)
 		}
@@ -38,6 +38,32 @@ func NewMatrixFramer(query *PrometheusQuery, matrix model.Matrix) Framer {
 		rowIdx:       0,
 		length:       length,
 		responseType: "matrix",
+		query:        query,
+		series:       series,
+		fields:       fields,
+		timeMap:      timeMap,
+	}
+
+}
+
+func NewVectorFramer(query *PrometheusQuery, vec model.Vector) Framer {
+	length := 1
+	series := make([]Series, vec.Len())
+
+	// get the length of the longest column first so we can reduce the need to expand
+	for i, s := range vec {
+		series[i] = &VectorSeries{sample: s, rowIdx: -1}
+	}
+
+	timeMap := make(map[int64]*int, length)
+	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, length))
+	fields := make([]*data.Field, 1, len(vec))
+	fields[0] = timeField
+
+	return Framer{
+		rowIdx:       0,
+		length:       length,
+		responseType: "vector",
 		query:        query,
 		series:       series,
 		fields:       fields,
@@ -77,8 +103,12 @@ func (f *Framer) processRow(query *PrometheusQuery, valueField *data.Field, s Se
 	if valueIdx == nil {
 		for _, field := range f.fields {
 			if field.Len() <= f.rowIdx {
-				field.Extend(1)
+				field.Extend(f.rowIdx - field.Len() + 1)
 			}
+		}
+
+		if valueField.Len() <= f.rowIdx {
+			valueField.Extend(f.rowIdx - valueField.Len() + 1)
 		}
 
 		ts := s.Timestamp()

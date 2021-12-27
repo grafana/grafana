@@ -63,7 +63,7 @@ func BenchmarkVectorToDataFrames(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		frames := make([]*data.Frame, 0)
 		frames = prometheus.VectorToDataFrames(m, query, frames)
-		if len(frames) != 6 {
+		if len(frames) != 1 {
 			b.Fatal("wrong frame count", len(frames))
 		}
 		if frames[0].Rows() != 1 {
@@ -86,7 +86,7 @@ func TestVectorToDataFrames(t *testing.T) {
 		frames = prometheus.VectorToDataFrames(m, query, frames)
 		res := &backend.DataResponse{Frames: frames}
 
-		err = experimental.CheckGoldenDataResponse("./testdata/vector.txt", res, true)
+		err = experimental.CheckGoldenDataResponse("./testdata/vector.txt", res, false)
 		require.NoError(t, err)
 	})
 }

@@ -44,3 +44,33 @@ func (r *MatrixSeries) IsSet() bool {
 func (r *MatrixSeries) Value() *float64 {
 	return func(f float64) *float64 { return &f }(float64(r.stream.Values[r.rowIdx].Value))
 }
+
+type VectorSeries struct {
+	rowIdx int
+	sample *model.Sample
+}
+
+func (s *VectorSeries) Metric() model.Metric {
+	return s.sample.Metric
+}
+
+func (s *VectorSeries) Len() int {
+	return 1
+}
+
+func (s *VectorSeries) Next() bool {
+	s.rowIdx += 1
+	return s.rowIdx < s.Len()
+}
+
+func (r *VectorSeries) Timestamp() int64 {
+	return r.sample.Timestamp.Unix()
+}
+
+func (r VectorSeries) IsSet() bool {
+	return !math.IsNaN(float64(r.sample.Value))
+}
+
+func (r *VectorSeries) Value() *float64 {
+	return func(f float64) *float64 { return &f }(float64(r.sample.Value))
+}

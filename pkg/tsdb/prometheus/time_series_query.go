@@ -315,28 +315,8 @@ func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, frames dat
 }
 
 func VectorToDataFrames(vector model.Vector, query *PrometheusQuery, frames data.Frames) data.Frames {
-	for _, v := range vector {
-		name := formatLegend(v.Metric, query)
-		tags := make(map[string]string, len(v.Metric))
-		timeVector := []time.Time{time.Unix(v.Timestamp.Unix(), 0).UTC()}
-		values := []float64{float64(v.Value)}
-
-		for k, v := range v.Metric {
-			tags[string(k)] = string(v)
-		}
-
-		frames = append(
-			frames,
-			newDataFrame(
-				name,
-				"vector",
-				data.NewField("Time", nil, timeVector),
-				data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}),
-			),
-		)
-	}
-
-	return frames
+	f := NewVectorFramer(query, vector)
+	return append(frames, f.Frames()...)
 }
 
 func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery, frames data.Frames) data.Frames {
