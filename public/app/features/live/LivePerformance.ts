@@ -1,5 +1,3 @@
-import config from 'app/core/config';
-
 import { fromPairs, mapValues, sortBy } from 'lodash';
 
 type IntervalStats = {
@@ -102,7 +100,7 @@ export class LivePerformance {
 
   static instance = () => singleton;
 
-  static isEnabled = () => config.livePerformance.measureDataRenderDelay;
+  static isEnabled = () => true;
 }
 
 const emptyArrayByEventName = <T>() =>

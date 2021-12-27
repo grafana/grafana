@@ -1,6 +1,6 @@
 import { measureDataRenderDelay } from './measureDataRenderDelay';
 import { FieldType, toDataFrame } from '@grafana/data';
-import { MeasurementName } from 'app/core/services/LivePerformance';
+import { MeasurementName } from 'app/features/live/LivePerformance';
 
 const mockMeasurementFn = jest.fn();
 jest.mock('app/core/services/LivePerformance', () => {

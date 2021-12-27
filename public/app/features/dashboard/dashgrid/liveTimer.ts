@@ -1,5 +1,5 @@
 import { dateMath, dateTime, TimeRange } from '@grafana/data';
-import { LivePerformance, MeasurementName } from 'app/core/services/LivePerformance';
+import { LivePerformance, MeasurementName } from 'app/features/live/LivePerformance';
 import { BehaviorSubject } from 'rxjs';
 import { PanelChrome } from './PanelChrome';
 

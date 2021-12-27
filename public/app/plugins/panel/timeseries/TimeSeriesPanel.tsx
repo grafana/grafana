@@ -13,7 +13,7 @@ import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { measureDataRenderDelay } from './measureDataRenderDelay';
-import { LivePerformance } from 'app/core/services/LivePerformance';
+import { LivePerformance } from 'app/features/live/LivePerformance';
 
 export const createOnDataRenderDelay: (
   isLivePerfRunning: boolean,

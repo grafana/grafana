@@ -1,6 +1,6 @@
 import { PanelData } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { LivePerformance } from 'app/core/services/LivePerformance';
+import { LivePerformance } from 'app/features/live/LivePerformance';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 /**

@@ -104,9 +104,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   recordedQueries = {
     enabled: false,
   };
-  livePerformance = {
-    measureDataRenderDelay: false,
-  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
