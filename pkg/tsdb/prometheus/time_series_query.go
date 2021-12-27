@@ -294,68 +294,8 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 
 // MatrixToDataFrames marshals a matrix result to data frames
 func MatrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
-	var (
-		rowIdx  = 0
-		length  = 0
-		timeMap = make(map[int64]*int)
-	)
-
-	// get the length of the longest column first so we can reduce the need to expand
-	for _, v := range matrix {
-		if len(v.Values) > length {
-			length = len(v.Values)
-		}
-	}
-
-	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, length))
-	fields := []*data.Field{timeField}
-
-	for _, v := range matrix {
-		tags := make(map[string]string, len(v.Metric))
-		for k, v := range v.Metric {
-			tags[string(k)] = string(v)
-		}
-
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, length)
-
-		for i := 0; i < len(v.Values); i++ {
-			k := v.Values[i]
-			timeKey := k.Timestamp.Unix()
-			value := float64(k.Value)
-			valueIdx := timeMap[timeKey]
-
-			// we haven't seen this timestamp yet, so we will need to add
-			// it to the map, and increment the row index
-			if valueIdx == nil {
-				for _, f := range fields {
-					if f.Len() <= rowIdx {
-						f.Extend(rowIdx - f.Len() + 1)
-					}
-				}
-				timeField.Set(rowIdx, time.Unix(timeKey, 0).UTC())
-				lastIdx := rowIdx
-				timeMap[timeKey] = &lastIdx
-				valueIdx = &lastIdx
-				rowIdx += 1
-			}
-
-			if valueField.Len() <= *valueIdx {
-				valueField.Extend(*valueIdx - valueField.Len() + 1)
-			}
-
-			if !math.IsNaN(value) {
-				valueField.Set(*valueIdx, &value)
-			}
-		}
-
-		name := formatLegend(v.Metric, query)
-		valueField.Name = data.TimeSeriesValueFieldName
-		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
-		valueField.Labels = tags
-		fields = append(fields, valueField)
-	}
-
-	return append(frames, newDataFrame("", "matrix", fields...))
+	f := NewMatrixFramer(query, matrix)
+	return append(frames, f.Frames()...)
 }
 
 func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, frames data.Frames) data.Frames {
