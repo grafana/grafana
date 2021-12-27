@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestDiscordNotifier(t *testing.T) {
@@ -48,7 +49,7 @@ func TestDiscordNotifier(t *testing.T) {
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/assets/img/fav32.png",
-						"text":     "Grafana v",
+						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
 					"url":   "http://localhost/alerting/list",
@@ -85,7 +86,7 @@ func TestDiscordNotifier(t *testing.T) {
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/assets/img/fav32.png",
-						"text":     "Grafana v",
+						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:2]  ",
 					"url":   "http://localhost/alerting/list",
@@ -120,7 +121,7 @@ func TestDiscordNotifier(t *testing.T) {
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/assets/img/fav32.png",
-						"text":     "Grafana v",
+						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
 					"url":   "http://localhost/alerting/list",
