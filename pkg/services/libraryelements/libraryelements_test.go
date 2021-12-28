@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 
 	dboards "github.com/grafana/grafana/pkg/dashboards"
 
@@ -317,9 +316,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Name:  "User In DB",
 			Login: userInDbName,
 		}
-		err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
-		_, err = sqlStore.CreateUser(context.Background(), cmd)
+
+		_, err := sqlStore.CreateUser(context.Background(), cmd)
 		require.NoError(t, err)
 
 		sc := scenarioContext{

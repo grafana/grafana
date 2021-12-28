@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -50,9 +51,10 @@ type SQLStore struct {
 	Dialect                     migrator.Dialect
 	skipEnsureDefaultOrgAndUser bool
 	migrations                  registry.DatabaseMigrator
+	tracer                      tracing.TracerService
 }
 
-func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, migrations registry.DatabaseMigrator, tracer tracing.TracerService) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
@@ -69,7 +71,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus
 	if err := s.Reset(); err != nil {
 		return nil, err
 	}
-
+	s.tracer = tracer
 	return s, nil
 }
 
@@ -322,7 +324,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	}
 
 	if ss.Cfg.IsDatabaseMetricsEnabled() {
-		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type)
+		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
 	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)

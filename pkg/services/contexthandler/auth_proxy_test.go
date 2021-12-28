@@ -71,8 +71,6 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	err = svc.RemoteCache.Set(context.Background(), key, int64(33), 0)
 	require.NoError(t, err)
 
-	err = tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)
 	require.True(t, authEnabled)
 
@@ -105,6 +103,8 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
+	tracer, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 
-	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore)
+	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer)
 }

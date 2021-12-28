@@ -35,7 +35,8 @@ const (
 const ServiceName = "ContextHandler"
 
 func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
-	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore *sqlstore.SQLStore) *ContextHandler {
+	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore *sqlstore.SQLStore,
+	tracer tracing.TracerService) *ContextHandler {
 	return &ContextHandler{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
@@ -43,6 +44,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 		RemoteCache:      remoteCache,
 		RenderService:    renderService,
 		SQLStore:         sqlStore,
+		tracer:           tracer,
 	}
 }
 
@@ -54,7 +56,7 @@ type ContextHandler struct {
 	RemoteCache      *remotecache.RemoteCache
 	RenderService    rendering.Service
 	SQLStore         *sqlstore.SQLStore
-
+	tracer           tracing.TracerService
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -72,7 +74,7 @@ func FromContext(c context.Context) *models.ReqContext {
 
 // Middleware provides a middleware to initialize the Macaron context.
 func (h *ContextHandler) Middleware(mContext *web.Context) {
-	_, span := tracing.GlobalTracer.Start(mContext.Req.Context(), "Auth - Middleware")
+	_, span := h.tracer.Start(mContext.Req.Context(), "Auth - Middleware")
 	defer span.End()
 
 	reqContext := &models.ReqContext{
@@ -158,7 +160,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 		return false
 	}
 
-	_, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "initContextWithAnonymousUser")
+	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAnonymousUser")
 	defer span.End()
 
 	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
@@ -193,7 +195,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return false
 	}
 
-	_, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "initContextWithAPIKey")
+	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAPIKey")
 	defer span.End()
 
 	// base64 decode key
@@ -273,7 +275,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		return false
 	}
 
-	ctx, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "initContextWithBasicAuth")
+	ctx, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithBasicAuth")
 	defer span.End()
 
 	username, password, err := util.DecodeBasicAuthHeader(header)
@@ -329,7 +331,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 		return false
 	}
 
-	ctx, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "initContextWithToken")
+	ctx, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithToken")
 	defer span.End()
 
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
@@ -370,7 +372,7 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, a
 			return
 		}
 
-		ctx, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "rotateEndOfRequestFunc")
+		ctx, span := h.tracer.Start(reqContext.Req.Context(), "rotateEndOfRequestFunc")
 		defer span.End()
 
 		addr := reqContext.RemoteAddr()
@@ -397,7 +399,7 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 		return false
 	}
 
-	_, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "initContextWithRenderAuth")
+	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithRenderAuth")
 	defer span.End()
 
 	renderUser, exists := h.RenderService.GetRenderUser(reqContext.Req.Context(), key)
@@ -467,7 +469,7 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 		return false
 	}
 
-	_, span := tracing.GlobalTracer.Start(reqContext.Req.Context(), "initContextWithAuthProxy")
+	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAuthProxy")
 	defer span.End()
 
 	// Check if allowed to continue with this IP

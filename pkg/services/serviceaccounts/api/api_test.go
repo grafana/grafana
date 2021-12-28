@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -57,8 +56,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 			),
 			expectedCode: http.StatusOK,
 		}
-		err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
+
 		serviceAccountDeletionScenario(t, http.MethodDelete, serviceaccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
 			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock)

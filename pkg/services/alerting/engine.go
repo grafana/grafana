@@ -39,6 +39,7 @@ type AlertEngine struct {
 	log               log.Logger
 	resultHandler     resultHandler
 	usageStatsService usagestats.Service
+	tracer            tracing.TracerService
 }
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
@@ -49,7 +50,7 @@ func (e *AlertEngine) IsDisabled() bool {
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
-	cfg *setting.Cfg) *AlertEngine {
+	cfg *setting.Cfg, tracer tracing.TracerService) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:               cfg,
 		RenderService:     renderer,
@@ -57,6 +58,7 @@ func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidato
 		RequestValidator:  requestValidator,
 		DataService:       dataService,
 		usageStatsService: usageStatsService,
+		tracer:            tracer,
 	}
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New(), 1)
 	e.execQueue = make(chan *Job, 1000)
@@ -176,7 +178,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
-	alertCtx, span := tracing.GlobalTracer.Start(alertCtx, "alert execution")
+	alertCtx, span := e.tracer.Start(alertCtx, "alert execution")
 	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator)
 	evalContext.Ctx = alertCtx
 

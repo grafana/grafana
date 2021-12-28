@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
@@ -159,8 +158,6 @@ func TestApi_getPermissions(t *testing.T) {
 			_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
 			require.NoError(t, err)
 			// seed user 1 with "View" permission on dashboard 1
-			err = tracing.InitializeTracerForTest()
-			require.NoError(t, err)
 			u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
 			require.NoError(t, err)
 			_, err = service.SetUserPermission(context.Background(), u.OrgId, u.Id, tt.resourceID, []string{"dashboards:read"})

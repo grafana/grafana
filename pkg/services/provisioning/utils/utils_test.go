@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -16,9 +15,8 @@ func TestCheckOrgExists(t *testing.T) {
 		sqlstore.InitTestDB(t)
 
 		defaultOrg := models.CreateOrgCommand{Name: "Main Org."}
-		err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
-		err = sqlstore.CreateOrg(context.Background(), &defaultOrg)
+
+		err := sqlstore.CreateOrg(context.Background(), &defaultOrg)
 		require.NoError(t, err)
 
 		t.Run("default org exists", func(t *testing.T) {

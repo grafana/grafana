@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -23,7 +22,7 @@ import (
 func TestUserAuth(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	srv := ProvideAuthInfoService(bus.New(), sqlStore, &OSSUserProtectionImpl{}, secretsService)
+	srv := ProvideAuthInfoService(bus.NewTest(t), sqlStore, &OSSUserProtectionImpl{}, secretsService)
 
 	t.Run("Given 5 users", func(t *testing.T) {
 		for i := 0; i < 5; i++ {
@@ -32,9 +31,7 @@ func TestUserAuth(t *testing.T) {
 				Name:  fmt.Sprint("user", i),
 				Login: fmt.Sprint("loginuser", i),
 			}
-			err := tracing.InitializeTracerForTest()
-			require.NoError(t, err)
-			_, err = srv.SQLStore.CreateUser(context.Background(), cmd)
+			_, err := srv.SQLStore.CreateUser(context.Background(), cmd)
 			require.Nil(t, err)
 		}
 

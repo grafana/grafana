@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
@@ -176,8 +175,6 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 
 		auth := prepareMiddleware(t, cache, nil)
 
-		err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
 		gotID, err := auth.Login(logger, false)
 		require.NoError(t, err)
 

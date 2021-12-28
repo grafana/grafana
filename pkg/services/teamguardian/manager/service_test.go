@@ -33,7 +33,7 @@ func TestUpdateTeam(t *testing.T) {
 
 		t.Run("Given an editor and a team he isn't a member of", func(t *testing.T) {
 			t.Run("Should not be able to update the team", func(t *testing.T) {
-				err := tracing.InitializeTracerForTest()
+				_, err := tracing.InitializeTracerForTest()
 				require.NoError(t, err)
 				ctx := context.Background()
 				store.On("GetTeamMembers", ctx, mock.Anything).Return([]*models.TeamMemberDTO{}, nil).Once()

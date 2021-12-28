@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -411,8 +410,6 @@ func (sc *scenarioContext) verifyUpdateDashboardPermissionsShouldBeAllowed(pt pe
 			}
 
 			sc.updatePermissions = permissionList
-			err := tracing.InitializeTracerForTest()
-			require.NoError(t, err)
 			ok, err := sc.g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, permissionList)
 			if err != nil {
 				sc.reportFailure(tc, nil, err)

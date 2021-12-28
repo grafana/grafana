@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -35,7 +34,7 @@ func TestService(t *testing.T) {
 	})
 
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	s := ProvideService(bus.New(), sqlStore, secretsService)
+	s := ProvideService(bus.NewTest(t), sqlStore, secretsService)
 
 	var ds *models.DataSource
 
@@ -45,9 +44,7 @@ func TestService(t *testing.T) {
 		sjd := map[string]string{"password": "12345"}
 		cmd := models.AddDataSourceCommand{SecureJsonData: sjd}
 
-		err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
-		err = s.AddDataSource(ctx, &cmd)
+		err := s.AddDataSource(ctx, &cmd)
 		require.NoError(t, err)
 
 		ds = cmd.Result
@@ -86,7 +83,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		}
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(bus.New(), nil, secretsService)
+		dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 		rt1, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
@@ -119,7 +116,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json.Set("tlsAuthWithCACert", true)
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(bus.New(), nil, secretsService)
+		dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 		tlsCaCert, err := secretsService.Encrypt(context.Background(), []byte(caCert), secrets.WithoutScope())
 		require.NoError(t, err)
@@ -169,7 +166,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json.Set("tlsAuth", true)
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(bus.New(), nil, secretsService)
+		dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 		tlsClientCert, err := secretsService.Encrypt(context.Background(), []byte(clientCert), secrets.WithoutScope())
 		require.NoError(t, err)
@@ -212,7 +209,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json.Set("serverName", "server-name")
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(bus.New(), nil, secretsService)
+		dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 		tlsCaCert, err := secretsService.Encrypt(context.Background(), []byte(caCert), secrets.WithoutScope())
 		require.NoError(t, err)
@@ -249,7 +246,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json.Set("tlsSkipVerify", true)
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(bus.New(), nil, secretsService)
+		dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 		ds := models.DataSource{
 			Id:       1,
@@ -280,7 +277,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		})
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(bus.New(), nil, secretsService)
+		dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 		encryptedData, err := secretsService.Encrypt(context.Background(), []byte(`Bearer xf5yhfkpsnmgo`), secrets.WithoutScope())
 		require.NoError(t, err)
@@ -339,7 +336,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		})
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(bus.New(), nil, secretsService)
+		dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 		ds := models.DataSource{
 			Id:       1,
@@ -372,7 +369,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(bus.New(), nil, secretsService)
+		dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 		ds := models.DataSource{
 			Type:     models.DS_ES,
@@ -406,7 +403,7 @@ func TestService_getTimeout(t *testing.T) {
 	}
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := ProvideService(bus.New(), nil, secretsService)
+	dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 	for _, tc := range testCases {
 		ds := &models.DataSource{
@@ -419,7 +416,7 @@ func TestService_getTimeout(t *testing.T) {
 func TestService_DecryptedValue(t *testing.T) {
 	t.Run("When datasource hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(bus.New(), nil, secretsService)
+		dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
 			context.Background(),
@@ -473,7 +470,7 @@ func TestService_DecryptedValue(t *testing.T) {
 			SecureJsonData: encryptedJsonData,
 		}
 
-		dsService := ProvideService(bus.New(), nil, secretsService)
+		dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 		// Populate cache
 		password, ok := dsService.DecryptedValue(&ds, "password")
@@ -509,7 +506,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			dsService := ProvideService(bus.New(), nil, secretsService)
+			dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
@@ -526,7 +523,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 			})
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			dsService := ProvideService(bus.New(), nil, secretsService)
+			dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
@@ -546,7 +543,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 			})
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			dsService := ProvideService(bus.New(), nil, secretsService)
+			dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
@@ -570,7 +567,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 			})
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			dsService := ProvideService(bus.New(), nil, secretsService)
+			dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
@@ -588,7 +585,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 			})
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			dsService := ProvideService(bus.New(), nil, secretsService)
+			dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 			_, err := dsService.httpClientOptions(&ds)
 			assert.Error(t, err)
@@ -602,7 +599,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 			})
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			dsService := ProvideService(bus.New(), nil, secretsService)
+			dsService := ProvideService(bus.NewTest(t), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)

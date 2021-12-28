@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
@@ -116,8 +115,6 @@ func TestOpsGenieNotifier(t *testing.T) {
 				}
 				return err
 			})
-			err := tracing.InitializeTracerForTest()
-			require.NoError(t, err)
 			alertErr := opsgenieNotifier.createAlert(evalContext)
 
 			require.Nil(t, notifierErr)

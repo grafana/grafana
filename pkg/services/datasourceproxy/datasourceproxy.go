@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -19,7 +20,7 @@ import (
 
 func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator models.PluginRequestValidator,
 	pluginStore plugins.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
-	oauthTokenService *oauthtoken.Service, dsService *datasources.Service) *DataSourceProxyService {
+	oauthTokenService *oauthtoken.Service, dsService *datasources.Service, tracer tracing.TracerService) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:        dataSourceCache,
 		PluginRequestValidator: plugReqValidator,
@@ -28,6 +29,7 @@ func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator m
 		HTTPClientProvider:     httpClientProvider,
 		OAuthTokenService:      oauthTokenService,
 		DataSourcesService:     dsService,
+		tracer:                 tracer,
 	}
 }
 
@@ -39,6 +41,7 @@ type DataSourceProxyService struct {
 	HTTPClientProvider     httpclient.Provider
 	OAuthTokenService      *oauthtoken.Service
 	DataSourcesService     *datasources.Service
+	tracer                 tracing.TracerService
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
@@ -77,7 +80,7 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 
 	proxyPath := getProxyPath(c)
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
-		p.OAuthTokenService, p.DataSourcesService)
+		p.OAuthTokenService, p.DataSourcesService, p.tracer)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)

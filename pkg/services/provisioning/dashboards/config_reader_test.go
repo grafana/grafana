@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -30,9 +29,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 
 		t.Run("Should fail if orgs don't exist in the database", func(t *testing.T) {
 			cfgProvider := configReader{path: appliedDefaults, log: logger}
-			err := tracing.InitializeTracerForTest()
-			require.NoError(t, err)
-			_, err = cfgProvider.readConfig(context.Background())
+			_, err := cfgProvider.readConfig(context.Background())
 			require.Error(t, err)
 			assert.True(t, errors.Is(err, models.ErrOrgNotFound))
 		})

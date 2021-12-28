@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 )
@@ -60,9 +59,8 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 		reader := &testConfigReader{result: cfg}
 		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader}
-		err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
-		err = ap.applyChanges(context.Background(), "")
+
+		err := ap.applyChanges(context.Background(), "")
 		require.NoError(t, err)
 		require.Len(t, sentCommands, 4)
 

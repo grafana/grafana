@@ -38,7 +38,7 @@ func init() {
 // WrapDatabaseDriverWithHooks creates a fake database driver that
 // executes pre and post functions which we use to gather metrics about
 // database queries. It also registers the metrics.
-func WrapDatabaseDriverWithHooks(dbType string) string {
+func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.TracerService) string {
 	drivers := map[string]driver.Driver{
 		migrator.SQLite:   &sqlite3.SQLiteDriver{},
 		migrator.MySQL:    &mysql.MySQLDriver{},
@@ -51,7 +51,7 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 	}
 
 	driverWithHooks := dbType + "WithHooks"
-	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics")}))
+	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics"), tracer: tracer}))
 	core.RegisterDriver(driverWithHooks, &databaseQueryWrapperDriver{dbType: dbType})
 	return driverWithHooks
 }
@@ -59,7 +59,8 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 // databaseQueryWrapper satisfies the sqlhook.databaseQueryWrapper interface
 // which allow us to wrap all SQL queries with a `Before` & `After` hook.
 type databaseQueryWrapper struct {
-	log log.Logger
+	log    log.Logger
+	tracer tracing.TracerService
 }
 
 // databaseQueryWrapperKey is used as key to save values in `context.Context`
@@ -93,7 +94,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 		histogram.Observe(elapsed.Seconds())
 	}
 
-	_, span := tracing.GlobalTracer.Start(ctx, "database query")
+	_, span := h.tracer.Start(ctx, "database query")
 	defer span.End()
 
 	span.AddEvents([]string{"query", "status"}, []tracing.EventValue{{Str: query}, {Str: status}})

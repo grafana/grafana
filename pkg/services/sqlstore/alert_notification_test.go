@@ -473,7 +473,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				OrgId: 1,
 			}
 
-			err = tracing.InitializeTracerForTest()
+			_, err = tracing.InitializeTracerForTest()
 			require.NoError(t, err)
 			err = sqlStore.DeleteAlertNotificationWithUid(context.Background(), deleteWithUidCmd)
 			require.Nil(t, err)

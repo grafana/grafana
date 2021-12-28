@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -177,8 +176,6 @@ func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejso
 			},
 			verifier: verifier,
 		}
-		err = tracing.InitializeTracerForTest()
-		require.NoError(t, err)
 		_, err = condition.Eval(ctx.result, reqHandler)
 
 		require.Nil(t, err)
