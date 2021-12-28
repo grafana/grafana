@@ -2,15 +2,20 @@ package prometheus_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -54,23 +59,37 @@ func TestMatrixToDataFrames(t *testing.T) {
 }
 
 func BenchmarkVectorToDataFrames(b *testing.B) {
+	results := generateVectorData(10_000)
 	query := &prometheus.PrometheusQuery{
 		LegendFormat: "",
 	}
-	var m model.Vector
-	if err := loadTestData("vector.json", &m); err != nil {
-		b.Fatal("failed to load test data", err)
-	}
 	for i := 0; i < b.N; i++ {
 		frames := make([]*data.Frame, 0)
-		frames = prometheus.VectorToDataFrames(m, query, frames)
+		frames = prometheus.VectorToDataFrames(results, query, frames)
 		if len(frames) != 1 {
 			b.Fatal("wrong frame count", len(frames))
 		}
-		if frames[0].Rows() != 1 {
+		if frames[0].Rows() != 10_000 {
 			b.Fatal("wrong row count", frames[0].Rows())
 		}
 	}
+}
+
+func generateVectorData(resultCount int) model.Vector {
+	results := make(model.Vector, 0)
+
+	for i := 0; i < resultCount; i += 1 {
+		s := model.Sample{
+			Metric:    p.Metric(model.LabelSet{"traceID": p.LabelValue(fmt.Sprintf("test_%d", i))}),
+			Value:     p.SampleValue(rand.Float64() + float64(i)),
+			Timestamp: p.TimeFromUnixNano(time.Now().Add(time.Duration(-1*i) * time.Second).UnixNano()),
+		}
+		if i%10 == 0 {
+			s.Metric["label"] = p.LabelValue(fmt.Sprintf("test_%d", i))
+		}
+		results = append(results, &s)
+	}
+	return results
 }
 
 func TestVectorToDataFrames(t *testing.T) {
@@ -94,22 +113,64 @@ func TestVectorToDataFrames(t *testing.T) {
 
 func BenchmarkExemplarToDataFrames(b *testing.B) {
 	query := &prometheus.PrometheusQuery{
+		Step:         5 * time.Second,
 		LegendFormat: "",
 	}
-	var r []v1.ExemplarQueryResult
-	if err := loadTestData("exemplar.json", &r); err != nil {
-		b.Fatal("failed to load test data", err)
-	}
+	resultCount := 1_000
+	rowCount := 10_000
+	results := generateExemplarData(resultCount, rowCount)
+
 	for i := 0; i < b.N; i++ {
 		frames := make([]*data.Frame, 0)
-		frames = prometheus.ExemplarToDataFrames(r, query, frames)
+		frames = prometheus.ExemplarToDataFrames(results, query, frames)
+		res := &backend.DataResponse{Frames: frames}
+
+		_ = experimental.CheckGoldenDataResponse("./testdata/exemplar_gen.txt", res, true)
+
 		if len(frames) != 1 {
-			b.Fatal("wrong frame count", len(frames))
+			b.Fatal("wrong frame count", 1, len(frames))
 		}
-		if frames[0].Rows() != 1 {
-			b.Fatal("wrong row count", frames[0].Rows())
+
+		if frames[0].Rows() != rowCount {
+			b.Fatal("wrong row count", rowCount, frames[0].Rows())
+		}
+
+		// resultCount + 1 because of the time field
+		if len(frames[0].Fields) != resultCount+1 {
+			b.Fatal("wrong field count", resultCount+1, len(frames[0].Fields))
 		}
 	}
+}
+
+func generateExemplarData(resultCount, exemplarCount int) []apiv1.ExemplarQueryResult {
+	results := []apiv1.ExemplarQueryResult{}
+
+	for i := 0; i < resultCount; i += 1 {
+		exemplars := []apiv1.Exemplar{}
+		for j := 0; j < resultCount; j += 1 {
+			e := apiv1.Exemplar{
+
+				Labels:    p.LabelSet{"traceID": p.LabelValue(fmt.Sprintf("test_%d", j))},
+				Value:     p.SampleValue(rand.Float64() + float64(i)),
+				Timestamp: p.TimeFromUnixNano(time.Now().Add(time.Duration(-1*j) * time.Second).UnixNano()),
+			}
+			//if j%10 == 0 {
+			//	e.Labels[p.LabelName(fmt.Sprintf("random_%d", i))] = p.LabelValue(fmt.Sprintf("name_%d", i))
+			//}
+			exemplars = append(exemplars, e)
+		}
+		result := apiv1.ExemplarQueryResult{
+			SeriesLabels: p.LabelSet{
+				"__name__": p.LabelValue(fmt.Sprintf("name_%d", i)),
+			},
+			Exemplars: exemplars,
+		}
+		//if i%10 == 0 {
+		//	result.SeriesLabels[p.LabelName(fmt.Sprintf("random_%d", i))] = p.LabelValue(fmt.Sprintf("name_%d", i))
+		//}
+		results = append(results, result)
+	}
+	return results
 }
 
 func TestExemplarToDataFrames(t *testing.T) {
