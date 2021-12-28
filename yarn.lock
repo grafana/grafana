@@ -3383,8 +3383,10 @@ __metadata:
     "@grafana/toolkit": 8.4.0-pre
     "@grafana/ui": 8.4.0-pre
     "@types/jest": 26.0.15
+    "@types/lodash": 4.14.149
     "@types/react": 17.0.30
     jquery: 3.5.1
+    lodash: 4.17.21
     pnp-webpack-plugin: ^1.7.0
     react: 17.0.1
     react-dom: 17.0.1
