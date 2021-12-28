@@ -68,6 +68,7 @@ const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onCha
       />
       <SecretFormField
         label="Value"
+        aria-label="Value"
         name="value"
         isConfigured={header.configured}
         value={header.value}

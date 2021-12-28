@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
@@ -58,6 +59,7 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -87,8 +89,10 @@ var wireBasicSet = wire.NewSet(
 	setting.NewCfgFromArgs,
 	New,
 	api.ProvideHTTPServer,
+	query.ProvideService,
 	bus.ProvideBus,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
+	thumbs.ProvideService,
 	rendering.ProvideService,
 	wire.Bind(new(rendering.Service), new(*rendering.RenderingService)),
 	routing.ProvideRegister,

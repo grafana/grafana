@@ -271,8 +271,8 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceID)), routing.Wrap(hs.DeleteDataSourceById))
 			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceUID)), routing.Wrap(hs.DeleteDataSourceByUID))
 			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceName)), routing.Wrap(hs.DeleteDataSourceByName))
-			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceID)), routing.Wrap(GetDataSourceById))
-			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceUID)), routing.Wrap(GetDataSourceByUID))
+			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceID)), routing.Wrap(hs.GetDataSourceById))
+			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceUID)), routing.Wrap(hs.GetDataSourceByUID))
 			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceName)), routing.Wrap(GetDataSourceByName))
 		})
 
@@ -326,6 +326,11 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", routing.Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/uid/:uid", routing.Wrap(hs.DeleteDashboardByUID))
+
+			if hs.ThumbService != nil {
+				dashboardRoute.Get("/uid/:uid/img/:size/:theme", hs.ThumbService.GetImage)
+				dashboardRoute.Post("/uid/:uid/img/:size/:theme", hs.ThumbService.SetImage)
+			}
 
 			dashboardRoute.Post("/calculate-diff", routing.Wrap(CalculateDashboardDiff))
 			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))
