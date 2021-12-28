@@ -73,7 +73,7 @@ func (user *LDAPUserDTO) FetchOrgs(ctx context.Context) error {
 	q := &models.SearchOrgsQuery{}
 	q.Ids = orgIds
 
-	if err := bus.DispatchCtx(ctx, q); err != nil {
+	if err := bus.Dispatch(ctx, q); err != nil {
 		return err
 	}
 
@@ -167,7 +167,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	query := models.GetUserByIdQuery{Id: userId}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil { // validate the userId exists
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil { // validate the userId exists
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -177,7 +177,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.Id, AuthModule: models.AuthModuleLDAP}
 
-	if err := bus.DispatchCtx(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
+	if err := bus.Dispatch(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -219,7 +219,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		SignupAllowed: hs.Cfg.LDAPAllowSignup,
 	}
 
-	err = bus.DispatchCtx(c.Req.Context(), upsertCmd)
+	err = bus.Dispatch(c.Req.Context(), upsertCmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update the user", err)
 	}
@@ -308,7 +308,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 	}
 
 	cmd := &models.GetTeamsForLDAPGroupCommand{Groups: user.Groups}
-	err = bus.DispatchCtx(c.Req.Context(), cmd)
+	err = bus.Dispatch(c.Req.Context(), cmd)
 	if err != nil && !errors.Is(err, bus.ErrHandlerNotFound) {
 		return response.Error(http.StatusBadRequest, "Unable to find the teams for this user", err)
 	}

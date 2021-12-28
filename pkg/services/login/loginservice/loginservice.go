@@ -81,7 +81,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 				AuthId:     extUser.AuthId,
 				OAuthToken: extUser.OAuthToken,
 			}
-			if err := ls.Bus.DispatchCtx(ctx, cmd2); err != nil {
+			if err := ls.Bus.Dispatch(ctx, cmd2); err != nil {
 				return err
 			}
 		}
@@ -103,7 +103,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 
 		if extUser.AuthModule == models.AuthModuleLDAP && user.IsDisabled {
 			// Re-enable user when it found in LDAP
-			if err := ls.Bus.DispatchCtx(ctx, &models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
+			if err := ls.Bus.Dispatch(ctx, &models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
 				return err
 			}
 		}
@@ -176,7 +176,7 @@ func updateUser(ctx context.Context, user *models.User, extUser *models.External
 	}
 
 	logger.Debug("Syncing user info", "id", user.Id, "update", updateCmd)
-	return bus.DispatchCtx(ctx, updateCmd)
+	return bus.Dispatch(ctx, updateCmd)
 }
 
 func updateUserAuth(ctx context.Context, user *models.User, extUser *models.ExternalUserInfo) error {
@@ -188,7 +188,7 @@ func updateUserAuth(ctx context.Context, user *models.User, extUser *models.Exte
 	}
 
 	logger.Debug("Updating user_auth info", "user_id", user.Id)
-	return bus.DispatchCtx(ctx, updateCmd)
+	return bus.Dispatch(ctx, updateCmd)
 }
 
 func syncOrgRoles(ctx context.Context, user *models.User, extUser *models.ExternalUserInfo) error {
@@ -201,7 +201,7 @@ func syncOrgRoles(ctx context.Context, user *models.User, extUser *models.Extern
 	}
 
 	orgsQuery := &models.GetUserOrgListQuery{UserId: user.Id}
-	if err := bus.DispatchCtx(ctx, orgsQuery); err != nil {
+	if err := bus.Dispatch(ctx, orgsQuery); err != nil {
 		return err
 	}
 
@@ -218,7 +218,7 @@ func syncOrgRoles(ctx context.Context, user *models.User, extUser *models.Extern
 		} else if extRole != org.Role {
 			// update role
 			cmd := &models.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.Id, Role: extRole}
-			if err := bus.DispatchCtx(ctx, cmd); err != nil {
+			if err := bus.Dispatch(ctx, cmd); err != nil {
 				return err
 			}
 		}
@@ -232,7 +232,7 @@ func syncOrgRoles(ctx context.Context, user *models.User, extUser *models.Extern
 
 		// add role
 		cmd := &models.AddOrgUserCommand{UserId: user.Id, Role: orgRole, OrgId: orgId}
-		err := bus.DispatchCtx(ctx, cmd)
+		err := bus.Dispatch(ctx, cmd)
 		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
 			return err
 		}
@@ -243,7 +243,7 @@ func syncOrgRoles(ctx context.Context, user *models.User, extUser *models.Extern
 		logger.Debug("Removing user's organization membership as part of syncing with OAuth login",
 			"userId", user.Id, "orgId", orgId)
 		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: user.Id}
-		if err := bus.DispatchCtx(ctx, cmd); err != nil {
+		if err := bus.Dispatch(ctx, cmd); err != nil {
 			if errors.Is(err, models.ErrLastOrgAdmin) {
 				logger.Error(err.Error(), "userId", cmd.UserId, "orgId", cmd.OrgId)
 				continue
@@ -260,7 +260,7 @@ func syncOrgRoles(ctx context.Context, user *models.User, extUser *models.Extern
 			break
 		}
 
-		return bus.DispatchCtx(ctx, &models.SetUsingOrgCommand{
+		return bus.Dispatch(ctx, &models.SetUsingOrgCommand{
 			UserId: user.Id,
 			OrgId:  user.OrgId,
 		})

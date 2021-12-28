@@ -170,7 +170,7 @@ func (ns *NotificationService) validateResetPasswordCode(ctx context.Context, qu
 	}
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: login}
-	if err := bus.DispatchCtx(ctx, &userQuery); err != nil {
+	if err := bus.Dispatch(ctx, &userQuery); err != nil {
 		return err
 	}
 
@@ -212,7 +212,7 @@ func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *ev
 	}
 
 	emailSentCmd := models.UpdateTempUserWithEmailSentCommand{Code: evt.Code}
-	return bus.DispatchCtx(ctx, &emailSentCmd)
+	return bus.Dispatch(ctx, &emailSentCmd)
 }
 
 func (ns *NotificationService) signUpCompletedHandler(ctx context.Context, evt *events.SignUpCompleted) error {

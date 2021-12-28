@@ -48,14 +48,14 @@ func (e *DashAlertExtractor) lookupQueryDataSource(ctx context.Context, panel *s
 
 	if dsName == "" && dsUid == "" {
 		query := &models.GetDefaultDataSourceQuery{OrgId: e.OrgID}
-		if err := bus.DispatchCtx(ctx, query); err != nil {
+		if err := bus.Dispatch(ctx, query); err != nil {
 			return nil, err
 		}
 		return query.Result, nil
 	}
 
 	query := &models.GetDataSourceQuery{Name: dsName, Uid: dsUid, OrgId: e.OrgID}
-	if err := bus.DispatchCtx(ctx, query); err != nil {
+	if err := bus.Dispatch(ctx, query); err != nil {
 		return nil, err
 	}
 
@@ -208,7 +208,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPan
 				Datasources: []*models.DataSource{datasource},
 			}
 
-			if err := bus.DispatchCtx(ctx, &dsFilterQuery); err != nil {
+			if err := bus.Dispatch(ctx, &dsFilterQuery); err != nil {
 				if !errors.Is(err, bus.ErrHandlerNotFound) {
 					return nil, err
 				}
