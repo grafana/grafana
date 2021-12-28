@@ -1,7 +1,7 @@
 import { DataFrame, SelectableValue } from '@grafana/data';
 import { Feature } from 'ol';
 import { FeatureLike } from 'ol/Feature';
-import { Point } from 'ol/geom';
+import { Geometry, LineString, Point } from 'ol/geom';
 import { GeometryTypeId } from '../style/types';
 import { LocationInfo } from './location';
 
@@ -18,6 +18,20 @@ export const getFeatures = (frame: DataFrame, info: LocationInfo): Array<Feature
       })
     );
   }
+
+  return features;
+};
+
+export const getFeaturesLineString = (frame: DataFrame, info: LocationInfo): Array<Feature<Geometry>> | undefined => {
+  const features: Array<Feature<Geometry>> = [];
+
+  const geometry = new LineString(info.points.map((p) => p.getCoordinates()));
+  features.push(
+    new Feature({
+      frame,
+      geometry: geometry,
+    })
+  );
 
   return features;
 };

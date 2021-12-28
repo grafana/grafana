@@ -84,6 +84,14 @@ export const polyStyle = (cfg: StyleConfigValues) => {
   });
 };
 
+export const routeStyle = (cfg: StyleConfigValues) => {
+  return new Style({
+    fill: getFillColor(cfg),
+    stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
+    text: textLabel(cfg),
+  });
+};
+
 // Square and cross
 const errorMarker = (cfg: StyleConfigValues) => {
   const radius = cfg.size ?? DEFAULT_SIZE;
