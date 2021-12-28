@@ -12,7 +12,7 @@ AWS Marketplace is a convenient place for AWS customers to buy and manage a lice
 
 You can deploy Grafana Enterprise in the following ways:
 
-- In an instance of AWS ECS or AWS EKS.
+- Using AWS services like ECS, EKS or EC2.
 - In an instance outside AWS.
 
 In each case, you must activate the Grafana Enterprise license purchased in AWS Marketplace to take advantage of Grafana Enterprise observability features.
