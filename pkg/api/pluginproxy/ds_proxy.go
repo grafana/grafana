@@ -43,6 +43,7 @@ type DataSourceProxy struct {
 	clientProvider     httpclient.Provider
 	oAuthTokenService  oauthtoken.OAuthTokenService
 	dataSourcesService *datasources.Service
+	tracer             tracing.Tracer
 }
 
 type handleResponseTransport struct {
@@ -76,7 +77,8 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.Route, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
-	oAuthTokenService oauthtoken.OAuthTokenService, dsService *datasources.Service) (*DataSourceProxy, error) {
+	oAuthTokenService oauthtoken.OAuthTokenService, dsService *datasources.Service,
+	tracer tracing.TracerService) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {
 		return nil, err
@@ -92,6 +94,7 @@ func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.Route, ct
 		clientProvider:     clientProvider,
 		oAuthTokenService:  oAuthTokenService,
 		dataSourcesService: dsService,
+		tracer:             tracer,
 	}, nil
 }
 
@@ -148,7 +151,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	}
 
 	proxy.logRequest()
-	ctx, span := tracing.GlobalTracer.Start(proxy.ctx.Req.Context(), "datasource reverse proxy")
+	ctx, span := proxy.tracer.Start(proxy.ctx.Req.Context(), "datasource reverse proxy")
 	defer span.End()
 
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
@@ -161,7 +164,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
 	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
 
-	tracing.GlobalTracer.Inject(ctx, proxy.ctx.Req.Header, span)
+	proxy.tracer.Inject(ctx, proxy.ctx.Req.Header, span)
 
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req)
 }
