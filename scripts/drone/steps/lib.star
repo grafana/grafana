@@ -707,31 +707,15 @@ def e2e_tests_server_step(edition, port=3001):
         ],
     }
 
-def install_cypress_step():
-    return {
-        'name': 'cypress',
-        'image': 'grafana/ci-e2e:12.19.0-1',
-        'depends_on': [
-            'package',
-            ],
-        'commands': [
-            'yarn run cypress install',
-        ],
-        'volumes': [{
-            'name': 'cypress_cache',
-            'path': '/root/.cache/Cypress'
-        }],
-    }
-
 def e2e_tests_step(suite, edition, port=3001, tries=None):
     cmd = './bin/grabpl e2e-tests --port {} --suite {}'.format(port, suite)
     if tries:
         cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
-        'image': 'grafana/ci-e2e:12.19.0-1',
+        'image': 'cypress/included:9.2.0',
         'depends_on': [
-            'cypress',
+            'package',
         ],
         'environment': {
             'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
@@ -741,6 +725,7 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
             'path': '/root/.cache/Cypress'
         }],
         'commands': [
+            'apt-get install -y netcat',
             cmd,
         ],
     }
