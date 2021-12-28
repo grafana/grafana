@@ -45,8 +45,6 @@ func fakeGetTime() func() time.Time {
 
 func TestMiddleWareSecurityHeaders(t *testing.T) {
 	middlewareScenario(t, "middleware should get correct x-xss-protection header", func(t *testing.T, sc *scenarioContext) {
-		err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "1; mode=block", sc.resp.Header().Get("X-XSS-Protection"))
 	}, func(cfg *setting.Cfg) {
@@ -734,7 +732,9 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore)
+	tracer, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer)
 }
 
 type fakeRenderService struct {

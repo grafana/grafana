@@ -20,7 +20,7 @@ import (
 func TestUsageStatsService_GetConcurrentUsersStats(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	uss := &UsageStats{
-		Bus:      bus.New(),
+		Bus:      bus.NewTest(t),
 		SQLStore: sqlStore,
 		kvStore:  kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
 		log:      log.New("infra.usagestats"),

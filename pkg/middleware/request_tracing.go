@@ -41,7 +41,7 @@ func RouteOperationNameFromContext(ctx context.Context) (string, bool) {
 	return "", false
 }
 
-func RequestTracing() web.Handler {
+func RequestTracing(tracer tracing.TracerService) web.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		if strings.HasPrefix(c.Req.URL.Path, "/public/") ||
 			c.Req.URL.Path == "robots.txt" {
@@ -52,7 +52,7 @@ func RequestTracing() web.Handler {
 		rw := res.(web.ResponseWriter)
 
 		wireContext := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
-		ctx, span := tracing.GlobalTracer.Start(req.Context(), fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
+		ctx, span := tracer.Start(req.Context(), fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
 
 		c.Req = req.WithContext(ctx)
 		c.Map(c.Req)

@@ -22,7 +22,9 @@ func TestTracingMiddleware(t *testing.T) {
 			return &http.Response{StatusCode: http.StatusOK, Request: req}, nil
 		})
 
-		mw := TracingMiddleware(log.New("test"))
+		tracer, err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
+		mw := TracingMiddleware(log.New("test"), tracer)
 		rt := mw.CreateMiddleware(httpclient.Options{
 			Labels: map[string]string{
 				"l1": "v1",
@@ -38,8 +40,6 @@ func TestTracingMiddleware(t *testing.T) {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://test.com/query", nil)
 		require.NoError(t, err)
 
-		err = tracing.InitializeTracerForTest()
-		require.NoError(t, err)
 		res, err := rt.RoundTrip(req)
 		require.NoError(t, err)
 		require.NotNil(t, res)
@@ -53,7 +53,9 @@ func TestTracingMiddleware(t *testing.T) {
 			return &http.Response{StatusCode: http.StatusBadRequest, Request: req}, nil
 		})
 
-		mw := TracingMiddleware(log.New("test"))
+		tracer, err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
+		mw := TracingMiddleware(log.New("test"), tracer)
 		rt := mw.CreateMiddleware(httpclient.Options{
 			Labels: map[string]string{
 				"l1": "v1",
@@ -81,7 +83,9 @@ func TestTracingMiddleware(t *testing.T) {
 			return &http.Response{StatusCode: http.StatusOK, Request: req, ContentLength: 10}, nil
 		})
 
-		mw := TracingMiddleware(log.New("test"))
+		tracer, err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
+		mw := TracingMiddleware(log.New("test"), tracer)
 		rt := mw.CreateMiddleware(httpclient.Options{
 			Labels: map[string]string{
 				"l1": "v1",

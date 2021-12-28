@@ -50,7 +50,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 			return errutil.Wrap("failed to load configuration", err)
 		}
 
-		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{})
+		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{}, nil)
 		if err != nil {
 			return errutil.Wrap("failed to initialize SQL store", err)
 		}

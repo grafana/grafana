@@ -155,8 +155,6 @@ func (ts *Opentracing) initGlobalTracer() error {
 	opentracing.SetGlobalTracer(tracer)
 
 	ts.closer = closer
-	GlobalTracer = ts
-
 	return nil
 }
 

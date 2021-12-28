@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -274,8 +273,6 @@ func TestMetrics(t *testing.T) {
 			})
 			usageStatsURL = ts.URL
 
-			err := tracing.InitializeTracerForTest()
-			require.NoError(t, err)
 			err = uss.sendUsageStats(context.Background())
 			require.NoError(t, err)
 
@@ -614,7 +611,7 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStats {
 	sqlStore := sqlstore.InitTestDB(t)
 
 	return &UsageStats{
-		Bus:             bus.New(),
+		Bus:             bus.NewTest(t),
 		Cfg:             &cfg,
 		SQLStore:        sqlStore,
 		externalMetrics: make([]usagestats.MetricsFunc, 0),

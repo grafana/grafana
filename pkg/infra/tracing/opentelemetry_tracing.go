@@ -38,10 +38,6 @@ type Span interface {
 	AddEvents(keys []string, values []EventValue)
 }
 
-var (
-	GlobalTracer Tracer
-)
-
 type Opentelemetry struct {
 	enabled bool
 	address string
@@ -109,7 +105,6 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 
 	ots.tracerProvider = tp
 	ots.tracer = otel.GetTracerProvider().Tracer("component-main")
-	GlobalTracer = ots
 
 	return nil
 }
