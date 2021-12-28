@@ -3,12 +3,14 @@ package database
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 type ServiceAccountsStoreImpl struct {
@@ -61,26 +63,133 @@ func deleteServiceAccountInTransaction(sess *sqlstore.DBSession, orgID, serviceA
 	return nil
 }
 
+// TODO: write test
+/*
+ write benchmarks if possible
+*/
 func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) error {
+	canStart, err := s.startMigration(ctx, orgID)
+	if err != nil {
+		return err
+	}
+	if !canStart {
+		// inprogress
+		return nil
+	}
 	basicKeys := s.sqlStore.GetNonServiceAccountAPIKeys(ctx)
 	if len(basicKeys) > 0 {
 		s.log.Info("Launching background thread to upgrade API keys to service accounts", "numberKeys", len(basicKeys))
 		go func() {
-			for _, key := range basicKeys {
-				sa, err := s.sqlStore.CreateServiceAccountForApikey(ctx, key.OrgId, key.Name, key.Role)
-				if err != nil {
-					s.log.Error("Failed to create service account for API key", "err", err, "keyId", key.Id)
-					continue
-				}
-
-				err = s.sqlStore.UpdateApikeyServiceAccount(ctx, key.Id, sa.Id)
-				if err != nil {
-					s.log.Error("Failed to attach new service account to API key", "err", err, "keyId", key.Id, "newServiceAccountId", sa.Id)
-					continue
-				}
-				s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", sa.Id)
+			err := s.migrateToServiceAccounts(basicKeys, orgID)
+			if err != nil {
+				s.log.Error("Failed to upgrade API keys to service accounts", "err", err)
 			}
+
 		}()
+	} else {
+		// no basic apikeys found
+		return s.updateMigrationLog(ctx, orgID, true, nil)
 	}
 	return nil
+}
+
+func (s *ServiceAccountsStoreImpl) migrateToServiceAccounts(basicKeys []*models.ApiKey, orgID int64) error {
+	migrationCtx, cancel := context.WithTimeout(context.Background(), time.Hour*1)
+	defer cancel()
+	err := s.sqlStore.WithTransactionalDbSession(migrationCtx, func(sess *sqlstore.DBSession) error {
+		for _, key := range basicKeys {
+			// TODO: pass in sess and move these into the package
+			sa, err := s.sqlStore.CreateServiceAccountForApikey(migrationCtx, sess, key.OrgId, key.Name, key.Role)
+			if err != nil {
+				return err
+			}
+			// TODO: pass in sess and move these into the package
+			err = s.sqlStore.UpdateApikeyServiceAccount(migrationCtx, sess, key.Id, sa.Id)
+			if err != nil {
+				return err
+			}
+			s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", sa.Id)
+		}
+		// adding to migration log so that we do not do this again
+		err := s.updateMigrationLog(migrationCtx, orgID, true, nil)
+		if err != nil {
+			s.log.Error("Failed to update migration log", "err", err)
+		}
+		return nil
+	})
+	if err != nil {
+		err := s.updateMigrationLog(migrationCtx, orgID, false, err)
+		s.log.Error("Failed to update migration log", "err", err)
+	}
+	return err
+}
+
+// TODO: write tests
+// TODO: rename potentially
+func (s *ServiceAccountsStoreImpl) startMigration(ctx context.Context, orgID int64) (bool, error) {
+	canStart := false
+	// 1. get migration log
+	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		migrationIdString := getMigrationId(orgID)
+		migration := migrator.MigrationLog{MigrationID: migrationIdString}
+		exists, _ := sess.Get(&migration)
+		// 2. if not found, create, state: progress
+		if !exists {
+			m := migrator.MigrationLog{
+				MigrationID: migrationIdString,
+				Timestamp:   time.Now(),
+				SQL:         "service account code migration",
+			}
+			if _, err := sess.Insert(&m); err != nil {
+				return err
+			}
+			// created the migration log
+			canStart = true
+			return nil
+		}
+		// 3. if found,
+		// 3.1 if state is error:
+		if !migration.Success && migration.Error != "" {
+			// update migration log
+			migration.Success = false
+			migration.Error = ""
+			migration.Timestamp = time.Now()
+
+			if _, err := sess.Update(&migration); err != nil {
+				return err
+			}
+			canStart = true
+			return nil
+		}
+		// 3.2 if state is progress && timestamp + 1h < now, update state to progress else return nil
+		if !migration.Success && migration.Timestamp.Add(time.Hour).Before(time.Now()) {
+			migration.Success = false
+			migration.Error = ""
+			migration.Timestamp = time.Now()
+
+			if _, err := sess.Update(&migration); err != nil {
+				return err
+			}
+			canStart = true
+			return nil
+		}
+		// canStart = false, error = nil
+		// inProgress
+		return nil
+	})
+	return canStart, err
+}
+
+func (s *ServiceAccountsStoreImpl) updateMigrationLog(ctx context.Context, orgID int64, success bool, err error) error {
+	migration := migrator.MigrationLog{MigrationID: getMigrationId(orgID)}
+	migration.Success = success
+	migration.Error = err.Error()
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Update(&migration)
+		return err
+	})
+}
+
+func getMigrationId(orgID int64) string {
+	return fmt.Sprintf("%s : %d", ServiceAccountsMigrationIdPrefix, orgID)
 }
