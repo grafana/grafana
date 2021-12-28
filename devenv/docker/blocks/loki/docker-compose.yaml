@@ -4,15 +4,6 @@
     ports:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://localhost:3100/loki/api/v1/push"
-    environment:
-      - JAEGER_AGENT_HOST=tempo
-      - JAEGER_AGENT_PORT=6831
-      - JAEGER_SAMPLER_TYPE=const
-      - JAEGER_SAMPLER_PARAM=1
   promtail:
     image: grafana/promtail:latest
     volumes:

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +19,7 @@ func BenchmarkMatrixToDataFrames(b *testing.B) {
 		LegendFormat: "",
 	}
 	var m model.Matrix
-	if err := loadTestData("matrix_range_bench.json", &m); err != nil {
+	if err := loadTestData("matrix.json", &m); err != nil {
 		b.Fatal("failed to load test data", err)
 	}
 	for i := 0; i < b.N; i++ {
@@ -34,11 +35,11 @@ func BenchmarkMatrixToDataFrames(b *testing.B) {
 }
 
 func TestMatrixToDataFrames(t *testing.T) {
-	t.Run("matrix_range.json golden response", func(t *testing.T) {
+	t.Run("matrix.json golden response", func(t *testing.T) {
 		var m model.Matrix
-		err := loadTestData("matrix_range_golden.json", &m)
+		err := loadTestData("matrix.json", &m)
 		require.NoError(t, err)
-		require.Equal(t, 3, m.Len())
+		require.Equal(t, 5, m.Len())
 
 		query := &prometheus.PrometheusQuery{
 			LegendFormat: "",
@@ -47,7 +48,7 @@ func TestMatrixToDataFrames(t *testing.T) {
 		frames = prometheus.MatrixToDataFrames(m, query, frames)
 		res := &backend.DataResponse{Frames: frames}
 
-		err = experimental.CheckGoldenDataResponse("./testdata/matrix_range_golden.txt", res, false)
+		err = experimental.CheckGoldenDataResponse("./testdata/matrix.txt", res, true)
 		require.NoError(t, err)
 	})
 }
@@ -87,6 +88,45 @@ func TestVectorToDataFrames(t *testing.T) {
 		res := &backend.DataResponse{Frames: frames}
 
 		err = experimental.CheckGoldenDataResponse("./testdata/vector.txt", res, false)
+		require.NoError(t, err)
+	})
+}
+
+func BenchmarkExemplarToDataFrames(b *testing.B) {
+	query := &prometheus.PrometheusQuery{
+		LegendFormat: "",
+	}
+	var r []v1.ExemplarQueryResult
+	if err := loadTestData("exemplar.json", &r); err != nil {
+		b.Fatal("failed to load test data", err)
+	}
+	for i := 0; i < b.N; i++ {
+		frames := make([]*data.Frame, 0)
+		frames = prometheus.ExemplarToDataFrames(r, query, frames)
+		if len(frames) != 1 {
+			b.Fatal("wrong frame count", len(frames))
+		}
+		if frames[0].Rows() != 1 {
+			b.Fatal("wrong row count", frames[0].Rows())
+		}
+	}
+}
+
+func TestExemplarToDataFrames(t *testing.T) {
+	t.Run("exemplar.json golden response", func(t *testing.T) {
+		var r []v1.ExemplarQueryResult
+		err := loadTestData("exemplar.json", &r)
+		require.NoError(t, err)
+		require.Equal(t, 2, len(r))
+
+		query := &prometheus.PrometheusQuery{
+			LegendFormat: "",
+		}
+		frames := make(data.Frames, 0)
+		frames = prometheus.ExemplarToDataFrames(r, query, frames)
+		res := &backend.DataResponse{Frames: frames}
+
+		err = experimental.CheckGoldenDataResponse("./testdata/exemplar.txt", res, true)
 		require.NoError(t, err)
 	})
 }
