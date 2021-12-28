@@ -32,20 +32,14 @@ To isolate series data in a visualization:
 
 1. To save your changes so that they appear to all viewers of the panel, click **Apply**.
 
-++++++Check this+++++
 This topic currently applies to the following visualizations:
 
-- [Bar chart]({{< relref "../visualizations/bar-chart.md" >}})
-
-[Create a dashboard]({{< relref "../../getting-started/getting-started.md" >}}).
-
-- [Histogram]({{< relref "../visualizations/histogram.md" >}})
-- [Pie chart]({{< relref "../visualizations/pie-chart-panel.md" >}})
-- [State timeline]({{< relref "../visualizations/state-timeline.md" >}})
-- [Status history]({{< relref "../visualizations/status-history.md" >}})
-- [Time series]({{< relref "../visualizations/time-series/_index.md" >}})
-- XY chart panel
-  ++++++++++++++++++++++
+- [Bar chart]({{< relref "../../visualizations/bar-chart.md" >}})
+- [Histogram]({{< relref "../../visualizations/histogram.md" >}})
+- [Pie chart]({{< relref "../../visualizations/pie-chart-panel.md" >}})
+- [State timeline]({{< relref "../../visualizations/state-timeline.md" >}})
+- [Status history]({{< relref "../../visualizations/status-history.md" >}})
+- [Time series]({{< relref "../../visualizations/time-series/_index.md" >}})
 
 ## Add values to a legend
 
@@ -89,7 +83,7 @@ To change a series color, perform the following steps:
 
 ## Sort series
 
-Change legend mode to **Table** and choose [calculations]({{< relref "./calculations-list.md" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
+Change legend mode to **Table** and choose [calculations]({{< relref "../reference-calculation-types.md" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
 
 The sort order affects the positions of the bars in the Bar chart panel as well as the order of stacked series in the Time series and Bar chart panels.
 

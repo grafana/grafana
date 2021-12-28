@@ -20,7 +20,7 @@ To apply a transformation function to data:
 
    A transformation row appear where you configure the transformation options. For more information about how to configure a transformation, refer to [Reference: Transformation functions]({{< relref "../reference-transformation-functions.md" >}}).
 
-   For information about available calculations, refer to [Reference: Calculations]({{< relref "../reference-calculations.md" >}}).
+   For information about available calculations, refer to [Reference: Calculations]({{< relref "../reference-calculation-types.md" >}}).
 
 1. To apply another transformation, click **Add transformation**.
 

@@ -4,6 +4,8 @@ aliases = []
 weight = 50
 +++
 
+# Apply color to series and fields
+
 In addition to specifying color based on thresholds, you can configure the color of series and field data. The color options and their effect on the visualization depends on the visualization you are working with. Some visualizations have different color options.
 
 You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
