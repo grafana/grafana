@@ -17,6 +17,7 @@
   "devDependencies": {
     "@types/jest": "26.0.15",
     "@types/react": "17.0.30",
+    "pnp-webpack-plugin": "^1.7.0",
     "ts-loader": "8.0.11",
     "webpack": "5.58.1"
   },
