@@ -257,6 +257,9 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
 
   // Update the query state in response to the meta data changing
   useEffect(() => {
+    if (!metricMetadata.supportedAggTypes.length) {
+      return;
+    }
     const aggregationIsValid = aggregation && metricMetadata.supportedAggTypes.includes(aggregation);
 
     const newAggregation = aggregationIsValid ? aggregation : metricMetadata.primaryAggType;
