@@ -195,12 +195,9 @@ func TestFilter_Datasources(t *testing.T) {
 				"datasources:read",
 				&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: GroupScopesByAction(tt.permissions)}},
 			)
-			fmt.Println(query)
-			fmt.Println(args)
-			sqlQuery := baseSql + query
 
 			var datasources []models.DataSource
-			err := sess.SQL(sqlQuery, args...).Find(&datasources)
+			err := sess.SQL(baseSql+query, args...).Find(&datasources)
 			require.NoError(t, err)
 
 			assert.Len(t, datasources, len(tt.expectedDataSources))

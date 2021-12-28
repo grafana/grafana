@@ -40,9 +40,7 @@ func Filter(ctx context.Context, dialect SQLDialect, prefix, sqlID string, actio
 }
 
 func sqliteQuery(scopes []string, prefix, sqlID string) (string, []interface{}) {
-	args := []interface{}{
-		prefix,
-	}
+	args := []interface{}{prefix}
 	for _, s := range scopes {
 		args = append(args, s)
 	}
