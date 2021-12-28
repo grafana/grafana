@@ -48,7 +48,6 @@ func NewVectorFramer(query *PrometheusQuery, vec model.Vector) Framer {
 	length := 1
 	series := make([]Series, vec.Len())
 
-	// get the length of the longest column first so we can reduce the need to expand
 	for i, s := range vec {
 		series[i] = &VectorSeries{sample: s, rowIdx: -1}
 	}

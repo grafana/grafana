@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"testing"
 	"time"
@@ -30,10 +31,10 @@ func BenchmarkMatrixToDataFrames(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		frames := make([]*data.Frame, 0)
 		frames = prometheus.MatrixToDataFrames(m, query, frames)
-		if len(frames) != 1 {
+		if len(frames) != 5 {
 			b.Fatal("wrong frame count", len(frames))
 		}
-		if frames[0].Rows() != 418 {
+		if frames[0].Rows() != 410 {
 			b.Fatal("wrong row count", frames[0].Rows())
 		}
 	}
@@ -69,23 +70,27 @@ func BenchmarkVectorToDataFrames(b *testing.B) {
 		if len(frames) != 1 {
 			b.Fatal("wrong frame count", len(frames))
 		}
-		if frames[0].Rows() != 10_000 {
+		if frames[0].Rows() != 1 {
 			b.Fatal("wrong row count", frames[0].Rows())
 		}
 	}
 }
 
 func generateVectorData(resultCount int) model.Vector {
+	ts := p.TimeFromUnixNano(time.Now().UnixNano())
 	results := make(model.Vector, 0)
 
 	for i := 0; i < resultCount; i += 1 {
 		s := model.Sample{
 			Metric:    p.Metric(model.LabelSet{"traceID": p.LabelValue(fmt.Sprintf("test_%d", i))}),
 			Value:     p.SampleValue(rand.Float64() + float64(i)),
-			Timestamp: p.TimeFromUnixNano(time.Now().Add(time.Duration(-1*i) * time.Second).UnixNano()),
+			Timestamp: ts,
 		}
-		if i%10 == 0 {
+		if rand.Int()%10 == 0 {
 			s.Metric["label"] = p.LabelValue(fmt.Sprintf("test_%d", i))
+		}
+		if rand.Int()%5 == 0 {
+			s.Value = p.SampleValue(math.NaN())
 		}
 		results = append(results, &s)
 	}

@@ -30,19 +30,19 @@ func (s *MatrixSeries) Len() int {
 
 func (s *MatrixSeries) Next() bool {
 	s.rowIdx += 1
-	return s.rowIdx < s.Len()
+	return s.rowIdx <= s.Len()
 }
 
 func (s *MatrixSeries) Timestamp() int64 {
-	return s.stream.Values[s.rowIdx].Timestamp.Unix()
+	return s.stream.Values[s.rowIdx-1].Timestamp.Unix()
 }
 
 func (s *MatrixSeries) IsSet() bool {
-	return !math.IsNaN(float64(s.stream.Values[s.rowIdx].Value))
+	return !math.IsNaN(float64(s.stream.Values[s.rowIdx-1].Value))
 }
 
 func (s *MatrixSeries) Value() *float64 {
-	return (*float64)(&s.stream.Values[s.rowIdx].Value)
+	return (*float64)(&s.stream.Values[s.rowIdx-1].Value)
 }
 
 type VectorSeries struct {
