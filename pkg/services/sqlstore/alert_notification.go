@@ -52,7 +52,7 @@ func (ss *SQLStore) DeleteAlertNotificationWithUid(ctx context.Context, cmd *mod
 		Id:    existingNotification.Result.Id,
 		OrgId: existingNotification.Result.OrgId,
 	}
-	if err := bus.DispatchCtx(ctx, deleteCommand); err != nil {
+	if err := bus.Dispatch(ctx, deleteCommand); err != nil {
 		return err
 	}
 
@@ -454,7 +454,7 @@ func (ss *SQLStore) UpdateAlertNotificationWithUid(ctx context.Context, cmd *mod
 		OrgId: cmd.OrgId,
 	}
 
-	if err := bus.DispatchCtx(ctx, updateNotification); err != nil {
+	if err := bus.Dispatch(ctx, updateNotification); err != nil {
 		return err
 	}
 

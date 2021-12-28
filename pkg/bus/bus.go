@@ -27,7 +27,7 @@ type TransactionManager interface {
 
 // Bus type defines the bus interface structure
 type Bus interface {
-	DispatchCtx(ctx context.Context, msg Msg) error
+	Dispatch(ctx context.Context, msg Msg) error
 
 	PublishCtx(ctx context.Context, msg Msg) error
 
@@ -92,7 +92,7 @@ func (b *InProcBus) SetTransactionManager(tm TransactionManager) {
 }
 
 // DispatchCtx function dispatch a message to the bus context.
-func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
+func (b *InProcBus) Dispatch(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "bus - "+msgName)
@@ -205,8 +205,8 @@ func AddEventListenerCtx(handler HandlerFunc) {
 	globalBus.AddEventListenerCtx(handler)
 }
 
-func DispatchCtx(ctx context.Context, msg Msg) error {
-	return globalBus.DispatchCtx(ctx, msg)
+func Dispatch(ctx context.Context, msg Msg) error {
+	return globalBus.Dispatch(ctx, msg)
 }
 
 func PublishCtx(ctx context.Context, msg Msg) error {

@@ -156,7 +156,7 @@ func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	data, _ := bodyJSON.MarshalJSON()
 	cmd := &models.SendWebhookSync{Url: vn.URL, Body: string(data)}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		vn.log.Error("Failed to send Victorops notification", "error", err, "webhook", vn.Name)
 		return err
 	}
