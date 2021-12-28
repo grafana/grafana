@@ -105,7 +105,6 @@ func (f *Framer) processRow(query *PrometheusQuery, valueField *data.Field, s Se
 				field.Extend(f.rowIdx - field.Len() + 1)
 			}
 		}
-
 		ts := s.Timestamp()
 		f.fields[0].Set(f.rowIdx, time.Unix(ts, 0).UTC())
 
@@ -115,8 +114,8 @@ func (f *Framer) processRow(query *PrometheusQuery, valueField *data.Field, s Se
 		f.rowIdx += 1
 	}
 
-	if valueField.Len() <= f.rowIdx {
-		valueField.Extend(f.rowIdx - valueField.Len() + 1)
+	if valueField.Len() <= *valueIdx {
+		valueField.Extend(*valueIdx - valueField.Len() + 1)
 	}
 
 	if s.IsSet() {

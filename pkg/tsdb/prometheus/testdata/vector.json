@@ -1,86 +1,86 @@
-		 [
-			{
-				"metric": {
-					"__name__": "counters_requests",
-					"app": "backend",
-					"geohash": "9wvfgzurfzb",
-					"instance": "fake-prometheus-data:9091",
-					"job": "fake-data-gen",
-					"server": "backend-01"
-				},
-				"value": [
-					1640311423,
-					"166812.87149415462"
-				]
-			},
-			{
-				"metric": {
-					"__name__": "counters_requests",
-					"app": "backend",
-					"geohash": "dre33fzyxcrz",
-					"instance": "fake-prometheus-data:9091",
-					"job": "fake-data-gen",
-					"server": "backend-02"
-				},
-				"value": [
-					1640311423,
-					"166722.13678517105"
-				]
-			},
-			{
-				"metric": {
-					"__name__": "counters_requests",
-					"app": "frontend",
-					"geohash": "9yy21uzzxypg",
-					"instance": "fake-prometheus-data:9091",
-					"job": "fake-data-gen",
-					"server": "webserver-02"
-				},
-				"value": [
-					1640311423,
-					"166843.3999289427"
-				]
-			},
-			{
-				"metric": {
-					"__name__": "counters_requests",
-					"app": "frontend",
-					"geohash": "dr199bpvpcru",
-					"instance": "fake-prometheus-data:9091",
-					"job": "fake-data-gen",
-					"server": "webserver-01"
-				},
-				"value": [
-					1640311423,
-					"166771.344590213"
-				]
-			},
-			{
-				"metric": {
-					"__name__": "counters_requests",
-					"app": "frontend",
-					"geohash": "gc6j7crvrcpf",
-					"instance": "fake-prometheus-data:9091",
-					"job": "fake-data-gen",
-					"server": "webserver_03"
-				},
-				"value": [
-					1640311423,
-					"166623.63257368412"
-				]
-			},
-			{
-				"metric": {
-					"__name__": "counters_requests",
-					"app": "frontend",
-					"geohash": "u6g9zuxvxypv",
-					"instance": "fake-prometheus-data:9091",
-					"job": "fake-data-gen",
-					"server": "webserver.03"
-				},
-				"value": [
-					1640311423,
-					"166701.9449569972"
-				]
-			}
+[
+	{
+		"metric": {
+			"__name__": "counters_requests",
+			"app": "backend",
+			"geohash": "9wvfgzurfzb",
+			"instance": "fake-prometheus-data:9091",
+			"job": "fake-data-gen",
+			"server": "backend-01"
+		},
+		"value": [
+			1640311423,
+			"166812.87149415462"
 		]
+	},
+	{
+		"metric": {
+			"__name__": "counters_requests",
+			"app": "backend",
+			"geohash": "dre33fzyxcrz",
+			"instance": "fake-prometheus-data:9091",
+			"job": "fake-data-gen",
+			"server": "backend-02"
+		},
+		"value": [
+			1640311423,
+			"166722.13678517105"
+		]
+	},
+	{
+		"metric": {
+			"__name__": "counters_requests",
+			"app": "frontend",
+			"geohash": "9yy21uzzxypg",
+			"instance": "fake-prometheus-data:9091",
+			"job": "fake-data-gen",
+			"server": "webserver-02"
+		},
+		"value": [
+			1640311423,
+			"166843.3999289427"
+		]
+	},
+	{
+		"metric": {
+			"__name__": "counters_requests",
+			"app": "frontend",
+			"geohash": "dr199bpvpcru",
+			"instance": "fake-prometheus-data:9091",
+			"job": "fake-data-gen",
+			"server": "webserver-01"
+		},
+		"value": [
+			1640311423,
+			"166771.344590213"
+		]
+	},
+	{
+		"metric": {
+			"__name__": "counters_requests",
+			"app": "frontend",
+			"geohash": "gc6j7crvrcpf",
+			"instance": "fake-prometheus-data:9091",
+			"job": "fake-data-gen",
+			"server": "webserver_03"
+		},
+		"value": [
+			1640311423,
+			"166623.63257368412"
+		]
+	},
+	{
+		"metric": {
+			"__name__": "counters_requests",
+			"app": "frontend",
+			"geohash": "u6g9zuxvxypv",
+			"instance": "fake-prometheus-data:9091",
+			"job": "fake-data-gen",
+			"server": "webserver.03"
+		},
+		"value": [
+			1640311423,
+			"166701.9449569972"
+		]
+	}
+]
