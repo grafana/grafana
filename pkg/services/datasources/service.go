@@ -244,7 +244,7 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 	}
 
 	if ds.JsonData != nil {
-		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), s.DecryptedValues())
+		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), s.DecryptedValues(ds))
 		if err != nil {
 			err = fmt.Errorf("invalid Azure credentials: %s", err)
 			return nil, err
