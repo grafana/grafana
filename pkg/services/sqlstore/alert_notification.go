@@ -64,7 +64,7 @@ func (ss *SQLStore) GetAlertNotifications(ctx context.Context, query *models.Get
 }
 
 func (ss *SQLStore) addAlertNotificationUidByIdHandler() {
-	bus.AddHandlerCtx("sql", ss.GetAlertNotificationUidWithId)
+	bus.AddHandler("sql", ss.GetAlertNotificationUidWithId)
 }
 
 func (ss *SQLStore) GetAlertNotificationUidWithId(ctx context.Context, query *models.GetAlertNotificationUidQuery) error {

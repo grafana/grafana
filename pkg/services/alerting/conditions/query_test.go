@@ -35,7 +35,7 @@ func newTimeSeriesPointsFromArgs(values ...float64) legacydata.DataTimeSeriesPoi
 func TestQueryCondition(t *testing.T) {
 	setup := func() *queryConditionTestContext {
 		ctx := &queryConditionTestContext{}
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
 			query.Result = &models.DataSource{Id: 1, Type: "graphite"}
 			return nil
 		})

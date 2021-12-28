@@ -18,7 +18,7 @@ func TestDispatch(t *testing.T) {
 
 	var invoked bool
 
-	bus.AddHandlerCtx(func(ctx context.Context, query *testQuery) error {
+	bus.AddHandler(func(ctx context.Context, query *testQuery) error {
 		invoked = true
 		return nil
 	})
@@ -42,7 +42,7 @@ func TestDispatch_ContextHandler(t *testing.T) {
 
 	var invoked bool
 
-	bus.AddHandlerCtx(func(ctx context.Context, query *testQuery) error {
+	bus.AddHandler(func(ctx context.Context, query *testQuery) error {
 		invoked = true
 		return nil
 	})
@@ -58,7 +58,7 @@ func TestDispatchCtx(t *testing.T) {
 
 	var invoked bool
 
-	bus.AddHandlerCtx(func(ctx context.Context, query *testQuery) error {
+	bus.AddHandler(func(ctx context.Context, query *testQuery) error {
 		invoked = true
 		return nil
 	})
@@ -74,7 +74,7 @@ func TestDispatchCtx_NoContextHandler(t *testing.T) {
 
 	var invoked bool
 
-	bus.AddHandlerCtx(func(ctx context.Context, query *testQuery) error {
+	bus.AddHandler(func(ctx context.Context, query *testQuery) error {
 		invoked = true
 		return nil
 	})
@@ -98,7 +98,7 @@ func TestQuery(t *testing.T) {
 
 	want := "hello from handler"
 
-	bus.AddHandlerCtx(func(ctx context.Context, q *testQuery) error {
+	bus.AddHandler(func(ctx context.Context, q *testQuery) error {
 		q.Resp = want
 		return nil
 	})
@@ -114,7 +114,7 @@ func TestQuery(t *testing.T) {
 func TestQuery_HandlerReturnsError(t *testing.T) {
 	bus := New()
 
-	bus.AddHandlerCtx(func(ctx context.Context, query *testQuery) error {
+	bus.AddHandler(func(ctx context.Context, query *testQuery) error {
 		return errors.New("handler error")
 	})
 
