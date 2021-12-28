@@ -30,6 +30,15 @@ var builtins = map[string]parse.Func{
 		Return: parse.TypeScalar,
 		F:      inf,
 	},
+	"infn": {
+		Return: parse.TypeScalar,
+		F:      infn,
+	},
+	"is_inf": {
+		Args:          []parse.ReturnType{parse.TypeVariantSet},
+		VariantReturn: true,
+		F:             isInf,
+	},
 	"null": {
 		Return: parse.TypeScalar,
 		F:      null,
@@ -38,6 +47,11 @@ var builtins = map[string]parse.Func{
 		Args:          []parse.ReturnType{parse.TypeVariantSet},
 		VariantReturn: true,
 		F:             isNull,
+	},
+	"is_number": {
+		Args:          []parse.ReturnType{parse.TypeVariantSet},
+		VariantReturn: true,
+		F:             isNumber,
 	},
 }
 
@@ -85,6 +99,25 @@ func isNaN(e *State, varSet Results) (Results, error) {
 	return newRes, nil
 }
 
+// isInf returns 1 if the value for each result in NumberSet, SeriesSet, or Scalar is a
+// positive or negative Inf, else 0.
+func isInf(e *State, varSet Results) (Results, error) {
+	newRes := Results{}
+	for _, res := range varSet.Values {
+		newVal, err := perFloat(e, res, func(f float64) float64 {
+			if math.IsInf(f, 0) {
+				return 1
+			}
+			return 0
+		})
+		if err != nil {
+			return newRes, err
+		}
+		newRes.Values = append(newRes.Values, newVal)
+	}
+	return newRes, nil
+}
+
 // nan returns a scalar nan value
 func nan(e *State) Results {
 	aNaN := math.NaN()
@@ -94,6 +127,12 @@ func nan(e *State) Results {
 // inf returns a scalar positive infinity value
 func inf(e *State) Results {
 	aInf := math.Inf(0)
+	return NewScalarResults(e.RefID, &aInf)
+}
+
+// infn returns a scalar negative infinity value
+func infn(e *State) Results {
+	aInf := math.Inf(-1)
 	return NewScalarResults(e.RefID, &aInf)
 }
 
@@ -110,6 +149,26 @@ func isNull(e *State, varSet Results) (Results, error) {
 			nF := float64(0)
 			if f == nil {
 				nF = 1
+			}
+			return &nF
+		})
+		if err != nil {
+			return newRes, err
+		}
+		newRes.Values = append(newRes.Values, newVal)
+	}
+	return newRes, nil
+}
+
+// isNumber returns 1 if the value for each result in NumberSet, SeriesSet, or Scalar is a real number, else 0.
+// Therefore 0 is returned if the value Inf+, Inf-, NaN, or Null.
+func isNumber(e *State, varSet Results) (Results, error) {
+	newRes := Results{}
+	for _, res := range varSet.Values {
+		newVal, err := perNullableFloat(e, res, func(f *float64) *float64 {
+			nF := float64(1)
+			if f == nil || math.IsInf(*f, 0) || math.IsNaN(*f) {
+				nF = 0
 			}
 			return &nF
 		})
