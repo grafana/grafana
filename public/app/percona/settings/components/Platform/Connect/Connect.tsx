@@ -1,5 +1,5 @@
-import { logger, LoaderButton, PasswordInputField, TextInputField } from '@percona/platform-core';
-import React, { FC } from 'react';
+import { logger, TextInputField, PasswordInputField, LoaderButton } from '@percona/platform-core';
+import React, { FC, useState } from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';
@@ -7,7 +7,7 @@ import { useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import validators from 'app/percona/shared/helpers/validators';
 
-import { INITIAL_VALUES } from '../Platform.constants';
+import { CONNECT_DELAY, INITIAL_VALUES } from '../Platform.constants';
 import { Messages } from '../Platform.messages';
 import { PlatformService } from '../Platform.service';
 import { ConnectProps, ConnectRenderProps } from '../types';
@@ -16,8 +16,11 @@ import { getStyles } from './Connect.styles';
 
 export const Connect: FC<ConnectProps> = ({ getSettings }) => {
   const styles = useStyles(getStyles);
+  const [connecting, setConnecting] = useState(false);
 
   const handleConnect = async ({ pmmServerName, email, password }: ConnectRenderProps) => {
+    setConnecting(true);
+
     try {
       await PlatformService.connect({
         server_name: pmmServerName,
@@ -25,14 +28,19 @@ export const Connect: FC<ConnectProps> = ({ getSettings }) => {
         password,
       });
 
-      getSettings();
-      appEvents.emit(AppEvents.alertSuccess, [Messages.connectSucceeded]);
+      // We need some short delay for changes to apply before immediately calling getSettings
+      setTimeout(() => {
+        getSettings();
+        appEvents.emit(AppEvents.alertSuccess, [Messages.connectSucceeded]);
+        setConnecting(false);
+      }, CONNECT_DELAY);
     } catch (e) {
       logger.error(e);
+      setConnecting(false);
     }
   };
 
-  const ConnectForm: FC<FormRenderProps<ConnectRenderProps>> = ({ pristine, submitting, valid, handleSubmit }) => (
+  const ConnectForm: FC<FormRenderProps<ConnectRenderProps>> = ({ pristine, valid, handleSubmit }) => (
     <form data-testid="connect-form" className={styles.form} onSubmit={handleSubmit} autoComplete="off">
       <legend className={styles.legend}>{Messages.title}</legend>
       <TextInputField
@@ -56,8 +64,8 @@ export const Connect: FC<ConnectProps> = ({ getSettings }) => {
         type="submit"
         size="md"
         variant="primary"
-        disabled={!valid || submitting || pristine}
-        loading={submitting}
+        disabled={!valid || connecting || pristine}
+        loading={connecting}
         className={styles.submitButton}
       >
         {Messages.connect}
