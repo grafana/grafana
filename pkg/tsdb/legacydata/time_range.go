@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/timberio/go-datemath"
+	"github.com/vectordotdev/go-datemath"
 )
 
 type DataTimeRange struct {
