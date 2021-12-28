@@ -71,6 +71,11 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		})
 	}
 
+	if tmplErr != nil {
+		gcn.log.Debug("failed to template Google Chat message", "err", tmplErr.Error())
+		tmplErr = nil
+	}
+
 	ruleURL := joinUrlPath(gcn.tmpl.ExternalURL.String(), "/alerting/list", gcn.log)
 	// Add a button widget (link to Grafana).
 	widgets = append(widgets, buttonWidget{
