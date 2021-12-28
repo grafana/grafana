@@ -37,7 +37,7 @@ type Bus interface {
 	// callback returns an error.
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 
-	AddHandlerCtx(handler HandlerFunc)
+	AddHandler(handler HandlerFunc)
 
 	AddEventListenerCtx(handler HandlerFunc)
 
@@ -114,7 +114,7 @@ func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 	if withCtx {
 		params = append(params, reflect.ValueOf(ctx))
 	} else if setting.Env == setting.Dev {
-		b.logger.Warn("DispatchCtx called with message handler registered using AddHandler and should be changed to use AddHandlerCtx", "msgName", msgName)
+		b.logger.Warn("DispatchCtx called with message handler registered using AddHandler and should be changed to use AddHandler", "msgName", msgName)
 	}
 	params = append(params, reflect.ValueOf(msg))
 
@@ -172,7 +172,7 @@ func callListeners(listeners []HandlerFunc, params []reflect.Value) error {
 	return nil
 }
 
-func (b *InProcBus) AddHandlerCtx(handler HandlerFunc) {
+func (b *InProcBus) AddHandler(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(1).Elem().Name()
 	b.handlersWithCtx[queryTypeName] = handler
@@ -193,10 +193,10 @@ func (b *InProcBus) AddEventListenerCtx(handler HandlerFunc) {
 	b.listenersWithCtx[eventName] = append(b.listenersWithCtx[eventName], handler)
 }
 
-// AddHandlerCtx attaches a handler function to the global bus context.
+// AddHandler attaches a handler function to the global bus context.
 // Package level function.
-func AddHandlerCtx(implName string, handler HandlerFunc) {
-	globalBus.AddHandlerCtx(handler)
+func AddHandler(implName string, handler HandlerFunc) {
+	globalBus.AddHandler(handler)
 }
 
 // AddEventListenerCtx attaches a handler function to the event listener.

@@ -31,12 +31,12 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error)
 		webhookQueue: make(chan *Webhook, 10),
 	}
 
-	ns.Bus.AddHandlerCtx(ns.sendResetPasswordEmail)
-	ns.Bus.AddHandlerCtx(ns.validateResetPasswordCode)
-	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandler)
+	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
+	ns.Bus.AddHandler(ns.validateResetPasswordCode)
+	ns.Bus.AddHandler(ns.sendEmailCommandHandler)
 
-	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandlerSync)
-	ns.Bus.AddHandlerCtx(ns.SendWebhookSync)
+	ns.Bus.AddHandler(ns.sendEmailCommandHandlerSync)
+	ns.Bus.AddHandler(ns.SendWebhookSync)
 
 	ns.Bus.AddEventListenerCtx(ns.signUpStartedHandler)
 	ns.Bus.AddEventListenerCtx(ns.signUpCompletedHandler)

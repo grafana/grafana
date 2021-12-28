@@ -12,10 +12,10 @@ import (
 )
 
 func (ss *SQLStore) addOrgUsersQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.AddOrgUser)
-	bus.AddHandlerCtx("sql", ss.RemoveOrgUser)
-	bus.AddHandlerCtx("sql", ss.GetOrgUsers)
-	bus.AddHandlerCtx("sql", ss.UpdateOrgUser)
+	bus.AddHandler("sql", ss.AddOrgUser)
+	bus.AddHandler("sql", ss.RemoveOrgUser)
+	bus.AddHandler("sql", ss.GetOrgUsers)
+	bus.AddHandler("sql", ss.UpdateOrgUser)
 }
 
 func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserCommand) error {
