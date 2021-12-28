@@ -85,7 +85,7 @@ func (a *authInfoServiceMock) LookupAndUpdate(ctx context.Context, query *models
 }
 
 func Test_teamSync(t *testing.T) {
-	b := bus.NewTest(t)
+	b := bus.New()
 	authInfoMock := &authInfoServiceMock{}
 	login := Implementation{
 		Bus:             b,

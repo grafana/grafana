@@ -15,7 +15,7 @@ import (
 
 func TestAlertingUsageStats(t *testing.T) {
 	ae := &AlertEngine{
-		Bus: bus.NewTest(t),
+		Bus: bus.New(),
 	}
 
 	ae.Bus.AddHandler(func(ctx context.Context, query *models.GetAllAlertsQuery) error {

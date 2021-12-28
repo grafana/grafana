@@ -39,7 +39,7 @@ func TestGetHomeDashboard(t *testing.T) {
 	cfg.StaticRootPath = "../../public/"
 
 	hs := &HTTPServer{
-		Cfg: cfg, Bus: bus.NewTest(t),
+		Cfg: cfg, Bus: bus.New(),
 		pluginStore: &fakePluginStore{},
 	}
 	hs.Bus.AddHandler(func(_ context.Context, query *models.GetPreferencesWithDefaultsQuery) error {

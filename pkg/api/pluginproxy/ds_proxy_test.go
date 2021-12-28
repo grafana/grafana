@@ -127,7 +127,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path", func(t *testing.T) {
 			ctx, req := setUp()
-			dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+			dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 			tracer, err := tracing.InitializeTracerForTest()
 			require.NoError(t, err)
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/v4/some/method", cfg, httpClientProvider,
@@ -142,7 +142,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path and has dynamic url", func(t *testing.T) {
 			ctx, req := setUp()
-			dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+			dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 			tracer, err := tracing.InitializeTracerForTest()
 			require.NoError(t, err)
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/common/some/method", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -156,7 +156,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path with no url", func(t *testing.T) {
 			ctx, req := setUp()
-			dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+			dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 			tracer, err := tracing.InitializeTracerForTest()
 			require.NoError(t, err)
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -169,7 +169,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path and has dynamic body", func(t *testing.T) {
 			ctx, req := setUp()
-			dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+			dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 			tracer, err := tracing.InitializeTracerForTest()
 			require.NoError(t, err)
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/body", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -185,7 +185,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("Validating request", func(t *testing.T) {
 			t.Run("plugin route with valid role", func(t *testing.T) {
 				ctx, _ := setUp()
-				dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+				dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 				tracer, err := tracing.InitializeTracerForTest()
 				require.NoError(t, err)
 				proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/v4/some/method", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -196,7 +196,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 			t.Run("plugin route with admin role and user is editor", func(t *testing.T) {
 				ctx, _ := setUp()
-				dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+				dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 				tracer, err := tracing.InitializeTracerForTest()
 				require.NoError(t, err)
 				proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/admin", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -208,7 +208,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			t.Run("plugin route with admin role and user is admin", func(t *testing.T) {
 				ctx, _ := setUp()
 				ctx.SignedInUser.OrgRole = models.ROLE_ADMIN
-				dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+				dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 				tracer, err := tracing.InitializeTracerForTest()
 				require.NoError(t, err)
 				proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/admin", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -301,7 +301,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 					},
 				}
 
-				dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+				dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 				tracer, err := tracing.InitializeTracerForTest()
 				require.NoError(t, err)
 				proxy, err := NewDataSourceProxy(ds, routes, ctx, "pathwithtoken1", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -319,7 +319,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 					req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 					require.NoError(t, err)
 					client = newFakeHTTPClient(t, json2)
-					dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+					dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 					tracer, err := tracing.InitializeTracerForTest()
 					require.NoError(t, err)
 					proxy, err := NewDataSourceProxy(ds, routes, ctx, "pathwithtoken2", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -338,7 +338,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 						require.NoError(t, err)
 
 						client = newFakeHTTPClient(t, []byte{})
-						dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+						dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 						tracer, err := tracing.InitializeTracerForTest()
 						require.NoError(t, err)
 						proxy, err := NewDataSourceProxy(ds, routes, ctx, "pathwithtoken1", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -362,7 +362,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		ctx := &models.ReqContext{}
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{BuildVersion: "5.3.0"}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -390,7 +390,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		ctx := &models.ReqContext{}
 		var routes []*plugins.Route
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -416,7 +416,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		ctx := &models.ReqContext{}
 		var routes []*plugins.Route
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -446,7 +446,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		ctx := &models.ReqContext{}
 		var pluginRoutes []*plugins.Route
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		proxy, err := NewDataSourceProxy(ds, pluginRoutes, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -471,7 +471,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		ctx := &models.ReqContext{}
 		var routes []*plugins.Route
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -537,7 +537,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		var routes []*plugins.Route
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &mockAuthToken, dsService, tracer)
@@ -669,7 +669,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		ctx, ds := setUp(t)
 		var routes []*plugins.Route
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -695,7 +695,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		})
 		var routes []*plugins.Route
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -719,7 +719,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		})
 		var routes []*plugins.Route
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -746,7 +746,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
 		var routes []*plugins.Route
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -773,7 +773,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
 		var routes []*plugins.Route
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
@@ -805,7 +805,7 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	cfg := setting.Cfg{}
 	var routes []*plugins.Route
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	_, err = NewDataSourceProxy(&ds, routes, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
@@ -826,7 +826,7 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 
 	var routes []*plugins.Route
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	_, err = NewDataSourceProxy(&ds, routes, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
@@ -868,7 +868,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 
 			var routes []*plugins.Route
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+			dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 			tracer, err := tracing.InitializeTracerForTest()
 			require.NoError(t, err)
 			p, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
@@ -895,7 +895,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *sett
 
 	var routes []*plugins.Route
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	proxy, err := NewDataSourceProxy(ds, routes, ctx, "", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
@@ -1017,7 +1017,7 @@ func createAuthTest(t *testing.T, secretsService secrets.Service, dsType string,
 func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, test *testCase) {
 	ctx := &models.ReqContext{}
 	var routes []*plugins.Route
-	dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	proxy, err := NewDataSourceProxy(test.datasource, routes, ctx, "", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
@@ -1059,7 +1059,7 @@ func Test_PathCheck(t *testing.T) {
 	}
 	ctx, _ := setUp()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := datasources.ProvideService(bus.NewTest(t), nil, secretsService)
+	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	proxy, err := NewDataSourceProxy(&models.DataSource{}, routes, ctx, "b", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)

@@ -5,12 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -91,21 +89,6 @@ func New() *InProcBus {
 	}
 	bus.tracer = tracer
 	return bus
-}
-
-// New initialize the bus for tests
-func NewTest(t *testing.T) *InProcBus {
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	return &InProcBus{
-		logger:           log.New("bus"),
-		handlers:         make(map[string]HandlerFunc),
-		handlersWithCtx:  make(map[string]HandlerFunc),
-		listeners:        make(map[string][]HandlerFunc),
-		listenersWithCtx: make(map[string][]HandlerFunc),
-		txMng:            &noopTransactionManager{},
-		tracer:           tracer,
-	}
 }
 
 // Want to get rid of global bus

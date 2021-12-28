@@ -19,7 +19,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		ctx := context.Background()
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		psService := ProvideService(bus.NewTest(t), nil, secretsService)
+		psService := ProvideService(bus.New(), nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
 			ctx,
@@ -57,7 +57,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		ctx := context.Background()
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		psService := ProvideService(bus.NewTest(t), nil, secretsService)
+		psService := ProvideService(bus.New(), nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
 			ctx,

@@ -611,7 +611,7 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStats {
 	sqlStore := sqlstore.InitTestDB(t)
 
 	return &UsageStats{
-		Bus:             bus.NewTest(t),
+		Bus:             bus.New(),
 		Cfg:             &cfg,
 		SQLStore:        sqlStore,
 		externalMetrics: make([]usagestats.MetricsFunc, 0),

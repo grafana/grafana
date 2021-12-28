@@ -19,7 +19,7 @@ func TestService(t *testing.T) {
 	nType := "test"
 	registerTestNotifier(nType)
 
-	s := ProvideService(bus.NewTest(t), sqlStore, ossencryption.ProvideService())
+	s := ProvideService(bus.New(), sqlStore, ossencryption.ProvideService())
 
 	origSecret := setting.SecretKey
 	setting.SecretKey = "alert_notification_service_test"

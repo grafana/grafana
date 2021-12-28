@@ -21,9 +21,9 @@ func TestNotificationService(t *testing.T) {
 	ns.Cfg.Smtp.FromAddress = "from@address.com"
 	ns.Cfg.Smtp.FromName = "Grafana Admin"
 	ns.Cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
-	ns.Bus = bus.NewTest(t)
+	ns.Bus = bus.New()
 
-	ns, err := ProvideService(bus.NewTest(t), ns.Cfg)
+	ns, err := ProvideService(bus.New(), ns.Cfg)
 	require.NoError(t, err)
 
 	t.Run("When sending reset email password", func(t *testing.T) {

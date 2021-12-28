@@ -44,7 +44,7 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 }
 
 func TestEngineProcessJob(t *testing.T) {
-	bus := bus.NewTest(t)
+	bus := bus.New()
 	usMock := &usagestats.UsageStatsMock{T: t}
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)

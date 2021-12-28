@@ -20,7 +20,7 @@ func TestEmailIntegrationTest(t *testing.T) {
 		setting.BuildVersion = "4.0.0"
 
 		ns := &NotificationService{}
-		ns.Bus = bus.NewTest(t)
+		ns.Bus = bus.New()
 		ns.Cfg = setting.NewCfg()
 		ns.Cfg.Smtp.Enabled = true
 		ns.Cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
