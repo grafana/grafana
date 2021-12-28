@@ -49,7 +49,8 @@ func (e *ApplicationInsightsDatasource) resourceRequest(rw http.ResponseWriter, 
 }
 
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+	originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+	url string, tracer tracing.TracerService) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries)
@@ -58,7 +59,7 @@ func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Conte
 	}
 
 	for _, query := range queries {
-		queryRes, err := e.executeQuery(ctx, query, dsInfo, client, url)
+		queryRes, err := e.executeQuery(ctx, query, dsInfo, client, url, tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +130,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []backend.DataQuery
 	return applicationInsightsQueries, nil
 }
 
-func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo datasourceInfo, client *http.Client, url string) (
+func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo datasourceInfo, client *http.Client, url string, tracer tracing.TracerService) (
 	backend.DataResponse, error) {
 	dataResponse := backend.DataResponse{}
 
@@ -142,7 +143,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	req.URL.Path = path.Join(req.URL.Path, query.ApiURL)
 	req.URL.RawQuery = query.Params.Encode()
 
-	ctx, span := tracing.GlobalTracer.Start(ctx, "application insights query")
+	ctx, span := tracer.Start(ctx, "application insights query")
 	span.SetAttributes(attribute.Key("target").String(query.Target))
 	span.SetAttributes(attribute.Key("from").Int64(query.TimeRange.From.UnixNano() / int64(time.Millisecond)))
 	span.SetAttributes(attribute.Key("until").Int64(query.TimeRange.To.UnixNano() / int64(time.Millisecond)))
@@ -151,7 +152,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 
 	defer span.End()
 
-	tracing.GlobalTracer.Inject(ctx, req.Header, span)
+	tracer.Inject(ctx, req.Header, span)
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, client, req)

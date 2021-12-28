@@ -24,6 +24,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -72,12 +73,13 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store,
-	dsService *datasources.Service) *Service {
+	dsService *datasources.Service, tracer tracing.TracerService) *Service {
 	s := &Service{
 		httpClientProvider: httpClientProvider,
 		cfg:                cfg,
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		dsService:          dsService,
+		tracer:             tracer,
 	}
 
 	mux := http.NewServeMux()
@@ -139,6 +141,7 @@ type Service struct {
 	cfg                *setting.Cfg
 	im                 instancemgmt.InstanceManager
 	dsService          *datasources.Service
+	tracer             tracing.TracerService
 }
 
 type QueryModel struct {
@@ -263,7 +266,7 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	}
 
 	for _, queryExecutor := range queryExecutors {
-		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo)
+		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, s.tracer)
 		if err != nil {
 			return resp, err
 		}

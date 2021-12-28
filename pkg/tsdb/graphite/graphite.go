@@ -35,6 +35,7 @@ import (
 type Service struct {
 	logger log.Logger
 	im     instancemgmt.InstanceManager
+	tracer tracing.TracerService
 }
 
 const (
@@ -43,10 +44,11 @@ const (
 	TargetModelField     = "target"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store, tracer tracing.TracerService) (*Service, error) {
 	s := &Service{
 		logger: log.New("tsdb.graphite"),
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		tracer: tracer,
 	}
 
 	factory := coreplugin.New(backend.ServeOpts{
@@ -166,7 +168,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &result, err
 	}
 
-	ctx, span := tracing.GlobalTracer.Start(ctx, "graphite query")
+	ctx, span := s.tracer.Start(ctx, "graphite query")
 	span.SetAttributes(attribute.Key("target").String(target))
 	span.SetAttributes(attribute.Key("from").String(from))
 	span.SetAttributes(attribute.Key("until").String(until))
@@ -174,7 +176,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	span.SetAttributes(attribute.Key("org_id").Int64(req.PluginContext.OrgID))
 
 	defer span.End()
-	tracing.GlobalTracer.Inject(ctx, graphiteReq.Header, span)
+	s.tracer.Inject(ctx, graphiteReq.Header, span)
 
 	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, graphiteReq)
 	if err != nil {

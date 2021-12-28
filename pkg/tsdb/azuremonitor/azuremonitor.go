@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,7 +31,7 @@ var (
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, pluginStore plugins.Store) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, pluginStore plugins.Store, tracer tracing.TracerService) *Service {
 	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &AzureMonitorDatasource{proxy: proxy},
@@ -45,6 +46,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, p
 		Cfg:       cfg,
 		im:        im,
 		executors: executors,
+		tracer:    tracer,
 	}
 
 	mux := s.newMux()
@@ -71,6 +73,7 @@ type Service struct {
 	Cfg       *setting.Cfg
 	im        instancemgmt.InstanceManager
 	executors map[string]azDatasourceExecutor
+	tracer    tracing.TracerService
 }
 
 type azureMonitorSettings struct {
@@ -162,7 +165,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, e
 }
 
 type azDatasourceExecutor interface {
-	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error)
+	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string, tracer tracing.TracerService) (*backend.QueryDataResponse, error)
 	resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client)
 }
 
@@ -194,7 +197,7 @@ func (s *Service) newMux() *datasource.QueryTypeMux {
 			if !ok {
 				return nil, fmt.Errorf("missing service for %s", dst)
 			}
-			return executor.executeTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL)
+			return executor.executeTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL, s.tracer)
 		})
 	}
 	return mux

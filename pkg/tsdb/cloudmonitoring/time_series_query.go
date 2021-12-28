@@ -21,7 +21,7 @@ import (
 )
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, tracer tracing.TracerService) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
 	projectName := timeSeriesQuery.ProjectName
 
@@ -56,13 +56,13 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	ctx, span := tracing.GlobalTracer.Start(ctx, "cloudMonitoring MQL query")
+	ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
 	span.SetAttributes(attribute.Key("query").String(timeSeriesQuery.Query))
 	span.SetAttributes(attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
 	span.SetAttributes(attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
 
 	defer span.End()
-	tracing.GlobalTracer.Inject(ctx, r.Header, span)
+	tracer.Inject(ctx, r.Header, span)
 
 	r = r.WithContext(ctx)
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)

@@ -47,7 +47,8 @@ func (e *AzureLogAnalyticsDatasource) resourceRequest(rw http.ResponseWriter, re
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+	url string, tracer tracing.TracerService) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries, dsInfo)
@@ -56,7 +57,7 @@ func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url, tracer)
 	}
 
 	return result, nil
@@ -126,7 +127,8 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery, 
 	return azureLogAnalyticsQueries, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo datasourceInfo, client *http.Client, url string) backend.DataResponse {
+func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo datasourceInfo, client *http.Client,
+	url string, tracer tracing.TracerService) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	dataResponseErrorWithExecuted := func(err error) backend.DataResponse {
@@ -156,7 +158,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
 	req.URL.RawQuery = query.Params.Encode()
 
-	ctx, span := tracing.GlobalTracer.Start(ctx, "azure log analytics query")
+	ctx, span := tracer.Start(ctx, "azure log analytics query")
 	span.SetAttributes(attribute.Key("target").String(query.Target))
 	span.SetAttributes(attribute.Key("from").Int64(query.TimeRange.From.UnixNano() / int64(time.Millisecond)))
 	span.SetAttributes(attribute.Key("until").Int64(query.TimeRange.To.UnixNano() / int64(time.Millisecond)))
@@ -165,7 +167,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	defer span.End()
 
-	tracing.GlobalTracer.Inject(ctx, req.Header, span)
+	tracer.Inject(ctx, req.Header, span)
 
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, client, req)

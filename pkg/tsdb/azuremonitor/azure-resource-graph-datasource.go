@@ -49,7 +49,8 @@ func (e *AzureResourceGraphDatasource) resourceRequest(rw http.ResponseWriter, r
 // 1. builds the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+	url string, tracer tracing.TracerService) (*backend.QueryDataResponse, error) {
 	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
@@ -60,7 +61,7 @@ func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Contex
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url, tracer)
 	}
 
 	return result, nil
@@ -102,7 +103,8 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery,
 	return azureResourceGraphQueries, nil
 }
 
-func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo datasourceInfo, client *http.Client, dsURL string) backend.DataResponse {
+func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo datasourceInfo, client *http.Client,
+	dsURL string, tracer tracing.TracerService) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	params := url.Values{}
@@ -149,7 +151,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	req.URL.Path = path.Join(req.URL.Path, argQueryProviderName)
 	req.URL.RawQuery = params.Encode()
 
-	ctx, span := tracing.GlobalTracer.Start(ctx, "azure resource graph query")
+	ctx, span := tracer.Start(ctx, "azure resource graph query")
 	span.SetAttributes(attribute.Key("interpolated_query").String(query.InterpolatedQuery))
 	span.SetAttributes(attribute.Key("from").Int64(query.TimeRange.From.UnixNano() / int64(time.Millisecond)))
 	span.SetAttributes(attribute.Key("until").Int64(query.TimeRange.To.UnixNano() / int64(time.Millisecond)))
@@ -158,7 +160,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 
 	defer span.End()
 
-	tracing.GlobalTracer.Inject(ctx, req.Header, span)
+	tracer.Inject(ctx, req.Header, span)
 
 	azlog.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, client, req)

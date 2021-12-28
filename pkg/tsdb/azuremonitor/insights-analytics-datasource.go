@@ -39,7 +39,8 @@ func (e *InsightsAnalyticsDatasource) resourceRequest(rw http.ResponseWriter, re
 }
 
 func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+	originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+	url string, tracer tracing.TracerService) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries, dsInfo)
@@ -48,7 +49,7 @@ func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url, tracer)
 	}
 
 	return result, nil
@@ -87,7 +88,8 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery, 
 	return iaQueries, nil
 }
 
-func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery, dsInfo datasourceInfo, client *http.Client, url string) backend.DataResponse {
+func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery, dsInfo datasourceInfo, client *http.Client,
+	url string, tracer tracing.TracerService) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	dataResponseError := func(err error) backend.DataResponse {
@@ -102,13 +104,13 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 	req.URL.Path = path.Join(req.URL.Path, "query")
 	req.URL.RawQuery = query.Params.Encode()
 
-	ctx, span := tracing.GlobalTracer.Start(ctx, "application insights analytics query")
+	ctx, span := tracer.Start(ctx, "application insights analytics query")
 	span.SetAttributes(attribute.Key("target").String(query.Target))
 	span.SetAttributes(attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
 	span.SetAttributes(attribute.Key("org_id").Int64(dsInfo.OrgID))
 
 	defer span.End()
-	tracing.GlobalTracer.Inject(ctx, req.Header, span)
+	tracer.Inject(ctx, req.Header, span)
 
 	if err != nil {
 		azlog.Warn("failed to inject global tracer")

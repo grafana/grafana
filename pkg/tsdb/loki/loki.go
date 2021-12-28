@@ -32,15 +32,17 @@ import (
 const pluginID = "loki"
 
 type Service struct {
-	im   instancemgmt.InstanceManager
-	plog log.Logger
+	im     instancemgmt.InstanceManager
+	plog   log.Logger
+	tracer tracing.TracerService
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store, tracer tracing.TracerService) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 	s := &Service{
-		im:   im,
-		plog: log.New("tsdb.loki"),
+		im:     im,
+		plog:   log.New("tsdb.loki"),
+		tracer: tracer,
 	}
 
 	factory := coreplugin.New(backend.ServeOpts{
@@ -141,7 +143,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	for _, query := range queries {
 		s.plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
-		_, span := tracing.GlobalTracer.Start(ctx, "alerting.loki")
+		_, span := s.tracer.Start(ctx, "alerting.loki")
 		span.SetAttributes(attribute.Key("expr").String(query.Expr))
 		span.SetAttributes(attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
 		span.SetAttributes(attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))

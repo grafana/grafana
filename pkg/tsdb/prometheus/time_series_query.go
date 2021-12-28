@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
@@ -56,7 +55,7 @@ func runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuer
 	for _, query := range queries {
 		plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
-		ctx, span := tracing.GlobalTracer.Start(ctx, "datasource.prometheus")
+		ctx, span := s.tracer.Start(ctx, "datasource.prometheus")
 		span.SetAttributes(attribute.Key("expr").String(query.Expr))
 		span.SetAttributes(attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
 		span.SetAttributes(attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
