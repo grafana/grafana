@@ -13,10 +13,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
-	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -77,20 +75,20 @@ func BenchmarkVectorToDataFrames(b *testing.B) {
 }
 
 func generateVectorData(resultCount int) model.Vector {
-	ts := p.TimeFromUnixNano(time.Now().UnixNano())
+	ts := model.TimeFromUnixNano(time.Now().UnixNano())
 	results := make(model.Vector, 0)
 
 	for i := 0; i < resultCount; i += 1 {
 		s := model.Sample{
-			Metric:    p.Metric(model.LabelSet{"traceID": p.LabelValue(fmt.Sprintf("test_%d", i))}),
-			Value:     p.SampleValue(rand.Float64() + float64(i)),
+			Metric:    model.Metric(model.LabelSet{"traceID": model.LabelValue(fmt.Sprintf("test_%d", i))}),
+			Value:     model.SampleValue(rand.Float64() + float64(i)),
 			Timestamp: ts,
 		}
 		if rand.Int()%10 == 0 {
-			s.Metric["label"] = p.LabelValue(fmt.Sprintf("test_%d", i))
+			s.Metric["label"] = model.LabelValue(fmt.Sprintf("test_%d", i))
 		}
 		if rand.Int()%5 == 0 {
-			s.Value = p.SampleValue(math.NaN())
+			s.Value = model.SampleValue(math.NaN())
 		}
 		results = append(results, &s)
 	}
@@ -147,26 +145,26 @@ func BenchmarkExemplarToDataFrames(b *testing.B) {
 	}
 }
 
-func generateExemplarData(resultCount, exemplarCount int) []apiv1.ExemplarQueryResult {
-	results := []apiv1.ExemplarQueryResult{}
+func generateExemplarData(resultCount, exemplarCount int) []v1.ExemplarQueryResult {
+	results := []v1.ExemplarQueryResult{}
 
 	for i := 0; i < resultCount; i += 1 {
-		exemplars := []apiv1.Exemplar{}
+		exemplars := []v1.Exemplar{}
 		for j := 0; j < resultCount; j += 1 {
-			e := apiv1.Exemplar{
+			e := v1.Exemplar{
 
-				Labels:    p.LabelSet{"traceID": p.LabelValue(fmt.Sprintf("test_%d", j))},
-				Value:     p.SampleValue(rand.Float64() + float64(i)),
-				Timestamp: p.TimeFromUnixNano(time.Now().Add(time.Duration(-1*j) * time.Second).UnixNano()),
+				Labels:    model.LabelSet{"traceID": model.LabelValue(fmt.Sprintf("test_%d", j))},
+				Value:     model.SampleValue(rand.Float64() + float64(i)),
+				Timestamp: model.TimeFromUnixNano(time.Now().Add(time.Duration(-1*j) * time.Second).UnixNano()),
 			}
 			//if j%10 == 0 {
 			//	e.Labels[p.LabelName(fmt.Sprintf("random_%d", i))] = p.LabelValue(fmt.Sprintf("name_%d", i))
 			//}
 			exemplars = append(exemplars, e)
 		}
-		result := apiv1.ExemplarQueryResult{
-			SeriesLabels: p.LabelSet{
-				"__name__": p.LabelValue(fmt.Sprintf("name_%d", i)),
+		result := v1.ExemplarQueryResult{
+			SeriesLabels: model.LabelSet{
+				"__name__": model.LabelValue(fmt.Sprintf("name_%d", i)),
 			},
 			Exemplars: exemplars,
 		}
