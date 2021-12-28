@@ -30,7 +30,7 @@ type PluginContextGetter interface {
 }
 
 type NumLocalSubscribersGetter interface {
-	// GetNumSubscribers returns number of channel subscribers throughout all nodes.
+	// GetNumLocalSubscribers returns number of channel subscribers throughout all nodes.
 	GetNumLocalSubscribers(channel string) (int, error)
 }
 

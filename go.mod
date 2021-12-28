@@ -27,7 +27,7 @@ require (
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v1.1.0
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
-	github.com/centrifugal/centrifuge v0.19.1-0.20211223174757-971f9168bb77
+	github.com/centrifugal/centrifuge v0.19.1-0.20211228164631-e0f7166f2425
 	github.com/cortexproject/cortex v1.10.1-0.20211014125347-85c378182d0d
 	github.com/crewjam/saml v0.4.6-0.20210521115923-29c6295245bd
 	github.com/davecgh/go-spew v1.1.1

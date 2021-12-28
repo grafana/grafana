@@ -258,9 +258,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	// different goroutines (belonging to different client connections). This is also
 	// true for other event handlers.
 	node.OnConnect(func(client *centrifuge.Client) {
-		var leaderSubsMu sync.RWMutex
-		leaderSubs := make(map[string]string)
-
 		numConnections := g.node.Hub().NumClients()
 		if g.Cfg.LiveMaxConnections >= 0 && numConnections > g.Cfg.LiveMaxConnections {
 			logger.Warn(
@@ -277,22 +274,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		logger.Debug("Client connected", "user", client.UserID(), "client", client.ID())
 		connectedAt := time.Now()
 
-		client.OnTransportWrite(func(e centrifuge.TransportWriteEvent) bool {
-			if e.Reply.Push != nil && e.Reply.Push.Pub != nil {
-				leaderSubsMu.RLock()
-				defer leaderSubsMu.RUnlock()
-				if expectedLeadershipID, ok := leaderSubs[e.Reply.Push.Channel]; ok {
-					currentLeadershipId := e.Reply.Push.Pub.Meta["lid"]
-					if currentLeadershipId != expectedLeadershipID {
-						logger.Debug("Leadership ID changed for a subscription", "channel", e.Reply.Push.Channel, "expectedLeadershipId", expectedLeadershipID, "currentLeadershipId", currentLeadershipId)
-						client.Disconnect(centrifuge.DisconnectForceReconnect)
-						return false
-					}
-				}
-			}
-			return true
-		})
-
 		// Called when client issues RPC (async request over Live connection).
 		client.OnRPC(func(e centrifuge.RPCEvent, cb centrifuge.RPCCallback) {
 			err := runConcurrentlyIfNeeded(client.Context(), semaphore, func() {
@@ -301,12 +282,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			if err != nil {
 				cb(centrifuge.RPCReply{}, err)
 			}
-		})
-
-		client.OnUnsubscribe(func(event centrifuge.UnsubscribeEvent) {
-			leaderSubsMu.Lock()
-			delete(leaderSubs, event.Channel)
-			leaderSubsMu.Unlock()
 		})
 
 		// Called when client subscribes to the channel.
@@ -318,9 +293,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 					return
 				}
 				if leadershipID != "" {
-					leaderSubsMu.Lock()
-					leaderSubs[e.Channel] = leadershipID
-					leaderSubsMu.Unlock()
+					reply.Options.Epoch = leadershipID
+					reply.Options.Position = true
 				}
 				cb(reply, err)
 			})

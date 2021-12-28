@@ -3,6 +3,7 @@ package liveplugin
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
@@ -40,13 +41,10 @@ func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte, leader
 	}
 	var err error
 	if p.channelLeaderMode {
-		var meta map[string]string
-		if leadershipID != "" {
-			meta = map[string]string{
-				"lid": leadershipID,
-			}
-		}
-		_, err = p.node.Publish(channel, data, centrifuge.WithMeta(meta))
+		_, err = p.node.Publish(channel, data,
+			centrifuge.WithEpoch(leadershipID),
+			centrifuge.WithHistory(1, time.Minute),
+		)
 	} else {
 		pub := &centrifuge.Publication{
 			Data: data,
