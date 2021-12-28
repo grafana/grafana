@@ -185,18 +185,18 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 		if err != nil {
 			return nil, err
 		}
-		defer res.Body.Close()
+
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				logger.Warn("AzureAD OAuth: failed to close response body", "err", err)
+			}
+		}()
 
 		if res.StatusCode != http.StatusOK {
 			if res.StatusCode == http.StatusForbidden {
-				// Need to set correct permissions for token in azure
+				logger.Error("AzureAD OAuth: failed to fetch user groups. Token need User.Read and GroupMember.Read.All permission")
 			}
-			var errRes map[string]interface{}
-
-			if err := json.NewDecoder(res.Body).Decode(&errRes); err != nil {
-				return nil, err
-			}
-			return nil, errors.New("failed to get member groups")
+			return nil, errors.New("error fetching groups")
 		}
 
 		var body getAzureGroupResponse
