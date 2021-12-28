@@ -30,7 +30,7 @@ func NewMatrixFramer(query *PrometheusQuery, matrix model.Matrix) Framer {
 	}
 
 	timeMap := make(map[int64]*int, length)
-	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, length))
+	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, 0, length))
 	fields := []*data.Field{timeField}
 
 	return Framer{
@@ -52,8 +52,8 @@ func NewVectorFramer(query *PrometheusQuery, vec model.Vector) Framer {
 		series[i] = &VectorSeries{sample: s, rowIdx: -1}
 	}
 
-	timeMap := make(map[int64]*int, length)
-	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, length))
+	timeMap := make(map[int64]*int)
+	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, 0, length))
 	fields := []*data.Field{timeField}
 
 	return Framer{
@@ -75,7 +75,7 @@ func (f *Framer) Frames() data.Frames {
 	}
 
 	for _, s := range f.series {
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, f.length)
+		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, f.fields[0].Len())
 		valueField.Labels = make(map[string]string, len(s.Metric()))
 		for k, v := range s.Metric() {
 			valueField.Labels[string(k)] = string(v)
@@ -87,38 +87,38 @@ func (f *Framer) Frames() data.Frames {
 		f.fields = append(f.fields, valueField)
 
 		for s.Next() {
-			f.processRow(f.query, valueField, s)
+			f.processRow(f.query, s)
 		}
 	}
 
 	return append(frames, newDataFrame("", f.responseType, f.fields...))
 }
 
-func (f *Framer) processRow(query *PrometheusQuery, valueField *data.Field, s Series) {
-	valueIdx := f.timeMap[s.Timestamp()]
+func (f *Framer) processRow(query *PrometheusQuery, s Series) {
+	ts := s.Timestamp()
+	valueField := f.fields[len(f.fields)-1]
+	timeField := f.fields[0]
+	timeIdx := f.timeMap[ts]
 
-	// we haven't seen this timestamp yet, so we will need to add
-	// it to the map, and increment the row index
-	if valueIdx == nil {
+	// if timeIdx is nil, then we haven't seen this timestamp yet
+	if timeIdx == nil {
+		timeField.Append(time.Unix(ts, 0).UTC())
+
+		// extend all of the fields to match the length of the time field
 		for _, field := range f.fields {
-			if field.Len() <= f.rowIdx {
-				field.Extend(f.rowIdx - field.Len() + 1)
+			if field.Len() < timeField.Len() {
+				field.Extend(timeField.Len() - field.Len())
 			}
 		}
-		ts := s.Timestamp()
-		f.fields[0].Set(f.rowIdx, time.Unix(ts, 0).UTC())
 
+		// make a copy of the current row index, and add it to the time map before incrementing
 		lastIdx := f.rowIdx
-		valueIdx = &lastIdx
-		f.timeMap[ts] = valueIdx
+		timeIdx = &lastIdx
+		f.timeMap[ts] = &lastIdx
 		f.rowIdx += 1
 	}
 
-	if valueField.Len() <= *valueIdx {
-		valueField.Extend(*valueIdx - valueField.Len() + 1)
-	}
-
 	if s.IsSet() {
-		valueField.Set(*valueIdx, s.Value())
+		valueField.Set(*timeIdx, s.Value())
 	}
 }
