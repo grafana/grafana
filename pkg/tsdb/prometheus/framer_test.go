@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -143,84 +142,6 @@ func TestVectorToDataFrames(t *testing.T) {
 		require.NoError(t, err)
 	})
 }
-
-func BenchmarkExemplarToDataFrames(b *testing.B) {
-	query := &prometheus.PrometheusQuery{
-		Step:         5 * time.Second,
-		LegendFormat: "",
-	}
-	resultCount := 500
-	rowCount := 10_000
-	results := generateExemplarData(resultCount, rowCount)
-
-	for i := 0; i < b.N; i++ {
-		frames := make([]*data.Frame, 0)
-		frames = prometheus.ExemplarToDataFrames(results, query, frames)
-
-		if len(frames) != 1 {
-			b.Fatal("wrong frame count", 1, len(frames))
-		}
-
-		if frames[0].Rows() != 200 {
-			b.Fatal("wrong row count", rowCount, frames[0].Rows())
-		}
-
-		// resultCount + 1 because of the time field
-		if len(frames[0].Fields) != 4 {
-			b.Fatal("wrong field count", resultCount+1, len(frames[0].Fields))
-		}
-	}
-}
-
-func generateExemplarData(resultCount, exemplarCount int) []v1.ExemplarQueryResult {
-	results := []v1.ExemplarQueryResult{}
-
-	for i := 0; i < resultCount; i += 1 {
-		exemplars := []v1.Exemplar{}
-		for j := 0; j < resultCount; j += 1 {
-			e := v1.Exemplar{
-
-				Labels:    model.LabelSet{"traceID": model.LabelValue(fmt.Sprintf("test_%d", j))},
-				Value:     model.SampleValue(rand.Float64() + float64(i)),
-				Timestamp: model.TimeFromUnixNano(time.Now().Add(time.Duration(-1*j) * time.Second).UnixNano()),
-			}
-			//if j%10 == 0 {
-			//	e.Labels[p.LabelName(fmt.Sprintf("random_%d", i))] = p.LabelValue(fmt.Sprintf("name_%d", i))
-			//}
-			exemplars = append(exemplars, e)
-		}
-		result := v1.ExemplarQueryResult{
-			SeriesLabels: model.LabelSet{
-				"__name__": model.LabelValue(fmt.Sprintf("name_%d", i)),
-			},
-			Exemplars: exemplars,
-		}
-		//if i%10 == 0 {
-		//	result.SeriesLabels[p.LabelName(fmt.Sprintf("random_%d", i))] = p.LabelValue(fmt.Sprintf("name_%d", i))
-		//}
-		results = append(results, result)
-	}
-	return results
-}
-
-//func TestExemplarToDataFrames(t *testing.T) {
-//t.Run("exemplar.json golden response", func(t *testing.T) {
-//var r []v1.ExemplarQueryResult
-//err := loadTestData("exemplar.json", &r)
-//require.NoError(t, err)
-//require.Equal(t, 2, len(r))
-
-//query := &prometheus.PrometheusQuery{
-//LegendFormat: "",
-//}
-//frames := make(data.Frames, 0)
-//frames = prometheus.ExemplarToDataFrames(r, query, frames)
-//res := &backend.DataResponse{Frames: frames}
-
-//err = experimental.CheckGoldenDataResponse("./testdata/exemplar.txt", res, false)
-//require.NoError(t, err)
-//})
-//}
 
 func loadTestData(path string, res interface{}) error {
 	// Ignore gosec warning G304 since it's a test

@@ -244,7 +244,7 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 		case *model.Scalar:
 			nextFrames = scalarToDataFrames(v, query, nextFrames)
 		case []apiv1.ExemplarQueryResult:
-			nextFrames = ExemplarToDataFrames(v, query, nextFrames)
+			nextFrames = exemplarToDataFrames(v, query, nextFrames)
 		default:
 			plog.Error("Query returned unexpected result type", "type", v, "query", query.Expr)
 			continue
@@ -319,7 +319,7 @@ func VectorToDataFrames(vector model.Vector, query *PrometheusQuery, frames data
 	return append(frames, f.Frames()...)
 }
 
-func ExemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery, frames data.Frames) data.Frames {
+func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery, frames data.Frames) data.Frames {
 	// TODO: this preallocation is very naive.
 	// We should figure out a better approximation here.
 	events := make([]ExemplarEvent, 0, len(response)*2)
