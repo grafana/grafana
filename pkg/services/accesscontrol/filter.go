@@ -23,9 +23,9 @@ func Filter(ctx context.Context, dialect SQLDialect, prefix, sqlID string, actio
 		}
 	}
 
-	// if not scopes push empty scope so no values will be returned
+	// if user has no scopes push invalid scope so no values will be returned
 	if len(scopes) == 0 {
-		scopes = append(scopes, "")
+		scopes = append(scopes, "no:access")
 	}
 
 	if strings.Contains(dialect.DriverName(), migrator.SQLite) {
