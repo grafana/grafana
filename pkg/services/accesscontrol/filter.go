@@ -14,6 +14,8 @@ type SQLDialect interface {
 }
 
 // Filter creates a where clause to restrict the view of a query based on a users permissions
+// Scopes for a certain action will be compared against prefix:id:sqlID where prefix is the scope prefix and sqlID
+// is the id to generate scope from e.g. user.id
 func Filter(ctx context.Context, dialect SQLDialect, prefix, sqlID string, action string, user *models.SignedInUser) (string, []interface{}) {
 	var scopes []string
 
