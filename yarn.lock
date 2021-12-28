@@ -4339,11 +4339,11 @@ __metadata:
   linkType: hard
 
 "@grafana/aws-sdk@npm:0.0.36":
-  version: 0.0.36
+  version: 0.0.0-use.local
   resolution: "@grafana/aws-sdk@npm:0.0.36"
   checksum: c243f7c900551e98fd23ef805e983d7db3180992e652ef9ad656acc74ac1c1e779e9b500db08a39d5cd0bc02fdb584e4c7dd89be8546e115ae12c085773cd212
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@grafana/data@9.0.0-pre, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local

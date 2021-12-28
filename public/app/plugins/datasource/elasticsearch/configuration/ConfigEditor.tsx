@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 
+import { SigV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { Alert, DataSourceHttpSettings } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -48,6 +49,7 @@ export const ConfigEditor = (props: Props) => {
         showAccessOptions
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
+        renderSigV4Editor={<SigV4ConnectionConfig {...props}></SigV4ConnectionConfig>}
       />
 
       <ElasticDetails value={options} onChange={onOptionsChange} />
