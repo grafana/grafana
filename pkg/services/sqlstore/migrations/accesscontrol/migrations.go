@@ -150,6 +150,7 @@ func AddMigration(mg *migrator.Migrator) {
 	seedAssignmentV1 := migrator.Table{
 		Name: "seed_assignment",
 		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "builtin_role", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "role_name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 		},

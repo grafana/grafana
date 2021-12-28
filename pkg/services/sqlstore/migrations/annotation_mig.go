@@ -71,6 +71,7 @@ func addAnnotationMig(mg *Migrator) {
 	annotationTagTable := Table{
 		Name: "annotation_tag",
 		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "annotation_id", Type: DB_BigInt, Nullable: false},
 			{Name: "tag_id", Type: DB_BigInt, Nullable: false},
 		},

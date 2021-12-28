@@ -47,6 +47,7 @@ func addAlertMigrations(mg *Migrator) {
 	alertRuleTagTable := Table{
 		Name: "alert_rule_tag",
 		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "alert_id", Type: DB_BigInt, Nullable: false},
 			{Name: "tag_id", Type: DB_BigInt, Nullable: false},
 		},
