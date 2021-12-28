@@ -3,9 +3,9 @@ package legacydata
 import (
 	"strconv"
 	"testing"
-
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -115,6 +115,30 @@ func TestTimeRange(t *testing.T) {
 			require.Nil(t, err)
 			require.Equal(t, expected, res)
 		})
+	})
+
+	t.Run("Can parse now/fy, now/fQ for 1994-02-26T14:00:00.000Z with fiscal year starting in July", func(t *testing.T) {
+		tr := DataTimeRange{
+			From: "now/fy",
+			To:   "now/fQ",
+			Now:  time.Date(1994, time.February, 26, 14, 0, 0, 0, time.UTC),
+		}
+
+		start, err := tr.ParseFrom(WithFiscalStartMonth(time.July))
+		require.NoError(t, err)
+		assert.Equal(
+			t,
+			time.Date(1993, time.July, 1, 0, 0, 0, 0, time.UTC),
+			start,
+		)
+
+		end, err := tr.ParseTo(WithFiscalStartMonth(time.July))
+		require.NoError(t, err)
+		assert.Equal(
+			t,
+			time.Date(1994, time.April, 1, 0, 0, 0, 0, time.UTC).Add(-time.Millisecond),
+			end,
+		)
 	})
 
 	t.Run("Can parse 1960-02-01T07:00:00.000Z, 1965-02-03T08:00:00.000Z", func(t *testing.T) {

@@ -89,6 +89,13 @@ func WithLocation(loc *time.Location) TimeRangeOption {
 	}
 }
 
+func WithFiscalStartMonth(month time.Month) TimeRangeOption {
+	return func(timeRange parsableTime) parsableTime {
+		timeRange.fiscalStartMonth = &month
+		return timeRange
+	}
+}
+
 func WithNow(t time.Time) TimeRangeOption {
 	return func(timeRange parsableTime) parsableTime {
 		timeRange.now = t
@@ -104,11 +111,12 @@ func WithRoundUp() TimeRangeOption {
 }
 
 type parsableTime struct {
-	time      string
-	now       time.Time
-	location  *time.Location
-	weekstart *time.Weekday
-	roundUp   bool
+	time             string
+	now              time.Time
+	location         *time.Location
+	weekstart        *time.Weekday
+	fiscalStartMonth *time.Month
+	roundUp          bool
 }
 
 type TimeRangeOption func(timeRange parsableTime) parsableTime
@@ -148,6 +156,17 @@ func (t parsableTime) Parse() (time.Time, error) {
 				weekstart = weekstart - 7
 			}
 			options = append(options, datemath.WithStartOfWeek(weekstart))
+		}
+		if t.fiscalStartMonth != nil {
+			loc := time.UTC
+			if t.location != nil {
+				loc = t.location
+			}
+			options = append(options, datemath.WithStartOfFiscalYear(
+				// Year doesn't matter, and Grafana only supports setting the
+				// month that the fiscal year starts in.
+				time.Date(0, *t.fiscalStartMonth, 1, 0, 0, 0, 0, loc),
+			))
 		}
 
 		return datemath.ParseAndEvaluate(t.time, options...)
