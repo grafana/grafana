@@ -21,6 +21,11 @@ var builtins = map[string]parse.Func{
 		Return: parse.TypeScalar,
 		F:      nan,
 	},
+	"is_nan": {
+		Args:          []parse.ReturnType{parse.TypeVariantSet},
+		VariantReturn: true,
+		F:             isNaN,
+	},
 	"inf": {
 		Return: parse.TypeScalar,
 		F:      inf,
@@ -49,6 +54,24 @@ func log(e *State, varSet Results) (Results, error) {
 	newRes := Results{}
 	for _, res := range varSet.Values {
 		newVal, err := perFloat(e, res, math.Log)
+		if err != nil {
+			return newRes, err
+		}
+		newRes.Values = append(newRes.Values, newVal)
+	}
+	return newRes, nil
+}
+
+// log returns the natural logarithm value for each result in NumberSet, SeriesSet, or Scalar
+func isNaN(e *State, varSet Results) (Results, error) {
+	newRes := Results{}
+	for _, res := range varSet.Values {
+		newVal, err := perFloat(e, res, func(f float64) float64 {
+			if math.IsNaN(f) {
+				return 1
+			}
+			return 0
+		})
 		if err != nil {
 			return newRes, err
 		}
