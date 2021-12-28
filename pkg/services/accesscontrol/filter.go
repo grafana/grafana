@@ -38,48 +38,51 @@ func Filter(ctx context.Context, dialect SQLDialect, prefix, sqlID string, actio
 }
 
 func sqliteQuery(scopes []string, prefix, sqlID string) (string, []interface{}) {
-	var args []interface{}
+	args := []interface{}{
+		prefix,
+	}
 	for _, s := range scopes {
 		args = append(args, s)
 	}
+	args = append(args, prefix, prefix, prefix)
 
 	return fmt.Sprintf(`
-		'%s:id:' || %s IN (
+		? || ':id:' || %s IN (
 			WITH t(scope) AS (
 				VALUES (?)`+strings.Repeat(`, (?)`, len(scopes)-1)+`
 			)
-			SELECT IIF(t.scope = '*' OR t.scope = '%s:*' OR t.scope = '%s:id:*', '%s:id:' || %s, t.scope) FROM t
+			SELECT IIF(t.scope = '*' OR t.scope = ? || ':*' OR t.scope = ? || ':id:*', ? || ':id:' || %s, t.scope) FROM t
 		)
-	`, prefix, sqlID, prefix, prefix, prefix, sqlID), args
+	`, sqlID, sqlID), args
 }
 
 func mysqlQuery(scopes []string, prefix, sqlID string) (string, []interface{}) {
-	var args []interface{}
+	args := []interface{}{prefix, prefix, prefix, prefix}
 	for _, s := range scopes {
 		args = append(args, s)
 	}
 
 	return fmt.Sprintf(`
-		CONCAT('%s:id:', %s) IN (
-			SELECT IF(t.scope = '*' OR t.scope = '%s:*' OR t.scope = '%s:id:*', CONCAT('%s:id:', %s), t.scope) FROM
+		CONCAT(?, ':id:', %s) IN (
+			SELECT IF(t.scope = '*' OR t.scope = CONCAT(?, ':*') OR t.scope = CONCAT(?, ':id:*'), CONCAT(?, ':id:', %s), t.scope) FROM
 			(SELECT ? AS scope`+strings.Repeat(" UNION ALL SELECT ?", len(scopes)-1)+`) AS t
 		)
-	`, prefix, sqlID, prefix, prefix, prefix, sqlID), args
+	`, sqlID, sqlID), args
 }
 
 func postgresQuery(scopes []string, prefix, sqlID string) (string, []interface{}) {
-	var args []interface{}
+	args := []interface{}{prefix, prefix, prefix, prefix}
 	for _, s := range scopes {
 		args = append(args, s)
 	}
 
 	return fmt.Sprintf(`
-		CONCAT('%s:id:', %s) IN (
+		CONCAT(?, ':id:', %s) IN (
 			SELECT
-				CASE WHEN p.scope = '*' OR p.scope = '%s:*' OR p.scope = '%s:id:*' THEN CONCAT('%s:id:', %s)
+				CASE WHEN p.scope = '*' OR p.scope = CONCAT(?, ':*') OR p.scope = CONCAT(?, ':id:*') THEN CONCAT(?, ':id:', %s)
 				ELSE p.scope
 	    		END
 			FROM (VALUES (?)`+strings.Repeat(", (?)", len(scopes)-1)+`) as p(scope)
 		)
-	`, prefix, sqlID, prefix, prefix, prefix, sqlID), args
+	`, sqlID, sqlID), args
 }

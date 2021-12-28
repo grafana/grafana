@@ -41,18 +41,22 @@ func TestFilter(t *testing.T) {
 				{Action: "datasources:delete", Scope: "datasources:id:101"},
 			},
 			expectedQuery: `
-		'datasources:id:' || data_source.id IN (
+		? || ':id:' || data_source.id IN (
 			WITH t(scope) AS (
 				VALUES (?), (?), (?), (?)
 			)
-			SELECT IIF(t.scope = '*' OR t.scope = 'datasources:*' OR t.scope = 'datasources:id:*', 'datasources:id:' || data_source.id, t.scope) FROM t
+			SELECT IIF(t.scope = '*' OR t.scope = ? || ':*' OR t.scope = ? || ':id:*', ? || ':id:' || data_source.id, t.scope) FROM t
 		)
 	`,
 			expectedArgs: []interface{}{
+				"datasources",
 				"datasources:id:1",
 				"datasources:id:2",
 				"datasources:id:3",
 				"datasources:id:8",
+				"datasources",
+				"datasources",
+				"datasources",
 			},
 		},
 		{
@@ -70,12 +74,16 @@ func TestFilter(t *testing.T) {
 				{Action: "dashboards:delete", Scope: "dashboards:id:101"},
 			},
 			expectedQuery: `
-		CONCAT('dashboards:id:', dashboard.id) IN (
-			SELECT IF(t.scope = '*' OR t.scope = 'dashboards:*' OR t.scope = 'dashboards:id:*', CONCAT('dashboards:id:', dashboard.id), t.scope) FROM
+		CONCAT(?, ':id:', dashboard.id) IN (
+			SELECT IF(t.scope = '*' OR t.scope = CONCAT(?, ':*') OR t.scope = CONCAT(?, ':id:*'), CONCAT(?, ':id:', dashboard.id), t.scope) FROM
 			(SELECT ? AS scope UNION ALL SELECT ? UNION ALL SELECT ?) AS t
 		)
 	`,
 			expectedArgs: []interface{}{
+				"dashboards",
+				"dashboards",
+				"dashboards",
+				"dashboards",
 				"dashboards:id:1",
 				"dashboards:id:2",
 				"dashboards:id:5",
@@ -95,15 +103,19 @@ func TestFilter(t *testing.T) {
 				{Action: "dashboards:delete", Scope: "dashboards:id:101"},
 			},
 			expectedQuery: `
-		CONCAT('users:id:', user.id) IN (
+		CONCAT(?, ':id:', user.id) IN (
 			SELECT
-				CASE WHEN p.scope = '*' OR p.scope = 'users:*' OR p.scope = 'users:id:*' THEN CONCAT('users:id:', user.id)
+				CASE WHEN p.scope = '*' OR p.scope = CONCAT(?, ':*') OR p.scope = CONCAT(?, ':id:*') THEN CONCAT(?, ':id:', user.id)
 				ELSE p.scope
 	    		END
 			FROM (VALUES (?), (?)) as p(scope)
 		)
 	`,
 			expectedArgs: []interface{}{
+				"users",
+				"users",
+				"users",
+				"users",
 				"users:id:1",
 				"users:id:100",
 			},
@@ -183,6 +195,8 @@ func TestFilter_Datasources(t *testing.T) {
 				"datasources:read",
 				&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: GroupScopesByAction(tt.permissions)}},
 			)
+			fmt.Println(query)
+			fmt.Println(args)
 			sqlQuery := baseSql + query
 
 			var datasources []models.DataSource
@@ -191,7 +205,7 @@ func TestFilter_Datasources(t *testing.T) {
 
 			assert.Len(t, datasources, len(tt.expectedDataSources))
 			for i, ds := range datasources {
-				assert.Equal(t, ds.Name, tt.expectedDataSources[i])
+				assert.Equal(t, tt.expectedDataSources[i], ds.Name)
 			}
 		})
 	}
