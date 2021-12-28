@@ -311,3 +311,14 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 func (s *SecretsService) GetProviders() map[string]secrets.Provider {
 	return s.providers
 }
+
+func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
+	err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProvider)
+	if err != nil {
+		return nil
+	}
+
+	// Invalidate cache
+	s.dataKeyCache = make(map[string]dataKeyCacheItem)
+	return err
+}

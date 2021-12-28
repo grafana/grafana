@@ -26,6 +26,8 @@ type Service interface {
 	DecryptJsonData(ctx context.Context, sjd map[string][]byte) (map[string]string, error)
 
 	GetDecryptedValue(ctx context.Context, sjd map[string][]byte, key, fallback string) string
+
+	ReEncryptDataKeys(ctx context.Context) error
 }
 
 // Store defines methods to interact with secrets storage
@@ -35,6 +37,7 @@ type Store interface {
 	CreateDataKey(ctx context.Context, dataKey DataKey) error
 	CreateDataKeyWithDBSession(ctx context.Context, dataKey DataKey, sess *xorm.Session) error
 	DeleteDataKey(ctx context.Context, name string) error
+	ReEncryptDataKeys(ctx context.Context, providers map[string]Provider, currProvider string) error
 }
 
 // Provider is a key encryption key provider for envelope encryption
