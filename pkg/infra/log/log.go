@@ -149,7 +149,9 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			dpath := filepath.Dir(fileName)
 			if err := os.MkdirAll(dpath, os.ModePerm); err != nil {
 				Root.Error("Failed to create directory", "dpath", dpath, "err", err)
-				return errutil.Wrapf(err, "failed to create log directory %q", dpath)
+				// uncomment to crash when it can't create a log directory
+				//return errutil.Wrapf(err, "failed to create log directory %q", dpath)
+				continue
 			}
 			fileHandler := NewFileWriter()
 			fileHandler.Filename = fileName
