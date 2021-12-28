@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type filterTest struct {
