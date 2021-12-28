@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Tooltip, useStyles2 } from '@grafana/ui';
 import { SerializedError } from '@reduxjs/toolkit';
 import pluralize from 'pluralize';
-import React, { useMemo, ReactElement, useState } from 'react';
+import React, { useMemo, ReactElement, useState, FC } from 'react';
+import { useLocalStorage } from 'react-use';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { isRulerNotSupportedResponse } from '../../utils/rules';
 
 export function RuleListErrors(): ReactElement {
   const [expanded, setExpanded] = useState(false);
-  const [closed, setClosed] = useState(false);
+  const [closed, setClosed] = useLocalStorage('grafana.unifiedalerting.hideErrors', false);
   const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const styles = useStyles2(getStyles);
@@ -63,6 +64,9 @@ export function RuleListErrors(): ReactElement {
 
   return (
     <>
+      {!!errors.length && closed && (
+        <ErrorSummaryButton count={errors.length} onClick={() => setClosed((closed) => !closed)} />
+      )}
       {!!errors.length && !closed && (
         <Alert
           data-testid="cloud-rulessource-errors"
@@ -93,8 +97,31 @@ export function RuleListErrors(): ReactElement {
   );
 }
 
+interface ErrorSummaryProps {
+  count: number;
+  onClick: () => void;
+}
+
+const ErrorSummaryButton: FC<ErrorSummaryProps> = ({ count, onClick }) => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.floatRight}>
+      <Tooltip content="Show all errors">
+        <Button fill="text" variant="destructive" icon="exclamation-triangle" onClick={onClick}>
+          {count > 1 ? <>{count} errors</> : <>1 error</>}
+        </Button>
+      </Tooltip>
+    </div>
+  );
+};
+
 const getStyles = (theme: GrafanaTheme2) => ({
   moreButton: css`
     padding: 0;
+  `,
+  floatRight: css`
+    display: flex;
+    justify-content: flex-end;
   `,
 });
