@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -10,10 +11,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // POST /api/teams
-func (hs *HTTPServer) CreateTeam(c *models.ReqContext, cmd models.CreateTeamCommand) response.Response {
+func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
+	cmd := models.CreateTeamCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if c.OrgRole == models.ROLE_VIEWER {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
@@ -47,15 +53,19 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext, cmd models.CreateTeamComm
 }
 
 // PUT /api/teams/:teamId
-func (hs *HTTPServer) UpdateTeam(c *models.ReqContext, cmd models.UpdateTeamCommand) response.Response {
+func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
+	cmd := models.UpdateTeamCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":teamId")
 
-	if err := teamguardian.CanAdmin(hs.Bus, cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(c.Req.Context(), hs.Bus, cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to update team", err)
 	}
 
-	if err := hs.Bus.Dispatch(&cmd); err != nil {
+	if err := hs.Bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrTeamNameTaken) {
 			return response.Error(400, "Team name taken", err)
 		}
@@ -71,11 +81,11 @@ func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
 	teamId := c.ParamsInt64(":teamId")
 	user := c.SignedInUser
 
-	if err := teamguardian.CanAdmin(hs.Bus, orgId, teamId, user); err != nil {
+	if err := teamguardian.CanAdmin(c.Req.Context(), hs.Bus, orgId, teamId, user); err != nil {
 		return response.Error(403, "Not allowed to delete team", err)
 	}
 
-	if err := hs.Bus.Dispatch(&models.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
+	if err := hs.Bus.DispatchCtx(c.Req.Context(), &models.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Failed to delete Team. ID not found", nil)
 		}
@@ -111,7 +121,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		HiddenUsers:  hs.Cfg.HiddenUsers,
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to search Teams", err)
 	}
 
@@ -134,7 +144,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 		HiddenUsers:  hs.Cfg.HiddenUsers,
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", err)
 		}
@@ -151,23 +161,27 @@ func (hs *HTTPServer) GetTeamPreferences(c *models.ReqContext) response.Response
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 
-	if err := teamguardian.CanAdmin(hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(c.Req.Context(), hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to view team preferences.", err)
 	}
 
-	return getPreferencesFor(orgId, 0, teamId)
+	return hs.getPreferencesFor(c.Req.Context(), orgId, 0, teamId)
 }
 
 // PUT /api/teams/:teamId/preferences
-func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext, dtoCmd dtos.UpdatePrefsCmd) response.Response {
+func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext) response.Response {
+	dtoCmd := dtos.UpdatePrefsCmd{}
+	if err := web.Bind(c.Req, &dtoCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 
-	if err := teamguardian.CanAdmin(hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(c.Req.Context(), hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to update team preferences.", err)
 	}
 
-	return updatePreferencesFor(orgId, 0, teamId, &dtoCmd)
+	return hs.updatePreferencesFor(c.Req.Context(), orgId, 0, teamId, &dtoCmd)
 }
 
 // createTeam creates a team.

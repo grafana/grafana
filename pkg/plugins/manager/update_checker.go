@@ -1,14 +1,13 @@
 package manager
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/hashicorp/go-version"
 )
 
@@ -16,112 +15,70 @@ var (
 	httpClient = http.Client{Timeout: 10 * time.Second}
 )
 
-type grafanaNetPlugin struct {
+type gcomPlugin struct {
 	Slug    string `json:"slug"`
 	Version string `json:"version"`
 }
 
-type gitHubLatest struct {
-	Stable  string `json:"stable"`
-	Testing string `json:"testing"`
-}
-
-func (pm *PluginManager) getAllExternalPluginSlugs() string {
-	var result []string
-	for _, plug := range pm.plugins {
-		if plug.IsCorePlugin {
-			continue
-		}
-
-		result = append(result, plug.Id)
-	}
-
-	return strings.Join(result, ",")
-}
-
-func (pm *PluginManager) checkForUpdates() {
-	if !pm.Cfg.CheckForUpdates {
+func (m *PluginManager) checkForUpdates(ctx context.Context) {
+	if !m.cfg.CheckForUpdates {
 		return
 	}
 
-	pm.log.Debug("Checking for updates")
+	m.log.Debug("Checking for updates")
 
-	pluginSlugs := pm.getAllExternalPluginSlugs()
-	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + setting.BuildVersion)
+	pluginIDs := m.pluginsEligibleForVersionCheck()
+	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + strings.Join(pluginIDs, ",") + "&grafanaVersion=" + m.cfg.BuildVersion)
 	if err != nil {
-		log.Tracef("Failed to get plugins repo from grafana.com, %v", err.Error())
+		m.log.Debug("Failed to get plugins repo from grafana.com", "error", err.Error())
 		return
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Warn("Failed to close response body", "err", err)
+			m.log.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Tracef("Update check failed, reading response from grafana.com, %v", err.Error())
+		m.log.Debug("Update check failed, reading response from grafana.com", "error", err.Error())
 		return
 	}
 
-	gNetPlugins := []grafanaNetPlugin{}
-	err = json.Unmarshal(body, &gNetPlugins)
+	var gcomPlugins []gcomPlugin
+	err = json.Unmarshal(body, &gcomPlugins)
 	if err != nil {
-		log.Tracef("Failed to unmarshal plugin repo, reading response from grafana.com, %v", err.Error())
+		m.log.Debug("Failed to unmarshal plugin repo, reading response from grafana.com", "error", err.Error())
 		return
 	}
 
-	for _, plug := range pm.Plugins() {
-		for _, gplug := range gNetPlugins {
-			if gplug.Slug == plug.Id {
-				plug.GrafanaNetVersion = gplug.Version
+	for _, localP := range m.Plugins(ctx) {
+		for _, gcomP := range gcomPlugins {
+			if gcomP.Slug == localP.ID {
+				localP.GrafanaComVersion = gcomP.Version
 
-				plugVersion, err1 := version.NewVersion(plug.Info.Version)
-				gplugVersion, err2 := version.NewVersion(gplug.Version)
+				plugVersion, err1 := version.NewVersion(localP.Info.Version)
+				gplugVersion, err2 := version.NewVersion(gcomP.Version)
 
 				if err1 != nil || err2 != nil {
-					plug.GrafanaNetHasUpdate = plug.Info.Version != plug.GrafanaNetVersion
+					localP.GrafanaComHasUpdate = localP.Info.Version != localP.GrafanaComVersion
 				} else {
-					plug.GrafanaNetHasUpdate = plugVersion.LessThan(gplugVersion)
+					localP.GrafanaComHasUpdate = plugVersion.LessThan(gplugVersion)
 				}
 			}
 		}
 	}
+}
 
-	resp2, err := httpClient.Get("https://raw.githubusercontent.com/grafana/grafana/main/latest.json")
-	if err != nil {
-		log.Tracef("Failed to get latest.json repo from github.com: %v", err.Error())
-		return
-	}
-	defer func() {
-		if err := resp2.Body.Close(); err != nil {
-			pm.log.Warn("Failed to close response body", "err", err)
+func (m *PluginManager) pluginsEligibleForVersionCheck() []string {
+	var result []string
+	for _, p := range m.plugins() {
+		if p.IsCorePlugin() {
+			continue
 		}
-	}()
-	body, err = ioutil.ReadAll(resp2.Body)
-	if err != nil {
-		log.Tracef("Update check failed, reading response from github.com, %v", err.Error())
-		return
+
+		result = append(result, p.ID)
 	}
 
-	var latest gitHubLatest
-	err = json.Unmarshal(body, &latest)
-	if err != nil {
-		log.Tracef("Failed to unmarshal github.com latest, reading response from github.com: %v", err.Error())
-		return
-	}
-
-	if strings.Contains(setting.BuildVersion, "-") {
-		pm.grafanaLatestVersion = latest.Testing
-		pm.grafanaHasUpdate = !strings.HasPrefix(setting.BuildVersion, latest.Testing)
-	} else {
-		pm.grafanaLatestVersion = latest.Stable
-		pm.grafanaHasUpdate = latest.Stable != setting.BuildVersion
-	}
-
-	currVersion, err1 := version.NewVersion(setting.BuildVersion)
-	latestVersion, err2 := version.NewVersion(pm.grafanaLatestVersion)
-	if err1 == nil && err2 == nil {
-		pm.grafanaHasUpdate = currVersion.LessThan(latestVersion)
-	}
+	return result
 }

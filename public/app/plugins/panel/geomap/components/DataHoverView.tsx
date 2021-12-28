@@ -1,20 +1,36 @@
 import React, { PureComponent } from 'react';
 import { stylesFactory } from '@grafana/ui';
-import { DataFrame, Field, formattedValueToString, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
+import {
+  ArrayDataFrame,
+  DataFrame,
+  Field,
+  formattedValueToString,
+  getFieldDisplayName,
+  GrafanaTheme2,
+} from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
+import { FeatureLike } from 'ol/Feature';
 
 export interface Props {
   data?: DataFrame; // source data
-  rowIndex?: number; // the hover row
-  columnIndex?: number; // the hover column
+  feature?: FeatureLike;
+  rowIndex?: number | null; // the hover row
+  columnIndex?: number | null; // the hover column
 }
 
 export class DataHoverView extends PureComponent<Props> {
   style = getStyles(config.theme2);
 
   render() {
-    const { data, rowIndex, columnIndex } = this.props;
+    const { feature, columnIndex } = this.props;
+    let { data, rowIndex } = this.props;
+    if (feature) {
+      const { geometry, ...properties } = feature.getProperties();
+      data = new ArrayDataFrame([properties]);
+      rowIndex = 0;
+    }
+
     if (!data || rowIndex == null) {
       return null;
     }
@@ -22,12 +38,14 @@ export class DataHoverView extends PureComponent<Props> {
     return (
       <table className={this.style.infoWrap}>
         <tbody>
-          {data.fields.map((f, i) => (
-            <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? this.style.highlight : ''}>
-              <th>{getFieldDisplayName(f, data)}:</th>
-              <td>{fmt(f, rowIndex)}</td>
-            </tr>
-          ))}
+          {data.fields
+            .filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip))
+            .map((f, i) => (
+              <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? this.style.highlight : ''}>
+                <th>{getFieldDisplayName(f, data)}:</th>
+                <td>{fmt(f, rowIndex!)}</td>
+              </tr>
+            ))}
         </tbody>
       </table>
     );

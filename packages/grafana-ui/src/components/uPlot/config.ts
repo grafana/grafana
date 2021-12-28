@@ -6,7 +6,7 @@ import {
   GraphGradientMode,
   GraphTresholdsStyleMode,
   LineInterpolation,
-  PointVisibility,
+  VisibilityMode,
   StackingMode,
 } from '@grafana/schema';
 
@@ -34,10 +34,10 @@ export const graphFieldOptions = {
   ] as Array<SelectableValue<BarAlignment>>,
 
   showPoints: [
-    { label: 'Auto', value: PointVisibility.Auto, description: 'Show points when the density is low' },
-    { label: 'Always', value: PointVisibility.Always },
-    { label: 'Never', value: PointVisibility.Never },
-  ] as Array<SelectableValue<PointVisibility>>,
+    { label: 'Auto', value: VisibilityMode.Auto, description: 'Show points when the density is low' },
+    { label: 'Always', value: VisibilityMode.Always },
+    { label: 'Never', value: VisibilityMode.Never },
+  ] as Array<SelectableValue<VisibilityMode>>,
 
   axisPlacement: [
     { label: 'Auto', value: AxisPlacement.Auto, description: 'First field on the left, everything else on the right' },

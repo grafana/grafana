@@ -9,8 +9,10 @@ import {
   ResourceDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
+  ScalarDimensionConfig,
 } from 'app/features/dimensions';
 import { config } from '@grafana/runtime';
+import { getScalarDimension } from './scalar';
 
 export function getColorDimensionFromData(
   data: PanelData | undefined,
@@ -40,6 +42,21 @@ export function getScaleDimensionFromData(
     }
   }
   return getScaledDimension(undefined, cfg);
+}
+
+export function getScalarDimensionFromData(
+  data: PanelData | undefined,
+  cfg: ScalarDimensionConfig
+): DimensionSupplier<number> {
+  if (data?.series && cfg.field) {
+    for (const frame of data.series) {
+      const d = getScalarDimension(frame, cfg);
+      if (!d.isAssumed || data.series.length === 1) {
+        return d;
+      }
+    }
+  }
+  return getScalarDimension(undefined, cfg);
 }
 
 export function getResourceDimensionFromData(
@@ -84,6 +101,24 @@ export function findField(frame?: DataFrame, name?: string): Field | undefined {
     const disp = getFieldDisplayName(field, frame);
     if (name === disp) {
       return field;
+    }
+  }
+  return undefined;
+}
+
+export function findFieldIndex(frame?: DataFrame, name?: string): number | undefined {
+  if (!frame || !name?.length) {
+    return undefined;
+  }
+
+  for (let i = 0; i < frame.fields.length; i++) {
+    const field = frame.fields[i];
+    if (name === field.name) {
+      return i;
+    }
+    const disp = getFieldDisplayName(field, frame);
+    if (name === disp) {
+      return i;
     }
   }
   return undefined;

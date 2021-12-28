@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { MenuItemProps } from './MenuItem';
+import { uniqueId } from 'lodash';
 
 /** @internal */
 export interface MenuItemsGroup<T = any> {
@@ -13,6 +14,7 @@ export interface MenuItemsGroup<T = any> {
   /** Items of the group */
   items: Array<MenuItemProps<T>>;
 }
+
 /** @internal */
 export interface MenuGroupProps extends Partial<MenuItemsGroup> {
   /** special children prop to pass children elements */
@@ -20,15 +22,16 @@ export interface MenuGroupProps extends Partial<MenuItemsGroup> {
 }
 
 /** @internal */
-export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children, ariaLabel }) => {
+export const MenuGroup: React.FC<MenuGroupProps> = ({ label, ariaLabel, children }) => {
   const styles = useStyles2(getStyles);
+  const labelID = `group-label-${uniqueId()}`;
 
   return (
-    <div>
+    <div role="group" aria-labelledby={!ariaLabel && label ? labelID : undefined} aria-label={ariaLabel}>
       {label && (
-        <div className={styles.groupLabel} aria-label={ariaLabel}>
+        <label id={labelID} className={styles.groupLabel} aria-hidden>
           {label}
-        </div>
+        </label>
       )}
       {children}
     </div>

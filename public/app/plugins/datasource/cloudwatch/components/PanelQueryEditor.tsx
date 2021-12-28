@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { pick } from 'lodash';
-import { ExploreQueryFieldProps, ExploreMode } from '@grafana/data';
+import { QueryEditorProps, ExploreMode } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { CloudWatchJsonData, CloudWatchQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
@@ -8,7 +8,7 @@ import { QueryInlineField } from './';
 import { MetricsQueryEditor } from './MetricsQueryEditor';
 import LogsQueryEditor from './LogsQueryEditor';
 
-export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
+export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
 
 const apiModes = {
   Metrics: { label: 'CloudWatch Metrics', value: 'Metrics' },
@@ -22,33 +22,36 @@ export class PanelQueryEditor extends PureComponent<Props> {
 
     return (
       <>
-        <QueryInlineField label="Query Mode">
-          <Segment
-            value={apiModes[apiMode]}
-            options={Object.values(apiModes)}
-            onChange={({ value }) => {
-              const newMode = (value as 'Metrics' | 'Logs') ?? 'Metrics';
-              if (newMode !== apiModes[apiMode].value) {
-                const commonProps = pick(
-                  query,
-                  'id',
-                  'region',
-                  'namespace',
-                  'refId',
-                  'hide',
-                  'key',
-                  'queryType',
-                  'datasource'
-                );
+        {/* TODO: Remove this in favor of the QueryHeader */}
+        {apiMode === ExploreMode.Logs && (
+          <QueryInlineField label="Query Mode">
+            <Segment
+              value={apiModes[apiMode]}
+              options={Object.values(apiModes)}
+              onChange={({ value }) => {
+                const newMode = (value as 'Metrics' | 'Logs') ?? 'Metrics';
+                if (newMode !== apiModes[apiMode].value) {
+                  const commonProps = pick(
+                    query,
+                    'id',
+                    'region',
+                    'namespace',
+                    'refId',
+                    'hide',
+                    'key',
+                    'queryType',
+                    'datasource'
+                  );
 
-                this.props.onChange({
-                  ...commonProps,
-                  queryMode: newMode,
-                } as CloudWatchQuery);
-              }
-            }}
-          />
-        </QueryInlineField>
+                  this.props.onChange({
+                    ...commonProps,
+                    queryMode: newMode,
+                  } as CloudWatchQuery);
+                }
+              }}
+            />
+          </QueryInlineField>
+        )}
         {apiMode === ExploreMode.Logs ? (
           <LogsQueryEditor {...this.props} allowCustomValue />
         ) : (

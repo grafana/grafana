@@ -5,8 +5,6 @@ import { getPluginId } from '../../config/utils/getPluginId';
 import { getCiFolder } from '../../plugins/env';
 import { useSpinner } from '../utils/useSpinner';
 import path = require('path');
-
-// @ts-ignore
 import execa = require('execa');
 
 interface Command extends Array<any> {}
@@ -120,7 +118,7 @@ const prepareRelease = ({ dryrun, verbose }: any) =>
             console.log('skipping empty line');
           }
         }
-      } catch (ex) {
+      } catch (ex: any) {
         const err: string = ex.message;
         if (opts['okOnError'] && Array.isArray(opts['okOnError'])) {
           let trueError = true;

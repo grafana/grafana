@@ -75,6 +75,13 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
     }
   }
 
+  // assert that field configs do not use array path syntax
+  for (const item of registry.list()) {
+    if (item.path.indexOf('[') > 0) {
+      throw new Error(`[${pluginName}] Field config paths do not support arrays: ${item.id}`);
+    }
+  }
+
   return registry;
 }
 

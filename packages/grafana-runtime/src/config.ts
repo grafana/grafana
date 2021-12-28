@@ -10,6 +10,7 @@ import {
   LicenseInfo,
   MapLayerOptions,
   PanelPluginMeta,
+  PreloadPlugin,
   systemDateFormats,
   SystemDateFormatSettings,
 } from '@grafana/data';
@@ -34,7 +35,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   externalUserMngInfo = '';
   allowOrgCreate = false;
   disableLoginForm = false;
-  defaultDatasource = '';
+  defaultDatasource = ''; // UID
   alertingEnabled = false;
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';
@@ -44,6 +45,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   ldapEnabled = false;
   sigV4AuthEnabled = false;
   samlEnabled = false;
+  samlName = '';
   autoAssignOrg = true;
   verifyEmailEnabled = false;
   oauth: any;
@@ -58,15 +60,16 @@ export class GrafanaBootConfig implements GrafanaConfig {
   liveEnabled = true;
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: string[] = [];
+  pluginsToPreload: PreloadPlugin[] = [];
   featureToggles: FeatureToggles = {
-    ngalert: false,
     accesscontrol: false,
     trimDefaults: false,
     tempoServiceGraph: false,
     tempoSearch: false,
-    prometheusMonaco: false,
+    recordedQueries: false,
     newNavigation: false,
+    fullRangeLogsVolume: false,
+    dashboardPreviews: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
@@ -80,8 +83,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
     sampleRate: 1,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
-  pluginAdminEnabled = false;
+  pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
+  pluginCatalogHiddenPlugins: string[] = [];
   expressionsEnabled = false;
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
@@ -94,6 +98,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
+  unifiedAlertingEnabled = false;
+  applicationInsightsConnectionString?: string;
+  applicationInsightsEndpointUrl?: string;
+  recordedQueries = {
+    enabled: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

@@ -1,25 +1,30 @@
 [[Subject .Subject "[[.Title]]"]]
 
 [[ define "alert" ]]
+<tr>
+  <td colspan="2" class="value">
+    <span class="value-heading">Value:</span> <span class="value-value">[[ .ValueString ]]</span>
+  </td>
+</tr>
   [[ if gt (len .Annotations.SortedPairs) 0 ]]
       <tr>
         <td colspan="2" class="annotations">
           [[ range .Annotations.SortedPairs ]]
-            <p>[[ .Name ]]: [[ .Value ]]</p>
+          <p><span class="annotations-heading">[[ .Name ]]:</span> <span class="annotations-value">[[ .Value ]]</span></p>
           [[ end ]]
         </td>
       </tr>
   [[ end ]]
   <tr>
-    <td valign="top" class="labels-heading">Labels:</td>
-    <td>
+    <td colspan="2">
+      <span class="labels-heading">Labels:</span>
       <ul class="labels-list">
         [[ range .Labels.SortedPairs ]]<li>[[ .Name ]]: [[ .Value ]]</li>[[ end ]]
       </ul>
     </td>
   </tr>
   <tr>
-    <td colspan="2">
+    <td colspan="2" class="actions">
       [[ if .SilenceURL ]]
         <a
           href="[[ .SilenceURL ]]"
@@ -108,6 +113,16 @@
     margin: 0 10px 0 0;
     padding: 5px 9px;
   }
+  .value {
+    font-size: 14px;
+    padding-top: 24px;
+  }
+  .value-heading {
+    font-weight: bold;
+  }
+  .value-value {
+    padding-left: 8px;
+  }
   .annotations {
     font-size: 14px;
     padding: 24px 0 12px 0;
@@ -116,10 +131,24 @@
     font-size: 14px;
     font-weight: bold;
     vertical-align: top;
+    display: inline-block;
+  }
+  .annotations-heading {
+    font-weight: bold;
+    text-transform: capitalize;
+  }
+  .annotations-value {
+    padding-left: 8px;
   }
   .labels-list {
     font-size: 14px;
     vertical-align: top;
+    margin: 0;
+    display: inline-block;
+    padding-left: 8px;
+  }
+  .actions {
+    padding: 24px 0 12px 0;
   }
   .section-heading {
     color: #2c3235;
@@ -132,6 +161,7 @@
     font-weight: bold;
     padding: 0 0 0 12px;
     text-decoration: underline;
+    vertical-align: middle;
   }
   .status-tag {
     color: #ffffff;
@@ -213,6 +243,6 @@
       </table>
       </table>
     </td>
-  </tr> 
+  </tr>
 </table>
 [[ end ]]

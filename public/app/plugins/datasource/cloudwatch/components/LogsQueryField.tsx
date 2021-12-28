@@ -19,7 +19,7 @@ import { Editor, Node, Plugin } from 'slate';
 import syntax from '../syntax';
 
 // Types
-import { AbsoluteTimeRange, ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
+import { AbsoluteTimeRange, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
@@ -33,7 +33,7 @@ import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
 export interface CloudWatchLogsQueryFieldProps
-  extends ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
+  extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   absoluteRange: AbsoluteTimeRange;
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
@@ -171,25 +171,26 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       loadingLogGroups: true,
     });
 
-    this.fetchLogGroupOptions(query.region).then((logGroups) => {
-      this.setState((state) => {
-        const selectedLogGroups = state.selectedLogGroups;
-        if (onChange) {
-          const nextQuery = {
-            ...query,
-            logGroupNames: selectedLogGroups.map((group) => group.value!),
+    query.region &&
+      this.fetchLogGroupOptions(query.region).then((logGroups) => {
+        this.setState((state) => {
+          const selectedLogGroups = state.selectedLogGroups;
+          if (onChange) {
+            const nextQuery = {
+              ...query,
+              logGroupNames: selectedLogGroups.map((group) => group.value!),
+            };
+
+            onChange(nextQuery);
+          }
+
+          return {
+            loadingLogGroups: false,
+            availableLogGroups: logGroups,
+            selectedLogGroups,
           };
-
-          onChange(nextQuery);
-        }
-
-        return {
-          loadingLogGroups: false,
-          availableLogGroups: logGroups,
-          selectedLogGroups,
-        };
+        });
       });
-    });
 
     datasource.getRegions().then((regions) => {
       this.setState({
@@ -263,7 +264,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const { datasource } = this.props;
+    const { datasource, query } = this.props;
     const { selectedLogGroups } = this.state;
 
     if (!datasource.languageProvider) {
@@ -276,7 +277,12 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
     return await cloudwatchLanguageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey, editor },
-      { history, absoluteRange, logGroupNames: selectedLogGroups.map((logGroup) => logGroup.value!) }
+      {
+        history,
+        absoluteRange,
+        logGroupNames: selectedLogGroups.map((logGroup) => logGroup.value!),
+        region: query.region,
+      }
     );
   };
 

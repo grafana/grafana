@@ -1,6 +1,7 @@
 package ossencryption
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,17 +22,19 @@ func TestEncryption(t *testing.T) {
 	})
 
 	t.Run("decrypting basic payload", func(t *testing.T) {
-		encrypted, err := svc.Encrypt([]byte("grafana"), "1234")
+		ctx := context.Background()
+
+		encrypted, err := svc.Encrypt(ctx, []byte("grafana"), "1234")
 		require.NoError(t, err)
 
-		decrypted, err := svc.Decrypt(encrypted, "1234")
+		decrypted, err := svc.Decrypt(ctx, encrypted, "1234")
 		require.NoError(t, err)
 
 		assert.Equal(t, []byte("grafana"), decrypted)
 	})
 
 	t.Run("decrypting empty payload should return error", func(t *testing.T) {
-		_, err := svc.Decrypt([]byte(""), "1234")
+		_, err := svc.Decrypt(context.Background(), []byte(""), "1234")
 		require.Error(t, err)
 
 		assert.Equal(t, "unable to compute salt", err.Error())

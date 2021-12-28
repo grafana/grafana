@@ -6,6 +6,7 @@ type SystemStats struct {
 	Users                     int64
 	ActiveUsers               int64
 	DailyActiveUsers          int64
+	MonthlyActiveUsers        int64
 	Orgs                      int64
 	Playlists                 int64
 	Alerts                    int64
@@ -17,6 +18,7 @@ type SystemStats struct {
 	Folders                   int64
 	ProvisionedDashboards     int64
 	AuthTokens                int64
+	APIKeys                   int64 `xorm:"api_keys"`
 	DashboardVersions         int64
 	Annotations               int64
 	AlertRules                int64
@@ -94,6 +96,7 @@ type AdminStats struct {
 	DailyActiveEditors  int64 `json:"dailyActiveEditors"`
 	DailyActiveViewers  int64 `json:"dailyActiveViewers"`
 	DailyActiveSessions int64 `json:"dailyActiveSessions"`
+	MonthlyActiveUsers  int64 `json:"monthlyActiveUsers"`
 }
 
 type GetAdminStatsQuery struct {

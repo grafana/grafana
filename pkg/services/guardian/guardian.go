@@ -1,6 +1,7 @@
 package guardian
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -40,15 +41,17 @@ type dashboardGuardianImpl struct {
 	acl    []*models.DashboardAclInfoDTO
 	teams  []*models.TeamDTO
 	log    log.Logger
+	ctx    context.Context
 }
 
 // New factory for creating a new dashboard guardian instance
-var New = func(dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
+var New = func(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
 	return &dashboardGuardianImpl{
 		user:   user,
 		dashId: dashId,
 		orgId:  orgId,
 		log:    log.New("dashboard.permissions"),
+		ctx:    ctx,
 	}
 }
 
@@ -131,7 +134,7 @@ func (g *dashboardGuardianImpl) checkAcl(permission models.PermissionType, acl [
 	}
 
 	// load teams
-	teams, err := g.getTeams()
+	teams, err := g.getTeams(g.ctx)
 	if err != nil {
 		return false, err
 	}
@@ -201,7 +204,7 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 	}
 
 	query := models.GetDashboardAclInfoListQuery{DashboardID: g.dashId, OrgID: g.orgId}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(g.ctx, &query); err != nil {
 		return nil, err
 	}
 
@@ -245,13 +248,14 @@ func (g *dashboardGuardianImpl) GetACLWithoutDuplicates() ([]*models.DashboardAc
 	return result, nil
 }
 
-func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
+func (g *dashboardGuardianImpl) getTeams(ctx context.Context) ([]*models.TeamDTO, error) {
 	if g.teams != nil {
 		return g.teams, nil
 	}
 
 	query := models.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserId}
-	err := bus.Dispatch(&query)
+	// TODO: Use bus.DispatchCtx(g.Ctx, &query) when GetTeamsByUserQuery supports context.
+	err := bus.DispatchCtx(ctx, &query)
 
 	g.teams = query.Result
 	return query.Result, err
@@ -343,7 +347,7 @@ func (g *FakeDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.Dashbo
 
 // nolint:unused
 func MockDashboardGuardian(mock *FakeDashboardGuardian) {
-	New = func(dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
+	New = func(_ context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
 		mock.OrgId = orgId
 		mock.DashId = dashId
 		mock.User = user

@@ -9,17 +9,20 @@ import { Loader } from '../plugins/admin/components/Loader';
 
 export const ServerStats = () => {
   const [stats, setStats] = useState<ServerStat | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    getServerStats().then((stats) => {
-      setStats(stats);
-      setIsLoading(false);
-    });
+    if (contextSrv.hasAccess(AccessControlAction.ActionServerStatsRead, contextSrv.isGrafanaAdmin)) {
+      setIsLoading(true);
+      getServerStats().then((stats) => {
+        setStats(stats);
+        setIsLoading(false);
+      });
+    }
   }, []);
 
-  if (!contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
+  if (!contextSrv.hasAccess(AccessControlAction.ActionServerStatsRead, contextSrv.isGrafanaAdmin)) {
     return null;
   }
 

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -8,9 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func CheckOrgExists(orgID int64) error {
+func CheckOrgExists(ctx context.Context, orgID int64) error {
 	query := models.GetOrgByIdQuery{Id: orgID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return err
 		}

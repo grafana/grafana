@@ -204,3 +204,7 @@ export interface CustomMetaData {
   perSeriesAligner?: string;
   alignmentPeriod?: string;
 }
+
+export interface PostResponse {
+  results: Record<string, any>;
+}

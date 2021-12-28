@@ -13,13 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
 // KafkaNotifier is responsible for sending
 // alert notifications to Kafka.
 type KafkaNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	Endpoint string
 	Topic    string
 	log      log.Logger
@@ -28,6 +27,10 @@ type KafkaNotifier struct {
 
 // NewKafkaNotifier is the constructor function for the Kafka notifier.
 func NewKafkaNotifier(model *NotificationChannelConfig, t *template.Template) (*KafkaNotifier, error) {
+	if model.Settings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
+	}
+
 	endpoint := model.Settings.Get("kafkaRestProxy").MustString()
 	if endpoint == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find kafka rest proxy endpoint property in settings"}
@@ -38,7 +41,7 @@ func NewKafkaNotifier(model *NotificationChannelConfig, t *template.Template) (*
 	}
 
 	return &KafkaNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,

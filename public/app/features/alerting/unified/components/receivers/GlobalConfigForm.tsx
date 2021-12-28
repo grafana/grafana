@@ -12,6 +12,7 @@ import { updateAlertManagerConfigAction } from '../../state/actions';
 import { omitEmptyValues } from '../../utils/receiver-form';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
+import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 
 interface Props {
   config: AlertManagerCortexConfig;
@@ -28,7 +29,7 @@ export const GlobalConfigForm: FC<Props> = ({ config, alertManagerSourceName }) 
   const dispatch = useDispatch();
   useCleanup((state) => state.unifiedAlerting.saveAMConfig);
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
-
+  const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
   const styles = useStyles2(getStyles);
 
   const formAPI = useForm<FormValues>({
@@ -75,6 +76,7 @@ export const GlobalConfigForm: FC<Props> = ({ config, alertManagerSourceName }) 
         )}
         {globalConfigOptions.map((option) => (
           <OptionField
+            readOnly={readOnly}
             defaultValue={defaultValues[option.propertyName]}
             key={option.propertyName}
             option={option}
@@ -84,12 +86,16 @@ export const GlobalConfigForm: FC<Props> = ({ config, alertManagerSourceName }) 
         ))}
         <div>
           <HorizontalGroup>
-            {loading && (
-              <Button disabled={true} icon="fa fa-spinner" variant="primary">
-                Saving...
-              </Button>
+            {!readOnly && (
+              <>
+                {loading && (
+                  <Button disabled={true} icon="fa fa-spinner" variant="primary">
+                    Saving...
+                  </Button>
+                )}
+                {!loading && <Button type="submit">Save global config</Button>}
+              </>
             )}
-            {!loading && <Button type="submit">Save global config</Button>}
             <LinkButton
               disabled={loading}
               fill="outline"

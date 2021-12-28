@@ -5,8 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"gopkg.in/macaron.v1"
-
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -58,8 +57,8 @@ func TestMiddleware(t *testing.T) {
 				fallbackCalled = true
 			}
 
-			server := macaron.New()
-			server.UseMiddleware(macaron.Renderer("../../public/views", "[[", "]]"))
+			server := web.New()
+			server.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
 
 			server.Use(contextProvider())
 			server.Use(Middleware(test.ac)(fallback, test.evaluator))
@@ -81,8 +80,8 @@ func TestMiddleware(t *testing.T) {
 	}
 }
 
-func contextProvider() macaron.Handler {
-	return func(c *macaron.Context) {
+func contextProvider() web.Handler {
+	return func(c *web.Context) {
 		reqCtx := &models.ReqContext{
 			Context:      c,
 			Logger:       log.New(""),

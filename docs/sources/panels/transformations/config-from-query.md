@@ -13,7 +13,7 @@ If you want to extract a unique config for every row in the config query result 
 
 ### Options
 
-- **Config query**: Selet the query that returns the data you want to use as configuration.
+- **Config query**: Select the query that returns the data you want to use as configuration.
 - **Apply to**: Select what fields or series to apply the configuration to.
 - **Apply to options**: Usually a field type or field name regex depending on what option you selected in **Apply to**.
 

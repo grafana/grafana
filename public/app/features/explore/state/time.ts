@@ -12,7 +12,7 @@ import { RefreshPicker } from '@grafana/ui';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
 import { ExploreItemState, ThunkResult } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import { getTimeZone } from 'app/features/profile/state/selectors';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { runQueries } from './query';
@@ -78,6 +78,7 @@ export const updateTime = (config: {
     const { exploreId, absoluteRange: absRange, rawRange: actionRange } = config;
     const itemState = getState().explore[exploreId]!;
     const timeZone = getTimeZone(getState().user);
+    const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
     const { range: rangeInState } = itemState;
     let rawRange: RawTimeRange = rangeInState.raw;
 
@@ -92,7 +93,7 @@ export const updateTime = (config: {
       rawRange = actionRange;
     }
 
-    const range = getTimeRange(timeZone, rawRange);
+    const range = getTimeRange(timeZone, rawRange, fiscalYearStartMonth);
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
 
     getTimeSrv().init(

@@ -213,8 +213,8 @@ a.external-link {
     margin-bottom: $spacer;
   }
 
-  table {
-    margin-bottom: $spacer;
+  *:not(:first-child) {
+    margin-top: $spacer;
   }
 
   table {

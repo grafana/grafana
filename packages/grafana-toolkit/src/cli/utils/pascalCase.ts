@@ -1,3 +1,3 @@
 import { flow, camelCase, upperFirst } from 'lodash';
 
-export const pascalCase = flow(camelCase, upperFirst);
+export const pascalCase = flow([camelCase, upperFirst]);

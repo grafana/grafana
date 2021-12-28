@@ -1,4 +1,4 @@
-# Singlestat Panel -  Native Plugin
+# Singlestat Panel - Native Plugin
 
 The Singlestat Panel is **included** with Grafana.
 

@@ -9,12 +9,16 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	gokit_log "github.com/go-kit/kit/log"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/alertmanager/cluster"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/inhibit"
 	"github.com/prometheus/alertmanager/nflog"
@@ -23,10 +27,13 @@ import (
 	"github.com/prometheus/alertmanager/provider/mem"
 	"github.com/prometheus/alertmanager/silence"
 	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
+	pb "github.com/prometheus/alertmanager/silence/silencepb"
+
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -52,30 +59,31 @@ const (
 	defaultResolveTimeout = 5 * time.Minute
 	// memoryAlertsGCInterval is the interval at which we'll remove resolved alerts from memory.
 	memoryAlertsGCInterval = 30 * time.Minute
-	// To start, the alertmanager needs at least one route defined.
-	// TODO: we should move this to Grafana settings and define this as the default.
-	alertmanagerDefaultConfiguration = `
-{
-	"alertmanager_config": {
-		"route": {
-			"receiver": "grafana-default-email"
-		},
-		"receivers": [{
-			"name": "grafana-default-email",
-			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
-				"type": "email",
-				"isDefault": true,
-				"settings": {
-					"addresses": "<example@email.com>"
-				}
-			}]
-		}]
+)
+
+func init() {
+	silence.ValidateMatcher = func(m *pb.Matcher) error {
+		switch m.Type {
+		case pb.Matcher_EQUAL, pb.Matcher_NOT_EQUAL:
+			if !model.LabelValue(m.Pattern).IsValid() {
+				return fmt.Errorf("invalid label value %q", m.Pattern)
+			}
+		case pb.Matcher_REGEXP, pb.Matcher_NOT_REGEXP:
+			if _, err := regexp.Compile(m.Pattern); err != nil {
+				return fmt.Errorf("invalid regular expression %q: %s", m.Pattern, err)
+			}
+		default:
+			return fmt.Errorf("unknown matcher type %q", m.Type)
+		}
+		return nil
 	}
 }
-`
-)
+
+type ClusterPeer interface {
+	AddState(string, cluster.State, prometheus.Registerer) cluster.ClusterChannel
+	Position() int
+	WaitReady(context.Context) error
+}
 
 type Alertmanager struct {
 	logger      log.Logger
@@ -90,6 +98,8 @@ type Alertmanager struct {
 	marker          types.Marker
 	alerts          *mem.Alerts
 	route           *dispatch.Route
+	peer            ClusterPeer
+	peerTimeout     time.Duration
 
 	dispatcher *dispatch.Dispatcher
 	inhibitor  *inhibit.Inhibitor
@@ -102,6 +112,10 @@ type Alertmanager struct {
 	silencer *silence.Silencer
 	silences *silence.Silences
 
+	// muteTimes is a map where the key is the name of the mute_time_interval
+	// and the value represents all configured time_interval(s)
+	muteTimes map[string][]timeinterval.TimeInterval
+
 	stageMetrics      *notify.Metrics
 	dispatcherMetrics *dispatch.DispatcherMetrics
 
@@ -109,9 +123,12 @@ type Alertmanager struct {
 	config          *apimodels.PostableUserConfig
 	configHash      [16]byte
 	orgID           int64
+
+	decryptFn channels.GetDecryptedValueFn
 }
 
-func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore, m *metrics.Alertmanager) (*Alertmanager, error) {
+func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
+	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:          cfg,
 		stopc:             make(chan struct{}),
@@ -120,11 +137,14 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		stageMetrics:      notify.NewMetrics(m.Registerer),
 		dispatcherMetrics: dispatch.NewDispatcherMetrics(false, m.Registerer),
 		Store:             store,
+		peer:              peer,
+		peerTimeout:       cfg.UnifiedAlerting.HAPeerTimeout,
 		Metrics:           m,
 		orgID:             orgID,
+		decryptFn:         decryptFn,
 	}
 
-	am.gokitLogger = gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger))
+	am.gokitLogger = logging.NewWrapper(am.logger)
 	am.fileStore = NewFileStore(am.orgID, kvStore, am.WorkingDirPath())
 
 	nflogFilepath, err := am.fileStore.FilepathFor(context.TODO(), notificationLogFilename)
@@ -148,6 +168,9 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
 	}
+	c := am.peer.AddState(fmt.Sprintf("notificationlog:%d", am.orgID), am.notificationLog, m.Registerer)
+	am.notificationLog.SetBroadcast(c.Broadcast)
+
 	// Initialize silences
 	am.silences, err = silence.New(silence.Options{
 		Metrics:      m.Registerer,
@@ -157,6 +180,9 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
 	}
+
+	c = am.peer.AddState(fmt.Sprintf("silences:%d", am.orgID), am.silences, m.Registerer)
+	am.silences.SetBroadcast(c.Broadcast)
 
 	am.wg.Add(1)
 	go func() {
@@ -212,19 +238,19 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 	defer am.reloadConfigMtx.Unlock()
 
 	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
+		AlertmanagerConfiguration: am.Settings.UnifiedAlerting.DefaultConfiguration,
 		Default:                   true,
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 		OrgID:                     am.orgID,
 	}
 
-	cfg, err := Load([]byte(alertmanagerDefaultConfiguration))
+	cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
 	if err != nil {
 		return err
 	}
 
 	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
-		if err := am.applyConfig(cfg, []byte(alertmanagerDefaultConfiguration)); err != nil {
+		if err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration)); err != nil {
 			return err
 		}
 		return nil
@@ -266,44 +292,20 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	return nil
 }
 
-// SyncAndApplyConfigFromDatabase picks the latest config from database and restarts
-// the components with the new config.
-func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
+// ApplyConfig applies the configuration to the Alertmanager.
+func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
+	var err error
+	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
+	if err != nil {
+		return fmt.Errorf("failed to parse Alertmanager config: %w", err)
+	}
+
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
-	// First, let's get the configuration we need from the database.
-	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: am.orgID}
-	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
-		// If there's no configuration in the database, let's use the default configuration.
-		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-			// First, let's save it to the database. We don't need to use a transaction here as we'll always succeed.
-			am.logger.Info("no Alertmanager configuration found, saving and applying a default")
-			savecmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-				AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
-				Default:                   true,
-				ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-				OrgID:                     am.orgID,
-			}
-			if err := am.Store.SaveAlertmanagerConfiguration(savecmd); err != nil {
-				return err
-			}
-
-			q.Result = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: alertmanagerDefaultConfiguration, Default: true}
-		} else {
-			return fmt.Errorf("unable to get Alertmanager configuration from the database: %w", err)
-		}
+	if err = am.applyConfig(cfg, nil); err != nil {
+		return fmt.Errorf("unable to apply configuration: %w", err)
 	}
-
-	cfg, err := Load([]byte(q.Result.AlertmanagerConfiguration))
-	if err != nil {
-		return err
-	}
-
-	if err := am.applyConfig(cfg, nil); err != nil {
-		return fmt.Errorf("unable to reload configuration: %w", err)
-	}
-
 	return nil
 }
 
@@ -331,6 +333,14 @@ func (am *Alertmanager) templateFromPaths(paths ...string) (*template.Template, 
 	}
 	tmpl.ExternalURL = externalURL
 	return tmpl, nil
+}
+
+func (am *Alertmanager) buildMuteTimesMap(muteTimeIntervals []config.MuteTimeInterval) map[string][]timeinterval.TimeInterval {
+	muteTimes := make(map[string][]timeinterval.TimeInterval, len(muteTimeIntervals))
+	for _, ti := range muteTimeIntervals {
+		muteTimes[ti.Name] = ti.TimeIntervals
+	}
+	return muteTimes
 }
 
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
@@ -379,6 +389,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	if err != nil {
 		return fmt.Errorf("failed to build integration map: %w", err)
 	}
+
 	// Now, let's put together our notification pipeline
 	routingStage := make(notify.RoutingStage, len(integrationsMap))
 
@@ -390,17 +401,20 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	}
 
 	am.inhibitor = inhibit.NewInhibitor(am.alerts, cfg.AlertmanagerConfig.InhibitRules, am.marker, am.gokitLogger)
+	am.muteTimes = am.buildMuteTimesMap(cfg.AlertmanagerConfig.MuteTimeIntervals)
 	am.silencer = silence.NewSilencer(am.silences, am.marker, am.gokitLogger)
 
+	meshStage := notify.NewGossipSettleStage(am.peer)
 	inhibitionStage := notify.NewMuteStage(am.inhibitor)
+	timeMuteStage := notify.NewTimeMuteStage(am.muteTimes)
 	silencingStage := notify.NewMuteStage(am.silencer)
 	for name := range integrationsMap {
-		stage := am.createReceiverStage(name, integrationsMap[name], waitFunc, am.notificationLog)
-		routingStage[name] = notify.MultiStage{silencingStage, inhibitionStage, stage}
+		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
+		routingStage[name] = notify.MultiStage{meshStage, silencingStage, timeMuteStage, inhibitionStage, stage}
 	}
 
-	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
-	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, timeoutFunc, &nilLimits{}, am.gokitLogger, am.dispatcherMetrics)
+	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route.AsAMRoute(), nil)
+	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.gokitLogger, am.dispatcherMetrics)
 
 	am.wg.Add(1)
 	go func() {
@@ -458,7 +472,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 
 func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *template.Template) (NotificationChannel, error) {
 	// secure settings are already encrypted at this point
-	secureSettings := securejsondata.SecureJsonData(make(map[string][]byte, len(r.SecureSettings)))
+	secureSettings := make(map[string][]byte, len(r.SecureSettings))
 
 	for k, v := range r.SecureSettings {
 		d, err := base64.StdEncoding.DecodeString(v)
@@ -474,6 +488,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	var (
 		cfg = &channels.NotificationChannelConfig{
 			UID:                   r.UID,
+			OrgID:                 am.orgID,
 			Name:                  r.Name,
 			Type:                  r.Type,
 			DisableResolveMessage: r.DisableResolveMessage,
@@ -487,13 +502,13 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	case "email":
 		n, err = channels.NewEmailNotifier(cfg, tmpl) // Email notifier already has a default template.
 	case "pagerduty":
-		n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
+		n, err = channels.NewPagerdutyNotifier(cfg, tmpl, am.decryptFn)
 	case "pushover":
-		n, err = channels.NewPushoverNotifier(cfg, tmpl)
+		n, err = channels.NewPushoverNotifier(cfg, tmpl, am.decryptFn)
 	case "slack":
-		n, err = channels.NewSlackNotifier(cfg, tmpl)
+		n, err = channels.NewSlackNotifier(cfg, tmpl, am.decryptFn)
 	case "telegram":
-		n, err = channels.NewTelegramNotifier(cfg, tmpl)
+		n, err = channels.NewTelegramNotifier(cfg, tmpl, am.decryptFn)
 	case "victorops":
 		n, err = channels.NewVictoropsNotifier(cfg, tmpl)
 	case "teams":
@@ -503,21 +518,23 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	case "kafka":
 		n, err = channels.NewKafkaNotifier(cfg, tmpl)
 	case "webhook":
-		n, err = channels.NewWebHookNotifier(cfg, tmpl)
+		n, err = channels.NewWebHookNotifier(cfg, tmpl, am.decryptFn)
+	case "wecom":
+		n, err = channels.NewWeComNotifier(cfg, tmpl, am.decryptFn)
 	case "sensugo":
-		n, err = channels.NewSensuGoNotifier(cfg, tmpl)
+		n, err = channels.NewSensuGoNotifier(cfg, tmpl, am.decryptFn)
 	case "discord":
 		n, err = channels.NewDiscordNotifier(cfg, tmpl)
 	case "googlechat":
 		n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
 	case "LINE":
-		n, err = channels.NewLineNotifier(cfg, tmpl)
+		n, err = channels.NewLineNotifier(cfg, tmpl, am.decryptFn)
 	case "threema":
-		n, err = channels.NewThreemaNotifier(cfg, tmpl)
+		n, err = channels.NewThreemaNotifier(cfg, tmpl, am.decryptFn)
 	case "opsgenie":
-		n, err = channels.NewOpsgenieNotifier(cfg, tmpl)
+		n, err = channels.NewOpsgenieNotifier(cfg, tmpl, am.decryptFn)
 	case "prometheus-alertmanager":
-		n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
+		n, err = channels.NewAlertmanagerNotifier(cfg, tmpl, am.decryptFn)
 	default:
 		return nil, InvalidReceiverError{
 			Receiver: r,
@@ -645,22 +662,14 @@ func validateLabelSet(ls model.LabelSet) error {
 	return nil
 }
 
-// isValidLabelName is ln.IsValid() while additionally allowing spaces.
-// The regex for Prometheus data model is ^[a-zA-Z_][a-zA-Z0-9_]*$
-// while we will follow ^[a-zA-Z_][a-zA-Z0-9_ ]*$
+// isValidLabelName is ln.IsValid() without restrictions other than it can not be empty.
+// The regex for Prometheus data model is ^[a-zA-Z_][a-zA-Z0-9_]*$.
 func isValidLabelName(ln model.LabelName) bool {
 	if len(ln) == 0 {
 		return false
 	}
-	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') ||
-			(b >= 'A' && b <= 'Z') ||
-			b == '_' ||
-			(i > 0 && (b == ' ' || (b >= '0' && b <= '9')))) {
-			return false
-		}
-	}
-	return true
+
+	return utf8.ValidString(string(ln))
 }
 
 // AlertValidationError is the error capturing the validation errors
@@ -701,21 +710,17 @@ func (am *Alertmanager) createReceiverStage(name string, integrations []notify.I
 	return fs
 }
 
-func waitFunc() time.Duration {
-	// When it's a single instance, we don't need additional wait. The routing policies will have their own group wait.
-	// We need >0 wait here in case we have peers to sync the notification state with. 0 wait in that case can result
-	// in duplicate notifications being sent.
-	// TODO: we have setting.AlertingNotificationTimeout in legacy settings. Either use that or separate set of config
-	// for clustering with intuitive name, like "PeerTimeout".
-	return 0
+func (am *Alertmanager) waitFunc() time.Duration {
+	return time.Duration(am.peer.Position()) * am.peerTimeout
 }
 
-func timeoutFunc(d time.Duration) time.Duration {
-	//TODO: What does MinTimeout means here?
+func (am *Alertmanager) timeoutFunc(d time.Duration) time.Duration {
+	// time.Duration d relates to the receiver's group_interval. Even with a group interval of 1s,
+	// we need to make sure (non-position-0) peers in the cluster wait before flushing the notifications.
 	if d < notify.MinTimeout {
 		d = notify.MinTimeout
 	}
-	return d + waitFunc()
+	return d + am.waitFunc()
 }
 
 type nilLimits struct{}

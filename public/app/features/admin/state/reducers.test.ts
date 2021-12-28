@@ -32,7 +32,7 @@ const makeInitialUserListAdminState = (): UserListAdminState => ({
   perPage: 50,
   totalPages: 1,
   showPaging: false,
-  filter: 'all',
+  filters: [{ name: 'activeLast30Days', value: true }],
   isLoading: false,
 });
 

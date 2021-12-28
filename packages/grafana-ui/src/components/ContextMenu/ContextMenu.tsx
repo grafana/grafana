@@ -41,12 +41,20 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(
     }, [x, y]);
 
     useClickAway(menuRef, () => {
-      if (onClose) {
-        onClose();
-      }
+      onClose?.();
     });
-    const header = renderHeader && renderHeader();
-    const menuItems = renderMenuItems && renderMenuItems();
+    const header = renderHeader?.();
+    const menuItems = renderMenuItems?.();
+    const onOpen = (setFocusedItem: (a: number) => void) => {
+      setFocusedItem(0);
+    };
+    const onKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose?.();
+      }
+    };
 
     return (
       <Portal>
@@ -55,7 +63,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(
           ref={menuRef}
           style={positionStyles}
           ariaLabel={selectors.components.Menu.MenuComponent('Context')}
+          onOpen={onOpen}
           onClick={onClose}
+          onKeyDown={onKeyDown}
         >
           {menuItems}
         </Menu>

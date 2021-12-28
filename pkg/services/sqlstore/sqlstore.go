@@ -113,6 +113,15 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	ss.addAlertNotificationUidByIdHandler()
 	ss.addPreferencesQueryAndCommandHandlers()
 	ss.addDashboardQueryAndCommandHandlers()
+	ss.addDashboardACLQueryAndCommandHandlers()
+	ss.addQuotaQueryAndCommandHandlers()
+	ss.addOrgUsersQueryAndCommandHandlers()
+	ss.addStarQueryAndCommandHandlers()
+	ss.addAlertQueryAndCommandHandlers()
+	ss.addTempUserQueryAndCommandHandlers()
+	ss.addDashboardVersionQueryAndCommandHandlers()
+	ss.addAPIKeysQueryAndCommandHandlers()
+	ss.addPlaylistQueryAndCommandHandlers()
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -155,6 +164,11 @@ func (ss *SQLStore) Reset() error {
 	}
 
 	return ss.ensureMainOrgAndAdminUser()
+}
+
+// Quote quotes the value in the used SQL dialect
+func (ss *SQLStore) Quote(value string) string {
+	return ss.engine.Quote(value)
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {

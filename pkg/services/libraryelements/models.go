@@ -137,8 +137,8 @@ type LibraryElementConnectionDTO struct {
 var (
 	// errLibraryElementAlreadyExists is an error for when the user tries to add a library element that already exists.
 	errLibraryElementAlreadyExists = errors.New("library element with that name or UID already exists")
-	// errLibraryElementNotFound is an error for when a library element can't be found.
-	errLibraryElementNotFound = errors.New("library element could not be found")
+	// ErrLibraryElementNotFound is an error for when a library element can't be found.
+	ErrLibraryElementNotFound = errors.New("library element could not be found")
 	// errLibraryElementDashboardNotFound is an error for when a library element connection can't be found.
 	errLibraryElementDashboardNotFound = errors.New("library element connection could not be found")
 	// errLibraryElementHasConnections is an error for when an user deletes a library element that is connected.
@@ -170,7 +170,7 @@ type CreateLibraryElementCommand struct {
 type patchLibraryElementCommand struct {
 	FolderID int64           `json:"folderId" binding:"Default(-1)"`
 	Name     string          `json:"name"`
-	Model    json.RawMessage `json:"model"`
+	Model    json.RawMessage `json:"model,omitempty"`
 	Kind     int64           `json:"kind" binding:"Required"`
 	Version  int64           `json:"version" binding:"Required"`
 	UID      string          `json:"uid"`
@@ -206,4 +206,10 @@ type LibraryElementArrayResponse struct {
 // LibraryElementConnectionsResponse is a response struct for an array of LibraryElementConnectionDTO.
 type LibraryElementConnectionsResponse struct {
 	Result []LibraryElementConnectionDTO `json:"result"`
+}
+
+// DeleteLibraryElementResponse is the response struct for deleting a library element.
+type DeleteLibraryElementResponse struct {
+	ID      int64  `json:"id"`
+	Message string `json:"message"`
 }

@@ -15,6 +15,7 @@
 If a query is added only to be used as a parameter, hide it from the graph with the eye icon
 
 #### Max data points
+
 - Every graphite request is issued with a maxDataPoints parameter
 - Graphite uses this parameter to consolidate the real number of values down to this number
 - If there are more real values, then by default they will be consolidated using averages

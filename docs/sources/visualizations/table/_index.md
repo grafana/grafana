@@ -41,6 +41,8 @@ By default, the minimum width of the table column is 150 pixels. This field opti
 
 For example, if you enter `75` in the field, then when you click outside the field, all the columns will scale to no smaller than 75 pixels wide.
 
+For small-screen devices, such as smartphones or tablets, reduce the default `150` pixel value to`50` to allow table based panels to render correctly in dashboards.
+
 ## Column alignment
 
 Choose how Grafana should align cell contents:

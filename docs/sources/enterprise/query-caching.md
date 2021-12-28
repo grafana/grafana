@@ -31,7 +31,7 @@ You can make a panel retrieve fresh data more frequently by increasing the **Max
 
 Query caching works for all [Enterprise data sources](https://grafana.com/grafana/plugins/?type=datasource&enterprise=1), and it works for the following [built-in data sources]({{< relref "../datasources/_index.md" >}}):
 
-- CloudWatch
+- CloudWatch Metrics
 - Google Cloud Monitoring
 - InfluxDB
 - Microsoft SQL Server
@@ -53,7 +53,6 @@ By default, data source queries are not cached. To enable query caching for a si
 
 1. On the side menu, click Configuration > Data Sources.
 1. In the data source list, click the data source that you want to turn on caching for.
-1. In the Cache tab, click Enable.
 1. Open the Cache tab.
 1. Press the Enable button.
 1. (Optional) Choose a custom TTL for that data source. If you skip this step, then Grafana uses the default TTL.

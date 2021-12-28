@@ -1432,4 +1432,39 @@ describe('ElasticResponse', () => {
       expect(fields).toContainEqual({ name: 'message', type: 'string' });
     });
   });
+
+  describe('logs query with empty response', () => {
+    const targets: ElasticsearchQuery[] = [
+      {
+        refId: 'A',
+        metrics: [{ type: 'logs', id: '2' }],
+        bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '1' }],
+        key: 'Q-1561369883389-0.7611823271062786-0',
+        query: 'hello AND message',
+        timeField: '@timestamp',
+      },
+    ];
+    const response = {
+      responses: [
+        {
+          hits: { hits: [] },
+          aggregations: {
+            '1': {
+              buckets: [
+                { key_as_string: '1633676760000', key: 1633676760000, doc_count: 0 },
+                { key_as_string: '1633676770000', key: 1633676770000, doc_count: 0 },
+                { key_as_string: '1633676780000', key: 1633676780000, doc_count: 0 },
+              ],
+            },
+          },
+          status: 200,
+        },
+      ],
+    };
+
+    it('should return histogram aggregation and documents', () => {
+      const result = new ElasticResponse(targets, response).getLogs('message', 'level');
+      expect(result.data.length).toBe(2);
+    });
+  });
 });

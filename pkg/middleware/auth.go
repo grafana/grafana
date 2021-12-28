@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	macaron "gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type AuthOptions struct {
@@ -79,7 +79,7 @@ func EnsureEditorOrViewerCanEdit(c *models.ReqContext) {
 	}
 }
 
-func RoleAuth(roles ...models.RoleType) macaron.Handler {
+func RoleAuth(roles ...models.RoleType) web.Handler {
 	return func(c *models.ReqContext) {
 		ok := false
 		for _, role := range roles {
@@ -94,7 +94,7 @@ func RoleAuth(roles ...models.RoleType) macaron.Handler {
 	}
 }
 
-func Auth(options *AuthOptions) macaron.Handler {
+func Auth(options *AuthOptions) web.Handler {
 	return func(c *models.ReqContext) {
 		forceLogin := false
 		if c.AllowAnonymous {
@@ -133,7 +133,7 @@ func Auth(options *AuthOptions) macaron.Handler {
 // feature flag is enabled.
 // Intended for when feature flags open up access to APIs that
 // are otherwise only available to admins.
-func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
+func AdminOrFeatureEnabled(enabled bool) web.Handler {
 	return func(c *models.ReqContext) {
 		if c.OrgRole == models.ROLE_ADMIN {
 			return
@@ -147,7 +147,7 @@ func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
 
 // SnapshotPublicModeOrSignedIn creates a middleware that allows access
 // if snapshot public mode is enabled or if user is signed in.
-func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) macaron.Handler {
+func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) web.Handler {
 	return func(c *models.ReqContext) {
 		if cfg.SnapshotPublicMode {
 			return
@@ -168,7 +168,7 @@ func ReqNotSignedIn(c *models.ReqContext) {
 
 // NoAuth creates a middleware that doesn't require any authentication.
 // If forceLogin param is set it will redirect the user to the login page.
-func NoAuth() macaron.Handler {
+func NoAuth() web.Handler {
 	return func(c *models.ReqContext) {
 		if shouldForceLogin(c) {
 			notAuthorized(c)
@@ -187,4 +187,30 @@ func shouldForceLogin(c *models.ReqContext) bool {
 	}
 
 	return forceLogin
+}
+
+func OrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) {
+	if c.OrgRole == models.ROLE_ADMIN {
+		return
+	}
+
+	hasAdminPermissionInFoldersQuery := models.HasAdminPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+	if err := sqlstore.HasAdminPermissionInFolders(c.Req.Context(), &hasAdminPermissionInFoldersQuery); err != nil {
+		c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
+	}
+
+	if hasAdminPermissionInFoldersQuery.Result {
+		return
+	}
+
+	isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
+	if err := sqlstore.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery); err != nil {
+		c.JsonApiErr(500, "Failed to check if user is a team admin", err)
+	}
+
+	if isAdminOfTeamsQuery.Result {
+		return
+	}
+
+	accessForbidden(c)
 }

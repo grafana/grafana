@@ -1,7 +1,7 @@
 import config from 'app/core/config';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
-import { ThunkResult, LdapUser, UserSession, UserDTO, AccessControlAction } from 'app/types';
+import { ThunkResult, LdapUser, UserSession, UserDTO, AccessControlAction, UserFilter } from 'app/types';
 
 import {
   userAdminPageLoadedAction,
@@ -258,12 +258,23 @@ export function clearUserMappingInfo(): ThunkResult<void> {
 
 // UserListAdminPage
 
+const getFilters = (filters: UserFilter[]) => {
+  return filters
+    .map((filter) => {
+      if (Array.isArray(filter.value)) {
+        return filter.value.map((v) => `${filter.name}=${v.value}`).join('&');
+      }
+      return `${filter.name}=${filter.value}`;
+    })
+    .join('&');
+};
+
 export function fetchUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
-      const { perPage, page, query, filter } = getState().userListAdmin;
+      const { perPage, page, query, filters } = getState().userListAdmin;
       const result = await getBackendSrv().get(
-        `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&filter=${filter}`
+        `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(filters)}`
       );
       dispatch(usersFetched(result));
     } catch (error) {
@@ -283,7 +294,7 @@ export function changeQuery(query: string): ThunkResult<void> {
   };
 }
 
-export function changeFilter(filter: string): ThunkResult<void> {
+export function changeFilter(filter: UserFilter): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(usersFetchBegin());
     dispatch(filterChanged(filter));

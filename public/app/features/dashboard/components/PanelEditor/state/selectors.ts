@@ -34,7 +34,10 @@ export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin
     });
   }
 
-  if ((getConfig().alertingEnabled && plugin.meta.id === 'graph') || plugin.meta.id === 'timeseries') {
+  if (
+    ((getConfig().alertingEnabled || getConfig().unifiedAlertingEnabled) && plugin.meta.id === 'graph') ||
+    plugin.meta.id === 'timeseries'
+  ) {
     tabs.push({
       id: PanelEditorTabId.Alert,
       text: 'Alert',

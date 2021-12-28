@@ -6,10 +6,12 @@ import { PromOptions } from '../types';
 import { AzureAuthSettings } from './AzureAuthSettings';
 import { PromSettings } from './PromSettings';
 import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
+import { getAllAlertmanagerDataSources } from 'app/features/alerting/unified/utils/alertmanager';
 
 export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
+  const alertmanagers = getAllAlertmanagerDataSources();
 
   const azureAuthSettings = {
     azureAuthSupported: config.featureToggles['prometheus_azure_auth'] ?? false,
@@ -36,7 +38,11 @@ export const ConfigEditor = (props: Props) => {
         azureAuthSettings={azureAuthSettings}
       />
 
-      <AlertingSettings<PromOptions> options={options} onOptionsChange={onOptionsChange} />
+      <AlertingSettings<PromOptions>
+        alertmanagerDataSources={alertmanagers}
+        options={options}
+        onOptionsChange={onOptionsChange}
+      />
 
       <PromSettings options={options} onOptionsChange={onOptionsChange} />
     </>

@@ -2,6 +2,8 @@ import './graph';
 import './series_overrides_ctrl';
 import './thresholds_form';
 import './time_regions_form';
+import './annotation_tooltip';
+import './event_editor';
 
 import template from './template';
 import { defaults, find, without } from 'lodash';
@@ -19,12 +21,12 @@ import { DataWarning, GraphFieldConfig, GraphPanelOptions } from './types';
 import { auto } from 'angular';
 import { getLocationSrv } from '@grafana/runtime';
 import { getDataTimeRange } from './utils';
-import { changePanelPlugin } from 'app/features/dashboard/state/actions';
+import { changePanelPlugin } from 'app/features/panel/state/actions';
 import { dispatch } from 'app/store/store';
 import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
 import { appEvents } from '../../../core/core';
 import { ZoomOutEvent } from '../../../types/events';
-import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
+import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
 import { loadSnapshotData } from '../../../features/dashboard/utils/loadSnapshotData';
 import { annotationsFromDataFrames } from '../../../features/query/state/DashboardQueryRunner/utils';
 
@@ -233,7 +235,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
               tip: 'Data exists, but is not timeseries',
               actionText: 'Switch to table view',
               action: () => {
-                dispatch(changePanelPlugin(this.panel, 'table'));
+                dispatch(changePanelPlugin({ panel: this.panel, pluginId: 'table' }));
               },
             };
           }
@@ -354,6 +356,10 @@ export class GraphCtrl extends MetricsPanelCtrl {
   getDataFrameByRefId = (refId: string) => {
     return this.dataList.filter((dataFrame) => dataFrame.refId === refId)[0];
   };
+
+  migrateToReact() {
+    this.onPluginTypeChange(config.panels['timeseries']);
+  }
 }
 
 // Use new react style configuration

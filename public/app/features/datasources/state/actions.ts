@@ -5,7 +5,7 @@ import { updateNavIndex } from 'app/core/actions';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
-import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
+import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types';
 
 import config from '../../../core/config';
@@ -25,6 +25,7 @@ import {
   testDataSourceSucceeded,
 } from './reducers';
 import { getDataSource, getDataSourceMeta } from './selectors';
+import { addAccessControlQueryParam } from 'app/core/utils/accessControl';
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];
@@ -33,6 +34,7 @@ export interface DataSourceTypesLoadedPayload {
 
 export interface InitDataSourceSettingDependencies {
   loadDataSource: typeof loadDataSource;
+  loadDataSourceMeta: typeof loadDataSourceMeta;
   getDataSource: typeof getDataSource;
   getDataSourceMeta: typeof getDataSourceMeta;
   importDataSourcePlugin: typeof importDataSourcePlugin;
@@ -47,6 +49,7 @@ export const initDataSourceSettings = (
   pageId: string,
   dependencies: InitDataSourceSettingDependencies = {
     loadDataSource,
+    loadDataSourceMeta,
     getDataSource,
     getDataSourceMeta,
     importDataSourcePlugin,
@@ -59,7 +62,8 @@ export const initDataSourceSettings = (
     }
 
     try {
-      await dispatch(dependencies.loadDataSource(pageId));
+      const loadedDataSource = await dispatch(dependencies.loadDataSource(pageId));
+      await dispatch(dependencies.loadDataSourceMeta(loadedDataSource));
 
       // have we already loaded the plugin then we can skip the steps below?
       if (getState().dataSourceSettings.plugin) {
@@ -72,7 +76,6 @@ export const initDataSourceSettings = (
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
-      console.error('Failed to import plugin module', err);
       dispatch(initDataSourceSettingsFailed(err));
     }
   };
@@ -117,17 +120,25 @@ export function loadDataSources(): ThunkResult<void> {
   };
 }
 
-export function loadDataSource(uid: string): ThunkResult<void> {
+export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSettings>> {
   return async (dispatch) => {
     const dataSource = await getDataSourceUsingUidOrId(uid);
+
+    dispatch(dataSourceLoaded(dataSource));
+    return dataSource;
+  };
+}
+
+export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<void> {
+  return async (dispatch) => {
     const pluginInfo = (await getPluginSettings(dataSource.type)) as DataSourcePluginMeta;
     const plugin = await importDataSourcePlugin(pluginInfo);
     const isBackend = plugin.DataSourceClass.prototype instanceof DataSourceWithBackend;
     const meta = {
       ...pluginInfo,
-      isBackend: isBackend,
+      isBackend: pluginInfo.backend || isBackend,
     };
-    dispatch(dataSourceLoaded(dataSource));
+
     dispatch(dataSourceMetaLoaded(meta));
 
     plugin.meta = meta;
@@ -144,7 +155,7 @@ export async function getDataSourceUsingUidOrId(uid: string | number): Promise<D
     const byUid = await lastValueFrom(
       getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
-        url: `/api/datasources/uid/${uid}`,
+        url: addAccessControlQueryParam(`/api/datasources/uid/${uid}`),
         showErrorAlert: false,
       })
     );
@@ -162,7 +173,7 @@ export async function getDataSourceUsingUidOrId(uid: string | number): Promise<D
     const response = await lastValueFrom(
       getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
-        url: `/api/datasources/${id}`,
+        url: addAccessControlQueryParam(`/api/datasources/${id}`),
         showErrorAlert: false,
       })
     );

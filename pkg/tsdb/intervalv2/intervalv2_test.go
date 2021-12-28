@@ -112,6 +112,7 @@ func TestGetIntervalFrom(t *testing.T) {
 		{"45s", nil, "45s", 0, time.Second * 15, time.Second * 45},
 		{"45", nil, "45", 0, time.Second * 15, time.Second * 45},
 		{"2m", nil, "2m", 0, time.Second * 15, time.Minute * 2},
+		{"1d", nil, "1d", 0, time.Second * 15, time.Hour * 24},
 		{"intervalMs", nil, "", 45000, time.Second * 15, time.Second * 45},
 		{"intervalMs sub-seconds", nil, "", 45200, time.Second * 15, time.Millisecond * 45200},
 		{"defaultInterval when interval empty", nil, "", 0, time.Second * 15, time.Second * 15},

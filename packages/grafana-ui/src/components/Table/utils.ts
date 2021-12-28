@@ -1,6 +1,6 @@
 import { Column, Row } from 'react-table';
 import memoizeOne from 'memoize-one';
-import { ContentPosition } from 'csstype';
+import { Property } from 'csstype';
 import {
   DataFrame,
   Field,
@@ -17,7 +17,7 @@ import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
 import { getFooterValue } from './FooterRow';
 
-export function getTextAlign(field?: Field): ContentPosition {
+export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
     return 'flex-start';
   }
@@ -49,7 +49,7 @@ export function getColumns(
   footerValues?: FooterItem[]
 ): Column[] {
   const columns: any[] = [];
-  let fieldCountWithoutWidth = data.fields.length;
+  let fieldCountWithoutWidth = 0;
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
@@ -60,7 +60,8 @@ export function getColumns(
 
     if (fieldTableOptions.width) {
       availableWidth -= fieldTableOptions.width;
-      fieldCountWithoutWidth -= 1;
+    } else {
+      fieldCountWithoutWidth++;
     }
 
     const selectSortType = (type: FieldType): string => {
@@ -238,12 +239,12 @@ export function sortNumber(rowA: Row<any>, rowB: Row<any>, id: string) {
 }
 
 function toNumber(value: any): number {
-  if (typeof value === 'number') {
-    return value;
-  }
-
   if (value === null || value === undefined || value === '' || isNaN(value)) {
     return Number.NEGATIVE_INFINITY;
+  }
+
+  if (typeof value === 'number') {
+    return value;
   }
 
   return Number(value);

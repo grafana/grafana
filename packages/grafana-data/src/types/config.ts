@@ -45,13 +45,14 @@ export enum GrafanaEdition {
 export interface FeatureToggles {
   [name: string]: boolean;
 
-  ngalert: boolean;
   trimDefaults: boolean;
   accesscontrol: boolean;
   tempoServiceGraph: boolean;
   tempoSearch: boolean;
-  prometheusMonaco: boolean;
+  recordedQueries: boolean;
   newNavigation: boolean;
+  fullRangeLogsVolume: boolean;
+  dashboardPreviews: boolean;
 }
 
 /**
@@ -79,6 +80,16 @@ export interface SentryConfig {
   customEndpoint: string;
   sampleRate: number;
 }
+
+/**
+ * Describes the plugins that should be preloaded prior to start Grafana.
+ *
+ * @public
+ */
+export type PreloadPlugin = {
+  path: string;
+  version: string;
+};
 
 /**
  * Describes all the different Grafana configuration values available for an instance.
@@ -123,7 +134,7 @@ export interface GrafanaConfig {
   liveEnabled: boolean;
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: string[];
+  pluginsToPreload: PreloadPlugin[];
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
@@ -132,4 +143,5 @@ export interface GrafanaConfig {
   customTheme?: any;
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
+  unifiedAlertingEnabled: boolean;
 }

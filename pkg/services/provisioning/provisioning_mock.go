@@ -15,8 +15,8 @@ type Calls struct {
 
 type ProvisioningServiceMock struct {
 	Calls                                   *Calls
-	RunInitProvisionersFunc                 func() error
-	ProvisionDatasourcesFunc                func() error
+	RunInitProvisionersFunc                 func(ctx context.Context) error
+	ProvisionDatasourcesFunc                func(ctx context.Context) error
 	ProvisionPluginsFunc                    func() error
 	ProvisionNotificationsFunc              func() error
 	ProvisionDashboardsFunc                 func() error
@@ -25,29 +25,29 @@ type ProvisioningServiceMock struct {
 	RunFunc                                 func(ctx context.Context) error
 }
 
-func NewProvisioningServiceMock() *ProvisioningServiceMock {
+func NewProvisioningServiceMock(ctx context.Context) *ProvisioningServiceMock {
 	return &ProvisioningServiceMock{
 		Calls: &Calls{},
 	}
 }
 
-func (mock *ProvisioningServiceMock) RunInitProvisioners() error {
+func (mock *ProvisioningServiceMock) RunInitProvisioners(ctx context.Context) error {
 	mock.Calls.RunInitProvisioners = append(mock.Calls.RunInitProvisioners, nil)
 	if mock.RunInitProvisionersFunc != nil {
-		return mock.RunInitProvisionersFunc()
+		return mock.RunInitProvisionersFunc(ctx)
 	}
 	return nil
 }
 
-func (mock *ProvisioningServiceMock) ProvisionDatasources() error {
+func (mock *ProvisioningServiceMock) ProvisionDatasources(ctx context.Context) error {
 	mock.Calls.ProvisionDatasources = append(mock.Calls.ProvisionDatasources, nil)
 	if mock.ProvisionDatasourcesFunc != nil {
-		return mock.ProvisionDatasourcesFunc()
+		return mock.ProvisionDatasourcesFunc(ctx)
 	}
 	return nil
 }
 
-func (mock *ProvisioningServiceMock) ProvisionPlugins() error {
+func (mock *ProvisioningServiceMock) ProvisionPlugins(ctx context.Context) error {
 	mock.Calls.ProvisionPlugins = append(mock.Calls.ProvisionPlugins, nil)
 	if mock.ProvisionPluginsFunc != nil {
 		return mock.ProvisionPluginsFunc()
@@ -55,7 +55,7 @@ func (mock *ProvisioningServiceMock) ProvisionPlugins() error {
 	return nil
 }
 
-func (mock *ProvisioningServiceMock) ProvisionNotifications() error {
+func (mock *ProvisioningServiceMock) ProvisionNotifications(ctx context.Context) error {
 	mock.Calls.ProvisionNotifications = append(mock.Calls.ProvisionNotifications, nil)
 	if mock.ProvisionNotificationsFunc != nil {
 		return mock.ProvisionNotificationsFunc()
@@ -63,7 +63,7 @@ func (mock *ProvisioningServiceMock) ProvisionNotifications() error {
 	return nil
 }
 
-func (mock *ProvisioningServiceMock) ProvisionDashboards() error {
+func (mock *ProvisioningServiceMock) ProvisionDashboards(ctx context.Context) error {
 	mock.Calls.ProvisionDashboards = append(mock.Calls.ProvisionDashboards, nil)
 	if mock.ProvisionDashboardsFunc != nil {
 		return mock.ProvisionDashboardsFunc()

@@ -6,21 +6,28 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type DSInfo struct {
+	ID                      int64
+	Updated                 time.Time
+	JSONData                map[string]interface{}
+	DecryptedSecureJSONData map[string]string
+}
+
 // ApplyRoute should use the plugin route data to set auth headers and custom headers.
-func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.AppPluginRoute,
-	ds *models.DataSource, cfg *setting.Cfg) {
+func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.Route,
+	ds DSInfo, cfg *setting.Cfg) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 
 	data := templateData{
-		JsonData:       ds.JsonData.Interface().(map[string]interface{}),
-		SecureJsonData: ds.SecureJsonData.Decrypt(),
+		JsonData:       ds.JSONData,
+		SecureJsonData: ds.DecryptedSecureJSONData,
 	}
 
 	if len(route.URL) > 0 {
@@ -69,12 +76,12 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 }
 
-func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
+func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds DSInfo, pluginRoute *plugins.Route,
 	data templateData) (accessTokenProvider, error) {
 	authType := pluginRoute.AuthType
 
 	// Plugin can override authentication type specified in route configuration
-	if authTypeOverride := ds.JsonData.Get("authenticationType").MustString(); authTypeOverride != "" {
+	if authTypeOverride, ok := ds.JSONData["authenticationType"].(string); ok && authTypeOverride != "" {
 		authType = authTypeOverride
 	}
 
@@ -98,8 +105,7 @@ func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSour
 		if jwtTokenAuth == nil {
 			return nil, fmt.Errorf("'jwtTokenAuth' not configured for authentication type '%s'", authType)
 		}
-		provider := newGceAccessTokenProvider(ctx, ds, pluginRoute, jwtTokenAuth)
-		return provider, nil
+		return newGceAccessTokenProvider(ctx, ds, pluginRoute, jwtTokenAuth), nil
 
 	case "jwt":
 		if jwtTokenAuth == nil {
@@ -127,7 +133,7 @@ func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSour
 	}
 }
 
-func interpolateAuthParams(tokenAuth *plugins.JwtTokenAuth, data templateData) (*plugins.JwtTokenAuth, error) {
+func interpolateAuthParams(tokenAuth *plugins.JWTTokenAuth, data templateData) (*plugins.JWTTokenAuth, error) {
 	if tokenAuth == nil {
 		// Nothing to interpolate
 		return nil, nil
@@ -147,7 +153,7 @@ func interpolateAuthParams(tokenAuth *plugins.JwtTokenAuth, data templateData) (
 		interpolatedParams[key] = interpolatedParam
 	}
 
-	return &plugins.JwtTokenAuth{
+	return &plugins.JWTTokenAuth{
 		Url:    interpolatedUrl,
 		Scopes: tokenAuth.Scopes,
 		Params: interpolatedParams,

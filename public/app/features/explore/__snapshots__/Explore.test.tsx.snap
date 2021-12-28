@@ -3,6 +3,7 @@
 exports[`Explore should render component 1`] = `
 <CustomScrollbar
   autoHeightMin="100%"
+  scrollRefCallback={[Function]}
 >
   <Connect(UnConnectedExploreToolbar)
     exploreId="left"
@@ -16,7 +17,6 @@ exports[`Explore should render component 1`] = `
     >
       <QueryRows
         exploreId="left"
-        queryKeys={Array []}
       />
       <SecondaryActions
         addQueryRowButtonDisabled={false}

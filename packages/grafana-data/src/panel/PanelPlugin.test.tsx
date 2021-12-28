@@ -2,6 +2,7 @@ import React from 'react';
 import { identityOverrideProcessor, standardEditorsRegistry, standardFieldConfigEditorRegistry } from '../field';
 import { PanelPlugin } from './PanelPlugin';
 import { FieldConfigProperty } from '../types';
+import { PanelOptionsEditorBuilder } from '..';
 
 describe('PanelPlugin', () => {
   describe('declarative options', () => {
@@ -70,8 +71,12 @@ describe('PanelPlugin', () => {
         });
       });
 
-      expect(panel.optionEditors).toBeDefined();
-      expect(panel.optionEditors!.list()).toHaveLength(1);
+      const supplier = panel.getPanelOptionsSupplier();
+      expect(supplier).toBeDefined();
+
+      const builder = new PanelOptionsEditorBuilder();
+      supplier(builder, { data: [] });
+      expect(builder.getItems()).toHaveLength(1);
     });
   });
 
@@ -180,6 +185,27 @@ describe('PanelPlugin', () => {
         };
 
         expect(panel.fieldConfigDefaults.defaults.custom).toEqual(expectedDefaults);
+      });
+
+      test('throw error with array fieldConfigs', () => {
+        const panel = new PanelPlugin(() => {
+          return <div>Panel</div>;
+        });
+
+        panel.useFieldConfig({
+          useCustomConfig: (builder) => {
+            builder.addCustomEditor({
+              id: 'somethingUnique',
+              path: 'numericOption[0]',
+              name: 'Option editor',
+              description: 'Option editor description',
+              defaultValue: 10,
+            } as any);
+          },
+        });
+        expect(() => panel.fieldConfigRegistry).toThrowErrorMatchingInlineSnapshot(
+          `"[undefined] Field config paths do not support arrays: custom.somethingUnique"`
+        );
       });
 
       test('default values for nested paths', () => {

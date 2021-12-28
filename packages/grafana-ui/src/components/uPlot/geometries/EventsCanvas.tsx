@@ -4,6 +4,7 @@ import { useMountedState } from 'react-use';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { Marker } from './Marker';
 import { XYCanvas } from './XYCanvas';
+import uPlot from 'uplot';
 
 interface EventsCanvasProps {
   id: string;

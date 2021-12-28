@@ -83,9 +83,13 @@ export const LogsParsers: { [name: string]: LogsParser } = {
     getLabelFromField: (field) => (field.match(/^"([^"]+)"\s*:/) || [])[1],
     getValueFromField: (field) => (field.match(/:\s*(.*)$/) || [])[1],
     test: (line) => {
+      let parsed;
       try {
-        return JSON.parse(line);
+        parsed = JSON.parse(line);
       } catch (error) {}
+      // The JSON parser should only be used for log lines that are valid serialized JSON objects.
+      // If it would be used for a string, detected fields would include each letter as a separate field.
+      return typeof parsed === 'object';
     },
   },
 

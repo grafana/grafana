@@ -1,4 +1,4 @@
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { DataSourceRef, getDefaultTimeRange, LoadingState } from '@grafana/data';
 
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
@@ -43,7 +43,7 @@ const mocks: Record<string, any> = {
     metricFindQuery: jest.fn().mockResolvedValue([]),
   },
   dataSourceSrv: {
-    get: (name: string) => Promise.resolve(mocks[name]),
+    get: (ref: DataSourceRef) => Promise.resolve(mocks[ref.uid!]),
     getList: jest.fn().mockReturnValue([]),
   },
   pluginLoader: {
@@ -186,7 +186,7 @@ describe('query actions', () => {
       const variable = createVariable({ includeAll: true });
       const error = { message: 'failed to fetch metrics' };
 
-      mocks[variable.datasource!].metricFindQuery = jest.fn(() => Promise.reject(error));
+      mocks[variable.datasource!.uid!].metricFindQuery = jest.fn(() => Promise.reject(error));
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
@@ -320,7 +320,7 @@ describe('query actions', () => {
 
   describe('when changeQueryVariableDataSource is dispatched', () => {
     it('then correct actions are dispatched', async () => {
-      const variable = createVariable({ datasource: 'other' });
+      const variable = createVariable({ datasource: { uid: 'other' } });
       const editor = {};
 
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
@@ -330,7 +330,10 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenAsyncActionIsDispatched(changeQueryVariableDataSource(toVariablePayload(variable), 'datasource'), true);
+        .whenAsyncActionIsDispatched(
+          changeQueryVariableDataSource(toVariablePayload(variable), { uid: 'datasource' }),
+          true
+        );
 
       tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
         const [updateDatasource, updateEditor] = actions;
@@ -349,7 +352,7 @@ describe('query actions', () => {
 
     describe('and data source type changed', () => {
       it('then correct actions are dispatched', async () => {
-        const variable = createVariable({ datasource: 'other' });
+        const variable = createVariable({ datasource: { uid: 'other' } });
         const editor = {};
         const preloadedState: any = { templating: { editor: { extended: { dataSource: { type: 'previous' } } } } };
 
@@ -362,7 +365,10 @@ describe('query actions', () => {
           .whenActionIsDispatched(
             addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable }))
           )
-          .whenAsyncActionIsDispatched(changeQueryVariableDataSource(toVariablePayload(variable), 'datasource'), true);
+          .whenAsyncActionIsDispatched(
+            changeQueryVariableDataSource(toVariablePayload(variable), { uid: 'datasource' }),
+            true
+          );
 
         tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
           const [changeVariable, updateDatasource, updateEditor] = actions;
@@ -386,7 +392,7 @@ describe('query actions', () => {
 
   describe('when changeQueryVariableDataSource is dispatched and editor is not configured', () => {
     it('then correct actions are dispatched', async () => {
-      const variable = createVariable({ datasource: 'other' });
+      const variable = createVariable({ datasource: { uid: 'other' } });
       const editor = LegacyVariableQueryEditor;
 
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
@@ -396,7 +402,10 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenAsyncActionIsDispatched(changeQueryVariableDataSource(toVariablePayload(variable), 'datasource'), true);
+        .whenAsyncActionIsDispatched(
+          changeQueryVariableDataSource(toVariablePayload(variable), { uid: 'datasource' }),
+          true
+        );
 
       tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
         const [updateDatasource, updateEditor] = actions;
@@ -417,7 +426,7 @@ describe('query actions', () => {
   describe('when changeQueryVariableQuery is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const optionsMetrics = [createMetric('A'), createMetric('B')];
-      const variable = createVariable({ datasource: 'datasource', includeAll: true });
+      const variable = createVariable({ datasource: { uid: 'datasource' }, includeAll: true });
 
       const query = '$datasource';
       const definition = 'depends on datasource variable';
@@ -447,7 +456,7 @@ describe('query actions', () => {
   describe('when changeQueryVariableQuery is dispatched for variable without tags', () => {
     it('then correct actions are dispatched', async () => {
       const optionsMetrics = [createMetric('A'), createMetric('B')];
-      const variable = createVariable({ datasource: 'datasource', includeAll: true });
+      const variable = createVariable({ datasource: { uid: 'datasource' }, includeAll: true });
 
       const query = '$datasource';
       const definition = 'depends on datasource variable';
@@ -477,7 +486,7 @@ describe('query actions', () => {
   describe('when changeQueryVariableQuery is dispatched for variable without tags and all', () => {
     it('then correct actions are dispatched', async () => {
       const optionsMetrics = [createMetric('A'), createMetric('B')];
-      const variable = createVariable({ datasource: 'datasource', includeAll: false });
+      const variable = createVariable({ datasource: { uid: 'datasource' }, includeAll: false });
       const query = '$datasource';
       const definition = 'depends on datasource variable';
 
@@ -505,7 +514,7 @@ describe('query actions', () => {
 
   describe('when changeQueryVariableQuery is dispatched with invalid query', () => {
     it('then correct actions are dispatched', async () => {
-      const variable = createVariable({ datasource: 'datasource', includeAll: false });
+      const variable = createVariable({ datasource: { uid: 'datasource' }, includeAll: false });
       const query = `$${variable.name}`;
       const definition = 'depends on datasource variable';
 
@@ -688,7 +697,7 @@ function mockDatasourceMetrics(variable: QueryVariableModel, optionsMetrics: any
     [variable.query]: optionsMetrics,
   };
 
-  const { metricFindQuery } = mocks[variable.datasource!];
+  const { metricFindQuery } = mocks[variable.datasource?.uid!];
 
   metricFindQuery.mockReset();
   metricFindQuery.mockImplementation((query: string) => Promise.resolve(metrics[query] ?? []));
@@ -707,7 +716,7 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
     hide: VariableHide.dontHide,
     skipUrlSync: false,
     index: 0,
-    datasource: 'datasource',
+    datasource: { uid: 'datasource' },
     definition: '',
     sort: VariableSort.alphabeticalAsc,
     refresh: VariableRefresh.onDashboardLoad,

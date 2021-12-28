@@ -1,4 +1,4 @@
-import { DataFrame, getFieldColorModeForField, getScaleCalculator, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, Field, getFieldColorModeForField, getScaleCalculator, GrafanaTheme2 } from '@grafana/data';
 import { ColorDimensionConfig, DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
@@ -11,7 +11,14 @@ export function getColorDimension(
   config: ColorDimensionConfig,
   theme: GrafanaTheme2
 ): DimensionSupplier<string> {
-  const field = findField(frame, config.field);
+  return getColorDimensionForField(findField(frame, config.field), config, theme);
+}
+
+export function getColorDimensionForField(
+  field: Field | undefined,
+  config: ColorDimensionConfig,
+  theme: GrafanaTheme2
+): DimensionSupplier<string> {
   if (!field) {
     const v = theme.visualization.getColorByName(config.fixed) ?? 'grey';
     return {

@@ -1,11 +1,14 @@
 package dashboardsnapshots
 
 import (
+	"context"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/secrets/database"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -13,10 +16,11 @@ import (
 
 func TestDashboardSnapshotsService(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
 	s := &Service{
-		SQLStore:          sqlStore,
-		EncryptionService: ossencryption.ProvideService(),
+		SQLStore:       sqlStore,
+		SecretsService: secretsService,
 	}
 
 	origSecret := setting.SecretKey
@@ -32,28 +36,32 @@ func TestDashboardSnapshotsService(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("create dashboard snapshot should encrypt the dashboard", func(t *testing.T) {
+		ctx := context.Background()
+
 		cmd := models.CreateDashboardSnapshotCommand{
 			Key:       dashboardKey,
 			DeleteKey: dashboardKey,
 			Dashboard: dashboard,
 		}
 
-		err = s.CreateDashboardSnapshot(&cmd)
+		err = s.CreateDashboardSnapshot(ctx, &cmd)
 		require.NoError(t, err)
 
-		decrypted, err := s.EncryptionService.Decrypt(cmd.Result.DashboardEncrypted, setting.SecretKey)
+		decrypted, err := s.SecretsService.Decrypt(ctx, cmd.Result.DashboardEncrypted)
 		require.NoError(t, err)
 
 		require.Equal(t, rawDashboard, decrypted)
 	})
 
 	t.Run("get dashboard snapshot should return the dashboard decrypted", func(t *testing.T) {
+		ctx := context.Background()
+
 		query := models.GetDashboardSnapshotQuery{
 			Key:       dashboardKey,
 			DeleteKey: dashboardKey,
 		}
 
-		err := s.GetDashboardSnapshot(&query)
+		err := s.GetDashboardSnapshot(ctx, &query)
 		require.NoError(t, err)
 
 		decrypted, err := query.Result.Dashboard.Encode()

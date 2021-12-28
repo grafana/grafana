@@ -150,7 +150,7 @@ describe('dataSourceSettingsReducer', () => {
         .thenStateShouldEqual({
           ...initialDataSourceSettingsState,
           plugin: {} as GenericDataSourcePlugin,
-          loadError: null,
+          loading: false,
         });
     });
   });
@@ -164,8 +164,12 @@ describe('dataSourceSettingsReducer', () => {
         })
         .whenActionIsDispatched(initDataSourceSettingsFailed(new Error('Some error')))
         .thenStatePredicateShouldEqual((resultingState) => {
-          expect(resultingState.plugin).toEqual(null);
-          expect(resultingState.loadError).toEqual('Some error');
+          expect(resultingState).toEqual({
+            testingStatus: {},
+            loadError: 'Some error',
+            loading: false,
+            plugin: null,
+          });
           return true;
         });
     });

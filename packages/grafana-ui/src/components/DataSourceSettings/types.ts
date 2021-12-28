@@ -18,11 +18,11 @@ export interface AzureAuthSettings {
   readonly azureSettingsUI?: React.ComponentType<HttpSettingsBaseProps>;
 }
 
-export interface HttpSettingsBaseProps {
+export interface HttpSettingsBaseProps<JSONData = any, SecureJSONData = any> {
   /** The configuration object of the data source */
-  dataSourceConfig: DataSourceSettings<any, any>;
+  dataSourceConfig: DataSourceSettings<JSONData, SecureJSONData>;
   /** Callback for handling changes to the configuration object */
-  onChange: (config: DataSourceSettings) => void;
+  onChange: (config: DataSourceSettings<JSONData, SecureJSONData>) => void;
   /** Show the Forward OAuth identity option */
   showForwardOAuthIdentityOption?: boolean;
 }

@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/logging"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type ExtendedAlert struct {
@@ -77,11 +78,11 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 		return extended
 	}
 	externalPath := u.Path
-	dashboardUid := alert.Annotations["__dashboardUid__"]
+	dashboardUid := alert.Annotations[ngmodels.DashboardUIDAnnotation]
 	if len(dashboardUid) > 0 {
 		u.Path = path.Join(externalPath, "/d/", dashboardUid)
 		extended.DashboardURL = u.String()
-		panelId := alert.Annotations["__panelId__"]
+		panelId := alert.Annotations[ngmodels.PanelIDAnnotation]
 		if len(panelId) > 0 {
 			u.RawQuery = "viewPanel=" + panelId
 			extended.PanelURL = u.String()

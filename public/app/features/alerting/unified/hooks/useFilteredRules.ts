@@ -14,9 +14,6 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   const filters = getFiltersFromUrlParams(queryParams);
 
   return useMemo(() => {
-    if (!filters.queryString && !filters.dataSource && !filters.alertState) {
-      return namespaces;
-    }
     const filteredNamespaces = namespaces
       // Filter by data source
       // TODO: filter by multiple data sources for grafana-managed alerts
@@ -48,6 +45,9 @@ const reduceNamespaces = (filters: FilterState) => {
 const reduceGroups = (filters: FilterState) => {
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
     const rules = group.rules.filter((rule) => {
+      if (filters.ruleType && filters.ruleType !== rule.promRule?.type) {
+        return false;
+      }
       if (filters.dataSource && isGrafanaRulerRule(rule.rulerRule) && !isQueryingDataSource(rule.rulerRule, filters)) {
         return false;
       }

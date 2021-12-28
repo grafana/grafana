@@ -1,15 +1,15 @@
 package api
 
 import (
+	"context"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
-	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 
 	"net/http"
 
@@ -46,7 +46,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
 			var sentLimit int
 			var sendPage int
-			bus.AddHandler("test", func(query *models.SearchTeamsQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
 				query.Result = mockResult
 
 				sentLimit = query.Limit
@@ -71,7 +71,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
 			var sentLimit int
 			var sendPage int
-			bus.AddHandler("test", func(query *models.SearchTeamsQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
 				query.Result = mockResult
 
 				sentLimit = query.Limit
@@ -126,13 +126,13 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		t.Run("with no real signed in user", func(t *testing.T) {
 			stub := &testLogger{}
 			c := &models.ReqContext{
-				Context:      &macaron.Context{Req: req},
+				Context:      &web.Context{Req: req},
 				SignedInUser: &models.SignedInUser{},
 				Logger:       stub,
 			}
 			c.OrgRole = models.ROLE_EDITOR
-			cmd := models.CreateTeamCommand{Name: teamName}
-			hs.CreateTeam(c, cmd)
+			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
+			hs.CreateTeam(c)
 			assert.Equal(t, createTeamCalled, 1)
 			assert.Equal(t, addTeamMemberCalled, 0)
 			assert.True(t, stub.warnCalled)
@@ -142,14 +142,14 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		t.Run("with real signed in user", func(t *testing.T) {
 			stub := &testLogger{}
 			c := &models.ReqContext{
-				Context:      &macaron.Context{Req: req},
+				Context:      &web.Context{Req: req},
 				SignedInUser: &models.SignedInUser{UserId: 42},
 				Logger:       stub,
 			}
 			c.OrgRole = models.ROLE_EDITOR
-			cmd := models.CreateTeamCommand{Name: teamName}
+			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
 			createTeamCalled, addTeamMemberCalled = 0, 0
-			hs.CreateTeam(c, cmd)
+			hs.CreateTeam(c)
 			assert.Equal(t, createTeamCalled, 1)
 			assert.Equal(t, addTeamMemberCalled, 1)
 			assert.False(t, stub.warnCalled)

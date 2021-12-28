@@ -36,8 +36,8 @@ func (*OSSLicensingService) ContentDeliveryPrefix() string {
 	return "grafana-oss"
 }
 
-func (l *OSSLicensingService) LicenseURL(user *models.SignedInUser) string {
-	if user.IsGrafanaAdmin {
+func (l *OSSLicensingService) LicenseURL(showAdminLicensingPage bool) string {
+	if showAdminLicensingPage {
 		return l.Cfg.AppSubURL + "/admin/upgrading"
 	}
 
@@ -59,7 +59,7 @@ func ProvideService(cfg *setting.Cfg, hooksService *hooks.HooksService) *OSSLice
 				node.Children = append(node.Children, &dtos.NavLink{
 					Text: "Stats and license",
 					Id:   "upgrading",
-					Url:  l.LicenseURL(req.SignedInUser),
+					Url:  l.LicenseURL(req.IsGrafanaAdmin),
 					Icon: "unlock",
 				})
 			}

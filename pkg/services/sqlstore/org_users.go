@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -10,15 +11,15 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func init() {
-	bus.AddHandler("sql", AddOrgUser)
-	bus.AddHandler("sql", RemoveOrgUser)
-	bus.AddHandler("sql", GetOrgUsers)
-	bus.AddHandler("sql", UpdateOrgUser)
+func (ss *SQLStore) addOrgUsersQueryAndCommandHandlers() {
+	bus.AddHandlerCtx("sql", ss.AddOrgUser)
+	bus.AddHandlerCtx("sql", ss.RemoveOrgUser)
+	bus.AddHandlerCtx("sql", ss.GetOrgUsers)
+	bus.AddHandlerCtx("sql", ss.UpdateOrgUser)
 }
 
-func AddOrgUser(cmd *models.AddOrgUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// check if user exists
 		var user models.User
 		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
@@ -71,8 +72,8 @@ func AddOrgUser(cmd *models.AddOrgUserCommand) error {
 	})
 }
 
-func UpdateOrgUser(cmd *models.UpdateOrgUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateOrgUser(ctx context.Context, cmd *models.UpdateOrgUserCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var orgUser models.OrgUser
 		exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgId, cmd.UserId).Get(&orgUser)
 		if err != nil {
@@ -94,7 +95,7 @@ func UpdateOrgUser(cmd *models.UpdateOrgUserCommand) error {
 	})
 }
 
-func GetOrgUsers(query *models.GetOrgUsersQuery) error {
+func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error {
 	query.Result = make([]*models.OrgUserDTO, 0)
 
 	sess := x.Table("org_user")
@@ -105,6 +106,10 @@ func GetOrgUsers(query *models.GetOrgUsersQuery) error {
 
 	whereConditions = append(whereConditions, "org_user.org_id = ?")
 	whereParams = append(whereParams, query.OrgId)
+
+	// TODO: add to chore, for cleaning up after we have created
+	// service accounts table in the modelling
+	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = false", x.Dialect().Quote("user")))
 
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"
@@ -142,7 +147,7 @@ func GetOrgUsers(query *models.GetOrgUsersQuery) error {
 	return nil
 }
 
-func (ss *SQLStore) SearchOrgUsers(query *models.SearchOrgUsersQuery) error {
+func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error {
 	query.Result = models.SearchOrgUsersQueryResult{
 		OrgUsers: make([]*models.OrgUserDTO, 0),
 	}
@@ -155,6 +160,10 @@ func (ss *SQLStore) SearchOrgUsers(query *models.SearchOrgUsersQuery) error {
 
 	whereConditions = append(whereConditions, "org_user.org_id = ?")
 	whereParams = append(whereParams, query.OrgID)
+
+	// TODO: add to chore, for cleaning up after we have created
+	// service accounts table in the modelling
+	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = false", x.Dialect().Quote("user")))
 
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"
@@ -188,7 +197,8 @@ func (ss *SQLStore) SearchOrgUsers(query *models.SearchOrgUsersQuery) error {
 
 	// get total count
 	orgUser := models.OrgUser{}
-	countSess := x.Table("org_user")
+	countSess := x.Table("org_user").
+		Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
 
 	if len(whereConditions) > 0 {
 		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
@@ -207,8 +217,8 @@ func (ss *SQLStore) SearchOrgUsers(query *models.SearchOrgUsersQuery) error {
 	return nil
 }
 
-func RemoveOrgUser(cmd *models.RemoveOrgUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// check if user exists
 		var user models.User
 		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {

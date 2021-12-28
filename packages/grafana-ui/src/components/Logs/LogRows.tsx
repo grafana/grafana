@@ -16,7 +16,6 @@ export interface Props extends Themeable2 {
   logRows?: LogRowModel[];
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
-  highlighterExpressions?: string[];
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
@@ -34,6 +33,7 @@ export interface Props extends Themeable2 {
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
+  onLogRowHover?: (row?: LogRowModel) => void;
 }
 
 interface State {
@@ -88,7 +88,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       prettifyLogMessage,
       logRows,
       deduplicatedRows,
-      highlighterExpressions,
       timeZone,
       onClickFilterLabel,
       onClickFilterOutLabel,
@@ -101,6 +100,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       onClickShowDetectedField,
       onClickHideDetectedField,
       forceEscape,
+      onLogRowHover,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable } = getLogRowStyles(theme);
@@ -129,7 +129,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 key={row.uid}
                 getRows={getRows}
                 getRowContext={getRowContext}
-                highlighterExpressions={highlighterExpressions}
                 row={row}
                 showContextToggle={showContextToggle}
                 showDuplicates={showDuplicates}
@@ -147,6 +146,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
+                onLogRowHover={onLogRowHover}
               />
             ))}
           {hasData &&
@@ -173,6 +173,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
+                onLogRowHover={onLogRowHover}
               />
             ))}
           {hasData && !renderAll && (

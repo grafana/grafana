@@ -16,6 +16,7 @@ export interface TraceToLogsOptions {
   spanEndTimeShift?: string;
   filterByTraceID?: boolean;
   filterBySpanID?: boolean;
+  lokiSearch?: boolean;
 }
 
 export interface TraceToLogsData extends DataSourceJsonData {
@@ -38,6 +39,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       <InlineFieldRow>
         <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
           <DataSourcePicker
+            inputId="trace-to-logs-data-source-picker"
             pluginId="loki"
             current={options.jsonData.tracesToLogs?.datasourceUid}
             noDefault={true}
@@ -123,6 +125,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           tooltip="Filters logs by Trace ID. Appends '|=<trace id>' to the query."
         >
           <InlineSwitch
+            id="filterByTraceID"
             value={options.jsonData.tracesToLogs?.filterByTraceID}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
@@ -142,11 +145,27 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           tooltip="Filters logs by Span ID. Appends '|=<span id>' to the query."
         >
           <InlineSwitch
+            id="filterBySpanID"
             value={options.jsonData.tracesToLogs?.filterBySpanID}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
                 ...options.jsonData.tracesToLogs,
                 filterBySpanID: event.currentTarget.checked,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Loki Search" labelWidth={26} grow tooltip="Use this logs data source to search for traces.">
+          <InlineSwitch
+            id="lokiSearch"
+            defaultChecked={true}
+            value={options.jsonData.tracesToLogs?.lokiSearch}
+            onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                lokiSearch: event.currentTarget.checked,
               })
             }
           />

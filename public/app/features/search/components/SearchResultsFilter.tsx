@@ -1,4 +1,4 @@
-import React, { FC, FormEvent } from 'react';
+import React, { FC, ChangeEvent, FormEvent } from 'react';
 import { css } from '@emotion/css';
 import { Button, Checkbox, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
@@ -13,11 +13,13 @@ export interface Props {
   hideLayout?: boolean;
   moveTo: () => void;
   onLayoutChange: (layout: SearchLayout) => void;
+  onShowPreviewsChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onSortChange: (value: SelectableValue) => void;
   onStarredFilterChange: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   onToggleAllChecked: () => void;
   query: DashboardQuery;
+  showPreviews?: boolean;
   editable?: boolean;
 }
 
@@ -29,11 +31,13 @@ export const SearchResultsFilter: FC<Props> = ({
   hideLayout,
   moveTo,
   onLayoutChange,
+  onShowPreviewsChange,
   onSortChange,
   onStarredFilterChange,
   onTagFilterChange,
   onToggleAllChecked,
   query,
+  showPreviews,
   editable,
 }) => {
   const showActions = canDelete || canMove;
@@ -42,7 +46,11 @@ export const SearchResultsFilter: FC<Props> = ({
 
   return (
     <div className={styles.wrapper}>
-      {editable && <Checkbox value={allChecked} onChange={onToggleAllChecked} />}
+      {editable && (
+        <div className={styles.checkboxWrapper}>
+          <Checkbox aria-label="Select all" value={allChecked} onChange={onToggleAllChecked} />
+        </div>
+      )}
       {showActions ? (
         <HorizontalGroup spacing="md">
           <Button disabled={!canMove} onClick={moveTo} icon="exchange-alt" variant="secondary">
@@ -57,10 +65,12 @@ export const SearchResultsFilter: FC<Props> = ({
           {...{
             hideLayout,
             onLayoutChange,
+            onShowPreviewsChange,
             onSortChange,
             onStarredFilterChange,
             onTagFilterChange,
             query,
+            showPreviews,
           }}
           showStarredFilter
         />
@@ -73,15 +83,22 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const { sm, md } = theme.spacing;
   return {
     wrapper: css`
-      height: 35px;
+      height: ${theme.height.md}px;
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: ${theme.spacing.md};
       align-items: center;
       margin-bottom: ${sm};
 
       > label {
         height: 20px;
         margin: 0 ${md} 0 ${sm};
+      }
+    `,
+    checkboxWrapper: css`
+      label {
+        line-height: 1.2;
+        width: max-content;
       }
     `,
   };

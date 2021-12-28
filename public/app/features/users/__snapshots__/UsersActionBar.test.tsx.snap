@@ -13,6 +13,11 @@ exports[`Render should render component 1`] = `
       value=""
     />
   </div>
+  <LinkButton
+    href="org/users/invite"
+  >
+    Invite
+  </LinkButton>
 </div>
 `;
 
@@ -53,6 +58,11 @@ exports[`Render should render pending invites button 1`] = `
       value="users"
     />
   </div>
+  <LinkButton
+    href="org/users/invite"
+  >
+    Invite
+  </LinkButton>
 </div>
 `;
 
@@ -69,6 +79,11 @@ exports[`Render should show external user management button 1`] = `
       value=""
     />
   </div>
+  <LinkButton
+    href="org/users/invite"
+  >
+    Invite
+  </LinkButton>
   <LinkButton
     href="some/url"
     rel="noopener"

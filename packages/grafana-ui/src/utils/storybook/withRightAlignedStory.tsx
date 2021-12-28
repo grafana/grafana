@@ -5,7 +5,7 @@ const RightAlignedStory: React.FunctionComponent<{}> = ({ children }) => {
   return (
     <div
       style={{
-        height: '100vh  ',
+        minHeight: '100%',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'flex-end',

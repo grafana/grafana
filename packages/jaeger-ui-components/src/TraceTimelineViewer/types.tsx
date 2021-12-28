@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceSpan } from '../types/trace';
 import { TNil } from '../types';
 
 interface TimeCursorUpdate {
@@ -52,11 +51,3 @@ export interface ViewRangeTime {
 export interface ViewRange {
   time: ViewRangeTime;
 }
-
-export type CreateSpanLink = (
-  span: TraceSpan
-) => {
-  href: string;
-  onClick?: (e: React.MouseEvent) => void;
-  content: React.ReactNode;
-};

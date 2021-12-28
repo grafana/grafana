@@ -188,9 +188,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       throw new Error('applyTemplateVariables called in influxql-mode. this should never happen');
     }
 
+    // We want to interpolate these variables on backend
+    const { __interval, __interval_ms, ...rest } = scopedVars;
+
     return {
       ...query,
-      query: this.templateSrv.replace(query.query ?? '', scopedVars), // The raw query text
+      query: this.templateSrv.replace(query.query ?? '', rest), // The raw query text
     };
   }
 
@@ -339,7 +342,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
-          datasource: this.name,
+          datasource: this.getRef(),
           measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
           policy: this.templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
         };

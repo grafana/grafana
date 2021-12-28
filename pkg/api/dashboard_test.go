@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	dboards "github.com/grafana/grafana/pkg/dashboards"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -25,21 +26,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
 )
 
 func TestGetHomeDashboard(t *testing.T) {
 	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
-	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &macaron.Context{Req: httpReq}}
+	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 
 	hs := &HTTPServer{
 		Cfg: cfg, Bus: bus.New(),
-		PluginManager: &fakePluginManager{},
+		pluginStore: &fakePluginStore{},
 	}
 	hs.Bus.AddHandlerCtx(func(_ context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
 		query.Result = &models.Preferences{
@@ -88,7 +89,7 @@ type testState struct {
 
 func newTestLive(t *testing.T) *live.GrafanaLive {
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
-	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t))
+	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t), nil, &usagestats.UsageStatsMock{T: t}, nil)
 	require.NoError(t, err)
 	return gLive
 }
@@ -107,7 +108,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			fakeDash.FolderId = 1
 			fakeDash.HasAcl = false
 
-			bus.AddHandler("test", func(query *models.GetDashboardsBySlugQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardsBySlugQuery) error {
 				dashboards := []*models.Dashboard{fakeDash}
 				query.Result = dashboards
 				return nil
@@ -129,12 +130,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 			}
 
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = aclMockResp
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
 				query.Result = []*models.TeamDTO{}
 				return nil
 			})
@@ -261,7 +262,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			})
 			setting.ViewersCanEdit = false
 
-			bus.AddHandler("test", func(query *models.GetDashboardsBySlugQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardsBySlugQuery) error {
 				dashboards := []*models.Dashboard{fakeDash}
 				query.Result = dashboards
 				return nil
@@ -275,7 +276,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				},
 			}
 
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = aclMockResp
 				return nil
 			})
@@ -286,7 +287,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
 				query.Result = []*models.TeamDTO{}
 				return nil
 			})
@@ -390,7 +391,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			setUpInner := func() *testState {
 				state := setUp()
-				bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 					query.Result = mockResult
 					return nil
 				})
@@ -442,7 +443,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
 				}
 
-				bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 					query.Result = mockResult
 					return nil
 				})
@@ -486,7 +487,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				mockResult := []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_ADMIN},
 				}
-				bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 					query.Result = mockResult
 					return nil
 				})
@@ -536,7 +537,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				mockResult := []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
 				}
-				bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 					query.Result = mockResult
 					return nil
 				})
@@ -587,7 +588,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		dashTwo.FolderId = 3
 		dashTwo.HasAcl = false
 
-		bus.AddHandler("test", func(query *models.GetDashboardsBySlugQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardsBySlugQuery) error {
 			dashboards := []*models.Dashboard{dashOne, dashTwo}
 			query.Result = dashboards
 			return nil
@@ -777,12 +778,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given two dashboards being compared", func(t *testing.T) {
 		setUp := func() {
 			mockResult := []*models.DashboardAclInfoDTO{}
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = mockResult
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardVersionQuery) error {
 				query.Result = &models.DashboardVersion{
 					Data: simplejson.NewFromAny(map[string]interface{}{
 						"title": fmt.Sprintf("Dash%d", query.DashboardId),
@@ -840,7 +841,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardVersionQuery) error {
 				query.Result = &models.DashboardVersion{
 					DashboardId: 2,
 					Version:     1,
@@ -888,7 +889,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardVersionQuery) error {
 				query.Result = &models.DashboardVersion{
 					DashboardId: 2,
 					Version:     1,
@@ -927,7 +928,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 	t.Run("Given provisioned dashboard", func(t *testing.T) {
 		setUp := func() {
-			bus.AddHandler("test", func(query *models.GetDashboardsBySlugQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardsBySlugQuery) error {
 				query.Result = []*models.Dashboard{{}}
 				return nil
 			})
@@ -946,7 +947,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return &models.DashboardProvisioning{ExternalId: "/tmp/grafana/dashboards/test/dashboard1.json"}, nil
 			}
 
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = []*models.DashboardAclInfoDTO{
 					{OrgId: testOrgID, DashboardId: 1, UserId: testUserID, Permission: models.PERMISSION_EDIT},
 				}
@@ -971,7 +972,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
-			mock := provisioning.NewProvisioningServiceMock()
+			mock := provisioning.NewProvisioningServiceMock(context.Background())
 			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
 			}
@@ -984,7 +985,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
-			mock := provisioning.NewProvisioningServiceMock()
+			mock := provisioning.NewProvisioningServiceMock(context.Background())
 			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
 			}
@@ -1014,7 +1015,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 func getDashboardShouldReturn200WithConfig(sc *scenarioContext, provisioningService provisioning.ProvisioningService) dtos.
 	DashboardFullWithMeta {
 	if provisioningService == nil {
-		provisioningService = provisioning.NewProvisioningServiceMock()
+		provisioningService = provisioning.NewProvisioningServiceMock(context.Background())
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}
@@ -1048,7 +1049,7 @@ func callGetDashboard(sc *scenarioContext, hs *HTTPServer) {
 }
 
 func callGetDashboardVersion(sc *scenarioContext) {
-	bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardVersionQuery) error {
 		query.Result = &models.DashboardVersion{}
 		return nil
 	})
@@ -1058,7 +1059,7 @@ func callGetDashboardVersion(sc *scenarioContext) {
 }
 
 func callGetDashboardVersions(sc *scenarioContext) {
-	bus.AddHandler("test", func(query *models.GetDashboardVersionsQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardVersionsQuery) error {
 		query.Result = []*models.DashboardVersionDTO{}
 		return nil
 	})
@@ -1068,7 +1069,7 @@ func callGetDashboardVersions(sc *scenarioContext) {
 }
 
 func callDeleteDashboardBySlug(sc *scenarioContext, hs *HTTPServer) {
-	bus.AddHandler("test", func(cmd *models.DeleteDashboardCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
 		return nil
 	})
 
@@ -1077,7 +1078,7 @@ func callDeleteDashboardBySlug(sc *scenarioContext, hs *HTTPServer) {
 }
 
 func callDeleteDashboardByUID(sc *scenarioContext, hs *HTTPServer) {
-	bus.AddHandler("test", func(cmd *models.DeleteDashboardCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
 		return nil
 	})
 
@@ -1109,22 +1110,23 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 		hs := HTTPServer{
 			Bus:                 bus.GetBus(),
 			Cfg:                 cfg,
-			ProvisioningService: provisioning.NewProvisioningServiceMock(),
+			ProvisioningService: provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                newTestLive(t),
 			QuotaService: &quota.QuotaService{
 				Cfg: cfg,
 			},
-			PluginManager:         &fakePluginManager{},
+			pluginStore:           &fakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 		}
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
 
-			return hs.PostDashboard(c, cmd)
+			return hs.PostDashboard(c)
 		})
 
 		origNewDashboardService := dashboards.NewService
@@ -1153,6 +1155,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{
 				OrgId:  testOrgID,
@@ -1160,7 +1163,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			}
 			sc.context.OrgRole = role
 
-			return CalculateDashboardDiff(c, cmd)
+			return CalculateDashboardDiff(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
@@ -1178,7 +1181,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		hs := HTTPServer{
 			Cfg:                   cfg,
 			Bus:                   bus.GetBus(),
-			ProvisioningService:   provisioning.NewProvisioningServiceMock(),
+			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                  newTestLive(t),
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
 			LibraryPanelService:   &mockLibraryPanelService{},
@@ -1187,6 +1190,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{
 				OrgId:  testOrgID,
@@ -1194,7 +1198,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			}
 			sc.context.OrgRole = models.ROLE_ADMIN
 
-			return hs.RestoreDashboardVersion(c, cmd)
+			return hs.RestoreDashboardVersion(c)
 		})
 
 		origProvisioningService := dashboards.NewProvisioningService
@@ -1233,7 +1237,7 @@ func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboard
 type mockLibraryPanelService struct {
 }
 
-func (m *mockLibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+func (m *mockLibraryPanelService) LoadLibraryPanelsForDashboard(c context.Context, dash *models.Dashboard) error {
 	return nil
 }
 
@@ -1241,33 +1245,42 @@ func (m *mockLibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Da
 	return nil
 }
 
-func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error {
+	return nil
+}
+
+func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard, folderID int64) error {
 	return nil
 }
 
 type mockLibraryElementService struct {
 }
 
-func (l *mockLibraryElementService) CreateElement(c *models.ReqContext, cmd libraryelements.CreateLibraryElementCommand) (libraryelements.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUser *models.SignedInUser, cmd libraryelements.CreateLibraryElementCommand) (libraryelements.LibraryElementDTO, error) {
+	return libraryelements.LibraryElementDTO{}, nil
+}
+
+// GetElement gets an element from a UID.
+func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *models.SignedInUser, UID string) (libraryelements.LibraryElementDTO, error) {
 	return libraryelements.LibraryElementDTO{}, nil
 }
 
 // GetElementsForDashboard gets all connected elements for a specific dashboard.
-func (l *mockLibraryElementService) GetElementsForDashboard(c *models.ReqContext, dashboardID int64) (map[string]libraryelements.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]libraryelements.LibraryElementDTO, error) {
 	return map[string]libraryelements.LibraryElementDTO{}, nil
 }
 
 // ConnectElementsToDashboard connects elements to a specific dashboard.
-func (l *mockLibraryElementService) ConnectElementsToDashboard(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
+func (l *mockLibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser *models.SignedInUser, elementUIDs []string, dashboardID int64) error {
 	return nil
 }
 
 // DisconnectElementsFromDashboard disconnects elements from a specific dashboard.
-func (l *mockLibraryElementService) DisconnectElementsFromDashboard(c *models.ReqContext, dashboardID int64) error {
+func (l *mockLibraryElementService) DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error {
 	return nil
 }
 
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
-func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c *models.ReqContext, folderUID string) error {
+func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser *models.SignedInUser, folderUID string) error {
 	return nil
 }

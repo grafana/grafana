@@ -9,7 +9,7 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type contextKey struct{}
@@ -19,8 +19,8 @@ var routeOperationNameKey = contextKey{}
 // ProvideRouteOperationName creates a named middleware responsible for populating
 // the context with the route operation name that can be used later in the request pipeline.
 // Implements routing.RegisterNamedMiddleware.
-func ProvideRouteOperationName(name string) macaron.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
+func ProvideRouteOperationName(name string) web.Handler {
+	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		ctx := context.WithValue(c.Req.Context(), routeOperationNameKey, name)
 		c.Req = c.Req.WithContext(ctx)
 	}
@@ -36,15 +36,15 @@ func RouteOperationNameFromContext(ctx context.Context) (string, bool) {
 	return "", false
 }
 
-func RequestTracing() macaron.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
+func RequestTracing() web.Handler {
+	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		if strings.HasPrefix(c.Req.URL.Path, "/public/") ||
 			c.Req.URL.Path == "robots.txt" {
 			c.Next()
 			return
 		}
 
-		rw := res.(macaron.ResponseWriter)
+		rw := res.(web.ResponseWriter)
 
 		tracer := opentracing.GlobalTracer()
 		wireContext, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))

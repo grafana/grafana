@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -20,34 +21,34 @@ const (
 func TestConfigReader(t *testing.T) {
 	t.Run("Broken yaml should return error", func(t *testing.T) {
 		reader := newConfigReader(log.New("test logger"), nil)
-		_, err := reader.readConfig(brokenYaml)
+		_, err := reader.readConfig(context.Background(), brokenYaml)
 		require.Error(t, err)
 	})
 
 	t.Run("Skip invalid directory", func(t *testing.T) {
 		cfgProvider := newConfigReader(log.New("test logger"), nil)
-		cfg, err := cfgProvider.readConfig(emptyFolder)
+		cfg, err := cfgProvider.readConfig(context.Background(), emptyFolder)
 		require.NoError(t, err)
 		require.Len(t, cfg, 0)
 	})
 
 	t.Run("Unknown app plugin should return error", func(t *testing.T) {
-		cfgProvider := newConfigReader(log.New("test logger"), fakePluginManager{})
-		_, err := cfgProvider.readConfig(unknownApp)
+		cfgProvider := newConfigReader(log.New("test logger"), fakePluginStore{})
+		_, err := cfgProvider.readConfig(context.Background(), unknownApp)
 		require.Error(t, err)
-		require.Equal(t, "app plugin not installed: \"nonexisting\"", err.Error())
+		require.Equal(t, "plugin not installed: \"nonexisting\"", err.Error())
 	})
 
 	t.Run("Read incorrect properties", func(t *testing.T) {
 		cfgProvider := newConfigReader(log.New("test logger"), nil)
-		_, err := cfgProvider.readConfig(incorrectSettings)
+		_, err := cfgProvider.readConfig(context.Background(), incorrectSettings)
 		require.Error(t, err)
 		require.Equal(t, "app item 1 in configuration doesn't contain required field type", err.Error())
 	})
 
 	t.Run("Can read correct properties", func(t *testing.T) {
-		pm := fakePluginManager{
-			apps: map[string]*plugins.AppPlugin{
+		pm := fakePluginStore{
+			apps: map[string]plugins.PluginDTO{
 				"test-plugin":   {},
 				"test-plugin-2": {},
 			},
@@ -60,7 +61,7 @@ func TestConfigReader(t *testing.T) {
 		})
 
 		cfgProvider := newConfigReader(log.New("test logger"), pm)
-		cfg, err := cfgProvider.readConfig(correctProperties)
+		cfg, err := cfgProvider.readConfig(context.Background(), correctProperties)
 		require.NoError(t, err)
 		require.Len(t, cfg, 1)
 
@@ -87,13 +88,14 @@ func TestConfigReader(t *testing.T) {
 	})
 }
 
-type fakePluginManager struct {
-	plugins.Manager
+type fakePluginStore struct {
+	plugins.Store
 
-	apps map[string]*plugins.AppPlugin
+	apps map[string]plugins.PluginDTO
 }
 
-func (pm fakePluginManager) IsAppInstalled(id string) bool {
-	_, exists := pm.apps[id]
-	return exists
+func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	p, exists := pr.apps[pluginID]
+
+	return p, exists
 }

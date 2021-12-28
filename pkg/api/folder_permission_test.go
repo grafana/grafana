@@ -1,20 +1,23 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	dashboardifaces "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFolderPermissionAPIEndpoint(t *testing.T) {
@@ -360,7 +363,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 					updateDashboardACL = origUpdateDashboardACL
 				})
 				var gotItems []*models.DashboardAcl
-				updateDashboardACL = func(hs *HTTPServer, dashID int64, items []*models.DashboardAcl) error {
+				updateDashboardACL = func(_ context.Context, _ dashboardifaces.Store, _ int64, items []*models.DashboardAcl) error {
 					gotItems = items
 					return nil
 				}
@@ -385,7 +388,7 @@ func callUpdateFolderPermissions(t *testing.T, sc *scenarioContext) {
 	t.Cleanup(func() {
 		updateDashboardACL = origUpdateDashboardACL
 	})
-	updateDashboardACL = func(hs *HTTPServer, dashID int64, items []*models.DashboardAcl) error {
+	updateDashboardACL = func(_ context.Context, _ dashboardifaces.Store, dashID int64, items []*models.DashboardAcl) error {
 		return nil
 	}
 
@@ -399,11 +402,12 @@ func updateFolderPermissionScenario(t *testing.T, ctx updatePermissionContext, h
 		sc := setupScenarioContext(t, ctx.url)
 
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(ctx.cmd)
 			sc.context = c
 			sc.context.OrgId = testOrgID
 			sc.context.UserId = testUserID
 
-			return hs.UpdateFolderPermissions(c, ctx.cmd)
+			return hs.UpdateFolderPermissions(c)
 		})
 
 		sc.m.Post(ctx.routePattern, sc.defaultHandler)

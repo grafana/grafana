@@ -56,11 +56,13 @@ describe('DashboardModel', () => {
   describe('getSaveModelClone', () => {
     it('should sort keys', () => {
       const model = new DashboardModel({});
+      model.autoUpdate = null;
+
       const saveModel = model.getSaveModelClone();
       const keys = _keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
-      expect(keys[1]).toBe('autoUpdate');
+      expect(keys[1]).toBe('editable');
     });
 
     it('should remove add panel panels', () => {
@@ -462,6 +464,46 @@ describe('DashboardModel', () => {
     });
   });
 
+  describe('When expanding row with panels that do not contain an x and y pos', () => {
+    let dashboard: DashboardModel;
+
+    beforeEach(() => {
+      dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          {
+            id: 2,
+            type: 'row',
+            gridPos: { x: 0, y: 6, w: 24, h: 1 },
+            collapsed: true,
+            panels: [
+              { id: 3, type: 'graph', gridPos: { w: 12, h: 2 } },
+              { id: 4, type: 'graph', gridPos: { w: 12, h: 2 } },
+            ],
+          },
+          { id: 5, type: 'row', gridPos: { x: 0, y: 7, w: 1, h: 1 } },
+        ],
+      });
+      dashboard.toggleRow(dashboard.panels[1]);
+    });
+
+    it('should correctly set the x and y values for the inner panels', () => {
+      expect(dashboard.panels[2].gridPos).toMatchObject({
+        x: 0,
+        y: 7,
+        w: 12,
+        h: 2,
+      });
+
+      expect(dashboard.panels[3].gridPos).toMatchObject({
+        x: 0,
+        y: 7,
+        w: 12,
+        h: 2,
+      });
+    });
+  });
+
   describe('Given model with time', () => {
     let model: DashboardModel;
 
@@ -571,6 +613,61 @@ describe('DashboardModel', () => {
       model.collapseRows();
       const savedModelWithCollapsedRows: any = model.getSaveModelClone();
       expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(1);
+    });
+
+    it('getSaveModelClone should not remove repeated panels and scopedVars during snapshot', () => {
+      const dashboardJSON = {
+        panels: [
+          { id: 1, type: 'row', repeat: 'dc', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+          { id: 2, repeat: 'app', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
+        ],
+        templating: {
+          list: [
+            {
+              name: 'dc',
+              type: 'custom',
+              current: {
+                text: 'dc1 + dc2',
+                value: ['dc1', 'dc2'],
+              },
+              options: [
+                { text: 'dc1', value: 'dc1', selected: true },
+                { text: 'dc2', value: 'dc2', selected: true },
+              ],
+            },
+            {
+              name: 'app',
+              type: 'custom',
+              current: {
+                text: 'se1 + se2',
+                value: ['se1', 'se2'],
+              },
+              options: [
+                { text: 'se1', value: 'se1', selected: true },
+                { text: 'se2', value: 'se2', selected: true },
+              ],
+            },
+          ],
+        },
+      };
+
+      const model = getDashboardModel(dashboardJSON);
+      model.processRepeats();
+      expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      model.snapshot = { timestamp: new Date() };
+      const saveModel = model.getSaveModelClone();
+      expect(saveModel.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(saveModel.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      model.collapseRows();
+      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(2);
     });
   });
 
@@ -766,6 +863,64 @@ describe('DashboardModel', () => {
       }
     );
   });
+
+  describe('canEditPanel', () => {
+    it('returns false if the dashboard cannot be edited', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      dashboard.meta.canEdit = false;
+      const panel = dashboard.getPanelById(2);
+      expect(dashboard.canEditPanel(panel)).toBe(false);
+    });
+
+    it('returns false if no panel is passed in', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      expect(dashboard.canEditPanel()).toBe(false);
+    });
+
+    it('returns false if the panel is a repeat', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+          { id: 3, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 }, repeatPanelId: 2 },
+        ],
+      });
+      const panel = dashboard.getPanelById(3);
+      expect(dashboard.canEditPanel(panel)).toBe(false);
+    });
+
+    it('returns false if the panel is a row', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      const panel = dashboard.getPanelById(1);
+      expect(dashboard.canEditPanel(panel)).toBe(false);
+    });
+
+    it('returns true otherwise', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      const panel = dashboard.getPanelById(2);
+      expect(dashboard.canEditPanel(panel)).toBe(true);
+    });
+  });
 });
 
 describe('exitViewPanel', () => {
@@ -801,17 +956,6 @@ describe('exitViewPanel', () => {
       dashboard.exitViewPanel(panel);
 
       expect(dashboard.startRefresh).not.toHaveBeenCalled();
-    });
-
-    describe('and there is a change that affects all panels', () => {
-      it('then startRefresh is not called', () => {
-        const { dashboard, panel } = getTestContext();
-        dashboard.setChangeAffectsAllPanels();
-
-        dashboard.exitViewPanel(panel);
-
-        expect(dashboard.startRefresh).toHaveBeenCalled();
-      });
     });
   });
 });
@@ -864,42 +1008,7 @@ describe('exitPanelEditor', () => {
       dashboard.exitPanelEditor();
       expect(timeSrvMock.resumeAutoRefresh).toHaveBeenCalled();
     });
-
-    describe('and there is a change that affects all panels', () => {
-      it('then startRefresh is called', () => {
-        const { dashboard } = getTestContext();
-        dashboard.setChangeAffectsAllPanels();
-
-        dashboard.exitPanelEditor();
-
-        expect(dashboard.startRefresh).toHaveBeenCalled();
-      });
-    });
   });
-});
-
-describe('setChangeAffectsAllPanels', () => {
-  it.each`
-    panelInEdit  | panelInView  | expected
-    ${null}      | ${null}      | ${false}
-    ${undefined} | ${undefined} | ${false}
-    ${null}      | ${{}}        | ${true}
-    ${undefined} | ${{}}        | ${true}
-    ${{}}        | ${null}      | ${true}
-    ${{}}        | ${undefined} | ${true}
-    ${{}}        | ${{}}        | ${true}
-  `(
-    'when called and panelInEdit:{$panelInEdit} and panelInView:{$panelInView}',
-    ({ panelInEdit, panelInView, expected }) => {
-      const dashboard = new DashboardModel({});
-      dashboard.panelInEdit = panelInEdit;
-      dashboard.panelInView = panelInView;
-
-      dashboard.setChangeAffectsAllPanels();
-
-      expect(dashboard['hasChangesThatAffectsAllPanels']).toEqual(expected);
-    }
-  );
 });
 
 describe('initEditPanel', () => {

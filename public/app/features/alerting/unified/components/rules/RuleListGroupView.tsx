@@ -6,9 +6,10 @@ import { GrafanaRules } from './GrafanaRules';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
+  expandAll: boolean;
 }
 
-export const RuleListGroupView: FC<Props> = ({ namespaces }) => {
+export const RuleListGroupView: FC<Props> = ({ namespaces, expandAll }) => {
   const [grafanaNamespaces, cloudNamespaces] = useMemo(() => {
     const sorted = namespaces
       .map((namespace) => ({
@@ -24,8 +25,8 @@ export const RuleListGroupView: FC<Props> = ({ namespaces }) => {
 
   return (
     <>
-      <GrafanaRules namespaces={grafanaNamespaces} />
-      <CloudRules namespaces={cloudNamespaces} />
+      <GrafanaRules namespaces={grafanaNamespaces} expandAll={expandAll} />
+      <CloudRules namespaces={cloudNamespaces} expandAll={expandAll} />
     </>
   );
 };

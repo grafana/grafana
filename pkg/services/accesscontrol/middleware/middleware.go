@@ -5,31 +5,36 @@ import (
 	"net/http"
 	"time"
 
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, accesscontrol.Evaluator) macaron.Handler {
-	return func(fallback macaron.Handler, evaluator accesscontrol.Evaluator) macaron.Handler {
+func authorize(c *models.ReqContext, ac accesscontrol.AccessControl, user *models.SignedInUser, evaluator accesscontrol.Evaluator) {
+	injected, err := evaluator.Inject(buildScopeParams(c))
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
+		return
+	}
+
+	hasAccess, err := ac.Evaluate(c.Req.Context(), user, injected)
+	if !hasAccess || err != nil {
+		Deny(c, injected, err)
+		return
+	}
+}
+
+func Middleware(ac accesscontrol.AccessControl) func(web.Handler, accesscontrol.Evaluator) web.Handler {
+	return func(fallback web.Handler, evaluator accesscontrol.Evaluator) web.Handler {
 		if ac.IsDisabled() {
 			return fallback
 		}
 
 		return func(c *models.ReqContext) {
-			injected, err := evaluator.Inject(macaron.Params(c.Req))
-			if err != nil {
-				c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
-				return
-			}
-
-			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, injected)
-			if !hasAccess || err != nil {
-				Deny(c, injected, err)
-				return
-			}
+			authorize(c, ac, c.SignedInUser, evaluator)
 		}
 	}
 }
@@ -45,6 +50,12 @@ func Deny(c *models.ReqContext, evaluator accesscontrol.Evaluator, err error) {
 			"accessErrorID", id,
 			"permissions", evaluator.String(),
 		)
+	}
+
+	if !c.IsApiRequest() {
+		// TODO(emil): I'd like to show a message after this redirect, not sure how that can be done?
+		c.Redirect(setting.AppSubUrl + "/")
+		return
 	}
 
 	// If the user triggers an error in the access control system, we
@@ -68,4 +79,90 @@ func newID() string {
 		id = fmt.Sprintf("%d", time.Now().UnixNano())
 	}
 	return "ACE" + id
+}
+
+func buildScopeParams(c *models.ReqContext) accesscontrol.ScopeParams {
+	return accesscontrol.ScopeParams{
+		OrgID:     c.OrgId,
+		URLParams: web.Params(c.Req),
+	}
+}
+
+type OrgIDGetter func(c *models.ReqContext) (int64, error)
+
+func AuthorizeInOrgMiddleware(ac accesscontrol.AccessControl, db *sqlstore.SQLStore) func(web.Handler, OrgIDGetter, accesscontrol.Evaluator) web.Handler {
+	return func(fallback web.Handler, getTargetOrg OrgIDGetter, evaluator accesscontrol.Evaluator) web.Handler {
+		if ac.IsDisabled() {
+			return fallback
+		}
+
+		return func(c *models.ReqContext) {
+			// using a copy of the user not to modify the signedInUser, yet perform the permission evaluation in another org
+			userCopy := *(c.SignedInUser)
+			orgID, err := getTargetOrg(c)
+			if err != nil {
+				Deny(c, nil, fmt.Errorf("failed to get target org: %w", err))
+				return
+			}
+			if orgID == accesscontrol.GlobalOrgID {
+				userCopy.OrgId = orgID
+				userCopy.OrgName = ""
+				userCopy.OrgRole = ""
+			} else {
+				query := models.GetSignedInUserQuery{UserId: c.UserId, OrgId: orgID}
+				if err := db.GetSignedInUserWithCacheCtx(c.Req.Context(), &query); err != nil {
+					Deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+					return
+				}
+				userCopy.OrgId = query.Result.OrgId
+				userCopy.OrgName = query.Result.OrgName
+				userCopy.OrgRole = query.Result.OrgRole
+			}
+
+			authorize(c, ac, &userCopy, evaluator)
+		}
+	}
+}
+
+func UseOrgFromContextParams(c *models.ReqContext) (int64, error) {
+	orgID := c.ParamsInt64(":orgId")
+	// Special case of macaron handling invalid params
+	if orgID == 0 {
+		return 0, models.ErrOrgNotFound
+	}
+
+	return orgID, nil
+}
+
+func UseGlobalOrg(c *models.ReqContext) (int64, error) {
+	return accesscontrol.GlobalOrgID, nil
+}
+
+// Disable returns http 404 if shouldDisable is set to true
+func Disable(shouldDisable bool) web.Handler {
+	return func(c *models.ReqContext) {
+		if shouldDisable {
+			c.Resp.WriteHeader(http.StatusNotFound)
+			return
+		}
+	}
+}
+
+func LoadPermissionsMiddleware(ac accesscontrol.AccessControl) web.Handler {
+	return func(c *models.ReqContext) {
+		if ac.IsDisabled() {
+			return
+		}
+
+		permissions, err := ac.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+		if err != nil {
+			c.JsonApiErr(http.StatusForbidden, "", err)
+			return
+		}
+
+		if c.SignedInUser.Permissions == nil {
+			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+		}
+		c.SignedInUser.Permissions[c.OrgId] = accesscontrol.GroupScopesByAction(permissions)
+	}
 }

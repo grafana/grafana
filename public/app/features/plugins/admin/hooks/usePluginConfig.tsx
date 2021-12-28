@@ -1,6 +1,6 @@
 import { useAsync } from 'react-use';
 import { CatalogPlugin } from '../types';
-import { loadPlugin } from '../../PluginPage';
+import { loadPlugin } from '../../utils';
 
 export const usePluginConfig = (plugin?: CatalogPlugin) => {
   return useAsync(async () => {
@@ -8,9 +8,9 @@ export const usePluginConfig = (plugin?: CatalogPlugin) => {
       return null;
     }
 
-    if (plugin.isInstalled) {
+    if (plugin.isInstalled && !plugin.isDisabled) {
       return loadPlugin(plugin.id);
     }
     return null;
-  }, [plugin?.id, plugin?.isInstalled]);
+  }, [plugin?.id, plugin?.isInstalled, plugin?.isDisabled]);
 };

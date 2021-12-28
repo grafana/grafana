@@ -129,9 +129,10 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
       },
     ]),
     new ForkTsCheckerWebpackPlugin({
-      tsconfig: path.join(process.cwd(), 'tsconfig.json'),
-      // Only report problems in detected in plugin's code
-      reportFiles: ['**/*.{ts,tsx}'],
+      typescript: { configFile: path.join(process.cwd(), 'tsconfig.json') },
+      issue: {
+        include: [{ file: '**/*.{ts,tsx}' }],
+      },
     }),
   ];
 };
@@ -170,6 +171,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
 
     performance: { hints: false },
     externals: [
+      'tslib',
       'lodash',
       'jquery',
       'moment',
@@ -213,15 +215,15 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
           test: /\.tsx?$/,
           loaders: [
             {
-              loader: 'babel-loader',
+              loader: require.resolve('babel-loader'),
               options: {
-                presets: [['@babel/preset-env', { modules: false }]],
-                plugins: ['angularjs-annotate'],
+                presets: [[require.resolve('@babel/preset-env'), { modules: false }]],
+                plugins: [require.resolve('babel-plugin-angularjs-annotate')],
                 sourceMaps: true,
               },
             },
             {
-              loader: 'ts-loader',
+              loader: require.resolve('ts-loader'),
               options: {
                 onlyCompileBundledFiles: true,
                 transpileOnly: true,
@@ -234,7 +236,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
           test: /\.jsx?$/,
           loaders: [
             {
-              loader: 'babel-loader',
+              loader: require.resolve('babel-loader'),
               options: {
                 presets: [['@babel/preset-env', { modules: false }]],
                 plugins: ['angularjs-annotate'],
@@ -249,7 +251,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
           test: /\.html$/,
           exclude: [/node_modules/],
           use: {
-            loader: 'html-loader',
+            loader: require.resolve('html-loader'),
           },
         },
         ...getFileLoaders(),
@@ -274,7 +276,7 @@ export const loadWebpackConfig: WebpackConfigurationGetter = async (options) => 
       );
     }
     return (configGetter as CustomWebpackConfigurationGetter)(baseConfig, options);
-  } catch (err) {
+  } catch (err: any) {
     if (err.code === 'ENOENT') {
       return baseConfig;
     }

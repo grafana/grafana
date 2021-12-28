@@ -1,12 +1,12 @@
 import React, { FC } from 'react';
 import { OperatorSegment } from './OperatorSegment';
 import { AdHocVariableFilter } from 'app/features/variables/types';
-import { SelectableValue } from '@grafana/data';
+import { DataSourceRef, SelectableValue } from '@grafana/data';
 import { AdHocFilterKey } from './AdHocFilterKey';
 import { AdHocFilterValue } from './AdHocFilterValue';
 
 interface Props {
-  datasource: string;
+  datasource: DataSourceRef;
   filter: AdHocVariableFilter;
   onKeyChange: (item: SelectableValue<string | null>) => void;
   onOperatorChange: (item: SelectableValue<string>) => void;

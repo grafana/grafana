@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -17,6 +18,7 @@ const AlertDefinitionMaxTitleLength = 190
 // AlertingStore is the database interface used by the Alertmanager service.
 type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(*models.GetLatestAlertmanagerConfigurationQuery) error
+	GetAllLatestAlertmanagerConfiguration(ctx context.Context) ([]*models.AlertConfiguration, error)
 	SaveAlertmanagerConfiguration(*models.SaveAlertmanagerConfigurationCmd) error
 	SaveAlertmanagerConfigurationWithCallback(*models.SaveAlertmanagerConfigurationCmd, SaveCallback) error
 }
@@ -26,7 +28,7 @@ type DBstore struct {
 	// the base scheduler tick rate; it's used for validating definition interval
 	BaseInterval time.Duration
 	// default alert definiiton interval
-	DefaultIntervalSeconds int64
-	SQLStore               *sqlstore.SQLStore
-	Logger                 log.Logger
+	DefaultInterval time.Duration
+	SQLStore        *sqlstore.SQLStore
+	Logger          log.Logger
 }

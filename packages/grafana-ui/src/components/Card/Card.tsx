@@ -39,10 +39,10 @@ export const Card: CardInterface = ({ heading, description, disabled, href, onCl
   const [tags, figure, meta, actions, secondaryActions] = ['Tags', 'Figure', 'Meta', 'Actions', 'SecondaryActions'].map(
     (item) => {
       const found = React.Children.toArray(children as React.ReactElement[]).find((child) => {
-        return child?.type && (child.type as any).displayName === item;
+        return React.isValidElement(child) && child?.type && (child.type as any).displayName === item;
       });
 
-      if (found) {
+      if (found && React.isValidElement(found)) {
         return React.cloneElement(found, { disabled, styles, ...found.props });
       }
       return found;
@@ -69,9 +69,7 @@ export const Card: CardInterface = ({ heading, description, disabled, href, onCl
       <div className={styles.inner}>
         <div className={styles.info}>
           <div>
-            <div className={styles.heading} role="heading">
-              {heading}
-            </div>
+            <h2 className={styles.heading}>{heading}</h2>
             {meta}
             {description && <p className={styles.description}>{description}</p>}
           </div>
@@ -115,6 +113,7 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme2) => {
       width: 100%;
       margin-bottom: 0;
       font-size: ${theme.typography.size.md};
+      letter-spacing: inherit;
       line-height: ${theme.typography.body.lineHeight};
       color: ${theme.colors.text.primary};
       font-weight: ${theme.typography.fontWeightMedium};

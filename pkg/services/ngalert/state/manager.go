@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -32,9 +33,9 @@ type Manager struct {
 	instanceStore store.InstanceStore
 }
 
-func NewManager(logger log.Logger, metrics *metrics.State, ruleStore store.RuleStore, instanceStore store.InstanceStore) *Manager {
+func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL, ruleStore store.RuleStore, instanceStore store.InstanceStore) *Manager {
 	manager := &Manager{
-		cache:         newCache(logger, metrics),
+		cache:         newCache(logger, metrics, externalURL),
 		quit:          make(chan struct{}),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           logger,
@@ -137,12 +138,12 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 	st.cache.removeByRuleUID(orgID, ruleUID)
 }
 
-func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []*State {
+func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results) []*State {
 	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
-		s := st.setNextState(alertRule, result)
+		s := st.setNextState(ctx, alertRule, result)
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
@@ -150,8 +151,8 @@ func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eva
 	return states
 }
 
-//Set the current state based on evaluation results
-func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Result) *State {
+// Set the current state based on evaluation results
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
 	currentState := st.getOrCreate(alertRule, result)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -184,7 +185,7 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 
 	st.set(currentState)
 	if oldState != currentState.State {
-		go st.createAlertAnnotation(currentState.State, alertRule, result, oldState)
+		go st.createAlertAnnotation(ctx, currentState.State, alertRule, result, oldState)
 	}
 	return currentState
 }
@@ -205,7 +206,7 @@ func (st *Manager) recordMetrics() {
 	for {
 		select {
 		case <-ticker.C:
-			st.log.Info("recording state cache metrics", "now", time.Now())
+			st.log.Debug("recording state cache metrics", "now", time.Now())
 			st.cache.recordMetrics()
 		case <-st.quit:
 			st.log.Debug("stopping state cache metrics recording", "now", time.Now())
@@ -232,46 +233,47 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.AlertRule, result eval.Result, oldState eval.State) {
-	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", new.String())
-	dashUid, ok := alertRule.Annotations["__dashboardUid__"]
-	if !ok {
-		return
-	}
-
-	panelUid := alertRule.Annotations["__panelId__"]
-
-	panelId, err := strconv.ParseInt(panelUid, 10, 64)
-	if err != nil {
-		st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "error", err.Error())
-		return
-	}
-
-	query := &models.GetDashboardQuery{
-		Uid:   dashUid,
-		OrgId: alertRule.OrgID,
-	}
-
-	err = sqlstore.GetDashboardCtx(context.TODO(), query)
-	if err != nil {
-		st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
-		return
-	}
+func (st *Manager) createAlertAnnotation(ctx context.Context, new eval.State, alertRule *ngModels.AlertRule, result eval.Result, oldState eval.State) {
+	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", new.String(), "oldState", oldState.String())
 
 	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, result.Instance.String(), new.String())
 
 	item := &annotations.Item{
-		OrgId:       alertRule.OrgID,
-		DashboardId: query.Result.Id,
-		PanelId:     panelId,
-		PrevState:   oldState.String(),
-		NewState:    new.String(),
-		Text:        annotationText,
-		Epoch:       result.EvaluatedAt.UnixNano() / int64(time.Millisecond),
+		AlertId:   alertRule.ID,
+		OrgId:     alertRule.OrgID,
+		PrevState: oldState.String(),
+		NewState:  new.String(),
+		Text:      annotationText,
+		Epoch:     result.EvaluatedAt.UnixNano() / int64(time.Millisecond),
+	}
+
+	dashUid, ok := alertRule.Annotations[ngModels.DashboardUIDAnnotation]
+	if ok {
+		panelUid := alertRule.Annotations[ngModels.PanelIDAnnotation]
+
+		panelId, err := strconv.ParseInt(panelUid, 10, 64)
+		if err != nil {
+			st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "error", err.Error())
+			return
+		}
+
+		query := &models.GetDashboardQuery{
+			Uid:   dashUid,
+			OrgId: alertRule.OrgID,
+		}
+
+		err = sqlstore.GetDashboard(ctx, query)
+		if err != nil {
+			st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
+			return
+		}
+
+		item.PanelId = panelId
+		item.DashboardId = query.Result.Id
 	}
 
 	annotationRepo := annotations.GetRepository()
-	if err = annotationRepo.Save(item); err != nil {
+	if err := annotationRepo.Save(item); err != nil {
 		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "error", err.Error())
 		return
 	}

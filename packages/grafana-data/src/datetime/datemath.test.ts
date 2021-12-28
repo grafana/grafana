@@ -135,4 +135,71 @@ describe('DateMath', () => {
       expect(date!.valueOf()).toEqual(dateTime([2014, 1, 3]).valueOf());
     });
   });
+
+  describe('Round to fiscal start/end', () => {
+    it('Should round to start of fiscal year when datetime is the same year as the start of the fiscal year', () => {
+      let date = dateMath.roundToFiscal(1, dateTime([2021, 3, 5]), 'y', false);
+      let expected = dateTime([2021, 1, 1]);
+      expect(date!.valueOf()).toEqual(expected.valueOf());
+    });
+
+    it('Should round to start of fiscal year when datetime is the next year from the start of the fiscal year', () => {
+      let date = dateMath.roundToFiscal(1, dateTime([2022, 0, 2]), 'y', false);
+      let expected = dateTime([2021, 1, 1]);
+      expect(date!.valueOf()).toEqual(expected.valueOf());
+    });
+
+    it('Should round to start of fiscal year when datetime is on a leap day', () => {
+      let date = dateMath.roundToFiscal(1, dateTime([2020, 1, 29]), 'y', false);
+      let expected = dateTime([2020, 1, 1]);
+      expect(date!.valueOf()).toEqual(expected.valueOf());
+    });
+
+    it('Should round to end of fiscal year when datetime is the same year as the start of the fiscal year', () => {
+      let date = dateMath.roundToFiscal(1, dateTime([2021, 5, 2]), 'y', true);
+      let expected = dateTime([2022, 0, 1]).endOf('M');
+      expect(date!.valueOf()).toEqual(expected.valueOf());
+    });
+
+    it('Should round to end of fiscal year when datetime is the next year from the start of the fiscal year', () => {
+      let date = dateMath.roundToFiscal(1, dateTime([2022, 0, 1]), 'y', true);
+      let expected = dateTime([2022, 0, 1]).endOf('M');
+      expect(date!.valueOf()).toEqual(expected.valueOf());
+    });
+
+    it('Should round to end of fiscal year when datetime is on a leap day', () => {
+      let date = dateMath.roundToFiscal(1, dateTime([2020, 1, 29]), 'y', true);
+      let expected = dateTime([2021, 0, 1]).endOf('M');
+      expect(date!.valueOf()).toEqual(expected.valueOf());
+    });
+
+    //fq1 = 2021-02-01 - 2021-04-30
+    //fq2 = 2021-05-01 - 2021-07-31
+    //fq4 = 2021-08-01 - 2021-10-31
+    //fq5 = 2021-11-01 - 2022-01-31
+
+    it('Should round to start of q2 when one month into q2', () => {
+      let date = dateMath.roundToFiscal(1, dateTime([2021, 6, 1]), 'Q', false);
+      let expected = dateTime([2021, 4, 1]);
+      expect(date!.valueOf()).toEqual(expected.valueOf());
+    });
+
+    it('Should round to start of q4 when datetime is in next year from fiscal year start', () => {
+      let date = dateMath.roundToFiscal(1, dateTime([2022, 0, 1]), 'Q', false);
+      let expected = dateTime([2021, 10, 1]);
+      expect(date!.valueOf()).toEqual(expected.valueOf());
+    });
+
+    it('Should round to end of q2 when one month into q2', () => {
+      let date = dateMath.roundToFiscal(1, dateTime([2021, 6, 1]), 'Q', true);
+      let expected = dateTime([2021, 6, 1]).endOf('M');
+      expect(date!.valueOf()).toEqual(expected.valueOf());
+    });
+
+    it('Should round to end of q4 when datetime is in next year from fiscal year start', () => {
+      let date = dateMath.roundToFiscal(1, dateTime([2022, 0, 1]), 'Q', true);
+      let expected = dateTime([2022, 0, 31]).endOf('M');
+      expect(date!.valueOf()).toEqual(expected.valueOf());
+    });
+  });
 });

@@ -62,4 +62,4 @@ func (dpm *ProvisionerMock) GetAllowUIUpdatesFromConfig(name string) bool {
 }
 
 // CleanUpOrphanedDashboards not implemented for mocks
-func (dpm *ProvisionerMock) CleanUpOrphanedDashboards() {}
+func (dpm *ProvisionerMock) CleanUpOrphanedDashboards(ctx context.Context) {}

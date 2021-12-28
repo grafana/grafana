@@ -233,6 +233,18 @@ describe('PanelModel', () => {
         const out = model.replaceVariables('hello $aaa and $bbb', extra);
         expect(out).toBe('hello XXX and BBB');
       });
+
+      it('Can use request scoped vars', () => {
+        model.getQueryRunner().getLastRequest = () => {
+          return {
+            scopedVars: {
+              __interval: { text: '10m', value: '10m' },
+            },
+          };
+        };
+        const out = model.replaceVariables('hello $__interval');
+        expect(out).toBe('hello 10m');
+      });
     });
 
     describe('when changing panel type', () => {
@@ -265,7 +277,6 @@ describe('PanelModel', () => {
           });
         });
 
-        model.editSourceId = 1001;
         model.fieldConfig.defaults.decimals = 3;
         model.fieldConfig.defaults.custom = {
           customProp: true,
@@ -287,10 +298,6 @@ describe('PanelModel', () => {
         ];
         model.changePlugin(newPlugin);
         model.alert = { id: 2 };
-      });
-
-      it('should keep editSourceId', () => {
-        expect(model.editSourceId).toBe(1001);
       });
 
       it('should keep maxDataPoints', () => {

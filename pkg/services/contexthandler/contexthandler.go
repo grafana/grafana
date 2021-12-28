@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -21,10 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	ol "github.com/opentracing/opentracing-go/log"
-	cw "github.com/weaveworks/common/middleware"
-	"gopkg.in/macaron.v1"
+	cw "github.com/weaveworks/common/tracing"
 )
 
 const (
@@ -71,7 +72,7 @@ func FromContext(c context.Context) *models.ReqContext {
 }
 
 // Middleware provides a middleware to initialize the Macaron context.
-func (h *ContextHandler) Middleware(mContext *macaron.Context) {
+func (h *ContextHandler) Middleware(mContext *web.Context) {
 	span, _ := opentracing.StartSpanFromContext(mContext.Req.Context(), "Auth - Middleware")
 	defer span.Finish()
 
@@ -105,6 +106,19 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 		}
 	}
 
+	queryParameters, err := url.ParseQuery(reqContext.Req.URL.RawQuery)
+	if err != nil {
+		reqContext.Logger.Error("Failed to parse query parameters", "error", err)
+	}
+	if queryParameters.Has("targetOrgId") {
+		targetOrg, err := strconv.ParseInt(queryParameters.Get("targetOrgId"), 10, 64)
+		if err == nil {
+			orgID = targetOrg
+		} else {
+			reqContext.Logger.Error("Invalid target organization ID", "error", err)
+		}
+	}
+
 	// the order in which these are tested are important
 	// look for api key in Authorization header first
 	// then init session and look for userId in session
@@ -132,7 +146,7 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	// update last seen every 5min
 	if reqContext.ShouldUpdateLastSeenAt() {
 		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserId)
-		if err := bus.Dispatch(&models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
+		if err := bus.DispatchCtx(mContext.Req.Context(), &models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
 			reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 		}
 	}
@@ -148,7 +162,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 
 	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
 	if err != nil {
-		log.Errorf(3, "Anonymous access organization error: '%s': %s", h.Cfg.AnonymousOrgName, err)
+		reqContext.Logger.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
 	}
 
@@ -190,7 +204,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	// fetch key
 	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-	if err := bus.Dispatch(&keyQuery); err != nil {
+	if err := bus.DispatchCtx(reqContext.Req.Context(), &keyQuery); err != nil {
 		reqContext.JsonApiErr(401, InvalidAPIKey, err)
 		return true
 	}
@@ -218,11 +232,33 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
+	if apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
+		//Use the old APIkey method.  This provides backwards compatibility.
+		reqContext.SignedInUser = &models.SignedInUser{}
+		reqContext.OrgRole = apikey.Role
+		reqContext.ApiKeyId = apikey.Id
+		reqContext.OrgId = apikey.OrgId
+		reqContext.IsSignedIn = true
+		return true
+	}
+
+	//There is a service account attached to the API key
+
+	//Use service account linked to API key as the signed in user
+	query := models.GetSignedInUserQuery{UserId: apikey.ServiceAccountId, OrgId: apikey.OrgId}
+	if err := bus.DispatchCtx(reqContext.Req.Context(), &query); err != nil {
+		reqContext.Logger.Error(
+			"Failed to link API key to service account in",
+			"id", query.UserId,
+			"org", query.OrgId,
+			"err", err,
+		)
+		reqContext.JsonApiErr(500, "Unable to link API key to service account", err)
+		return true
+	}
+
 	reqContext.IsSignedIn = true
-	reqContext.SignedInUser = &models.SignedInUser{}
-	reqContext.OrgRole = apikey.Role
-	reqContext.ApiKeyId = apikey.Id
-	reqContext.OrgId = apikey.OrgId
+	reqContext.SignedInUser = query.Result
 	return true
 }
 
@@ -250,7 +286,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		Password: password,
 		Cfg:      h.Cfg,
 	}
-	if err := bus.Dispatch(&authQuery); err != nil {
+	if err := bus.DispatchCtx(reqContext.Req.Context(), &authQuery); err != nil {
 		reqContext.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
@@ -320,8 +356,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 }
 
 func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService models.UserTokenService,
-	token *models.UserToken) macaron.BeforeFunc {
-	return func(w macaron.ResponseWriter) {
+	token *models.UserToken) web.BeforeFunc {
+	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
 			return
@@ -363,7 +399,7 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 	span, _ := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithRenderAuth")
 	defer span.Finish()
 
-	renderUser, exists := h.RenderService.GetRenderUser(key)
+	renderUser, exists := h.RenderService.GetRenderUser(reqContext.Req.Context(), key)
 	if !exists {
 		reqContext.JsonApiErr(401, "Invalid Render Key", nil)
 		return true

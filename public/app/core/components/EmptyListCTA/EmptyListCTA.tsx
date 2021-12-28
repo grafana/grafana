@@ -48,9 +48,11 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
           <span key="proTipFooter">
             <Icon name="rocket" />
             <> ProTip: {proTip} </>
-            <a href={proTipLink} target={proTipTarget} className="text-link">
-              {proTipLinkTitle}
-            </a>
+            {proTipLink && (
+              <a href={proTipLink} target={proTipTarget} className="text-link">
+                {proTipLinkTitle}
+              </a>
+            )}
           </span>
         ) : (
           ''
@@ -80,7 +82,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
       href={buttonLink}
       icon={buttonIcon}
       className={ctaElementClassName}
-      aria-label={selectors.components.CallToActionCard.button(buttonTitle)}
+      data-testid={selectors.components.CallToActionCard.buttonV2(buttonTitle)}
       disabled={buttonDisabled}
     >
       {buttonTitle}

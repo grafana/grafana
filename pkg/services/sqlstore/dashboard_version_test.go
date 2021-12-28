@@ -8,11 +8,10 @@ import (
 	"reflect"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 )
 
 func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Dashboard, data map[string]interface{}) {
@@ -26,151 +25,152 @@ func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Das
 		Dashboard: simplejson.NewFromAny(data),
 	}
 	_, err := sqlStore.SaveDashboard(saveCmd)
-	So(err, ShouldBeNil)
+	require.Nil(t, err)
 }
 
 func TestGetDashboardVersion(t *testing.T) {
-	Convey("Testing dashboard version retrieval", t, func() {
-		sqlStore := InitTestDB(t)
+	sqlStore := InitTestDB(t)
 
-		Convey("Get a Dashboard ID and version ID", func() {
-			savedDash := insertTestDashboard(t, sqlStore, "test dash 26", 1, 0, false, "diff")
+	t.Run("Get a Dashboard ID and version ID", func(t *testing.T) {
+		savedDash := insertTestDashboard(t, sqlStore, "test dash 26", 1, 0, false, "diff")
 
-			query := models.GetDashboardVersionQuery{
-				DashboardId: savedDash.Id,
-				Version:     savedDash.Version,
-				OrgId:       1,
-			}
+		query := models.GetDashboardVersionQuery{
+			DashboardId: savedDash.Id,
+			Version:     savedDash.Version,
+			OrgId:       1,
+		}
 
-			err := GetDashboardVersion(&query)
-			So(err, ShouldBeNil)
-			So(savedDash.Id, ShouldEqual, query.DashboardId)
-			So(savedDash.Version, ShouldEqual, query.Version)
+		err := sqlStore.GetDashboardVersion(context.Background(), &query)
+		require.Nil(t, err)
+		require.Equal(t, query.DashboardId, savedDash.Id)
+		require.Equal(t, query.Version, savedDash.Version)
 
-			dashCmd := models.GetDashboardQuery{
-				OrgId: savedDash.OrgId,
-				Uid:   savedDash.Uid,
-			}
+		dashCmd := models.GetDashboardQuery{
+			OrgId: savedDash.OrgId,
+			Uid:   savedDash.Uid,
+		}
 
-			err = GetDashboardCtx(context.Background(), &dashCmd)
-			So(err, ShouldBeNil)
-			eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)
-			So(eq, ShouldEqual, true)
-		})
+		err = GetDashboard(context.Background(), &dashCmd)
+		require.Nil(t, err)
+		eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)
+		require.Equal(t, true, eq)
+	})
 
-		Convey("Attempt to get a version that doesn't exist", func() {
-			query := models.GetDashboardVersionQuery{
-				DashboardId: int64(999),
-				Version:     123,
-				OrgId:       1,
-			}
+	t.Run("Attempt to get a version that doesn't exist", func(t *testing.T) {
+		query := models.GetDashboardVersionQuery{
+			DashboardId: int64(999),
+			Version:     123,
+			OrgId:       1,
+		}
 
-			err := GetDashboardVersion(&query)
-			So(err, ShouldNotBeNil)
-			So(err, ShouldEqual, models.ErrDashboardVersionNotFound)
-		})
+		err := sqlStore.GetDashboardVersion(context.Background(), &query)
+		require.Error(t, err)
+		require.Equal(t, models.ErrDashboardVersionNotFound, err)
 	})
 }
 
 func TestGetDashboardVersions(t *testing.T) {
-	Convey("Testing dashboard versions retrieval", t, func() {
-		sqlStore := InitTestDB(t)
-		savedDash := insertTestDashboard(t, sqlStore, "test dash 43", 1, 0, false, "diff-all")
+	sqlStore := InitTestDB(t)
+	savedDash := insertTestDashboard(t, sqlStore, "test dash 43", 1, 0, false, "diff-all")
 
-		Convey("Get all versions for a given Dashboard ID", func() {
-			query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
+	t.Run("Get all versions for a given Dashboard ID", func(t *testing.T) {
+		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
 
-			err := GetDashboardVersions(&query)
-			So(err, ShouldBeNil)
-			So(len(query.Result), ShouldEqual, 1)
+		err := sqlStore.GetDashboardVersions(context.Background(), &query)
+		require.Nil(t, err)
+		require.Equal(t, 1, len(query.Result))
+	})
+
+	t.Run("Attempt to get the versions for a non-existent Dashboard ID", func(t *testing.T) {
+		query := models.GetDashboardVersionsQuery{DashboardId: int64(999), OrgId: 1}
+
+		err := sqlStore.GetDashboardVersions(context.Background(), &query)
+		require.Error(t, err)
+		require.Equal(t, models.ErrNoVersionsForDashboardId, err)
+		require.Equal(t, 0, len(query.Result))
+	})
+
+	t.Run("Get all versions for an updated dashboard", func(t *testing.T) {
+		updateTestDashboard(t, sqlStore, savedDash, map[string]interface{}{
+			"tags": "different-tag",
 		})
 
-		Convey("Attempt to get the versions for a non-existent Dashboard ID", func() {
-			query := models.GetDashboardVersionsQuery{DashboardId: int64(999), OrgId: 1}
+		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
+		err := sqlStore.GetDashboardVersions(context.Background(), &query)
 
-			err := GetDashboardVersions(&query)
-			So(err, ShouldNotBeNil)
-			So(err, ShouldEqual, models.ErrNoVersionsForDashboardId)
-			So(len(query.Result), ShouldEqual, 0)
-		})
-
-		Convey("Get all versions for an updated dashboard", func() {
-			updateTestDashboard(t, sqlStore, savedDash, map[string]interface{}{
-				"tags": "different-tag",
-			})
-
-			query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
-			err := GetDashboardVersions(&query)
-
-			So(err, ShouldBeNil)
-			So(len(query.Result), ShouldEqual, 2)
-		})
+		require.Nil(t, err)
+		require.Equal(t, 2, len(query.Result))
 	})
 }
 
 func TestDeleteExpiredVersions(t *testing.T) {
-	Convey("Testing dashboard versions clean up", t, func() {
-		sqlStore := InitTestDB(t)
-		versionsToKeep := 5
-		versionsToWrite := 10
-		setting.DashboardVersionsToKeep = versionsToKeep
+	versionsToKeep := 5
+	versionsToWrite := 10
+	setting.DashboardVersionsToKeep = versionsToKeep
 
-		savedDash := insertTestDashboard(t, sqlStore, "test dash 53", 1, 0, false, "diff-all")
+	var sqlStore *SQLStore
+	var savedDash *models.Dashboard
+	setup := func(t *testing.T) {
+		sqlStore = InitTestDB(t)
+		savedDash = insertTestDashboard(t, sqlStore, "test dash 53", 1, 0, false, "diff-all")
 		for i := 0; i < versionsToWrite-1; i++ {
 			updateTestDashboard(t, sqlStore, savedDash, map[string]interface{}{
 				"tags": "different-tag",
 			})
 		}
+	}
 
-		Convey("Clean up old dashboard versions", func() {
-			err := DeleteExpiredVersions(&models.DeleteExpiredVersionsCommand{})
-			So(err, ShouldBeNil)
+	t.Run("Clean up old dashboard versions", func(t *testing.T) {
+		setup(t)
+		err := sqlStore.DeleteExpiredVersions(context.Background(), &models.DeleteExpiredVersionsCommand{})
+		require.Nil(t, err)
 
-			query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
-			err = GetDashboardVersions(&query)
-			So(err, ShouldBeNil)
+		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
+		err = sqlStore.GetDashboardVersions(context.Background(), &query)
+		require.Nil(t, err)
 
-			So(len(query.Result), ShouldEqual, versionsToKeep)
-			// Ensure latest versions were kept
-			So(query.Result[versionsToKeep-1].Version, ShouldEqual, versionsToWrite-versionsToKeep+1)
-			So(query.Result[0].Version, ShouldEqual, versionsToWrite)
-		})
+		require.Equal(t, versionsToKeep, len(query.Result))
+		// Ensure latest versions were kept
+		require.Equal(t, versionsToWrite-versionsToKeep+1, query.Result[versionsToKeep-1].Version)
+		require.Equal(t, versionsToWrite, query.Result[0].Version)
+	})
 
-		Convey("Don't delete anything if there are no expired versions", func() {
-			setting.DashboardVersionsToKeep = versionsToWrite
+	t.Run("Don't delete anything if there are no expired versions", func(t *testing.T) {
+		setup(t)
+		setting.DashboardVersionsToKeep = versionsToWrite
 
-			err := DeleteExpiredVersions(&models.DeleteExpiredVersionsCommand{})
-			So(err, ShouldBeNil)
+		err := sqlStore.DeleteExpiredVersions(context.Background(), &models.DeleteExpiredVersionsCommand{})
+		require.Nil(t, err)
 
-			query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWrite}
-			err = GetDashboardVersions(&query)
-			So(err, ShouldBeNil)
+		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWrite}
+		err = sqlStore.GetDashboardVersions(context.Background(), &query)
+		require.Nil(t, err)
 
-			So(len(query.Result), ShouldEqual, versionsToWrite)
-		})
+		require.Equal(t, versionsToWrite, len(query.Result))
+	})
 
-		Convey("Don't delete more than MAX_VERSIONS_TO_DELETE_PER_BATCH * MAX_VERSION_DELETION_BATCHES per iteration", func() {
-			perBatch := 10
-			maxBatches := 10
+	t.Run("Don't delete more than MAX_VERSIONS_TO_DELETE_PER_BATCH * MAX_VERSION_DELETION_BATCHES per iteration", func(t *testing.T) {
+		setup(t)
+		perBatch := 10
+		maxBatches := 10
 
-			versionsToWriteBigNumber := perBatch*maxBatches + versionsToWrite
-			for i := 0; i < versionsToWriteBigNumber-versionsToWrite; i++ {
-				updateTestDashboard(t, sqlStore, savedDash, map[string]interface{}{
-					"tags": "different-tag",
-				})
-			}
+		versionsToWriteBigNumber := perBatch*maxBatches + versionsToWrite
+		for i := 0; i < versionsToWriteBigNumber-versionsToWrite; i++ {
+			updateTestDashboard(t, sqlStore, savedDash, map[string]interface{}{
+				"tags": "different-tag",
+			})
+		}
 
-			err := deleteExpiredVersions(&models.DeleteExpiredVersionsCommand{}, perBatch, maxBatches)
-			So(err, ShouldBeNil)
+		err := sqlStore.deleteExpiredVersions(context.Background(), &models.DeleteExpiredVersionsCommand{}, perBatch, maxBatches)
+		require.Nil(t, err)
 
-			query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWriteBigNumber}
-			err = GetDashboardVersions(&query)
-			So(err, ShouldBeNil)
+		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWriteBigNumber}
+		err = sqlStore.GetDashboardVersions(context.Background(), &query)
+		require.Nil(t, err)
 
-			// Ensure we have at least versionsToKeep versions
-			So(len(query.Result), ShouldBeGreaterThanOrEqualTo, versionsToKeep)
-			// Ensure we haven't deleted more than perBatch * maxBatches rows
-			So(versionsToWriteBigNumber-len(query.Result), ShouldBeLessThanOrEqualTo, perBatch*maxBatches)
-		})
+		// Ensure we have at least versionsToKeep versions
+		require.GreaterOrEqual(t, len(query.Result), versionsToKeep)
+		// Ensure we haven't deleted more than perBatch * maxBatches rows
+		require.LessOrEqual(t, versionsToWriteBigNumber-len(query.Result), perBatch*maxBatches)
 	})
 }

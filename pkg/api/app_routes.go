@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/tls"
 	"net"
 	"net/http"
@@ -13,12 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var pluginProxyTransport *http.Transport
+var applog = log.New("app.routes")
 
-func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
+func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 	pluginProxyTransport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: hs.Cfg.PluginsAppsSkipVerifyTLS,
@@ -32,10 +34,10 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
-	for _, plugin := range hs.PluginManager.Apps() {
+	for _, plugin := range hs.pluginStore.Plugins(context.TODO(), plugins.App) {
 		for _, route := range plugin.Routes {
-			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
-			handlers := make([]macaron.Handler, 0)
+			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.ID, route.Path)
+			handlers := make([]web.Handler, 0)
 			handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{
 				ReqSignedIn: true,
 			}))
@@ -47,20 +49,21 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 					handlers = append(handlers, middleware.RoleAuth(models.ROLE_EDITOR, models.ROLE_ADMIN))
 				}
 			}
-			handlers = append(handlers, AppPluginRoute(route, plugin.Id, hs))
+			handlers = append(handlers, AppPluginRoute(route, plugin.ID, hs))
 			for _, method := range strings.Split(route.Method, ",") {
 				r.Handle(strings.TrimSpace(method), url, handlers)
 			}
-			log.Debugf("Plugins: Adding proxy route %s", url)
+
+			applog.Debug("Plugins: Adding proxy route", "url", url)
 		}
 	}
 }
 
-func AppPluginRoute(route *plugins.AppPluginRoute, appID string, hs *HTTPServer) macaron.Handler {
+func AppPluginRoute(route *plugins.Route, appID string, hs *HTTPServer) web.Handler {
 	return func(c *models.ReqContext) {
-		path := macaron.Params(c.Req)["*"]
+		path := web.Params(c.Req)["*"]
 
-		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg)
+		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg, hs.SecretsService)
 		proxy.Transport = pluginProxyTransport
 		proxy.ServeHTTP(c.Resp, c.Req)
 	}

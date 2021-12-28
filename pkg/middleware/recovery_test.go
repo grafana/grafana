@@ -10,9 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	macaron "gopkg.in/macaron.v1"
 )
 
 func TestRecoveryMiddleware(t *testing.T) {
@@ -61,11 +61,11 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		viewsPath, err := filepath.Abs("../../public/views")
 		require.NoError(t, err)
 
-		sc.m = macaron.New()
+		sc.m = web.New()
 		sc.m.Use(Recovery(cfg))
 
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
-		sc.m.UseMiddleware(macaron.Renderer(viewsPath, "[[", "]]"))
+		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
 
 		sc.userAuthTokenService = auth.NewFakeUserAuthTokenService()
 		sc.remoteCacheService = remotecache.NewFakeStore(t)

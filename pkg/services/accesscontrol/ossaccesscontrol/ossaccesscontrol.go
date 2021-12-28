@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -12,11 +13,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(cfg *setting.Cfg, usageStats usagestats.UsageStats) *OSSAccessControlService {
+func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessControlService {
 	s := &OSSAccessControlService{
-		Cfg:        cfg,
-		UsageStats: usageStats,
-		Log:        log.New("accesscontrol"),
+		Cfg:           cfg,
+		UsageStats:    usageStats,
+		Log:           log.New("accesscontrol"),
+		scopeResolver: accesscontrol.NewScopeResolver(),
 	}
 	s.registerUsageMetrics()
 	return s
@@ -25,22 +27,21 @@ func ProvideService(cfg *setting.Cfg, usageStats usagestats.UsageStats) *OSSAcce
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
 	Cfg           *setting.Cfg
-	UsageStats    usagestats.UsageStats
+	UsageStats    usagestats.Service
 	Log           log.Logger
 	registrations accesscontrol.RegistrationList
+	scopeResolver accesscontrol.ScopeResolver
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
 	if ac.Cfg == nil {
 		return true
 	}
-
-	_, exists := ac.Cfg.FeatureToggles["accesscontrol"]
-	return !exists
+	return !ac.Cfg.FeatureToggles["accesscontrol"]
 }
 
 func (ac *OSSAccessControlService) registerUsageMetrics() {
-	ac.UsageStats.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+	ac.UsageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 		return map[string]interface{}{
 			"stats.oss.accesscontrol.enabled.count": ac.getUsageMetrics(),
 		}, nil
@@ -61,11 +62,24 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	defer timer.ObserveDuration()
 	metrics.MAccessEvaluationCount.Inc()
 
-	permissions, err := ac.GetUserPermissions(ctx, user)
-	if err != nil {
-		return false, err
+	if user.Permissions == nil {
+		user.Permissions = map[int64]map[string][]string{}
 	}
-	return evaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
+
+	if _, ok := user.Permissions[user.OrgId]; !ok {
+		permissions, err := ac.GetUserPermissions(ctx, user)
+		if err != nil {
+			return false, err
+		}
+		user.Permissions[user.OrgId] = accesscontrol.GroupScopesByAction(permissions)
+	}
+
+	return evaluator.Evaluate(user.Permissions[user.OrgId])
+}
+
+// GetUserRoles returns user permissions based on built-in roles
+func (ac *OSSAccessControlService) GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.RoleDTO, error) {
+	return nil, errors.New("unsupported function") //OSS users will continue to use builtin roles via GetUserPermissions
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
@@ -83,8 +97,12 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 					continue
 				}
 				for _, p := range role.Permissions {
-					permission := p
-					permissions = append(permissions, &permission)
+					// if the permission has a keyword in its scope it will be resolved
+					permission, err := ac.scopeResolver.ResolveKeyword(user, p)
+					if err != nil {
+						return nil, err
+					}
+					permissions = append(permissions, permission)
 				}
 			}
 		}
@@ -111,7 +129,7 @@ func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
 		// needs to be increased. Hence, we don't overwrite a role with a
 		// greater version.
 		if storedRole.Version >= role.Version {
-			log.Debugf("role %v has already been stored in a greater version, skipping registration", role.Name)
+			ac.Log.Debug("the has already been stored in a greater version, skipping registration", "role", role.Name)
 			return
 		}
 	}
@@ -127,7 +145,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 		if ok {
 			for _, assignedRole := range assignments {
 				if assignedRole == role.Name {
-					log.Debugf("role %v has already been assigned to %v", role.Name, builtInRole)
+					ac.Log.Debug("the role has already been assigned", "rolename", role.Name, "build_in_role", builtInRole)
 					alreadyAssigned = true
 				}
 			}

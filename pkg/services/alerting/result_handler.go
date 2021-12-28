@@ -24,10 +24,10 @@ type defaultResultHandler struct {
 	log      log.Logger
 }
 
-func newResultHandler(renderService rendering.Service) *defaultResultHandler {
+func newResultHandler(renderService rendering.Service, decryptFn GetDecryptedValueFn) *defaultResultHandler {
 	return &defaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
-		notifier: newNotificationService(renderService),
+		notifier: newNotificationService(renderService, decryptFn),
 	}
 }
 
@@ -58,7 +58,7 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 			EvalData: annotationData,
 		}
 
-		if err := bus.Dispatch(cmd); err != nil {
+		if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 			if errors.Is(err, models.ErrCannotChangeStateOnPausedAlert) {
 				handler.log.Error("Cannot change state on alert that's paused", "error", err)
 				return err

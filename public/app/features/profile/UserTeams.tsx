@@ -37,7 +37,7 @@ export class UserTeams extends PureComponent<Props> {
                 return (
                   <tr key={index}>
                     <td className="width-4 text-center">
-                      <img className="filter-table__avatar" src={team.avatarUrl} />
+                      <img className="filter-table__avatar" src={team.avatarUrl} alt="" />
                     </td>
                     <td>{team.name}</td>
                     <td>{team.email}</td>

@@ -1,13 +1,14 @@
 import React, { FC, FormEvent, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useMedia } from 'react-use';
-import Calendar from 'react-calendar/dist/entry.nostyle';
+import Calendar from 'react-calendar';
 import { css, cx } from '@emotion/css';
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
 import { Button, ClickOutsideWrapper, HorizontalGroup, Icon, InlineField, Input, Portal } from '../..';
 import { TimeOfDayPicker } from '../TimeOfDayPicker';
-import { getBodyStyles, getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
+import { getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
 import { useStyles2, useTheme2 } from '../../../themes';
 import { isValid } from '../utils';
+import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 
 export interface Props {
   /** Input date for the component */
@@ -134,7 +135,7 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
     }
   }, [internalDate.value, onChange]);
 
-  const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
+  const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
   return (
     <InlineField
       label={label}
@@ -194,7 +195,9 @@ const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onClose, onChange, 
         prev2Label={null}
         value={internalDate}
         nextLabel={<Icon name="angle-right" />}
+        nextAriaLabel="Next month"
         prevLabel={<Icon name="angle-left" />}
+        prevAriaLabel="Previous month"
         onChange={onChangeDate}
         locale="en"
         className={calendarStyles.body}

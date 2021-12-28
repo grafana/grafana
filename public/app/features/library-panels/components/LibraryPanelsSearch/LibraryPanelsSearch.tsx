@@ -1,8 +1,7 @@
 import React, { useReducer } from 'react';
-import { HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
+import { HorizontalGroup, useStyles2, VerticalGroup, FilterInput } from '@grafana/ui';
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { css } from '@emotion/css';
-import { FilterInput } from '../../../../core/components/FilterInput/FilterInput';
 import { SortPicker } from '../../../../core/components/Select/SortPicker';
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
@@ -132,7 +131,6 @@ function getStyles(theme: GrafanaTheme2) {
       width: 100%;
       overflow-y: auto;
       padding: ${theme.spacing(1)};
-      min-height: 400px;
     `,
     buttonRow: css`
       display: flex;

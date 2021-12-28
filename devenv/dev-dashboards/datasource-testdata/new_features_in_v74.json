@@ -1991,7 +1991,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillOpacity": 29,
+            "fillOpacity": 0,
             "gradientMode": {
               "label": "None",
               "value": "none"
@@ -2051,6 +2051,18 @@
             "properties": [
               {
                 "id": "custom.lineWidth",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "value"
+            },
+            "properties": [
+              {
+                "id": "custom.fillOpacity",
                 "value": 0
               }
             ]
@@ -2156,6 +2168,7 @@
   "style": "dark",
   "tags": [
     "gdev",
+    "graph-ng",
     "demo"
   ],
   "templating": {

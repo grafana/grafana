@@ -45,4 +45,11 @@ describe('PartialHighlighter component', () => {
     assertPart(main.childAt(1), false, ' ipsum dolor sit ');
     assertPart(main.childAt(2), true, 'amet');
   });
+
+  it('returns null if highlightParts is empty', () => {
+    const component = mount(
+      <PartialHighlighter text="Lorem ipsum dolor sit amet" highlightClassName="highlight" highlightParts={[]} />
+    );
+    expect(component.html()).toBe(null);
+  });
 });

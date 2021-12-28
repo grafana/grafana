@@ -15,7 +15,7 @@ import (
 )
 
 func TestStateIsUpdatedWhenNeeded(t *testing.T) {
-	ctx := NewEvalContext(context.TODO(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{})
+	ctx := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{})
 
 	t.Run("ok -> alerting", func(t *testing.T) {
 		ctx.PrevAlertState = models.AlertStateOK

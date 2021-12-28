@@ -1,4 +1,4 @@
-import { DataFrame, formattedValueToString } from '@grafana/data';
+import { DataFrame, Field, FieldType, formattedValueToString } from '@grafana/data';
 import { DimensionSupplier, TextDimensionConfig, TextDimensionMode } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
@@ -7,6 +7,14 @@ import { findField, getLastNotNullFieldValue } from './utils';
 //---------------------------------------------------------
 
 export function getTextDimension(frame: DataFrame | undefined, config: TextDimensionConfig): DimensionSupplier<string> {
+  const field = config.field ? findField(frame, config.field) : frame?.fields.find((f) => f.type === FieldType.string);
+  return getTextDimensionForField(field, config);
+}
+
+export function getTextDimensionForField(
+  field: Field | undefined,
+  config: TextDimensionConfig
+): DimensionSupplier<string> {
   let v = config.fixed;
   const mode = config.mode ?? TextDimensionMode.Fixed;
   if (mode === TextDimensionMode.Fixed) {
@@ -18,7 +26,6 @@ export function getTextDimension(frame: DataFrame | undefined, config: TextDimen
     };
   }
 
-  const field = findField(frame, config.field);
   if (mode === TextDimensionMode.Template) {
     const disp = (v: any) => {
       return `TEMPLATE[${config.fixed} // ${v}]`;

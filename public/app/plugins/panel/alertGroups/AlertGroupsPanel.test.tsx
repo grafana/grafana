@@ -26,9 +26,7 @@ jest.mock('@grafana/runtime', () => ({
     ...jest.requireActual('@grafana/runtime').config,
     buildInfo: {},
     panels: {},
-    featureToggles: {
-      ngalert: true,
-    },
+    unifiedAlertingEnabled: true,
   },
 }));
 

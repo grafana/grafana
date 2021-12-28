@@ -132,7 +132,7 @@
           }
         ]
       },
-      "pluginVersion": "7.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
           "refId": "A",
@@ -263,7 +263,7 @@
           }
         ]
       },
-      "pluginVersion": "7.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
           "refId": "A",
@@ -351,7 +351,7 @@
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "7.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
           "refId": "A",
@@ -387,7 +387,7 @@
     },
     {
       "collapsed": false,
-      "datasource": null,
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -460,7 +460,7 @@
                 "value": [
                   {
                     "title": "Details",
-                    "url": "http://detail?serverLabel=${__field.labels.server}﻿﻿&valueNumeric=${__value.numeric}"
+                    "url": "http://detail?serverLabel=${__field.labels.server}&valueNumeric=${__value.numeric}"
                   }
                 ]
               }
@@ -479,7 +479,7 @@
       "options": {
         "showHeader": true
       },
-      "pluginVersion": "7.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
           "alias": "S1",
@@ -571,7 +571,7 @@
           }
         ]
       },
-      "pluginVersion": "7.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
           "refId": "A",
@@ -604,6 +604,55 @@
         }
       ],
       "type": "table"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "id": 12,
+      "options": {
+        "footer": {
+          "show": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ]
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "",
+      "title": "Footer",
+      "type": "table"
     }
   ],
   "schemaVersion": 27,
@@ -635,5 +684,5 @@
   "timezone": "",
   "title": "Panel Tests - React Table",
   "uid": "U_bZIMRMk",
-  "version": 1
+  "version": 6
 }

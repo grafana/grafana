@@ -1,15 +1,16 @@
 package remotecache
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	redis "gopkg.in/redis.v5"
 )
 
 const redisCacheType = "redis"
@@ -85,19 +86,19 @@ func newRedisStorage(opts *setting.RemoteCacheOptions) (*redisStorage, error) {
 }
 
 // Set sets value to given key in session.
-func (s *redisStorage) Set(key string, val interface{}, expires time.Duration) error {
+func (s *redisStorage) Set(ctx context.Context, key string, val interface{}, expires time.Duration) error {
 	item := &cachedItem{Val: val}
 	value, err := encodeGob(item)
 	if err != nil {
 		return err
 	}
-	status := s.c.Set(key, string(value), expires)
+	status := s.c.Set(ctx, key, string(value), expires)
 	return status.Err()
 }
 
 // Get gets value by given key in session.
-func (s *redisStorage) Get(key string) (interface{}, error) {
-	v := s.c.Get(key)
+func (s *redisStorage) Get(ctx context.Context, key string) (interface{}, error) {
+	v := s.c.Get(ctx, key)
 
 	item := &cachedItem{}
 	err := decodeGob([]byte(v.Val()), item)
@@ -112,7 +113,7 @@ func (s *redisStorage) Get(key string) (interface{}, error) {
 }
 
 // Delete delete a key from session.
-func (s *redisStorage) Delete(key string) error {
-	cmd := s.c.Del(key)
+func (s *redisStorage) Delete(ctx context.Context, key string) error {
+	cmd := s.c.Del(ctx, key)
 	return cmd.Err()
 }

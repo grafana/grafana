@@ -98,12 +98,13 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
           {error.message || (error as any)?.data?.message || String(error)}
         </Alert>
       )}
-      <Field label="Template name" error={errors?.name?.message} invalid={!!errors.name?.message}>
+      <Field label="Template name" error={errors?.name?.message} invalid={!!errors.name?.message} required>
         <Input
           {...register('name', {
             required: { value: true, message: 'Required.' },
             validate: { nameIsUnique: validateNameIsUnique },
           })}
+          placeholder="Give your template a name"
           width={42}
           autoFocus={true}
         />
@@ -134,10 +135,12 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
         label="Content"
         error={errors?.content?.message}
         invalid={!!errors.content?.message}
+        required
       >
         <TextArea
           {...register('content', { required: { value: true, message: 'Required.' } })}
           className={styles.textarea}
+          placeholder="Message"
           rows={12}
         />
       </Field>

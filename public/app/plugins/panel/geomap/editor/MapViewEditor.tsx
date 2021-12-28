@@ -4,10 +4,10 @@ import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@gra
 import { GeomapPanelOptions, MapViewConfig } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
-import { lastGeomapPanelInstance } from '../GeomapPanel';
 import { toLonLat } from 'ol/proj';
+import { GeomapInstanceState } from '../GeomapPanel';
 
-export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPanelOptions>> = ({
+export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPanelOptions, GeomapInstanceState>> = ({
   value,
   onChange,
   context,
@@ -25,7 +25,7 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
   }, [value?.id]);
 
   const onSetCurrentView = useCallback(() => {
-    const map = lastGeomapPanelInstance?.map;
+    const map = context.instanceState?.map;
     if (map) {
       const view = map.getView();
       const coords = view.getCenter();
@@ -40,7 +40,7 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
         });
       }
     }
-  }, [value, onChange]);
+  }, [value, onChange, context.instanceState]);
 
   const onSelectView = useCallback(
     (selection: SelectableValue<string>) => {
@@ -49,9 +49,9 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
         onChange({
           ...value,
           id: v.id,
-          lat: v.lat ?? value.lat,
-          lon: v.lon ?? value.lon,
-          zoom: v.zoom ?? value.zoom,
+          lat: v.lat ?? value?.lat,
+          lon: v.lon ?? value?.lon,
+          zoom: v.zoom ?? value?.zoom,
         });
       }
     },
@@ -99,7 +99,7 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
       <InlineFieldRow>
         <InlineField label="Zoom" labelWidth={labelWidth} grow={true}>
           <NumberInput
-            value={value.zoom ?? 1}
+            value={value?.zoom ?? 1}
             min={1}
             max={18}
             step={0.01}

@@ -4,7 +4,7 @@ import { css } from '@emotion/css';
 import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getTemplateSrv } from '@grafana/runtime';
-import { DataSourceInstanceSettings, LoadingState, SelectableValue } from '@grafana/data';
+import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
 
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
@@ -68,7 +68,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   onDataSourceChange = (dsSettings: DataSourceInstanceSettings) => {
     this.props.onPropChange({
       propName: 'datasource',
-      propValue: dsSettings.isDefault ? null : dsSettings.name,
+      propValue: dsSettings.isDefault ? null : getDataSourceRef(dsSettings),
     });
   };
 
@@ -161,7 +161,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         <VerticalGroup spacing="lg">
           <VerticalGroup spacing="none">
             <InlineFieldRow>
-              <InlineField label="Data source" labelWidth={20}>
+              <InlineField label="Data source" labelWidth={20} htmlFor="data-source-picker">
                 <DataSourcePicker
                   current={this.props.variable.datasource}
                   onChange={this.onDataSourceChange}
@@ -190,6 +190,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   Optional, if you want to extract part of a series name or metric node segment. Named capture groups
                   can be used to separate the display text and value (
                   <a
+                    className="external-link"
                     href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
                     target="__blank"
                   >

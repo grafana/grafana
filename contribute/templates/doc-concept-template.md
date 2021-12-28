@@ -23,20 +23,20 @@ Concepts are topic types for any information that doesn't involve task lists or 
 
 ## Idea
 
-Concept topics or sections explain *what* and *why*. They do not explain *how*. If you are a new user, you might look for concept information to learn about what Grafana is, why it might be useful to you, and what the general workflow is. 
+Concept topics or sections explain _what_ and _why_. They do not explain _how_. If you are a new user, you might look for concept information to learn about what Grafana is, why it might be useful to you, and what the general workflow is.
 
 ## Workflow
 
-Continuing the example in the previous section, here is a sample Grafana workflow. 
+Continuing the example in the previous section, here is a sample Grafana workflow.
 
 1. Install Grafana. <link to task for installing Grafana>
 1. Set up data sources. <link to data sources concept topic, which links to data source task topics>
 1. Create panels. <link to panel concept topic, which links to tasks>
-1. Create dashboards.  <link to panel concept topic, which links to tasks>
+1. Create dashboards. <link to panel concept topic, which links to tasks>
 1. Enter queries. <link to query editor concept topic>
 1. Add users. <link to user management concept topic, which links to tasks>
 1. Create playlists. <link to Playlist topic that contains concept information and tasks>
 
 ## Next steps
 
-Concept tasks often link to related information, including *tasks* related to the concept and *reference* topics related to the concept.
+Concept tasks often link to related information, including _tasks_ related to the concept and _reference_ topics related to the concept.

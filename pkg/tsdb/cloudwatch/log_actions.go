@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -13,8 +14,21 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/sync/errgroup"
 )
+
+var LimitExceededException = "LimitExceededException"
+
+type AWSError struct {
+	Code    string
+	Message string
+	Payload map[string]string
+}
+
+func (e *AWSError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Code, e.Message)
+}
 
 func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
@@ -32,6 +46,13 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 		eg.Go(func() error {
 			dataframe, err := e.executeLogAction(ectx, model, query, req.PluginContext)
 			if err != nil {
+				var AWSError *AWSError
+				if errors.As(err, &AWSError) {
+					resultChan <- backend.Responses{
+						query.RefID: backend.DataResponse{Frames: data.Frames{}, Error: AWSError},
+					}
+					return nil
+				}
 				return err
 			}
 
@@ -55,6 +76,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 		for refID, response := range result {
 			respD := resp.Responses[refID]
 			respD.Frames = response.Frames
+			respD.Error = response.Error
 			resp.Responses[refID] = respD
 		}
 	}
@@ -95,7 +117,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model *simple
 		data, err = e.handleGetLogEvents(ctx, logsClient, model)
 	}
 	if err != nil {
-		return nil, err
+		return nil, errutil.Wrapf(err, "failed to execute log action with subtype: %s", subType)
 	}
 
 	return data, nil
@@ -201,8 +223,13 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		logStreamIdentifierInternal + "|" + parameters.Get("queryString").MustString("")
 
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
-		StartTime:     aws.Int64(startTime.Unix()),
-		EndTime:       aws.Int64(endTime.Unix()),
+		StartTime: aws.Int64(startTime.Unix()),
+		// Usually grafana time range allows only second precision, but you can create ranges with milliseconds
+		// for example when going from trace to logs for that trace and trace length is sub second. In that case
+		// StartTime is effectively floored while here EndTime is ceiled and so we should get the logs user wants
+		// and also a little bit more but as CW logs accept only seconds as integers there is not much to do about
+		// that.
+		EndTime:       aws.Int64(int64(math.Ceil(float64(endTime.UnixNano()) / 1e9))),
 		LogGroupNames: aws.StringSlice(parameters.Get("logGroupNames").MustStringArray()),
 		QueryString:   aws.String(modifiedQueryString),
 	}
@@ -218,6 +245,11 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 	model *simplejson.Json, timeRange backend.TimeRange, refID string) (*data.Frame, error) {
 	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
 	if err != nil {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
+			plog.Debug("executeStartQuery limit exceeded", "err", awsErr)
+			return nil, &AWSError{Code: LimitExceededException, Message: err.Error()}
+		}
 		return nil, err
 	}
 

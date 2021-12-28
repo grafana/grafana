@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ExploreQueryFieldProps } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
 import {
   ButtonCascader,
   CascaderOption,
@@ -21,7 +21,7 @@ import { apiPrefix } from './constants';
 import { ZipkinDatasource } from './datasource';
 import { ZipkinQuery, ZipkinQueryType, ZipkinSpan } from './types';
 
-type Props = ExploreQueryFieldProps<ZipkinDatasource, ZipkinQuery>;
+type Props = QueryEditorProps<ZipkinDatasource, ZipkinQuery>;
 
 export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Props) => {
   const serviceOptions = useServices(datasource);

@@ -282,6 +282,7 @@ $alert-info-bg: ${theme.colors.warning.main};
 // -------------------------
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: $link-color;
+$tooltipExternalLinkColor: $external-link-color;
 $graph-tooltip-bg: $dark-1;
 
 $tooltipBackground: ${theme.components.tooltip.background};

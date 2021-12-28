@@ -46,7 +46,6 @@ export const prepare = () =>
       // Remove local dependencies for @grafana/data/node_modules
       // See: https://github.com/grafana/grafana/issues/26748
       rimraf(resolvePath(__dirname, 'node_modules/@grafana/data/node_modules')),
-
       // Copy only if local tsconfig does not exist.  Otherwise this will work, but have odd behavior
       copyIfNonExistent(
         resolvePath(__dirname, '../../config/tsconfig.plugin.local.json'),
@@ -100,7 +99,7 @@ export const lintPlugin = ({ fix }: Fixable = {}) =>
         if (filePaths.length > 0) {
           return filePaths[0];
         } else {
-          return resolvePath(__dirname, '../../config/eslint.plugin.json');
+          return resolvePath(__dirname, '../../config/eslint.plugin.js');
         }
       }
     );
@@ -108,6 +107,7 @@ export const lintPlugin = ({ fix }: Fixable = {}) =>
     const cli = new CLIEngine({
       configFile,
       fix,
+      useEslintrc: false,
     });
 
     const report = cli.executeOnFiles(await getTypescriptSources());

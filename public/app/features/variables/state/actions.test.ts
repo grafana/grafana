@@ -1,6 +1,6 @@
 import { AnyAction } from 'redux';
 
-import { getRootReducer, getTemplatingRootReducer, RootReducerType, TemplatingReducerType } from './helpers';
+import { getTemplatingRootReducer, TemplatingReducerType } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -14,7 +14,7 @@ import {
   cleanUpVariables,
   fixSelectedInconsistency,
   initDashboardTemplating,
-  initVariablesTransaction,
+  isVariableUrlValueDifferentFromCurrent,
   processVariables,
   validateVariableSelectionState,
 } from './actions';
@@ -46,22 +46,15 @@ import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
   cleanEditorState,
-  initialVariableEditorState,
   setIdInEditor,
 } from '../editor/reducer';
-import {
-  TransactionStatus,
-  variablesClearTransaction,
-  variablesCompleteTransaction,
-  variablesInitTransaction,
-} from './transactionReducer';
-import { cleanPickerState, initialState } from '../pickers/OptionsPicker/reducer';
+import { variablesClearTransaction, variablesInitTransaction } from './transactionReducer';
+import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { cleanVariables } from './variablesReducer';
-import { expect } from '../../../../test/lib/common';
 import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
-import { setDataSourceSrv, setLocationService } from '@grafana/runtime';
+import * as runtime from '@grafana/runtime';
 import { LoadingState } from '@grafana/data';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
 
@@ -85,7 +78,7 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   }),
 }));
 
-setDataSourceSrv({
+runtime.setDataSourceSrv({
   get: getDatasource,
   getList: getMetricSources,
 } as any);
@@ -150,7 +143,7 @@ describe('shared actions', () => {
         templating: ({} as unknown) as TemplatingState,
       };
       const locationService: any = { getSearchObject: () => ({}) };
-      setLocationService(locationService);
+      runtime.setLocationService(locationService);
       const variableQueryRunner: any = {
         cancelRequest: jest.fn(),
         queueRequest: jest.fn(),
@@ -218,7 +211,7 @@ describe('shared actions', () => {
       const list = [stats, substats];
       const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
       const locationService: any = { getSearchObject: () => query };
-      setLocationService(locationService);
+      runtime.setLocationService(locationService);
       const preloadedState = {
         templating: ({} as unknown) as TemplatingState,
       };
@@ -576,79 +569,6 @@ describe('shared actions', () => {
     });
   });
 
-  describe('initVariablesTransaction', () => {
-    const constant = constantBuilder().withId('constant').withName('constant').build();
-    const templating: any = { list: [constant] };
-    const uid = 'uid';
-    const dashboard: any = { title: 'Some dash', uid, templating };
-
-    describe('when called and the previous dashboard has completed', () => {
-      it('then correct actions are dispatched', async () => {
-        const tester = await reduxTester<RootReducerType>()
-          .givenRootReducer(getRootReducer())
-          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
-
-        tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
-          expect(dispatchedActions[0]).toEqual(variablesInitTransaction({ uid }));
-          expect(dispatchedActions[1].type).toEqual(addVariable.type);
-          expect(dispatchedActions[1].payload.id).toEqual('__dashboard');
-          expect(dispatchedActions[2].type).toEqual(addVariable.type);
-          expect(dispatchedActions[2].payload.id).toEqual('__org');
-          expect(dispatchedActions[3].type).toEqual(addVariable.type);
-          expect(dispatchedActions[3].payload.id).toEqual('__user');
-          expect(dispatchedActions[4]).toEqual(
-            addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
-          );
-          expect(dispatchedActions[5]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
-          expect(dispatchedActions[6]).toEqual(variableStateCompleted(toVariablePayload(constant)));
-
-          expect(dispatchedActions[7]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 8;
-        });
-      });
-    });
-
-    describe('when called and the previous dashboard is still processing variables', () => {
-      it('then correct actions are dispatched', async () => {
-        const transactionState = { uid: 'previous-uid', status: TransactionStatus.Fetching };
-
-        const tester = await reduxTester<RootReducerType>({
-          preloadedState: ({
-            templating: {
-              transaction: transactionState,
-              variables: {},
-              optionsPicker: { ...initialState },
-              editor: { ...initialVariableEditorState },
-            },
-          } as unknown) as RootReducerType,
-        })
-          .givenRootReducer(getRootReducer())
-          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
-
-        tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
-          expect(dispatchedActions[0]).toEqual(cleanVariables());
-          expect(dispatchedActions[1]).toEqual(cleanEditorState());
-          expect(dispatchedActions[2]).toEqual(cleanPickerState());
-          expect(dispatchedActions[3]).toEqual(variablesClearTransaction());
-          expect(dispatchedActions[4]).toEqual(variablesInitTransaction({ uid }));
-          expect(dispatchedActions[5].type).toEqual(addVariable.type);
-          expect(dispatchedActions[5].payload.id).toEqual('__dashboard');
-          expect(dispatchedActions[6].type).toEqual(addVariable.type);
-          expect(dispatchedActions[6].payload.id).toEqual('__org');
-          expect(dispatchedActions[7].type).toEqual(addVariable.type);
-          expect(dispatchedActions[7].payload.id).toEqual('__user');
-          expect(dispatchedActions[8]).toEqual(
-            addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
-          );
-          expect(dispatchedActions[9]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
-          expect(dispatchedActions[10]).toEqual(variableStateCompleted(toVariablePayload(constant)));
-          expect(dispatchedActions[11]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 12;
-        });
-      });
-    });
-  });
-
   describe('cleanUpVariables', () => {
     describe('when called', () => {
       it('then correct actions are dispatched', async () => {
@@ -771,6 +691,66 @@ describe('shared actions', () => {
             { text: 'Y', value: 'Y', selected: false },
             { text: 'Z', value: 'Z', selected: false },
           ]);
+        });
+      });
+    });
+  });
+
+  describe('isVariableUrlValueDifferentFromCurrent', () => {
+    describe('when called with a single valued variable', () => {
+      describe('and values are equal', () => {
+        it('then it should return false', () => {
+          const variable = queryBuilder().withMulti(false).withCurrent('A', 'A').build();
+          const urlValue = 'A';
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+        });
+      });
+
+      describe('and values are different', () => {
+        it('then it should return true', () => {
+          const variable = queryBuilder().withMulti(false).withCurrent('A', 'A').build();
+          const urlValue = 'B';
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+        });
+      });
+    });
+
+    describe('when called with a multi valued variable', () => {
+      describe('and values are equal', () => {
+        it('then it should return false', () => {
+          const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+          const urlValue = ['A'];
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+        });
+
+        describe('but urlValue is not an array', () => {
+          it('then it should return false', () => {
+            const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+            const urlValue = 'A';
+
+            expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+          });
+        });
+      });
+
+      describe('and values are different', () => {
+        it('then it should return true', () => {
+          const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+          const urlValue = ['C'];
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+        });
+
+        describe('but urlValue is not an array', () => {
+          it('then it should return true', () => {
+            const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+            const urlValue = 'C';
+
+            expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+          });
         });
       });
     });

@@ -148,7 +148,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       right: -4px;
       border-radius: 3px;
       top: 0;
-      z-index: ${theme.zIndex.dropdown};
       touch-action: none;
 
       &:hover {
@@ -170,6 +169,10 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       label: filterItem;
       cursor: pointer;
       padding: 0 ${theme.spacing(0.025)};
+    `,
+    typeIcon: css`
+      margin-right: ${theme.spacing(1)};
+      color: ${theme.colors.text.secondary};
     `,
     noData: css`
       align-items: center;

@@ -16,29 +16,32 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 		ReturnData: aws.Bool(query.ReturnData),
 	}
 
-	if query.Expression != "" {
+	switch query.getGMDAPIMode() {
+	case GMDApiModeMathExpression:
+		mdq.Period = aws.Int64(int64(query.Period))
 		mdq.Expression = aws.String(query.Expression)
-	} else {
-		if query.isSearchExpression() {
-			mdq.Expression = aws.String(buildSearchExpression(query, query.Statistic))
-		} else {
-			mdq.MetricStat = &cloudwatch.MetricStat{
-				Metric: &cloudwatch.Metric{
-					Namespace:  aws.String(query.Namespace),
-					MetricName: aws.String(query.MetricName),
-					Dimensions: make([]*cloudwatch.Dimension, 0),
-				},
-				Period: aws.Int64(int64(query.Period)),
-			}
-			for key, values := range query.Dimensions {
-				mdq.MetricStat.Metric.Dimensions = append(mdq.MetricStat.Metric.Dimensions,
-					&cloudwatch.Dimension{
-						Name:  aws.String(key),
-						Value: aws.String(values[0]),
-					})
-			}
-			mdq.MetricStat.Stat = aws.String(query.Statistic)
+	case GMDApiModeSQLExpression:
+		mdq.Period = aws.Int64(int64(query.Period))
+		mdq.Expression = aws.String(query.SqlExpression)
+	case GMDApiModeInferredSearchExpression:
+		mdq.Expression = aws.String(buildSearchExpression(query, query.Statistic))
+	case GMDApiModeMetricStat:
+		mdq.MetricStat = &cloudwatch.MetricStat{
+			Metric: &cloudwatch.Metric{
+				Namespace:  aws.String(query.Namespace),
+				MetricName: aws.String(query.MetricName),
+				Dimensions: make([]*cloudwatch.Dimension, 0),
+			},
+			Period: aws.Int64(int64(query.Period)),
 		}
+		for key, values := range query.Dimensions {
+			mdq.MetricStat.Metric.Dimensions = append(mdq.MetricStat.Metric.Dimensions,
+				&cloudwatch.Dimension{
+					Name:  aws.String(key),
+					Value: aws.String(values[0]),
+				})
+		}
+		mdq.MetricStat.Stat = aws.String(query.Statistic)
 	}
 
 	if mdq.Expression != nil {

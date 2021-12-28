@@ -45,7 +45,7 @@ func (dr *dashboardServiceImpl) GetFolders(ctx context.Context, limit int64, pag
 		Page:         page,
 	}
 
-	if err := bus.Dispatch(&searchQuery); err != nil {
+	if err := bus.DispatchCtx(ctx, &searchQuery); err != nil {
 		return nil, err
 	}
 
@@ -72,7 +72,7 @@ func (dr *dashboardServiceImpl) GetFolderByID(ctx context.Context, id int64) (*m
 		return nil, toFolderError(err)
 	}
 
-	g := guardian.New(dashFolder.Id, dr.orgId, dr.user)
+	g := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -91,7 +91,7 @@ func (dr *dashboardServiceImpl) GetFolderByUID(ctx context.Context, uid string) 
 		return nil, toFolderError(err)
 	}
 
-	g := guardian.New(dashFolder.Id, dr.orgId, dr.user)
+	g := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -108,7 +108,7 @@ func (dr *dashboardServiceImpl) GetFolderByTitle(ctx context.Context, title stri
 		return nil, toFolderError(err)
 	}
 
-	g := guardian.New(dashFolder.Id, dr.orgId, dr.user)
+	g := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -137,7 +137,7 @@ func (dr *dashboardServiceImpl) CreateFolder(ctx context.Context, title, uid str
 		User:      dr.user,
 	}
 
-	saveDashboardCmd, err := dr.buildSaveDashboardCommand(dto, false, false)
+	saveDashboardCmd, err := dr.buildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
@@ -172,7 +172,7 @@ func (dr *dashboardServiceImpl) UpdateFolder(ctx context.Context, existingUid st
 		Overwrite: cmd.Overwrite,
 	}
 
-	saveDashboardCmd, err := dr.buildSaveDashboardCommand(dto, false, false)
+	saveDashboardCmd, err := dr.buildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
 		return toFolderError(err)
 	}
@@ -200,7 +200,7 @@ func (dr *dashboardServiceImpl) DeleteFolder(ctx context.Context, uid string, fo
 		return nil, toFolderError(err)
 	}
 
-	guardian := guardian.New(dashFolder.Id, dr.orgId, dr.user)
+	guardian := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -209,7 +209,7 @@ func (dr *dashboardServiceImpl) DeleteFolder(ctx context.Context, uid string, fo
 	}
 
 	deleteCmd := models.DeleteDashboardCommand{OrgId: dr.orgId, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
-	if err := bus.Dispatch(&deleteCmd); err != nil {
+	if err := bus.DispatchCtx(ctx, &deleteCmd); err != nil {
 		return nil, toFolderError(err)
 	}
 

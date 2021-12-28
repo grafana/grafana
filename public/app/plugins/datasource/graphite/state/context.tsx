@@ -31,6 +31,7 @@ export const GraphiteQueryEditorContext = ({
   children,
 }: PropsWithChildren<GraphiteQueryEditorProps>) => {
   const [state, setState] = useState<GraphiteQueryEditorState>();
+  const [needsRefresh, setNeedsRefresh] = useState<boolean>(false);
 
   const dispatch = useMemo(() => {
     return createStore((state) => {
@@ -68,6 +69,19 @@ export const GraphiteQueryEditorContext = ({
     [dispatch, query]
   );
 
+  useEffect(
+    () => {
+      if (needsRefresh && state) {
+        setNeedsRefresh(false);
+        onChange({ ...query, target: state.target.target });
+        onRunQuery();
+      }
+    },
+    // adding state to dependencies causes infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [needsRefresh, onChange, onRunQuery, query]
+  );
+
   if (!state) {
     dispatch(
       actions.init({
@@ -78,9 +92,10 @@ export const GraphiteQueryEditorContext = ({
         // list of queries is passed only when the editor is in Dashboards. This is to allow interpolation
         // of sub-queries which are stored in "targetFull" property used by alerting in the backend.
         queries: queries || [],
-        refresh: (target: string) => {
-          onChange({ ...query, target: target });
-          onRunQuery();
+        refresh: () => {
+          // do not run onChange/onRunQuery straight away to ensure the internal state gets updated first
+          // to avoid race conditions (onChange could update props before the reducer action finishes)
+          setNeedsRefresh(true);
         },
       })
     );

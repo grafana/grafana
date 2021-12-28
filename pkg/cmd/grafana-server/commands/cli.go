@@ -39,27 +39,34 @@ type exitWithCode struct {
 	code   int
 }
 
+var serverFs = flag.NewFlagSet("server", flag.ContinueOnError)
+
+var clilog = log.New("cli")
+
 func (e exitWithCode) Error() string {
 	return e.reason
 }
 
 func RunServer(opt ServerOptions) int {
 	var (
-		configFile = flag.String("config", "", "path to config file")
-		homePath   = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
-		pidFile    = flag.String("pidfile", "", "path to pid file")
-		packaging  = flag.String("packaging", "unknown", "describes the way Grafana was installed")
+		configFile = serverFs.String("config", "", "path to config file")
+		homePath   = serverFs.String("homepath", "", "path to grafana install/home path, defaults to working directory")
+		pidFile    = serverFs.String("pidfile", "", "path to pid file")
+		packaging  = serverFs.String("packaging", "unknown", "describes the way Grafana was installed")
 
-		v           = flag.Bool("v", false, "prints current version and exits")
-		vv          = flag.Bool("vv", false, "prints current version, all dependencies and exits")
-		profile     = flag.Bool("profile", false, "Turn on pprof profiling")
-		profileAddr = flag.String("profile-addr", "localhost", "Define custom address for profiling")
-		profilePort = flag.Uint64("profile-port", 6060, "Define custom port for profiling")
-		tracing     = flag.Bool("tracing", false, "Turn on tracing")
-		tracingFile = flag.String("tracing-file", "trace.out", "Define tracing output file")
+		v           = serverFs.Bool("v", false, "prints current version and exits")
+		vv          = serverFs.Bool("vv", false, "prints current version, all dependencies and exits")
+		profile     = serverFs.Bool("profile", false, "Turn on pprof profiling")
+		profileAddr = serverFs.String("profile-addr", "localhost", "Define custom address for profiling")
+		profilePort = serverFs.Uint64("profile-port", 6060, "Define custom port for profiling")
+		tracing     = serverFs.Bool("tracing", false, "Turn on tracing")
+		tracingFile = serverFs.String("tracing-file", "trace.out", "Define tracing output file")
 	)
 
-	flag.Parse()
+	if err := serverFs.Parse(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		return 1
+	}
 
 	if *v || *vv {
 		fmt.Printf("Version %s (commit: %s, branch: %s)\n", opt.Version, opt.Commit, opt.BuildBranch)
@@ -128,7 +135,7 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		}
 		defer func() {
 			if err := f.Close(); err != nil {
-				log.Error("Failed to write trace diagnostics", "path", traceDiagnostics.file, "err", err)
+				clilog.Error("Failed to write trace diagnostics", "path", traceDiagnostics.file, "err", err)
 			}
 		}()
 
@@ -161,7 +168,7 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 	}
 
 	s, err := server.Initialize(setting.CommandLineArgs{
-		Config: configFile, HomePath: homePath, Args: flag.Args(),
+		Config: configFile, HomePath: homePath, Args: serverFs.Args(),
 	}, server.Options{
 		PidFile: pidFile, Version: opt.Version, Commit: opt.Commit, BuildBranch: opt.BuildBranch,
 	}, api.ServerOptions{})

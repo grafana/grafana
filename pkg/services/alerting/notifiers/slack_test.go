@@ -1,11 +1,16 @@
 package notifiers
 
 import (
+	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +27,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewSlackNotifier(model)
+		_, err = NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		assert.EqualError(t, err, "alert validation error: recipient must be specified when using the Slack chat API")
 	})
 
@@ -40,7 +45,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewSlackNotifier(model)
+		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		require.NoError(t, err)
 		slackNotifier := not.(*SlackNotifier)
 		assert.Equal(t, "ops", slackNotifier.Name)
@@ -78,7 +83,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewSlackNotifier(model)
+		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		require.NoError(t, err)
 		slackNotifier := not.(*SlackNotifier)
 		assert.Equal(t, "ops", slackNotifier.Name)
@@ -110,9 +115,15 @@ func TestSlackNotifier(t *testing.T) {
 
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
-		securedSettingsJSON := securejsondata.GetEncryptedJsonData(map[string]string{
-			"token": "xenc-XXXXXXXX-XXXXXXXX-XXXXXXXXXX",
-		})
+
+		encryptionService := ossencryption.ProvideService()
+		securedSettingsJSON, err := encryptionService.EncryptJsonData(
+			context.Background(),
+			map[string]string{
+				"token": "xenc-XXXXXXXX-XXXXXXXX-XXXXXXXXXX",
+			}, setting.SecretKey)
+		require.NoError(t, err)
+
 		model := &models.AlertNotification{
 			Name:           "ops",
 			Type:           "slack",
@@ -120,7 +131,7 @@ func TestSlackNotifier(t *testing.T) {
 			SecureSettings: securedSettingsJSON,
 		}
 
-		not, err := NewSlackNotifier(model)
+		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		require.NoError(t, err)
 		slackNotifier := not.(*SlackNotifier)
 		assert.Equal(t, "ops", slackNotifier.Name)
@@ -134,63 +145,6 @@ func TestSlackNotifier(t *testing.T) {
 		assert.Equal(t, []string{"group1", "group2"}, slackNotifier.mentionGroups)
 		assert.Equal(t, "here", slackNotifier.mentionChannel)
 		assert.Equal(t, "xenc-XXXXXXXX-XXXXXXXX-XXXXXXXXXX", slackNotifier.token)
-	})
-
-	t.Run("with channel recipient with spaces should return an error", func(t *testing.T) {
-		json := `
-                    {
-                      "url": "http://google.com",
-                      "recipient": "#open tsdb"
-                    }`
-
-		settingsJSON, err := simplejson.NewJson([]byte(json))
-		require.NoError(t, err)
-		model := &models.AlertNotification{
-			Name:     "ops",
-			Type:     "slack",
-			Settings: settingsJSON,
-		}
-
-		_, err = NewSlackNotifier(model)
-		assert.EqualError(t, err, "alert validation error: recipient on invalid format: \"#open tsdb\"")
-	})
-
-	t.Run("with user recipient with spaces should return an error", func(t *testing.T) {
-		json := `
-                    {
-                      "url": "http://google.com",
-                      "recipient": "@user name"
-                    }`
-
-		settingsJSON, err := simplejson.NewJson([]byte(json))
-		require.NoError(t, err)
-		model := &models.AlertNotification{
-			Name:     "ops",
-			Type:     "slack",
-			Settings: settingsJSON,
-		}
-
-		_, err = NewSlackNotifier(model)
-		assert.EqualError(t, err, "alert validation error: recipient on invalid format: \"@user name\"")
-	})
-
-	t.Run("with user recipient with uppercase letters should return an error", func(t *testing.T) {
-		json := `
-                    {
-                      "url": "http://google.com",
-                      "recipient": "@User"
-                    }`
-
-		settingsJSON, err := simplejson.NewJson([]byte(json))
-		require.NoError(t, err)
-		model := &models.AlertNotification{
-			Name:     "ops",
-			Type:     "slack",
-			Settings: settingsJSON,
-		}
-
-		_, err = NewSlackNotifier(model)
-		assert.EqualError(t, err, "alert validation error: recipient on invalid format: \"@User\"")
 	})
 
 	t.Run("with Slack ID for recipient should work", func(t *testing.T) {
@@ -208,9 +162,107 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewSlackNotifier(model)
+		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		require.NoError(t, err)
 		slackNotifier := not.(*SlackNotifier)
 		assert.Equal(t, "1ABCDE", slackNotifier.recipient)
 	})
+}
+
+func TestSendSlackRequest(t *testing.T) {
+	tests := []struct {
+		name          string
+		slackResponse string
+		statusCode    int
+		expectError   bool
+	}{
+		{
+			name: "Example error",
+			slackResponse: `{
+					"ok": false,
+					"error": "too_many_attachments"
+				}`,
+			statusCode:  http.StatusBadRequest,
+			expectError: true,
+		},
+		{
+			name:        "Non 200 status code, no response body",
+			statusCode:  http.StatusMovedPermanently,
+			expectError: true,
+		},
+		{
+			name: "Success case, normal response body",
+			slackResponse: `{
+				"ok": true,
+				"channel": "C1H9RESGL",
+				"ts": "1503435956.000247",
+				"message": {
+					"text": "Here's a message for you",
+					"username": "ecto1",
+					"bot_id": "B19LU7CSY",
+					"attachments": [
+						{
+							"text": "This is an attachment",
+							"id": 1,
+							"fallback": "This is an attachment's fallback"
+						}
+					],
+					"type": "message",
+					"subtype": "bot_message",
+					"ts": "1503435956.000247"
+				}
+			}`,
+			statusCode:  http.StatusOK,
+			expectError: false,
+		},
+		{
+			name:       "No response body",
+			statusCode: http.StatusOK,
+		},
+		{
+			name:          "Success case, unexpected response body",
+			statusCode:    http.StatusOK,
+			slackResponse: `{"test": true}`,
+			expectError:   false,
+		},
+		{
+			name:          "Success case, ok: true",
+			statusCode:    http.StatusOK,
+			slackResponse: `{"ok": true}`,
+			expectError:   false,
+		},
+		{
+			name:          "200 status code, error in body",
+			statusCode:    http.StatusOK,
+			slackResponse: `{"ok": false, "error": "test error"}`,
+			expectError:   true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(test.statusCode)
+				_, err := w.Write([]byte(test.slackResponse))
+				require.NoError(tt, err)
+			}))
+
+			settingsJSON, err := simplejson.NewJson([]byte(fmt.Sprintf(`{"url": %q}`, server.URL)))
+			require.NoError(t, err)
+			model := &models.AlertNotification{
+				Settings: settingsJSON,
+			}
+
+			not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			require.NoError(t, err)
+			slackNotifier := not.(*SlackNotifier)
+
+			err = slackNotifier.sendRequest(context.Background(), []byte("test"))
+			if !test.expectError {
+				require.NoError(tt, err)
+			} else {
+				require.Error(tt, err)
+			}
+		})
+	}
 }

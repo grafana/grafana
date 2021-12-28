@@ -89,7 +89,11 @@ export class TeamMemberRow extends PureComponent<Props> {
     return (
       <tr key={member.userId}>
         <td className="width-4 text-center">
-          <img className="filter-table__avatar" src={member.avatarUrl} />
+          <img
+            aria-label={`Avatar for team member "${member.name}"`}
+            className="filter-table__avatar"
+            src={member.avatarUrl}
+          />
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
@@ -97,7 +101,12 @@ export class TeamMemberRow extends PureComponent<Props> {
         {this.renderPermissions(member)}
         {syncEnabled && this.renderLabels(member.labels)}
         <td className="text-right">
-          <DeleteButton size="sm" disabled={!signedInUserIsTeamAdmin} onConfirm={() => this.onRemoveMember(member)} />
+          <DeleteButton
+            aria-label="Remove team member"
+            size="sm"
+            disabled={!signedInUserIsTeamAdmin}
+            onConfirm={() => this.onRemoveMember(member)}
+          />
         </td>
       </tr>
     );

@@ -28,7 +28,7 @@ import {
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { contextSrv } from 'app/core/core';
 
-interface OwnProps extends GrafanaRouteComponentProps<{}, { username: string }> {
+interface OwnProps extends GrafanaRouteComponentProps<{}, { username?: string }> {
   navModel: NavModel;
   ldapConnectionInfo: LdapConnectionInfo;
   ldapUser?: LdapUser;

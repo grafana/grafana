@@ -12,7 +12,7 @@ import {
 
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
-import { TempoDatasource, TempoQuery } from './datasource';
+import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './datasource';
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
@@ -80,7 +80,7 @@ describe('Tempo data source', () => {
     ]);
   });
 
-  it('runs service map queries', async () => {
+  it('runs service graph queries', async () => {
     const ds = new TempoDatasource({
       ...defaultSettings,
       jsonData: {
@@ -97,6 +97,7 @@ describe('Tempo data source', () => {
     expect(response.data).toHaveLength(2);
     expect(response.data[0].name).toBe('Nodes');
     expect(response.data[0].fields[0].values.length).toBe(3);
+    expect(response.data[0].fields[0].config.links.length).toBeGreaterThan(0);
 
     expect(response.data[1].name).toBe('Edges');
     expect(response.data[1].fields[0].values.length).toBe(2);
@@ -146,27 +147,45 @@ describe('Tempo data source', () => {
     };
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
-      'service.name': 'frontend',
-      name: '/config',
-      'root.http.status_code': '500',
+      tags: 'root.http.status_code=500 service.name="frontend" name="/config"',
       minDuration: '1ms',
       maxDuration: '100s',
       limit: 10,
     });
   });
 
-  it('should ignore incomplete tag queries', () => {
+  it('should include a default limit', () => {
     const ds = new TempoDatasource(defaultSettings);
     const tempoQuery: TempoQuery = {
       queryType: 'search',
       refId: 'A',
       query: '',
-      search: 'root.ip root.http.status_code=500',
+      search: '',
     };
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
-      'root.http.status_code': '500',
+      tags: '',
+      limit: DEFAULT_LIMIT,
     });
+  });
+
+  it('formats native search query history correctly', () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const tempoQuery: TempoQuery = {
+      queryType: 'nativeSearch',
+      refId: 'A',
+      query: '',
+      serviceName: 'frontend',
+      spanName: '/config',
+      search: 'root.http.status_code=500',
+      minDuration: '1ms',
+      maxDuration: '100s',
+      limit: 10,
+    };
+    const result = ds.getQueryDisplayText(tempoQuery);
+    expect(result).toBe(
+      'Service Name: frontend, Span Name: /config, Search: root.http.status_code=500, Min Duration: 1ms, Max Duration: 100s, Limit: 10'
+    );
   });
 });
 
@@ -175,7 +194,7 @@ const backendSrvWithPrometheus = {
     if (uid === 'prom') {
       return {
         query() {
-          return of({ data: [totalsPromMetric] }, { data: [secondsPromMetric] });
+          return of({ data: [totalsPromMetric, secondsPromMetric, failedPromMetric] });
         },
       };
     }
@@ -199,7 +218,7 @@ function setupBackendSrv(frame: DataFrame) {
   } as any);
 }
 
-const defaultSettings: DataSourceInstanceSettings = {
+const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   id: 0,
   uid: '0',
   type: 'tracing',
@@ -213,11 +232,15 @@ const defaultSettings: DataSourceInstanceSettings = {
     module: '',
     baseUrl: '',
   },
-  jsonData: {},
+  jsonData: {
+    nodeGraph: {
+      enabled: true,
+    },
+  },
 };
 
 const totalsPromMetric = new MutableDataFrame({
-  refId: 'tempo_service_graph_request_total',
+  refId: 'traces_service_graph_request_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
     { name: 'client', values: ['app', 'lb'] },
@@ -225,12 +248,12 @@ const totalsPromMetric = new MutableDataFrame({
     { name: 'job', values: ['local_scrape', 'local_scrape'] },
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
-    { name: 'Value #tempo_service_graph_request_total', values: [10, 20] },
+    { name: 'Value #traces_service_graph_request_total', values: [10, 20] },
   ],
 });
 
 const secondsPromMetric = new MutableDataFrame({
-  refId: 'tempo_service_graph_request_server_seconds_sum',
+  refId: 'traces_service_graph_request_server_seconds_sum',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
     { name: 'client', values: ['app', 'lb'] },
@@ -238,7 +261,20 @@ const secondsPromMetric = new MutableDataFrame({
     { name: 'job', values: ['local_scrape', 'local_scrape'] },
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
-    { name: 'Value #tempo_service_graph_request_server_seconds_sum', values: [10, 40] },
+    { name: 'Value #traces_service_graph_request_server_seconds_sum', values: [10, 40] },
+  ],
+});
+
+const failedPromMetric = new MutableDataFrame({
+  refId: 'traces_service_graph_request_failed_total',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['app', 'lb'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['db', 'app'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #traces_service_graph_request_failed_total', values: [2, 15] },
   ],
 });
 

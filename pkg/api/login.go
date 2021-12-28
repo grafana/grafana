@@ -11,14 +11,15 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -97,6 +98,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 
 	viewData.Settings["oauth"] = enabledOAuths
 	viewData.Settings["samlEnabled"] = hs.samlEnabled()
+	viewData.Settings["samlName"] = hs.samlName()
 
 	if loginError, ok := hs.tryGetEncryptedCookie(c, loginErrorCookieName); ok {
 		// this cookie is only set whenever an OAuth login fails
@@ -128,7 +130,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			if err := hs.ValidateRedirectTo(redirectTo); err != nil {
 				// the user is already logged so instead of rendering the login page with error
 				// it should be redirected to the home page.
-				log.Debugf("Ignored invalid redirect_to cookie value: %v", redirectTo)
+				c.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
 				redirectTo = hs.Cfg.AppSubURL + "/"
 			}
 			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
@@ -149,12 +151,12 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 	}
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
 	if len(oauthInfos) != 1 {
-		log.Warnf("Skipping OAuth auto login because multiple OAuth providers are configured")
+		c.Logger.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
 		return false
 	}
 	for key := range oauthInfos {
 		redirectUrl := hs.Cfg.AppSubURL + "/login/" + key
-		log.Infof("OAuth auto login enabled. Redirecting to " + redirectUrl)
+		c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
 		c.Redirect(redirectUrl, 307)
 		return true
 	}
@@ -169,7 +171,11 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 	return response.Error(401, "Unauthorized", nil)
 }
 
-func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) response.Response {
+func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
+	cmd := dtos.LoginCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad login data", err)
+	}
 	authModule := ""
 	var user *models.User
 	var resp *response.NormalResponse
@@ -201,7 +207,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) res
 		Cfg:        hs.Cfg,
 	}
 
-	err := bus.Dispatch(authQuery)
+	err := bus.DispatchCtx(c.Req.Context(), authQuery)
 	authModule = authQuery.AuthModule
 	if err != nil {
 		resp = response.Error(401, "Invalid username or password", err)
@@ -242,7 +248,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) res
 		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
 			result["redirectUrl"] = redirectTo
 		} else {
-			log.Infof("Ignored invalid redirect_to cookie value: %v", redirectTo)
+			c.Logger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
 		}
 		cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 	}
@@ -309,12 +315,12 @@ func (hs *HTTPServer) tryGetEncryptedCookie(ctx *models.ReqContext, cookieName s
 		return "", false
 	}
 
-	decryptedError, err := hs.EncryptionService.Decrypt(decoded, setting.SecretKey)
+	decryptedError, err := hs.SecretsService.Decrypt(ctx.Req.Context(), decoded)
 	return string(decryptedError), err == nil
 }
 
 func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
-	encryptedError, err := hs.EncryptionService.Encrypt([]byte(value), setting.SecretKey)
+	encryptedError, err := hs.SecretsService.Encrypt(ctx.Req.Context(), []byte(value), secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
@@ -344,6 +350,10 @@ func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err erro
 
 func (hs *HTTPServer) samlEnabled() bool {
 	return hs.SettingsProvider.KeyValue("auth.saml", "enabled").MustBool(false) && hs.License.HasValidLicense()
+}
+
+func (hs *HTTPServer) samlName() string {
+	return hs.SettingsProvider.KeyValue("auth.saml", "name").MustString("SAML")
 }
 
 func (hs *HTTPServer) samlSingleLogoutEnabled() bool {

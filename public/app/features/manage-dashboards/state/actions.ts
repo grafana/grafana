@@ -2,25 +2,36 @@ import { AppEvents, DataSourceInstanceSettings, locationUtil } from '@grafana/da
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import {
   clearDashboard,
+  fetchDashboard,
+  fetchFailed,
   ImportDashboardDTO,
   InputType,
+  LibraryPanelInput,
+  LibraryPanelInputState,
   setGcomDashboard,
   setInputs,
   setJsonDashboard,
+  setLibraryPanelInputs,
 } from './reducers';
 import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { DashboardSearchHit } from '../../search/types';
+import { getLibraryPanel } from '../../library-panels/state/api';
+import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
+import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async (dispatch) => {
     try {
+      dispatch(fetchDashboard());
       const dashboard = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
       dispatch(setGcomDashboard(dashboard));
       dispatch(processInputs(dashboard.json));
+      dispatch(processElements(dashboard.json));
     } catch (error) {
+      dispatch(fetchFailed());
       appEvents.emit(AppEvents.alertError, [error.data.message || error]);
     }
   };
@@ -30,6 +41,7 @@ export function importDashboardJson(dashboard: any): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(setJsonDashboard(dashboard));
     dispatch(processInputs(dashboard));
+    dispatch(processElements(dashboard));
   };
 }
 
@@ -58,6 +70,54 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
       });
       dispatch(setInputs(inputs));
     }
+  };
+}
+
+function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }): ThunkResult<void> {
+  return async function (dispatch) {
+    if (!dashboardJson || !dashboardJson.__elements) {
+      return;
+    }
+
+    const libraryPanelInputs: LibraryPanelInput[] = [];
+
+    for (const element of dashboardJson.__elements) {
+      if (element.kind !== LibraryElementKind.Panel) {
+        continue;
+      }
+
+      const model = element.model;
+      const { type, description } = model;
+      const { uid, name } = element;
+      const input: LibraryPanelInput = {
+        model: {
+          model,
+          uid,
+          name,
+          version: 0,
+          meta: {},
+          id: 0,
+          type,
+          kind: LibraryElementKind.Panel,
+          description,
+        } as LibraryElementDTO,
+        state: LibraryPanelInputState.New,
+      };
+
+      try {
+        const panelInDb = await getLibraryPanel(uid, true);
+        input.state = LibraryPanelInputState.Exits;
+        input.model = panelInDb;
+      } catch (e: any) {
+        if (e.status !== 404) {
+          throw e;
+        }
+      }
+
+      libraryPanelInputs.push(input);
+    }
+
+    dispatch(setLibraryPanelInputs(libraryPanelInputs));
   };
 }
 
@@ -217,8 +277,8 @@ export function saveDashboard(options: SaveDashboardOptions) {
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().request({
     method: 'DELETE',
-    url: `/api/folders/${uid}?forceDeleteRules=true`,
-    showSuccessAlert: showSuccessAlert === true,
+    url: `/api/folders/${uid}?forceDeleteRules=false`,
+    showSuccessAlert: showSuccessAlert,
   });
 }
 
@@ -238,7 +298,7 @@ export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().request({
     method: 'DELETE',
     url: `/api/dashboards/uid/${uid}`,
-    showSuccessAlert: showSuccessAlert === true,
+    showSuccessAlert: showSuccessAlert,
   });
 }
 

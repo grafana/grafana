@@ -8,19 +8,15 @@ weight = 150
 
 # Configuration
 
-Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
+Grafana has default and custom configuration files. You can customize your Grafana instance by modifying the custom configuration file or by using environment variables. To see the list of settings for a Grafana instance, refer to [View server settings]({{< relref "view-server/view-server-settings.md" >}}).
 
-> **Note:** You must restart Grafana for any configuration changes to take effect.
+> **Note:** After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the relevant sections of the configuration file. Restart Grafana for your changes to take effect.
 
-To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server/view-server-settings.md" >}}).
+## Configuration file location
 
-## Config file locations
+The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ change the location in this file.
 
-_Do not_ change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
-
-- Default configuration from `$WORKING_DIR/conf/defaults.ini`
-- Custom configuration from `$WORKING_DIR/conf/custom.ini`
-- The custom configuration file path can be overridden using the `--config` parameter
+Depending on your OS, your custom configuration file is either the `$WORKING_DIR/conf/defaults.ini` file or the `/usr/local/etc/grafana/grafana.ini` file. The custom configuration file path can be overridden using the `--config` parameter.
 
 ### Linux
 
@@ -32,28 +28,28 @@ Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}
 
 ### Windows
 
-`sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
+On Windows, the `sample.ini` file is located in the same directory as `defaults.ini` file. It contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
 ### macOS
 
-By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
+By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override the settings defined in `conf/defaults.ini`.
 
-## Comments in .ini Files
+## Remove comments in the .ini files
 
-Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file. If you want to change a setting, you must delete the semicolon (`;`) in front of the setting before it will work.
+Grafana uses semicolons (the `;` char) to comment out lines in a `.ini` file. You must uncomment each line in the `custom.ini` or the `grafana.ini` file that you are modify by removing `;` from the beginning of that line. Otherwise your changes will be ignored.
 
-**Example**
+For example:
 
 ```
 # The HTTP port  to use
 ;http_port = 3000
 ```
 
-A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
+## Override configuration with environment variables
 
-## Configure with environment variables
+Do not use environment variables to _add_ new configuration settings. Instead, use environmental variables to _override_ existing options.
 
-All options in the configuration file can be overridden using environment variables using the syntax:
+To override an option:
 
 ```bash
 GF_<SectionName>_<KeyName>
@@ -467,6 +463,35 @@ Analytics ID here. By default this feature is disabled.
 ### google_tag_manager_id
 
 Google Tag Manager ID, only enabled if you enter an ID here.
+
+### rudderstack_write_key
+
+If you want to track Grafana usage via Rudderstack specify _your_ Rudderstack
+Write Key here. The `rudderstack_data_plane_url` must also be provided for this
+feature to be enabled. By default this feature is disabled.
+
+### rudderstack_data_plane_url
+
+Rudderstack data plane url that will receive Rudderstack events. The
+`rudderstack_write_key` must also be provided for this feature to be enabled.
+
+### rudderstack_sdk_url
+
+Optional. If tracking with Rudderstack is enabled, you can provide a custom
+URL to load the Rudderstack SDK.
+
+### rudderstack_config_url
+
+Optional. If tracking with Rudderstack is enabled, you can provide a custom
+URL to load the Rudderstack config.
+
+### application_insights_connection_string
+
+If you want to track Grafana usage via Azure Application Insights, then specify _your_ Application Insights connection string. Since the connection string contains semicolons, you need to wrap it in backticks (`). By default, tracking usage is disabled.
+
+### application_insights_endpoint_url
+
+    	Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
 <hr />
 
@@ -1109,25 +1134,99 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 ## [unified_alerting]
 
-For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+For more information about the Grafana alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
 
-### admin_config_poll_interval_seconds
+### enabled
 
-Specify the frequency of polling for admin config changes. The default value is `60`.
+Enable the Unified Alerting sub-system and interface. When enabled we'll migrate all of your alert rules and notification channels to the new system. New alert rules will be created and your notification channels will be converted into an Alertmanager configuration. Previous data is preserved to enable backwards compatibility but new data is removed. The default value is `false`.
+
+Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
+
+### disabled_orgs
+
+Comma-separated list of organization IDs for which to disable Grafana 8 Unified Alerting.
+
+### admin_config_poll_interval
+
+Specify the frequency of polling for admin config changes. The default value is `60s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### alertmanager_config_poll_interval
+
+Specify the frequency of polling for Alertmanager config changes. The default value is `60s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_listen_address
+
+Listen address/hostname and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
+
+### ha_advertise_address
+
+Explicit address/hostname and port to advertise other Grafana instances. The port is used for both TCP and UDP.
+
+### ha_peers
+
+Comma-separated list of initial instances (in a format of host:port) that will form the HA cluster. Configuring this setting will enable High Availability mode for alerting.
+
+### ha_peer_timeout
+
+Time to wait for an instance to send a notification via the Alertmanager. In HA, each Grafana instance will
+be assigned a position (e.g. 0, 1). We then multiply this position with the timeout to indicate how long should
+each instance wait before sending the notification to take into account replication lag. The default value is `15s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_gossip_interval
+
+The interval between sending gossip messages. By lowering this value (more frequent) gossip messages are propagated
+across cluster more quickly at the expense of increased bandwidth usage. The default value is `200ms`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_push_pull_interval
+
+The interval between gossip full state syncs. Setting this interval lower (more frequent) will increase convergence speeds
+across larger clusters at the expense of increased bandwidth usage. The default value is `60s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### execute_alerts
+
+Enable or disable alerting rule execution. The default value is `true`. The alerting UI remains visible. This option has a [legacy version in the alerting section]({{< relref "#execute_alerts-1">}}) that takes precedence.
+
+### evaluation_timeout
+
+Sets the alert evaluation timeout when fetching data from the datasource. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds">}}) that takes precedence.
+
+The timeout string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### max_attempts
+
+Sets a maximum number of times we'll attempt to evaluate an alert rule before giving up on that evaluation. The default value is `3`. This option has a [legacy version in the alerting section]({{< relref "#max_attempts-1">}}) that takes precedence.
+
+### min_interval
+
+Sets the minimum interval to enforce between rule evaluations. The default value is `10s` which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as we'll schedule fewer evaluations over time. This option has [a legacy version in the alerting section]({{< relref "#min_interval_seconds">}}) that takes precedence.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+> **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
 <hr>
 
 ## [alerting]
 
-For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
+For more information about the legacy dashboard alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
 ### enabled
 
-Set to `false` to disable alerting engine and hide Alerting in the Grafana UI. Default is `true`.
+Set to `false` to [enable Grafana alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. to disable Grafana alerting, set to `true`.
 
 ### execute_alerts
 
-Turns off alert rule execution, but Alerting is still visible in the Grafana UI.
+Turns off alert rule execution, but alerting is still visible in the Grafana UI.
 
 ### error_or_timeout
 
@@ -1504,7 +1603,7 @@ We do _not_ recommend using this option. For more information, refer to [Plugin 
 
 ### plugin_admin_enabled
 
-Available to Grafana administrators only, the plugin admin app is set to `false` by default. Set it to `true` to enable the app.
+Available to Grafana administrators only, enables installing / uninstalling / updating plugins directly from the Grafana UI. Set to `true` by default. Setting it to `false` will hide the install / uninstall / update controls.
 
 For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
 
@@ -1515,6 +1614,10 @@ Set to `true` if you want to enable external management of plugins. Default is `
 ### plugin_catalog_url
 
 Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
+
+### plugin_catalog_hidden_plugins
+
+Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.
 
 <hr>
 
@@ -1575,7 +1678,7 @@ ha_engine_address = 127.0.0.1:6379
 
 ## [plugin.grafana-image-renderer]
 
-For more information, refer to [Image rendering]({{< relref "image_rendering.md" >}}).
+For more information, refer to [Image rendering]({{< relref "../image-rendering/" >}}).
 
 ### rendering_timezone
 
@@ -1611,7 +1714,7 @@ It can be useful to set this to `true` when troubleshooting.
 
 ### rendering_args
 
-Additional arguments to pass to the headless browser instance. Default is --no-sandbox. The list of Chromium flags can be found at (https://peter.sh/experiments/chromium-command-line-switches/). Separate multiple arguments with commas.
+Additional arguments to pass to the headless browser instance. Defaults are `--no-sandbox,--disable-gpu`. The list of Chromium flags can be found at (https://peter.sh/experiments/chromium-command-line-switches/). Separate multiple arguments with commas.
 
 ### rendering_chrome_bin
 
@@ -1629,13 +1732,19 @@ Mode `reusable` will have one browser instance and will create a new incognito p
 
 ### rendering_clustering_mode
 
-When rendering_mode = clustered you can instruct how many browsers or incognito pages can execute concurrently. Default is `browser` and will cluster using browser instances.
+When rendering_mode = clustered, you can instruct how many browsers or incognito pages can execute concurrently. Default is `browser` and will cluster using browser instances.
 
 Mode `context` will cluster using incognito pages.
 
 ### rendering_clustering_max_concurrency
 
-When rendering_mode = clustered you can define the maximum number of browser instances/incognito pages that can execute concurrently.
+When rendering_mode = clustered, you can define the maximum number of browser instances/incognito pages that can execute concurrently. Default is `5`.
+
+### rendering_clustering_timeout
+
+> **Note**: Available in grafana-image-renderer v3.3.0 and later versions.
+
+When rendering_mode = clustered, you can specify the duration a rendering request can take before it will time out. Default is `30` seconds.
 
 ### rendering_viewport_max_width
 
@@ -1669,7 +1778,7 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `ngalert`
+Keys of alpha features to enable, separated by space.
 
 ## [date_formats]
 
@@ -1706,6 +1815,10 @@ Set this to `true` to have date formats automatically derived from your browser 
 ### default_timezone
 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
+
+### default_week_start
+
+Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
 
 ## [expressions]
 

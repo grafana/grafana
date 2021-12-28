@@ -12,6 +12,7 @@ export interface GeomapHoverFeature {
 
 export interface GeomapHoverPayload extends DataHoverPayload {
   features?: GeomapHoverFeature[];
+  feature?: FeatureLike;
   pageX: number;
   pageY: number;
 }

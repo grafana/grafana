@@ -1,5 +1,5 @@
 import { isArray, reduce } from 'lodash';
-import { QueryPartDef, QueryPart } from 'app/core/components/query_part/query_part';
+import { QueryPartDef, QueryPart } from 'app/angular/components/query_part';
 
 const alertQueryDef = new QueryPartDef({
   type: 'query',

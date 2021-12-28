@@ -37,3 +37,18 @@ func GetContextStreamID(ctx context.Context) (string, bool) {
 	}
 	return "", false
 }
+
+type channelIDContextKey struct{}
+
+func SetContextChannelID(ctx context.Context, channelID string) context.Context {
+	ctx = context.WithValue(ctx, channelIDContextKey{}, channelID)
+	return ctx
+}
+
+func GetContextChannelID(ctx context.Context) (string, bool) {
+	if val := ctx.Value(channelIDContextKey{}); val != nil {
+		values, ok := val.(string)
+		return values, ok
+	}
+	return "", false
+}

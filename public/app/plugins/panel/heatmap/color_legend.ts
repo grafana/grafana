@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { contextSrv } from 'app/core/core';
 import { tickStep } from 'app/core/utils/ticks';
 import { getColorScale, getOpacityScale } from './color_scale';
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import { PanelEvents, getColorForTheme } from '@grafana/data';
 import { config } from 'app/core/config';
 

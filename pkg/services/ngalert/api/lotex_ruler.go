@@ -7,7 +7,7 @@ import (
 	"net/url"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -33,7 +33,7 @@ func NewLotexRuler(proxy *AlertingProxy, log log.Logger) *LotexRuler {
 }
 
 func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	legacyRulerPrefix, err := r.getPrefix(ctx)
+	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
@@ -42,7 +42,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) res
 		http.MethodDelete,
 		withPath(
 			*ctx.Req.URL,
-			fmt.Sprintf("%s/%s", legacyRulerPrefix, macaron.Params(ctx.Req)[":Namespace"]),
+			fmt.Sprintf("%s/%s", legacyRulerPrefix, web.Params(ctx.Req)[":Namespace"]),
 		),
 		nil,
 		messageExtractor,
@@ -51,7 +51,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) res
 }
 
 func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	legacyRulerPrefix, err := r.getPrefix(ctx)
+	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
@@ -63,8 +63,8 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response
 			fmt.Sprintf(
 				"%s/%s/%s",
 				legacyRulerPrefix,
-				macaron.Params(ctx.Req)[":Namespace"],
-				macaron.Params(ctx.Req)[":Groupname"],
+				web.Params(ctx.Req)[":Namespace"],
+				web.Params(ctx.Req)[":Groupname"],
 			),
 		),
 		nil,
@@ -74,7 +74,7 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response
 }
 
 func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	legacyRulerPrefix, err := r.getPrefix(ctx)
+	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
@@ -86,7 +86,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respon
 			fmt.Sprintf(
 				"%s/%s",
 				legacyRulerPrefix,
-				macaron.Params(ctx.Req)[":Namespace"],
+				web.Params(ctx.Req)[":Namespace"],
 			),
 		),
 		nil,
@@ -96,7 +96,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respon
 }
 
 func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
-	legacyRulerPrefix, err := r.getPrefix(ctx)
+	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
@@ -108,8 +108,8 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.R
 			fmt.Sprintf(
 				"%s/%s/%s",
 				legacyRulerPrefix,
-				macaron.Params(ctx.Req)[":Namespace"],
-				macaron.Params(ctx.Req)[":Groupname"],
+				web.Params(ctx.Req)[":Namespace"],
+				web.Params(ctx.Req)[":Groupname"],
 			),
 		),
 		nil,
@@ -119,10 +119,11 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.R
 }
 
 func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
-	legacyRulerPrefix, err := r.getPrefix(ctx)
+	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
+
 	return r.withReq(
 		ctx,
 		http.MethodGet,
@@ -137,7 +138,7 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respon
 }
 
 func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
-	legacyRulerPrefix, err := r.getPrefix(ctx)
+	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
@@ -145,16 +146,21 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 	if err != nil {
 		return ErrResp(500, err, "Failed marshal rule group")
 	}
-	ns := macaron.Params(ctx.Req)[":Namespace"]
+	ns := web.Params(ctx.Req)[":Namespace"]
 	u := withPath(*ctx.Req.URL, fmt.Sprintf("%s/%s", legacyRulerPrefix, ns))
 	return r.withReq(ctx, http.MethodPost, u, bytes.NewBuffer(yml), jsonExtractor(nil), nil)
 }
 
-func (r *LotexRuler) getPrefix(ctx *models.ReqContext) (string, error) {
-	ds, err := r.DataProxy.DataSourceCache.GetDatasource(ctx.ParamsInt64(":Recipient"), ctx.SignedInUser, ctx.SkipCache)
+func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error) {
+	ds, err := r.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), ctx.ParamsInt64(":Recipient"), ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		return "", err
 	}
+	// Validate URL
+	if ds.Url == "" {
+		return "", fmt.Errorf("URL for this data source is empty")
+	}
+
 	prefix, ok := dsTypeToRulerPrefix[ds.Type]
 	if !ok {
 		return "", fmt.Errorf("unexpected datasource type. expecting loki or prometheus")

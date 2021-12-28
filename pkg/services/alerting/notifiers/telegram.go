@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -61,12 +63,12 @@ type TelegramNotifier struct {
 }
 
 // NewTelegramNotifier is the constructor for the Telegram notifier
-func NewTelegramNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func NewTelegramNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
 
-	botToken := model.DecryptedValue("bottoken", model.Settings.Get("bottoken").MustString())
+	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString(), setting.SecretKey)
 	chatID := model.Settings.Get("chatid").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool()
 
@@ -237,22 +239,22 @@ func generateImageCaption(evalContext *alerting.EvalContext, ruleURL string, met
 
 	if len(ruleURL) > 0 {
 		urlLine := fmt.Sprintf("\nURL: %s", ruleURL)
-		message = appendIfPossible(message, urlLine, captionLengthLimit)
+		message = appendIfPossible(evalContext.Log, message, urlLine, captionLengthLimit)
 	}
 
 	if metrics != "" {
 		metricsLines := fmt.Sprintf("\n\nMetrics:%s", metrics)
-		message = appendIfPossible(message, metricsLines, captionLengthLimit)
+		message = appendIfPossible(evalContext.Log, message, metricsLines, captionLengthLimit)
 	}
 
 	return message
 }
 
-func appendIfPossible(message string, extra string, sizeLimit int) string {
+func appendIfPossible(tlog log.Logger, message string, extra string, sizeLimit int) string {
 	if len(extra)+len(message) <= sizeLimit {
 		return message + extra
 	}
-	log.Debugf("Line too long for image caption. value: %s", extra)
+	tlog.Debug("Line too long for image caption.", "value", extra)
 	return message
 }
 

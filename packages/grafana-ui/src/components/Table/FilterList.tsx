@@ -4,31 +4,39 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { stylesFactory, useTheme2 } from '../../themes';
-import { Checkbox, Input, Label, VerticalGroup } from '..';
+import { Checkbox, FilterInput, Label, VerticalGroup } from '..';
 
 interface Props {
   values: SelectableValue[];
   options: SelectableValue[];
   onChange: (options: SelectableValue[]) => void;
+  caseSensitive?: boolean;
 }
 
 const ITEM_HEIGHT = 28;
 const MIN_HEIGHT = ITEM_HEIGHT * 5;
 
-export const FilterList: FC<Props> = ({ options, values, onChange }) => {
+export const FilterList: FC<Props> = ({ options, values, caseSensitive, onChange }) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const [searchFilter, setSearchFilter] = useState('');
-  const items = useMemo(() => options.filter((option) => option.label?.indexOf(searchFilter) !== -1), [
-    options,
-    searchFilter,
-  ]);
+  const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
+  const items = useMemo(
+    () =>
+      options.filter((option) => {
+        if (option.label === undefined) {
+          return false;
+        }
+        return regex.test(option.label);
+      }),
+    [options, regex]
+  );
   const gutter = theme.spacing.gridSize;
   const height = useMemo(() => Math.min(items.length * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [gutter, items.length]);
 
   const onInputChange = useCallback(
-    (event: React.FormEvent<HTMLInputElement>) => {
-      setSearchFilter(event.currentTarget.value);
+    (v: string) => {
+      setSearchFilter(v);
     },
     [setSearchFilter]
   );
@@ -46,12 +54,7 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
 
   return (
     <VerticalGroup spacing="md">
-      <Input
-        placeholder="filter values"
-        className={styles.filterListInput}
-        onChange={onInputChange}
-        value={searchFilter}
-      />
+      <FilterInput placeholder="Filter values" onChange={onInputChange} value={searchFilter} />
       {!items.length && <Label>No values</Label>}
       {items.length && (
         <List
@@ -93,8 +96,5 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     :hover {
       background-color: ${theme.colors.action.hover};
     }
-  `,
-  filterListInput: css`
-    label: filterListInput;
   `,
 }));

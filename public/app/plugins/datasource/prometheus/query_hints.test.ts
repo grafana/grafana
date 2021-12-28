@@ -42,7 +42,7 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const mock: unknown = { languageProvider: { metricsMetadata: { foo: [{ type: 'counter' }] } } };
+    const mock: unknown = { languageProvider: { metricsMetadata: { foo: { type: 'counter' } } } };
     const datasource = mock as PrometheusDatasource;
 
     let hints = getQueryHints('foo', series, datasource);

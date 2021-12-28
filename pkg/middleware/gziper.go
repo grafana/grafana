@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"strings"
 
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type gzipResponseWriter struct {
 	w *gzip.Writer
-	macaron.ResponseWriter
+	web.ResponseWriter
 }
 
 func (grw *gzipResponseWriter) WriteHeader(c int) {
@@ -68,7 +68,7 @@ func Gziper() func(http.Handler) http.Handler {
 				return
 			}
 
-			grw := &gzipResponseWriter{gzip.NewWriter(rw), rw.(macaron.ResponseWriter)}
+			grw := &gzipResponseWriter{gzip.NewWriter(rw), rw.(web.ResponseWriter)}
 			grw.Header().Set("Content-Encoding", "gzip")
 			grw.Header().Set("Vary", "Accept-Encoding")
 

@@ -196,7 +196,7 @@ Read more about this new feature in [Generic OAuth Authentication]({{< relref ".
 
 Since we announced the deprecation of PhantomJS and the new [Image Renderer Plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) in Grafana [6.4]({{< relref "whats-new-in-v6-4/#phantomjs-deprecation" >}}), we’ve received bug reports and valuable feedback.
 
-In Grafana 6.5 we’ve updated documentation to make it easier to understand how to install and troubleshoot possible problems. Read more about [Image Rendering]({{< relref "../administration/image_rendering/" >}}).
+In Grafana 6.5 we’ve updated documentation to make it easier to understand how to install and troubleshoot possible problems. Read more about [Image Rendering]({{< relref "../image-rendering/" >}}).
 
 Please try the [Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) and let us know what you think.
 

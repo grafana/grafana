@@ -6,6 +6,7 @@ import React, { FC } from 'react';
 import { NewRuleFromPanelButton } from './components/panel-alerts-tab/NewRuleFromPanelButton';
 import { RulesTable } from './components/rules/RulesTable';
 import { usePanelCombinedRules } from './hooks/usePanelCombinedRules';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   dashboard: DashboardModel;
@@ -52,7 +53,7 @@ export const PanelAlertTabContent: FC<Props> = ({ dashboard, panel }) => {
   }
 
   return (
-    <div className={styles.noRulesWrapper}>
+    <div aria-label={selectors.components.PanelAlertTabContent.content} className={styles.noRulesWrapper}>
       {alert}
       {!!dashboard.uid && (
         <>

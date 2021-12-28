@@ -1,22 +1,44 @@
-import React, { FC, useState } from 'react';
-import { AccessControlAction, OrgUser } from 'app/types';
+import React, { FC, useEffect, useState } from 'react';
+import { AccessControlAction, OrgUser, Role } from 'app/types';
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
+import { fetchBuiltinRoles, fetchRoleOptions, UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 
 export interface Props {
   users: OrgUser[];
+  orgId?: number;
   onRoleChange: (role: OrgRole, user: OrgUser) => void;
   onRemoveUser: (user: OrgUser) => void;
 }
 
 const UsersTable: FC<Props> = (props) => {
-  const { users, onRoleChange, onRemoveUser } = props;
-  const canUpdateRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
-  const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
+  const { users, orgId, onRoleChange, onRemoveUser } = props;
 
   const [showRemoveModal, setShowRemoveModal] = useState<string | boolean>(false);
+  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
+
+  useEffect(() => {
+    async function fetchOptions() {
+      try {
+        let options = await fetchRoleOptions(orgId);
+        setRoleOptions(options);
+        const builtInRoles = await fetchBuiltinRoles(orgId);
+        setBuiltinRoles(builtInRoles);
+      } catch (e) {
+        console.error('Error loading options');
+      }
+    }
+    if (contextSrv.accessControlEnabled()) {
+      fetchOptions();
+    }
+  }, [orgId]);
+
+  const getRoleOptions = async () => roleOptions;
+  const getBuiltinRoles = async () => builtinRoles;
+
   return (
     <table className="filter-table form-inline">
       <thead>
@@ -35,7 +57,7 @@ const UsersTable: FC<Props> = (props) => {
           return (
             <tr key={`${user.userId}-${index}`}>
               <td className="width-2 text-center">
-                <img className="filter-table__avatar" src={user.avatarUrl} />
+                <img className="filter-table__avatar" src={user.avatarUrl} alt="User avatar" />
               </td>
               <td className="max-width-6">
                 <span className="ellipsis" title={user.login}>
@@ -56,16 +78,35 @@ const UsersTable: FC<Props> = (props) => {
               <td className="width-1">{user.lastSeenAtAge}</td>
 
               <td className="width-8">
-                <OrgRolePicker
-                  value={user.role}
-                  disabled={!canUpdateRole}
-                  onChange={(newRole) => onRoleChange(newRole, user)}
-                />
+                {contextSrv.accessControlEnabled() ? (
+                  <UserRolePicker
+                    userId={user.userId}
+                    orgId={orgId}
+                    builtInRole={user.role}
+                    onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
+                    getRoleOptions={getRoleOptions}
+                    getBuiltinRoles={getBuiltinRoles}
+                    disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
+                  />
+                ) : (
+                  <OrgRolePicker
+                    aria-label="Role"
+                    value={user.role}
+                    disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
+                    onChange={(newRole) => onRoleChange(newRole, user)}
+                  />
+                )}
               </td>
 
-              {canRemoveFromOrg && (
+              {contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRemove, user) && (
                 <td>
-                  <Button size="sm" variant="destructive" onClick={() => setShowRemoveModal(user.login)} icon="times" />
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setShowRemoveModal(user.login)}
+                    icon="times"
+                    aria-label="Delete user"
+                  />
                   <ConfirmModal
                     body={`Are you sure you want to delete user ${user.login}?`}
                     confirmText="Delete"

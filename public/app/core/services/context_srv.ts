@@ -1,7 +1,6 @@
 import config from '../../core/config';
 import { extend } from 'lodash';
-import coreModule from 'app/core/core_module';
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil, WithAccessControlMetadata } from '@grafana/data';
 import { AccessControlAction, UserPermission } from 'app/types';
 
 export class User {
@@ -14,6 +13,7 @@ export class User {
   login: string;
   orgCount: number;
   timezone: string;
+  fiscalYearStartMonth: number;
   helpFlags1: number;
   lightTheme: boolean;
   hasEditPermissionInFolders: boolean;
@@ -30,6 +30,7 @@ export class User {
     this.login = '';
     this.orgCount = 0;
     this.timezone = '';
+    this.fiscalYearStartMonth = 0;
     this.helpFlags1 = 0;
     this.lightTheme = false;
     this.hasEditPermissionInFolders = false;
@@ -73,7 +74,25 @@ export class ContextSrv {
   }
 
   hasRole(role: string) {
-    return this.user.orgRole === role;
+    if (role === 'ServerAdmin') {
+      return this.isGrafanaAdmin;
+    } else {
+      return this.user.orgRole === role;
+    }
+  }
+
+  accessControlEnabled(): boolean {
+    return config.licenseInfo.hasLicense && config.featureToggles['accesscontrol'];
+  }
+
+  // Checks whether user has required permission
+  hasPermissionInMetadata(action: AccessControlAction | string, object: WithAccessControlMetadata): boolean {
+    // Fallback if access control disabled
+    if (!config.featureToggles['accesscontrol']) {
+      return true;
+    }
+
+    return !!object.accessControl?.[action];
   }
 
   // Checks whether user has required permission
@@ -87,7 +106,7 @@ export class ContextSrv {
   }
 
   isGrafanaVisible() {
-    return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
+    return document.visibilityState === undefined || document.visibilityState === 'visible';
   }
 
   // checks whether the passed interval is longer than the configured minimum refresh rate
@@ -111,6 +130,25 @@ export class ContextSrv {
     }
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
+
+  hasAccess(action: string, fallBack: boolean) {
+    if (!config.featureToggles['accesscontrol']) {
+      return fallBack;
+    }
+    return this.hasPermission(action);
+  }
+
+  // evaluates access control permissions, granting access if the user has any of them; uses fallback if access control is disabled
+  evaluatePermission(fallback: () => string[], actions: string[]) {
+    if (!config.featureToggles['accesscontrol']) {
+      return fallback();
+    }
+    if (actions.some((action) => this.hasPermission(action))) {
+      return [];
+    }
+    // Hack to reject when user does not have permission
+    return ['Reject'];
+  }
 }
 
 let contextSrv = new ContextSrv();
@@ -122,7 +160,3 @@ export const setContextSrv = (override: ContextSrv) => {
   }
   contextSrv = override;
 };
-
-coreModule.factory('contextSrv', () => {
-  return contextSrv;
-});

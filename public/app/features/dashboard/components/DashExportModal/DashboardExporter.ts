@@ -7,6 +7,8 @@ import { PanelPluginMeta } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { VariableOption, VariableRefresh } from '../../../variables/types';
 import { isConstant, isQuery } from '../../../variables/guard';
+import { LibraryElementKind } from '../../../library-panels/types';
+import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
 interface Input {
   name: string;
@@ -36,6 +38,13 @@ interface DataSources {
   };
 }
 
+export interface LibraryElementExport {
+  name: string;
+  uid: string;
+  model: any;
+  kind: LibraryElementKind;
+}
+
 export class DashboardExporter {
   makeExportable(dashboard: DashboardModel) {
     // clean up repeated rows and panels,
@@ -55,6 +64,7 @@ export class DashboardExporter {
     const datasources: DataSources = {};
     const promises: Array<Promise<void>> = [];
     const variableLookup: { [key: string]: any } = {};
+    const libraryPanels: Map<string, LibraryElementExport> = new Map<string, LibraryElementExport>();
 
     for (const variable of saveModel.getVariables()) {
       variableLookup[variable.name] = variable;
@@ -65,10 +75,13 @@ export class DashboardExporter {
       let datasourceVariable: any = null;
 
       // ignore data source properties that contain a variable
-      if (datasource && datasource.indexOf('$') === 0) {
-        datasourceVariable = variableLookup[datasource.substring(1)];
-        if (datasourceVariable && datasourceVariable.current) {
-          datasource = datasourceVariable.current.value;
+      if (datasource && (datasource as any).uid) {
+        const uid = (datasource as any).uid as string;
+        if (uid.indexOf('$') === 0) {
+          datasourceVariable = variableLookup[uid.substring(1)];
+          if (datasourceVariable && datasourceVariable.current) {
+            datasource = datasourceVariable.current.value;
+          }
         }
       }
 
@@ -103,7 +116,11 @@ export class DashboardExporter {
               pluginName: ds.meta?.name,
             };
 
-            obj.datasource = '${' + refName + '}';
+            if (obj.datasource === null || typeof obj.datasource === 'string') {
+              obj.datasource = '${' + refName + '}';
+            } else {
+              obj.datasource.uid = '${' + refName + '}';
+            }
           })
       );
     };
@@ -129,6 +146,16 @@ export class DashboardExporter {
           name: panelDef.name,
           version: panelDef.info.version,
         };
+      }
+    };
+
+    const processLibraryPanels = (panel: any) => {
+      if (isPanelModelLibraryPanel(panel)) {
+        const { libraryPanel, ...model } = panel;
+        const { name, uid } = libraryPanel;
+        if (!libraryPanels.has(uid)) {
+          libraryPanels.set(uid, { name, uid, kind: LibraryElementKind.Panel, model });
+        }
       }
     };
 
@@ -174,6 +201,17 @@ export class DashboardExporter {
           inputs.push(value);
         });
 
+        // we need to process all panels again after all the promises are resolved
+        // so all data sources, variables and targets have been templateized when we process library panels
+        for (const panel of saveModel.panels) {
+          processLibraryPanels(panel);
+          if (panel.collapsed !== undefined && panel.collapsed === true && panel.panels) {
+            for (const rowPanel of panel.panels) {
+              processLibraryPanels(rowPanel);
+            }
+          }
+        }
+
         // templatize constants
         for (const variable of saveModel.getVariables()) {
           if (isConstant(variable)) {
@@ -199,6 +237,7 @@ export class DashboardExporter {
         // make inputs and requires a top thing
         const newObj: { [key: string]: {} } = {};
         newObj['__inputs'] = inputs;
+        newObj['__elements'] = [...libraryPanels.values()];
         newObj['__requires'] = sortBy(requires, ['id']);
 
         defaults(newObj, saveModel);

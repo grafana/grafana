@@ -29,8 +29,9 @@ import (
 
 func TestAMConfigAccess(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		DisableAnonymous:     true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -95,7 +96,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "API error","error": "permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -165,7 +166,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "API error","error": "permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -228,7 +229,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "API error","error": "permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -334,7 +335,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "API error","error": "permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -387,8 +388,9 @@ func TestAMConfigAccess(t *testing.T) {
 
 func TestAlertAndGroupsQuery(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		DisableAnonymous:     true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -552,10 +554,11 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 func TestRulerAccess(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		EnableQuota:          true,
-		DisableAnonymous:     true,
-		ViewersCanEdit:       true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		EnableQuota:           true,
+		DisableAnonymous:      true,
+		ViewersCanEdit:        true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -600,7 +603,7 @@ func TestRulerAccess(t *testing.T) {
 			desc:             "viewer request should fail",
 			url:              "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
 			expStatus:        http.StatusForbidden,
-			expectedResponse: `{"message":"user does not have permissions to edit the namespace: user does not have permissions to edit the namespace"}`,
+			expectedResponse: `{"message": "API error","error":"user does not have permissions to edit the namespace: user does not have permissions to edit the namespace"}`,
 		},
 		{
 			desc:             "editor request should succeed",
@@ -678,10 +681,11 @@ func TestRulerAccess(t *testing.T) {
 func TestDeleteFolderWithRules(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		EnableQuota:          true,
-		DisableAnonymous:     true,
-		ViewersCanEdit:       true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		EnableQuota:           true,
+		DisableAnonymous:      true,
+		ViewersCanEdit:        true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -718,7 +722,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		assert.Equal(t, 202, resp.StatusCode)
+		assert.Equal(t, 200, resp.StatusCode)
 
 		re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
 		b = re.ReplaceAll(b, []byte(`"uid":""`))
@@ -829,7 +833,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		assert.Equal(t, 202, resp.StatusCode)
+		assert.Equal(t, 200, resp.StatusCode)
 		assert.JSONEq(t, "{}", string(b))
 	}
 }
@@ -837,9 +841,10 @@ func TestDeleteFolderWithRules(t *testing.T) {
 func TestAlertRuleCRUD(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		EnableQuota:          true,
-		DisableAnonymous:     true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		EnableQuota:           true,
+		DisableAnonymous:      true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -885,7 +890,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						Data:  []ngmodels.AlertQuery{},
 					},
 				},
-				expectedResponse: `{"message":"failed to update rule group: invalid alert rule: no queries or expressions are found"}`,
+				expectedResponse: `{"message": "API error","error":"failed to update rule group: invalid alert rule: no queries or expressions are found"}`,
 			},
 			{
 				desc:      "alert rule with empty title",
@@ -915,7 +920,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message":"failed to update rule group: invalid alert rule: title is empty"}`,
+				expectedResponse: `{"message": "API error","error":"failed to update rule group: invalid alert rule: title is empty"}`,
 			},
 			{
 				desc:      "alert rule with too long name",
@@ -945,7 +950,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message":"failed to update rule group: invalid alert rule: name length should not be greater than 190"}`,
+				expectedResponse: `{"message": "API error","error":"failed to update rule group: invalid alert rule: name length should not be greater than 190"}`,
 			},
 			{
 				desc:      "alert rule with too long rulegroup",
@@ -975,7 +980,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message":"failed to update rule group: invalid alert rule: rule group name length should not be greater than 190"}`,
+				expectedResponse: `{"message": "API error","error":"failed to update rule group: invalid alert rule: rule group name length should not be greater than 190"}`,
 			},
 			{
 				desc:      "alert rule with invalid interval",
@@ -1006,7 +1011,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message":"failed to update rule group: invalid alert rule: interval (1s) should be non-zero and divided exactly by scheduler interval: 10s"}`,
+				expectedResponse: `{"message": "API error","error":"failed to update rule group: invalid alert rule: interval (1s) should be non-zero and divided exactly by scheduler interval: 10s"}`,
 			},
 			{
 				desc:      "alert rule with unknown datasource",
@@ -1036,7 +1041,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message":"failed to validate alert rule \"AlwaysFiring\": invalid query A: data source not found: unknown"}`,
+				expectedResponse: `{"message": "API error","error":"failed to validate alert rule \"AlwaysFiring\": invalid query A: data source not found: unknown"}`,
 			},
 			{
 				desc:      "alert rule with invalid condition",
@@ -1066,7 +1071,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message":"failed to validate alert rule \"AlwaysFiring\": condition B not found in any query or expression: it should be one of: [A]"}`,
+				expectedResponse: `{"message": "API error","error":"failed to validate alert rule \"AlwaysFiring\": condition B not found in any query or expression: it should be one of: [A]"}`,
 			},
 		}
 
@@ -1356,7 +1361,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-		require.JSONEq(t, `{"message":"failed to update rule group: failed to get alert rule unknown: could not find alert rule"}`, string(b))
+		require.JSONEq(t, `{"message": "API error","error":"failed to update rule group: failed to get alert rule unknown: could not find alert rule"}`, string(b))
 
 		// let's make sure that rule definitions are not affected by the failed POST request.
 		u = fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1475,7 +1480,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.JSONEq(t, fmt.Sprintf(`{"message":"failed to validate alert rule \"AlwaysAlerting\": conflicting UID \"%s\" found"}`, ruleUID), string(b))
+		require.JSONEq(t, fmt.Sprintf(`{"message": "API error","error":"failed to validate alert rule \"AlwaysAlerting\": conflicting UID \"%s\" found"}`, ruleUID), string(b))
 
 		// let's make sure that rule definitions are not affected by the failed POST request.
 		u = fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1880,7 +1885,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, http.StatusNotFound, resp.StatusCode)
-			require.JSONEq(t, `{"message":"failed to delete rule group: rule group not found under this namespace"}`, string(b))
+			require.JSONEq(t, `{"message": "API error","error":"failed to delete rule group: rule group not found under this namespace"}`, string(b))
 		})
 
 		t.Run("succeed if the rule group name does exist", func(t *testing.T) {
@@ -1905,7 +1910,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 func TestAlertmanagerStatus(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafana(t, dir, path)
@@ -1965,9 +1971,10 @@ func TestAlertmanagerStatus(t *testing.T) {
 func TestQuota(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		EnableQuota:          true,
-		DisableAnonymous:     true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		EnableQuota:           true,
+		DisableAnonymous:      true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -2018,7 +2025,7 @@ func TestQuota(t *testing.T) {
 	t.Run("when quota limit exceed creating new rule should fail", func(t *testing.T) {
 		// get existing org quota
 		query := models.GetOrgQuotaByTargetQuery{OrgId: 1, Target: "alert_rule"}
-		err = sqlstore.GetOrgQuotaByTarget(&query)
+		err = store.GetOrgQuotaByTarget(context.Background(), &query)
 		require.NoError(t, err)
 		used := query.Result.Used
 		limit := query.Result.Limit
@@ -2029,7 +2036,7 @@ func TestQuota(t *testing.T) {
 			Target: "alert_rule",
 			Limit:  used,
 		}
-		err := sqlstore.UpdateOrgQuota(&orgCmd)
+		err := store.UpdateOrgQuota(context.Background(), &orgCmd)
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
@@ -2039,7 +2046,7 @@ func TestQuota(t *testing.T) {
 				Target: "alert_rule",
 				Limit:  limit,
 			}
-			err := sqlstore.UpdateOrgQuota(&orgCmd)
+			err := store.UpdateOrgQuota(context.Background(), &orgCmd)
 			require.NoError(t, err)
 		})
 
@@ -2086,7 +2093,7 @@ func TestQuota(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-		require.JSONEq(t, `{"message":"quota reached"}`, string(b))
+		require.JSONEq(t, `{"message": "API error","error":"quota reached"}`, string(b))
 	})
 
 	t.Run("when quota limit exceed updating existing rule should succeed", func(t *testing.T) {
@@ -2207,9 +2214,10 @@ func TestQuota(t *testing.T) {
 func TestEval(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		EnableQuota:          true,
-		DisableAnonymous:     true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		EnableQuota:           true,
+		DisableAnonymous:      true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -2380,7 +2388,7 @@ func TestEval(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"message":"invalid condition: condition B not found in any query or expression: it should be one of: [A]"}`,
+			expectedResponse:   `{"message": "API error","error":"invalid condition: condition B not found in any query or expression: it should be one of: [A]"}`,
 		},
 		{
 			desc: "unknown query datasource",
@@ -2405,7 +2413,7 @@ func TestEval(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"message":"invalid condition: invalid query A: data source not found: unknown"}`,
+			expectedResponse:   `{"message": "API error","error":"invalid condition: invalid query A: data source not found: unknown"}`,
 		},
 	}
 
@@ -2561,7 +2569,7 @@ func TestEval(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"message":"invalid queries or expressions: invalid query A: data source not found: unknown"}`,
+			expectedResponse:   `{"message": "API error","error":"invalid queries or expressions: invalid query A: data source not found: unknown"}`,
 		},
 	}
 

@@ -20,7 +20,7 @@ Any changes you make to a dashboard used in a report are reflected the next time
 ## Requirements
 
 - SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../administration/configuration.md#smtp" >}}) in [Configuration]({{< relref "../administration/configuration.md" >}}) for more information.
-- The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../administration/image_rendering.md" >}}) for more information.
+- The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../image-rendering/" >}}) for more information.
 
 ## Access control
 
@@ -99,7 +99,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 You can attach a CSV file to the report email for each table panel on the selected dashboard, along with the PDF report. By default, CSVs larger than 10Mb won't be sent to avoid email servers to reject the email. You can increase or decrease this limit in the [reporting configuration]({{< relref "#rendering-configuration" >}}).
 
-This feature relies on the same plugin that supports the [image rendering]({{< relref "../administration/image_rendering.md" >}}) features.
+This feature relies on the same plugin that supports the [image rendering]({{< relref "../image-rendering/" >}}) features.
 
 When the CSV file is generated, it is temporarily written to the `csv` folder in the Grafana `data` folder.
 

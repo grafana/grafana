@@ -87,8 +87,8 @@ const defaultProps: Props = {
 };
 
 function getSelectors() {
-  const dashboardSelect = () => screen.getByLabelText(/user preferences home dashboard drop down/i);
-  const timepickerSelect = () => screen.getByLabelText(selectors.components.TimeZonePicker.container);
+  const dashboardSelect = () => screen.getByTestId('User preferences home dashboard drop down');
+  const timepickerSelect = () => screen.getByTestId(selectors.components.TimeZonePicker.containerV2);
   const teamsTable = () => screen.getByRole('table', { name: /user teams table/i });
   const orgsTable = () => screen.getByRole('table', { name: /user organizations table/i });
   const sessionsTable = () => screen.getByRole('table', { name: /user sessions table/i });
@@ -235,8 +235,9 @@ describe('UserProfileEditPage', () => {
 
         const { email, saveProfile } = getSelectors();
         userEvent.clear(email());
-        await userEvent.type(email(), 'test@test.se');
-        userEvent.click(saveProfile());
+        userEvent.type(email(), 'test@test.se');
+        // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+        userEvent.click(saveProfile(), undefined, { skipPointerEventsCheck: true });
 
         await waitFor(() => expect(props.updateUserProfile).toHaveBeenCalledTimes(1));
         expect(props.updateUserProfile).toHaveBeenCalledWith({
@@ -251,7 +252,9 @@ describe('UserProfileEditPage', () => {
       it('should call changeUserOrg', async () => {
         const { props } = await getTestContext();
         const orgsAdminSelectButton = () =>
-          within(getSelectors().orgsAdminRow()).getByRole('button', { name: /select/i });
+          within(getSelectors().orgsAdminRow()).getByRole('button', {
+            name: /switch to the organization named Third/i,
+          });
 
         userEvent.click(orgsAdminSelectButton());
 
@@ -267,7 +270,10 @@ describe('UserProfileEditPage', () => {
     describe('and session is revoked', () => {
       it('should call revokeUserSession', async () => {
         const { props } = await getTestContext();
-        const sessionsRevokeButton = () => within(getSelectors().sessionsRow()).getByRole('button');
+        const sessionsRevokeButton = () =>
+          within(getSelectors().sessionsRow()).getByRole('button', {
+            name: /revoke user session/i,
+          });
 
         userEvent.click(sessionsRevokeButton());
 

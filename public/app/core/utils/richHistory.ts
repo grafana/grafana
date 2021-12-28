@@ -6,7 +6,7 @@ import { DataQuery, DataSourceApi, dateTimeFormat, urlUtil, ExploreUrlState } fr
 import store from 'app/core/store';
 import { dispatch } from 'app/store/store';
 import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
+import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
 
 // Types
 import { RichHistoryQuery } from 'app/types/explore';
@@ -34,6 +34,8 @@ export enum SortOrder {
  * Side-effect: store history in local storage
  */
 
+export const MAX_HISTORY_ITEMS = 10000;
+
 export function addToRichHistory(
   richHistory: RichHistoryQuery[],
   datasourceId: string,
@@ -41,8 +43,10 @@ export function addToRichHistory(
   queries: DataQuery[],
   starred: boolean,
   comment: string | null,
-  sessionName: string
-): any {
+  sessionName: string,
+  showQuotaExceededError: boolean,
+  showLimitExceededWarning: boolean
+): { richHistory: RichHistoryQuery[]; localStorageFull?: boolean; limitExceeded?: boolean } {
   const ts = Date.now();
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
@@ -66,24 +70,53 @@ export function addToRichHistory(
       });
 
     if (isEqual(newQueriesToCompare, lastQueriesToCompare)) {
-      return richHistory;
+      return { richHistory };
     }
 
-    let updatedHistory = [
-      { queries: newQueriesToSave, ts, datasourceId, datasourceName, starred, comment, sessionName },
+    // remove oldest non-starred items to give space for the recent query
+    let limitExceeded = false;
+    let current = queriesToKeep.length - 1;
+    while (current >= 0 && queriesToKeep.length >= MAX_HISTORY_ITEMS) {
+      if (!queriesToKeep[current].starred) {
+        queriesToKeep.splice(current, 1);
+        limitExceeded = true;
+      }
+      current--;
+    }
+
+    let updatedHistory: RichHistoryQuery[] = [
+      {
+        queries: newQueriesToSave,
+        ts,
+        datasourceId,
+        datasourceName: datasourceName ?? '',
+        starred,
+        comment: comment ?? '',
+        sessionName,
+      },
       ...queriesToKeep,
     ];
 
     try {
+      showLimitExceededWarning &&
+        limitExceeded &&
+        dispatch(
+          notifyApp(
+            createWarningNotification(
+              `Query history reached the limit of ${MAX_HISTORY_ITEMS}. Old, not-starred items will be removed.`
+            )
+          )
+        );
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
-      return updatedHistory;
+      return { richHistory: updatedHistory, limitExceeded, localStorageFull: false };
     } catch (error) {
-      dispatch(notifyApp(createErrorNotification(error)));
-      return richHistory;
+      showQuotaExceededError &&
+        dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      return { richHistory: updatedHistory, limitExceeded, localStorageFull: error.name === 'QuotaExceededError' };
     }
   }
 
-  return richHistory;
+  return { richHistory };
 }
 
 export function getRichHistory(): RichHistoryQuery[] {
@@ -111,7 +144,7 @@ export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: 
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification(error)));
+    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
   }
 }
@@ -133,7 +166,7 @@ export function updateCommentInRichHistory(
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification(error)));
+    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
   }
 }
@@ -144,7 +177,7 @@ export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: nu
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification(error)));
+    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
   }
 }
@@ -361,7 +394,6 @@ export function filterAndSortQueries(
   return sortQueries(filteredQueriesToBeSorted, sortOrder);
 }
 
-/* These functions are created to migrate string queries (from 6.7 release) to DataQueries. They can be removed after 7.1 release. */
 function migrateRichHistory(richHistory: RichHistoryQuery[]) {
   const transformedRichHistory = richHistory.map((query) => {
     const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
@@ -374,10 +406,13 @@ function migrateRichHistory(richHistory: RichHistoryQuery[]) {
 function createDataQuery(query: RichHistoryQuery, individualQuery: DataQuery | string, index: number) {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZ';
   if (typeof individualQuery === 'object') {
+    // the current format
     return individualQuery;
   } else if (isParsable(individualQuery)) {
+    // ElasticSearch (maybe other datasoures too) before grafana7
     return JSON.parse(individualQuery);
   }
+  // prometehus (maybe other datasources too) before grafana7
   return { expr: individualQuery, refId: letters[index] };
 }
 

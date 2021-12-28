@@ -450,6 +450,9 @@ describe('Table utils', () => {
       ${{ values: [Number.NEGATIVE_INFINITY] }} | ${{ values: [1] }}                        | ${-1}
       ${{ values: ['infinIty'] }}               | ${{ values: [1] }}                        | ${-1}
       ${{ values: ['infinIty'] }}               | ${{ values: [-1] }}                       | ${-1}
+      ${{ values: [1] }}                        | ${{ values: [NaN] }}                      | ${1}
+      ${{ values: [NaN] }}                      | ${{ values: [NaN] }}                      | ${0}
+      ${{ values: [NaN] }}                      | ${{ values: [1] }}                        | ${-1}
     `("when called with a: '$a.toString', b: '$b.toString' then result should be '$expected'", ({ a, b, expected }) => {
       expect(sortNumber(a, b, '0')).toEqual(expected);
     });

@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,12 +31,14 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	for _, ds := range datasources {
 		ds.Created = time.Now()
 		ds.Updated = time.Now()
+
 		if ds.Name == "elasticsearch" {
-			ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
-				"key": "value",
-			})
+			key, err := util.Encrypt([]byte("value"), setting.SecretKey)
+			require.NoError(t, err)
+
+			ds.SecureJsonData = map[string][]byte{"key": key}
 		} else {
-			ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{})
+			ds.SecureJsonData = map[string][]byte{}
 		}
 	}
 
@@ -59,7 +62,8 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	assert.Equal(t, len(dss), 4)
 
 	for _, ds := range dss {
-		sj := ds.SecureJsonData.Decrypt()
+		sj, err := DecryptSecureJsonData(ds)
+		require.NoError(t, err)
 
 		if ds.Name == "influxdb" {
 			assert.Equal(t, ds.Password, "")
@@ -89,4 +93,17 @@ func TestPasswordMigrationCommand(t *testing.T) {
 			assert.Equal(t, key, "value", "expected existing key to be kept intact in securejson")
 		}
 	}
+}
+
+func DecryptSecureJsonData(ds *models.DataSource) (map[string]string, error) {
+	decrypted := make(map[string]string)
+	for key, data := range ds.SecureJsonData {
+		decryptedData, err := util.Decrypt(data, setting.SecretKey)
+		if err != nil {
+			return nil, err
+		}
+
+		decrypted[key] = string(decryptedData)
+	}
+	return decrypted, nil
 }

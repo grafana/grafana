@@ -128,7 +128,9 @@ export class UserAdminPage extends PureComponent<Props> {
 
           {orgs && (
             <UserOrgs
+              user={user}
               orgs={orgs}
+              isExternalUser={user?.isExternal}
               onOrgRemove={this.onOrgRemove}
               onOrgRoleChange={this.onOrgRoleChange}
               onOrgAdd={this.onOrgAdd}

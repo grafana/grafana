@@ -10,9 +10,10 @@ import { initialAsyncRequestState } from '../../utils/redux';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
+  expandAll: boolean;
 }
 
-export const GrafanaRules: FC<Props> = ({ namespaces }) => {
+export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
   const styles = useStyles(getStyles);
   const { loading } = useUnifiedAlertingSelector(
     (state) => state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState
@@ -27,7 +28,12 @@ export const GrafanaRules: FC<Props> = ({ namespaces }) => {
 
       {namespaces?.map((namespace) =>
         namespace.groups.map((group) => (
-          <RulesGroup group={group} key={`${namespace.name}-${group.name}`} namespace={namespace} />
+          <RulesGroup
+            group={group}
+            key={`${namespace.name}-${group.name}`}
+            namespace={namespace}
+            expandAll={expandAll}
+          />
         ))
       )}
       {namespaces?.length === 0 && <p>No rules found.</p>}

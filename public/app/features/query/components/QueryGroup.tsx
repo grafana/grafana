@@ -12,7 +12,7 @@ import {
   stylesFactory,
   Tooltip,
 } from '@grafana/ui';
-import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
+import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -29,16 +29,15 @@ import {
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
-import {
-  dataSource as expressionDatasource,
-  ExpressionDatasourceID,
-} from 'app/features/expressions/ExpressionDatasource';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
+import { GroupActionComponents } from './QueryActionComponent';
+import { updateQueries } from '../state/updateQueries';
 
 interface Props {
   queryRunner: PanelQueryRunner;
@@ -51,6 +50,7 @@ interface Props {
 interface State {
   dataSource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
+  queries: DataQuery[];
   helpContent: React.ReactNode;
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
@@ -73,6 +73,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     isAddingMixed: false,
     isHelpOpen: false,
     scrollTop: 0,
+    queries: [],
     data: {
       state: LoadingState.NotStarted,
       series: [],
@@ -88,10 +89,12 @@ export class QueryGroup extends PureComponent<Props, State> {
     });
 
     try {
-      const ds = await this.dataSourceSrv.get(options.dataSource.name);
-      const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
+      const ds = await this.dataSourceSrv.get(options.dataSource);
+      const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
       const defaultDataSource = await this.dataSourceSrv.get();
-      this.setState({ dataSource: ds, dsSettings, defaultDataSource });
+      const datasource = ds.getRef();
+      const queries = options.queries.map((q) => (q.datasource ? q : { ...q, datasource }));
+      this.setState({ queries, dataSource: ds, dsSettings, defaultDataSource });
     } catch (error) {
       console.log('failed to load data source', error);
     }
@@ -109,66 +112,40 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
-    let { queries } = this.props.options;
     const { dsSettings } = this.state;
-
-    // switching to mixed
-    if (newSettings.meta.mixed) {
-      for (const query of queries) {
-        if (query.datasource !== ExpressionDatasourceID) {
-          query.datasource = dsSettings?.name;
-          if (!query.datasource) {
-            query.datasource = config.defaultDatasource;
-          }
-        }
-      }
-    } else if (dsSettings) {
-      // if switching from mixed
-      if (dsSettings.meta.mixed) {
-        // Remove the explicit datasource
-        for (const query of queries) {
-          if (query.datasource !== ExpressionDatasourceID) {
-            delete query.datasource;
-          }
-        }
-      } else if (dsSettings.meta.id !== newSettings.meta.id) {
-        // we are changing data source type, clear queries
-        queries = [{ refId: 'A' }];
-      }
-    }
+    const queries = updateQueries(newSettings, this.state.queries, dsSettings);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
-
     this.onChange({
       queries,
       dataSource: {
         name: newSettings.name,
         uid: newSettings.uid,
+        type: newSettings.meta.id,
         default: newSettings.isDefault,
       },
     });
 
     this.setState({
+      queries,
       dataSource: dataSource,
       dsSettings: newSettings,
     });
   };
 
   onAddQueryClick = () => {
-    const { options } = this.props;
-    this.onChange({ queries: addQuery(options.queries, this.newQuery()) });
+    const { queries } = this.state;
+    this.onQueriesChange(addQuery(queries, this.newQuery()));
     this.onScrollBottom();
   };
 
   newQuery(): Partial<DataQuery> {
     const { dsSettings, defaultDataSource } = this.state;
 
-    if (!dsSettings?.meta.mixed) {
-      return {};
-    }
+    const ds = !dsSettings?.meta.mixed ? dsSettings : defaultDataSource;
 
     return {
-      datasource: defaultDataSource?.name,
+      datasource: { uid: ds?.uid, type: ds?.type },
     };
   }
 
@@ -180,9 +157,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   onAddExpressionClick = () => {
-    this.onChange({
-      queries: addQuery(this.props.options.queries, expressionDatasource.newQuery()),
-    });
+    this.onQueriesChange(addQuery(this.state.queries, expressionDatasource.newQuery()));
     this.onScrollBottom();
   };
 
@@ -202,11 +177,13 @@ export class QueryGroup extends PureComponent<Props, State> {
     return (
       <div>
         <div className={styles.dataSourceRow}>
-          <InlineFormLabel width={'auto'}>Data source</InlineFormLabel>
+          <InlineFormLabel htmlFor="data-source-picker" width={'auto'}>
+            Data source
+          </InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
             <DataSourcePicker
               onChange={this.onChangeDataSource}
-              current={options.dataSource.name}
+              current={options.dataSource}
               metrics={true}
               mixed={true}
               dashboard={true}
@@ -281,8 +258,8 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onAddQuery = (query: Partial<DataQuery>) => {
-    const { queries } = this.props.options;
-    this.onChange({ queries: addQuery(queries, query) });
+    const { dsSettings, queries } = this.state;
+    this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
     this.onScrollBottom();
   };
 
@@ -292,16 +269,17 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onQueriesChange = (queries: DataQuery[]) => {
     this.onChange({ queries });
+    this.setState({ queries });
   };
 
   renderQueries(dsSettings: DataSourceInstanceSettings) {
-    const { options, onRunQueries } = this.props;
-    const { data } = this.state;
+    const { onRunQueries } = this.props;
+    const { data, queries } = this.state;
 
     if (isSharedDashboardQuery(dsSettings.name)) {
       return (
         <DashboardQueryEditor
-          queries={options.queries}
+          queries={queries}
           panelData={data}
           onChange={this.onQueriesChange}
           onRunQueries={onRunQueries}
@@ -312,7 +290,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     return (
       <div aria-label={selectors.components.QueryTab.content}>
         <QueryEditorRows
-          queries={options.queries}
+          queries={queries}
           dsSettings={dsSettings}
           onQueriesChange={this.onQueriesChange}
           onAddQuery={this.onAddQuery}
@@ -325,6 +303,18 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   isExpressionsSupported(dsSettings: DataSourceInstanceSettings): boolean {
     return (dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
+  }
+
+  renderExtraActions() {
+    return GroupActionComponents.getAllExtraRenderAction()
+      .map((action, index) =>
+        action({
+          onAddQuery: this.onAddQuery,
+          onChangeDataSource: this.onChangeDataSource,
+          key: index,
+        })
+      )
+      .filter(Boolean);
   }
 
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
@@ -356,6 +346,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             </Button>
           </Tooltip>
         )}
+        {this.renderExtraActions()}
       </HorizontalGroup>
     );
   }

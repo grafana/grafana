@@ -1849,7 +1849,170 @@ export const bigResponse = new MutableDataFrame({
   ],
 });
 
-export const otlpDataFrame = new MutableDataFrame({
+export const otlpDataFrameFromResponse = new MutableDataFrame({
+  meta: {
+    preferredVisualisationType: 'trace',
+    custom: {
+      traceFormat: 'otlp',
+    },
+  },
+  creator: jest.fn(),
+  fields: [
+    {
+      name: 'traceID',
+      type: 'string',
+      config: {},
+      labels: undefined,
+      values: ['60ba2abb44f13eae'],
+      state: {
+        displayName: 'traceID',
+      },
+    },
+    {
+      name: 'spanID',
+      type: 'string',
+      config: {},
+      labels: undefined,
+      values: ['726b5e30102fc0d0'],
+      state: {
+        displayName: 'spanID',
+      },
+    },
+    {
+      name: 'parentSpanID',
+      type: 'string',
+      config: {},
+      labels: undefined,
+      values: ['398f0f21a3db99ae'],
+      state: {
+        displayName: 'parentSpanID',
+      },
+    },
+    {
+      name: 'operationName',
+      type: 'string',
+      config: {},
+      labels: undefined,
+      values: ['HTTP GET - root'],
+      state: {
+        displayName: 'operationName',
+      },
+    },
+    {
+      name: 'serviceName',
+      type: 'string',
+      config: {},
+      labels: undefined,
+      values: ['db'],
+      state: {
+        displayName: 'serviceName',
+      },
+    },
+    {
+      name: 'serviceTags',
+      type: 'other',
+      config: {},
+      labels: undefined,
+      values: [
+        [
+          {
+            key: 'service.name',
+            value: 'db',
+          },
+          {
+            key: 'job',
+            value: 'tns/db',
+          },
+          {
+            key: 'opencensus.exporterversion',
+            value: 'Jaeger-Go-2.22.1',
+          },
+          {
+            key: 'host.name',
+            value: '63d16772b4a2',
+          },
+          {
+            key: 'ip',
+            value: '0.0.0.0',
+          },
+          {
+            key: 'client-uuid',
+            value: '39fb01637a579639',
+          },
+        ],
+      ],
+      state: {
+        displayName: 'serviceTags',
+      },
+    },
+    {
+      name: 'startTime',
+      type: 'number',
+      config: {},
+      labels: undefined,
+      values: [1627471657255.809],
+      state: {
+        displayName: 'startTime',
+      },
+    },
+    {
+      name: 'duration',
+      type: 'number',
+      config: {},
+      labels: undefined,
+      values: [0.459008],
+      state: {
+        displayName: 'duration',
+      },
+    },
+    {
+      name: 'logs',
+      type: 'other',
+      config: {},
+      labels: undefined,
+      values: [[]],
+      state: {
+        displayName: 'logs',
+      },
+    },
+    {
+      name: 'tags',
+      type: 'other',
+      config: {},
+      labels: undefined,
+      values: [
+        [
+          {
+            key: 'http.status_code',
+            value: 200,
+          },
+          {
+            key: 'http.method',
+            value: 'GET',
+          },
+          {
+            key: 'http.url',
+            value: '/',
+          },
+          {
+            key: 'component',
+            value: 'net/http',
+          },
+          {
+            key: 'span.kind',
+            value: 'producer',
+          },
+        ],
+      ],
+      state: {
+        displayName: 'tags',
+      },
+    },
+  ],
+  length: 1,
+} as any);
+
+export const otlpDataFrameToResponse = new MutableDataFrame({
   meta: {
     preferredVisualisationType: 'trace',
     custom: {

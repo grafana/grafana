@@ -41,7 +41,9 @@ export class Store {
       this.set(key, json);
     } catch (error) {
       // Likely hitting storage quota
-      throw new Error(`Could not save item in localStorage: ${key}. [${error}]`);
+      const errorToThrow = new Error(`Could not save item in localStorage: ${key}. [${error}]`);
+      errorToThrow.name = error.name;
+      throw errorToThrow;
     }
     return true;
   }

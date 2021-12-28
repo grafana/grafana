@@ -1,23 +1,26 @@
 # 7.3.0-beta1 (2020-10-15)
 
 ### Features / Enhancements
-* **NamedColors**: Named colors refactors. [#28235](https://github.com/grafana/grafana/pull/28235), [@torkelo](https://github.com/torkelo)
+
+- **NamedColors**: Named colors refactors. [#28235](https://github.com/grafana/grafana/pull/28235), [@torkelo](https://github.com/torkelo)
 
 # 7.2.0 (2020-09-23)
 
 ### Features / Enhancements
+
 - **grafana/ui**: Do not bundle jQuery. [#27667](https://github.com/grafana/grafana/pull/27667), [@kennytm](https://github.com/kennytm)
 
 # 7.1.0-beta1 (2020-07-01)
 
 ### Features / Enhancements
+
 - **Grafana-UI**: Add FileUpload. [#25835](https://github.com/grafana/grafana/pull/25835), [@Clarity-89](https://github.com/Clarity-89)
 - **Switch**: Deprecate checked prop in favor of value. [#25862](https://github.com/grafana/grafana/pull/25862), [@tskarhed](https://github.com/tskarhed)
-  
 
 # 7.0.4 (2020-06-25)
 
 ### Features / Enhancements
+
 - **Slider**: Update rc-slider dependency to 9.3.1. [#25617](https://github.com/grafana/grafana/pull/25617), [@torkelo](https://github.com/torkelo)
 
 # 7.0.0 (2020-05-18)

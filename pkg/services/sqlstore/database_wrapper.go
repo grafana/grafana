@@ -17,7 +17,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	ol "github.com/opentracing/opentracing-go/log"
 	"github.com/prometheus/client_golang/prometheus"
-	cw "github.com/weaveworks/common/middleware"
+	cw "github.com/weaveworks/common/tracing"
 	"xorm.io/core"
 )
 

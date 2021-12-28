@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -13,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
@@ -39,12 +40,12 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folder, err := s.GetFolderByUID(c.Req.Context(), macaron.Params(c.Req)[":uid"])
+	folder, err := s.GetFolderByUID(c.Req.Context(), web.Params(c.Req)[":uid"])
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
@@ -55,11 +56,15 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
-func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolderCommand) response.Response {
+func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
+	cmd := models.CreateFolderCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folder, err := s.CreateFolder(c.Req.Context(), cmd.Title, cmd.Uid)
 	if err != nil {
@@ -73,24 +78,28 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolder
 		}
 	}
 
-	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
-func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response.Response {
+func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
+	cmd := models.UpdateFolderCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	err := s.UpdateFolder(c.Req.Context(), macaron.Params(c.Req)[":uid"], &cmd)
+	err := s.UpdateFolder(c.Req.Context(), web.Params(c.Req)[":uid"], &cmd)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgId, c.SignedInUser)
 	return response.JSON(200, toFolderDto(c.Req.Context(), g, cmd.Result))
 }
 
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c, macaron.Params(c.Req)[":uid"])
+	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		if errors.Is(err, libraryelements.ErrFolderHasConnectedLibraryElements) {
 			return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
@@ -98,7 +107,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	f, err := s.DeleteFolder(c.Req.Context(), macaron.Params(c.Req)[":uid"], c.QueryBool("forceDeleteRules"))
+	f, err := s.DeleteFolder(c.Req.Context(), web.Params(c.Req)[":uid"], c.QueryBool("forceDeleteRules"))
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}

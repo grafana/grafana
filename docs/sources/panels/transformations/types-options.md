@@ -192,19 +192,32 @@ In the example below, I added two fields together and named them Sum.
 
 ## Labels to fields
 
-This transformation changes time series results that include labels or tags into to a table structure where each label becomes its own field.
+This transformation changes time series results that include labels or tags into to a table structure where each label keys and values
+are included in the table result. The labels can be displayed either as columns or as row values.
 
 Given a query result of two time series:
 
 - Series 1: labels Server=Server A, Datacenter=EU
 - Series 2: labels Server=Server B, Datacenter=EU
 
-This would result in a table like this:
+In "Columns" mode, the result looks like this:
 
 | Time                | Server   | Datacenter | Value |
 | ------------------- | -------- | ---------- | ----- |
 | 2020-07-07 11:34:20 | Server A | EU         | 1     |
 | 2020-07-07 11:34:20 | Server B | EU         | 2     |
+
+In "Rows" mode, the result has a table for each series and show each label value like this:
+
+| label      | value    |
+| ---------- | -------- |
+| Server     | Server A |
+| Datacenter | EU       |
+
+| label      | value    |
+| ---------- | -------- |
+| Server     | Server B |
+| Datacenter | EU       |
 
 ### Value field name
 
@@ -334,26 +347,30 @@ This transformation changes the field type of the specified field.
   - **Numeric -** attempts to make the values numbers
   - **String -** will make the values strings
   - **Time -** attempts to parse the values as time
-    - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
+    - Will show an option to specify a DateFormat for the input field like yyyy-mm-dd or DD MM YYYY hh:mm:ss
   - **Boolean -** will make the values booleans
+  - **JSON -** attempts to parse the values as JSON, potentially resulting in complex objects or arrays
 
-For example the following query could be modified by selecting the time field, as Time, and Date Format as YYYY.
+For example the following query could be modified by:
 
-| Time       | Mark  | Value |
-| ---------- | ----- | ----- |
-| 2017-07-01 | above | 25    |
-| 2018-08-02 | below | 22    |
-| 2019-09-02 | below | 29    |
-| 2020-10-04 | above | 22    |
+- selecting the time field as Time, and Input format as YYYY
+- selecting the JSON field as JSON
+
+| Time       | Mark  | Value | JSON     |
+| ---------- | ----- | ----- | -------- |
+| 2017-07-01 | above | 25    | "[0, 1]" |
+| 2018-08-02 | below | 22    | "[2, 3]" |
+| 2019-09-02 | below | 29    | "[4, 5]" |
+| 2020-10-04 | above | 22    | "[6, 7]" |
 
 The result:
 
-| Time                | Mark  | Value |
-| ------------------- | ----- | ----- |
-| 2017-01-01 00:00:00 | above | 25    |
-| 2018-01-01 00:00:00 | below | 22    |
-| 2019-01-01 00:00:00 | below | 29    |
-| 2020-01-01 00:00:00 | above | 22    |
+| Time                | Mark  | Value | JSON   |
+| ------------------- | ----- | ----- | ------ |
+| 2017-01-01 00:00:00 | above | 25    | [0, 1] |
+| 2018-01-01 00:00:00 | below | 22    | [2, 3] |
+| 2019-01-01 00:00:00 | below | 29    | [4, 5] |
+| 2020-01-01 00:00:00 | above | 22    | [6, 7] |
 
 ## Series to rows
 
@@ -429,7 +446,7 @@ Consider the following data set:
 If you **Include** the data points that have a temperature below 30°C, the configuration will look as follows:
 
 - Filter Type: `Include`
-- Condition: Rows where `Temperature` matches `Lower Than` `100`
+- Condition: Rows where `Temperature` matches `Lower Than` `30`
 
 And you will get the following result, where only the temperatures below 30°C are included:
 

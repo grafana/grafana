@@ -138,7 +138,7 @@ const optionsPickerSlice = createSlice({
       const { multi, selectedValues } = state;
 
       if (option) {
-        const selected = !selectedValues.find((o) => o.value === option.value);
+        const selected = !selectedValues.find((o) => o.value === option.value && o.text === option.text);
 
         if (option.value === ALL_VARIABLE_VALUE || !multi || clearOthers) {
           if (selected || forceSelect) {
@@ -153,7 +153,7 @@ const optionsPickerSlice = createSlice({
           return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
         }
 
-        state.selectedValues = selectedValues.filter((o) => o.value !== option.value);
+        state.selectedValues = selectedValues.filter((o) => o.value !== option.value && o.text !== option.text);
       } else {
         state.selectedValues = [];
       }

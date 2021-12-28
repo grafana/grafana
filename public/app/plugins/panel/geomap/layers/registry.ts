@@ -7,6 +7,7 @@ import { dataLayers } from './data';
 
 export const DEFAULT_BASEMAP_CONFIG: MapLayerOptions = {
   type: 'default',
+  name: '', // will get filled in with a non-empty name
   config: {},
 };
 

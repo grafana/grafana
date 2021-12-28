@@ -18,11 +18,7 @@ const maxPointsEnforceFactor float64 = 10
 func executeQuery(ctx context.Context, query queryModel, runner queryRunner, maxSeries int) (dr backend.DataResponse) {
 	dr = backend.DataResponse{}
 
-	flux, err := interpolate(query)
-	if err != nil {
-		dr.Error = err
-		return
-	}
+	flux := interpolate(query)
 
 	glog.Debug("Executing Flux query", "flux", flux)
 

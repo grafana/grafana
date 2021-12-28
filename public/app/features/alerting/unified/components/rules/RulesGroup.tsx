@@ -1,5 +1,5 @@
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useEffect } from 'react';
 import { HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
@@ -17,14 +17,19 @@ import { EditCloudGroupModal } from './EditCloudGroupModal';
 interface Props {
   namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
+  expandAll: boolean;
 }
 
-export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
+export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }) => {
   const { rulesSource } = namespace;
   const styles = useStyles2(getStyles);
 
-  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isEditingGroup, setIsEditingGroup] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(!expandAll);
+
+  useEffect(() => {
+    setIsCollapsed(!expandAll);
+  }, [expandAll]);
 
   const hasRuler = useHasRuler();
   const rulerRule = group.rules[0]?.rulerRule;
@@ -49,12 +54,20 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
       const baseUrl = `/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
       if (folder?.canSave) {
         actionIcons.push(
-          <ActionIcon key="edit" icon="pen" tooltip="edit" to={baseUrl + '/settings'} target="__blank" />
+          <ActionIcon
+            aria-label="edit folder"
+            key="edit"
+            icon="pen"
+            tooltip="edit folder"
+            to={baseUrl + '/settings'}
+            target="__blank"
+          />
         );
       }
       if (folder?.canAdmin) {
         actionIcons.push(
           <ActionIcon
+            aria-label="manage permissions"
             key="manage-perms"
             icon="lock"
             tooltip="manage permissions"
@@ -67,10 +80,11 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
   } else if (hasRuler(rulesSource)) {
     actionIcons.push(
       <ActionIcon
+        aria-label="edit rule group"
         data-testid="edit-group"
         key="edit"
         icon="pen"
-        tooltip="edit"
+        tooltip="edit rule group"
         onClick={() => setIsEditingGroup(true)}
       />
     );
@@ -87,10 +101,14 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
           onToggle={setIsCollapsed}
           data-testid="group-collapse-toggle"
         />
-        <Icon name={isCollapsed ? 'folder-open' : 'folder'} />
+        <Icon name={isCollapsed ? 'folder' : 'folder-open'} />
         {isCloudRulesSource(rulesSource) && (
           <Tooltip content={rulesSource.name} placement="top">
-            <img className={styles.dataSourceIcon} src={rulesSource.meta.info.logos.small} />
+            <img
+              alt={rulesSource.meta.name}
+              className={styles.dataSourceIcon}
+              src={rulesSource.meta.info.logos.small}
+            />
           </Tooltip>
         )}
         <h6 className={styles.heading}>{groupName}</h6>

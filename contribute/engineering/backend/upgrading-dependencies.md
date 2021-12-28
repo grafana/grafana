@@ -17,6 +17,6 @@ mage protobuf
 After upgrading the protobuf dependency in Grafana and the plugin SDK, it might be wise to test that things still work,
 before making corresponding PRs:
 
-* Test a plugin built with upgraded SDK on upgraded Grafana
-* Test a plugin built with non-upgraded SDK on upgraded Grafana
-* Test a plugin built with upgraded SDK on non-upgraded Grafana
+- Test a plugin built with upgraded SDK on upgraded Grafana
+- Test a plugin built with non-upgraded SDK on upgraded Grafana
+- Test a plugin built with upgraded SDK on non-upgraded Grafana

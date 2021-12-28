@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -11,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
-	macaron "gopkg.in/macaron.v1"
 )
 
 func TestHealthAPI_Version(t *testing.T) {
@@ -21,7 +22,7 @@ func TestHealthAPI_Version(t *testing.T) {
 		cfg.BuildCommit = "59906ab1bf"
 	})
 
-	bus.AddHandler("test", func(query *models.GetDBHealthQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDBHealthQuery) error {
 		return nil
 	})
 
@@ -44,7 +45,7 @@ func TestHealthAPI_AnonymousHideVersion(t *testing.T) {
 	m, hs := setupHealthAPITestEnvironment(t)
 	hs.Cfg.AnonymousHideVersion = true
 
-	bus.AddHandler("test", func(query *models.GetDBHealthQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDBHealthQuery) error {
 		return nil
 	})
 
@@ -67,7 +68,7 @@ func TestHealthAPI_DatabaseHealthy(t *testing.T) {
 	m, hs := setupHealthAPITestEnvironment(t)
 	hs.Cfg.AnonymousHideVersion = true
 
-	bus.AddHandler("test", func(query *models.GetDBHealthQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDBHealthQuery) error {
 		return nil
 	})
 
@@ -98,7 +99,7 @@ func TestHealthAPI_DatabaseUnhealthy(t *testing.T) {
 	m, hs := setupHealthAPITestEnvironment(t)
 	hs.Cfg.AnonymousHideVersion = true
 
-	bus.AddHandler("test", func(query *models.GetDBHealthQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDBHealthQuery) error {
 		return errors.New("bad")
 	})
 
@@ -130,7 +131,7 @@ func TestHealthAPI_DatabaseHealthCached(t *testing.T) {
 	hs.Cfg.AnonymousHideVersion = true
 
 	// Database is healthy.
-	bus.AddHandler("test", func(query *models.GetDBHealthQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDBHealthQuery) error {
 		return nil
 	})
 
@@ -167,13 +168,13 @@ func TestHealthAPI_DatabaseHealthCached(t *testing.T) {
 	require.True(t, healthy.(bool))
 }
 
-func setupHealthAPITestEnvironment(t *testing.T, cbs ...func(*setting.Cfg)) (*macaron.Macaron, *HTTPServer) {
+func setupHealthAPITestEnvironment(t *testing.T, cbs ...func(*setting.Cfg)) (*web.Mux, *HTTPServer) {
 	t.Helper()
 
 	bus.ClearBusHandlers()
 	t.Cleanup(bus.ClearBusHandlers)
 
-	m := macaron.New()
+	m := web.New()
 	cfg := setting.NewCfg()
 	for _, cb := range cbs {
 		cb(cfg)

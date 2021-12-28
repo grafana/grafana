@@ -59,7 +59,7 @@ To use a DraggableManager instance, relevant mouse events should be piped to the
 <div className="DividerDemo--realm">
   <div
     className="DividerDemo--divider"
-    onMouseDown={event => {
+    onMouseDown={(event) => {
       const { clientX, target } = event;
       const { left, width } = target.getBoundingClientRect();
       const localX = clientX - left;

@@ -38,20 +38,10 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
 
   return (
     <div className={styles.wrapper}>
-      <TabsBar className={styles.tabBar}>
+      <TabsBar className={styles.tabBar} hideBorder>
         {tabs.map((tab) => {
-          if (config.featureToggles.ngalert && tab.id === PanelEditorTabId.Alert) {
-            return (
-              <PanelAlertTab
-                key={tab.id}
-                label={tab.text}
-                active={tab.active}
-                onChangeTab={() => onChangeTab(tab)}
-                icon={tab.icon as IconName}
-                panel={panel}
-                dashboard={dashboard}
-              />
-            );
+          if (tab.id === PanelEditorTabId.Alert) {
+            renderAlertTab(tab, panel, dashboard, onChangeTab);
           }
           return (
             <Tab
@@ -90,6 +80,42 @@ function getCounter(panel: PanelModel, tab: PanelEditorTab) {
   return null;
 }
 
+function renderAlertTab(
+  tab: PanelEditorTab,
+  panel: PanelModel,
+  dashboard: DashboardModel,
+  onChangeTab: (tab: PanelEditorTab) => void
+) {
+  if (!config.alertingEnabled || !config.unifiedAlertingEnabled) {
+    return null;
+  } else if (config.unifiedAlertingEnabled) {
+    return (
+      <PanelAlertTab
+        key={tab.id}
+        label={tab.text}
+        active={tab.active}
+        onChangeTab={() => onChangeTab(tab)}
+        icon={tab.icon as IconName}
+        panel={panel}
+        dashboard={dashboard}
+      />
+    );
+  } else if (config.alertingEnabled) {
+    return (
+      <Tab
+        key={tab.id}
+        label={tab.text}
+        active={tab.active}
+        onChangeTab={() => onChangeTab(tab)}
+        icon={tab.icon as IconName}
+        counter={getCounter(panel, tab)}
+      />
+    );
+  }
+
+  return null;
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
@@ -107,7 +133,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex-grow: 1;
       min-height: 0;
       background: ${theme.colors.background.primary};
-      border-right: 1px solid ${theme.components.panel.borderColor};
+      border: 1px solid ${theme.components.panel.borderColor};
+      border-left: none;
+      border-bottom: none;
+      border-top-right-radius: ${theme.shape.borderRadius(1.5)};
     `,
   };
 };

@@ -2,7 +2,7 @@ import React from 'react';
 import config from 'app/core/config';
 import { css, cx } from '@emotion/css';
 import { Icon, IconName, LinkButton, useStyles, useTheme2, VerticalGroup } from '@grafana/ui';
-import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
 import { pickBy } from 'lodash';
 
 export interface LoginService {
@@ -24,7 +24,7 @@ const loginServices: () => LoginServices = () => {
     saml: {
       bgColor: '#464646',
       enabled: config.samlEnabled,
-      name: 'SAML',
+      name: config.samlName || DEFAULT_SAML_NAME,
       icon: 'key-skeleton-alt',
     },
     google: {

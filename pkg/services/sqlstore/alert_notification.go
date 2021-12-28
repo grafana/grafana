@@ -9,28 +9,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func init() {
-	bus.AddHandler("sql", GetAlertNotifications)
-	bus.AddHandler("sql", CreateAlertNotificationCommand)
-	bus.AddHandler("sql", UpdateAlertNotification)
-	bus.AddHandler("sql", DeleteAlertNotification)
-	bus.AddHandler("sql", GetAllAlertNotifications)
-	bus.AddHandlerCtx("sql", GetOrCreateAlertNotificationState)
-	bus.AddHandlerCtx("sql", SetAlertNotificationStateToCompleteCommand)
-	bus.AddHandlerCtx("sql", SetAlertNotificationStateToPendingCommand)
-
-	bus.AddHandler("sql", GetAlertNotificationsWithUid)
-	bus.AddHandler("sql", UpdateAlertNotificationWithUid)
-	bus.AddHandler("sql", DeleteAlertNotificationWithUid)
-	bus.AddHandler("sql", GetAlertNotificationsWithUidToSend)
-}
-
-func DeleteAlertNotification(cmd *models.DeleteAlertNotificationCommand) error {
+func (ss *SQLStore) DeleteAlertNotification(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		sql := "DELETE FROM alert_notification WHERE alert_notification.org_id = ? AND alert_notification.id = ?"
 		res, err := sess.Exec(sql, cmd.OrgId, cmd.Id)
@@ -54,9 +37,9 @@ func DeleteAlertNotification(cmd *models.DeleteAlertNotificationCommand) error {
 	})
 }
 
-func DeleteAlertNotificationWithUid(cmd *models.DeleteAlertNotificationWithUidCommand) error {
+func (ss *SQLStore) DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error {
 	existingNotification := &models.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
-	if err := getAlertNotificationWithUidInternal(existingNotification, newSession(context.Background())); err != nil {
+	if err := getAlertNotificationWithUidInternal(ctx, existingNotification, newSession(context.Background())); err != nil {
 		return err
 	}
 
@@ -69,22 +52,22 @@ func DeleteAlertNotificationWithUid(cmd *models.DeleteAlertNotificationWithUidCo
 		Id:    existingNotification.Result.Id,
 		OrgId: existingNotification.Result.OrgId,
 	}
-	if err := bus.Dispatch(deleteCommand); err != nil {
+	if err := bus.DispatchCtx(ctx, deleteCommand); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func GetAlertNotifications(query *models.GetAlertNotificationsQuery) error {
-	return getAlertNotificationInternal(query, newSession(context.Background()))
+func (ss *SQLStore) GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) error {
+	return getAlertNotificationInternal(ctx, query, newSession(context.Background()))
 }
 
 func (ss *SQLStore) addAlertNotificationUidByIdHandler() {
-	bus.AddHandler("sql", ss.GetAlertNotificationUidWithId)
+	bus.AddHandlerCtx("sql", ss.GetAlertNotificationUidWithId)
 }
 
-func (ss *SQLStore) GetAlertNotificationUidWithId(query *models.GetAlertNotificationUidQuery) error {
+func (ss *SQLStore) GetAlertNotificationUidWithId(ctx context.Context, query *models.GetAlertNotificationUidQuery) error {
 	cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
 
 	if cached, found := ss.CacheService.Get(cacheKey); found {
@@ -92,7 +75,7 @@ func (ss *SQLStore) GetAlertNotificationUidWithId(query *models.GetAlertNotifica
 		return nil
 	}
 
-	err := getAlertNotificationUidInternal(query, newSession(context.Background()))
+	err := getAlertNotificationUidInternal(ctx, query, newSession(context.Background()))
 	if err != nil {
 		return err
 	}
@@ -106,11 +89,11 @@ func newAlertNotificationUidCacheKey(orgID, notificationId int64) string {
 	return fmt.Sprintf("notification-uid-by-org-%d-and-id-%d", orgID, notificationId)
 }
 
-func GetAlertNotificationsWithUid(query *models.GetAlertNotificationsWithUidQuery) error {
-	return getAlertNotificationWithUidInternal(query, newSession(context.Background()))
+func (ss *SQLStore) GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) error {
+	return getAlertNotificationWithUidInternal(ctx, query, newSession(context.Background()))
 }
 
-func GetAllAlertNotifications(query *models.GetAllAlertNotificationsQuery) error {
+func (ss *SQLStore) GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) error {
 	results := make([]*models.AlertNotification, 0)
 	if err := x.Where("org_id = ?", query.OrgId).Asc("name").Find(&results); err != nil {
 		return err
@@ -120,7 +103,7 @@ func GetAllAlertNotifications(query *models.GetAllAlertNotificationsQuery) error
 	return nil
 }
 
-func GetAlertNotificationsWithUidToSend(query *models.GetAlertNotificationsWithUidToSendQuery) error {
+func (ss *SQLStore) GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -164,7 +147,7 @@ func GetAlertNotificationsWithUidToSend(query *models.GetAlertNotificationsWithU
 	return nil
 }
 
-func getAlertNotificationUidInternal(query *models.GetAlertNotificationUidQuery, sess *DBSession) error {
+func getAlertNotificationUidInternal(ctx context.Context, query *models.GetAlertNotificationUidQuery, sess *DBSession) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -193,7 +176,7 @@ func getAlertNotificationUidInternal(query *models.GetAlertNotificationUidQuery,
 	return nil
 }
 
-func getAlertNotificationInternal(query *models.GetAlertNotificationsQuery, sess *DBSession) error {
+func getAlertNotificationInternal(ctx context.Context, query *models.GetAlertNotificationsQuery, sess *DBSession) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -243,7 +226,7 @@ func getAlertNotificationInternal(query *models.GetAlertNotificationsQuery, sess
 	return nil
 }
 
-func getAlertNotificationWithUidInternal(query *models.GetAlertNotificationsWithUidQuery, sess *DBSession) error {
+func getAlertNotificationWithUidInternal(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery, sess *DBSession) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -281,10 +264,10 @@ func getAlertNotificationWithUidInternal(query *models.GetAlertNotificationsWith
 	return nil
 }
 
-func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) error {
+func (ss *SQLStore) CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if cmd.Uid == "" {
-			uid, uidGenerationErr := generateNewAlertNotificationUid(sess, cmd.OrgId)
+			uid, uidGenerationErr := generateNewAlertNotificationUid(ctx, sess, cmd.OrgId)
 			if uidGenerationErr != nil {
 				return uidGenerationErr
 			}
@@ -292,7 +275,7 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 			cmd.Uid = uid
 		}
 		existingQuery := &models.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
-		err := getAlertNotificationWithUidInternal(existingQuery, sess)
+		err := getAlertNotificationWithUidInternal(ctx, existingQuery, sess)
 
 		if err != nil {
 			return err
@@ -304,7 +287,7 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 
 		// check if name exists
 		sameNameQuery := &models.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
-		if err := getAlertNotificationInternal(sameNameQuery, sess); err != nil {
+		if err := getAlertNotificationInternal(ctx, sameNameQuery, sess); err != nil {
 			return err
 		}
 
@@ -337,7 +320,7 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 			Name:                  cmd.Name,
 			Type:                  cmd.Type,
 			Settings:              cmd.Settings,
-			SecureSettings:        securejsondata.GetEncryptedJsonData(cmd.SecureSettings),
+			SecureSettings:        cmd.EncryptedSecureSettings,
 			SendReminder:          cmd.SendReminder,
 			DisableResolveMessage: cmd.DisableResolveMessage,
 			Frequency:             frequency,
@@ -355,7 +338,7 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 	})
 }
 
-func generateNewAlertNotificationUid(sess *DBSession, orgId int64) (string, error) {
+func generateNewAlertNotificationUid(ctx context.Context, sess *DBSession, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
 		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&models.AlertNotification{})
@@ -371,7 +354,7 @@ func generateNewAlertNotificationUid(sess *DBSession, orgId int64) (string, erro
 	return "", models.ErrAlertNotificationFailedGenerateUniqueUid
 }
 
-func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
+func (ss *SQLStore) UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) (err error) {
 		current := models.AlertNotification{}
 
@@ -385,7 +368,7 @@ func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 
 		// check if name exists
 		sameNameQuery := &models.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
-		if err := getAlertNotificationInternal(sameNameQuery, sess); err != nil {
+		if err := getAlertNotificationInternal(ctx, sameNameQuery, sess); err != nil {
 			return err
 		}
 
@@ -402,7 +385,7 @@ func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 
 		current.Updated = time.Now()
 		current.Settings = cmd.Settings
-		current.SecureSettings = securejsondata.GetEncryptedJsonData(cmd.SecureSettings)
+		current.SecureSettings = cmd.EncryptedSecureSettings
 		current.Name = cmd.Name
 		current.Type = cmd.Type
 		current.IsDefault = cmd.IsDefault
@@ -439,10 +422,10 @@ func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 	})
 }
 
-func UpdateAlertNotificationWithUid(cmd *models.UpdateAlertNotificationWithUidCommand) error {
+func (ss *SQLStore) UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
 	getAlertNotificationWithUidQuery := &models.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
 
-	if err := getAlertNotificationWithUidInternal(getAlertNotificationWithUidQuery, newSession(context.Background())); err != nil {
+	if err := getAlertNotificationWithUidInternal(ctx, getAlertNotificationWithUidQuery, newSession(context.Background())); err != nil {
 		return err
 	}
 
@@ -471,7 +454,7 @@ func UpdateAlertNotificationWithUid(cmd *models.UpdateAlertNotificationWithUidCo
 		OrgId: cmd.OrgId,
 	}
 
-	if err := bus.Dispatch(updateNotification); err != nil {
+	if err := bus.DispatchCtx(ctx, updateNotification); err != nil {
 		return err
 	}
 
@@ -480,7 +463,7 @@ func UpdateAlertNotificationWithUid(cmd *models.UpdateAlertNotificationWithUidCo
 	return nil
 }
 
-func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error {
+func (ss *SQLStore) SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error {
 	return inTransactionCtx(ctx, func(sess *DBSession) error {
 		version := cmd.Version
 		var current models.AlertNotificationState
@@ -509,7 +492,7 @@ func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models
 	})
 }
 
-func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
+func (ss *SQLStore) SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
 	return withDbSession(ctx, x, func(sess *DBSession) error {
 		newVersion := cmd.Version + 1
 		sql := `UPDATE alert_notification_state SET
@@ -545,11 +528,11 @@ func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.
 	})
 }
 
-func GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error {
+func (ss *SQLStore) GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error {
 	return inTransactionCtx(ctx, func(sess *DBSession) error {
 		nj := &models.AlertNotificationState{}
 
-		exist, err := getAlertNotificationState(sess, cmd, nj)
+		exist, err := getAlertNotificationState(ctx, sess, cmd, nj)
 
 		// if exists, return it, otherwise create it with default values
 		if err != nil {
@@ -571,7 +554,7 @@ func GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCre
 
 		if _, err := sess.Insert(notificationState); err != nil {
 			if dialect.IsUniqueConstraintViolation(err) {
-				exist, err = getAlertNotificationState(sess, cmd, nj)
+				exist, err = getAlertNotificationState(ctx, sess, cmd, nj)
 
 				if err != nil {
 					return err
@@ -593,7 +576,7 @@ func GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCre
 	})
 }
 
-func getAlertNotificationState(sess *DBSession, cmd *models.GetOrCreateNotificationStateQuery, nj *models.AlertNotificationState) (bool, error) {
+func getAlertNotificationState(ctx context.Context, sess *DBSession, cmd *models.GetOrCreateNotificationStateQuery, nj *models.AlertNotificationState) (bool, error) {
 	return sess.
 		Where("alert_notification_state.org_id = ?", cmd.OrgId).
 		Where("alert_notification_state.alert_id = ?", cmd.AlertId).

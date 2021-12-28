@@ -1,4 +1,5 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { removeVariable, variableStateNotStarted } from './sharedReducer';
 import {
   initialTransactionState,
   transactionReducer,
@@ -57,6 +58,58 @@ describe('transactionReducer', () => {
         })
         .whenActionIsDispatched(variablesClearTransaction())
         .thenStateShouldEqual({ ...initialTransactionState });
+    });
+  });
+
+  describe('extraReducers', () => {
+    describe('isDirty', () => {
+      describe('when called during fetch', () => {
+        it('then isDirty should not be changed', () => {
+          reducerTester<TransactionState>()
+            .givenReducer(transactionReducer, {
+              ...initialTransactionState,
+              status: TransactionStatus.Fetching,
+            })
+            .whenActionIsDispatched(removeVariable({} as any))
+            .thenStateShouldEqual({ uid: null, status: TransactionStatus.Fetching, isDirty: false });
+        });
+      });
+
+      describe('when called after clean', () => {
+        it('then isDirty should not be changed', () => {
+          reducerTester<TransactionState>()
+            .givenReducer(transactionReducer, {
+              ...initialTransactionState,
+              status: TransactionStatus.NotStarted,
+            })
+            .whenActionIsDispatched(removeVariable({} as any))
+            .thenStateShouldEqual({ uid: null, status: TransactionStatus.NotStarted, isDirty: false });
+        });
+      });
+
+      describe('when called after complete with action that affects isDirty', () => {
+        it('then isDirty should be changed', () => {
+          reducerTester<TransactionState>()
+            .givenReducer(transactionReducer, {
+              ...initialTransactionState,
+              status: TransactionStatus.Completed,
+            })
+            .whenActionIsDispatched(removeVariable({} as any))
+            .thenStateShouldEqual({ uid: null, status: TransactionStatus.Completed, isDirty: true });
+        });
+      });
+
+      describe('when called after complete with action that does not affect isDirty', () => {
+        it('then isDirty should be changed', () => {
+          reducerTester<TransactionState>()
+            .givenReducer(transactionReducer, {
+              ...initialTransactionState,
+              status: TransactionStatus.Completed,
+            })
+            .whenActionIsDispatched(variableStateNotStarted({} as any))
+            .thenStateShouldEqual({ uid: null, status: TransactionStatus.Completed, isDirty: false });
+        });
+      });
     });
   });
 });

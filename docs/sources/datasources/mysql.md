@@ -447,9 +447,10 @@ datasources:
     url: localhost:3306
     database: grafana
     user: grafana
-    password: password
     jsonData:
       maxOpenConns: 0 # Grafana v5.4+
       maxIdleConns: 2 # Grafana v5.4+
       connMaxLifetime: 14400 # Grafana v5.4+
+    secureJsonData:
+      password: ${GRAFANA_MYSQL_PASSWORD}
 ```

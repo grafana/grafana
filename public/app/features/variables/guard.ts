@@ -7,8 +7,8 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
+  DataSourceRef,
   MetricFindValue,
-  QueryEditorProps,
   StandardVariableQuery,
   StandardVariableSupport,
   VariableModel,
@@ -60,6 +60,14 @@ function hasObjectProperty(model: VariableModel, property: string): model is Var
   return withProperty.hasOwnProperty(property) && typeof withProperty[property] === 'object';
 }
 
+export function isLegacyAdHocDataSource(datasource: null | DataSourceRef | string): datasource is string {
+  if (datasource === null) {
+    return false;
+  }
+
+  return typeof datasource === 'string';
+}
+
 interface DataSourceWithLegacyVariableSupport<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
@@ -86,7 +94,7 @@ interface DataSourceWithCustomVariableSupport<
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
     getType(): VariableSupportType;
-    editor: ComponentType<QueryEditorProps<any, TQuery, TOptions, VariableQuery>>;
+    editor: VariableQueryEditorType;
     query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
   };
 }
@@ -184,7 +192,7 @@ export function isQueryEditor<
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>
-): component is ComponentType<QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions, any>> {
+): component is VariableQueryEditorType {
   if (!component) {
     return false;
   }

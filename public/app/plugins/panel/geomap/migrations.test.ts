@@ -1,6 +1,5 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
-import { mapPanelChangedHandler } from './migrations';
-
+import { mapMigrationHandler, mapPanelChangedHandler } from './migrations';
 describe('Worldmap Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
 
@@ -48,6 +47,7 @@ describe('Worldmap Migrations', () => {
         },
         "options": Object {
           "basemap": Object {
+            "name": "Basemap",
             "type": "default",
           },
           "controls": Object {
@@ -106,3 +106,82 @@ const simpleWorldmapConfig = {
   valueName: 'total',
   datasource: null,
 };
+
+describe('geomap migrations', () => {
+  it('updates marker', () => {
+    const panel = ({
+      type: 'geomap',
+      options: {
+        layers: [
+          {
+            type: 'markers',
+            config: {
+              size: {
+                fixed: 5,
+                min: 2,
+                max: 15,
+                field: 'Count',
+              },
+              color: {
+                fixed: 'dark-green',
+                field: 'Price',
+              },
+              fillOpacity: 0.4,
+              shape: 'triangle',
+              showLegend: true,
+            },
+          },
+        ],
+      },
+      pluginVersion: '8.2.0',
+    } as any) as PanelModel;
+    panel.options = mapMigrationHandler(panel);
+
+    expect(panel).toMatchInlineSnapshot(`
+      Object {
+        "options": Object {
+          "layers": Array [
+            Object {
+              "config": Object {
+                "showLegend": true,
+                "style": Object {
+                  "color": Object {
+                    "field": "Price",
+                    "fixed": "dark-green",
+                  },
+                  "opacity": 0.4,
+                  "rotation": Object {
+                    "fixed": 0,
+                    "max": 360,
+                    "min": -360,
+                    "mode": "mod",
+                  },
+                  "size": Object {
+                    "field": "Count",
+                    "fixed": 5,
+                    "max": 15,
+                    "min": 2,
+                  },
+                  "symbol": Object {
+                    "fixed": "img/icons/marker/triangle.svg",
+                    "mode": "fixed",
+                  },
+                  "textConfig": Object {
+                    "fontSize": 12,
+                    "offsetX": 0,
+                    "offsetY": 0,
+                    "textAlign": "center",
+                    "textBaseline": "middle",
+                  },
+                },
+              },
+              "type": "markers",
+            },
+          ],
+        },
+        "pluginVersion": "8.2.0",
+        "type": "geomap",
+      }
+    `);
+  });
+});

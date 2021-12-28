@@ -92,6 +92,7 @@ exports[`Render should render teams table 1`] = `
                 href="org/teams/edit/1"
               >
                 <img
+                  alt="Team avatar"
                   className="filter-table__avatar"
                   src="some/url/"
                 />
@@ -128,6 +129,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                aria-label="Delete team"
                 disabled={false}
                 onConfirm={[Function]}
                 size="sm"
@@ -144,6 +146,7 @@ exports[`Render should render teams table 1`] = `
                 href="org/teams/edit/2"
               >
                 <img
+                  alt="Team avatar"
                   className="filter-table__avatar"
                   src="some/url/"
                 />
@@ -180,6 +183,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                aria-label="Delete team"
                 disabled={false}
                 onConfirm={[Function]}
                 size="sm"
@@ -196,6 +200,7 @@ exports[`Render should render teams table 1`] = `
                 href="org/teams/edit/3"
               >
                 <img
+                  alt="Team avatar"
                   className="filter-table__avatar"
                   src="some/url/"
                 />
@@ -232,6 +237,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                aria-label="Delete team"
                 disabled={false}
                 onConfirm={[Function]}
                 size="sm"
@@ -248,6 +254,7 @@ exports[`Render should render teams table 1`] = `
                 href="org/teams/edit/4"
               >
                 <img
+                  alt="Team avatar"
                   className="filter-table__avatar"
                   src="some/url/"
                 />
@@ -284,6 +291,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                aria-label="Delete team"
                 disabled={false}
                 onConfirm={[Function]}
                 size="sm"
@@ -300,6 +308,7 @@ exports[`Render should render teams table 1`] = `
                 href="org/teams/edit/5"
               >
                 <img
+                  alt="Team avatar"
                   className="filter-table__avatar"
                   src="some/url/"
                 />
@@ -336,6 +345,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                aria-label="Delete team"
                 disabled={false}
                 onConfirm={[Function]}
                 size="sm"
@@ -422,6 +432,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
                 href="org/teams/edit/1"
               >
                 <img
+                  alt="Team avatar"
                   className="filter-table__avatar"
                   src="some/url/"
                 />
@@ -458,6 +469,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
               className="text-right"
             >
               <DeleteButton
+                aria-label="Delete team"
                 disabled={true}
                 onConfirm={[Function]}
                 size="sm"
@@ -544,6 +556,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
                 href="org/teams/edit/1"
               >
                 <img
+                  alt="Team avatar"
                   className="filter-table__avatar"
                   src="some/url/"
                 />
@@ -580,6 +593,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
               className="text-right"
             >
               <DeleteButton
+                aria-label="Delete team"
                 disabled={true}
                 onConfirm={[Function]}
                 size="sm"

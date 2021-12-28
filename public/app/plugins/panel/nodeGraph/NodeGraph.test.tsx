@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor, getByText } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 import { NodeGraph } from './NodeGraph';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
-jest.mock('./layout.worker.js');
 
 jest.mock('react-use/lib/useMeasure', () => {
   return {

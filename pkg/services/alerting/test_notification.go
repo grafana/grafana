@@ -6,9 +6,6 @@ import (
 	"math/rand"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -31,49 +28,22 @@ var (
 	logger = log.New("alerting.testnotification")
 )
 
-func init() {
-	bus.AddHandlerCtx("alerting", handleNotificationTestCommand)
-}
+func (s *AlertNotificationService) HandleNotificationTestCommand(ctx context.Context, cmd *NotificationTestCommand) error {
+	notificationSvc := newNotificationService(nil, nil)
 
-func handleNotificationTestCommand(ctx context.Context, cmd *NotificationTestCommand) error {
-	notifier := newNotificationService(nil)
-
-	model := &models.AlertNotification{
+	model := models.AlertNotification{
+		Id:       cmd.ID,
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
 	}
 
-	secureSettingsMap := map[string]string{}
-
-	if cmd.ID > 0 {
-		query := &models.GetAlertNotificationsQuery{
-			OrgId: cmd.OrgID,
-			Id:    cmd.ID,
-		}
-		if err := bus.Dispatch(query); err != nil {
-			return err
-		}
-
-		if query.Result.SecureSettings != nil {
-			secureSettingsMap = query.Result.SecureSettings.Decrypt()
-		}
-	}
-
-	for k, v := range cmd.SecureSettings {
-		secureSettingsMap[k] = v
-	}
-
-	model.SecureSettings = securejsondata.GetEncryptedJsonData(secureSettingsMap)
-
-	notifiers, err := InitNotifier(model)
-
+	notifier, err := s.createNotifier(ctx, &model, cmd.SecureSettings)
 	if err != nil {
-		logger.Error("Failed to create notifier", "error", err.Error())
 		return err
 	}
 
-	return notifier.sendNotifications(createTestEvalContext(cmd), notifierStateSlice{{notifier: notifiers}})
+	return notificationSvc.sendNotifications(createTestEvalContext(cmd), notifierStateSlice{{notifier: notifier}})
 }
 
 func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {

@@ -25,11 +25,6 @@ func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
 
 	measurement := model.Get("measurement").MustString("")
 
-	resultFormat, err := model.Get("resultFormat").String()
-	if err != nil {
-		return nil, err
-	}
-
 	tags, err := qp.parseTags(model)
 	if err != nil {
 		return nil, err
@@ -55,17 +50,16 @@ func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
 	}
 
 	return &Query{
-		Measurement:  measurement,
-		Policy:       policy,
-		ResultFormat: resultFormat,
-		GroupBy:      groupBys,
-		Tags:         tags,
-		Selects:      selects,
-		RawQuery:     rawQuery,
-		Interval:     interval,
-		Alias:        alias,
-		UseRawQuery:  useRawQuery,
-		Tz:           tz,
+		Measurement: measurement,
+		Policy:      policy,
+		GroupBy:     groupBys,
+		Tags:        tags,
+		Selects:     selects,
+		RawQuery:    rawQuery,
+		Interval:    interval,
+		Alias:       alias,
+		UseRawQuery: useRawQuery,
+		Tz:          tz,
 	}, nil
 }
 

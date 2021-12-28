@@ -1,6 +1,14 @@
 import angular from 'angular';
 import { castArray, isEqual } from 'lodash';
-import { DataQuery, LoadingState, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
+import {
+  DataQuery,
+  getDataSourceRef,
+  isDataSourceRef,
+  LoadingState,
+  TimeRange,
+  UrlQueryMap,
+  UrlQueryValue,
+} from '@grafana/data';
 
 import {
   DashboardVariableModel,
@@ -12,6 +20,9 @@ import {
   VariableModel,
   VariableOption,
   VariableRefresh,
+  VariablesChanged,
+  VariablesChangedEvent,
+  VariablesChangedInUrl,
   VariableWithMultiSupport,
   VariableWithOptions,
 } from '../types';
@@ -44,6 +55,7 @@ import {
   hasLegacyVariableSupport,
   hasOptions,
   hasStandardVariableSupport,
+  isAdHoc,
   isMulti,
   isQuery,
 } from '../guard';
@@ -64,6 +76,8 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { cleanEditorState } from '../editor/reducer';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { locationService } from '@grafana/runtime';
+import { appEvents } from '../../../core/core';
+import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -492,13 +506,15 @@ const createGraph = (variables: VariableModel[]) => {
 
 export const variableUpdated = (
   identifier: VariableIdentifier,
-  emitChangeEvents: boolean
+  emitChangeEvents: boolean,
+  events: typeof appEvents = appEvents
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable(identifier.id, getState());
+    const state = getState();
+    const variableInState = getVariable(identifier.id, state);
 
     // if we're initializing variables ignore cascading update because we are in a boot up scenario
-    if (getState().templating.transaction.status === TransactionStatus.Fetching) {
+    if (state.templating.transaction.status === TransactionStatus.Fetching) {
       if (getVariableRefresh(variableInState) === VariableRefresh.never) {
         // for variable types with updates that go the setValueFromUrl path in the update let's make sure their state is set to Done.
         await dispatch(upgradeLegacyQueries(toVariableIdentifier(variableInState)));
@@ -507,8 +523,12 @@ export const variableUpdated = (
       return Promise.resolve();
     }
 
-    const variables = getVariables(getState());
+    const variables = getVariables(state);
     const g = createGraph(variables);
+    const panels = state.dashboard?.getModel()?.panels ?? [];
+    const event: VariablesChangedEvent = isAdHoc(variableInState)
+      ? { refreshAll: true, panelIds: [] } // for adhoc variables we don't know which panels that will be impacted
+      : { refreshAll: false, panelIds: getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels) };
 
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
@@ -525,11 +545,8 @@ export const variableUpdated = (
 
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
-        const dashboard = getState().dashboard.getModel();
-        dashboard?.setChangeAffectsAllPanels();
-        dashboard?.processRepeats();
+        events.publish(new VariablesChanged(event));
         locationService.partial(getQueryWithVariables(getState));
-        dashboard?.startRefresh();
       }
     });
   };
@@ -537,11 +554,12 @@ export const variableUpdated = (
 
 export interface OnTimeRangeUpdatedDependencies {
   templateSrv: TemplateSrv;
+  events: typeof appEvents;
 }
 
 export const onTimeRangeUpdated = (
   timeRange: TimeRange,
-  dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: getTemplateSrv() }
+  dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: getTemplateSrv(), events: appEvents }
 ): ThunkResult<Promise<void>> => async (dispatch, getState) => {
   dependencies.templateSrv.updateTimeRange(timeRange);
   const variablesThatNeedRefresh = getVariables(getState()).filter((variable) => {
@@ -559,9 +577,7 @@ export const onTimeRangeUpdated = (
 
   try {
     await Promise.all(promises);
-    const dashboard = getState().dashboard.getModel();
-    dashboard?.setChangeAffectsAllPanels();
-    dashboard?.startRefresh();
+    dependencies.events.publish(new VariablesChanged({ panelIds: [], refreshAll: true }));
   } catch (error) {
     console.error(error);
     dispatch(notifyApp(createVariableErrorNotification('Template variable service failed', error)));
@@ -583,10 +599,10 @@ const timeRangeUpdated = (identifier: VariableIdentifier): ThunkResult<Promise<v
   }
 };
 
-export const templateVarsChangedInUrl = (vars: ExtendedUrlQueryMap): ThunkResult<void> => async (
-  dispatch,
-  getState
-) => {
+export const templateVarsChangedInUrl = (
+  vars: ExtendedUrlQueryMap,
+  events: typeof appEvents = appEvents
+): ThunkResult<void> => async (dispatch, getState) => {
   const update: Array<Promise<any>> = [];
   const dashboard = getState().dashboard.getModel();
   for (const variable of getVariables(getState())) {
@@ -617,16 +633,19 @@ export const templateVarsChangedInUrl = (vars: ExtendedUrlQueryMap): ThunkResult
 
   if (update.length) {
     await Promise.all(update);
-    dashboard?.templateVariableValueUpdated();
-    dashboard?.startRefresh();
+    events.publish(new VariablesChangedInUrl({ panelIds: [], refreshAll: true }));
   }
 };
 
-const isVariableUrlValueDifferentFromCurrent = (variable: VariableModel, urlValue: any): boolean => {
-  const stringUrlValue = ensureStringValues(urlValue);
+export function isVariableUrlValueDifferentFromCurrent(variable: VariableModel, urlValue: any): boolean {
+  const variableValue = variableAdapters.get(variable.type).getValueForUrl(variable);
+  let stringUrlValue = ensureStringValues(urlValue);
+  if (Array.isArray(variableValue) && !Array.isArray(stringUrlValue)) {
+    stringUrlValue = [stringUrlValue];
+  }
   // lodash isEqual handles array of value equality checks as well
-  return !isEqual(variableAdapters.get(variable.type).getValueForUrl(variable), stringUrlValue);
-};
+  return !isEqual(variableValue, stringUrlValue);
+}
 
 const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
   const queryParams = locationService.getSearchObject();
@@ -667,6 +686,8 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
     dispatch(addSystemTemplateVariables(dashboard));
     // Load all variables into redux store
     dispatch(initDashboardTemplating(dashboard.templating.list));
+    // Migrate data source name to ref
+    dispatch(migrateVariablesDatasourceNameToRef());
     // Process all variable updates
     await dispatch(processVariables());
     // Mark update as complete
@@ -676,6 +697,31 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
     console.error(err);
   }
 };
+
+export function migrateVariablesDatasourceNameToRef(
+  getDatasourceSrvFunc: typeof getDatasourceSrv = getDatasourceSrv
+): ThunkResult<void> {
+  return function (dispatch, getState) {
+    const variables = getVariables(getState());
+    for (const variable of variables) {
+      if (!isAdHoc(variable) && !isQuery(variable)) {
+        continue;
+      }
+
+      const { datasource: nameOrRef } = variable;
+
+      if (isDataSourceRef(nameOrRef)) {
+        continue;
+      }
+
+      // the call to getInstanceSettings needs to be done after initDashboardTemplating because we might have
+      // datasource variables that need to be resolved
+      const ds = getDatasourceSrvFunc().getInstanceSettings(nameOrRef);
+      const dsRef = !ds ? { uid: nameOrRef } : getDataSourceRef(ds);
+      dispatch(changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: dsRef })));
+    }
+  };
+}
 
 export const cleanUpVariables = (): ThunkResult<void> => (dispatch) => {
   dispatch(cleanVariables());

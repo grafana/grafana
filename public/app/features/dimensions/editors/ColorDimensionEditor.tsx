@@ -16,6 +16,8 @@ const fixedColorOption: SelectableValue<string> = {
 export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, any, any>> = (props) => {
   const { value, context, onChange } = props;
 
+  const defaultColor = 'dark-green';
+
   const styles = useStyles2(getStyles);
   const fieldName = value?.field;
   const isFixed = Boolean(!fieldName);
@@ -31,7 +33,7 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
           field,
         });
       } else {
-        const fixed = value.fixed ?? 'grey';
+        const fixed = value.fixed ?? defaultColor;
         onChange({
           ...value,
           field: undefined,
@@ -46,7 +48,7 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
     (c: string) => {
       onChange({
         field: undefined,
-        fixed: c ?? 'grey',
+        fixed: c ?? defaultColor,
       });
     },
     [onChange]
@@ -65,7 +67,7 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
         />
         {isFixed && (
           <div className={styles.picker}>
-            <ColorPicker color={value?.fixed ?? 'grey'} onChange={onColorChange} enableNamedColors={true} />
+            <ColorPicker color={value?.fixed ?? defaultColor} onChange={onColorChange} enableNamedColors={true} />
           </div>
         )}
       </div>

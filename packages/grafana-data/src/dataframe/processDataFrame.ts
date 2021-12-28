@@ -25,13 +25,14 @@ import { ArrayDataFrame } from './ArrayDataFrame';
 import { getFieldDisplayName } from '../field/fieldState';
 import { fieldIndexComparer } from '../field/fieldComparers';
 import { vectorToArray } from '../vector/vectorToArray';
+import { dataFrameFromJSON } from './DataFrameJSON';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
     // TODO: should be Column but type does not exists there so not sure whats up here.
     const { text, type, ...disp } = c as any;
     return {
-      name: text, // rename 'text' to the 'name' field
+      name: text?.length ? text : c, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
       values: new ArrayVector(),
       type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
@@ -189,9 +190,32 @@ export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType 
 }
 
 /**
+ * Check the field type to see what the contents are
+ */
+export function getFieldTypeFromValue(v: any): FieldType {
+  if (v instanceof Date || isDateTime(v)) {
+    return FieldType.time;
+  }
+
+  if (isNumber(v)) {
+    return FieldType.number;
+  }
+
+  if (isString(v)) {
+    return FieldType.string;
+  }
+
+  if (isBoolean(v)) {
+    return FieldType.boolean;
+  }
+
+  return FieldType.other;
+}
+
+/**
  * Given a value this will guess the best column type
  *
- * TODO: better Date/Time support!  Look for standard date strings?
+ * NOTE: this is will try to see if string values can be mapped to other types (like number)
  */
 export function guessFieldTypeFromValue(v: any): FieldType {
   if (v instanceof Date || isDateTime(v)) {
@@ -236,7 +260,7 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
   // 2. Check the first non-null value
   for (let i = 0; i < field.values.length; i++) {
     const v = field.values.get(i);
-    if (v !== null) {
+    if (v != null) {
       return guessFieldTypeFromValue(v);
     }
   }
@@ -302,6 +326,9 @@ export function toDataFrame(data: any): DataFrame {
   }
 
   if (data.hasOwnProperty('data')) {
+    if (data.hasOwnProperty('schema')) {
+      return dataFrameFromJSON(data);
+    }
     return convertGraphSeriesToDataFrame(data);
   }
 
@@ -443,7 +470,12 @@ export function getDataFrameRow(data: DataFrame, row: number): any[] {
  * Returns a copy that does not include functions
  */
 export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
-  const fields: FieldDTO[] = data.fields.map((f) => {
+  return toFilteredDataFrameDTO(data);
+}
+
+export function toFilteredDataFrameDTO(data: DataFrame, fieldPredicate?: (f: Field) => boolean): DataFrameDTO {
+  const filteredFields = fieldPredicate ? data.fields.filter(fieldPredicate) : data.fields;
+  const fields: FieldDTO[] = filteredFields.map((f) => {
     let values = f.values.toArray();
     // The byte buffers serialize like objects
     if (values instanceof Float64Array) {

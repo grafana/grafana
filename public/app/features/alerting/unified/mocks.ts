@@ -1,4 +1,11 @@
-import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta, ScopedVars } from '@grafana/data';
+import {
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
+  DataSourcePluginMeta,
+  DataSourceRef,
+  ScopedVars,
+} from '@grafana/data';
 import {
   GrafanaAlertStateDecision,
   GrafanaRuleDefinition,
@@ -11,7 +18,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
+import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -19,14 +26,16 @@ import {
   AlertmanagerStatus,
   AlertState,
   GrafanaManagedReceiverConfig,
+  Silence,
+  SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
 
 let nextDataSourceId = 1;
 
-export const mockDataSource = (
-  partial: Partial<DataSourceInstanceSettings> = {},
+export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData>(
+  partial: Partial<DataSourceInstanceSettings<T>> = {},
   meta: Partial<DataSourcePluginMeta> = {}
-): DataSourceInstanceSettings<any> => {
+): DataSourceInstanceSettings<T> {
   const id = partial.id ?? nextDataSourceId++;
 
   return {
@@ -35,7 +44,7 @@ export const mockDataSource = (
     type: 'prometheus',
     name: `Prometheus-${id}`,
     access: 'proxy',
-    jsonData: {},
+    jsonData: {} as T,
     meta: ({
       info: {
         logos: {
@@ -47,7 +56,7 @@ export const mockDataSource = (
     } as any) as DataSourcePluginMeta,
     ...partial,
   };
-};
+}
 
 export const mockPromAlert = (partial: Partial<Alert> = {}): Alert => ({
   activeAt: '2021-03-18T13:47:05.04938691Z',
@@ -204,6 +213,22 @@ export const mockAlertGroup = (partial: Partial<AlertmanagerGroup> = {}): Alertm
   };
 };
 
+export const mockSilence = (partial: Partial<Silence> = {}): Silence => {
+  return {
+    id: '1a2b3c4d5e6f',
+    matchers: [{ name: 'foo', value: 'bar', isEqual: true, isRegex: false }],
+    startsAt: new Date().toISOString(),
+    endsAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+    createdBy: config.bootData.user.name || 'admin',
+    comment: 'Silence noisy alerts',
+    status: {
+      state: SilenceState.Active,
+    },
+    ...partial,
+  };
+};
+
 export class MockDataSourceSrv implements DataSourceSrv {
   datasources: Record<string, DataSourceApi> = {};
   // @ts-ignore
@@ -215,6 +240,7 @@ export class MockDataSourceSrv implements DataSourceSrv {
     getVariables: () => [],
     replace: (name: any) => name,
   };
+
   defaultName = '';
 
   constructor(datasources: Record<string, DataSourceInstanceSettings>) {
@@ -226,6 +252,7 @@ export class MockDataSourceSrv implements DataSourceSrv {
       },
       {}
     );
+
     for (const dsSettings of Object.values(this.settingsMapByName)) {
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
       this.settingsMapById[dsSettings.id] = dsSettings;
@@ -235,7 +262,7 @@ export class MockDataSourceSrv implements DataSourceSrv {
     }
   }
 
-  get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+  get(name?: string | null | DataSourceRef, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     return DatasourceSrv.prototype.get.call(this, name, scopedVars);
     //return Promise.reject(new Error('not implemented'));
   }
@@ -334,6 +361,14 @@ export const someCloudAlertManagerConfig: AlertManagerCortexConfig = {
   alertmanager_config: {
     route: {
       receiver: 'cloud-receiver',
+      routes: [
+        {
+          receiver: 'foo-receiver',
+        },
+        {
+          receiver: 'bar-receiver',
+        },
+      ],
     },
     receivers: [
       {

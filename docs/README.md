@@ -20,6 +20,8 @@ If you have the grafana/website repo checked out in the same directory as the gr
 
 Edit content in the `sources` directory.
 
+### [Contributing](https://github.com/grafana/grafana/blob/main/contribute/documentation.md)
+
 ### Using `relref` for internal links
 
 Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) any time you are linking to other internal docs pages.

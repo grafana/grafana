@@ -11,14 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // EmailNotifier is responsible for sending
 // alert notifications over email.
 type EmailNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	Addresses   []string
 	SingleEmail bool
 	Message     string
@@ -30,7 +29,7 @@ type EmailNotifier struct {
 // for the EmailNotifier.
 func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*EmailNotifier, error) {
 	if model.Settings == nil {
-		return nil, receiverInitError{Reason: "no settings supplied", Cfg: *model}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	addressesString := model.Settings.Get("addresses").MustString()
@@ -44,7 +43,7 @@ func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*
 	addresses := util.SplitEmails(addressesString)
 
 	return &EmailNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,

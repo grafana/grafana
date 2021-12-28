@@ -304,7 +304,7 @@ $input-border: 1px solid $input-border-color;
     top: 50%;
     margin-top: -7px;
 
-    & + .gf-form-input {
+    + .gf-form-input {
       position: relative;
       z-index: 2;
       padding-left: $space-xl;

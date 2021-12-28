@@ -7,7 +7,7 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
   const [items, setItems] = useState<PlaylistItem[]>(playlistItems ?? []);
 
   const addById = useCallback(
-    (dashboard: DashboardPickerItem) => {
+    (dashboard?: DashboardPickerItem) => {
       if (!dashboard || items.find((item) => item.id === dashboard.id)) {
         return;
       }
