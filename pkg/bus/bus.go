@@ -84,7 +84,8 @@ func New() *InProcBus {
 		listenersWithCtx: make(map[string][]HandlerFunc),
 		txMng:            &noopTransactionManager{},
 	}
-	tracer, err := tracing.InitializeTracerForBus()
+	// NEEDS TO BE CHANGED!!!
+	tracer, err := tracing.InitializeTracerForTest()
 	if err != nil {
 		return bus
 	}
@@ -94,7 +95,7 @@ func New() *InProcBus {
 
 // New initialize the bus for tests
 func NewTest(t *testing.T) *InProcBus {
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	return &InProcBus{
 		logger:           log.New("bus"),

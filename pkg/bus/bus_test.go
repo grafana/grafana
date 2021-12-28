@@ -16,7 +16,7 @@ type testQuery struct {
 
 func TestDispatch(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -36,7 +36,7 @@ func TestDispatch(t *testing.T) {
 
 func TestDispatch_NoRegisteredHandler(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -47,7 +47,7 @@ func TestDispatch_NoRegisteredHandler(t *testing.T) {
 
 func TestDispatch_ContextHandler(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -66,7 +66,7 @@ func TestDispatch_ContextHandler(t *testing.T) {
 
 func TestDispatchCtx(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -85,7 +85,7 @@ func TestDispatchCtx(t *testing.T) {
 
 func TestDispatchCtx_NoContextHandler(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -104,7 +104,7 @@ func TestDispatchCtx_NoContextHandler(t *testing.T) {
 
 func TestDispatchCtx_NoRegisteredHandler(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -115,7 +115,7 @@ func TestDispatchCtx_NoRegisteredHandler(t *testing.T) {
 
 func TestQuery(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -136,7 +136,7 @@ func TestQuery(t *testing.T) {
 
 func TestQuery_HandlerReturnsError(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -150,7 +150,7 @@ func TestQuery_HandlerReturnsError(t *testing.T) {
 
 func TestEventPublish(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -169,7 +169,7 @@ func TestEventPublish(t *testing.T) {
 
 func TestEventPublish_NoRegisteredListener(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -179,7 +179,7 @@ func TestEventPublish_NoRegisteredListener(t *testing.T) {
 
 func TestEventCtxPublishCtx(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -198,7 +198,7 @@ func TestEventCtxPublishCtx(t *testing.T) {
 
 func TestEventPublishCtx_NoRegisteredListener(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -208,7 +208,7 @@ func TestEventPublishCtx_NoRegisteredListener(t *testing.T) {
 
 func TestEventPublishCtx(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
@@ -227,7 +227,7 @@ func TestEventPublishCtx(t *testing.T) {
 
 func TestEventCtxPublish(t *testing.T) {
 	bus := New()
-	tracer, err := tracing.InitializeTracerForBus()
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	bus.tracer = tracer
 
