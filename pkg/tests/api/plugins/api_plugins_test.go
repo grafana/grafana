@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -33,8 +32,6 @@ func TestPlugins(t *testing.T) {
 		PluginAdminEnabled: true,
 	})
 
-	err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, cfgPath)
 
 	type testCase struct {

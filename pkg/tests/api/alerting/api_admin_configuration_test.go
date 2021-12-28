@@ -22,7 +22,7 @@ import (
 
 func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	const disableOrgID int64 = 3
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:          true,

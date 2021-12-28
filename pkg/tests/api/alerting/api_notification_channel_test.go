@@ -33,7 +33,7 @@ import (
 
 func TestTestReceivers(t *testing.T) {
 	t.Run("assert no receivers returns 400 Bad Request", func(t *testing.T) {
-		err := tracing.InitializeTracerForTest()
+		_, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -66,7 +66,7 @@ func TestTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert working receiver returns OK", func(t *testing.T) {
-		err := tracing.InitializeTracerForTest()
+		_, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -154,7 +154,7 @@ func TestTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert invalid receiver returns 400 Bad Request", func(t *testing.T) {
-		err := tracing.InitializeTracerForTest()
+		_, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -237,7 +237,7 @@ func TestTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert timed out receiver returns 408 Request Timeout", func(t *testing.T) {
-		err := tracing.InitializeTracerForTest()
+		_, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -330,7 +330,7 @@ func TestTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert multiple different errors returns 207 Multi Status", func(t *testing.T) {
-		err := tracing.InitializeTracerForTest()
+		_, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -449,7 +449,7 @@ func TestTestReceivers(t *testing.T) {
 
 func TestTestReceiversAlertCustomization(t *testing.T) {
 	t.Run("assert custom annotations and labels are sent", func(t *testing.T) {
-		err := tracing.InitializeTracerForTest()
+		_, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -548,7 +548,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 	})
 
 	t.Run("assert custom annotations can replace default annotations", func(t *testing.T) {
-		err := tracing.InitializeTracerForTest()
+		_, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -642,7 +642,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 	})
 
 	t.Run("assert custom labels can replace default label", func(t *testing.T) {
-		err := tracing.InitializeTracerForTest()
+		_, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -736,7 +736,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 }
 
 func TestNotificationChannels(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -25,8 +24,6 @@ import (
 )
 
 func TestDashboardQuota(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	// enable quota and set low dashboard quota
 	// Setup Grafana and its Database
 	dashboardQuota := int64(1)

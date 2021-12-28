@@ -18,7 +18,7 @@ import (
 )
 
 func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -131,7 +131,7 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 }
 
 func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

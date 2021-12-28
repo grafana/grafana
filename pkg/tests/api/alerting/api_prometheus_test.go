@@ -22,7 +22,7 @@ import (
 )
 
 func TestPrometheusRules(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -324,7 +324,7 @@ func TestPrometheusRules(t *testing.T) {
 }
 
 func TestPrometheusRulesFilterByDashboard(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
@@ -621,7 +621,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 }
 
 func TestPrometheusRulesPermissions(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

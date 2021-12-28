@@ -29,7 +29,7 @@ import (
 )
 
 func TestAMConfigAccess(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -391,7 +391,7 @@ func TestAMConfigAccess(t *testing.T) {
 }
 
 func TestAlertAndGroupsQuery(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -559,7 +559,7 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 }
 
 func TestRulerAccess(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -688,7 +688,7 @@ func TestRulerAccess(t *testing.T) {
 }
 
 func TestDeleteFolderWithRules(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -850,7 +850,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 }
 
 func TestAlertRuleCRUD(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -1982,7 +1982,7 @@ func TestAlertmanagerStatus(t *testing.T) {
 }
 
 func TestQuota(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -2227,7 +2227,7 @@ func TestQuota(t *testing.T) {
 }
 
 func TestEval(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

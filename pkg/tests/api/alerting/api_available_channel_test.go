@@ -15,7 +15,7 @@ import (
 )
 
 func TestAvailableChannels(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

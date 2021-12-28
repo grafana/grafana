@@ -23,7 +23,7 @@ import (
 
 func TestAlertRulePermissions(t *testing.T) {
 	// Setup Grafana and its Database
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -328,7 +328,7 @@ func createRule(t *testing.T, grafanaListedAddr string, folder string, user, pas
 }
 
 func TestAlertRuleConflictingTitle(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -454,7 +454,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 }
 
 func TestRulerRulesFilterByDashboard(t *testing.T) {
-	err := tracing.InitializeTracerForTest()
+	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
