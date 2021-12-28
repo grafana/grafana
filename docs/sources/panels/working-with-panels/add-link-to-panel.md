@@ -8,6 +8,4 @@ weight = 60
 
 {{< docs/shared "panels/panel-links-intro.md" >}}
 
-{{< docs/shared "panels/panel-links-intro.md" >}}
-
 For more information, refer to [Panel links]({{< relref "../../linking/panel-links.md" >}}).

@@ -29,6 +29,11 @@ This page describes the parts of the Grafana panel editor.
 - **Transform tab -** Apply data transformations. For more information, refer to [Transform data]({{< relref "../transform-data/_index.md" >}}).
 - **Alert tab -** Write alert rules. For more information, refer to [Overview of Grafana 8 alerting]({{< relref "../../alerting/unified-alerting/_index.md" >}}).
 
-4. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization. Not all options are available for each visualization.
+4. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization, including:
+  - [Apply color to series and fields]({{< relref "./apply-color-to-series.md" >}})
+  - [Format a standard field]({{< relref "./format-standard-fields.md" >}})
+  - [Add a title and description to a panel]({{< relref "./add-title-and-description.md" >}})
+
+  > Not all options are available for each visualization.
 
 {{< figure src="/static/img/docs/panel-editor/panel-editor-8-0.png" class="docs-image--no-shadow" max-width="1500px" >}}
