@@ -4,10 +4,11 @@ import {
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
   PluginType,
+  ScopedVars,
 } from '@grafana/data';
 import { ExpressionQuery, ExpressionQueryType } from './types';
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
-import { DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { Observable, from, mergeMap } from 'rxjs';
 
@@ -17,6 +18,15 @@ import { Observable, from, mergeMap } from 'rxjs';
 export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQuery> {
   constructor(public instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
+  }
+
+  applyTemplateVariables(query: ExpressionQuery, scopedVars: ScopedVars): Record<string, any> {
+    const templateSrv = getTemplateSrv();
+    return {
+      ...query,
+      expression: templateSrv.replace(query.expression, scopedVars),
+      window: templateSrv.replace(query.window, scopedVars),
+    };
   }
 
   getCollapsedText(query: ExpressionQuery) {
