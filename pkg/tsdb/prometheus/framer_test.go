@@ -19,23 +19,52 @@ import (
 )
 
 func BenchmarkMatrixToDataFrames(b *testing.B) {
+	results := generateMatrixData(100, 10_000)
 	query := &prometheus.PrometheusQuery{
 		LegendFormat: "",
 	}
-	var m model.Matrix
-	if err := loadTestData("matrix.json", &m); err != nil {
-		b.Fatal("failed to load test data", err)
-	}
 	for i := 0; i < b.N; i++ {
 		frames := make([]*data.Frame, 0)
-		frames = prometheus.MatrixToDataFrames(m, query, frames)
-		if len(frames) != 5 {
+		frames = prometheus.MatrixToDataFrames(results, query, frames)
+		if len(frames) != 1 {
 			b.Fatal("wrong frame count", len(frames))
 		}
-		if frames[0].Rows() != 410 {
+		if len(frames[0].Fields) != 101 {
+			b.Fatal("wrong field count", len(frames[0].Fields))
+		}
+		if frames[0].Rows() != 10_000 {
 			b.Fatal("wrong row count", frames[0].Rows())
 		}
 	}
+}
+
+func generateMatrixData(seriesCount, rowCount int) model.Matrix {
+	results := model.Matrix{}
+
+	for i := 0; i < seriesCount; i += 1 {
+		samples := []model.SamplePair{}
+		for j := 0; j < rowCount; j += 1 {
+			s := model.SamplePair{
+				Value:     model.SampleValue(rand.Float64()),
+				Timestamp: model.TimeFromUnixNano(time.Now().Add(time.Duration(-1*j) * time.Second).UnixNano()),
+			}
+			if rand.Int()%10 == 0 {
+				continue
+			}
+			samples = append(samples, s)
+		}
+		result := model.SampleStream{
+			Metric: model.Metric{
+				"__name__": model.LabelValue(fmt.Sprintf("name_%d", i)),
+			},
+			Values: samples,
+		}
+		if rand.Int()%10 == 0 {
+			result.Metric[model.LabelName(fmt.Sprintf("random_%d", i))] = model.LabelValue(fmt.Sprintf("name_%d", i))
+		}
+		results = append(results, &result)
+	}
+	return results
 }
 
 func TestMatrixToDataFrames(t *testing.T) {
