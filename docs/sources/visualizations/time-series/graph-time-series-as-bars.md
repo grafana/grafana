@@ -13,10 +13,10 @@ For more information about the time series visualization, refer to [Time series]
 
 ## Create the panel
 
-1. [Add a panel]({{< relref "../../panels/working-with-panels/add-panel.md" >}}). 
+1. [Add a panel]({{< relref "../../panels/working-with-panels/add-panel.md" >}}).
 1. Select the **Time series** visualization.
-2. In the Panel editor side pane, click **Graph styles** to expand it.
-3. In Style, click **Bars**.
+1. In the Panel editor side pane, click **Graph styles** to expand it.
+1. In Style, click **Bars**.
 
 ## Style the bars
 

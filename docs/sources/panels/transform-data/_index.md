@@ -12,7 +12,7 @@ With transformations, you can:
 
 - Rename fields
 - Join time series data
-- Perform mathmatical operations across queries
+- Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
 
 This section includes the following topics:

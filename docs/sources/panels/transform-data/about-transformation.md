@@ -9,7 +9,7 @@ Transformations process the result set of a query before it’s passed on for vi
 
 - Rename fields
 - Join time series data
-- Perform mathmatical operations across queries
+- Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
 
 For users that rely on multiple views of the same dataset, transformations offer an efficient method of creating and maintaining numerous dashboards.
