@@ -15,13 +15,13 @@ var getTime = time.Now
 
 func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
-	err := s.Bus.DispatchCtx(ctx, &userQuery)
+	err := s.Bus.Dispatch(ctx, &userQuery)
 	if err != nil {
 		return err
 	}
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userQuery.Result.Id}
-	if err := s.Bus.DispatchCtx(ctx, authInfoQuery); err != nil {
+	if err := s.Bus.Dispatch(ctx, authInfoQuery); err != nil {
 		return err
 	}
 
