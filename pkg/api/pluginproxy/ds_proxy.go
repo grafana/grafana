@@ -43,7 +43,7 @@ type DataSourceProxy struct {
 	clientProvider     httpclient.Provider
 	oAuthTokenService  oauthtoken.OAuthTokenService
 	dataSourcesService *datasources.Service
-	tracer             tracing.Tracer
+	tracer             tracing.TracerService
 }
 
 type handleResponseTransport struct {

@@ -24,11 +24,6 @@ type TracerService interface {
 	Inject(context.Context, http.Header, Span)
 }
 
-type Tracer interface {
-	Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span)
-	Inject(context.Context, http.Header, Span)
-}
-
 type Span interface {
 	End()
 	SetAttributes(kv ...attribute.KeyValue)
