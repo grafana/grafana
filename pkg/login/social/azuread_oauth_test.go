@@ -266,6 +266,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Email:             "test@test.com",
 				Roles:             []string{"Viewer"},
 				ClaimNames:        claimNames{Groups: "src1"},
+				ClaimSources:      nil, // set by the test
 			},
 			settingAutoAssignOrgRole: "",
 			want: &BasicUserInfo{
