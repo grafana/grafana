@@ -29,7 +29,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
-	"gopkg.in/ini.v1"
 )
 
 func TestDataSourceProxy_routeRule(t *testing.T) {
@@ -675,12 +674,8 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
 
-		file, err := ini.Load("./test-data/test_opentracing.ini")
+		_, err = tracing.InitializeTracerForTest()
 		require.NoError(t, err)
-		tracingService, err := tracing.ProvideService(&setting.Cfg{Raw: file})
-		require.NoError(t, err)
-		require.NotNil(t, tracingService)
-
 		proxy.HandleRequest()
 
 		require.NoError(t, writeErr)
@@ -779,11 +774,8 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
 
-		file, err := ini.Load("./test-data/test_opentelemetry.ini")
+		_, err = tracing.InitializeTracerForTest()
 		require.NoError(t, err)
-		tracingService, err := tracing.ProvideService(&setting.Cfg{Raw: file})
-		require.NoError(t, err)
-		require.NotNil(t, tracingService)
 
 		proxy.HandleRequest()
 
