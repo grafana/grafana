@@ -75,6 +75,7 @@ export class RefreshPicker extends PureComponent<Props> {
           icon={isLoading ? 'fa fa-spinner' : 'sync'}
           style={width ? { width } : undefined}
           data-testid={selectors.components.RefreshPicker.runButtonV2}
+          aria-label="Refresh"
         >
           {text}
         </ToolbarButton>
