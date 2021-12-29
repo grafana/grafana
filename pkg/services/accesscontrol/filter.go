@@ -20,9 +20,7 @@ func Filter(ctx context.Context, dialect SQLDialect, prefix, sqlID string, actio
 	var scopes []string
 
 	if user.Permissions != nil {
-		for _, scope := range user.Permissions[user.OrgId][action] {
-			scopes = append(scopes, scope)
-		}
+		scopes = append(scopes, user.Permissions[user.OrgId][action]...)
 	}
 
 	// if user has no scopes push invalid scope so no values will be returned
