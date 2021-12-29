@@ -11,12 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var frontendLogger log.MultiLoggers
+var frontendLogger = log.New("frontend")
 
 type frontendLogMessageHandler func(c *models.ReqContext) response.Response
 
 func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) frontendLogMessageHandler {
-	frontendLogger = log.New("frontend")
 	return func(c *models.ReqContext) response.Response {
 		event := frontendlogging.FrontendSentryEvent{}
 		if err := web.Bind(c.Req, &event); err != nil {
@@ -35,13 +34,13 @@ func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) fronten
 
 		switch event.Level {
 		case sentry.LevelError:
-			frontendLogger.Error(msg, ctx)
+			frontendLogger.Error(msg, ctx...)
 		case sentry.LevelWarning:
-			frontendLogger.Warn(msg, ctx)
+			frontendLogger.Warn(msg, ctx...)
 		case sentry.LevelDebug:
-			frontendLogger.Debug(msg, ctx)
+			frontendLogger.Debug(msg, ctx...)
 		default:
-			frontendLogger.Info(msg, ctx)
+			frontendLogger.Info(msg, ctx...)
 		}
 
 		return response.Success("ok")

@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -28,15 +29,19 @@ type SourceMapReadRecord struct {
 	path string
 }
 
-type logScenarioFunc func(c *scenarioContext, logs []interface{}, sourceMapReads []SourceMapReadRecord)
+type logScenarioFunc func(c *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord)
 
 func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.FrontendSentryEvent, fn logScenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
-		var logs []interface{}
+		var logcontent = make(map[string]interface{})
+		logcontent["logger"] = "frontend"
 		newfrontendLogger := log.Logger(log.LoggerFunc(func(keyvals ...interface{}) error {
-			logs = keyvals
+			for i := 0; i < len(keyvals); i += 2 {
+				logcontent[keyvals[i].(string)] = keyvals[i+1]
+			}
 			return nil
 		}))
+
 		origHandler := frontendLogger.GetLogger()
 		frontendLogger.AddLogger(newfrontendLogger, "info", map[string]level.Option{})
 		sourceMapReads := []SourceMapReadRecord{}
@@ -93,7 +98,7 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 
 		sc.m.Post(sc.url, handler)
 		sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-		fn(sc, logs, sourceMapReads)
+		fn(sc, logcontent, sourceMapReads)
 	})
 }
 
@@ -150,8 +155,9 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 		}
 
 		logSentryEventScenario(t, "Should log received error event", errorEvent,
-			func(sc *scenarioContext, logs []interface{}, sourceMapReads []SourceMapReadRecord) {
+			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, 200, sc.resp.Code)
+				assertContextContains(t, logs, "logger", "frontend")
 				assertContextContains(t, logs, "url", errorEvent.Request.URL)
 				assertContextContains(t, logs, "user_agent", errorEvent.Request.Headers["User-Agent"])
 				assertContextContains(t, logs, "event_id", errorEvent.EventID)
@@ -175,18 +181,19 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 		}
 
 		logSentryEventScenario(t, "Should log received message event", messageEvent,
-			func(sc *scenarioContext, logs []interface{}, sourceMapReads []SourceMapReadRecord) {
+			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, 200, sc.resp.Code)
-				assert.Len(t, logs, 1)
-				// assert.Equal(t, "hello world", logs[0].Msg)
-				// assert.Equal(t, log.LvlInfo, logs[0].Lvl)
+				assert.Len(t, logs, 10)
+				assertContextContains(t, logs, "logger", "frontend")
+				assertContextContains(t, logs, "msg", "hello world")
+				assertContextContains(t, logs, "lvl", level.InfoValue())
 				assertContextContains(t, logs, "logger", "frontend")
 				assertContextContains(t, logs, "url", messageEvent.Request.URL)
 				assertContextContains(t, logs, "user_agent", messageEvent.Request.Headers["User-Agent"])
 				assertContextContains(t, logs, "event_id", messageEvent.EventID)
 				assertContextContains(t, logs, "original_timestamp", messageEvent.Timestamp)
-				// assert.NotContains(t, logs[0].Ctx, "stacktrace")
-				// assert.NotContains(t, logs[0].Ctx, "context")
+				assert.NotContains(t, logs, "stacktrace")
+				assert.NotContains(t, logs, "context")
 				assertContextContains(t, logs, "user_email", user.Email)
 				assertContextContains(t, logs, "user_id", user.ID)
 			})
@@ -211,9 +218,8 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 		}
 
 		logSentryEventScenario(t, "Should log event context", eventWithContext,
-			func(sc *scenarioContext, logs []interface{}, sourceMapReads []SourceMapReadRecord) {
+			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, 200, sc.resp.Code)
-				assert.Len(t, logs, 1)
 				assertContextContains(t, logs, "context_foo_one", "two")
 				assertContextContains(t, logs, "context_foo_three", "4")
 				assertContextContains(t, logs, "context_bar", "baz")
@@ -278,9 +284,9 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 		}
 
 		logSentryEventScenario(t, "Should load sourcemap and transform stacktrace line when possible",
-			errorEventForSourceMapping, func(sc *scenarioContext, logs []interface{}, sourceMapReads []SourceMapReadRecord) {
+			errorEventForSourceMapping, func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, 200, sc.resp.Code)
-				assert.Len(t, logs, 1)
+				assert.Len(t, logs, 9)
 				assertContextContains(t, logs, "stacktrace", `UserError: Please replace user and try again
   at ? (core|webpack:///./some_source.ts:2:2)
   at ? (telepathic|webpack:///./some_source.ts:3:2)
@@ -306,17 +312,8 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 	})
 }
 
-func indexOf(arr []interface{}, item string) int {
-	for i, elem := range arr {
-		if elem == item {
-			return i
-		}
-	}
-	return -1
-}
-
-func assertContextContains(t *testing.T, logRecord []interface{}, label string, value interface{}) {
+func assertContextContains(t *testing.T, logRecord map[string]interface{}, label string, value interface{}) {
+	fmt.Println(logRecord)
 	assert.Contains(t, logRecord, label)
-	labelIdx := indexOf(logRecord, label)
-	assert.Equal(t, value, logRecord[labelIdx+1])
+	assert.Equal(t, value, logRecord[label])
 }
