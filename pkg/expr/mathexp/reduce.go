@@ -81,6 +81,10 @@ func Last(fv *Float64Field) *float64 {
 }
 
 // Reduce turns the Series into a Number based on the given reduction function
+// When mode is not set, generally reductions on empty series (or series with NaN/null values) (with the exception of count)
+// return NaN.
+// When mode is set to Drop Non-Number "dropNN" (eww.. make some constants) then all NaN/Inf/Null values are removed from the series
+// before the reduction is performed, and if the resulting series is empty then null is returned from the reduction.
 func (s Series) Reduce(refID, rFunc string, mode string) (Number, error) {
 	var l data.Labels
 	if s.GetLabels() != nil {
