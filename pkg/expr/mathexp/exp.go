@@ -475,7 +475,7 @@ func (e *State) biSeriesSeries(labels data.Labels, op string, aSeries, bSeries S
 			continue
 		}
 		if aF == nil || bF == nil {
-			if err := newSeries.AppendPoint(aIdx, aTime, nil); err != nil {
+			if err := newSeries.AppendPoint(aTime, nil); err != nil {
 				return newSeries, err
 			}
 			continue
@@ -484,7 +484,7 @@ func (e *State) biSeriesSeries(labels data.Labels, op string, aSeries, bSeries S
 		if err != nil {
 			return newSeries, err
 		}
-		if err := newSeries.AppendPoint(aIdx, aTime, &nF); err != nil {
+		if err := newSeries.AppendPoint(aTime, &nF); err != nil {
 			return newSeries, err
 		}
 	}

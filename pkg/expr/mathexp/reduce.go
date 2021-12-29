@@ -81,7 +81,7 @@ func Last(fv *Float64Field) *float64 {
 }
 
 // Reduce turns the Series into a Number based on the given reduction function
-func (s Series) Reduce(refID, rFunc string) (Number, error) {
+func (s Series) Reduce(refID, rFunc string, mode string) (Number, error) {
 	var l data.Labels
 	if s.GetLabels() != nil {
 		l = s.GetLabels().Copy()
@@ -89,6 +89,9 @@ func (s Series) Reduce(refID, rFunc string) (Number, error) {
 	number := NewNumber(refID, l)
 	var f *float64
 	fVec := s.Frame.Fields[seriesTypeValIdx]
+	if mode == "dropNN" {
+		fVec = s.filterNonNumber().Frame.Fields[seriesTypeValIdx]
+	}
 	floatField := Float64Field(*fVec)
 	switch rFunc {
 	case "sum":
@@ -106,7 +109,23 @@ func (s Series) Reduce(refID, rFunc string) (Number, error) {
 	default:
 		return number, fmt.Errorf("reduction %v not implemented", rFunc)
 	}
+	if mode == "dropNN" && f != nil && math.IsNaN(*f) {
+		f = nil
+	}
 	number.SetValue(f)
 
 	return number, nil
+}
+
+func (s Series) filterNonNumber() Series {
+	newSeries := NewSeries(s.Frame.RefID, s.GetLabels(), 0)
+	for i := 0; i < s.Len(); i++ {
+		f := s.GetValue(i)
+		if f == nil || math.IsNaN(*f) || math.IsInf(*f, 0) {
+			continue
+		}
+		newFloat := *f
+		newSeries.AppendPoint(s.GetTime(i), &newFloat)
+	}
+	return newSeries
 }

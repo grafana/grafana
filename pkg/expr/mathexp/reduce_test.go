@@ -234,7 +234,7 @@ func TestSeriesReduce(t *testing.T) {
 			results := Results{}
 			seriesSet := tt.vars[tt.varToReduce]
 			for _, series := range seriesSet.Values {
-				ns, err := series.Value().(*Series).Reduce("", tt.red)
+				ns, err := series.Value().(*Series).Reduce("", tt.red, "")
 				tt.errIs(t, err)
 				if err != nil {
 					return

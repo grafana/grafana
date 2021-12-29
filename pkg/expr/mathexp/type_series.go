@@ -173,7 +173,7 @@ func (s Series) SetPoint(pointIdx int, t time.Time, f *float64) (err error) {
 }
 
 // AppendPoint appends a point (time/value).
-func (s Series) AppendPoint(pointIdx int, t time.Time, f *float64) (err error) {
+func (s Series) AppendPoint(t time.Time, f *float64) (err error) {
 	s.Frame.Fields[seriesTypeTimeIdx].Append(t)
 	s.Frame.Fields[seriesTypeValIdx].Append(f)
 	return

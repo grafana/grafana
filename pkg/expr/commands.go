@@ -123,7 +123,7 @@ func (gr *ReduceCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathex
 		if !ok {
 			return newRes, fmt.Errorf("can only reduce type series, got type %v", val.Type())
 		}
-		num, err := series.Reduce(gr.refID, gr.Reducer)
+		num, err := series.Reduce(gr.refID, gr.Reducer, "")
 		if err != nil {
 			return newRes, err
 		}
