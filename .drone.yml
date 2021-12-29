@@ -189,15 +189,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -207,45 +198,49 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -648,15 +643,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -666,45 +652,49 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -1359,15 +1349,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -1377,45 +1358,49 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -1906,15 +1891,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -1926,45 +1902,49 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -2433,15 +2413,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -2451,45 +2422,49 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -2954,15 +2929,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -2974,45 +2940,49 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -3584,15 +3554,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -3602,45 +3563,49 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -4080,15 +4045,6 @@ steps:
   image: grafana/build-container:1.4.8
   name: package
 - commands:
-  - yarn run cypress install
-  depends_on:
-  - package
-  image: grafana/ci-e2e:12.19.0-1
-  name: cypress
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./e2e/start-server
   depends_on:
   - package
@@ -4100,45 +4056,49 @@ steps:
   image: grafana/build-container:1.4.8
   name: end-to-end-tests-server
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
   volumes:
   - name: cypress_cache
     path: /root/.cache/Cypress
 - commands:
+  - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - cypress
+  - package
   environment:
     HOST: end-to-end-tests-server
-  image: grafana/ci-e2e:12.19.0-1
+  image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
   volumes:
   - name: cypress_cache
@@ -4539,6 +4499,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: dd4acd4d9a3c87a66abc68a0fc815cf08d334507f9f5df7265a186df1a8410a9
+hmac: 0140292b5e609a2db7f55c930a9072d5bd1afa92ebd6043ed10314119413c331
 
 ...
