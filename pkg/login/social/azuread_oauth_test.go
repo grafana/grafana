@@ -279,30 +279,6 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			},
 			wantErr: false,
 		},
-		{
-			name: "Fetch groups when ClaimsNames and ClaimsSources is set",
-			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}),
-			},
-			claims: &azureClaims{
-				ID:                "1",
-				Name:              "test",
-				PreferredUsername: "test",
-				Email:             "test@test.com",
-				Roles:             []string{"Viewer"},
-				ClaimNames:        claimNames{Groups: "src1"},
-			},
-			settingAutoAssignOrgRole: "",
-			want: &BasicUserInfo{
-				Id:     "1",
-				Name:   "test",
-				Email:  "test@test.com",
-				Login:  "test@test.com",
-				Role:   "Viewer",
-				Groups: []string{"from_server"},
-			},
-			wantErr: false,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
