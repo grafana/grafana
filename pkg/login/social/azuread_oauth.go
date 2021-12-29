@@ -161,7 +161,7 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 	}
 
 	if claims.ClaimNames.Groups == "" {
-		return nil, nil
+		return []string{}, nil
 	}
 
 	// If user groups exceeds 200 no groups will be found in claims.
