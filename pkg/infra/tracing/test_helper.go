@@ -22,3 +22,9 @@ func InitializeTracerForTest() (TracerService, error) {
 	}
 	return tracer, nil
 }
+
+func InitializeForBus() TracerService {
+	ots := &Opentelemetry{}
+	_ = ots.initOpentelemetryTracer()
+	return ots
+}

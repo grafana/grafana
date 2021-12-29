@@ -82,12 +82,7 @@ func New() *InProcBus {
 		listenersWithCtx: make(map[string][]HandlerFunc),
 		txMng:            &noopTransactionManager{},
 	}
-	// NEEDS TO BE CHANGED!!!
-	tracer, err := tracing.InitializeTracerForTest()
-	if err != nil {
-		return bus
-	}
-	bus.tracer = tracer
+	bus.tracer = tracing.InitializeForBus()
 	return bus
 }
 
