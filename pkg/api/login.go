@@ -210,7 +210,21 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 	err := bus.Dispatch(c.Req.Context(), authQuery)
 	authModule = authQuery.AuthModule
 	if err != nil {
-		resp = response.Error(401, "Invalid username or password", err)
+
+		var msg string
+
+		if errors.Is(err, login.ErrTooManyLoginAttempts) {
+			msg = "Too many consecutive incorrect login attempts for user - login for user temporarily blocked"
+		}
+		if errors.Is(err, login.ErrInvalidCredentials) {
+			msg = "Invalid username or password"
+		}
+
+		if errors.Is(err, models.ErrUserNotFound) {
+			msg = "User not found"
+		}
+
+		resp = response.Error(401, msg, err)
 		if errors.Is(err, login.ErrInvalidCredentials) || errors.Is(err, login.ErrTooManyLoginAttempts) || errors.Is(err,
 			models.ErrUserNotFound) {
 			return resp
