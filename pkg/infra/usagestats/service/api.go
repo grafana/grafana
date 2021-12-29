@@ -18,6 +18,10 @@ func (uss *UsageStats) registerAPIEndpoints() {
 }
 
 func (uss *UsageStats) getUsageReportPreview(ctx *models.ReqContext) response.Response {
+	if !uss.Cfg.ReportingEnabled {
+		return response.JSON(http.StatusUnauthorized, "Reporting is not enabled")
+	}
+
 	usageReport, err := uss.GetUsageReport(ctx.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to get summary for dashboard", err)
