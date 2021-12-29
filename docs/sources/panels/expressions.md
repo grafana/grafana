@@ -109,7 +109,7 @@ is_inf takes a number or a series and returns `1` for `Inf` values (negative or 
 
 ##### is_nan
 
-is_nan takes a number or a series and returns `1` for `NaN` values and `0` for other values. For example `is_nan($A)`.The function exists because `NaN` is not equal to `NaN`.
+is_nan takes a number or a series and returns `1` for `NaN` values and `0` for other values. For example `is_nan($A)`. This function exists because `NaN` is not equal to `NaN`.
 
 ##### is_null
 
