@@ -166,20 +166,23 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 
 	// If user groups exceeds 200 no groups will be found in claims.
 	// See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
-	parsedToken, err := jwt.ParseSigned(token.AccessToken)
-	if err != nil {
-		return nil, errutil.Wrapf(err, "error parsing id token")
+	endpoint := claims.ClaimSources[claims.ClaimNames.Groups].Endpoint
+	if strings.Contains(endpoint, "graph.windows.net") {
+		// If the endpoints provided in _claim_source is pointed to the deprecated "graph.windows.net" api
+		// replace with handcrafted url to graph.microsoft.com
+		// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
+		parsedToken, err := jwt.ParseSigned(token.AccessToken)
+		if err != nil {
+			return nil, errutil.Wrapf(err, "error parsing id token")
+		}
+
+		var accessClaims azureAccessClaims
+		if err := parsedToken.UnsafeClaimsWithoutVerification(&accessClaims); err != nil {
+			return nil, errutil.Wrapf(err, "error getting claims from access token")
+		}
+		endpoint = fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", accessClaims.TenantID, claims.ID)
 	}
 
-	var accessClaims azureAccessClaims
-	if err := parsedToken.UnsafeClaimsWithoutVerification(&accessClaims); err != nil {
-		return nil, errutil.Wrapf(err, "error getting claims from access token")
-	}
-
-	// Sadly the endpoints provided in _claim_source is pointed to the deprecated "graph.windows.net" api
-	// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
-	// So instead we do the group lookup to microsoft graph api
-	endpoint := fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", accessClaims.TenantID, claims.ID)
 	data, err := json.Marshal(&getAzureGroupRequest{SecurityEnabledOnly: false})
 	if err != nil {
 		return nil, err
@@ -209,5 +212,4 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 	}
 
 	return body.Value, nil
-
 }
