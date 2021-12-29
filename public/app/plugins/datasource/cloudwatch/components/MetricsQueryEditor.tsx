@@ -144,6 +144,7 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
             tooltip="ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter."
           >
             <Input
+              aria-label="Optional ID"
               onBlur={onRunQuery}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
                 this.onChange({ ...metricsQuery, id: event.target.value })
