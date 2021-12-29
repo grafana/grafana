@@ -158,53 +158,56 @@ type getAzureGroupResponse struct {
 func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token) ([]string, error) {
 	if len(claims.Groups) > 0 {
 		return claims.Groups, nil
-	} else if claims.ClaimNames.Groups != "" {
-		// If user groups exceeds 200 no groups will be found in claims.
-		// See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
-		parsedToken, err := jwt.ParseSigned(token.AccessToken)
-		if err != nil {
-			return nil, errutil.Wrapf(err, "error parsing id token")
-		}
-
-		var accessClaims azureAccessClaims
-		if err := parsedToken.UnsafeClaimsWithoutVerification(&accessClaims); err != nil {
-			return nil, errutil.Wrapf(err, "error getting claims from access token")
-		}
-
-		// Sadly the endpoints provided in _claim_source is pointed to the deprecated "graph.windows.net" api
-		// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
-		// So instead we do the group lookup to microsoft graph api
-		endpoint := fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", accessClaims.TenantID, claims.ID)
-		data, err := json.Marshal(&getAzureGroupRequest{SecurityEnabledOnly: false})
-		if err != nil {
-			return nil, err
-		}
-
-		res, err := client.Post(endpoint, "application/json", bytes.NewBuffer(data))
-		if err != nil {
-			return nil, err
-		}
-
-		defer func() {
-			if err := res.Body.Close(); err != nil {
-				logger.Warn("AzureAD OAuth: failed to close response body", "err", err)
-			}
-		}()
-
-		if res.StatusCode != http.StatusOK {
-			if res.StatusCode == http.StatusForbidden {
-				logger.Error("AzureAD OAuth: failed to fetch user groups. Token need User.Read and GroupMember.Read.All permission")
-			}
-			return nil, errors.New("error fetching groups")
-		}
-
-		var body getAzureGroupResponse
-		if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
-			return nil, err
-		}
-
-		return body.Value, nil
 	}
 
-	return []string{}, nil
+	if claims.ClaimNames.Groups == "" {
+		return nil, nil
+	}
+
+	// If user groups exceeds 200 no groups will be found in claims.
+	// See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
+	parsedToken, err := jwt.ParseSigned(token.AccessToken)
+	if err != nil {
+		return nil, errutil.Wrapf(err, "error parsing id token")
+	}
+
+	var accessClaims azureAccessClaims
+	if err := parsedToken.UnsafeClaimsWithoutVerification(&accessClaims); err != nil {
+		return nil, errutil.Wrapf(err, "error getting claims from access token")
+	}
+
+	// Sadly the endpoints provided in _claim_source is pointed to the deprecated "graph.windows.net" api
+	// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
+	// So instead we do the group lookup to microsoft graph api
+	endpoint := fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", accessClaims.TenantID, claims.ID)
+	data, err := json.Marshal(&getAzureGroupRequest{SecurityEnabledOnly: false})
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := client.Post(endpoint, "application/json", bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			logger.Warn("AzureAD OAuth: failed to close response body", "err", err)
+		}
+	}()
+
+	if res.StatusCode != http.StatusOK {
+		if res.StatusCode == http.StatusForbidden {
+			logger.Error("AzureAD OAuth: failed to fetch user groups. Token need User.Read and GroupMember.Read.All permission")
+		}
+		return nil, errors.New("error fetching groups")
+	}
+
+	var body getAzureGroupResponse
+	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+		return nil, err
+	}
+
+	return body.Value, nil
+
 }
