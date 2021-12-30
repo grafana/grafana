@@ -164,18 +164,18 @@
   },
   {
     "type":"label",
-    "name":"area/explore",
+    "name":"oss-user-essentials",
     "action":"removeFromProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/54"
+      "url":"https://github.com/orgs/grafana/projects/78"
     }
   },
   {
     "type":"label",
-    "name":"area/explore",
+    "name":"oss-user-essentials",
     "action":"removeFromProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/54"
+      "url":"https://github.com/grafana/grafana/projects/33"
     }
   }
 ]
