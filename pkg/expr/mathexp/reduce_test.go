@@ -37,7 +37,6 @@ func TestSeriesReduce(t *testing.T) {
 		vars        Vars
 		varToReduce string
 		errIs       require.ErrorAssertionFunc
-		resultsIs   require.ComparisonAssertionFunc
 		results     Results
 	}{
 		{
@@ -46,7 +45,6 @@ func TestSeriesReduce(t *testing.T) {
 			varToReduce: "A",
 			vars:        aSeries,
 			errIs:       require.Error,
-			resultsIs:   require.Equal,
 		},
 		{
 			name:        "sum series",
@@ -54,7 +52,6 @@ func TestSeriesReduce(t *testing.T) {
 			varToReduce: "A",
 			vars:        aSeries,
 			errIs:       require.NoError,
-			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
 					makeNumber("", nil, float64Pointer(3)),
@@ -67,7 +64,6 @@ func TestSeriesReduce(t *testing.T) {
 			varToReduce: "A",
 			vars:        seriesWithNil,
 			errIs:       require.NoError,
-			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
 					makeNumber("", nil, NaN),
@@ -80,7 +76,6 @@ func TestSeriesReduce(t *testing.T) {
 			varToReduce: "A",
 			vars:        seriesEmpty,
 			errIs:       require.NoError,
-			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
 					makeNumber("", nil, float64Pointer(0)),
@@ -93,7 +88,6 @@ func TestSeriesReduce(t *testing.T) {
 			varToReduce: "A",
 			vars:        seriesWithNil,
 			errIs:       require.NoError,
-			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
 					makeNumber("", nil, NaN),
@@ -106,7 +100,6 @@ func TestSeriesReduce(t *testing.T) {
 			varToReduce: "A",
 			vars:        seriesEmpty,
 			errIs:       require.NoError,
-			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
 					makeNumber("", nil, NaN),
@@ -119,7 +112,6 @@ func TestSeriesReduce(t *testing.T) {
 			varToReduce: "A",
 			vars:        seriesWithNil,
 			errIs:       require.NoError,
-			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
 					makeNumber("", nil, NaN),
@@ -132,7 +124,6 @@ func TestSeriesReduce(t *testing.T) {
 			varToReduce: "A",
 			vars:        seriesEmpty,
 			errIs:       require.NoError,
-			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
 					makeNumber("", nil, NaN),
@@ -145,7 +136,6 @@ func TestSeriesReduce(t *testing.T) {
 			varToReduce: "A",
 			vars:        seriesWithNil,
 			errIs:       require.NoError,
-			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
 					makeNumber("", nil, NaN),
@@ -158,7 +148,6 @@ func TestSeriesReduce(t *testing.T) {
 			varToReduce: "A",
 			vars:        seriesEmpty,
 			errIs:       require.NoError,
-			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
 					makeNumber("", nil, NaN),
@@ -171,7 +160,6 @@ func TestSeriesReduce(t *testing.T) {
 			varToReduce: "A",
 			vars:        aSeries,
 			errIs:       require.NoError,
-			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
 					makeNumber("", nil, float64Pointer(1.5)),
@@ -184,7 +172,6 @@ func TestSeriesReduce(t *testing.T) {
 			varToReduce: "A",
 			vars:        seriesEmpty,
 			errIs:       require.NoError,
-			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
 					makeNumber("", nil, float64Pointer(0)),
@@ -206,8 +193,7 @@ func TestSeriesReduce(t *testing.T) {
 					},
 				},
 			},
-			errIs:     require.NoError,
-			resultsIs: require.Equal,
+			errIs: require.NoError,
 			results: Results{
 				[]Value{
 					makeNumber("", data.Labels{"host": "a"}, float64Pointer(1.5)),
