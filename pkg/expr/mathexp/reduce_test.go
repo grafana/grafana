@@ -237,3 +237,133 @@ func TestSeriesReduce(t *testing.T) {
 		})
 	}
 }
+
+var seriesNonNumbers = Vars{
+	"A": Results{
+		[]Value{
+			makeSeries("temp", nil,
+				tp{time.Unix(5, 0), NaN},
+				tp{time.Unix(10, 0), float64Pointer(math.Inf(-1))},
+				tp{time.Unix(15, 0), float64Pointer(math.Inf(1))},
+				tp{time.Unix(15, 0), nil}),
+		},
+	},
+}
+
+func TestSeriesReduceDropNN(t *testing.T) {
+	var tests = []struct {
+		name        string
+		red         string
+		vars        Vars
+		varToReduce string
+		results     Results
+	}{
+		{
+			name:        "dropNN: sum series",
+			red:         "sum",
+			varToReduce: "A",
+			vars:        aSeries,
+			results: Results{
+				[]Value{
+					makeNumber("", nil, float64Pointer(3)),
+				},
+			},
+		},
+		{
+			name:        "dropNN: sum series with a nil value",
+			red:         "sum",
+			varToReduce: "A",
+			vars:        seriesWithNil,
+			results: Results{
+				[]Value{
+					makeNumber("", nil, float64Pointer(2)),
+				},
+			},
+		},
+		{
+			name:        "dropNN: sum empty series",
+			red:         "sum",
+			varToReduce: "A",
+			vars:        seriesEmpty,
+			results: Results{
+				[]Value{
+					makeNumber("", nil, float64Pointer(0)),
+				},
+			},
+		},
+		{
+			name:        "dropNN: mean series with a nil value and real value",
+			red:         "mean",
+			varToReduce: "A",
+			vars:        seriesWithNil,
+			results: Results{
+				[]Value{
+					makeNumber("", nil, float64Pointer(2)),
+				},
+			},
+		},
+		{
+			name:        "DropNN: mean empty series",
+			red:         "mean",
+			varToReduce: "A",
+			vars:        seriesEmpty,
+			results: Results{
+				[]Value{
+					makeNumber("", nil, nil),
+				},
+			},
+		},
+		{
+			name:        "DropNN: mean series that becomes empty after filtering non-number",
+			red:         "mean",
+			varToReduce: "A",
+			vars:        seriesNonNumbers,
+			results: Results{
+				[]Value{
+					makeNumber("", nil, nil),
+				},
+			},
+		},
+		{
+			name:        "DropNN: count empty series",
+			red:         "count",
+			varToReduce: "A",
+			vars:        seriesEmpty,
+			results: Results{
+				[]Value{
+					makeNumber("", nil, float64Pointer(0)),
+				},
+			},
+		},
+		{
+			name:        "DropNN: count series with nil and value should only count real numbers",
+			red:         "count",
+			varToReduce: "A",
+			vars:        seriesWithNil,
+			results: Results{
+				[]Value{
+					makeNumber("", nil, float64Pointer(1)),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results := Results{}
+			seriesSet := tt.vars[tt.varToReduce]
+			for _, series := range seriesSet.Values {
+				ns, err := series.Value().(*Series).Reduce("", tt.red, ReduceModeDropNN)
+				require.NoError(t, err)
+				results.Values = append(results.Values, ns)
+			}
+			opt := cmp.Comparer(func(x, y float64) bool {
+				return (math.IsNaN(x) && math.IsNaN(y)) || x == y
+			})
+			options := append([]cmp.Option{opt}, data.FrameTestCompareOptions()...)
+			if diff := cmp.Diff(tt.results, results, options...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}

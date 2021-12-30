@@ -80,6 +80,8 @@ func Last(fv *Float64Field) *float64 {
 	return &f
 }
 
+const ReduceModeDropNN = "dropNN"
+
 // Reduce turns the Series into a Number based on the given reduction function
 // When mode is not set, generally reductions on empty series (or series with NaN/null values) (with the exception of count)
 // return NaN.
@@ -93,7 +95,7 @@ func (s Series) Reduce(refID, rFunc string, mode string) (Number, error) {
 	number := NewNumber(refID, l)
 	var f *float64
 	fVec := s.Frame.Fields[seriesTypeValIdx]
-	if mode == "dropNN" {
+	if mode == ReduceModeDropNN {
 		fVec = s.filterNonNumber().Frame.Fields[seriesTypeValIdx]
 	}
 	floatField := Float64Field(*fVec)
@@ -113,7 +115,7 @@ func (s Series) Reduce(refID, rFunc string, mode string) (Number, error) {
 	default:
 		return number, fmt.Errorf("reduction %v not implemented", rFunc)
 	}
-	if mode == "dropNN" && f != nil && math.IsNaN(*f) {
+	if mode == ReduceModeDropNN && f != nil && math.IsNaN(*f) {
 		f = nil
 	}
 	number.SetValue(f)
