@@ -22,9 +22,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		allowedGroups     []string
 		autoAssignOrgRole string
 	}
-	type args struct {
-		client *http.Client
-	}
+	type args struct{}
 
 	tests := []struct {
 		name                     string
