@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const updateMocks = false
+
 func BenchmarkMatrixToDataFrames(b *testing.B) {
 	results := generateMatrixData(100, 1_000)
 	query := &prometheus.PrometheusQuery{
@@ -81,7 +83,7 @@ func TestMatrixToDataFrames(t *testing.T) {
 		frames = prometheus.MatrixToDataFrames(m, query, frames)
 		res := &backend.DataResponse{Frames: frames}
 
-		err = experimental.CheckGoldenDataResponse("./testdata/matrix.txt", res, false)
+		err = experimental.CheckGoldenDataResponse("./testdata/matrix.txt", res, updateMocks)
 		require.NoError(t, err)
 	})
 }
@@ -138,7 +140,7 @@ func TestVectorToDataFrames(t *testing.T) {
 		frames = prometheus.VectorToDataFrames(m, query, frames)
 		res := &backend.DataResponse{Frames: frames}
 
-		err = experimental.CheckGoldenDataResponse("./testdata/vector.txt", res, false)
+		err = experimental.CheckGoldenDataResponse("./testdata/vector.txt", res, updateMocks)
 		require.NoError(t, err)
 	})
 }
