@@ -1,4 +1,5 @@
-[{
+[
+    {
 		"type": "label",
 		"name": "bot/question",
 		"addLabel": "type/question",
