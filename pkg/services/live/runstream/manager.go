@@ -66,7 +66,7 @@ type Manager struct {
 	checkInterval           time.Duration
 	maxChecks               int
 	datasourceCheckInterval time.Duration
-	leaderTouchInterval     time.Duration
+	leaderRefreshInterval   time.Duration
 	leaderManager           leader.Manager
 	nodeIDGetter            NodeIDGetter
 }
@@ -85,7 +85,7 @@ func WithCheckConfig(interval time.Duration, maxChecks int) ManagerOption {
 const (
 	defaultCheckInterval           = 5 * time.Second
 	defaultDatasourceCheckInterval = 60 * time.Second
-	defaultLeaderTouchInterval     = 3 * time.Second
+	defaultLeaderRefreshInterval   = 3 * time.Second
 	defaultMaxChecks               = 3
 )
 
@@ -102,7 +102,7 @@ func NewManager(channelSender ChannelLocalPublisher, presenceGetter NumLocalSubs
 		checkInterval:           defaultCheckInterval,
 		maxChecks:               defaultMaxChecks,
 		datasourceCheckInterval: defaultDatasourceCheckInterval,
-		leaderTouchInterval:     defaultLeaderTouchInterval,
+		leaderRefreshInterval:   defaultLeaderRefreshInterval,
 		leaderManager:           leaderManager,
 		nodeIDGetter:            nodeIDGetter,
 	}
@@ -188,15 +188,15 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 	defer presenceTicker.Stop()
 	datasourceTicker := time.NewTicker(s.datasourceCheckInterval)
 	defer datasourceTicker.Stop()
-	leaderTouchTicker := time.NewTicker(s.leaderTouchInterval)
-	defer leaderTouchTicker.Stop()
+	leaderRefreshTicker := time.NewTicker(s.leaderRefreshInterval)
+	defer leaderRefreshTicker.Stop()
 	maxLeaderCheckFailures := 2
 	var currentLeaderCheckFailures int
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-leaderTouchTicker.C:
+		case <-leaderRefreshTicker.C:
 			if s.leaderManager == nil {
 				continue
 			}
@@ -216,11 +216,11 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 			refreshCtxCancel()
 
 			if !ok {
-				logger.Error("Channel leader changed", "channel", sr.Channel)
+				logger.Error("Channel leader changed, stop stream", "channel", sr.Channel, "lid", sr.leadershipID)
 				s.stopStream(sr, cancelFn)
 				return
 			}
-			logger.Debug("Periodic channel leader refresh OK", "channel", sr.Channel)
+			logger.Debug("Periodic channel leader refresh OK", "channel", sr.Channel, "lid", sr.leadershipID)
 		case <-datasourceTicker.C:
 			if sr.PluginContext.DataSourceInstanceSettings != nil {
 				dsUID := sr.PluginContext.DataSourceInstanceSettings.UID

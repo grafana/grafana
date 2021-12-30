@@ -293,6 +293,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 					return
 				}
 				if leadershipID != "" {
+					logger.Debug("Setting epoch for stream", "lid", leadershipID)
 					reply.Options.Epoch = leadershipID
 					reply.Options.Position = true
 				}
@@ -744,7 +745,7 @@ func (g *GrafanaLive) watchChannelLeader(client *centrifuge.Client, orgChannel s
 		select {
 		case <-client.Context().Done():
 			return
-		case <-time.After(10 * time.Second):
+		case <-time.After(20 * time.Second):
 			ctx, cancel := context.WithTimeout(client.Context(), 250*time.Millisecond)
 			ok, _, currentLeadershipID, err := g.leaderManager.GetLeader(ctx, orgChannel)
 			if err != nil {
@@ -754,16 +755,16 @@ func (g *GrafanaLive) watchChannelLeader(client *centrifuge.Client, orgChannel s
 			}
 			cancel()
 			if !ok {
-				logger.Debug("Subscription leader not found", "channel", orgChannel)
+				logger.Debug("Subscription leader not found", "channel", orgChannel, "lid", leadershipID)
 				client.Disconnect(centrifuge.DisconnectForceReconnect)
 				return
 			}
 			if leadershipID != currentLeadershipID {
-				logger.Debug("Subscription leadership ID mismatch", "channel", orgChannel)
+				logger.Debug("Subscription leadership ID mismatch", "channel", orgChannel, "lid", leadershipID, "currentLid", currentLeadershipID)
 				client.Disconnect(centrifuge.DisconnectForceReconnect)
 				return
 			}
-			logger.Debug("Periodic subscription leader check OK", "channel", orgChannel)
+			logger.Debug("Periodic subscription leader check OK", "channel", orgChannel, "lid", leadershipID)
 		}
 	}
 }

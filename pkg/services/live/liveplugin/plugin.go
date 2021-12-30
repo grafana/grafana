@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
@@ -12,6 +14,10 @@ import (
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+)
+
+var (
+	logger = log.New("live.runstream")
 )
 
 type ChannelLocalPublisher struct {
@@ -41,6 +47,7 @@ func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte, leader
 	}
 	var err error
 	if p.channelLeaderMode {
+		logger.Debug("Publish into channel in leader mode", "channel", channel, "lid", leadershipID)
 		_, err = p.node.Publish(channel, data,
 			centrifuge.WithEpoch(leadershipID),
 			centrifuge.WithHistory(1, time.Minute),

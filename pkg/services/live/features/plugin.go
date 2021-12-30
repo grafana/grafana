@@ -158,7 +158,7 @@ func (r *PluginPathRunner) handleHASubscribe(ctx context.Context, user *models.S
 		logger.Error("Error on upsert channel leader", "error", err, "path", r.path, "orgChannel", orgChannel)
 		return models.SubscribeReply{}, 0, err
 	}
-	logger.Debug("Channel leader found", "leaderNodeId", leaderNodeID)
+	logger.Debug("Channel leader found", "leaderNodeId", leaderNodeID, "lid", leadershipID)
 
 	proxySubscribeCtx, proxySubscribeCancel := context.WithTimeout(ctx, proxySubscribeTimeout)
 	defer proxySubscribeCancel()
