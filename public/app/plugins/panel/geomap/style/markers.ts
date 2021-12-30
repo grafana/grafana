@@ -40,6 +40,18 @@ export function getFillColor(cfg: StyleConfigValues) {
   return undefined;
 }
 
+export function getStrokeStyle(cfg: StyleConfigValues) {
+  const opacity = cfg.opacity == null ? 0.8 : cfg.opacity;
+  if (opacity === 1) {
+    return new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 });
+  }
+  if (opacity > 0) {
+    const color = tinycolor(cfg.color).setAlpha(opacity).toRgbString();
+    return new Stroke({ color, width: cfg.lineWidth ?? 1 });
+  }
+  return undefined;
+}
+
 const textLabel = (cfg: StyleConfigValues) => {
   if (!cfg.text) {
     return undefined;
@@ -87,7 +99,7 @@ export const polyStyle = (cfg: StyleConfigValues) => {
 export const routeStyle = (cfg: StyleConfigValues) => {
   return new Style({
     fill: getFillColor(cfg),
-    stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
+    stroke: getStrokeStyle(cfg),
     text: textLabel(cfg),
   });
 };
