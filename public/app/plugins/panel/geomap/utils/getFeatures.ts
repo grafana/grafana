@@ -30,6 +30,7 @@ export const getFeaturesLineString = (frame: DataFrame, info: LocationInfo): Arr
     new Feature({
       frame,
       geometry: geometry,
+      rowIndex: 0,
     })
   );
 
