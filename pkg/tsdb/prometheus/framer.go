@@ -76,12 +76,15 @@ func (f *Framer) Frames() data.Frames {
 
 	for _, s := range f.series {
 		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, f.fields[0].Len())
-		f.fields = append(f.fields, valueField)
-		valueField.Name = formatLegend(s.Metric(), f.query)
 		valueField.Labels = make(map[string]string, len(s.Metric()))
 		for k, v := range s.Metric() {
 			valueField.Labels[string(k)] = string(v)
 		}
+
+		name := formatLegend(s.Metric(), f.query)
+		valueField.Name = data.TimeSeriesValueFieldName
+		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
+		f.fields = append(f.fields, valueField)
 
 		for s.Next() {
 			f.processRow(f.query, s)
