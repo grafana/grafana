@@ -161,5 +161,21 @@
     "addToProject":{
       "url":"https://github.com/orgs/grafana/projects/54"
     }
+  },
+  {
+    "type":"label",
+    "name":"area/explore",
+    "action":"removeFromProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/54"
+    }
+  },
+  {
+    "type":"label",
+    "name":"area/explore",
+    "action":"removeFromProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/54"
+    }
   }
 ]
