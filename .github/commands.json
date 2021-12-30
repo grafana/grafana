@@ -152,6 +152,20 @@
       "action": "addToProject",
       "addToProject": {
         "url": "https://github.com/orgs/grafana/projects/54"
+    },
+    {
+      "type": "label",
+      "name": "area/frontend",
+      "action": "removeFromProject",
+      "removeFromProject": {
+        "url": "https://github.com/orgs/grafana/projects/101"
+    },
+    {
+      "type": "label",
+      "name": "area/frontend",
+      "action": "removeFromProject",
+      "removeFromProject": {
+        "url": "https://github.com/orgs/grafana/projects/100"
     }
   }
 ]
