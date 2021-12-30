@@ -42,7 +42,7 @@ export const defaultRouteConfig: MapLayerOptions<RouteConfig> = {
   location: {
     mode: FrameGeometrySourceMode.Auto,
   },
-  tooltip: true,
+  tooltip: false,
 };
 
 /**
