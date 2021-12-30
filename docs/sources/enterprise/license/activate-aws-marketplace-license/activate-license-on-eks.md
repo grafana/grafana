@@ -37,7 +37,9 @@ Grafana requires that you configure a database to hold dashboards, users, and ot
 
 ### Before you begin
 
-- Ensure that you have a MySQL database available. For information about creating a MySQL database, refer to [Creating an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html).
+- Ensure that you have a supported Grafana database available.
+  - For a list of supported databases, refer to [Supported databases]({{< relref "../../../installation/requirements.md#supported-databases" >}}).
+  - For information about creating a database, refer to [Creating an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html).
 - Review the information required to connect to the RDS DB instance. For more information, refer to [Connecting to an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_CommonTasks.Connect.html).
 
 To configure Grafana for high availability, perform one of the following steps:
@@ -46,26 +48,26 @@ To configure Grafana for high availability, perform one of the following steps:
 
   ```
   [database]
-  type = mysql
-  host = localhost:3306
-  name = grafana
-  user = [mysql database username]
-  password = [mysql database password]
+  type = [database type]
+  host = [database address and port]
+  name = [database name]
+  user = [database username]
+  password = [database password]
   ```
 
 - Use `kubectl edit deployment my-release` to edit the pod `env` variables and add the following database variables:
 
   ```
   - name: GF_DATABASE_TYPE
-    value: mysql
+    value: [database type]
   - name: GF_DATABASE_HOST
-    value: localhost:3306
+    value: [database address and port]
   - name: GF_DATABASE_NAME
-    value: grafana
+    value: [database name]
   - name: GF_DATABASE_USER
-    value: [mysql database username]
+    value: [database username]
   - name: GF_DATABASE_PASSWORD
-    value: [mysql database password]
+    value: [database password]
   ```
 
 ## Task 3: Configure Grafana Enterprise to validate its license with AWS

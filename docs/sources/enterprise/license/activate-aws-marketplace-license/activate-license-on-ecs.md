@@ -35,14 +35,16 @@ Grafana requires that you configure a database to hold dashboards, users, and ot
 
 ### Before you begin
 
-- Ensure that you have a MySQL database available. For information about creating a MySQL database, refer to [Creating an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html).
+- Ensure that you have a supported Grafana database available.
+  - For a list of supported databases, refer to [Supported databases]({{< relref "../../../installation/requirements.md#supported-databases" >}}).
+  - For information about creating a database, refer to [Creating an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html).
 - Review the information required to connect to the RDS DB instance. For more information, refer to [Connecting to an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_CommonTasks.Connect.html).
 
 To configure Grafana for high availability:
 
-1. In Grafana Enterprise, open the grafana.ini file and update the [database] parameters.
+1. In AWS ECS, use environment variables to update the `database` parameters.
 
-   For more information about configuring the database, refer to [Configuration]({{< relref "../../../administration/configuration.md#database" >}}).
+   For a list of database parameters, refer to [Configuration]({{< relref "../../../administration/configuration.md#database" >}}).
 
 1. Create a revision of the task definition for the ECS Task that runs Grafana Enterprise.
 
@@ -51,11 +53,11 @@ To configure Grafana for high availability:
 1. Within the new revision, edit the Grafana Enterprise container for this task, and add the following environment variable to the container:
 
    ```
-   GF_DATABASE_TYPE=mysql
-   GF_DATABASE_HOST=localhost:3306
-   GF_DATABASE_NAME=grafana
-   GF_DATABASE_USER=[mysql database username]
-   GF_DATABASE_PASSWORD=[mysql database password]
+   GF_DATABASE_TYPE=[database type]
+   GF_DATABASE_HOST=[database address and port]
+   GF_DATABASE_NAME=[database name]
+   GF_DATABASE_USER=[database username]
+   GF_DATABASE_PASSWORD=[database password]
    ```
 
    > For more information about how to update your ECS service with an environment variable, refer to [Updating a service using the new console](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-service-console-v2.html).
