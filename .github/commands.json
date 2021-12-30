@@ -10,9 +10,7 @@
   {
     "type":"comment",
     "name":"duplicate",
-    "allowUsers":[
-      
-    ],
+    "allowUsers":[],
     "action":"updateLabels",
     "addLabel":"type/duplicate"
   },
@@ -27,9 +25,7 @@
   {
     "type":"comment",
     "name":"needsMoreInfo",
-    "allowUsers":[
-      
-    ],
+    "allowUsers":[],
     "action":"updateLabels",
     "addLabel":"bot/needs more info"
   },
