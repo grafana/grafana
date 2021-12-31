@@ -74,8 +74,9 @@ export function UserProfile({
   const lockMessage = authSource ? `Synced via ${authSource}` : '';
   const styles = getStyles(config.theme);
 
-  const editLocked = user.isExternal || !contextSrv.hasPermission(AccessControlAction.UsersWrite);
-  const passwordChangeLocked = user.isExternal || !contextSrv.hasPermission(AccessControlAction.UsersPasswordUpdate);
+  const editLocked = user.isExternal || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersWrite, user);
+  const passwordChangeLocked =
+    user.isExternal || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersPasswordUpdate, user);
   const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersDelete, user);
   const canDisable = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersDisable, user);
   const canEnable = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersEnable, user);
