@@ -64,7 +64,7 @@ func Deny(c *models.ReqContext, evaluator accesscontrol.Evaluator, err error) {
 	// internal server error or access denied.
 	c.JSON(http.StatusForbidden, map[string]string{
 		"title":         "Access denied", // the component needs to pick this up
-		"message":       fmt.Sprintf("Your user account does not have permissions to do the action. We recorded your attempt with log message %s. Contact your administrator for help.", id),
+		"message":       fmt.Sprintf("You'll need additional permissions to perform this action. Refer your administrator to a Grafana log with the reference %s to identify which permissions to add.", id),
 		"accessErrorId": id,
 	})
 }
