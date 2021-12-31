@@ -15,19 +15,19 @@ import (
 )
 
 // GET /api/user  (current authenticated user)
-func GetSignedInUser(c *models.ReqContext) response.Response {
-	return getUserUserProfile(c.Req.Context(), c.UserId)
+func (hs *HTTPServer) GetSignedInUser(c *models.ReqContext) response.Response {
+	return hs.getUserUserProfile(c, c.UserId)
 }
 
 // GET /api/users/:id
-func GetUserByID(c *models.ReqContext) response.Response {
-	return getUserUserProfile(c.Req.Context(), c.ParamsInt64(":id"))
+func (hs *HTTPServer) GetUserByID(c *models.ReqContext) response.Response {
+	return hs.getUserUserProfile(c, c.ParamsInt64(":id"))
 }
 
-func getUserUserProfile(ctx context.Context, userID int64) response.Response {
+func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) response.Response {
 	query := models.GetUserProfileQuery{UserId: userID}
 
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -36,12 +36,18 @@ func getUserUserProfile(ctx context.Context, userID int64) response.Response {
 
 	getAuthQuery := models.GetAuthInfoQuery{UserId: userID}
 	query.Result.AuthLabels = []string{}
-	if err := bus.Dispatch(ctx, &getAuthQuery); err == nil {
+	if err := bus.Dispatch(c.Req.Context(), &getAuthQuery); err == nil {
 		authLabel := GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
 		query.Result.AuthLabels = append(query.Result.AuthLabels, authLabel)
 		query.Result.IsExternal = true
 	}
 
+	accessControlMetadata, errAC := hs.getUserAccessControlMetadata(c, userID)
+	if errAC != nil {
+		hs.log.Error("Failed to get access control metadata", "error", errAC)
+	}
+
+	query.Result.AccessControl = accessControlMetadata
 	query.Result.AvatarUrl = dtos.GetGravatarUrl(query.Result.Email)
 
 	return response.JSON(200, query.Result)
