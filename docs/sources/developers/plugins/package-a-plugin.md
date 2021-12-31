@@ -50,7 +50,7 @@ Before you submit your plugin, we ask that you read our guidelines and frequentl
 
 To speed up the time it takes to review your plugin:
 
-- Check that your plugin is ready for review using the plugin validator.
+- Check that your plugin is ready for review using the [plugin validator](https://github.com/grafana/plugin-validator).
 - Read our 6 tips for improving your Grafana plugin before you publish
 
 ### Frequently Asked Questions
