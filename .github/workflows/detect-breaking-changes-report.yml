@@ -17,7 +17,7 @@ jobs:
     - name: 'Download artifact'
       uses: actions/github-script@v5
       env:
-        RUN_ID: ${{github.event.workflow_run.id }}
+        RUN_ID: ${{ github.event.workflow_run.id }}
       with:
         script: |
           const fs = require('fs');
