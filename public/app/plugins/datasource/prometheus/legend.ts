@@ -1,7 +1,25 @@
 import { Labels } from '@grafana/data';
 
-/** replace labels in a string.  Used for loki+prometheus legend formats */
+/**
+ * Replace labels in a string.  Used for loki+prometheus legend formats
+ *
+ * For many years, this was implemented as:
+ *   const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
+ */
 export function renderLegendFormat(aliasPattern: string, aliasData: Labels): string {
-  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-  return aliasPattern.replace(aliasRegex, (_, g1) => (aliasData[g1] ? aliasData[g1] : g1));
+  let idx = aliasPattern ? aliasPattern.indexOf('{{') : -1;
+  while (idx >= 0 && aliasData) {
+    let edx = aliasPattern.indexOf('}}', idx + 1);
+    if (idx > edx) {
+      return aliasPattern;
+    }
+
+    const key = aliasPattern.substring(idx + 2, edx).trim();
+    const val = aliasData[key];
+    if (val != null) {
+      aliasPattern = aliasPattern.substring(0, idx) + val + aliasPattern.substring(edx + 2);
+    }
+    idx = aliasPattern.indexOf('{{', idx + 2);
+  }
+  return aliasPattern;
 }

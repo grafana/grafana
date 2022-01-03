@@ -23,8 +23,8 @@ describe('renderLegendFormat()', () => {
   it('Bad syntax', () => {
     expect(renderLegendFormat('value: {{a}', labels)).toEqual('value: {{a}');
     expect(renderLegendFormat('value: {a}}}', labels)).toEqual('value: {a}}}');
-
-    // Current behavior -- not sure if expected or not
-    expect(renderLegendFormat('value: {{{a}}}', labels)).toEqual('value: {a}');
+    expect(renderLegendFormat('{{}}', labels)).toEqual('{{}}');
+    expect(renderLegendFormat('{{{{a', labels)).toEqual('{{{{a');
+    expect(renderLegendFormat('value: {{{a}}}', labels)).toEqual('value: {{{a}}}');
   });
 });
