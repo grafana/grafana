@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -83,4 +84,33 @@ func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) e
 		}()
 	}
 	return nil
+}
+
+func (s *ServiceAccountsStoreImpl) getServiceAccounts(ctx context.Context, orgID int64) ([]*models.User, error) {
+	result := make([]*accesscontrol.RoleDTO, 0)
+	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		roles := make([]*accesscontrol.RoleDTO, 0)
+		q := `
+	SELECT id,
+		uid,
+		org_id,
+		version,
+		name,
+		display_name,
+		group_name,
+		description,
+		updated,
+		created
+		FROM role
+	WHERE (org_id = ? OR org_id = ?)
+	AND name NOT LIKE 'managed:%'
+	`
+		if err := sess.SQL(q, orgID, acmodels.GlobalOrgID).Find(&roles); err != nil {
+			return err
+		}
+
+		result = roles
+		return nil
+	})
+	return result, err
 }
