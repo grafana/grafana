@@ -19,7 +19,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus) *SearchService {
 			SortAlphaDesc.Name: SortAlphaDesc,
 		},
 	}
-	s.Bus.AddHandlerCtx(s.searchHandler)
+	s.Bus.AddHandler(s.searchHandler)
 	return s
 }
 
@@ -84,7 +84,7 @@ func (s *SearchService) searchHandler(ctx context.Context, query *Query) error {
 		dashboardQuery.Sort = sortOpt
 	}
 
-	if err := bus.DispatchCtx(ctx, &dashboardQuery); err != nil {
+	if err := bus.Dispatch(ctx, &dashboardQuery); err != nil {
 		return err
 	}
 
@@ -120,7 +120,7 @@ func setStarredDashboards(ctx context.Context, userID int64, hits []*Hit) error 
 		UserId: userID,
 	}
 
-	if err := bus.DispatchCtx(ctx, &query); err != nil {
+	if err := bus.Dispatch(ctx, &query); err != nil {
 		return err
 	}
 

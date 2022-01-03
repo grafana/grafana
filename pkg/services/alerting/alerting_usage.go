@@ -28,7 +28,7 @@ type UsageStatsQuerier interface {
 // configured in Grafana.
 func (e *AlertEngine) QueryUsageStats(ctx context.Context) (*UsageStats, error) {
 	cmd := &models.GetAllAlertsQuery{}
-	err := e.Bus.DispatchCtx(ctx, cmd)
+	err := e.Bus.Dispatch(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (e *AlertEngine) mapRulesToUsageStats(ctx context.Context, rules []*models.
 	result := map[string]int{}
 	for k, v := range typeCount {
 		query := &models.GetDataSourceQuery{Id: k}
-		err := e.Bus.DispatchCtx(ctx, query)
+		err := e.Bus.Dispatch(ctx, query)
 		if err != nil {
 			return map[string]int{}, nil
 		}

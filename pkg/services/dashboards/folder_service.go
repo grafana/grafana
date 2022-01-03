@@ -45,7 +45,7 @@ func (dr *dashboardServiceImpl) GetFolders(ctx context.Context, limit int64, pag
 		Page:         page,
 	}
 
-	if err := bus.DispatchCtx(ctx, &searchQuery); err != nil {
+	if err := bus.Dispatch(ctx, &searchQuery); err != nil {
 		return nil, err
 	}
 
@@ -209,7 +209,7 @@ func (dr *dashboardServiceImpl) DeleteFolder(ctx context.Context, uid string, fo
 	}
 
 	deleteCmd := models.DeleteDashboardCommand{OrgId: dr.orgId, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
-	if err := bus.DispatchCtx(ctx, &deleteCmd); err != nil {
+	if err := bus.Dispatch(ctx, &deleteCmd); err != nil {
 		return nil, toFolderError(err)
 	}
 
@@ -217,7 +217,7 @@ func (dr *dashboardServiceImpl) DeleteFolder(ctx context.Context, uid string, fo
 }
 
 func getFolder(ctx context.Context, query models.GetDashboardQuery) (*models.Dashboard, error) {
-	if err := bus.DispatchCtx(ctx, &query); err != nil {
+	if err := bus.Dispatch(ctx, &query); err != nil {
 		return nil, toFolderError(err)
 	}
 
