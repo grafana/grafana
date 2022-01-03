@@ -57,6 +57,7 @@ var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 
 type Calls struct {
 	CreateServiceAccount   []interface{}
+	ListServiceAccounts    []interface{}
 	DeleteServiceAccount   []interface{}
 	UpgradeServiceAccounts []interface{}
 }
@@ -80,4 +81,9 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
 	s.Calls.DeleteServiceAccount = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
 	return nil
+}
+
+func (s *ServiceAccountsStoreMock) ListServiceAccounts(ctx context.Context, orgID int64) ([]*models.OrgUserDTO, error) {
+	s.Calls.ListServiceAccounts = append(s.Calls.ListServiceAccounts, []interface{}{ctx, orgID})
+	return nil, nil
 }
