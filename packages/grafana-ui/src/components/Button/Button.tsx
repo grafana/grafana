@@ -57,7 +57,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
 
     return (
-      <button className={ghostMode ? styles.ghost : cx(styles.button, className)} {...otherProps} ref={ref}>
+      <button className={ghostMode === true ? styles.ghost : cx(styles.button, className)} {...otherProps} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </button>
