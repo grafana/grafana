@@ -33,6 +33,8 @@ export interface StreamPacketInfo {
   schemaChanged: boolean;
 }
 
+const PROM_STYLE_METRIC_LABEL = '__name__';
+
 enum PushMode {
   wide,
   labels,
@@ -231,7 +233,8 @@ export class StreamingDataFrame implements DataFrame {
         });        
         if (legendFormat) {
           this.fields.forEach((f) => {
-            f.config.displayNameFromDS = renderLegendFormat(legendFormat, f.labels ?? {});
+            const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...f.labels};
+            f.config.displayNameFromDS = renderLegendFormat(legendFormat, labels);
           });
         }
       } else {
@@ -240,7 +243,8 @@ export class StreamingDataFrame implements DataFrame {
         this.fields = niceSchemaFields.map((f) => {
           const config = f.config ?? {};
           if (legendFormat) {
-            config.displayNameFromDS = renderLegendFormat(legendFormat, f.labels ?? {});
+            const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...f.labels};
+            config.displayNameFromDS = renderLegendFormat(legendFormat, labels);
           }
           return {
             config,
@@ -407,7 +411,8 @@ export class StreamingDataFrame implements DataFrame {
         if (i > 0) {
           f.labels = parsedLabels;
           if (legendFormat) {
-            f.config.displayNameFromDS = renderLegendFormat(legendFormat, parsedLabels);
+            const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...parsedLabels};
+            f.config.displayNameFromDS = renderLegendFormat(legendFormat, labels);
           }
         }
       });
@@ -416,7 +421,8 @@ export class StreamingDataFrame implements DataFrame {
         let proto = this.schemaFields[i] as Field;
         const config = proto.config ?? {};
         if (legendFormat) {
-          config.displayNameFromDS = renderLegendFormat(legendFormat, parsedLabels);
+          const labels = {[PROM_STYLE_METRIC_LABEL]:proto.name, ...parsedLabels};
+          config.displayNameFromDS = renderLegendFormat(legendFormat, labels);
         }
         this.fields.push({
           ...proto,
