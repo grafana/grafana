@@ -37,7 +37,7 @@ func (s *ServiceAccountMock) DeleteServiceAccount(ctx context.Context, orgID, se
 	return nil
 }
 
-func (s *ServiceAccountMock) HasServiceAccountsMigrated(ctx context.Context, orgID int64) bool {
+func (s *ServiceAccountMock) Migrated(ctx context.Context, orgID int64) bool {
 	return false
 }
 
