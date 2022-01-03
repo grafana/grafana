@@ -277,15 +277,15 @@ func TestSecretsService_Run(t *testing.T) {
 		require.Len(t, svc.dataKeyCache, 1)
 
 		// Execute background process after key's TTL, to force
-		// clean up process, during a millisecond with gc ticker
-		// configured on every nanosecond, to ensure the ticker
-		// is triggered.
+		// clean up process, during a hundred milliseconds with
+		// gc ticker configured on every nanosecond, to ensure
+		// the ticker is triggered.
 		gcInterval = time.Nanosecond
 
 		t.Cleanup(func() { now = time.Now })
 		now = func() time.Time { return time.Now().Add(dekTTL) }
 
-		ctx, cancel := context.WithTimeout(ctx, time.Millisecond)
+		ctx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
 		defer cancel()
 
 		err = svc.Run(ctx)

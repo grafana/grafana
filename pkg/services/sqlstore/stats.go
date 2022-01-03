@@ -10,12 +10,12 @@ import (
 )
 
 func init() {
-	bus.AddHandlerCtx("sql", GetSystemStats)
-	bus.AddHandlerCtx("sql", GetDataSourceStats)
-	bus.AddHandlerCtx("sql", GetDataSourceAccessStats)
-	bus.AddHandlerCtx("sql", GetAdminStats)
-	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
-	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
+	bus.AddHandler("sql", GetSystemStats)
+	bus.AddHandler("sql", GetDataSourceStats)
+	bus.AddHandler("sql", GetDataSourceAccessStats)
+	bus.AddHandler("sql", GetAdminStats)
+	bus.AddHandler("sql", GetAlertNotifiersUsageStats)
+	bus.AddHandler("sql", GetSystemUserCountStats)
 }
 
 const activeUserTimeLimit = time.Hour * 24 * 30

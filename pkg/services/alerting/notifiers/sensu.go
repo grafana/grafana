@@ -146,7 +146,7 @@ func (sn *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 		HttpMethod: "POST",
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		sn.log.Error("Failed to send sensu event", "error", err, "sensu", sn.Name)
 		return err
 	}

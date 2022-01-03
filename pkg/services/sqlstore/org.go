@@ -16,13 +16,13 @@ import (
 const MainOrgName = "Main Org."
 
 func init() {
-	bus.AddHandlerCtx("sql", GetOrgById)
-	bus.AddHandlerCtx("sql", CreateOrg)
-	bus.AddHandlerCtx("sql", UpdateOrg)
-	bus.AddHandlerCtx("sql", UpdateOrgAddress)
-	bus.AddHandlerCtx("sql", GetOrgByName)
-	bus.AddHandlerCtx("sql", SearchOrgs)
-	bus.AddHandlerCtx("sql", DeleteOrg)
+	bus.AddHandler("sql", GetOrgById)
+	bus.AddHandler("sql", CreateOrg)
+	bus.AddHandler("sql", UpdateOrg)
+	bus.AddHandler("sql", UpdateOrgAddress)
+	bus.AddHandler("sql", GetOrgByName)
+	bus.AddHandler("sql", SearchOrgs)
+	bus.AddHandler("sql", DeleteOrg)
 }
 
 func SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {

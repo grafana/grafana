@@ -21,7 +21,7 @@ func TestPluginProvisioner(t *testing.T) {
 	})
 
 	t.Run("Should apply configurations", func(t *testing.T) {
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetOrgByNameQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetOrgByNameQuery) error {
 			if query.Name == "Org 4" {
 				query.Result = &models.Org{Id: 4}
 			}
@@ -29,7 +29,7 @@ func TestPluginProvisioner(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
 			if query.PluginId == "test-plugin" && query.OrgId == 2 {
 				query.Result = &models.PluginSetting{
 					PluginVersion: "2.0.1",
@@ -42,7 +42,7 @@ func TestPluginProvisioner(t *testing.T) {
 
 		sentCommands := []*models.UpdatePluginSettingCmd{}
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
+		bus.AddHandler("test", func(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
 			sentCommands = append(sentCommands, cmd)
 			return nil
 		})
