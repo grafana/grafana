@@ -4,7 +4,6 @@ import { css } from '@emotion/css';
 import { FieldConfigSource, GrafanaTheme2, PanelData, ThresholdsConfig } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { PanelContext, PanelContextProvider, useStyles2 } from '@grafana/ui';
-import { GraphFieldConfig, GraphTresholdsStyleMode } from '@grafana/schema';
 import { PanelOptions } from 'app/plugins/panel/table/models.gen';
 import { useVizHeight } from '../../hooks/useVizHeight';
 import { SupportedPanelPlugins, PanelPluginsButtonGroup } from '../PanelPluginsButtonGroup';
@@ -18,8 +17,6 @@ interface Props {
   onThresholdsChange: (thresholds: ThresholdsConfig) => void;
 }
 
-type PanelFieldConfig = FieldConfigSource<GraphFieldConfig>;
-
 export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThresholdsChange, thresholds }) => {
   const [options, setOptions] = useState<PanelOptions>({
     frameIndex: 0,
@@ -28,7 +25,7 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThres
   const vizHeight = useVizHeight(data, currentPanel, options.frameIndex);
   const styles = useStyles2(getStyles(vizHeight));
 
-  const [fieldConfig, setFieldConfig] = useState<PanelFieldConfig>(defaultFieldConfig(thresholds, data));
+  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>(defaultFieldConfig(thresholds, data));
 
   useEffect(() => {
     setFieldConfig((fieldConfig) => ({
@@ -40,7 +37,7 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThres
         custom: {
           ...fieldConfig.defaults.custom,
           thresholdsStyle: {
-            mode: GraphTresholdsStyleMode.Line,
+            mode: 'line',
           },
         },
       },
@@ -107,7 +104,7 @@ function defaultUnit(data: PanelData): string | undefined {
   return data.series[0]?.fields.find((field) => field.type === 'number')?.config.unit;
 }
 
-function defaultFieldConfig(thresholds: ThresholdsConfig, data: PanelData): PanelFieldConfig {
+function defaultFieldConfig(thresholds: ThresholdsConfig, data: PanelData): FieldConfigSource {
   if (!thresholds) {
     return { defaults: {}, overrides: [] };
   }
@@ -118,7 +115,7 @@ function defaultFieldConfig(thresholds: ThresholdsConfig, data: PanelData): Pane
       unit: defaultUnit(data),
       custom: {
         thresholdsStyle: {
-          mode: GraphTresholdsStyleMode.Line,
+          mode: 'line',
         },
       },
     },
