@@ -67,6 +67,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding-bottom: 5px;
     margin-right: 10px;
   `,
+  viewControlsWrapper: css`
+    margin-left: auto;
+  `,
   alert: css`
     label: alert;
     padding: 5px 8px;
@@ -212,7 +215,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
       </svg>
 
       <div className={styles.viewControls}>
-        {nodes.length && (
+        {nodes.length ? (
           <div className={styles.legend}>
             <Legend
               sortable={config.gridLayout}
@@ -226,22 +229,24 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
               }}
             />
           </div>
-        )}
+        ) : null}
 
-        <ViewControls<Config>
-          config={config}
-          onConfigChange={(cfg) => {
-            if (cfg.gridLayout !== config.gridLayout) {
-              setFocusedNodeId(undefined);
-            }
-            setConfig(cfg);
-          }}
-          onMinus={onStepDown}
-          onPlus={onStepUp}
-          scale={scale}
-          disableZoomIn={isMaxZoom}
-          disableZoomOut={isMinZoom}
-        />
+        <div className={styles.viewControlsWrapper}>
+          <ViewControls<Config>
+            config={config}
+            onConfigChange={(cfg) => {
+              if (cfg.gridLayout !== config.gridLayout) {
+                setFocusedNodeId(undefined);
+              }
+              setConfig(cfg);
+            }}
+            onMinus={onStepDown}
+            onPlus={onStepUp}
+            scale={scale}
+            disableZoomIn={isMaxZoom}
+            disableZoomOut={isMinZoom}
+          />
+        </div>
       </div>
 
       {hiddenNodesCount > 0 && (
