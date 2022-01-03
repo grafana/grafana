@@ -128,7 +128,7 @@ func addUserMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Add is_service_account column to user", NewAddColumnMigration(userV2, &Column{
-		Name: "is_service_account", Type: DB_Bool, Nullable: true, Default: false,
+		Name: "is_service_account", Type: DB_Bool, Nullable: true, Default: "FALSE",
 	}))
 }
 
