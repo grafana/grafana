@@ -15,3 +15,7 @@ export * from './schema';
 
 // Exposes standard editors for registries of optionsUi config and panel options UI
 export { getStandardFieldConfigs, getStandardOptionEditors } from './utils/standardEditors';
+
+// TESTING
+// This is only for testing the breaking-changes workflow and is not going to be merged in.
+export const foo = "bar";
