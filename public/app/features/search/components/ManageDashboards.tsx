@@ -1,4 +1,5 @@
 import React, { FC, memo, useState } from 'react';
+import { useLocalStorage } from 'react-use';
 import { css } from '@emotion/css';
 import { stylesFactory, useTheme, Spinner, FilterInput } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -13,6 +14,7 @@ import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
+import { PREVIEWS_LOCAL_STORAGE_KEY } from '../constants';
 
 export interface Props {
   folder?: FolderDTO;
@@ -21,6 +23,10 @@ export interface Props {
 const { isEditor } = contextSrv;
 
 export const ManageDashboards: FC<Props> = memo(({ folder }) => {
+  const [showPreviews, setShowPreviews] = useLocalStorage<boolean>(PREVIEWS_LOCAL_STORAGE_KEY, true);
+  const onShowPreviewsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setShowPreviews(event.target.checked);
+  };
   const folderId = folder?.id;
   const folderUid = folder?.uid;
   const theme = useTheme();
@@ -106,11 +112,13 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
           canMove={hasEditPermissionInFolders && canMove}
           deleteItem={onItemDelete}
           moveTo={onMoveTo}
+          onShowPreviewsChange={onShowPreviewsChange}
           onToggleAllChecked={onToggleAllChecked}
           onStarredFilterChange={onStarredFilterChange}
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           query={query}
+          showPreviews={showPreviews}
           hideLayout={!!folderUid}
           onLayoutChange={onLayoutChange}
           editable={hasEditPermissionInFolders}
@@ -123,6 +131,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
           onToggleSection={onToggleSection}
           onToggleChecked={onToggleChecked}
           layout={query.layout}
+          showPreviews={showPreviews}
         />
       </div>
       <ConfirmDeleteModal

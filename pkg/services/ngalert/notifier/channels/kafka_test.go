@@ -127,7 +127,7 @@ func TestKafkaNotifier(t *testing.T) {
 
 			body := ""
 			actUrl := ""
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
+			bus.AddHandler("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
 				body = webhook.Body
 				actUrl = webhook.Url
 				return nil
