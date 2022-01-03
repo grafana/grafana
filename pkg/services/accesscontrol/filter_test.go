@@ -131,7 +131,6 @@ func TestFilter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-
 			query, args, err := Filter(
 				context.Background(),
 				FakeDriver{name: tt.driverName},
