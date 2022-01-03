@@ -1,4 +1,4 @@
-package prometheus
+package middleware
 
 import (
 	"net/http"
@@ -14,7 +14,7 @@ const (
 	grafanaDataKey                      = "grafanaData"
 )
 
-func customQueryParametersMiddleware(logger log.Logger) sdkhttpclient.Middleware {
+func CustomQueryParameters(logger log.Logger) sdkhttpclient.Middleware {
 	return sdkhttpclient.NamedMiddlewareFunc(customQueryParametersMiddlewareName, func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		grafanaData, exists := opts.CustomOptions[grafanaDataKey]
 		if !exists {
