@@ -57,6 +57,12 @@ export const Variants: Story<ButtonProps> = () => {
         <Button icon="cloud" size="md" />
         <Button icon="cloud" size="lg" />
       </HorizontalGroup>
+      <HorizontalGroup spacing="lg">
+        <div>With icon only and button unstyled</div>
+        <Button icon="cloud" size="sm" ghostMode={true} />
+        <Button icon="cloud" size="md" ghostMode={true} />
+        <Button icon="cloud" size="lg" ghostMode={true} />
+      </HorizontalGroup>
       <div />
       <Button icon="plus" fullWidth>
         Button with fullWidth
