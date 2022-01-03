@@ -143,42 +143,45 @@ func newParsableTime(t string, options ...TimeRangeOption) parsableTime {
 }
 
 func (t parsableTime) Parse() (time.Time, error) {
+	// Milliseconds since Unix epoch.
 	if val, err := strconv.ParseInt(t.time, 10, 64); err == nil {
-		seconds := val / 1000
-		nano := (val - seconds*1000) * 1000000
-		return time.Unix(seconds, nano), nil
+		return time.UnixMilli(val), nil
 	}
 
-	diff, err := time.ParseDuration("-" + t.time)
-	if err != nil {
-		options := []func(*datemath.Options){
-			datemath.WithNow(t.now),
-			datemath.WithRoundUp(t.roundUp),
+	// Duration relative to current time.
+	if diff, err := time.ParseDuration("-" + t.time); err == nil {
+		return t.now.Add(diff), nil
+	}
+
+	// Advanced time string, mimics the frontend's datemath library.
+	return datemath.ParseAndEvaluate(t.time, t.datemathOptions()...)
+}
+
+func (t parsableTime) datemathOptions() []func(*datemath.Options) {
+	options := []func(*datemath.Options){
+		datemath.WithNow(t.now),
+		datemath.WithRoundUp(t.roundUp),
+	}
+	if t.location != nil {
+		options = append(options, datemath.WithLocation(t.location))
+	}
+	if t.weekstart != nil {
+		weekstart := *t.weekstart
+		if weekstart > t.now.Weekday() {
+			weekstart = weekstart - 7
 		}
+		options = append(options, datemath.WithStartOfWeek(weekstart))
+	}
+	if t.fiscalStartMonth != nil {
+		loc := time.UTC
 		if t.location != nil {
-			options = append(options, datemath.WithLocation(t.location))
+			loc = t.location
 		}
-		if t.weekstart != nil {
-			weekstart := *t.weekstart
-			if weekstart > t.now.Weekday() {
-				weekstart = weekstart - 7
-			}
-			options = append(options, datemath.WithStartOfWeek(weekstart))
-		}
-		if t.fiscalStartMonth != nil {
-			loc := time.UTC
-			if t.location != nil {
-				loc = t.location
-			}
-			options = append(options, datemath.WithStartOfFiscalYear(
-				// Year doesn't matter, and Grafana only supports setting the
-				// month that the fiscal year starts in.
-				time.Date(0, *t.fiscalStartMonth, 1, 0, 0, 0, 0, loc),
-			))
-		}
-
-		return datemath.ParseAndEvaluate(t.time, options...)
+		options = append(options, datemath.WithStartOfFiscalYear(
+			// Year doesn't matter, and Grafana only supports setting the
+			// month that the fiscal year starts in.
+			time.Date(0, *t.fiscalStartMonth, 1, 0, 0, 0, 0, loc),
+		))
 	}
-
-	return t.now.Add(diff), nil
+	return options
 }
