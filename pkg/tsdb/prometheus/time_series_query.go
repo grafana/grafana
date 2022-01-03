@@ -300,7 +300,9 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		}
 
 		baseTimestamp := alignTimeRange(query.Start, query.Step, query.UtcOffsetSec).UnixMilli()
-		datapointsCount := int((query.End.UnixMilli()-query.Start.UnixMilli())/query.Step.Milliseconds()) + 1
+		endTimestamp := alignTimeRange(query.End, query.Step, query.UtcOffsetSec).UnixMilli()
+		// For each step we create 1 data point. This results in range / step + 1 data points.
+		datapointsCount := int((endTimestamp-baseTimestamp)/query.Step.Milliseconds()) + 1
 
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, datapointsCount)
 		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, datapointsCount)
