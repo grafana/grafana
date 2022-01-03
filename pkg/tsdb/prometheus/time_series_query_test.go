@@ -620,7 +620,6 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.Equal(t, res[0].Fields[1].Len(), 4)
 		require.Equal(t, res[0].Fields[1].At(1), nilPointer)
 		require.Equal(t, res[0].Fields[1].At(2), nilPointer)
-
 	})
 
 	t.Run("matrix response with NaN value should be changed to null", func(t *testing.T) {
