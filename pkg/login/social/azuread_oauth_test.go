@@ -22,7 +22,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		allowedGroups     []string
 		autoAssignOrgRole string
 	}
-	type args struct{}
+	type args struct {
+		client *http.Client
+	}
 
 	tests := []struct {
 		name                     string
@@ -338,12 +340,11 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				token = token.WithExtra(map[string]interface{}{"id_token": raw})
 			}
 
-			var client *http.Client
 			if tt.fields.SocialBase != nil {
-				client = s.Client(context.Background(), token)
+				tt.args.client = s.Client(context.Background(), token)
 			}
 
-			got, err := s.UserInfo(client, token)
+			got, err := s.UserInfo(tt.args.client, token)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
 				return
