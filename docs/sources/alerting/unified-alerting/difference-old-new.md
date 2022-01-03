@@ -17,6 +17,8 @@ You can now create alerts that give you system-wide visibility with a single ale
 
 Unlike legacy dashboard alerts, Grafana alerts allow you to create queries and expressions that combine data from multiple sources in unique ways. You can still link dashboards and panels to alerting rules using their ID and quickly troubleshoot the system under observation.
 
+Since unified alerts are no longer directly tied to panel queries, they do not include images or query values in the notification email. You can use customized notification templates to view query values.  
+
 ## Create Loki and Cortex alerting rules
 
 In Grafana alerting, you can manage Loki and Cortex alerting rules using the same UI and API as your Grafana managed alerts.
