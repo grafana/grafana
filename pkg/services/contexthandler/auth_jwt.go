@@ -60,18 +60,20 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		ctx.JsonApiErr(401, InvalidJWT, err)
 		return true
 	}
+
 	if h.Cfg.JWTAuthAutoSignUp {
 		upsert := &models.UpsertUserCommand{
 			ReqContext:    ctx,
 			SignupAllowed: h.Cfg.JWTAuthAutoSignUp,
 			ExternalUser:  extUser,
 		}
-		if err := bus.DispatchCtx(ctx.Req.Context(), upsert); err != nil {
+		if err := bus.Dispatch(ctx.Req.Context(), upsert); err != nil {
 			ctx.Logger.Error("Failed to upsert JWT user", "error", err)
 			return false
 		}
 	}
-	if err := bus.DispatchCtx(ctx.Req.Context(), &query); err != nil {
+
+	if err := bus.Dispatch(ctx.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			ctx.Logger.Debug(
 				"Failed to find user using JWT claims",

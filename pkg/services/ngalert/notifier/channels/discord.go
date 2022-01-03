@@ -114,7 +114,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		Body:        string(body),
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		d.log.Error("Failed to send notification to Discord", "error", err)
 		return false, err
 	}

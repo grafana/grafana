@@ -19,7 +19,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 	if c.OrgId != 0 {
 		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
-		err := bus.DispatchCtx(c.Req.Context(), &query)
+		err := bus.Dispatch(c.Req.Context(), &query)
 
 		if err != nil {
 			return nil, err
@@ -30,7 +30,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			Datasources: query.Result,
 		}
 
-		if err := bus.DispatchCtx(c.Req.Context(), &dsFilterQuery); err != nil {
+		if err := bus.Dispatch(c.Req.Context(), &dsFilterQuery); err != nil {
 			if !errors.Is(err, bus.ErrHandlerNotFound) {
 				return nil, err
 			}

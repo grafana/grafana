@@ -460,7 +460,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying a datasource that has OAuth token pass-through enabled", func(t *testing.T) {
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetAuthInfoQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetAuthInfoQuery) error {
 			query.Result = &models.UserAuth{
 				Id:                1,
 				UserId:            1,

@@ -46,7 +46,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
 			var sentLimit int
 			var sendPage int
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
 				query.Result = mockResult
 
 				sentLimit = query.Limit
@@ -71,7 +71,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
 			var sentLimit int
 			var sendPage int
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
 				query.Result = mockResult
 
 				sentLimit = query.Limit

@@ -246,7 +246,7 @@ func (hs *thumbService) StopCrawler(c *models.ReqContext) response.Response {
 func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bool) int {
 	query := models.GetDashboardQuery{Uid: uid, OrgId: c.OrgId}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		return 404 // not found
 	}
 
