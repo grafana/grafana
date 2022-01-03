@@ -18,4 +18,4 @@ export { getStandardFieldConfigs, getStandardOptionEditors } from './utils/stand
 
 // TESTING
 // This is only for testing the breaking-changes workflow and is not going to be merged in.
-export const foo = "bar";
+export const foo = "zed";
