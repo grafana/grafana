@@ -3383,8 +3383,11 @@ __metadata:
     "@grafana/toolkit": 8.4.0-pre
     "@grafana/ui": 8.4.0-pre
     "@types/jest": 26.0.15
+    "@types/lodash": 4.14.149
     "@types/react": 17.0.30
     jquery: 3.5.1
+    lodash: 4.17.21
+    pnp-webpack-plugin: ^1.7.0
     react: 17.0.1
     react-dom: 17.0.1
     react-hook-form: 7.5.3
@@ -27096,6 +27099,15 @@ __metadata:
   dependencies:
     ts-pnp: ^1.1.6
   checksum: 0606a63db96400b07f182300168298da9518727a843f9e10cf5045d2a102a4be06bb18c73dc481281e3e0f1ed8d04ef0d285a342b6dcd0eff1340e28e5d2328d
+  languageName: node
+  linkType: hard
+
+"pnp-webpack-plugin@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "pnp-webpack-plugin@npm:1.7.0"
+  dependencies:
+    ts-pnp: ^1.1.6
+  checksum: a41716d13607be5a3e06ba58b17e9e619cf07da3a0a7b10bd41cd89362873041054fd2b7966ad30a1b26b826cfb8fecc0469a95902d5b1b8ba8f591e2fe6b96d
   languageName: node
   linkType: hard
 
