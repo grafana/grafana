@@ -19,9 +19,10 @@ var (
 )
 
 type ServiceAccountsService struct {
-	store serviceaccounts.Store
-	cfg   *setting.Cfg
-	log   log.Logger
+	migrated bool
+	store    serviceaccounts.Store
+	cfg      *setting.Cfg
+	log      log.Logger
 }
 
 func ProvideServiceAccountsService(
@@ -31,9 +32,10 @@ func ProvideServiceAccountsService(
 	routeRegister routing.RouteRegister,
 ) (*ServiceAccountsService, error) {
 	s := &ServiceAccountsService{
-		cfg:   cfg,
-		store: database.NewServiceAccountsStore(store),
-		log:   log.New("serviceaccounts"),
+		cfg:      cfg,
+		store:    database.NewServiceAccountsStore(store),
+		log:      log.New("serviceaccounts"),
+		migrated: false,
 	}
 	if err := ac.DeclareFixedRoles(role); err != nil {
 		return nil, err
@@ -63,5 +65,8 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 func (sa *ServiceAccountsService) Migrated(ctx context.Context, orgID int64) bool {
 	// TODO: implement migration logic
 	// change this to return true for development of service accounts page
-	return false
+
+	// TODO: implement caching here for the service
+	// set migrated field when the migration is done
+	return sa.migrated
 }
