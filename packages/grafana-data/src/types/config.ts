@@ -53,6 +53,7 @@ export interface FeatureToggles {
   newNavigation: boolean;
   fullRangeLogsVolume: boolean;
   lokiLive: boolean;
+  dashboardPreviews: boolean;
 }
 
 /**

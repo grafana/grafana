@@ -1,0 +1,148 @@
+name: Levitate / Report breaking changes
+
+on:
+  workflow_run:
+    workflows: ["Levitate / Detect breaking changes"]
+    types: [completed]
+
+jobs:
+  notify:
+    name: Report
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup environment
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16
+    - run: npm install adm-zip
+
+    - name: Download artifact
+      uses: actions/github-script@v5
+      id: download-artifact
+      env:
+        RUN_ID: ${{github.event.workflow_run.id }}
+      with:
+        result-encoding: string
+        script: |
+          const runId = process.env.RUN_ID;
+          const artifactName = 'levitate';
+          const script = require('./.github/workflows/scripts/get-workflow-run-artifact.js');
+          return await script({ github, context, core, runId, artifactName });
+    
+    - name: Parsing levitate result
+      uses: actions/github-script@v5
+      id: levitate-run
+      env:
+        ARTIFACT_FOLDER: ${{ steps.download-artifact.outputs.result }}
+      with:
+        script: |
+          const filePath = `${process.env.ARTIFACT_FOLDER}/result.json`;
+          const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
+          await script({ core, filePath });
+
+    - name: Check if "breaking change" label exists
+      id: does-label-exist
+      uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+      with:
+        script: |
+          const { data } = await github.rest.issues.listLabelsOnIssue({
+            issue_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+          });
+          const labels = data.map(({ name }) => name);
+          const doesExist = labels.includes('breaking change');
+
+          return doesExist ? 1 : 0;
+
+    - name: Comment on PR
+      if: ${{ steps.levitate-run.outputs.exit_code == 1 }}
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        number: ${{ github.event.workflow_run.pull_requests[0].number }}
+        message: |
+          ⚠️ &nbsp;&nbsp;**Possible breaking changes**
+
+          _(Open the links below in a new tab to go to the correct steps)_
+
+          ${{ steps.levitate-run.outputs.message }}
+
+          [Check console output](${{ steps.levitate-run.outputs.job_link }})
+
+    - name: Remove comment on PR
+      if: ${{ steps.levitate-run.outputs.exit_code == 0 }}
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        number: ${{ github.event.workflow_run.pull_requests[0].number }}
+        delete: true
+
+
+    - name: Add "breaking change" label
+      if: ${{ steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 }}
+      uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+      with:
+        script: |
+          await github.rest.issues.addLabels({
+            issue_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['breaking change']
+          })
+
+    - name: Remove "breaking change" label
+      if: ${{ steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1 }}
+      uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+      with:
+        script: |
+          await github.rest.issues.removeLabel({
+            issue_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            name: 'breaking change'
+          })
+
+    # This is very weird, the actual request goes through (comes back with a 201), but does not assign the team.
+    # Related issue: https://github.com/renovatebot/renovate/issues/1908
+    - name: Add "grafana/plugins-platform-frontend" as a reviewer
+      if: ${{ steps.levitate-run.outputs.exit_code == 1 }}
+      uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+      with:
+        script: |
+          await github.rest.pulls.requestReviewers({
+            pull_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            reviewers: [],
+            team_reviewers: ['grafana/plugins-platform-frontend']
+          });
+
+    - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
+      if: ${{ steps.levitate-run.outputs.exit_code == 0 }}
+      uses: actions/github-script@v5
+      env:
+        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+      with:
+        script: |
+          await github.rest.pulls.removeRequestedReviewers({
+            pull_number: process.env.PR_NUMBER,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            reviewers: [],
+            team_reviewers: ['grafana/plugins-platform-frontend']
+          });
+
+    - name: Exit
+      run: exit ${{ steps.levitate-run.outputs.exit_code }}
+      shell: bash
+

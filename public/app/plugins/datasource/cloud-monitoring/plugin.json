@@ -7,6 +7,7 @@
   "metrics": true,
   "alerting": true,
   "annotations": true,
+  "backend": true,
   "includes": [
     {
       "type": "dashboard",

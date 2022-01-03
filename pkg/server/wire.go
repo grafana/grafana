@@ -59,6 +59,7 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -91,6 +92,7 @@ var wireBasicSet = wire.NewSet(
 	query.ProvideService,
 	bus.ProvideBus,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
+	thumbs.ProvideService,
 	rendering.ProvideService,
 	wire.Bind(new(rendering.Service), new(*rendering.RenderingService)),
 	routing.ProvideRegister,

@@ -20,20 +20,20 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 
 	bus.ClearBusHandlers()
 	defer bus.ClearBusHandlers()
-	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
+	bus.AddHandler("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
 		q.Result = createUserOrgDTO()
 
 		return nil
 	})
 
-	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
+	bus.AddHandler("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
 		testData := remResp[0]
 		remResp = remResp[1:]
 
 		require.Equal(t, testData.orgId, cmd.OrgId)
 		return testData.response
 	})
-	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
+	bus.AddHandler("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 		return nil
 	})
 
@@ -55,20 +55,20 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 
 	bus.ClearBusHandlers()
 	defer bus.ClearBusHandlers()
-	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
+	bus.AddHandler("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
 		q.Result = createUserOrgDTO()
 
 		return nil
 	})
 
-	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
+	bus.AddHandler("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
 		testData := remResp[0]
 		remResp = remResp[1:]
 
 		require.Equal(t, testData.orgId, cmd.OrgId)
 		return testData.response
 	})
-	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
+	bus.AddHandler("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 		return nil
 	})
 

@@ -3383,8 +3383,11 @@ __metadata:
     "@grafana/toolkit": 8.4.0-pre
     "@grafana/ui": 8.4.0-pre
     "@types/jest": 26.0.15
+    "@types/lodash": 4.14.149
     "@types/react": 17.0.30
     jquery: 3.5.1
+    lodash: 4.17.21
+    pnp-webpack-plugin: ^1.7.0
     react: 17.0.1
     react-dom: 17.0.1
     react-hook-form: 7.5.3
@@ -3840,7 +3843,7 @@ __metadata:
     mock-raf: 1.0.1
     moment: 2.29.1
     monaco-editor: ^0.31.1
-    postcss: 8.3.11
+    postcss: 8.4.5
     postcss-loader: 6.1.1
     prismjs: 1.25.0
     raw-loader: 4.0.2
@@ -3850,7 +3853,7 @@ __metadata:
     rc-time-picker: ^3.7.3
     react: 17.0.1
     react-beautiful-dnd: 13.1.0
-    react-calendar: 3.4.0
+    react-calendar: 3.5.0
     react-colorful: 5.1.2
     react-custom-scrollbars-2: 4.4.0
     react-docgen-typescript-loader: 3.7.2
@@ -19628,7 +19631,7 @@ __metadata:
     ol: 6.9.0
     papaparse: 5.3.0
     pluralize: ^8.0.0
-    postcss: 8.3.6
+    postcss: 8.4.5
     postcss-loader: 6.2.0
     postcss-reporter: 7.0.2
     postcss-scss: 4.0.2
@@ -27100,6 +27103,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pnp-webpack-plugin@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "pnp-webpack-plugin@npm:1.7.0"
+  dependencies:
+    ts-pnp: ^1.1.6
+  checksum: a41716d13607be5a3e06ba58b17e9e619cf07da3a0a7b10bd41cd89362873041054fd2b7966ad30a1b26b826cfb8fecc0469a95902d5b1b8ba8f591e2fe6b96d
+  languageName: node
+  linkType: hard
+
 "pofile@npm:^1.1.0":
   version: 1.1.1
   resolution: "pofile@npm:1.1.1"
@@ -28114,7 +28126,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:8.3.11, postcss@npm:^8.2.1, postcss@npm:^8.2.15, postcss@npm:^8.3.11, postcss@npm:^8.3.5":
+"postcss@npm:8.4.5":
+  version: 8.4.5
+  resolution: "postcss@npm:8.4.5"
+  dependencies:
+    nanoid: ^3.1.30
+    picocolors: ^1.0.0
+    source-map-js: ^1.0.1
+  checksum: b78abdd89c10f7b48f4bdcd376104a19d6e9c7495ab521729bdb3df315af6c211360e9f06887ad3bc0ab0f61a04b91d68ea11462997c79cced58b9ccd66fac07
+  languageName: node
+  linkType: hard
+
+"postcss@npm:^8.2.1, postcss@npm:^8.2.15, postcss@npm:^8.3.11, postcss@npm:^8.3.5":
   version: 8.3.11
   resolution: "postcss@npm:8.3.11"
   dependencies:
@@ -28122,17 +28145,6 @@ __metadata:
     picocolors: ^1.0.0
     source-map-js: ^0.6.2
   checksum: 1a230553d74c66aa9585c90781ed8ea75f19cefea405d2117b67fbeb24b5b5e0e17be2e0c5a07db31dd085643a13394127ab2222e940771b70498331bf20f35e
-  languageName: node
-  linkType: hard
-
-"postcss@npm:8.3.6":
-  version: 8.3.6
-  resolution: "postcss@npm:8.3.6"
-  dependencies:
-    colorette: ^1.2.2
-    nanoid: ^3.1.23
-    source-map-js: ^0.6.2
-  checksum: ff55b91bea21f42c2a94d77fd05c3f66dd15889c68506cf1dbb9cdee8c3b9e9d0e219bcbc6e61a107bd63e3cac0670176486e2a5794c106a4e1b9babceb79317
   languageName: node
   linkType: hard
 
@@ -29143,9 +29155,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-calendar@npm:3.4.0":
-  version: 3.4.0
-  resolution: "react-calendar@npm:3.4.0"
+"react-calendar@npm:3.5.0":
+  version: 3.5.0
+  resolution: "react-calendar@npm:3.5.0"
   dependencies:
     "@wojtekmaj/date-utils": ^1.0.2
     get-user-locale: ^1.2.0
@@ -29154,7 +29166,7 @@ __metadata:
   peerDependencies:
     react: ^16.3.0 || ^17.0.0-0
     react-dom: ^16.3.0 || ^17.0.0-0
-  checksum: 2ab2633e8e9db38ea8bcd5f33c29674ef84d92820583b84a15e19cae2dbee45e72d1b1e55465353f5fb29174f9771882ef50d3dfddcf6f9b537d2537a083b5f4
+  checksum: 22cdfd472cfabb9dc6253a79c2a11c8bb13ef130356d0166fe78a5cb70ba52a7ad70962bdc604ee326ed404cb99d9a8fbbb6ef0a8b061337aee7d11aae0ad8cd
   languageName: node
   linkType: hard
 
@@ -32098,6 +32110,13 @@ __metadata:
   version: 0.6.2
   resolution: "source-map-js@npm:0.6.2"
   checksum: 9c8151a29e00fd8d3ba87709fdf9a9ce48313d653f4a29a39b4ae53d346ac79e005de624796ff42eff55cbaf26d2e87f4466001ca87831d400d818c5cf146a0e
+  languageName: node
+  linkType: hard
+
+"source-map-js@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "source-map-js@npm:1.0.1"
+  checksum: 22606113d62bbd468712b0cb0c46e9a8629de7eb081049c62a04d977a211abafd7d61455617f8b78daba0b6c0c7e7c88f8c6b5aaeacffac0a6676ecf5caac5ce
   languageName: node
   linkType: hard
 

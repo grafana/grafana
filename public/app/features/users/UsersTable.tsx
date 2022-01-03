@@ -15,9 +15,6 @@ export interface Props {
 
 const UsersTable: FC<Props> = (props) => {
   const { users, orgId, onRoleChange, onRemoveUser } = props;
-  const canUpdateRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
-  const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
-  const rolePickerDisabled = !canUpdateRole;
 
   const [showRemoveModal, setShowRemoveModal] = useState<string | boolean>(false);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
@@ -89,19 +86,19 @@ const UsersTable: FC<Props> = (props) => {
                     onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
                     getRoleOptions={getRoleOptions}
                     getBuiltinRoles={getBuiltinRoles}
-                    disabled={rolePickerDisabled}
+                    disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
                   />
                 ) : (
                   <OrgRolePicker
                     aria-label="Role"
                     value={user.role}
-                    disabled={!canUpdateRole}
+                    disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
                     onChange={(newRole) => onRoleChange(newRole, user)}
                   />
                 )}
               </td>
 
-              {canRemoveFromOrg && (
+              {contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRemove, user) && (
                 <td>
                   <Button
                     size="sm"
