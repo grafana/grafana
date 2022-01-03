@@ -9,7 +9,7 @@ interface InfoTooltipProps extends Omit<TooltipProps, 'children' | 'content'> {
 export const InfoTooltip = ({ children, ...restProps }: InfoTooltipProps) => {
   return (
     <Tooltip content={children} {...restProps}>
-      <Button variant="secondary" icon="info-circle" />
+      <Button icon="info-circle" ghostMode={true} />
     </Tooltip>
   );
 };
