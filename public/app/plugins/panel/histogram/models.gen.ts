@@ -10,6 +10,7 @@ import {
   TooltipDisplayMode,
   GraphGradientMode,
   HideableFieldConfig,
+  TooltipSortOrder,
 } from '@grafana/schema';
 
 export const modelVersion = Object.freeze([1, 0]);
@@ -29,6 +30,7 @@ export const defaultPanelOptions: PanelOptions = {
   },
   tooltip: {
     mode: TooltipDisplayMode.Multi,
+    sortOrder: TooltipSortOrder.None,
   },
 };
 

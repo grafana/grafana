@@ -12,7 +12,7 @@ import {
   getFieldDisplayName,
   TimeZone,
 } from '@grafana/data';
-import { TooltipDisplayMode } from '@grafana/schema';
+import { TooltipDisplayMode, TooltipSortOrder } from '@grafana/schema';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { Portal } from '../../Portal/Portal';
 import { SeriesTable, SeriesTableRowProps, VizTooltipContainer } from '../../VizTooltip';
@@ -24,6 +24,7 @@ interface TooltipPluginProps {
   data: DataFrame;
   config: UPlotConfigBuilder;
   mode?: TooltipDisplayMode;
+  sortOrder?: TooltipSortOrder;
   sync?: DashboardCursorSync;
   // Allows custom tooltip content rendering. Exposes aligned data frame with relevant indexes for data inspection
   // Use field.state.origin indexes from alignedData frame field to get access to original data frame and field index.
@@ -37,6 +38,7 @@ const TOOLTIP_OFFSET = 10;
  */
 export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   mode = TooltipDisplayMode.Single,
+  sortOrder = TooltipSortOrder.None,
   sync,
   timeZone,
   config,
@@ -206,6 +208,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       let series: SeriesTableRowProps[] = [];
       const frame = otherProps.data;
       const fields = frame.fields;
+      const sortIdx: Array<[number, number]> = [];
 
       for (let i = 0; i < fields.length; i++) {
         const field = frame.fields[i];
@@ -220,8 +223,9 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
           continue;
         }
 
-        const display = field.display!(otherProps.data.fields[i].values.get(focusedPointIdxs[i]!));
-
+        const v = otherProps.data.fields[i].values.get(focusedPointIdxs[i]!);
+        const display = field.display!(v);
+        sortIdx.push([series.length, v]);
         series.push({
           color: display.color || FALLBACK_COLOR,
           label: getFieldDisplayName(field, frame),
@@ -230,7 +234,18 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         });
       }
 
-      tooltip = <SeriesTable series={series} timestamp={xVal} />;
+      let result = new Array(series.length);
+
+      if (sortOrder !== TooltipSortOrder.None) {
+        sortIdx.sort((a, b) => sortValues(sortOrder)(a[1], b[1]));
+        for (let i = 0; i < sortIdx.length; i++) {
+          result[i] = series[sortIdx[i][0]];
+        }
+      } else {
+        result = series;
+      }
+
+      tooltip = <SeriesTable series={result} timestamp={xVal} />;
     }
   } else {
     tooltip = renderTooltip(otherProps.data, focusedSeriesIdx, focusedPointIdx);
@@ -284,4 +299,28 @@ export function positionTooltip(u: uPlot, bbox: DOMRect) {
   }
 
   return { x, y };
+}
+
+/**
+ * Given a sort order and a value, return a function that can be used to sort values
+ * Null values are always sorted to the end regardless of the sort order
+ */
+function sortValues(sort: TooltipSortOrder) {
+  return (a: number | null | undefined, b: number | null | undefined) => {
+    if (a === b) {
+      return 0;
+    }
+
+    if (b == null) {
+      return -1;
+    }
+    if (a == null) {
+      return 1;
+    }
+
+    if (sort === TooltipSortOrder.Descending) {
+      return b - a;
+    }
+    return a - b;
+  };
 }

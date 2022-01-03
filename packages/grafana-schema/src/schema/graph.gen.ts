@@ -239,6 +239,12 @@ export enum TooltipDisplayMode {
   Single = 'single',
 }
 
+export enum TooltipSortOrder {
+  Ascending = 'asc',
+  Descending = 'desc',
+  None = 'none',
+}
+
 export interface GraphFieldConfig
   extends LineConfig,
     FillConfig,
@@ -284,4 +290,5 @@ export const defaultTableFieldOptions: TableFieldOptions = {
 
 export interface VizTooltipOptions {
   mode: TooltipDisplayMode;
+  sortOrder: TooltipSortOrder;
 }

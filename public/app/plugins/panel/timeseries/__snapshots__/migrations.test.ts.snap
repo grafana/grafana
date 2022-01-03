@@ -46,7 +46,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sortOrder": "none",
     },
   },
 }
@@ -74,6 +75,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "single",
+      "sortOrder": "none",
     },
   },
 }
@@ -99,6 +101,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "single",
+      "sortOrder": "none",
     },
   },
 }
@@ -153,7 +156,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sortOrder": "none",
     },
   },
 }
@@ -208,7 +212,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sortOrder": "none",
     },
   },
 }
@@ -236,6 +241,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "single",
+      "sortOrder": "none",
     },
   },
 }
@@ -321,7 +327,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sortOrder": "none",
     },
   },
 }
@@ -377,7 +384,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sortOrder": "none",
     },
   },
 }
@@ -417,7 +425,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sortOrder": "none",
     },
   },
 }
@@ -465,7 +474,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sortOrder": "none",
     },
   },
 }
@@ -550,7 +560,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sortOrder": "none",
     },
   },
 }
