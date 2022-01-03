@@ -645,13 +645,9 @@ export type LogVolumeMeta = {
 
 export const hasLogsVolumeMeta = (custom: any): custom is LogVolumeMeta => {
   return (
-    custom !== null &&
-    typeof custom === 'object' &&
-    custom.cacheInfo !== null &&
-    typeof custom.cacheInfo === 'object' &&
-    typeof custom.cacheInfo.targets === 'object' &&
-    typeof custom.cacheInfo.absoluteRange === 'object' &&
-    typeof custom.bucketSize === 'number'
+    typeof custom?.cacheInfo?.targets === 'object' &&
+    typeof custom?.cacheInfo?.absoluteRange === 'object' &&
+    typeof custom?.bucketSize === 'number'
   );
 };
 
