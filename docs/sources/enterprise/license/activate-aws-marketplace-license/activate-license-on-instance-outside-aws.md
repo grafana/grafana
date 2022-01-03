@@ -28,7 +28,7 @@ To install Grafana, refer to the documentation specific to your implementation.
 
 ## Task 2: Create an AWS IAM user with access to your Grafana Enterprise license
 
-To retrieve your license, Grafana Enterprise requires access to your AWS account and license information. To grant access, create an IAM user in AWS with access to the license, and pass its credentials as environment variables on the host or container where Grafana is running. These environment variables enables Grafana to retrieve license details from AWS.
+To retrieve your license, Grafana Enterprise requires access to your AWS account and license information. To grant access, create an IAM user in AWS with access to the license, and pass its credentials as environment variables on the host or container where Grafana is running. These environment variables allow Grafana to retrieve license details from AWS.
 
 1. In the AWS License Manager service, create an IAM policy with the following permissions:
 
@@ -71,7 +71,7 @@ To retrieve your license, Grafana Enterprise requires access to your AWS account
    }
    ```
 
-1. Create an IAM user and assign access key credentials.
+1. Create an IAM user and choose access key credentials as its authentication method.
 
    For more information about creating an IAM user, refer to [IAM users](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html).
 
@@ -97,9 +97,9 @@ To retrieve your license, Grafana Enterprise requires access to your AWS account
 
 In this task you configure Grafana Enterprise to validate the license with AWS instead of Grafana Labs.
 
-Perform one of the following steps to update the [license_validation_type]({{< relref "../../enterprise-configuration.md#license_validation_type" >}}) configuration to `aws`:
+Choose one of the following options to update the [license_validation_type]({{< relref "../../enterprise-configuration.md#license_validation_type" >}}) configuration to `aws`:
 
-- In the `[enterprise]` section of the grafana.ini configuration file, add `license_validation_type=aws`.
+- **Option 1:** In the `[enterprise]` section of the grafana.ini configuration file, add `license_validation_type=aws`.
 
   For example:
 
@@ -108,7 +108,7 @@ Perform one of the following steps to update the [license_validation_type]({{< r
   license_validation_type=aws
   ```
 
-- Add the following environment variable to the container or host:
+- **Option 2:** Add the following environment variable to the container or host:
 
   ```
   GF_ENTERPRISE_LICENSE_VALIDATION_TYPE=aws
