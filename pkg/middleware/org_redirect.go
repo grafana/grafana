@@ -34,7 +34,7 @@ func OrgRedirect(cfg *setting.Cfg) web.Handler {
 		}
 
 		cmd := models.SetUsingOrgCommand{UserId: ctx.UserId, OrgId: orgId}
-		if err := bus.DispatchCtx(ctx.Req.Context(), &cmd); err != nil {
+		if err := bus.Dispatch(ctx.Req.Context(), &cmd); err != nil {
 			if ctx.IsApiRequest() {
 				ctx.JsonApiErr(404, "Not found", nil)
 			} else {

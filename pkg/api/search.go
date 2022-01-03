@@ -62,7 +62,7 @@ func Search(c *models.ReqContext) response.Response {
 		Sort:         sort,
 	}
 
-	err := bus.DispatchCtx(c.Req.Context(), &searchQuery)
+	err := bus.Dispatch(c.Req.Context(), &searchQuery)
 	if err != nil {
 		return response.Error(500, "Search failed", err)
 	}

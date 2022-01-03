@@ -153,7 +153,7 @@ func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 		HttpMethod: wn.HTTPMethod,
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		wn.log.Error("Failed to send webhook", "error", err, "webhook", wn.Name)
 		return err
 	}

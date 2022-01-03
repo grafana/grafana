@@ -255,6 +255,7 @@ Organize your code in a directory that encloses feature code:
 - Put React components in `components` directory (i.e. `features/my-feature/components/ButtonPeopleDreamOf.tsx`).
 - Put test files next to the test subject.
 - Put containers (pages) in feature root (i.e. `features/my-feature/DashboardPage.tsx`).
+- Put API function calls that isn't a redux thunk in an `api.ts` file within the same directory.
 - Subcomponents can live in the component folders. Small component do not need their own folder.
 - Component SASS styles should live in the same folder as component code.
 

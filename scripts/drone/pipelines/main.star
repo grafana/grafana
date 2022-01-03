@@ -14,9 +14,9 @@ load(
     'build_frontend_step',
     'build_plugins_step',
     'package_step',
-    'install_cypress_step',
     'e2e_tests_server_step',
     'e2e_tests_step',
+    'e2e_tests_artifacts',
     'build_storybook_step',
     'build_frontend_docs_step',
     'copy_packages_for_docker_step',
@@ -29,10 +29,10 @@ load(
     'benchmark_ldap_step',
     'enterprise_downstream_step',
     'frontend_metrics_step',
-    'publish_storybook_step',
+    'store_storybook_step',
     'release_canary_npm_packages_step',
     'upload_packages_step',
-    'publish_packages_step',
+    'store_packages_step',
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
@@ -98,15 +98,15 @@ def get_steps(edition, is_downstream=False):
 
     # Insert remaining steps
     build_steps.extend([
-        package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, is_downstream=is_downstream),
-        install_cypress_step(),
+        package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, is_downstream=is_downstream),        
         e2e_tests_server_step(edition=edition),
         e2e_tests_step('dashboards-suite', edition=edition),
         e2e_tests_step('smoke-tests-suite', edition=edition),
         e2e_tests_step('panels-suite', edition=edition),
         e2e_tests_step('various-suite', edition=edition),
+        e2e_tests_artifacts(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
-        publish_storybook_step(edition=edition, ver_mode=ver_mode),
+        store_storybook_step(edition=edition, ver_mode=ver_mode),
         test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
         frontend_metrics_step(edition=edition),
         build_frontend_docs_step(edition=edition),
@@ -134,13 +134,13 @@ def get_steps(edition, is_downstream=False):
 
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)
     if edition == 'enterprise' and not is_downstream:
-        publish_steps = []
+        store_steps = []
     else:
-        publish_steps = [
-            publish_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
+        store_steps = [
+            store_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         ]
 
-    return test_steps, build_steps, integration_test_steps, windows_steps, publish_steps
+    return test_steps, build_steps, integration_test_steps, windows_steps, store_steps
 
 def main_pipelines(edition):
     services = integration_test_services(edition)
@@ -161,7 +161,7 @@ def main_pipelines(edition):
             ],
         },
     }
-    test_steps, build_steps, integration_test_steps, windows_steps, publish_steps = get_steps(edition=edition)
+    test_steps, build_steps, integration_test_steps, windows_steps, store_steps = get_steps(edition=edition)
 
     if edition == 'enterprise':
         services.append(ldap_service())
@@ -179,7 +179,7 @@ def main_pipelines(edition):
             volumes=volumes,
         ),
         pipeline(
-            name='main-integration-tests', edition=edition, trigger=trigger, services=[],
+            name='main-integration-tests', edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps,
             volumes=volumes,
         ),
@@ -194,7 +194,7 @@ def main_pipelines(edition):
     if edition != 'enterprise':
         pipelines.append(pipeline(
             name='publish-main', edition=edition, trigger=trigger,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, install_deps=False) + publish_steps,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, install_deps=False) + store_steps,
             depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main',],
         ))
 
@@ -207,7 +207,7 @@ def main_pipelines(edition):
         trigger = {
             'event': ['custom',],
         }
-        test_steps, build_steps, integration_test_steps, windows_steps, publish_steps = get_steps(edition=edition, is_downstream=True)
+        test_steps, build_steps, integration_test_steps, windows_steps, store_steps = get_steps(edition=edition, is_downstream=True)
         pipelines.append(pipeline(
             name='build-main-downstream', edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, is_downstream=True) + test_steps + build_steps + integration_test_steps,
@@ -220,7 +220,7 @@ def main_pipelines(edition):
         ))
         pipelines.append(pipeline(
             name='publish-main-downstream', edition=edition, trigger=trigger,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, is_downstream=True, install_deps=False) + publish_steps,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, is_downstream=True, install_deps=False) + store_steps,
             depends_on=['build-main-downstream', 'windows-main-downstream'],
         ))
 
