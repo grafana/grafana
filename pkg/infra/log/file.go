@@ -64,21 +64,22 @@ func (w *FileLogWriter) setFD(fd *os.File) error {
 
 // create a FileLogWriter returning as LoggerInterface.
 func NewFileWriter() *FileLogWriter {
-	w := new(FileLogWriter)
-	w.Filename = ""
-	w.Format = func(w io.Writer) log.Logger {
-		return log.NewLogfmtLogger(w)
+	w := &FileLogWriter{
+		Filename: "",
+		Format: func(w io.Writer) log.Logger {
+			return log.NewLogfmtLogger(w)
+		},
+		Maxlines: 1000000,
+		Maxsize:  1 << 28, // 256 MB
+		Daily:    true,
+		Maxdays:  7,
+		Rotate:   true,
 	}
-	w.Maxlines = 1000000
-	w.Maxsize = 1 << 28 // 256 MB
-	w.Daily = true
-	w.Maxdays = 7
-	w.Rotate = true
 	return w
 }
 
 func (w *FileLogWriter) Log(keyvals ...interface{}) error {
-	return w.logger.Log(keyvals)
+	return w.logger.Log(keyvals...)
 }
 
 func (w *FileLogWriter) Init() error {
@@ -90,7 +91,6 @@ func (w *FileLogWriter) Init() error {
 	}
 	w.logger = log.NewLogfmtLogger(log.NewSyncWriter(w))
 	return nil
-
 }
 
 // start file logger. create log file and set to locker-inside file writer.

@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -313,7 +312,6 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 }
 
 func assertContextContains(t *testing.T, logRecord map[string]interface{}, label string, value interface{}) {
-	fmt.Println(logRecord)
 	assert.Contains(t, logRecord, label)
 	assert.Equal(t, value, logRecord[label])
 }

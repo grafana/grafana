@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	gokitlog "github.com/go-kit/log"
 	"github.com/go-kit/log/term"
@@ -17,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	isatty "github.com/mattn/go-isatty"
+	"github.com/mattn/go-isatty"
 	"gopkg.in/ini.v1"
 )
 
@@ -49,7 +50,7 @@ func (ml *MultiLoggers) AddLogger(val gokitlog.Logger, levelName string, filters
 }
 
 func (ml *MultiLoggers) SetLogger(des MultiLoggers) {
-	ml = &des
+	ml.loggers = des.loggers
 }
 
 func (ml *MultiLoggers) GetLogger() MultiLoggers {
@@ -58,27 +59,39 @@ func (ml *MultiLoggers) GetLogger() MultiLoggers {
 
 func (ml MultiLoggers) Warn(msg string, args ...interface{}) {
 	args = append([]interface{}{level.Key(), level.WarnValue(), "msg", msg}, args...)
-	ml.Log(args...)
+	err := ml.Log(args...)
+	if err != nil {
+		_ = level.Error(Root).Log("Logging error", "error", err)
+	}
 }
 
 func (ml MultiLoggers) Debug(msg string, args ...interface{}) {
 	args = append([]interface{}{level.Key(), level.DebugValue(), "msg", msg}, args...)
-	ml.Log(args...)
+	err := ml.Log(args...)
+	if err != nil {
+		_ = level.Error(Root).Log("Logging error", "error", err)
+	}
 }
 
 func (ml MultiLoggers) Error(msg string, args ...interface{}) {
 	args = append([]interface{}{level.Key(), level.ErrorValue(), "msg", msg}, args...)
-	ml.Log(args...)
+	err := ml.Log(args...)
+	if err != nil {
+		_ = level.Error(Root).Log("Logging error", "error", err)
+	}
 }
 
 func (ml MultiLoggers) Info(msg string, args ...interface{}) {
 	args = append([]interface{}{level.Key(), level.InfoValue(), "msg", msg}, args...)
-	ml.Log(args...)
+	err := ml.Log(args...)
+	if err != nil {
+		_ = level.Error(Root).Log("Logging error", "error", err)
+	}
 }
 
 func (ml MultiLoggers) Log(keyvals ...interface{}) error {
 	for _, multilogger := range ml.loggers {
-		multilogger.val = gokitlog.With(multilogger.val, "ts", gokitlog.DefaultTimestamp)
+		multilogger.val = gokitlog.With(multilogger.val, "t", gokitlog.TimestampFormat(time.Now, "2006-01-02T15:04:05.99-0700"))
 		if err := multilogger.val.Log(keyvals...); err != nil {
 			return err
 		}
@@ -143,7 +156,7 @@ func getLogLevelFromString(levelName string) level.Option {
 	loglevel, ok := logLevels[levelName]
 
 	if !ok {
-		level.Error(Root).Log("Unknown log level", "level", levelName)
+		_ = level.Error(Root).Log("Unknown log level", "level", levelName)
 		return level.AllowError()
 	}
 
@@ -260,7 +273,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		mode = strings.TrimSpace(mode)
 		sec, err := cfg.GetSection("log." + mode)
 		if err != nil {
-			level.Error(Root).Log("Unknown log mode", "mode", mode)
+			_ = level.Error(Root).Log("Unknown log mode", "mode", mode)
 			return errutil.Wrapf(err, "failed to get config section log.%s", mode)
 		}
 
@@ -279,7 +292,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			fileName := sec.Key("file_name").MustString(filepath.Join(logsPath, "grafana.log"))
 			dpath := filepath.Dir(fileName)
 			if err := os.MkdirAll(dpath, os.ModePerm); err != nil {
-				level.Error(Root).Log("Failed to create directory", "dpath", dpath, "err", err)
+				_ = level.Error(Root).Log("Failed to create directory", "dpath", dpath, "err", err)
 				return errutil.Wrapf(err, "failed to create log directory %q", dpath)
 			}
 			fileHandler := NewFileWriter()
@@ -291,7 +304,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			fileHandler.Daily = sec.Key("daily_rotate").MustBool(true)
 			fileHandler.Maxdays = sec.Key("max_days").MustInt64(7)
 			if err := fileHandler.Init(); err != nil {
-				level.Error(Root).Log("Failed to initialize file handler", "dpath", dpath, "err", err)
+				_ = level.Error(Root).Log("Failed to initialize file handler", "dpath", dpath, "err", err)
 				return errutil.Wrapf(err, "failed to initialize file handler")
 			}
 

@@ -11,10 +11,7 @@ import (
 
 func (w *FileLogWriter) WriteLine(line string) error {
 	_, err := w.Write([]byte(line))
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func TestLogFile(t *testing.T) {

@@ -62,7 +62,7 @@ func NewSyslog(sec *ini.Section, format Formatedlogger) *SysLogHandler {
 	handler.Tag = sec.Key("tag").MustString("")
 
 	if err := handler.Init(); err != nil {
-		level.Error(Root).Log("Failed to init syslog log handler", "error", err)
+		_ = level.Error(Root).Log("Failed to init syslog log handler", "error", err)
 		os.Exit(1)
 	}
 	handler.logger = gokitsyslog.NewSyslogLogger(handler.syslog, format, gokitsyslog.PrioritySelectorOption(selector))
@@ -71,10 +71,7 @@ func NewSyslog(sec *ini.Section, format Formatedlogger) *SysLogHandler {
 
 func (sw *SysLogHandler) Init() error {
 	// the facility is the origin of the syslog message
-	prio, err := parseFacility(sw.Facility)
-	if err != nil {
-		return err
-	}
+	prio := parseFacility(sw.Facility)
 
 	w, err := syslog.Dial(sw.Network, sw.Address, prio, sw.Tag)
 	if err != nil {
@@ -84,8 +81,6 @@ func (sw *SysLogHandler) Init() error {
 	sw.syslog = w
 	return nil
 }
-
-type levelOption func(logger log.Logger) log.Logger
 
 func (sw *SysLogHandler) Log(keyvals ...interface{}) error {
 	err := sw.logger.Log(keyvals...)
@@ -109,6 +104,11 @@ var facilities = map[string]syslog.Priority{
 	"local7": syslog.LOG_LOCAL7,
 }
 
-func parseFacility(facility string) (syslog.Priority, error) {
-	return syslog.LOG_LOCAL0, nil
+func parseFacility(facility string) syslog.Priority {
+	v, found := facilities[facility]
+	if !found {
+		// default the facility level to LOG_LOCAL7
+		return syslog.LOG_LOCAL7
+	}
+	return v
 }
