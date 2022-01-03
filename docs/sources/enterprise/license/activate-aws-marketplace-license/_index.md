@@ -2,7 +2,7 @@
 title = "Activate a Grafana Enterprise license purchased through AWS Marketplace"
 description = "Activate Enterprise license purchased through AWS Marketplace"
 keywords = ["grafana", "aws", "marketplace", "enterprise", "license"]
-weight = 10
+weight = 400
 +++
 
 # Activate a Grafana Enterprise license purchased through AWS Marketplace

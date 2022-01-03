@@ -23,7 +23,7 @@ To activate your license, complete the following tasks:
 
    For more information about deploying an application on Amazon EKS, refer to [Getting started with Amazon EKS – AWS Management Console and AWS CLI](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-console.html).
 
-   For more information about installing Grafana on Kubernetes using the Helm Chart, refer to [Grafana Helm Chart](https://github.com/grafana/helm-charts/tree/main/charts/grafana#readme).
+   For more information about installing Grafana on Kubernetes using the Helm Chart, refer to the [Grafana Helm Chart](https://github.com/grafana/helm-charts/tree/main/charts/grafana#readme).
 
 1. Use `kubectl set image deployment/my-release grafana=grafana/grafana-enterprise:<version>` to update the container image to Grafana Enterprise version 8.3.0 or later.
 
@@ -42,9 +42,9 @@ Grafana requires that you configure a database to hold dashboards, users, and ot
   - For information about creating a database, refer to [Creating an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html).
 - Review the information required to connect to the RDS DB instance. For more information, refer to [Connecting to an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_CommonTasks.Connect.html).
 
-To configure Grafana for high availability, perform one of the following steps:
+To configure Grafana for high availability, choose **one** of the following options:
 
-- Use `kubectl edit configmap grafana` to edit `grafana.ini` add the following section to the configuration:
+- **Option 1:** Use `kubectl edit configmap grafana` to edit `grafana.ini` add the following section to the configuration:
 
   ```
   [database]
@@ -55,7 +55,7 @@ To configure Grafana for high availability, perform one of the following steps:
   password = [database password]
   ```
 
-- Use `kubectl edit deployment my-release` to edit the pod `env` variables and add the following database variables:
+- **Option 2:** use `kubectl edit deployment my-release` to edit the pod `env` variables and add the following database variables:
 
   ```
   - name: GF_DATABASE_TYPE
@@ -69,6 +69,8 @@ To configure Grafana for high availability, perform one of the following steps:
   - name: GF_DATABASE_PASSWORD
     value: [database password]
   ```
+
+For more information on Grafana High Availability setup, refer to [Set up Grafana for high availability]({{< relref "../../../administration/set-up-for-high-availability.md" >}}).
 
 ## Task 3: Configure Grafana Enterprise to validate its license with AWS
 
@@ -85,16 +87,16 @@ In this task, you configure Grafana Enterprise to validate the license with AWS 
 
    For more information about AWS license permissions, refer to [Actions, resources, and condition keys for AWS License Manager](https://docs.aws.amazon.com/service-authorization/latest/reference/list_awslicensemanager.html).
 
-1. Perform one of the following steps to update the [license_validation_type]({{< relref "../../enterprise-configuration.md#license_validation_type" >}}) configuration to `aws`:
+1. Choose **one** of the following options to update the [license_validation_type]({{< relref "../../enterprise-configuration.md#license_validation_type" >}}) configuration to `aws`:
 
-   - Use `kubectl edit configmap grafana` to edit `grafana.ini` add the following section to the configuration:
+   - **Option 1:** Use `kubectl edit configmap grafana` to edit `grafana.ini` add the following section to the configuration:
 
      ```
      [enterprise]
      license_validation_type=aws
      ```
 
-   - Use `kubectl edit deployment my-release` to edit the pod `env` variables and add the following variable:
+   - **Option 2:** Use `kubectl edit deployment my-release` to edit the pod `env` variables and add the following variable:
 
      ```
      name: GF_ENTERPRISE_LICENSE_VALIDATION_TYPE
@@ -105,7 +107,11 @@ In this task, you configure Grafana Enterprise to validate the license with AWS 
 
 To activate Grafana Enterprise features, you must start (or restart) Grafana.
 
-To restart Grafana on a Kubernetes cluster, use `kubectl rollout restart deployment my-release`.
+To restart Grafana on a Kubernetes cluster, 
+
+1. Run the command `kubectl rollout restart deployment my-release`.
+
+1. After you update the service, navigate to your Grafana instance, sign in with Grafana Admin credentials, and navigate to the Statistics and Licensing page to validate that your license is active.
 
 For more information about restarting Grafana, refer to [Restart Grafana]({{< relref "../../../installation/restart-grafana" >}}).
 

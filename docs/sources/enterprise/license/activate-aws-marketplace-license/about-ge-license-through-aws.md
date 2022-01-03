@@ -17,8 +17,6 @@ You can deploy Grafana Enterprise in the following ways:
 
 In each case, you must activate the Grafana Enterprise license purchased in AWS Marketplace to take advantage of Grafana Enterprise observability features.
 
-The following topics guide you in activating a Grafana Enterprise license for each deployment use cases.
-
 > To purchase a license directly from Grafana Labs or learn more about other Grafana offerings, [Contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise).
 
 ## Before you begin

@@ -50,7 +50,7 @@ To configure Grafana for high availability:
 
    For more information about creating a task, refer to [Updating a task definition using the classic console](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-task-definition.html).
 
-1. Within the new revision, edit the Grafana Enterprise container for this task, and add the following environment variable to the container:
+1. Within the new revision, edit the Grafana Enterprise container for this task, and add the following environment variables to the container:
 
    ```
    GF_DATABASE_TYPE=[database type]
@@ -60,7 +60,7 @@ To configure Grafana for high availability:
    GF_DATABASE_PASSWORD=[database password]
    ```
 
-   > For more information about how to update your ECS service with an environment variable, refer to [Updating a service using the new console](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-service-console-v2.html).
+> For more information about how to update your ECS service with an environment variable, refer to [Updating a service using the new console](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-service-console-v2.html).
 
 ## Task 3: Configure Grafana Enterprise to validate its license with AWS
 
@@ -100,7 +100,6 @@ In this task you configure Grafana Enterprise to validate the license with AWS i
 ### Task 4: Start or restart Grafana
 
 1. To restart Grafana and activate your license, update the service running Grafana to use the latest revision of the task definition that you created.
-
 1. After you update the service, navigate to your Grafana instance, sign in with Grafana Admin credentials, and navigate to the **Statistics and Licensing** page to validate that your license is active.
 
 For more information about validating that your license is active, refer to [Determine the number of active users for each licensed role](../../license-restrictions/#determine-the-number-of-active-users-for-each-licensed-role).

@@ -14,7 +14,7 @@ While AWS Marketplace lists ECS and EKS as the supported environments for Grafan
 
 - Purchase a subscription to [Grafana Enterprise from AWS Marketplace](https://aws.amazon.com/marketplace/pp/prodview-dlncd4kzt5kx6).
 - Be sure that the IAM user that was used to purchase Grafana Enterprise has permission to manage subscriptions, create new IAM users, and create access policies.
-- Be sure there is network access between AWS and the environment where you intend to run Grafana. Network access is required because your Grafana instance communicates with the [AWS License Manager endpoints and quotas](https://docs.aws.amazon.com/general/latest/gr/licensemanager.html) to retrieve license and subscription information.
+- Be sure there is network access between AWS and the environment where you intend to run Grafana. Network access is required because your Grafana instance communicates with the [AWS License Manager endpoints and quotas](https://docs.aws.amazon.com/general/latest/gr/licensemanager.html) to retrieve license and subscription information. Grafana instances with access to the public internet will have access to AWS license manager.
 
 To activate a Grafana Enterprise license from AWS on a Grafana Enterprise instance deployed outside of AWS, complete the following tasks.
 
