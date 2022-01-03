@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
+# Find existing packages using Lerna
 PACKAGES=$(lerna list -p -l)
 EXIT_CODE=0
 GITHUB_MESSAGE=""
 
-# Loop through packages
+# Loop through the packages
 while IFS= read -r line; do
 
     # Read package info
@@ -15,7 +16,6 @@ while IFS= read -r line; do
     # Calculate current and previous package paths / names
     PREV="$PACKAGE_NAME@canary"
     CURRENT="$PACKAGE_PATH/dist/"
-
 
     # Temporarily skipping @grafana/toolkit, as it doesn't have any exposed static typing
     if [[ "$PACKAGE_NAME" == '@grafana/toolkit' ]]; then
@@ -39,7 +39,7 @@ while IFS= read -r line; do
     if [ $STATUS -gt 0 ]
     then
         EXIT_CODE=1
-        GITHUB_MESSAGE="${GITHUB_MESSAGE}**\`${PACKAGE_NAME}\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:11:1))<br />"    
+        GITHUB_MESSAGE="${GITHUB_MESSAGE}**\`${PACKAGE_NAME}\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"    
     fi    
 
 done <<< "$PACKAGES"
