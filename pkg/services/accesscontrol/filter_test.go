@@ -122,16 +122,25 @@ func TestFilter(t *testing.T) {
 		},
 	}
 
+	// set sqlIDAcceptList before running tests
+	sqlIDAcceptList = map[string]struct{}{
+		"user.id":        {},
+		"dashboard.id":   {},
+		"data_source.id": {},
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			query, args := Filter(
+
+			query, args, err := Filter(
 				context.Background(),
 				FakeDriver{name: tt.driverName},
-				tt.prefix,
 				tt.sqlID,
+				tt.prefix,
 				tt.action,
 				&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: GroupScopesByAction(tt.permissions)}},
 			)
+			require.NoError(t, err)
 			assert.Equal(t, tt.expectedQuery, query)
 
 			require.Len(t, args, len(tt.expectedArgs))
@@ -144,14 +153,17 @@ func TestFilter(t *testing.T) {
 
 type filterDatasourcesTestCase struct {
 	desc                string
+	sqlID               string
 	permissions         []*Permission
 	expectedDataSources []string
+	expectErr           bool
 }
 
 func TestFilter_Datasources(t *testing.T) {
 	tests := []filterDatasourcesTestCase{
 		{
-			desc: "expect all data sources to be returned",
+			desc:  "expect all data sources to be returned",
+			sqlID: "data_source.id",
 			permissions: []*Permission{
 				{Action: "datasources:read", Scope: "datasources:*"},
 			},
@@ -159,11 +171,13 @@ func TestFilter_Datasources(t *testing.T) {
 		},
 		{
 			desc:                "expect no data sources to be returned",
+			sqlID:               "data_source.id",
 			permissions:         []*Permission{},
 			expectedDataSources: []string{},
 		},
 		{
-			desc: "expect data sources with id 3, 7 and 8 to be returned",
+			desc:  "expect data sources with id 3, 7 and 8 to be returned",
+			sqlID: "data_source.id",
 			permissions: []*Permission{
 				{Action: "datasources:read", Scope: "datasources:id:3"},
 				{Action: "datasources:read", Scope: "datasources:id:7"},
@@ -171,6 +185,22 @@ func TestFilter_Datasources(t *testing.T) {
 			},
 			expectedDataSources: []string{"ds:3", "ds:7", "ds:8"},
 		},
+		{
+			desc:  "expect error if sqlID is not in the accept list",
+			sqlID: "other.id",
+			permissions: []*Permission{
+				{Action: "datasources:read", Scope: "datasources:id:3"},
+				{Action: "datasources:read", Scope: "datasources:id:7"},
+				{Action: "datasources:read", Scope: "datasources:id:8"},
+			},
+			expectedDataSources: []string{"ds:3", "ds:7", "ds:8"},
+			expectErr:           true,
+		},
+	}
+
+	// set sqlIDAcceptList before running tests
+	sqlIDAcceptList = map[string]struct{}{
+		"data_source.id": {},
 	}
 
 	for _, tt := range tests {
@@ -187,22 +217,27 @@ func TestFilter_Datasources(t *testing.T) {
 			}
 
 			baseSql := `SELECT data_source.* FROM data_source WHERE`
-			query, args := Filter(
+			query, args, err := Filter(
 				context.Background(),
 				&FakeDriver{name: "sqlite3"},
+				tt.sqlID,
 				"datasources",
-				"data_source.id",
 				"datasources:read",
 				&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: GroupScopesByAction(tt.permissions)}},
 			)
 
-			var datasources []models.DataSource
-			err := sess.SQL(baseSql+query, args...).Find(&datasources)
-			require.NoError(t, err)
+			if !tt.expectErr {
+				require.NoError(t, err)
+				var datasources []models.DataSource
+				err = sess.SQL(baseSql+query, args...).Find(&datasources)
+				require.NoError(t, err)
 
-			assert.Len(t, datasources, len(tt.expectedDataSources))
-			for i, ds := range datasources {
-				assert.Equal(t, tt.expectedDataSources[i], ds.Name)
+				assert.Len(t, datasources, len(tt.expectedDataSources))
+				for i, ds := range datasources {
+					assert.Equal(t, tt.expectedDataSources[i], ds.Name)
+				}
+			} else {
+				require.Error(t, err)
 			}
 		})
 	}

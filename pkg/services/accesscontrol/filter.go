@@ -2,12 +2,15 @@ package accesscontrol
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
+
+var sqlIDAcceptList = map[string]struct{}{}
 
 type SQLDialect interface {
 	DriverName() string
@@ -16,28 +19,35 @@ type SQLDialect interface {
 // Filter creates a where clause to restrict the view of a query based on a users permissions
 // Scopes for a certain action will be compared against prefix:id:sqlID where prefix is the scope prefix and sqlID
 // is the id to generate scope from e.g. user.id
-func Filter(ctx context.Context, dialect SQLDialect, prefix, sqlID string, action string, user *models.SignedInUser) (string, []interface{}) {
-	var scopes []string
+func Filter(ctx context.Context, dialect SQLDialect, sqlID, prefix, action string, user *models.SignedInUser) (string, []interface{}, error) {
+	if _, ok := sqlIDAcceptList[sqlID]; !ok {
+		return "", nil, errors.New("sqlID is not in the accept list")
+	}
 
-	if user.Permissions != nil {
+	var scopes []string
+	if user.Permissions != nil && user.Permissions[user.OrgId] != nil {
 		scopes = append(scopes, user.Permissions[user.OrgId][action]...)
 	}
 
-	// if user has no scopes push invalid scope so no values will be returned
 	if len(scopes) == 0 {
 		scopes = append(scopes, "no:access")
 	}
 
+	var sql string
+	var args []interface{}
+
 	if strings.Contains(dialect.DriverName(), migrator.SQLite) {
-		return sqliteQuery(scopes, prefix, sqlID)
+		sql, args = sqliteQuery(scopes, sqlID, prefix)
 	} else if strings.Contains(dialect.DriverName(), migrator.MySQL) {
-		return mysqlQuery(scopes, prefix, sqlID)
+		sql, args = mysqlQuery(scopes, sqlID, prefix)
 	} else {
-		return postgresQuery(scopes, prefix, sqlID)
+		sql, args = postgresQuery(scopes, sqlID, prefix)
 	}
+
+	return sql, args, nil
 }
 
-func sqliteQuery(scopes []string, prefix, sqlID string) (string, []interface{}) {
+func sqliteQuery(scopes []string, sqlID, prefix string) (string, []interface{}) {
 	args := []interface{}{prefix}
 	for _, s := range scopes {
 		args = append(args, s)
@@ -54,7 +64,7 @@ func sqliteQuery(scopes []string, prefix, sqlID string) (string, []interface{}) 
 	`, sqlID, sqlID), args
 }
 
-func mysqlQuery(scopes []string, prefix, sqlID string) (string, []interface{}) {
+func mysqlQuery(scopes []string, sqlID, prefix string) (string, []interface{}) {
 	args := []interface{}{prefix, prefix, prefix, prefix}
 	for _, s := range scopes {
 		args = append(args, s)
@@ -68,7 +78,7 @@ func mysqlQuery(scopes []string, prefix, sqlID string) (string, []interface{}) {
 	`, sqlID, sqlID), args
 }
 
-func postgresQuery(scopes []string, prefix, sqlID string) (string, []interface{}) {
+func postgresQuery(scopes []string, sqlID, prefix string) (string, []interface{}) {
 	args := []interface{}{prefix, prefix, prefix, prefix}
 	for _, s := range scopes {
 		args = append(args, s)
