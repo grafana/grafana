@@ -58,7 +58,7 @@ export const Variants: Story<ButtonProps> = () => {
         <Button icon="cloud" size="lg" />
       </HorizontalGroup>
       <HorizontalGroup spacing="lg">
-        <div>With icon only and button unstyled</div>
+        <div>With icon only and ghost mode</div>
         <Button icon="cloud" size="sm" ghostMode={true} />
         <Button icon="cloud" size="md" ghostMode={true} />
         <Button icon="cloud" size="lg" ghostMode={true} />
