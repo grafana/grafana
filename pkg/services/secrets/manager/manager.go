@@ -103,7 +103,7 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 
 	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
 	scope := opt()
-	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.currentProvider)
+	keyName := s.keyName(scope)
 
 	dataKey, err := s.dataKey(ctx, keyName)
 	if err != nil {
@@ -132,6 +132,10 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 	copy(blob[len(prefix):], encrypted)
 
 	return blob, nil
+}
+
+func (s *SecretsService) keyName(scope string) string {
+	return fmt.Sprintf("%s/%s@%s", now().Format("2006-01-02"), scope, s.currentProvider)
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
@@ -265,7 +269,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 
 	// 4. Cache its unencrypted value and return it
 	s.dataKeyCache[name] = dataKeyCacheItem{
-		expiry:  time.Now().Add(15 * time.Minute),
+		expiry:  now().Add(dekTTL),
 		dataKey: dataKey,
 	}
 
@@ -275,11 +279,9 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 // dataKey looks up DEK in cache or database, and decrypts it
 func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, error) {
 	if item, exists := s.dataKeyCache[name]; exists {
-		if item.expiry.Before(time.Now()) && !item.expiry.IsZero() {
-			delete(s.dataKeyCache, name)
-		} else {
-			return item.dataKey, nil
-		}
+		item.expiry = now().Add(dekTTL)
+		s.dataKeyCache[name] = item
+		return item.dataKey, nil
 	}
 
 	// 1. get encrypted data key from database
@@ -301,7 +303,7 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 
 	// 3. cache data key
 	s.dataKeyCache[name] = dataKeyCacheItem{
-		expiry:  time.Now().Add(15 * time.Minute),
+		expiry:  now().Add(dekTTL),
 		dataKey: decrypted,
 	}
 
@@ -310,4 +312,38 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 
 func (s *SecretsService) GetProviders() map[string]secrets.Provider {
 	return s.providers
+}
+
+// These variables are used to test the code
+// responsible for periodically cleaning up
+// data encryption keys cache.
+var (
+	now        = time.Now
+	dekTTL     = 15 * time.Minute
+	gcInterval = time.Minute
+)
+
+func (s *SecretsService) Run(ctx context.Context) error {
+	gc := time.NewTicker(gcInterval)
+
+	for {
+		select {
+		case <-gc.C:
+			s.log.Debug("removing expired data encryption keys from cache...")
+			s.removeExpiredItems()
+			s.log.Debug("done removing expired data encryption keys from cache")
+		case <-ctx.Done():
+			s.log.Debug("grafana is shutting down; stopping...")
+			gc.Stop()
+			return nil
+		}
+	}
+}
+
+func (s *SecretsService) removeExpiredItems() {
+	for id, dek := range s.dataKeyCache {
+		if dek.expiry.Before(now()) {
+			delete(s.dataKeyCache, id)
+		}
+	}
 }

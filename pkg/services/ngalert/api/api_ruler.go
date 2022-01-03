@@ -247,7 +247,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 			OrgID:     c.SignedInUser.OrgId,
 			Data:      r.GrafanaManagedAlert.Data,
 		}
-		if err := validateCondition(cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+		if err := validateCondition(c.Req.Context(), cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
 			return ErrResp(http.StatusBadRequest, err, "failed to validate alert rule %q", r.GrafanaManagedAlert.Title)
 		}
 		if r.GrafanaManagedAlert.UID != "" {

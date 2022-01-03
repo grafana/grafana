@@ -495,3 +495,9 @@ The org id of the datasource where the query data will be written.
 
 If all `default_remote_write_*` properties are set, this information will be populated at startup. If a remote write target has
 already been configured, nothing will happen.
+
+## [feature_highlights]
+
+### enabled
+
+Whether the feature highlights feature is enabled

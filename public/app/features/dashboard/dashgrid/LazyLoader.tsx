@@ -15,6 +15,7 @@ export function LazyLoader({ children, width, height, onLoad, onChange }: Props)
   const [loaded, setLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
   useEffectOnce(() => {
     LazyLoader.addCallback(id, (entry) => {
       if (!loaded && entry.isIntersecting) {
@@ -26,12 +27,15 @@ export function LazyLoader({ children, width, height, onLoad, onChange }: Props)
       onChange?.(entry.isIntersecting);
     });
 
-    if (wrapperRef.current) {
-      LazyLoader.observer.observe(wrapperRef.current);
+    const wrapperEl = wrapperRef.current;
+
+    if (wrapperEl) {
+      LazyLoader.observer.observe(wrapperEl);
     }
 
     return () => {
       delete LazyLoader.callbacks[id];
+      wrapperEl && LazyLoader.observer.unobserve(wrapperEl);
       if (Object.keys(LazyLoader.callbacks).length === 0) {
         LazyLoader.observer.disconnect();
       }
