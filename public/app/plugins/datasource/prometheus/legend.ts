@@ -15,7 +15,10 @@ export function renderLegendFormat(aliasPattern: string, aliasData: Labels): str
     }
 
     const key = aliasPattern.substring(idx + 2, edx).trim();
-    const val = aliasData[key];
+    let val = aliasData[key];
+    if (val == null && Object.keys(aliasData).length === 0) {
+      val = key; // legacy behavior
+    }
     if (val != null) {
       aliasPattern = aliasPattern.substring(0, idx) + val + aliasPattern.substring(edx + 2);
     }
