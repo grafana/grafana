@@ -54,6 +54,8 @@ load(
 )
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
+disable_tests = False
+
 def build_npm_packages_step(edition, ver_mode):
     if edition == 'enterprise' or ver_mode != 'release':
         return None
@@ -214,62 +216,95 @@ def get_oss_pipelines(trigger, ver_mode):
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
     test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
-    return [
-        pipeline(
-            name='oss-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-              test_steps,
-            volumes=[],
-        ),
+    windows_pipeline = pipeline(
+        name='oss-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
+        steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
+        platform='windows', depends_on=[
+            'oss-build-e2e-publish-{}'.format(ver_mode),
+        ],
+    )
+    pipelines = [
         pipeline(
             name='oss-build-e2e-publish-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                   build_steps + package_steps + publish_steps,
             volumes=volumes,
         ),
-        pipeline(
-            name='oss-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                  integration_test_steps,
-            volumes=volumes,
-        ),
-        pipeline(
-            name='oss-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
-            steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
-            platform='windows', depends_on=['oss-test-{}'.format(ver_mode), 'oss-build-e2e-publish-{}'.format(ver_mode), 'oss-integration-tests-{}'.format(ver_mode)],
-        ),
     ]
+    if not disable_tests:
+        pipelines.extend([
+            pipeline(
+                name='oss-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
+                steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
+                  test_steps,
+                volumes=[],
+            ),
+            pipeline(
+                name='oss-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
+                steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
+                      integration_test_steps,
+                volumes=volumes,
+            )
+        ])
+        deps = {
+            'depends_on': [
+                'oss-build-e2e-publish-{}'.format(ver_mode),
+                'oss-test-{}'.format(ver_mode),
+                'oss-integration-tests-{}'.format(ver_mode)
+            ]
+        }
+        windows_pipeline.update(deps)
+
+    pipelines.extend([windows_pipeline])
+    return pipelines
 
 def get_enterprise_pipelines(trigger, ver_mode):
     edition = 'enterprise'
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
     test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
-    return [
-        pipeline(
-            name='enterprise-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-              test_steps,
-            volumes=[],
-        ),
+    windows_pipeline = pipeline(
+        name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
+        steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
+        platform='windows', depends_on=[
+            'enterprise-build-e2e-publish-{}'.format(ver_mode),
+        ],
+    )
+    pipelines = [
         pipeline(
             name='enterprise-build-e2e-publish-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                   build_steps + package_steps + publish_steps,
             volumes=volumes,
         ),
-        pipeline(
-            name='enterprise-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                  integration_test_steps,
-            volumes=volumes,
-        ),
-        pipeline(
-            name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
-            steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
-            platform='windows', depends_on=['enterprise-test-{}'.format(ver_mode), 'enterprise-build-e2e-publish-{}'.format(ver_mode), 'enterprise-integration-tests-{}'.format(ver_mode)],
-        ),
     ]
+    if not disable_tests:
+        pipelines.extend([
+            pipeline(
+                name='enterprise-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
+                steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
+                  test_steps,
+                volumes=[],
+            ),
+            pipeline(
+                name='enterprise-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
+                steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
+                      integration_test_steps,
+                volumes=volumes,
+            ),
+        ])
+        deps = {
+            'depends_on': [
+                'enterprise-build-e2e-publish-{}'.format(ver_mode),
+                'enterprise-test-{}'.format(ver_mode),
+                'enterprise-integration-tests-{}'.format(ver_mode)
+            ]
+        }
+        windows_pipeline.update(deps)
+
+    pipelines.extend([windows_pipeline])
+
+    return pipelines
 
 def release_pipelines(ver_mode='release', trigger=None):
     # 'enterprise' edition services contain both OSS and enterprise services
