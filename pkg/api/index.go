@@ -297,7 +297,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			configNodes = append(configNodes, &dtos.NavLink{
 				Text:        "Service accounts",
 				Id:          "serviceaccounts",
-				Description: "Create & manage Service accounts",
+				Description: "Manage service accounts",
 				Icon:        "key-skeleton-alt",
 				Url:         hs.Cfg.AppSubURL + "/org/serviceaccounts",
 			})
