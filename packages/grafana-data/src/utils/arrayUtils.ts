@@ -9,7 +9,7 @@ export function moveItemImmutably<T>(arr: T[], from: number, to: number) {
 
 /**
  * Given a sort order and a value, return a function that can be used to sort values
- * Null values are always sorted to the end regardless of the sort order
+ * Null/undefined/empty string values are always sorted to the end regardless of the sort order provided
  */
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 export function sortValues(sort: SortOrder.Ascending | SortOrder.Descending) {
@@ -18,10 +18,10 @@ export function sortValues(sort: SortOrder.Ascending | SortOrder.Descending) {
       return 0;
     }
 
-    if (b == null) {
+    if (b == null || (typeof b === 'string' && b.trim() === '')) {
       return -1;
     }
-    if (a == null) {
+    if (a == null || (typeof a === 'string' && a?.trim() === '')) {
       return 1;
     }
 

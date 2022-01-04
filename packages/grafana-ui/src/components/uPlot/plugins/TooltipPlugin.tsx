@@ -235,18 +235,11 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         });
       }
 
-      let result = new Array(series.length);
-
       if (sortOrder !== SortOrder.None) {
-        sortIdx.sort((a, b) => arrayUtils.sortValues(sortOrder)(a[1], b[1]));
-        for (let i = 0; i < sortIdx.length; i++) {
-          result[i] = series[sortIdx[i][0]];
-        }
-      } else {
-        result = series;
+        series.sort((a, b) => arrayUtils.sortValues(sortOrder)(a.value, b.value));
       }
 
-      tooltip = <SeriesTable series={result} timestamp={xVal} />;
+      tooltip = <SeriesTable series={series} timestamp={xVal} />;
     }
   } else {
     tooltip = renderTooltip(otherProps.data, focusedSeriesIdx, focusedPointIdx);
