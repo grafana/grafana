@@ -39,14 +39,14 @@ export class ServiceAccountsListPage extends PureComponent<Props, State> {
   };
 
   getPaginatedServiceAccounts = (serviceAccounts: OrgServiceAccount[]) => {
-    const offset = (this.props.searchPage - 1) * pageLimit;
-    return serviceAccounts.slice(offset, offset + pageLimit);
+    const offset = (this.props.searchPage - 1) * ITEMS_PER_PAGE;
+    return serviceAccounts.slice(offset, offset + ITEMS_PER_PAGE);
   };
 
   renderTable() {
     const { serviceAccounts } = this.props;
     const paginatedServiceAccounts = this.getPaginatedServiceAccounts(serviceAccounts);
-    const totalPages = Math.ceil(serviceAccounts.length / pageLimit);
+    const totalPages = Math.ceil(serviceAccounts.length / ITEMS_PER_PAGE);
 
     if (this.state.showInvites) {
       return <></>;
