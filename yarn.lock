@@ -3844,7 +3844,7 @@ __metadata:
     moment: 2.29.1
     monaco-editor: ^0.31.1
     postcss: 8.4.5
-    postcss-loader: 6.1.1
+    postcss-loader: 6.2.1
     prismjs: 1.25.0
     raw-loader: 4.0.2
     rc-cascader: 1.5.0
@@ -23537,6 +23537,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"klona@npm:^2.0.5":
+  version: 2.0.5
+  resolution: "klona@npm:2.0.5"
+  checksum: 8c976126ea252b766e648a4866e1bccff9d3b08432474ad80c559f6c7265cf7caede2498d463754d8c88c4759895edd8210c85c0d3155e6aae4968362889466f
+  languageName: node
+  linkType: hard
+
 "known-css-properties@npm:^0.23.0":
   version: 0.23.0
   resolution: "known-css-properties@npm:0.23.0"
@@ -27470,20 +27477,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-loader@npm:6.1.1":
-  version: 6.1.1
-  resolution: "postcss-loader@npm:6.1.1"
-  dependencies:
-    cosmiconfig: ^7.0.0
-    klona: ^2.0.4
-    semver: ^7.3.5
-  peerDependencies:
-    postcss: ^7.0.0 || ^8.0.1
-    webpack: ^5.0.0
-  checksum: 3c32d123813efeaede39cbd990a5c2275d0feeb3e3d2b9ad8f0bbf37e1e6d28f24d3174e4eebe9db4f563d57052dc9b5fb3f699f7527f639769d88e907a99490
-  languageName: node
-  linkType: hard
-
 "postcss-loader@npm:6.2.0":
   version: 6.2.0
   resolution: "postcss-loader@npm:6.2.0"
@@ -27495,6 +27488,20 @@ __metadata:
     postcss: ^7.0.0 || ^8.0.1
     webpack: ^5.0.0
   checksum: 240a807b696ceab4fac88ca713a9264a322af49d021f5056da8d6ce00307d80d8ad429595221498b6c4d44edaf825b54e8d84b4eb7e517fec41e2909d4a5f75d
+  languageName: node
+  linkType: hard
+
+"postcss-loader@npm:6.2.1":
+  version: 6.2.1
+  resolution: "postcss-loader@npm:6.2.1"
+  dependencies:
+    cosmiconfig: ^7.0.0
+    klona: ^2.0.5
+    semver: ^7.3.5
+  peerDependencies:
+    postcss: ^7.0.0 || ^8.0.1
+    webpack: ^5.0.0
+  checksum: e40ae79c3e39df37014677a817b001bd115d8b10dedf53a07b97513d93b1533cd702d7a48831bdd77b9a9484b1ec84a5d4a723f80e83fb28682c75b5e65e8a90
   languageName: node
   linkType: hard
 
