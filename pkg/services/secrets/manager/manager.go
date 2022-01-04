@@ -44,18 +44,17 @@ func ProvideSecretsService(
 
 	logger := log.New("secrets")
 	enabled := settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle)
-	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
-	currentProviderID := secrets.ProviderID(currentProvider)
+	currentProviderID := readCurrentProviderID(settings)
 
 	if _, ok := providers[currentProviderID]; enabled && !ok {
-		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProvider)
+		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
 
-	if !enabled && currentProvider != kmsproviders.Default {
+	if !enabled && currentProviderID != kmsproviders.Default {
 		logger.Warn("Changing encryption provider requires enabling envelope encryption feature")
 	}
 
-	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProvider)
+	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProviderID)
 
 	s := &SecretsService{
 		store:             store,
@@ -71,6 +70,15 @@ func ProvideSecretsService(
 	s.registerUsageMetrics()
 
 	return s, nil
+}
+
+func readCurrentProviderID(settings setting.Provider) secrets.ProviderID {
+	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
+	if currentProvider == kmsproviders.Legacy {
+		currentProvider = kmsproviders.Default
+	}
+
+	return secrets.ProviderID(currentProvider)
 }
 
 func (s *SecretsService) registerUsageMetrics() {
