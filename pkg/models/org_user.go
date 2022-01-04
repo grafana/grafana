@@ -111,6 +111,7 @@ type GetOrgUsersQuery struct {
 	Query string
 	Limit int
 
+	User   *SignedInUser
 	Result []*OrgUserDTO
 }
 
@@ -120,6 +121,7 @@ type SearchOrgUsersQuery struct {
 	Page  int
 	Limit int
 
+	User   *SignedInUser
 	Result SearchOrgUsersQueryResult
 }
 
