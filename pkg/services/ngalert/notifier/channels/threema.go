@@ -101,7 +101,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	// Build message
 	message := fmt.Sprintf("%s%s\n\n*Message:*\n%s\n*URL:* %s\n",
 		stateEmoji,
-		tmpl(`{{ template "default.title" . }}`),
+		tmpl(DefaultMessageTitleEmbed),
 		tmpl(`{{ template "default.message" . }}`),
 		path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
 	)

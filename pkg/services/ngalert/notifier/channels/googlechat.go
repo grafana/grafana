@@ -102,12 +102,12 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 
 	// Nest the required structs.
 	res := &outerStruct{
-		PreviewText:  tmpl(`{{ template "default.title" . }}`),
-		FallbackText: tmpl(`{{ template "default.title" . }}`),
+		PreviewText:  tmpl(DefaultMessageTitleEmbed),
+		FallbackText: tmpl(DefaultMessageTitleEmbed),
 		Cards: []card{
 			{
 				Header: header{
-					Title: tmpl(`{{ template "default.title" . }}`),
+					Title: tmpl(DefaultMessageTitleEmbed),
 				},
 				Sections: []section{
 					{

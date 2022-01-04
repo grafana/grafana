@@ -63,7 +63,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	var tmplErr error
 	tmpl, data := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
 
-	title := tmpl(`{{ template "default.title" . }}`)
+	title := tmpl(DefaultMessageTitleEmbed)
 
 	alertPageURL := en.tmpl.ExternalURL.String()
 	ruleURL := en.tmpl.ExternalURL.String()

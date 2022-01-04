@@ -72,7 +72,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("alert_state", state)
-	bodyJSON.Set("description", tmpl(`{{ template "default.title" . }}`))
+	bodyJSON.Set("description", tmpl(DefaultMessageTitleEmbed))
 	bodyJSON.Set("client", "Grafana")
 	bodyJSON.Set("details", tmpl(`{{ template "default.message" . }}`))
 

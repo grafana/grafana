@@ -86,7 +86,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	embed := simplejson.New()
-	embed.Set("title", tmpl(`{{ template "default.title" . }}`))
+	embed.Set("title", tmpl(DefaultMessageTitleEmbed))
 	embed.Set("footer", footer)
 	embed.Set("type", "rich")
 

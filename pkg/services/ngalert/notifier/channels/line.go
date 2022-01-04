@@ -65,7 +65,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 
 	body := fmt.Sprintf(
 		"%s\n%s\n\n%s",
-		tmpl(`{{ template "default.title" . }}`),
+		tmpl(DefaultMessageTitleEmbed),
 		ruleURL,
 		tmpl(`{{ template "default.message" . }}`),
 	)

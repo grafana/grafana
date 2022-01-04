@@ -195,7 +195,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	// Add title
-	err = w.WriteField("title", tmpl(`{{ template "default.title" . }}`))
+	err = w.WriteField("title", tmpl(DefaultMessageTitleEmbed))
 	if err != nil {
 		return nil, b, err
 	}
