@@ -68,7 +68,7 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 
 	if len(sess.events) > 0 {
 		for _, e := range sess.events {
-			if err = bus.PublishCtx(ctx, e); err != nil {
+			if err = bus.Publish(ctx, e); err != nil {
 				tsclogger.Error("Failed to publish event after commit.", "error", err)
 			}
 		}

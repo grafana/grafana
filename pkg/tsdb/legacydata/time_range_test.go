@@ -3,9 +3,9 @@ package legacydata
 import (
 	"strconv"
 	"testing"
-
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -117,6 +117,30 @@ func TestTimeRange(t *testing.T) {
 		})
 	})
 
+	t.Run("Can parse now/fy, now/fQ for 1994-02-26T14:00:00.000Z with fiscal year starting in July", func(t *testing.T) {
+		tr := DataTimeRange{
+			From: "now/fy",
+			To:   "now/fQ",
+			Now:  time.Date(1994, time.February, 26, 14, 0, 0, 0, time.UTC),
+		}
+
+		start, err := tr.ParseFrom(WithFiscalStartMonth(time.July))
+		require.NoError(t, err)
+		assert.Equal(
+			t,
+			time.Date(1993, time.July, 1, 0, 0, 0, 0, time.UTC),
+			start,
+		)
+
+		end, err := tr.ParseTo(WithFiscalStartMonth(time.July))
+		require.NoError(t, err)
+		assert.Equal(
+			t,
+			time.Date(1994, time.April, 1, 0, 0, 0, 0, time.UTC).Add(-time.Millisecond),
+			end,
+		)
+	})
+
 	t.Run("Can parse 1960-02-01T07:00:00.000Z, 1965-02-03T08:00:00.000Z", func(t *testing.T) {
 		tr := DataTimeRange{
 			From: "1960-02-01T07:00:00.000Z",
@@ -205,7 +229,7 @@ func TestTimeRange(t *testing.T) {
 			expected, err := time.Parse(time.RFC3339Nano, "2020-06-01T00:00:00.000-05:00")
 			require.Nil(t, err)
 
-			res, err := tr.ParseFromWithLocation(location)
+			res, err := tr.ParseFrom(WithLocation(location))
 			require.Nil(t, err)
 			require.True(t, expected.Equal(res))
 		})
@@ -214,7 +238,7 @@ func TestTimeRange(t *testing.T) {
 			expected, err := time.Parse(time.RFC3339Nano, "2020-06-30T23:59:59.999-05:00")
 			require.Nil(t, err)
 
-			res, err := tr.ParseToWithLocation(location)
+			res, err := tr.ParseTo(WithLocation(location))
 			require.Nil(t, err)
 			require.True(t, expected.Equal(res))
 		})
@@ -233,7 +257,7 @@ func TestTimeRange(t *testing.T) {
 			expected, err := time.Parse(time.RFC3339Nano, "2020-07-26T07:12:56.000-05:00")
 			require.Nil(t, err)
 
-			res, err := tr.ParseFromWithLocation(location)
+			res, err := tr.ParseFrom(WithLocation(location))
 			require.Nil(t, err)
 			require.True(t, expected.Equal(res))
 		})
@@ -242,7 +266,7 @@ func TestTimeRange(t *testing.T) {
 			expected, err := time.Parse(time.RFC3339Nano, "2020-07-26T12:12:56.000-05:00")
 			require.Nil(t, err)
 
-			res, err := tr.ParseToWithLocation(location)
+			res, err := tr.ParseTo(WithLocation(location))
 			require.Nil(t, err)
 			require.True(t, expected.Equal(res))
 		})
@@ -261,7 +285,7 @@ func TestTimeRange(t *testing.T) {
 			expected, err := time.Parse(time.RFC3339Nano, "2020-07-13T00:00:00.000Z")
 			require.Nil(t, err)
 
-			res, err := tr.ParseFromWithWeekStart(nil, weekstart)
+			res, err := tr.ParseFrom(WithWeekstart(weekstart))
 			require.Nil(t, err)
 			require.True(t, expected.Equal(res))
 		})
@@ -270,7 +294,7 @@ func TestTimeRange(t *testing.T) {
 			expected, err := time.Parse(time.RFC3339Nano, "2020-07-19T23:59:59.999Z")
 			require.Nil(t, err)
 
-			res, err := tr.ParseToWithWeekStart(nil, weekstart)
+			res, err := tr.ParseTo(WithWeekstart(weekstart))
 			require.Nil(t, err)
 			require.True(t, expected.Equal(res))
 		})
@@ -290,7 +314,7 @@ func TestTimeRange(t *testing.T) {
 			expected, err := time.Parse(time.RFC3339Nano, "2020-07-13T00:00:00.000-05:00")
 			require.Nil(t, err)
 
-			res, err := tr.ParseFromWithWeekStart(location, weekstart)
+			res, err := tr.ParseFrom(WithLocation(location), WithWeekstart(weekstart))
 			require.Nil(t, err)
 			require.True(t, expected.Equal(res))
 		})
@@ -299,7 +323,7 @@ func TestTimeRange(t *testing.T) {
 			expected, err := time.Parse(time.RFC3339Nano, "2020-07-19T23:59:59.999-05:00")
 			require.Nil(t, err)
 
-			res, err := tr.ParseToWithWeekStart(location, weekstart)
+			res, err := tr.ParseTo(WithLocation(location), WithWeekstart(weekstart))
 			require.Nil(t, err)
 			require.True(t, expected.Equal(res))
 		})
@@ -319,7 +343,7 @@ func TestTimeRange(t *testing.T) {
 			expected, err := time.Parse(time.RFC3339Nano, "2020-07-19T00:00:00.000-05:00")
 			require.Nil(t, err)
 
-			res, err := tr.ParseFromWithWeekStart(location, weekstart)
+			res, err := tr.ParseFrom(WithLocation(location), WithWeekstart(weekstart))
 			require.Nil(t, err)
 			require.True(t, expected.Equal(res))
 		})
@@ -328,7 +352,7 @@ func TestTimeRange(t *testing.T) {
 			expected, err := time.Parse(time.RFC3339Nano, "2020-07-25T23:59:59.999-05:00")
 			require.Nil(t, err)
 
-			res, err := tr.ParseToWithWeekStart(location, weekstart)
+			res, err := tr.ParseTo(WithLocation(location), WithWeekstart(weekstart))
 			require.Nil(t, err)
 			require.True(t, expected.Equal(res))
 		})
@@ -348,7 +372,7 @@ func TestTimeRange(t *testing.T) {
 			expected, err := time.Parse(time.RFC3339Nano, "2020-07-18T00:00:00.000-05:00")
 			require.Nil(t, err)
 
-			res, err := tr.ParseFromWithWeekStart(location, weekstart)
+			res, err := tr.ParseFrom(WithLocation(location), WithWeekstart(weekstart))
 			require.Nil(t, err)
 			require.True(t, expected.Equal(res))
 		})
@@ -357,7 +381,7 @@ func TestTimeRange(t *testing.T) {
 			expected, err := time.Parse(time.RFC3339Nano, "2020-07-24T23:59:59.999-05:00")
 			require.Nil(t, err)
 
-			res, err := tr.ParseToWithWeekStart(location, weekstart)
+			res, err := tr.ParseTo(WithLocation(location), WithWeekstart(weekstart))
 			require.Nil(t, err)
 			require.True(t, expected.Equal(res))
 		})
