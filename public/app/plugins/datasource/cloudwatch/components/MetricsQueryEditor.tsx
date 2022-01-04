@@ -157,6 +157,7 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
 
           <EditorField label="Period" width={26} tooltip="Minimum interval between points in seconds.">
             <Input
+              aria-label="Period"
               value={query.period || ''}
               placeholder="auto"
               onBlur={onRunQuery}
