@@ -1,4 +1,4 @@
-package prometheus
+package middleware
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-func forceHttpGetMiddleware(logger log.Logger) sdkhttpclient.Middleware {
+func ForceHttpGet(logger log.Logger) sdkhttpclient.Middleware {
 	return sdkhttpclient.NamedMiddlewareFunc("force-http-get", func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		// the prometheus library we use does not allow us to set the http method.
 		// it's behavior is to first try POST, and if it fails in certain ways

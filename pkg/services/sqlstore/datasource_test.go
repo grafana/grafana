@@ -97,7 +97,7 @@ func TestDataAccess(t *testing.T) {
 			sqlStore := InitTestDB(t)
 
 			var created *events.DataSourceCreated
-			bus.AddEventListenerCtx(func(ctx context.Context, e *events.DataSourceCreated) error {
+			bus.AddEventListener(func(ctx context.Context, e *events.DataSourceCreated) error {
 				created = e
 				return nil
 			})
@@ -241,7 +241,7 @@ func TestDataAccess(t *testing.T) {
 		ds := initDatasource(sqlStore)
 
 		var deleted *events.DataSourceDeleted
-		bus.AddEventListenerCtx(func(ctx context.Context, e *events.DataSourceDeleted) error {
+		bus.AddEventListener(func(ctx context.Context, e *events.DataSourceDeleted) error {
 			deleted = e
 			return nil
 		})
