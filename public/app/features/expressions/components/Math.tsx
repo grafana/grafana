@@ -12,7 +12,7 @@ interface Props {
 const mathPlaceholder =
   'Math operations on one more queries, you reference the query by ${refId} ie. $A, $B, $C etc\n' +
   'Example: $A + $B\n' +
-  'Available functions: abs(), log(), nan(), inf(), null()';
+  'Available functions: abs(), log(), is_number(), is_inf(), is_nan(), is_null()';
 
 export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
   const onExpressionChange = (event: ChangeEvent<HTMLTextAreaElement>) => {

@@ -276,7 +276,7 @@ func lexSymbol(l *lexer) stateFn {
 func lexFunc(l *lexer) stateFn {
 	for {
 		switch r := l.next(); {
-		case unicode.IsLetter(r):
+		case unicode.IsLetter(r) || r == '_':
 			// absorb
 		default:
 			l.backup()
