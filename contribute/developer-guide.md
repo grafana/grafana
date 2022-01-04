@@ -43,7 +43,7 @@ For alternative ways of cloning the Grafana repository, please refer to [GitHub'
 
 For some IDEs, additional configuration may be needed for Typescript to work with [Yarn plug'n'play](https://yarnpkg.com/features/pnp).
 For [VSCode](https://yarnpkg.com/getting-started/editor-sdks#vscode) and [Vim](https://yarnpkg.com/getting-started/editor-sdks#vim),
-it's as easy as running `yarn dlx @yarnpkg/sdks vscode` or `yarn dlx@yarnpkg/sdks vim`, respectively.
+it's as easy as running `yarn dlx @yarnpkg/sdks vscode` or `yarn dlx @yarnpkg/sdks vim`, respectively.
 
 More information can be found [here](https://yarnpkg.com/getting-started/editor-sdks).
 
