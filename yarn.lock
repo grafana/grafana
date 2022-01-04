@@ -9754,12 +9754,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-grid-layout@npm:1.1.1":
-  version: 1.1.1
-  resolution: "@types/react-grid-layout@npm:1.1.1"
+"@types/react-grid-layout@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@types/react-grid-layout@npm:1.3.0"
   dependencies:
     "@types/react": "*"
-  checksum: bd8be3dbab89b720a8306a6bce7aac33e5578884775b55a6d5d9a623c18c0d4c92b455bd0095be036bc7f88cea1ae98b3b11661c5cec52810aa34398ea865ae7
+  checksum: 94243bce2c7005dafad165f6f9329e4e77e09eed3ab8380b010474d75e4314856da43ff006f90c26a3f69e3d5398bbec145dbbd8619361abbc068ed413b791a6
   languageName: node
   linkType: hard
 
@@ -19520,7 +19520,7 @@ __metadata:
     "@types/react": 17.0.30
     "@types/react-beautiful-dnd": 13.1.1
     "@types/react-dom": 17.0.10
-    "@types/react-grid-layout": 1.1.1
+    "@types/react-grid-layout": 1.3.0
     "@types/react-highlight-words": ^0.16.2
     "@types/react-loadable": 5.5.2
     "@types/react-redux": 7.1.20
@@ -19659,7 +19659,7 @@ __metadata:
     react-diff-viewer: ^3.1.1
     react-dom: 17.0.1
     react-draggable: 4.4.4
-    react-grid-layout: 1.2.5
+    react-grid-layout: 1.3.0
     react-highlight-words: 0.17.0
     react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
@@ -29479,19 +29479,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-grid-layout@npm:1.2.5":
-  version: 1.2.5
-  resolution: "react-grid-layout@npm:1.2.5"
+"react-grid-layout@npm:1.3.0":
+  version: 1.3.0
+  resolution: "react-grid-layout@npm:1.3.0"
   dependencies:
     classnames: 2.3.1
     lodash.isequal: ^4.0.0
     prop-types: ^15.0.0
     react-draggable: ^4.0.0
-    react-resizable: ^3.0.1
+    react-resizable: ^3.0.4
   peerDependencies:
     react: ">= 16.3.0"
     react-dom: ">= 16.3.0"
-  checksum: 800d727c8a5d0ced70b56bc8e2a8c51a25d3158c79d84ccf08863fedd1790ab123d4ba49a8b4a2c4f065b590e495303484ad28dd121aca3431515d6b35bf6369
+  checksum: 955c135dcc14e86f573141e75b211e08e68f1d4f4ea2d0849652410dfc41715d89507abf1d28c2de4326b201f2e4138a2c2796561e917a2ee8b932adf40864bb
   languageName: node
   linkType: hard
 
@@ -29742,7 +29742,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-resizable@npm:3.0.4, react-resizable@npm:^3.0.1":
+"react-resizable@npm:3.0.4, react-resizable@npm:^3.0.4":
   version: 3.0.4
   resolution: "react-resizable@npm:3.0.4"
   dependencies:
