@@ -160,7 +160,4 @@ jobs:
             team_reviewers: ['grafana/plugins-platform-frontend']
           });
 
-    - name: Exit
-      run: exit ${{ steps.levitate-run.outputs.exit_code }}
-      shell: bash
 

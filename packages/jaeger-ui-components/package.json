@@ -43,7 +43,7 @@
     "memoize-one": "6.0.0",
     "moment": "2.29.1",
     "moment-timezone": "0.5.33",
-    "prop-types": "15.7.2",
+    "prop-types": "15.8.0",
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "react-icons": "2.2.7",
