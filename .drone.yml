@@ -95,8 +95,6 @@ trigger:
   - pull_request
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -206,9 +204,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
@@ -218,9 +213,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
@@ -230,9 +222,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
@@ -242,9 +231,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -330,8 +316,6 @@ trigger:
   - pull_request
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -407,8 +391,6 @@ trigger:
   - pull_request
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -516,8 +498,6 @@ trigger:
   - push
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -650,9 +630,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
@@ -662,9 +639,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
@@ -674,9 +648,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
@@ -686,9 +657,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -846,8 +814,6 @@ trigger:
   - push
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -930,8 +896,6 @@ trigger:
   - push
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -994,8 +958,6 @@ trigger:
   - push
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -1081,8 +1043,6 @@ trigger:
   - push
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -1346,9 +1306,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -1358,9 +1315,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -1370,9 +1324,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
@@ -1382,9 +1333,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -1525,8 +1473,6 @@ trigger:
     - grafana/grafana
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -1588,8 +1534,6 @@ trigger:
     - grafana/grafana
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -1890,9 +1834,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -1902,9 +1843,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -1914,9 +1852,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
@@ -1926,9 +1861,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -2088,8 +2020,6 @@ trigger:
     - grafana/grafana
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -2175,8 +2105,6 @@ trigger:
     - grafana/grafana
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -2410,9 +2338,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -2422,9 +2347,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -2434,9 +2356,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
@@ -2446,9 +2365,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -2566,8 +2482,6 @@ trigger:
   - custom
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -2627,8 +2541,6 @@ trigger:
   - custom
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -2928,9 +2840,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -2940,9 +2849,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -2952,9 +2858,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
@@ -2964,9 +2867,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -3123,8 +3023,6 @@ trigger:
   - custom
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -3208,8 +3106,6 @@ trigger:
   - custom
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -3290,8 +3186,6 @@ trigger:
   - custom
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -3551,9 +3445,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -3563,9 +3454,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -3575,9 +3463,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
@@ -3587,9 +3472,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -3692,8 +3574,6 @@ trigger:
   - refs/heads/v[0-9]*
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -3748,8 +3628,6 @@ trigger:
   - refs/heads/v[0-9]*
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -4044,9 +3922,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -4056,9 +3931,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -4068,9 +3940,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
@@ -4080,9 +3949,6 @@ steps:
     HOST: end-to-end-tests-server
   image: cypress/included:9.2.0
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -4248,8 +4114,6 @@ trigger:
   - refs/heads/v[0-9]*
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -4328,8 +4192,6 @@ trigger:
   - refs/heads/v[0-9]*
 type: docker
 volumes:
-- name: cypress_cache
-  temp: {}
 - host:
     path: /var/run/docker.sock
   name: docker
@@ -4479,6 +4341,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 39bd9bda630c4071f354cb8f5192a84b37fadfd588fc13cc48bc5f0c036c163a
+hmac: ca3826510f1b87e8ba9d1cbc5af4ccacfa1117c8bb52f30510e9ce381dc5b2e8
 
 ...
