@@ -49,28 +49,25 @@ export class ServiceAccountsListPage extends PureComponent<Props, State> {
     const totalPages = Math.ceil(serviceAccounts.length / ITEMS_PER_PAGE);
 
     if (this.state.showInvites) {
-      return <></>;
-    } else {
-      return (
-        <VerticalGroup spacing="md">
-          <ServiceAccountsTable
-            serviceAccounts={paginatedServiceAccounts}
-            onRoleChange={(role, serviceAccount) => this.onRoleChange(role, serviceAccount)}
-            onRemoveServiceaccount={(serviceAccount) =>
-              this.props.removeServiceAccount(serviceAccount.serviceAccountId)
-            }
-          />
-          <HorizontalGroup justify="flex-end">
-            <Pagination
-              onNavigate={setServiceAccountsSearchPage}
-              currentPage={this.props.searchPage}
-              numberOfPages={totalPages}
-              hideWhenSinglePage={true}
-            />
-          </HorizontalGroup>
-        </VerticalGroup>
-      );
+      return null;
     }
+    return (
+      <VerticalGroup spacing="md">
+        <ServiceAccountsTable
+          serviceAccounts={paginatedServiceAccounts}
+          onRoleChange={(role, serviceAccount) => this.onRoleChange(role, serviceAccount)}
+          onRemoveServiceaccount={(serviceAccount) => this.props.removeServiceAccount(serviceAccount.serviceAccountId)}
+        />
+        <HorizontalGroup justify="flex-end">
+          <Pagination
+            onNavigate={setServiceAccountsSearchPage}
+            currentPage={this.props.searchPage}
+            numberOfPages={totalPages}
+            hideWhenSinglePage={true}
+          />
+        </HorizontalGroup>
+      </VerticalGroup>
+    );
   }
 
   render() {

@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import { AccessControlAction, Role, OrgServiceaccount } from 'app/types';
+import { AccessControlAction, Role, OrgServiceAccount } from 'app/types';
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { OrgRole } from '@grafana/data';
@@ -7,19 +7,14 @@ import { contextSrv } from 'app/core/core';
 import { fetchBuiltinRoles, fetchRoleOptions, UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 
 export interface Props {
-  serviceaccounts: OrgServiceaccount[];
+  serviceAccounts: OrgServiceAccount[];
   orgId?: number;
-  onRoleChange: (role: OrgRole, serviceaccount: OrgServiceaccount) => void;
-  onRemoveServiceaccount: (serviceaccount: OrgServiceaccount) => void;
+  onRoleChange: (role: OrgRole, serviceaccount: OrgServiceAccount) => void;
+  onRemoveServiceaccount: (serviceaccount: OrgServiceAccount) => void;
 }
 
 const ServiceaccountsTable: FC<Props> = (props) => {
-  const {
-    serviceaccounts: serviceaccounts,
-    orgId,
-    onRoleChange,
-    onRemoveServiceaccount: onRemoveserviceaccount,
-  } = props;
+  const { serviceAccounts, orgId, onRoleChange, onRemoveServiceaccount: onRemoveserviceaccount } = props;
   const canUpdateRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
   const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
   const rolePickerDisabled = !canUpdateRole;
@@ -61,37 +56,37 @@ const ServiceaccountsTable: FC<Props> = (props) => {
         </tr>
       </thead>
       <tbody>
-        {serviceaccounts.map((serviceaccount, index) => {
+        {serviceAccounts.map((serviceAccount, index) => {
           return (
-            <tr key={`${serviceaccount.serviceaccountId}-${index}`}>
+            <tr key={`${serviceAccount.serviceAccountId}-${index}`}>
               <td className="width-2 text-center">
-                <img className="filter-table__avatar" src={serviceaccount.avatarUrl} alt="serviceaccount avatar" />
+                <img className="filter-table__avatar" src={serviceAccount.avatarUrl} alt="serviceaccount avatar" />
               </td>
               <td className="max-width-6">
-                <span className="ellipsis" title={serviceaccount.login}>
-                  {serviceaccount.login}
+                <span className="ellipsis" title={serviceAccount.login}>
+                  {serviceAccount.login}
                 </span>
               </td>
 
               <td className="max-width-5">
-                <span className="ellipsis" title={serviceaccount.email}>
-                  {serviceaccount.email}
+                <span className="ellipsis" title={serviceAccount.email}>
+                  {serviceAccount.email}
                 </span>
               </td>
               <td className="max-width-5">
-                <span className="ellipsis" title={serviceaccount.name}>
-                  {serviceaccount.name}
+                <span className="ellipsis" title={serviceAccount.name}>
+                  {serviceAccount.name}
                 </span>
               </td>
-              <td className="width-1">{serviceaccount.lastSeenAtAge}</td>
+              <td className="width-1">{serviceAccount.lastSeenAtAge}</td>
 
               <td className="width-8">
                 {contextSrv.accessControlEnabled() ? (
                   <UserRolePicker
-                    userId={serviceaccount.serviceaccountId}
+                    userId={serviceAccount.serviceAccountId}
                     orgId={orgId}
-                    builtInRole={serviceaccount.role}
-                    onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceaccount)}
+                    builtInRole={serviceAccount.role}
+                    onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                     getRoleOptions={getRoleOptions}
                     getBuiltinRoles={getBuiltinRoles}
                     disabled={rolePickerDisabled}
@@ -99,9 +94,9 @@ const ServiceaccountsTable: FC<Props> = (props) => {
                 ) : (
                   <OrgRolePicker
                     aria-label="Role"
-                    value={serviceaccount.role}
+                    value={serviceAccount.role}
                     disabled={!canUpdateRole}
-                    onChange={(newRole) => onRoleChange(newRole, serviceaccount)}
+                    onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                   />
                 )}
               </td>
@@ -111,18 +106,18 @@ const ServiceaccountsTable: FC<Props> = (props) => {
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => setShowRemoveModal(serviceaccount.login)}
+                    onClick={() => setShowRemoveModal(serviceAccount.login)}
                     icon="times"
                     aria-label="Delete serviceaccount"
                   />
                   <ConfirmModal
-                    body={`Are you sure you want to delete serviceaccount ${serviceaccount.login}?`}
+                    body={`Are you sure you want to delete serviceaccount ${serviceAccount.login}?`}
                     confirmText="Delete"
                     title="Delete"
                     onDismiss={() => setShowRemoveModal(false)}
-                    isOpen={serviceaccount.login === showRemoveModal}
+                    isOpen={serviceAccount.login === showRemoveModal}
                     onConfirm={() => {
-                      onRemoveserviceaccount(serviceaccount);
+                      onRemoveserviceaccount(serviceAccount);
                     }}
                   />
                 </td>
