@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
+	sa "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 )
 
 var plog = log.New("api")
@@ -252,10 +253,10 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
-			keysRoute.Get("/", routing.Wrap(GetAPIKeys))
-			keysRoute.Post("/", quota("api_key"), routing.Wrap(hs.AddAPIKey))
-			keysRoute.Post("/additional", quota("api_key"), routing.Wrap(hs.AdditionalAPIKey))
-			keysRoute.Delete("/:id", routing.Wrap(DeleteAPIKey))
+			keysRoute.Get("/", authorize(reqOrgAdmin, sa.ActionApikeyListEv), routing.Wrap(GetAPIKeys))
+			keysRoute.Post("/", authorize(reqOrgAdmin, sa.ActionApikeyAddEv), quota("api_key"), routing.Wrap(hs.AddAPIKey))
+			keysRoute.Post("/additional", authorize(reqOrgAdmin, sa.ActionApikeyAddAdditionalEv), quota("api_key"), routing.Wrap(hs.AdditionalAPIKey))
+			keysRoute.Delete("/:id", authorize(reqOrgAdmin, sa.ActionApikeyRemoveEv), routing.Wrap(DeleteAPIKey))
 		}, reqOrgAdmin)
 
 		// Preferences

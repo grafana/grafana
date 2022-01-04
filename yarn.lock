@@ -2323,14 +2323,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@es-joy/jsdoccomment@npm:0.13.0":
-  version: 0.13.0
-  resolution: "@es-joy/jsdoccomment@npm:0.13.0"
+"@es-joy/jsdoccomment@npm:0.14.2":
+  version: 0.14.2
+  resolution: "@es-joy/jsdoccomment@npm:0.14.2"
   dependencies:
     comment-parser: 1.3.0
     esquery: ^1.4.0
-    jsdoc-type-pratt-parser: 2.0.0
-  checksum: eb7dcef7069e96c8c86c60aa843ba4cefa8485353b9bef46d02ab879891d674a79b796f1e029478f656c25e782d351452a2a7a47d928ce7fac9dc8409ecac1b9
+    jsdoc-type-pratt-parser: 2.0.2
+  checksum: babc7f975782a0b07c90d7823dbfeaa06ba7cbe779708cc2e997d049a4e7b592ae59226abf05caffc08fc84001683bfbddfd7a1943dca5f7c38afc706a8cafaf
   languageName: node
   linkType: hard
 
@@ -2585,8 +2585,8 @@ __metadata:
   linkType: hard
 
 "@grafana/experimental@npm:^0.0.2-canary.10":
-  version: 0.0.2-canary.10
-  resolution: "@grafana/experimental@npm:0.0.2-canary.10"
+  version: 0.0.2-canary.11
+  resolution: "@grafana/experimental@npm:0.0.2-canary.11"
   dependencies:
     "@types/uuid": ^8.3.3
     uuid: ^8.3.2
@@ -2594,7 +2594,7 @@ __metadata:
     "@emotion/css": 11.1.3
     react: 17.0.1
     react-select: 5.2.1
-  checksum: 80b82b15bdfdd664a7e83d753d6441b1e9733ff8fb31ed90d712012f81962703fc949e7bf880fba9f4f8e18dab5fc1443a9ac7579a6b9489fdab7191ff54b87e
+  checksum: 6e8fa4bbdf6082af5f56cb631990cda4f51ebe57b00a7a619488707a11087565b802f0166a019ff0115094ed82fec7f213a88e2b0caf0f6fde2005aa11f45a7f
   languageName: node
   linkType: hard
 
@@ -2888,7 +2888,7 @@ __metadata:
     react-custom-scrollbars-2: 4.4.0
     react-docgen-typescript-loader: 3.7.2
     react-dom: 17.0.1
-    react-dropzone: 11.3.4
+    react-dropzone: 11.4.2
     react-highlight-words: 0.17.0
     react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
@@ -3028,7 +3028,7 @@ __metadata:
     memoize-one: 6.0.0
     moment: 2.29.1
     moment-timezone: 0.5.33
-    prop-types: 15.7.2
+    prop-types: 15.8.0
     react: 17.0.1
     react-dom: 17.0.1
     react-icons: 2.2.7
@@ -8685,12 +8685,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-grid-layout@npm:1.1.1":
-  version: 1.1.1
-  resolution: "@types/react-grid-layout@npm:1.1.1"
+"@types/react-grid-layout@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@types/react-grid-layout@npm:1.3.0"
   dependencies:
     "@types/react": "*"
-  checksum: bd8be3dbab89b720a8306a6bce7aac33e5578884775b55a6d5d9a623c18c0d4c92b455bd0095be036bc7f88cea1ae98b3b11661c5cec52810aa34398ea865ae7
+  checksum: 94243bce2c7005dafad165f6f9329e4e77e09eed3ab8380b010474d75e4314856da43ff006f90c26a3f69e3d5398bbec145dbbd8619361abbc068ed413b791a6
   languageName: node
   linkType: hard
 
@@ -15476,9 +15476,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.3.564, electron-to-chromium@npm:^1.4.17":
-  version: 1.4.33
-  resolution: "electron-to-chromium@npm:1.4.33"
-  checksum: 4ec0c3a92451aa4d62afd9f2ff96ab4d1be32c8bbba673ff8d370f1e60f10be61f79354876b3d39e34f9fdf9b50c980e6c59460341f8cb7189315da4bdb15c5f
+  version: 1.4.34
+  resolution: "electron-to-chromium@npm:1.4.34"
+  checksum: 95598b02681c46fed8131c2265a9729963fdc10b628201c8cedf286c7268dee6074ca270628c10a52f5f5b62f2c59260fdbd1f0f6828a35438f329988fd1408c
   languageName: node
   linkType: hard
 
@@ -16026,22 +16026,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:37.4.0":
-  version: 37.4.0
-  resolution: "eslint-plugin-jsdoc@npm:37.4.0"
+"eslint-plugin-jsdoc@npm:37.5.1":
+  version: 37.5.1
+  resolution: "eslint-plugin-jsdoc@npm:37.5.1"
   dependencies:
-    "@es-joy/jsdoccomment": 0.13.0
+    "@es-joy/jsdoccomment": 0.14.2
     comment-parser: 1.3.0
     debug: ^4.3.3
     escape-string-regexp: ^4.0.0
     esquery: ^1.4.0
-    jsdoc-type-pratt-parser: ^2.0.0
+    jsdoc-type-pratt-parser: ^2.0.2
     regextras: ^0.8.0
     semver: ^7.3.5
     spdx-expression-parse: ^3.0.1
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0
-  checksum: df7efe0634e67f0788cac847e695022be20bd418892ab948743978f793489be8645d4da5e5b7fdcf2dfa67385cba39d85a577dddb259da129e4eb3993fd6627c
+  checksum: 8f5c3edbd3685df3b4d22c6896c4a4c75d96e3e641f45fef717c61cc8a1be17012cadd8fa90caf7aa2c8330dd35aae6aaed7b6806d97e9326ea96e307b6a3b39
   languageName: node
   linkType: hard
 
@@ -18251,7 +18251,7 @@ __metadata:
     "@types/react": 17.0.30
     "@types/react-beautiful-dnd": 13.1.1
     "@types/react-dom": 17.0.10
-    "@types/react-grid-layout": 1.1.1
+    "@types/react-grid-layout": 1.3.0
     "@types/react-highlight-words": ^0.16.2
     "@types/react-loadable": 5.5.2
     "@types/react-redux": 7.1.20
@@ -18314,7 +18314,7 @@ __metadata:
     enzyme-to-json: 3.6.2
     eslint: 7.28.0
     eslint-config-prettier: 8.3.0
-    eslint-plugin-jsdoc: 37.4.0
+    eslint-plugin-jsdoc: 37.5.1
     eslint-plugin-lodash: ^7.2.0
     eslint-plugin-no-only-tests: 2.6.0
     eslint-plugin-prettier: 4.0.0
@@ -18377,7 +18377,7 @@ __metadata:
     postcss-scss: 4.0.2
     prettier: 2.2.1
     prismjs: 1.25.0
-    prop-types: 15.7.2
+    prop-types: 15.8.0
     raw-loader: 4.0.2
     rc-cascader: 1.5.0
     rc-drawer: 4.4.0
@@ -18389,7 +18389,7 @@ __metadata:
     react-diff-viewer: ^3.1.1
     react-dom: 17.0.1
     react-draggable: 4.4.4
-    react-grid-layout: 1.2.5
+    react-grid-layout: 1.3.0
     react-highlight-words: 0.17.0
     react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
@@ -21840,7 +21840,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsdoc-type-pratt-parser@npm:^2.0.0":
+"jsdoc-type-pratt-parser@npm:2.0.2, jsdoc-type-pratt-parser@npm:^2.0.0, jsdoc-type-pratt-parser@npm:^2.0.2":
   version: 2.0.2
   resolution: "jsdoc-type-pratt-parser@npm:2.0.2"
   checksum: c04e0aec3eab6983956d2a23e778581eb90e69b5123e0da12a8fc9ecda967092443a67b12a878f280eed056a4a7d9b0bb3b35d04f1affb8eb5b003ccb51ea51f
@@ -27102,18 +27102,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:15.7.2":
-  version: 15.7.2
-  resolution: "prop-types@npm:15.7.2"
-  dependencies:
-    loose-envify: ^1.4.0
-    object-assign: ^4.1.1
-    react-is: ^16.8.1
-  checksum: 5eef82fdda64252c7e75aa5c8cc28a24bbdece0f540adb60ce67c205cf978a5bd56b83e4f269f91c6e4dcfd80b36f2a2dec24d362e278913db2086ca9c6f9430
-  languageName: node
-  linkType: hard
-
-"prop-types@npm:15.x, prop-types@npm:^15.0.0, prop-types@npm:^15.5.0, prop-types@npm:^15.5.10, prop-types@npm:^15.5.4, prop-types@npm:^15.5.7, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.0, prop-types@npm:^15.7.2":
+"prop-types@npm:15.8.0, prop-types@npm:15.x, prop-types@npm:^15.0.0, prop-types@npm:^15.5.0, prop-types@npm:^15.5.10, prop-types@npm:^15.5.4, prop-types@npm:^15.5.7, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.0, prop-types@npm:^15.7.2":
   version: 15.8.0
   resolution: "prop-types@npm:15.8.0"
   dependencies:
@@ -27950,16 +27939,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dropzone@npm:11.3.4":
-  version: 11.3.4
-  resolution: "react-dropzone@npm:11.3.4"
+"react-dropzone@npm:11.4.2":
+  version: 11.4.2
+  resolution: "react-dropzone@npm:11.4.2"
   dependencies:
     attr-accept: ^2.2.1
     file-selector: ^0.2.2
     prop-types: ^15.7.2
   peerDependencies:
     react: ">= 16.8"
-  checksum: 602ac4e41a39d9ef8b475faed0c5d5429116150c2cdd1cceb98992d741769865212ceb9d379e9886c4c101b8a65d06f16395dee530e949830bf0bb60d46d29b4
+  checksum: f8dc6af69193133efe30ed11dd8c2212a180abd3833e91d03dab4bdc9546d47dcad311d7f72b4968b7d016871884555b9e16f7a490913b78dbfec8ce8f569193
   languageName: node
   linkType: hard
 
@@ -28011,19 +28000,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-grid-layout@npm:1.2.5":
-  version: 1.2.5
-  resolution: "react-grid-layout@npm:1.2.5"
+"react-grid-layout@npm:1.3.0":
+  version: 1.3.0
+  resolution: "react-grid-layout@npm:1.3.0"
   dependencies:
     classnames: 2.3.1
     lodash.isequal: ^4.0.0
     prop-types: ^15.0.0
     react-draggable: ^4.0.0
-    react-resizable: ^3.0.1
+    react-resizable: ^3.0.4
   peerDependencies:
     react: ">= 16.3.0"
     react-dom: ">= 16.3.0"
-  checksum: 800d727c8a5d0ced70b56bc8e2a8c51a25d3158c79d84ccf08863fedd1790ab123d4ba49a8b4a2c4f065b590e495303484ad28dd121aca3431515d6b35bf6369
+  checksum: 955c135dcc14e86f573141e75b211e08e68f1d4f4ea2d0849652410dfc41715d89507abf1d28c2de4326b201f2e4138a2c2796561e917a2ee8b932adf40864bb
   languageName: node
   linkType: hard
 
@@ -28142,7 +28131,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-is@npm:^16.12.0, react-is@npm:^16.13.1, react-is@npm:^16.6.0, react-is@npm:^16.7.0, react-is@npm:^16.8.1":
+"react-is@npm:^16.12.0, react-is@npm:^16.13.1, react-is@npm:^16.6.0, react-is@npm:^16.7.0":
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
   checksum: f7a19ac3496de32ca9ae12aa030f00f14a3d45374f1ceca0af707c831b2a6098ef0d6bdae51bd437b0a306d7f01d4677fcc8de7c0d331eb47ad0f46130e53c5f
@@ -28274,7 +28263,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-resizable@npm:3.0.4, react-resizable@npm:^3.0.1":
+"react-resizable@npm:3.0.4, react-resizable@npm:^3.0.4":
   version: 3.0.4
   resolution: "react-resizable@npm:3.0.4"
   dependencies:
