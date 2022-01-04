@@ -55,12 +55,6 @@ export class ServiceaccountsListPage extends PureComponent<Props, State> {
     this.props.updateserviceaccount(updatedServiceaccount);
   };
 
-  onShowInvites = () => {
-    this.setState((prevState) => ({
-      showInvites: !prevState.showInvites,
-    }));
-  };
-
   getPaginatedServiceaccounts = (serviceaccounts: OrgServiceaccount[]) => {
     const offset = (this.props.searchPage - 1) * pageLimit;
     return serviceaccounts.slice(offset, offset + pageLimit);
@@ -71,29 +65,23 @@ export class ServiceaccountsListPage extends PureComponent<Props, State> {
     const paginatedServiceaccounts = this.getPaginatedServiceaccounts(serviceaccounts);
     const totalPages = Math.ceil(serviceaccounts.length / pageLimit);
 
-    if (this.state.showInvites) {
-      return <></>;
-    } else {
-      return (
-        <VerticalGroup spacing="md">
-          <ServiceAccountsTable
-            serviceaccounts={paginatedServiceaccounts}
-            onRoleChange={(role, serviceaccount) => this.onRoleChange(role, serviceaccount)}
-            onRemoveServiceaccount={(serviceaccount) =>
-              this.props.removeserviceaccount(serviceaccount.serviceaccountId)
-            }
+    return (
+      <VerticalGroup spacing="md">
+        <ServiceAccountsTable
+          serviceaccounts={paginatedServiceaccounts}
+          onRoleChange={(role, serviceaccount) => this.onRoleChange(role, serviceaccount)}
+          onRemoveServiceaccount={(serviceaccount) => this.props.removeserviceaccount(serviceaccount.serviceaccountId)}
+        />
+        <HorizontalGroup justify="flex-end">
+          <Pagination
+            onNavigate={setserviceaccountsSearchPage}
+            currentPage={this.props.searchPage}
+            numberOfPages={totalPages}
+            hideWhenSinglePage={true}
           />
-          <HorizontalGroup justify="flex-end">
-            <Pagination
-              onNavigate={setserviceaccountsSearchPage}
-              currentPage={this.props.searchPage}
-              numberOfPages={totalPages}
-              hideWhenSinglePage={true}
-            />
-          </HorizontalGroup>
-        </VerticalGroup>
-      );
-    }
+        </HorizontalGroup>
+      </VerticalGroup>
+    );
   }
 
   render() {
