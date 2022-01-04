@@ -64,7 +64,7 @@ For example, you can define a template fragment can using the `define` keyword:
 {{ end }}
 ```
 
-Other custom templates may then embed the fragment using the `template` keyword:
+You can then embed custom templates within this fragment using the `template` keyword. For example:
 
 ```
 Alert summary:
