@@ -183,7 +183,7 @@ func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error 
 			Body:       string(body),
 		}
 
-		if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+		if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 			am.log.Error("Failed to send alertmanager", "error", err, "alertmanager", am.Name, "url", url)
 			errCnt++
 		}

@@ -17,7 +17,7 @@ func populateDashboardsByID(ctx context.Context, dashboardByIDs []int64, dashboa
 
 	if len(dashboardByIDs) > 0 {
 		dashboardQuery := models.GetDashboardsQuery{DashboardIds: dashboardByIDs}
-		if err := bus.DispatchCtx(ctx, &dashboardQuery); err != nil {
+		if err := bus.Dispatch(ctx, &dashboardQuery); err != nil {
 			return result, err
 		}
 
@@ -49,7 +49,7 @@ func populateDashboardsByTag(ctx context.Context, orgID int64, signedInUser *mod
 			OrgId:        orgID,
 		}
 
-		if err := bus.DispatchCtx(ctx, &searchQuery); err == nil {
+		if err := bus.Dispatch(ctx, &searchQuery); err == nil {
 			for _, item := range searchQuery.Result {
 				result = append(result, dtos.PlaylistDashboard{
 					Id:    item.ID,

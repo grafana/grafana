@@ -18,7 +18,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		Bus: bus.New(),
 	}
 
-	ae.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetAllAlertsQuery) error {
+	ae.Bus.AddHandler(func(ctx context.Context, query *models.GetAllAlertsQuery) error {
 		var createFake = func(file string) *simplejson.Json {
 			// Ignore gosec warning G304 since it's a test
 			// nolint:gosec
@@ -39,7 +39,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		return nil
 	})
 
-	ae.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceQuery) error {
+	ae.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceQuery) error {
 		ds := map[int64]*models.DataSource{
 			1: {Type: "influxdb"},
 			2: {Type: "graphite"},

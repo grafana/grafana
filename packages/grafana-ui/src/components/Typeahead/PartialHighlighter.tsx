@@ -42,11 +42,14 @@ export const PartialHighlighter: React.FC<Props> = (props: Props) => {
     let end = indices[i];
 
     children.push(
-      createElement(highlighted ? 'mark' : 'span', {
-        key: i - 1,
-        children: text.substring(start, end),
-        className: highlighted ? highlightClassName : undefined,
-      })
+      createElement(
+        highlighted ? 'mark' : 'span',
+        {
+          key: i - 1,
+          className: highlighted ? highlightClassName : undefined,
+        },
+        text.substring(start, end)
+      )
     );
     highlighted = !highlighted;
   }

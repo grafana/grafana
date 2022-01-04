@@ -33,7 +33,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 
 	tmpDir, err := ioutil.TempDir("", "test")
 	require.NoError(t, err)
-	kvStore := newFakeKVStore(t)
+	kvStore := NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
@@ -161,7 +161,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 
 	tmpDir, err := ioutil.TempDir("", "test")
 	require.NoError(t, err)
-	kvStore := newFakeKVStore(t)
+	kvStore := NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
@@ -219,7 +219,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 		DataPath:        tmpDir,
 		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute, DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration()}, // do not poll in tests.
 	}
-	kvStore := newFakeKVStore(t)
+	kvStore := NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
@@ -246,7 +246,9 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	{
 		// let's delete its "running config" to make it non-ready
 		mam.alertmanagers[1].config = nil
-		_, err := mam.AlertmanagerFor(1)
+		am, err := mam.AlertmanagerFor(1)
+		require.NotNil(t, am)
+		require.False(t, am.Ready())
 		require.EqualError(t, err, ErrAlertmanagerNotReady.Error())
 	}
 

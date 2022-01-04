@@ -55,7 +55,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	t.Run("When a server admin attempts to logout himself from all devices", func(t *testing.T) {
 		adminLogoutUserScenario(t, "Should not be allowed when calling POST on",
 			"/api/admin/users/1/logout", "/api/admin/users/:id/logout", func(sc *scenarioContext) {
-				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 					cmd.Result = &models.User{Id: testUserID}
 					return nil
 				})
@@ -70,7 +70,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			"/api/admin/users/:id/logout", func(sc *scenarioContext) {
 				userID := int64(0)
 
-				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 					userID = cmd.Id
 					return models.ErrUserNotFound
 				})
@@ -86,7 +86,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		adminRevokeUserAuthTokenScenario(t, "Should return not found when calling POST on",
 			"/api/admin/users/200/revoke-auth-token", "/api/admin/users/:id/revoke-auth-token", cmd, func(sc *scenarioContext) {
 				var userID int64
-				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 					userID = cmd.Id
 					return models.ErrUserNotFound
 				})
@@ -101,7 +101,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		adminGetUserAuthTokensScenario(t, "Should return not found when calling GET on",
 			"/api/admin/users/200/auth-tokens", "/api/admin/users/:id/auth-tokens", func(sc *scenarioContext) {
 				var userID int64
-				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 					userID = cmd.Id
 					return models.ErrUserNotFound
 				})
@@ -117,11 +117,11 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			"/api/admin/users/42/enable", "/api/admin/users/:id/enable", func(sc *scenarioContext) {
 				var userID int64
 				isDisabled := false
-				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetAuthInfoQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetAuthInfoQuery) error {
 					return models.ErrUserNotFound
 				})
 
-				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.DisableUserCommand) error {
+				bus.AddHandler("test", func(ctx context.Context, cmd *models.DisableUserCommand) error {
 					userID = cmd.UserId
 					isDisabled = cmd.IsDisabled
 					return models.ErrUserNotFound
@@ -143,11 +143,11 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			"/api/admin/users/42/disable", "/api/admin/users/:id/disable", func(sc *scenarioContext) {
 				var userID int64
 				isDisabled := false
-				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetAuthInfoQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetAuthInfoQuery) error {
 					return models.ErrUserNotFound
 				})
 
-				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.DisableUserCommand) error {
+				bus.AddHandler("test", func(ctx context.Context, cmd *models.DisableUserCommand) error {
 					userID = cmd.UserId
 					isDisabled = cmd.IsDisabled
 					return models.ErrUserNotFound
@@ -170,7 +170,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		adminDisableUserScenario(t, "Should return Could not disable external user error", "disable",
 			"/api/admin/users/42/disable", "/api/admin/users/:id/disable", func(sc *scenarioContext) {
 				var userID int64
-				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetAuthInfoQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetAuthInfoQuery) error {
 					userID = cmd.UserId
 					return nil
 				})
@@ -188,7 +188,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		adminDisableUserScenario(t, "Should return Could not enable external user error", "enable",
 			"/api/admin/users/42/enable", "/api/admin/users/:id/enable", func(sc *scenarioContext) {
 				var userID int64
-				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetAuthInfoQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetAuthInfoQuery) error {
 					userID = cmd.UserId
 					return nil
 				})
@@ -208,7 +208,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		adminDeleteUserScenario(t, "Should return user not found error", "/api/admin/users/42",
 			"/api/admin/users/:id", func(sc *scenarioContext) {
 				var userID int64
-				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.DeleteUserCommand) error {
+				bus.AddHandler("test", func(ctx context.Context, cmd *models.DeleteUserCommand) error {
 					userID = cmd.UserId
 					return models.ErrUserNotFound
 				})
