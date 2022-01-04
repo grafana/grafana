@@ -1,6 +1,6 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 import { GrafanaTheme2, AppEvents } from '@grafana/data';
-import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner } from '@grafana/ui';
+import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner, ConfirmModal } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 import { AlertTypeStep } from './AlertTypeStep';
@@ -11,7 +11,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { saveRuleFormAction } from '../../state/actions';
+import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import { useDispatch } from 'react-redux';
 import { useCleanup } from 'app/core/hooks/useCleanup';
@@ -22,6 +22,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { appEvents } from 'app/core/core';
 import { CloudConditionsStep } from './CloudConditionsStep';
 import { GrafanaConditionsStep } from './GrafanaConditionsStep';
+import * as ruleId from '../../utils/rule-id';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -33,6 +34,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const [queryParams] = useQueryParams();
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const defaultValues: RuleFormValues = useMemo(() => {
     if (existing) {
@@ -82,6 +84,19 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     );
   };
 
+  const deleteRule = () => {
+    if (existing) {
+      const identifier = ruleId.fromRulerRule(
+        existing.ruleSourceName,
+        existing.namespace,
+        existing.group.name,
+        existing.rule
+      );
+
+      dispatch(deleteRuleAction(identifier, { navigateTo: '/alerting/list' }));
+    }
+  };
+
   const onInvalid = () => {
     appEvents.emit(AppEvents.alertError, ['There are errors in the form. Please correct them and try again!']);
   };
@@ -95,6 +110,11 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               Cancel
             </Button>
           </Link>
+          {existing ? (
+            <Button variant="destructive" type="button" onClick={() => setShowDeleteModal(true)}>
+              Delete
+            </Button>
+          ) : null}
           <Button
             variant="primary"
             type="button"
@@ -129,6 +149,17 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
           </CustomScrollbar>
         </div>
       </form>
+      {showDeleteModal ? (
+        <ConfirmModal
+          isOpen={true}
+          title="Delete rule"
+          body="Deleting this rule will permanently remove it. Are you sure you want to delete this rule?"
+          confirmText="Yes, delete"
+          icon="exclamation-triangle"
+          onConfirm={deleteRule}
+          onDismiss={() => setShowDeleteModal(false)}
+        />
+      ) : null}
     </FormProvider>
   );
 };
