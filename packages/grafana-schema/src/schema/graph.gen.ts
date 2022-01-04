@@ -239,7 +239,7 @@ export enum TooltipDisplayMode {
   Single = 'single',
 }
 
-export enum TooltipSortOrder {
+export enum SortOrder {
   Ascending = 'asc',
   Descending = 'desc',
   None = 'none',
@@ -290,5 +290,5 @@ export const defaultTableFieldOptions: TableFieldOptions = {
 
 export interface VizTooltipOptions {
   mode: TooltipDisplayMode;
-  sortOrder: TooltipSortOrder;
+  sortOrder: SortOrder;
 }

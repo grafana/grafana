@@ -1,7 +1,7 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
 import { graphPanelChangedHandler } from './migrations';
 import { cloneDeep } from 'lodash';
-import { TooltipDisplayMode, TooltipSortOrder } from '@grafana/schema';
+import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
 describe('Graph Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
@@ -384,10 +384,10 @@ describe('Graph Migrations', () => {
       panel3.options = graphPanelChangedHandler(panel3, 'graph', desc, prevFieldConfig);
       panel4.options = graphPanelChangedHandler(panel4, 'graph', singleModeWithUnnecessaryOption, prevFieldConfig);
 
-      expect(panel1.options.tooltip.sortOrder).toBe(TooltipSortOrder.None);
-      expect(panel2.options.tooltip.sortOrder).toBe(TooltipSortOrder.Ascending);
-      expect(panel3.options.tooltip.sortOrder).toBe(TooltipSortOrder.Descending);
-      expect(panel4.options.tooltip.sortOrder).toBe(TooltipSortOrder.None);
+      expect(panel1.options.tooltip.sortOrder).toBe(SortOrder.None);
+      expect(panel2.options.tooltip.sortOrder).toBe(SortOrder.Ascending);
+      expect(panel3.options.tooltip.sortOrder).toBe(SortOrder.Descending);
+      expect(panel4.options.tooltip.sortOrder).toBe(SortOrder.None);
     });
   });
 });

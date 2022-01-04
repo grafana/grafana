@@ -25,7 +25,7 @@ import {
   VisibilityMode,
   ScaleDistribution,
   StackingMode,
-  TooltipSortOrder,
+  SortOrder,
 } from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
@@ -314,7 +314,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     },
     tooltip: {
       mode: TooltipDisplayMode.Single,
-      sortOrder: TooltipSortOrder.None,
+      sortOrder: SortOrder.None,
     },
   };
 
@@ -346,13 +346,13 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     if (tooltipConfig.sort !== undefined && tooltipConfig.shared) {
       switch (tooltipConfig.sort) {
         case 1:
-          options.tooltip.sortOrder = TooltipSortOrder.Ascending;
+          options.tooltip.sortOrder = SortOrder.Ascending;
           break;
         case 2:
-          options.tooltip.sortOrder = TooltipSortOrder.Descending;
+          options.tooltip.sortOrder = SortOrder.Descending;
           break;
         default:
-          options.tooltip.sortOrder = TooltipSortOrder.None;
+          options.tooltip.sortOrder = SortOrder.None;
       }
     }
   }

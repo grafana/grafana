@@ -1,9 +1,9 @@
 package schema
 
 TooltipDisplayMode: "single" | "multi" | "none" @cuetsy(kind="enum")
-TooltipSortOrder: "asc" | "desc" | "none" @cuetsy(kind="enum")
+SortOrder: "asc" | "desc" | "none" @cuetsy(kind="enum")
 
 VizTooltipOptions: {
 	mode: TooltipDisplayMode
-	sortOrder: TooltipSortOrder
+	sortOrder: SortOrder
 } @cuetsy(kind="interface")

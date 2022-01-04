@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 import {
+  arrayUtils,
   CartesianCoords2D,
   DashboardCursorSync,
   DataFrame,
@@ -12,7 +13,7 @@ import {
   getFieldDisplayName,
   TimeZone,
 } from '@grafana/data';
-import { TooltipDisplayMode, TooltipSortOrder } from '@grafana/schema';
+import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { Portal } from '../../Portal/Portal';
 import { SeriesTable, SeriesTableRowProps, VizTooltipContainer } from '../../VizTooltip';
@@ -24,7 +25,7 @@ interface TooltipPluginProps {
   data: DataFrame;
   config: UPlotConfigBuilder;
   mode?: TooltipDisplayMode;
-  sortOrder?: TooltipSortOrder;
+  sortOrder?: SortOrder;
   sync?: DashboardCursorSync;
   // Allows custom tooltip content rendering. Exposes aligned data frame with relevant indexes for data inspection
   // Use field.state.origin indexes from alignedData frame field to get access to original data frame and field index.
@@ -38,7 +39,7 @@ const TOOLTIP_OFFSET = 10;
  */
 export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   mode = TooltipDisplayMode.Single,
-  sortOrder = TooltipSortOrder.None,
+  sortOrder = SortOrder.None,
   sync,
   timeZone,
   config,
@@ -236,8 +237,8 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
 
       let result = new Array(series.length);
 
-      if (sortOrder !== TooltipSortOrder.None) {
-        sortIdx.sort((a, b) => sortValues(sortOrder)(a[1], b[1]));
+      if (sortOrder !== SortOrder.None) {
+        sortIdx.sort((a, b) => arrayUtils.sortValues(sortOrder)(a[1], b[1]));
         for (let i = 0; i < sortIdx.length; i++) {
           result[i] = series[sortIdx[i][0]];
         }
@@ -299,28 +300,4 @@ export function positionTooltip(u: uPlot, bbox: DOMRect) {
   }
 
   return { x, y };
-}
-
-/**
- * Given a sort order and a value, return a function that can be used to sort values
- * Null values are always sorted to the end regardless of the sort order
- */
-function sortValues(sort: TooltipSortOrder) {
-  return (a: number | null | undefined, b: number | null | undefined) => {
-    if (a === b) {
-      return 0;
-    }
-
-    if (b == null) {
-      return -1;
-    }
-    if (a == null) {
-      return 1;
-    }
-
-    if (sort === TooltipSortOrder.Descending) {
-      return b - a;
-    }
-    return a - b;
-  };
 }
