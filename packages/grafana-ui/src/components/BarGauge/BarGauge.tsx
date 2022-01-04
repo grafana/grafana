@@ -486,6 +486,9 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     // adjust so that filled in bar is at the bottom
     emptyBar.bottom = '-3px';
 
+    //adjust empty region to always have same width as colored bar
+    emptyBar.width = `${valueWidth}px`;
+
     if (isBasic) {
       // Basic styles
       barStyles.background = `${tinycolor(valueColor).setAlpha(0.35).toRgbString()}`;
@@ -508,6 +511,9 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     // shift empty region back to fill gaps due to border radius
     emptyBar.left = '-3px';
+
+    //adjust empty region to always have same height as colored bar
+    emptyBar.height = `${valueHeight}px`;
 
     if (isBasic) {
       // Basic styles

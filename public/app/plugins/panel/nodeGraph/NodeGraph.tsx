@@ -44,6 +44,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     user-select: none;
   `,
 
+  noDataMsg: css`
+    height: 100%;
+    width: 100%;
+    display: grid;
+    place-items: center;
+    font-size: ${theme.typography.h4.fontSize};
+    color: ${theme.colors.text.secondary};
+  `,
+
   mainGroup: css`
     label: mainGroup;
     will-change: transform;
@@ -66,6 +75,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     box-shadow: ${theme.shadows.z1};
     padding-bottom: 5px;
     margin-right: 10px;
+  `,
+  viewControlsWrapper: css`
+    margin-left: auto;
   `,
   alert: css`
     label: alert;
@@ -177,42 +189,46 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
         </div>
       ) : null}
 
-      <svg
-        ref={panRef}
-        viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
-        className={cx(styles.svg, isPanning && styles.svgPanning)}
-      >
-        <g
-          className={styles.mainGroup}
-          style={{ transform: `scale(${scale}) translate(${Math.floor(position.x)}px, ${Math.floor(position.y)}px)` }}
+      {dataFrames.length ? (
+        <svg
+          ref={panRef}
+          viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
+          className={cx(styles.svg, isPanning && styles.svgPanning)}
         >
-          <EdgeArrowMarker />
-          {!config.gridLayout && (
-            <Edges
-              edges={edges}
-              nodeHoveringId={nodeHover}
-              edgeHoveringId={edgeHover}
-              onClick={onEdgeOpen}
-              onMouseEnter={setEdgeHover}
-              onMouseLeave={clearEdgeHover}
+          <g
+            className={styles.mainGroup}
+            style={{ transform: `scale(${scale}) translate(${Math.floor(position.x)}px, ${Math.floor(position.y)}px)` }}
+          >
+            <EdgeArrowMarker />
+            {!config.gridLayout && (
+              <Edges
+                edges={edges}
+                nodeHoveringId={nodeHover}
+                edgeHoveringId={edgeHover}
+                onClick={onEdgeOpen}
+                onMouseEnter={setEdgeHover}
+                onMouseLeave={clearEdgeHover}
+              />
+            )}
+            <Nodes
+              nodes={nodes}
+              onMouseEnter={setNodeHover}
+              onMouseLeave={clearNodeHover}
+              onClick={onNodeOpen}
+              hoveringId={nodeHover || highlightId}
             />
-          )}
-          <Nodes
-            nodes={nodes}
-            onMouseEnter={setNodeHover}
-            onMouseLeave={clearNodeHover}
-            onClick={onNodeOpen}
-            hoveringId={nodeHover || highlightId}
-          />
 
-          <Markers markers={markers || []} onClick={setFocused} />
-          {/*We split the labels from edges so that they are shown on top of everything else*/}
-          {!config.gridLayout && <EdgeLabels edges={edges} nodeHoveringId={nodeHover} edgeHoveringId={edgeHover} />}
-        </g>
-      </svg>
+            <Markers markers={markers || []} onClick={setFocused} />
+            {/*We split the labels from edges so that they are shown on top of everything else*/}
+            {!config.gridLayout && <EdgeLabels edges={edges} nodeHoveringId={nodeHover} edgeHoveringId={edgeHover} />}
+          </g>
+        </svg>
+      ) : (
+        <div className={styles.noDataMsg}>No data</div>
+      )}
 
       <div className={styles.viewControls}>
-        {nodes.length && (
+        {nodes.length ? (
           <div className={styles.legend}>
             <Legend
               sortable={config.gridLayout}
@@ -226,22 +242,24 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
               }}
             />
           </div>
-        )}
+        ) : null}
 
-        <ViewControls<Config>
-          config={config}
-          onConfigChange={(cfg) => {
-            if (cfg.gridLayout !== config.gridLayout) {
-              setFocusedNodeId(undefined);
-            }
-            setConfig(cfg);
-          }}
-          onMinus={onStepDown}
-          onPlus={onStepUp}
-          scale={scale}
-          disableZoomIn={isMaxZoom}
-          disableZoomOut={isMinZoom}
-        />
+        <div className={styles.viewControlsWrapper}>
+          <ViewControls<Config>
+            config={config}
+            onConfigChange={(cfg) => {
+              if (cfg.gridLayout !== config.gridLayout) {
+                setFocusedNodeId(undefined);
+              }
+              setConfig(cfg);
+            }}
+            onMinus={onStepDown}
+            onPlus={onStepUp}
+            scale={scale}
+            disableZoomIn={isMaxZoom}
+            disableZoomOut={isMinZoom}
+          />
+        </div>
       </div>
 
       {hiddenNodesCount > 0 && (
