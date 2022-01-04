@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/promclient"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -62,15 +62,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
-		httpCliOpts, err := settings.HTTPClientOptions()
-		if err != nil {
-			return nil, fmt.Errorf("error getting http options: %w", err)
-		}
-
-		// Set SigV4 service namespace
-		if httpCliOpts.SigV4 != nil {
-			httpCliOpts.SigV4.Service = "aps"
-		}
 
 		// timeInterval can be a string or can be missing.
 		// if it is missing, we set it to empty-string
@@ -86,7 +77,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			}
 		}
 
-		client, err := client.Create(settings.URL, httpCliOpts, httpClientProvider, jsonData, plog)
+		p := promclient.NewProvider(settings.URL, settings, httpClientProvider, plog)
+		client, err := p.GetClient(nil)
 		if err != nil {
 			return nil, err
 		}
