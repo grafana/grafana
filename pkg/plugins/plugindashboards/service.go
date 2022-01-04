@@ -19,7 +19,7 @@ func ProvideService(pluginStore plugins.Store, pluginDashboardManager plugins.Pl
 		pluginDashboardManager: pluginDashboardManager,
 		logger:                 log.New("plugindashboards"),
 	}
-	bus.AddEventListenerCtx(s.handlePluginStateChanged)
+	bus.AddEventListener(s.handlePluginStateChanged)
 	s.updateAppDashboards()
 	return s
 }

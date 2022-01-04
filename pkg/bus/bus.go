@@ -29,7 +29,7 @@ type TransactionManager interface {
 type Bus interface {
 	Dispatch(ctx context.Context, msg Msg) error
 
-	PublishCtx(ctx context.Context, msg Msg) error
+	Publish(ctx context.Context, msg Msg) error
 
 	// InTransaction starts a transaction and store it in the context.
 	// The caller can then pass a function with multiple DispatchCtx calls that
@@ -39,7 +39,7 @@ type Bus interface {
 
 	AddHandler(handler HandlerFunc)
 
-	AddEventListenerCtx(handler HandlerFunc)
+	AddEventListener(handler HandlerFunc)
 
 	// SetTransactionManager allows the user to replace the internal
 	// noop TransactionManager that is responsible for managing
@@ -127,7 +127,7 @@ func (b *InProcBus) Dispatch(ctx context.Context, msg Msg) error {
 }
 
 // PublishCtx function publish a message to the bus listener.
-func (b *InProcBus) PublishCtx(ctx context.Context, msg Msg) error {
+func (b *InProcBus) Publish(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
 	var params = []reflect.Value{}
@@ -183,7 +183,7 @@ func (b *InProcBus) GetHandlerCtx(name string) HandlerFunc {
 	return b.handlersWithCtx[name]
 }
 
-func (b *InProcBus) AddEventListenerCtx(handler HandlerFunc) {
+func (b *InProcBus) AddEventListener(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	eventName := handlerType.In(1).Elem().Name()
 	_, exists := b.listenersWithCtx[eventName]
@@ -201,16 +201,16 @@ func AddHandler(implName string, handler HandlerFunc) {
 
 // AddEventListenerCtx attaches a handler function to the event listener.
 // Package level function.
-func AddEventListenerCtx(handler HandlerFunc) {
-	globalBus.AddEventListenerCtx(handler)
+func AddEventListener(handler HandlerFunc) {
+	globalBus.AddEventListener(handler)
 }
 
 func Dispatch(ctx context.Context, msg Msg) error {
 	return globalBus.Dispatch(ctx, msg)
 }
 
-func PublishCtx(ctx context.Context, msg Msg) error {
-	return globalBus.PublishCtx(ctx, msg)
+func Publish(ctx context.Context, msg Msg) error {
+	return globalBus.Publish(ctx, msg)
 }
 
 func GetHandlerCtx(name string) HandlerFunc {
