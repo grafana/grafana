@@ -36,7 +36,7 @@ export type CellComponent = FC<TableCellProps>;
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
 export type GrafanaTableColumn = Column & {
-  grafanaField: Field;
+  field: Field;
   sortType: 'number' | 'basic' | 'alphanumeric-insensitive';
   filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => SelectableValue[];
   justifyContent: Property.JustifyContent;

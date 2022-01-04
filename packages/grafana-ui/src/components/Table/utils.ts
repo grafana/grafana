@@ -79,7 +79,7 @@ export function getColumns(
     columns.push({
       Cell,
       id: fieldIndex.toString(),
-      grafanaField: field,
+      field: field,
       Header: getFieldDisplayName(field, data),
       accessor: (row: any, i: number) => {
         return field.values.get(i);
