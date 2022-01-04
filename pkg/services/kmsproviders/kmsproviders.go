@@ -3,9 +3,9 @@ package kmsproviders
 import "github.com/grafana/grafana/pkg/services/secrets"
 
 const (
-	Default = "secretKey"
+	Default = "secretKey.v1"
 )
 
 type Service interface {
-	Provide() (map[string]secrets.Provider, error)
+	Provide() (map[secrets.ProviderID]secrets.Provider, error)
 }
