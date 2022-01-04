@@ -71,7 +71,7 @@ Alert summary:
 {{ template "mytemplate" . }}
 ```
 
-Grafana provides a few built-in templates, which can be embedded in custom templates:
+You can use any of the following built-in template options to embed custom templates.
 
 | Name                    | Notes                                                         |
 | ----------------------- | ------------------------------------------------------------- |
