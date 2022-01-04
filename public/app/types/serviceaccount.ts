@@ -1,7 +1,7 @@
 import { OrgRole, Unit } from '.';
 import { SelectableValue } from '@grafana/data';
 
-export interface OrgServiceaccount {
+export interface OrgServiceAccount {
   avatarUrl: string;
   email: string;
   lastSeenAt: string;
@@ -10,10 +10,10 @@ export interface OrgServiceaccount {
   name: string;
   orgId: number;
   role: OrgRole;
-  serviceaccountId: number;
+  serviceAccountId: number;
 }
 
-export interface Serviceaccount {
+export interface ServiceAccount {
   id: number;
   label: string;
   avatarUrl: string;
@@ -44,14 +44,14 @@ export interface ServiceaccountDTO {
   orgs?: Unit[];
 }
 
-export interface ServiceaccountsState {
-  serviceaccounts: OrgServiceaccount[];
+export interface ServiceAccountsState {
+  serviceaccounts: OrgServiceAccount[];
   searchQuery: string;
   searchPage: number;
   hasFetched: boolean;
 }
 
-export interface ServiceaccountSession {
+export interface ServiceAccountSession {
   id: number;
   createdAt: string;
   clientIp: string;
@@ -64,21 +64,21 @@ export interface ServiceaccountSession {
   device: string;
 }
 
-export interface ServiceaccountOrg {
+export interface ServiceAccountOrg {
   name: string;
   orgId: number;
   role: OrgRole;
 }
 
-export interface ServiceaccountAdminState {
+export interface ServiceAccountAdminState {
   serviceaccount?: ServiceaccountDTO;
-  sessions: ServiceaccountSession[];
-  orgs: ServiceaccountOrg[];
+  sessions: ServiceAccountSession[];
+  orgs: ServiceAccountOrg[];
   isLoading: boolean;
-  error?: ServiceaccountAdminError;
+  error?: ServiceAccountAdminError;
 }
 
-export interface ServiceaccountAdminError {
+export interface ServiceAccountAdminError {
   title: string;
   body: string;
 }
