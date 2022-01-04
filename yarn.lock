@@ -3441,7 +3441,7 @@ __metadata:
     "@types/braintree__sanitize-url": 4.1.0
     "@types/d3-interpolate": ^1.4.0
     "@types/jest": 27.4.0
-    "@types/jquery": 3.3.38
+    "@types/jquery": 3.5.11
     "@types/lodash": 4.14.123
     "@types/marked": 4.0.0
     "@types/node": 16.11.6
@@ -3797,7 +3797,7 @@ __metadata:
     "@types/hoist-non-react-statics": 3.3.1
     "@types/is-hotkey": 0.1.1
     "@types/jest": 27.4.0
-    "@types/jquery": 3.3.38
+    "@types/jquery": 3.5.11
     "@types/lodash": 4.14.123
     "@types/mock-raf": 1.0.2
     "@types/node": 16.11.6
@@ -3837,7 +3837,7 @@ __metadata:
     hoist-non-react-statics: 3.3.2
     immutable: 4.0.0
     is-hotkey: 0.2.0
-    jquery: 3.5.1
+    jquery: 3.6.0
     lodash: 4.17.21
     memoize-one: 6.0.0
     mock-raf: 1.0.1
@@ -9368,12 +9368,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jquery@npm:3.3.38":
-  version: 3.3.38
-  resolution: "@types/jquery@npm:3.3.38"
+"@types/jquery@npm:3.5.11":
+  version: 3.5.11
+  resolution: "@types/jquery@npm:3.5.11"
   dependencies:
     "@types/sizzle": "*"
-  checksum: 1d15653cf0f9a06587ddddc46a55bcc439f3fbba3d39c91255694f05f551d857c31e9008c791f23f87abddce22fbd9d59901ad99ed0bef5dd70d99858f14ddd4
+  checksum: bad7c4495ade39e712462af534169790115d07874bb1a8c43a597676bd4e4d62caaf961353836f1e9f67309cac3a224b8743da07bad4cb2ff853b93f1856014b
   languageName: node
   linkType: hard
 
@@ -19504,7 +19504,7 @@ __metadata:
     "@types/history": ^4.7.8
     "@types/hoist-non-react-statics": 3.3.1
     "@types/jest": 27.4.0
-    "@types/jquery": 3.3.38
+    "@types/jquery": 3.5.11
     "@types/jsurl": ^1.2.28
     "@types/lingui__macro": ^3
     "@types/lodash": 4.14.149
@@ -19614,7 +19614,7 @@ __metadata:
     jest-date-mock: 1.0.8
     jest-junit: 13.0.0
     jest-matcher-utils: 27.4.2
-    jquery: 3.5.1
+    jquery: 3.6.0
     json-source-map: 0.6.1
     jsurl: ^0.1.5
     lerna: ^4.0.0
@@ -23087,6 +23087,13 @@ __metadata:
   version: 3.5.1
   resolution: "jquery@npm:3.5.1"
   checksum: 813047b852511ca1ecfaa7b2568aba1d7270a92e5c74962b308792a401adf041869a3b2a6858b0b7a02f6684947fb93171e40cbb4460831977a937b40b0e15ce
+  languageName: node
+  linkType: hard
+
+"jquery@npm:3.6.0":
+  version: 3.6.0
+  resolution: "jquery@npm:3.6.0"
+  checksum: 8fd5fef4aa48fd374ec716dd1c1df1af407814a228e15c1260ca140de3a697c2a77c30c54ff1d238b6a3ab4ddc445ddeef9adce6c6d28e4869d85eb9d3951c0e
   languageName: node
   linkType: hard
 
