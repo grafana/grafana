@@ -81,7 +81,7 @@ Grafana provides a few built-in templates, which can be embedded in custom templ
 
 ### Custom template examples
 
-Below are some sample usages of custom templates.
+Here are a few examples of how to use custom templates.
 
 Template to render a single alert:
 
