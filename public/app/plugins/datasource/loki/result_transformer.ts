@@ -407,7 +407,18 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   view.forEach((row: { line: string }) => {
     for (const field of newFields) {
       const logMatch = row.line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
-      field.values.add(logMatch && logMatch[1]);
+      if (logMatch && logMatch[1]) {
+        field.values.add(logMatch[1]);
+      }
+    }
+  });
+
+  dataFrame.fields.forEach((df: Field) => {
+    for (const field of newFields) {
+      const labelValue = df.labels?.[field.name];
+      if (labelValue) {
+        field.values.add(labelValue);
+      }
     }
   });
 
