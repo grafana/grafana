@@ -144,14 +144,14 @@ func (s *AccessControlStore) setResourcePermission(
 	var permissions []flatResourcePermission
 
 	for action := range missing {
-		p, err := createResourcePermission(sess, role.ID, action, cmd.Resource, cmd.ResourceID)
+		p, err := s.createResourcePermission(sess, role.ID, action, cmd.Resource, cmd.ResourceID)
 		if err != nil {
 			return nil, err
 		}
 		permissions = append(permissions, *p)
 	}
 
-	keptPermissions, err := getResourcePermissions(sess, cmd.ResourceID, keep)
+	keptPermissions, err := s.getResourcePermissions(sess, cmd.ResourceID, keep)
 	if err != nil {
 		return nil, err
 	}
@@ -169,14 +169,14 @@ func (s *AccessControlStore) GetResourcesPermissions(ctx context.Context, orgID 
 
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
-		result, err = getResourcesPermissions(sess, orgID, query)
+		result, err = s.getResourcesPermissions(sess, orgID, query)
 		return err
 	})
 
 	return result, err
 }
 
-func createResourcePermission(sess *sqlstore.DBSession, roleID int64, action, resource string, resourceID string) (*flatResourcePermission, error) {
+func (s *AccessControlStore) createResourcePermission(sess *sqlstore.DBSession, roleID int64, action, resource string, resourceID string) (*flatResourcePermission, error) {
 	permission := managedPermission(action, resource, resourceID)
 	permission.RoleID = roleID
 	permission.Created = time.Now()
@@ -202,7 +202,7 @@ func createResourcePermission(sess *sqlstore.DBSession, roleID int64, action, re
 		LEFT JOIN team_role tr ON r.id = tr.role_id
 		LEFT JOIN team t ON tr.team_id = t.id
 		LEFT JOIN user_role ur ON r.id = ur.role_id
-		LEFT JOIN user u ON ur.user_id = u.id
+		LEFT JOIN ` + s.sql.Dialect.Quote("user") + ` u ON ur.user_id = u.id
 	WHERE p.id = ?
 	`
 
@@ -214,7 +214,7 @@ func createResourcePermission(sess *sqlstore.DBSession, roleID int64, action, re
 	return p, nil
 }
 
-func getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query accesscontrol.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
+func (s *AccessControlStore) getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query accesscontrol.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
 	if len(query.Actions) == 0 {
 		return nil, nil
 	}
@@ -265,7 +265,7 @@ func getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query access
     `
 	userFrom := rawFrom + `
 		INNER JOIN user_role ur ON r.id = ur.role_id AND (ur.org_id = 0 OR ur.org_id = ?)
-		INNER JOIN user u ON ur.user_id = u.id
+		INNER JOIN ` + s.sql.Dialect.Quote("user") + ` u ON ur.user_id = u.id
 	`
 	teamFrom := rawFrom + `
 		INNER JOIN team_role tr ON r.id = tr.role_id AND (tr.org_id = 0 OR tr.org_id = ?)
@@ -511,12 +511,11 @@ func (s *AccessControlStore) getOrCreateManagedRole(sess *sqlstore.DBSession, or
 	return &role, nil
 }
 
-func getResourcePermissions(sess *sqlstore.DBSession, resourceID string, ids []int64) ([]flatResourcePermission, error) {
+func (s *AccessControlStore) getResourcePermissions(sess *sqlstore.DBSession, resourceID string, ids []int64) ([]flatResourcePermission, error) {
 	var result []flatResourcePermission
 	if len(ids) == 0 {
 		return result, nil
 	}
-
 	rawSql := `
 	SELECT
 		p.*,
@@ -533,7 +532,7 @@ func getResourcePermissions(sess *sqlstore.DBSession, resourceID string, ids []i
 		LEFT JOIN team_role tr ON r.id = tr.role_id
 		LEFT JOIN team t ON tr.team_id = t.id
 		LEFT JOIN user_role ur ON r.id = ur.role_id
-		LEFT JOIN user u ON ur.user_id = u.id
+		LEFT JOIN ` + s.sql.Dialect.Quote("user") + ` u ON ur.user_id = u.id
 	WHERE p.id IN (?` + strings.Repeat(",?", len(ids)-1) + `)
 	`
 
