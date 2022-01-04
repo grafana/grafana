@@ -23,7 +23,7 @@ export interface ServiceAccount {
   orgId?: number;
 }
 
-export interface ServiceaccountDTO {
+export interface ServiceAccountDTO {
   id: number;
   login: string;
   email: string;
@@ -71,7 +71,7 @@ export interface ServiceAccountOrg {
 }
 
 export interface ServiceAccountAdminState {
-  serviceaccount?: ServiceaccountDTO;
+  serviceaccount?: ServiceAccountDTO;
   sessions: ServiceAccountSession[];
   orgs: ServiceAccountOrg[];
   isLoading: boolean;
@@ -83,14 +83,14 @@ export interface ServiceAccountAdminError {
   body: string;
 }
 
-export type ServiceaccountFilter = Record<string, string | boolean | SelectableValue[]>;
+export type ServiceAccountFilter = Record<string, string | boolean | SelectableValue[]>;
 export interface ServiceaccountListAdminState {
-  serviceaccounts: ServiceaccountDTO[];
+  serviceaccounts: ServiceAccountDTO[];
   query: string;
   perPage: number;
   page: number;
   totalPages: number;
   showPaging: boolean;
-  filters: ServiceaccountFilter[];
+  filters: ServiceAccountFilter[];
   isLoading: boolean;
 }
