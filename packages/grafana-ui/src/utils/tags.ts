@@ -69,10 +69,10 @@ const TAG_BORDER_COLORS = [
 export function getTagColorsFromName(name = ''): { color: string; borderColor: string } {
   const hash = djb2(name.toLowerCase());
   const index = Math.abs(hash % TAG_COLORS.length);
-  return getTagColor(index);
+  return getTagColorRenamed(index);
 }
 
-export function getTagColor(index: number): { color: string; borderColor: string } {
+export function getTagColorRenamed(index: number): { color: string; borderColor: string } {
   return { color: TAG_COLORS[index], borderColor: TAG_BORDER_COLORS[index] };
 }
 

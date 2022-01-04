@@ -2,7 +2,7 @@ import React, { forwardRef, HTMLAttributes } from 'react';
 import { cx, css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme } from '../../themes';
-import { getTagColor, getTagColorsFromName } from '../../utils';
+import { getTagColorRenamed, getTagColorsFromName } from '../../utils';
 
 /**
  * @public
@@ -47,7 +47,7 @@ const getTagStyles = (theme: GrafanaTheme, name: string, colorIndex?: number) =>
   if (colorIndex === undefined) {
     colors = getTagColorsFromName(name);
   } else {
-    colors = getTagColor(colorIndex);
+    colors = getTagColorRenamed(colorIndex);
   }
   return {
     wrapper: css`
