@@ -55,7 +55,7 @@ func SignUp(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to create signup", err)
 	}
 
-	if err := bus.PublishCtx(c.Req.Context(), &events.SignUpStarted{
+	if err := bus.Publish(c.Req.Context(), &events.SignUpStarted{
 		Email: form.Email,
 		Code:  cmd.Code,
 	}); err != nil {
@@ -102,7 +102,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 	}
 
 	// publish signup event
-	if err := bus.PublishCtx(c.Req.Context(), &events.SignUpCompleted{
+	if err := bus.Publish(c.Req.Context(), &events.SignUpCompleted{
 		Email: user.Email,
 		Name:  user.NameOrFallback(),
 	}); err != nil {
