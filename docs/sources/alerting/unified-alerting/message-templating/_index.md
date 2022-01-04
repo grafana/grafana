@@ -77,7 +77,7 @@ Grafana provides a few built-in templates, which can be embedded in custom templ
 | ----------------------- | --------------------------------------------------------------------- |
 | `default.title`         | Displays high-level status information.                               |
 | `default.message`       | Provides a formatted summary of firing and resolved alerts.           |
-| `teams.default.message` | Similar content to `default.messsage`, formatted for Microsoft Teams. |
+| `teams.default.message` |Similar to `default.messsage`, formatted for Microsoft Teams. |
 
 ### Custom template examples
 
