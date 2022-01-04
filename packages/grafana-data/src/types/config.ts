@@ -52,6 +52,7 @@ export interface FeatureToggles {
   recordedQueries: boolean;
   newNavigation: boolean;
   fullRangeLogsVolume: boolean;
+  dashboardPreviews: boolean;
 }
 
 /**

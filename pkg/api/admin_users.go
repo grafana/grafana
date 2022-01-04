@@ -75,7 +75,7 @@ func AdminUpdateUserPassword(c *models.ReqContext) response.Response {
 
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &userQuery); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &userQuery); err != nil {
 		return response.Error(500, "Could not read user from database", err)
 	}
 
@@ -89,7 +89,7 @@ func AdminUpdateUserPassword(c *models.ReqContext) response.Response {
 		NewPassword: passwordHashed,
 	}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update user password", err)
 	}
 
@@ -121,7 +121,7 @@ func AdminDeleteUser(c *models.ReqContext) response.Response {
 
 	cmd := models.DeleteUserCommand{UserId: userID}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -137,12 +137,12 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.DispatchCtx(c.Req.Context(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
+	if err := bus.Dispatch(c.Req.Context(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
 		return response.Error(500, "Could not disable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
-	if err := bus.DispatchCtx(c.Req.Context(), &disableCmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &disableCmd); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -163,12 +163,12 @@ func AdminEnableUser(c *models.ReqContext) response.Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.DispatchCtx(c.Req.Context(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
+	if err := bus.Dispatch(c.Req.Context(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
 		return response.Error(500, "Could not enable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
-	if err := bus.DispatchCtx(c.Req.Context(), &disableCmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &disableCmd); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}

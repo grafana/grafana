@@ -485,7 +485,10 @@ export function prepareTimelineLegendItems(
     return undefined;
   }
 
-  const fields = allNonTimeFields(frames);
+  return getFieldLegendItem(allNonTimeFields(frames), theme);
+}
+
+export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
   if (!fields.length) {
     return undefined;
   }

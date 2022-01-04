@@ -15,7 +15,7 @@ type BuiltinSubscriber struct {
 }
 
 type ChannelHandlerGetter interface {
-	GetChannelHandler(user *models.SignedInUser, channel string) (models.ChannelHandler, live.Channel, error)
+	GetChannelHandler(ctx context.Context, user *models.SignedInUser, channel string) (models.ChannelHandler, live.Channel, error)
 }
 
 const SubscriberTypeBuiltin = "builtin"
@@ -33,7 +33,7 @@ func (s *BuiltinSubscriber) Subscribe(ctx context.Context, vars Vars, data []byt
 	if !ok {
 		return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 	}
-	handler, _, err := s.channelHandlerGetter.GetChannelHandler(u, vars.Channel)
+	handler, _, err := s.channelHandlerGetter.GetChannelHandler(ctx, u, vars.Channel)
 	if err != nil {
 		return models.SubscribeReply{}, 0, err
 	}

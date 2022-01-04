@@ -70,7 +70,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 	t.Run("Folder with removed default permissions returns no acl items", func(t *testing.T) {
 		setup(t)
-		err := sqlStore.UpdateDashboardACL(savedFolder.Id, nil)
+		err := sqlStore.UpdateDashboardACL(context.Background(), savedFolder.Id, nil)
 		require.Nil(t, err)
 
 		query := models.GetDashboardAclInfoListQuery{DashboardID: childDash.Id, OrgID: 1}
