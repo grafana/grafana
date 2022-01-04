@@ -11,9 +11,7 @@ import { getServiceAccounts, getServiceAccountsSearchPage, getServiceAccountsSea
 import { setServiceAccountsSearchPage } from './state/reducers';
 export type Props = ConnectedProps<typeof connector>;
 
-export interface State {
-  showInvites: boolean;
-}
+export interface State {}
 
 const ITEMS_PER_PAGE = 30;
 
@@ -32,12 +30,6 @@ export class ServiceAccountsListPage extends PureComponent<Props, State> {
     this.props.updateServiceAccount(updatedServiceaccount);
   };
 
-  onShowInvites = () => {
-    this.setState((prevState) => ({
-      showInvites: !prevState.showInvites,
-    }));
-  };
-
   getPaginatedServiceAccounts = (serviceAccounts: OrgServiceAccount[]) => {
     const offset = (this.props.searchPage - 1) * ITEMS_PER_PAGE;
     return serviceAccounts.slice(offset, offset + ITEMS_PER_PAGE);
@@ -48,9 +40,6 @@ export class ServiceAccountsListPage extends PureComponent<Props, State> {
     const paginatedServiceAccounts = this.getPaginatedServiceAccounts(serviceAccounts);
     const totalPages = Math.ceil(serviceAccounts.length / ITEMS_PER_PAGE);
 
-    if (this.state.showInvites) {
-      return null;
-    }
     return (
       <VerticalGroup spacing="md">
         <ServiceAccountsTable
@@ -89,7 +78,7 @@ function mapStateToProps(state: StoreState) {
     serviceAccounts: getServiceAccounts(state.serviceAccounts),
     searchQuery: getServiceAccountsSearchQuery(state.serviceAccounts),
     searchPage: getServiceAccountsSearchPage(state.serviceAccounts),
-    hasFetched: state.serviceAccounts.hasFetched,
+    hasFetched: state.serviceAccounts.isLoading,
   };
 }
 

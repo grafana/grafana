@@ -45,10 +45,10 @@ export interface ServiceAccountDTO {
 }
 
 export interface ServiceAccountsState {
-  serviceaccounts: OrgServiceAccount[];
+  serviceAccounts: OrgServiceAccount[];
   searchQuery: string;
   searchPage: number;
-  hasFetched: boolean;
+  isLoading: boolean;
 }
 
 export interface ServiceAccountSession {

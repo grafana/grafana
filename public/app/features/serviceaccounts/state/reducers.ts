@@ -14,7 +14,7 @@ const serviceAccountsSlice = createSlice({
   initialState,
   reducers: {
     serviceAccountsLoaded: (state, action: PayloadAction<OrgServiceAccount[]>): ServiceAccountsState => {
-      return { ...state, hasFetched: true, serviceAccounts: action.payload };
+      return { ...state, isLoading: true, serviceAccounts: action.payload };
     },
     setServiceAccountsSearchQuery: (state, action: PayloadAction<string>): ServiceAccountsState => {
       // reset searchPage otherwise search results won't appear
