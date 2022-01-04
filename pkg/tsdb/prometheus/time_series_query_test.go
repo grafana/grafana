@@ -610,7 +610,6 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			UtcOffsetSec: 0,
 		}
 		res, err := parseTimeSeriesResponse(value, query)
-		var nilPointer *float64
 
 		require.NoError(t, err)
 		require.Len(t, res, 1)
