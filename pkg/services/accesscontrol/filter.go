@@ -10,7 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-var sqlIDAcceptList = map[string]struct{}{}
+var sqlIDAcceptList = map[string]struct{}{
+	"org_user.id": {},
+}
 
 type SQLDialect interface {
 	DriverName() string
@@ -32,6 +34,8 @@ func Filter(ctx context.Context, dialect SQLDialect, sqlID, prefix, action strin
 	if len(scopes) == 0 {
 		scopes = append(scopes, "no:access")
 	}
+
+	fmt.Println(scopes)
 
 	var sql string
 	var args []interface{}
