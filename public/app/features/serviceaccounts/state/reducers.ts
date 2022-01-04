@@ -6,7 +6,7 @@ export const initialState: ServiceAccountsState = {
   serviceAccounts: [] as OrgServiceAccount[],
   searchQuery: '',
   searchPage: 1,
-  hasFetched: false,
+  isLoading: true,
 };
 
 const serviceAccountsSlice = createSlice({

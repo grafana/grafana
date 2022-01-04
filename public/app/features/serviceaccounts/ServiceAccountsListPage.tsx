@@ -15,7 +15,7 @@ export interface State {
   showInvites: boolean;
 }
 
-const pageLimit = 30;
+const ITEMS_PER_PAGE = 30;
 
 export class ServiceAccountsListPage extends PureComponent<Props, State> {
   componentDidMount() {
