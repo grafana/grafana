@@ -3854,7 +3854,7 @@ __metadata:
     react: 17.0.1
     react-beautiful-dnd: 13.1.0
     react-calendar: 3.5.0
-    react-colorful: 5.1.2
+    react-colorful: 5.5.1
     react-custom-scrollbars-2: 4.4.0
     react-docgen-typescript-loader: 3.7.2
     react-dom: 17.0.1
@@ -29218,13 +29218,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-colorful@npm:5.1.2":
-  version: 5.1.2
-  resolution: "react-colorful@npm:5.1.2"
+"react-colorful@npm:5.5.1":
+  version: 5.5.1
+  resolution: "react-colorful@npm:5.5.1"
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: f91fcadf159afc6285f57604615486e914fb7250ece776ba703a38ccc6d1067d3f84c256168c25c54221f59672694787aab781302aa42f167bbdc1c428df6db0
+  checksum: e60811781716e57f0990379eff20d6f22d4d35b9e858c47ecf857c1dc1c1a2274c924ded7248bad5f1e2fbf2aab06e59b12852910c8dee5e6850f8e4df293670
   languageName: node
   linkType: hard
 
