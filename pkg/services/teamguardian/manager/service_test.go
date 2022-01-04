@@ -2,12 +2,11 @@ package manager
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/teamguardian/database"
-	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
-
+	"github.com/grafana/grafana/pkg/services/teamguardian/database"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,7 +15,6 @@ func TestUpdateTeam(t *testing.T) {
 	teamGuardianService := ProvideService(store)
 
 	t.Run("Updating a team", func(t *testing.T) {
-
 		admin := models.SignedInUser{
 			UserId:  1,
 			OrgId:   1,
