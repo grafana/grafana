@@ -85,7 +85,7 @@ To retrieve your license, Grafana Enterprise requires access to your AWS account
    - IAM user's access key ID
    - IAM user's secret access key
 
-   The environment variables should look similiar to the following example:
+   The environment variables should look similar to the following example:
 
    ```
    AWS_ACCESS_KEY_ID=ABCD5E75FGHIJKTM7
