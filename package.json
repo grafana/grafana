@@ -171,7 +171,7 @@
     "eslint-plugin-lodash": "^7.2.0",
     "eslint-plugin-no-only-tests": "2.6.0",
     "eslint-plugin-prettier": "4.0.0",
-    "eslint-plugin-react": "7.27.1",
+    "eslint-plugin-react": "7.28.0",
     "eslint-plugin-react-hooks": "4.2.0",
     "eslint-webpack-plugin": "3.1.0",
     "expose-loader": "3.1.0",
