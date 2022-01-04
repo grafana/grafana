@@ -9,37 +9,53 @@ jobs:
   notify:
     name: Report
     runs-on: ubuntu-latest
+    env:
+      ARTIFACT_FOLDER: '${{ github.workspace }}/tmp'
+      ARTIFACT_NAME: 'levitate'
 
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Setup environment
-      uses: actions/setup-node@v2
-      with:
-        node-version: 16
-    - run: npm install adm-zip
-
-    - name: Download artifact
+    - name: 'Download artifact'
       uses: actions/github-script@v5
-      id: download-artifact
       env:
-        RUN_ID: ${{github.event.workflow_run.id }}
+        RUN_ID: ${{ github.event.workflow_run.id }}
       with:
-        result-encoding: string
         script: |
+          const fs = require('fs');
+
+          const { owner, repo } = context.repo;
           const runId = process.env.RUN_ID;
-          const artifactName = 'levitate';
-          const script = require('./.github/workflows/scripts/get-workflow-run-artifact.js');
-          return await script({ github, context, core, runId, artifactName });
+          const artifactName = process.env.ARTIFACT_NAME;
+          const artifactFolder = process.env.ARTIFACT_FOLDER;
+          const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner,
+              repo,
+              run_id: runId,
+          });
+          const artifact = artifacts.data.artifacts.find(a => a.name === artifactName);
+        
+          if (!artifact) {
+              throw new Error(`Could not find artifact ${ artifactName } in workflow (${ runId })`);
+          }
+
+          const download = await github.rest.actions.downloadArtifact({
+              owner,
+              repo,
+              artifact_id: artifact.id,
+              archive_format: 'zip',
+          });
+
+          fs.mkdirSync(artifactFolder, { recursive: true });
+          fs.writeFileSync(`${ artifactFolder }/${ artifactName }.zip`, Buffer.from(download.data));
+        
+    - name: Unzip artifact
+      run: unzip "${ARTIFACT_FOLDER}/${ARTIFACT_NAME}.zip" -d "${ARTIFACT_FOLDER}"
     
     - name: Parsing levitate result
       uses: actions/github-script@v5
       id: levitate-run
-      env:
-        ARTIFACT_FOLDER: ${{ steps.download-artifact.outputs.result }}
       with:
         script: |
-          const filePath = `${process.env.ARTIFACT_FOLDER}/result.json`;
+          const filePath = `${ process.env.ARTIFACT_FOLDER }/result.json`;
           const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
           await script({ core, filePath });
 
