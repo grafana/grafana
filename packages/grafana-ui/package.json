@@ -51,7 +51,7 @@
     "clipboard": "2.0.4",
     "core-js": "3.20.0",
     "d3": "5.15.0",
-    "date-fns": "2.27.0",
+    "date-fns": "2.28.0",
     "hoist-non-react-statics": "3.3.2",
     "immutable": "4.0.0",
     "is-hotkey": "0.2.0",
