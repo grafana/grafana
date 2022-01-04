@@ -3440,7 +3440,7 @@ __metadata:
     "@testing-library/user-event": 13.5.0
     "@types/braintree__sanitize-url": 4.1.0
     "@types/d3-interpolate": ^1.4.0
-    "@types/jest": 27.0.2
+    "@types/jest": 27.4.0
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
     "@types/marked": 4.0.0
@@ -3582,7 +3582,7 @@ __metadata:
     "@testing-library/user-event": ^13.5.0
     "@types/angular": 1.8.3
     "@types/history": ^4.7.8
-    "@types/jest": 27.0.2
+    "@types/jest": 27.4.0
     "@types/lodash": 4.14.149
     "@types/react": 17.0.36
     "@types/react-dom": 17.0.10
@@ -3796,7 +3796,7 @@ __metadata:
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": 3.3.1
     "@types/is-hotkey": 0.1.1
-    "@types/jest": 27.0.2
+    "@types/jest": 27.4.0
     "@types/jquery": 3.3.38
     "@types/lodash": 4.14.123
     "@types/mock-raf": 1.0.2
@@ -9355,6 +9355,16 @@ __metadata:
     jest-diff: ^26.0.0
     pretty-format: ^26.0.0
   checksum: ae39675412f08d884926254e9b12bfd2b5a4e4d204c94d3148cb942174a474930d0c60540133c968f22241d4712b7940c96cbc883096eb326a4d5b206fb78bd0
+  languageName: node
+  linkType: hard
+
+"@types/jest@npm:27.4.0":
+  version: 27.4.0
+  resolution: "@types/jest@npm:27.4.0"
+  dependencies:
+    jest-diff: ^27.0.0
+    pretty-format: ^27.0.0
+  checksum: d2350267f954f9a2e4a15e5f02fbf19a77abfb9fd9e57a954de1fb0e9a0d3d5f8d3646ac7d9c42aeb4b4d828d2e70624ec149c85bb50a48634a54eed8429e1f8
   languageName: node
   linkType: hard
 
@@ -19493,7 +19503,7 @@ __metadata:
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/history": ^4.7.8
     "@types/hoist-non-react-statics": 3.3.1
-    "@types/jest": 27.0.2
+    "@types/jest": 27.4.0
     "@types/jquery": 3.3.38
     "@types/jsurl": ^1.2.28
     "@types/lingui__macro": ^3

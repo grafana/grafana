@@ -127,7 +127,7 @@
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5",
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/is-hotkey": "0.1.1",
-    "@types/jest": "27.0.2",
+    "@types/jest": "27.4.0",
     "@types/jquery": "3.3.38",
     "@types/lodash": "4.14.123",
     "@types/mock-raf": "1.0.2",
