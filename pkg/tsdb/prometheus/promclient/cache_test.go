@@ -111,7 +111,6 @@ func newFakePromClientProvider() *fakePromClientProvider {
 }
 
 type fakePromClientProvider struct {
-	client   *fakePromClient
 	headers  map[string]string
 	numCalls int
 	errors   chan error
