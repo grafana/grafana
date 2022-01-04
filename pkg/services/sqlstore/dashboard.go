@@ -27,23 +27,23 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 )
 
 func init() {
-	bus.AddHandlerCtx("sql", GetDashboard)
-	bus.AddHandlerCtx("sql", GetDashboards)
-	bus.AddHandlerCtx("sql", DeleteDashboard)
-	bus.AddHandlerCtx("sql", GetDashboardTags)
-	bus.AddHandlerCtx("sql", GetDashboardSlugById)
-	bus.AddHandlerCtx("sql", GetDashboardsByPluginId)
-	bus.AddHandlerCtx("sql", GetDashboardPermissionsForUser)
-	bus.AddHandlerCtx("sql", GetDashboardsBySlug)
-	bus.AddHandlerCtx("sql", HasEditPermissionInFolders)
-	bus.AddHandlerCtx("sql", HasAdminPermissionInFolders)
+	bus.AddHandler("sql", GetDashboard)
+	bus.AddHandler("sql", GetDashboards)
+	bus.AddHandler("sql", DeleteDashboard)
+	bus.AddHandler("sql", GetDashboardTags)
+	bus.AddHandler("sql", GetDashboardSlugById)
+	bus.AddHandler("sql", GetDashboardsByPluginId)
+	bus.AddHandler("sql", GetDashboardPermissionsForUser)
+	bus.AddHandler("sql", GetDashboardsBySlug)
+	bus.AddHandler("sql", HasEditPermissionInFolders)
+	bus.AddHandler("sql", HasAdminPermissionInFolders)
 
 	prometheus.MustRegister(shadowSearchCounter)
 }
 
 func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.GetDashboardUIDById)
-	bus.AddHandlerCtx("sql", ss.SearchDashboards)
+	bus.AddHandler("sql", ss.GetDashboardUIDById)
+	bus.AddHandler("sql", ss.SearchDashboards)
 }
 
 var generateNewUid func() string = util.GenerateShortUID

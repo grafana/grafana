@@ -22,7 +22,7 @@ func (hs *HTTPServer) AdminGetSettings(c *models.ReqContext) response.Response {
 func AdminGetStats(c *models.ReqContext) response.Response {
 	statsQuery := models.GetAdminStatsQuery{}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &statsQuery); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &statsQuery); err != nil {
 		return response.Error(500, "Failed to get admin stats from database", err)
 	}
 

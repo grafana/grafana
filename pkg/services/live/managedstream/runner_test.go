@@ -1,6 +1,7 @@
 package managedstream
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -57,13 +58,13 @@ func TestGetManagedStreams(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, managedChannels, 4) // 4 hardcoded testdata streams.
 
-	err = s1.Push("cpu1", data.NewFrame("cpu1"))
+	err = s1.Push(context.Background(), "cpu1", data.NewFrame("cpu1"))
 	require.NoError(t, err)
 
-	err = s1.Push("cpu2", data.NewFrame("cpu2"))
+	err = s1.Push(context.Background(), "cpu2", data.NewFrame("cpu2"))
 	require.NoError(t, err)
 
-	err = s2.Push("cpu1", data.NewFrame("cpu1"))
+	err = s2.Push(context.Background(), "cpu1", data.NewFrame("cpu1"))
 	require.NoError(t, err)
 
 	managedChannels, err = runner.GetManagedChannels(1)
@@ -76,7 +77,7 @@ func TestGetManagedStreams(t *testing.T) {
 	// Different org.
 	s3, err := runner.GetOrCreateStream(2, "stream", "test1")
 	require.NoError(t, err)
-	err = s3.Push("cpu1", data.NewFrame("cpu1"))
+	err = s3.Push(context.Background(), "cpu1", data.NewFrame("cpu1"))
 	require.NoError(t, err)
 	managedChannels, err = runner.GetManagedChannels(1)
 	require.NoError(t, err)

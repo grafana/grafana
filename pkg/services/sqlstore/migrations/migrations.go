@@ -56,9 +56,12 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddTablesMigrations(mg)
 	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
-	if mg.Cfg != nil || mg.Cfg.IsLiveConfigEnabled() {
-		addLiveChannelMigrations(mg)
+	if mg.Cfg != nil {
+		if mg.Cfg.IsLiveConfigEnabled() {
+			addLiveChannelMigrations(mg)
+		}
 	}
+
 	ualert.RerunDashAlertMigration(mg)
 	addSecretsMigration(mg)
 	addKVStoreMigrations(mg)

@@ -9,7 +9,7 @@ import { ComparisonOperation, FeatureRuleConfig, FeatureStyleConfig } from '../.
 import { Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { defaultStyleConfig, StyleConfig, StyleConfigState } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { polyStyle } from '../../style/markers';
 import { StyleEditor } from './StyleEditor';
@@ -35,8 +35,9 @@ const defaultOptions: GeoJSONMapperConfig = {
 };
 
 interface StyleCheckerState {
-  poly: Style | Style[];
-  point: Style | Style[];
+  state: StyleConfigState;
+  poly?: Style | Style[];
+  point?: Style | Style[];
   rule?: FeatureRuleConfig;
 }
 
@@ -84,8 +85,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         if (r.style) {
           const s = await getStyleConfigState(r.style);
           styles.push({
-            point: s.maker(s.base),
-            poly: polyStyle(s.base),
+            state: s,
             rule: r.check,
           });
         }
@@ -94,8 +94,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     if (true) {
       const s = await getStyleConfigState(config.style);
       styles.push({
-        point: s.maker(s.base),
-        poly: polyStyle(s.base),
+        state: s,
       });
     }
 
@@ -108,7 +107,33 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           if (check.rule && !checkFeatureMatchesStyleRule(check.rule, feature)) {
             continue;
           }
-          return isPoint ? check.point : check.poly;
+
+          // Support dynamic values
+          if (check.state.fields) {
+            const values = { ...check.state.base };
+            const { text } = check.state.fields;
+
+            if (text) {
+              values.text = `${feature.get(text)}`;
+            }
+            if (isPoint) {
+              return check.state.maker(values);
+            }
+            return polyStyle(values);
+          }
+
+          // Lazy create the style object
+          if (isPoint) {
+            if (!check.point) {
+              check.point = check.state.maker(check.state.base);
+            }
+            return check.point;
+          }
+
+          if (!check.poly) {
+            check.poly = polyStyle(check.state.base);
+          }
+          return check.poly;
         }
         return undefined; // unreachable
       },

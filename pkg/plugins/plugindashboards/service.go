@@ -72,7 +72,7 @@ func (s *Service) syncPluginDashboards(ctx context.Context, plugin plugins.Plugi
 			s.logger.Info("Deleting plugin dashboard", "pluginId", plugin.ID, "dashboard", dash.Slug)
 
 			deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dash.DashboardId}
-			if err := bus.DispatchCtx(ctx, &deleteCmd); err != nil {
+			if err := bus.Dispatch(ctx, &deleteCmd); err != nil {
 				s.logger.Error("Failed to auto update app dashboard", "pluginId", plugin.ID, "error", err)
 				return
 			}
@@ -91,7 +91,7 @@ func (s *Service) syncPluginDashboards(ctx context.Context, plugin plugins.Plugi
 
 	// update version in plugin_setting table to mark that we have processed the update
 	query := models.GetPluginSettingByIdQuery{PluginId: plugin.ID, OrgId: orgID}
-	if err := bus.DispatchCtx(ctx, &query); err != nil {
+	if err := bus.Dispatch(ctx, &query); err != nil {
 		s.logger.Error("Failed to read plugin setting by ID", "error", err)
 		return
 	}
@@ -103,7 +103,7 @@ func (s *Service) syncPluginDashboards(ctx context.Context, plugin plugins.Plugi
 		PluginVersion: plugin.Info.Version,
 	}
 
-	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+	if err := bus.Dispatch(ctx, &cmd); err != nil {
 		s.logger.Error("Failed to update plugin setting version", "error", err)
 	}
 }
@@ -120,14 +120,14 @@ func (s *Service) handlePluginStateChanged(ctx context.Context, event *models.Pl
 		s.syncPluginDashboards(ctx, p, event.OrgId)
 	} else {
 		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
-		if err := bus.DispatchCtx(ctx, &query); err != nil {
+		if err := bus.Dispatch(ctx, &query); err != nil {
 			return err
 		}
 
 		for _, dash := range query.Result {
 			s.logger.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
 			deleteCmd := models.DeleteDashboardCommand{OrgId: dash.OrgId, Id: dash.Id}
-			if err := bus.DispatchCtx(ctx, &deleteCmd); err != nil {
+			if err := bus.Dispatch(ctx, &deleteCmd); err != nil {
 				return err
 			}
 		}

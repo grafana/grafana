@@ -31,12 +31,12 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error)
 		webhookQueue: make(chan *Webhook, 10),
 	}
 
-	ns.Bus.AddHandlerCtx(ns.sendResetPasswordEmail)
-	ns.Bus.AddHandlerCtx(ns.validateResetPasswordCode)
-	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandler)
+	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
+	ns.Bus.AddHandler(ns.validateResetPasswordCode)
+	ns.Bus.AddHandler(ns.sendEmailCommandHandler)
 
-	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandlerSync)
-	ns.Bus.AddHandlerCtx(ns.SendWebhookSync)
+	ns.Bus.AddHandler(ns.sendEmailCommandHandlerSync)
+	ns.Bus.AddHandler(ns.SendWebhookSync)
 
 	ns.Bus.AddEventListenerCtx(ns.signUpStartedHandler)
 	ns.Bus.AddEventListenerCtx(ns.signUpCompletedHandler)
@@ -170,7 +170,7 @@ func (ns *NotificationService) validateResetPasswordCode(ctx context.Context, qu
 	}
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: login}
-	if err := bus.DispatchCtx(ctx, &userQuery); err != nil {
+	if err := bus.Dispatch(ctx, &userQuery); err != nil {
 		return err
 	}
 
@@ -212,7 +212,7 @@ func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *ev
 	}
 
 	emailSentCmd := models.UpdateTempUserWithEmailSentCommand{Code: evt.Code}
-	return bus.DispatchCtx(ctx, &emailSentCmd)
+	return bus.Dispatch(ctx, &emailSentCmd)
 }
 
 func (ns *NotificationService) signUpCompletedHandler(ctx context.Context, evt *events.SignUpCompleted) error {

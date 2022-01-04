@@ -22,7 +22,7 @@ func CanAdmin(ctx context.Context, bus bus.Bus, orgId int64, teamId int64, user 
 		UserId: user.UserId,
 	}
 
-	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+	if err := bus.Dispatch(ctx, &cmd); err != nil {
 		return err
 	}
 
