@@ -56,6 +56,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
           "borderRadius": "3px",
           "display": "flex",
           "flexGrow": 1,
+          "height": "300px",
           "left": "-3px",
           "position": "relative",
         }
