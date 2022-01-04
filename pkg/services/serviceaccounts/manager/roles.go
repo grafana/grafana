@@ -11,8 +11,8 @@ var (
 	ActionApikeyRemove        = "apikey:remove"
 	ActionApikeyAddAdditional = "apikey:addadditional"
 
-	apikeyAdminEdit = "fixed:apikey:admin:edit"
-	apikeyAdminRead = "fixed:apikey:admin:read"
+	apikeyWriter = "fixed:apikey:writer"
+	apikeyReader = "fixed:apikey:reader"
 
 	//API key actions
 	ActionApikeyListEv          = accesscontrol.EvalPermission(ActionApikeyList)
@@ -53,7 +53,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 	apikeyAdminReadRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Version:     1,
-			Name:        apikeyAdminRead,
+			Name:        apikeyReader,
 			DisplayName: "Apikeys reader",
 			Description: "Gives access to list apikeys.",
 			Group:       "Service accounts",
@@ -73,7 +73,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 	apikeyAdminEditRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Version:     1,
-			Name:        apikeyAdminEdit,
+			Name:        apikeyWriter,
 			DisplayName: "Apikeys writer",
 			Description: "Gives access to add and delete api keys.",
 			Group:       "Service accounts",
