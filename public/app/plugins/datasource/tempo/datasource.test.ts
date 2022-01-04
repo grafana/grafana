@@ -43,7 +43,7 @@ describe('Tempo data source', () => {
       })
     );
     const ds = new TempoDatasource(defaultSettings);
-    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1' }] } as any));
+    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1', query: '12345' }] } as any));
 
     expect(
       (response.data[0] as DataFrame).fields.map((f) => ({

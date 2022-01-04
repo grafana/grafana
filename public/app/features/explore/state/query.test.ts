@@ -13,7 +13,7 @@ import {
   storeLogsVolumeDataProviderAction,
 } from './query';
 import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
-import { EMPTY, interval, lastValueFrom, Observable, of } from 'rxjs';
+import { EMPTY, interval, Observable, of } from 'rxjs';
 import {
   ArrayVector,
   DataFrame,
