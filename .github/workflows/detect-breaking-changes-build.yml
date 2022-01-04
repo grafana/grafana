@@ -48,3 +48,7 @@ jobs:
       with:
         name: levitate
         path: levitate/
+      
+    - name: Exit
+      run: exit ${{ steps.breaking-changes.outputs.is_breaking }}
+      shell: bash
