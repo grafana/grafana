@@ -38,8 +38,8 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error)
 	ns.Bus.AddHandler(ns.sendEmailCommandHandlerSync)
 	ns.Bus.AddHandler(ns.SendWebhookSync)
 
-	ns.Bus.AddEventListenerCtx(ns.signUpStartedHandler)
-	ns.Bus.AddEventListenerCtx(ns.signUpCompletedHandler)
+	ns.Bus.AddEventListener(ns.signUpStartedHandler)
+	ns.Bus.AddEventListener(ns.signUpCompletedHandler)
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{

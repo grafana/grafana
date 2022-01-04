@@ -10,7 +10,7 @@ import {
   TraceLog,
   TraceSpanRow,
 } from '@grafana/data';
-import { SpanKind, SpanStatus, SpanStatusCode } from '@opentelemetry/api';
+import { SpanStatus, SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { createGraphFrames } from './graphTransform';
@@ -216,13 +216,11 @@ function getSpanTags(
     }
   }
 
-  if (
-    span.kind !== undefined &&
-    span.kind !== collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind.SPAN_KIND_INTERNAL
-  ) {
+  if (span.kind !== undefined) {
+    const split = span.kind.toString().toLowerCase().split('_');
     spanTags.push({
       key: 'span.kind',
-      value: SpanKind[collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind[span.kind] as any].toLowerCase(),
+      value: split.length ? split[split.length - 1] : span.kind.toString(),
     });
   }
 
