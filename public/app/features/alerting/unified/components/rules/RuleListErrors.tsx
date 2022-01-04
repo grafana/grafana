@@ -107,7 +107,7 @@ const ErrorSummaryButton: FC<ErrorSummaryProps> = ({ count, onClick }) => {
 
   return (
     <div className={styles.floatRight}>
-      <Tooltip content="Show all errors">
+      <Tooltip content="Show all errors" placement="bottom">
         <Button fill="text" variant="destructive" icon="exclamation-triangle" onClick={onClick}>
           {count > 1 ? <>{count} errors</> : <>1 error</>}
         </Button>
