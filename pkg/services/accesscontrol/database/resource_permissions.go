@@ -264,16 +264,16 @@ func getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query access
 		INNER JOIN role r ON p.role_id = r.id
     `
 	userFrom := rawFrom + `
-		INNER JOIN user_role ur ON r.id = ur.role_id
+		INNER JOIN user_role ur ON r.id = ur.role_id AND (ur.org_id = 0 OR ur.org_id = ?)
 		INNER JOIN user u ON ur.user_id = u.id
 	`
 	teamFrom := rawFrom + `
-		INNER JOIN team_role tr ON r.id = tr.role_id
+		INNER JOIN team_role tr ON r.id = tr.role_id AND (tr.org_id = 0 OR tr.org_id = ?)
 		INNER JOIN team t ON tr.team_id = t.id
 	`
 
 	builtinFrom := rawFrom + `
-		INNER JOIN builtin_role br ON r.id = br.role_id
+		INNER JOIN builtin_role br ON r.id = br.role_id AND (br.org_id = 0 OR br.org_id = ?)
 	`
 	where := `
 	WHERE (r.org_id = ? OR r.org_id = 0)
@@ -286,6 +286,7 @@ func getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query access
 	}
 
 	args := []interface{}{
+		orgID,
 		orgID,
 		accesscontrol.GetResourceAllScope(query.Resource),
 		accesscontrol.GetResourceAllIDScope(query.Resource),
