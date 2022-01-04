@@ -100,7 +100,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if tmplErr != nil {
-		en.log.Debug("failed to template email message", "err", tmplErr.Error())
+		en.log.Warn("failed to template email message", "err", tmplErr.Error())
 	}
 
 	if err := bus.Dispatch(ctx, cmd); err != nil {

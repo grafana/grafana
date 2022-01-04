@@ -99,7 +99,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	topicURL := strings.TrimRight(kn.Endpoint, "/") + "/topics/" + tmpl(kn.Topic)
 
 	if tmplErr != nil {
-		kn.log.Debug("failed to template Kafka message", "err", tmplErr.Error())
+		kn.log.Warn("failed to template Kafka message", "err", tmplErr.Error())
 	}
 
 	cmd := &models.SendWebhookSync{

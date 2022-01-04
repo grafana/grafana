@@ -97,7 +97,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	u := tmpl(vn.URL)
 	if tmplErr != nil {
-		vn.log.Debug("failed to template VictorOps message", "err", tmplErr.Error())
+		vn.log.Warn("failed to template VictorOps message", "err", tmplErr.Error())
 	}
 
 	b, err := bodyJSON.MarshalJSON()

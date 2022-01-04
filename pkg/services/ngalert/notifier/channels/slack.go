@@ -269,7 +269,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 		},
 	}
 	if tmplErr != nil {
-		sn.log.Debug("failed to template Slack message", "err", tmplErr.Error())
+		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())
 	}
 
 	mentionsBuilder := strings.Builder{}

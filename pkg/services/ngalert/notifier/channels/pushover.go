@@ -218,7 +218,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	if tmplErr != nil {
-		pn.log.Debug("failed to template pushover message", "err", tmplErr.Error())
+		pn.log.Warn("failed to template pushover message", "err", tmplErr.Error())
 	}
 
 	// Mark as html message

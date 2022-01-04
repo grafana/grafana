@@ -108,7 +108,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	data.Set("text", message)
 
 	if tmplErr != nil {
-		tn.log.Debug("failed to template Threema message", "err", tmplErr.Error())
+		tn.log.Warn("failed to template Threema message", "err", tmplErr.Error())
 	}
 
 	cmd := &models.SendWebhookSync{

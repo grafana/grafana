@@ -88,7 +88,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	u := tmpl(tn.URL)
 	if tmplErr != nil {
-		tn.log.Debug("failed to template Teams message", "err", tmplErr.Error())
+		tn.log.Warn("failed to template Teams message", "err", tmplErr.Error())
 	}
 
 	b, err := json.Marshal(&body)

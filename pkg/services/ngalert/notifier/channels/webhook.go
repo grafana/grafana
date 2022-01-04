@@ -102,7 +102,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		wn.log.Debug("failed to template webhook message", "err", tmplErr.Error())
+		wn.log.Warn("failed to template webhook message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(msg)
