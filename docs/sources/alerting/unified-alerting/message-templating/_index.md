@@ -54,7 +54,7 @@ Use caution when deleting a template since Grafana does not prevent you from del
 
 ### Nested templates
 
-Templates may embed other templates.
+You can embed templates within other templates.
 
 For example, a template fragment can be defined using the `define` keyword:
 
