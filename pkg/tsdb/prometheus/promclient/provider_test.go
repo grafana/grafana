@@ -1,6 +1,7 @@
 package promclient_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 
@@ -16,9 +17,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetClient(t *testing.T) {
-	headers := map[string]string{"Authorization": "token", "X-ID-Token": "id-token"}
+var headers = map[string]string{"Authorization": "token", "X-ID-Token": "id-token"}
 
+func TestGetClient(t *testing.T) {
 	t.Run("it sets the SigV4 service if it exists", func(t *testing.T) {
 		tc := setup(`{"sigV4Auth":true}`)
 
@@ -31,13 +32,23 @@ func TestGetClient(t *testing.T) {
 		require.Equal(t, "aps", tc.httpProvider.opts.SigV4.Service)
 	})
 
+	t.Run("it always uses the custom params and custom headers middlewares", func(t *testing.T) {
+		tc := setup()
+
+		_, err := tc.promClientProvider.GetClient(headers)
+		require.Nil(t, err)
+
+		require.Len(t, tc.httpProvider.middlewares(), 2)
+		require.Contains(t, tc.httpProvider.middlewares(), "prom-custom-query-parameters")
+		require.Contains(t, tc.httpProvider.middlewares(), "CustomHeaders")
+	})
+
 	t.Run("oauth pass through", func(t *testing.T) {
 		t.Run("it sets the headers when 'oauthPassThru' is true and auth headers are passed", func(t *testing.T) {
 			tc := setup(`{"oauthPassThru":true}`)
 			_, err := tc.promClientProvider.GetClient(headers)
 			require.Nil(t, err)
 
-			require.Len(t, tc.httpProvider.middlewares(), 2)
 			require.Equal(t, headers, tc.httpProvider.opts.Headers)
 		})
 
@@ -48,7 +59,6 @@ func TestGetClient(t *testing.T) {
 			_, err := tc.promClientProvider.GetClient(withNonAuth)
 			require.Nil(t, err)
 
-			require.Len(t, tc.httpProvider.middlewares(), 2)
 			require.Equal(t, map[string]string{}, tc.httpProvider.opts.Headers)
 		})
 
@@ -64,7 +74,6 @@ func TestGetClient(t *testing.T) {
 			_, err := tc.promClientProvider.GetClient(headers)
 			require.Nil(t, err)
 
-			require.Len(t, tc.httpProvider.middlewares(), 2)
 			require.Len(t, tc.httpProvider.opts.Headers, 0)
 		})
 	})
@@ -96,7 +105,6 @@ func TestGetClient(t *testing.T) {
 			_, err := tc.promClientProvider.GetClient(headers)
 			require.Nil(t, err)
 
-			require.Len(t, tc.httpProvider.middlewares(), 2)
 			require.NotContains(t, tc.httpProvider.middlewares(), "force-http-get")
 		})
 
@@ -106,7 +114,6 @@ func TestGetClient(t *testing.T) {
 			_, err := tc.promClientProvider.GetClient(headers)
 			require.Nil(t, err)
 
-			require.Len(t, tc.httpProvider.middlewares(), 2)
 			require.NotContains(t, tc.httpProvider.middlewares(), "force-http-get")
 		})
 
@@ -116,7 +123,6 @@ func TestGetClient(t *testing.T) {
 			_, err := tc.promClientProvider.GetClient(headers)
 			require.Nil(t, err)
 
-			require.Len(t, tc.httpProvider.middlewares(), 2)
 			require.NotContains(t, tc.httpProvider.middlewares(), "force-http-get")
 		})
 
@@ -126,21 +132,23 @@ func TestGetClient(t *testing.T) {
 			_, err := tc.promClientProvider.GetClient(headers)
 			require.Nil(t, err)
 
-			require.Len(t, tc.httpProvider.middlewares(), 2)
 			require.NotContains(t, tc.httpProvider.middlewares(), "force-http-get")
 		})
 	})
 }
 
 func setup(jsonData ...string) *testContext {
-	var jd []byte
+	var rawData []byte
 	if len(jsonData) > 0 {
-		jd = []byte(jsonData[0])
+		rawData = []byte(jsonData[0])
 	}
 
-	settings := backend.DataSourceInstanceSettings{JSONData: jd}
+	var jd promclient.JsonData
+	_ = json.Unmarshal(rawData, &jd)
+
+	settings := backend.DataSourceInstanceSettings{URL: "test-url", JSONData: rawData}
 	hp := &fakeHttpClientProvider{}
-	p := promclient.NewProvider("test-url", settings, hp, nil)
+	p := promclient.NewProvider(settings, jd, hp, nil)
 
 	return &testContext{
 		httpProvider:       hp,

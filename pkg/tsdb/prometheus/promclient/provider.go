@@ -1,7 +1,6 @@
 package promclient
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -21,42 +20,40 @@ const (
 )
 
 type Provider struct {
-	url            string
 	settings       backend.DataSourceInstanceSettings
+	jsonData       JsonData
 	clientProvider httpclient.Provider
 	log            log.Logger
 }
 
 func NewProvider(
-	url string,
 	settings backend.DataSourceInstanceSettings,
+	jsonData JsonData,
 	clientProvider httpclient.Provider,
 	log log.Logger,
 ) *Provider {
 	return &Provider{
-		url:            url,
 		settings:       settings,
+		jsonData:       jsonData,
 		clientProvider: clientProvider,
 		log:            log,
 	}
 }
 
-type jsonSettings struct {
+type JsonData struct {
 	Method        string `json:"httpMethod"`
 	OauthPassThru bool   `json:"oauthPassThru"`
+	TimeInterval  string `json:"timeInterval"`
 }
 
 func (p *Provider) GetClient(headers map[string]string) (apiv1.API, error) {
-	var jsonSettings jsonSettings
-	_ = json.Unmarshal(p.settings.JSONData, &jsonSettings) //if there's an error unmarshalling, the 0 value is fine
-
 	opts, err := p.settings.HTTPClientOptions()
 	if err != nil {
 		return nil, err
 	}
 
-	opts.Middlewares = p.middlewares(jsonSettings)
-	if jsonSettings.OauthPassThru {
+	opts.Middlewares = p.middlewares()
+	if p.jsonData.OauthPassThru {
 		opts.Headers = authHeaders(headers)
 	}
 
@@ -71,7 +68,7 @@ func (p *Provider) GetClient(headers map[string]string) (apiv1.API, error) {
 	}
 
 	cfg := api.Config{
-		Address:      p.url,
+		Address:      p.settings.URL,
 		RoundTripper: roundTripper,
 	}
 
@@ -83,12 +80,12 @@ func (p *Provider) GetClient(headers map[string]string) (apiv1.API, error) {
 	return apiv1.NewAPI(client), nil
 }
 
-func (p *Provider) middlewares(js jsonSettings) []sdkhttpclient.Middleware {
+func (p *Provider) middlewares() []sdkhttpclient.Middleware {
 	middlewares := []sdkhttpclient.Middleware{
 		middleware.CustomQueryParameters(p.log),
 		sdkhttpclient.CustomHeadersMiddleware(),
 	}
-	if strings.ToLower(js.Method) == "get" {
+	if strings.ToLower(p.jsonData.Method) == "get" {
 		middlewares = append(middlewares, middleware.ForceHttpGet(p.log))
 	}
 

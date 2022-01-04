@@ -48,7 +48,10 @@ const (
 )
 
 func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *DatasourceInfo) (*backend.QueryDataResponse, error) {
-	client := dsInfo.promClient
+	client, err := dsInfo.getClient(req.Headers)
+	if err != nil {
+		return nil, err
+	}
 
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
