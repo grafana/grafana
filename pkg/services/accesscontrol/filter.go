@@ -35,8 +35,6 @@ func Filter(ctx context.Context, dialect SQLDialect, sqlID, prefix, action strin
 		scopes = append(scopes, "no:access")
 	}
 
-	fmt.Println(scopes)
-
 	var sql string
 	var args []interface{}
 
