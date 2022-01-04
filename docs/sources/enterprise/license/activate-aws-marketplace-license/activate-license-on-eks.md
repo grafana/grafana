@@ -107,7 +107,7 @@ In this task, you configure Grafana Enterprise to validate the license with AWS 
 
 To activate Grafana Enterprise features, you must start (or restart) Grafana.
 
-To restart Grafana on a Kubernetes cluster, 
+To restart Grafana on a Kubernetes cluster,
 
 1. Run the command `kubectl rollout restart deployment my-release`.
 
