@@ -130,7 +130,7 @@ func addUserMigrations(mg *Migrator) {
 	//Service accounts are lightweight users with restricted permissions.  They support API keys
 	//and provisioning and tasks like alarms and reports.
 	mg.AddMigration("Add is_service_account column to user", NewAddColumnMigration(userV2, &Column{
-		Name: "is_service_account", Type: DB_Bool, Nullable: true, Default: "FALSE",
+		Name: "is_service_account", Type: DB_Bool, Nullable: true, Default: "0",
 	}))
 }
 
