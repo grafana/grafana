@@ -177,7 +177,7 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		dn.log.Error("Failed to send notification to Discord", "error", err)
 		return err
 	}

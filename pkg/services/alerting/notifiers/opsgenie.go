@@ -205,7 +205,7 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 		},
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		on.log.Error("Failed to send notification to OpsGenie", "error", err, "body", string(body))
 	}
 
@@ -229,7 +229,7 @@ func (on *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) error 
 		},
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		on.log.Error("Failed to send notification to OpsGenie", "error", err, "body", string(body))
 		return err
 	}

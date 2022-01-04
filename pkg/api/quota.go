@@ -58,7 +58,7 @@ func GetUserQuotas(c *models.ReqContext) response.Response {
 	}
 	query := models.GetUserQuotasQuery{UserId: c.ParamsInt64(":id")}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get org quotas", err)
 	}
 
@@ -80,7 +80,7 @@ func UpdateUserQuota(c *models.ReqContext) response.Response {
 		return response.Error(404, "Invalid quota target", nil)
 	}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update org quotas", err)
 	}
 	return response.Success("Organization quota updated")

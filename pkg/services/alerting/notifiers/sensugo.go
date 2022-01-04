@@ -197,7 +197,7 @@ func (sn *SensuGoNotifier) Notify(evalContext *alerting.EvalContext) error {
 			"Authorization": fmt.Sprintf("Key %s", sn.APIKey),
 		},
 	}
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		sn.log.Error("Failed to send Sensu Go event", "error", err, "sensugo", sn.Name)
 		return err
 	}

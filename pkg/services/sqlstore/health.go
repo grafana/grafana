@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	bus.AddHandlerCtx("sql", GetDBHealthQuery)
+	bus.AddHandler("sql", GetDBHealthQuery)
 }
 
 // GetDBHealthQuery executes a query to check

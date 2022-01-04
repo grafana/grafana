@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strings"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
@@ -56,24 +55,6 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pl
 	return s, nil
 }
 
-func forceHttpGet(settingsJson map[string]interface{}) bool {
-	methodInterface, exists := settingsJson["httpMethod"]
-	if !exists {
-		return false
-	}
-
-	method, ok := methodInterface.(string)
-	if !ok {
-		return false
-	}
-
-	if strings.ToLower(method) != "get" {
-		return false
-	}
-
-	return true
-}
-
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]interface{}{}
@@ -105,7 +86,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			}
 		}
 
-		client, err := createClient(settings.URL, httpCliOpts, httpClientProvider, forceHttpGet(jsonData))
+		client, err := client.Create(settings.URL, httpCliOpts, httpClientProvider, jsonData, plog)
 		if err != nil {
 			return nil, err
 		}
@@ -141,32 +122,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	return result, err
-}
-
-func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider, forceHttpGet bool) (apiv1.API, error) {
-	customParamsMiddleware := customQueryParametersMiddleware(plog)
-	middlewares := []sdkhttpclient.Middleware{customParamsMiddleware}
-	if forceHttpGet {
-		middlewares = append(middlewares, forceHttpGetMiddleware(plog))
-	}
-	httpOpts.Middlewares = middlewares
-
-	roundTripper, err := clientProvider.GetTransport(httpOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := api.Config{
-		Address:      url,
-		RoundTripper: roundTripper,
-	}
-
-	client, err := api.NewClient(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return apiv1.NewAPI(client), nil
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*DatasourceInfo, error) {

@@ -11,6 +11,7 @@ import {
   Legend,
 } from '@grafana/ui';
 import { DataSourcePicker } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -107,6 +108,9 @@ export const ImportDashboardForm: FC<Props> = ({
       </Field>
       {inputs.dataSources &&
         inputs.dataSources.map((input: DataSourceInput, index: number) => {
+          if (input.pluginId === ExpressionDatasourceRef.type) {
+            return null;
+          }
           const dataSourceOption = `dataSources[${index}]`;
           const current = watchDataSources ?? [];
           return (
