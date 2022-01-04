@@ -22,7 +22,7 @@ func (m *PluginManager) GetPluginDashboards(ctx context.Context, orgID int64, pl
 
 	// load current dashboards
 	query := models.GetDashboardsByPluginIdQuery{OrgId: orgID, PluginId: pluginID}
-	if err := bus.DispatchCtx(ctx, &query); err != nil {
+	if err := bus.Dispatch(ctx, &query); err != nil {
 		return nil, err
 	}
 

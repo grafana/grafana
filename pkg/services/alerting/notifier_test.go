@@ -177,7 +177,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 
 		evalCtx.dashboardRef = &models.DashboardRef{Uid: "db-uid"}
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
 			query.Result = []*models.AlertNotification{
 				{
 					Id:   1,
@@ -190,7 +190,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			return nil
 		})
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error {
 			query.Result = &models.AlertNotificationState{
 				AlertId:                      evalCtx.Rule.ID,
 				AlertRuleStateUpdatedVersion: 1,
@@ -201,11 +201,11 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			return nil
 		})
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
+		bus.AddHandler("test", func(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
 			return nil
 		})
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error {
+		bus.AddHandler("test", func(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error {
 			return nil
 		})
 
@@ -373,7 +373,7 @@ func (s *testRenderService) RenderErrorImage(theme rendering.Theme, err error) (
 	return &rendering.RenderResult{FilePath: "image.png"}, nil
 }
 
-func (s *testRenderService) GetRenderUser(key string) (*rendering.RenderUser, bool) {
+func (s *testRenderService) GetRenderUser(ctx context.Context, key string) (*rendering.RenderUser, bool) {
 	return nil, false
 }
 

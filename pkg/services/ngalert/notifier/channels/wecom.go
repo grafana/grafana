@@ -74,7 +74,7 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		Body: string(body),
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		w.log.Error("failed to send WeCom webhook", "error", err, "notification", w.Name)
 		return false, err
 	}
