@@ -373,16 +373,6 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.3
-  name: identify-runner
-- commands:
-  - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
-  image: grafana/build-container:1.4.8
-  name: initialize
-- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
@@ -904,16 +894,6 @@ steps:
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.14.3
-  name: identify-runner
-- commands:
-  - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
-  image: grafana/build-container:1.4.8
-  name: initialize
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
@@ -4499,6 +4479,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 0140292b5e609a2db7f55c930a9072d5bd1afa92ebd6043ed10314119413c331
+hmac: 39bd9bda630c4071f354cb8f5192a84b37fadfd588fc13cc48bc5f0c036c163a
 
 ...
