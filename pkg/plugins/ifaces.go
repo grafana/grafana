@@ -18,10 +18,14 @@ type Store interface {
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 
 	// Add adds a plugin to the store.
-	Add(ctx context.Context, pluginID, version string, opts AddOpts) error
+	Add(ctx context.Context, pluginID, version string) error
+	// AddWithFactory adds a plugin to the store.
+	AddWithFactory(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc, resolver PluginPathResolver) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
 }
+
+type PluginPathResolver func() (string, error)
 
 type AddOpts struct {
 	PluginInstallDir, PluginZipURL, PluginRepoURL string
@@ -64,11 +68,6 @@ type Client interface {
 type RendererManager interface {
 	// Renderer returns a renderer plugin.
 	Renderer() *Plugin
-}
-
-type CoreBackendRegistrar interface {
-	// LoadAndRegister loads and registers a Core backend plugin
-	LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error
 }
 
 type StaticRouteResolver interface {

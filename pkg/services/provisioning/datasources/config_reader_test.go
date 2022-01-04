@@ -33,11 +33,11 @@ func TestDatasourceAsConfig(t *testing.T) {
 	setup := func() {
 		fakeRepo = &fakeRepository{}
 		bus.ClearBusHandlers()
-		bus.AddHandlerCtx("test", mockDelete)
-		bus.AddHandlerCtx("test", mockInsert)
-		bus.AddHandlerCtx("test", mockUpdate)
-		bus.AddHandlerCtx("test", mockGet)
-		bus.AddHandlerCtx("test", mockGetOrg)
+		bus.AddHandler("test", mockDelete)
+		bus.AddHandler("test", mockInsert)
+		bus.AddHandler("test", mockUpdate)
+		bus.AddHandler("test", mockGet)
+		bus.AddHandler("test", mockGetOrg)
 	}
 
 	t.Run("when some values missing", func(t *testing.T) {

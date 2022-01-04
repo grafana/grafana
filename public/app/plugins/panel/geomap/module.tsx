@@ -7,12 +7,17 @@ import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
 import { getLayerEditor } from './editor/layerEditor';
 import { LayersEditor } from './editor/LayersEditor';
 import { config } from '@grafana/runtime';
+import { commonOptionsBuilder } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
   .setPanelChangeHandler(mapPanelChangedHandler)
   .setMigrationHandler(mapMigrationHandler)
-  .useFieldConfig()
+  .useFieldConfig({
+    useCustomConfig: (builder) => {
+      commonOptionsBuilder.addHideFrom(builder);
+    },
+  })
   .setPanelOptions((builder, context) => {
     let category = ['Map view'];
     builder.addCustomEditor({

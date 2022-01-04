@@ -39,3 +39,4 @@ export { isUnsignedPluginSignature } from './pluginSignature';
 export { GrafanaConfig, BuildInfo, FeatureToggles, LicenseInfo, PreloadPlugin } from './config';
 export * from './alerts';
 export * from './slider';
+export * from './accesscontrol';

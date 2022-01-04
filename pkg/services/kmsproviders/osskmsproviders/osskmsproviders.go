@@ -3,8 +3,8 @@ package osskmsproviders
 import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
+	grafana "github.com/grafana/grafana/pkg/services/kmsproviders/defaultprovider"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	grafana "github.com/grafana/grafana/pkg/services/secrets/defaultprovider"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

@@ -32,10 +32,28 @@ describe('SearchResults', () => {
 
   it('should render section items for expanded section', () => {
     setup();
-    expect(screen.getAllByTestId(selectors.components.Search.collapseFolder('0'))).toHaveLength(1);
-    expect(screen.getAllByTestId(selectors.components.Search.itemsV2)).toHaveLength(1);
-    expect(screen.getAllByTestId(selectors.components.Search.dashboardItem('Test 1'))).toHaveLength(1);
-    expect(screen.getAllByTestId(selectors.components.Search.dashboardItem('Test 2'))).toHaveLength(1);
+    expect(screen.getByTestId(selectors.components.Search.collapseFolder('0'))).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Search.itemsV2)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Search.dashboardItem('Test 1'))).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Search.dashboardItem('Test 2'))).toBeInTheDocument();
+
+    // Check search cards aren't in the DOM
+    expect(screen.queryByTestId(selectors.components.Search.cards)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Search.dashboardCard('Test 1'))).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Search.dashboardCard('Test 2'))).not.toBeInTheDocument();
+  });
+
+  it('should render search card items for expanded section when showPreviews is enabled', () => {
+    setup({ showPreviews: true });
+    expect(screen.getByTestId(selectors.components.Search.collapseFolder('0'))).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Search.cards)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Search.dashboardCard('Test 1'))).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Search.dashboardCard('Test 2'))).toBeInTheDocument();
+
+    // Check search items aren't in the DOM
+    expect(screen.queryByTestId(selectors.components.Search.itemsV2)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Search.dashboardItem('Test 1'))).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Search.dashboardItem('Test 2'))).not.toBeInTheDocument();
   });
 
   it('should not render checkboxes for non-editable results', () => {

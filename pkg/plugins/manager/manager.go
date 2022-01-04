@@ -32,7 +32,6 @@ var _ plugins.Client = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
 var _ plugins.PluginDashboardManager = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
-var _ plugins.CoreBackendRegistrar = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
@@ -115,7 +114,7 @@ func (m *PluginManager) init() error {
 func (m *PluginManager) Run(ctx context.Context) error {
 	if m.cfg.CheckForUpdates {
 		go func() {
-			m.checkForUpdates()
+			m.checkForUpdates(ctx)
 
 			ticker := time.NewTicker(time.Minute * 10)
 			run := true
@@ -123,7 +122,7 @@ func (m *PluginManager) Run(ctx context.Context) error {
 			for run {
 				select {
 				case <-ticker.C:
-					m.checkForUpdates()
+					m.checkForUpdates(ctx)
 				case <-ctx.Done():
 					run = false
 				}
@@ -356,31 +355,6 @@ func (m *PluginManager) isRegistered(pluginID string) bool {
 	}
 
 	return !p.IsDecommissioned()
-}
-
-func (m *PluginManager) LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	if m.isRegistered(pluginID) {
-		return fmt.Errorf("backend plugin %s already registered", pluginID)
-	}
-
-	pluginRootDir := pluginID
-	if pluginID == "stackdriver" {
-		pluginRootDir = "cloud-monitoring"
-	}
-
-	path := filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource", pluginRootDir)
-
-	p, err := m.pluginLoader.LoadWithFactory(path, factory)
-	if err != nil {
-		return err
-	}
-
-	err = m.register(p)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (m *PluginManager) Routes() []*plugins.StaticRoute {

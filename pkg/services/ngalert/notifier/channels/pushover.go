@@ -110,7 +110,7 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		Body:       uploadBody.String(),
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		pn.log.Error("Failed to send pushover notification", "error", err, "webhook", pn.Name)
 		return false, err
 	}
