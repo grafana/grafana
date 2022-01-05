@@ -118,7 +118,7 @@ func TestFeatureToggles(t *testing.T) {
 	}
 }
 
-func TestFeatureToggleRegistry(t *testing.T) {
+func TestFeatureToggleTypeScript(t *testing.T) {
 	tsgen := generateTypeScript()
 
 	fpath := "../../packages/grafana-data/src/types/featureToggles.gen.ts"
@@ -147,7 +147,7 @@ func generateTypeScript() string {
  * @public
  */
 export interface FeatureToggles {
-  [name: string]: boolean;
+  // [name: string]: boolean; // support any string value
 
 `
 	for _, flag := range featureToggleRegistry {

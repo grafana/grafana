@@ -10,7 +10,7 @@
  * @public
  */
 export interface FeatureToggles {
-  [name: string]: boolean;
+  // [name: string]: boolean; // support any string value
 
   recordedQueries: boolean;
   trimDefaults: boolean;
@@ -18,9 +18,13 @@ export interface FeatureToggles {
   dashboardPreviews: boolean;
   ['live-config']: boolean;
   ['live-pipeline']: boolean;
+  ['live-service-web-worker']: boolean;
   tempoSearch: boolean;
   tempoServiceGraph: boolean;
   fullRangeLogsVolume: boolean;
+  accesscontrol: boolean;
+  prometheus_azure_auth: boolean;
+  newNavigation: boolean;
 }
 
 /**
@@ -33,7 +37,11 @@ export const defalutFeatureToggles: FeatureToggles = {
   dashboardPreviews: false,
   ['live-config']: false,
   ['live-pipeline']: false,
+  ['live-service-web-worker']: false,
   tempoSearch: false,
   tempoServiceGraph: false,
   fullRangeLogsVolume: false,
+  accesscontrol: false,
+  prometheus_azure_auth: false,
+  newNavigation: false,
 };

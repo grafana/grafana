@@ -3,7 +3,7 @@ import {
   BuildInfo,
   createTheme,
   DataSourceInstanceSettings,
-  FeatureToggles,
+  defalutFeatureToggles,
   GrafanaConfig,
   GrafanaTheme,
   GrafanaTheme2,
@@ -61,16 +61,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: PreloadPlugin[] = [];
-  featureToggles: FeatureToggles = {
-    accesscontrol: false,
-    trimDefaults: false,
-    tempoServiceGraph: false,
-    tempoSearch: false,
-    recordedQueries: false,
-    newNavigation: false,
-    fullRangeLogsVolume: false,
-    dashboardPreviews: false,
-  };
+  featureToggles = defalutFeatureToggles;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   rendererVersion = '';

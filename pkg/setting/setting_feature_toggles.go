@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -58,8 +59,20 @@ func NewFeatureToggles(flags map[string]bool) FeatureToggles {
 	}
 }
 
+func (ft *FeatureToggles) Toggles() map[string]bool {
+	return ft.flags
+}
+
 func (ft *FeatureToggles) IsEnabled(key string) bool {
 	return ft.flags[key]
+}
+
+func (ft FeatureToggles) MarshalJSON() ([]byte, error) {
+	res := make(map[string]interface{}, 3)
+	res["toggles"] = ft.flags
+	res["info"] = ft.info
+	res["messagges"] = ft.messages
+	return json.Marshal(res)
 }
 
 func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
@@ -90,6 +103,7 @@ func loadFeatureTogglesFromConfiguration(opts featureFlagOptions) (*FeatureToggl
 	registry := initFeatureToggleRegistry(opts.flags)
 	ff := &FeatureToggles{
 		flags: make(map[string]bool, len(registry)),
+		info:  opts.flags,
 	}
 
 	// parse the comma separated list in `enable`.

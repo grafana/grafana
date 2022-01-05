@@ -5,6 +5,7 @@ const (
 	featureToggle_accesscontrol                 string = "accesscontrol"
 	featureToggle_service_accounts              string = "service-accounts"
 	featureToggle_httpclientprovider_azure_auth string = "httpclientprovider_azure_auth"
+	featureToggle_prometheus_azure_auth         string = "prometheus_azure_auth"
 
 	featureToggle_dashboardPreviews              string = "dashboardPreviews"
 	featureToggle_trimDefaults                   string = "trimDefaults"
@@ -12,8 +13,9 @@ const (
 	featureToggle_disable_http_request_histogram string = "disable_http_request_histogram"
 	featureToggle_newNavigation                  string = "newNavigation"
 
-	featureToggle_live_config   string = "live-config"
-	featureToggle_live_pipeline string = "live-pipeline"
+	featureToggle_live_config             string = "live-config"
+	featureToggle_live_pipeline           string = "live-pipeline"
+	featureToggle_live_service_web_worker string = "live-service-web-worker"
 
 	featureToggle_tempoSearch         string = "tempoSearch"
 	featureToggle_tempoServiceGraph   string = "tempoServiceGraph"
@@ -60,7 +62,12 @@ var (
 			Description: "enable a generic live processing pipeline",
 			State:       AlphaState,
 		},
-
+		{
+			Id:          featureToggle_live_service_web_worker,
+			Name:        "Live service worker",
+			Description: "This will use a webworker thread to processes events rather than the main thread",
+			State:       AlphaState,
+		},
 		{
 			Id:          featureToggle_tempoSearch,
 			Name:        "Tempo search",
@@ -78,6 +85,24 @@ var (
 			Name:        "Full range logs volume",
 			Description: "Show full range logs volume in expore",
 			State:       BetaState,
+		},
+		{
+			Id:          featureToggle_accesscontrol,
+			Name:        "Access control",
+			Description: "Support robust access control",
+			State:       BetaState,
+		},
+		{
+			Id:          featureToggle_prometheus_azure_auth,
+			Name:        "Prometheus azure auth",
+			Description: "Use azure authentication for prometheus datasource",
+			State:       BetaState,
+		},
+		{
+			Id:          featureToggle_newNavigation,
+			Name:        "New navigation",
+			Description: "Try the next gen naviation model",
+			State:       AlphaState,
 		},
 	}
 )
