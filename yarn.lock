@@ -6686,9 +6686,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rushstack/node-core-library@npm:3.44.2":
-  version: 3.44.2
-  resolution: "@rushstack/node-core-library@npm:3.44.2"
+"@rushstack/node-core-library@npm:3.45.0":
+  version: 3.45.0
+  resolution: "@rushstack/node-core-library@npm:3.45.0"
   dependencies:
     "@types/node": 12.20.24
     colors: ~1.2.1
@@ -6699,7 +6699,7 @@ __metadata:
     semver: ~7.3.0
     timsort: ~0.3.0
     z-schema: ~5.0.2
-  checksum: 6a0da67b5560379584772b18b41f20b605d0f282c0b774d6deafe44c2e288c6d033a7a9be5894ac0bb9a391fed1ef2dd344a5e27d5916baf11f07ca9227d1a32
+  checksum: 1dc9dd7a042b33d891d4174369f8a63e70c76a2a502ef0a2d49993639d9722ff34eb149da7f06cd16ad069aa0d6045df8df9be27ab38fdad0fbc0349787d08b3
   languageName: node
   linkType: hard
 
