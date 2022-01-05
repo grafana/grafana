@@ -1,7 +1,11 @@
 package setting
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -108,8 +112,68 @@ func TestFeatureToggles(t *testing.T) {
 
 		if err == nil {
 			for k, v := range tc.expectedToggles {
-				require.Equal(t, featureToggles.Toggles[k], v, tc.name)
+				require.Equal(t, featureToggles.IsEnabled(k), v, tc.name)
 			}
 		}
 	}
+}
+
+func TestFeatureToggleRegistry(t *testing.T) {
+	tsgen := generateTypeScript()
+
+	fpath := "../../packages/grafana-data/src/types/featureToggles.gen.ts"
+	body, err := ioutil.ReadFile(fpath)
+	if err == nil && tsgen != string(body) {
+		err = fmt.Errorf("feature toggle typescript does not match")
+	}
+
+	if err != nil {
+		_ = os.WriteFile(fpath, []byte(tsgen), 0644)
+		t.Errorf("Feature toggle typescript does not match: %s", err.Error())
+		t.Fail()
+	}
+}
+
+func generateTypeScript() string {
+	buf := `// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
+// To change feature flags, edit:
+//  pkg/setting/setting_feature_toggles_registry.go
+
+/**
+ * Describes available feature toggles in Grafana. These can be configured via
+ * conf/custom.ini to enable features under development or not yet available in
+ * stable version.
+ *
+ * @public
+ */
+export interface FeatureToggles {
+	[name: string]: boolean;
+
+`
+	for _, flag := range featureToggleRegistry {
+		buf += "  " + getTypeScriptKey(flag.Id) + ": boolean;\n"
+	}
+
+	buf += `
+}
+
+/**
+ * @public
+ */
+export const defalutFeatureToggles: FeatureToggles = {
+`
+	for _, flag := range featureToggleRegistry {
+		buf += "  " + getTypeScriptKey(flag.Id) + ": " + strconv.FormatBool(flag.Enabled) + ",\n"
+	}
+
+	buf += "}\n\n"
+
+	return buf
+}
+
+func getTypeScriptKey(key string) string {
+	if strings.Contains(key, "-") {
+		return "['" + key + "']"
+	}
+	return key
 }

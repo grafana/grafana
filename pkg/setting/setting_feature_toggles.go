@@ -35,7 +35,6 @@ type FeatureToggleInfo struct {
 	Description string             `json:"description"`
 	AliasIds    []string           `json:"aliasIds,omitempty"` // ids that will also work (support spelling changes and product renames)
 	State       FeatureToggleState `json:"state,omitempty"`
-	Tags        []string           `json:"tags,omitempty"`
 	DocsURL     string             `json:"docsURL,omitempty"`
 
 	// Loading state
@@ -48,19 +47,19 @@ type FeatureToggleInfo struct {
 }
 
 type FeatureToggles struct {
-	Toggles  map[string]bool
-	Info     []FeatureToggleInfo
-	Messages []string
+	flags    map[string]bool
+	info     []FeatureToggleInfo
+	messages []string
 }
 
 func NewFeatureToggles(flags map[string]bool) FeatureToggles {
 	return FeatureToggles{
-		Toggles: flags,
+		flags: flags,
 	}
 }
 
 func (ft *FeatureToggles) IsEnabled(key string) bool {
-	return ft.Toggles[key]
+	return ft.flags[key]
 }
 
 func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
@@ -90,7 +89,7 @@ type featureFlagOptions struct {
 func loadFeatureTogglesFromConfiguration(opts featureFlagOptions) (*FeatureToggles, error) {
 	registry := initFeatureToggleRegistry(opts.flags)
 	ff := &FeatureToggles{
-		Toggles: make(map[string]bool, len(registry)),
+		flags: make(map[string]bool, len(registry)),
 	}
 
 	// parse the comma separated list in `enable`.
@@ -119,20 +118,20 @@ func loadFeatureTogglesFromConfiguration(opts featureFlagOptions) (*FeatureToggl
 		if info.Enabled {
 			if info.RequiresDevMode && !opts.isDev {
 				info.Enabled = false
-				ff.Messages = append(ff.Messages, "(%s) can only run in development mode", info.Id)
+				ff.messages = append(ff.messages, "(%s) can only run in development mode", info.Id)
 			}
 
 			if info.RequiresEnterprise && !opts.isEnterprise {
 				info.Enabled = false
-				ff.Messages = append(ff.Messages, "(%s) requires an enterprise license", info.Id)
+				ff.messages = append(ff.messages, "(%s) requires an enterprise license", info.Id)
 			}
 		}
 
-		ff.Toggles[info.Id] = info.Enabled
+		ff.flags[info.Id] = info.Enabled
 	}
 
 	// track if feature toggles are enabled or not using an info metric
-	for k, v := range ff.Toggles {
+	for k, v := range ff.flags {
 		val := 0.0
 		if v {
 			val = 1.0
@@ -161,7 +160,7 @@ func setToggle(registry map[string]*FeatureToggleInfo, key string, val bool, ff 
 	if ok {
 		info.Enabled = val
 	} else {
-		ff.Toggles[key] = val
-		ff.Messages = append(ff.Messages, fmt.Sprintf("unknown feature toggle: %s", key))
+		ff.flags[key] = val
+		ff.messages = append(ff.messages, fmt.Sprintf("unknown feature toggle: %s", key))
 	}
 }
