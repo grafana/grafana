@@ -32,6 +32,9 @@ export interface StreamingFrameOptions {
   maxLength: number; // 1000
   maxDelta: number; // how long to keep things
   action: StreamingFrameAction; // default will append
+
+  /** optionally format field names based on labels */
+  displayNameFormat?: string;
 }
 
 /**
