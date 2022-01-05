@@ -223,7 +223,7 @@ export class StreamingDataFrame implements DataFrame {
         this.meta = { ...schema.meta };
       }
 
-      const { legendFormat } = this.options;
+      const { displayNameFormat } = this.options;
       if (hasSameStructure(this.schemaFields, niceSchemaFields)) {
         const len = niceSchemaFields.length;
         this.fields.forEach((f, idx) => {
@@ -231,10 +231,10 @@ export class StreamingDataFrame implements DataFrame {
           f.config = sf.config ?? {};
           f.labels = sf.labels;
         });        
-        if (legendFormat) {
+        if (displayNameFormat) {
           this.fields.forEach((f) => {
             const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...f.labels};
-            f.config.displayNameFromDS = renderLegendFormat(legendFormat, labels);
+            f.config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
           });
         }
       } else {
@@ -242,9 +242,9 @@ export class StreamingDataFrame implements DataFrame {
         const isWide = this.pushMode === PushMode.wide;
         this.fields = niceSchemaFields.map((f) => {
           const config = f.config ?? {};
-          if (legendFormat) {
+          if (displayNameFormat) {
             const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...f.labels};
-            config.displayNameFromDS = renderLegendFormat(legendFormat, labels);
+            config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
           }
           return {
             config,
@@ -399,7 +399,7 @@ export class StreamingDataFrame implements DataFrame {
 
   // adds a set of fields for a new label
   private addLabel(label: string) {
-    const { legendFormat } = this.options;
+    const { displayNameFormat } = this.options;
     const labelCount = this.labels.size;
 
     // parse labels
@@ -410,9 +410,9 @@ export class StreamingDataFrame implements DataFrame {
       this.fields.forEach((f, i) => {
         if (i > 0) {
           f.labels = parsedLabels;
-          if (legendFormat) {
+          if (displayNameFormat) {
             const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...parsedLabels};
-            f.config.displayNameFromDS = renderLegendFormat(legendFormat, labels);
+            f.config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
           }
         }
       });
@@ -420,9 +420,9 @@ export class StreamingDataFrame implements DataFrame {
       for (let i = 1; i < this.schemaFields.length; i++) {
         let proto = this.schemaFields[i] as Field;
         const config = proto.config ?? {};
-        if (legendFormat) {
+        if (displayNameFormat) {
           const labels = {[PROM_STYLE_METRIC_LABEL]:proto.name, ...parsedLabels};
-          config.displayNameFromDS = renderLegendFormat(legendFormat, labels);
+          config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
         }
         this.fields.push({
           ...proto,
@@ -444,7 +444,7 @@ export function getStreamingFrameOptions(opts?: Partial<StreamingFrameOptions>):
     maxLength: opts?.maxLength ?? 1000,
     maxDelta: opts?.maxDelta ?? Infinity,
     action: opts?.action ?? StreamingFrameAction.Append,
-    legendFormat: opts?.legendFormat,
+    displayNameFormat: opts?.displayNameFormat,
   };
 }
 
