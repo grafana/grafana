@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
+type CtxVector []interface{}
+
 var logger = log.New("frontendlogging")
 
 type FrontendSentryExceptionValue struct {
@@ -64,7 +66,7 @@ func (exception *FrontendSentryException) FmtStacktraces(store *SourceMapStore) 
 	return strings.Join(stacktraces, "\n\n")
 }
 
-func addEventContextToLogContext(rootPrefix string, logCtx *[]interface{}, eventCtx map[string]interface{}) {
+func addEventContextToLogContext(rootPrefix string, logCtx *CtxVector, eventCtx map[string]interface{}) {
 	for key, element := range eventCtx {
 		prefix := fmt.Sprintf("%s_%s", rootPrefix, key)
 		switch v := element.(type) {
@@ -77,7 +79,7 @@ func addEventContextToLogContext(rootPrefix string, logCtx *[]interface{}, event
 }
 
 func (event *FrontendSentryEvent) ToLogContext(store *SourceMapStore) []interface{} {
-	var ctx = []interface{}{"url", event.Request.URL, "user_agent", event.Request.Headers["User-Agent"],
+	var ctx = CtxVector{"url", event.Request.URL, "user_agent", event.Request.Headers["User-Agent"],
 		"event_id", event.EventID, "original_timestamp", event.Timestamp}
 
 	if event.Exception != nil {
