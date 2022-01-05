@@ -1,4 +1,3 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { importDashboard } from './actions';
