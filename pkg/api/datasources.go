@@ -78,8 +78,7 @@ func (hs *HTTPServer) getDataSourceAccessControlMetadata(c *models.ReqContext, d
 	key := fmt.Sprintf("%d", dsID)
 	dsIDs := map[string]bool{key: true}
 
-	metadata := accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "datasources", dsIDs)
-	return metadata[key], nil
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "datasources", dsIDs)[key], nil
 }
 
 func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response {
