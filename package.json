@@ -28,6 +28,7 @@
     "packages:publishCanary": "lerna publish from-package --contents dist --dist-tag canary --yes",
     "packages:publishLatest": "lerna publish from-package --contents dist --yes",
     "packages:publishNext": "lerna publish from-package --contents dist --dist-tag next --yes",
+    "packages:publishTest": "lerna publish from-package --contents dist --dist-tag test --yes",
     "packages:publishDev": "lerna publish from-package --contents dist --dist-tag dev --yes --registry http://grafana-npm.local:4873 --force-publish=*",
     "packages:typecheck": "lerna run typecheck",
     "packages:clean": "lerna run clean",
