@@ -137,7 +137,7 @@ func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *
 //nolint: staticcheck // legacydata.DataResponse deprecated
 func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejson.Json, queryModel string, verifier func(query legacydata.DataSubQuery)) {
 	t.Run("desc", func(t *testing.T) {
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
 			query.Result = &models.DataSource{Id: 1, Type: "graphite", JsonData: dataSourceJsonData}
 			return nil
 		})

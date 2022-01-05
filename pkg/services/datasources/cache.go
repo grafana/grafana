@@ -18,7 +18,7 @@ func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlsto
 }
 
 type CacheService interface {
-	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+	GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
 	GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
 }
 
@@ -28,6 +28,7 @@ type CacheServiceImpl struct {
 }
 
 func (dc *CacheServiceImpl) GetDatasource(
+	ctx context.Context,
 	datasourceID int64,
 	user *models.SignedInUser,
 	skipCache bool,
@@ -46,7 +47,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
 
 	query := &models.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgId}
-	err := dc.SQLStore.GetDataSource(context.TODO(), query)
+	err := dc.SQLStore.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}

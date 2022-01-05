@@ -104,7 +104,7 @@ func TestLineNotifier(t *testing.T) {
 
 			body := ""
 			var headers map[string]string
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
+			bus.AddHandler("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
 				body = webhook.Body
 				headers = webhook.HttpHeader
 				return nil

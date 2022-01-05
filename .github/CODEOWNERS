@@ -64,6 +64,9 @@ go.sum @grafana/backend-platform
 /pkg/services/datasourceproxy @grafana/plugins-platform-backend
 /pkg/services/datasources @grafana/plugins-platform-backend
 
+# Dashboard previews / crawler (behind feature flag)
+/pkg/services/thumbs @grafana/grafana-edge-squad
+
 # Backend code docs
 /contribute/style-guides/backend.md @grafana/backend-platform
 /contribute/architecture/backend @grafana/backend-platform
