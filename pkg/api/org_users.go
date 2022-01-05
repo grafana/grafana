@@ -115,12 +115,7 @@ func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, resourc
 		return nil, err
 	}
 
-	metadata, err := accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "users", resourceIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	return metadata, err
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "users", resourceIDs)
 }
 
 // GET /api/orgs/:orgId/users
@@ -158,6 +153,8 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetO
 	accessControlMetadata, errAC := hs.getUserAccessControlMetadata(c, userIDs)
 	if errAC != nil {
 		hs.log.Error("Failed to get access control metadata", "error", errAC)
+
+		return filteredUsers, nil
 	}
 
 	for i := range filteredUsers {
