@@ -350,7 +350,7 @@
     "regenerator-runtime": "0.13.3",
     "reselect": "4.0.0",
     "rst2html": "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809",
-    "rxjs": "7.3.0",
+    "rxjs": "7.5.1",
     "sass": "link:./public/sass",
     "search-query-parser": "1.5.4",
     "selecto": "1.13.0",

@@ -83,7 +83,7 @@
     "react-transition-group": "4.4.1",
     "react-use": "17.3.2",
     "react-window": "1.8.5",
-    "rxjs": "7.3.0",
+    "rxjs": "7.5.1",
     "slate": "0.47.8",
     "slate-plain-serializer": "0.7.10",
     "tinycolor2": "1.4.1",

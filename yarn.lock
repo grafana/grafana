@@ -3469,7 +3469,7 @@ __metadata:
     rollup: 2.63.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
-    rxjs: 7.3.0
+    rxjs: 7.5.1
     sinon: 12.0.1
     tinycolor2: 1.4.1
     tslib: 2.3.1
@@ -3595,7 +3595,7 @@ __metadata:
     rollup: 2.63.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
-    rxjs: 7.3.0
+    rxjs: 7.5.1
     systemjs: 0.20.19
     tslib: 2.3.1
     typescript: 4.4.3
@@ -3875,7 +3875,7 @@ __metadata:
     rollup: 2.63.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
-    rxjs: 7.3.0
+    rxjs: 7.5.1
     sass-loader: 12.1.0
     slate: 0.47.8
     slate-plain-serializer: 0.7.10
@@ -19679,7 +19679,7 @@ __metadata:
     reselect: 4.0.0
     rimraf: 3.0.1
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
-    rxjs: 7.3.0
+    rxjs: 7.5.1
     sass: 1.32.13
     sass-loader: 12.3.0
     search-query-parser: 1.5.4
@@ -31191,12 +31191,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rxjs@npm:7.3.0":
-  version: 7.3.0
-  resolution: "rxjs@npm:7.3.0"
+"rxjs@npm:7.5.1":
+  version: 7.5.1
+  resolution: "rxjs@npm:7.5.1"
   dependencies:
-    tslib: ~2.1.0
-  checksum: e63adb8808ea6c299a020d56d2af92bcf71efe641adf838499932e29b8f5fd5ff00873653ad48ba3ecf6c9fc11c3c595acf995e8d456f9d8cb85c7d37a1fd72e
+    tslib: ^2.1.0
+  checksum: 78e3eecb1644dd83adabc8d956f879dca62eb19c8afcd6acac71cf6d94534c33ea201e65387494fdeb1332395cba081e194f5a9699d58a5d48e416b8b52372aa
   languageName: node
   linkType: hard
 
