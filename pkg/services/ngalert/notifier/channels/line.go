@@ -65,12 +65,12 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 
 	body := fmt.Sprintf(
 		"%s\n%s\n\n%s",
-		tmpl(`{{ template "default.title" . }}`),
+		tmpl(DefaultMessageTitleEmbed),
 		ruleURL,
 		tmpl(`{{ template "default.message" . }}`),
 	)
 	if tmplErr != nil {
-		ln.log.Debug("failed to template Line message", "err", tmplErr.Error())
+		ln.log.Warn("failed to template Line message", "err", tmplErr.Error())
 	}
 
 	form := url.Values{}
