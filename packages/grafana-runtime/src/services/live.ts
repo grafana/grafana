@@ -33,7 +33,7 @@ export interface StreamingFrameOptions {
   action: StreamingFrameAction; // default will append
 
   /** optionally format field names based on labels */
-  legendFormat?: string;
+  displayNameFormat?: string;
 }
 
 /**
