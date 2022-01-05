@@ -17,7 +17,7 @@ import (
 func GetAPIKeys(c *models.ReqContext) response.Response {
 	query := models.GetApiKeysQuery{OrgId: c.OrgId, IncludeExpired: c.QueryBool("includeExpired")}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to list api keys", err)
 	}
 
@@ -45,7 +45,7 @@ func DeleteAPIKey(c *models.ReqContext) response.Response {
 
 	cmd := &models.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
 
-	err := bus.DispatchCtx(c.Req.Context(), cmd)
+	err := bus.Dispatch(c.Req.Context(), cmd)
 	if err != nil {
 		var status int
 		if errors.Is(err, models.ErrApiKeyNotFound) {
@@ -94,7 +94,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 
 			//Check if user and service account are in the same org
 			query := models.GetUserByIdQuery{Id: cmd.ServiceAccountId}
-			err = bus.DispatchCtx(c.Req.Context(), &query)
+			err = bus.Dispatch(c.Req.Context(), &query)
 			if err != nil {
 				hs.log.Warn("Unable to link new API key to existing service account", "err", err, "query", query)
 				return response.Error(500, "Unable to link new API key to existing service account", err)
@@ -118,7 +118,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 
 	cmd.Key = newKeyInfo.HashedKey
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
 			return response.Error(400, err.Error(), nil)
 		}

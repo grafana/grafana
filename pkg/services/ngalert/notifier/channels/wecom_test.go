@@ -106,7 +106,7 @@ func TestWeComNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			body := ""
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
+			bus.AddHandler("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
 				body = webhook.Body
 				return nil
 			})
