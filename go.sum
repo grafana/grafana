@@ -2299,8 +2299,6 @@ github.com/tidwall/pretty v1.0.2 h1:Z7S3cePv9Jwm1KwS0513MRaoUe3S01WPbLNV40pwWZU=
 github.com/tidwall/pretty v1.0.2/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tidwall/tinylru v1.0.2/go.mod h1:HDVL7TsWeezQ4g44Um84TOVBMFcq7Xa9giqNc805KJ8=
 github.com/tidwall/wal v0.1.4/go.mod h1:ww7Pd44/KnyETODJPUPKrzLlYjI72GZWlucNKt7pOt0=
-github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff h1:QCdUBuN+iKWAB9HqPTkBwyKPPUHDobJ2AuELSNZwd4o=
-github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff/go.mod h1:m7kjsbCuO4QKP3KLfnxiUZWiOiFXmxj30HeexjL3lc0=
 github.com/tinylib/msgp v1.0.2/go.mod h1:+d+yLhGm8mzTaHzB+wgMYrodPfmZrzkirds8fDWklFE=
 github.com/tinylib/msgp v1.1.0/go.mod h1:+d+yLhGm8mzTaHzB+wgMYrodPfmZrzkirds8fDWklFE=
 github.com/tinylib/msgp v1.1.5/go.mod h1:eQsjooMTnV42mHu917E26IogZ2930nFyBQdofk10Udg=
@@ -2351,6 +2349,8 @@ github.com/valyala/fasthttp v1.6.0/go.mod h1:FstJa9V+Pj9vQ7OJie2qMHdwemEDaDiSdBn
 github.com/valyala/fasttemplate v1.0.1/go.mod h1:UQGH1tvbgY+Nz5t2n7tXsz52dQxojPUpymEIMZ47gx8=
 github.com/valyala/fasttemplate v1.2.1/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
 github.com/valyala/tcplisten v0.0.0-20161114210144-ceec8f93295a/go.mod h1:v3UYOV9WzVtRmSR+PDvWpU/qWl4Wa5LApYYX4ZtKbio=
+github.com/vectordotdev/go-datemath v0.1.1-0.20211214152759-c03a58217724 h1:v2/Zact72KD/a+HJNb0ES/8JV0Lhlp9PjPdZQGiaBoQ=
+github.com/vectordotdev/go-datemath v0.1.1-0.20211214152759-c03a58217724/go.mod h1:PnwzbSst7KD3vpBzzlntZU5gjVa455Uqa5QPiKSYJzQ=
 github.com/vektah/gqlparser v1.1.2/go.mod h1:1ycwN7Ij5njmMkPPAOaRFY4rET2Enx7IkVv3vaXspKw=
 github.com/vektra/mockery v0.0.0-20181123154057-e78b021dcbb5/go.mod h1:ppEjwdhyy7Y31EnHRDm1JkChoC7LXIJ7Ex0VYLWtZtQ=
 github.com/vishvananda/netlink v0.0.0-20171020171820-b2de5d10e38e/go.mod h1:+SR5DhBJrl6ZM7CoCKvpw5BKroDKQ+PJqOg65H/2ktk=

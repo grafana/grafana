@@ -87,7 +87,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("message_type", messageType)
 	bodyJSON.Set("entity_id", groupKey.Hash())
-	bodyJSON.Set("entity_display_name", tmpl(`{{ template "default.title" . }}`))
+	bodyJSON.Set("entity_display_name", tmpl(DefaultMessageTitleEmbed))
 	bodyJSON.Set("timestamp", time.Now().Unix())
 	bodyJSON.Set("state_message", tmpl(`{{ template "default.message" . }}`))
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
@@ -97,7 +97,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	u := tmpl(vn.URL)
 	if tmplErr != nil {
-		vn.log.Debug("failed to template VictorOps message", "err", tmplErr.Error())
+		vn.log.Warn("failed to template VictorOps message", "err", tmplErr.Error())
 	}
 
 	b, err := bodyJSON.MarshalJSON()

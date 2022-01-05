@@ -459,6 +459,10 @@ func (cfg Cfg) IsNewNavigationEnabled() bool {
 	return cfg.FeatureToggles["newNavigation"]
 }
 
+func (cfg Cfg) IsServiceAccountEnabled() bool {
+	return cfg.FeatureToggles["service-accounts"]
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string

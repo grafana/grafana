@@ -1,4 +1,4 @@
-package prometheus
+package middleware
 
 import (
 	"net/http"
@@ -19,7 +19,7 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("Without custom query parameters set should not apply middleware", func(t *testing.T) {
-		mw := customQueryParametersMiddleware(log.New("test"))
+		mw := CustomQueryParameters(log.New("test"))
 		rt := mw.CreateMiddleware(httpclient.Options{}, finalRoundTripper)
 		require.NotNil(t, rt)
 		middlewareName, ok := mw.(httpclient.MiddlewareName)
@@ -39,7 +39,7 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("Without custom query parameters set as string should not apply middleware", func(t *testing.T) {
-		mw := customQueryParametersMiddleware(log.New("test"))
+		mw := CustomQueryParameters(log.New("test"))
 		rt := mw.CreateMiddleware(httpclient.Options{
 			CustomOptions: map[string]interface{}{
 				customQueryParametersKey: 64,
@@ -63,7 +63,7 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("With custom query parameters set as empty string should not apply middleware", func(t *testing.T) {
-		mw := customQueryParametersMiddleware(log.New("test"))
+		mw := CustomQueryParameters(log.New("test"))
 		rt := mw.CreateMiddleware(httpclient.Options{
 			CustomOptions: map[string]interface{}{
 				customQueryParametersKey: "",
@@ -87,7 +87,7 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("With custom query parameters set as invalid query string should not apply middleware", func(t *testing.T) {
-		mw := customQueryParametersMiddleware(log.New("test"))
+		mw := CustomQueryParameters(log.New("test"))
 		rt := mw.CreateMiddleware(httpclient.Options{
 			CustomOptions: map[string]interface{}{
 				customQueryParametersKey: "custom=%%abc&test=abc",
@@ -111,7 +111,7 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("With custom query parameters set should apply middleware for request URL containing query parameters ", func(t *testing.T) {
-		mw := customQueryParametersMiddleware(log.New("test"))
+		mw := CustomQueryParameters(log.New("test"))
 		rt := mw.CreateMiddleware(httpclient.Options{
 			CustomOptions: map[string]interface{}{
 				grafanaDataKey: map[string]interface{}{
@@ -143,7 +143,7 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("With custom query parameters set should apply middleware for request URL not containing query parameters", func(t *testing.T) {
-		mw := customQueryParametersMiddleware(log.New("test"))
+		mw := CustomQueryParameters(log.New("test"))
 		rt := mw.CreateMiddleware(httpclient.Options{
 			CustomOptions: map[string]interface{}{
 				grafanaDataKey: map[string]interface{}{

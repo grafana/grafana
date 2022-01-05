@@ -86,7 +86,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	embed := simplejson.New()
-	embed.Set("title", tmpl(`{{ template "default.title" . }}`))
+	embed.Set("title", tmpl(DefaultMessageTitleEmbed))
 	embed.Set("footer", footer)
 	embed.Set("type", "rich")
 
@@ -100,7 +100,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	u := tmpl(d.WebhookURL)
 	if tmplErr != nil {
-		d.log.Debug("failed to template Discord message", "err", tmplErr.Error())
+		d.log.Warn("failed to template Discord message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyJSON)
