@@ -49,15 +49,10 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
   ) => {
     const theme = useTheme2();
     const styles = getStyles(theme, size, variant);
-    const tooltipString = React.isValidElement(tooltip) === true ? '' : (tooltip as string);
+    const tooltipString = typeof tooltip === 'string' ? tooltip : '';
 
     const button = (
-      <button
-        ref={ref}
-        aria-label={ariaLabel || tooltipString || ''}
-        {...restProps}
-        className={cx(styles.button, className)}
-      >
+      <button ref={ref} aria-label={ariaLabel || tooltipString} {...restProps} className={cx(styles.button, className)}>
         <Icon name={name} size={size} className={styles.icon} type={iconType} />
       </button>
     );
