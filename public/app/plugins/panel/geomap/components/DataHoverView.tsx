@@ -15,8 +15,8 @@ import { FeatureLike } from 'ol/Feature';
 export interface Props {
   data?: DataFrame; // source data
   feature?: FeatureLike;
-  rowIndex?: number; // the hover row
-  columnIndex?: number; // the hover column
+  rowIndex?: number | null; // the hover row
+  columnIndex?: number | null; // the hover column
 }
 
 export class DataHoverView extends PureComponent<Props> {

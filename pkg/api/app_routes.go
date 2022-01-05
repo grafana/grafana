@@ -34,7 +34,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
-	for _, plugin := range hs.pluginStore.Plugins(context.TODO(), plugins.App) {
+	for _, plugin := range hs.pluginStore.Plugins(context.Background(), plugins.App) {
 		for _, route := range plugin.Routes {
 			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.ID, route.Path)
 			handlers := make([]web.Handler, 0)

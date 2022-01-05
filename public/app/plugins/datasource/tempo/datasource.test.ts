@@ -16,6 +16,15 @@ import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './dat
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
+  it('returns empty response when traceId is empty', async () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const response = await lastValueFrom(
+      ds.query({ targets: [{ refId: 'refid1', queryType: 'traceId', query: '' } as Partial<TempoQuery>] } as any),
+      { defaultValue: 'empty' }
+    );
+    expect(response).toBe('empty');
+  });
+
   it('parses json fields from backend', async () => {
     setupBackendSrv(
       new MutableDataFrame({
@@ -34,7 +43,7 @@ describe('Tempo data source', () => {
       })
     );
     const ds = new TempoDatasource(defaultSettings);
-    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1' }] } as any));
+    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1', query: '12345' }] } as any));
 
     expect(
       (response.data[0] as DataFrame).fields.map((f) => ({

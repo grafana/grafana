@@ -58,7 +58,7 @@ var loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery) (bo
 		ExternalUser:  externalUser,
 		SignupAllowed: setting.LDAPAllowSignup,
 	}
-	err = bus.DispatchCtx(ctx, upsert)
+	err = bus.Dispatch(ctx, upsert)
 	if err != nil {
 		return true, err
 	}
@@ -74,7 +74,7 @@ func DisableExternalUser(ctx context.Context, username string) error {
 		LoginOrEmail: username,
 	}
 
-	if err := bus.DispatchCtx(ctx, userQuery); err != nil {
+	if err := bus.Dispatch(ctx, userQuery); err != nil {
 		return err
 	}
 
@@ -92,7 +92,7 @@ func DisableExternalUser(ctx context.Context, username string) error {
 			IsDisabled: true,
 		}
 
-		if err := bus.DispatchCtx(ctx, disableUserCmd); err != nil {
+		if err := bus.Dispatch(ctx, disableUserCmd); err != nil {
 			ldapLogger.Debug(
 				"Error disabling external user",
 				"user",

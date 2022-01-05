@@ -25,7 +25,7 @@ import {
 } from './reducers';
 import { debounce } from 'lodash';
 import { contextSrv } from 'app/core/core';
-
+import { addAccessControlQueryParam } from 'app/core/utils/accessControl';
 // UserAdminPage
 
 export function loadAdminUserPage(userId: number): ThunkResult<void> {
@@ -54,7 +54,7 @@ export function loadAdminUserPage(userId: number): ThunkResult<void> {
 
 export function loadUserProfile(userId: number): ThunkResult<void> {
   return async (dispatch) => {
-    const user = await getBackendSrv().get(`/api/users/${userId}`);
+    const user = await getBackendSrv().get(addAccessControlQueryParam(`/api/users/${userId}`));
     dispatch(userProfileLoadedAction(user));
   };
 }
