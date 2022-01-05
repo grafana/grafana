@@ -25,9 +25,9 @@ export class ServiceAccountsListPage extends PureComponent<Props, State> {
   }
 
   onRoleChange = (role: OrgRole, serviceAccount: OrgServiceAccount) => {
-    const updatedServiceaccount = { ...serviceAccount, role: role };
+    const updatedServiceAccount = { ...serviceAccount, role: role };
 
-    this.props.updateServiceAccount(updatedServiceaccount);
+    this.props.updateServiceAccount(updatedServiceAccount);
   };
 
   getPaginatedServiceAccounts = (serviceAccounts: OrgServiceAccount[]) => {
