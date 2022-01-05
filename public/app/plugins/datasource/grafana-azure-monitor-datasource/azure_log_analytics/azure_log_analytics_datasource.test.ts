@@ -6,6 +6,8 @@ import { AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '.
 import { toUtc } from '@grafana/data';
 import createMockQuery from '../__mocks__/query';
 import { singleVariable } from '../__mocks__/variables';
+import { describe, expect } from 'test/lib/common';
+import { ScopedVars } from '../../../../../../packages/grafana-data/src';
 
 const templateSrv = new TemplateSrv();
 
@@ -326,6 +328,109 @@ describe('AzureLogAnalyticsDatasource', () => {
       };
 
       expect(laDatasource.filterQuery(query)).toBeFalsy();
+    });
+  });
+
+  describe('When performing applyTemplateVariables', () => {
+    const ctx: any = {};
+    const scopedVars: ScopedVars = [
+      {
+        id: '$sub',
+        current: {
+          value: 'testSubID',
+        },
+        query: {
+          grafanaTemplateVariableFn: {
+            rawQuery: 'Subscriptions()',
+          },
+        },
+      },
+      {
+        id: '$rg',
+        current: {
+          value: 'testRG',
+        },
+        query: {
+          grafanaTemplateVariableFn: {
+            rawQuery: 'ResourceGroups($sub)',
+          },
+        },
+      },
+      {
+        id: '$ns',
+        current: {
+          value: 'Microsoft.Insights/testNS',
+        },
+        query: {
+          grafanaTemplateVariableFn: {
+            rawQuery: 'Namespaces($sub, $rg)',
+          },
+        },
+      },
+      {
+        id: '$res',
+        current: {
+          value: 'testRes',
+        },
+        query: {
+          grafanaTemplateVariableFn: {
+            rawQuery: 'ResourceNames($sub, $rg, $ns)',
+            resourceGroup: '$rg',
+            metricDefinition: '$ns',
+          },
+        },
+      },
+    ] as any;
+    let laDatasource: AzureLogAnalyticsDatasource;
+
+    beforeEach(() => {
+      ctx.instanceSettings = {
+        jsonData: { subscriptionId: 'xxx' },
+        url: 'http://azureloganalyticsapi',
+      };
+
+      laDatasource = new AzureLogAnalyticsDatasource(ctx.instanceSettings);
+    });
+    it('should replace path for subscription variable', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        azureLogAnalytics: {
+          resource: '$sub',
+          query: 'perf | take 100',
+        },
+      };
+
+      const parsedResponse = laDatasource.applyTemplateVariables(query, scopedVars, true, 'testSubID');
+      expect(parsedResponse?.azureLogAnalytics?.resource === '/susbcriptions/testSubID');
+    });
+
+    it('should replace path for resource group variable', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        azureLogAnalytics: {
+          resource: '$rg',
+          query: 'perf | take 100',
+        },
+      };
+
+      const parsedResponse = laDatasource.applyTemplateVariables(query, scopedVars, true, 'testRG');
+      expect(parsedResponse?.azureLogAnalytics?.resource === '/susbcriptions/testSubID/resourceGroups/testRG');
+    });
+
+    it('should replace path for resource variable', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        azureLogAnalytics: {
+          resource: '$res',
+          query: 'perf | take 100',
+        },
+      };
+
+      const parsedResponse = laDatasource.applyTemplateVariables(query, scopedVars, true);
+      expect(
+        parsedResponse?.azureLogAnalytics?.resource ===
+          '/susbcriptions/testSubID/resourceGroups/testRG/providers/Microsoft.Insights/testNS/testRes'
+      );
     });
   });
 });

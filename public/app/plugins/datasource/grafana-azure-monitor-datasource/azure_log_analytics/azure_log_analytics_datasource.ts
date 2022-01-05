@@ -108,19 +108,27 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return transformMetadataToKustoSchema(metadata, resourceUri);
   }
 
-  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
+  applyTemplateVariables(
+    target: AzureMonitorQuery,
+    scopedVars: ScopedVars,
+    testing?: boolean,
+    testResource?: string
+  ): AzureMonitorQuery {
     const item = target.azureLogAnalytics;
     if (!item) {
       return target;
     }
 
     const templateSrv = getTemplateSrv();
-    const allVars = templateSrv.getVariables();
-    let resource = templateSrv.replace(item.resource, scopedVars);
+    // casting scopedVars to any for testing purposes.
+    const allVars = testing ? (scopedVars as any) : templateSrv.getVariables();
+    let resource = testing ? testResource : templateSrv.replace(item.resource, scopedVars);
     let workspace = templateSrv.replace(item.workspace, scopedVars);
     let resPath = '';
 
     // Complete the path for the selected resource if necessary
+    // using the type any below because not all properties available during runtime are declared
+    // as avilable properties in the VariableModel object
     const resourceVar = allVars.find((var_: any) => var_.id === item.resource?.substring(1));
     const resourceVarRawQuery = (resourceVar as any)?.query?.grafanaTemplateVariableFn.rawQuery;
     var subscription = (allVars.find((var_: any) =>
