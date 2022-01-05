@@ -287,7 +287,7 @@ func createDummyACL(t *testing.T, sqlStore *SQLStore, dashboardPermission *Dashb
 		acl.Role = &dashboardPermission.Role
 	}
 
-	err := sqlStore.UpdateDashboardACL(dashboardID, []*models.DashboardAcl{acl})
+	err := sqlStore.UpdateDashboardACL(context.Background(), dashboardID, []*models.DashboardAcl{acl})
 	require.NoError(t, err)
 	if user != nil {
 		return user.Id

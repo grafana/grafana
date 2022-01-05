@@ -119,7 +119,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			"Content-Type": "application/x-www-form-urlencoded",
 		},
 	}
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		tn.log.Error("Failed to send threema notification", "error", err, "webhook", tn.Name)
 		return false, err
 	}

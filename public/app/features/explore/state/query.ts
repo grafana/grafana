@@ -7,6 +7,8 @@ import {
   DataQueryResponse,
   DataSourceApi,
   hasLogsVolumeSupport,
+  hasQueryExportSupport,
+  hasQueryImportSupport,
   HistoryItem,
   LoadingState,
   PanelData,
@@ -265,6 +267,9 @@ export const importQueries = (
     if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
       // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
       importedQueries = queries.map(({ datasource, ...query }) => query);
+    } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
+      const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
+      importedQueries = await targetDataSource.importFromAbstractQueries(abstractQueries);
     } else if (targetDataSource.importQueries) {
       // Datasource-specific importers
       importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);

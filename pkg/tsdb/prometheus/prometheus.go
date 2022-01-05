@@ -7,16 +7,17 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
@@ -26,12 +27,14 @@ var (
 	safeRes      = 11000
 )
 
+const pluginID = "prometheus"
+
 type Service struct {
 	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
 	plog.Debug("initializing")
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 
@@ -43,7 +46,8 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
-	if err := registrar.LoadAndRegister("prometheus", factory); err != nil {
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}
@@ -82,7 +86,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			}
 		}
 
-		client, err := createClient(settings.URL, httpCliOpts, httpClientProvider)
+		client, err := client.Create(settings.URL, httpCliOpts, httpClientProvider, jsonData, plog)
 		if err != nil {
 			return nil, err
 		}
@@ -118,28 +122,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	return result, err
-}
-
-func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider) (apiv1.API, error) {
-	customMiddlewares := customQueryParametersMiddleware(plog)
-	httpOpts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
-
-	roundTripper, err := clientProvider.GetTransport(httpOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := api.Config{
-		Address:      url,
-		RoundTripper: roundTripper,
-	}
-
-	client, err := api.NewClient(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return apiv1.NewAPI(client), nil
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*DatasourceInfo, error) {

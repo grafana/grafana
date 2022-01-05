@@ -53,7 +53,7 @@ func TestEmailNotifier(t *testing.T) {
 		require.NoError(t, err)
 
 		expected := map[string]interface{}{}
-		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SendEmailCommandSync) error {
+		bus.AddHandler("test", func(ctx context.Context, cmd *models.SendEmailCommandSync) error {
 			expected["subject"] = cmd.SendEmailCommand.Subject
 			expected["to"] = cmd.SendEmailCommand.To
 			expected["single_email"] = cmd.SendEmailCommand.SingleEmail

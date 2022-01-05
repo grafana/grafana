@@ -107,7 +107,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 			tags := make([]string, 0)
 			details := make(map[string]interface{})
-			bus.AddHandlerCtx("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
+			bus.AddHandler("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
 				bodyJSON, err := simplejson.NewJson([]byte(cmd.Body))
 				if err == nil {
 					tags = bodyJSON.Get("tags").MustStringArray([]string{})
@@ -157,7 +157,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 			tags := make([]string, 0)
 			details := make(map[string]interface{})
-			bus.AddHandlerCtx("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
+			bus.AddHandler("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
 				bodyJSON, err := simplejson.NewJson([]byte(cmd.Body))
 				if err == nil {
 					tags = bodyJSON.Get("tags").MustStringArray([]string{})
@@ -207,7 +207,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 			tags := make([]string, 0)
 			details := make(map[string]interface{})
-			bus.AddHandlerCtx("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
+			bus.AddHandler("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
 				bodyJSON, err := simplejson.NewJson([]byte(cmd.Body))
 				if err == nil {
 					tags = bodyJSON.Get("tags").MustStringArray([]string{})

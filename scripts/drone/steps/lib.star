@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = '2.7.5'
+grabpl_version = '2.7.8'
 build_image = 'grafana/build-container:1.4.8'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -251,7 +251,7 @@ def build_storybook_step(edition, ver_mode):
     }
 
 
-def publish_storybook_step(edition, ver_mode):
+def store_storybook_step(edition, ver_mode):
     if edition in ('enterprise', 'enterprise2'):
         return None
 
@@ -275,7 +275,7 @@ def publish_storybook_step(edition, ver_mode):
                         ])
 
     return {
-        'name': 'publish-storybook',
+        'name': 'store-storybook',
         'image': publish_image,
         'depends_on': [
             'build-storybook',
@@ -291,12 +291,44 @@ def publish_storybook_step(edition, ver_mode):
         'commands': commands,
     }
 
+def e2e_tests_artifacts(edition):
+    return {
+        'name': 'e2e_tests_artifacts_upload' + enterprise2_suffix(edition),
+        'image': 'google/cloud-sdk:367.0.0',
+        'depends_on': [
+            'end-to-end-tests-dashboards-suite',
+            'end-to-end-tests-panels-suite',
+            'end-to-end-tests-smoke-tests-suite',
+            'end-to-end-tests-various-suite',
+        ],
+        'environment': {
+            'GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY': from_secret('gcp_upload_artifacts_key'),
+            'E2E_TEST_ARTIFACTS_BUCKET': 'releng-pipeline-artifacts-dev',
+            'GITHUB_TOKEN': from_secret('github_token'),
+        },
+        'commands': [
+            'apt-get update',
+            'apt-get install -yq zip',
+            'ls -lah ./e2e',
+            'find ./e2e -type f -name "*.mp4"',
+            'printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json',
+            'gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json',
+            # we want to only include files in e2e folder that end with .spec.ts.mp4
+            'find ./e2e -type f -name "*spec.ts.mp4" | zip e2e/videos.zip -@',
+            'gsutil cp e2e/videos.zip gs://$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip',
+            'export E2E_ARTIFACTS_VIDEO_ZIP=https://storage.googleapis.com/$${E2E_TEST_ARTIFACTS_BUCKET}/${DRONE_BUILD_NUMBER}/artifacts/videos/videos.zip',
+            'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"',
+            'curl -X POST https://api.github.com/repos/${DRONE_REPO}/statuses/${DRONE_COMMIT_SHA} -H "Authorization: token $${GITHUB_TOKEN}" -d ' +
+            '"{\\"state\\":\\"success\\",\\"target_url\\":\\"$${E2E_ARTIFACTS_VIDEO_ZIP}\\", \\"description\\": \\"Click on the details to download e2e recording videos\\", \\"context\\": \\"e2e_artifacts\\"}"',
+        ],
+    }
+
 
 def upload_cdn_step(edition, ver_mode):
-    if ver_mode == "main":
-        bucket = "grafana-static-assets"
-    else:
+    if ver_mode == "release":
         bucket = "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+    else:
+        bucket = "grafana-static-assets"
 
     deps = []
     if edition in 'enterprise2':
@@ -496,6 +528,7 @@ def lint_frontend_step():
         'commands': [
             'yarn run prettier:check',
             'yarn run lint',
+            'yarn run i18n:compile', # TODO: right place for this?
             'yarn run typecheck',
         ],
     }
@@ -674,40 +707,21 @@ def e2e_tests_server_step(edition, port=3001):
         ],
     }
 
-def install_cypress_step():
-    return {
-        'name': 'cypress',
-        'image': 'grafana/ci-e2e:12.19.0-1',
-        'depends_on': [
-            'package',
-            ],
-        'commands': [
-            'yarn run cypress install',
-        ],
-        'volumes': [{
-            'name': 'cypress_cache',
-            'path': '/root/.cache/Cypress'
-        }],
-    }
-
 def e2e_tests_step(suite, edition, port=3001, tries=None):
     cmd = './bin/grabpl e2e-tests --port {} --suite {}'.format(port, suite)
     if tries:
         cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
-        'image': 'grafana/ci-e2e:12.19.0-1',
+        'image': 'cypress/included:9.2.0',
         'depends_on': [
-            'cypress',
+            'package',
         ],
         'environment': {
             'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
         },
-        'volumes': [{
-            'name': 'cypress_cache',
-            'path': '/root/.cache/Cypress'
-        }],
         'commands': [
+            'apt-get install -y netcat',
             cmd,
         ],
     }
@@ -930,11 +944,13 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'test-release':
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
               '--packages-bucket grafana-downloads-test'
-    elif ver_mode == 'main':
-        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
+    elif ver_mode == 'release':
+        packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}/${{DRONE_TAG}}'.format(enterprise2_suffix(edition))
+        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
+    elif edition == 'enterprise2':
+        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads-enterprise2'.format(edition)
     else:
-        packages_bucket = ' --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads' + enterprise2_suffix(edition)
-        cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
+        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
 
     deps = []
     if edition in 'enterprise2':
@@ -965,15 +981,15 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     }
 
 
-def publish_packages_step(edition, ver_mode, is_downstream=False):
+def store_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'test-release':
-        cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json '.format(edition) + \
+        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json '.format(edition) + \
               '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
               'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release {}'.format(
                   test_release_ver,
               )
     elif ver_mode == 'release':
-        cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
+        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,
         )
     elif ver_mode == 'main':
@@ -981,14 +997,14 @@ def publish_packages_step(edition, ver_mode, is_downstream=False):
             build_no = '${DRONE_BUILD_NUMBER}'
         else:
             build_no = '$${SOURCE_BUILD_NUMBER}'
-        cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
             edition, build_no,
         )
     else:
         fail('Unexpected version mode {}'.format(ver_mode))
 
     return {
-        'name': 'publish-packages-{}'.format(edition),
+        'name': 'store-packages-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
             'initialize',

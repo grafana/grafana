@@ -13,7 +13,7 @@ import (
 func ValidateOrgPlaylist(c *models.ReqContext) {
 	id := c.ParamsInt64(":id")
 	query := models.GetPlaylistByIdQuery{Id: id}
-	err := bus.DispatchCtx(c.Req.Context(), &query)
+	err := bus.Dispatch(c.Req.Context(), &query)
 
 	if err != nil {
 		c.JsonApiErr(404, "Playlist not found", err)
@@ -45,7 +45,7 @@ func SearchPlaylists(c *models.ReqContext) response.Response {
 		OrgId: c.OrgId,
 	}
 
-	err := bus.DispatchCtx(c.Req.Context(), &searchQuery)
+	err := bus.Dispatch(c.Req.Context(), &searchQuery)
 	if err != nil {
 		return response.Error(500, "Search failed", err)
 	}
@@ -57,7 +57,7 @@ func GetPlaylist(c *models.ReqContext) response.Response {
 	id := c.ParamsInt64(":id")
 	cmd := models.GetPlaylistByIdQuery{Id: id}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Playlist not found", err)
 	}
 
@@ -99,7 +99,7 @@ func LoadPlaylistItemDTOs(ctx context.Context, id int64) ([]models.PlaylistItemD
 
 func LoadPlaylistItems(ctx context.Context, id int64) ([]models.PlaylistItem, error) {
 	itemQuery := models.GetPlaylistItemsByIdQuery{PlaylistId: id}
-	if err := bus.DispatchCtx(ctx, &itemQuery); err != nil {
+	if err := bus.Dispatch(ctx, &itemQuery); err != nil {
 		return nil, err
 	}
 
@@ -133,7 +133,7 @@ func DeletePlaylist(c *models.ReqContext) response.Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := models.DeletePlaylistCommand{Id: id, OrgId: c.OrgId}
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to delete playlist", err)
 	}
 
@@ -147,7 +147,7 @@ func CreatePlaylist(c *models.ReqContext) response.Response {
 	}
 	cmd.OrgId = c.OrgId
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to create playlist", err)
 	}
 
@@ -162,7 +162,7 @@ func UpdatePlaylist(c *models.ReqContext) response.Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to save playlist", err)
 	}
 

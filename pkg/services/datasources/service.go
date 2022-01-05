@@ -62,13 +62,13 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 		},
 	}
 
-	s.Bus.AddHandlerCtx(s.GetDataSources)
-	s.Bus.AddHandlerCtx(s.GetDataSourcesByType)
-	s.Bus.AddHandlerCtx(s.GetDataSource)
-	s.Bus.AddHandlerCtx(s.AddDataSource)
-	s.Bus.AddHandlerCtx(s.DeleteDataSource)
-	s.Bus.AddHandlerCtx(s.UpdateDataSource)
-	s.Bus.AddHandlerCtx(s.GetDefaultDataSource)
+	s.Bus.AddHandler(s.GetDataSources)
+	s.Bus.AddHandler(s.GetDataSourcesByType)
+	s.Bus.AddHandler(s.GetDataSource)
+	s.Bus.AddHandler(s.AddDataSource)
+	s.Bus.AddHandler(s.DeleteDataSource)
+	s.Bus.AddHandler(s.UpdateDataSource)
+	s.Bus.AddHandler(s.GetDefaultDataSource)
 
 	return s
 }

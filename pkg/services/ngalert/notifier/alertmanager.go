@@ -127,7 +127,7 @@ type Alertmanager struct {
 	decryptFn channels.GetDecryptedValueFn
 }
 
-func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
+func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
 	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:          cfg,
@@ -144,14 +144,14 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		decryptFn:         decryptFn,
 	}
 
-	am.gokitLogger = gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger))
+	am.gokitLogger = logging.NewWrapper(am.logger)
 	am.fileStore = NewFileStore(am.orgID, kvStore, am.WorkingDirPath())
 
-	nflogFilepath, err := am.fileStore.FilepathFor(context.TODO(), notificationLogFilename)
+	nflogFilepath, err := am.fileStore.FilepathFor(ctx, notificationLogFilename)
 	if err != nil {
 		return nil, err
 	}
-	silencesFilePath, err := am.fileStore.FilepathFor(context.TODO(), silencesFilename)
+	silencesFilePath, err := am.fileStore.FilepathFor(ctx, silencesFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		nflog.WithRetention(retentionNotificationsAndSilences),
 		nflog.WithSnapshot(nflogFilepath),
 		nflog.WithMaintenance(maintenanceNotificationAndSilences, am.stopc, am.wg.Done, func() (int64, error) {
-			return am.fileStore.Persist(context.TODO(), notificationLogFilename, am.notificationLog)
+			return am.fileStore.Persist(ctx, notificationLogFilename, am.notificationLog)
 		}),
 	)
 	if err != nil {
@@ -187,7 +187,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	am.wg.Add(1)
 	go func() {
 		am.silences.Maintenance(15*time.Minute, silencesFilePath, am.stopc, func() (int64, error) {
-			return am.fileStore.Persist(context.TODO(), silencesFilename, am.silences)
+			return am.fileStore.Persist(ctx, silencesFilename, am.silences)
 		})
 		am.wg.Done()
 	}()
@@ -519,6 +519,8 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 		n, err = channels.NewKafkaNotifier(cfg, tmpl)
 	case "webhook":
 		n, err = channels.NewWebHookNotifier(cfg, tmpl, am.decryptFn)
+	case "wecom":
+		n, err = channels.NewWeComNotifier(cfg, tmpl, am.decryptFn)
 	case "sensugo":
 		n, err = channels.NewSensuGoNotifier(cfg, tmpl, am.decryptFn)
 	case "discord":
