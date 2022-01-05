@@ -348,7 +348,7 @@ func TestLoginPostRedirect(t *testing.T) {
 		return hs.LoginPost(c)
 	})
 
-	bus.AddHandlerCtx("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
+	bus.AddHandler("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
 		query.User = &models.User{
 			Id:    42,
 			Email: "",
@@ -685,7 +685,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 
 	for _, c := range testCases {
 		t.Run(c.desc, func(t *testing.T) {
-			bus.AddHandlerCtx("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
+			bus.AddHandler("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
 				query.User = c.authUser
 				query.AuthModule = c.authModule
 				return c.authErr

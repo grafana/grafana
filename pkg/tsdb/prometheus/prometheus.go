@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
@@ -86,7 +86,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			}
 		}
 
-		client, err := createClient(settings.URL, httpCliOpts, httpClientProvider)
+		client, err := client.Create(settings.URL, httpCliOpts, httpClientProvider, jsonData, plog)
 		if err != nil {
 			return nil, err
 		}
@@ -122,28 +122,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	return result, err
-}
-
-func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider) (apiv1.API, error) {
-	customMiddlewares := customQueryParametersMiddleware(plog)
-	httpOpts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
-
-	roundTripper, err := clientProvider.GetTransport(httpOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := api.Config{
-		Address:      url,
-		RoundTripper: roundTripper,
-	}
-
-	client, err := api.NewClient(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return apiv1.NewAPI(client), nil
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*DatasourceInfo, error) {

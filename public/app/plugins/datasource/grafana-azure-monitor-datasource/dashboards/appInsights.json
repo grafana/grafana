@@ -18,6 +18,7 @@
       }
     ]
   },
+  "description": "The dashboard provides insights of Azure Apps via different metrics for app monitoring through Application Insights.",
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
@@ -208,42 +209,8 @@
       "pluginVersion": "8.1.2",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
-          "azureMonitor": {
-            "aggOptions": [],
-            "aggregation": "Count",
-            "alias": "Servers",
-            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "microsoft.insights/components",
-            "metricName": "requests/count",
-            "metricNamespace": "microsoft.insights/components",
-            "resourceGroup": "$rg",
-            "resourceName": "$res",
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "50"
-          },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
-          },
-          "queryType": "Azure Monitor",
-          "refId": "A",
-          "subscription": "$sub",
-          "subscriptions": []
+          "queryType": "randomWalk",
+          "refId": "A"
         }
       ],
       "type": "text"
@@ -342,7 +309,7 @@
                   {
                     "targetBlank": true,
                     "title": "",
-                    "url": "https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/segmentationUsers"
+                    "url": "https://ms.portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D/Chart/%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22requests%2Fcount%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Server%20requests%22%7D%2C%22aggregationType%22%3A7%2C%22thresholds%22%3A%5B%5D%7D%5D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%5D%7D%2C%22grouping%22%3Anull%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22legendVisualization%22%3A%7B%22isVisible%22%3Atrue%2C%22position%22%3A2%2C%22hideSubtitle%22%3Afalse%7D%2C%22axisVisualization%22%3A%7B%22x%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A2%7D%2C%22y%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A1%7D%7D%2C%22disablePinning%22%3Atrue%7D%2C%22title%22%3A%22Count%20Server%20requests%20for%20${res}%22%2C%22titleKind%22%3A1%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22showUTCTime%22%3Afalse%2C%22grain%22%3A1%7D%2C%22ariaLabel%22%3Anull%7D/openInEditMode/true"
                   }
                 ]
               }
@@ -705,8 +672,8 @@
       "links": [
         {
           "targetBlank": true,
-          "title": "${res} | Users",
-          "url": "https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/segmentationUsers"
+          "title": "${res} | Server Requests",
+          "url": "https://ms.portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D/Chart/%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%7D%2C%22name%22%3A%22requests%2Fcount%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Server%20requests%22%7D%2C%22aggregationType%22%3A7%2C%22thresholds%22%3A%5B%5D%7D%5D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%5D%7D%2C%22grouping%22%3Anull%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22legendVisualization%22%3A%7B%22isVisible%22%3Atrue%2C%22position%22%3A2%2C%22hideSubtitle%22%3Afalse%7D%2C%22axisVisualization%22%3A%7B%22x%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A2%7D%2C%22y%22%3A%7B%22isVisible%22%3Atrue%2C%22axisType%22%3A1%7D%7D%2C%22disablePinning%22%3Atrue%7D%2C%22title%22%3A%22Count%20Server%20requests%20for%20${res}%22%2C%22titleKind%22%3A1%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22showUTCTime%22%3Afalse%2C%22grain%22%3A1%7D%2C%22ariaLabel%22%3Anull%7D/openInEditMode/true"
         }
       ],
       "maxDataPoints": 150,

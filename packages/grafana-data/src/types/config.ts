@@ -53,6 +53,7 @@ export interface FeatureToggles {
   newNavigation: boolean;
   fullRangeLogsVolume: boolean;
   queryOverLive: boolean;
+  dashboardPreviews: boolean;
 }
 
 /**

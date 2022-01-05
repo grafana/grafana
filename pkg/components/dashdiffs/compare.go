@@ -65,7 +65,7 @@ func CalculateDiff(ctx context.Context, options *Options) (*Result, error) {
 		OrgId:       options.OrgId,
 	}
 
-	if err := bus.DispatchCtx(ctx, &baseVersionQuery); err != nil {
+	if err := bus.Dispatch(ctx, &baseVersionQuery); err != nil {
 		return nil, err
 	}
 
@@ -75,7 +75,7 @@ func CalculateDiff(ctx context.Context, options *Options) (*Result, error) {
 		OrgId:       options.OrgId,
 	}
 
-	if err := bus.DispatchCtx(ctx, &newVersionQuery); err != nil {
+	if err := bus.Dispatch(ctx, &newVersionQuery); err != nil {
 		return nil, err
 	}
 
