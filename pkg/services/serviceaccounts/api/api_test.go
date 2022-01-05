@@ -97,7 +97,7 @@ func serviceAccountDeletionScenario(t *testing.T, httpMethod string, endpoint st
 func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock, routerRegister routing.RouteRegister, acmock *accesscontrolmock.Mock) *web.Mux {
 	store := sqlstore.InitTestDB(t)
 	a := NewServiceAccountsAPI(svc, acmock, routerRegister, database.NewServiceAccountsStore(store))
-	a.RegisterAPIEndpoints(&setting.Cfg{FeatureToggles: map[string]bool{"service-accounts": true}})
+	a.RegisterAPIEndpoints(&setting.Cfg{Features: setting.NewFeatureToggles(map[string]bool{"service-accounts": true})})
 
 	m := web.New()
 	signedUser := &models.SignedInUser{

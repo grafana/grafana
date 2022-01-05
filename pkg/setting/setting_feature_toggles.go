@@ -145,11 +145,11 @@ func loadFeatureTogglesFromConfiguration(opts featureFlagOptions) (*FeatureToggl
 
 func initFeatureToggleRegistry(opts []FeatureToggleInfo) map[string]*FeatureToggleInfo {
 	featureToggles := make(map[string]*FeatureToggleInfo, len(opts)+5)
-	for _, info := range opts {
-		featureToggles[info.Id] = &info
+	for idx, info := range opts {
+		featureToggles[info.Id] = &opts[idx]
 		if info.AliasIds != nil {
 			for _, alias := range info.AliasIds {
-				featureToggles[alias] = &info
+				featureToggles[alias] = featureToggles[info.Id]
 			}
 		}
 	}
