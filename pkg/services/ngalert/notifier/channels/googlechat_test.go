@@ -152,6 +152,114 @@ func TestGoogleChatNotifier(t *testing.T) {
 			name:         "Error in initing",
 			settings:     `{}`,
 			expInitError: `failed to validate receiver "googlechat_testing" of type "googlechat": could not find url property in settings`,
+		}, {
+			name:     "Customized message",
+			settings: `{"url": "http://localhost", "message": "I'm a custom template and you have {{ len .Alerts.Firing }} firing alert."}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &outerStruct{
+				PreviewText:  "[FIRING:1]  (val1)",
+				FallbackText: "[FIRING:1]  (val1)",
+				Cards: []card{
+					{
+						Header: header{
+							Title: "[FIRING:1]  (val1)",
+						},
+						Sections: []section{
+							{
+								Widgets: []widget{
+									textParagraphWidget{
+										Text: text{
+											Text: "I'm a custom template and you have 1 firing alert.",
+										},
+									},
+									buttonWidget{
+										Buttons: []button{
+											{
+												TextButton: textButton{
+													Text: "OPEN IN GRAFANA",
+													OnClick: onClick{
+														OpenLink: openLink{
+															URL: "http://localhost/alerting/list",
+														},
+													},
+												},
+											},
+										},
+									},
+									textParagraphWidget{
+										Text: text{
+											// RFC822 only has the minute, hence it works in most cases.
+											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expMsgError: nil,
+		}, {
+			name:     "Invalid template",
+			settings: `{"url": "http://localhost", "message": "I'm a custom template {{ .NotAField }} bad template"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &outerStruct{
+				PreviewText:  "[FIRING:1]  (val1)",
+				FallbackText: "[FIRING:1]  (val1)",
+				Cards: []card{
+					{
+						Header: header{
+							Title: "[FIRING:1]  (val1)",
+						},
+						Sections: []section{
+							{
+								Widgets: []widget{
+									textParagraphWidget{
+										Text: text{
+											Text: "I'm a custom template ",
+										},
+									},
+									buttonWidget{
+										Buttons: []button{
+											{
+												TextButton: textButton{
+													Text: "OPEN IN GRAFANA",
+													OnClick: onClick{
+														OpenLink: openLink{
+															URL: "http://localhost/alerting/list",
+														},
+													},
+												},
+											},
+										},
+									},
+									textParagraphWidget{
+										Text: text{
+											// RFC822 only has the minute, hence it works in most cases.
+											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expMsgError: nil,
 		},
 	}
 
