@@ -7,15 +7,15 @@ weight = 450
 
 # Mute timings
 
-A mute timing is a named recurring interval of time to mute notifications for a notification policy. This is useful for preventing alert notifications from a notification policy for a period of time that reoccurs, such as a regular maintenance period. If an alert is triggered and it matches the interval then a notification will not be sent for that policy.
+A mute timing is a  recurring interval of time when no new notifications for a policy are generated or sent. are sent for a policy. Use them to prevent alerts from firing a specific and reoccurring period, for example, a regular maintenance period. 
 
-As with silences, mute timings do not prevent alert rules from being evaluated. They also do not stop alert instances being shown in the user interface. Mute timings only prevent notifications from being created.
+Similar to silences, mute timings do not prevent alert rules from being evaluated, nor do they stop alert instances from being shown in the user interface. They only prevent notifications from being created.
 
 You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./fundamentals/alertmanager.md" >}}).
 
 ## Mute timings vs silences
 
-While similar in effect there are a few key differences between mute timings and silences.
+The following table highlights the key differences between mute timings and silences.
 
 | Mute timing                                        | Silence                                                                      |
 | -------------------------------------------------- | ---------------------------------------------------------------------------- |
@@ -33,7 +33,6 @@ While similar in effect there are a few key differences between mute timings and
 
 ## Add mute timing to a notification policy
 
-After a mute timing is created, you need to select the notification policies to add it to.
 
 1. Identify the notification policy you would like to add the mute timing to and click the **Edit** button for that policy.
 1. From the Mute Timings dropdown select the mute timings you would like to add to the route.
@@ -41,19 +40,22 @@ After a mute timing is created, you need to select the notification policies to 
 
 ## Time intervals
 
-A time interval is a definition for a moment in time. If an alert fires during this interval it will be suppressed. All fields are lists, and at least one list element must be satisfied to match the field. Fields also support ranges using `:` (ex: `monday:thursday`). The fields available for a time interval are:
+A time interval is a definition for a moment in time. If an alert fires during this interval it will be suppressed. All fields are lists, and at least one list element must be satisfied to match the field. Fields also support ranges using `:` (ex: `monday:thursday`). The fields available for a time interval are: mute timing can contain multiple time intervals. A time interval is a specific duration when alerts are suppressed from firing. The duration typically consists of a specific time range along with days of a week, month, or year. 
 
-- Time range: The time inclusive of the starting time and exclusive of the end time in UTC
-- Days of the week: The day or range of days of the week. Example: `monday:thursday`
-- Days of the month: The date 1-31 of a month. Negative values can also be used to represent days which begin at the end of the month. Example: `-1` for the last day of the month.
-- Months: The months of the year in either numerical or the full calendar month. Example: `1, may:august`
-- Years: The year or years for the interval. Example: `2021:2024`
+	All properties for the time interval are lists, and at least one list element must be satisfied to match the field. The fields support ranges using `:` (ex: `monday:thursday`). If you leave a field blank, it will match with any moment of time. 
+
+Supported time interval options are:
+
+- Time range: The time inclusive of the starting time and exclusive of the end time in UTC.
+		- Days of the week: The day or range of days of the week. Example: `monday:thursday`.
+		- Days of the month: The date 1-31 of a month. Negative values can also be used to represent days that begin at the end of the month. For example: `-1` for the last day of the month.
+		- Months: The months of the year in either numerical or the full calendar month. For example: `1, may:august`.
+		- Years: The year or years for the interval. For example: `2021:2024`.
 
 If a field is left blank, any moment of time will match the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.
 
-## Example
-
-If you wanted to create a time interval for the first Monday of the month, for the months of March, June, September, and December, between the hours of 12:00 and 24:00 UTC your time interval would be:
+If you want to specify an exact duration, specify all the options. For example, if you wanted to create a time interval for the first Monday of the month, for March, June, September, and December, between the hours of 12:00 and 24:00 UTC your time interval specification would be:
+		
 
 - Time range:
   - Start time: `12:00`
