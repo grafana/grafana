@@ -115,7 +115,7 @@ func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, resourc
 		return nil, err
 	}
 
-	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "users", resourceIDs)
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "users", resourceIDs), nil
 }
 
 // GET /api/orgs/:orgId/users
