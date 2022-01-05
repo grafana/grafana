@@ -3,6 +3,7 @@ package setting
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -49,13 +50,36 @@ type FeatureToggleInfo struct {
 
 type FeatureToggles struct {
 	flags    map[string]bool
+	enabled  map[string]bool // only the "on" values
 	info     []FeatureToggleInfo
 	messages []string
 }
 
-func NewFeatureToggles(flags map[string]bool) FeatureToggles {
+// WithFeatureToggles is used for testing
+func WithFeatureToggles(spec ...interface{}) FeatureToggles {
+	count := len(spec)
+	flags := make(map[string]bool, count)
+	enabled := make(map[string]bool, count)
+
+	idx := 0
+	for idx < count {
+		key := fmt.Sprintf("%v", spec[idx])
+		val := true
+		idx++
+		if idx < count && reflect.TypeOf(spec[idx]).Kind() == reflect.Bool {
+			val = spec[idx].(bool)
+			idx++
+		}
+
+		flags[key] = val
+		if val {
+			enabled[key] = true
+		}
+	}
+
 	return FeatureToggles{
-		flags: flags,
+		flags:   flags,
+		enabled: enabled,
 	}
 }
 

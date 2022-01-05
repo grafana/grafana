@@ -24,9 +24,10 @@ func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 		secret_key = ` + defaultKey))
 	require.NoError(tb, err)
 	cfg := &setting.Cfg{Raw: raw}
-	cfg.Features = setting.NewFeatureToggles(map[string]bool{secrets.EnvelopeEncryptionFeatureToggle: true})
+	cfg.Features = setting.WithFeatureToggles("envelopeEncryption")
 	settings := &setting.OSSImpl{Cfg: cfg}
-	assert.True(tb, settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle))
+	assert.True(tb, settings.IsFeatureToggleEnabled("envelopeEncryption"))
+	assert.True(tb, cfg.Features.IsSecretsEnvelopeEncryptionEnabled())
 
 	encryption := ossencryption.ProvideService()
 	secretsService, err := ProvideSecretsService(

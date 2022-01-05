@@ -14,6 +14,7 @@ export interface FeatureToggles {
 
   recordedQueries?: boolean;
   trimDefaults?: boolean;
+  envelopeEncryption?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
   ['live-config']?: boolean;

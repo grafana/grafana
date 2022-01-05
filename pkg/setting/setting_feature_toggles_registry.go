@@ -1,5 +1,7 @@
 package setting
 
+import "github.com/grafana/grafana/pkg/services/secrets"
+
 const (
 	featureToggle_recordedQueries               string = "recordedQueries"
 	featureToggle_accesscontrol                 string = "accesscontrol"
@@ -12,6 +14,7 @@ const (
 	featureToggle_database_metrics               string = "database_metrics"
 	featureToggle_disable_http_request_histogram string = "disable_http_request_histogram"
 	featureToggle_newNavigation                  string = "newNavigation"
+	featureToggle_secrets_envelopeEncryption     string = secrets.EnvelopeEncryptionFeatureToggle
 
 	featureToggle_live_config             string = "live-config"
 	featureToggle_live_pipeline           string = "live-pipeline"
@@ -37,6 +40,12 @@ var (
 			Id:          featureToggle_trimDefaults,
 			Name:        "Trim dashboard defaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
+			State:       BetaState,
+		},
+		{
+			Id:          featureToggle_secrets_envelopeEncryption,
+			Name:        "Secrets envelope encryption",
+			Description: "encrypt secrets",
 			State:       BetaState,
 		},
 		{
@@ -159,4 +168,8 @@ func (ft *FeatureToggles) IsAccessControlEnabled() bool {
 
 func (ft *FeatureToggles) IsAzureAuthHttpProviderEnabled() bool {
 	return ft.flags[featureToggle_httpclientprovider_azure_auth]
+}
+
+func (ft *FeatureToggles) IsSecretsEnvelopeEncryptionEnabled() bool {
+	return ft.flags[featureToggle_secrets_envelopeEncryption]
 }

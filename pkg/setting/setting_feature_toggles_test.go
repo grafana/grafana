@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 )
@@ -116,6 +117,19 @@ func TestFeatureToggles(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestFeatureToggleSetup(t *testing.T) {
+	ft := WithFeatureToggles("a", "b", "c")
+	assert.True(t, ft.IsEnabled("a"))
+	assert.True(t, ft.IsEnabled("b"))
+	assert.True(t, ft.IsEnabled("c"))
+	assert.False(t, ft.IsEnabled("d"))
+
+	// Explict values
+	ft = WithFeatureToggles("a", true, "b", false)
+	assert.True(t, ft.IsEnabled("a"))
+	assert.False(t, ft.IsEnabled("b"))
 }
 
 func TestFeatureToggleTypeScript(t *testing.T) {
