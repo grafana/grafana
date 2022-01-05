@@ -1,39 +1,39 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { OrgServiceaccount, ServiceaccountsState } from 'app/types';
+import { OrgServiceAccount, ServiceAccountsState } from 'app/types';
 
-export const initialState: ServiceaccountsState = {
-  serviceaccounts: [] as OrgServiceaccount[],
+export const initialState: ServiceAccountsState = {
+  serviceAccounts: [] as OrgServiceAccount[],
   searchQuery: '',
   searchPage: 1,
-  hasFetched: false,
+  isLoading: true,
 };
 
-const serviceaccountsSlice = createSlice({
+const serviceAccountsSlice = createSlice({
   name: 'serviceaccounts',
   initialState,
   reducers: {
-    serviceaccountsLoaded: (state, action: PayloadAction<OrgServiceaccount[]>): ServiceaccountsState => {
-      return { ...state, hasFetched: true, serviceaccounts: action.payload };
+    serviceAccountsLoaded: (state, action: PayloadAction<OrgServiceAccount[]>): ServiceAccountsState => {
+      return { ...state, isLoading: true, serviceAccounts: action.payload };
     },
-    setserviceaccountsSearchQuery: (state, action: PayloadAction<string>): ServiceaccountsState => {
+    setServiceAccountsSearchQuery: (state, action: PayloadAction<string>): ServiceAccountsState => {
       // reset searchPage otherwise search results won't appear
       return { ...state, searchQuery: action.payload, searchPage: initialState.searchPage };
     },
-    setserviceaccountsSearchPage: (state, action: PayloadAction<number>): ServiceaccountsState => {
+    setServiceAccountsSearchPage: (state, action: PayloadAction<number>): ServiceAccountsState => {
       return { ...state, searchPage: action.payload };
     },
   },
 });
 
 export const {
-  setserviceaccountsSearchQuery,
-  setserviceaccountsSearchPage,
-  serviceaccountsLoaded,
-} = serviceaccountsSlice.actions;
+  setServiceAccountsSearchQuery,
+  setServiceAccountsSearchPage,
+  serviceAccountsLoaded,
+} = serviceAccountsSlice.actions;
 
-export const serviceaccountsReducer = serviceaccountsSlice.reducer;
+export const serviceAccountsReducer = serviceAccountsSlice.reducer;
 
 export default {
-  serviceaccounts: serviceaccountsReducer,
+  serviceAccounts: serviceAccountsReducer,
 };

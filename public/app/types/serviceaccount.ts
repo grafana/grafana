@@ -1,7 +1,7 @@
 import { OrgRole, Unit } from '.';
 import { SelectableValue } from '@grafana/data';
 
-export interface OrgServiceaccount {
+export interface OrgServiceAccount {
   avatarUrl: string;
   email: string;
   lastSeenAt: string;
@@ -10,10 +10,10 @@ export interface OrgServiceaccount {
   name: string;
   orgId: number;
   role: OrgRole;
-  serviceaccountId: number;
+  serviceAccountId: number;
 }
 
-export interface Serviceaccount {
+export interface ServiceAccount {
   id: number;
   label: string;
   avatarUrl: string;
@@ -23,7 +23,7 @@ export interface Serviceaccount {
   orgId?: number;
 }
 
-export interface ServiceaccountDTO {
+export interface ServiceAccountDTO {
   id: number;
   login: string;
   email: string;
@@ -31,10 +31,8 @@ export interface ServiceaccountDTO {
   isGrafanaAdmin: boolean;
   isDisabled: boolean;
   isAdmin?: boolean;
-  isExternal?: boolean;
   updatedAt?: string;
   authLabels?: string[];
-  theme?: string;
   avatarUrl?: string;
   orgId?: number;
   lastSeenAtAge?: string;
@@ -44,53 +42,35 @@ export interface ServiceaccountDTO {
   orgs?: Unit[];
 }
 
-export interface ServiceaccountsState {
-  serviceaccounts: OrgServiceaccount[];
+export interface ServiceAccountsState {
+  serviceAccounts: OrgServiceAccount[];
   searchQuery: string;
   searchPage: number;
-  hasFetched: boolean;
+  isLoading: boolean;
 }
 
-export interface ServiceaccountSession {
+export interface ServiceAccountSession {
   id: number;
   createdAt: string;
   clientIp: string;
   isActive: boolean;
   seenAt: string;
-  browser: string;
-  browserVersion: string;
-  os: string;
-  osVersion: string;
-  device: string;
 }
 
-export interface ServiceaccountOrg {
+export interface ServiceAccountOrg {
   name: string;
   orgId: number;
   role: OrgRole;
 }
 
-export interface ServiceaccountAdminState {
-  serviceaccount?: ServiceaccountDTO;
-  sessions: ServiceaccountSession[];
-  orgs: ServiceaccountOrg[];
-  isLoading: boolean;
-  error?: ServiceaccountAdminError;
-}
-
-export interface ServiceaccountAdminError {
-  title: string;
-  body: string;
-}
-
-export type ServiceaccountFilter = Record<string, string | boolean | SelectableValue[]>;
+export type ServiceAccountFilter = Record<string, string | boolean | SelectableValue[]>;
 export interface ServiceaccountListAdminState {
-  serviceaccounts: ServiceaccountDTO[];
+  serviceaccounts: ServiceAccountDTO[];
   query: string;
   perPage: number;
   page: number;
   totalPages: number;
   showPaging: boolean;
-  filters: ServiceaccountFilter[];
+  filters: ServiceAccountFilter[];
   isLoading: boolean;
 }

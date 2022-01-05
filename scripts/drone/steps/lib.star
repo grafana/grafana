@@ -295,7 +295,7 @@ def e2e_tests_artifacts(edition):
     return {
         'name': 'e2e_tests_artifacts_upload' + enterprise2_suffix(edition),
         'image': 'google/cloud-sdk:367.0.0',
-        'depends_on': [            
+        'depends_on': [
             'end-to-end-tests-dashboards-suite',
             'end-to-end-tests-panels-suite',
             'end-to-end-tests-smoke-tests-suite',
@@ -308,7 +308,7 @@ def e2e_tests_artifacts(edition):
         },
         'commands': [
             'apt-get update',
-            'apt-get install -yq zip',     
+            'apt-get install -yq zip',
             'ls -lah ./e2e',
             'find ./e2e -type f -name "*.mp4"',
             'printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json',
@@ -707,40 +707,21 @@ def e2e_tests_server_step(edition, port=3001):
         ],
     }
 
-def install_cypress_step():
-    return {
-        'name': 'cypress',
-        'image': 'grafana/ci-e2e:12.19.0-1',
-        'depends_on': [
-            'package',
-            ],
-        'commands': [
-            'yarn run cypress install',
-        ],
-        'volumes': [{
-            'name': 'cypress_cache',
-            'path': '/root/.cache/Cypress'
-        }],
-    }
-
 def e2e_tests_step(suite, edition, port=3001, tries=None):
     cmd = './bin/grabpl e2e-tests --port {} --suite {}'.format(port, suite)
     if tries:
         cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
-        'image': 'grafana/ci-e2e:12.19.0-1',
+        'image': 'cypress/included:9.2.0',
         'depends_on': [
-            'cypress',
+            'package',
         ],
         'environment': {
             'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
         },
-        'volumes': [{
-            'name': 'cypress_cache',
-            'path': '/root/.cache/Cypress'
-        }],
         'commands': [
+            'apt-get install -y netcat',
             cmd,
         ],
     }

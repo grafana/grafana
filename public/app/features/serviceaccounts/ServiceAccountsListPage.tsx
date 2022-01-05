@@ -4,77 +4,52 @@ import { HorizontalGroup, Pagination, VerticalGroup } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import ServiceAccountsTable from './ServiceAccountsTable';
-import { OrgServiceaccount, OrgRole, StoreState } from 'app/types';
-import { loadserviceaccounts, removeserviceaccount, updateserviceaccount } from './state/actions';
+import { OrgServiceAccount, OrgRole, StoreState } from 'app/types';
+import { loadServiceAccounts, removeServiceAccount, updateServiceAccount } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getServiceaccounts, getserviceaccountsSearchPage, getserviceaccountsSearchQuery } from './state/selectors';
-import { setserviceaccountsSearchPage } from './state/reducers';
-
-function mapStateToProps(state: StoreState) {
-  return {
-    navModel: getNavModel(state.navIndex, 'serviceaccounts'),
-    serviceaccounts: getServiceaccounts(state.serviceaccounts),
-    searchQuery: getserviceaccountsSearchQuery(state.serviceaccounts),
-    searchPage: getserviceaccountsSearchPage(state.serviceaccounts),
-    hasFetched: state.serviceaccounts.hasFetched,
-  };
-}
-
-const mapDispatchToProps = {
-  loadserviceaccounts,
-  updateserviceaccount,
-  removeserviceaccount,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
+import { getServiceAccounts, getServiceAccountsSearchPage, getServiceAccountsSearchQuery } from './state/selectors';
+import { setServiceAccountsSearchPage } from './state/reducers';
 export type Props = ConnectedProps<typeof connector>;
 
-export interface State {
-  showInvites: boolean;
-}
+export interface State {}
 
-const pageLimit = 30;
+const ITEMS_PER_PAGE = 30;
 
-export class ServiceaccountsListPage extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-  }
-
+export class ServiceAccountsListPage extends PureComponent<Props, State> {
   componentDidMount() {
-    this.fetchServiceaccounts();
+    this.fetchServiceAccounts();
   }
 
-  async fetchServiceaccounts() {
-    return await this.props.loadserviceaccounts();
+  async fetchServiceAccounts() {
+    return this.props.loadServiceAccounts();
   }
 
-  onRoleChange = (role: OrgRole, serviceaccount: OrgServiceaccount) => {
-    const updatedServiceaccount = { ...serviceaccount, role: role };
+  onRoleChange = (role: OrgRole, serviceAccount: OrgServiceAccount) => {
+    const updatedServiceAccount = { ...serviceAccount, role: role };
 
-    this.props.updateserviceaccount(updatedServiceaccount);
+    this.props.updateServiceAccount(updatedServiceAccount);
   };
 
-  getPaginatedServiceaccounts = (serviceaccounts: OrgServiceaccount[]) => {
-    const offset = (this.props.searchPage - 1) * pageLimit;
-    return serviceaccounts.slice(offset, offset + pageLimit);
+  getPaginatedServiceAccounts = (serviceAccounts: OrgServiceAccount[]) => {
+    const offset = (this.props.searchPage - 1) * ITEMS_PER_PAGE;
+    return serviceAccounts.slice(offset, offset + ITEMS_PER_PAGE);
   };
 
   renderTable() {
-    const { serviceaccounts } = this.props;
-    const paginatedServiceaccounts = this.getPaginatedServiceaccounts(serviceaccounts);
-    const totalPages = Math.ceil(serviceaccounts.length / pageLimit);
+    const { serviceAccounts } = this.props;
+    const paginatedServiceAccounts = this.getPaginatedServiceAccounts(serviceAccounts);
+    const totalPages = Math.ceil(serviceAccounts.length / ITEMS_PER_PAGE);
 
     return (
       <VerticalGroup spacing="md">
         <ServiceAccountsTable
-          serviceaccounts={paginatedServiceaccounts}
-          onRoleChange={(role, serviceaccount) => this.onRoleChange(role, serviceaccount)}
-          onRemoveServiceaccount={(serviceaccount) => this.props.removeserviceaccount(serviceaccount.serviceaccountId)}
+          serviceAccounts={paginatedServiceAccounts}
+          onRoleChange={(role, serviceAccount) => this.onRoleChange(role, serviceAccount)}
+          onRemoveServiceaccount={(serviceAccount) => this.props.removeServiceAccount(serviceAccount.serviceAccountId)}
         />
         <HorizontalGroup justify="flex-end">
           <Pagination
-            onNavigate={setserviceaccountsSearchPage}
+            onNavigate={setServiceAccountsSearchPage}
             currentPage={this.props.searchPage}
             numberOfPages={totalPages}
             hideWhenSinglePage={true}
@@ -97,4 +72,22 @@ export class ServiceaccountsListPage extends PureComponent<Props, State> {
   }
 }
 
-export default connector(ServiceaccountsListPage);
+function mapStateToProps(state: StoreState) {
+  return {
+    navModel: getNavModel(state.navIndex, 'serviceaccounts'),
+    serviceAccounts: getServiceAccounts(state.serviceAccounts),
+    searchQuery: getServiceAccountsSearchQuery(state.serviceAccounts),
+    searchPage: getServiceAccountsSearchPage(state.serviceAccounts),
+    hasFetched: state.serviceAccounts.isLoading,
+  };
+}
+
+const mapDispatchToProps = {
+  loadServiceAccounts,
+  updateServiceAccount,
+  removeServiceAccount,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export default connector(ServiceAccountsListPage);

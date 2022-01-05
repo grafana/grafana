@@ -123,7 +123,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
               text:
                 hidden || isNaN(fractionOfTotal)
                   ? props.fieldConfig.defaults.noValue ?? '-'
-                  : percentOfTotal.toFixed(0) + '%',
+                  : percentOfTotal.toFixed(value.field.decimals ?? 0) + '%',
               title: valuesToShow.length > 1 ? 'Percent' : '',
             });
           }
