@@ -29,7 +29,7 @@ const rootReducers = {
   ...exploreReducers,
   ...dataSourcesReducers,
   ...usersReducers,
-  ...serviceaccountsReducer,
+  ...serviceAccountsReducer,
   ...userReducers,
   ...organizationReducers,
   ...ldapReducers,
