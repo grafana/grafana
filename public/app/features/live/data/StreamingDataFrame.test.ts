@@ -524,7 +524,7 @@ describe('Streaming JSON', () => {
       },
       {
         maxLength: 4,
-        legendFormat: '{{__name__}}: {{sensor}}',
+        displayNameFormat: '{{__name__}}: {{sensor}}',
       }
     );
 
