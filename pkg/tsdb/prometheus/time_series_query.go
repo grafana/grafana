@@ -73,8 +73,8 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 		timeRange := apiv1.Range{
 			Step: query.Step,
 			// Align query range to step. It rounds start and end down to a multiple of step.
-			Start: time.Unix(int64(math.Floor((float64(query.Start.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
-			End:   time.Unix(int64(math.Floor((float64(query.End.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
+			Start: alignTimeRange(query.Start, query.Step, query.UtcOffsetSec),
+			End:   alignTimeRange(query.End, query.Step, query.UtcOffsetSec),
 		}
 
 		if query.RangeQuery {
@@ -299,15 +299,30 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 			tags[string(k)] = string(v)
 		}
 
-		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(v.Values))
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(v.Values))
+		baseTimestamp := alignTimeRange(query.Start, query.Step, query.UtcOffsetSec).UnixMilli()
+		endTimestamp := alignTimeRange(query.End, query.Step, query.UtcOffsetSec).UnixMilli()
+		// For each step we create 1 data point. This results in range / step + 1 data points.
+		datapointsCount := int((endTimestamp-baseTimestamp)/query.Step.Milliseconds()) + 1
 
-		for i, k := range v.Values {
-			timeField.Set(i, time.Unix(k.Timestamp.Unix(), 0).UTC())
-			value := float64(k.Value)
-			if !math.IsNaN(value) {
-				valueField.Set(i, &value)
+		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, datapointsCount)
+		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, datapointsCount)
+		idx := 0
+
+		for _, pair := range v.Values {
+			timestamp := int64(pair.Timestamp)
+			value := float64(pair.Value)
+
+			for t := baseTimestamp; t < timestamp; t += query.Step.Milliseconds() {
+				timeField.Set(idx, time.Unix(0, t*1000000).UTC())
+				idx++
 			}
+
+			timeField.Set(idx, time.Unix(pair.Timestamp.Unix(), 0).UTC())
+			if !math.IsNaN(value) {
+				valueField.Set(idx, &value)
+			}
+			baseTimestamp = timestamp + query.Step.Milliseconds()
+			idx++
 		}
 
 		name := formatLegend(v.Metric, query)
@@ -502,4 +517,8 @@ func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
 	}
 
 	return frame
+}
+
+func alignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
+	return time.Unix(int64(math.Floor((float64(t.Unix()+offset)/step.Seconds()))*step.Seconds()-float64(offset)), 0)
 }

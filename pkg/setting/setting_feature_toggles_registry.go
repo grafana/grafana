@@ -16,6 +16,7 @@ const (
 	featureToggle_live_config             string = "live-config"
 	featureToggle_live_pipeline           string = "live-pipeline"
 	featureToggle_live_service_web_worker string = "live-service-web-worker"
+	featureToggle_queryOverLive           string = "queryOverLive"
 
 	featureToggle_tempoSearch         string = "tempoSearch"
 	featureToggle_tempoServiceGraph   string = "tempoServiceGraph"
@@ -66,6 +67,12 @@ var (
 			Id:          featureToggle_live_service_web_worker,
 			Name:        "Live service worker",
 			Description: "This will use a webworker thread to processes events rather than the main thread",
+			State:       AlphaState,
+		},
+		{
+			Id:          featureToggle_queryOverLive,
+			Name:        "Query using live websocket",
+			Description: "Send queries over live websocket rather than HTTP requests",
 			State:       AlphaState,
 		},
 		{

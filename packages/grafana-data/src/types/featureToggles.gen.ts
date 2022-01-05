@@ -19,6 +19,7 @@ export interface FeatureToggles {
   ['live-config']: boolean;
   ['live-pipeline']: boolean;
   ['live-service-web-worker']: boolean;
+  queryOverLive: boolean;
   tempoSearch: boolean;
   tempoServiceGraph: boolean;
   fullRangeLogsVolume: boolean;
@@ -38,6 +39,7 @@ export const defalutFeatureToggles: FeatureToggles = {
   ['live-config']: false,
   ['live-pipeline']: false,
   ['live-service-web-worker']: false,
+  queryOverLive: false,
   tempoSearch: false,
   tempoServiceGraph: false,
   fullRangeLogsVolume: false,
