@@ -13,7 +13,7 @@ import {
   storeLogsVolumeDataProviderAction,
 } from './query';
 import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
-import { interval, Observable, of } from 'rxjs';
+import { EMPTY, interval, Observable, of } from 'rxjs';
 import {
   ArrayVector,
   DataFrame,
@@ -91,16 +91,25 @@ function setupQueryResponse(state: StoreState) {
 
 describe('runQueries', () => {
   it('should pass dataFrames to state even if there is error in response', async () => {
-    setTimeSrv({
-      init() {},
-    } as any);
-    const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+    setTimeSrv({ init() {} } as any);
+    const { dispatch, getState } = configureStore({
       ...(defaultInitialState as any),
     });
     setupQueryResponse(getState());
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
+  });
+
+  it('should set state to done if query completes without emitting', async () => {
+    setTimeSrv({ init() {} } as any);
+    const { dispatch, getState } = configureStore({
+      ...(defaultInitialState as any),
+    });
+    (getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(EMPTY);
+    await dispatch(runQueries(ExploreId.left));
+    await new Promise((resolve) => setTimeout(() => resolve(''), 500));
+    expect(getState().explore[ExploreId.left].queryResponse.state).toBe(LoadingState.Done);
   });
 });
 
