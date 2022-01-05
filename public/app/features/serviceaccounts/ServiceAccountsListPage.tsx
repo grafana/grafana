@@ -17,17 +17,17 @@ const ITEMS_PER_PAGE = 30;
 
 export class ServiceAccountsListPage extends PureComponent<Props, State> {
   componentDidMount() {
-    this.fetchServiceaccounts();
+    this.fetchServiceAccounts();
   }
 
-  async fetchServiceaccounts() {
+  async fetchServiceAccounts() {
     return this.props.loadServiceAccounts();
   }
 
   onRoleChange = (role: OrgRole, serviceAccount: OrgServiceAccount) => {
-    const updatedServiceaccount = { ...serviceAccount, role: role };
+    const updatedServiceAccount = { ...serviceAccount, role: role };
 
-    this.props.updateServiceAccount(updatedServiceaccount);
+    this.props.updateServiceAccount(updatedServiceAccount);
   };
 
   getPaginatedServiceAccounts = (serviceAccounts: OrgServiceAccount[]) => {
