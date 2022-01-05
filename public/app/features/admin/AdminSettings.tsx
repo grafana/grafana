@@ -9,6 +9,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { AdminFeatureInfo } from './AdminFeatureInfo';
+import { Icon } from '@grafana/ui';
 
 type Settings = { [key: string]: { [key: string]: string } };
 
@@ -40,8 +41,14 @@ const AdminSettings: React.FC<Props> = ({ navModel }) => {
                 {Object.entries(settings).map(([sectionName, sectionSettings], i) => (
                   <React.Fragment key={`section-${i}`}>
                     <tr>
-                      <td className="admin-settings-section">{sectionName}</td>
-                      <td />
+                      <td className="admin-settings-section" colSpan={2}>
+                        {sectionName}
+                        {sectionName === 'feature_toggles' && (
+                          <a href="admin/settings?features">
+                            &nbsp; details <Icon name="external-link-alt" />
+                          </a>
+                        )}
+                      </td>
                     </tr>
                     {Object.entries(sectionSettings).map(([settingName, settingValue], j) => (
                       <tr key={`property-${j}`}>
