@@ -56,11 +56,11 @@ describe('Table utils', () => {
       expect(columns[1].width).toBe(100);
     });
 
-    it('Should set grafanaField on columns', () => {
+    it('Should set field on columns', () => {
       const columns = getColumns(getData(), 1000, 120);
 
-      expect(columns[0].grafanaField.name).toBe('Time');
-      expect(columns[1].grafanaField.name).toBe('Value');
+      expect(columns[0].field.name).toBe('Time');
+      expect(columns[1].field.name).toBe('Value');
     });
   });
 
