@@ -122,8 +122,8 @@ func New(ctx ...interface{}) MultiLoggers {
 		return Root
 	}
 	var newloger MultiLoggers
+	ctx = append([]interface{}{"logger"}, ctx...)
 	for _, logWithFilter := range Root.loggers {
-		ctx = append([]interface{}{"logger"}, ctx...)
 		logWithFilter.val = gokitlog.With(logWithFilter.val, ctx...)
 		v, ok := logWithFilter.filters[ctx[0].(string)]
 		if ok {
