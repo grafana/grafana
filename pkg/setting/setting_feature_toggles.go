@@ -43,9 +43,10 @@ type FeatureToggleInfo struct {
 	Enabled bool `json:"enabled,omitempty"`
 
 	// Special flags
-	RequiresDevMode    bool `json:"requiresDevMode,omitempty"`
-	RequiresEnterprise bool `json:"requiresEnterprise,omitempty"`
-	ModifiesDatabase   bool `json:"modifiesDatabase,omitempty"`
+	RequiresDevMode    bool `json:"requiresDevMode,omitempty"`    // can not be enabled in production
+	RequiresEnterprise bool `json:"requiresEnterprise,omitempty"` // requires enterprise executable
+	ModifiesDatabase   bool `json:"modifiesDatabase,omitempty"`   // the feature will modify the SQL tables
+	FrontendFlag       bool `json:"frontend,omitempty"`           // the change is only seen in the frontend (can change without restart!)
 }
 
 type FeatureToggles struct {
