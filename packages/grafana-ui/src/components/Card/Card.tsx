@@ -97,13 +97,20 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   const styles = useStyles2(getHeadingStyles);
 
   const { href, onClick } = context ?? { href: undefined, onClick: undefined };
-  const Wrapper = href ? 'a' : onClick ? 'button' : React.Fragment;
 
   return (
     <h2 className={cx(styles.heading, className)}>
-      <Wrapper href={href} onClick={onClick} className={styles.linkHack} aria-label={ariaLabel}>
-        {children}
-      </Wrapper>
+      {href ? (
+        <a href={href} className={styles.linkHack} aria-label={ariaLabel}>
+          {children}
+        </a>
+      ) : onClick ? (
+        <button onClick={onClick} className={styles.linkHack} aria-label={ariaLabel}>
+          {children}
+        </button>
+      ) : (
+        <>{children}</>
+      )}
     </h2>
   );
 };
