@@ -312,7 +312,7 @@
     "monaco-promql": "^1.7.2",
     "mousetrap": "1.6.5",
     "mousetrap-global-bind": "1.1.0",
-    "moveable": "0.26.0",
+    "moveable": "0.27.3",
     "ol": "6.9.0",
     "papaparse": "5.3.0",
     "pluralize": "^8.0.0",
