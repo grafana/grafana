@@ -112,6 +112,10 @@ export interface AlertRuleCreatePayload {
   template_name: string;
 }
 
+export interface AlertRuleCopyPayload extends Omit<AlertRuleCreatePayload, 'template_name'> {
+  source_rule_id: string;
+}
+
 export interface AlertRuleGetPayload {
   page_params: {
     page_size: number;
