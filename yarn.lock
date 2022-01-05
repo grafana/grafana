@@ -18606,13 +18606,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"framework-utils@npm:^0.3.4":
-  version: 0.3.4
-  resolution: "framework-utils@npm:0.3.4"
-  checksum: 7edc71c02da231ffc0bd3823c7cc590de205f58771f1829b9e4094a5d18cf0b092fc86f6cbf89d3e1549680451000bf43a5ba3eb67c468486fb620f27cf8fe66
-  languageName: node
-  linkType: hard
-
 "framework-utils@npm:^1.1.0":
   version: 1.1.0
   resolution: "framework-utils@npm:1.1.0"
@@ -19664,7 +19657,7 @@ __metadata:
     react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
     react-loadable: 5.5.0
-    react-moveable: 0.29.0
+    react-moveable: 0.30.3
     react-popper: 2.2.4
     react-redux: 7.2.5
     react-refresh: ^0.10.0
@@ -29270,18 +29263,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-css-styled@npm:^1.0.1":
-  version: 1.0.2
-  resolution: "react-css-styled@npm:1.0.2"
-  dependencies:
-    css-styled: ^1.0.0
-    framework-utils: ^0.3.4
-  peerDependencies:
-    framework-utils: ">=0.3.4"
-  checksum: a05f3fd46eff98af574f134e58bad0b2b5cafc404878d7142a5870858050169b5148368c9b273f74e25da2f09b79341aecff5a2b7114220a7f5b518755cbe7a1
-  languageName: node
-  linkType: hard
-
 "react-css-styled@npm:^1.0.3":
   version: 1.0.3
   resolution: "react-css-styled@npm:1.0.3"
@@ -29649,25 +29630,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-moveable@npm:0.29.0":
-  version: 0.29.0
-  resolution: "react-moveable@npm:0.29.0"
-  dependencies:
-    "@daybrush/utils": ^1.6.0
-    "@egjs/agent": ^2.2.1
-    "@egjs/children-differ": ^1.0.1
-    "@scena/dragscroll": ^1.0.1
-    "@scena/matrix": ^1.1.1
-    css-to-mat: ^1.0.3
-    framework-utils: ^1.1.0
-    gesto: ^1.2.1
-    overlap-area: ^1.0.0
-    react-css-styled: ^1.0.1
-  checksum: 00c09100017873826f47dab061181529bfa753341cec8e48c809931c5c6d1bbbc6eebf3186f4d7055ad3cf180f93f042b4dc868903984879afeec307af1050ae
-  languageName: node
-  linkType: hard
-
-"react-moveable@npm:~0.30.3":
+"react-moveable@npm:0.30.3, react-moveable@npm:~0.30.3":
   version: 0.30.3
   resolution: "react-moveable@npm:0.30.3"
   dependencies:
