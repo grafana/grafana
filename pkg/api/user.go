@@ -69,7 +69,7 @@ func (hs *HTTPServer) getGlobalUserAccessControlMetadata(c *models.ReqContext, u
 	userIDs := map[string]bool{key: true}
 
 	metadata := accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "global:users", userIDs)
-	return metadata[key], nil
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "global:users", userIDs)[key], nil
 }
 
 // GET /api/users/lookup
