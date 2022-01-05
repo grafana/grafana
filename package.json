@@ -333,7 +333,7 @@
     "react-hook-form": "7.5.3",
     "react-inlinesvg": "2.3.0",
     "react-loadable": "5.5.0",
-    "react-moveable": "0.29.0",
+    "react-moveable": "0.30.3",
     "react-popper": "2.2.4",
     "react-redux": "7.2.5",
     "react-resizable": "3.0.4",
