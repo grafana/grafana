@@ -56,7 +56,7 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		"msgtype": "markdown",
 	}
 	content := fmt.Sprintf("# %s\n%s\n",
-		tmpl(`{{ template "default.title" . }}`),
+		tmpl(DefaultMessageTitleEmbed),
 		tmpl(w.Message),
 	)
 
