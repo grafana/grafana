@@ -1,5 +1,5 @@
 import { TemplateParamType, TemplateParamUnit } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
-import { AlertRuleCreatePayload, AlertRuleSeverity } from '../AlertRules.types';
+import { AlertRuleCopyPayload, AlertRuleSeverity } from '../AlertRules.types';
 import { createAlertRuleCopyPayload } from './AlertRulesActions.utils';
 
 describe('AlertRulesActions.utils.test::utils', () => {
@@ -84,12 +84,12 @@ describe('AlertRulesActions.utils.test::utils', () => {
           name: 'Rule one',
           expr: 'string',
           expr_template: 'string',
-          rule_id: 'string',
+          rule_id: '1',
           template_name: 'Template one',
           summary: 'string',
         },
       })
-    ).toEqual<AlertRuleCreatePayload>({
+    ).toEqual<AlertRuleCopyPayload>({
       channel_ids: [],
       disabled: true,
       filters: [],
@@ -109,7 +109,7 @@ describe('AlertRulesActions.utils.test::utils', () => {
       ],
       severity: 'SEVERITY_CRITICAL',
       name: 'Copy of Rule one',
-      template_name: 'Template one',
+      source_rule_id: '1',
     });
   });
 });

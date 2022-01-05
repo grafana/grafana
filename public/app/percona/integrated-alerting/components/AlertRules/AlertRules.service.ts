@@ -7,6 +7,7 @@ import {
   AlertRuleDeletePayload,
   AlertRuleCreateResponse,
   AlertRuleGetPayload,
+  AlertRuleCopyPayload,
 } from './AlertRules.types';
 
 const BASE_URL = `/v1/management/ia/Rules`;
@@ -15,7 +16,10 @@ export const AlertRulesService = {
   async list(payload: AlertRuleGetPayload, token?: CancelToken): Promise<AlertRulesListResponse> {
     return api.post(`${BASE_URL}/List`, payload, false, token);
   },
-  async create(payload: AlertRuleCreatePayload, token?: CancelToken): Promise<AlertRuleCreateResponse> {
+  async create(
+    payload: AlertRuleCreatePayload | AlertRuleCopyPayload,
+    token?: CancelToken
+  ): Promise<AlertRuleCreateResponse> {
     return api.post(`${BASE_URL}/Create`, payload, false, token);
   },
   async update(payload: AlertRuleCreatePayload, token?: CancelToken): Promise<{}> {
