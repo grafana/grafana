@@ -21,26 +21,12 @@ type CommonProps = {
   className?: string;
   children?: React.ReactNode;
   fullWidth?: boolean;
-  ghostMode?: boolean;
 };
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      variant = 'primary',
-      size = 'md',
-      fill = 'solid',
-      icon,
-      fullWidth,
-      ghostMode = 'false',
-      children,
-      className,
-      ...otherProps
-    },
-    ref
-  ) => {
+  ({ variant = 'primary', size = 'md', fill = 'solid', icon, fullWidth, children, className, ...otherProps }, ref) => {
     const theme = useTheme2();
     const styles = getButtonStyles({
       theme,
@@ -57,7 +43,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
 
     return (
-      <button className={ghostMode === true ? styles.ghost : cx(styles.button, className)} {...otherProps} ref={ref}>
+      <button className={cx(styles.button, className)} {...otherProps} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </button>
@@ -180,16 +166,6 @@ export const getButtonStyles = (props: StyleProps) => {
       white-space: nowrap;
       height: 100%;
     `,
-    ghost: css({
-      backgroundColor: 'transparent',
-      borderColor: 'transparent',
-      borderRadius: theme.shape.borderRadius(1),
-      color: theme.colors.text.primary,
-      fontWeight: 'normal',
-      '&:focus': focusStyle,
-      '&:focus-visible': focusStyle,
-      '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
-    }),
   };
 };
 
