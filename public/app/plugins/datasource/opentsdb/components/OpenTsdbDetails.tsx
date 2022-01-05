@@ -29,6 +29,7 @@ export const OpenTsdbDetails = (props: Props) => {
       <div className="gf-form">
         <InlineFormLabel width={7}>Version</InlineFormLabel>
         <Select
+          aria-label="Version"
           menuShouldPortal
           options={tsdbVersions}
           value={tsdbVersions.find((version) => version.value === value.jsonData.tsdbVersion) ?? tsdbVersions[0]}
@@ -38,6 +39,7 @@ export const OpenTsdbDetails = (props: Props) => {
       <div className="gf-form">
         <InlineFormLabel width={7}>Resolution</InlineFormLabel>
         <Select
+          aria-label="Resolution"
           menuShouldPortal
           options={tsdbResolutions}
           value={
@@ -50,6 +52,7 @@ export const OpenTsdbDetails = (props: Props) => {
       <div className="gf-form">
         <InlineFormLabel width={7}>Lookup limit</InlineFormLabel>
         <Input
+          aria-label="Lookup limit"
           type="number"
           value={value.jsonData.lookupLimit ?? 1000}
           onChange={onInputChangeHandler('lookupLimit', value, onChange)}
