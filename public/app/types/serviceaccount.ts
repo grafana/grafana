@@ -31,10 +31,8 @@ export interface ServiceAccountDTO {
   isGrafanaAdmin: boolean;
   isDisabled: boolean;
   isAdmin?: boolean;
-  isExternal?: boolean;
   updatedAt?: string;
   authLabels?: string[];
-  theme?: string;
   avatarUrl?: string;
   orgId?: number;
   lastSeenAtAge?: string;
@@ -57,30 +55,12 @@ export interface ServiceAccountSession {
   clientIp: string;
   isActive: boolean;
   seenAt: string;
-  browser: string;
-  browserVersion: string;
-  os: string;
-  osVersion: string;
-  device: string;
 }
 
 export interface ServiceAccountOrg {
   name: string;
   orgId: number;
   role: OrgRole;
-}
-
-export interface ServiceAccountAdminState {
-  serviceaccount?: ServiceAccountDTO;
-  sessions: ServiceAccountSession[];
-  orgs: ServiceAccountOrg[];
-  isLoading: boolean;
-  error?: ServiceAccountAdminError;
-}
-
-export interface ServiceAccountAdminError {
-  title: string;
-  body: string;
 }
 
 export type ServiceAccountFilter = Record<string, string | boolean | SelectableValue[]>;
