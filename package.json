@@ -346,7 +346,7 @@
     "react-virtualized-auto-sizer": "1.0.2",
     "react-window": "1.8.5",
     "redux": "4.1.1",
-    "redux-thunk": "2.3.0",
+    "redux-thunk": "2.4.1",
     "regenerator-runtime": "0.13.3",
     "reselect": "4.0.0",
     "rst2html": "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809",
