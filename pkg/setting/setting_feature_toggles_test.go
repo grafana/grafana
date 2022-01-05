@@ -14,7 +14,7 @@ func TestFeatureToggles(t *testing.T) {
 		conf            map[string]string
 		err             error
 		expectedToggles map[string]bool
-		defaultToggles  map[string]bool
+		opts            *featureFlagOptions
 	}{
 		{
 			name: "can parse feature toggles passed in the `enable` array",
@@ -60,9 +60,13 @@ func TestFeatureToggles(t *testing.T) {
 		},
 		{
 			name: "should override default feature toggles",
-			defaultToggles: map[string]bool{
-				"feature1": true,
-			},
+			opts: &featureFlagOptions{
+				flags: []FeatureToggleInfo{
+					{
+						Id:      "feature1",
+						Enabled: true,
+					},
+				}},
 			conf: map[string]string{
 				"feature1": "false",
 			},
@@ -81,17 +85,30 @@ func TestFeatureToggles(t *testing.T) {
 			require.ErrorIs(t, err, nil)
 		}
 
-		dt := map[string]bool{}
-		if len(tc.defaultToggles) > 0 {
-			dt = tc.defaultToggles
+		opts := &featureFlagOptions{}
+
+		if tc.opts != nil {
+			opts = tc.opts
 		}
 
-		featureToggles, err := overrideDefaultWithConfiguration(f, dt)
+		if len(opts.flags) < 1 {
+			opts.flags = []FeatureToggleInfo{
+				{
+					Id: featureToggle_dashboardPreviews,
+				},
+				{
+					Id: featureToggle_newNavigation,
+				},
+			}
+		}
+
+		opts.cfgSection = toggles
+		featureToggles, err := loadFeatureTogglesFromConfiguration(*opts)
 		require.ErrorIs(t, err, tc.err)
 
 		if err == nil {
-			for k, v := range featureToggles {
-				require.Equal(t, tc.expectedToggles[k], v, tc.name)
+			for k, v := range tc.expectedToggles {
+				require.Equal(t, featureToggles.Toggles[k], v, tc.name)
 			}
 		}
 	}

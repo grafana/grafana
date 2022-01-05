@@ -321,7 +321,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return err
 	}
 
-	if ss.Cfg.IsDatabaseMetricsEnabled() {
+	if ss.Cfg.Features.IsDatabaseMetricsEnabled() {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type)
 	}
 

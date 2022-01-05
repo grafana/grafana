@@ -39,7 +39,7 @@ func NewServiceAccountsAPI(
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 	cfg *setting.Cfg,
 ) {
-	if !cfg.FeatureToggles["service-accounts"] {
+	if !cfg.Features.IsServiceAccountsEnabled() {
 		return
 	}
 	auth := acmiddleware.Middleware(api.accesscontrol)

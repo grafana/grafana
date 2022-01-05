@@ -49,7 +49,7 @@ func (rs *SchemaLoaderService) IsDisabled() bool {
 	if rs.Cfg == nil {
 		return true
 	}
-	return !rs.Cfg.IsTrimDefaultsEnabled()
+	return !rs.Cfg.Features.IsTrimDefaultsEnabled()
 }
 
 func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*simplejson.Json, error) {

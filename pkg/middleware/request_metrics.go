@@ -60,7 +60,7 @@ func RequestMetrics(cfg *setting.Cfg) func(handler string) web.Handler {
 			method := sanitizeMethod(req.Method)
 
 			// enable histogram and disable summaries + counters for http requests.
-			if cfg.IsHTTPRequestHistogramDisabled() {
+			if cfg.Features.IsHTTPRequestHistogramDisabled() {
 				duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
 				metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
 				metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))

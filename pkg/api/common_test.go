@@ -210,8 +210,9 @@ func (s *fakeRenderService) Init() error {
 }
 
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
-	cfg.FeatureToggles = make(map[string]bool)
-	cfg.FeatureToggles["accesscontrol"] = true
+	cfg.Features = setting.NewFeatureToggles(map[string]bool{
+		"accesscontrol": true,
+	})
 	cfg.Quota.Enabled = false
 
 	bus := bus.GetBus()
@@ -296,10 +297,9 @@ func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessContro
 
 	// Use a new conf
 	cfg := setting.NewCfg()
-	cfg.FeatureToggles = make(map[string]bool)
-	if enableAccessControl {
-		cfg.FeatureToggles["accesscontrol"] = enableAccessControl
-	}
+	cfg.Features = setting.NewFeatureToggles(map[string]bool{
+		"accesscontrol": enableAccessControl,
+	})
 
 	// Use a test DB
 	db := sqlstore.InitTestDB(t)

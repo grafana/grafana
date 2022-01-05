@@ -57,7 +57,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
 	if mg.Cfg != nil {
-		if mg.Cfg.IsLiveConfigEnabled() {
+		if mg.Cfg.Features.IsLiveConfigEnabled() {
 			addLiveChannelMigrations(mg)
 		}
 	}

@@ -79,7 +79,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 	}
 	cmd.OrgId = c.OrgId
 	var err error
-	if hs.Cfg.FeatureToggles["service-accounts"] {
+	if hs.Cfg.Features.IsServiceAccountsEnabled() {
 		//Every new API key must have an associated service account
 		if cmd.CreateNewServiceAccount {
 			//Create a new service account for the new API key
@@ -143,7 +143,7 @@ func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if !hs.Cfg.FeatureToggles["service-accounts"] {
+	if !hs.Cfg.Features.IsServiceAccountsEnabled() {
 		return response.Error(500, "Requires services-accounts feature", errors.New("feature missing"))
 	}
 	if cmd.CreateNewServiceAccount {

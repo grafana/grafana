@@ -36,7 +36,7 @@ type Service interface {
 }
 
 func ProvideService(cfg *setting.Cfg, renderService rendering.Service) Service {
-	if !cfg.IsDashboardPreviesEnabled() {
+	if !cfg.Features.IsDashboardPreviesEnabled() {
 		return &dummyService{}
 	}
 
