@@ -19674,7 +19674,7 @@ __metadata:
     react-window: 1.8.5
     redux: 4.1.1
     redux-mock-store: 1.5.4
-    redux-thunk: 2.3.0
+    redux-thunk: 2.4.1
     regenerator-runtime: 0.13.3
     reselect: 4.0.0
     rimraf: 3.0.1
@@ -30378,14 +30378,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux-thunk@npm:2.3.0":
-  version: 2.3.0
-  resolution: "redux-thunk@npm:2.3.0"
-  checksum: d13f442ffc91249b534bf14884c33feff582894be2562169637dc9d4d70aec6423bfe6d66f88c46ac027ac1c0cd07d6c2dd4a61cf7695b8e43491de679df9bcf
-  languageName: node
-  linkType: hard
-
-"redux-thunk@npm:^2.4.1":
+"redux-thunk@npm:2.4.1, redux-thunk@npm:^2.4.1":
   version: 2.4.1
   resolution: "redux-thunk@npm:2.4.1"
   peerDependencies:
