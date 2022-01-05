@@ -6744,7 +6744,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scena/matrix@npm:^1.0.0, @scena/matrix@npm:^1.1.1":
+"@scena/matrix@npm:1.1.1, @scena/matrix@npm:^1.0.0, @scena/matrix@npm:^1.1.1":
   version: 1.1.1
   resolution: "@scena/matrix@npm:1.1.1"
   dependencies:
