@@ -17,10 +17,10 @@ const ITEMS_PER_PAGE = 30;
 
 export class ServiceAccountsListPage extends PureComponent<Props, State> {
   componentDidMount() {
-    this.fetchServiceaccounts();
+    this.fetchServiceAccounts();
   }
 
-  async fetchServiceaccounts() {
+  async fetchServiceAccounts() {
     return this.props.loadServiceAccounts();
   }
 
