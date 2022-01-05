@@ -4002,7 +4002,7 @@ __metadata:
     react: 17.0.1
     react-dom: 17.0.1
     react-icons: 2.2.7
-    recompose: ^0.25.0
+    recompose: 0.30.0
     reselect: 4.0.0
     sinon: 12.0.1
     tinycolor2: 1.4.1
@@ -29612,7 +29612,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-lifecycles-compat@npm:^3.0.4":
+"react-lifecycles-compat@npm:^3.0.2, react-lifecycles-compat@npm:^3.0.4":
   version: 3.0.4
   resolution: "react-lifecycles-compat@npm:3.0.4"
   checksum: a904b0fc0a8eeb15a148c9feb7bc17cec7ef96e71188280061fc340043fd6d8ee3ff233381f0e8f95c1cf926210b2c4a31f38182c8f35ac55057e453d6df204f
@@ -30334,17 +30334,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"recompose@npm:^0.25.0":
-  version: 0.25.1
-  resolution: "recompose@npm:0.25.1"
+"recompose@npm:0.30.0":
+  version: 0.30.0
+  resolution: "recompose@npm:0.30.0"
   dependencies:
+    "@babel/runtime": ^7.0.0
     change-emitter: ^0.1.2
     fbjs: ^0.8.1
     hoist-non-react-statics: ^2.3.1
+    react-lifecycles-compat: ^3.0.2
     symbol-observable: ^1.0.4
   peerDependencies:
     react: ^0.14.0 || ^15.0.0 || ^16.0.0
-  checksum: 02470bf14db152bb158dfb8227b91449048c56fc5a55a1879c810a54202a0fd2025275be9dabf61054dc33e8162f6ec1af0b29466ab2694702553dd77fedb578
+  checksum: 18e58252336d0628b22db1e38407d32e836648e6d5c9453ba37c9f8030138b3429ee3952b053a13b60311f8b60893b207a761466bb293083542db0cf317b7a41
   languageName: node
   linkType: hard
 
