@@ -126,7 +126,7 @@ func TestFeatureToggleSetup(t *testing.T) {
 	assert.True(t, ft.IsEnabled("c"))
 	assert.False(t, ft.IsEnabled("d"))
 
-	// Explict values
+	// Explicit values
 	ft = WithFeatureToggles("a", true, "b", false)
 	assert.True(t, ft.IsEnabled("a"))
 	assert.False(t, ft.IsEnabled("b"))
@@ -153,6 +153,8 @@ func generateTypeScript() string {
 // To change feature flags, edit:
 //  pkg/setting/setting_feature_toggles_registry.go
 
+import { RegistryItem } from '../utils/Registry';
+
 /**
  * Describes available feature toggles in Grafana. These can be configured via
  * conf/custom.ini to enable features under development or not yet available in
@@ -168,7 +170,22 @@ export interface FeatureToggles {
 		buf += "  " + getTypeScriptKey(flag.Id) + "?: boolean;\n"
 	}
 
-	buf += "}\n"
+	buf += `}
+
+/**
+ * Metadata about each feature flag
+ *
+ * @internal
+ */
+export interface FeatureFlagInfo extends RegistryItem {
+  docsURL?: string;
+  enabled?: boolean;
+  requiresDevMode?: boolean;
+  requiresEnterprise?: boolean;
+  modifiesDatabase?: boolean;
+  frontend?: boolean;
+}
+`
 
 	return buf
 }
