@@ -3,31 +3,33 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 // GET /api/user  (current authenticated user)
-func GetSignedInUser(c *models.ReqContext) response.Response {
-	return getUserUserProfile(c.Req.Context(), c.UserId)
+func (hs *HTTPServer) GetSignedInUser(c *models.ReqContext) response.Response {
+	return hs.getUserUserProfile(c, c.UserId)
 }
 
 // GET /api/users/:id
-func GetUserByID(c *models.ReqContext) response.Response {
-	return getUserUserProfile(c.Req.Context(), c.ParamsInt64(":id"))
+func (hs *HTTPServer) GetUserByID(c *models.ReqContext) response.Response {
+	return hs.getUserUserProfile(c, c.ParamsInt64(":id"))
 }
 
-func getUserUserProfile(ctx context.Context, userID int64) response.Response {
+func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) response.Response {
 	query := models.GetUserProfileQuery{UserId: userID}
 
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -36,15 +38,42 @@ func getUserUserProfile(ctx context.Context, userID int64) response.Response {
 
 	getAuthQuery := models.GetAuthInfoQuery{UserId: userID}
 	query.Result.AuthLabels = []string{}
-	if err := bus.Dispatch(ctx, &getAuthQuery); err == nil {
+	if err := bus.Dispatch(c.Req.Context(), &getAuthQuery); err == nil {
 		authLabel := GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
 		query.Result.AuthLabels = append(query.Result.AuthLabels, authLabel)
 		query.Result.IsExternal = true
 	}
 
+	accessControlMetadata, errAC := hs.getGlobalUserAccessControlMetadata(c, userID)
+	if errAC != nil {
+		hs.log.Error("Failed to get access control metadata", "error", errAC)
+	}
+
+	query.Result.AccessControl = accessControlMetadata
 	query.Result.AvatarUrl = dtos.GetGravatarUrl(query.Result.Email)
 
 	return response.JSON(200, query.Result)
+}
+
+func (hs *HTTPServer) getGlobalUserAccessControlMetadata(c *models.ReqContext, userID int64) (accesscontrol.Metadata, error) {
+	if hs.AccessControl == nil || hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
+		return nil, nil
+	}
+
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	if err != nil || len(userPermissions) == 0 {
+		return nil, err
+	}
+
+	key := fmt.Sprintf("%d", userID)
+	userIDs := map[string]bool{key: true}
+
+	metadata, err := accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "global:users", userIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return metadata[key], err
 }
 
 // GET /api/users/lookup

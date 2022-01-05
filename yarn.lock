@@ -3291,14 +3291,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@es-joy/jsdoccomment@npm:0.13.0":
-  version: 0.13.0
-  resolution: "@es-joy/jsdoccomment@npm:0.13.0"
+"@es-joy/jsdoccomment@npm:0.14.2":
+  version: 0.14.2
+  resolution: "@es-joy/jsdoccomment@npm:0.14.2"
   dependencies:
     comment-parser: 1.3.0
     esquery: ^1.4.0
-    jsdoc-type-pratt-parser: 2.0.0
-  checksum: eb7dcef7069e96c8c86c60aa843ba4cefa8485353b9bef46d02ab879891d674a79b796f1e029478f656c25e782d351452a2a7a47d928ce7fac9dc8409ecac1b9
+    jsdoc-type-pratt-parser: 2.0.2
+  checksum: babc7f975782a0b07c90d7823dbfeaa06ba7cbe779708cc2e997d049a4e7b592ae59226abf05caffc08fc84001683bfbddfd7a1943dca5f7c38afc706a8cafaf
   languageName: node
   linkType: hard
 
@@ -3440,8 +3440,8 @@ __metadata:
     "@testing-library/user-event": 13.5.0
     "@types/braintree__sanitize-url": 4.1.0
     "@types/d3-interpolate": ^1.4.0
-    "@types/jest": 27.0.2
-    "@types/jquery": 3.3.38
+    "@types/jest": 27.4.0
+    "@types/jquery": 3.5.11
     "@types/lodash": 4.14.123
     "@types/marked": 4.0.0
     "@types/node": 16.11.6
@@ -3453,7 +3453,7 @@ __metadata:
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.2
     d3-interpolate: 1.4.0
-    date-fns: 2.27.0
+    date-fns: 2.28.0
     eventemitter3: 4.0.7
     lodash: 4.17.21
     marked: 4.0.5
@@ -3582,7 +3582,7 @@ __metadata:
     "@testing-library/user-event": ^13.5.0
     "@types/angular": 1.8.3
     "@types/history": ^4.7.8
-    "@types/jest": 27.0.2
+    "@types/jest": 27.4.0
     "@types/lodash": 4.14.149
     "@types/react": 17.0.36
     "@types/react-dom": 17.0.10
@@ -3796,8 +3796,8 @@ __metadata:
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": 3.3.1
     "@types/is-hotkey": 0.1.1
-    "@types/jest": 27.0.2
-    "@types/jquery": 3.3.38
+    "@types/jest": 27.4.0
+    "@types/jquery": 3.5.11
     "@types/lodash": 4.14.123
     "@types/mock-raf": 1.0.2
     "@types/node": 16.11.6
@@ -3831,34 +3831,34 @@ __metadata:
     css-minimizer-webpack-plugin: 3.3.0
     csstype: 3.0.9
     d3: 5.15.0
-    date-fns: 2.27.0
+    date-fns: 2.28.0
     enzyme: 3.11.0
     expose-loader: 3.1.0
     hoist-non-react-statics: 3.3.2
     immutable: 4.0.0
     is-hotkey: 0.2.0
-    jquery: 3.5.1
+    jquery: 3.6.0
     lodash: 4.17.21
     memoize-one: 6.0.0
     mock-raf: 1.0.1
     moment: 2.29.1
     monaco-editor: ^0.31.1
     postcss: 8.4.5
-    postcss-loader: 6.1.1
+    postcss-loader: 6.2.1
     prismjs: 1.25.0
     raw-loader: 4.0.2
     rc-cascader: 1.5.0
     rc-drawer: 4.4.0
-    rc-slider: 9.6.4
+    rc-slider: 9.7.5
     rc-time-picker: ^3.7.3
     react: 17.0.1
     react-beautiful-dnd: 13.1.0
     react-calendar: 3.5.0
-    react-colorful: 5.1.2
+    react-colorful: 5.5.1
     react-custom-scrollbars-2: 4.4.0
     react-docgen-typescript-loader: 3.7.2
     react-dom: 17.0.1
-    react-dropzone: 11.3.4
+    react-dropzone: 11.4.2
     react-highlight-words: 0.17.0
     react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
@@ -3869,7 +3869,7 @@ __metadata:
     react-table: 7.7.0
     react-test-renderer: 17.0.1
     react-transition-group: 4.4.1
-    react-use: 17.2.4
+    react-use: 17.3.2
     react-window: 1.8.5
     rimraf: 3.0.1
     rollup: 2.58.3
@@ -3998,11 +3998,11 @@ __metadata:
     memoize-one: 6.0.0
     moment: 2.29.1
     moment-timezone: 0.5.33
-    prop-types: 15.7.2
+    prop-types: 15.8.0
     react: 17.0.1
     react-dom: 17.0.1
     react-icons: 2.2.7
-    recompose: ^0.25.0
+    recompose: 0.30.0
     reselect: 4.0.0
     sinon: 12.0.1
     tinycolor2: 1.4.1
@@ -6725,7 +6725,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scena/dragscroll@npm:^1.0.1, @scena/dragscroll@npm:^1.0.2":
+"@scena/dragscroll@npm:^1.0.1, @scena/dragscroll@npm:^1.0.2, @scena/dragscroll@npm:^1.0.3":
   version: 1.0.3
   resolution: "@scena/dragscroll@npm:1.0.3"
   dependencies:
@@ -9358,12 +9358,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jquery@npm:3.3.38":
-  version: 3.3.38
-  resolution: "@types/jquery@npm:3.3.38"
+"@types/jest@npm:27.4.0":
+  version: 27.4.0
+  resolution: "@types/jest@npm:27.4.0"
+  dependencies:
+    jest-diff: ^27.0.0
+    pretty-format: ^27.0.0
+  checksum: d2350267f954f9a2e4a15e5f02fbf19a77abfb9fd9e57a954de1fb0e9a0d3d5f8d3646ac7d9c42aeb4b4d828d2e70624ec149c85bb50a48634a54eed8429e1f8
+  languageName: node
+  linkType: hard
+
+"@types/jquery@npm:3.5.11":
+  version: 3.5.11
+  resolution: "@types/jquery@npm:3.5.11"
   dependencies:
     "@types/sizzle": "*"
-  checksum: 1d15653cf0f9a06587ddddc46a55bcc439f3fbba3d39c91255694f05f551d857c31e9008c791f23f87abddce22fbd9d59901ad99ed0bef5dd70d99858f14ddd4
+  checksum: bad7c4495ade39e712462af534169790115d07874bb1a8c43a597676bd4e4d62caaf961353836f1e9f67309cac3a224b8743da07bad4cb2ff853b93f1856014b
   languageName: node
   linkType: hard
 
@@ -9744,12 +9754,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-grid-layout@npm:1.1.1":
-  version: 1.1.1
-  resolution: "@types/react-grid-layout@npm:1.1.1"
+"@types/react-grid-layout@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@types/react-grid-layout@npm:1.3.0"
   dependencies:
     "@types/react": "*"
-  checksum: bd8be3dbab89b720a8306a6bce7aac33e5578884775b55a6d5d9a623c18c0d4c92b455bd0095be036bc7f88cea1ae98b3b11661c5cec52810aa34398ea865ae7
+  checksum: 94243bce2c7005dafad165f6f9329e4e77e09eed3ab8380b010474d75e4314856da43ff006f90c26a3f69e3d5398bbec145dbbd8619361abbc068ed413b791a6
   languageName: node
   linkType: hard
 
@@ -15929,10 +15939,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"date-fns@npm:2.27.0":
-  version: 2.27.0
-  resolution: "date-fns@npm:2.27.0"
-  checksum: db62036b3816eb0322c9532b353beac7f660a91e1a55dbd21c14893c621ebb8509f21c66ba287844dabd34dee0207edd54a9537bce6bb7cab9383dedc6b8bc90
+"date-fns@npm:2.28.0":
+  version: 2.28.0
+  resolution: "date-fns@npm:2.28.0"
+  checksum: a0516b2e4f99b8bffc6cc5193349f185f195398385bdcaf07f17c2c4a24473c99d933eb0018be4142a86a6d46cb0b06be6440ad874f15e795acbedd6fd727a1f
   languageName: node
   linkType: hard
 
@@ -17266,22 +17276,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:37.4.0":
-  version: 37.4.0
-  resolution: "eslint-plugin-jsdoc@npm:37.4.0"
+"eslint-plugin-jsdoc@npm:37.5.1":
+  version: 37.5.1
+  resolution: "eslint-plugin-jsdoc@npm:37.5.1"
   dependencies:
-    "@es-joy/jsdoccomment": 0.13.0
+    "@es-joy/jsdoccomment": 0.14.2
     comment-parser: 1.3.0
     debug: ^4.3.3
     escape-string-regexp: ^4.0.0
     esquery: ^1.4.0
-    jsdoc-type-pratt-parser: ^2.0.0
+    jsdoc-type-pratt-parser: ^2.0.2
     regextras: ^0.8.0
     semver: ^7.3.5
     spdx-expression-parse: ^3.0.1
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0
-  checksum: df7efe0634e67f0788cac847e695022be20bd418892ab948743978f793489be8645d4da5e5b7fdcf2dfa67385cba39d85a577dddb259da129e4eb3993fd6627c
+  checksum: 8f5c3edbd3685df3b4d22c6896c4a4c75d96e3e641f45fef717c61cc8a1be17012cadd8fa90caf7aa2c8330dd35aae6aaed7b6806d97e9326ea96e307b6a3b39
   languageName: node
   linkType: hard
 
@@ -17363,9 +17373,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react@npm:7.27.1":
-  version: 7.27.1
-  resolution: "eslint-plugin-react@npm:7.27.1"
+"eslint-plugin-react@npm:7.28.0":
+  version: 7.28.0
+  resolution: "eslint-plugin-react@npm:7.28.0"
   dependencies:
     array-includes: ^3.1.4
     array.prototype.flatmap: ^1.2.5
@@ -17383,7 +17393,7 @@ __metadata:
     string.prototype.matchall: ^4.0.6
   peerDependencies:
     eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
-  checksum: db1ce303b597ede0bc8873d3f575b05873b06a058162c80f76604c9096eee8f72f299d7f849a86ac2e59f269c196575e6bcfb1ef9d7cbb23f533d081bcc15ea0
+  checksum: 90293d0fd53bb1f735ffd32141cdd211fb1120c9f7bbe5342f9e923261a39e52a2b2575d4e46c9cd77d257f42db4a99b8b339689fc5b5c1c26048929f69b1784
   languageName: node
   linkType: hard
 
@@ -18596,13 +18606,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"framework-utils@npm:^0.3.4":
-  version: 0.3.4
-  resolution: "framework-utils@npm:0.3.4"
-  checksum: 7edc71c02da231ffc0bd3823c7cc590de205f58771f1829b9e4094a5d18cf0b092fc86f6cbf89d3e1549680451000bf43a5ba3eb67c468486fb620f27cf8fe66
-  languageName: node
-  linkType: hard
-
 "framework-utils@npm:^1.1.0":
   version: 1.1.0
   resolution: "framework-utils@npm:1.1.0"
@@ -19493,8 +19496,8 @@ __metadata:
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/history": ^4.7.8
     "@types/hoist-non-react-statics": 3.3.1
-    "@types/jest": 27.0.2
-    "@types/jquery": 3.3.38
+    "@types/jest": 27.4.0
+    "@types/jquery": 3.5.11
     "@types/jsurl": ^1.2.28
     "@types/lingui__macro": ^3
     "@types/lodash": 4.14.149
@@ -19510,7 +19513,7 @@ __metadata:
     "@types/react": 17.0.30
     "@types/react-beautiful-dnd": 13.1.1
     "@types/react-dom": 17.0.10
-    "@types/react-grid-layout": 1.1.1
+    "@types/react-grid-layout": 1.3.0
     "@types/react-highlight-words": ^0.16.2
     "@types/react-loadable": 5.5.2
     "@types/react-redux": 7.1.20
@@ -19567,18 +19570,18 @@ __metadata:
     d3-force: ^2.1.1
     d3-scale-chromatic: 1.5.0
     dangerously-set-html-content: 1.0.9
-    date-fns: 2.27.0
+    date-fns: 2.28.0
     debounce-promise: 3.1.2
     emotion: 11.0.0
     enzyme: 3.11.0
     enzyme-to-json: 3.6.2
     eslint: 7.28.0
     eslint-config-prettier: 8.3.0
-    eslint-plugin-jsdoc: 37.4.0
+    eslint-plugin-jsdoc: 37.5.1
     eslint-plugin-lodash: ^7.2.0
     eslint-plugin-no-only-tests: 2.6.0
     eslint-plugin-prettier: 4.0.0
-    eslint-plugin-react: 7.27.1
+    eslint-plugin-react: 7.28.0
     eslint-plugin-react-hooks: 4.2.0
     eslint-webpack-plugin: 3.1.0
     eventemitter3: 4.0.0
@@ -19604,7 +19607,7 @@ __metadata:
     jest-date-mock: 1.0.8
     jest-junit: 13.0.0
     jest-matcher-utils: 27.4.2
-    jquery: 3.5.1
+    jquery: 3.6.0
     json-source-map: 0.6.1
     jsurl: ^0.1.5
     lerna: ^4.0.0
@@ -19623,7 +19626,7 @@ __metadata:
     monaco-promql: ^1.7.2
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
-    moveable: 0.26.0
+    moveable: 0.27.3
     mutationobserver-shim: 0.3.3
     ngtemplate-loader: 2.1.0
     node-notifier: ^10.0.0
@@ -19637,11 +19640,11 @@ __metadata:
     postcss-scss: 4.0.2
     prettier: 2.2.1
     prismjs: 1.25.0
-    prop-types: 15.7.2
+    prop-types: 15.8.0
     raw-loader: 4.0.2
     rc-cascader: 1.5.0
     rc-drawer: 4.4.0
-    rc-slider: 9.6.4
+    rc-slider: 9.7.5
     rc-time-picker: 3.7.3
     re-resizable: ^6.2.0
     react: 17.0.1
@@ -19649,12 +19652,12 @@ __metadata:
     react-diff-viewer: ^3.1.1
     react-dom: 17.0.1
     react-draggable: 4.4.4
-    react-grid-layout: 1.2.5
+    react-grid-layout: 1.3.0
     react-highlight-words: 0.17.0
     react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
     react-loadable: 5.5.0
-    react-moveable: 0.29.0
+    react-moveable: 0.30.3
     react-popper: 2.2.4
     react-redux: 7.2.5
     react-refresh: ^0.10.0
@@ -19666,7 +19669,7 @@ __metadata:
     react-split-pane: 0.1.89
     react-test-renderer: 17.0.1
     react-transition-group: 4.4.1
-    react-use: 17.2.4
+    react-use: 17.3.2
     react-virtualized-auto-sizer: 1.0.2
     react-window: 1.8.5
     redux: 4.1.1
@@ -23080,6 +23083,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jquery@npm:3.6.0":
+  version: 3.6.0
+  resolution: "jquery@npm:3.6.0"
+  checksum: 8fd5fef4aa48fd374ec716dd1c1df1af407814a228e15c1260ca140de3a697c2a77c30c54ff1d238b6a3ab4ddc445ddeef9adce6c6d28e4869d85eb9d3951c0e
+  languageName: node
+  linkType: hard
+
 "js-cookie@npm:^2.2.1":
   version: 2.2.1
   resolution: "js-cookie@npm:2.2.1"
@@ -23147,6 +23157,13 @@ __metadata:
   version: 2.0.0
   resolution: "jsdoc-type-pratt-parser@npm:2.0.0"
   checksum: 0e49e7e10a1ef047aa2cfcce9b5102214b9f8b5294593beba09bf825b115345c9efba153c422a6a649bbe0dca9aa5b4c8d34dca21e74ad42bd2252d7ecbda92d
+  languageName: node
+  linkType: hard
+
+"jsdoc-type-pratt-parser@npm:2.0.2, jsdoc-type-pratt-parser@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "jsdoc-type-pratt-parser@npm:2.0.2"
+  checksum: c04e0aec3eab6983956d2a23e778581eb90e69b5123e0da12a8fc9ecda967092443a67b12a878f280eed056a4a7d9b0bb3b35d04f1affb8eb5b003ccb51ea51f
   languageName: node
   linkType: hard
 
@@ -23534,6 +23551,13 @@ __metadata:
   version: 2.0.4
   resolution: "klona@npm:2.0.4"
   checksum: abc6690882e0e6f5cf70451b79a6de95a27be56ced283d1d6d7e610db7d824e5da1f142f8073466dfbcfa887ee001b98f6dcfbcf02759828ba356b90202a74c5
+  languageName: node
+  linkType: hard
+
+"klona@npm:^2.0.5":
+  version: 2.0.5
+  resolution: "klona@npm:2.0.5"
+  checksum: 8c976126ea252b766e648a4866e1bccff9d3b08432474ad80c559f6c7265cf7caede2498d463754d8c88c4759895edd8210c85c0d3155e6aae4968362889466f
   languageName: node
   linkType: hard
 
@@ -25201,13 +25225,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moveable@npm:0.26.0":
-  version: 0.26.0
-  resolution: "moveable@npm:0.26.0"
+"moveable@npm:0.27.3":
+  version: 0.27.3
+  resolution: "moveable@npm:0.27.3"
   dependencies:
     "@scena/event-emitter": ^1.0.3
-    react-compat-moveable: ~0.14.0
-  checksum: f4ee3b8b5562c60534ee7843125234fd549faf7c3be3e09c56e4ec4c12333f3d6715eed60314843bcf0ebe66585024e0dfe129f8d9848040bcbdc8be2da17de3
+    react-compat-moveable: ~0.15.2
+    react-simple-compat: ^1.2.1
+  checksum: 2c99a866da521ebdfb6111fd7e732f94ebfa19a7caa20125f2f0fcc4e4d378a5f8039e58bdb28111a6c1eb18ec8ecd935386acbc572bf5b2d8a0748594a5be19
   languageName: node
   linkType: hard
 
@@ -27470,20 +27495,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-loader@npm:6.1.1":
-  version: 6.1.1
-  resolution: "postcss-loader@npm:6.1.1"
-  dependencies:
-    cosmiconfig: ^7.0.0
-    klona: ^2.0.4
-    semver: ^7.3.5
-  peerDependencies:
-    postcss: ^7.0.0 || ^8.0.1
-    webpack: ^5.0.0
-  checksum: 3c32d123813efeaede39cbd990a5c2275d0feeb3e3d2b9ad8f0bbf37e1e6d28f24d3174e4eebe9db4f563d57052dc9b5fb3f699f7527f639769d88e907a99490
-  languageName: node
-  linkType: hard
-
 "postcss-loader@npm:6.2.0":
   version: 6.2.0
   resolution: "postcss-loader@npm:6.2.0"
@@ -27495,6 +27506,20 @@ __metadata:
     postcss: ^7.0.0 || ^8.0.1
     webpack: ^5.0.0
   checksum: 240a807b696ceab4fac88ca713a9264a322af49d021f5056da8d6ce00307d80d8ad429595221498b6c4d44edaf825b54e8d84b4eb7e517fec41e2909d4a5f75d
+  languageName: node
+  linkType: hard
+
+"postcss-loader@npm:6.2.1":
+  version: 6.2.1
+  resolution: "postcss-loader@npm:6.2.1"
+  dependencies:
+    cosmiconfig: ^7.0.0
+    klona: ^2.0.5
+    semver: ^7.3.5
+  peerDependencies:
+    postcss: ^7.0.0 || ^8.0.1
+    webpack: ^5.0.0
+  checksum: e40ae79c3e39df37014677a817b001bd115d8b10dedf53a07b97513d93b1533cd702d7a48831bdd77b9a9484b1ec84a5d4a723f80e83fb28682c75b5e65e8a90
   languageName: node
   linkType: hard
 
@@ -28527,7 +28552,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:15.7.2, prop-types@npm:15.x, prop-types@npm:^15.0.0, prop-types@npm:^15.5.0, prop-types@npm:^15.5.10, prop-types@npm:^15.5.4, prop-types@npm:^15.5.7, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.0, prop-types@npm:^15.7.2":
+"prop-types@npm:15.8.0":
+  version: 15.8.0
+  resolution: "prop-types@npm:15.8.0"
+  dependencies:
+    loose-envify: ^1.4.0
+    object-assign: ^4.1.1
+    react-is: ^16.13.1
+  checksum: d8d51cf55d70cab207dd1e80df2dc093b8288a4519598a28d25d32d6e02319b2fd66712caa979040451656185f7393341185b0b081158520557aa4cbdcaa4b3a
+  languageName: node
+  linkType: hard
+
+"prop-types@npm:15.x, prop-types@npm:^15.0.0, prop-types@npm:^15.5.0, prop-types@npm:^15.5.10, prop-types@npm:^15.5.4, prop-types@npm:^15.5.7, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.0, prop-types@npm:^15.7.2":
   version: 15.7.2
   resolution: "prop-types@npm:15.7.2"
   dependencies:
@@ -29009,19 +29045,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-slider@npm:9.6.4":
-  version: 9.6.4
-  resolution: "rc-slider@npm:9.6.4"
+"rc-slider@npm:9.7.5":
+  version: 9.7.5
+  resolution: "rc-slider@npm:9.7.5"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: ^2.2.5
     rc-tooltip: ^5.0.1
-    rc-util: ^5.0.0
+    rc-util: ^5.16.1
     shallowequal: ^1.1.0
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: e290ad937c8e55c29b8101bdcfe17e3e6d3664e22074c7f18af9b2ee9d358e706b42a7ddb9f87445afb8ff11ddad24aa7ccf38c8af2d694941514aca1c97aea3
+  checksum: e5b7b8e6036ea51d88e40c11c46e9c1639f5133fd1a6b5353c87547b1bc92393a291f9d0772a0465d1d139c9dbd14a349838861df86d33b1abb6a94593e7b17e
   languageName: node
   linkType: hard
 
@@ -29096,7 +29132,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-util@npm:^5.0.0, rc-util@npm:^5.0.1, rc-util@npm:^5.2.1, rc-util@npm:^5.3.0, rc-util@npm:^5.5.0, rc-util@npm:^5.7.0":
+"rc-util@npm:^5.0.1, rc-util@npm:^5.2.1, rc-util@npm:^5.3.0, rc-util@npm:^5.5.0, rc-util@npm:^5.7.0":
   version: 5.14.0
   resolution: "rc-util@npm:5.14.0"
   dependencies:
@@ -29107,6 +29143,20 @@ __metadata:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
   checksum: 9cf41398dbdcb55c94ec193fb234df211677390c6f9c273048d5a3923951930a99f3e0f293c0fb813858901f9590265d102ce3f892e7ce12b052d6128588cd72
+  languageName: node
+  linkType: hard
+
+"rc-util@npm:^5.16.1":
+  version: 5.16.1
+  resolution: "rc-util@npm:5.16.1"
+  dependencies:
+    "@babel/runtime": ^7.12.5
+    react-is: ^16.12.0
+    shallowequal: ^1.1.0
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: f2a6fd262d91d0b2ee1d84853c5ab212c9138b535ce5df8fa807fad4d8772539cbf0fee8cf7044ce9d47d8847950dfa5ae2f884c40eda9b0e9879050e4d549ec
   languageName: node
   linkType: hard
 
@@ -29169,13 +29219,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-colorful@npm:5.1.2":
-  version: 5.1.2
-  resolution: "react-colorful@npm:5.1.2"
+"react-colorful@npm:5.5.1":
+  version: 5.5.1
+  resolution: "react-colorful@npm:5.5.1"
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: f91fcadf159afc6285f57604615486e914fb7250ece776ba703a38ccc6d1067d3f84c256168c25c54221f59672694787aab781302aa42f167bbdc1c428df6db0
+  checksum: e60811781716e57f0990379eff20d6f22d4d35b9e858c47ecf857c1dc1c1a2274c924ded7248bad5f1e2fbf2aab06e59b12852910c8dee5e6850f8e4df293670
   languageName: node
   linkType: hard
 
@@ -29189,43 +29239,37 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-compat-css-styled@npm:^1.0.5":
-  version: 1.0.6
-  resolution: "react-compat-css-styled@npm:1.0.6"
+"react-compat-css-styled@npm:^1.0.8":
+  version: 1.0.8
+  resolution: "react-compat-css-styled@npm:1.0.8"
   dependencies:
     "@daybrush/utils": ^1.0.0
     css-styled: ^1.0.0
-    framework-utils: ^0.3.4
-    react-css-styled: ^1.0.2
-    react-simple-compat: ^1.1.0
-  peerDependencies:
-    framework-utils: ">=0.3.4"
-  checksum: cb3b9158879fa9ed2d238b1ef3fafd4609414312ad648f71fb8faefb5479ee0633c54835a5a618c4a6467bd8772be2d2d2487c5552c0d65eef8f7b6ac548d9de
+    framework-utils: ^1.1.0
+    react-css-styled: ^1.0.3
+  checksum: 7a8e51849ec957be380e1224579b90eff5ee1692ac880c125ddfa47c6b393be20bd449cd4fb602427b91be69357d7610c905e92c8dc791d88363729e707884d3
   languageName: node
   linkType: hard
 
-"react-compat-moveable@npm:~0.14.0":
-  version: 0.14.0
-  resolution: "react-compat-moveable@npm:0.14.0"
+"react-compat-moveable@npm:~0.15.2":
+  version: 0.15.2
+  resolution: "react-compat-moveable@npm:0.15.2"
   dependencies:
     "@daybrush/utils": ^1.6.0
     "@scena/dragscroll": ^1.0.1
-    react-compat-css-styled: ^1.0.5
-    react-moveable: ~0.29.0
-    react-simple-compat: ^1.2.1
-  checksum: 3aa4dbbeaa5c12d974d84c23f0567476cd14346ccc6b06f9b8062cda4c40bbd1f335bf21f5829ebdacf7e9f27803e6e8ffc5f9cbed35cb008049730b27388bc5
+    react-compat-css-styled: ^1.0.8
+    react-moveable: ~0.30.3
+  checksum: 65c8e8b54af6df4b4fddeab957ed97f2fe6d73cdc903903e70f2391d3f179b8b75772fae07754a1e26dfd1c60320be7f720b5b511124e5d7e74e9cef786a2c03
   languageName: node
   linkType: hard
 
-"react-css-styled@npm:^1.0.1, react-css-styled@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "react-css-styled@npm:1.0.2"
+"react-css-styled@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "react-css-styled@npm:1.0.3"
   dependencies:
     css-styled: ^1.0.0
-    framework-utils: ^0.3.4
-  peerDependencies:
-    framework-utils: ">=0.3.4"
-  checksum: a05f3fd46eff98af574f134e58bad0b2b5cafc404878d7142a5870858050169b5148368c9b273f74e25da2f09b79341aecff5a2b7114220a7f5b518755cbe7a1
+    framework-utils: ^1.1.0
+  checksum: 8dbfcc037483f57e701140c160fc5e5eed6e423d6eb78a69ff8ae6713f5f7135fd2852e461e63b2d0d1311e5ba272b7a03e7f5eab25baf45095d86abc9d566f4
   languageName: node
   linkType: hard
 
@@ -29369,16 +29413,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dropzone@npm:11.3.4":
-  version: 11.3.4
-  resolution: "react-dropzone@npm:11.3.4"
+"react-dropzone@npm:11.4.2":
+  version: 11.4.2
+  resolution: "react-dropzone@npm:11.4.2"
   dependencies:
     attr-accept: ^2.2.1
     file-selector: ^0.2.2
     prop-types: ^15.7.2
   peerDependencies:
     react: ">= 16.8"
-  checksum: 602ac4e41a39d9ef8b475faed0c5d5429116150c2cdd1cceb98992d741769865212ceb9d379e9886c4c101b8a65d06f16395dee530e949830bf0bb60d46d29b4
+  checksum: f8dc6af69193133efe30ed11dd8c2212a180abd3833e91d03dab4bdc9546d47dcad311d7f72b4968b7d016871884555b9e16f7a490913b78dbfec8ce8f569193
   languageName: node
   linkType: hard
 
@@ -29430,19 +29474,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-grid-layout@npm:1.2.5":
-  version: 1.2.5
-  resolution: "react-grid-layout@npm:1.2.5"
+"react-grid-layout@npm:1.3.0":
+  version: 1.3.0
+  resolution: "react-grid-layout@npm:1.3.0"
   dependencies:
     classnames: 2.3.1
     lodash.isequal: ^4.0.0
     prop-types: ^15.0.0
     react-draggable: ^4.0.0
-    react-resizable: ^3.0.1
+    react-resizable: ^3.0.4
   peerDependencies:
     react: ">= 16.3.0"
     react-dom: ">= 16.3.0"
-  checksum: 800d727c8a5d0ced70b56bc8e2a8c51a25d3158c79d84ccf08863fedd1790ab123d4ba49a8b4a2c4f065b590e495303484ad28dd121aca3431515d6b35bf6369
+  checksum: 955c135dcc14e86f573141e75b211e08e68f1d4f4ea2d0849652410dfc41715d89507abf1d28c2de4326b201f2e4138a2c2796561e917a2ee8b932adf40864bb
   languageName: node
   linkType: hard
 
@@ -29568,7 +29612,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-lifecycles-compat@npm:^3.0.4":
+"react-lifecycles-compat@npm:^3.0.2, react-lifecycles-compat@npm:^3.0.4":
   version: 3.0.4
   resolution: "react-lifecycles-compat@npm:3.0.4"
   checksum: a904b0fc0a8eeb15a148c9feb7bc17cec7ef96e71188280061fc340043fd6d8ee3ff233381f0e8f95c1cf926210b2c4a31f38182c8f35ac55057e453d6df204f
@@ -29586,21 +29630,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-moveable@npm:0.29.0, react-moveable@npm:~0.29.0":
-  version: 0.29.0
-  resolution: "react-moveable@npm:0.29.0"
+"react-moveable@npm:0.30.3, react-moveable@npm:~0.30.3":
+  version: 0.30.3
+  resolution: "react-moveable@npm:0.30.3"
   dependencies:
     "@daybrush/utils": ^1.6.0
     "@egjs/agent": ^2.2.1
     "@egjs/children-differ": ^1.0.1
-    "@scena/dragscroll": ^1.0.1
+    "@scena/dragscroll": ^1.0.3
     "@scena/matrix": ^1.1.1
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
     gesto: ^1.2.1
     overlap-area: ^1.0.0
-    react-css-styled: ^1.0.1
-  checksum: 00c09100017873826f47dab061181529bfa753341cec8e48c809931c5c6d1bbbc6eebf3186f4d7055ad3cf180f93f042b4dc868903984879afeec307af1050ae
+    react-css-styled: ^1.0.3
+  checksum: 552528854d01ce4abb7a6346c489f1fcf920f288e7a06d03ab893fef2ad1586900dc7c1241dd332d41bf8256ac378fd265f8c33c2bbfcc9e522b5572564c1cb7
   languageName: node
   linkType: hard
 
@@ -29693,7 +29737,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-resizable@npm:3.0.4, react-resizable@npm:^3.0.1":
+"react-resizable@npm:3.0.4, react-resizable@npm:^3.0.4":
   version: 3.0.4
   resolution: "react-resizable@npm:3.0.4"
   dependencies:
@@ -29834,7 +29878,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-simple-compat@npm:1.2.1, react-simple-compat@npm:^1.1.0, react-simple-compat@npm:^1.2.1":
+"react-simple-compat@npm:1.2.1, react-simple-compat@npm:^1.2.1":
   version: 1.2.1
   resolution: "react-simple-compat@npm:1.2.1"
   dependencies:
@@ -29996,9 +30040,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-use@npm:17.2.4":
-  version: 17.2.4
-  resolution: "react-use@npm:17.2.4"
+"react-use@npm:17.3.2":
+  version: 17.3.2
+  resolution: "react-use@npm:17.3.2"
   dependencies:
     "@types/js-cookie": ^2.2.6
     "@xobotyi/scrollbar-width": ^1.9.5
@@ -30017,7 +30061,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0  || ^17.0.0
     react-dom: ^16.8.0  || ^17.0.0
-  checksum: 3c885c3798bb07581f78f8445c0a9545c1bb8876ea5bdbe0236ebf3f923dc3572a0f71324f02ecddb8515b0625d7f3e2560da751bdf51f5a2fdb47290a689292
+  checksum: 7379460f51b78c5375f8e039f59305c55efb75205d49a18d579154fcccfddf98fa9460a734e7d4cf3b1be8f1c15ec86feeab0d846fbaaa1fea425da83aaf117c
   languageName: node
   linkType: hard
 
@@ -30290,17 +30334,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"recompose@npm:^0.25.0":
-  version: 0.25.1
-  resolution: "recompose@npm:0.25.1"
+"recompose@npm:0.30.0":
+  version: 0.30.0
+  resolution: "recompose@npm:0.30.0"
   dependencies:
+    "@babel/runtime": ^7.0.0
     change-emitter: ^0.1.2
     fbjs: ^0.8.1
     hoist-non-react-statics: ^2.3.1
+    react-lifecycles-compat: ^3.0.2
     symbol-observable: ^1.0.4
   peerDependencies:
     react: ^0.14.0 || ^15.0.0 || ^16.0.0
-  checksum: 02470bf14db152bb158dfb8227b91449048c56fc5a55a1879c810a54202a0fd2025275be9dabf61054dc33e8162f6ec1af0b29466ab2694702553dd77fedb578
+  checksum: 18e58252336d0628b22db1e38407d32e836648e6d5c9453ba37c9f8030138b3429ee3952b053a13b60311f8b60893b207a761466bb293083542db0cf317b7a41
   languageName: node
   linkType: hard
 

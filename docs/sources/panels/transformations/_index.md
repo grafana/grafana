@@ -29,7 +29,7 @@ Before you can configure and apply transformations:
 - [Add field from calculation]({{< relref "./types-options.md#add-field-from-calculation" >}})
 - [Concatenate fields]({{< relref "./types-options.md#concatenate-fields" >}})
 - [Config from query results]({{< relref "./config-from-query.md" >}})
-- [Convert field type]({{< relref "./convert-field-type.md" >}})
+- [Convert field type]({{< relref "./types-options.md#convert-field-type" >}})
 - [Filter data by name]({{< relref "./types-options.md#filter-data-by-name" >}})
 - [Filter data by query]({{< relref "./types-options.md#filter-data-by-query" >}})
 - [Filter data by value]({{< relref "./types-options.md#filter-data-by-value" >}})
