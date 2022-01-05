@@ -3,12 +3,12 @@ import { FeatureFlagInfo, FeatureToggles } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { useAsync } from 'react-use';
 import Page from 'app/core/components/Page/Page';
-import { Card, TagList } from '@grafana/ui';
+import { Card, TagList, VerticalGroup, Alert } from '@grafana/ui';
 
 interface FeatureSettings {
   enabled: FeatureToggles;
   info: FeatureFlagInfo[];
-  messages?: string[];
+  notice?: string[];
 }
 
 export const AdminFeatureInfo: FC = () => {
@@ -23,6 +23,14 @@ export const AdminFeatureInfo: FC = () => {
   return (
     <Page.Contents isLoading={loading}>
       <div>
+        {features?.notice?.length && (
+          <VerticalGroup>
+            {features.notice.map((m, idx) => (
+              <Alert key={idx} severity={'warning'} title={m} />
+            ))}
+          </VerticalGroup>
+        )}
+
         {enabled.length && (
           <div>
             <h2>Enabled feature flags:</h2>

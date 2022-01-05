@@ -50,9 +50,9 @@ type FeatureToggleInfo struct {
 }
 
 type FeatureToggles struct {
-	info     []FeatureToggleInfo
-	enabled  map[string]bool // only the "on" values
-	messages []string
+	info    []FeatureToggleInfo
+	enabled map[string]bool // only the "on" values
+	notice  []string
 }
 
 // WithFeatureToggles is used to define feature toggles for testing.
@@ -94,7 +94,7 @@ func (ft FeatureToggles) MarshalJSON() ([]byte, error) {
 	res := make(map[string]interface{}, 3)
 	res["enabled"] = ft.enabled
 	res["info"] = ft.info
-	res["messagges"] = ft.messages
+	res["notice"] = ft.notice
 	return json.Marshal(res)
 }
 
@@ -155,12 +155,12 @@ func loadFeatureTogglesFromConfiguration(opts featureFlagOptions) (*FeatureToggl
 		if info.Enabled {
 			if info.RequiresDevMode && !opts.isDev {
 				info.Enabled = false
-				ff.messages = append(ff.messages, "(%s) can only run in development mode", info.Id)
+				ff.notice = append(ff.notice, "(%s) can only run in development mode", info.Id)
 			}
 
 			if info.RequiresEnterprise && !opts.isEnterprise {
 				info.Enabled = false
-				ff.messages = append(ff.messages, "(%s) requires an enterprise license", info.Id)
+				ff.notice = append(ff.notice, "(%s) requires an enterprise license", info.Id)
 			}
 		}
 
@@ -195,6 +195,6 @@ func setToggle(registry map[string]*FeatureToggleInfo, key string, val bool, ff 
 		info.Enabled = val
 	} else {
 		ff.enabled[key] = val // register it even when unknown
-		ff.messages = append(ff.messages, fmt.Sprintf("Unknown feature toggle: %s", key))
+		ff.notice = append(ff.notice, fmt.Sprintf("Unknown feature toggle: %s", key))
 	}
 }
