@@ -124,52 +124,52 @@ var (
 )
 
 func (ft *FeatureToggles) IsRecordedQueriesEnabled() bool {
-	return ft.flags[featureToggle_recordedQueries]
+	return ft.enabled[featureToggle_recordedQueries]
 }
 
 func (ft *FeatureToggles) IsLiveConfigEnabled() bool {
-	return ft.flags[featureToggle_live_config]
+	return ft.enabled[featureToggle_live_config]
 }
 
 func (ft *FeatureToggles) IsLivePipelineEnabled() bool {
-	return ft.flags[featureToggle_live_pipeline]
+	return ft.enabled[featureToggle_live_pipeline]
 }
 
 func (ft *FeatureToggles) IsDashboardPreviesEnabled() bool {
-	return ft.flags[featureToggle_dashboardPreviews]
+	return ft.enabled[featureToggle_dashboardPreviews]
 }
 
 func (ft *FeatureToggles) IsTrimDefaultsEnabled() bool {
-	return ft.flags[featureToggle_trimDefaults]
+	return ft.enabled[featureToggle_trimDefaults]
 }
 
 func (ft *FeatureToggles) IsDatabaseMetricsEnabled() bool {
-	return ft.flags[featureToggle_database_metrics]
+	return ft.enabled[featureToggle_database_metrics]
 }
 
 // IsHTTPRequestHistogramDisabled returns whether the request historgrams is disabled.
 // This feature toggle will be removed in Grafana 8.x but gives the operator
 // some graceperiod to update all the monitoring tools.
 func (ft *FeatureToggles) IsHTTPRequestHistogramDisabled() bool {
-	return ft.flags[featureToggle_disable_http_request_histogram]
+	return ft.enabled[featureToggle_disable_http_request_histogram]
 }
 
 func (ft *FeatureToggles) IsNewNavigationEnabled() bool {
-	return ft.flags[featureToggle_newNavigation]
+	return ft.enabled[featureToggle_newNavigation]
 }
 
 func (ft *FeatureToggles) IsServiceAccountsEnabled() bool {
-	return ft.flags[featureToggle_service_accounts]
+	return ft.enabled[featureToggle_service_accounts]
 }
 
 func (ft *FeatureToggles) IsAccessControlEnabled() bool {
-	return ft.flags[featureToggle_accesscontrol]
+	return ft.enabled[featureToggle_accesscontrol]
 }
 
 func (ft *FeatureToggles) IsAzureAuthHttpProviderEnabled() bool {
-	return ft.flags[featureToggle_httpclientprovider_azure_auth]
+	return ft.enabled[featureToggle_httpclientprovider_azure_auth]
 }
 
 func (ft *FeatureToggles) IsSecretsEnvelopeEncryptionEnabled() bool {
-	return ft.flags[featureToggle_secrets_envelopeEncryption]
+	return ft.enabled[featureToggle_secrets_envelopeEncryption]
 }
