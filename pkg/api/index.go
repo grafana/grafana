@@ -143,7 +143,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 }
 
 func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
-	return c.OrgRole == models.ROLE_ADMIN && hs.Cfg.IsServiceAccountEnabled() && hs.serviceAccountsService.Migrated(c.Req.Context(), c.OrgId)
+	return c.OrgRole == models.ROLE_ADMIN && hs.Cfg.Features.IsServiceAccountsEnabled() && hs.serviceAccountsService.Migrated(c.Req.Context(), c.OrgId)
 }
 
 func enableTeams(hs *HTTPServer, c *models.ReqContext) bool {

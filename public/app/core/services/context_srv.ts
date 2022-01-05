@@ -82,13 +82,13 @@ export class ContextSrv {
   }
 
   accessControlEnabled(): boolean {
-    return config.licenseInfo.hasLicense && config.featureToggles['accesscontrol'];
+    return config.licenseInfo.hasLicense && !!config.featureToggles.accesscontrol;
   }
 
   // Checks whether user has required permission
   hasPermissionInMetadata(action: AccessControlAction | string, object: WithAccessControlMetadata): boolean {
     // Fallback if access control disabled
-    if (!config.featureToggles['accesscontrol']) {
+    if (!config.featureToggles.accesscontrol) {
       return true;
     }
 
@@ -98,7 +98,7 @@ export class ContextSrv {
   // Checks whether user has required permission
   hasPermission(action: AccessControlAction | string): boolean {
     // Fallback if access control disabled
-    if (!config.featureToggles['accesscontrol']) {
+    if (!config.featureToggles.accesscontrol) {
       return true;
     }
 
@@ -125,14 +125,14 @@ export class ContextSrv {
   }
 
   hasAccessToExplore() {
-    if (config.featureToggles['accesscontrol']) {
+    if (config.featureToggles.accesscontrol) {
       return this.hasPermission(AccessControlAction.DataSourcesExplore);
     }
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
 
   hasAccess(action: string, fallBack: boolean) {
-    if (!config.featureToggles['accesscontrol']) {
+    if (!config.featureToggles.accesscontrol) {
       return fallBack;
     }
     return this.hasPermission(action);
@@ -140,7 +140,7 @@ export class ContextSrv {
 
   // evaluates access control permissions, granting access if the user has any of them; uses fallback if access control is disabled
   evaluatePermission(fallback: () => string[], actions: string[]) {
-    if (!config.featureToggles['accesscontrol']) {
+    if (!config.featureToggles.accesscontrol) {
       return fallback();
     }
     if (actions.some((action) => this.hasPermission(action))) {

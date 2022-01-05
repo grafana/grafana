@@ -3,7 +3,7 @@ import {
   BuildInfo,
   createTheme,
   DataSourceInstanceSettings,
-  defalutFeatureToggles,
+  FeatureToggles,
   GrafanaConfig,
   GrafanaTheme,
   GrafanaTheme2,
@@ -61,7 +61,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: PreloadPlugin[] = [];
-  featureToggles = defalutFeatureToggles;
+  featureToggles: FeatureToggles = {};
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   rendererVersion = '';

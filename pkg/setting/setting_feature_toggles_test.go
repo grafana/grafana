@@ -147,25 +147,14 @@ func generateTypeScript() string {
  * @public
  */
 export interface FeatureToggles {
-  // [name: string]: boolean; // support any string value
+  // [name: string]?: boolean; // support any string value
 
 `
 	for _, flag := range featureToggleRegistry {
-		buf += "  " + getTypeScriptKey(flag.Id) + ": boolean;\n"
+		buf += "  " + getTypeScriptKey(flag.Id) + "?: boolean;\n"
 	}
 
-	buf += `}
-
-/**
- * @public
- */
-export const defalutFeatureToggles: FeatureToggles = {
-`
-	for _, flag := range featureToggleRegistry {
-		buf += "  " + getTypeScriptKey(flag.Id) + ": " + strconv.FormatBool(flag.Enabled) + ",\n"
-	}
-
-	buf += "};\n"
+	buf += "}\n"
 
 	return buf
 }

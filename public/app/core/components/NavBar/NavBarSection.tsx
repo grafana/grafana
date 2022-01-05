@@ -10,7 +10,7 @@ export interface Props {
 }
 
 export function NavBarSection({ children, className }: Props) {
-  const newNavigationEnabled = config.featureToggles.newNavigation;
+  const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
   const theme = useTheme2();
   const styles = getStyles(theme, newNavigationEnabled);
 
