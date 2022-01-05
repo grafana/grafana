@@ -9,7 +9,9 @@ import (
 type Service interface {
 	CreateServiceAccount(ctx context.Context, saForm *CreateServiceaccountForm) (*models.User, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
+	Migrated(ctx context.Context, orgID int64) bool
 }
+
 type Store interface {
 	CreateServiceAccount(ctx context.Context, saForm *CreateServiceaccountForm) (*models.User, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error

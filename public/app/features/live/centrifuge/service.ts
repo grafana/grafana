@@ -2,11 +2,13 @@ import Centrifuge from 'centrifuge/dist/centrifuge';
 import {
   GrafanaLiveSrv,
   LiveDataStreamOptions,
+  LiveQueryDataOptions,
   StreamingFrameAction,
   StreamingFrameOptions,
 } from '@grafana/runtime/src/services/live';
 import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
 import {
+  DataQueryError,
   DataQueryResponse,
   LiveChannelAddress,
   LiveChannelConnectionState,
@@ -16,6 +18,8 @@ import {
 import { CentrifugeLiveChannel } from './channel';
 import { LiveDataStream } from './LiveDataStream';
 import { StreamingResponseData } from '../data/utils';
+import { BackendDataSourceResponse } from '@grafana/runtime/src/utils/queryResponse';
+import { FetchResponse } from '@grafana/runtime/src/services/backendSrv';
 
 export type CentrifugeSrvDeps = {
   appUrl: string;
@@ -28,8 +32,15 @@ export type CentrifugeSrvDeps = {
 
 export type StreamingDataQueryResponse = Omit<DataQueryResponse, 'data'> & { data: [StreamingResponseData] };
 
-export type CentrifugeSrv = Omit<GrafanaLiveSrv, 'publish' | 'getDataStream'> & {
+export type CentrifugeSrv = Omit<GrafanaLiveSrv, 'publish' | 'getDataStream' | 'getQueryData'> & {
   getDataStream: (options: LiveDataStreamOptions) => Observable<StreamingDataQueryResponse>;
+  getQueryData: (
+    options: LiveQueryDataOptions
+  ) => Promise<
+    | { data: BackendDataSourceResponse | undefined }
+    | FetchResponse<BackendDataSourceResponse | undefined>
+    | DataQueryError
+  >;
 };
 
 export type DataStreamSubscriptionKey = string;
@@ -53,7 +64,9 @@ export class CentrifugeService implements CentrifugeSrv {
   constructor(private deps: CentrifugeSrvDeps) {
     this.dataStreamSubscriberReadiness = deps.dataStreamSubscriberReadiness.pipe(share(), startWith(true));
     const liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
-    this.centrifuge = new Centrifuge(liveUrl, {});
+    this.centrifuge = new Centrifuge(liveUrl, {
+      timeout: 30000,
+    });
     this.centrifuge.setConnectData({
       sessionId: deps.sessionId,
       orgId: deps.orgId,
@@ -125,7 +138,7 @@ export class CentrifugeService implements CentrifugeSrv {
       this.open.delete(id);
     });
 
-    // return the not-yet initalized channel
+    // return the not-yet initialized channel
     return channel;
   }
 
@@ -188,6 +201,15 @@ export class CentrifugeService implements CentrifugeSrv {
 
     const stream = this.getLiveDataStream(options);
     return stream.get(options, subscriptionKey);
+  };
+
+  /**
+   * Executes a query over the live websocket. Query response can contain live channels we can subscribe to for further updates
+   *
+   * Since the initial request and subscription are on the same socket, this will support HA setups
+   */
+  getQueryData: CentrifugeSrv['getQueryData'] = async (options) => {
+    return this.centrifuge.namedRPC('grafana.query', options.body);
   };
 
   /**
