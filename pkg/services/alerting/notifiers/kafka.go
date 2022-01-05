@@ -124,7 +124,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 		},
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		kn.log.Error("Failed to send notification to Kafka", "error", err, "body", string(body))
 		return err
 	}

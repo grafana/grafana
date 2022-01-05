@@ -118,7 +118,7 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn
 		IconURL:        model.Settings.Get("icon_url").MustString(),
 		Token:          token,
 		Text:           model.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
-		Title:          model.Settings.Get("title").MustString(`{{ template "default.title" . }}`),
+		Title:          model.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
 		log:            log.New("alerting.notifier.slack"),
 		tmpl:           t,
 	}, nil
@@ -269,7 +269,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 		},
 	}
 	if tmplErr != nil {
-		sn.log.Debug("failed to template Slack message", "err", tmplErr.Error())
+		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())
 	}
 
 	mentionsBuilder := strings.Builder{}

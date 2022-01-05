@@ -22,3 +22,5 @@ export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsW
     </div>
   );
 });
+
+IndicatorsContainer.displayName = 'IndicatorsContainer';

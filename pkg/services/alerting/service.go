@@ -24,19 +24,19 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService enc
 		EncryptionService: encryptionService,
 	}
 
-	s.Bus.AddHandlerCtx(s.GetAlertNotifications)
-	s.Bus.AddHandlerCtx(s.CreateAlertNotificationCommand)
-	s.Bus.AddHandlerCtx(s.UpdateAlertNotification)
-	s.Bus.AddHandlerCtx(s.DeleteAlertNotification)
-	s.Bus.AddHandlerCtx(s.GetAllAlertNotifications)
-	s.Bus.AddHandlerCtx(s.GetOrCreateAlertNotificationState)
-	s.Bus.AddHandlerCtx(s.SetAlertNotificationStateToCompleteCommand)
-	s.Bus.AddHandlerCtx(s.SetAlertNotificationStateToPendingCommand)
-	s.Bus.AddHandlerCtx(s.GetAlertNotificationsWithUid)
-	s.Bus.AddHandlerCtx(s.UpdateAlertNotificationWithUid)
-	s.Bus.AddHandlerCtx(s.DeleteAlertNotificationWithUid)
-	s.Bus.AddHandlerCtx(s.GetAlertNotificationsWithUidToSend)
-	s.Bus.AddHandlerCtx(s.HandleNotificationTestCommand)
+	s.Bus.AddHandler(s.GetAlertNotifications)
+	s.Bus.AddHandler(s.CreateAlertNotificationCommand)
+	s.Bus.AddHandler(s.UpdateAlertNotification)
+	s.Bus.AddHandler(s.DeleteAlertNotification)
+	s.Bus.AddHandler(s.GetAllAlertNotifications)
+	s.Bus.AddHandler(s.GetOrCreateAlertNotificationState)
+	s.Bus.AddHandler(s.SetAlertNotificationStateToCompleteCommand)
+	s.Bus.AddHandler(s.SetAlertNotificationStateToPendingCommand)
+	s.Bus.AddHandler(s.GetAlertNotificationsWithUid)
+	s.Bus.AddHandler(s.UpdateAlertNotificationWithUid)
+	s.Bus.AddHandler(s.DeleteAlertNotificationWithUid)
+	s.Bus.AddHandler(s.GetAlertNotificationsWithUidToSend)
+	s.Bus.AddHandler(s.HandleNotificationTestCommand)
 
 	return s
 }

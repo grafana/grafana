@@ -72,7 +72,7 @@ func TestWhenAlertManagerShouldNotify(t *testing.T) {
 
 		evalContext.Rule.State = tc.newState
 
-		res := am.ShouldNotify(context.TODO(), evalContext, &models.AlertNotificationState{})
+		res := am.ShouldNotify(context.Background(), evalContext, &models.AlertNotificationState{})
 		if res != tc.expect {
 			t.Errorf("got %v expected %v", res, tc.expect)
 		}

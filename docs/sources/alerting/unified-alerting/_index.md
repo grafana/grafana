@@ -15,7 +15,7 @@ When Grafana alerting is enabled, you can:
 - [View existing alerting rules and manage their current state]({{< relref "alerting-rules/rule-list.md" >}})
 - [View the state and health of alerting rules]({{< relref "./fundamentals/state-and-health.md" >}})
 - [Add or edit an alert contact point]({{< relref "./contact-points.md" >}})
-- [Add or edit notification policies]({{< relref "./notification-policies.md" >}})
+- [Add or edit notification policies]({{< relref "./notifications/_index.md" >}})
 - [Add or edit silences]({{< relref "./silences.md" >}})
 
 Before you begin using Grafana alerting, we recommend that you familiarize yourself with some [basic concepts]({{< relref "./fundamentals/_index.md" >}}) of Grafana alerting.

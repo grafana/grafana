@@ -116,8 +116,8 @@ func (st *Manager) Warm() {
 	}
 }
 
-func (st *Manager) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *State {
-	return st.cache.getOrCreate(alertRule, result)
+func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
+	return st.cache.getOrCreate(ctx, alertRule, result)
 }
 
 func (st *Manager) set(entry *State) {
@@ -153,7 +153,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
-	currentState := st.getOrCreate(alertRule, result)
+	currentState := st.getOrCreate(ctx, alertRule, result)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration

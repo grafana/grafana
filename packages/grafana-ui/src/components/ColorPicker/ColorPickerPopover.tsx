@@ -144,6 +144,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       border-radius: ${theme.shape.borderRadius()};
       box-shadow: ${theme.shadows.z3};
       background: ${theme.colors.background.primary};
+      border: 1px solid ${theme.colors.border.medium};
 
       .ColorPickerPopover__tab {
         width: 50%;
@@ -151,8 +152,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
         padding: ${theme.spacing(1, 0)};
         background: ${theme.colors.background.secondary};
         color: ${theme.colors.text.secondary};
+        font-size: ${theme.typography.bodySmall.fontSize};
         cursor: pointer;
         border: none;
+
+        &:focus:not(:focus-visible) {
+          outline: none;
+          box-shadow: none;
+        }
       }
 
       .ColorPickerPopover__tab--active {
@@ -162,17 +169,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
     `,
     colorPickerPopoverContent: css`
-      width: 266px;
+      width: 246px;
       font-size: ${theme.typography.bodySmall.fontSize};
       min-height: 184px;
-      padding: ${theme.spacing(2, 0)};
+      padding: ${theme.spacing(1)};
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
     `,
     colorPickerPopoverTabs: css`
       display: flex;
-      column-gap: 10px;
       width: 100%;
       border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
     `,

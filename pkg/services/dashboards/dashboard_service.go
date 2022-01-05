@@ -32,6 +32,7 @@ type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
+	GetProvisionedDashboardDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
 	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
@@ -81,6 +82,10 @@ func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(dashboa
 	return GetProvisionedData(dr.dashboardStore, dashboardID)
 }
 
+func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
+	return dr.dashboardStore.GetProvisionedDataByDashboardUID(orgID, dashboardUID)
+}
+
 func (dr *dashboardServiceImpl) buildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool,
 	validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
@@ -124,7 +129,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if isParentFolderChanged {
-		folderGuardian := guardian.New(context.TODO(), dash.FolderId, dto.OrgId, dto.User)
+		folderGuardian := guardian.New(ctx, dash.FolderId, dto.OrgId, dto.User)
 		if canSave, err := folderGuardian.CanSave(); err != nil || !canSave {
 			if err != nil {
 				return nil, err
@@ -144,7 +149,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(ctx context.Context, d
 		}
 	}
 
-	guard := guardian.New(context.TODO(), dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
+	guard := guardian.New(ctx, dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
 	if canSave, err := guard.CanSave(); err != nil || !canSave {
 		if err != nil {
 			return nil, err
@@ -319,7 +324,7 @@ func (dr *dashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 		}
 	}
 	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
-	return bus.DispatchCtx(ctx, cmd)
+	return bus.Dispatch(ctx, cmd)
 }
 
 func (dr *dashboardServiceImpl) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (
@@ -348,7 +353,7 @@ func (dr *dashboardServiceImpl) ImportDashboard(ctx context.Context, dto *SaveDa
 // and provisioned dashboards are left behind but not deleted.
 func (dr *dashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashboardId int64) error {
 	cmd := &models.UnprovisionDashboardCommand{Id: dashboardId}
-	return bus.DispatchCtx(ctx, cmd)
+	return bus.Dispatch(ctx, cmd)
 }
 
 type FakeDashboardService struct {
@@ -371,7 +376,7 @@ func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *SaveDashb
 }
 
 func (s *FakeDashboardService) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error) {
-	return s.SaveDashboard(context.Background(), dto, true)
+	return s.SaveDashboard(ctx, dto, true)
 }
 
 func (s *FakeDashboardService) DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
