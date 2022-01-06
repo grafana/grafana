@@ -183,6 +183,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/org/serviceaccounts',
+      roles: () => ['Editor', 'Admin'],
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "ServiceAccountsPage" */ 'app/features/serviceaccounts/ServiceAccountsListPage')
+      ),
+    },
+    {
       path: '/org/teams',
       roles: () => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList')),

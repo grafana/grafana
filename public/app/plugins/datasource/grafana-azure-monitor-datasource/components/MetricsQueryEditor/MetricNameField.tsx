@@ -34,6 +34,7 @@ const MetricNameField: React.FC<MetricNameProps> = ({ metricNames, query, variab
         onChange={handleChange}
         options={options}
         width={38}
+        allowCustomValue
       />
     </Field>
   );

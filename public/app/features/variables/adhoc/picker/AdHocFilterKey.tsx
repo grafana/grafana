@@ -7,12 +7,13 @@ interface Props {
   datasource: DataSourceRef;
   filterKey: string | null;
   onChange: (item: SelectableValue<string | null>) => void;
+  getTagKeysOptions?: any;
 }
 
 const MIN_WIDTH = 90;
-export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, filterKey }) => {
-  const loadKeys = () => fetchFilterKeys(datasource);
-  const loadKeysWithRemove = () => fetchFilterKeysWithRemove(datasource);
+export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, filterKey, getTagKeysOptions }) => {
+  const loadKeys = () => fetchFilterKeys(datasource, getTagKeysOptions);
+  const loadKeysWithRemove = () => fetchFilterKeysWithRemove(datasource, getTagKeysOptions);
 
   if (filterKey === null) {
     return (
@@ -51,18 +52,24 @@ const plusSegment: ReactElement = (
   </a>
 );
 
-const fetchFilterKeys = async (datasource: DataSourceRef): Promise<Array<SelectableValue<string>>> => {
+const fetchFilterKeys = async (
+  datasource: DataSourceRef,
+  getTagKeysOptions?: any
+): Promise<Array<SelectableValue<string>>> => {
   const ds = await getDatasourceSrv().get(datasource);
 
   if (!ds || !ds.getTagKeys) {
     return [];
   }
 
-  const metrics = await ds.getTagKeys();
+  const metrics = await ds.getTagKeys(getTagKeysOptions);
   return metrics.map((m) => ({ label: m.text, value: m.text }));
 };
 
-const fetchFilterKeysWithRemove = async (datasource: DataSourceRef): Promise<Array<SelectableValue<string>>> => {
-  const keys = await fetchFilterKeys(datasource);
+const fetchFilterKeysWithRemove = async (
+  datasource: DataSourceRef,
+  getTagKeysOptions?: any
+): Promise<Array<SelectableValue<string>>> => {
+  const keys = await fetchFilterKeys(datasource, getTagKeysOptions);
   return [REMOVE_VALUE, ...keys];
 };

@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/inconshreveable/log15"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -357,11 +356,11 @@ type testPlugin struct {
 }
 
 type fakeLogger struct {
-	log.Logger
+	log.MultiLoggers
 }
 
-func (f fakeLogger) New(_ ...interface{}) log15.Logger {
-	return fakeLogger{}
+func (f fakeLogger) New(_ ...interface{}) log.MultiLoggers {
+	return log.MultiLoggers{}
 }
 
 func (f fakeLogger) Warn(_ string, _ ...interface{}) {
