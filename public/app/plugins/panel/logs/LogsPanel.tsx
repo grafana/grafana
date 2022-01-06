@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useLayoutEffect, useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
 import {
@@ -16,6 +16,7 @@ import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { COMMON_LABELS } from '../../../core/logs_model';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
+import { cloneDeep } from 'lodash';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -39,6 +40,11 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   const style = useStyles2(getStyles(title, isAscending));
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
+  const [newData, setNewData] = useState(data);
+
+  useEffect(() => {
+    setNewData(data);
+  }, [data]);
 
   const { eventBus } = usePanelContext();
   const onLogRowHover = useCallback(
@@ -60,12 +66,12 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
-    const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs) : null;
+    const newResults = newData ? dataFrameToLogsModel(newData.series, newData.request?.intervalMs) : null;
     const logRows = newResults?.rows || [];
     const commonLabels = newResults?.meta?.find((m) => m.label === COMMON_LABELS);
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
-  }, [data, dedupStrategy]);
+  }, [newData, dedupStrategy]);
 
   useLayoutEffect(() => {
     if (isAscending && logsContainerRef.current) {
@@ -77,13 +83,42 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   const getFieldLinks = useCallback(
     (field: Field, rowIndex: number) => {
-      return getFieldLinksForExplore({ field, rowIndex, range: data.timeRange });
+      return getFieldLinksForExplore({ field, rowIndex, range: newData.timeRange });
     },
-    [data]
+    [newData]
   );
 
-  if (!data || logRows.length === 0) {
-    return <PanelDataErrorView panelId={id} data={data} needsStringField />;
+  useEffect(() => {
+    const postMessage = (msg: any) => {
+      const clonedData = cloneDeep(newData);
+      const fields = clonedData.series[0].fields;
+      const time = fields[0];
+      const message = fields[1];
+      const containerId = fields[2];
+      const hostname = fields[3];
+      //@ts-ignore
+      time.values.add(Date.now());
+      //@ts-ignore
+      message.values.add(msg.data);
+      //@ts-ignore
+      containerId.values.add('fusebit');
+      //@ts-ignore
+      hostname.values.add('fusebit');
+
+      clonedData.series[0].length++;
+      setNewData(clonedData);
+      console.log('Message Received from parent: ', msg.data);
+    };
+
+    window.addEventListener('message', postMessage);
+
+    return () => {
+      window.removeEventListener('message', postMessage);
+    };
+  }, [newData]);
+
+  if (!newData || logRows.length === 0) {
+    return <PanelDataErrorView panelId={id} data={newData} needsStringField />;
   }
 
   const renderCommonLabels = () => (
