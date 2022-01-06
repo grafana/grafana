@@ -129,9 +129,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     // using the type any below because not all properties available during runtime are declared
     // as avilable properties in the VariableModel object
     const resourceVar = allVars.find((var_: any) => var_.id === item.resource?.substring(1));
-    const resourceVarRawQuery = (resourceVar as any)?.query?.grafanaTemplateVariableFn.rawQuery;
+    const resourceVarRawQuery = (resourceVar as any)?.query?.grafanaTemplateVariableFn?.rawQuery;
     var subscription = (allVars.find((var_: any) =>
-      var_.query.grafanaTemplateVariableFn.rawQuery.includes('Subscriptions(')
+      var_.query?.grafanaTemplateVariableFn?.rawQuery?.includes('Subscriptions(')
     ) as any)?.current.value;
 
     if (resourceVarRawQuery?.includes('Subscriptions(')) {
