@@ -124,7 +124,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const allVars = testing ? (scopedVars as any) : templateSrv.getVariables();
     let resource = testing ? testResource : templateSrv.replace(item.resource, scopedVars);
     let workspace = templateSrv.replace(item.workspace, scopedVars);
-    let resPath = '';
 
     // Complete the path for the selected resource if necessary
     // using the type any below because not all properties available during runtime are declared
@@ -136,11 +135,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     ) as any)?.current.value;
 
     if (resourceVarRawQuery?.includes('Subscriptions(')) {
-      resPath = '/subscriptions/' + resource;
-      resource = resPath;
+      resource = '/subscriptions/' + resource;
     } else if (resourceVarRawQuery?.includes('ResourceGroups(')) {
-      resPath = '/subscriptions/' + subscription + '/resourceGroups/' + resource;
-      resource = resPath;
+      resource = '/subscriptions/' + subscription + '/resourceGroups/' + resource;
     } else if (resourceVarRawQuery?.includes('ResourceNames(')) {
       var resGroup = allVars.find(
         (var_: any) => var_.id === (resourceVar as any)?.query?.grafanaTemplateVariableFn.resourceGroup.substring(1)
@@ -148,7 +145,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       var namespaceVar = allVars.find(
         (var_: any) => var_.id === (resourceVar as any)?.query?.grafanaTemplateVariableFn.metricDefinition.substring(1)
       );
-      resPath =
+      resource =
         '/subscriptions/' +
         subscription +
         '/resourceGroups/' +
@@ -157,7 +154,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         (namespaceVar as any).current.value +
         '/' +
         resource;
-      resource = resPath;
     }
 
     if (!workspace && !resource && this.firstWorkspace) {
