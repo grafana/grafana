@@ -48,6 +48,19 @@ export function Modal(props: PropsWithChildren<Props>) {
     }
   }, [propsOnDismiss]);
 
+  // restoreFocus doesn't seem to work correctly here, so we're using this
+  useEffect(() => {
+    if (isOpen) {
+      const wasFocused = document.activeElement as HTMLElement;
+
+      return () => {
+        wasFocused.focus();
+      };
+    }
+
+    return;
+  }, [isOpen]);
+
   useEffect(() => {
     const onEscKey = (ev: KeyboardEvent) => {
       if (ev.key === 'Esc' || ev.key === 'Escape') {
@@ -76,7 +89,7 @@ export function Modal(props: PropsWithChildren<Props>) {
         className={styles.modalBackdrop}
         onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
       />
-      <FocusScope contain autoFocus restoreFocus>
+      <FocusScope contain autoFocus>
         <div className={cx(styles.modal, className)}>
           <div className={headerClass}>
             {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
