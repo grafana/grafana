@@ -185,9 +185,6 @@ func (r *simpleCrawler) Status() (crawlStatus, error) {
 }
 
 func (r *simpleCrawler) walk() {
-	headers := make(map[string][]string)
-	headers["x-grafana-crawler-mode"] = []string{string(r.mode)}
-
 	for {
 		if r.status.State == "stopping" {
 			break
@@ -203,16 +200,15 @@ func (r *simpleCrawler) walk() {
 		// Hack (for now) pick a URL that will render
 		panelURL := strings.TrimPrefix(item.url, "/") + "?kiosk"
 		res, err := r.renderService.Render(context.Background(), rendering.Opts{
-			Width:             1024,
-			Height:            768,
+			Width:             320,
+			Height:            240,
 			Path:              panelURL,
 			OrgID:             r.opts.OrgID,
 			UserID:            r.opts.UserID,
 			OrgRole:           r.opts.OrgRole,
 			Theme:             r.opts.Theme,
 			Timeout:           10 * time.Second,
-			Headers:           headers,
-			DeviceScaleFactor: 1,
+			DeviceScaleFactor: -5, // negative numbers will render larger then scale down
 		})
 		if err != nil {
 			tlog.Warn("error getting image", "err", err)
