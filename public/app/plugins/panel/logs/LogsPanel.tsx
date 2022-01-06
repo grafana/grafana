@@ -75,7 +75,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   useLayoutEffect(() => {
     if (isAscending && logsContainerRef.current) {
-      setScrollTop(logsContainerRef.current.offsetHeight);
+      setScrollTop(logsContainerRef.current.scrollHeight);
     } else {
       setScrollTop(0);
     }
