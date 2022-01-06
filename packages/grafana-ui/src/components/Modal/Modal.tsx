@@ -1,5 +1,4 @@
 import React, { PropsWithChildren, useCallback, useEffect } from 'react';
-import { Portal } from '../Portal/Portal';
 import { cx } from '@emotion/css';
 import { useTheme2 } from '../../themes';
 import { IconName } from '../../types';
@@ -8,6 +7,7 @@ import { ModalHeader } from './ModalHeader';
 import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
 import { FocusScope } from '@react-aria/focus';
+import { OverlayContainer } from '@react-aria/overlays';
 
 export interface Props {
   /** @deprecated no longer used */
@@ -48,19 +48,6 @@ export function Modal(props: PropsWithChildren<Props>) {
     }
   }, [propsOnDismiss]);
 
-  // restoreFocus doesn't seem to work correctly here, so we're using this
-  useEffect(() => {
-    if (isOpen) {
-      const wasFocused = document.activeElement as HTMLElement;
-
-      return () => {
-        wasFocused.focus();
-      };
-    }
-
-    return;
-  }, [isOpen]);
-
   useEffect(() => {
     const onEscKey = (ev: KeyboardEvent) => {
       if (ev.key === 'Esc' || ev.key === 'Escape') {
@@ -84,12 +71,12 @@ export function Modal(props: PropsWithChildren<Props>) {
   const headerClass = cx(styles.modalHeader, typeof title !== 'string' && styles.modalHeaderWithTabs);
 
   return (
-    <Portal>
+    <OverlayContainer>
       <div
         className={styles.modalBackdrop}
         onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
       />
-      <FocusScope contain autoFocus>
+      <FocusScope contain autoFocus restoreFocus>
         <div className={cx(styles.modal, className)}>
           <div className={headerClass}>
             {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
@@ -101,7 +88,7 @@ export function Modal(props: PropsWithChildren<Props>) {
           <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
         </div>
       </FocusScope>
-    </Portal>
+    </OverlayContainer>
   );
 }
 
