@@ -24,6 +24,7 @@ export function NavBarSection({ children, className }: Props) {
 const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
   container: css`
     display: none;
+    list-style: none;
 
     ${theme.breakpoints.up('md')} {
       background-color: ${newNavigationEnabled ? theme.colors.background.primary : 'inherit'};

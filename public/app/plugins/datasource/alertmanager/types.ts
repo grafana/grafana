@@ -105,6 +105,7 @@ export type Route = {
   group_interval?: string;
   repeat_interval?: string;
   routes?: Route[];
+  mute_time_intervals?: string[];
 };
 
 export type InhibitRule = {
@@ -141,6 +142,7 @@ export type AlertmanagerConfig = {
   route?: Route;
   inhibit_rules?: InhibitRule[];
   receivers?: Receiver[];
+  mute_time_intervals?: MuteTimeInterval[];
 };
 
 export type Matcher = {
@@ -274,5 +276,23 @@ export enum AlertManagerImplementation {
   cortex = 'cortex',
   prometheus = 'prometheus',
 }
+
+export interface TimeRange {
+  /** Times are in format `HH:MM` in UTC */
+  start_time: string;
+  end_time: string;
+}
+export interface TimeInterval {
+  times?: TimeRange[];
+  weekdays?: string[];
+  days_of_month?: string[];
+  months?: string[];
+  years?: string[];
+}
+
+export type MuteTimeInterval = {
+  name: string;
+  time_intervals: TimeInterval[];
+};
 
 export type AlertManagerDataSourceJsonData = DataSourceJsonData & { implementation?: AlertManagerImplementation };

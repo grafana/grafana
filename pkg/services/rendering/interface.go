@@ -72,5 +72,5 @@ type Service interface {
 	Render(ctx context.Context, opts Opts) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error)
 	RenderErrorImage(theme Theme, error error) (*RenderResult, error)
-	GetRenderUser(key string) (*RenderUser, bool)
+	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
 }
