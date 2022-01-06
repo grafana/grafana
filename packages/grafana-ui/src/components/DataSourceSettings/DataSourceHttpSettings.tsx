@@ -135,7 +135,13 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
         <h3 className="page-heading">HTTP</h3>
         <div className="gf-form-group">
           <div className="gf-form">
-            <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} />
+            <FormField
+              aria-label="Datasource HTTP settings url"
+              label="URL"
+              labelWidth={13}
+              tooltip={urlTooltip}
+              inputEl={urlInput}
+            />
           </div>
 
           {showAccessOptions && (
