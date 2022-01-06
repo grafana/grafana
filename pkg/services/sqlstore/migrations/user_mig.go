@@ -134,9 +134,10 @@ func addUserMigrations(mg *Migrator) {
 	}))
 
 	//Make column nullable to support Grafana cloud
-	mg.AddMigration("Update is_service_account column to nullable", NewAddColumnMigration(userV2, &Column{
-		Name: "is_service_account", Type: DB_Bool, Nullable: true, Default: "0",
-	}))
+	mg.AddMigration("Update is_service_account column to nullable", NewRawSQLMigration("").
+		Postgres("ALTER TABLE user ALTER COLUMN is_service_account DROP NOT NULL;").
+		Mysql("ALTER TABLE user MODIFY is_service_account BOOLEAN DEFAULT 0;"))
+
 }
 
 type AddMissingUserSaltAndRandsMigration struct {
