@@ -145,6 +145,28 @@ func New(ctx ...interface{}) MultiLoggers {
 	return newloger
 }
 
+func with(loggers MultiLoggers, withFunc func(gokitlog.Logger, ...interface{}) gokitlog.Logger, ctx []interface{}) MultiLoggers {
+	if len(ctx) == 0 {
+		return loggers
+	}
+	var newloger MultiLoggers
+	for _, l := range loggers.loggers {
+		l.val = withFunc(l.val, ctx...)
+		newloger.loggers = append(newloger.loggers, l)
+	}
+	return newloger
+}
+
+// WithPrefix adds context that will be added to the log message
+func WithPrefix(loggers MultiLoggers, ctx ...interface{}) MultiLoggers {
+	return with(loggers, gokitlog.WithPrefix, ctx)
+}
+
+// WithSuffix adds context that will be appended at the end of the log message
+func WithSuffix(loggers MultiLoggers, ctx ...interface{}) MultiLoggers {
+	return with(loggers, gokitlog.WithSuffix, ctx)
+}
+
 var logLevels = map[string]level.Option{
 	"trace":    level.AllowDebug(),
 	"debug":    level.AllowDebug(),
