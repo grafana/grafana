@@ -30,7 +30,7 @@ Grafana offers a variety of visualizations to support different use cases. This 
 - Widgets
   - [Dashboard list]({{< relref "./dashboard-list-panel.md" >}}) can list dashboards.
   - [Alert list]({{< relref "./alert-list-panel.md" >}}) can list alerts.
-  - [Text panel]({{< relref "./alert-list-panel.md" >}}) can show markdown and html.
+  - [Text panel]({{< relref "./text-panel.md" >}}) can show markdown and html.
   - [News panel]({{< relref "./news-panel.md" >}}) can show RSS feeds.
 
 ## Get more
