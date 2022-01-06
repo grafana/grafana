@@ -138,17 +138,40 @@ apiVersion: 1
 
 # Roles to insert/update in the database
 roles:
-  - name: custom:users:editor
-    description: 'This role allows users to list/create/update other users in the organization'
+  - name: custom:users:writer
+    description: 'List/update other users in the organization'
     version: 1
     global: true
     permissions:
-      - action: 'users:read'
+      - action: 'org.users:read'
         scope: 'users:*'
-      - action: 'users:write'
+      - action: 'org.users:write'
         scope: 'users:*'
-      - action: 'users:create'
-        scope: 'users:*'
+    teams:
+      - name: 'user editors'
+        orgId: 1
+      - name: 'user admins'
+        orgId: 1
+```
+
+### Assign fixed roles to specific teams
+
+To assign a fixed role to teams, add said teams to the `teams` section of the associated entry. To remove a specific assignment, remove it from the list.
+
+> **Note:** Since fixed roles are global, the Global attribute has to be specified. Any other specified attribute of the role will be ignored.
+
+In order for provisioning to succeed, specified teams must already exist. Additionally, since teams are local to an organization, the organization has to be specified in the assignment.
+
+For example, the following fixed role is assigned to the `user editors` team and `user admins` team:
+
+```yaml
+# config file version
+apiVersion: 1
+
+# Roles to insert/update in the database
+roles:
+  - name: fixed:users:writer
+    global: true
     teams:
       - name: 'user editors'
         orgId: 1
