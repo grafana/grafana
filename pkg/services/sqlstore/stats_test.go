@@ -27,6 +27,7 @@ func TestStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(3), query.Result.Admins)
 		assert.Equal(t, int64(0), query.Result.LibraryPanels)
 		assert.Equal(t, int64(0), query.Result.LibraryVariables)
+		assert.Equal(t, int64(1), query.Result.APIKeys)
 	})
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
@@ -124,5 +125,10 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 
 	// force renewal of user stats
 	err = updateUserRoleCountsIfNecessary(context.Background(), true)
+	require.NoError(t, err)
+
+	// add 1st api key
+	addAPIKeyCmd := &models.AddApiKeyCommand{OrgId: org.Id, Name: "Test key 1", Key: "secret-key", Role: models.ROLE_VIEWER}
+	err = sqlStore.AddAPIKey(context.Background(), addAPIKeyCmd)
 	require.NoError(t, err)
 }

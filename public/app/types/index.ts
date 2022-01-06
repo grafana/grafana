@@ -6,6 +6,7 @@ export * from './dashboard';
 export * from './acl';
 export * from './apiKeys';
 export * from './user';
+export * from './serviceaccount';
 export * from './datasources';
 export * from './plugins';
 export * from './organization';

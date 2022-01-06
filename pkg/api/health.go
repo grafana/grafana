@@ -15,7 +15,7 @@ func (hs *HTTPServer) databaseHealthy(ctx context.Context) bool {
 		return cached.(bool)
 	}
 
-	healthy := bus.DispatchCtx(ctx, &models.GetDBHealthQuery{}) == nil
+	healthy := bus.Dispatch(ctx, &models.GetDBHealthQuery{}) == nil
 
 	hs.CacheService.Set(cacheKey, healthy, time.Second*5)
 	return healthy

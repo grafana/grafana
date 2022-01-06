@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { debounce } from 'lodash';
-import { PanelProps, renderMarkdown, textUtil } from '@grafana/data';
+import { PanelProps, renderTextPanelMarkdown, textUtil } from '@grafana/data';
 // Utils
 import config from 'app/core/config';
 // Types
@@ -44,7 +44,9 @@ export class TextPanel extends PureComponent<Props, State> {
 
   prepareMarkdown(content: string): string {
     // Sanitize is disabled here as we handle that after variable interpolation
-    return renderMarkdown(this.interpolateAndSanitizeString(content), { noSanitize: config.disableSanitizeHtml });
+    return renderTextPanelMarkdown(this.interpolateAndSanitizeString(content), {
+      noSanitize: config.disableSanitizeHtml,
+    });
   }
 
   interpolateAndSanitizeString(content: string): string {
@@ -52,7 +54,7 @@ export class TextPanel extends PureComponent<Props, State> {
 
     content = replaceVariables(content, {}, 'html');
 
-    return config.disableSanitizeHtml ? content : textUtil.sanitize(content);
+    return config.disableSanitizeHtml ? content : textUtil.sanitizeTextPanelContent(content);
   }
 
   processContent(options: PanelOptions): string {

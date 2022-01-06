@@ -25,7 +25,7 @@ type ChannelLocalPublisher interface {
 }
 
 type PluginContextGetter interface {
-	GetPluginContext(user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error)
+	GetPluginContext(ctx context.Context, user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error)
 }
 
 type NumLocalSubscribersGetter interface {
@@ -182,7 +182,7 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 		case <-datasourceTicker.C:
 			if sr.PluginContext.DataSourceInstanceSettings != nil {
 				dsUID := sr.PluginContext.DataSourceInstanceSettings.UID
-				pCtx, ok, err := s.pluginContextGetter.GetPluginContext(sr.user, sr.PluginContext.PluginID, dsUID, false)
+				pCtx, ok, err := s.pluginContextGetter.GetPluginContext(ctx, sr.user, sr.PluginContext.PluginID, dsUID, false)
 				if err != nil {
 					logger.Error("Error getting datasource context", "channel", sr.Channel, "path", sr.Path, "error", err)
 					continue
@@ -283,7 +283,7 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 			if pluginCtx.DataSourceInstanceSettings != nil {
 				datasourceUID = pluginCtx.DataSourceInstanceSettings.UID
 			}
-			newPluginCtx, ok, err := s.pluginContextGetter.GetPluginContext(sr.user, pluginCtx.PluginID, datasourceUID, false)
+			newPluginCtx, ok, err := s.pluginContextGetter.GetPluginContext(ctx, sr.user, pluginCtx.PluginID, datasourceUID, false)
 			if err != nil {
 				logger.Error("Error getting plugin context", "path", sr.Path, "error", err)
 				isReconnect = true
@@ -407,7 +407,7 @@ func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, c
 		if pCtx.DataSourceInstanceSettings != nil {
 			datasourceUID = pCtx.DataSourceInstanceSettings.UID
 		}
-		newPluginCtx, ok, err := s.pluginContextGetter.GetPluginContext(user, pCtx.PluginID, datasourceUID, false)
+		newPluginCtx, ok, err := s.pluginContextGetter.GetPluginContext(ctx, user, pCtx.PluginID, datasourceUID, false)
 		if err != nil {
 			return nil, err
 		}
