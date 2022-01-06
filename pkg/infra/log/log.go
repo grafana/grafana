@@ -15,17 +15,24 @@ import (
 	gokitlog "github.com/go-kit/log"
 	"github.com/go-kit/log/term"
 	"github.com/go-stack/stack"
+	"github.com/mattn/go-isatty"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/mattn/go-isatty"
-	"gopkg.in/ini.v1"
 )
 
 var loggersToClose []DisposableHandler
 var loggersToReload []ReloadableHandler
 var filters map[string]level.Option
 var Root MultiLoggers
+
+const (
+	DefaultCallerDepth = 7
+	CallerContextKey   = "caller"
+	StackContextKey    = "stack"
+)
 
 func init() {
 	loggersToClose = make([]DisposableHandler, 0)
@@ -117,6 +124,8 @@ func (ml MultiLoggers) New(ctx ...interface{}) MultiLoggers {
 	return newloger
 }
 
+// New creates MultiLoggers with the provided context and caller that is added as a suffix.
+// The first element of the context must be the logger name
 func New(ctx ...interface{}) MultiLoggers {
 	if len(ctx) == 0 {
 		return Root
@@ -181,6 +190,19 @@ func Stack(skip int) string {
 	call := stack.Caller(skip)
 	s := stack.Trace().TrimBelow(call).TrimRuntime()
 	return s.String()
+}
+
+// StackCaller returns a go-kit Valuer function that returns the stack trace from the place it is called. Argument `skip` allows skipping top n lines from the stack.
+func StackCaller(skip int) gokitlog.Valuer {
+	return func() interface{} {
+		return Stack(skip + 1)
+	}
+}
+
+// Caller proxies go-kit/log Caller and returns a Valuer function that returns a file and line from a specified depth
+// in the callstack
+func Caller(depth int) gokitlog.Valuer {
+	return gokitlog.Caller(depth)
 }
 
 type Formatedlogger func(w io.Writer) gokitlog.Logger
