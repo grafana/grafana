@@ -122,6 +122,40 @@ roles:
       - name: 'Admin'
 ```
 
+### Assign your custom role to specific teams
+
+To assign roles to teams, add said teams to the `teams` section of your roles. To remove a specific assignment, remove it from the list.
+
+> **Note:** Assignments are updated if the version of the role is greater or equal to the one stored internally. You don’t need to increment the version number of the role to update its assignments.
+
+In order for provisioning to succeed, specified teams must already exist. Additionally, since teams are local to an organization, the organization has to be specified in the assignment.
+
+For example, the following role is assigned to the `user editors` team and `user admins` team:
+
+```yaml
+# config file version
+apiVersion: 1
+
+# Roles to insert/update in the database
+roles:
+  - name: custom:users:editor
+    description: 'This role allows users to list/create/update other users in the organization'
+    version: 1
+    global: true
+    permissions:
+      - action: 'users:read'
+        scope: 'users:*'
+      - action: 'users:write'
+        scope: 'users:*'
+      - action: 'users:create'
+        scope: 'users:*'
+    teams:
+      - name: 'user editors'
+        orgId: 1
+      - name: 'user admins'
+        orgId: 1
+```
+
 ## Manage default built-in role assignments
 
 During startup, Grafana creates [default built-in role assignments]({{< relref "./roles#default-built-in-role-assignments" >}}) with [fixed roles]({{< relref "./roles#fixed-roles" >}}). You can remove and later restore those assignments with provisioning.
