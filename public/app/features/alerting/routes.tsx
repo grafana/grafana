@@ -4,7 +4,7 @@ import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynami
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
 
-const alertingRoutes = [
+const alertingRoutes: RouteDescriptor[] = [
   {
     path: '/alerting',
     // eslint-disable-next-line react/display-name
@@ -27,6 +27,20 @@ const alertingRoutes = [
     roles: () => ['Admin', 'Editor'],
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/AmRoutes')
+    ),
+  },
+  {
+    path: '/alerting/routes/mute-timing/new',
+    roles: () => ['Admin', 'Editor'],
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "MuteTimings" */ 'app/features/alerting/unified/MuteTimings')
+    ),
+  },
+  {
+    path: '/alerting/routes/mute-timing/edit',
+    roles: () => ['Admin', 'Editor'],
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "MuteTimings" */ 'app/features/alerting/unified/MuteTimings')
     ),
   },
   {
