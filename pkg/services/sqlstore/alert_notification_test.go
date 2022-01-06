@@ -174,14 +174,12 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		}
 
 		t.Run("and missing frequency", func(t *testing.T) {
-			setup()
 			err := sqlStore.CreateAlertNotificationCommand(context.Background(), cmd)
 			require.Equal(t, models.ErrNotificationFrequencyNotFound, err)
 		})
 
 		t.Run("invalid frequency", func(t *testing.T) {
 			cmd.Frequency = "invalid duration"
-			setup()
 			err := sqlStore.CreateAlertNotificationCommand(context.Background(), cmd)
 			require.True(t, regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
 				err.Error()))
