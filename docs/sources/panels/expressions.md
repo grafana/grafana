@@ -101,13 +101,31 @@ While most functions exist in the own expression operations, the math operation 
 
 abs returns the absolute value of its argument which can be a number or a series. For example `abs(-1)` or `abs($A)`.
 
+##### is_inf
+
+is_inf takes a number or a series and returns `1` for `Inf` values (negative or positive) and `0` for other values. For example `is_inf($A)`.
+
+> **Note:** If you need to specifically check for negative infinity for example, you can do a comparison like `$A == infn()`.
+
+##### is_nan
+
+is_nan takes a number or a series and returns `1` for `NaN` values and `0` for other values. For example `is_nan($A)`. This function exists because `NaN` is not equal to `NaN`.
+
+##### is_null
+
+is_nan takes a number or a series and returns `1` for `null` values and `0` for other values. For example `is_null($A)`.
+
+##### is_number
+
+is_number takes a number or a series and returns `1` for all real number values and `0` for other values (which are `null`, `Inf+`, `Inf-`, and `NaN`). For example `is_number($A)`.
+
 ##### log
 
 Log returns the natural logarithm of of its argument which can be a number or a series. If the value is less than 0, NaN is returned. For example `log(-1)` or `log($A)`.
 
-##### inf, nan, and null
+##### inf, infn, nan, and null
 
-The inf, nan, and null functions all return a single value of the name. They primarily exist for testing. Example: `null()`. (Note: inf always returns positive infinity, should probably change this to take an argument so it can return negative infinity).
+The inf, infn, nan, and null functions all return a single value of the name. They primarily exist for testing. Example: `null()`.
 
 ### Reduce
 

@@ -75,7 +75,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 	sc.t.Run(desc, func(t *testing.T) {
 		bus.ClearBusHandlers()
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 			if query.OrgID != sc.givenUser.OrgId {
 				sc.reportFailure("Invalid organization id for GetDashboardAclInfoListQuery", sc.givenUser.OrgId, query.OrgID)
 			}
@@ -95,7 +95,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 			}
 		}
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
 			if query.OrgId != sc.givenUser.OrgId {
 				sc.reportFailure("Invalid organization id for GetTeamsByUserQuery", sc.givenUser.OrgId, query.OrgId)
 			}
