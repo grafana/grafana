@@ -3876,7 +3876,7 @@ __metadata:
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.1
-    sass-loader: 12.1.0
+    sass-loader: 12.4.0
     slate: 0.47.8
     slate-plain-serializer: 0.7.10
     storybook-dark-mode: 1.0.8
@@ -19681,7 +19681,7 @@ __metadata:
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
     rxjs: 7.5.1
     sass: 1.45.2
-    sass-loader: 12.3.0
+    sass-loader: 12.4.0
     search-query-parser: 1.5.4
     selecto: 1.13.0
     semver: ^7.1.3
@@ -31267,15 +31267,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass-loader@npm:12.1.0":
-  version: 12.1.0
-  resolution: "sass-loader@npm:12.1.0"
+"sass-loader@npm:12.4.0":
+  version: 12.4.0
+  resolution: "sass-loader@npm:12.4.0"
   dependencies:
     klona: ^2.0.4
     neo-async: ^2.6.2
   peerDependencies:
     fibers: ">= 3.1.0"
-    node-sass: ^4.0.0 || ^5.0.0 || ^6.0.0
+    node-sass: ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
     sass: ^1.3.0
     webpack: ^5.0.0
   peerDependenciesMeta:
@@ -31285,29 +31285,7 @@ __metadata:
       optional: true
     sass:
       optional: true
-  checksum: 69c66ea3482922064f1e907fc204283e5e9cc02eb20b7ab1761d478922f77b3e2c47c8e3c585f771d75ce57bb088b226ae2eb4c736849b29c8727e921a6e0d41
-  languageName: node
-  linkType: hard
-
-"sass-loader@npm:12.3.0":
-  version: 12.3.0
-  resolution: "sass-loader@npm:12.3.0"
-  dependencies:
-    klona: ^2.0.4
-    neo-async: ^2.6.2
-  peerDependencies:
-    fibers: ">= 3.1.0"
-    node-sass: ^4.0.0 || ^5.0.0 || ^6.0.0
-    sass: ^1.3.0
-    webpack: ^5.0.0
-  peerDependenciesMeta:
-    fibers:
-      optional: true
-    node-sass:
-      optional: true
-    sass:
-      optional: true
-  checksum: b755e6d5ceddb70d54334b53f70546b4afc9af5f9704cc0e2666894d0568bdaeccb2b07056bd35465c22c51c55e1d790023b32b9aa0977080403036ef6c47b29
+  checksum: 0f7ca3633e7f61c412b0628766a9b57cb15f68def45e4303e68eb2f3a0722aec231956fbfd118489d93c997ab605470e89de8e3f7d6776830cc6366d9657d618
   languageName: node
   linkType: hard
 
