@@ -1,4 +1,4 @@
-import { from, merge, Observable, of, throwError } from 'rxjs';
+import { EMPTY, from, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
 import {
   DataQuery,
@@ -41,7 +41,7 @@ export interface TempoJsonData extends DataSourceJsonData {
   nodeGraph?: NodeGraphOptions;
 }
 
-export type TempoQuery = {
+export interface TempoQuery extends DataQuery {
   query: string;
   // Query to find list of traces, e.g., via Loki
   linkedQuery?: LokiQuery;
@@ -53,7 +53,7 @@ export type TempoQuery = {
   maxDuration?: string;
   limit?: number;
   serviceMapQuery?: string;
-} & DataQuery;
+}
 
 export const DEFAULT_LIMIT = 20;
 
@@ -152,20 +152,36 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (targets.traceId?.length > 0) {
-      const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: targets.traceId };
-      subQueries.push(
-        super.query(traceRequest).pipe(
-          map((response) => {
-            if (response.error) {
-              return response;
-            }
-            return transformTrace(response, this.nodeGraph?.enabled);
-          })
-        )
-      );
+      subQueries.push(this.handleTraceIdQuery(options, targets.traceId));
     }
 
     return merge(...subQueries);
+  }
+
+  /**
+   * Handles the simplest of the queries where we have just a trace id and return trace data for it.
+   * @param options
+   * @param targets
+   * @private
+   */
+  private handleTraceIdQuery(
+    options: DataQueryRequest<TempoQuery>,
+    targets: TempoQuery[]
+  ): Observable<DataQueryResponse> {
+    const validTargets = targets.filter((t) => t.query);
+    if (!validTargets.length) {
+      return EMPTY;
+    }
+
+    const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: validTargets };
+    return super.query(traceRequest).pipe(
+      map((response) => {
+        if (response.error) {
+          return response;
+        }
+        return transformTrace(response, this.nodeGraph?.enabled);
+      })
+    );
   }
 
   async metadataRequest(url: string, params = {}) {

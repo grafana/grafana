@@ -18,22 +18,22 @@ import (
 )
 
 func (ss *SQLStore) addUserQueryAndCommandHandlers() {
-	ss.Bus.AddHandlerCtx(ss.GetSignedInUserWithCacheCtx)
+	ss.Bus.AddHandler(ss.GetSignedInUserWithCacheCtx)
 
-	bus.AddHandlerCtx("sql", GetUserById)
-	bus.AddHandlerCtx("sql", UpdateUser)
-	bus.AddHandlerCtx("sql", ChangeUserPassword)
-	bus.AddHandlerCtx("sql", ss.GetUserByLogin)
-	bus.AddHandlerCtx("sql", ss.GetUserByEmail)
-	bus.AddHandlerCtx("sql", SetUsingOrg)
-	bus.AddHandlerCtx("sql", UpdateUserLastSeenAt)
-	bus.AddHandlerCtx("sql", ss.GetUserProfile)
-	bus.AddHandlerCtx("sql", SearchUsers)
-	bus.AddHandlerCtx("sql", GetUserOrgList)
-	bus.AddHandlerCtx("sql", DisableUser)
-	bus.AddHandlerCtx("sql", BatchDisableUsers)
-	bus.AddHandlerCtx("sql", DeleteUser)
-	bus.AddHandlerCtx("sql", SetUserHelpFlag)
+	bus.AddHandler("sql", GetUserById)
+	bus.AddHandler("sql", UpdateUser)
+	bus.AddHandler("sql", ChangeUserPassword)
+	bus.AddHandler("sql", ss.GetUserByLogin)
+	bus.AddHandler("sql", ss.GetUserByEmail)
+	bus.AddHandler("sql", SetUsingOrg)
+	bus.AddHandler("sql", UpdateUserLastSeenAt)
+	bus.AddHandler("sql", ss.GetUserProfile)
+	bus.AddHandler("sql", SearchUsers)
+	bus.AddHandler("sql", GetUserOrgList)
+	bus.AddHandler("sql", DisableUser)
+	bus.AddHandler("sql", BatchDisableUsers)
+	bus.AddHandler("sql", DeleteUser)
+	bus.AddHandler("sql", SetUserHelpFlag)
 }
 
 func getOrgIdForNewUser(sess *DBSession, cmd models.CreateUserCommand) (int64, error) {

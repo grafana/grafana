@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/timberio/go-datemath"
+	"github.com/vectordotdev/go-datemath"
 )
 
 type DataTimeRange struct {
@@ -21,31 +21,31 @@ func NewDataTimeRange(from, to string) DataTimeRange {
 	}
 }
 
-func (tr *DataTimeRange) GetFromAsMsEpoch() int64 {
+func (tr DataTimeRange) GetFromAsMsEpoch() int64 {
 	return tr.MustGetFrom().UnixNano() / int64(time.Millisecond)
 }
 
-func (tr *DataTimeRange) GetFromAsSecondsEpoch() int64 {
+func (tr DataTimeRange) GetFromAsSecondsEpoch() int64 {
 	return tr.GetFromAsMsEpoch() / 1000
 }
 
-func (tr *DataTimeRange) GetFromAsTimeUTC() time.Time {
+func (tr DataTimeRange) GetFromAsTimeUTC() time.Time {
 	return tr.MustGetFrom().UTC()
 }
 
-func (tr *DataTimeRange) GetToAsMsEpoch() int64 {
+func (tr DataTimeRange) GetToAsMsEpoch() int64 {
 	return tr.MustGetTo().UnixNano() / int64(time.Millisecond)
 }
 
-func (tr *DataTimeRange) GetToAsSecondsEpoch() int64 {
+func (tr DataTimeRange) GetToAsSecondsEpoch() int64 {
 	return tr.GetToAsMsEpoch() / 1000
 }
 
-func (tr *DataTimeRange) GetToAsTimeUTC() time.Time {
+func (tr DataTimeRange) GetToAsTimeUTC() time.Time {
 	return tr.MustGetTo().UTC()
 }
 
-func (tr *DataTimeRange) MustGetFrom() time.Time {
+func (tr DataTimeRange) MustGetFrom() time.Time {
 	res, err := tr.ParseFrom()
 	if err != nil {
 		return time.Unix(0, 0)
@@ -53,7 +53,7 @@ func (tr *DataTimeRange) MustGetFrom() time.Time {
 	return res
 }
 
-func (tr *DataTimeRange) MustGetTo() time.Time {
+func (tr DataTimeRange) MustGetTo() time.Time {
 	res, err := tr.ParseTo()
 	if err != nil {
 		return time.Unix(0, 0)
@@ -61,59 +61,127 @@ func (tr *DataTimeRange) MustGetTo() time.Time {
 	return res
 }
 
-func (tr DataTimeRange) ParseFrom() (time.Time, error) {
-	return parseTimeRange(tr.From, tr.Now, false, nil)
+func (tr DataTimeRange) ParseFrom(options ...TimeRangeOption) (time.Time, error) {
+	options = append(options, WithNow(tr.Now))
+
+	pt := newParsableTime(tr.From, options...)
+	return pt.Parse()
 }
 
-func (tr DataTimeRange) ParseTo() (time.Time, error) {
-	return parseTimeRange(tr.To, tr.Now, true, nil)
-}
+func (tr DataTimeRange) ParseTo(options ...TimeRangeOption) (time.Time, error) {
+	options = append(options, WithRoundUp(), WithNow(tr.Now))
 
-func (tr DataTimeRange) ParseFromWithLocation(location *time.Location) (time.Time, error) {
-	return parseTimeRange(tr.From, tr.Now, false, location)
-}
-
-func (tr DataTimeRange) ParseToWithLocation(location *time.Location) (time.Time, error) {
-	return parseTimeRange(tr.To, tr.Now, true, location)
+	pt := newParsableTime(tr.To, options...)
+	return pt.Parse()
 }
 
 func (tr DataTimeRange) ParseFromWithWeekStart(location *time.Location, weekstart time.Weekday) (time.Time, error) {
-	return parseTimeRangeWithWeekStart(tr.From, tr.Now, false, location, weekstart)
+	return tr.ParseFrom(WithLocation(location), WithWeekstart(weekstart))
 }
 
-func (tr *DataTimeRange) ParseToWithWeekStart(location *time.Location, weekstart time.Weekday) (time.Time, error) {
-	return parseTimeRangeWithWeekStart(tr.To, tr.Now, true, location, weekstart)
+func (tr DataTimeRange) ParseToWithWeekStart(location *time.Location, weekstart time.Weekday) (time.Time, error) {
+	return tr.ParseTo(WithLocation(location), WithWeekstart(weekstart))
 }
 
-func parseTimeRange(s string, now time.Time, withRoundUp bool, location *time.Location) (time.Time, error) {
-	return parseTimeRangeWithWeekStart(s, now, withRoundUp, location, -1)
+func WithWeekstart(weekday time.Weekday) TimeRangeOption {
+	return func(timeRange parsableTime) parsableTime {
+		timeRange.weekstart = &weekday
+		return timeRange
+	}
 }
 
-func parseTimeRangeWithWeekStart(s string, now time.Time, withRoundUp bool, location *time.Location, weekstart time.Weekday) (time.Time, error) {
-	if val, err := strconv.ParseInt(s, 10, 64); err == nil {
-		seconds := val / 1000
-		nano := (val - seconds*1000) * 1000000
-		return time.Unix(seconds, nano), nil
+func WithLocation(loc *time.Location) TimeRangeOption {
+	return func(timeRange parsableTime) parsableTime {
+		timeRange.location = loc
+		return timeRange
+	}
+}
+
+func WithFiscalStartMonth(month time.Month) TimeRangeOption {
+	return func(timeRange parsableTime) parsableTime {
+		timeRange.fiscalStartMonth = &month
+		return timeRange
+	}
+}
+
+func WithNow(t time.Time) TimeRangeOption {
+	return func(timeRange parsableTime) parsableTime {
+		timeRange.now = t
+		return timeRange
+	}
+}
+
+func WithRoundUp() TimeRangeOption {
+	return func(timeRange parsableTime) parsableTime {
+		timeRange.roundUp = true
+		return timeRange
+	}
+}
+
+type parsableTime struct {
+	time             string
+	now              time.Time
+	location         *time.Location
+	weekstart        *time.Weekday
+	fiscalStartMonth *time.Month
+	roundUp          bool
+}
+
+type TimeRangeOption func(timeRange parsableTime) parsableTime
+
+func newParsableTime(t string, options ...TimeRangeOption) parsableTime {
+	p := parsableTime{
+		time: t,
+		now:  time.Now(),
 	}
 
-	diff, err := time.ParseDuration("-" + s)
-	if err != nil {
-		options := []func(*datemath.Options){
-			datemath.WithNow(now),
-			datemath.WithRoundUp(withRoundUp),
-		}
-		if location != nil {
-			options = append(options, datemath.WithLocation(location))
-		}
-		if weekstart != -1 {
-			if weekstart > now.Weekday() {
-				weekstart = weekstart - 7
-			}
-			options = append(options, datemath.WithStartOfWeek(weekstart))
-		}
-
-		return datemath.ParseAndEvaluate(s, options...)
+	for _, opt := range options {
+		p = opt(p)
 	}
 
-	return now.Add(diff), nil
+	return p
+}
+
+func (t parsableTime) Parse() (time.Time, error) {
+	// Milliseconds since Unix epoch.
+	if val, err := strconv.ParseInt(t.time, 10, 64); err == nil {
+		return time.UnixMilli(val), nil
+	}
+
+	// Duration relative to current time.
+	if diff, err := time.ParseDuration("-" + t.time); err == nil {
+		return t.now.Add(diff), nil
+	}
+
+	// Advanced time string, mimics the frontend's datemath library.
+	return datemath.ParseAndEvaluate(t.time, t.datemathOptions()...)
+}
+
+func (t parsableTime) datemathOptions() []func(*datemath.Options) {
+	options := []func(*datemath.Options){
+		datemath.WithNow(t.now),
+		datemath.WithRoundUp(t.roundUp),
+	}
+	if t.location != nil {
+		options = append(options, datemath.WithLocation(t.location))
+	}
+	if t.weekstart != nil {
+		weekstart := *t.weekstart
+		if weekstart > t.now.Weekday() {
+			weekstart = weekstart - 7
+		}
+		options = append(options, datemath.WithStartOfWeek(weekstart))
+	}
+	if t.fiscalStartMonth != nil {
+		loc := time.UTC
+		if t.location != nil {
+			loc = t.location
+		}
+		options = append(options, datemath.WithStartOfFiscalYear(
+			// Year doesn't matter, and Grafana only supports setting the
+			// month that the fiscal year starts in.
+			time.Date(0, *t.fiscalStartMonth, 1, 0, 0, 0, 0, loc),
+		))
+	}
+	return options
 }

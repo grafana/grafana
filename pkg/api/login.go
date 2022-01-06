@@ -207,7 +207,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		Cfg:        hs.Cfg,
 	}
 
-	err := bus.DispatchCtx(c.Req.Context(), authQuery)
+	err := bus.Dispatch(c.Req.Context(), authQuery)
 	authModule = authQuery.AuthModule
 	if err != nil {
 		resp = response.Error(401, "Invalid username or password", err)

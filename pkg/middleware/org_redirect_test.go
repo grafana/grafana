@@ -13,11 +13,11 @@ import (
 func TestOrgRedirectMiddleware(t *testing.T) {
 	middlewareScenario(t, "when setting a correct org for the user", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
 			return nil
 		})
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
 			return nil
 		})
@@ -37,11 +37,11 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 
 	middlewareScenario(t, "when setting an invalid org for user", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
 			return fmt.Errorf("")
 		})
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
 			return nil
 		})

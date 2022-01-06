@@ -134,7 +134,7 @@ func CreateDashboardSnapshot(c *models.ReqContext) response.Response {
 		metrics.MApiDashboardSnapshotCreate.Inc()
 	}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		c.JsonApiErr(500, "Failed to create snapshot", err)
 		return nil
 	}
@@ -158,7 +158,7 @@ func GetDashboardSnapshot(c *models.ReqContext) response.Response {
 
 	query := &models.GetDashboardSnapshotQuery{Key: key}
 
-	err := bus.DispatchCtx(c.Req.Context(), query)
+	err := bus.Dispatch(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard snapshot", err)
 	}
@@ -226,7 +226,7 @@ func DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response 
 
 	query := &models.GetDashboardSnapshotQuery{DeleteKey: key}
 
-	err := bus.DispatchCtx(c.Req.Context(), query)
+	err := bus.Dispatch(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard snapshot", err)
 	}
@@ -240,7 +240,7 @@ func DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response 
 
 	cmd := &models.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
 
-	if err := bus.DispatchCtx(c.Req.Context(), cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), cmd); err != nil {
 		return response.Error(500, "Failed to delete dashboard snapshot", err)
 	}
 
@@ -259,7 +259,7 @@ func DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
 
 	query := &models.GetDashboardSnapshotQuery{Key: key}
 
-	err := bus.DispatchCtx(c.Req.Context(), query)
+	err := bus.Dispatch(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard snapshot", err)
 	}
@@ -288,7 +288,7 @@ func DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
 
 	cmd := &models.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
 
-	if err := bus.DispatchCtx(c.Req.Context(), cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), cmd); err != nil {
 		return response.Error(500, "Failed to delete dashboard snapshot", err)
 	}
 
@@ -314,7 +314,7 @@ func SearchDashboardSnapshots(c *models.ReqContext) response.Response {
 		SignedInUser: c.SignedInUser,
 	}
 
-	err := bus.DispatchCtx(c.Req.Context(), &searchQuery)
+	err := bus.Dispatch(c.Req.Context(), &searchQuery)
 	if err != nil {
 		return response.Error(500, "Search failed", err)
 	}

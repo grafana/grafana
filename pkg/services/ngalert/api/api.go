@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -49,6 +50,10 @@ type Alertmanager interface {
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
 }
 
+type AlertingStore interface {
+	GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error
+}
+
 // API handlers.
 type API struct {
 	Cfg                  *setting.Cfg
@@ -59,7 +64,7 @@ type API struct {
 	Schedule             schedule.ScheduleService
 	RuleStore            store.RuleStore
 	InstanceStore        store.InstanceStore
-	AlertingStore        store.AlertingStore
+	AlertingStore        AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager

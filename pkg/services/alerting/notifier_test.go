@@ -177,7 +177,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 
 		evalCtx.dashboardRef = &models.DashboardRef{Uid: "db-uid"}
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
 			query.Result = []*models.AlertNotification{
 				{
 					Id:   1,
@@ -190,7 +190,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			return nil
 		})
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error {
 			query.Result = &models.AlertNotificationState{
 				AlertId:                      evalCtx.Rule.ID,
 				AlertRuleStateUpdatedVersion: 1,
@@ -201,11 +201,11 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			return nil
 		})
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
+		bus.AddHandler("test", func(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
 			return nil
 		})
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error {
+		bus.AddHandler("test", func(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error {
 			return nil
 		})
 

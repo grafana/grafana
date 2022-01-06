@@ -331,6 +331,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             labelWidth={4}
             inputEl={
               <Select
+                aria-label="Region"
                 menuShouldPortal
                 options={regions}
                 value={selectedRegion}
@@ -348,6 +349,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             className="flex-grow-1"
             inputEl={
               <MultiSelect
+                aria-label="Log Groups"
                 menuShouldPortal
                 allowCustomValue={allowCustomValue}
                 options={unionBy(availableLogGroups, selectedLogGroups, 'value')}

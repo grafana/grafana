@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetResourcesMetadata(t *testing.T) {
@@ -95,9 +94,7 @@ func TestGetResourcesMetadata(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			metadata, err := GetResourcesMetadata(context.Background(), tt.permissions, tt.resource, tt.resourcesIDs)
-			require.NoError(t, err)
-
+			metadata := GetResourcesMetadata(context.Background(), tt.permissions, tt.resource, tt.resourcesIDs)
 			assert.EqualValues(t, tt.expected, metadata)
 		})
 	}
