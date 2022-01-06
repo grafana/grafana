@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/inconshreveable/log15"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -904,8 +903,8 @@ type fakeLogger struct {
 	log.Logger
 }
 
-func (fl fakeLogger) New(_ ...interface{}) log15.Logger {
-	return fakeLogger{}
+func (fl fakeLogger) New(_ ...interface{}) log.MultiLoggers {
+	return log.MultiLoggers{}
 }
 
 func (fl fakeLogger) Info(_ string, _ ...interface{}) {
