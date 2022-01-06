@@ -126,7 +126,9 @@ roles:
 
 To assign roles to teams, add said teams to the `teams` section of your roles. To remove a specific assignment, remove it from the list.
 
-> **Note:** Assignments are updated if the version of the role is greater or equal to the one stored internally. You don’t need to increment the version number of the role to update its assignments.
+> **Note:** Assignments are updated if the version of the role is greater or equal to the one stored internally.<br/>
+> You don’t need to increment the version number of the role to update its assignments.<br/>
+> Assignments to built-in roles will be ignored. Use `addDefaultAssignments` and `removeDefaultAssignments` instead.
 
 In order for provisioning to succeed, specified teams must already exist. Additionally, since teams are local to an organization, the organization has to be specified in the assignment.
 
@@ -158,7 +160,7 @@ roles:
 
 To assign a fixed role to teams, add said teams to the `teams` section of the associated entry. To remove a specific assignment, remove it from the list.
 
-> **Note:** Since fixed roles are global, the Global attribute has to be specified. Any other specified attribute of the role will be ignored.
+> **Note:** Since fixed roles are global, the Global attribute has to be specified. A fixed role will never be updated through provisioning.
 
 In order for provisioning to succeed, specified teams must already exist. Additionally, since teams are local to an organization, the organization has to be specified in the assignment.
 
