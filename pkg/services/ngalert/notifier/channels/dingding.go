@@ -74,7 +74,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	tmpl, _ := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
 
 	message := tmpl(dd.Message)
-	title := tmpl(`{{ template "default.title" . }}`)
+	title := tmpl(DefaultMessageTitleEmbed)
 
 	var bodyMsg map[string]interface{}
 	if tmpl(dd.MsgType) == "actionCard" {
@@ -102,7 +102,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 
 	u := tmpl(dd.URL)
 	if tmplErr != nil {
-		dd.log.Debug("failed to template DingDing message", "err", tmplErr.Error())
+		dd.log.Warn("failed to template DingDing message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsg)

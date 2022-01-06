@@ -449,8 +449,8 @@ export const runQueries = (
             )
           )
         )
-        .subscribe(
-          (data) => {
+        .subscribe({
+          next(data) {
             dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
             // Keep scanning for results if this was the last scanning transaction
@@ -465,12 +465,15 @@ export const runQueries = (
               }
             }
           },
-          (error) => {
+          error(error) {
             dispatch(notifyApp(createErrorNotification('Query processing error', error)));
             dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
             console.error(error);
-          }
-        );
+          },
+          complete() {
+            dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
+          },
+        });
 
       if (live) {
         dispatch(
