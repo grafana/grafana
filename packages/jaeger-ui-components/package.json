@@ -48,7 +48,7 @@
     "react-dom": "17.0.1",
     "react-icons": "2.2.7",
     "recompose": "0.30.0",
-    "reselect": "4.0.0",
+    "reselect": "4.1.5",
     "tinycolor2": "1.4.1",
     "tslib": "2.3.1",
     "tween-functions": "^1.2.0"

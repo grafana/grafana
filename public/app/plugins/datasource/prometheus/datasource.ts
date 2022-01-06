@@ -790,9 +790,19 @@ export class PrometheusDatasource
     );
   }
 
-  async getTagKeys() {
-    const result = await this.metadataRequest('/api/v1/labels');
-    return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
+  async getTagKeys(options?: any) {
+    if (options?.series) {
+      // Get tags for the provided series only
+      const seriesLabels: Array<Record<string, string[]>> = await Promise.all(
+        options.series.map((series: string) => this.languageProvider.fetchSeriesLabels(series))
+      );
+      const uniqueLabels = [...new Set(...seriesLabels.map((value) => Object.keys(value)))];
+      return uniqueLabels.map((value: any) => ({ text: value }));
+    } else {
+      // Get all tags
+      const result = await this.metadataRequest('/api/v1/labels');
+      return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
+    }
   }
 
   async getTagValues(options: { key?: string } = {}) {
