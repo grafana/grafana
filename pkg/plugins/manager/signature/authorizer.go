@@ -7,12 +7,12 @@ import (
 
 func ProvideService(cfg *setting.Cfg) (*UnsignedPluginAuthorizer, error) {
 	return &UnsignedPluginAuthorizer{
-		Cfg: cfg,
+		Cfg: plugins.FromGrafanaCfg(cfg),
 	}, nil
 }
 
 type UnsignedPluginAuthorizer struct {
-	Cfg *setting.Cfg
+	Cfg *plugins.Cfg
 }
 
 func (u *UnsignedPluginAuthorizer) CanLoadPlugin(p *plugins.Plugin) bool {
@@ -20,7 +20,7 @@ func (u *UnsignedPluginAuthorizer) CanLoadPlugin(p *plugins.Plugin) bool {
 		return true
 	}
 
-	if u.Cfg.Env == setting.Dev {
+	if u.Cfg.DevMode {
 		return true
 	}
 
