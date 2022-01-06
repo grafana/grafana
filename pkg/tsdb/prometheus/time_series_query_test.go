@@ -1,13 +1,17 @@
 package prometheus
 
 import (
+	"fmt"
 	"math"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -700,6 +704,82 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		testValue := res[0].Fields[0].At(0)
 		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
 	})
+}
+
+func TestPrometheus_matrixToDataFrames(t *testing.T) {
+	t.Run("matrix_golden.json response", func(t *testing.T) {
+		query, results := generateMatrixData(5, 10)
+
+		frames := make(data.Frames, 0)
+		frames = matrixToDataFrames(results, query, frames)
+		res := &backend.DataResponse{Frames: frames}
+
+		err := experimental.CheckGoldenDataResponse("./testdata/matrix_golden.txt", res, false)
+		require.NoError(t, err)
+	})
+}
+
+func BenchmarkPrometheus_matrixToDataFrames(b *testing.B) {
+	b.Run("100 series with 1,000 rows", runMatrixBenchmark(100, 1_000))
+	b.Run("1,000 series with 100 rows", runMatrixBenchmark(1_000, 100))
+	b.Run("100 series with 100 rows", runMatrixBenchmark(100, 100))
+	b.Run("1 series with 10,000 rows", runMatrixBenchmark(1, 10_000))
+	b.Run("10,000 series with 1 row", runMatrixBenchmark(10_000, 1))
+}
+
+func runMatrixBenchmark(series, rows int) func(*testing.B) {
+	return func(b *testing.B) {
+		query, results := generateMatrixData(series, rows)
+		for i := 0; i < b.N; i++ {
+			frames := make([]*data.Frame, 0)
+			frames = matrixToDataFrames(results, query, frames)
+			if len(frames) != series {
+				b.Fatal("wrong frame count", len(frames))
+			}
+			if len(frames[0].Fields) != 2 {
+				b.Fatal("wrong field count", len(frames[0].Fields))
+			}
+			if count, err := frames[0].RowLen(); count != rows || err != nil {
+				b.Fatal("wrong row count", count, err)
+			}
+		}
+	}
+}
+
+func generateMatrixData(seriesCount, rowCount int) (*PrometheusQuery, model.Matrix) {
+	step := 1 * time.Second
+	ts := time.Unix(0, 0).UTC()
+	results := model.Matrix{}
+
+	for i := 0; i < seriesCount; i += 1 {
+		samples := []model.SamplePair{}
+		for j := 0; j < rowCount; j += 1 {
+			s := model.SamplePair{
+				Value:     model.SampleValue(j / (i + 1)),
+				Timestamp: model.TimeFromUnixNano(ts.Add(time.Duration(j) * step).UnixNano()),
+			}
+			if j%(i+1) != 0 {
+				continue
+			}
+			samples = append(samples, s)
+		}
+		result := model.SampleStream{
+			Metric: model.Metric{
+				"__name__": model.LabelValue(fmt.Sprintf("every_%d", i)),
+			},
+			Values: samples,
+		}
+		results = append(results, &result)
+	}
+
+	query := &PrometheusQuery{
+		Step:         step,
+		Start:        ts,
+		End:          time.Unix(int64(rowCount-1), 0).UTC(),
+		LegendFormat: "",
+	}
+
+	return query, results
 }
 
 func queryContext(json string, timeRange backend.TimeRange) *backend.QueryDataRequest {
