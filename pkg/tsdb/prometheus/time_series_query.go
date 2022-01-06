@@ -296,43 +296,45 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 }
 
 func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
-	for _, v := range matrix {
-		tags := make(map[string]string, len(v.Metric))
-		for k, v := range v.Metric {
-			tags[string(k)] = string(v)
-		}
-
-		baseTimestamp := alignTimeRange(query.Start, query.Step, query.UtcOffsetSec).UnixMilli()
-		endTimestamp := alignTimeRange(query.End, query.Step, query.UtcOffsetSec).UnixMilli()
+	var (
+		idx           = 0
+		baseTimestamp = alignTimeRange(query.Start, query.Step, query.UtcOffsetSec).UnixMilli()
+		endTimestamp  = alignTimeRange(query.End, query.Step, query.UtcOffsetSec).UnixMilli()
 		// For each step we create 1 data point. This results in range / step + 1 data points.
-		datapointsCount := int((endTimestamp-baseTimestamp)/query.Step.Milliseconds()) + 1
+		datapointsCount = int((endTimestamp-baseTimestamp)/query.Step.Milliseconds()) + 1
+		timeField       = data.NewFieldFromFieldType(data.FieldTypeTime, datapointsCount)
+		timeMap         = make(map[int64]int, datapointsCount)
+	)
 
-		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, datapointsCount)
+	timeField.Name = data.TimeSeriesTimeFieldName
+
+	// Fill the time field so we can avoid creating time fields for each matrix result, and
+	// create a map of timestamp -> time field index so that we can look up the index of the matching
+	// timestamp in the loop below.
+	for t := baseTimestamp; t <= endTimestamp; t += query.Step.Milliseconds() {
+		timeField.Set(idx, time.Unix(0, t*int64(time.Millisecond)).UTC())
+		timeMap[t*int64(time.Millisecond)] = idx
+		idx++
+	}
+
+	for _, s := range matrix {
 		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, datapointsCount)
-		idx := 0
-
-		for _, pair := range v.Values {
-			timestamp := int64(pair.Timestamp)
-			value := float64(pair.Value)
-
-			for t := baseTimestamp; t < timestamp; t += query.Step.Milliseconds() {
-				timeField.Set(idx, time.Unix(0, t*1000000).UTC())
-				idx++
-			}
-
-			timeField.Set(idx, time.Unix(pair.Timestamp.Unix(), 0).UTC())
-			if !math.IsNaN(value) {
-				valueField.Set(idx, &value)
-			}
-			baseTimestamp = timestamp + query.Step.Milliseconds()
-			idx++
+		valueField.Labels = make(map[string]string, len(s.Metric))
+		for k, v := range s.Metric {
+			valueField.Labels[string(k)] = string(v)
 		}
 
-		name := formatLegend(v.Metric, query)
-		timeField.Name = data.TimeSeriesTimeFieldName
+		// Using indexes in this for loop instead of range in order to avoid copying the sample pair.
+		for rowIdx := 0; rowIdx < len(s.Values); rowIdx++ {
+			r := &s.Values[rowIdx]
+			if !math.IsNaN(float64(r.Value)) {
+				valueField.Set(timeMap[int64(r.Timestamp.UnixNano())], (*float64)(&r.Value))
+			}
+		}
+
+		name := formatLegend(s.Metric, query)
 		valueField.Name = data.TimeSeriesValueFieldName
 		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
-		valueField.Labels = tags
 
 		frames = append(frames, newDataFrame(name, "matrix", timeField, valueField))
 	}
