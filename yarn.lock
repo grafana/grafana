@@ -19682,7 +19682,7 @@ __metadata:
     rxjs: 7.5.1
     sass: 1.46.0
     sass-loader: 12.4.0
-    search-query-parser: 1.5.4
+    search-query-parser: 1.6.0
     selecto: 1.13.0
     semver: ^7.1.3
     sinon: 12.0.1
@@ -31429,10 +31429,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"search-query-parser@npm:1.5.4":
-  version: 1.5.4
-  resolution: "search-query-parser@npm:1.5.4"
-  checksum: cff91c9b1ab773d2a40ad825c6fc190f44053f31820aa8073df3eccef318d8fd5cd0a928f1a0377e1a04f7cfaa23422144d5e7f4cbc98cb8861ecc2a4e210ccc
+"search-query-parser@npm:1.6.0":
+  version: 1.6.0
+  resolution: "search-query-parser@npm:1.6.0"
+  checksum: 6ce290e1d1602401ab5e4561f2a9744d1ffd75da5759cc8ead162153258d8470dd86757a3be577772e883d48673dec42b26843fc4aa5155f1ec902112ce92225
   languageName: node
   linkType: hard
 
