@@ -106,22 +106,9 @@ func (ml MultiLoggers) Log(keyvals ...interface{}) error {
 	return nil
 }
 
-// we need to implement new function for multiloggers
+// New creates a new logger from the existing one with additional context
 func (ml MultiLoggers) New(ctx ...interface{}) MultiLoggers {
-	var newloger MultiLoggers
-	for _, logWithFilter := range ml.loggers {
-		logWithFilter.val = gokitlog.With(logWithFilter.val, ctx)
-		if len(ctx) > 0 {
-			v, ok := logWithFilter.filters[ctx[0].(string)]
-			if ok {
-				logWithFilter.val = level.NewFilter(logWithFilter.val, v)
-			} else {
-				logWithFilter.val = level.NewFilter(logWithFilter.val, logWithFilter.maxLevel)
-			}
-		}
-		newloger.loggers = append(newloger.loggers, logWithFilter)
-	}
-	return newloger
+	return with(ml, gokitlog.With, ctx)
 }
 
 // New creates MultiLoggers with the provided context and caller that is added as a suffix.
