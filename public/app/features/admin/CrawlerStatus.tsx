@@ -53,14 +53,16 @@ export const CrawlerStatus = () => {
     <div className={styles.wrap}>
       <pre>{JSON.stringify(status, null, 2)}</pre>
       {status.state !== 'running' && <CrawlerStartButton />}
-      <Button
-        variant="secondary"
-        onClick={() => {
-          getBackendSrv().post('/api/admin/crawler/stop');
-        }}
-      >
-        Stop
-      </Button>
+      {status.state !== 'stopped' && (
+        <Button
+          variant="secondary"
+          onClick={() => {
+            getBackendSrv().post('/api/admin/crawler/stop');
+          }}
+        >
+          Stop
+        </Button>
+      )}
     </div>
   );
 };

@@ -25,7 +25,6 @@ export const CrawlerStartButton = () => {
     <>
       <Modal title={'Start crawler'} isOpen={open} onDismiss={onDismiss}>
         <div className={styles.wrap}>
-          For now, we must enter credentials manually :(
           <CodeEditor
             height={200}
             value={JSON.stringify(body, null, 2) ?? ''}

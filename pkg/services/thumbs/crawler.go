@@ -120,7 +120,7 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rend
 		OrgId:        c.OrgId,
 	}
 
-	err := bus.DispatchCtx(context.Background(), &searchQuery)
+	err := bus.Dispatch(context.Background(), &searchQuery)
 	if err != nil {
 		return crawlStatus{}, err
 	}
