@@ -14,6 +14,7 @@ import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig, defaultP
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { prepareBarChartDisplayValues } from './utils';
 import { config } from '@grafana/runtime';
+import { TickSpacingEditor } from './TickSpacingEditor';
 
 export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
@@ -113,22 +114,16 @@ export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChar
         name: 'Bar label max length',
         description: 'Bar labels will be truncated to the length provided',
         settings: {
-          placeholder: 'Auto',
+          placeholder: 'None',
           min: 0,
         },
       })
-      .addSliderInput({
+      .addCustomEditor({
+        id: 'xTickLabelSpacing',
         path: 'xTickLabelSpacing',
-        name: 'Bar label minimum spacing',
-        description: 'Bar labels will be skipped to maintain this distance',
-        defaultValue: 0,
-        settings: {
-          min: -300,
-          max: 300,
-          step: 10,
-          marks: { '-300': 'LTR', 0: 'None', 300: 'RTL' },
-          included: false,
-        },
+        name: 'Bar labels minimum spacing',
+        defaultValue: defaultPanelOptions.xTickLabelSpacing,
+        editor: TickSpacingEditor,
       })
       .addRadio({
         path: 'showValue',
