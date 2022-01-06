@@ -19,15 +19,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/services/datasources"
-
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -60,8 +55,6 @@ var (
 )
 
 const (
-	pluginID string = "stackdriver"
-
 	gceAuthentication         string = "gce"
 	jwtAuthentication         string = "jwt"
 	metricQueryType           string = "metrics"
@@ -71,27 +64,15 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store,
-	dsService *datasources.Service) *Service {
+func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	s := &Service{
 		httpClientProvider: httpClientProvider,
-		cfg:                cfg,
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		dsService:          dsService,
 	}
 
 	mux := http.NewServeMux()
 	s.registerRoutes(mux)
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler:    s,
-		CallResourceHandler: httpadapter.New(mux),
-		CheckHealthHandler:  s,
-	})
 
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		slog.Error("Failed to register plugin", "error", err)
-	}
 	return s
 }
 
@@ -136,9 +117,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 type Service struct {
 	httpClientProvider httpclient.Provider
-	cfg                *setting.Cfg
 	im                 instancemgmt.InstanceManager
-	dsService          *datasources.Service
 }
 
 type QueryModel struct {

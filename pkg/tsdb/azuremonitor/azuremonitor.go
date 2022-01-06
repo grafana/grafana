@@ -11,18 +11,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 const (
 	timeSeries = "time_series"
-	pluginID   = "grafana-azure-monitor-datasource"
 )
 
 var (
@@ -30,7 +26,7 @@ var (
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, pluginStore plugins.Store) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider) *Service {
 	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &AzureMonitorDatasource{proxy: proxy},
@@ -47,18 +43,8 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, p
 		executors: executors,
 	}
 
-	mux := s.newMux()
 	resourceMux := http.NewServeMux()
 	s.registerRoutes(resourceMux)
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler:    mux,
-		CallResourceHandler: httpadapter.New(resourceMux),
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		azlog.Error("Failed to register plugin", "error", err)
-	}
 
 	return s
 }

@@ -25,8 +25,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -52,24 +50,13 @@ const defaultRegion = "default"
 const logIdentifierInternal = "__log__grafana_internal__"
 const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 
-const pluginID = "cloudwatch"
-
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func ProvideService(cfg *setting.Cfg, logsService *LogsService, pluginStore plugins.Store) (*CloudWatchService, error) {
+func ProvideService(cfg *setting.Cfg, logsService *LogsService) (*CloudWatchService, error) {
 	plog.Debug("initing")
 
 	executor := newExecutor(logsService, datasource.NewInstanceManager(NewInstanceSettings()), cfg, awsds.NewSessionCache())
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: executor,
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		plog.Error("Failed to register plugin", "error", err)
-		return nil, err
-	}
 
 	return &CloudWatchService{
 		LogsService: logsService,

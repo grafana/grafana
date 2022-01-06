@@ -13,35 +13,21 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/collector/model/otlp"
 )
-
-const pluginID = "tempo"
 
 type Service struct {
 	im   instancemgmt.InstanceManager
 	tlog log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 
 	s := &Service{
 		tlog: log.New("tsdb.tempo"),
 		im:   im,
-	}
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		s.tlog.Error("Failed to register plugin", "error", err)
-		return nil, err
 	}
 
 	return s, nil
