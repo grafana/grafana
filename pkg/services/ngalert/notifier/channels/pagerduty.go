@@ -72,7 +72,7 @@ func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template
 		Class:     model.Settings.Get("class").MustString("default"),
 		Component: model.Settings.Get("component").MustString("Grafana"),
 		Group:     model.Settings.Get("group").MustString("default"),
-		Summary:   model.Settings.Get("summary").MustString(`{{ template "default.title" . }}`),
+		Summary:   model.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
 		tmpl:      t,
 		log:       log.New("alerting.notifier." + model.Name),
 	}, nil
@@ -145,7 +145,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			HRef: pn.tmpl.ExternalURL.String(),
 			Text: "External URL",
 		}},
-		Description: tmpl(`{{ template "default.title" . }}`), // TODO: this can be configurable template.
+		Description: tmpl(DefaultMessageTitleEmbed), // TODO: this can be configurable template.
 		Payload: pagerDutyPayload{
 			Component:     tmpl(pn.Component),
 			Summary:       tmpl(pn.Summary),
@@ -167,7 +167,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	if tmplErr != nil {
-		pn.log.Debug("failed to template PagerDuty message", "err", tmplErr.Error())
+		pn.log.Warn("failed to template PagerDuty message", "err", tmplErr.Error())
 	}
 
 	return msg, eventType, nil

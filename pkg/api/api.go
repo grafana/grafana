@@ -141,7 +141,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
 		apiRoute.Group("/user", func(userRoute routing.RouteRegister) {
-			userRoute.Get("/", routing.Wrap(GetSignedInUser))
+			userRoute.Get("/", routing.Wrap(hs.GetSignedInUser))
 			userRoute.Put("/", routing.Wrap(UpdateSignedInUser))
 			userRoute.Post("/using/:id", routing.Wrap(UserSetUsingOrg))
 			userRoute.Get("/orgs", routing.Wrap(GetSignedInUserOrgList))
@@ -167,7 +167,7 @@ func (hs *HTTPServer) registerRoutes() {
 			userIDScope := ac.Scope("global", "users", "id", ac.Parameter(":id"))
 			usersRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsers))
 			usersRoute.Get("/search", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsersWithPaging))
-			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(GetUserByID))
+			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserByID))
 			usersRoute.Get("/:id/teams", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersTeamRead, userIDScope)), routing.Wrap(GetUserTeams))
 			usersRoute.Get("/:id/orgs", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(GetUserOrgList))
 			// query parameters /users/lookup?loginOrEmail=admin@example.com

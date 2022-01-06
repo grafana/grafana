@@ -128,7 +128,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		sn.log.Debug("failed to template sensugo message", "err", tmplErr.Error())
+		sn.log.Warn("failed to template sensugo message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsgType)

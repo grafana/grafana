@@ -6,7 +6,11 @@ weight = 115
 
 # Opt-in to Grafana alerting
 
-Grafana alerting is enabled by default for new OSS installations. For older installations that use legacy dashboard alerts, it is still an opt-in feature. This topic describes how to opt-in to Grafana alerting if you have an existing Grafana installation and the rules and restrictions that govern the migration of existing dashboard alerts to the new alerting system. You can [disable Grafana alerts]({{< relref "./opt-in.md#disable-grafana-alerts" >}}) and use the legacy dashboard alerting if needed.
+Grafana alerting is enabled by default for new Cloud and OSS installations.
+
+**Note:** If you are an existing Grafana Cloud user and want to explore unified alerting, contact Grafana Support. They will enable unified alerting for your Cloud stack.
+
+For older OSS installations that use legacy dashboard alerts, unified alerting is still an opt-in feature. This topic describes how to opt-in to Grafana alerting if you have an existing Grafana installation and the rules and restrictions that govern the migration of existing dashboard alerts to the new alerting system. You can [disable Grafana alerts]({{< relref "./opt-in.md#disable-grafana-alerts" >}}) and use the legacy dashboard alerting if needed.
 
 Before you begin, we recommend that you backup Grafana's database. If you are using PostgreSQL as the backend database, then the minimum required version is 9.5.
 
