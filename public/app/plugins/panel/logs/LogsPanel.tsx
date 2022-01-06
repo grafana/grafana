@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
 import {
@@ -16,6 +16,8 @@ import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { COMMON_LABELS } from '../../../core/logs_model';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
+import usePanelScroll from './usePanelScroll';
+import usePopulateData from './usePopulateData';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -37,10 +39,15 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 }) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles(title, isAscending));
-  const [scrollTop, setScrollTop] = useState(0);
-  const logsContainerRef = useRef<HTMLDivElement>(null);
 
   const { eventBus } = usePanelContext();
+  const { newData, externalLogs } = usePopulateData({ data });
+
+  usePanelScroll({
+    isAscending,
+    messages: newData?.series[0]?.fields[1]?.values?.buffer || [''],
+  });
+
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
       if (!row) {
@@ -60,30 +67,24 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
-    const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs) : null;
+    const newResults = newData ? dataFrameToLogsModel(newData.series, newData.request?.intervalMs) : null;
     const logRows = newResults?.rows || [];
     const commonLabels = newResults?.meta?.find((m) => m.label === COMMON_LABELS);
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
-  }, [data, dedupStrategy]);
 
-  useLayoutEffect(() => {
-    if (isAscending && logsContainerRef.current) {
-      setScrollTop(logsContainerRef.current.offsetHeight);
-    } else {
-      setScrollTop(0);
-    }
-  }, [isAscending, logRows]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newData, externalLogs, dedupStrategy]);
 
   const getFieldLinks = useCallback(
     (field: Field, rowIndex: number) => {
-      return getFieldLinksForExplore({ field, rowIndex, range: data.timeRange });
+      return getFieldLinksForExplore({ field, rowIndex, range: newData.timeRange });
     },
-    [data]
+    [newData]
   );
 
-  if (!data || logRows.length === 0) {
-    return <PanelDataErrorView panelId={id} data={data} needsStringField />;
+  if (!newData || logRows.length === 0) {
+    return <PanelDataErrorView panelId={id} data={newData} needsStringField />;
   }
 
   const renderCommonLabels = () => (
@@ -94,8 +95,8 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   );
 
   return (
-    <CustomScrollbar autoHide scrollTop={scrollTop}>
-      <div className={style.container} ref={logsContainerRef}>
+    <CustomScrollbar autoHide>
+      <div className={style.container}>
         {showCommonLabels && !isAscending && renderCommonLabels()}
         <LogRows
           logRows={logRows}
