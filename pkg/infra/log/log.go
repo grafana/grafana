@@ -192,14 +192,14 @@ func terminalColorFn(keyvals ...interface{}) term.FgBgColor {
 		}
 		switch keyvals[i+1] {
 		case "trace":
-			return term.FgBgColor{Fg: term.DarkGray}
-		case "debug":
-			return term.FgBgColor{Fg: term.DarkGray}
-		case "info":
 			return term.FgBgColor{Fg: term.Gray}
-		case "warn":
+		case level.DebugValue():
+			return term.FgBgColor{Fg: term.Gray}
+		case level.InfoValue():
+			return term.FgBgColor{Fg: term.Green}
+		case level.WarnValue():
 			return term.FgBgColor{Fg: term.Yellow}
-		case "error":
+		case level.ErrorValue():
 			return term.FgBgColor{Fg: term.Red}
 		case "crit":
 			return term.FgBgColor{Fg: term.Gray, Bg: term.DarkRed}
@@ -215,7 +215,7 @@ func getLogFormat(format string) Formatedlogger {
 	case "console":
 		if isatty.IsTerminal(os.Stdout.Fd()) {
 			return func(w io.Writer) gokitlog.Logger {
-				return term.NewLogger(w, gokitlog.NewLogfmtLogger, terminalColorFn)
+				return term.NewColorLogger(w, gokitlog.NewLogfmtLogger, terminalColorFn)
 			}
 		}
 		return func(w io.Writer) gokitlog.Logger {
@@ -344,25 +344,3 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 	}
 	return nil
 }
-
-// parsing the logger key then find the logger name, apply the dedicated level to the logger. info is lower than debug, we take the highest level.
-// the filters setting is overwritting the global configuration
-// func LogFilterHandler(maxLevel level.Option, filters map[string]level.Option, h LogWithFilters) LogWithFilters {
-// 	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-// 		if len(filters) > 0 {
-// 			for i := 0; i < len(r.Ctx); i += 2 {
-// 				key, ok := r.Ctx[i].(string)
-// 				if ok && key == "logger" {
-// 					loggerName, strOk := r.Ctx[i+1].(string)
-// 					if strOk {
-// 						if filterLevel, ok := filters[loggerName]; ok {
-// 							return r.Lvl <= filterLevel
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-
-// 		return r.Lvl <= maxLevel
-// 	}, h)
-// }
