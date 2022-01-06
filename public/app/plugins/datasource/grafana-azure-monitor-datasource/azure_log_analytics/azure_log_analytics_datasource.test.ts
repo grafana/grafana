@@ -380,6 +380,15 @@ describe('AzureLogAnalyticsDatasource', () => {
           },
         },
       },
+      {
+        id: '$incorrect_var',
+        current: {},
+        query: {
+          grafanaTemplateVariableFn: {
+            rawQuery: 'InvalidQuery()',
+          },
+        },
+      },
     ] as any;
     let laDatasource: AzureLogAnalyticsDatasource;
 
@@ -431,6 +440,19 @@ describe('AzureLogAnalyticsDatasource', () => {
         parsedResponse?.azureLogAnalytics?.resource ===
           '/susbcriptions/testSubID/resourceGroups/testRG/providers/Microsoft.Insights/testNS/testRes'
       );
+    });
+
+    it('should throw error if the variable query is invalid', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        azureLogAnalytics: {
+          resource: '$res',
+          query: 'perf | take 100',
+        },
+      };
+
+      const parsedResponse = laDatasource.applyTemplateVariables(query, scopedVars, true);
+      expect(parsedResponse?.azureLogAnalytics?.resource === '');
     });
   });
 });
