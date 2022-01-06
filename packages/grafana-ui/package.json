@@ -171,7 +171,7 @@
     "sass-loader": "12.4.0",
     "storybook-dark-mode": "1.0.8",
     "style-loader": "3.3.0",
-    "terser-webpack-plugin": "5.2.4",
+    "terser-webpack-plugin": "5.3.0",
     "ts-loader": "8.0.11",
     "typescript": "4.4.3",
     "webpack": "5.58.1",
