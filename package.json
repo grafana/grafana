@@ -348,7 +348,7 @@
     "redux": "4.1.1",
     "redux-thunk": "2.4.1",
     "regenerator-runtime": "0.13.3",
-    "reselect": "4.0.0",
+    "reselect": "4.1.5",
     "rst2html": "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809",
     "rxjs": "7.5.1",
     "sass": "link:./public/sass",
