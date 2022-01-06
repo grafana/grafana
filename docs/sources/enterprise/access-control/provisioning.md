@@ -296,6 +296,12 @@ roles:
       - name: 'Editor'
         # <bool> overwrite org id and assign role globally
         global: true
+  - name: fixed:users:writer
+    global: true
+    # <list> list of teams the role should be assigned to
+    teams:
+      - name: 'user editors'
+        orgId: 1
 ```
 
 ## Supported settings
