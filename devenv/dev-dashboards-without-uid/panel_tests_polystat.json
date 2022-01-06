@@ -823,11 +823,11 @@
               "value": "kvoltamp"
             },
             {
-              "text": "Volt-ampere reactive (var)",
+              "text": "Volt-Ampere reactive (VAr)",
               "value": "voltampreact"
             },
             {
-              "text": "Kilovolt-ampere reactive (kvar)",
+              "text": "Kilovolt-Ampere reactive (kVAr)",
               "value": "kvoltampreact"
             },
             {
