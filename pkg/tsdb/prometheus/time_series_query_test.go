@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -746,26 +745,26 @@ func runMatrixBenchmark(series, rows int) func(*testing.B) {
 	}
 }
 
-func generateMatrixData(seriesCount, rowCount int) (*PrometheusQuery, model.Matrix) {
+func generateMatrixData(seriesCount, rowCount int) (*PrometheusQuery, p.Matrix) {
 	step := 1 * time.Second
 	ts := time.Unix(0, 0).UTC()
-	results := model.Matrix{}
+	results := p.Matrix{}
 
 	for i := 0; i < seriesCount; i += 1 {
-		samples := []model.SamplePair{}
+		samples := []p.SamplePair{}
 		for j := 0; j < rowCount; j += 1 {
-			s := model.SamplePair{
-				Value:     model.SampleValue(j / (i + 1)),
-				Timestamp: model.TimeFromUnixNano(ts.Add(time.Duration(j) * step).UnixNano()),
+			s := p.SamplePair{
+				Value:     p.SampleValue(j / (i + 1)),
+				Timestamp: p.TimeFromUnixNano(ts.Add(time.Duration(j) * step).UnixNano()),
 			}
 			if j%(i+1) != 0 {
 				continue
 			}
 			samples = append(samples, s)
 		}
-		result := model.SampleStream{
-			Metric: model.Metric{
-				"__name__": model.LabelValue(fmt.Sprintf("every_%d", i)),
+		result := p.SampleStream{
+			Metric: p.Metric{
+				"__name__": p.LabelValue(fmt.Sprintf("every_%d", i)),
 			},
 			Values: samples,
 		}

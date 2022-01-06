@@ -328,7 +328,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		for rowIdx := 0; rowIdx < len(s.Values); rowIdx++ {
 			r := &s.Values[rowIdx]
 			if !math.IsNaN(float64(r.Value)) {
-				valueField.Set(timeMap[int64(r.Timestamp.UnixNano())], (*float64)(&r.Value))
+				valueField.Set(timeMap[r.Timestamp.UnixNano()], (*float64)(&r.Value))
 			}
 		}
 
