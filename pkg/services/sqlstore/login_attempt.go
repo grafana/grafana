@@ -12,9 +12,9 @@ import (
 var getTimeNow = time.Now
 
 func init() {
-	bus.AddHandlerCtx("sql", CreateLoginAttempt)
-	bus.AddHandlerCtx("sql", DeleteOldLoginAttempts)
-	bus.AddHandlerCtx("sql", GetUserLoginAttemptCount)
+	bus.AddHandler("sql", CreateLoginAttempt)
+	bus.AddHandler("sql", DeleteOldLoginAttempts)
+	bus.AddHandler("sql", GetUserLoginAttemptCount)
 }
 
 func CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {

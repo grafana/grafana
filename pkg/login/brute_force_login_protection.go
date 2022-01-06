@@ -23,7 +23,7 @@ var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQue
 		Since:    time.Now().Add(-loginAttemptsWindow),
 	}
 
-	if err := bus.DispatchCtx(ctx, &loginAttemptCountQuery); err != nil {
+	if err := bus.Dispatch(ctx, &loginAttemptCountQuery); err != nil {
 		return err
 	}
 
@@ -44,5 +44,5 @@ var saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQ
 		IpAddress: query.IpAddress,
 	}
 
-	return bus.DispatchCtx(ctx, &loginAttemptCommand)
+	return bus.Dispatch(ctx, &loginAttemptCommand)
 }

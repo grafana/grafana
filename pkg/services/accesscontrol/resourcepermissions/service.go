@@ -90,11 +90,21 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, re
 		return nil, err
 	}
 
-	return s.store.SetUserResourcePermission(ctx, orgID, userID, accesscontrol.SetResourcePermissionCommand{
+	permission, err := s.store.SetUserResourcePermission(ctx, orgID, userID, accesscontrol.SetResourcePermissionCommand{
 		Actions:    actions,
 		ResourceID: resourceID,
 		Resource:   s.options.Resource,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	if s.options.OnSetUser != nil {
+		if err := s.options.OnSetUser(ctx, orgID, userID, resourceID, s.MapActions(*permission)); err != nil {
+			return nil, err
+		}
+	}
+	return permission, nil
 }
 
 func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
@@ -113,11 +123,21 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 		return nil, err
 	}
 
-	return s.store.SetTeamResourcePermission(ctx, orgID, teamID, accesscontrol.SetResourcePermissionCommand{
+	permission, err := s.store.SetTeamResourcePermission(ctx, orgID, teamID, accesscontrol.SetResourcePermissionCommand{
 		Actions:    actions,
 		ResourceID: resourceID,
 		Resource:   s.options.Resource,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	if s.options.OnSetTeam != nil {
+		if err := s.options.OnSetTeam(ctx, orgID, teamID, resourceID, s.MapActions(*permission)); err != nil {
+			return nil, err
+		}
+	}
+	return permission, nil
 }
 
 func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, actions []string) (*accesscontrol.ResourcePermission, error) {
@@ -137,11 +157,21 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		return nil, err
 	}
 
-	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, accesscontrol.SetResourcePermissionCommand{
+	permission, err := s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, accesscontrol.SetResourcePermissionCommand{
 		Actions:    actions,
 		ResourceID: resourceID,
 		Resource:   s.options.Resource,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	if s.options.OnSetBuiltInRole != nil {
+		if err := s.options.OnSetBuiltInRole(ctx, orgID, builtInRole, resourceID, s.MapActions(*permission)); err != nil {
+			return nil, err
+		}
+	}
+	return permission, nil
 }
 
 func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {

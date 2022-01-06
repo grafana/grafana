@@ -34,13 +34,13 @@ func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) fronten
 
 		switch event.Level {
 		case sentry.LevelError:
-			frontendLogger.Error(msg, ctx)
+			frontendLogger.Error(msg, ctx...)
 		case sentry.LevelWarning:
-			frontendLogger.Warn(msg, ctx)
+			frontendLogger.Warn(msg, ctx...)
 		case sentry.LevelDebug:
-			frontendLogger.Debug(msg, ctx)
+			frontendLogger.Debug(msg, ctx...)
 		default:
-			frontendLogger.Info(msg, ctx)
+			frontendLogger.Info(msg, ctx...)
 		}
 
 		return response.Success("ok")

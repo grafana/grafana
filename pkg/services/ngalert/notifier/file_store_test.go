@@ -11,7 +11,7 @@ import (
 )
 
 func TestFileStore_FilepathFor_DirectoryNotExist(t *testing.T) {
-	store := newFakeKVStore(t)
+	store := NewFakeKVStore(t)
 	workingDir := filepath.Join(t.TempDir(), "notexistdir")
 	fs := NewFileStore(1, store, workingDir)
 	filekey := "silences"
@@ -32,7 +32,7 @@ func TestFileStore_FilepathFor_DirectoryNotExist(t *testing.T) {
 	}
 }
 func TestFileStore_FilepathFor(t *testing.T) {
-	store := newFakeKVStore(t)
+	store := NewFakeKVStore(t)
 	workingDir := t.TempDir()
 	fs := NewFileStore(1, store, workingDir)
 	filekey := "silences"
@@ -74,7 +74,7 @@ func TestFileStore_FilepathFor(t *testing.T) {
 }
 
 func TestFileStore_Persist(t *testing.T) {
-	store := newFakeKVStore(t)
+	store := NewFakeKVStore(t)
 	state := &fakeState{data: "something to marshal"}
 	workingDir := t.TempDir()
 	fs := NewFileStore(1, store, workingDir)

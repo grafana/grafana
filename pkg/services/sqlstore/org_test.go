@@ -381,5 +381,5 @@ func testHelperUpdateDashboardAcl(t *testing.T, sqlStore *SQLStore, dashboardID 
 		item.Updated = time.Now()
 		itemPtrs = append(itemPtrs, &item)
 	}
-	return sqlStore.UpdateDashboardACL(dashboardID, itemPtrs)
+	return sqlStore.UpdateDashboardACL(context.Background(), dashboardID, itemPtrs)
 }
