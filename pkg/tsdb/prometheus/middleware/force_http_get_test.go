@@ -1,4 +1,4 @@
-package prometheus
+package middleware
 
 import (
 	"net/http"
@@ -9,52 +9,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestForceGet(t *testing.T) {
-	t.Run("With nil jsonOpts, should not force get-method", func(t *testing.T) {
-		var jsonOpts map[string]interface{}
-		require.False(t, forceHttpGet(jsonOpts))
-	})
-
-	t.Run("With empty jsonOpts, should not force get-method", func(t *testing.T) {
-		jsonOpts := make(map[string]interface{})
-		require.False(t, forceHttpGet(jsonOpts))
-	})
-
-	t.Run("With httpMethod=nil, should not not force get-method", func(t *testing.T) {
-		jsonOpts := map[string]interface{}{
-			"httpMethod": nil,
-		}
-		require.False(t, forceHttpGet(jsonOpts))
-	})
-
-	t.Run("With httpMethod=post, should not force get-method", func(t *testing.T) {
-		jsonOpts := map[string]interface{}{
-			"httpMethod": "POST",
-		}
-		require.False(t, forceHttpGet(jsonOpts))
-	})
-
-	t.Run("With httpMethod=get, should force get-method", func(t *testing.T) {
-		jsonOpts := map[string]interface{}{
-			"httpMethod": "get",
-		}
-		require.True(t, forceHttpGet(jsonOpts))
-	})
-
-	t.Run("With httpMethod=GET, should force get-method", func(t *testing.T) {
-		jsonOpts := map[string]interface{}{
-			"httpMethod": "GET",
-		}
-		require.True(t, forceHttpGet(jsonOpts))
-	})
-}
-
 func TestEnsureHttpMethodMiddleware(t *testing.T) {
 	t.Run("Name should be correct", func(t *testing.T) {
 		finalRoundTripper := httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			return &http.Response{StatusCode: http.StatusOK}, nil
 		})
-		mw := forceHttpGetMiddleware(log.New("test"))
+		mw := ForceHttpGet(log.New("test"))
 		rt := mw.CreateMiddleware(httpclient.Options{}, finalRoundTripper)
 		require.NotNil(t, rt)
 		middlewareName, ok := mw.(httpclient.MiddlewareName)
@@ -67,7 +27,7 @@ func TestEnsureHttpMethodMiddleware(t *testing.T) {
 			return &http.Response{StatusCode: http.StatusOK}, nil
 		})
 
-		mw := forceHttpGetMiddleware(log.New("test"))
+		mw := ForceHttpGet(log.New("test"))
 		rt := mw.CreateMiddleware(httpclient.Options{}, finalRoundTripper)
 		require.NotNil(t, rt)
 
