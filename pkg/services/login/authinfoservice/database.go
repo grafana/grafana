@@ -15,13 +15,13 @@ var getTime = time.Now
 
 func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
-	err := s.Bus.DispatchCtx(ctx, &userQuery)
+	err := s.Bus.Dispatch(ctx, &userQuery)
 	if err != nil {
 		return err
 	}
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userQuery.Result.Id}
-	if err := s.Bus.DispatchCtx(context.TODO(), authInfoQuery); err != nil {
+	if err := s.Bus.Dispatch(ctx, authInfoQuery); err != nil {
 		return err
 	}
 
@@ -37,7 +37,7 @@ func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *
 	return nil
 }
 
-func (s *Implementation) GetAuthInfo(query *models.GetAuthInfoQuery) error {
+func (s *Implementation) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
 	userAuth := &models.UserAuth{
 		UserId:     query.UserId,
 		AuthModule: query.AuthModule,
@@ -47,7 +47,7 @@ func (s *Implementation) GetAuthInfo(query *models.GetAuthInfoQuery) error {
 	var has bool
 	var err error
 
-	err = s.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err = s.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		has, err = sess.Desc("created").Get(userAuth)
 		return err
 	})
@@ -71,15 +71,20 @@ func (s *Implementation) GetAuthInfo(query *models.GetAuthInfoQuery) error {
 	if err != nil {
 		return err
 	}
+	secretIdToken, err := s.decodeAndDecrypt(userAuth.OAuthIdToken)
+	if err != nil {
+		return err
+	}
 	userAuth.OAuthAccessToken = secretAccessToken
 	userAuth.OAuthRefreshToken = secretRefreshToken
 	userAuth.OAuthTokenType = secretTokenType
+	userAuth.OAuthIdToken = secretIdToken
 
 	query.Result = userAuth
 	return nil
 }
 
-func (s *Implementation) SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
+func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
 	authUser := &models.UserAuth{
 		UserId:     cmd.UserId,
 		AuthModule: cmd.AuthModule,
@@ -101,19 +106,28 @@ func (s *Implementation) SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
 			return err
 		}
 
+		var secretIdToken string
+		if idToken, ok := cmd.OAuthToken.Extra("id_token").(string); ok && idToken != "" {
+			secretIdToken, err = s.encryptAndEncode(idToken)
+			if err != nil {
+				return err
+			}
+		}
+
 		authUser.OAuthAccessToken = secretAccessToken
 		authUser.OAuthRefreshToken = secretRefreshToken
 		authUser.OAuthTokenType = secretTokenType
+		authUser.OAuthIdToken = secretIdToken
 		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 	}
 
-	return s.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return s.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Insert(authUser)
 		return err
 	})
 }
 
-func (s *Implementation) UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error {
+func (s *Implementation) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
 	authUser := &models.UserAuth{
 		UserId:     cmd.UserId,
 		AuthModule: cmd.AuthModule,
@@ -135,9 +149,18 @@ func (s *Implementation) UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error
 			return err
 		}
 
+		var secretIdToken string
+		if idToken, ok := cmd.OAuthToken.Extra("id_token").(string); ok && idToken != "" {
+			secretIdToken, err = s.encryptAndEncode(idToken)
+			if err != nil {
+				return err
+			}
+		}
+
 		authUser.OAuthAccessToken = secretAccessToken
 		authUser.OAuthRefreshToken = secretRefreshToken
 		authUser.OAuthTokenType = secretTokenType
+		authUser.OAuthIdToken = secretIdToken
 		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 	}
 
@@ -146,15 +169,15 @@ func (s *Implementation) UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error
 		AuthModule: cmd.AuthModule,
 	}
 
-	return s.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return s.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		upd, err := sess.Update(authUser, cond)
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_module", cmd.AuthModule, "rows", upd)
 		return err
 	})
 }
 
-func (s *Implementation) DeleteAuthInfo(cmd *models.DeleteAuthInfoCommand) error {
-	return s.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (s *Implementation) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error {
+	return s.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Delete(cmd.UserAuth)
 		return err
 	})

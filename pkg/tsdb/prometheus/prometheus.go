@@ -7,16 +7,17 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/promclient"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
@@ -26,12 +27,14 @@ var (
 	safeRes      = 11000
 )
 
+const pluginID = "prometheus"
+
 type Service struct {
 	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
 	plog.Debug("initializing")
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 
@@ -43,7 +46,8 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
-	if err := registrar.LoadAndRegister("prometheus", factory); err != nil {
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}
@@ -53,36 +57,14 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		jsonData := map[string]interface{}{}
+		var jsonData promclient.JsonData
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
-		httpCliOpts, err := settings.HTTPClientOptions()
-		if err != nil {
-			return nil, fmt.Errorf("error getting http options: %w", err)
-		}
 
-		// Set SigV4 service namespace
-		if httpCliOpts.SigV4 != nil {
-			httpCliOpts.SigV4.Service = "aps"
-		}
-
-		// timeInterval can be a string or can be missing.
-		// if it is missing, we set it to empty-string
-		timeInterval := ""
-
-		timeIntervalJson := jsonData["timeInterval"]
-		if timeIntervalJson != nil {
-			// if it is not nil, it must be a string
-			var ok bool
-			timeInterval, ok = timeIntervalJson.(string)
-			if !ok {
-				return nil, errors.New("invalid time-interval provided")
-			}
-		}
-
-		client, err := createClient(settings.URL, httpCliOpts, httpClientProvider)
+		p := promclient.NewProvider(settings, jsonData, httpClientProvider, plog)
+		pc, err := promclient.NewProviderCache(p, jsonData)
 		if err != nil {
 			return nil, err
 		}
@@ -90,8 +72,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		mdl := DatasourceInfo{
 			ID:           settings.ID,
 			URL:          settings.URL,
-			TimeInterval: timeInterval,
-			promClient:   client,
+			TimeInterval: jsonData.TimeInterval,
+			getClient:    pc.GetClient,
 		}
 
 		return mdl, nil
@@ -118,28 +100,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	return result, err
-}
-
-func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider) (apiv1.API, error) {
-	customMiddlewares := customQueryParametersMiddleware(plog)
-	httpOpts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
-
-	roundTripper, err := clientProvider.GetTransport(httpOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := api.Config{
-		Address:      url,
-		RoundTripper: roundTripper,
-	}
-
-	client, err := api.NewClient(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return apiv1.NewAPI(client), nil
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*DatasourceInfo, error) {

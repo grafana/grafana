@@ -1,5 +1,5 @@
 import { ThunkResult } from '../../../types';
-import { getEditorVariables, getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
+import { getEditorVariables, getNewVariableIndex, getVariable, getVariables } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
@@ -88,7 +88,7 @@ export const switchToNewMode = (type: VariableType = 'query'): ThunkResult<void>
   const id = getNextAvailableId(type, getVariables(getState()));
   const identifier = { type, id };
   const global = false;
-  const index = getNewVariabelIndex(getState());
+  const index = getNewVariableIndex(getState());
   const model = cloneDeep(variableAdapters.get(type).initialState);
   model.id = id;
   model.name = id;
@@ -109,12 +109,10 @@ export const switchToListMode = (): ThunkResult<void> => (dispatch, getState) =>
   const state = getState();
   const variables = getEditorVariables(state);
   const dashboard = state.dashboard.getModel();
-  const { unknown, usages } = createUsagesNetwork(variables, dashboard);
-  const unknownsNetwork = transformUsagesToNetwork(unknown);
-  const unknownExits = Object.keys(unknown).length > 0;
+  const { usages } = createUsagesNetwork(variables, dashboard);
   const usagesNetwork = transformUsagesToNetwork(usages);
 
-  dispatch(initInspect({ unknown, usages, usagesNetwork, unknownsNetwork, unknownExits }));
+  dispatch(initInspect({ usages, usagesNetwork }));
 };
 
 export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {

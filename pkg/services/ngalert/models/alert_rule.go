@@ -41,6 +41,7 @@ func (executionErrorState ExecutionErrorState) String() string {
 
 const (
 	AlertingErrState ExecutionErrorState = "Alerting"
+	ErrorErrState    ExecutionErrorState = "Error"
 )
 
 const (

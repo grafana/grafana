@@ -15,11 +15,8 @@ export interface Props {
 
 const UsersTable: FC<Props> = (props) => {
   const { users, orgId, onRoleChange, onRemoveUser } = props;
-  const canUpdateRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
-  const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
-  const rolePickerDisabled = !canUpdateRole;
 
-  const [showRemoveModal, setShowRemoveModal] = useState<string | boolean>(false);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
 
@@ -89,24 +86,24 @@ const UsersTable: FC<Props> = (props) => {
                     onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
                     getRoleOptions={getRoleOptions}
                     getBuiltinRoles={getBuiltinRoles}
-                    disabled={rolePickerDisabled}
+                    disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
                   />
                 ) : (
                   <OrgRolePicker
                     aria-label="Role"
                     value={user.role}
-                    disabled={!canUpdateRole}
+                    disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
                     onChange={(newRole) => onRoleChange(newRole, user)}
                   />
                 )}
               </td>
 
-              {canRemoveFromOrg && (
+              {contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRemove, user) && (
                 <td>
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => setShowRemoveModal(user.login)}
+                    onClick={() => setShowRemoveModal(Boolean(user.login))}
                     icon="times"
                     aria-label="Delete user"
                   />
@@ -115,7 +112,7 @@ const UsersTable: FC<Props> = (props) => {
                     confirmText="Delete"
                     title="Delete"
                     onDismiss={() => setShowRemoveModal(false)}
-                    isOpen={user.login === showRemoveModal}
+                    isOpen={Boolean(user.login) === showRemoveModal}
                     onConfirm={() => {
                       onRemoveUser(user);
                     }}

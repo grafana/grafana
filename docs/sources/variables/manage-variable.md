@@ -11,7 +11,7 @@ The variables page lets you [add]({{< relref "variable-types/_index.md" >}}) var
 
 ## Move
 
-You can move a variable up or down the list using the up and down arrows respectively.
+You can move a variable up or down the list using drag and drop.
 
 ## Clone
 

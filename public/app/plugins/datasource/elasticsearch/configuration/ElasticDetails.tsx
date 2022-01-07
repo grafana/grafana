@@ -3,7 +3,8 @@ import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui'
 const { Switch, Select, Input, FormField } = LegacyForms;
 import { ElasticsearchOptions, Interval } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { gte, lt } from 'semver';
+import { gte, lt, valid } from 'semver';
+import { isTruthy } from './utils';
 
 const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'No pattern', value: 'none' },
@@ -34,6 +35,14 @@ type Props = {
   onChange: (value: DataSourceSettings<ElasticsearchOptions>) => void;
 };
 export const ElasticDetails = ({ value, onChange }: Props) => {
+  const currentVersion = esVersions.find((version) => version.value === value.jsonData.esVersion);
+  const customOption =
+    !currentVersion && valid(value.jsonData.esVersion)
+      ? {
+          label: value.jsonData.esVersion,
+          value: value.jsonData.esVersion,
+        }
+      : undefined;
   return (
     <>
       <h3 className="page-heading">Elasticsearch details</h3>
@@ -89,7 +98,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             inputEl={
               <Select
                 menuShouldPortal
-                options={esVersions}
+                options={[customOption, ...esVersions].filter(isTruthy)}
                 onChange={(option) => {
                   const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
                     value.jsonData.maxConcurrentShardRequests,
@@ -104,7 +113,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
                     },
                   });
                 }}
-                value={esVersions.find((version) => version.value === value.jsonData.esVersion)}
+                value={currentVersion || customOption}
               />
             }
           />

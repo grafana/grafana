@@ -37,9 +37,7 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 	if ac.Cfg == nil {
 		return true
 	}
-
-	_, exists := ac.Cfg.FeatureToggles["accesscontrol"]
-	return !exists
+	return !ac.Cfg.FeatureToggles["accesscontrol"]
 }
 
 func (ac *OSSAccessControlService) registerUsageMetrics() {
@@ -64,12 +62,19 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	defer timer.ObserveDuration()
 	metrics.MAccessEvaluationCount.Inc()
 
-	permissions, err := ac.GetUserPermissions(ctx, user)
-	if err != nil {
-		return false, err
+	if user.Permissions == nil {
+		user.Permissions = map[int64]map[string][]string{}
 	}
 
-	return evaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
+	if _, ok := user.Permissions[user.OrgId]; !ok {
+		permissions, err := ac.GetUserPermissions(ctx, user)
+		if err != nil {
+			return false, err
+		}
+		user.Permissions[user.OrgId] = accesscontrol.GroupScopesByAction(permissions)
+	}
+
+	return evaluator.Evaluate(user.Permissions[user.OrgId])
 }
 
 // GetUserRoles returns user permissions based on built-in roles

@@ -240,7 +240,7 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 		},
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		pn.log.Error("Failed to send notification to Pagerduty", "error", err, "body", string(body))
 		return err
 	}

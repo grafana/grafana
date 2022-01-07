@@ -11,7 +11,7 @@ import {
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
-import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
+import { RuleIdentifier, RuleNamespace, RuleWithLocation, StateHistoryItem } from 'app/types/unified-alerting';
 import {
   PostableRulerRuleGroupDTO,
   RulerGrafanaRuleDTO,
@@ -19,6 +19,7 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 import { fetchNotifiers } from '../api/grafana';
+import { fetchAnnotations } from '../api/annotations';
 import {
   expireSilence,
   fetchAlertManagerConfig,
@@ -61,7 +62,7 @@ import {
   isPrometheusRuleIdentifier,
   isRulerNotSupportedResponse,
 } from '../utils/rules';
-import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
+import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import * as ruleId from '../utils/rule-id';
 import { isEmpty } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
@@ -446,6 +447,11 @@ export const fetchGrafanaNotifiersAction = createAsyncThunk(
   (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
 );
 
+export const fetchGrafanaAnnotationsAction = createAsyncThunk(
+  'unifiedalerting/fetchGrafanaAnnotations',
+  (alertId: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(alertId))
+);
+
 interface UpdateAlertManagerConfigActionOptions {
   alertManagerSourceName: string;
   oldConfig: AlertManagerCortexConfig; // it will be checked to make sure it didn't change in the meanwhile
@@ -648,6 +654,41 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
     );
   }
 );
+
+export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimingName: string): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const config = getState().unifiedAlerting.amConfigs[alertManagerSourceName].result;
+
+    const muteIntervals =
+      config?.alertmanager_config?.mute_time_intervals?.filter(({ name }) => name !== muteTimingName) ?? [];
+
+    if (config) {
+      withAppEvents(
+        dispatch(
+          updateAlertManagerConfigAction({
+            alertManagerSourceName,
+            oldConfig: config,
+            newConfig: {
+              ...config,
+              alertmanager_config: {
+                ...config.alertmanager_config,
+                route: config.alertmanager_config.route
+                  ? removeMuteTimingFromRoute(muteTimingName, config.alertmanager_config?.route)
+                  : undefined,
+                mute_time_intervals: muteIntervals,
+              },
+            },
+            refetch: true,
+          })
+        ),
+        {
+          successMessage: `Deleted "${muteTimingName}" from Alertmanager configuration`,
+          errorMessage: 'Failed to delete mute timing',
+        }
+      );
+    }
+  };
+};
 
 interface TestReceiversOptions {
   alertManagerSourceName: string;

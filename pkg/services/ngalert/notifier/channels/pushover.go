@@ -43,6 +43,9 @@ func NewPushoverNotifier(model *NotificationChannelConfig, t *template.Template,
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 
 	userKey := fn(context.Background(), model.SecureSettings, "userKey", model.Settings.Get("userKey").MustString())
 	APIToken := fn(context.Background(), model.SecureSettings, "apiToken", model.Settings.Get("apiToken").MustString())
@@ -107,7 +110,7 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		Body:       uploadBody.String(),
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		pn.log.Error("Failed to send pushover notification", "error", err, "webhook", pn.Name)
 		return false, err
 	}
@@ -192,7 +195,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	// Add title
-	err = w.WriteField("title", tmpl(`{{ template "default.title" . }}`))
+	err = w.WriteField("title", tmpl(DefaultMessageTitleEmbed))
 	if err != nil {
 		return nil, b, err
 	}
@@ -215,7 +218,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	if tmplErr != nil {
-		pn.log.Debug("failed to template pushover message", "err", tmplErr.Error())
+		pn.log.Warn("failed to template pushover message", "err", tmplErr.Error())
 	}
 
 	// Mark as html message

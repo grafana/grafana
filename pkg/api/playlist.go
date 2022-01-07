@@ -2,16 +2,18 @@ package api
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func ValidateOrgPlaylist(c *models.ReqContext) {
 	id := c.ParamsInt64(":id")
 	query := models.GetPlaylistByIdQuery{Id: id}
-	err := bus.DispatchCtx(c.Req.Context(), &query)
+	err := bus.Dispatch(c.Req.Context(), &query)
 
 	if err != nil {
 		c.JsonApiErr(404, "Playlist not found", err)
@@ -43,7 +45,7 @@ func SearchPlaylists(c *models.ReqContext) response.Response {
 		OrgId: c.OrgId,
 	}
 
-	err := bus.DispatchCtx(c.Req.Context(), &searchQuery)
+	err := bus.Dispatch(c.Req.Context(), &searchQuery)
 	if err != nil {
 		return response.Error(500, "Search failed", err)
 	}
@@ -55,7 +57,7 @@ func GetPlaylist(c *models.ReqContext) response.Response {
 	id := c.ParamsInt64(":id")
 	cmd := models.GetPlaylistByIdQuery{Id: id}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Playlist not found", err)
 	}
 
@@ -97,7 +99,7 @@ func LoadPlaylistItemDTOs(ctx context.Context, id int64) ([]models.PlaylistItemD
 
 func LoadPlaylistItems(ctx context.Context, id int64) ([]models.PlaylistItem, error) {
 	itemQuery := models.GetPlaylistItemsByIdQuery{PlaylistId: id}
-	if err := bus.DispatchCtx(ctx, &itemQuery); err != nil {
+	if err := bus.Dispatch(ctx, &itemQuery); err != nil {
 		return nil, err
 	}
 
@@ -131,28 +133,36 @@ func DeletePlaylist(c *models.ReqContext) response.Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := models.DeletePlaylistCommand{Id: id, OrgId: c.OrgId}
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to delete playlist", err)
 	}
 
 	return response.JSON(200, "")
 }
 
-func CreatePlaylist(c *models.ReqContext, cmd models.CreatePlaylistCommand) response.Response {
+func CreatePlaylist(c *models.ReqContext) response.Response {
+	cmd := models.CreatePlaylistCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.OrgId
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to create playlist", err)
 	}
 
 	return response.JSON(200, cmd.Result)
 }
 
-func UpdatePlaylist(c *models.ReqContext, cmd models.UpdatePlaylistCommand) response.Response {
+func UpdatePlaylist(c *models.ReqContext) response.Response {
+	cmd := models.UpdatePlaylistCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to save playlist", err)
 	}
 

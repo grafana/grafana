@@ -101,7 +101,7 @@ If you install the `.deb` package, then you will need to manually update Grafana
 1. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
 
 ```bash
-sudo apt-get install -y adduser libfontconfig1
+sudo apt-get install -y adduser
 wget <.deb package url>
 sudo dpkg -i grafana<edition>_<version>_amd64.deb
 ```

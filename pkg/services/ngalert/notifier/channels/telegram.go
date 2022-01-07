@@ -33,6 +33,9 @@ func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template,
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 
 	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString())
 	chatID := model.Settings.Get("chatid").MustString()
@@ -106,7 +109,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		},
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		tn.log.Error("Failed to send webhook", "error", err, "webhook", tn.Name)
 		return false, err
 	}
@@ -124,7 +127,7 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 
 	message := tmpl(tn.Message)
 	if tmplErr != nil {
-		tn.log.Debug("failed to template Telegram message", "err", tmplErr.Error())
+		tn.log.Warn("failed to template Telegram message", "err", tmplErr.Error())
 	}
 
 	msg["text"] = message

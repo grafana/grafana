@@ -2,4 +2,4 @@
 
 . e2e/variables
 
-SUITE=verify ./e2e/run-suite
+./e2e/run-suite verify/specs

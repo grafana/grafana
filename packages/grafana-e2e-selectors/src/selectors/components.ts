@@ -274,9 +274,11 @@ export const Components = {
      */
     items: 'Search items',
     itemsV2: 'data-testid Search items',
+    cards: 'data-testid Search cards',
     collapseFolder: (sectionId: string) => `data-testid Collapse folder ${sectionId}`,
     expandFolder: (sectionId: string) => `data-testid Expand folder ${sectionId}`,
     dashboardItem: (item: string) => `${Components.Search.dashboardItems} ${item}`,
+    dashboardCard: (item: string) => `data-testid Search card ${item}`,
     dashboardItems: 'data-testid Dashboard search item',
   },
   DashboardLinks: {
@@ -313,5 +315,8 @@ export const Components = {
   },
   VisualizationPreview: {
     card: (name: string) => `data-testid suggestion-${name}`,
+  },
+  ColorSwatch: {
+    name: `data-testid-colorswatch`,
   },
 };

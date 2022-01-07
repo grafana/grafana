@@ -11,7 +11,8 @@
   ],
   "swagger": "2.0",
   "info": {
-    "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Unified Alerting API.\nDocumentation of the API.",
+    "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Grafana Alerting API.",
+    "title": "Grafana Alerting API.",
     "version": "1.1.0"
   },
   "basePath": "/api/v1",
@@ -494,22 +495,10 @@
         "operationId": "RoutePostTestReceivers",
         "parameters": [
           {
-            "x-go-name": "Alert",
-            "name": "alert",
+            "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/TestReceiversConfigAlertParams"
-            }
-          },
-          {
-            "x-go-name": "Receivers",
-            "name": "receivers",
-            "in": "body",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/PostableApiReceiver"
-              }
+              "$ref": "#/definitions/TestReceiversConfigBodyParams"
             }
           },
           {
@@ -1351,6 +1340,13 @@
           },
           "x-go-name": "InhibitRules"
         },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimeInterval"
+          },
+          "x-go-name": "MuteTimeIntervals"
+        },
         "route": {
           "$ref": "#/definitions/Route"
         },
@@ -1369,6 +1365,21 @@
       "type": "string",
       "format": "date-time",
       "x-go-package": "github.com/go-openapi/strfmt"
+    },
+    "DayOfMonthRange": {
+      "type": "object",
+      "title": "A DayOfMonthRange is an inclusive range that may have negative Beginning/End values that represent distance from the End of the month Beginning at -1.",
+      "properties": {
+        "Begin": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "End": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
     },
     "DiscoveryBase": {
       "type": "object",
@@ -1569,6 +1580,13 @@
             "$ref": "#/definitions/InhibitRule"
           },
           "x-go-name": "InhibitRules"
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimeInterval"
+          },
+          "x-go-name": "MuteTimeIntervals"
         },
         "receivers": {
           "description": "Override with our superset receiver type",
@@ -1932,6 +1950,10 @@
         "opsgenie_api_key": {
           "$ref": "#/definitions/Secret"
         },
+        "opsgenie_api_key_file": {
+          "type": "string",
+          "x-go-name": "OpsGenieAPIKeyFile"
+        },
         "opsgenie_api_url": {
           "$ref": "#/definitions/URL"
         },
@@ -2043,6 +2065,21 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "InclusiveRange": {
+      "type": "object",
+      "title": "InclusiveRange is used to hold the Beginning and End values of many time interval components.",
+      "properties": {
+        "Begin": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "End": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
     },
     "InhibitRule": {
       "description": "InhibitRule defines an inhibition rule that mutes alerts that match the\ntarget labels if an alert matching the source labels exists.\nBoth alerts have to have a set of labels being equal.",
@@ -2169,9 +2206,42 @@
       },
       "$ref": "#/definitions/Matchers"
     },
+    "MonthRange": {
+      "type": "object",
+      "title": "A MonthRange is an inclusive range between [1, 12] where 1 = January.",
+      "properties": {
+        "Begin": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "End": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+    },
     "MultiStatus": {
       "type": "object",
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "MuteTimeInterval": {
+      "type": "object",
+      "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
+          },
+          "x-go-name": "TimeIntervals"
+        }
+      },
+      "x-go-package": "github.com/prometheus/alertmanager/config"
     },
     "NamespaceConfigResponse": {
       "type": "object",
@@ -2198,6 +2268,9 @@
       "type": "object",
       "title": "OAuth2 is the oauth2 client configuration.",
       "properties": {
+        "TLSConfig": {
+          "$ref": "#/definitions/TLSConfig"
+        },
         "client_id": {
           "type": "string",
           "x-go-name": "ClientID"
@@ -2238,8 +2311,16 @@
       "type": "object",
       "title": "OpsGenieConfig configures notifications via OpsGenie.",
       "properties": {
+        "actions": {
+          "type": "string",
+          "x-go-name": "Actions"
+        },
         "api_key": {
           "$ref": "#/definitions/Secret"
+        },
+        "api_key_file": {
+          "type": "string",
+          "x-go-name": "APIKeyFile"
         },
         "api_url": {
           "$ref": "#/definitions/URL"
@@ -2254,6 +2335,10 @@
             "type": "string"
           },
           "x-go-name": "Details"
+        },
+        "entity": {
+          "type": "string",
+          "x-go-name": "Entity"
         },
         "http_config": {
           "$ref": "#/definitions/HTTPClientConfig"
@@ -2457,6 +2542,13 @@
             "$ref": "#/definitions/InhibitRule"
           },
           "x-go-name": "InhibitRules"
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimeInterval"
+          },
+          "x-go-name": "MuteTimeIntervals"
         },
         "receivers": {
           "description": "Override with our superset receiver type",
@@ -3486,6 +3578,22 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "TestReceiversConfigBodyParams": {
+      "type": "object",
+      "properties": {
+        "alert": {
+          "$ref": "#/definitions/TestReceiversConfigAlertParams"
+        },
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostableApiReceiver"
+          },
+          "x-go-name": "Receivers"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
     "TestReceiversResult": {
       "type": "object",
       "properties": {
@@ -3533,9 +3641,68 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
-    "URL": {
+    "TimeInterval": {
+      "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "properties": {
+        "days_of_month": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DayOfMonthRange"
+          },
+          "x-go-name": "DaysOfMonth"
+        },
+        "months": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MonthRange"
+          },
+          "x-go-name": "Months"
+        },
+        "times": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeRange"
+          },
+          "x-go-name": "Times"
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WeekdayRange"
+          },
+          "x-go-name": "Weekdays"
+        },
+        "years": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/YearRange"
+          },
+          "x-go-name": "Years"
+        }
+      },
+      "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+    },
+    "TimeRange": {
+      "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
+      "type": "object",
+      "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
+      "properties": {
+        "EndMinute": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "StartMinute": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+    },
+    "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
+      "type": "object",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -3568,7 +3735,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "github.com/prometheus/common/config"
+      "x-go-package": "net/url"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3713,6 +3880,36 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "WeekdayRange": {
+      "type": "object",
+      "title": "A WeekdayRange is an inclusive range between [0, 6] where 0 = Sunday.",
+      "properties": {
+        "Begin": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "End": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+    },
+    "YearRange": {
+      "type": "object",
+      "title": "A YearRange is a positive inclusive range.",
+      "properties": {
+        "Begin": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "End": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
     },
     "alert": {
       "description": "Alert alert",
@@ -3959,6 +4156,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -4011,8 +4209,6 @@
           "x-go-name": "UpdatedAt"
         }
       },
-      "x-go-name": "GettableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
@@ -4150,6 +4346,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -4190,8 +4387,6 @@
           "x-go-name": "StartsAt"
         }
       },
-      "x-go-name": "PostableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {

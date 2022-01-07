@@ -97,6 +97,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
                 {!isVanillaAM && (
                   <>
                     <ActionIcon
+                      aria-label="Edit"
                       data-testid="edit"
                       to={makeAMLink(
                         `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,

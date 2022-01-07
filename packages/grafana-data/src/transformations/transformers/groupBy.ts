@@ -63,13 +63,13 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 
           // Group the values by fields and groups so we can get all values for a
           // group for a given field.
-          const valuesByGroupKey: Record<string, Record<string, MutableField>> = {};
+          const valuesByGroupKey = new Map<string, Record<string, MutableField>>();
           for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
             const groupKey = String(groupByFields.map((field) => field.values.get(rowIndex)));
-            const valuesByField = valuesByGroupKey[groupKey] ?? {};
+            const valuesByField = valuesByGroupKey.get(groupKey) ?? {};
 
-            if (!valuesByGroupKey[groupKey]) {
-              valuesByGroupKey[groupKey] = valuesByField;
+            if (!valuesByGroupKey.has(groupKey)) {
+              valuesByGroupKey.set(groupKey, valuesByField);
             }
 
             for (let field of frame.fields) {
@@ -89,16 +89,14 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
           }
 
           const fields: Field[] = [];
-          const groupKeys = Object.keys(valuesByGroupKey);
 
           for (const field of groupByFields) {
             const values = new ArrayVector();
             const fieldName = getFieldDisplayName(field);
 
-            for (let key of groupKeys) {
-              const valuesByField = valuesByGroupKey[key];
-              values.add(valuesByField[fieldName].values.get(0));
-            }
+            valuesByGroupKey.forEach((value) => {
+              values.add(value[fieldName].values.get(0));
+            });
 
             fields.push({
               name: field.name,
@@ -120,8 +118,8 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
             const aggregations = options.fields[fieldName].aggregations;
             const valuesByAggregation: Record<string, any[]> = {};
 
-            for (const groupKey of groupKeys) {
-              const fieldWithValuesForGroup = valuesByGroupKey[groupKey][fieldName];
+            valuesByGroupKey.forEach((value) => {
+              const fieldWithValuesForGroup = value[fieldName];
               const results = reduceField({
                 field: fieldWithValuesForGroup,
                 reducers: aggregations,
@@ -133,7 +131,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
                 }
                 valuesByAggregation[aggregation].push(results[aggregation]);
               }
-            }
+            });
 
             for (const aggregation of aggregations) {
               const aggregationField: Field = {
@@ -150,7 +148,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 
           processed.push({
             fields,
-            length: groupKeys.length,
+            length: valuesByGroupKey.size,
           });
         }
 

@@ -76,7 +76,7 @@ async function setupTestContext({
     onOptionsChange: jest.fn(),
     options,
     renderCounter: 1,
-    replaceVariables: jest.fn(),
+    replaceVariables: (str: string) => str,
     timeRange: getDefaultTimeRange(),
     timeZone: 'utc',
     title: 'Test Title',

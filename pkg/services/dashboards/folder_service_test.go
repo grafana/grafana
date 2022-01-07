@@ -25,7 +25,7 @@ func TestFolderService(t *testing.T) {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = models.NewDashboardFolder("Folder")
 				return nil
 			})
@@ -85,7 +85,7 @@ func TestFolderService(t *testing.T) {
 			dash := models.NewDashboardFolder("Folder")
 			dash.Id = 1
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = dash
 				return nil
 			})
@@ -99,12 +99,12 @@ func TestFolderService(t *testing.T) {
 				return nil
 			}
 
-			bus.AddHandler("test", func(cmd *models.SaveDashboardCommand) error {
+			bus.AddHandler("test", func(ctx context.Context, cmd *models.SaveDashboardCommand) error {
 				cmd.Result = dash
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.DeleteDashboardCommand) error {
+			bus.AddHandler("test", func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
 				return nil
 			})
 
@@ -139,7 +139,7 @@ func TestFolderService(t *testing.T) {
 			dashFolder.Id = 1
 			dashFolder.Uid = "uid-abc"
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = dashFolder
 				return nil
 			})

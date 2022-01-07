@@ -37,6 +37,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: setting.NewCfg(),
+			log: &fakeLogger{},
 		}
 
 		err := i.Initialize(p)
@@ -71,6 +72,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: setting.NewCfg(),
+			log: fakeLogger{},
 		}
 
 		err := i.Initialize(p)
@@ -117,6 +119,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			cfg: &setting.Cfg{
 				AppSubURL: "appSubURL",
 			},
+			log: fakeLogger{},
 		}
 
 		err := i.Initialize(p)
@@ -163,6 +166,7 @@ func TestInitializer_InitializeWithFactory(t *testing.T) {
 			cfg: &setting.Cfg{
 				AppSubURL: "appSubURL",
 			},
+			log: fakeLogger{},
 		}
 
 		factoryInvoked := false
@@ -202,6 +206,7 @@ func TestInitializer_InitializeWithFactory(t *testing.T) {
 			cfg: &setting.Cfg{
 				AppSubURL: "appSubURL",
 			},
+			log: fakeLogger{},
 		}
 
 		err := i.InitializeWithFactory(p, nil)
@@ -236,6 +241,7 @@ func TestInitializer_envVars(t *testing.T) {
 				},
 			},
 			license: licensing,
+			log:     fakeLogger{},
 		}
 
 		envVars := i.envVars(p)
@@ -252,6 +258,7 @@ func TestInitializer_setPathsBasedOnApp(t *testing.T) {
 	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
 		i := &Initializer{
 			cfg: setting.NewCfg(),
+			log: fakeLogger{},
 		}
 
 		child := &plugins.Plugin{
@@ -346,4 +353,16 @@ func (t *testLicensingService) Environment() map[string]string {
 
 type testPlugin struct {
 	backendplugin.Plugin
+}
+
+type fakeLogger struct {
+	log.MultiLoggers
+}
+
+func (f fakeLogger) New(_ ...interface{}) log.MultiLoggers {
+	return log.MultiLoggers{}
+}
+
+func (f fakeLogger) Warn(_ string, _ ...interface{}) {
+
 }
