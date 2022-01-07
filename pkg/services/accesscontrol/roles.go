@@ -256,7 +256,6 @@ var (
 			orgUsersWriter,
 			settingsReader,
 			statsReader,
-			teamsWriter,
 			usersReader,
 			usersWriter,
 		},
