@@ -1,7 +1,7 @@
 import { FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
 import { DataTransformerID } from '@grafana/data/src/transformations/transformers/ids';
-import { Gazetteer } from 'app/plugins/panel/geomap/gazetteer/gazetteer';
+import { Gazetteer } from 'app/features/geo/gazetteer/gazetteer';
 import { addFieldsFromGazetteer } from './fieldLookup';
 
 describe('Lookup gazetteer', () => {

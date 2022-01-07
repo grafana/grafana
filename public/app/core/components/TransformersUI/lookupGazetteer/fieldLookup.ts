@@ -9,7 +9,7 @@ import {
   FieldType,
   DataTransformerInfo,
 } from '@grafana/data';
-import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from 'app/plugins/panel/geomap/gazetteer/gazetteer';
+import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from 'app/features/geo/gazetteer/gazetteer';
 import { mergeMap, from } from 'rxjs';
 
 export interface FieldLookupOptions {
