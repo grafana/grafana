@@ -362,31 +362,31 @@ func TestNotificationAsConfig(t *testing.T) {
 }
 
 func setupBusHandlers(sqlStore *sqlstore.SQLStore) {
-	bus.AddHandlerCtx("getOrg", func(ctx context.Context, q *models.GetOrgByNameQuery) error {
+	bus.AddHandler("getOrg", func(ctx context.Context, q *models.GetOrgByNameQuery) error {
 		return sqlstore.GetOrgByName(ctx, q)
 	})
 
-	bus.AddHandlerCtx("getAlertNotifications", func(ctx context.Context, q *models.GetAlertNotificationsWithUidQuery) error {
+	bus.AddHandler("getAlertNotifications", func(ctx context.Context, q *models.GetAlertNotificationsWithUidQuery) error {
 		return sqlStore.GetAlertNotificationsWithUid(ctx, q)
 	})
 
-	bus.AddHandlerCtx("createAlertNotification", func(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error {
+	bus.AddHandler("createAlertNotification", func(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error {
 		return sqlStore.CreateAlertNotificationCommand(ctx, cmd)
 	})
 
-	bus.AddHandlerCtx("updateAlertNotification", func(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
+	bus.AddHandler("updateAlertNotification", func(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
 		return sqlStore.UpdateAlertNotification(ctx, cmd)
 	})
 
-	bus.AddHandlerCtx("updateAlertNotification", func(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
+	bus.AddHandler("updateAlertNotification", func(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
 		return sqlStore.UpdateAlertNotificationWithUid(ctx, cmd)
 	})
 
-	bus.AddHandlerCtx("deleteAlertNotification", func(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
+	bus.AddHandler("deleteAlertNotification", func(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
 		return sqlStore.DeleteAlertNotification(ctx, cmd)
 	})
 
-	bus.AddHandlerCtx("deleteAlertNotification", func(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error {
+	bus.AddHandler("deleteAlertNotification", func(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error {
 		return sqlStore.DeleteAlertNotificationWithUid(ctx, cmd)
 	})
 }

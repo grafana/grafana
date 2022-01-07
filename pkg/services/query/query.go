@@ -238,7 +238,7 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.Signe
 	// use datasourceId if it exists
 	id := query.Get("datasourceId").MustInt64(0)
 	if id > 0 {
-		ds, err = s.dataSourceCache.GetDatasource(id, user, skipCache)
+		ds, err = s.dataSourceCache.GetDatasource(ctx, id, user, skipCache)
 		if err != nil {
 			return nil, err
 		}

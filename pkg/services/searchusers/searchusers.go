@@ -60,7 +60,7 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*models.SearchUsersQuery,
 	}
 
 	query := &models.SearchUsersQuery{Query: searchQuery, Filters: filters, Page: page, Limit: perPage}
-	if err := s.bus.DispatchCtx(c.Req.Context(), query); err != nil {
+	if err := s.bus.Dispatch(c.Req.Context(), query); err != nil {
 		return nil, err
 	}
 

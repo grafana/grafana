@@ -22,3 +22,11 @@ export function getPluginSettings(pluginId: string): Promise<PluginMeta> {
       return Promise.reject(new Error('Unknown Plugin'));
     });
 }
+
+export const clearPluginSettingsCache = (pluginId?: string) => {
+  if (pluginId) {
+    return delete pluginInfoCache[pluginId];
+  }
+  // clear all
+  return Object.keys(pluginInfoCache).forEach((key) => delete pluginInfoCache[key]);
+};

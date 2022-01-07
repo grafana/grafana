@@ -33,6 +33,7 @@ func (s *AlertNotificationService) HandleNotificationTestCommand(ctx context.Con
 
 	model := models.AlertNotification{
 		Id:       cmd.ID,
+		OrgId:    cmd.OrgID,
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,

@@ -12,16 +12,16 @@ import (
 )
 
 func init() {
-	bus.AddHandlerCtx("sql", UpdateTeam)
-	bus.AddHandlerCtx("sql", DeleteTeam)
-	bus.AddHandlerCtx("sql", SearchTeams)
-	bus.AddHandlerCtx("sql", GetTeamById)
-	bus.AddHandlerCtx("sql", GetTeamsByUser)
+	bus.AddHandler("sql", UpdateTeam)
+	bus.AddHandler("sql", DeleteTeam)
+	bus.AddHandler("sql", SearchTeams)
+	bus.AddHandler("sql", GetTeamById)
+	bus.AddHandler("sql", GetTeamsByUser)
 
-	bus.AddHandlerCtx("sql", UpdateTeamMember)
-	bus.AddHandlerCtx("sql", RemoveTeamMember)
-	bus.AddHandlerCtx("sql", GetTeamMembers)
-	bus.AddHandlerCtx("sql", IsAdminOfTeams)
+	bus.AddHandler("sql", UpdateTeamMember)
+	bus.AddHandler("sql", RemoveTeamMember)
+	bus.AddHandler("sql", GetTeamMembers)
+	bus.AddHandler("sql", IsAdminOfTeams)
 }
 
 func getFilteredUsers(signedInUser *models.SignedInUser, hiddenUsers map[string]struct{}) []string {
