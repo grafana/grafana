@@ -14,7 +14,7 @@ interface Props {
   navModel: NavModel;
 }
 
-const AdminSettings: React.FC<Props> = ({ navModel }) => {
+function AdminSettings({ navModel }: Props) {
   const { loading, value: settings } = useAsync(
     () => getBackendSrv().get('/api/admin/settings') as Promise<Settings>,
     []
