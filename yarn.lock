@@ -8610,6 +8610,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/bonjour@npm:^3.5.9":
+  version: 3.5.10
+  resolution: "@types/bonjour@npm:3.5.10"
+  dependencies:
+    "@types/node": "*"
+  checksum: bfcadb042a41b124c4e3de4925e3be6d35b78f93f27c4535d5ff86980dc0f8bc407ed99b9b54528952dc62834d5a779392f7a12c2947dd19330eb05a6bcae15a
+  languageName: node
+  linkType: hard
+
 "@types/braintree__sanitize-url@npm:4.1.0":
   version: 4.1.0
   resolution: "@types/braintree__sanitize-url@npm:4.1.0"
@@ -8684,7 +8693,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/connect-history-api-fallback@npm:*":
+"@types/connect-history-api-fallback@npm:*, @types/connect-history-api-fallback@npm:^1.3.5":
   version: 1.3.5
   resolution: "@types/connect-history-api-fallback@npm:1.3.5"
   dependencies:
@@ -10047,6 +10056,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/serve-index@npm:^1.9.1":
+  version: 1.9.1
+  resolution: "@types/serve-index@npm:1.9.1"
+  dependencies:
+    "@types/express": "*"
+  checksum: 026f3995fb500f6df7c3fe5009e53bad6d739e20b84089f58ebfafb2f404bbbb6162bbe33f72d2f2af32d5b8d3799c8e179793f90d9ed5871fb8591190bb6056
+  languageName: node
+  linkType: hard
+
 "@types/serve-static@npm:*":
   version: 1.13.10
   resolution: "@types/serve-static@npm:1.13.10"
@@ -10096,6 +10114,15 @@ __metadata:
     "@types/react": "*"
     immutable: ^3.8.2
   checksum: c92350f1ef366b5907356a7f3b7bd41dda548dc1002cc2bd79f6b0ff1356d3189c124a54b363ddbe22cbdeb2a75f9d1b67d4f5b2a1bb6b89b714ecf7cf0c49c2
+  languageName: node
+  linkType: hard
+
+"@types/sockjs@npm:^0.3.33":
+  version: 0.3.33
+  resolution: "@types/sockjs@npm:0.3.33"
+  dependencies:
+    "@types/node": "*"
+  checksum: b9bbb2b5c5ead2fb884bb019f61a014e37410bddd295de28184e1b2e71ee6b04120c5ba7b9954617f0bdf962c13d06249ce65004490889c747c80d3f628ea842
   languageName: node
   linkType: hard
 
@@ -10313,6 +10340,15 @@ __metadata:
     anymatch: ^3.0.0
     source-map: ^0.6.0
   checksum: 8aa4b4ad68bb7a6ee5bd027005014e6242434162ed4c14cd251713ad6041e42bf7629fc56a5edc5a2124b49cc0dce273d6ee3386fae9a9cfe02e1f7e82087ea2
+  languageName: node
+  linkType: hard
+
+"@types/ws@npm:^8.2.2":
+  version: 8.2.2
+  resolution: "@types/ws@npm:8.2.2"
+  dependencies:
+    "@types/node": "*"
+  checksum: 308957864b9a5a0378ac82f1b084fa31b1bbe85106fb0d84ed2b392e4829404f21ab6ab2c1eb782d556e59cd33d57c75ad2d0cedc4b9b9d0ca3b2311bc915578
   languageName: node
   linkType: hard
 
@@ -16172,7 +16208,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"default-gateway@npm:^6.0.0":
+"default-gateway@npm:^6.0.3":
   version: 6.0.3
   resolution: "default-gateway@npm:6.0.3"
   dependencies:
@@ -19738,7 +19774,7 @@ __metadata:
     webpack: 5.65.0
     webpack-bundle-analyzer: 4.5.0
     webpack-cli: 4.9.1
-    webpack-dev-server: 4.4.0
+    webpack-dev-server: 4.7.2
     webpack-merge: 5.8.0
     whatwg-fetch: 3.1.0
   languageName: unknown
@@ -20920,18 +20956,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"internal-ip@npm:^6.2.0":
-  version: 6.2.0
-  resolution: "internal-ip@npm:6.2.0"
-  dependencies:
-    default-gateway: ^6.0.0
-    ipaddr.js: ^1.9.1
-    is-ip: ^3.1.0
-    p-event: ^4.2.0
-  checksum: 6d08299c052c4ec926fa4e3643049d81daacbc33d3ab90fc30cd59cd7f12902152107bc75778e1202a269eb82cab0c412ff04a78f0361e056de0c5c2628881fa
-  languageName: node
-  linkType: hard
-
 "internal-slot@npm:^1.0.3":
   version: 1.0.3
   resolution: "internal-slot@npm:1.0.3"
@@ -20984,13 +21008,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ip-regex@npm:^4.0.0":
-  version: 4.3.0
-  resolution: "ip-regex@npm:4.3.0"
-  checksum: 7ff904b891221b1847f3fdf3dbb3e6a8660dc39bc283f79eb7ed88f5338e1a3d1104b779bc83759159be266249c59c2160e779ee39446d79d4ed0890dfd06f08
-  languageName: node
-  linkType: hard
-
 "ip@npm:^1.1.0, ip@npm:^1.1.5":
   version: 1.1.5
   resolution: "ip@npm:1.1.5"
@@ -20998,7 +21015,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ipaddr.js@npm:1.9.1, ipaddr.js@npm:^1.9.1":
+"ipaddr.js@npm:1.9.1":
   version: 1.9.1
   resolution: "ipaddr.js@npm:1.9.1"
   checksum: f88d3825981486f5a1942414c8d77dd6674dd71c065adcfa46f578d677edcb99fda25af42675cb59db492fdf427b34a5abfcde3982da11a8fd83a500b41cfe77
@@ -21399,15 +21416,6 @@ __metadata:
   version: 1.0.0
   resolution: "is-interactive@npm:1.0.0"
   checksum: 824808776e2d468b2916cdd6c16acacebce060d844c35ca6d82267da692e92c3a16fdba624c50b54a63f38bdc4016055b6f443ce57d7147240de4f8cdabaf6f9
-  languageName: node
-  linkType: hard
-
-"is-ip@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "is-ip@npm:3.1.0"
-  dependencies:
-    ip-regex: ^4.0.0
-  checksum: da2c2b282407194adf2320bade0bad94be9c9d0bdab85ff45b1b62d8185f31c65dff3884519d57bf270277e5ea2046c7916a6e5a6db22fe4b7ddcdd3760f23eb
   languageName: node
   linkType: hard
 
@@ -26440,7 +26448,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"p-event@npm:^4.1.0, p-event@npm:^4.2.0":
+"p-event@npm:^4.1.0":
   version: 4.2.0
   resolution: "p-event@npm:4.2.0"
   dependencies:
@@ -35452,49 +35460,53 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-dev-middleware@npm:^5.2.1":
-  version: 5.2.1
-  resolution: "webpack-dev-middleware@npm:5.2.1"
+"webpack-dev-middleware@npm:^5.3.0":
+  version: 5.3.0
+  resolution: "webpack-dev-middleware@npm:5.3.0"
   dependencies:
     colorette: ^2.0.10
     memfs: ^3.2.2
     mime-types: ^2.1.31
     range-parser: ^1.2.1
-    schema-utils: ^3.1.0
+    schema-utils: ^4.0.0
   peerDependencies:
     webpack: ^4.0.0 || ^5.0.0
-  checksum: 06f3ef14ec983d115d7109f37312fc691c867c95fe7579784c7b80db0a2be77392fa27de444d0a937546da68c7e99640c13df73dc1351bbed7ebab4cc5569f14
+  checksum: 01f9e11583bb682cd5ab5a1b9d6dc99545f777513c4c15aa67d10f5d057fc3d0c6f9365e02c07792d3c9b17bd47a16c8185e66eb66e9de74d8ccf561e75085e7
   languageName: node
   linkType: hard
 
-"webpack-dev-server@npm:4.4.0":
-  version: 4.4.0
-  resolution: "webpack-dev-server@npm:4.4.0"
+"webpack-dev-server@npm:4.7.2":
+  version: 4.7.2
+  resolution: "webpack-dev-server@npm:4.7.2"
   dependencies:
+    "@types/bonjour": ^3.5.9
+    "@types/connect-history-api-fallback": ^1.3.5
+    "@types/serve-index": ^1.9.1
+    "@types/sockjs": ^0.3.33
+    "@types/ws": ^8.2.2
     ansi-html-community: ^0.0.8
     bonjour: ^3.5.0
     chokidar: ^3.5.2
     colorette: ^2.0.10
     compression: ^1.7.4
     connect-history-api-fallback: ^1.6.0
+    default-gateway: ^6.0.3
     del: ^6.0.0
     express: ^4.17.1
     graceful-fs: ^4.2.6
     html-entities: ^2.3.2
     http-proxy-middleware: ^2.0.0
-    internal-ip: ^6.2.0
     ipaddr.js: ^2.0.1
     open: ^8.0.9
     p-retry: ^4.5.0
     portfinder: ^1.0.28
-    schema-utils: ^3.1.0
+    schema-utils: ^4.0.0
     selfsigned: ^1.10.11
     serve-index: ^1.9.1
     sockjs: ^0.3.21
     spdy: ^4.0.2
     strip-ansi: ^7.0.0
-    url: ^0.11.0
-    webpack-dev-middleware: ^5.2.1
+    webpack-dev-middleware: ^5.3.0
     ws: ^8.1.0
   peerDependencies:
     webpack: ^4.37.0 || ^5.0.0
@@ -35503,7 +35515,7 @@ __metadata:
       optional: true
   bin:
     webpack-dev-server: bin/webpack-dev-server.js
-  checksum: c317b5029b6f8caad47a257edb68b2dad5cd7087f4481ebda3359701c981037ce387486bdf992fb6e23213685d8e25e306b25a62541a42d0154562b1999563a5
+  checksum: d3dd7d61f25a2ac1ac64d4298396043b1b8b46c009afc12c7af4d7c7724b077baa84d4ea353f1956e3f591ab09cde1d15f18d94e8884c1adaa2e1d816c37f814
   languageName: node
   linkType: hard
 
