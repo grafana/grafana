@@ -192,8 +192,8 @@ func (ss *SQLStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*mode
 	})
 }
 
-func (ss *SQLStore) SaveAlerts(ctx context.Context, cmd *models.SaveAlertsCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+func SaveAlerts(ctx context.Context, cmd *models.SaveAlertsCommand) error {
+	return inTransaction(func(sess *DBSession) error {
 		existingAlerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
 		if err != nil {
 			return err
