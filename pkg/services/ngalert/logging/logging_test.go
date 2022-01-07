@@ -6,18 +6,17 @@ import (
 	"io"
 	"testing"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	"github.com/inconshreveable/log15"
+	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_GoKitWrapper(t *testing.T) {
 	getLogger := func(writer io.Writer) log.Logger {
-		log15Logger := log15.New()
-		log15Logger.SetHandler(log15.StreamHandler(writer, log15.LogfmtFormat()))
-		return NewWrapper(log15Logger)
+		gLogger := glog.New()
+		gLogger.AddLogger(log.NewLogfmtLogger(writer), "info", map[string]level.Option{})
+		return NewWrapper(gLogger)
 	}
 
 	tests := []struct {
@@ -71,20 +70,21 @@ func Test_GoKitWrapper(t *testing.T) {
 }
 
 func Benchmark_Baseline(t *testing.B) {
-	log15Logger := log15.New()
+	gLogger := glog.New()
 	var buff bytes.Buffer
-	log15Logger.SetHandler(log15.StreamHandler(&buff, log15.LogfmtFormat()))
+	gLogger.AddLogger(log.NewLogfmtLogger(&buff), "info", map[string]level.Option{})
 
 	for i := 0; i < t.N; i++ {
-		log15Logger.Info("test", "some", "more", "context", "data")
+		gLogger.Info("test", "some", "more", "context", "data")
 	}
 }
 
 func Benchmark_WrapperLogger(t *testing.B) {
-	log15Logger := log15.New()
+	gLogger := glog.New()
 	var buff bytes.Buffer
-	log15Logger.SetHandler(log15.StreamHandler(&buff, log15.LogfmtFormat()))
-	gokit := NewWrapper(log15Logger)
+	gLogger.AddLogger(log.NewLogfmtLogger(&buff), "info", map[string]level.Option{})
+
+	gokit := NewWrapper(gLogger)
 
 	for i := 0; i < t.N; i++ {
 		_ = level.Info(gokit).Log("msg", "test", "some", "more", "context", "data")
@@ -92,10 +92,11 @@ func Benchmark_WrapperLogger(t *testing.B) {
 }
 
 func Benchmark_WrapperWriter(t *testing.B) {
-	log15Logger := log15.New()
+	gLogger := glog.New()
 	var buff bytes.Buffer
-	log15Logger.SetHandler(log15.StreamHandler(&buff, log15.LogfmtFormat()))
-	gokit := gokit_log.NewLogfmtLogger(NewWrapper(log15Logger))
+	gLogger.AddLogger(log.NewLogfmtLogger(&buff), "info", map[string]level.Option{})
+	gokit := NewWrapper(gLogger)
+
 	for i := 0; i < t.N; i++ {
 		_ = level.Info(gokit).Log("msg", "test", "some", "more", "context", "data")
 	}

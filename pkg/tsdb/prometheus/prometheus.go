@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/promclient"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -57,36 +57,14 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pl
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		jsonData := map[string]interface{}{}
+		var jsonData promclient.JsonData
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
-		httpCliOpts, err := settings.HTTPClientOptions()
-		if err != nil {
-			return nil, fmt.Errorf("error getting http options: %w", err)
-		}
 
-		// Set SigV4 service namespace
-		if httpCliOpts.SigV4 != nil {
-			httpCliOpts.SigV4.Service = "aps"
-		}
-
-		// timeInterval can be a string or can be missing.
-		// if it is missing, we set it to empty-string
-		timeInterval := ""
-
-		timeIntervalJson := jsonData["timeInterval"]
-		if timeIntervalJson != nil {
-			// if it is not nil, it must be a string
-			var ok bool
-			timeInterval, ok = timeIntervalJson.(string)
-			if !ok {
-				return nil, errors.New("invalid time-interval provided")
-			}
-		}
-
-		client, err := client.Create(settings.URL, httpCliOpts, httpClientProvider, jsonData, plog)
+		p := promclient.NewProvider(settings, jsonData, httpClientProvider, plog)
+		pc, err := promclient.NewProviderCache(p, jsonData)
 		if err != nil {
 			return nil, err
 		}
@@ -94,8 +72,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		mdl := DatasourceInfo{
 			ID:           settings.ID,
 			URL:          settings.URL,
-			TimeInterval: timeInterval,
-			promClient:   client,
+			TimeInterval: jsonData.TimeInterval,
+			getClient:    pc.GetClient,
 		}
 
 		return mdl, nil
