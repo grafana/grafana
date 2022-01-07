@@ -52,6 +52,7 @@ type Alertmanager interface {
 
 type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
+	UpdateAlertManagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error
 }
 
 // API handlers.

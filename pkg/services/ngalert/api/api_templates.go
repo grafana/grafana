@@ -14,11 +14,10 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 type TemplateServer struct {
-	store store.AlertingStore
+	store AlertingStore
 }
 
 func (s *TemplateServer) RouteGetTemplates(c *api.ReqContext, template apimodels.PostableTemplate) response.Response {
