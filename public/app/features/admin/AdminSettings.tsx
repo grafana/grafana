@@ -51,7 +51,7 @@ function AdminSettings({ navModel }: Props) {
       </Page.Contents>
     </Page>
   );
-};
+}
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'server-settings'),
