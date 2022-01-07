@@ -15,15 +15,25 @@ weight = 100
 
 # Concept
 
-The title of the concept topic will generally be a noun or a gerund. Examples include _Templates_, _Templating_, _Dashboards_, and _Panels_.
+The title of the concept topic will generally be a noun or a gerund, prefaced by the word "About" for easier skimming. Examples include _About templates_, _About value mapping_, and _About dashboards_.
 
-A concepts is an information type that explains a concept, idea, or provides an overview or workflow. In the introduction, such as this first paragraph or two, explain what the reader can expect to read.
+A concept is an information type that helps readers _ understand_ by explaining a concept or idea or providing an overview of workflow. 
+
+In the first sentence, explain what the concept is succinctly for easier reading. In the next sentence (or two or three) explain the value or benefit that is provided.
 
 [Permissions overview](https://grafana.com/docs/grafana/latest/permissions/overview/) is an example of a concept topic.
 
 ## Idea
 
 A concept explains _what_ and _why_, but not _how_. If you are a new user, you might look for concept information to learn about what Grafana is, why it might be useful to you, and what the general workflow is.
+
+A sample concept might look like this:
+
+# Example: About Grafana panel libraries
+
+A library panel is a reusable panel that you can use in any dashboard. When you make a change to a library panel, that change propagates to all instances of where the panel is used. Library panels streamline reuse of panels across multiple dashboards.
+
+You can save a library panel in a folder alongside saved dashboards.
 
 ## Workflow
 
