@@ -145,11 +145,8 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
                 currentAlertState.value &&
                 currentAlertState.value!.map((alert) => (
                   <li className={styles.alertRuleItem} key={`alert-${alert.id}`}>
-                    <Card
-                      heading={alert.name}
-                      href={`${alert.url}?viewPanel=${alert.panelId}`}
-                      className={styles.cardContainer}
-                    >
+                    <Card href={`${alert.url}?viewPanel=${alert.panelId}`} className={styles.cardContainer}>
+                      <Card.Heading>{alert.name}</Card.Heading>
                       <Card.Figure className={cx(styles.alertRuleItemIcon, alert.stateModel.stateClass)}>
                         <Icon name={alert.stateModel.iconClass} size="xl" className={styles.alertIcon} />
                       </Card.Figure>
@@ -166,7 +163,8 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
                 recentStateChanges.value &&
                 recentStateChanges.value.map((alert) => (
                   <li className={styles.alertRuleItem} key={`alert-${alert.id}`}>
-                    <Card heading={alert.alertName} className={styles.cardContainer}>
+                    <Card className={styles.cardContainer}>
+                      <Card.Heading>{alert.alertName}</Card.Heading>
                       <Card.Figure className={cx(styles.alertRuleItemIcon, alert.stateModel.stateClass)}>
                         <Icon name={alert.stateModel.iconClass} size="xl" />
                       </Card.Figure>

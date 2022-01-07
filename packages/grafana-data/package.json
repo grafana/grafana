@@ -36,7 +36,7 @@
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "regenerator-runtime": "0.13.3",
-    "rxjs": "7.3.0",
+    "rxjs": "7.5.1",
     "tslib": "2.3.1",
     "uplot": "1.6.16",
     "xss": "1.0.10"
@@ -54,7 +54,7 @@
     "@testing-library/user-event": "13.5.0",
     "@types/braintree__sanitize-url": "4.1.0",
     "@types/jest": "27.4.0",
-    "@types/jquery": "3.3.38",
+    "@types/jquery": "3.5.11",
     "@types/lodash": "4.14.123",
     "@types/marked": "4.0.0",
     "@types/node": "16.11.6",
@@ -67,11 +67,11 @@
     "@types/tinycolor2": "1.4.2",
     "react-test-renderer": "17.0.1",
     "rimraf": "3.0.1",
-    "rollup": "2.58.3",
+    "rollup": "2.63.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
     "sinon": "12.0.1",
     "tinycolor2": "1.4.1",
-    "typescript": "4.4.3"
+    "typescript": "4.5.4"
   }
 }

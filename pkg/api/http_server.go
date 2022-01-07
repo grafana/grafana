@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -115,6 +116,7 @@ type HTTPServer struct {
 	searchUsersService        searchusers.Service
 	teamGuardian              teamguardian.TeamGuardian
 	queryDataService          *query.Service
+	serviceAccountsService    serviceaccounts.Service
 }
 
 type ServerOptions struct {
@@ -139,7 +141,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	quotaService *quota.QuotaService, socialService social.Service, tracingService tracing.Tracer,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
-	teamGuardian teamguardian.TeamGuardian) (*HTTPServer, error) {
+	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -192,6 +194,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		searchUsersService:        searchUsersService,
 		teamGuardian:              teamGuardian,
 		queryDataService:          queryDataService,
+		serviceAccountsService:    serviceaccountsService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

@@ -156,10 +156,10 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	var tmplErr error
 	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
 
-	title := tmpl(`{{ template "default.title" . }}`)
+	title := tmpl(DefaultMessageTitleEmbed)
 	description := fmt.Sprintf(
 		"%s\n%s\n\n%s",
-		tmpl(`{{ template "default.title" . }}`),
+		tmpl(DefaultMessageTitleEmbed),
 		ruleURL,
 		tmpl(`{{ template "default.message" . }}`),
 	)
@@ -207,7 +207,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	apiURL = tmpl(on.APIUrl)
 
 	if tmplErr != nil {
-		on.log.Debug("failed to template Opsgenie message", "err", tmplErr.Error())
+		on.log.Warn("failed to template Opsgenie message", "err", tmplErr.Error())
 	}
 
 	return bodyJSON, apiURL, nil
