@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/services/searchusers"
 
@@ -20,6 +22,12 @@ import (
 )
 
 func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
+	settings := setting.NewCfg()
+	hs := &HTTPServer{Cfg: settings}
+
+	sqlStore := sqlstore.InitTestDB(t)
+	hs.SQLStore = sqlStore
+
 	mockResult := models.SearchUserQueryResult{
 		Users: []*models.UserSearchHitDTO{
 			{Name: "user1"},
@@ -53,7 +61,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			return nil
 		})
 
-		sc.handlerFunc = GetUserByID
+		sc.handlerFunc = hs.GetUserByID
 		avatarUrl := dtos.GetGravatarUrl("daniel@grafana.com")
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 

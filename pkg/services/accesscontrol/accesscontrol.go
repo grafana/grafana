@@ -146,7 +146,7 @@ func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map
 }
 
 // GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs map[string]bool) (map[string]Metadata, error) {
+func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs map[string]bool) map[string]Metadata {
 	allScope := GetResourceAllScope(resource)
 	allIDScope := GetResourceAllIDScope(resource)
 
@@ -171,5 +171,5 @@ func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resour
 		}
 	}
 
-	return result, nil
+	return result
 }

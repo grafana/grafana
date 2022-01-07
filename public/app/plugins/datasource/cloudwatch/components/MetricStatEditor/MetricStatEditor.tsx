@@ -38,6 +38,7 @@ export function MetricStatEditor({
         <EditorFieldGroup>
           <EditorField label="Namespace" width={26}>
             <Select
+              aria-label="Namespace"
               value={query.namespace}
               allowCustomValue
               options={namespaces}
@@ -50,6 +51,7 @@ export function MetricStatEditor({
           </EditorField>
           <EditorField label="Metric name" width={16}>
             <Select
+              aria-label="Metric name"
               value={query.metricName}
               allowCustomValue
               options={metrics}

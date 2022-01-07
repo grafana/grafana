@@ -158,8 +158,6 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => {
       border-radius: 4px;
       display: flex;
       flex-direction: column;
-      height: 100%;
-      width: 100%;
 
       &:hover {
         background-color: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
