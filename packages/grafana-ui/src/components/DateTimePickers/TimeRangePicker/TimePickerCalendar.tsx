@@ -3,10 +3,9 @@ import { css } from '@emotion/css';
 import { DateTime, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { useTheme2 } from '../../../themes';
 import { Header } from './CalendarHeader';
-import { Portal } from '../../Portal/Portal';
 import { selectors } from '@grafana/e2e-selectors';
 import { FocusScope } from '@react-aria/focus';
-import { useOverlay } from '@react-aria/overlays';
+import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import { Body } from './CalendarBody';
 import { Footer } from './CalendarFooter';
 
@@ -109,7 +108,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   }
 
   return (
-    <Portal>
+    <OverlayContainer>
       <FocusScope contain autoFocus restoreFocus>
         <section className={styles.modal} onClick={stopPropagation} ref={ref} {...overlayProps}>
           <div className={styles.content} aria-label={selectors.components.TimePicker.calendar.label}>
@@ -120,7 +119,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
         </section>
       </FocusScope>
       <div className={styles.backdrop} onClick={stopPropagation} />
-    </Portal>
+    </OverlayContainer>
   );
 }
 export default memo(TimePickerCalendar);

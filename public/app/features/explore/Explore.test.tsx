@@ -37,6 +37,7 @@ const dummyProps: Props = {
   isLive: false,
   syncedTimes: false,
   updateTimeRange: jest.fn(),
+  makeAbsoluteTime: jest.fn(),
   graphResult: [],
   absoluteRange: {
     from: 0,

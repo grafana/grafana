@@ -10,12 +10,8 @@ import (
 )
 
 func (w *FileLogWriter) WriteLine(line string) error {
-	n, err := w.mw.Write([]byte(line))
-	if err != nil {
-		return err
-	}
-	w.docheck(n)
-	return nil
+	_, err := w.Write([]byte(line))
+	return err
 }
 
 func TestLogFile(t *testing.T) {
