@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/common"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
@@ -244,7 +245,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		OrgID:                         am.orgID,
 	}
 
-	cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
+	cfg, err := common.LoadAMConfig([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
 	if err != nil {
 		return err
 	}
@@ -296,7 +297,7 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 // ApplyConfig applies the configuration to the Alertmanager.
 func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
 	var err error
-	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
+	cfg, err := common.LoadAMConfig([]byte(dbCfg.AlertmanagerConfiguration))
 	if err != nil {
 		return fmt.Errorf("failed to parse Alertmanager config: %w", err)
 	}

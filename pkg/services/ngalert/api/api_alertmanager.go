@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/common"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -54,7 +55,7 @@ func (srv AlertmanagerSrv) loadSecureSettings(ctx context.Context, orgId int64, 
 
 	currentReceiverMap := make(map[string]*apimodels.PostableGrafanaReceiver)
 	if query.Result != nil {
-		currentConfig, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
+		currentConfig, err := common.LoadAMConfig([]byte(query.Result.AlertmanagerConfiguration))
 		if err != nil {
 			return fmt.Errorf("failed to load latest configuration: %w", err)
 		}
@@ -200,7 +201,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 		return ErrResp(http.StatusInternalServerError, err, "failed to get latest configuration")
 	}
 
-	cfg, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
+	cfg, err := common.LoadAMConfig([]byte(query.Result.AlertmanagerConfiguration))
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to unmarshal alertmanager configuration")
 	}

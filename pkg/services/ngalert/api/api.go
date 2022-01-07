@@ -81,7 +81,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	}
 
 	api.RegisterTemplateEndpoints(&TemplateServer{
-		store: api.AlertingStore,
+		store: store.NewEmbeddedTemplateStore(api.AlertingStore),
 	}, m)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
