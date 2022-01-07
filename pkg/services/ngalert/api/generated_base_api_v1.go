@@ -9,21 +9,18 @@ package api
 import (
 	"net/http"
 
-	"github.com/go-macaron/binding"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
 
 type V1TemplateService interface {
 	RouteGetTemplates(*models.ReqContext) response.Response
-	RouteCreateTemplate(*models.ReqContext, apimodels.PostableTemplate) response.Response
-	RouteUpdateTemplate(*models.ReqContext, apimodels.PostableTemplate) response.Response
-	RouteDeleteTemplate(*models.ReqContext, apimodels.PostableTemplate) response.Response
+	RouteCreateTemplate(*models.ReqContext) response.Response
+	RouteUpdateTemplate(*models.ReqContext) response.Response
+	RouteDeleteTemplate(*models.ReqContext) response.Response
 }
 
 func (api *API) RegisterTemplateEndpoints(srv V1TemplateService, m *metrics.API) {
@@ -39,7 +36,6 @@ func (api *API) RegisterTemplateEndpoints(srv V1TemplateService, m *metrics.API)
 		)
 		group.Post(
 			toMacaronPath("/api/alerting/templates"),
-			binding.Bind(apimodels.PostableTemplate{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alerting/templates",
@@ -49,7 +45,6 @@ func (api *API) RegisterTemplateEndpoints(srv V1TemplateService, m *metrics.API)
 		)
 		group.Put(
 			toMacaronPath("/api/alerting/templates"),
-			binding.Bind(apimodels.PostableTemplate{}),
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/alerting/templates",
@@ -59,7 +54,6 @@ func (api *API) RegisterTemplateEndpoints(srv V1TemplateService, m *metrics.API)
 		)
 		group.Delete(
 			toMacaronPath("/api/alerting/templates"),
-			binding.Bind(apimodels.PostableTemplate{}),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/alerting/templates",

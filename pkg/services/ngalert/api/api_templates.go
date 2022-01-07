@@ -14,6 +14,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type TemplateServer struct {
@@ -35,16 +36,20 @@ func (s *TemplateServer) RouteGetTemplates(c *api.ReqContext) response.Response 
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to unmarshal alertmanager configuration")
 	}
-	templates := make([]apimodels.PostableTemplate, len(cfg.TemplateFiles))
+	templates := []apimodels.PostableTemplate{}
 	for name, content := range cfg.TemplateFiles {
 		templates = append(templates, apimodels.PostableTemplate{Name: name, Content: content})
 	}
 	return response.JSON(http.StatusOK, templates)
 }
 
-func (s *TemplateServer) RouteCreateTemplate(c *api.ReqContext, template apimodels.PostableTemplate) response.Response {
+func (s *TemplateServer) RouteCreateTemplate(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
+	template := apimodels.PostableTemplate{}
+	if err := web.Bind(c.Req, &template); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	if template.Name == "" || template.Content == "" {
 		return ErrResp(http.StatusInternalServerError, errors.New("empty template"), "template name or content empty")
@@ -67,8 +72,12 @@ func (s *TemplateServer) RouteCreateTemplate(c *api.ReqContext, template apimode
 	// but this is not obvious because user also has to provide name separately in the form.
 	// so if user does not manually add {{ define }} tag, we do it automatically
 	template.Content = ensureDefine(template.Name, template.Content)
+	// ensure that we don't try write into a nil map if no template exists
+	if cfg.TemplateFiles == nil {
+		cfg.TemplateFiles = make(map[string]string, 1)
+	}
 	cfg.TemplateFiles[template.Name] = template.Content
-	// cfg.AlertmanagerConfig.Config.Templates = append(cfg.AlertmanagerConfig.Config.Templates, template.Name)
+	cfg.AlertmanagerConfig.Config.Templates = append(cfg.AlertmanagerConfig.Config.Templates, template.Name)
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to marshal alertmanager configuration")
@@ -87,9 +96,13 @@ func (s *TemplateServer) RouteCreateTemplate(c *api.ReqContext, template apimode
 	return response.JSON(http.StatusOK, "")
 }
 
-func (s *TemplateServer) RouteUpdateTemplate(c *api.ReqContext, template apimodels.PostableTemplate) response.Response {
+func (s *TemplateServer) RouteUpdateTemplate(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
+	template := apimodels.PostableTemplate{}
+	if err := web.Bind(c.Req, &template); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	if template.Name == "" || template.Content == "" {
 		return ErrResp(http.StatusInternalServerError, errors.New("empty template"), "template name or content empty")
@@ -127,9 +140,13 @@ func (s *TemplateServer) RouteUpdateTemplate(c *api.ReqContext, template apimode
 	return response.JSON(http.StatusOK, "")
 }
 
-func (s *TemplateServer) RouteDeleteTemplate(c *api.ReqContext, template apimodels.PostableTemplate) response.Response {
+func (s *TemplateServer) RouteDeleteTemplate(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
+	template := apimodels.PostableTemplate{}
+	if err := web.Bind(c.Req, &template); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	if template.Name == "" {
 		return ErrResp(http.StatusInternalServerError, errors.New("empty template name"), "template name empty")
@@ -149,6 +166,12 @@ func (s *TemplateServer) RouteDeleteTemplate(c *api.ReqContext, template apimode
 		return ErrResp(http.StatusInternalServerError, errors.New("template not found"), "template with this name not found")
 	}
 	delete(cfg.TemplateFiles, template.Name)
+	for i, name := range cfg.AlertmanagerConfig.Templates {
+		if name == template.Name {
+			cfg.AlertmanagerConfig.Templates = append(cfg.AlertmanagerConfig.Templates[:i], cfg.AlertmanagerConfig.Templates[i+1:]...)
+			break
+		}
+	}
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to marshal alertmanager configuration")
