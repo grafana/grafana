@@ -1,9 +1,9 @@
 import { DataFrame, SelectableValue } from '@grafana/data';
+import { LocationInfo } from 'app/features/geo/utils/location';
 import { Feature } from 'ol';
 import { FeatureLike } from 'ol/Feature';
 import { Point } from 'ol/geom';
 import { GeometryTypeId } from '../style/types';
-import { LocationInfo } from './location';
 
 export const getFeatures = (frame: DataFrame, info: LocationInfo): Array<Feature<Point>> | undefined => {
   const features: Array<Feature<Point>> = [];

@@ -51,10 +51,10 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gaz: Gazetteer, matc
         for (let v = 0; v < values.length; v++) {
           const foundMatchingValue = gaz.find(values[v]);
 
-          //for now start by adding lat and lon
-          if (foundMatchingValue && foundMatchingValue?.coords.length) {
-            lon[v] = foundMatchingValue.coords[0];
-            lat[v] = foundMatchingValue.coords[1];
+          const point = foundMatchingValue?.point();
+          if (point) {
+            lon[v] = point.getCoordinates()[0];
+            lat[v] = point.getCoordinates()[1];
           }
         }
         fields.push({ name: 'lon', type: FieldType.number, values: new ArrayVector(lon), config: {} });

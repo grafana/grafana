@@ -10,7 +10,7 @@ import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
-import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
+import { dataFrameToPoints, getLocationMatchers } from 'app/features/geo/utils/location';
 import { ScaleDimensionConfig, getScaledDimension } from 'app/features/dimensions';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors';
 

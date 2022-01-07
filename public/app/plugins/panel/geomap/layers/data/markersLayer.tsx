@@ -10,7 +10,7 @@ import Map from 'ol/Map';
 import Feature, { FeatureLike } from 'ol/Feature';
 import { Point } from 'ol/geom';
 import * as source from 'ol/source';
-import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
+import { dataFrameToPoints, getLocationMatchers } from 'app/features/geo/utils/location';
 import { getScaledDimension, getColorDimension, getTextDimension, getScalarDimension } from 'app/features/dimensions';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
