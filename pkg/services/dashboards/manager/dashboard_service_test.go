@@ -1,18 +1,17 @@
-package dashboards
+package manager
 
 import (
 	"context"
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	m "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
-
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,7 +20,7 @@ func TestDashboardService(t *testing.T) {
 		bus.ClearBusHandlers()
 
 		fakeStore := fakeDashboardStore{}
-		service := &dashboardServiceImpl{
+		service := &DashboardServiceImpl{
 			log:            log.New("test.logger"),
 			dashboardStore: &fakeStore,
 		}
@@ -31,7 +30,7 @@ func TestDashboardService(t *testing.T) {
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
 		t.Run("Save dashboard validation", func(t *testing.T) {
-			dto := &SaveDashboardDTO{}
+			dto := &m.SaveDashboardDTO{}
 
 			t.Run("When saving a dashboard with empty title it should return error", func(t *testing.T) {
 				titles := []string{"", " ", "   \t   "}
@@ -83,7 +82,7 @@ func TestDashboardService(t *testing.T) {
 					dto.Dashboard.SetUid(tc.Uid)
 					dto.User = &models.SignedInUser{}
 
-					_, err := service.buildSaveDashboardCommand(context.Background(), dto, true, false)
+					_, err := service.BuildSaveDashboardCommand(context.Background(), dto, true, false)
 					require.Equal(t, err, tc.Error)
 				}
 			})
@@ -141,7 +140,7 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		t.Run("Save provisioned dashboard validation", func(t *testing.T) {
-			dto := &SaveDashboardDTO{}
+			dto := &m.SaveDashboardDTO{}
 
 			t.Run("Should not return validation error if dashboard is provisioned", func(t *testing.T) {
 				origUpdateAlerting := UpdateAlerting
@@ -201,7 +200,7 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		t.Run("Import dashboard validation", func(t *testing.T) {
-			dto := &SaveDashboardDTO{}
+			dto := &m.SaveDashboardDTO{}
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
 				t.Cleanup(func() {
