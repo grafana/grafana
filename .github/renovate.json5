@@ -32,9 +32,6 @@
       "extends": ["schedule:monthly"]
     }
   ],
-  "patch": {
-    "enabled": false
-  },
   "pin": {
     "enabled": false
   },
