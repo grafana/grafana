@@ -4085,7 +4085,7 @@ __metadata:
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.4
     "@types/react-window": 1.8.5
-    "@types/slate": 0.47.10
+    "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.7.2
     "@types/slate-react": 0.22.5
     "@types/testing-library__jest-dom": 5.14.2
@@ -10381,13 +10381,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/slate@npm:0.47.10":
-  version: 0.47.10
-  resolution: "@types/slate@npm:0.47.10"
+"@types/slate@npm:0.47.2":
+  version: 0.47.2
+  resolution: "@types/slate@npm:0.47.2"
   dependencies:
     "@types/react": "*"
     immutable: ^3.8.2
-  checksum: fc75bb1c163337041887a55ed5749a3b8ddf87d9cafa443a4a472a2be6f62879c0b984017d6d0a47a952173ac49a7a9be5c0513bafda00ea1b154231243b2366
+  checksum: c92350f1ef366b5907356a7f3b7bd41dda548dc1002cc2bd79f6b0ff1356d3189c124a54b363ddbe22cbdeb2a75f9d1b67d4f5b2a1bb6b89b714ecf7cf0c49c2
   languageName: node
   linkType: hard
 
@@ -19803,7 +19803,7 @@ __metadata:
     "@types/redux-mock-store": 1.0.3
     "@types/reselect": 2.2.0
     "@types/semver": 7.3.9
-    "@types/slate": 0.47.10
+    "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.7.2
     "@types/slate-react": 0.22.5
     "@types/testing-library__jest-dom": 5.14.2
