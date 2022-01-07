@@ -87,7 +87,7 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args userCreationArgs) (
 	return ss.getOrCreateOrg(sess, orgName)
 }
 
-// createUser creates a user in the database.
+// createUser creates a user in the database
 func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCreationArgs, skipOrgSetup bool) (models.User, error) {
 	var user models.User
 	var orgID int64 = -1
