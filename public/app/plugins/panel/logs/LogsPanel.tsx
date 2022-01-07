@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useLayoutEffect, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useLayoutEffect, useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
 import {
@@ -39,7 +39,6 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles(title, isAscending));
   const [scrollTop, setScrollTop] = useState(0);
-  const logsContainerRef = useRef<HTMLDivElement>(null);
   const [newData, setNewData] = useState(data);
 
   useEffect(() => {
@@ -74,10 +73,30 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   }, [newData, dedupStrategy]);
 
   useLayoutEffect(() => {
-    if (isAscending && logsContainerRef.current) {
-      setScrollTop(logsContainerRef.current.scrollHeight);
-    } else {
-      setScrollTop(0);
+    const scrollbar = document.querySelector('.scrollbar-view');
+    // the height of each log
+    const logRowHeight = document.querySelector('tbody')?.children[0].clientHeight;
+    // the height of all of the logs
+    const logHeight = scrollbar?.clientHeight;
+    // the new height the log panel is going to have once the new log is added
+    const newLogHeight = logRowHeight && logHeight ? logRowHeight + logHeight : 0;
+
+    if (isAscending && scrollbar) {
+      if (newLogHeight < scrollbar.scrollHeight) {
+        // if the scrollbar is present, we check if the user is scrolled at the bottom to
+        // determine if we are gonna scroll all the way down when a new log comes in
+        // or if we are gonna keep our scroll position
+        if (scrollbar.scrollHeight - scrollbar.scrollTop === newLogHeight) {
+          setScrollTop(scrollbar.scrollHeight);
+        } else {
+          setScrollTop(scrollbar.scrollTop);
+        }
+      } else {
+        // if the scrollbar is not present, we scroll to the bottom by default
+        // so when it starts to be present, its at the bottom position by default
+        // until the user scrolls up
+        setScrollTop(scrollbar.scrollHeight);
+      }
     }
   }, [isAscending, logRows]);
 
@@ -106,6 +125,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
       hostname.values.add('fusebit');
 
       clonedData.series[0].length++;
+      console.log(clonedData);
       setNewData(clonedData);
       console.log('Message Received from parent: ', msg.data);
     };
@@ -130,7 +150,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   return (
     <CustomScrollbar autoHide scrollTop={scrollTop}>
-      <div className={style.container} ref={logsContainerRef}>
+      <div className={style.container}>
         {showCommonLabels && !isAscending && renderCommonLabels()}
         <LogRows
           logRows={logRows}
