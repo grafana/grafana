@@ -2,12 +2,9 @@ import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from '@grafana/data';
 import { parseMatcher } from './alertmanager';
 
-// parses comma separated matchers like "foo=bar,baz=~bad*" into SilenceMatcher[]
-export function parseQueryParamMatchers(paramValue: string): Matcher[] {
-  return paramValue
-    .split(',')
-    .filter((x) => !!x.trim())
-    .map((x) => parseMatcher(x.trim()));
+// Parses a list of entries like like "['foo=bar', 'baz=~bad*']" into SilenceMatcher[]
+export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
+  return matcherPairs.filter((x) => !!x.trim()).map((x) => parseMatcher(x.trim()));
 }
 
 export const getMatcherQueryParams = (labels: Labels) => {

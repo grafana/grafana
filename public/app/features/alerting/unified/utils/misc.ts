@@ -62,12 +62,15 @@ export function makeAMLink(path: string, alertManagerName?: string): string {
 }
 
 export function makeSilenceLink(alertmanagerSourceName: string, rule: CombinedRule) {
-  return (
-    `${config.appSubUrl}/alerting/silence/new?alertmanager=${alertmanagerSourceName}` +
-    `&matchers=alertname=${rule.name},${Object.entries(rule.labels)
-      .map(([key, value]) => encodeURIComponent(`${key}=${value}`))
-      .join(',')}`
-  );
+  const silenceUrlParams = new URLSearchParams();
+
+  silenceUrlParams.append('alertmanager', alertmanagerSourceName);
+  silenceUrlParams.append('matchers', `alertname=${rule.name}`);
+  Object.entries(rule.labels).forEach(([key, value]) => {
+    silenceUrlParams.append('matchers', `${key}=${value}`);
+  });
+
+  return `${config.appSubUrl}/alerting/silence/new?${silenceUrlParams.toString()}`;
 }
 
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
