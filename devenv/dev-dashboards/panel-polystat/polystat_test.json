@@ -815,11 +815,11 @@
               "value": "Wm2"
             },
             {
-              "text": "Volt-ampere (VA)",
+              "text": "Volt-Ampere (VA)",
               "value": "voltamp"
             },
             {
-              "text": "Kilovolt-ampere (kVA)",
+              "text": "Kilovolt-Ampere (kVA)",
               "value": "kvoltamp"
             },
             {
@@ -827,7 +827,7 @@
               "value": "voltampreact"
             },
             {
-              "text": "Kilovolt-ampere reactive (kVAr)",
+              "text": "Kilovolt-Ampere reactive (kVAr)",
               "value": "kvoltampreact"
             },
             {
