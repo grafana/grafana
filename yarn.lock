@@ -3716,7 +3716,7 @@ __metadata:
     "@types/d3-interpolate": ^1.4.0
     "@types/jest": 27.4.0
     "@types/jquery": 3.5.11
-    "@types/lodash": 4.14.178
+    "@types/lodash": 4.14.149
     "@types/marked": 4.0.1
     "@types/node": 16.11.19
     "@types/papaparse": 5.3.1
@@ -3857,7 +3857,7 @@ __metadata:
     "@types/angular": 1.8.4
     "@types/history": ^4.7.8
     "@types/jest": 27.4.0
-    "@types/lodash": 4.14.178
+    "@types/lodash": 4.14.149
     "@types/react": 17.0.38
     "@types/react-dom": 17.0.11
     "@types/systemjs": ^0.20.6
@@ -4071,7 +4071,7 @@ __metadata:
     "@types/is-hotkey": 0.1.7
     "@types/jest": 27.4.0
     "@types/jquery": 3.5.11
-    "@types/lodash": 4.14.178
+    "@types/lodash": 4.14.149
     "@types/mock-raf": 1.0.3
     "@types/node": 16.11.19
     "@types/prismjs": 1.16.6
@@ -4248,7 +4248,7 @@ __metadata:
     "@types/deep-freeze": ^0.1.1
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": ^3.3.1
-    "@types/lodash": 4.14.178
+    "@types/lodash": 4.14.149
     "@types/prop-types": ^15
     "@types/react": 17.0.38
     "@types/react-icons": 2.2.7
@@ -9752,7 +9752,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.14.178, @types/lodash@npm:^4.14.172":
+"@types/lodash@npm:^4.14.172":
   version: 4.14.178
   resolution: "@types/lodash@npm:4.14.178"
   checksum: a69a04a60bfc5257c3130a554b4efa0c383f0141b7b3db8ab7cf07ad2a46ea085fce66d0242da41da7e5647b133d5dfb2c15add9cbed8d7fef955e4a1e5b3128
@@ -9826,10 +9826,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mousetrap@npm:1.6.9":
-  version: 1.6.9
-  resolution: "@types/mousetrap@npm:1.6.9"
-  checksum: 9362f0aadf4b66deb39e506159248592ec422583fe8c1b3e6e98a6ba193828b4221b50b832829333089e577729d967423165c692a995b1deafa85934b2b63125
+"@types/mousetrap@npm:1.6.3":
+  version: 1.6.3
+  resolution: "@types/mousetrap@npm:1.6.3"
+  checksum: ac2fc9d55ecee6aae6724d76750dfff14f7145fcc1823db9f4644d321c443081e01b66f14f75b52b4611d40c0d581889b52ef1ffaab80df4ea11a43cbbb5fd74
   languageName: node
   linkType: hard
 
@@ -19778,10 +19778,10 @@ __metadata:
     "@types/jquery": 3.5.11
     "@types/jsurl": ^1.2.28
     "@types/lingui__macro": ^3
-    "@types/lodash": 4.14.178
+    "@types/lodash": 4.14.149
     "@types/logfmt": ^1.2.1
     "@types/lru-cache": ^5.1.0
-    "@types/mousetrap": 1.6.9
+    "@types/mousetrap": 1.6.3
     "@types/node": 16.11.19
     "@types/ol": ^6.5.1
     "@types/papaparse": 5.3.1
