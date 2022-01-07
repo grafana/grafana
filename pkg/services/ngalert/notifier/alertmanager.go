@@ -15,7 +15,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	gokit_log "github.com/go-kit/kit/log"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/alertmanager/config"
@@ -37,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
@@ -86,8 +84,7 @@ type ClusterPeer interface {
 }
 
 type Alertmanager struct {
-	logger      log.Logger
-	gokitLogger gokit_log.Logger
+	logger log.Logger
 
 	Settings  *setting.Cfg
 	Store     store.AlertingStore
@@ -144,7 +141,6 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store s
 		decryptFn:         decryptFn,
 	}
 
-	am.gokitLogger = logging.NewWrapper(am.logger)
 	am.fileStore = NewFileStore(am.orgID, kvStore, am.WorkingDirPath())
 
 	nflogFilepath, err := am.fileStore.FilepathFor(ctx, notificationLogFilename)
@@ -193,7 +189,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store s
 	}()
 
 	// Initialize in-memory alerts
-	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, nil, am.gokitLogger)
+	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, nil, am.logger)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the alert provider component of alerting: %w", err)
 	}
@@ -400,9 +396,9 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		am.dispatcher.Stop()
 	}
 
-	am.inhibitor = inhibit.NewInhibitor(am.alerts, cfg.AlertmanagerConfig.InhibitRules, am.marker, am.gokitLogger)
+	am.inhibitor = inhibit.NewInhibitor(am.alerts, cfg.AlertmanagerConfig.InhibitRules, am.marker, am.logger)
 	am.muteTimes = am.buildMuteTimesMap(cfg.AlertmanagerConfig.MuteTimeIntervals)
-	am.silencer = silence.NewSilencer(am.silences, am.marker, am.gokitLogger)
+	am.silencer = silence.NewSilencer(am.silences, am.marker, am.logger)
 
 	meshStage := notify.NewGossipSettleStage(am.peer)
 	inhibitionStage := notify.NewMuteStage(am.inhibitor)
@@ -414,7 +410,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	}
 
 	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route.AsAMRoute(), nil)
-	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.gokitLogger, am.dispatcherMetrics)
+	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.logger, am.dispatcherMetrics)
 
 	am.wg.Add(1)
 	go func() {
