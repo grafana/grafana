@@ -4087,7 +4087,7 @@ __metadata:
     "@types/react-window": 1.8.5
     "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.7.2
-    "@types/slate-react": 0.22.5
+    "@types/slate-react": 0.50.0
     "@types/testing-library__jest-dom": 5.14.2
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
@@ -4254,7 +4254,7 @@ __metadata:
     "@types/react-icons": 2.2.7
     "@types/recompose": 0.30.10
     "@types/reselect": 2.2.0
-    "@types/slate-react": 0.22.5
+    "@types/slate-react": 0.50.0
     "@types/tinycolor2": 1.4.3
     chance: ^1.0.10
     classnames: ^2.2.5
@@ -9516,7 +9516,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/grafana__slate-react@npm:@types/slate-react@0.22.5, @types/slate-react@npm:0.22.5":
+"@types/grafana__slate-react@npm:@types/slate-react@0.22.5":
   version: 0.22.5
   resolution: "@types/slate-react@npm:0.22.5"
   dependencies:
@@ -9615,7 +9615,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/is-hotkey@npm:0.1.7":
+"@types/is-hotkey@npm:0.1.7, @types/is-hotkey@npm:^0.1.1":
   version: 0.1.7
   resolution: "@types/is-hotkey@npm:0.1.7"
   checksum: bce7c8874b30f346f20cf6cfcf4a10372962924f0e1b1a925a279004faeb276242ebfbfee47bd48df57e1021f2e3078c34e25837e226960c418d5f78f83dacea
@@ -9752,7 +9752,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:^4.14.172":
+"@types/lodash@npm:^4.14.149, @types/lodash@npm:^4.14.172":
   version: 4.14.178
   resolution: "@types/lodash@npm:4.14.178"
   checksum: a69a04a60bfc5257c3130a554b4efa0c383f0141b7b3db8ab7cf07ad2a46ea085fce66d0242da41da7e5647b133d5dfb2c15add9cbed8d7fef955e4a1e5b3128
@@ -10378,6 +10378,15 @@ __metadata:
   dependencies:
     "@types/slate": "*"
   checksum: b982c2241012e547eeba18e1104f2baa4ba0dbb674e4dcec9bf78bfe039fbde1599bd7a8c1d398baec67401a0949416c7543c0133ab80f81cddfdaff916c3f59
+  languageName: node
+  linkType: hard
+
+"@types/slate-react@npm:0.50.0":
+  version: 0.50.0
+  resolution: "@types/slate-react@npm:0.50.0"
+  dependencies:
+    slate-react: "*"
+  checksum: fdbebd7bd8f6294707fd17e23af398a782686f60863a9f2ecfc6caff994509cee456c6ab9dccf4f7043c9edb9ebaa6dbfc01e022e4838832cab9b029b0f060cc
   languageName: node
   linkType: hard
 
@@ -16732,6 +16741,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"direction@npm:^1.0.3":
+  version: 1.0.4
+  resolution: "direction@npm:1.0.4"
+  bin:
+    direction: cli.js
+  checksum: 572ac399093d7c9f2181c96828d252922e2a962b8f31a7fc118e3f7619592c566cc2ed313baf7703f17b2be00cd3c1402550140d0c3f4f70362976376a08b095
+  languageName: node
+  linkType: hard
+
 "discontinuous-range@npm:1.0.0":
   version: 1.0.0
   resolution: "discontinuous-range@npm:1.0.0"
@@ -19805,7 +19823,7 @@ __metadata:
     "@types/semver": 7.3.9
     "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.7.2
-    "@types/slate-react": 0.22.5
+    "@types/slate-react": 0.50.0
     "@types/testing-library__jest-dom": 5.14.2
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
@@ -21585,6 +21603,13 @@ __metadata:
   version: 0.2.0
   resolution: "is-hotkey@npm:0.2.0"
   checksum: 97d295cfd8c3eb2c9b218daee5bff0ddaf47210930e3eb1eff36d2e6ad74854028203c640f35ea2d183d0cba94ac4c4bcd291925bc3a343d8a4c7d2c5ab3e2a6
+  languageName: node
+  linkType: hard
+
+"is-hotkey@npm:^0.1.6":
+  version: 0.1.8
+  resolution: "is-hotkey@npm:0.1.8"
+  checksum: 793d0cccaf804583d8f4b835e040d4b6a74cb3f8d4094cb8188ed7cc86e6edf8f650fc80fabd4309e6c29938f5b0e9a17b45504b29dbf92735ef8d780d613aa0
   languageName: node
   linkType: hard
 
@@ -31641,6 +31666,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"scroll-into-view-if-needed@npm:^2.2.20":
+  version: 2.2.28
+  resolution: "scroll-into-view-if-needed@npm:2.2.28"
+  dependencies:
+    compute-scroll-into-view: ^1.0.17
+  checksum: 0b18d33118091ae0b5b1bd67913042b6903d2ad11d777e7763530317feee46d867e6367f9eec7213a15b62c464a008cfd79bcabb16490fe097e0e5448bee2277
+  languageName: node
+  linkType: hard
+
 "search-query-parser@npm:1.6.0":
   version: 1.6.0
   resolution: "search-query-parser@npm:1.6.0"
@@ -32118,6 +32152,26 @@ __metadata:
     slate: ">=0.47.0"
     slate-react: ">=0.22.0"
   checksum: 34b9cd299bda66031ad6d88e63748439e4ad47a4dfddef04ebf47d8e3afbf3be9fb5e8ca923ef719e7c9f8627af4d3faf764c858b68761e376c0f3daeab705f8
+  languageName: node
+  linkType: hard
+
+"slate-react@npm:*":
+  version: 0.72.2
+  resolution: "slate-react@npm:0.72.2"
+  dependencies:
+    "@types/is-hotkey": ^0.1.1
+    "@types/lodash": ^4.14.149
+    direction: ^1.0.3
+    is-hotkey: ^0.1.6
+    is-plain-object: ^5.0.0
+    lodash: ^4.17.4
+    scroll-into-view-if-needed: ^2.2.20
+    tiny-invariant: 1.0.6
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+    slate: ">=0.65.3"
+  checksum: 8fa269a47fc16841545cbfd55e66d62e27aa25f338191f1af70e0806fe8010803ee0476b461d72f9c9ef386f41c1eea0f510abe39f57a372b5e01386a4e9a2a6
   languageName: node
   linkType: hard
 
@@ -33810,6 +33864,13 @@ __metadata:
   version: 0.3.0
   resolution: "timsort@npm:0.3.0"
   checksum: 1a66cb897dacabd7dd7c91b7e2301498ca9e224de2edb9e42d19f5b17c4b6dc62a8d4cbc64f28be82aaf1541cb5a78ab49aa818f42a2989ebe049a64af731e2a
+  languageName: node
+  linkType: hard
+
+"tiny-invariant@npm:1.0.6":
+  version: 1.0.6
+  resolution: "tiny-invariant@npm:1.0.6"
+  checksum: c90b34beea3cb10c49531e754afb0999033a2d7edffef6602922de27678d8a96dcbc0e8f0a959bc272859281b0cd1305b711e25d5edfb1da5fc7135e2a992961
   languageName: node
   linkType: hard
 
