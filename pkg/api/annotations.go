@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -164,7 +165,11 @@ func UpdateAnnotation(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	annotationID := c.ParamsInt64(":annotationId")
+
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
 
 	repo := annotations.GetRepository()
 
