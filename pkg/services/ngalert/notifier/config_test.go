@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -148,7 +149,7 @@ func TestLoad(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := Load([]byte(tt.rawConfig))
+			c, err := common.LoadAMConfig([]byte(tt.rawConfig))
 
 			if tt.expectedError != nil {
 				assert.Nil(t, c)
