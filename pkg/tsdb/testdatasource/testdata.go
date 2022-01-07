@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg) (*Service, error) {
+func ProvideService(cfg *setting.Cfg) *Service {
 	s := &Service{
 		queryMux:  datasource.NewQueryTypeMux(),
 		scenarios: map[string]*Scenario{},
@@ -34,7 +34,7 @@ func ProvideService(cfg *setting.Cfg) (*Service, error) {
 	rMux := http.NewServeMux()
 	s.RegisterRoutes(rMux)
 
-	return s, nil
+	return s
 }
 
 type Service struct {

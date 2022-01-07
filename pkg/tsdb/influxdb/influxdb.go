@@ -21,8 +21,8 @@ import (
 )
 
 type Service struct {
-	QueryParser    *InfluxdbQueryParser
-	ResponseParser *ResponseParser
+	queryParser    *InfluxdbQueryParser
+	responseParser *ResponseParser
 	glog           log.Logger
 
 	im instancemgmt.InstanceManager
@@ -30,16 +30,13 @@ type Service struct {
 
 var ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 
-func ProvideService(cfg *setting.Cfg, httpClient httpclient.Provider) (*Service, error) {
-	im := datasource.NewInstanceManager(newInstanceSettings(httpClient))
-	s := &Service{
-		QueryParser:    &InfluxdbQueryParser{},
-		ResponseParser: &ResponseParser{},
+func ProvideService(httpClient httpclient.Provider) *Service {
+	return &Service{
+		queryParser:    &InfluxdbQueryParser{},
+		responseParser: &ResponseParser{},
 		glog:           log.New("tsdb.influxdb"),
-		im:             im,
+		im:             datasource.NewInstanceManager(newInstanceSettings(httpClient)),
 	}
-
-	return s, nil
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -132,7 +129,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, fmt.Errorf("InfluxDB returned error status: %s", res.Status)
 	}
 
-	resp := s.ResponseParser.Parse(res.Body, query)
+	resp := s.responseParser.Parse(res.Body, query)
 
 	return resp, nil
 }
@@ -148,7 +145,7 @@ func (s *Service) getQuery(dsInfo *models.DatasourceInfo, query *backend.QueryDa
 
 	q := query.Queries[0]
 
-	return s.QueryParser.Parse(q)
+	return s.queryParser.Parse(q)
 }
 
 func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceInfo, query string) (*http.Request, error) {

@@ -47,6 +47,7 @@ var RendererProvider PluginBackendProvider = func(_ context.Context, p *plugins.
 }
 
 var DefaultProvider PluginBackendProvider = func(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+	// TODO check for executable
 	cmd := plugins.ComposePluginStartCommand(p.Executable)
 	return grpcplugin.NewBackendPlugin(p.ID, filepath.Join(p.PluginDir, cmd))
 }

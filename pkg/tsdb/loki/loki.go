@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
 	"github.com/grafana/loki/pkg/logproto"
@@ -31,14 +30,11 @@ type Service struct {
 	plog log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) (*Service, error) {
-	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
-	s := &Service{
-		im:   im,
+func ProvideService(httpClientProvider httpclient.Provider) *Service {
+	return &Service{
+		im:   datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		plog: log.New("tsdb.loki"),
 	}
-
-	return s, nil
 }
 
 var (

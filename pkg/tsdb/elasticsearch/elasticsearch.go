@@ -19,25 +19,17 @@ import (
 var eslog = log.New("tsdb.elasticsearch")
 
 type Service struct {
-	HTTPClientProvider httpclient.Provider
+	httpClientProvider httpclient.Provider
 	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) (*Service, error) {
+func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	eslog.Debug("initializing")
 
-	im := datasource.NewInstanceManager(newInstanceSettings())
-	s := newService(im, httpClientProvider)
-
-	return s, nil
-}
-
-// newService creates a new executor func.
-func newService(im instancemgmt.InstanceManager, httpClientProvider httpclient.Provider) *Service {
 	return &Service{
-		im:                 im,
-		HTTPClientProvider: httpClientProvider,
+		im:                 datasource.NewInstanceManager(newInstanceSettings()),
+		httpClientProvider: httpClientProvider,
 		intervalCalculator: intervalv2.NewCalculator(),
 	}
 }
@@ -52,7 +44,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, err
 	}
 
-	client, err := es.NewClient(ctx, s.HTTPClientProvider, dsInfo, req.Queries[0].TimeRange)
+	client, err := es.NewClient(ctx, s.httpClientProvider, dsInfo, req.Queries[0].TimeRange)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}

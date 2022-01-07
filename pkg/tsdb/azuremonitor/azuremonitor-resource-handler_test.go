@@ -102,7 +102,6 @@ func Test_resourceHandler(t *testing.T) {
 				},
 			},
 		},
-		Cfg: &setting.Cfg{},
 		executors: map[string]azDatasourceExecutor{
 			azureMonitor: &AzureMonitorDatasource{
 				proxy: proxy,

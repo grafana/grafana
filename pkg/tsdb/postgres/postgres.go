@@ -21,12 +21,12 @@ import (
 
 var logger = log.New("tsdb.postgres")
 
-func ProvideService(cfg *setting.Cfg) (*Service, error) {
+func ProvideService(cfg *setting.Cfg) *Service {
 	s := &Service{
 		tlsManager: newTLSManager(logger, cfg.DataPath),
 	}
 	s.im = datasource.NewInstanceManager(s.newInstanceSettings(cfg))
-	return s, nil
+	return s
 }
 
 type Service struct {

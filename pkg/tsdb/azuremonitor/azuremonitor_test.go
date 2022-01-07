@@ -97,10 +97,6 @@ func (f *fakeExecutor) executeTimeSeriesQuery(ctx context.Context, originalQueri
 }
 
 func Test_newMux(t *testing.T) {
-	cfg := &setting.Cfg{
-		Azure: setting.AzureSettings{},
-	}
-
 	tests := []struct {
 		name        string
 		queryType   string
@@ -124,7 +120,6 @@ func Test_newMux(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
-				Cfg: cfg,
 				im: &fakeInstance{
 					routes: routes[azureMonitorPublic],
 					services: map[string]datasourceService{

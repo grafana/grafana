@@ -28,11 +28,10 @@ type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func ProvideService(cfg *setting.Cfg) (*Service, error) {
-	s := &Service{
+func ProvideService(cfg *setting.Cfg) *Service {
+	return &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(cfg)),
 	}
-	return s, nil
 }
 
 func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {

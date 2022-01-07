@@ -39,13 +39,11 @@ const (
 	TargetModelField     = "target"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) (*Service, error) {
-	s := &Service{
+func ProvideService(httpClientProvider httpclient.Provider) *Service {
+	return &Service{
 		logger: log.New("tsdb.graphite"),
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
-
-	return s, nil
 }
 
 type datasourceInfo struct {

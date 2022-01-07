@@ -28,14 +28,11 @@ type Service struct {
 	im     instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) (*Service, error) {
-	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
-	s := &Service{
+func ProvideService(httpClientProvider httpclient.Provider) *Service {
+	return &Service{
 		logger: log.New("tsdb.opentsdb"),
-		im:     im,
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
-
-	return s, nil
 }
 
 type datasourceInfo struct {

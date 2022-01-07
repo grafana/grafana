@@ -41,11 +41,10 @@ func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) (*Service, error) {
-	s := &Service{
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *Service {
+	return &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(cfg, httpClientProvider)),
 	}
-	return s, nil
 }
 
 func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {

@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -854,7 +854,7 @@ func newLoader(cfg *plugins.Cfg) *Loader {
 	return &Loader{
 		cfg:                cfg,
 		pluginFinder:       finder.New(),
-		pluginInitializer:  initializer.New(cfg, &provider.Service{}, &fakeLicensingService{}),
+		pluginInitializer:  initializer.New(cfg, &fakeBackendProvider{}, &fakeLicensingService{}),
 		signatureValidator: signature.NewValidator(&signature.UnsignedPluginAuthorizer{Cfg: cfg}),
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                &fakeLogger{},
@@ -917,4 +917,13 @@ func (fl fakeLogger) Debug(_ string, _ ...interface{}) {
 
 func (fl fakeLogger) Warn(_ string, _ ...interface{}) {
 
+}
+
+type fakeBackendProvider struct {
+}
+
+func (f *fakeBackendProvider) BackendFactory(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+	return func(_ string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+		return p, nil
+	}
 }

@@ -38,7 +38,6 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider) *
 	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, *httpClientProvider, executors))
 
 	s := &Service{
-		Cfg:       cfg,
 		im:        im,
 		executors: executors,
 	}
@@ -54,7 +53,6 @@ type serviceProxy interface {
 }
 
 type Service struct {
-	Cfg       *setting.Cfg
 	im        instancemgmt.InstanceManager
 	executors map[string]azDatasourceExecutor
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/collector/model/otlp"
 )
 
@@ -22,15 +21,11 @@ type Service struct {
 	tlog log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) (*Service, error) {
-	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
-
-	s := &Service{
+func ProvideService(httpClientProvider httpclient.Provider) *Service {
+	return &Service{
 		tlog: log.New("tsdb.tempo"),
-		im:   im,
+		im:   datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
-
-	return s, nil
 }
 
 type datasourceInfo struct {

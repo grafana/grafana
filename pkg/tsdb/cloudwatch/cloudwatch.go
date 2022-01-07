@@ -53,7 +53,7 @@ const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func ProvideService(cfg *setting.Cfg, logsService *LogsService) (*CloudWatchService, error) {
+func ProvideService(cfg *setting.Cfg, logsService *LogsService) *CloudWatchService {
 	plog.Debug("initing")
 
 	executor := newExecutor(logsService, datasource.NewInstanceManager(NewInstanceSettings()), cfg, awsds.NewSessionCache())
@@ -62,7 +62,7 @@ func ProvideService(cfg *setting.Cfg, logsService *LogsService) (*CloudWatchServ
 		LogsService: logsService,
 		Cfg:         cfg,
 		Executor:    executor,
-	}, nil
+	}
 }
 
 type CloudWatchService struct {
