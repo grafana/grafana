@@ -256,7 +256,7 @@ require cloud.google.com/go/kms v1.1.0
 
 require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.15 // indirect
-	github.com/containerd/containerd v1.5.9 // indirect
+	github.com/containerd/containerd v1.5.8 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
