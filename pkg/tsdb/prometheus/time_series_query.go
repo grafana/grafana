@@ -321,10 +321,6 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, datapointsCount)
 		valueField.Labels = make(map[string]string, len(s.Metric))
 		for k, v := range s.Metric {
-			// Skip the name label since it's already being used for the frame name.
-			if string(k) == "__name__" {
-				continue
-			}
 			valueField.Labels[string(k)] = string(v)
 		}
 
