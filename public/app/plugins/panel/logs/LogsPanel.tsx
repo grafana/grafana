@@ -40,9 +40,31 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   const style = useStyles2(getStyles(title, isAscending));
   const [scrollTop, setScrollTop] = useState(0);
   const [newData, setNewData] = useState(data);
+  const [externalLogs, setExternalLogs] = useState<any>([]);
 
   useEffect(() => {
-    setNewData(data);
+    const clonedData = cloneDeep(data);
+    externalLogs.forEach((log: any) => {
+      const lastFrame = clonedData.series.length - 1;
+      const fields = clonedData.series[lastFrame].fields;
+      const time = fields[0];
+      const message = fields[1];
+      const containerId = fields[2];
+      const hostname = fields[3];
+      //@ts-ignore
+      time.values.add(log.timestamp);
+      //@ts-ignore
+      message.values.add(JSON.stringify(log));
+      //@ts-ignore
+      containerId.values.add('fusebit');
+      //@ts-ignore
+      hostname.values.add('fusebit');
+
+      clonedData.series[lastFrame].length++;
+    });
+    setNewData(clonedData);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const { eventBus } = usePanelContext();
@@ -70,7 +92,9 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     const commonLabels = newResults?.meta?.find((m) => m.label === COMMON_LABELS);
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
-  }, [newData, dedupStrategy]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newData, externalLogs, dedupStrategy]);
 
   useLayoutEffect(() => {
     const scrollbar = document.querySelector('.scrollbar-view');
@@ -109,6 +133,9 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   useEffect(() => {
     const postMessage = (msg: any) => {
+      const logs = [...externalLogs];
+      logs.push({ msg: msg.data, timestamp: Date.now() });
+      setExternalLogs(logs);
       const clonedData = cloneDeep(newData);
       const fields = clonedData.series[0].fields;
       const time = fields[0];
@@ -135,7 +162,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     return () => {
       window.removeEventListener('message', postMessage);
     };
-  }, [newData]);
+  }, [newData, externalLogs]);
 
   if (!newData || logRows.length === 0) {
     return <PanelDataErrorView panelId={id} data={newData} needsStringField />;
