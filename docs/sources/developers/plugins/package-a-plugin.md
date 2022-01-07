@@ -40,20 +40,20 @@ There are three steps needed to package a plugin:
    zip myorg-simple-panel-1.0.0.zip myorg-simple-panel -r
    ```
 
-## Publish your plugin on Grafana.com
+# Publish your plugin on Grafana.com
 
 The best way to share your plugin with the world is to publish it on [Grafana Plugins](https://grafana.com/plugins). By having your plugin published on Grafana.com, more users will be able to discover your plugin.
 
 Before you submit your plugin, we ask that you read our guidelines and frequently asked questions.
 
-### Guidelines
+## Guidelines
 
 To speed up the time it takes to review your plugin:
 
 - Check that your plugin is ready for review using the [plugin validator](https://github.com/grafana/plugin-validator).
 - Read our [6 tips for improving your Grafana plugin before you publish](https://grafana.com/blog/2021/01/21/6-tips-for-improving-your-grafana-plugin-before-you-publish/).
 
-### Frequently Asked Questions
+## Frequently Asked Questions
 
 **Do I need to submit a private plugin?**
 
