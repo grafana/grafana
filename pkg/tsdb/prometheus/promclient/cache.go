@@ -1,6 +1,7 @@
 package promclient
 
 import (
+	"sort"
 	"strings"
 
 	lru "github.com/hashicorp/golang-lru"
@@ -44,9 +45,12 @@ func (c *ProviderCache) GetClient(headers map[string]string) (apiv1.API, error) 
 }
 
 func (c *ProviderCache) key(headers map[string]string) string {
-	var vals []string
+	vals := make([]string, len(headers))
+	var i int
 	for _, v := range headers {
-		vals = append(vals, v)
+		vals[i] = v
+		i++
 	}
+	sort.Strings(vals)
 	return strings.Join(vals, "")
 }
