@@ -22,19 +22,24 @@ export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, className, c
   const styles = getTagStyles(theme, name, colorIndex);
 
   const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
-    if (onClick) {
-      onClick(name, event);
-    }
+    event.preventDefault();
+    event.stopPropagation();
+
+    onClick?.(name, event);
   };
 
-  return (
-    <span
-      key={name}
-      ref={ref}
-      onClick={onTagClick}
-      className={cx(styles.wrapper, className, onClick && styles.hover)}
-      {...rest}
-    >
+  const commonProps = {
+    key: name,
+    className: cx(styles.wrapper, className, onClick && styles.hover),
+    ...rest,
+  };
+
+  return onClick ? (
+    <button {...commonProps} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
+      {name}
+    </button>
+  ) : (
+    <span {...commonProps} ref={ref}>
       {name}
     </span>
   );
@@ -51,6 +56,7 @@ const getTagStyles = (theme: GrafanaTheme, name: string, colorIndex?: number) =>
   }
   return {
     wrapper: css`
+      border-style: none;
       font-weight: ${theme.typography.weight.semibold};
       font-size: ${theme.typography.size.sm};
       line-height: ${theme.typography.lineHeight.xs};
