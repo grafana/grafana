@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"time"
 )
 
 type ServiceAccountsAPI struct {
@@ -79,6 +80,30 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) resp
 func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) response.Response {
 	if err := api.store.UpgradeServiceAccounts(ctx.Req.Context()); err == nil {
 		return response.Success("service accounts upgraded")
+	} else {
+		return response.Error(500, "Internal server error", err)
+	}
+}
+
+func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Response {
+	SAid := ctx.ParamsInt64(":serviceAccountId")
+	if SA_tokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, SAid); err == nil {
+		result := make([]*models.ApiKeyDTO, len(SA_tokens))
+		for i, t := range SA_tokens {
+			var expiration *time.Time = nil
+			if t.Expires != nil {
+				v := time.Unix(*t.Expires, 0)
+				expiration = &v
+			}
+			result[i] = &models.ApiKeyDTO{
+				Id:         t.Id,
+				Name:       t.Name,
+				Role:       t.Role,
+				Expiration: expiration,
+			}
+		}
+
+		return response.JSON(200, result)
 	} else {
 		return response.Error(500, "Internal server error", err)
 	}

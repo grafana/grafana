@@ -3,12 +3,13 @@ package database
 import (
 	"context"
 	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"time"
+	"xorm.io/xorm"
 )
 
 type ServiceAccountsStoreImpl struct {
@@ -83,4 +84,19 @@ func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) e
 		}()
 	}
 	return nil
+}
+
+func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error) {
+	result := make([]*models.ApiKey, 0)
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		var sess *xorm.Session
+
+		sess = dbSession.Limit(100, 0).
+			Join("inner", "user", "user.id = apikey.service_account_id").
+			Where("org_id=? and ( expires IS NULL or expires >= ?)", orgID, time.Now().Unix()).
+			Asc("name")
+
+		return sess.Find(&result)
+	})
+	return result, err
 }
