@@ -390,6 +390,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
       </div>
       <LinkButton
         className=" disabled"
+        disabled={true}
         href="#"
       >
         New Team
@@ -514,6 +515,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
       </div>
       <LinkButton
         className=""
+        disabled={true}
         href="org/teams/new"
       >
         New Team
