@@ -29,6 +29,7 @@ export interface FeatureToggles {
   accesscontrol?: boolean;
   prometheus_azure_auth?: boolean;
   newNavigation?: boolean;
+  showFeatureFlagsInUI?: boolean;
 }
 
 /**

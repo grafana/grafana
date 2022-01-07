@@ -1,14 +1,9 @@
 package setting
 
 import (
-	"fmt"
-	"io/ioutil"
-	"os"
 	"strconv"
-	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 )
@@ -19,7 +14,7 @@ func TestFeatureToggles(t *testing.T) {
 		conf            map[string]string
 		err             error
 		expectedToggles map[string]bool
-		opts            *featureFlagOptions
+		defaultToggles  map[string]bool
 	}{
 		{
 			name: "can parse feature toggles passed in the `enable` array",
@@ -65,13 +60,9 @@ func TestFeatureToggles(t *testing.T) {
 		},
 		{
 			name: "should override default feature toggles",
-			opts: &featureFlagOptions{
-				flags: []FeatureToggleInfo{
-					{
-						Id:      "feature1",
-						Enabled: true,
-					},
-				}},
+			defaultToggles: map[string]bool{
+				"feature1": true,
+			},
 			conf: map[string]string{
 				"feature1": "false",
 			},
@@ -90,109 +81,18 @@ func TestFeatureToggles(t *testing.T) {
 			require.ErrorIs(t, err, nil)
 		}
 
-		opts := &featureFlagOptions{}
-
-		if tc.opts != nil {
-			opts = tc.opts
+		dt := map[string]bool{}
+		if len(tc.defaultToggles) > 0 {
+			dt = tc.defaultToggles
 		}
 
-		if len(opts.flags) < 1 {
-			opts.flags = []FeatureToggleInfo{
-				{
-					Id: featureToggle_dashboardPreviews,
-				},
-				{
-					Id: featureToggle_newNavigation,
-				},
-			}
-		}
-
-		opts.cfgSection = toggles
-		featureToggles, err := loadFeatureTogglesFromConfiguration(*opts)
+		featureToggles, err := overrideDefaultWithConfiguration(f, dt)
 		require.ErrorIs(t, err, tc.err)
 
 		if err == nil {
-			for k, v := range tc.expectedToggles {
-				require.Equal(t, featureToggles.IsEnabled(k), v, tc.name)
+			for k, v := range featureToggles {
+				require.Equal(t, tc.expectedToggles[k], v, tc.name)
 			}
 		}
 	}
-}
-
-func TestFeatureToggleSetup(t *testing.T) {
-	ft := WithFeatureToggles("a", "b", "c")
-	assert.True(t, ft.IsEnabled("a"))
-	assert.True(t, ft.IsEnabled("b"))
-	assert.True(t, ft.IsEnabled("c"))
-	assert.False(t, ft.IsEnabled("d"))
-
-	// Explicit values
-	ft = WithFeatureToggles("a", true, "b", false)
-	assert.True(t, ft.IsEnabled("a"))
-	assert.False(t, ft.IsEnabled("b"))
-}
-
-func TestFeatureToggleTypeScript(t *testing.T) {
-	tsgen := generateTypeScript()
-
-	fpath := "../../packages/grafana-data/src/types/featureToggles.gen.ts"
-	body, err := ioutil.ReadFile(fpath)
-	if err == nil && tsgen != string(body) {
-		err = fmt.Errorf("feature toggle typescript does not match")
-	}
-
-	if err != nil {
-		_ = os.WriteFile(fpath, []byte(tsgen), 0644)
-		t.Errorf("Feature toggle typescript does not match: %s", err.Error())
-		t.Fail()
-	}
-}
-
-func generateTypeScript() string {
-	buf := `// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
-// To change feature flags, edit:
-//  pkg/setting/setting_feature_toggles_registry.go
-
-import { RegistryItem } from '../utils/Registry';
-
-/**
- * Describes available feature toggles in Grafana. These can be configured via
- * conf/custom.ini to enable features under development or not yet available in
- * stable version.
- *
- * @public
- */
-export interface FeatureToggles {
-  // [name: string]?: boolean; // support any string value
-
-`
-	for _, flag := range featureToggleRegistry {
-		buf += "  " + getTypeScriptKey(flag.Id) + "?: boolean;\n"
-	}
-
-	buf += `}
-
-/**
- * Metadata about each feature flag
- *
- * @internal
- */
-export interface FeatureFlagInfo extends RegistryItem {
-  docsURL?: string;
-  enabled?: boolean;
-  requiresDevMode?: boolean;
-  requiresEnterprise?: boolean;
-  modifiesDatabase?: boolean;
-  frontend?: boolean;
-}
-`
-
-	return buf
-}
-
-func getTypeScriptKey(key string) string {
-	if strings.Contains(key, "-") {
-		return "['" + key + "']"
-	}
-	return key
 }

@@ -17,7 +17,7 @@ interface Props {
   navModel: NavModel;
 }
 
-const AdminSettings: React.FC<Props> = ({ navModel }) => {
+function AdminSettings({ navModel }: Props) {
   const [queryParams] = useQueryParams();
   const { loading, value: settings } = useAsync(
     () => getBackendSrv().get('/api/admin/settings') as Promise<Settings>,
@@ -65,7 +65,7 @@ const AdminSettings: React.FC<Props> = ({ navModel }) => {
       )}
     </Page>
   );
-};
+}
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'server-settings'),
