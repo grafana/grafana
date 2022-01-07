@@ -49,6 +49,7 @@ exports[`Render should render teams table 1`] = `
       </div>
       <LinkButton
         className=""
+        disabled={true}
         href="org/teams/new"
       >
         New Team
