@@ -66,7 +66,7 @@ func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
 		return response.Error(403, "Not allowed to update team", err)
 	}
 
-	if err := hs.Bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := hs.Bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrTeamNameTaken) {
 			return response.Error(400, "Team name taken", err)
 		}
@@ -86,7 +86,7 @@ func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
 		return response.Error(403, "Not allowed to delete team", err)
 	}
 
-	if err := hs.Bus.DispatchCtx(c.Req.Context(), &models.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
+	if err := hs.Bus.Dispatch(c.Req.Context(), &models.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Failed to delete Team. ID not found", nil)
 		}
@@ -122,7 +122,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		HiddenUsers:  hs.Cfg.HiddenUsers,
 	}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to search Teams", err)
 	}
 
@@ -145,7 +145,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 		HiddenUsers:  hs.Cfg.HiddenUsers,
 	}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", err)
 		}

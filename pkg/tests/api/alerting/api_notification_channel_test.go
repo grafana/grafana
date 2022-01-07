@@ -80,9 +80,9 @@ func TestTestReceivers(t *testing.T) {
 
 		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 		mockEmails := &mockEmailHandler{}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		bus.AddHandler("", mockEmails.sendEmailCommandHandlerSync)
 		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
+			bus.AddHandler("", oldEmailBus)
 		})
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
@@ -166,9 +166,9 @@ func TestTestReceivers(t *testing.T) {
 
 		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 		mockEmails := &mockEmailHandler{}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		bus.AddHandler("", mockEmails.sendEmailCommandHandlerSync)
 		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
+			bus.AddHandler("", oldEmailBus)
 		})
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
@@ -249,9 +249,9 @@ func TestTestReceivers(t *testing.T) {
 		mockEmails := &mockEmailHandlerWithTimeout{
 			timeout: 5 * time.Second,
 		}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		bus.AddHandler("", mockEmails.sendEmailCommandHandlerSync)
 		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
+			bus.AddHandler("", oldEmailBus)
 		})
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
@@ -340,9 +340,9 @@ func TestTestReceivers(t *testing.T) {
 		mockEmails := &mockEmailHandlerWithTimeout{
 			timeout: 5 * time.Second,
 		}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		bus.AddHandler("", mockEmails.sendEmailCommandHandlerSync)
 		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
+			bus.AddHandler("", oldEmailBus)
 		})
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
@@ -455,9 +455,9 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 		mockEmails := &mockEmailHandler{}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		bus.AddHandler("", mockEmails.sendEmailCommandHandlerSync)
 		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
+			bus.AddHandler("", oldEmailBus)
 		})
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
@@ -552,9 +552,9 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 		mockEmails := &mockEmailHandler{}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		bus.AddHandler("", mockEmails.sendEmailCommandHandlerSync)
 		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
+			bus.AddHandler("", oldEmailBus)
 		})
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
@@ -644,9 +644,9 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 		mockEmails := &mockEmailHandler{}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		bus.AddHandler("", mockEmails.sendEmailCommandHandlerSync)
 		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
+			bus.AddHandler("", oldEmailBus)
 		})
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
@@ -743,7 +743,7 @@ func TestNotificationChannels(t *testing.T) {
 			channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
 			channels.LineNotifyURL, channels.ThreemaGwBaseURL = os, opa, ot, opu, ogb, ol, oth
 		channels.DefaultTemplateString = originalTemplate
-		bus.AddHandlerCtx("", originalEmailBus)
+		bus.AddHandler("", originalEmailBus)
 	})
 	channels.DefaultTemplateString = channels.TemplateForTestsString
 	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
@@ -753,7 +753,7 @@ func TestNotificationChannels(t *testing.T) {
 	channels.LineNotifyURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
 	channels.ThreemaGwBaseURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
 	channels.GetBoundary = func() string { return "abcd" }
-	bus.AddHandlerCtx("", mockEmail.sendEmailCommandHandlerSync)
+	bus.AddHandler("", mockEmail.sendEmailCommandHandlerSync)
 
 	// Create a user to make authenticated requests
 	createUser(t, s, models.CreateUserCommand{
