@@ -20,7 +20,7 @@ type TemplateServer struct {
 	store AlertingStore
 }
 
-func (s *TemplateServer) RouteGetTemplates(c *api.ReqContext, template apimodels.PostableTemplate) response.Response {
+func (s *TemplateServer) RouteGetTemplates(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_VIEWER) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
@@ -35,7 +35,7 @@ func (s *TemplateServer) RouteGetTemplates(c *api.ReqContext, template apimodels
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to unmarshal alertmanager configuration")
 	}
-	var templates []apimodels.PostableTemplate
+	templates := make([]apimodels.PostableTemplate, len(cfg.TemplateFiles))
 	for name, content := range cfg.TemplateFiles {
 		templates = append(templates, apimodels.PostableTemplate{Name: name, Content: content})
 	}

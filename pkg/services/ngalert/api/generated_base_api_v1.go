@@ -20,7 +20,7 @@ import (
 )
 
 type V1TemplateService interface {
-	RouteGetTemplates(*models.ReqContext, apimodels.PostableTemplate) response.Response
+	RouteGetTemplates(*models.ReqContext) response.Response
 	RouteCreateTemplate(*models.ReqContext, apimodels.PostableTemplate) response.Response
 	RouteUpdateTemplate(*models.ReqContext, apimodels.PostableTemplate) response.Response
 	RouteDeleteTemplate(*models.ReqContext, apimodels.PostableTemplate) response.Response
