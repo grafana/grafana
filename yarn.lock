@@ -3808,7 +3808,6 @@ __metadata:
     "@testing-library/react-hooks": 7.0.2
     "@testing-library/user-event": 13.5.0
     "@types/classnames": 2.3.0
-    "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.1.0
     "@types/enzyme": 3.10.5
@@ -3844,7 +3843,6 @@ __metadata:
     babel-loader: 8.2.2
     calculate-size: 1.1.1
     classnames: 2.3.1
-    clipboard: 2.0.4
     common-tags: ^1.8.0
     core-js: 3.20.0
     css-loader: 6.5.1
@@ -5412,7 +5410,7 @@ __metadata:
     ramda: ^0.27.1
   peerDependencies:
     "@babel/core": ^7.0.0
-    babel-plugin-macros: 2 || 3
+    babel-plugin-macros: 2 || 3
     typescript: 2 || 3 || 4
   bin:
     lingui: lingui.js
@@ -5467,7 +5465,7 @@ __metadata:
     "@lingui/conf": ^3.12.1
     ramda: ^0.27.1
   peerDependencies:
-    babel-plugin-macros: 2 || 3
+    babel-plugin-macros: 2 || 3
   checksum: 83384f2d796dbc7ecadb74a1c6159ccad82976c194f97b82c2ba72cc8113f95bf0193aa6a4e9596db25b713129a9037a873bf1282bc30e197c2a72855707162f
   languageName: node
   linkType: hard
@@ -5480,7 +5478,7 @@ __metadata:
     "@lingui/conf": ^3.13.0
     ramda: ^0.27.1
   peerDependencies:
-    babel-plugin-macros: 2 || 3
+    babel-plugin-macros: 2 || 3
   checksum: 5b80f4fe162e2be76462a124d267d97a7b7c5eacbf966b603e44b06010b016235366ebfa426473262bd72caffc1b03b351743a4cf909c8a77e4319e419abab07
   languageName: node
   linkType: hard
@@ -8673,13 +8671,6 @@ __metadata:
     "@types/node": "*"
     source-map: ^0.6.0
   checksum: 640f0c47ecda76fa15d1d4ea0cd49c6f617f080147b09aae009cafe90bd69362d018abbe61823ac3b867b1057ef7b2c64162ce9fbf876c524800d80c9f87a9e2
-  languageName: node
-  linkType: hard
-
-"@types/clipboard@npm:2.0.1":
-  version: 2.0.1
-  resolution: "@types/clipboard@npm:2.0.1"
-  checksum: 4ef5af19ac1055693a313194396e00a3f42326b45dd5ae90a2bb47a643957f313ce864c430f387fb16c78c9cd2cde44af84f0f7fd9f2695674a75161a7016937
   languageName: node
   linkType: hard
 
@@ -14036,17 +14027,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clipboard@npm:2.0.4":
-  version: 2.0.4
-  resolution: "clipboard@npm:2.0.4"
-  dependencies:
-    good-listener: ^1.2.2
-    select: ^1.1.2
-    tiny-emitter: ^2.0.0
-  checksum: 2f44556f713e940a69a20f95dde9ebc4dc7f6ec121562496a5358eb1893583f6554c64b8a54051cb1d3f637df71efd035afd9baf0b28d8b8799803e8556545db
-  languageName: node
-  linkType: hard
-
 "cliui@npm:^6.0.0":
   version: 6.0.0
   resolution: "cliui@npm:6.0.0"
@@ -16327,13 +16307,6 @@ __metadata:
   version: 1.0.0
   resolution: "delayed-stream@npm:1.0.0"
   checksum: 46fe6e83e2cb1d85ba50bd52803c68be9bd953282fa7096f51fc29edd5d67ff84ff753c51966061e5ba7cb5e47ef6d36a91924eddb7f3f3483b1c560f77a0020
-  languageName: node
-  linkType: hard
-
-"delegate@npm:^3.1.2":
-  version: 3.2.0
-  resolution: "delegate@npm:3.2.0"
-  checksum: d943058fe05897228b158cbd1bab05164df28c8f54127873231d6b03b0a5acc1b3ee1f98ac70ccc9b79cd84aa47118a7de111fee2923753491583905069da27d
   languageName: node
   linkType: hard
 
@@ -19486,15 +19459,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"good-listener@npm:^1.2.2":
-  version: 1.2.2
-  resolution: "good-listener@npm:1.2.2"
-  dependencies:
-    delegate: ^3.1.2
-  checksum: f39fb82c4e41524f56104cfd2d7aef1a88e72f3f75139115fbdf98cc7d844e0c1b39218b2e83438c6188727bf904ed78c7f0f2feff67b32833bc3af7f0202b33
-  languageName: node
-  linkType: hard
-
 "got@npm:^6.7.1":
   version: 6.7.1
   resolution: "got@npm:6.7.1"
@@ -19592,7 +19556,6 @@ __metadata:
     "@types/angular": 1.8.3
     "@types/angular-route": 1.7.0
     "@types/classnames": 2.3.0
-    "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.1.0
     "@types/d3-force": ^2.1.0
@@ -19667,7 +19630,6 @@ __metadata:
     calculate-size: 1.1.1
     centrifuge: 2.8.4
     classnames: 2.3.1
-    clipboard: 2.0.4
     comlink: 4.3.1
     common-tags: ^1.8.0
     copy-webpack-plugin: 9.0.1
@@ -31573,13 +31535,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"select@npm:^1.1.2":
-  version: 1.1.2
-  resolution: "select@npm:1.1.2"
-  checksum: 4346151e94f226ea6131e44e68e6d837f3fdee64831b756dd657cc0b02f4cb5107f867cb34a1d1216ab7737d0bf0645d44546afb030bbd8d64e891f5e4c4814e
-  languageName: node
-  linkType: hard
-
 "selection-is-backward@npm:^1.0.0":
   version: 1.0.0
   resolution: "selection-is-backward@npm:1.0.0"
@@ -33746,13 +33701,6 @@ __metadata:
   version: 0.3.0
   resolution: "timsort@npm:0.3.0"
   checksum: 1a66cb897dacabd7dd7c91b7e2301498ca9e224de2edb9e42d19f5b17c4b6dc62a8d4cbc64f28be82aaf1541cb5a78ab49aa818f42a2989ebe049a64af731e2a
-  languageName: node
-  linkType: hard
-
-"tiny-emitter@npm:^2.0.0":
-  version: 2.1.0
-  resolution: "tiny-emitter@npm:2.1.0"
-  checksum: fbcfb5145751a0e3b109507a828eb6d6d4501352ab7bb33eccef46e22e9d9ad3953158870a6966a59e57ab7c3f9cfac7cab8521db4de6a5e757012f4677df2dd
   languageName: node
   linkType: hard
 
