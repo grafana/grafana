@@ -43,7 +43,7 @@ func TestGetClient(t *testing.T) {
 		require.Contains(t, tc.httpProvider.middlewares(), "CustomHeaders")
 	})
 
-	t.Run("oauth pass through", func(t *testing.T) {
+	t.Run("extra headers", func(t *testing.T) {
 		t.Run("it sets the headers when 'oauthPassThru' is true and auth headers are passed", func(t *testing.T) {
 			tc := setup(`{"oauthPassThru":true}`)
 			_, err := tc.promClientProvider.GetClient(headers)
@@ -52,14 +52,14 @@ func TestGetClient(t *testing.T) {
 			require.Equal(t, headers, tc.httpProvider.opts.Headers)
 		})
 
-		t.Run("it only sets auth headers", func(t *testing.T) {
+		t.Run("it sets all headers", func(t *testing.T) {
 			withNonAuth := map[string]string{"X-Not-Auth": "stuff"}
 
 			tc := setup(`{"oauthPassThru":true}`)
 			_, err := tc.promClientProvider.GetClient(withNonAuth)
 			require.Nil(t, err)
 
-			require.Equal(t, map[string]string{}, tc.httpProvider.opts.Headers)
+			require.Equal(t, map[string]string{"X-Not-Auth": "stuff"}, tc.httpProvider.opts.Headers)
 		})
 
 		t.Run("it does not error when headers are nil", func(t *testing.T) {
@@ -67,14 +67,6 @@ func TestGetClient(t *testing.T) {
 
 			_, err := tc.promClientProvider.GetClient(nil)
 			require.Nil(t, err)
-		})
-
-		t.Run("it does not set the headers when 'oauthPassThru' is false", func(t *testing.T) {
-			tc := setup()
-			_, err := tc.promClientProvider.GetClient(headers)
-			require.Nil(t, err)
-
-			require.Len(t, tc.httpProvider.opts.Headers, 0)
 		})
 	})
 
