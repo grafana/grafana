@@ -21,9 +21,34 @@ type TemplateServer struct {
 	store store.AlertingStore
 }
 
+func (s *TemplateServer) RouteGetTemplates(c *api.ReqContext, template apimodels.PostableTemplate) response.Response {
+	if !c.HasUserRole(api.ROLE_VIEWER) {
+		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
+	query := &models.GetLatestAlertmanagerConfigurationQuery{
+		OrgID: c.OrgId,
+	}
+	err := s.store.GetLatestAlertmanagerConfiguration(query)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	cfg, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to unmarshal alertmanager configuration")
+	}
+	var templates []apimodels.PostableTemplate
+	for name, content := range cfg.TemplateFiles {
+		templates = append(templates, apimodels.PostableTemplate{Name: name, Content: content})
+	}
+	return response.JSON(http.StatusOK, templates)
+}
+
 func (s *TemplateServer) RouteCreateTemplate(c *api.ReqContext, template apimodels.PostableTemplate) response.Response {
 	if !c.HasUserRole(api.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
+	if template.Name == "" || template.Content == "" {
+		return ErrResp(http.StatusInternalServerError, errors.New("empty template"), "template name or content empty")
 	}
 	query := &models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: c.OrgId,
@@ -39,15 +64,12 @@ func (s *TemplateServer) RouteCreateTemplate(c *api.ReqContext, template apimode
 	if _, exists := cfg.TemplateFiles[template.Name]; exists {
 		return ErrResp(http.StatusInternalServerError, errors.New("duplicated template name"), "template with this name already exists")
 	}
-	if template.Name == "" || template.Content == "" {
-		return ErrResp(http.StatusInternalServerError, errors.New("empty template"), "template name or content empty")
-	}
 	// notification template content must be wrapped in {{ define "name" }} tag,
 	// but this is not obvious because user also has to provide name separately in the form.
 	// so if user does not manually add {{ define }} tag, we do it automatically
 	template.Content = ensureDefine(template.Name, template.Content)
 	cfg.TemplateFiles[template.Name] = template.Content
-	cfg.AlertmanagerConfig.Config.Templates = append(cfg.AlertmanagerConfig.Config.Templates, template.Name)
+	// cfg.AlertmanagerConfig.Config.Templates = append(cfg.AlertmanagerConfig.Config.Templates, template.Name)
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to marshal alertmanager configuration")
@@ -64,6 +86,87 @@ func (s *TemplateServer) RouteCreateTemplate(c *api.ReqContext, template apimode
 		return ErrResp(http.StatusInternalServerError, err, "failed to unmarshal alertmanager configuration")
 	}
 	return response.JSON(http.StatusOK, "")
+}
+
+func (s *TemplateServer) RouteUpdateTemplate(c *api.ReqContext, template apimodels.PostableTemplate) response.Response {
+	if !c.HasUserRole(api.ROLE_EDITOR) {
+		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
+	if template.Name == "" || template.Content == "" {
+		return ErrResp(http.StatusInternalServerError, errors.New("empty template"), "template name or content empty")
+	}
+	query := &models.GetLatestAlertmanagerConfigurationQuery{
+		OrgID: c.OrgId,
+	}
+	err := s.store.GetLatestAlertmanagerConfiguration(query)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	cfg, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to unmarshal alertmanager configuration")
+	}
+	if _, exists := cfg.TemplateFiles[template.Name]; !exists {
+		return ErrResp(http.StatusInternalServerError, errors.New("template not found"), "template with this name not found")
+	}
+	cfg.TemplateFiles[template.Name] = template.Content
+	data, err := json.Marshal(cfg)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to marshal alertmanager configuration")
+	}
+	err = s.store.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration:     string(data),
+		AlertmanagerConfigurationHash: fmt.Sprintf("%x", md5.Sum(data)),
+		ConfigurationVersion:          "v1",
+		Default:                       false,
+		OrgID:                         c.OrgId,
+		FetchedHash:                   query.Result.AlertmanagerConfigurationHash,
+	})
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to unmarshal alertmanager configuration")
+	}
+	return response.JSON(http.StatusOK, "")
+}
+
+func (s *TemplateServer) RouteDeleteTemplate(c *api.ReqContext, template apimodels.PostableTemplate) response.Response {
+	if !c.HasUserRole(api.ROLE_EDITOR) {
+		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
+	if template.Name == "" {
+		return ErrResp(http.StatusInternalServerError, errors.New("empty template name"), "template name empty")
+	}
+	query := &models.GetLatestAlertmanagerConfigurationQuery{
+		OrgID: c.OrgId,
+	}
+	err := s.store.GetLatestAlertmanagerConfiguration(query)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	cfg, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to unmarshal alertmanager configuration")
+	}
+	if _, exists := cfg.TemplateFiles[template.Name]; !exists {
+		return ErrResp(http.StatusInternalServerError, errors.New("template not found"), "template with this name not found")
+	}
+	delete(cfg.TemplateFiles, template.Name)
+	data, err := json.Marshal(cfg)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to marshal alertmanager configuration")
+	}
+	err = s.store.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration:     string(data),
+		AlertmanagerConfigurationHash: fmt.Sprintf("%x", md5.Sum(data)),
+		ConfigurationVersion:          "v1",
+		Default:                       false,
+		OrgID:                         c.OrgId,
+		FetchedHash:                   query.Result.AlertmanagerConfigurationHash,
+	})
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to unmarshal alertmanager configuration")
+	}
+	return response.JSON(http.StatusOK, "")
+	return nil
 }
 
 func ensureDefine(name, content string) string {

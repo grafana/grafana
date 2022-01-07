@@ -20,18 +20,50 @@ import (
 )
 
 type V1TemplateService interface {
+	RouteGetTemplates(*models.ReqContext, apimodels.PostableTemplate) response.Response
 	RouteCreateTemplate(*models.ReqContext, apimodels.PostableTemplate) response.Response
+	RouteUpdateTemplate(*models.ReqContext, apimodels.PostableTemplate) response.Response
+	RouteDeleteTemplate(*models.ReqContext, apimodels.PostableTemplate) response.Response
 }
 
 func (api *API) RegisterTemplateEndpoints(srv V1TemplateService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
+		group.Get(
+			toMacaronPath("/api/alerting/templates"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/alerting/templates",
+				srv.RouteGetTemplates,
+				m,
+			),
+		)
 		group.Post(
-			toMacaronPath("/api/ngalert/templates"),
+			toMacaronPath("/api/alerting/templates"),
 			binding.Bind(apimodels.PostableTemplate{}),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/ngalert/templates",
+				"/api/alerting/templates",
 				srv.RouteCreateTemplate,
+				m,
+			),
+		)
+		group.Put(
+			toMacaronPath("/api/alerting/templates"),
+			binding.Bind(apimodels.PostableTemplate{}),
+			metrics.Instrument(
+				http.MethodPut,
+				"/api/alerting/templates",
+				srv.RouteUpdateTemplate,
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/alerting/templates"),
+			binding.Bind(apimodels.PostableTemplate{}),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/alerting/templates",
+				srv.RouteDeleteTemplate,
 				m,
 			),
 		)
