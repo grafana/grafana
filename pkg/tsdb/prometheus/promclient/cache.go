@@ -1,25 +1,23 @@
 package promclient
 
 import (
+	"sort"
+	"strings"
+
 	lru "github.com/hashicorp/golang-lru"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-)
-
-const (
-	noPassThrough = "no-pass-through"
 )
 
 type ProviderCache struct {
 	provider promClientProvider
 	cache    *lru.Cache
-	jsonData JsonData
 }
 
 type promClientProvider interface {
 	GetClient(map[string]string) (apiv1.API, error)
 }
 
-func NewProviderCache(p promClientProvider, jd JsonData) (*ProviderCache, error) {
+func NewProviderCache(p promClientProvider) (*ProviderCache, error) {
 	cache, err := lru.New(500)
 	if err != nil {
 		return nil, err
@@ -28,7 +26,6 @@ func NewProviderCache(p promClientProvider, jd JsonData) (*ProviderCache, error)
 	return &ProviderCache{
 		provider: p,
 		cache:    cache,
-		jsonData: jd,
 	}, nil
 }
 
@@ -48,8 +45,12 @@ func (c *ProviderCache) GetClient(headers map[string]string) (apiv1.API, error) 
 }
 
 func (c *ProviderCache) key(headers map[string]string) string {
-	if c.jsonData.OauthPassThru {
-		return headers[authHeader] + headers[idTokenHeader]
+	vals := make([]string, len(headers))
+	var i int
+	for _, v := range headers {
+		vals[i] = v
+		i++
 	}
-	return noPassThrough
+	sort.Strings(vals)
+	return strings.Join(vals, "")
 }
