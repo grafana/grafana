@@ -163,7 +163,6 @@ var (
 	createTeamCmd = `{"name": "MyTestTeam%d"}`
 )
 
-
 func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, false)
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
