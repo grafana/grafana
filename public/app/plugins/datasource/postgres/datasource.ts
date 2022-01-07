@@ -167,16 +167,37 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
     );
   }
 
+  private _metaRequest(rawSql: string) {
+    const refId = 'meta';
+    const range = this.timeSrv.timeRange();
+    const query = {
+      refId: refId,
+      datasource: this.getRef(),
+      rawSql,
+      format: 'table',
+    };
+    return getBackendSrv().fetch<BackendDataSourceResponse>({
+      url: '/api/ds/query',
+      method: 'POST',
+      data: {
+        from: range.from.valueOf().toString(),
+        to: range.to.valueOf().toString(),
+        queries: [query],
+      },
+      requestId: refId,
+    });
+  }
+
   getVersion(): Promise<any> {
-    return this.metricFindQuery("SELECT current_setting('server_version_num')::int/100", {});
+    return lastValueFrom(this._metaRequest("SELECT current_setting('server_version_num')::int/100"));
   }
 
   getTimescaleDBVersion(): Promise<any> {
-    return this.metricFindQuery("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'", {});
+    return lastValueFrom(this._metaRequest("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'"));
   }
 
   testDatasource(): Promise<any> {
-    return this.metricFindQuery('SELECT 1', {})
+    return lastValueFrom(this._metaRequest('SELECT 1'))
       .then(() => {
         return { status: 'success', message: 'Database Connection OK' };
       })

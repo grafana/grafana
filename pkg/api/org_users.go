@@ -155,6 +155,8 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetO
 		hs.log.Error("Failed to get access control metadata", "error", errAC)
 
 		return filteredUsers, nil
+	} else if accessControlMetadata == nil {
+		return filteredUsers, nil
 	}
 
 	for i := range filteredUsers {

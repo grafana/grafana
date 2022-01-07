@@ -72,6 +72,6 @@
     "rollup-plugin-terser": "7.0.2",
     "sinon": "12.0.1",
     "tinycolor2": "1.4.1",
-    "typescript": "4.4.3"
+    "typescript": "4.5.4"
   }
 }

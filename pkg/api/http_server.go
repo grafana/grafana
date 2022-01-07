@@ -53,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
@@ -114,6 +115,7 @@ type HTTPServer struct {
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
 	ldapGroups                ldap.Groups
+	teamGuardian              teamguardian.TeamGuardian
 	queryDataService          *query.Service
 	serviceAccountsService    serviceaccounts.Service
 }
@@ -140,7 +142,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	quotaService *quota.QuotaService, socialService social.Service, tracingService tracing.Tracer,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
-	ldapGroups ldap.Groups, serviceaccountsService serviceaccounts.Service) (*HTTPServer, error) {
+	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -192,6 +194,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
 		ldapGroups:                ldapGroups,
+		teamGuardian:              teamGuardian,
 		queryDataService:          queryDataService,
 		serviceAccountsService:    serviceaccountsService,
 	}

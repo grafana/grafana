@@ -11,7 +11,7 @@ type DataKey struct {
 	Active        bool
 	Name          string
 	Scope         string
-	Provider      string
+	Provider      ProviderID
 	EncryptedData []byte
 	Created       time.Time
 	Updated       time.Time
