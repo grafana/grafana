@@ -15,6 +15,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 
 	"github.com/centrifugal/centrifuge"
@@ -176,7 +177,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	}
 
 	g.ManagedStreamRunner = managedStreamRunner
-	if enabled := g.Cfg.Features.IsLivePipelineEnabled(); enabled {
+	if enabled := g.Cfg.Features.IsEnabled(featuremgmt.FLAG_live_pipeline); enabled {
 		var builder pipeline.RuleBuilder
 		if os.Getenv("GF_LIVE_DEV_BUILDER") != "" {
 			builder = &pipeline.DevRuleBuilder{

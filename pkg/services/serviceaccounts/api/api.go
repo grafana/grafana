@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -39,7 +40,7 @@ func NewServiceAccountsAPI(
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 	cfg *setting.Cfg,
 ) {
-	if !cfg.Features.IsServiceAccountsEnabled() {
+	if !cfg.Features.IsEnabled(featuremgmt.FLAG_service_accounts) {
 		return
 	}
 	auth := acmiddleware.Middleware(api.accesscontrol)

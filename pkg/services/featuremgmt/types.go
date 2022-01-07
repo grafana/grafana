@@ -1,12 +1,8 @@
 package featuremgmt
 
-import (
-	"context"
-)
-
 type FeatureManager interface {
-	IsEnabled(ctx context.Context, flag string) bool
-	GetEnabled(ctx context.Context) map[string]bool
+	IsEnabled(flag string) bool
+	GetEnabled() map[string]bool
 	GetFlags() []FeatureFlag
 }
 

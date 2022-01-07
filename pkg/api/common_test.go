@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -210,7 +211,7 @@ func (s *fakeRenderService) Init() error {
 }
 
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
-	cfg.Features = setting.WithFeatureToggles("accesscontrol")
+	cfg.Features = featuremgmt.WithFeatures("accesscontrol")
 	cfg.Quota.Enabled = false
 
 	bus := bus.GetBus()
@@ -295,7 +296,7 @@ func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessContro
 
 	// Use a new conf
 	cfg := setting.NewCfg()
-	cfg.Features = setting.WithFeatureToggles("accesscontrol", enableAccessControl)
+	cfg.Features = featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
 
 	// Use a test DB
 	db := sqlstore.InitTestDB(t)

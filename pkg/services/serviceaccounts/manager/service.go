@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
@@ -47,7 +48,7 @@ func ProvideServiceAccountsService(
 }
 
 func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
-	if !sa.cfg.Features.IsServiceAccountsEnabled() {
+	if !sa.cfg.Features.IsEnabled(featuremgmt.FLAG_service_accounts) {
 		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil, nil
 	}
@@ -55,7 +56,7 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saFo
 }
 
 func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
-	if !sa.cfg.Features.IsServiceAccountsEnabled() {
+	if !sa.cfg.Features.IsEnabled(featuremgmt.FLAG_service_accounts) {
 		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil
 	}

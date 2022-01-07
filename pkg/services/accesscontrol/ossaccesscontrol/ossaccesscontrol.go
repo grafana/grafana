@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -37,7 +38,7 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 	if ac.Cfg == nil {
 		return true
 	}
-	return !ac.Cfg.Features.IsAccessControlEnabled()
+	return !ac.Cfg.Features.IsEnabled(featuremgmt.FLAG_accesscontrol)
 }
 
 func (ac *OSSAccessControlService) registerUsageMetrics() {

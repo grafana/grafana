@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,10 +25,10 @@ func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 		secret_key = ` + defaultKey))
 	require.NoError(tb, err)
 	cfg := &setting.Cfg{Raw: raw}
-	cfg.Features = setting.WithFeatureToggles("envelopeEncryption")
+	cfg.Features = featuremgmt.WithFeatures("envelopeEncryption")
 	settings := &setting.OSSImpl{Cfg: cfg}
 	assert.True(tb, settings.IsFeatureToggleEnabled("envelopeEncryption"))
-	assert.True(tb, cfg.Features.IsSecretsEnvelopeEncryptionEnabled())
+	assert.True(tb, cfg.Features.IsEnabled(featuremgmt.FLAG_secrets_envelopeEncryption))
 
 	encryption := ossencryption.ProvideService()
 	secretsService, err := ProvideSecretsService(

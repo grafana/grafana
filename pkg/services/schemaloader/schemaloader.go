@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/grafana/pkg/schema/load"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -49,7 +50,7 @@ func (rs *SchemaLoaderService) IsDisabled() bool {
 	if rs.Cfg == nil {
 		return true
 	}
-	return !rs.Cfg.Features.IsTrimDefaultsEnabled()
+	return !rs.Cfg.Features.IsEnabled(featuremgmt.FLAG_trimDefaults)
 }
 
 func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*simplejson.Json, error) {

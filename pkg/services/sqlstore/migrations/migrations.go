@@ -3,6 +3,7 @@ package migrations
 import (
 	"os"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -57,7 +58,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
 	if mg.Cfg != nil {
-		if mg.Cfg.Features.IsLiveConfigEnabled() {
+		if mg.Cfg.Features.IsEnabled(featuremgmt.FLAG_live_config) {
 			addLiveChannelMigrations(mg)
 		}
 	}

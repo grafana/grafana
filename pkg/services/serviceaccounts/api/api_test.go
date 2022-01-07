@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -97,7 +98,7 @@ func serviceAccountDeletionScenario(t *testing.T, httpMethod string, endpoint st
 func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock, routerRegister routing.RouteRegister, acmock *accesscontrolmock.Mock) *web.Mux {
 	store := sqlstore.InitTestDB(t)
 	a := NewServiceAccountsAPI(svc, acmock, routerRegister, database.NewServiceAccountsStore(store))
-	a.RegisterAPIEndpoints(&setting.Cfg{Features: setting.WithFeatureToggles("service-accounts")})
+	a.RegisterAPIEndpoints(&setting.Cfg{Features: featuremgmt.WithFeatures("service-accounts")})
 
 	m := web.New()
 	signedUser := &models.SignedInUser{

@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { useAsync } from 'react-use';
-import { getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { NavModel } from '@grafana/data';
 
 import { StoreState } from 'app/types';
@@ -23,7 +23,8 @@ function AdminSettings({ navModel }: Props) {
     () => getBackendSrv().get('/api/admin/settings') as Promise<Settings>,
     []
   );
-  const showFeatures = Boolean(queryParams.features);
+  const featureUIEnabled = Boolean(config.featureToggles.showFeatureFlagsInUI);
+  const showFeatures = featureUIEnabled && Boolean(queryParams.features);
 
   return (
     <Page navModel={navModel}>
@@ -43,7 +44,7 @@ function AdminSettings({ navModel }: Props) {
                     <tr>
                       <td className="admin-settings-section" colSpan={2}>
                         {sectionName}
-                        {sectionName === 'feature_toggles' && (
+                        {sectionName === 'feature_toggles' && featureUIEnabled && (
                           <a href="admin/settings?features">
                             &nbsp; details <Icon name="external-link-alt" />
                           </a>

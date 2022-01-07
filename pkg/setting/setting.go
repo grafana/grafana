@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/gobwas/glob"
@@ -342,7 +343,7 @@ type Cfg struct {
 	ApiKeyMaxSecondsToLive int64
 
 	// Use to enable new features which may still be in alpha/beta stage.
-	Features             FeatureToggles
+	Features             featuremgmt.FeatureManager
 	AnonymousEnabled     bool
 	AnonymousOrgName     string
 	AnonymousOrgRole     string

@@ -1,7 +1,7 @@
 package featuremgmt
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 )
@@ -53,12 +53,12 @@ func (ff *flagManager) registerFlags(flags ...FeatureFlag) {
 }
 
 // IsEnabled checks if a feature is enabled
-func (ff *flagManager) IsEnabled(ctx context.Context, flag string) bool {
+func (ff *flagManager) IsEnabled(flag string) bool {
 	return ff.enabled[flag]
 }
 
 // GetEnabled returns a map contaning only the features that are enabled
-func (ff *flagManager) GetEnabled(ctx context.Context) map[string]bool {
+func (ff *flagManager) GetEnabled() map[string]bool {
 	return ff.enabled
 }
 
@@ -76,7 +76,7 @@ func (ff *flagManager) GetFlags() []FeatureFlag {
 func WithFeatures(spec ...interface{}) FeatureManager {
 	count := len(spec)
 	enabled := make(map[string]bool, count)
-	flags := make(map[string]FeatureFlag)
+	flags := make(map[string]FeatureFlag, count)
 
 	idx := 0
 	for idx < count {
@@ -88,10 +88,10 @@ func WithFeatures(spec ...interface{}) FeatureManager {
 			idx++
 		}
 
-		flags = make(map[string]FeatureFlag)
 		flags[key] = FeatureFlag{
 			Name:       key,
 			Expression: fmt.Sprintf("%t", val),
+			State:      BetaState, // unknown!
 		}
 		if val {
 			enabled[key] = true
@@ -104,10 +104,16 @@ func WithFeatures(spec ...interface{}) FeatureManager {
 	}
 }
 
-// func (ft FeatureToggles) MarshalJSON() ([]byte, error) {
-// 	res := make(map[string]interface{}, 3)
-// 	res["enabled"] = ft.enabled
-// 	res["info"] = ft.info
-// 	res["notice"] = ft.notice
-// 	return json.Marshal(res)
-// }
+func (ff flagManager) MarshalJSON() ([]byte, error) {
+	res := make(map[string]interface{}, 3)
+	res["enabled"] = ff.enabled
+
+	vv := make([]FeatureFlag, 0, len(ff.flags))
+	for _, v := range ff.flags {
+		vv = append(vv, v)
+	}
+
+	res["info"] = vv
+	//res["notice"] = ft.notice
+	return json.Marshal(res)
+}
