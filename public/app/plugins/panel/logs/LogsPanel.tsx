@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
 import {
@@ -16,8 +16,8 @@ import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { COMMON_LABELS } from '../../../core/logs_model';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
-import { cloneDeep } from 'lodash';
 import useScrollTop from './useScrollTop';
+import useNewData from './useNewData';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -39,35 +39,9 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 }) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles(title, isAscending));
-  const [newData, setNewData] = useState(data);
-  const [externalLogs, setExternalLogs] = useState<any>([]);
-
-  useEffect(() => {
-    const clonedData = cloneDeep(data);
-    externalLogs.forEach((log: any) => {
-      const lastFrame = clonedData.series.length - 1;
-      const fields = clonedData.series[lastFrame].fields;
-      const time = fields[0];
-      const message = fields[1];
-      const containerId = fields[2];
-      const hostname = fields[3];
-      //@ts-ignore
-      time.values.add(log.timestamp);
-      //@ts-ignore
-      message.values.add(JSON.stringify(log));
-      //@ts-ignore
-      containerId.values.add('fusebit');
-      //@ts-ignore
-      hostname.values.add('fusebit');
-
-      clonedData.series[lastFrame].length++;
-    });
-    setNewData(clonedData);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
 
   const { eventBus } = usePanelContext();
+  const { newData, externalLogs } = useNewData({ data });
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
       if (!row) {
@@ -104,39 +78,6 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     },
     [newData]
   );
-
-  useEffect(() => {
-    const postMessage = (msg: any) => {
-      const logs = [...externalLogs];
-      logs.push({ msg: msg.data, timestamp: Date.now() });
-      setExternalLogs(logs);
-      const clonedData = cloneDeep(newData);
-      const fields = clonedData.series[0].fields;
-      const time = fields[0];
-      const message = fields[1];
-      const containerId = fields[2];
-      const hostname = fields[3];
-      //@ts-ignore
-      time.values.add(Date.now());
-      //@ts-ignore
-      message.values.add(msg.data);
-      //@ts-ignore
-      containerId.values.add('fusebit');
-      //@ts-ignore
-      hostname.values.add('fusebit');
-
-      clonedData.series[0].length++;
-      console.log(clonedData);
-      setNewData(clonedData);
-      console.log('Message Received from parent: ', msg.data);
-    };
-
-    window.addEventListener('message', postMessage);
-
-    return () => {
-      window.removeEventListener('message', postMessage);
-    };
-  }, [newData, externalLogs]);
 
   if (!newData || logRows.length === 0) {
     return <PanelDataErrorView panelId={id} data={newData} needsStringField />;
