@@ -83,6 +83,8 @@ jobs:
           node-version: '16'
       - name: Install Actions
         run: npm install --production --prefix ./actions
+      - name: Setup yarn
+        run: corepack enable
       - name: Run bump version (manually invoked)
         if: ${{ github.event.inputs.version != '' }}
         uses: ./actions/bump-version
