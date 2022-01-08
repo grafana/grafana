@@ -38,7 +38,7 @@ export interface LokiQuery extends DataQuery {
   valueWithRefId?: boolean;
   maxLines?: number;
   resolution?: number;
-  volumeQuery?: boolean;
+  volumeQuery?: boolean; // Used in range queries
 
   /* @deprecated now use queryType */
   range?: boolean;
