@@ -19,7 +19,7 @@ export function LokiQueryEditor(props: LokiQueryEditorProps) {
     <div className="gf-form-inline">
       <div className="gf-form">
         <InlineFormLabel
-          width={7}
+          width={6}
           tooltip="Controls the name of the time series, using name or pattern. For example
         {{hostname}} will be replaced with label value for the label hostname. The legend only applies to metric queries."
         >
