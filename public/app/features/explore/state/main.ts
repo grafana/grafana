@@ -1,6 +1,6 @@
 import { AnyAction } from 'redux';
 import { DataSourceSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { DataQuery, ExploreUrlState, serializeStateToUrlParam, SplitOpen, TimeRange, UrlQueryMap } from '@grafana/data';
+import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap } from '@grafana/data';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { paneReducer } from './explorePane';

@@ -2,7 +2,6 @@ import {
   DataFrame,
   DataFrameView,
   DataLink,
-  DataSourceApi,
   Field,
   mapInternalLinkToExplore,
   SplitOpen,
@@ -22,7 +21,6 @@ import {
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { TempoQuery } from 'app/plugins/datasource/tempo/datasource';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -41,7 +39,6 @@ function noop(): {} {
 }
 
 type Props = {
-  datasource: DataSourceApi;
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
@@ -87,19 +84,25 @@ export function TraceView(props: Props) {
         spanId,
       })
     );
+
+  const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
+  const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
+  const datasource = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance);
+  const query = useSelector((state: StoreState) =>
+    state.explore[props.exploreId]?.queries.find((query) => query.refId === frame.refId)
+  );
+  const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(datasource?.name)?.jsonData as TraceToLogsData)
+    ?.tracesToLogs;
+  const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
+
   const createFocusSpanLink = (traceId: string, spanId: string) => {
-    const link: DataLink<TempoQuery> = {
+    const link: DataLink = {
       title: 'Deep link to this span',
       url: '',
       internal: {
-        datasourceUid: props.datasource.uid,
-        datasourceName: props.datasource.name,
-        query: {
-          refId: '',
-          queryType: 'traceId',
-          query: traceId,
-          search: '',
-        },
+        datasourceUid: datasource?.uid!,
+        datasourceName: datasource?.name!,
+        query,
         panelsState: {
           trace: {
             spanId,
@@ -118,13 +121,6 @@ export function TraceView(props: Props) {
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
     });
   };
-
-  const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
-  const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
-  const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
-  const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
-    ?.tracesToLogs;
-  const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
 
   const traceTimeline: TTraceTimeline = useMemo(
     () => ({

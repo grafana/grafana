@@ -200,7 +200,7 @@ export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: bo
     const compactState: unknown[] = [urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries];
     // only serialize panel state if we have at least one non-default panel configuration
     if (urlState.panelsState !== undefined) {
-      compactState.push(urlState.panelsState);
+      compactState.push({ __panelsState: urlState.panelsState });
     }
     return JSON.stringify(compactState);
   }

@@ -23,7 +23,6 @@ import {
   rangeUtil,
   DateTime,
   isDateTime,
-  preferredVisualizationTypes,
 } from '@grafana/data';
 import store from 'app/core/store';
 import { v4 as uuidv4 } from 'uuid';
@@ -251,11 +250,11 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
   const queries = parsedSegments.filter(
-    (segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode', ...preferredVisualizationTypes)
+    (segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode', '__panelsState')
   );
 
   const originPanelId = parsedSegments.find((segment) => isSegment(segment, 'originPanelId'));
-  const panelsState = parsedSegments.find((segment) => isSegment(segment, ...preferredVisualizationTypes));
+  const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'));
   return { datasource, queries, range, originPanelId, panelsState: panelsState };
 }
 
