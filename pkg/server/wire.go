@@ -59,6 +59,9 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/teamguardian"
+	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
+	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
@@ -173,6 +176,10 @@ var wireBasicSet = wire.NewSet(
 	serviceaccountsmanager.ProvideServiceAccountsService,
 	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsmanager.ServiceAccountsService)),
 	expr.ProvideService,
+	teamguardianDatabase.ProvideTeamGuardianStore,
+	wire.Bind(new(teamguardian.Store), new(*teamguardianDatabase.TeamGuardianStoreImpl)),
+	teamguardianManager.ProvideService,
+	wire.Bind(new(teamguardian.TeamGuardian), new(*teamguardianManager.Service)),
 )
 
 var wireSet = wire.NewSet(

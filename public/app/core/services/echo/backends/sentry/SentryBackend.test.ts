@@ -21,7 +21,6 @@ describe('SentryEchoBackend', () => {
   const buildInfo: BuildInfo = {
     version: '1.0',
     commit: 'abcd123',
-    isEnterprise: false,
     env: 'production',
     edition: GrafanaEdition.OpenSource,
     latestVersion: 'ba',
