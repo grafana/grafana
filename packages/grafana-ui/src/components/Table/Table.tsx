@@ -175,8 +175,6 @@ export const Table: FC<Props> = memo((props: Props) => {
     useResizeColumns
   );
 
-  const { fields } = data;
-
   const RenderRow = React.useCallback(
     ({ index: rowIndex, style }) => {
       const row = rows[rowIndex];
@@ -186,7 +184,6 @@ export const Table: FC<Props> = memo((props: Props) => {
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
-              field={fields[index]}
               tableStyles={tableStyles}
               cell={cell}
               onCellFilterAdded={onCellFilterAdded}
@@ -197,7 +194,7 @@ export const Table: FC<Props> = memo((props: Props) => {
         </div>
       );
     },
-    [fields, onCellFilterAdded, prepareRow, rows, tableStyles]
+    [onCellFilterAdded, prepareRow, rows, tableStyles]
   );
 
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;

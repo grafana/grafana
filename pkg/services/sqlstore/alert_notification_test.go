@@ -20,8 +20,7 @@ import (
 func TestAlertNotificationSQLAccess(t *testing.T) {
 	var sqlStore *SQLStore
 	setup := func() {
-		sqlStore := InitTestDB(t)
-
+		sqlStore = InitTestDB(t)
 		// Set up bus handlers
 		bus.AddHandler("deleteAlertNotification", func(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
 			return sqlStore.DeleteAlertNotification(ctx, cmd)
@@ -181,7 +180,6 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 		t.Run("invalid frequency", func(t *testing.T) {
 			cmd.Frequency = "invalid duration"
-
 			err := sqlStore.CreateAlertNotificationCommand(context.Background(), cmd)
 			require.True(t, regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
 				err.Error()))

@@ -53,7 +53,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
 
   return {
     container: css({
-      minHeight: '100vh',
+      minHeight: '100%',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
       backgroundColor: bgColor,

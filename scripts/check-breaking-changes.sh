@@ -39,7 +39,7 @@ while IFS= read -r line; do
     if [ $STATUS -gt 0 ]
     then
         EXIT_CODE=1
-        GITHUB_MESSAGE="${GITHUB_MESSAGE}**\`${PACKAGE_NAME}\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"    
+        GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_NAME}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"    
     fi    
 
 done <<< "$PACKAGES"

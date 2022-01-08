@@ -44,7 +44,8 @@ const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = [DEFAULT_RESOLUTION].
 );
 
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
-  const { lineLimitValue, resolution, query, onRunQuery, runOnBlur, onChange } = props;
+  const { lineLimitValue, resolution, onRunQuery, runOnBlur, onChange } = props;
+  const query = props.query ?? {};
   let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
 
   function onChangeQueryLimit(value: string) {

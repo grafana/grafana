@@ -40,8 +40,10 @@ export interface LokiQuery extends DataQuery {
   resolution?: number;
   volumeQuery?: boolean;
 
-  // now queryType
+  /* @deprecated now use queryType */
   range?: boolean;
+
+  /* @deprecated now use queryType */
   instant?: boolean;
 }
 

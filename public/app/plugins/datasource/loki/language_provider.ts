@@ -7,7 +7,7 @@ import {
   extractLabelMatchers,
   parseSelector,
   processLabels,
-  toPromLikeQuery,
+  toPromLikeExpr,
 } from 'app/plugins/datasource/prometheus/language_utils';
 import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 
@@ -332,9 +332,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   importFromAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
-    const q = toPromLikeQuery(labelBasedQuery);
-    q.queryType = LokiQueryType.Range;
-    return q as LokiQuery;
+    return {
+      refId: labelBasedQuery.refId,
+      expr: toPromLikeExpr(labelBasedQuery),
+      queryType: LokiQueryType.Range,
+    };
   }
 
   exportToAbstractQuery(query: LokiQuery): AbstractQuery {

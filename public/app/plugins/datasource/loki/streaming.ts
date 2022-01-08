@@ -33,7 +33,7 @@ export function doLokiChannelStream(
         frame = StreamingDataFrame.fromDataFrameJSON(p, {
           maxLength: 5000, // hardcoded max buffer size?
           maxDelta,
-          legendFormat: query.legendFormat,
+          displayNameFormat: query.legendFormat,
         });
       } else {
         frame.push(p);
