@@ -205,6 +205,7 @@ func (r *simpleCrawler) walk() {
 			Path:              panelURL,
 			OrgID:             r.opts.OrgID,
 			UserID:            r.opts.UserID,
+			ConcurrentLimit:   r.opts.ConcurrentLimit,
 			OrgRole:           r.opts.OrgRole,
 			Theme:             r.opts.Theme,
 			Timeout:           10 * time.Second,
