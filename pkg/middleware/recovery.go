@@ -106,7 +106,8 @@ func Recovery(cfg *setting.Cfg) web.Handler {
 	return func(c *web.Context) {
 		defer func() {
 			if r := recover(); r != nil {
-				panicLogger := log.Root
+				var panicLogger log.Logger
+				panicLogger = log.Root
 				// try to get request logger
 				ctx := contexthandler.FromContext(c.Req.Context())
 				if ctx != nil {

@@ -49,6 +49,7 @@ import { addParsedLabelToQuery, queryHasPipeParser } from './query_utils';
 import {
   LokiOptions,
   LokiQuery,
+  LokiQueryType,
   LokiRangeQueryRequest,
   LokiResultType,
   LokiStreamResponse,
@@ -172,7 +173,7 @@ export class LokiDatasource
       });
 
     for (const target of filteredTargets) {
-      if (target.instant) {
+      if (target.instant || target.queryType === LokiQueryType.Instant) {
         subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
       } else {
         subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
@@ -647,6 +648,7 @@ export class LokiDatasource
       maxLines,
       instant,
       stepInterval,
+      queryType: instant ? LokiQueryType.Instant : LokiQueryType.Range,
     };
     const { data } = instant
       ? await lastValueFrom(this.runInstantQuery(query, options as any))
