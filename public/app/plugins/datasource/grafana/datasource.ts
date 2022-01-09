@@ -1,5 +1,11 @@
 import { from, merge, Observable, of } from 'rxjs';
-import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv } from '@grafana/runtime';
+import {
+  DataSourceWithBackend,
+  getBackendSrv,
+  getGrafanaLiveSrv,
+  getTemplateSrv,
+  StreamingFrameOptions,
+} from '@grafana/runtime';
 import {
   AnnotationQuery,
   AnnotationQueryRequest,
@@ -10,7 +16,6 @@ import {
   DataSourceRef,
   isValidLiveChannelAddress,
   parseLiveChannelAddress,
-  StreamingFrameOptions,
   toDataFrame,
 } from '@grafana/data';
 
@@ -88,7 +93,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         if (!isValidLiveChannelAddress(addr)) {
           continue;
         }
-        const buffer: StreamingFrameOptions = {
+        const buffer: Partial<StreamingFrameOptions> = {
           maxLength: request.maxDataPoints ?? 500,
         };
         if (target.buffer) {

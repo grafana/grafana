@@ -49,6 +49,7 @@ import { addParsedLabelToQuery, queryHasPipeParser } from './query_utils';
 import {
   LokiOptions,
   LokiQuery,
+  LokiQueryType,
   LokiRangeQueryRequest,
   LokiResultType,
   LokiStreamResponse,
@@ -62,6 +63,7 @@ import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import { queryLogsVolume } from 'app/core/logs_model';
 import config from 'app/core/config';
+import { renderLegendFormat } from '../prometheus/legend';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -171,7 +173,7 @@ export class LokiDatasource
       });
 
     for (const target of filteredTargets) {
-      if (target.instant) {
+      if (target.instant || target.queryType === LokiQueryType.Instant) {
         subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
       } else {
         subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
@@ -646,6 +648,7 @@ export class LokiDatasource
       maxLines,
       instant,
       stepInterval,
+      queryType: instant ? LokiQueryType.Instant : LokiQueryType.Range,
     };
     const { data } = instant
       ? await lastValueFrom(this.runInstantQuery(query, options as any))
@@ -684,8 +687,8 @@ export class LokiDatasource
       view.forEach((row) => {
         annotations.push({
           time: new Date(row.ts).valueOf(),
-          title: renderTemplate(titleFormat, labels),
-          text: renderTemplate(textFormat, labels) || row.line,
+          title: renderLegendFormat(titleFormat, labels),
+          text: renderLegendFormat(textFormat, labels) || row.line,
           tags,
         });
       });
@@ -750,16 +753,6 @@ export class LokiDatasource
       return addLabelToQuery(queryExpr, key, value, operator, true);
     }
   }
-}
-
-export function renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {
-  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-  return aliasPattern.replace(aliasRegex, (_match, g1) => {
-    if (aliasData[g1]) {
-      return aliasData[g1];
-    }
-    return '';
-  });
 }
 
 export function lokiRegularEscape(value: any) {

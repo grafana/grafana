@@ -6,6 +6,8 @@ import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { emptyRoute } from '../../utils/amroutes';
 import { AmRoutesTable } from './AmRoutesTable';
 import { getGridStyles } from './gridStyles';
+import { MuteTimingsTable } from './MuteTimingsTable';
+import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
 
 export interface AmRoutesExpandedReadProps {
   onChange: (routes: FormAmRoute) => void;
@@ -22,6 +24,7 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const gridStyles = useStyles2(getGridStyles);
+  const [alertManagerSourceName] = useAlertManagerSourceName();
 
   const groupWait = routes.groupWaitValue ? `${routes.groupWaitValue}${routes.groupWaitValueType}` : '-';
   const groupInterval = routes.groupIntervalValue
@@ -86,6 +89,14 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
             Add nested policy
           </Button>
         )}
+      </div>
+      <div className={gridStyles.titleCell}>Mute timings</div>
+      <div className={gridStyles.valueCell}>
+        <MuteTimingsTable
+          alertManagerSourceName={alertManagerSourceName!}
+          muteTimingNames={routes.muteTimeIntervals}
+          hideActions
+        />
       </div>
     </div>
   );

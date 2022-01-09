@@ -15,7 +15,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	gokit_log "github.com/go-kit/kit/log"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/alertmanager/config"
@@ -37,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
@@ -86,8 +84,7 @@ type ClusterPeer interface {
 }
 
 type Alertmanager struct {
-	logger      log.Logger
-	gokitLogger gokit_log.Logger
+	logger log.Logger
 
 	Settings  *setting.Cfg
 	Store     store.AlertingStore
@@ -127,7 +124,7 @@ type Alertmanager struct {
 	decryptFn channels.GetDecryptedValueFn
 }
 
-func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
+func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
 	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:          cfg,
@@ -144,14 +141,13 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		decryptFn:         decryptFn,
 	}
 
-	am.gokitLogger = logging.NewWrapper(am.logger)
 	am.fileStore = NewFileStore(am.orgID, kvStore, am.WorkingDirPath())
 
-	nflogFilepath, err := am.fileStore.FilepathFor(context.TODO(), notificationLogFilename)
+	nflogFilepath, err := am.fileStore.FilepathFor(ctx, notificationLogFilename)
 	if err != nil {
 		return nil, err
 	}
-	silencesFilePath, err := am.fileStore.FilepathFor(context.TODO(), silencesFilename)
+	silencesFilePath, err := am.fileStore.FilepathFor(ctx, silencesFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +158,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		nflog.WithRetention(retentionNotificationsAndSilences),
 		nflog.WithSnapshot(nflogFilepath),
 		nflog.WithMaintenance(maintenanceNotificationAndSilences, am.stopc, am.wg.Done, func() (int64, error) {
-			return am.fileStore.Persist(context.TODO(), notificationLogFilename, am.notificationLog)
+			return am.fileStore.Persist(ctx, notificationLogFilename, am.notificationLog)
 		}),
 	)
 	if err != nil {
@@ -187,13 +183,13 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	am.wg.Add(1)
 	go func() {
 		am.silences.Maintenance(15*time.Minute, silencesFilePath, am.stopc, func() (int64, error) {
-			return am.fileStore.Persist(context.TODO(), silencesFilename, am.silences)
+			return am.fileStore.Persist(ctx, silencesFilename, am.silences)
 		})
 		am.wg.Done()
 	}()
 
 	// Initialize in-memory alerts
-	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, nil, am.gokitLogger)
+	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, nil, am.logger)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the alert provider component of alerting: %w", err)
 	}
@@ -400,9 +396,9 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		am.dispatcher.Stop()
 	}
 
-	am.inhibitor = inhibit.NewInhibitor(am.alerts, cfg.AlertmanagerConfig.InhibitRules, am.marker, am.gokitLogger)
+	am.inhibitor = inhibit.NewInhibitor(am.alerts, cfg.AlertmanagerConfig.InhibitRules, am.marker, am.logger)
 	am.muteTimes = am.buildMuteTimesMap(cfg.AlertmanagerConfig.MuteTimeIntervals)
-	am.silencer = silence.NewSilencer(am.silences, am.marker, am.gokitLogger)
+	am.silencer = silence.NewSilencer(am.silences, am.marker, am.logger)
 
 	meshStage := notify.NewGossipSettleStage(am.peer)
 	inhibitionStage := notify.NewMuteStage(am.inhibitor)
@@ -414,7 +410,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	}
 
 	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route.AsAMRoute(), nil)
-	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.gokitLogger, am.dispatcherMetrics)
+	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.logger, am.dispatcherMetrics)
 
 	am.wg.Add(1)
 	go func() {
@@ -519,6 +515,8 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 		n, err = channels.NewKafkaNotifier(cfg, tmpl)
 	case "webhook":
 		n, err = channels.NewWebHookNotifier(cfg, tmpl, am.decryptFn)
+	case "wecom":
+		n, err = channels.NewWeComNotifier(cfg, tmpl, am.decryptFn)
 	case "sensugo":
 		n, err = channels.NewSensuGoNotifier(cfg, tmpl, am.decryptFn)
 	case "discord":

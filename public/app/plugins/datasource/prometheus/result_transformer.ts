@@ -33,6 +33,7 @@ import {
   PromValue,
   TransformOptions,
 } from './types';
+import { renderLegendFormat } from './legend';
 
 const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
 const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
@@ -504,7 +505,7 @@ function getValueField({
 
 function createLabelInfo(labels: { [key: string]: string }, options: TransformOptions) {
   if (options?.legendFormat) {
-    const title = renderTemplate(getTemplateSrv().replace(options.legendFormat, options?.scopedVars), labels);
+    const title = renderLegendFormat(getTemplateSrv().replace(options.legendFormat, options?.scopedVars), labels);
     return { name: title, labels };
   }
 
@@ -526,16 +527,6 @@ export function getOriginalMetricName(labelData: { [key: string]: string }) {
     .map((label) => `${label[0]}="${label[1]}"`)
     .join(',');
   return `${metricName}{${labelPart}}`;
-}
-
-export function renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {
-  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-  return aliasPattern.replace(aliasRegex, (_match, g1) => {
-    if (aliasData[g1]) {
-      return aliasData[g1];
-    }
-    return '';
-  });
 }
 
 function transformToHistogramOverTime(seriesList: DataFrame[]) {
