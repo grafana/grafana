@@ -4,6 +4,7 @@ type FeatureManager interface {
 	IsEnabled(flag string) bool
 	GetEnabled() map[string]bool
 	GetFlags() []FeatureFlag
+	GetFeatureToggles() FeatureToggles
 }
 
 type FeatureToggleState string
@@ -27,5 +28,6 @@ type FeatureFlag struct {
 
 	// Special behavior flags
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
+	RequiresRestart bool `json:"requiresRestart,omitempty"` // The server must be initalized with the value
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 }

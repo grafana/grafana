@@ -17,6 +17,8 @@ export interface FeatureToggles {
   recordedQueries?: boolean;
   trimDefaults?: boolean;
   envelopeEncryption?: boolean;
+  httpclientprovider_azure_auth?: boolean;
+  ['service-accounts']?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
   ['live-config']?: boolean;
@@ -30,18 +32,5 @@ export interface FeatureToggles {
   prometheus_azure_auth?: boolean;
   newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
-}
-
-/**
- * Metadata about each feature flag
- *
- * @internal
- */
-export interface FeatureFlagInfo extends RegistryItem {
-  docsURL?: string;
-  enabled?: boolean;
-  requiresDevMode?: boolean;
-  requiresEnterprise?: boolean;
-  modifiesDatabase?: boolean;
-  frontend?: boolean;
+  disable_http_request_histogram?: boolean;
 }

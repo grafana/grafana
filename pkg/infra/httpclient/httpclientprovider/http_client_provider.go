@@ -8,7 +8,6 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/mwitkow/go-conntrack"
 )
@@ -35,7 +34,7 @@ func New(cfg *setting.Cfg) *sdkhttpclient.Provider {
 
 	setDefaultTimeoutOptions(cfg)
 
-	if cfg.Features.IsEnabled(featuremgmt.FLAG_httpclientprovider_azure_auth) {
+	if cfg.Features.IsHttpclientproviderAzureAuthEnabled() {
 		middlewares = append(middlewares, AzureMiddleware(cfg))
 	}
 

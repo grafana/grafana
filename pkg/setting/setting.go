@@ -343,7 +343,7 @@ type Cfg struct {
 	ApiKeyMaxSecondsToLive int64
 
 	// Use to enable new features which may still be in alpha/beta stage.
-	Features             featuremgmt.FeatureManager
+	Features             featuremgmt.FeatureToggles
 	AnonymousEnabled     bool
 	AnonymousOrgName     string
 	AnonymousOrgRole     string

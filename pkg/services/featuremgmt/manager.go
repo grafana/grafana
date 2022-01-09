@@ -62,6 +62,13 @@ func (ff *flagManager) GetEnabled() map[string]bool {
 	return ff.enabled
 }
 
+// GetFeatureToggles returns nice functions for each toggle
+func (ff *flagManager) GetFeatureToggles() FeatureToggles {
+	return FeatureToggles{
+		manager: ff,
+	}
+}
+
 // GetFlags returns all flag definitions
 func (ff *flagManager) GetFlags() []FeatureFlag {
 	v := make([]FeatureFlag, 0, len(ff.flags))
@@ -102,6 +109,10 @@ func WithFeatures(spec ...interface{}) FeatureManager {
 		enabled: enabled,
 		flags:   flags,
 	}
+}
+
+func WithToggles(spec ...interface{}) FeatureToggles {
+	return WithFeatures(spec).GetFeatureToggles()
 }
 
 func (ff flagManager) MarshalJSON() ([]byte, error) {

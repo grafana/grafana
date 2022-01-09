@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -80,7 +79,8 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 	}
 	cmd.OrgId = c.OrgId
 	var err error
-	if hs.Cfg.Features.IsEnabled(featuremgmt.FLAG_service_accounts) {
+
+	if hs.Cfg.Features.IsServiceAccountsEnabled() {
 		//Every new API key must have an associated service account
 		if cmd.CreateNewServiceAccount {
 			//Create a new service account for the new API key
@@ -144,7 +144,7 @@ func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if !hs.Cfg.Features.IsEnabled(featuremgmt.FLAG_service_accounts) {
+	if !hs.Cfg.Features.IsServiceAccountsEnabled() {
 		return response.Error(500, "Requires services-accounts feature", errors.New("feature missing"))
 	}
 	if cmd.CreateNewServiceAccount {

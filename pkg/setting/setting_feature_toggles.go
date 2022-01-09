@@ -38,7 +38,7 @@ func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
 		args = append(args, key)
 		args = append(args, val)
 	}
-	cfg.Features = featuremgmt.WithFeatures(args...)
+	cfg.Features = featuremgmt.WithToggles(args...)
 	return nil
 }
 

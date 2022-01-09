@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 )
 
@@ -437,7 +436,7 @@ func (hs *HTTPServer) registerRoutes() {
 			// Some channels may have info
 			liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
 
-			if hs.Cfg.Features.IsEnabled(featuremgmt.FLAG_live_pipeline) {
+			if hs.Cfg.Features.IsLivePipelineEnabled() {
 				// POST Live data to be processed according to channel rules.
 				liveRoute.Post("/pipeline/push/*", hs.LivePushGateway.HandlePipelinePush)
 				liveRoute.Post("/pipeline-convert-test", routing.Wrap(hs.Live.HandlePipelineConvertTestHTTP), reqOrgAdmin)
@@ -460,7 +459,7 @@ func (hs *HTTPServer) registerRoutes() {
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
 		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetSettings))
-		if hs.Cfg.Features.IsEnabled(featuremgmt.FLAG_showFeatureFlagsInUI) {
+		if hs.Cfg.Features.IsShowFeatureFlagsInUIEnabled() {
 			adminRoute.Get("/settings/features", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), func(c *models.ReqContext) {
 				response.JSON(200, hs.Cfg.Features).WriteTo(c)
 			})

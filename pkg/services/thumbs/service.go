@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,7 +36,7 @@ type Service interface {
 }
 
 func ProvideService(cfg *setting.Cfg, renderService rendering.Service) Service {
-	if !cfg.Features.IsEnabled(featuremgmt.FLAG_dashboardPreviews) {
+	if !cfg.Features.IsDashboardPreviewsEnabled() {
 		return &dummyService{}
 	}
 

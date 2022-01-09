@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -322,7 +321,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return err
 	}
 
-	if ss.Cfg.Features.IsEnabled(featuremgmt.FLAG_database_metrics) {
+	if ss.Cfg.Features.IsDatabaseMetricsEnabled() {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type)
 	}
 

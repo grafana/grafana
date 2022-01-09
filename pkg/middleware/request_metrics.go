@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
@@ -61,7 +60,7 @@ func RequestMetrics(cfg *setting.Cfg) func(handler string) web.Handler {
 			method := sanitizeMethod(req.Method)
 
 			// enable histogram and disable summaries + counters for http requests.
-			if cfg.Features.IsEnabled(featuremgmt.FLAG_disable_http_request_histogram) {
+			if cfg.Features.IsDisableHttpRequestHistogramEnabled() {
 				duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
 				metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
 				metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
