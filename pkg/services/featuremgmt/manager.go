@@ -112,7 +112,7 @@ func WithFeatures(spec ...interface{}) FeatureManager {
 }
 
 func WithToggles(spec ...interface{}) FeatureToggles {
-	return WithFeatures(spec).GetFeatureToggles()
+	return WithFeatures(spec...).GetFeatureToggles()
 }
 
 func (ff flagManager) MarshalJSON() ([]byte, error) {

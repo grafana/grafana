@@ -37,7 +37,7 @@ export * from './variables';
 export * from './geometry';
 export { isUnsignedPluginSignature } from './pluginSignature';
 export { GrafanaConfig, BuildInfo, LicenseInfo, PreloadPlugin } from './config';
-export { FeatureToggles, FeatureFlagInfo } from './featureToggles.gen';
+export { FeatureToggles } from './featureToggles.gen';
 export * from './alerts';
 export * from './slider';
 export * from './accesscontrol';

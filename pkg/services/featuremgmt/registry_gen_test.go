@@ -34,8 +34,6 @@ func generateTypeScript() string {
 // To change feature flags, edit:
 //  pkg/setting/setting_feature_toggles_registry.go
 
-import { RegistryItem } from '../utils/Registry';
-
 /**
  * Describes available feature toggles in Grafana. These can be configured via
  * conf/custom.ini to enable features under development or not yet available in
@@ -51,7 +49,7 @@ export interface FeatureToggles {
 		buf += "  " + getTypeScriptKey(flag.Name) + "?: boolean;\n"
 	}
 
-	buf += "}\n\n"
+	buf += "}\n"
 	return buf
 }
 
@@ -122,6 +120,11 @@ type FeatureToggles struct {
 // IsEnabled checks if a flag is enabled
 func (ft *FeatureToggles) IsEnabled(flag string) bool {
 	return ft.manager.IsEnabled(flag)
+}
+
+// GetEnabled returns a map contaning only the features that are enabled
+func (ft *FeatureToggles) GetEnabled() map[string]bool {
+	return ft.manager.GetEnabled()
 }
 `)
 

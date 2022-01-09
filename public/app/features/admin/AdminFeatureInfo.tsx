@@ -1,10 +1,16 @@
 import React, { FC } from 'react';
-import { FeatureFlagInfo, FeatureToggles } from '@grafana/data';
+import { FeatureToggles } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { useAsync } from 'react-use';
 import Page from 'app/core/components/Page/Page';
 import { Card, TagList, VerticalGroup, Alert } from '@grafana/ui';
 
+interface FeatureFlagInfo {
+  name: string;
+  description: string;
+  state: string;
+  enabled: boolean;
+}
 interface FeatureSettings {
   enabled: FeatureToggles;
   info: FeatureFlagInfo[];
@@ -52,23 +58,23 @@ export const AdminFeatureInfo: FC = () => {
 function renderFlags(features: FeatureFlagInfo[]) {
   return features.map((f) => {
     const tags: string[] = [];
-    if (f.modifiesDatabase) {
-      tags.push('Modifies database');
-    }
-    if (f.frontend) {
-      tags.push('frontend');
-    }
-    if (f.requiresEnterprise) {
-      tags.push('enterprise');
-    }
-    if (f.requiresDevMode) {
-      tags.push('dev mode');
-    }
+    // if (f.modifiesDatabase) {
+    //   tags.push('Modifies database');
+    // }
+    // if (f.frontend) {
+    //   tags.push('frontend');
+    // }
+    // if (f.requiresEnterprise) {
+    //   tags.push('enterprise');
+    // }
+    // if (f.requiresDevMode) {
+    //   tags.push('dev mode');
+    // }
 
     tags.push(f.state!);
 
     return (
-      <Card key={f.id} heading={`${f.name} (${f.id})`} description={f.description}>
+      <Card key={f.name} heading={f.name} description={f.description}>
         <Card.Tags>
           <TagList tags={tags} />
         </Card.Tags>
