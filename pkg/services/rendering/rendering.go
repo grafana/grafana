@@ -207,6 +207,8 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 
 func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+		rs.log.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
+
 		theme := ThemeDark
 		if opts.Theme != "" {
 			theme = opts.Theme
