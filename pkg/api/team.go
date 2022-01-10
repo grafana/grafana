@@ -33,7 +33,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to create Team", err)
 	}
 
-	if (!accessControlEnabled && c.OrgRole == models.ROLE_EDITOR && hs.Cfg.EditorsCanAdmin) || accessControlEnabled {
+	if accessControlEnabled || (c.OrgRole == models.ROLE_EDITOR && hs.Cfg.EditorsCanAdmin) {
 		// if the request is authenticated using API tokens
 		// the SignedInUser is an empty struct therefore
 		// an additional check whether it is an actual user is required
