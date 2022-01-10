@@ -10,6 +10,7 @@ export interface Props {
   onClick?: OnTagClick;
   /** Custom styles for the wrapper component */
   className?: string;
+  /** aria-label for the `i`-th Tag component */
   getAriaLabel?: (name: string, i: number) => string;
 }
 

@@ -28,18 +28,14 @@ export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, className, c
     onClick?.(name, event);
   };
 
-  const commonProps = {
-    key: name,
-    className: cx(styles.wrapper, className, onClick && styles.hover),
-    ...rest,
-  };
+  const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
 
   return onClick ? (
-    <button {...commonProps} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
+    <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
       {name}
     </button>
   ) : (
-    <span {...commonProps} ref={ref}>
+    <span {...rest} className={classes} ref={ref}>
       {name}
     </span>
   );
