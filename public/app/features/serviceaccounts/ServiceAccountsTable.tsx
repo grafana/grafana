@@ -47,24 +47,23 @@ const ServiceaccountsTable: FC<Props> = (props) => {
       <thead>
         <tr>
           <th />
-          <th>Login</th>
-          <th>Email</th>
-          <th>Name</th>
-          <th>Seen</th>
+          <th>Account</th>
+          <th>ID</th>
           <th>Role</th>
+          <th>Tokens</th>
           <th style={{ width: '34px' }} />
         </tr>
       </thead>
       <tbody>
-        {serviceAccounts.map((serviceAccount, index) => {
+        {serviceAccounts.map((serviceAccount: OrgServiceAccount, index: number) => {
           return (
             <tr key={`${serviceAccount.serviceAccountId}-${index}`}>
               <td className="width-2 text-center">
-                <img className="filter-table__avatar" src={serviceAccount.avatarUrl} alt="serviceaccount avatar" />
+                <img className="filter-table__avatar" src={serviceAccount.avatarUrl} alt="avatar" />
               </td>
               <td className="max-width-6">
-                <span className="ellipsis" title={serviceAccount.login}>
-                  {serviceAccount.login}
+                <span className="ellipsis" title={serviceAccount.name}>
+                  {serviceAccount.name}
                 </span>
               </td>
 
@@ -73,12 +72,6 @@ const ServiceaccountsTable: FC<Props> = (props) => {
                   {serviceAccount.email}
                 </span>
               </td>
-              <td className="max-width-5">
-                <span className="ellipsis" title={serviceAccount.name}>
-                  {serviceAccount.name}
-                </span>
-              </td>
-              <td className="width-1">{serviceAccount.lastSeenAtAge}</td>
 
               <td className="width-8">
                 {contextSrv.accessControlEnabled() ? (
@@ -99,6 +92,12 @@ const ServiceaccountsTable: FC<Props> = (props) => {
                     onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                   />
                 )}
+              </td>
+
+              <td className="max-width-5">
+                <span className="ellipsis" title={serviceAccount.tokens}>
+                  {serviceAccount.tokens}
+                </span>
               </td>
 
               {canRemoveFromOrg && (

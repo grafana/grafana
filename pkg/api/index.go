@@ -299,17 +299,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Icon:        "key-skeleton-alt",
 			Url:         hs.Cfg.AppSubURL + "/org/apikeys",
 		})
-
-		// needs both feature flag and migration to be able to show service accounts
-		if hs.Cfg.IsServiceAccountEnabled() && hs.serviceAccountsService.HasServiceAccountsMigrated(c.Req.Context(), c.OrgId) {
-			configNodes = append(configNodes, &dtos.NavLink{
-				Text:        "Service accounts",
-				Id:          "serviceaccounts",
-				Description: "Create & manage Service accounts",
-				Icon:        "key-skeleton-alt",
-				Url:         hs.Cfg.AppSubURL + "/org/serviceaccounts",
-			})
-		}
 	}
 	// needs both feature flag and migration to be able to show service accounts
 	if enableServiceAccount(hs, c) {
