@@ -59,6 +59,7 @@ type Calls struct {
 	CreateServiceAccount   []interface{}
 	DeleteServiceAccount   []interface{}
 	UpgradeServiceAccounts []interface{}
+	ListTokens             []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
@@ -78,6 +79,11 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 }
 
 func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
-	s.Calls.DeleteServiceAccount = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
+	s.Calls.UpgradeServiceAccounts = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
 	return nil
+}
+
+func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error) {
+	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, orgID, serviceAccount})
+	return nil, nil
 }
