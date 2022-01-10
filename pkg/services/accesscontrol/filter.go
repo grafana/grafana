@@ -36,12 +36,15 @@ func Filter(ctx context.Context, dialect SQLDialect, sqlID, prefix, action strin
 	var sql string
 	var args []interface{}
 
-	if strings.Contains(dialect.DriverName(), migrator.SQLite) {
+	switch {
+	case strings.Contains(dialect.DriverName(), migrator.SQLite):
 		sql, args = sqliteQuery(scopes, sqlID, prefix)
-	} else if strings.Contains(dialect.DriverName(), migrator.MySQL) {
+	case strings.Contains(dialect.DriverName(), migrator.MySQL):
 		sql, args = mysqlQuery(scopes, sqlID, prefix)
-	} else {
+	case strings.Contains(dialect.DriverName(), migrator.Postgres)
 		sql, args = postgresQuery(scopes, sqlID, prefix)
+	default:
+		return nil, nil, fmt.Errorf("unknown database: %s", dialect.DriverName())
 	}
 
 	return sql, args, nil
