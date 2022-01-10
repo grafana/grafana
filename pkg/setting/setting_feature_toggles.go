@@ -9,10 +9,7 @@ import (
 
 // @deprecated -- should use `featuremgmt.FeatureToggles`
 func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
-	section, err := iniFile.GetSection("feature_toggles")
-	if err != nil {
-		return err
-	}
+	section := iniFile.Section("feature_toggles")
 	toggles, err := ReadFeatureTogglesFromInitFile(section)
 	if err != nil {
 		return err
