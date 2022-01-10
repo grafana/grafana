@@ -1,19 +1,21 @@
 import React, { PureComponent } from 'react';
 import { UserSession } from 'app/types';
 import { Button, Icon, LoadingPlaceholder } from '@grafana/ui';
+import { withI18n, withI18nProps } from '@lingui/react';
+import { t, Trans } from '@lingui/macro';
 
-export interface Props {
+interface Props extends withI18nProps {
   sessions: UserSession[];
   isLoading: boolean;
   revokeUserSession: (tokenId: number) => void;
 }
 
-export class UserSessions extends PureComponent<Props> {
+class UserSessions extends PureComponent<Props> {
   render() {
-    const { isLoading, sessions, revokeUserSession } = this.props;
+    const { isLoading, sessions, revokeUserSession, i18n } = this.props;
 
     if (isLoading) {
-      return <LoadingPlaceholder text="Loading sessions..." />;
+      return <LoadingPlaceholder text={<Trans id="user-sessions.loading">Loading sessions...</Trans>} />;
     }
 
     return (
@@ -25,10 +27,18 @@ export class UserSessions extends PureComponent<Props> {
               <table className="filter-table form-inline" aria-label="User sessions table">
                 <thead>
                   <tr>
-                    <th>Last seen</th>
-                    <th>Logged on</th>
-                    <th>IP address</th>
-                    <th>Browser &amp; OS</th>
+                    <th>
+                      <Trans id="user-session.seen-at-column">Last seen</Trans>
+                    </th>
+                    <th>
+                      <Trans id="user-session.created-at-column">Logged on</Trans>
+                    </th>
+                    <th>
+                      <Trans id="user-session.ip-column">IP address</Trans>
+                    </th>
+                    <th>
+                      <Trans id="user-session.browser-column">Browser &amp; OS</Trans>
+                    </th>
                     <th></th>
                   </tr>
                 </thead>
@@ -36,7 +46,7 @@ export class UserSessions extends PureComponent<Props> {
                   {sessions.map((session: UserSession, index) => (
                     <tr key={index}>
                       {session.isActive ? <td>Now</td> : <td>{session.seenAt}</td>}
-                      <td>{session.createdAt}</td>
+                      <td>{i18n.date(session.createdAt, { dateStyle: 'long' })}</td>
                       <td>{session.clientIp}</td>
                       <td>
                         {session.browser} on {session.os} {session.osVersion}
@@ -46,7 +56,7 @@ export class UserSessions extends PureComponent<Props> {
                           size="sm"
                           variant="destructive"
                           onClick={() => revokeUserSession(session.id)}
-                          aria-label="Revoke user session"
+                          aria-label={t({ id: 'user-session.revoke', message: 'Revoke user session' })}
                         >
                           <Icon name="power" />
                         </Button>
@@ -63,4 +73,4 @@ export class UserSessions extends PureComponent<Props> {
   }
 }
 
-export default UserSessions;
+export default withI18n()(UserSessions);

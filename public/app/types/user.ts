@@ -76,7 +76,7 @@ export interface UsersState {
 
 export interface UserSession {
   id: number;
-  createdAt: string;
+  createdAt: Date;
   clientIp: string;
   isActive: boolean;
   seenAt: string;

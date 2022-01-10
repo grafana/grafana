@@ -322,4 +322,7 @@ export const Components = {
   DashboardRow: {
     title: (title: string) => `data-testid dashboard-row-title-${title}`,
   },
+  UserProfileEditForm: {
+    save: 'data-testid-save',
+  },
 };
