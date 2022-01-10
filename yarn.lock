@@ -4130,7 +4130,7 @@ __metadata:
     react-custom-scrollbars-2: 4.4.0
     react-docgen-typescript-loader: 3.7.2
     react-dom: 17.0.2
-    react-dropzone: 11.4.2
+    react-dropzone: 11.5.1
     react-highlight-words: 0.17.0
     react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
@@ -19957,7 +19957,7 @@ __metadata:
     rimraf: 3.0.2
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
     rxjs: 7.5.1
-    sass: 1.46.0
+    sass: 1.47.0
     sass-loader: 12.4.0
     search-query-parser: 1.6.0
     selecto: 1.13.2
@@ -29681,16 +29681,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dropzone@npm:11.4.2":
-  version: 11.4.2
-  resolution: "react-dropzone@npm:11.4.2"
+"react-dropzone@npm:11.5.1":
+  version: 11.5.1
+  resolution: "react-dropzone@npm:11.5.1"
   dependencies:
     attr-accept: ^2.2.1
     file-selector: ^0.2.2
     prop-types: ^15.7.2
   peerDependencies:
     react: ">= 16.8"
-  checksum: f8dc6af69193133efe30ed11dd8c2212a180abd3833e91d03dab4bdc9546d47dcad311d7f72b4968b7d016871884555b9e16f7a490913b78dbfec8ce8f569193
+  checksum: 54d801ca5b952d9e00913c516bcb3b961d34058116d0444ac3ce911e98e777fbd936fb60e81c0739664f68bf1dd1bdc6a1477d0b50b46ffe986140671562110d
   languageName: node
   linkType: hard
 
@@ -31537,16 +31537,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:1.46.0":
-  version: 1.46.0
-  resolution: "sass@npm:1.46.0"
+"sass@npm:1.47.0":
+  version: 1.47.0
+  resolution: "sass@npm:1.47.0"
   dependencies:
     chokidar: ">=3.0.0 <4.0.0"
     immutable: ^4.0.0
     source-map-js: ">=0.6.2 <2.0.0"
   bin:
     sass: sass.js
-  checksum: d1f727c41ec0fcf9c54c16571bebf97ae1f1f41617796f188d9a1166bd1f1dc03ff63083bb83a4910a40635d4ecd9de9aebded34a363d2c51eed340cd17f4730
+  checksum: e725a37eb7360ad5f96e6e6209d81beeb22ecec70c6f01a1acdf237dbbb6e05e50cc0a0851b16ee1dbc63fbdd7a90405cbbd9911f56b2dba3d5f934f7e291f10
   languageName: node
   linkType: hard
 

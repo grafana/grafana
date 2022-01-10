@@ -9,9 +9,17 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "recordedQueries",
-			Description: "Supports saving queries that can be scraped by prometheus",
-			State:       FeatureStateBeta,
+			Name:            "recordedQueries",
+			Description:     "Supports saving queries that can be scraped by prometheus",
+			State:           FeatureStateBeta,
+			RequiresLicense: true,
+		},
+		{
+			Name:            "teamsync",
+			Description:     "Team sync",
+			State:           FeatureStateStable,
+			DocsURL:         "https://grafana.com/docs/grafana/latest/enterprise/team-sync/",
+			RequiresLicense: true,
 		},
 		{
 			Name:        "trimDefaults",
@@ -29,9 +37,10 @@ var (
 			State: FeatureStateBeta,
 		},
 		{
-			Name:        "service-accounts",
-			Description: "support service accounts",
-			State:       FeatureStateBeta,
+			Name:            "service-accounts",
+			Description:     "support service accounts",
+			State:           FeatureStateBeta,
+			RequiresLicense: true,
 		},
 
 		{
@@ -73,6 +82,11 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "tempoBackendSearch",
+			Description: "use backend for tempo search",
+			State:       FeatureStateBeta,
+		},
+		{
 			Name:         "tempoServiceGraph",
 			Description:  "show service ",
 			State:        FeatureStateBeta,
@@ -85,9 +99,10 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "accesscontrol",
-			Description: "Support robust access control",
-			State:       FeatureStateBeta,
+			Name:            "accesscontrol",
+			Description:     "Support robust access control",
+			State:           FeatureStateBeta,
+			RequiresLicense: true,
 		},
 		{
 			Name:        "prometheus_azure_auth",

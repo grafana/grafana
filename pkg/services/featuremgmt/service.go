@@ -2,7 +2,11 @@ package featuremgmt
 
 import (
 	"fmt"
+	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -17,10 +21,13 @@ var (
 	}, []string{"name"})
 )
 
-func ProvideManagerService(cfg *setting.Cfg) (*FeatureManager, error) {
+func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*FeatureManager, error) {
 	mgmt := &FeatureManager{
-		flags:   make(map[string]*FeatureFlag, 30),
-		enabled: make(map[string]bool),
+		isDevMod:  setting.Env != setting.Prod,
+		licensing: licensing,
+		flags:     make(map[string]*FeatureFlag, 30),
+		enabled:   make(map[string]bool),
+		log:       log.New("featuremgmt"),
 	}
 
 	// Register the standard flags
@@ -43,8 +50,12 @@ func ProvideManagerService(cfg *setting.Cfg) (*FeatureManager, error) {
 		flag.Expression = fmt.Sprintf("%t", val) // true | false
 	}
 
+	// Load config settings
+	mgmt.config = filepath.Join(cfg.HomePath, "config", "features.yaml")
+	mgmt.readFile()
+
 	// update the values
-	mgmt.evaluate()
+	mgmt.update()
 
 	// Mimimum approach to avoid circular dependency
 	cfg.IsFeatureToggleEnabled = mgmt.IsEnabled

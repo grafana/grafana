@@ -2,29 +2,39 @@ package featuremgmt
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"reflect"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type FeatureManager struct {
-	flags   map[string]*FeatureFlag
-	enabled map[string]bool // only the "on" values
-	toggles *FeatureToggles
-	config  string // path to config file
+	isDevMod  bool
+	licensing models.Licensing
+	flags     map[string]*FeatureFlag
+	enabled   map[string]bool // only the "on" values
+	toggles   *FeatureToggles
+	config    string // path to config file
+	vars      map[string]interface{}
+	log       log.Logger
 }
 
-// This will
-func (ff *FeatureManager) registerFlags(flags ...FeatureFlag) {
+// This will merge the flags with the current configuration
+func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 	for idx, add := range flags {
 		if add.Name == "" {
 			continue // skip it with warning?
 		}
-		flag, ok := ff.flags[add.Name]
+		flag, ok := fm.flags[add.Name]
 		if !ok {
-			ff.flags[add.Name] = &flags[idx]
+			fm.flags[add.Name] = &flags[idx]
 			continue
 		}
 
@@ -40,23 +50,51 @@ func (ff *FeatureManager) registerFlags(flags ...FeatureFlag) {
 		}
 
 		// The least stable state
-		if add.State != flag.State {
-			// only define it downwards
-			fmt.Printf("todo...")
+		if add.State > flag.State {
+			flag.State = add.State
 		}
 
 		// Only gets more restrictive
 		if add.RequiresDevMode {
 			flag.RequiresDevMode = true
 		}
+
+		if add.RequiresLicense {
+			flag.RequiresLicense = true
+		}
+
+		if add.RequiresEnterprise {
+			flag.RequiresEnterprise = true
+		}
+
+		if add.RequiresRestart {
+			flag.RequiresRestart = true
+		}
 	}
 }
 
+func (fm *FeatureManager) evaluate(ff *FeatureFlag) bool {
+	if ff.RequiresDevMode && !fm.isDevMod {
+		return false
+	}
+
+	if ff.RequiresEnterprise && !setting.IsEnterprise {
+		return false
+	}
+
+	if ff.RequiresLicense && !fm.licensing.FeatureEnabled(ff.Name) {
+		return false
+	}
+
+	// TODO: CEL - expression
+	return ff.Expression == "true"
+}
+
 // Update
-func (ff *FeatureManager) evaluate() {
+func (fm *FeatureManager) update() {
 	enabled := make(map[string]bool)
-	for _, flag := range ff.flags {
-		val := flag.Expression == "true"
+	for _, flag := range fm.flags {
+		val := fm.evaluate(flag)
 
 		// Update the registry
 		track := 0.0
@@ -68,24 +106,69 @@ func (ff *FeatureManager) evaluate() {
 		// Register value with prometheus metric
 		featureToggleInfo.WithLabelValues(flag.Name).Set(track)
 	}
-	ff.enabled = enabled
+	fm.enabled = enabled
 }
 
 // Run is called by background services
-func (ff *FeatureManager) Run(ctx context.Context) error {
-	fmt.Printf("RUN!!!!")
+func (fm *FeatureManager) readFile() error {
+	if _, err := os.Stat(fm.config); errors.Is(err, os.ErrNotExist) {
+		return nil // nothing to read
+	}
+
+	cfg, err := readConfigFileWithIncludes(fm.config)
+	if err != nil {
+		return err
+	}
+
+	fm.registerFlags(cfg.Flags...)
+	fm.vars = cfg.Vars
+
 	return nil
 }
 
+// Run is called by background services
+func (fm *FeatureManager) Run(ctx context.Context) error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+	defer watcher.Close()
+
+	if err := watcher.Add(fm.config); err != nil {
+		return err
+	}
+
+	for {
+		select {
+		// watch for events
+		case event := <-watcher.Events:
+			cfg, err := readConfigFileWithIncludes(fm.config)
+			if err != nil {
+				if err != nil {
+					fm.log.Error("failed to read experiments file", "event", event, "error", err)
+				} else {
+					fm.log.Info("reloading experiments file", "path", fm.config)
+					fm.registerFlags(cfg.Flags...)
+				}
+			}
+
+		case err := <-watcher.Errors:
+			fm.log.Error("failed to watch experiments file", "error", err)
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+}
+
 // IsEnabled checks if a feature is enabled
-func (ff *FeatureManager) IsEnabled(flag string) bool {
-	return ff.enabled[flag]
+func (fm *FeatureManager) IsEnabled(flag string) bool {
+	return fm.enabled[flag]
 }
 
 // GetEnabled returns a map contaning only the features that are enabled
-func (ff *FeatureManager) GetEnabled() []string {
-	enabled := make([]string, 0, len(ff.enabled))
-	for key, val := range ff.enabled {
+func (fm *FeatureManager) GetEnabled() []string {
+	enabled := make([]string, 0, len(fm.enabled))
+	for key, val := range fm.enabled {
 		if val {
 			enabled = append(enabled, key)
 		}
@@ -94,17 +177,17 @@ func (ff *FeatureManager) GetEnabled() []string {
 }
 
 // IsEnabled checks if a feature is enabled
-func (ff *FeatureManager) Toggles() *FeatureToggles {
-	if ff.toggles == nil {
-		ff.toggles = &FeatureToggles{manager: ff}
+func (fm *FeatureManager) Toggles() *FeatureToggles {
+	if fm.toggles == nil {
+		fm.toggles = &FeatureToggles{manager: fm}
 	}
-	return ff.toggles
+	return fm.toggles
 }
 
 // GetFlags returns all flag definitions
-func (ff *FeatureManager) GetFlags() []FeatureFlag {
-	v := make([]FeatureFlag, 0, len(ff.flags))
-	for _, value := range ff.flags {
+func (fm *FeatureManager) GetFlags() []FeatureFlag {
+	v := make([]FeatureFlag, 0, len(fm.flags))
+	for _, value := range fm.flags {
 		v = append(v, *value)
 	}
 	return v

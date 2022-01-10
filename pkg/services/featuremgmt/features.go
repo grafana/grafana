@@ -85,49 +85,12 @@ type FeatureFlag struct {
 	Expression string `json:"expression,omitempty"`
 
 	// Special behavior flags
-	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
-	RequiresRestart bool `json:"requiresRestart,omitempty"` // The server must be initalized with the value
-	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
+	RequiresDevMode    bool `json:"requiresDevMode,omitempty"`    // can not be enabled in production
+	RequiresRestart    bool `json:"requiresRestart,omitempty"`    // The server must be initalized with the value
+	RequiresLicense    bool `json:"requiresLicense,omitempty"`    // Must be enabled in the license
+	RequiresEnterprise bool `json:"requiresEnterprise,omitempty"` // Must be enabled in the license
+	FrontendOnly       bool `json:"frontend,omitempty"`           // change is only seen in the frontend
+
+	// Internal properties
+	expr string `json:-`
 }
-
-// type featureToggles struct {
-// 	loookup map[string]bool
-// }
-
-// func (ft *featureToggles) IsEnabled(flag string) bool {
-// 	return ft.loookup[flag]
-// }
-
-// func (ft *featureToggles) GetEnabled() []string {
-// 	enabled := make([]string, 0, len(ft.loookup))
-// 	for key, val := range ft.loookup {
-// 		if val {
-// 			enabled = append(enabled, key)
-// 		}
-// 	}
-// 	return enabled
-// }
-
-// // WithFeatures is used to define feature toggles for testing.
-// // The arguments are a list of strings that are optionally followed by a boolean value
-// func WithFeatures(spec ...interface{}) FeatureToggles {
-// 	count := len(spec)
-// 	lookup := make(map[string]bool, count)
-
-// 	idx := 0
-// 	for idx < count {
-// 		key := fmt.Sprintf("%v", spec[idx])
-// 		val := true
-// 		idx++
-// 		if idx < count && reflect.TypeOf(spec[idx]).Kind() == reflect.Bool {
-// 			val = spec[idx].(bool)
-// 			idx++
-// 		}
-
-// 		if val {
-// 			lookup[key] = true
-// 		}
-// 	}
-
-// 	return &featureToggles{loookup: lookup}
-// }

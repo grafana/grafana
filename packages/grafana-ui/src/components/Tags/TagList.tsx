@@ -10,21 +10,24 @@ export interface Props {
   onClick?: OnTagClick;
   /** Custom styles for the wrapper component */
   className?: string;
+  /** aria-label for the `i`-th Tag component */
+  getAriaLabel?: (name: string, i: number) => string;
 }
 
-export const TagList: FC<Props> = memo(({ displayMax, tags, onClick, className }) => {
+export const TagList: FC<Props> = memo(({ displayMax, tags, onClick, className, getAriaLabel }) => {
   const theme = useTheme2();
   const styles = getStyles(theme, Boolean(displayMax && displayMax > 0));
   const numTags = tags.length;
   const tagsToDisplay = displayMax ? tags.slice(0, displayMax) : tags;
-
   return (
-    <span className={cx(styles.wrapper, className)}>
-      {tagsToDisplay.map((tag) => (
-        <Tag key={tag} name={tag} onClick={onClick} />
+    <ul className={cx(styles.wrapper, className)} aria-label="Tags">
+      {tagsToDisplay.map((tag, i) => (
+        <li className={styles.li} key={tag}>
+          <Tag name={tag} onClick={onClick} aria-label={getAriaLabel?.(tag, i)} />
+        </li>
       ))}
       {displayMax && displayMax > 0 && numTags - 1 > 0 && <span className={styles.moreTagsLabel}>+ {numTags - 1}</span>}
-    </span>
+    </ul>
   );
 });
 
@@ -33,6 +36,7 @@ TagList.displayName = 'TagList';
 const getStyles = (theme: GrafanaTheme2, isTruncated: boolean) => {
   return {
     wrapper: css`
+      position: relative;
       align-items: ${isTruncated ? 'center' : 'unset'};
       display: flex;
       flex: 1 1 auto;
@@ -45,5 +49,8 @@ const getStyles = (theme: GrafanaTheme2, isTruncated: boolean) => {
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.size.sm};
     `,
+    li: css({
+      listStyle: 'none',
+    }),
   };
 };

@@ -13,6 +13,7 @@ export interface FeatureToggles {
   // [name: string]?: boolean; // support any string value
 
   recordedQueries?: boolean;
+  teamsync?: boolean;
   trimDefaults?: boolean;
   envelopeEncryption?: boolean;
   httpclientprovider_azure_auth?: boolean;
@@ -24,6 +25,7 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   tempoSearch?: boolean;
+  tempoBackendSearch?: boolean;
   tempoServiceGraph?: boolean;
   fullRangeLogsVolume?: boolean;
   accesscontrol?: boolean;

@@ -49,7 +49,12 @@ import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { Subscription } from 'rxjs';
 import { appEvents } from '../../../core/core';
-import { VariablesChanged, VariablesChangedEvent, VariablesChangedInUrl } from '../../variables/types';
+import {
+  VariablesChanged,
+  VariablesChangedEvent,
+  VariablesChangedInUrl,
+  VariablesTimeRangeProcessDone,
+} from '../../variables/types';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -178,6 +183,9 @@ export class DashboardModel {
     this.appEventsSubscription = new Subscription();
     this.lastRefresh = Date.now();
     this.appEventsSubscription.add(appEvents.subscribe(VariablesChanged, this.variablesChangedHandler.bind(this)));
+    this.appEventsSubscription.add(
+      appEvents.subscribe(VariablesTimeRangeProcessDone, this.variablesTimeRangeProcessDoneHandler.bind(this))
+    );
     this.appEventsSubscription.add(
       appEvents.subscribe(VariablesChangedInUrl, this.variablesChangedInUrlHandler.bind(this))
     );
@@ -1210,8 +1218,15 @@ export class DashboardModel {
     });
   }
 
-  private variablesChangedHandler(event: VariablesChanged) {
-    this.processRepeats();
+  private variablesTimeRangeProcessDoneHandler(event: VariablesTimeRangeProcessDone) {
+    const processRepeats = event.payload.variableIds.length > 0;
+    this.variablesChangedHandler(new VariablesChanged({ panelIds: [], refreshAll: true }), processRepeats);
+  }
+
+  private variablesChangedHandler(event: VariablesChanged, processRepeats = true) {
+    if (processRepeats) {
+      this.processRepeats();
+    }
 
     if (event.payload.refreshAll || getTimeSrv().isRefreshOutsideThreshold(this.lastRefresh)) {
       this.startRefresh({ refreshAll: true, panelIds: [] });
