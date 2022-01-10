@@ -21,7 +21,7 @@ To access Google Cloud Monitoring settings, hover your mouse over the **Configur
 | `Name`    | The data source name. This is how you refer to the data source in panels and queries. |
 | `Default` | Default data source means that it is pre-selected for new panels.                     |
 
-For authentication options and configuration details, see the [Google authentication]({{< relref "google-authentication.md" >}}) topic.
+For authentication options and configuration details, see the [Google authentication]({{< relref "google-authentication.md" >}}) documentation.
 
 ### Google Cloud Monitoring specific data source configuration
 
