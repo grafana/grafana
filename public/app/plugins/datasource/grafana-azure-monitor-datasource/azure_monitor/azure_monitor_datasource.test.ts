@@ -1,10 +1,10 @@
-import AzureMonitorDatasource from '../datasource';
-
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { AzureDataSourceJsonData, AzureQueryType, DatasourceValidationResult } from '../types';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import createMockQuery from '../__mocks__/query';
 import { singleVariable, subscriptionsVariable } from '../__mocks__/variables';
+import AzureMonitorDatasource from '../datasource';
+import { AzureDataSourceJsonData, AzureQueryType, DatasourceValidationResult } from '../types';
 
 const templateSrv = new TemplateSrv();
 
@@ -163,7 +163,7 @@ describe('AzureMonitorDatasource', () => {
     beforeEach(() => {
       ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
         const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-        expect(path).toBe(basePath + '/nodesapp/resources?api-version=2018-01-01');
+        expect(path).toBe(basePath + '/nodesapp/resources?api-version=2021-04-01');
         return Promise.resolve(response);
       });
     });
@@ -192,6 +192,16 @@ describe('AzureMonitorDatasource', () => {
   });
 
   describe('When performing getResourceNames', () => {
+    let subscription = '9935389e-9122-4ef9-95f9-1513dd24753f';
+    let resourceGroup = 'nodeapp';
+    let metricDefinition = 'microsoft.insights/components';
+
+    beforeEach(() => {
+      subscription = '9935389e-9122-4ef9-95f9-1513dd24753f';
+      resourceGroup = 'nodeapp';
+      metricDefinition = 'microsoft.insights/components';
+    });
+
     describe('and there are no special cases', () => {
       const response = {
         value: [
@@ -200,23 +210,25 @@ describe('AzureMonitorDatasource', () => {
             type: 'microsoft.insights/alertrules',
           },
           {
-            name: 'nodeapp',
-            type: 'microsoft.insights/components',
+            name: resourceGroup,
+            type: metricDefinition,
           },
         ],
       };
 
       beforeEach(() => {
         ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-          expect(path).toBe(basePath + '/nodeapp/resources?api-version=2018-01-01');
+          const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
+          expect(path).toBe(
+            `${basePath}/${resourceGroup}/resources?$filter=resourceType eq '${metricDefinition}'&api-version=2021-04-01`
+          );
           return Promise.resolve(response);
         });
       });
 
       it('should return list of Resource Names', () => {
         return ctx.ds
-          .getResourceNames('9935389e-9122-4ef9-95f9-1513dd24753f', 'nodeapp', 'microsoft.insights/components')
+          .getResourceNames(subscription, resourceGroup, metricDefinition)
           .then((results: Array<{ text: string; value: string }>) => {
             expect(results.length).toEqual(1);
             expect(results[0].text).toEqual('nodeapp');
@@ -225,8 +237,9 @@ describe('AzureMonitorDatasource', () => {
       });
 
       it('should return ignore letter case', () => {
+        metricDefinition = 'microsoft.insights/Components';
         return ctx.ds
-          .getResourceNames('9935389e-9122-4ef9-95f9-1513dd24753f', 'nodeapp', 'microsoft.insights/Components')
+          .getResourceNames(subscription, resourceGroup, metricDefinition)
           .then((results: Array<{ text: string; value: string }>) => {
             expect(results.length).toEqual(1);
             expect(results[0].text).toEqual('nodeapp');
@@ -251,19 +264,19 @@ describe('AzureMonitorDatasource', () => {
 
       beforeEach(() => {
         ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-          expect(path).toBe(basePath + '/nodeapp/resources?api-version=2018-01-01');
+          const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
+          expect(path).toBe(
+            basePath +
+              `/${resourceGroup}/resources?$filter=resourceType eq '${metricDefinition}'&api-version=2021-04-01`
+          );
           return Promise.resolve(response);
         });
       });
 
       it('should return list of Resource Names', () => {
+        metricDefinition = 'Microsoft.Storage/storageAccounts/blobServices';
         return ctx.ds
-          .getResourceNames(
-            '9935389e-9122-4ef9-95f9-1513dd24753f',
-            'nodeapp',
-            'Microsoft.Storage/storageAccounts/blobServices'
-          )
+          .getResourceNames(subscription, resourceGroup, metricDefinition)
           .then((results: Array<{ text: string; value: string }>) => {
             expect(results.length).toEqual(1);
             expect(results[0].text).toEqual('storagetest/default');
