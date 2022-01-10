@@ -6,13 +6,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/yaml.v2"
 )
 
 type configBody struct {
 	Include []string               `toml:"include"`
 	Vars    map[string]interface{} `toml:"vars"`
-	Flags   []FeatureFlag          `toml:"flags"`
+	Flags   []setting.FeatureFlag  `toml:"flags"`
 
 	// Runtime loaded properties
 	filename string

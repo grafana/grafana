@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +15,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 	t.Run("feature toggle present, should call store function", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		storeMock := &tests.ServiceAccountsStoreMock{Calls: tests.Calls{}}
-		cfg.Features = featuremgmt.WithFeatures("service-accounts", true)
+		cfg.Features = setting.WithFeatures("service-accounts", true)
 		svc := ServiceAccountsService{cfg: cfg, store: storeMock}
 		err := svc.DeleteServiceAccount(context.Background(), 1, 1)
 		require.NoError(t, err)
@@ -26,7 +25,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 	t.Run("no feature toggle present, should not call store function", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		svcMock := &tests.ServiceAccountsStoreMock{Calls: tests.Calls{}}
-		cfg.Features = featuremgmt.WithFeatures("service-accounts", false)
+		cfg.Features = setting.WithFeatures("service-accounts", false)
 		svc := ServiceAccountsService{
 			cfg:   cfg,
 			store: svcMock,

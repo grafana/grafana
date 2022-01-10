@@ -3,21 +3,21 @@ package featuremgmt
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-type flagManager struct {
-	flags   map[string]FeatureFlag
+type FeatureManager struct {
+	flags   map[string]setting.FeatureFlag
 	enabled map[string]bool // only the "on" values
 }
 
-// Make sure the manager interface is implemented
 var (
-	_ FeatureManager = (*flagManager)(nil)
+	_ setting.FeatureToggles = (*FeatureManager)(nil)
 )
 
 // This will
-func (ff *flagManager) registerFlags(flags ...FeatureFlag) {
+func (ff *FeatureManager) registerFlags(flags ...setting.FeatureFlag) {
 	for _, add := range flags {
 		if add.Name == "" {
 			continue // skip it with warning?
@@ -53,73 +53,35 @@ func (ff *flagManager) registerFlags(flags ...FeatureFlag) {
 }
 
 // IsEnabled checks if a feature is enabled
-func (ff *flagManager) IsEnabled(flag string) bool {
+func (ff *FeatureManager) IsEnabled(flag string) bool {
 	return ff.enabled[flag]
 }
 
 // GetEnabled returns a map contaning only the features that are enabled
-func (ff *flagManager) GetEnabled() map[string]bool {
-	return ff.enabled
-}
-
-// GetFeatureToggles returns nice functions for each toggle
-func (ff *flagManager) GetFeatureToggles() FeatureToggles {
-	return FeatureToggles{
-		manager: ff,
+func (ff *FeatureManager) GetEnabled() []string {
+	enabled := make([]string, 0, len(ff.enabled))
+	for key, val := range ff.enabled {
+		if val {
+			enabled = append(enabled, key)
+		}
 	}
+	return enabled
 }
 
 // GetFlags returns all flag definitions
-func (ff *flagManager) GetFlags() []FeatureFlag {
-	v := make([]FeatureFlag, 0, len(ff.flags))
+func (ff *FeatureManager) GetFlags() []setting.FeatureFlag {
+	v := make([]setting.FeatureFlag, 0, len(ff.flags))
 	for _, value := range ff.flags {
 		v = append(v, value)
 	}
 	return v
 }
 
-// WithFeatures is used to define feature toggles for testing.
-// The arguments are a list of strings that are optionally followed by a boolean value
-func WithFeatures(spec ...interface{}) FeatureManager {
-	count := len(spec)
-	enabled := make(map[string]bool, count)
-	flags := make(map[string]FeatureFlag, count)
-
-	idx := 0
-	for idx < count {
-		key := fmt.Sprintf("%v", spec[idx])
-		val := true
-		idx++
-		if idx < count && reflect.TypeOf(spec[idx]).Kind() == reflect.Bool {
-			val = spec[idx].(bool)
-			idx++
-		}
-
-		flags[key] = FeatureFlag{
-			Name:       key,
-			Expression: fmt.Sprintf("%t", val),
-			State:      BetaState, // unknown!
-		}
-		if val {
-			enabled[key] = true
-		}
-	}
-
-	return &flagManager{
-		enabled: enabled,
-		flags:   flags,
-	}
-}
-
-func WithToggles(spec ...interface{}) FeatureToggles {
-	return WithFeatures(spec...).GetFeatureToggles()
-}
-
-func (ff flagManager) MarshalJSON() ([]byte, error) {
+func (ff FeatureManager) MarshalJSON() ([]byte, error) {
 	res := make(map[string]interface{}, 3)
 	res["enabled"] = ff.enabled
 
-	vv := make([]FeatureFlag, 0, len(ff.flags))
+	vv := make([]setting.FeatureFlag, 0, len(ff.flags))
 	for _, v := range ff.flags {
 		vv = append(vv, v)
 	}

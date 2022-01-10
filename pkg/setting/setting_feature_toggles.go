@@ -6,7 +6,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 	"gopkg.in/ini.v1"
 )
@@ -38,7 +37,8 @@ func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
 		args = append(args, key)
 		args = append(args, val)
 	}
-	cfg.Features = featuremgmt.WithToggles(args...)
+
+	cfg.Features = WithFeatures(args...)
 	return nil
 }
 
