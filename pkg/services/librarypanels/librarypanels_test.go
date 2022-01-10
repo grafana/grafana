@@ -4,19 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 )
 
 const userInDbName = "user_in_db"
@@ -1413,16 +1414,16 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.Sig
 		User:      user,
 		Overwrite: false,
 	}
-	origUpdateAlerting := dashboards.UpdateAlerting
+	origUpdateAlerting := manager.UpdateAlerting
 	t.Cleanup(func() {
-		dashboards.UpdateAlerting = origUpdateAlerting
+		manager.UpdateAlerting = origUpdateAlerting
 	})
-	dashboards.UpdateAlerting = func(ctx context.Context, store dboards.Store, orgID int64, dashboard *models.Dashboard,
+	manager.UpdateAlerting = func(ctx context.Context, store dboards.Store, orgID int64, dashboard *models.Dashboard,
 		user *models.SignedInUser) error {
 		return nil
 	}
 
-	dashboard, err := dashboards.NewService(sqlStore).SaveDashboard(context.Background(), dashItem, true)
+	dashboard, err := manager.ProvideDashboardService(sqlStore).SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
@@ -1432,9 +1433,10 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	items []folderACLItem) *models.Folder {
 	t.Helper()
 
-	s := dashboards.NewFolderService(user.OrgId, user, sqlStore)
+	d := manager.ProvideDashboardService(sqlStore)
+	s := manager.ProvideFolderService(d, sqlStore)
 	t.Logf("Creating folder with title and UID %q", title)
-	folder, err := s.CreateFolder(context.Background(), title, title)
+	folder, err := s.CreateFolder(context.Background(), user, user.OrgId, title, title)
 	require.NoError(t, err)
 
 	updateFolderACL(t, sqlStore, folder.Id, items)
@@ -1519,14 +1521,13 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
-		elementService := libraryelements.LibraryElementService{
-			Cfg:      cfg,
-			SQLStore: sqlStore,
-		}
+		folderService := manager.ProvideFolderService(manager.ProvideDashboardService(sqlStore), sqlStore)
+
+		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService)
 		service := LibraryPanelService{
 			Cfg:                   cfg,
 			SQLStore:              sqlStore,
-			LibraryElementService: &elementService,
+			LibraryElementService: elementService,
 		}
 
 		user := &models.SignedInUser{
@@ -1554,7 +1555,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			user:           user,
 			ctx:            context.Background(),
 			service:        &service,
-			elementService: &elementService,
+			elementService: elementService,
 			sqlStore:       sqlStore,
 		}
 

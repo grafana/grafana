@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"io"
 	"net/http"
 	"testing"
@@ -194,16 +195,16 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 		User:      &user,
 		Overwrite: false,
 	}
-	origUpdateAlerting := dashboards.UpdateAlerting
+	origUpdateAlerting := manager.UpdateAlerting
 	t.Cleanup(func() {
-		dashboards.UpdateAlerting = origUpdateAlerting
+		manager.UpdateAlerting = origUpdateAlerting
 	})
-	dashboards.UpdateAlerting = func(ctx context.Context, store dboards.Store, orgID int64, dashboard *models.Dashboard,
+	manager.UpdateAlerting = func(ctx context.Context, store dboards.Store, orgID int64, dashboard *models.Dashboard,
 		user *models.SignedInUser) error {
 		return nil
 	}
 
-	dashboard, err := dashboards.NewService(sqlStore).SaveDashboard(context.Background(), dashItem, true)
+	dashboard, err := manager.ProvideDashboardService(sqlStore).SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
@@ -213,9 +214,10 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	items []folderACLItem) *models.Folder {
 	t.Helper()
 
-	s := dashboards.NewFolderService(user.OrgId, &user, sqlStore)
+	d := manager.ProvideDashboardService(sqlStore)
+	s := manager.ProvideFolderService(d, sqlStore)
 	t.Logf("Creating folder with title and UID %q", title)
-	folder, err := s.CreateFolder(context.Background(), title, title)
+	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
 	require.NoError(t, err)
 
 	updateFolderACL(t, sqlStore, folder.Id, items)

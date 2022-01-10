@@ -2,6 +2,7 @@ package libraryelements
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -10,11 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister) *LibraryElementService {
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister, folderService dashboards.FolderService) *LibraryElementService {
 	l := &LibraryElementService{
 		Cfg:           cfg,
 		SQLStore:      sqlStore,
 		RouteRegister: routeRegister,
+		folderService: folderService,
 		log:           log.New("library-elements"),
 	}
 	l.registerAPIEndpoints()
@@ -36,6 +38,7 @@ type LibraryElementService struct {
 	Cfg           *setting.Cfg
 	SQLStore      *sqlstore.SQLStore
 	RouteRegister routing.RouteRegister
+	folderService dashboards.FolderService
 	log           log.Logger
 }
 

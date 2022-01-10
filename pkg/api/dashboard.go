@@ -153,8 +153,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	svc := dashboards.NewProvisioningService(hs.SQLStore)
-	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
+	provisioningData, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -254,8 +253,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		hs.log.Error("Failed to disconnect library elements", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
 	}
 
-	svc := dashboards.NewService(hs.SQLStore)
-	err = svc.DeleteDashboard(c.Req.Context(), dash.Id, c.OrgId)
+	err = hs.dashboardService.DeleteDashboard(c.Req.Context(), dash.Id, c.OrgId)
 	if err != nil {
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
@@ -295,8 +293,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
 	if cmd.FolderUid != "" {
-		folders := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-		folder, err := folders.GetFolderByUID(ctx, cmd.FolderUid)
+		folder, err := hs.folderService.GetFolderByUID(ctx, c.SignedInUser, c.OrgId, cmd.FolderUid)
 		if err != nil {
 			if errors.Is(err, models.ErrFolderNotFound) {
 				return response.Error(400, "Folder not found", err)
@@ -318,16 +315,15 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
-	svc := dashboards.NewProvisioningService(hs.SQLStore)
 	var provisioningData *models.DashboardProvisioning
 	if dash.Id != 0 {
-		data, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
+		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(dash.Id)
 		if err != nil {
 			return response.Error(500, "Error while checking if dashboard is provisioned", err)
 		}
 		provisioningData = data
 	} else if dash.Uid != "" {
-		data, err := svc.GetProvisionedDashboardDataByDashboardUID(dash.OrgId, dash.Uid)
+		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(dash.OrgId, dash.Uid)
 		if err != nil && !errors.Is(err, models.ErrProvisionedDashboardNotFound) {
 			return response.Error(500, "Error while checking if dashboard is provisioned", err)
 		}
@@ -353,8 +349,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashSvc := dashboards.NewService(hs.SQLStore)
-	dashboard, err := dashSvc.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
+	dashboard, err := hs.dashboardService.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
 
 	if hs.Live != nil {
 		// Tell everyone listening that the dashboard changed
@@ -386,7 +381,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	if hs.Cfg.EditorsCanAdmin && newDashboard {
 		inFolder := cmd.FolderId > 0
-		err := dashSvc.MakeUserAdmin(ctx, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
+		err := hs.dashboardService.MakeUserAdmin(ctx, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
 		if err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}

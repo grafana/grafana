@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -42,12 +43,13 @@ type PluginManager struct {
 	pluginInstaller  plugins.Installer
 	pluginLoader     plugins.Loader
 	pluginsMu        sync.RWMutex
+	dashboardService dashboards.DashboardService
 	log              log.Logger
 }
 
 func ProvideService(cfg *setting.Cfg, requestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
-	sqlStore *sqlstore.SQLStore) (*PluginManager, error) {
-	pm := newManager(cfg, requestValidator, pluginLoader, sqlStore)
+	sqlStore *sqlstore.SQLStore, dashboardService dashboards.DashboardService) (*PluginManager, error) {
+	pm := newManager(cfg, requestValidator, pluginLoader, sqlStore, dashboardService)
 	if err := pm.init(); err != nil {
 		return nil, err
 	}
@@ -55,7 +57,7 @@ func ProvideService(cfg *setting.Cfg, requestValidator models.PluginRequestValid
 }
 
 func newManager(cfg *setting.Cfg, pluginRequestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
-	sqlStore *sqlstore.SQLStore) *PluginManager {
+	sqlStore *sqlstore.SQLStore, dashboardService dashboards.DashboardService) *PluginManager {
 	return &PluginManager{
 		cfg:              cfg,
 		requestValidator: pluginRequestValidator,
@@ -64,6 +66,7 @@ func newManager(cfg *setting.Cfg, pluginRequestValidator models.PluginRequestVal
 		store:            map[string]*plugins.Plugin{},
 		log:              log.New("plugin.manager"),
 		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
+		dashboardService: dashboardService,
 	}
 }
 

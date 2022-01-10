@@ -2,9 +2,7 @@ package libraryelements
 
 import (
 	"context"
-
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
@@ -32,9 +30,7 @@ func (l *LibraryElementService) requirePermissionsOnFolder(ctx context.Context, 
 	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_VIEWER) {
 		return models.ErrFolderAccessDenied
 	}
-
-	s := dashboards.NewFolderService(user.OrgId, user, l.SQLStore)
-	folder, err := s.GetFolderByID(ctx, folderID)
+	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgId)
 	if err != nil {
 		return err
 	}
