@@ -14,7 +14,6 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "refId": "A",
         }
       }
-      queryType="range"
       resolution={1}
     />
   }

@@ -7,12 +7,12 @@ import {
   extractLabelMatchers,
   parseSelector,
   processLabels,
-  toPromLikeQuery,
+  toPromLikeExpr,
 } from 'app/plugins/datasource/prometheus/language_utils';
 import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 
 // Types
-import { LokiQuery } from './types';
+import { LokiQuery, LokiQueryType } from './types';
 import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
 
 import LokiDatasource from './datasource';
@@ -332,7 +332,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   importFromAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
-    return toPromLikeQuery(labelBasedQuery);
+    return {
+      refId: labelBasedQuery.refId,
+      expr: toPromLikeExpr(labelBasedQuery),
+      queryType: LokiQueryType.Range,
+    };
   }
 
   exportToAbstractQuery(query: LokiQuery): AbstractQuery {

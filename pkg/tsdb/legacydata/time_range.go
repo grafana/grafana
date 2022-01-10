@@ -75,14 +75,6 @@ func (tr DataTimeRange) ParseTo(options ...TimeRangeOption) (time.Time, error) {
 	return pt.Parse()
 }
 
-func (tr DataTimeRange) ParseFromWithWeekStart(location *time.Location, weekstart time.Weekday) (time.Time, error) {
-	return tr.ParseFrom(WithLocation(location), WithWeekstart(weekstart))
-}
-
-func (tr DataTimeRange) ParseToWithWeekStart(location *time.Location, weekstart time.Weekday) (time.Time, error) {
-	return tr.ParseTo(WithLocation(location), WithWeekstart(weekstart))
-}
-
 func WithWeekstart(weekday time.Weekday) TimeRangeOption {
 	return func(timeRange parsableTime) parsableTime {
 		timeRange.weekstart = &weekday

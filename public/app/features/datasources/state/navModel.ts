@@ -1,4 +1,5 @@
 import { DataSourceSettings, PluginType, PluginInclude, NavModel, NavModelItem } from '@grafana/data';
+import { featureEnabled } from '@grafana/runtime';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
@@ -47,7 +48,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     });
   }
 
-  if (config.licenseInfo.hasLicense) {
+  if (featureEnabled('dspermissions')) {
     if (contextSrv.hasPermission(AccessControlAction.DataSourcesPermissionsRead)) {
       navModel.children!.push({
         active: false,
@@ -57,7 +58,9 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
         url: `datasources/edit/${dataSource.id}/permissions`,
       });
     }
+  }
 
+  if (featureEnabled('analytics')) {
     navModel.children!.push({
       active: false,
       icon: 'info-circle',
@@ -65,7 +68,9 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       text: 'Insights',
       url: `datasources/edit/${dataSource.id}/insights`,
     });
+  }
 
+  if (featureEnabled('caching')) {
     navModel.children!.push({
       active: false,
       icon: 'database',
