@@ -59,7 +59,7 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 7,
+        "w": 12,
         "x": 0,
         "y": 0
       },
@@ -91,114 +91,6 @@
         }
       ],
       "title": "Auto  sizing & auto show values",
-      "type": "barchart"
-    },
-    {
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "axisSoftMin": 0,
-            "fillOpacity": 21,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 2,
-            "scaleDistribution": {
-              "type": "linear"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Status"
-            },
-            "properties": [
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "options": {
-                      "ERROR": {
-                        "color": "red",
-                        "index": 2
-                      },
-                      "OK": {
-                        "color": "green",
-                        "index": 0
-                      },
-                      "WARN": {
-                        "color": "orange",
-                        "index": 1
-                      }
-                    },
-                    "type": "value"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 9,
-        "x": 15,
-        "y": 0
-      },
-      "id": 21,
-      "options": {
-        "barRadius": 0.5,
-        "barWidth": 0.4,
-        "colorByField": "Status",
-        "groupWidth": 0.4,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "orientation": "vertical",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": {
-          "mode": "single"
-        },
-        "xField": "Time",
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": -130
-      },
-      "targets": [
-        {
-          "csvContent": "Time,Duration,Status,Job\n2020-01-01T00:00:00Z,10,OK,j10\n2020-01-02T00:00:00Z,19,OK,j11\n2020-01-03T00:00:00Z,10,WARN,j21\n2020-01-04T00:00:00Z,15,OK,j11\n2020-01-05T00:00:00Z,15,ERROR,j23\n2020-01-06T00:00:00Z,5,WARN,j22\n2020-01-07T00:00:00Z,10,OK,j13\n2020-01-08T00:00:00Z,19,OK,j14\n2020-01-09T00:00:00Z,10,WARN,j25\n2020-01-10T00:00:00Z,15,OK,j17\n2020-01-11T00:00:00Z,15,ERROR,j38\n2020-01-12T00:00:00Z,5,WARN,j27\n2020-01-13T00:00:00Z,10,OK,j18\n2020-01-14T00:00:00Z,19,OK,j16\n2020-01-15T00:00:00Z,10,WARN,j33",
-          "datasource": "gdev-testdata",
-          "refId": "A",
-          "scenarioId": "csv_content"
-        }
-      ],
-      "title": "Color field & Label skipping",
       "type": "barchart"
     },
     {
@@ -239,9 +131,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,        
-        "w": 8,
-        "x": 7,
+        "h": 10,
+        "w": 12,
+        "x": 12,
         "y": 0
       },
       "id": 15,
