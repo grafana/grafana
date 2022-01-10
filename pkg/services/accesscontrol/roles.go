@@ -197,6 +197,19 @@ var (
 			},
 		}),
 	}
+
+	teamsWriterRole = RoleDTO{
+		Name:        teamsWriter,
+		DisplayName: "Teams writer",
+		Description: "Create teams.",
+		Group:       "Teams",
+		Version:     1,
+		Permissions: []Permission{
+			{
+				Action: ActionTeamsCreate,
+			},
+		},
+	}
 )
 
 // Role names definitions
@@ -210,6 +223,7 @@ const (
 	statsReader         = "fixed:stats:reader"
 	usersReader         = "fixed:users:reader"
 	usersWriter         = "fixed:users:writer"
+	teamsWriter         = "fixed:teams:writer"
 )
 
 var (
@@ -229,6 +243,7 @@ var (
 		statsReader:         statsReaderRole,
 		usersReader:         usersReaderRole,
 		usersWriter:         usersWriterRole,
+		teamsWriter:         teamsWriterRole,
 	}
 
 	// FixedRoleGrants specifies which built-in roles are assigned
@@ -247,6 +262,7 @@ var (
 		string(models.ROLE_ADMIN): {
 			orgUsersReader,
 			orgUsersWriter,
+			teamsWriter,
 		},
 		string(models.ROLE_EDITOR): {
 			datasourcesExplorer,

@@ -13,12 +13,6 @@ import { MapLayerOptions } from '../geo/layer';
 export interface BuildInfo {
   version: string;
   commit: string;
-  /**
-   * Is set to true when running Grafana Enterprise edition.
-   *
-   * @deprecated use `licenseInfo.hasLicense` instead
-   */
-  isEnterprise: boolean;
   env: string;
   edition: GrafanaEdition;
   latestVersion: string;
@@ -49,9 +43,11 @@ export interface FeatureToggles {
   accesscontrol: boolean;
   tempoServiceGraph: boolean;
   tempoSearch: boolean;
+  tempoBackendSearch: boolean;
   recordedQueries: boolean;
   newNavigation: boolean;
   fullRangeLogsVolume: boolean;
+  queryOverLive: boolean;
   dashboardPreviews: boolean;
 }
 
@@ -61,12 +57,11 @@ export interface FeatureToggles {
  * @public
  */
 export interface LicenseInfo {
-  hasLicense: boolean;
   expiry: number;
   licenseUrl: string;
   stateInfo: string;
-  hasValidLicense: boolean;
   edition: GrafanaEdition;
+  enabledFeatures: { [key: string]: boolean };
 }
 
 /**

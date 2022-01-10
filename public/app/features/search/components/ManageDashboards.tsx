@@ -3,6 +3,7 @@ import { useLocalStorage } from 'react-use';
 import { css } from '@emotion/css';
 import { stylesFactory, useTheme, Spinner, FilterInput } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { FolderDTO } from 'app/types';
@@ -23,6 +24,7 @@ export interface Props {
 const { isEditor } = contextSrv;
 
 export const ManageDashboards: FC<Props> = memo(({ folder }) => {
+  const previewsEnabled = Boolean(config.featureToggles.dashboardPreviews);
   const [showPreviews, setShowPreviews] = useLocalStorage<boolean>(PREVIEWS_LOCAL_STORAGE_KEY, true);
   const onShowPreviewsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setShowPreviews(event.target.checked);
@@ -118,7 +120,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           query={query}
-          showPreviews={showPreviews}
+          showPreviews={previewsEnabled && showPreviews}
           hideLayout={!!folderUid}
           onLayoutChange={onLayoutChange}
           editable={hasEditPermissionInFolders}
@@ -131,7 +133,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
           onToggleSection={onToggleSection}
           onToggleChecked={onToggleChecked}
           layout={query.layout}
-          showPreviews={showPreviews}
+          showPreviews={previewsEnabled && showPreviews}
         />
       </div>
       <ConfirmDeleteModal

@@ -32,9 +32,10 @@ interface Props {
   header: string;
   subheader?: string;
   editionNotice?: string;
+  children?: React.ReactNode;
 }
 
-export const LicenseChrome: React.FC<Props> = ({ header, editionNotice, subheader, children }) => {
+export function LicenseChrome({ header, editionNotice, subheader, children }: Props) {
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -68,7 +69,7 @@ export const LicenseChrome: React.FC<Props> = ({ header, editionNotice, subheade
       {editionNotice && <div className={styles.footer}>{editionNotice}</div>}
     </>
   );
-};
+}
 
 interface CircleProps {
   size: string;

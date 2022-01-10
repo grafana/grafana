@@ -133,6 +133,7 @@ export const getAvailableIcons = () =>
     'presentation-play',
     'process',
     'question-circle',
+    'record-audio',
     'repeat',
     'rocket',
     'save',

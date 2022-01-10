@@ -27,13 +27,13 @@ func SendResetPasswordEmail(c *models.ReqContext) response.Response {
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &userQuery); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &userQuery); err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
 		return response.Error(200, "Email sent", err)
 	}
 
 	emailCmd := models.SendResetPasswordEmailCommand{User: userQuery.Result}
-	if err := bus.DispatchCtx(c.Req.Context(), &emailCmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &emailCmd); err != nil {
 		return response.Error(500, "Failed to send email", err)
 	}
 
@@ -47,7 +47,7 @@ func ResetPassword(c *models.ReqContext) response.Response {
 	}
 	query := models.ValidateResetPasswordCodeQuery{Code: form.Code}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrInvalidEmailCode) {
 			return response.Error(400, "Invalid or expired reset password code", nil)
 		}
@@ -66,7 +66,7 @@ func ResetPassword(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to encode password", err)
 	}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change user password", err)
 	}
 

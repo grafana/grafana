@@ -1,5 +1,5 @@
 import { Team, TeamPermissionLevel } from 'app/types';
-import config from 'app/core/config';
+import { featureEnabled } from '@grafana/runtime';
 import { NavModelItem, NavModel } from '@grafana/data';
 
 export function buildNavModel(team: Team): NavModelItem {
@@ -28,7 +28,7 @@ export function buildNavModel(team: Team): NavModelItem {
     ],
   };
 
-  if (config.licenseInfo.hasLicense) {
+  if (featureEnabled('teamsync')) {
     navModel.children.push({
       active: false,
       icon: 'sync',
