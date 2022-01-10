@@ -17,7 +17,7 @@ type SmtpClient struct {
 	cfg setting.SmtpSettings
 }
 
-func ProvideSmtpService(cfg *setting.Cfg) (*SmtpClient, error) {
+func ProvideSmtpService(cfg *setting.Cfg) (Mailer, error) {
 	return NewSmtpClient(cfg.Smtp)
 }
 
