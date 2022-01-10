@@ -46,7 +46,6 @@ describe('<SpanGraph>', () => {
     };
     wrapper = shallow(<ViewingLayer {...props} />)
       .dive()
-      .dive()
       .dive();
   });
 
@@ -54,7 +53,6 @@ describe('<SpanGraph>', () => {
     beforeEach(() => {
       props = { ...props, viewRange: getViewRange(0.1, 0.9) };
       wrapper = shallow(<ViewingLayer {...props} />)
-        .dive()
         .dive()
         .dive();
       wrapper.instance()._setRoot({
@@ -131,7 +129,6 @@ describe('<SpanGraph>', () => {
           props = { ...props, viewRange: { time } };
           wrapper = shallow(<ViewingLayer {...props} />)
             .dive()
-            .dive()
             .dive();
           wrapper.instance()._handleReframeDragUpdate({ value });
           const calls = props.updateNextViewRangeTime.mock.calls;
@@ -161,7 +158,6 @@ describe('<SpanGraph>', () => {
           props = { ...props, viewRange: { time } };
           wrapper = shallow(<ViewingLayer {...props} />)
             .dive()
-            .dive()
             .dive();
           wrapper.instance()._handleReframeDragEnd({ manager, value });
 
@@ -176,7 +172,6 @@ describe('<SpanGraph>', () => {
           const time = { ...props.viewRange.time, reframe: { anchor } };
           props = { ...props, viewRange: { time } };
           wrapper = shallow(<ViewingLayer {...props} />)
-            .dive()
             .dive()
             .dive();
           wrapper.instance()._handleReframeDragEnd({ manager, value });
@@ -314,7 +309,6 @@ describe('<SpanGraph>', () => {
     const _props = { ...props, viewRange: getViewRange(0.2, 1) };
     wrapper = shallow(<ViewingLayer {..._props} />)
       .dive()
-      .dive()
       .dive();
 
     const leftBox = wrapper.find(`.${getStyles(createTheme()).ViewingLayerInactive}`);
@@ -328,7 +322,6 @@ describe('<SpanGraph>', () => {
   it('renders a filtering box if rightBound exists', () => {
     const _props = { ...props, viewRange: getViewRange(0, 0.8) };
     wrapper = shallow(<ViewingLayer {..._props} />)
-      .dive()
       .dive()
       .dive();
 

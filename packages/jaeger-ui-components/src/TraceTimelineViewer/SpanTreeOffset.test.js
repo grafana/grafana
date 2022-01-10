@@ -45,7 +45,6 @@ describe('SpanTreeOffset', () => {
     };
     wrapper = shallow(<SpanTreeOffset {...props} />)
       .dive()
-      .dive()
       .dive();
   });
 
@@ -53,7 +52,6 @@ describe('SpanTreeOffset', () => {
     it('renders only one .SpanTreeOffset--indentGuide for entire trace if span has no ancestors', () => {
       spanAncestorIdsSpy.mockReturnValue([]);
       wrapper = shallow(<SpanTreeOffset {...props} />)
-        .dive()
         .dive()
         .dive();
       const indentGuides = wrapper.find('[data-test-id="SpanTreeOffset--indentGuide"]');
@@ -72,7 +70,6 @@ describe('SpanTreeOffset', () => {
     it('adds .is-active to correct indentGuide', () => {
       props.hoverIndentGuideIds = new Set([parentSpanID]);
       wrapper = shallow(<SpanTreeOffset {...props} />)
-        .dive()
         .dive()
         .dive();
       const styles = getStyles(createTheme());
