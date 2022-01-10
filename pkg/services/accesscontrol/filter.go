@@ -41,10 +41,10 @@ func Filter(ctx context.Context, dialect SQLDialect, sqlID, prefix, action strin
 		sql, args = sqliteQuery(scopes, sqlID, prefix)
 	case strings.Contains(dialect.DriverName(), migrator.MySQL):
 		sql, args = mysqlQuery(scopes, sqlID, prefix)
-	case strings.Contains(dialect.DriverName(), migrator.Postgres)
+	case strings.Contains(dialect.DriverName(), migrator.Postgres):
 		sql, args = postgresQuery(scopes, sqlID, prefix)
 	default:
-		return nil, nil, fmt.Errorf("unknown database: %s", dialect.DriverName())
+		return "", nil, fmt.Errorf("unknown database: %s", dialect.DriverName())
 	}
 
 	return sql, args, nil
