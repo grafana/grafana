@@ -9,6 +9,7 @@ export interface OrgServiceAccount {
   displayName: string;
   orgId: number;
   role: OrgRole;
+  tokens: number[];
 }
 
 export interface ServiceAccount {

@@ -95,7 +95,7 @@ const ServiceaccountsTable: FC<Props> = (props) => {
               </td>
 
               <td className="max-width-5">
-                <span className="ellipsis" title={serviceAccount.tokens}>
+                <span className="ellipsis" title={serviceAccount.tokens.toString()}>
                   {serviceAccount.tokens}
                 </span>
               </td>
