@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -45,7 +46,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer
 			RendererPluginManager: &fakeRendererManager{},
 		},
 		SQLStore:         sqlStore,
-		SettingsProvider: setting.ProvideProvider(cfg),
+		SettingsProvider: setting.ProvideProvider(cfg, featuremgmt.WithToggles()),
 		pluginStore:      &fakePluginStore{},
 		updateChecker:    &updatechecker.Service{},
 		AccessControl:    accesscontrolmock.New().WithDisabled(),

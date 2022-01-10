@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -210,7 +211,8 @@ func (s *fakeRenderService) Init() error {
 }
 
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
-	cfg.Features = setting.WithFeatures("accesscontrol")
+	features := featuremgmt.WithFeatures("accesscontrol")
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	cfg.Quota.Enabled = false
 
 	bus := bus.GetBus()
@@ -218,6 +220,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		Cfg:                cfg,
 		Bus:                bus,
 		Live:               newTestLive(t),
+		Features:           features,
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
@@ -294,8 +297,9 @@ func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessContro
 	var ac *ossaccesscontrol.OSSAccessControlService
 
 	// Use a new conf
+	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
 	cfg := setting.NewCfg()
-	cfg.Features = setting.WithFeatures("accesscontrol", enableAccessControl)
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	// Use a test DB
 	db := sqlstore.InitTestDB(t)
@@ -306,6 +310,7 @@ func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessContro
 	// Create minimal HTTP Server
 	hs := &HTTPServer{
 		Cfg:                cfg,
+		Features:           features,
 		Bus:                bus,
 		Live:               newTestLive(t),
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
@@ -322,7 +327,7 @@ func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessContro
 		}
 		hs.AccessControl = acmock
 	} else {
-		ac = ossaccesscontrol.ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
+		ac = ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t})
 		hs.AccessControl = ac
 		// Perform role registration
 		err := hs.declareFixedRoles()

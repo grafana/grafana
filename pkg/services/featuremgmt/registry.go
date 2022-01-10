@@ -1,113 +1,113 @@
 package featuremgmt
 
-import (
-	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/setting"
-)
+import "github.com/grafana/grafana/pkg/services/secrets"
 
 var (
+	FLAG_database_metrics = "database_metrics"
+	FLAG_live_config      = "live-config"
+
 	// Register each toggle here
-	standardFeatureFlags = []setting.FeatureFlag{
+	standardFeatureFlags = []FeatureFlag{
 		{
 			Name:        "recordedQueries",
 			Description: "Supports saving queries that can be scraped by prometheus",
-			State:       setting.StableState,
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
-			State:       setting.BetaState,
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:        secrets.EnvelopeEncryptionFeatureToggle,
 			Description: "encrypt secrets",
-			State:       setting.BetaState,
+			State:       FeatureStateBeta,
 		},
 
 		{
 			Name:  "httpclientprovider_azure_auth",
-			State: setting.BetaState,
+			State: FeatureStateBeta,
 		},
 		{
 			Name:        "service-accounts",
 			Description: "support service accounts",
-			State:       setting.BetaState,
+			State:       FeatureStateBeta,
 		},
 
 		{
-			Name:        "database_metrics",
+			Name:        FLAG_database_metrics,
 			Description: "Add prometheus metrics for database tables",
-			State:       setting.StableState,
+			State:       FeatureStateStable,
 		},
 		{
 			Name:        "dashboardPreviews",
 			Description: "support showing thumbnails id dashboard search results",
-			State:       setting.AlphaState,
+			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "live-config",
+			Name:        FLAG_live_config,
 			Description: "live should be able to save configs to SQL tables",
-			State:       setting.AlphaState,
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "live-pipeline",
 			Description: "enable a generic live processing pipeline",
-			State:       setting.AlphaState,
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:         "live-service-web-worker",
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
-			State:        setting.AlphaState,
+			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
 			Name:         "queryOverLive",
 			Description:  "Send queries over live websocket rather than HTTP requests",
-			State:        setting.AlphaState,
+			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
 			Name:         "tempoSearch",
 			Description:  "enable searching in tempo datasources",
-			State:        setting.BetaState,
+			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
 		{
 			Name:         "tempoServiceGraph",
 			Description:  "show service ",
-			State:        setting.BetaState,
+			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
 		{
 			Name:         "fullRangeLogsVolume",
 			Description:  "Show full range logs volume in expore",
-			State:        setting.BetaState,
+			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
 		{
 			Name:        "accesscontrol",
 			Description: "Support robust access control",
-			State:       setting.BetaState,
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "prometheus_azure_auth",
 			Description: "Use azure authentication for prometheus datasource",
-			State:       setting.BetaState,
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "newNavigation",
 			Description: "Try the next gen naviation model",
-			State:       setting.AlphaState,
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settigns UI",
-			State:           setting.AlphaState,
+			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
 		{
 			Name:  "disable_http_request_histogram",
-			State: setting.AlphaState,
+			State: FeatureStateAlpha,
 		},
 	}
 )
