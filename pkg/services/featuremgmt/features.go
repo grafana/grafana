@@ -85,11 +85,10 @@ type FeatureFlag struct {
 	Expression string `json:"expression,omitempty"`
 
 	// Special behavior flags
-	RequiresDevMode    bool `json:"requiresDevMode,omitempty"`    // can not be enabled in production
-	RequiresRestart    bool `json:"requiresRestart,omitempty"`    // The server must be initalized with the value
-	RequiresLicense    bool `json:"requiresLicense,omitempty"`    // Must be enabled in the license
-	RequiresEnterprise bool `json:"requiresEnterprise,omitempty"` // Must be enabled in the license
-	FrontendOnly       bool `json:"frontend,omitempty"`           // change is only seen in the frontend
+	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
+	RequiresRestart bool `json:"requiresRestart,omitempty"` // The server must be initalized with the value
+	RequiresLicense bool `json:"requiresLicense,omitempty"` // Must be enabled in the license
+	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 
 	// Internal properties
 	expr string `json:-`

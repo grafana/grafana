@@ -14,6 +14,11 @@ export interface FeatureToggles {
 
   recordedQueries?: boolean;
   teamsync?: boolean;
+  ldapsync?: boolean;
+  caching?: boolean;
+  dspermissions?: boolean;
+  analytics?: boolean;
+  ['enterprise.plugins']?: boolean;
   trimDefaults?: boolean;
   envelopeEncryption?: boolean;
   httpclientprovider_azure_auth?: boolean;

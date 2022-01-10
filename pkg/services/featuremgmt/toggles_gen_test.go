@@ -54,7 +54,7 @@ export interface FeatureToggles {
 }
 
 func getTypeScriptKey(key string) string {
-	if strings.Contains(key, "-") {
+	if strings.Contains(key, "-") || strings.Contains(key, ".") {
 		return "['" + key + "']"
 	}
 	return key

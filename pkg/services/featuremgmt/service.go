@@ -2,6 +2,7 @@ package featuremgmt
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -51,8 +52,14 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 	}
 
 	// Load config settings
-	mgmt.config = filepath.Join(cfg.HomePath, "config", "features.yaml")
-	mgmt.readFile()
+	configfile := filepath.Join(cfg.HomePath, "config", "features.yaml")
+	if _, err := os.Stat(configfile); err == nil {
+		mgmt.config = configfile
+		err = mgmt.readFile()
+		if err != nil {
+			return mgmt, err
+		}
+	}
 
 	// update the values
 	mgmt.update()

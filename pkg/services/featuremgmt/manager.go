@@ -2,9 +2,7 @@ package featuremgmt
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os"
 	"reflect"
 
 	"github.com/fsnotify/fsnotify"
@@ -12,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type FeatureManager struct {
@@ -63,10 +60,6 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 			flag.RequiresLicense = true
 		}
 
-		if add.RequiresEnterprise {
-			flag.RequiresEnterprise = true
-		}
-
 		if add.RequiresRestart {
 			flag.RequiresRestart = true
 		}
@@ -75,10 +68,6 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 
 func (fm *FeatureManager) evaluate(ff *FeatureFlag) bool {
 	if ff.RequiresDevMode && !fm.isDevMod {
-		return false
-	}
-
-	if ff.RequiresEnterprise && !setting.IsEnterprise {
 		return false
 	}
 
@@ -111,8 +100,8 @@ func (fm *FeatureManager) update() {
 
 // Run is called by background services
 func (fm *FeatureManager) readFile() error {
-	if _, err := os.Stat(fm.config); errors.Is(err, os.ErrNotExist) {
-		return nil // nothing to read
+	if fm.config == "" {
+		return nil // not configured
 	}
 
 	cfg, err := readConfigFileWithIncludes(fm.config)
@@ -128,6 +117,10 @@ func (fm *FeatureManager) readFile() error {
 
 // Run is called by background services
 func (fm *FeatureManager) Run(ctx context.Context) error {
+	if fm.config == "" {
+		return nil // no config file found
+	}
+
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
@@ -145,15 +138,15 @@ func (fm *FeatureManager) Run(ctx context.Context) error {
 			cfg, err := readConfigFileWithIncludes(fm.config)
 			if err != nil {
 				if err != nil {
-					fm.log.Error("failed to read experiments file", "event", event, "error", err)
+					fm.log.Error("failed to read features file", "event", event, "error", err)
 				} else {
-					fm.log.Info("reloading experiments file", "path", fm.config)
+					fm.log.Info("reloading features file", "path", fm.config)
 					fm.registerFlags(cfg.Flags...)
 				}
 			}
 
 		case err := <-watcher.Errors:
-			fm.log.Error("failed to watch experiments file", "error", err)
+			fm.log.Error("failed to watch features file", "error", err)
 		case <-ctx.Done():
 			return ctx.Err()
 		}
