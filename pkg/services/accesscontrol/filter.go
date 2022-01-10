@@ -30,7 +30,7 @@ func Filter(ctx context.Context, dialect SQLDialect, sqlID, prefix, action strin
 
 	scopes := user.Permissions[user.OrgId][action]
 	if len(scopes) == 0 {
-		scopes = append(scopes, "no:access")
+		return " 1 = 0", nil, nil
 	}
 
 	var sql string
