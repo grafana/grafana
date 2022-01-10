@@ -4036,7 +4036,12 @@ __metadata:
     "@react-aria/focus": 3.5.0
     "@react-aria/menu": 3.3.0
     "@react-aria/overlays": 3.7.3
+    "@react-aria/tabs": 3.1.0
+    "@react-stately/collections": 3.3.4
     "@react-stately/menu": 3.2.3
+    "@react-stately/tabs": 3.0.1
+    "@react-types/shared": 3.10.1
+    "@react-types/tabs": 3.0.1
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-image": 2.1.1
     "@rollup/plugin-node-resolve": 13.1.3
@@ -6640,6 +6645,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-aria/tabs@npm:3.1.0":
+  version: 3.1.0
+  resolution: "@react-aria/tabs@npm:3.1.0"
+  dependencies:
+    "@babel/runtime": ^7.6.2
+    "@react-aria/focus": ^3.5.0
+    "@react-aria/i18n": ^3.3.3
+    "@react-aria/interactions": ^3.7.0
+    "@react-aria/selection": ^3.7.0
+    "@react-aria/utils": ^3.10.0
+    "@react-stately/list": ^3.4.0
+    "@react-stately/tabs": ^3.0.1
+    "@react-types/shared": ^3.10.0
+    "@react-types/tabs": ^3.0.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: ddc86c6d2c420b1dbc0cf3ff84ccfa3d7cf79672a6ce1e3e7045c405c02f744ca4e904fb3739f41447bebb6f3e5c5bef179302441164184a521c145aa00d7de6
+  languageName: node
+  linkType: hard
+
 "@react-aria/utils@npm:3.11.0":
   version: 3.11.0
   resolution: "@react-aria/utils@npm:3.11.0"
@@ -6711,6 +6736,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-stately/list@npm:^3.3.0, @react-stately/list@npm:^3.4.0":
+  version: 3.4.1
+  resolution: "@react-stately/list@npm:3.4.1"
+  dependencies:
+    "@babel/runtime": ^7.6.2
+    "@react-stately/collections": ^3.3.3
+    "@react-stately/selection": ^3.9.0
+    "@react-stately/utils": ^3.3.0
+    "@react-types/shared": ^3.10.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 9a980ec8c4fd9e7046e16650b4f49fb76979526f810d0914678c56edb83ba819a47b0e19644c5968c8c7358495e6c9cc238576fda21504c347379fe8edc0f389
+  languageName: node
+  linkType: hard
+
 "@react-stately/menu@npm:3.2.3, @react-stately/menu@npm:^3.2.3":
   version: 3.2.3
   resolution: "@react-stately/menu@npm:3.2.3"
@@ -6750,6 +6790,34 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1
   checksum: 2774ff720fcef55b03a5a0927132216e5dde941d7645de1dece92cfe0db7acd3f022f5a62f12f82b1c4b647cb725cd8224e2f487e55a0479d97caacaac744f9c
+  languageName: node
+  linkType: hard
+
+"@react-stately/selection@npm:^3.9.0":
+  version: 3.9.0
+  resolution: "@react-stately/selection@npm:3.9.0"
+  dependencies:
+    "@babel/runtime": ^7.6.2
+    "@react-stately/collections": ^3.3.3
+    "@react-stately/utils": ^3.3.0
+    "@react-types/shared": ^3.10.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 59b1fe42f79299adf8b84a95c7a527bf2b2ff67987fc5e049e1162eed2808bd9074bf0c2024b7adaa21ca2987bf902f3da416521eb59b40b7b75942d8940ffe5
+  languageName: node
+  linkType: hard
+
+"@react-stately/tabs@npm:3.0.1, @react-stately/tabs@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "@react-stately/tabs@npm:3.0.1"
+  dependencies:
+    "@babel/runtime": ^7.6.2
+    "@react-stately/list": ^3.3.0
+    "@react-stately/utils": ^3.2.2
+    "@react-types/tabs": ^3.0.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 92a04537ad06d14a3dc20a702b07aa56c314d9cf8a0995ca30663ae806b12df5b57d94cf8393478f48883b710011c339a1f2496418c03e0303862ef64e9b654b
   languageName: node
   linkType: hard
 
@@ -6873,6 +6941,17 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1
   checksum: 0be11ba4234767d47707dff8601605f46bfd9e3e07dcd3213119517f9a627cca4b71e9030478d3941241d8a6be8b8bc00e92278342daad8f7397bc9eee290f1c
+  languageName: node
+  linkType: hard
+
+"@react-types/tabs@npm:3.0.1, @react-types/tabs@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "@react-types/tabs@npm:3.0.1"
+  dependencies:
+    "@react-types/shared": ^3.8.0
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: b52f1afe430e95517df6e3cbc63bfbcdfe6b9c6927e3e085b4e80f36d5f1b097f17654dcc1ee6ba6a48490fe792198125950bc003fe601303779e59c3cd1dbb6
   languageName: node
   linkType: hard
 
