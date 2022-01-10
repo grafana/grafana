@@ -374,7 +374,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		engine.SetLogger(&xorm.DiscardLogger{})
 	} else {
 		// add stack to database calls to be able to see what repository initiated queries. Top 7 items from the stack as they are likely in the xorm library.
-		engine.SetLogger(NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.StackContextKey, log.StackCaller(7))))
+		engine.SetLogger(NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
 		engine.ShowSQL(true)
 		engine.ShowExecTime(true)
 	}

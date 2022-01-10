@@ -29,9 +29,9 @@ var filters map[string]level.Option
 var Root MultiLoggers
 
 const (
+	// top 7 calls in the stack are within logger
 	DefaultCallerDepth = 7
 	CallerContextKey   = "caller"
-	StackContextKey    = "stack"
 )
 
 func init() {
