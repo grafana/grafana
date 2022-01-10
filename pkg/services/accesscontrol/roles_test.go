@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +22,7 @@ func TestFixedRoles(t *testing.T) {
 }
 
 func TestFixedRoleGrants(t *testing.T) {
-	for _, grants := range FixedRoleGrants {
+	for _, grants := range fixedRoleGrants {
 		// Check grants list is sorted
 		assert.True(t,
 			sort.SliceIsSorted(grants, func(i, j int) bool {
@@ -34,6 +36,14 @@ func TestFixedRoleGrants(t *testing.T) {
 			assert.Contains(t, FixedRoles, r)
 		}
 	}
+}
+
+func TestGetFixedRoleGrants(t *testing.T) {
+	grants := GetFixedRoleGrants(setting.NewCfg())
+	assert.Equal(t, fixedRoleGrants, grants, "if no special access control properties are set, fixed roles grants should not be extended")
+
+	grantsWithEditorCanAdmin := GetFixedRoleGrants(&setting.Cfg{EditorsCanAdmin: true})
+	assert.Contains(t, grantsWithEditorCanAdmin[string(models.ROLE_EDITOR)], teamsWriter, "if editorsCanAdmin is set, editors can create teams")
 }
 
 func TestConcatPermissions(t *testing.T) {

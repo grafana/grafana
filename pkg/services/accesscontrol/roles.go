@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type RoleRegistry interface {
@@ -231,7 +232,7 @@ var (
 	// assigned to a set of users. When adding a new resource protected by
 	// Grafana access control the default permissions should be added to a
 	// new fixed role in this set so that users can access the new
-	// resource. FixedRoleGrants lists which built-in roles are
+	// resource. fixedRoleGrants lists which built-in roles are
 	// assigned which fixed roles in this list.
 	FixedRoles = map[string]RoleDTO{
 		datasourcesExplorer: datasourcesExplorerRole,
@@ -246,9 +247,9 @@ var (
 		teamsWriter:         teamsWriterRole,
 	}
 
-	// FixedRoleGrants specifies which built-in roles are assigned
+	// fixedRoleGrants specifies which built-in roles are assigned
 	// to which set of FixedRoles by default. Alphabetically sorted.
-	FixedRoleGrants = map[string][]string{
+	fixedRoleGrants = map[string][]string{
 		RoleGrafanaAdmin: {
 			ldapReader,
 			ldapWriter,
@@ -269,6 +270,19 @@ var (
 		},
 	}
 )
+
+func GetFixedRoleGrants(cfg *setting.Cfg) map[string][]string {
+	if cfg.EditorsCanAdmin {
+		fixedRoleGrants[string(models.ROLE_EDITOR)] = append(fixedRoleGrants[string(models.ROLE_EDITOR)], teamsWriter)
+	}
+
+	return fixedRoleGrants
+}
+
+func AssignFixedRoles(builtInRole string, assignments []string) {
+	fixedRoleGrants[builtInRole] = assignments
+
+}
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {
 	if permissions == nil {
