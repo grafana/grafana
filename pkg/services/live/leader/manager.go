@@ -21,7 +21,8 @@ type RedisManager struct {
 }
 
 const (
-	leaderTTLSeconds = 10
+	// LeadershipEntryTTLSeconds defines expiration time for leadership entry.
+	LeadershipEntryTTLSeconds = 10
 )
 
 // KEYS[1] - channel hash key
@@ -44,7 +45,7 @@ return redis.call("hmget", KEYS[1], "n", "l")
 // ARGV[1] - hash key expire seconds
 // ARGV[2] - expected leadership ID
 // Returns leader nodeID and current leadershipID.
-const touchLeaderScriptSource = `
+const refreshLeaderScriptSource = `
 if redis.call('exists', KEYS[1]) ~= 0 then
 	if redis.call('hget', KEYS[1], "l") ~= ARGV[2] then
 		return 0
@@ -59,12 +60,12 @@ func NewRedisManager(redisClient *redis.Client) *RedisManager {
 	return &RedisManager{
 		redisClient:       redisClient,
 		getOrCreateScript: redis.NewScript(getOrCreateScriptSource),
-		refreshScript:     redis.NewScript(touchLeaderScriptSource),
+		refreshScript:     redis.NewScript(refreshLeaderScriptSource),
 	}
 }
 
 func (m *RedisManager) GetOrCreateLeader(ctx context.Context, ch string, currentNodeID string, newLeadershipID string) (string, string, error) {
-	result, err := m.getOrCreateScript.Eval(ctx, m.redisClient, []string{ch}, leaderTTLSeconds, currentNodeID, newLeadershipID).StringSlice()
+	result, err := m.getOrCreateScript.Eval(ctx, m.redisClient, []string{ch}, LeadershipEntryTTLSeconds, currentNodeID, newLeadershipID).StringSlice()
 	if err != nil {
 		return "", "", err
 	}
@@ -89,8 +90,7 @@ func (m *RedisManager) GetLeader(ctx context.Context, ch string) (bool, string, 
 }
 
 func (m *RedisManager) RefreshLeader(ctx context.Context, ch string, currentLeadershipID string) (bool, error) {
-	//return m.redisClient.Expire(ctx, ch, leaderTTLSeconds*time.Second).Result()
-	return m.refreshScript.Eval(ctx, m.redisClient, []string{ch}, leaderTTLSeconds, currentLeadershipID).Bool()
+	return m.refreshScript.Eval(ctx, m.redisClient, []string{ch}, LeadershipEntryTTLSeconds, currentLeadershipID).Bool()
 }
 
 func (m *RedisManager) CleanLeader(ctx context.Context, ch string) error {

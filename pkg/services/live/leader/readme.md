@@ -43,7 +43,7 @@ Do retries. Return an error to subscription request - we need to support re-issu
 
 In MVP we can also disconnect client.
 
-### Failure scenario #3: Can't touch/refresh leadership
+### Failure scenario #3: Can't refresh leadership
 
 May be persistent Redis error, single timeout.
 
@@ -58,13 +58,13 @@ Request to Redis timeout (200ms) + refresh interval (3 secs) ~ leadership entry 
 
 We can count failure count, at some point close stream. We can make retries at this point.
 
-If we touch – but there is no entry then we should close stream.
-If we touch - but there is entry with another leadership ID (or node ID?) – then we should close the current stream.
+If we refresh – but there is no entry – then we should close stream.
+If we refresh - but there is entry with another leadership ID (or node ID?) – then we should close the current stream.
 
 ### Failure scenario #4: Can't check leader during subscription lifetime
 
-Redis should be available – for now we can disconnect client, this should not be often,
-but can make retries to Redis at this point.
+Redis should be available – we can postpone decision to the next interval tick. Since most of the time things will fine
+this may lead to an increased leadership loss detection with a delay which seems fine to start with.
 
 ### Failure scenario #5: Existing subscription consumes events from a stream with another leadershipID 
 

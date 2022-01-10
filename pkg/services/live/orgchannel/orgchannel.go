@@ -12,7 +12,7 @@ func PrependOrgID(orgID int64, channel string) string {
 }
 
 // StripOrgID strips organization ID from channel ID.
-// The reason why we strip orgID is because we need to maintain multi-tenancy.
+// The reason why we strip orgID is that we need to maintain multi-tenancy.
 // Each organization can have the same channels which should not overlap. Due
 // to this every channel in Centrifuge has orgID prefix. Internally in Grafana
 // we strip this prefix since orgID is part of user identity and channel handlers

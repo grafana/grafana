@@ -13,21 +13,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-
-	"github.com/grafana/grafana/pkg/services/live/leader"
-	jsoniter "github.com/json-iterator/go"
-
-	"github.com/grafana/grafana/pkg/services/query"
-
-	"github.com/centrifugal/centrifuge"
-	"github.com/go-redis/redis/v8"
-	"github.com/gobwas/glob"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -38,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/database"
 	"github.com/grafana/grafana/pkg/services/live/features"
+	"github.com/grafana/grafana/pkg/services/live/leader"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/liveplugin"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
@@ -46,12 +36,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/live/survey"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+
+	"github.com/centrifugal/centrifuge"
+	"github.com/go-redis/redis/v8"
+	"github.com/gobwas/glob"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
+	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -68,6 +66,7 @@ type CoreGrafanaScope struct {
 	Dashboards models.DashboardActivityChannel
 }
 
+// ProvideService initializes GrafanaLive.
 //nolint: gocyclo
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	logsService *cloudwatch.LogsService, pluginStore plugins.Store, cacheService *localcache.CacheService,
@@ -96,17 +95,17 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	// We use default config here as starting point. Default config contains
 	// reasonable values for available options.
-	scfg := centrifuge.DefaultConfig
+	centrifugeCfg := centrifuge.DefaultConfig
 
-	// scfg.LogLevel = centrifuge.LogLevelDebug
-	scfg.LogHandler = handleLog
-	scfg.LogLevel = centrifuge.LogLevelError
-	scfg.MetricsNamespace = "grafana_live"
+	centrifugeCfg.LogHandler = handleLog
+	centrifugeCfg.LogLevel = centrifuge.LogLevelError
+	centrifugeCfg.MetricsNamespace = "grafana_live"
 
-	// Node is the core object in Centrifuge library responsible for many useful
-	// things. For example Node allows to publish messages to channels from server
-	// side with its Publish method.
-	node, err := centrifuge.New(scfg)
+	// Create Centrifuge node which is responsible for the real-time transport
+	// mechanics. Node manages WebSocket connections and channel subscriptions,
+	// provides API to publish messages to a channel. We also use Node Survey
+	// API to communicate between Grafana nodes in Live HA scenario.
+	node, err := centrifuge.New(centrifugeCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -132,10 +131,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		broker, err := centrifuge.NewRedisBroker(node, centrifuge.RedisBrokerConfig{
 			Prefix: "gf_live",
 
-			// Use reasonably large expiration interval for stream meta key,
-			// much bigger than maximum HistoryLifetime value in Node config.
-			// This way stream meta data will expire, in some cases you may want
-			// to prevent its expiration setting this to zero value.
+			// Use reasonably large expiration interval for stream meta info,
+			// Must be much bigger than a maximum HistoryTTL value used in Live
+			// channels. This way stream metadata will eventually expire preventing
+			// memory leak due to inactive channels.
 			HistoryMetaTTL: 7 * 24 * time.Hour,
 
 			// And configure a couple of shards to use.
@@ -167,6 +166,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			return nil, fmt.Errorf("error pinging Redis: %v", err)
 		}
 		if g.Cfg.FeatureToggles["live-ha-leader"] {
+			// Channel leadership mechanism allows using Grafana Live and make
+			// sure that only one stream open for a certain channel throughout
+			// all Grafana nodes. This is achieved by keeping channel leadership
+			// information in Redis and passing subscription control to the channel
+			// leader node.
 			logger.Debug("Live HA channel leader mode ON")
 			leaderManager = leader.NewRedisManager(redisClient)
 			g.leaderManager = leaderManager
@@ -277,7 +281,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		// Called when client issues RPC (async request over Live connection).
 		client.OnRPC(func(e centrifuge.RPCEvent, cb centrifuge.RPCCallback) {
 			err := runConcurrentlyIfNeeded(client.Context(), semaphore, func() {
-				cb(g.handleOnRPC(client, e))
+				cb(g.handleOnRPC(client.Context(), client, e))
 			})
 			if err != nil {
 				cb(centrifuge.RPCReply{}, err)
@@ -593,12 +597,12 @@ func (g *GrafanaLive) HandleDatasourceUpdate(orgID int64, dsUID string) {
 // that map keys is ordered.
 var jsonStd = jsoniter.ConfigCompatibleWithStandardLibrary
 
-func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEvent) (centrifuge.RPCReply, error) {
+func (g *GrafanaLive) handleOnRPC(ctx context.Context, client *centrifuge.Client, e centrifuge.RPCEvent) (centrifuge.RPCReply, error) {
 	logger.Debug("Client calls RPC", "user", client.UserID(), "client", client.ID(), "method", e.Method)
 	if e.Method != "grafana.query" {
 		return centrifuge.RPCReply{}, centrifuge.ErrorMethodNotFound
 	}
-	user, ok := livecontext.GetContextSignedUser(client.Context())
+	user, ok := livecontext.GetContextSignedUser(ctx)
 	if !ok {
 		logger.Error("No user found in context", "user", client.UserID(), "client", client.ID(), "method", e.Method)
 		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
@@ -608,7 +612,7 @@ func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEve
 	if err != nil {
 		return centrifuge.RPCReply{}, centrifuge.ErrorBadRequest
 	}
-	resp, err := g.queryDataService.QueryData(client.Context(), user, false, req, true)
+	resp, err := g.queryDataService.QueryData(ctx, user, false, req, true)
 	if err != nil {
 		logger.Error("Error query data", "user", client.UserID(), "client", client.ID(), "method", e.Method, "error", err)
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
@@ -740,21 +744,29 @@ func (g *GrafanaLive) handleOnSubscribe(ctx context.Context, client *centrifuge.
 	}, reply.LeadershipID, nil
 }
 
+func (g *GrafanaLive) getLeaderOnce(ctx context.Context, orgChannel string) (bool, string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 250*time.Millisecond)
+	defer cancel()
+	ok, _, currentLeadershipID, err := g.leaderManager.GetLeader(ctx, orgChannel)
+	return ok, currentLeadershipID, err
+}
+
 func (g *GrafanaLive) watchChannelLeader(client *centrifuge.Client, orgChannel string, leadershipID string) {
+	leaderCheckInterval := leader.LeadershipEntryTTLSeconds * 2 * time.Second
+	ticker := time.NewTicker(leaderCheckInterval)
+	defer ticker.Stop()
+	logger.Debug("Start watching subscription leadership", "channel", orgChannel, "leaderCheckInterval", leaderCheckInterval)
 	for {
 		select {
 		case <-client.Context().Done():
 			return
-		case <-time.After(20 * time.Second):
-			ctx, cancel := context.WithTimeout(client.Context(), 250*time.Millisecond)
-			ok, _, currentLeadershipID, err := g.leaderManager.GetLeader(ctx, orgChannel)
+		case <-ticker.C:
+			leaderExists, currentLeadershipID, err := g.getLeaderOnce(client.Context(), orgChannel)
 			if err != nil {
-				cancel()
 				logger.Error("Error getting leader", "error", err, "channel", orgChannel)
 				continue
 			}
-			cancel()
-			if !ok {
+			if !leaderExists {
 				logger.Debug("Subscription leader not found", "channel", orgChannel, "lid", leadershipID)
 				client.Disconnect(centrifuge.DisconnectForceReconnect)
 				return

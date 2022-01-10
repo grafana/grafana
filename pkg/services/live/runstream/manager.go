@@ -85,7 +85,7 @@ func WithCheckConfig(interval time.Duration, maxChecks int) ManagerOption {
 const (
 	defaultCheckInterval           = 5 * time.Second
 	defaultDatasourceCheckInterval = 60 * time.Second
-	defaultLeaderRefreshInterval   = 3 * time.Second
+	defaultLeaderRefreshInterval   = (leader.LeadershipEntryTTLSeconds / 3) * time.Second
 	defaultMaxChecks               = 3
 )
 
@@ -182,6 +182,12 @@ func (s *Manager) stopStream(sr streamRequest, cancelFn func()) {
 	close(closeCh)
 }
 
+func (s *Manager) refreshLeaderOnce(ctx context.Context, sr streamRequest) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, 250*time.Millisecond)
+	defer cancel()
+	return s.leaderManager.RefreshLeader(ctx, sr.Channel, sr.leadershipID)
+}
+
 func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamRequest) {
 	numNoSubscribersChecks := 0
 	presenceTicker := time.NewTicker(s.checkInterval)
@@ -192,6 +198,9 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 	defer leaderRefreshTicker.Stop()
 	maxLeaderCheckFailures := 2
 	var currentLeaderCheckFailures int
+	if s.leaderManager != nil {
+		logger.Debug("Start watching stream", "channel", sr.Channel, "lid", sr.leadershipID, "leaderRefreshInterval", s.leaderRefreshInterval)
+	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -200,22 +209,26 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 			if s.leaderManager == nil {
 				continue
 			}
-			refreshCtx, refreshCtxCancel := context.WithTimeout(ctx, 250*time.Millisecond)
-			ok, err := s.leaderManager.RefreshLeader(refreshCtx, sr.Channel, sr.leadershipID)
+			var (
+				refreshOk bool
+				err       error
+			)
+			refreshOk, err = s.refreshLeaderOnce(ctx, sr)
 			if err != nil {
-				refreshCtxCancel()
-				logger.Error("Error refreshing leader entry", "channel", sr.Channel, "error", err)
-				currentLeaderCheckFailures++
-				if currentLeaderCheckFailures == maxLeaderCheckFailures {
-					logger.Error("Stop stream as we can't refresh leadership for a long time", "channel", sr.Channel)
-					s.stopStream(sr, cancelFn)
-					return
+				// Retry once immediately, maybe a one-time network thing.
+				refreshOk, err = s.refreshLeaderOnce(ctx, sr)
+				if err != nil {
+					logger.Error("Error refreshing leader entry", "channel", sr.Channel, "error", err)
+					currentLeaderCheckFailures++
+					if currentLeaderCheckFailures == maxLeaderCheckFailures {
+						logger.Error("Stop stream as we can't refresh leadership for a long time", "channel", sr.Channel)
+						s.stopStream(sr, cancelFn)
+						return
+					}
+					continue
 				}
-				continue
 			}
-			refreshCtxCancel()
-
-			if !ok {
+			if !refreshOk {
 				logger.Error("Channel leader changed, stop stream", "channel", sr.Channel, "lid", sr.leadershipID)
 				s.stopStream(sr, cancelFn)
 				return

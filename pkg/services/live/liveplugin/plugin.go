@@ -50,7 +50,7 @@ func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte, leader
 		logger.Debug("Publish into channel in leader mode", "channel", channel, "lid", leadershipID)
 		_, err = p.node.Publish(channel, data,
 			centrifuge.WithEpoch(leadershipID),
-			centrifuge.WithHistory(1, time.Minute),
+			centrifuge.WithHistory(1, time.Hour),
 		)
 	} else {
 		pub := &centrifuge.Publication{
