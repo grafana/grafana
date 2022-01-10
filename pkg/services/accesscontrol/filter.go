@@ -10,7 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-var sqlIDAcceptList = map[string]struct{}{}
+var sqlIDAcceptList = map[string]struct{}{
+	"u.id":        {},
+	"org_user.id": {},
+}
 
 type SQLDialect interface {
 	DriverName() string
