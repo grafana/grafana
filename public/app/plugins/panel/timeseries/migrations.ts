@@ -314,7 +314,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     },
     tooltip: {
       mode: TooltipDisplayMode.Single,
-      sortOrder: SortOrder.None,
+      sort: SortOrder.None,
     },
   };
 
@@ -346,13 +346,13 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     if (tooltipConfig.sort !== undefined && tooltipConfig.shared) {
       switch (tooltipConfig.sort) {
         case 1:
-          options.tooltip.sortOrder = SortOrder.Ascending;
+          options.tooltip.sort = SortOrder.Ascending;
           break;
         case 2:
-          options.tooltip.sortOrder = SortOrder.Descending;
+          options.tooltip.sort = SortOrder.Descending;
           break;
         default:
-          options.tooltip.sortOrder = SortOrder.None;
+          options.tooltip.sort = SortOrder.None;
       }
     }
   }

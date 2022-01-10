@@ -47,7 +47,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "multi",
-      "sortOrder": "none",
+      "sort": "none",
     },
   },
 }
@@ -75,7 +75,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "single",
-      "sortOrder": "none",
+      "sort": "none",
     },
   },
 }
@@ -101,7 +101,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "single",
-      "sortOrder": "none",
+      "sort": "none",
     },
   },
 }
@@ -157,7 +157,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "multi",
-      "sortOrder": "none",
+      "sort": "none",
     },
   },
 }
@@ -213,7 +213,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "multi",
-      "sortOrder": "none",
+      "sort": "none",
     },
   },
 }
@@ -241,7 +241,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "single",
-      "sortOrder": "none",
+      "sort": "none",
     },
   },
 }
@@ -328,7 +328,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "multi",
-      "sortOrder": "none",
+      "sort": "none",
     },
   },
 }
@@ -385,7 +385,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "multi",
-      "sortOrder": "none",
+      "sort": "none",
     },
   },
 }
@@ -426,7 +426,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "multi",
-      "sortOrder": "none",
+      "sort": "none",
     },
   },
 }
@@ -475,7 +475,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "multi",
-      "sortOrder": "none",
+      "sort": "none",
     },
   },
 }
@@ -561,7 +561,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "multi",
-      "sortOrder": "none",
+      "sort": "none",
     },
   },
 }

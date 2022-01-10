@@ -123,7 +123,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
         data={info.aligned}
         rowIndex={datapointIdx}
         columnIndex={seriesIdx}
-        sortOrder={options.tooltip.sortOrder}
+        sortOrder={options.tooltip.sort}
       />
     );
   };

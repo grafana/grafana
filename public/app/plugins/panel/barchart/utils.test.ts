@@ -93,7 +93,7 @@ describe('BarChart utils', () => {
       stacking: StackingMode.None,
       tooltip: {
         mode: TooltipDisplayMode.None,
-        sortOrder: SortOrder.None,
+        sort: SortOrder.None,
       },
       text: {
         valueSize: 10,

@@ -104,7 +104,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-pre",
@@ -220,7 +220,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-pre",
@@ -344,7 +344,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-pre",
@@ -486,7 +486,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-pre",
@@ -602,7 +602,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-pre",
@@ -726,7 +726,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-pre",
@@ -898,7 +898,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.2.0-pre",
@@ -1045,7 +1045,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.2.0-pre",
@@ -1160,7 +1160,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.5.0-pre",
@@ -1272,7 +1272,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"targets": [

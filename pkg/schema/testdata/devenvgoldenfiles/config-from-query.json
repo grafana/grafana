@@ -87,7 +87,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -530,7 +530,7 @@
 				"text": {},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "8.1.0-pre",

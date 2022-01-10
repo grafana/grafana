@@ -165,7 +165,7 @@ export function ExploreGraph({
         timeZone={timeZone}
         options={
           {
-            tooltip: { mode: tooltipDisplayMode, sortOrder: SortOrder.None },
+            tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
             legend: { displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] },
           } as TimeSeriesOptions
         }

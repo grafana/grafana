@@ -290,5 +290,5 @@ export const defaultTableFieldOptions: TableFieldOptions = {
 
 export interface VizTooltipOptions {
   mode: TooltipDisplayMode;
-  sortOrder: SortOrder;
+  sort: SortOrder;
 }

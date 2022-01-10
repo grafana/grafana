@@ -5,5 +5,5 @@ SortOrder: "asc" | "desc" | "none" @cuetsy(kind="enum")
 
 VizTooltipOptions: {
 	mode: TooltipDisplayMode
-	sortOrder: SortOrder
+	sort: SortOrder
 } @cuetsy(kind="interface")

@@ -190,7 +190,7 @@
 				"showValue": "auto",
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -389,7 +389,7 @@
 				"showCommonLabels": false,
 				"showLabels": false,
 				"showTime": false,
-				"sortOrder": "Descending",
+				"sort": "Descending",
 				"wrapLogMessage": false
 			},
 			"targets": [
@@ -478,7 +478,7 @@
 				"dashboardAlerts": false,
 				"maxItems": 20,
 				"showInstances": false,
-				"sortOrder": 1,
+				"sort": 1,
 				"stateFilter": {
 					"firing": true,
 					"inactive": false,
@@ -653,7 +653,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -940,7 +940,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -1019,7 +1019,7 @@
 				"text": {},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"targets": [

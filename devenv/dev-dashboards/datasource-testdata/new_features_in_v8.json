@@ -320,7 +320,7 @@
           },
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "pluginVersion": "8.0.0-beta2",
@@ -607,7 +607,7 @@
           "text": {},
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "targets": [
@@ -729,7 +729,7 @@
           "text": {},
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "targets": [
@@ -876,7 +876,7 @@
           },
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "pluginVersion": "7.4.0-beta1",
@@ -995,7 +995,7 @@
           },
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "pluginVersion": "7.4.0-beta1",
@@ -1114,7 +1114,7 @@
           },
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "pluginVersion": "7.4.0-beta1",
@@ -1242,7 +1242,7 @@
           },
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "pluginVersion": "7.4.0-beta1",
@@ -1347,7 +1347,7 @@
           },
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "pluginVersion": "7.4.0-beta1",
@@ -1452,7 +1452,7 @@
           },
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "pluginVersion": "7.4.0-beta1",
@@ -1633,7 +1633,7 @@
           },
           "tooltip": {
             "mode": "multi",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "pluginVersion": "7.4.0-beta1",
@@ -1910,7 +1910,7 @@
           },
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "pluginVersion": "7.4.0-beta1",
@@ -2233,7 +2233,7 @@
           },
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "pluginVersion": "7.4.0-beta1",
@@ -2488,7 +2488,7 @@
           },
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "pluginVersion": "7.4.0-beta1",

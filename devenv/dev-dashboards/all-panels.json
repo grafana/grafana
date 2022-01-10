@@ -162,7 +162,7 @@
           "showValue": "auto",
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "targets": [
@@ -547,7 +547,7 @@
           },
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "targets": [
@@ -795,7 +795,7 @@
           },
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "targets": [
@@ -865,7 +865,7 @@
           "text": {},
           "tooltip": {
             "mode": "single",
-            "sortOrder": "none"
+            "sort": "none"
           }
         },
         "targets": [

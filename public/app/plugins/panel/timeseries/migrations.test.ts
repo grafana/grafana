@@ -384,10 +384,10 @@ describe('Graph Migrations', () => {
       panel3.options = graphPanelChangedHandler(panel3, 'graph', desc, prevFieldConfig);
       panel4.options = graphPanelChangedHandler(panel4, 'graph', singleModeWithUnnecessaryOption, prevFieldConfig);
 
-      expect(panel1.options.tooltip.sortOrder).toBe(SortOrder.None);
-      expect(panel2.options.tooltip.sortOrder).toBe(SortOrder.Ascending);
-      expect(panel3.options.tooltip.sortOrder).toBe(SortOrder.Descending);
-      expect(panel4.options.tooltip.sortOrder).toBe(SortOrder.None);
+      expect(panel1.options.tooltip.sort).toBe(SortOrder.None);
+      expect(panel2.options.tooltip.sort).toBe(SortOrder.Ascending);
+      expect(panel3.options.tooltip.sort).toBe(SortOrder.Descending);
+      expect(panel4.options.tooltip.sort).toBe(SortOrder.None);
     });
   });
 });

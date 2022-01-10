@@ -34,7 +34,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       },
     })
     .addRadio({
-      path: 'tooltip.sortOrder',
+      path: 'tooltip.sort',
       name: 'Values sort order',
       category,
       defaultValue: SortOrder.None,

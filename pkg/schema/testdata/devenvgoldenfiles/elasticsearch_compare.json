@@ -10534,7 +10534,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -10672,7 +10672,7 @@
 				},
 				"tooltip": {
 					"mode": "single",
-					"sortOrder": "none"
+					"sort": "none"
 				}
 			},
 			"targets": [

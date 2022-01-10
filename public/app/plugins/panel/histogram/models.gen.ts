@@ -30,7 +30,7 @@ export const defaultPanelOptions: PanelOptions = {
   },
   tooltip: {
     mode: TooltipDisplayMode.Multi,
-    sortOrder: SortOrder.None,
+    sort: SortOrder.None,
   },
 };
 

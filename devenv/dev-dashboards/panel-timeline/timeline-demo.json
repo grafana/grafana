@@ -90,7 +90,7 @@
         "showValue": "always",
         "tooltip": {
           "mode": "single",
-          "sortOrder": "none"
+          "sort": "none"
         }
       },
       "pluginVersion": "7.5.0-pre",
@@ -188,7 +188,7 @@
         "showValue": "always",
         "tooltip": {
           "mode": "single",
-          "sortOrder": "none"
+          "sort": "none"
         }
       },
       "targets": [
@@ -290,7 +290,7 @@
         "showValue": "always",
         "tooltip": {
           "mode": "single",
-          "sortOrder": "none"
+          "sort": "none"
         }
       },
       "targets": [
@@ -371,7 +371,7 @@
         "showValue": "always",
         "tooltip": {
           "mode": "single",
-          "sortOrder": "asc"
+          "sort": "asc"
         }
       },
       "pluginVersion": "7.5.0-pre",
