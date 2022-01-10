@@ -257,7 +257,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"licenseUrl": hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, accesscontrol.LicensingPageReaderAccess)),
 			"edition":    hs.License.Edition(),
 		},
-		"featureToggles":                   asBooleanMap(hs.Features.GetEnabled()),
+		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
 		"rendererAvailable":                hs.RenderService.IsAvailable(),
 		"rendererVersion":                  hs.RenderService.Version(),
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
@@ -293,14 +293,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	}
 
 	return jsonObj, nil
-}
-
-func asBooleanMap(keys []string) map[string]bool {
-	vals := make(map[string]bool, len(keys))
-	for _, k := range keys {
-		vals[k] = true
-	}
-	return vals
 }
 
 func getPanelSort(id string) int {
