@@ -206,7 +206,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 		return response.Error(500, "failed to create user", err)
 	}
 
-	if err := bus.PublishCtx(c.Req.Context(), &events.SignUpCompleted{
+	if err := bus.Publish(c.Req.Context(), &events.SignUpCompleted{
 		Name:  user.NameOrFallback(),
 		Email: user.Email,
 	}); err != nil {

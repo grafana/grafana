@@ -54,7 +54,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
               editable={false}
               onToggleSection={onToggleSection}
               layout={query.layout}
-              showPreviews={showPreviews}
+              showPreviews={previewsEnabled && showPreviews}
             />
           </CustomScrollbar>
         </div>

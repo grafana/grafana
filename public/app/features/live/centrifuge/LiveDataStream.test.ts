@@ -1,5 +1,6 @@
 import {
   DataFrameJSON,
+  dataFrameToJSON,
   DataQueryResponse,
   FieldType,
   LiveChannelAddress,
@@ -472,7 +473,7 @@ describe('LiveDataStream', () => {
       const liveDataStream = new LiveDataStream(deps);
       const valuesCollection = new ValuesCollection<DataQueryResponse>();
 
-      const initialFrame = StreamingDataFrame.fromDataFrameJSON(dataFrameJsons.schema2());
+      const initialFrame = dataFrameJsons.schema2();
       const observable = liveDataStream.get(
         { ...liveDataStreamOptions.withTimeBFilter, frame: initialFrame },
         subscriptionKey
@@ -512,7 +513,7 @@ describe('LiveDataStream', () => {
         liveDataStream.get(
           {
             ...liveDataStreamOptions.withTimeBFilter,
-            frame: StreamingDataFrame.fromDataFrameJSON(dataFrameJsons.schema1()),
+            frame: dataFrameToJSON(StreamingDataFrame.fromDataFrameJSON(dataFrameJsons.schema1())),
           },
           subscriptionKey
         )
@@ -524,7 +525,7 @@ describe('LiveDataStream', () => {
         liveDataStream.get(
           {
             ...liveDataStreamOptions.withTimeBFilter,
-            frame: StreamingDataFrame.fromDataFrameJSON(dataFrameJsons.schema2()),
+            frame: dataFrameJsons.schema2(),
           },
           subscriptionKey
         )

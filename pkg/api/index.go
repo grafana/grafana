@@ -142,6 +142,14 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 	return appLinks, nil
 }
 
+func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
+	return c.OrgRole == models.ROLE_ADMIN && hs.Cfg.IsServiceAccountEnabled() && hs.serviceAccountsService.Migrated(c.Req.Context(), c.OrgId)
+}
+
+func enableTeams(hs *HTTPServer, c *models.ReqContext) bool {
+	return c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR)
+}
+
 func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dtos.NavLink, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
@@ -253,7 +261,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR) {
+	if enableTeams(hs, c) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Teams",
 			Id:          "teams",
@@ -290,6 +298,17 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Description: "Create & manage API keys",
 			Icon:        "key-skeleton-alt",
 			Url:         hs.Cfg.AppSubURL + "/org/apikeys",
+		})
+	}
+	// needs both feature flag and migration to be able to show service accounts
+	if enableServiceAccount(hs, c) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Service accounts",
+			Id:          "serviceaccounts",
+			Description: "Manage service accounts",
+			// TODO: change icon to "key-skeleton-alt" when it's available
+			Icon: "key-skeleton-alt",
+			Url:  hs.Cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
 
@@ -592,7 +611,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		NewGrafanaVersion:       hs.updateChecker.LatestGrafanaVersion(),
 		NewGrafanaVersionExists: hs.updateChecker.GrafanaUpdateAvailable(),
 		AppName:                 setting.ApplicationName,
-		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
+		AppNameBodyClass:        "app-grafana",
 		FavIcon:                 "public/img/fav32.png",
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
 		AppTitle:                "Grafana",
@@ -660,12 +679,4 @@ func (hs *HTTPServer) NotFoundHandler(c *models.ReqContext) {
 	}
 
 	c.HTML(404, "index", data)
-}
-
-func getAppNameBodyClass(validLicense bool) string {
-	if validLicense {
-		return "app-enterprise"
-	}
-
-	return "app-grafana"
 }
