@@ -48,7 +48,7 @@ To send a test notification:
 1. Find the contact point to delete, then click **Delete** (trash icon).
 1. In the confirmation dialog, click **Yes, delete**.
 
-> **Note:** You cannot delete contact points that are in use by a notification policy. You will have to either delete the [notification policy]({{< relref "./notification-policies.md" >}}) or update it to use another contact point.
+> **Note:** You cannot delete contact points that are in use by a notification policy. You will have to either delete the [notification policy]({{< relref "./notifications/_index.md" >}}) or update it to use another contact point.
 
 ## Edit Alertmanager global config
 
@@ -84,6 +84,7 @@ To edit global configuration options for an external Alertmanager, like SMTP ser
 | Threema                                       | `threema`                 | Supported            | N/A                                                                                                      |
 | VictorOps                                     | `victorops`               | Supported            | Supported                                                                                                |
 | [Webhook](#webhook)                           | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
+| [WeCom](#wecom)                               | `wecom`                   | Supported            | N/A                                                                                                      |
 | [Zenduty](#zenduty)                           | `webhook`                 | Supported            | N/A                                                                                                      |
 
 ### Webhook
@@ -195,3 +196,15 @@ Example JSON body:
 #### Removed fields related to dashboards
 
 Alerts are not coupled to dashboards anymore therefore the fields related to dashboards `dashboardId` and `panelId` have been removed.
+
+### WeCom
+
+WeCom contact points need a Webhook URL. These are obtained by setting up a WeCom robot on the corresponding group chat. To obtain a Webhook URL using the WeCom desktop Client please follow these steps:
+
+1. Click the "..." in the top right corner of a group chat that you want your alerts to be delivered to
+2. Click "Add Group Robot", select "New Robot" and give your robot a name. Click "Add Robot"
+3. There should be a Webhook URL in the panel.
+
+| Setting | Description        |
+| ------- | ------------------ |
+| Url     | WeCom webhook URL. |

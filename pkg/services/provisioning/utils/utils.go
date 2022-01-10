@@ -11,7 +11,7 @@ import (
 
 func CheckOrgExists(ctx context.Context, orgID int64) error {
 	query := models.GetOrgByIdQuery{Id: orgID}
-	if err := bus.DispatchCtx(ctx, &query); err != nil {
+	if err := bus.Dispatch(ctx, &query); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return err
 		}

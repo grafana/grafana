@@ -120,7 +120,7 @@ func (m *MockStreamRunner) RunStream(arg0 context.Context, arg1 *backend.RunStre
 }
 
 // RunStream indicates an expected call of RunStream.
-func (mr *MockStreamRunnerMockRecorder) RunStream(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockStreamRunnerMockRecorder) RunStream(ctx, arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunStream", reflect.TypeOf((*MockStreamRunner)(nil).RunStream), arg0, arg1, arg2)
 }
@@ -149,9 +149,9 @@ func (m *MockPluginContextGetter) EXPECT() *MockPluginContextGetterMockRecorder 
 }
 
 // GetPluginContext mocks base method.
-func (m *MockPluginContextGetter) GetPluginContext(arg0 *models.SignedInUser, arg1, arg2 string, arg3 bool) (backend.PluginContext, bool, error) {
+func (m *MockPluginContextGetter) GetPluginContext(ctx context.Context, arg0 *models.SignedInUser, arg1, arg2 string, arg3 bool) (backend.PluginContext, bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPluginContext", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "GetPluginContext", ctx, arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(backend.PluginContext)
 	ret1, _ := ret[1].(bool)
 	ret2, _ := ret[2].(error)
@@ -159,7 +159,7 @@ func (m *MockPluginContextGetter) GetPluginContext(arg0 *models.SignedInUser, ar
 }
 
 // GetPluginContext indicates an expected call of GetPluginContext.
-func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(ctx, arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPluginContext", reflect.TypeOf((*MockPluginContextGetter)(nil).GetPluginContext), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPluginContext", reflect.TypeOf((*MockPluginContextGetter)(nil).GetPluginContext), ctx, arg0, arg1, arg2, arg3)
 }

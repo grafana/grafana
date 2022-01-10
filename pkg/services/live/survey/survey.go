@@ -26,7 +26,7 @@ var (
 )
 
 type ChannelHandlerGetter interface {
-	GetChannelHandler(user *models.SignedInUser, channel string) (models.ChannelHandler, live.Channel, error)
+	GetChannelHandler(ctx context.Context, user *models.SignedInUser, channel string) (models.ChannelHandler, live.Channel, error)
 }
 
 type Caller struct {
@@ -147,13 +147,13 @@ func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStrea
 	}
 
 	query := models.GetSignedInUserQuery{UserId: req.UserID, OrgId: req.OrgID}
-	if err := c.bus.DispatchCtx(context.Background(), &query); err != nil {
+	if err := c.bus.Dispatch(context.Background(), &query); err != nil {
 		// TODO: better handling of auth error.
 		return nil, errors.New("unauthorized")
 	}
 	user := query.Result
 
-	handler, parsedChannel, err := c.channelHandlerGetter.GetChannelHandler(user, req.Channel)
+	handler, parsedChannel, err := c.channelHandlerGetter.GetChannelHandler(context.Background(), user, req.Channel)
 	if err != nil {
 		return nil, err
 	}

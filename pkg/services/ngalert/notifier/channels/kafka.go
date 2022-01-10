@@ -72,7 +72,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("alert_state", state)
-	bodyJSON.Set("description", tmpl(`{{ template "default.title" . }}`))
+	bodyJSON.Set("description", tmpl(DefaultMessageTitleEmbed))
 	bodyJSON.Set("client", "Grafana")
 	bodyJSON.Set("details", tmpl(`{{ template "default.message" . }}`))
 
@@ -99,7 +99,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	topicURL := strings.TrimRight(kn.Endpoint, "/") + "/topics/" + tmpl(kn.Topic)
 
 	if tmplErr != nil {
-		kn.log.Debug("failed to template Kafka message", "err", tmplErr.Error())
+		kn.log.Warn("failed to template Kafka message", "err", tmplErr.Error())
 	}
 
 	cmd := &models.SendWebhookSync{
@@ -112,7 +112,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		},
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		kn.log.Error("Failed to send notification to Kafka", "error", err, "body", string(body))
 		return false, err
 	}

@@ -39,7 +39,7 @@ func TestEngineTimeouts(t *testing.T) {
 			engine.evalHandler = evalHandler
 			engine.resultHandler = resultHandler
 
-			err := engine.processJobWithRetry(context.TODO(), job)
+			err := engine.processJobWithRetry(context.Background(), job)
 			require.Nil(t, err)
 
 			require.Equal(t, true, evalHandler.EvalSucceed)

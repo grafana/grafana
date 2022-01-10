@@ -18,7 +18,7 @@ import (
 //go:generate mockgen -destination=plugin_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features PluginContextGetter
 
 type PluginContextGetter interface {
-	GetPluginContext(user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error)
+	GetPluginContext(ctx context.Context, user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error)
 }
 
 type SubscribeStreamCaller interface {
@@ -88,7 +88,7 @@ type PluginPathRunner struct {
 
 // OnSubscribe passes control to a plugin.
 func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
-	pCtx, found, err := r.pluginContextGetter.GetPluginContext(user, r.pluginID, r.datasourceUID, false)
+	pCtx, found, err := r.pluginContextGetter.GetPluginContext(ctx, user, r.pluginID, r.datasourceUID, false)
 	if err != nil {
 		logger.Error("Get plugin context error", "error", err, "path", r.path)
 		return models.SubscribeReply{}, 0, err
@@ -177,7 +177,7 @@ func (r *PluginPathRunner) handleHASubscribe(ctx context.Context, user *models.S
 
 // OnPublish passes control to a plugin.
 func (r *PluginPathRunner) OnPublish(ctx context.Context, user *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
-	pCtx, found, err := r.pluginContextGetter.GetPluginContext(user, r.pluginID, r.datasourceUID, false)
+	pCtx, found, err := r.pluginContextGetter.GetPluginContext(ctx, user, r.pluginID, r.datasourceUID, false)
 	if err != nil {
 		logger.Error("Get plugin context error", "error", err, "path", r.path)
 		return models.PublishReply{}, 0, err

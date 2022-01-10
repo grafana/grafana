@@ -274,7 +274,7 @@ const ToPromLikeMap: Record<AbstractLabelOperator, string> = invert(FromPromLike
   string
 >;
 
-export function toPromLikeQuery(labelBasedQuery: AbstractQuery): PromLikeQuery {
+export function toPromLikeExpr(labelBasedQuery: AbstractQuery): string {
   const expr = labelBasedQuery.labelMatchers
     .map((selector: AbstractLabelMatcher) => {
       const operator = ToPromLikeMap[selector.operator];
@@ -287,9 +287,13 @@ export function toPromLikeQuery(labelBasedQuery: AbstractQuery): PromLikeQuery {
     .filter((e: string) => e !== '')
     .join(', ');
 
+  return expr ? `{${expr}}` : '';
+}
+
+export function toPromLikeQuery(labelBasedQuery: AbstractQuery): PromLikeQuery {
   return {
     refId: labelBasedQuery.refId,
-    expr: expr ? `{${expr}}` : '',
+    expr: toPromLikeExpr(labelBasedQuery),
     range: true,
   };
 }

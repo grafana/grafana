@@ -9,11 +9,11 @@ import (
 )
 
 func (ss *SQLStore) addDashboardACLQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.GetDashboardAclInfoList)
+	bus.AddHandler("sql", ss.GetDashboardAclInfoList)
 }
 
-func (ss *SQLStore) UpdateDashboardACL(dashboardID int64, items []*models.DashboardAcl) error {
-	return ss.UpdateDashboardACLCtx(context.TODO(), dashboardID, items)
+func (ss *SQLStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {
+	return ss.UpdateDashboardACLCtx(ctx, dashboardID, items)
 }
 
 func (ss *SQLStore) UpdateDashboardACLCtx(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {

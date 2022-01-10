@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -22,9 +23,20 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, expressionService *expr.Service,
-	pluginRequestValidator models.PluginRequestValidator, SecretsService secrets.Service,
-	pluginClient plugins.Client, OAuthTokenService oauthtoken.OAuthTokenService) *Service {
+const (
+	headerName  = "httpHeaderName"
+	headerValue = "httpHeaderValue"
+)
+
+func ProvideService(
+	cfg *setting.Cfg,
+	dataSourceCache datasources.CacheService,
+	expressionService *expr.Service,
+	pluginRequestValidator models.PluginRequestValidator,
+	SecretsService secrets.Service,
+	pluginClient plugins.Client,
+	oAuthTokenService oauthtoken.OAuthTokenService,
+) *Service {
 	g := &Service{
 		cfg:                    cfg,
 		dataSourceCache:        dataSourceCache,
@@ -32,14 +44,13 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		pluginRequestValidator: pluginRequestValidator,
 		secretsService:         SecretsService,
 		pluginClient:           pluginClient,
-		oAuthTokenService:      OAuthTokenService,
+		oAuthTokenService:      oAuthTokenService,
 		log:                    log.New("query_data"),
 	}
 	g.log.Info("Query Service initialization")
 	return g
 }
 
-// Gateway receives data and translates it to Grafana Live publications.
 type Service struct {
 	cfg                    *setting.Cfg
 	dataSourceCache        datasources.CacheService
@@ -59,7 +70,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 // QueryData can process queries and return query responses.
 func (s *Service) QueryData(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
-	parsedReq, err := s.parseMetricRequest(user, skipCache, reqDTO)
+	parsedReq, err := s.parseMetricRequest(ctx, user, skipCache, reqDTO)
 	if err != nil {
 		return nil, err
 	}
@@ -87,10 +98,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUs
 			RefID:         pq.query.RefID,
 			MaxDataPoints: pq.query.MaxDataPoints,
 			QueryType:     pq.query.QueryType,
-			Datasource: expr.DataSourceRef{
-				Type: pq.datasource.Type,
-				UID:  pq.datasource.Uid,
-			},
+			DataSource:    pq.datasource,
 			TimeRange: expr.TimeRange{
 				From: pq.query.TimeRange.From,
 				To:   pq.query.TimeRange.To,
@@ -130,7 +138,16 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
 		if token := s.oAuthTokenService.GetCurrentOAuthToken(ctx, user); token != nil {
 			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+
+			idToken, ok := token.Extra("id_token").(string)
+			if ok && idToken != "" {
+				req.Headers["X-ID-Token"] = idToken
+			}
 		}
+	}
+
+	for k, v := range customHeaders(ds.JsonData, instanceSettings.DecryptedSecureJSONData) {
+		req.Headers[k] = v
 	}
 
 	for _, q := range parsedReq.parsedQueries {
@@ -150,7 +167,27 @@ type parsedRequest struct {
 	parsedQueries []parsedQuery
 }
 
-func (s *Service) parseMetricRequest(user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
+func customHeaders(jsonData *simplejson.Json, decryptedJsonData map[string]string) map[string]string {
+	if jsonData == nil {
+		return nil
+	}
+
+	data := jsonData.MustMap()
+
+	headers := map[string]string{}
+	for k := range data {
+		if strings.HasPrefix(k, headerName) {
+			if header, ok := data[k].(string); ok {
+				valueKey := strings.ReplaceAll(k, headerName, headerValue)
+				headers[header] = decryptedJsonData[valueKey]
+			}
+		}
+	}
+
+	return headers
+}
+
+func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
 		return nil, NewErrBadQuery("no queries found")
 	}
@@ -164,7 +201,7 @@ func (s *Service) parseMetricRequest(user *models.SignedInUser, skipCache bool, 
 	// Parse the queries
 	datasourcesByUid := map[string]*models.DataSource{}
 	for _, query := range reqDTO.Queries {
-		ds, err := s.getDataSourceFromQuery(user, skipCache, query, datasourcesByUid)
+		ds, err := s.getDataSourceFromQuery(ctx, user, skipCache, query, datasourcesByUid)
 		if err != nil {
 			return nil, err
 		}
@@ -210,7 +247,7 @@ func (s *Service) parseMetricRequest(user *models.SignedInUser, skipCache bool, 
 	return req, nil
 }
 
-func (s *Service) getDataSourceFromQuery(user *models.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*models.DataSource) (*models.DataSource, error) {
+func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*models.DataSource) (*models.DataSource, error) {
 	var err error
 	uid := query.Get("datasource").Get("uid").MustString()
 
@@ -236,7 +273,7 @@ func (s *Service) getDataSourceFromQuery(user *models.SignedInUser, skipCache bo
 	// use datasourceId if it exists
 	id := query.Get("datasourceId").MustInt64(0)
 	if id > 0 {
-		ds, err = s.dataSourceCache.GetDatasource(id, user, skipCache)
+		ds, err = s.dataSourceCache.GetDatasource(ctx, id, user, skipCache)
 		if err != nil {
 			return nil, err
 		}
@@ -244,7 +281,7 @@ func (s *Service) getDataSourceFromQuery(user *models.SignedInUser, skipCache bo
 	}
 
 	if uid != "" {
-		ds, err = s.dataSourceCache.GetDatasourceByUID(uid, user, skipCache)
+		ds, err = s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipCache)
 		if err != nil {
 			return nil, err
 		}

@@ -36,7 +36,7 @@ export function createSpanLinkFactory({
     // let's try to use the old legacy path.
     return legacyCreateSpanLinkFactory(splitOpenFn, traceToLogsOptions);
   } else {
-    return function (span: TraceSpan): SpanLinkDef | undefined {
+    return function SpanLink(span: TraceSpan): SpanLinkDef | undefined {
       // We should be here only if there are some links in the dataframe
       const field = dataFrame.fields.find((f) => Boolean(f.config.links?.length))!;
       try {
@@ -74,7 +74,7 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
     return undefined;
   }
 
-  return function (span: TraceSpan): SpanLinkDef {
+  return function SpanLink(span: TraceSpan): SpanLinkDef {
     // This is reusing existing code from derived fields which may not be ideal match so some data is a bit faked at
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do

@@ -37,6 +37,10 @@ func (s *ServiceAccountMock) DeleteServiceAccount(ctx context.Context, orgID, se
 	return nil
 }
 
+func (s *ServiceAccountMock) Migrated(ctx context.Context, orgID int64) bool {
+	return false
+}
+
 func SetupMockAccesscontrol(t *testing.T, userpermissionsfunc func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error), disableAccessControl bool) *accesscontrolmock.Mock {
 	t.Helper()
 	acmock := accesscontrolmock.New()
@@ -52,8 +56,9 @@ func SetupMockAccesscontrol(t *testing.T, userpermissionsfunc func(c context.Con
 var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 
 type Calls struct {
-	CreateServiceAccount []interface{}
-	DeleteServiceAccount []interface{}
+	CreateServiceAccount   []interface{}
+	DeleteServiceAccount   []interface{}
+	UpgradeServiceAccounts []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
@@ -69,5 +74,10 @@ func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, cmd
 func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	// now we can test that the mock has these calls when we call the function
 	s.Calls.DeleteServiceAccount = append(s.Calls.DeleteServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
+	return nil
+}
+
+func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
+	s.Calls.DeleteServiceAccount = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
 	return nil
 }
