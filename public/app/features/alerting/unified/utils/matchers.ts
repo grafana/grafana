@@ -8,12 +8,15 @@ export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
 }
 
 export const getMatcherQueryParams = (labels: Labels) => {
-  return `matchers=${encodeURIComponent(
-    Object.entries(labels)
-      .filter(([labelKey]) => !(labelKey.startsWith('__') && labelKey.endsWith('__')))
-      .map(([labelKey, labelValue]) => {
-        return `${labelKey}=${labelValue}`;
-      })
-      .join(',')
-  )}`;
+  const matcherUrlParams = new URLSearchParams();
+
+  const matcherLabels = Object.entries(labels).filter(
+    ([labelKey]) => !(labelKey.startsWith('__') && labelKey.endsWith('__'))
+  );
+
+  matcherLabels.forEach(([labekKey, labelValue]) => {
+    matcherUrlParams.append('matchers', `${labekKey}=${labelValue}`);
+  });
+
+  return matcherUrlParams;
 };
