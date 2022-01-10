@@ -10,9 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-var sqlIDAcceptList = map[string]struct{}{
-	"org_user.id": {},
-}
+var sqlIDAcceptList = map[string]struct{}{}
 
 type SQLDialect interface {
 	DriverName() string
@@ -26,24 +24,27 @@ func Filter(ctx context.Context, dialect SQLDialect, sqlID, prefix, action strin
 		return "", nil, errors.New("sqlID is not in the accept list")
 	}
 
-	var scopes []string
-	if user.Permissions != nil && user.Permissions[user.OrgId] != nil {
-		scopes = append(scopes, user.Permissions[user.OrgId][action]...)
+	if user.Permissions == nil || user.Permissions[user.OrgId] == nil {
+		return "", nil, errors.New("missing permissions")
 	}
 
+	scopes := user.Permissions[user.OrgId][action]
 	if len(scopes) == 0 {
-		scopes = append(scopes, "no:access")
+		return " 1 = 0", nil, nil
 	}
 
 	var sql string
 	var args []interface{}
 
-	if strings.Contains(dialect.DriverName(), migrator.SQLite) {
+	switch {
+	case strings.Contains(dialect.DriverName(), migrator.SQLite):
 		sql, args = sqliteQuery(scopes, sqlID, prefix)
-	} else if strings.Contains(dialect.DriverName(), migrator.MySQL) {
+	case strings.Contains(dialect.DriverName(), migrator.MySQL):
 		sql, args = mysqlQuery(scopes, sqlID, prefix)
-	} else {
+	case strings.Contains(dialect.DriverName(), migrator.Postgres):
 		sql, args = postgresQuery(scopes, sqlID, prefix)
+	default:
+		return "", nil, fmt.Errorf("unknown database: %s", dialect.DriverName())
 	}
 
 	return sql, args, nil

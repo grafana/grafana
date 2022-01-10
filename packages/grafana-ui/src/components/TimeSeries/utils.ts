@@ -11,6 +11,7 @@ import {
   getFieldColorModeForField,
   getFieldSeriesColor,
   getFieldDisplayName,
+  getDisplayProcessor,
 } from '@grafana/data';
 
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
@@ -23,6 +24,7 @@ import {
   ScaleDirection,
   ScaleOrientation,
   VizLegendOptions,
+  StackingMode,
 } from '@grafana/schema';
 import { collectStackingGroups, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
@@ -135,8 +137,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     // TODO: skip this for fields with custom renderers?
     field.state!.seriesIndex = seriesIndex++;
 
-    const fmt = field.display ?? defaultFormatter;
-
+    let fmt = field.display ?? defaultFormatter;
+    if (field.config.custom?.stacking?.mode === StackingMode.Percent) {
+      fmt = getDisplayProcessor({
+        field: {
+          ...field,
+          config: {
+            ...field.config,
+            unit: 'percentunit',
+          },
+        },
+        theme,
+      });
+    }
     const scaleKey = buildScaleKey(config);
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
