@@ -16,7 +16,7 @@ export interface Props {
 const UsersTable: FC<Props> = (props) => {
   const { users, orgId, onRoleChange, onRemoveUser } = props;
 
-  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState<boolean | string>(false);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
 
@@ -103,7 +103,7 @@ const UsersTable: FC<Props> = (props) => {
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => setShowRemoveModal(Boolean(user.login))}
+                    onClick={() => setShowRemoveModal(user.login)}
                     icon="times"
                     aria-label="Delete user"
                   />
@@ -112,7 +112,7 @@ const UsersTable: FC<Props> = (props) => {
                     confirmText="Delete"
                     title="Delete"
                     onDismiss={() => setShowRemoveModal(false)}
-                    isOpen={Boolean(user.login) === showRemoveModal}
+                    isOpen={user.login === showRemoveModal}
                     onConfirm={() => {
                       onRemoveUser(user);
                     }}

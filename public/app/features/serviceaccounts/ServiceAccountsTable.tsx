@@ -19,7 +19,7 @@ const ServiceaccountsTable: FC<Props> = (props) => {
   const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
   const rolePickerDisabled = !canUpdateRole;
 
-  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState<boolean | string>(false);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [builtinRoles, setBuiltinRoles] = useState<Record<string, Role[]>>({});
 
@@ -106,7 +106,7 @@ const ServiceaccountsTable: FC<Props> = (props) => {
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => setShowRemoveModal(Boolean(serviceAccount.login))}
+                    onClick={() => setShowRemoveModal(serviceAccount.login)}
                     icon="times"
                     aria-label="Delete serviceaccount"
                   />
@@ -115,7 +115,7 @@ const ServiceaccountsTable: FC<Props> = (props) => {
                     confirmText="Delete"
                     title="Delete"
                     onDismiss={() => setShowRemoveModal(false)}
-                    isOpen={Boolean(serviceAccount.login) === showRemoveModal}
+                    isOpen={serviceAccount.login === showRemoveModal}
                     onConfirm={() => {
                       onRemoveserviceaccount(serviceAccount);
                     }}
