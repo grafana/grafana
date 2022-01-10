@@ -16,7 +16,7 @@ import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { COMMON_LABELS } from '../../../core/logs_model';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
-import useScrollTop from './useScrollTop';
+import usePanelScroll from './usePanelScroll';
 import useNewData from './useNewData';
 
 interface LogsPanelProps extends PanelProps<Options> {}
@@ -70,7 +70,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newData, externalLogs, dedupStrategy]);
 
-  const { scrollTop } = useScrollTop({ isAscending, logRows });
+  const { scrollTop } = usePanelScroll({ isAscending, logRows });
 
   const getFieldLinks = useCallback(
     (field: Field, rowIndex: number) => {

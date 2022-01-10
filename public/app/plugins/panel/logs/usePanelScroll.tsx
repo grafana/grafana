@@ -6,7 +6,7 @@ interface Props {
   logRows: LogRowModel[];
 }
 
-const useScrollTop = ({ isAscending, logRows }: Props) => {
+const usePanelScroll = ({ isAscending, logRows }: Props) => {
   const [scrollTop, setScrollTop] = useState(0);
 
   useLayoutEffect(() => {
@@ -34,6 +34,8 @@ const useScrollTop = ({ isAscending, logRows }: Props) => {
         // until the user scrolls up
         setScrollTop(scrollbar.scrollHeight);
       }
+    } else if (!isAscending && scrollbar) {
+      setScrollTop(scrollbar.scrollTop);
     }
   }, [isAscending, logRows]);
 
@@ -42,4 +44,4 @@ const useScrollTop = ({ isAscending, logRows }: Props) => {
   };
 };
 
-export default useScrollTop;
+export default usePanelScroll;
