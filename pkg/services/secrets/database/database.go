@@ -13,15 +13,15 @@ import (
 
 const dataKeysTable = "data_keys"
 
-var logger = log.New("secrets-store")
-
 type SecretsStoreImpl struct {
 	sqlStore *sqlstore.SQLStore
+	log      log.Logger
 }
 
 func ProvideSecretsStore(sqlStore *sqlstore.SQLStore) *SecretsStoreImpl {
 	return &SecretsStoreImpl{
 		sqlStore: sqlStore,
+		log:      log.New("secrets.store"),
 	}
 }
 
@@ -42,7 +42,7 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, name string) (*secre
 	}
 
 	if err != nil {
-		logger.Error("Failed getting data key", "err", err, "name", name)
+		ss.log.Error("Failed to get data key", "err", err, "name", name)
 		return nil, fmt.Errorf("failed getting data key: %w", err)
 	}
 

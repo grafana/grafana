@@ -577,7 +577,7 @@ func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(ctx context.
 	if copyDto.Dashboard.Id == 0 {
 		copyDto.Dashboard.Id = rand.Int63n(1000000)
 	} else {
-		err := s.DeleteProvisionedDashboard(dto.Dashboard.Id, dto.Dashboard.OrgId)
+		err := s.DeleteProvisionedDashboard(context.Background(), dto.Dashboard.Id, dto.Dashboard.OrgId)
 		// Lets delete existing so we do not have duplicates
 		if err != nil {
 			return nil, err
@@ -608,7 +608,7 @@ func (s *fakeDashboardProvisioningService) SaveFolderForProvisionedDashboards(ct
 	return dto.Dashboard, nil
 }
 
-func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardID int64) error {
+func (s *fakeDashboardProvisioningService) UnprovisionDashboard(ctx context.Context, dashboardID int64) error {
 	for key, val := range s.provisioned {
 		for index, dashboard := range val {
 			if dashboard.DashboardId == dashboardID {
@@ -619,8 +619,8 @@ func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardID int6
 	return nil
 }
 
-func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(dashboardID int64, orgID int64) error {
-	err := s.UnprovisionDashboard(dashboardID)
+func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error {
+	err := s.UnprovisionDashboard(ctx, dashboardID)
 	if err != nil {
 		return err
 	}
@@ -637,7 +637,7 @@ func (s *fakeDashboardProvisioningService) GetProvisionedDashboardDataByDashboar
 	return nil, nil
 }
 
-func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
+func mockGetDashboardQuery(ctx context.Context, cmd *models.GetDashboardQuery) error {
 	for _, d := range fakeService.getDashboard {
 		if d.Slug == cmd.Slug {
 			cmd.Result = d

@@ -42,6 +42,12 @@ type OpsgenieNotifier struct {
 
 // NewOpsgenieNotifier is the constructor for the Opsgenie notifier
 func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*OpsgenieNotifier, error) {
+	if model.Settings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
+	}
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
 	apiKey := fn(context.Background(), model.SecureSettings, "apiKey", model.Settings.Get("apiKey").MustString())
@@ -114,7 +120,7 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		},
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Opsgenie: %w", err)
 	}
 
@@ -150,10 +156,10 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	var tmplErr error
 	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
 
-	title := tmpl(`{{ template "default.title" . }}`)
+	title := tmpl(DefaultMessageTitleEmbed)
 	description := fmt.Sprintf(
 		"%s\n%s\n\n%s",
-		tmpl(`{{ template "default.title" . }}`),
+		tmpl(DefaultMessageTitleEmbed),
 		ruleURL,
 		tmpl(`{{ template "default.message" . }}`),
 	)
@@ -201,7 +207,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	apiURL = tmpl(on.APIUrl)
 
 	if tmplErr != nil {
-		on.log.Debug("failed to template Opsgenie message", "err", tmplErr.Error())
+		on.log.Warn("failed to template Opsgenie message", "err", tmplErr.Error())
 	}
 
 	return bodyJSON, apiURL, nil

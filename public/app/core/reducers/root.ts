@@ -7,7 +7,7 @@ import apiKeysReducers from 'app/features/api-keys/state/reducers';
 import foldersReducers from 'app/features/folders/state/reducers';
 import dashboardReducers from 'app/features/dashboard/state/reducers';
 import exploreReducers from 'app/features/explore/state/main';
-import pluginReducers from 'app/features/plugins/state/reducers';
+import { reducer as pluginsReducer } from 'app/features/plugins/admin/state/reducer';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
 import userReducers from 'app/features/profile/state/reducers';
@@ -17,6 +17,7 @@ import templatingReducers from 'app/features/variables/state/reducers';
 import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
 import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
+import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers';
 
 const rootReducers = {
   ...sharedReducers,
@@ -26,9 +27,9 @@ const rootReducers = {
   ...foldersReducers,
   ...dashboardReducers,
   ...exploreReducers,
-  ...pluginReducers,
   ...dataSourcesReducers,
   ...usersReducers,
+  ...serviceAccountsReducer,
   ...userReducers,
   ...organizationReducers,
   ...ldapReducers,
@@ -36,6 +37,7 @@ const rootReducers = {
   ...importDashboardReducers,
   ...panelEditorReducers,
   ...panelsReducers,
+  plugins: pluginsReducer,
 };
 
 const addedReducers = {};

@@ -127,7 +127,7 @@ function getProvideCompletionItems(query: string): Promise<TypeaheadOutput> {
     {
       value,
     } as any,
-    { logGroupNames: ['logGroup1'] }
+    { logGroupNames: ['logGroup1'], region: 'custom' }
   );
 }
 

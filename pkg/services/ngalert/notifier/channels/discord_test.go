@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestDiscordNotifier(t *testing.T) {
@@ -43,12 +44,12 @@ func TestDiscordNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"content": "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"content": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/assets/img/fav32.png",
-						"text":     "Grafana v",
+						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
 					"url":   "http://localhost/alerting/list",
@@ -85,7 +86,7 @@ func TestDiscordNotifier(t *testing.T) {
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/assets/img/fav32.png",
-						"text":     "Grafana v",
+						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:2]  ",
 					"url":   "http://localhost/alerting/list",
@@ -103,7 +104,7 @@ func TestDiscordNotifier(t *testing.T) {
 		{
 			name: "Default config with one alert, use default discord username",
 			settings: `{
-				"url": "http://localhost", 
+				"url": "http://localhost",
 				"use_discord_username": true
 			}`,
 			alerts: []*types.Alert{
@@ -115,12 +116,12 @@ func TestDiscordNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"content": "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"content": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/assets/img/fav32.png",
-						"text":     "Grafana v",
+						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
 					"url":   "http://localhost/alerting/list",
@@ -150,7 +151,7 @@ func TestDiscordNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			body := ""
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
+			bus.AddHandler("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
 				body = webhook.Body
 				return nil
 			})

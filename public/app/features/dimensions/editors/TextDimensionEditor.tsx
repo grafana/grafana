@@ -95,7 +95,7 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
                 onChange={onFixedChange}
                 item={dummyStringSettings}
               />
-              {value.fixed && (
+              {value?.fixed && (
                 <Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClearFixedText} />
               )}
             </>

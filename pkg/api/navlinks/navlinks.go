@@ -2,7 +2,7 @@ package navlinks
 
 import "github.com/grafana/grafana/pkg/api/dtos"
 
-func GetServerAdminNode(children []*dtos.NavLink) *dtos.NavLink {
+func GetServerAdminNode(children []*dtos.NavLink, navSection string) *dtos.NavLink {
 	url := ""
 	if len(children) > 0 {
 		url = children[0].Url
@@ -15,6 +15,7 @@ func GetServerAdminNode(children []*dtos.NavLink) *dtos.NavLink {
 		Icon:         "shield",
 		Url:          url,
 		SortWeight:   dtos.WeightAdmin,
+		Section:      navSection,
 		Children:     children,
 	}
 }

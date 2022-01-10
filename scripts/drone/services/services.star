@@ -1,3 +1,9 @@
+def integration_test_services_volumes():
+    return [
+        { 'name': 'postgres', 'temp': { 'medium': 'memory' } },
+        { 'name': 'mysql', 'temp': { 'medium': 'memory' }
+    }]
+
 def integration_test_services(edition):
     services = [
         {
@@ -7,7 +13,12 @@ def integration_test_services(edition):
               'POSTGRES_USER': 'grafanatest',
               'POSTGRES_PASSWORD': 'grafanatest',
               'POSTGRES_DB': 'grafanatest',
+              'PGDATA': '/var/lib/postgresql/data/pgdata',
             },
+            'volumes': [{
+                'name': 'postgres',
+                'path': '/var/lib/postgresql/data/pgdata'
+            }],
         },
         {
             'name': 'mysql',
@@ -18,6 +29,10 @@ def integration_test_services(edition):
                 'MYSQL_USER': 'grafana',
                 'MYSQL_PASSWORD': 'password',
             },
+            'volumes': [{
+                'name': 'mysql',
+                'path': '/var/lib/mysql'
+            }]
         },
     ]
 

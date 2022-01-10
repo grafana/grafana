@@ -16,6 +16,15 @@ import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './dat
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
+  it('returns empty response when traceId is empty', async () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const response = await lastValueFrom(
+      ds.query({ targets: [{ refId: 'refid1', queryType: 'traceId', query: '' } as Partial<TempoQuery>] } as any),
+      { defaultValue: 'empty' }
+    );
+    expect(response).toBe('empty');
+  });
+
   it('parses json fields from backend', async () => {
     setupBackendSrv(
       new MutableDataFrame({
@@ -34,7 +43,7 @@ describe('Tempo data source', () => {
       })
     );
     const ds = new TempoDatasource(defaultSettings);
-    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1' }] } as any));
+    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1', query: '12345' }] } as any));
 
     expect(
       (response.data[0] as DataFrame).fields.map((f) => ({
@@ -147,9 +156,7 @@ describe('Tempo data source', () => {
     };
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
-      'service.name': 'frontend',
-      name: '/config',
-      'root.http.status_code': '500',
+      tags: 'root.http.status_code=500 service.name="frontend" name="/config"',
       minDuration: '1ms',
       maxDuration: '100s',
       limit: 10,
@@ -166,22 +173,8 @@ describe('Tempo data source', () => {
     };
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
+      tags: '',
       limit: DEFAULT_LIMIT,
-    });
-  });
-
-  it('should ignore incomplete tag queries', () => {
-    const ds = new TempoDatasource(defaultSettings);
-    const tempoQuery: TempoQuery = {
-      queryType: 'search',
-      refId: 'A',
-      query: '',
-      search: 'root.ip root.http.status_code=500',
-    };
-    const builtQuery = ds.buildSearchQuery(tempoQuery);
-    expect(builtQuery).toStrictEqual({
-      limit: DEFAULT_LIMIT,
-      'root.http.status_code': '500',
     });
   });
 

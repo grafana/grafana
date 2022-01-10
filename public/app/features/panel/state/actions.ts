@@ -1,6 +1,6 @@
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { loadPanelPlugin } from 'app/features/plugins/state/actions';
+import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
 import { panelModelAndPluginReady } from './reducers';
 import { LibraryElementDTO } from 'app/features/library-panels/types';

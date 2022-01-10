@@ -19,7 +19,7 @@ export class CandlestickSuggestionsSupplier {
     }
 
     const info = prepareCandlestickFields(builder.data.series, defaultPanelOptions, config.theme2);
-    if (!info.open || info.warn || info.noTimeField) {
+    if (!info) {
       return;
     }
 
@@ -38,7 +38,6 @@ export class CandlestickSuggestionsSupplier {
         },
         overrides: [],
       },
-      previewModifier: (s) => {},
     });
 
     list.append({

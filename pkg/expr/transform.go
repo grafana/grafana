@@ -6,11 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 )
@@ -32,40 +28,6 @@ func init() {
 	prometheus.MustRegister(expressionsQuerySummary)
 }
 
-// WrapTransformData creates and executes transform requests
-func (s *Service) WrapTransformData(ctx context.Context, query legacydata.DataQuery) (*backend.QueryDataResponse, error) {
-	req := Request{
-		OrgId:   query.User.OrgId,
-		Queries: []Query{},
-	}
-
-	for _, q := range query.Queries {
-		if q.DataSource == nil {
-			return nil, fmt.Errorf("mising datasource info: " + q.RefID)
-		}
-		modelJSON, err := q.Model.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		req.Queries = append(req.Queries, Query{
-			JSON:          modelJSON,
-			Interval:      time.Duration(q.IntervalMS) * time.Millisecond,
-			RefID:         q.RefID,
-			MaxDataPoints: q.MaxDataPoints,
-			QueryType:     q.QueryType,
-			Datasource: DataSourceRef{
-				Type: q.DataSource.Type,
-				UID:  q.DataSource.Uid,
-			},
-			TimeRange: TimeRange{
-				From: query.TimeRange.GetFromAsTimeUTC(),
-				To:   query.TimeRange.GetToAsTimeUTC(),
-			},
-		})
-	}
-	return s.TransformData(ctx, &req)
-}
-
 // Request is similar to plugins.DataQuery but with the Time Ranges is per Query.
 type Request struct {
 	Headers map[string]string
@@ -79,28 +41,11 @@ type Request struct {
 type Query struct {
 	RefID         string
 	TimeRange     TimeRange
-	DatasourceUID string        // deprecated, value -100 when expressions
-	Datasource    DataSourceRef `json:"datasource"`
+	DataSource    *models.DataSource `json:"datasource"`
 	JSON          json.RawMessage
 	Interval      time.Duration
 	QueryType     string
 	MaxDataPoints int64
-}
-
-type DataSourceRef struct {
-	Type string `json:"type"` // value should be __expr__
-	UID  string `json:"uid"`  // value should be __expr__
-}
-
-func (q *Query) GetDatasourceUID() string {
-	if q.DatasourceUID != "" {
-		return q.DatasourceUID // backwards compatibility gets precedence
-	}
-
-	if q.Datasource.UID != "" {
-		return q.Datasource.UID
-	}
-	return ""
 }
 
 // TimeRange is a time.Time based TimeRange.
@@ -179,42 +124,6 @@ func hiddenRefIDs(queries []Query) (map[string]struct{}, error) {
 		}
 	}
 	return hidden, nil
-}
-
-// queryData is called used to query datasources that are not expression commands, but are used
-// alongside expressions and/or are the input of an expression command.
-func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if len(req.Queries) == 0 {
-		return nil, fmt.Errorf("zero queries found in datasource request")
-	}
-
-	datasourceID := int64(0)
-	var datasourceUID string
-
-	if req.PluginContext.DataSourceInstanceSettings != nil {
-		datasourceID = req.PluginContext.DataSourceInstanceSettings.ID
-		datasourceUID = req.PluginContext.DataSourceInstanceSettings.UID
-	}
-
-	getDsInfo := &models.GetDataSourceQuery{
-		OrgId: req.PluginContext.OrgID,
-		Id:    datasourceID,
-		Uid:   datasourceUID,
-	}
-
-	if err := bus.DispatchCtx(ctx, getDsInfo); err != nil {
-		return nil, fmt.Errorf("could not find datasource: %w", err)
-	}
-
-	dsInstanceSettings, err := adapters.ModelToInstanceSettings(getDsInfo.Result, s.decryptSecureJsonDataFn(ctx))
-	if err != nil {
-		return nil, errutil.Wrap("failed to convert datasource instance settings", err)
-	}
-
-	req.PluginContext.DataSourceInstanceSettings = dsInstanceSettings
-	req.PluginContext.PluginID = getDsInfo.Result.Type
-
-	return s.dataService.QueryData(ctx, req)
 }
 
 func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(map[string][]byte) map[string]string {

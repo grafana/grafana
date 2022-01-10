@@ -1,16 +1,17 @@
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
 import {
+  AbstractLabelOperator,
   AnnotationQueryRequest,
   CoreApp,
   DataFrame,
   dateTime,
   FieldCache,
-  TimeSeries,
-  toUtc,
+  FieldType,
   LogRowModel,
   MutableDataFrame,
-  FieldType,
+  TimeSeries,
+  toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, config } from '@grafana/runtime';
 
@@ -184,14 +185,26 @@ describe('LokiDatasource', () => {
 
       it('should add volume hint param for log volume queries', () => {
         const target = { expr: '{job="grafana"}', refId: 'B', volumeQuery: true };
-        const req = ds.createRangeQuery(target, options as any, 1000);
-        expect(req.hint).toBe('logvolhist');
+        ds.runRangeQuery(target, options);
+        expect(backendSrv.fetch).toBeCalledWith(
+          expect.objectContaining({
+            headers: {
+              'X-Query-Tags': 'Source=logvolhist',
+            },
+          })
+        );
       });
 
       it('should not add volume hint param for regular queries', () => {
         const target = { expr: '{job="grafana"}', refId: 'B', volumeQuery: false };
-        const req = ds.createRangeQuery(target, options as any, 1000);
-        expect(req.hint).not.toBeDefined();
+        ds.runRangeQuery(target, options);
+        expect(backendSrv.fetch).not.toBeCalledWith(
+          expect.objectContaining({
+            headers: {
+              'X-Query-Tags': 'Source=logvolhist',
+            },
+          })
+        );
       });
     });
   });
@@ -860,7 +873,7 @@ describe('LokiDatasource', () => {
       });
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
-          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz"} | logfmt | job="grafana"', ds);
+          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz",job="grafana"} | logfmt', ds);
         });
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"} | logfmt [5m])', 'rate({bar="baz",job="grafana"} | logfmt [5m])', ds);
@@ -895,7 +908,7 @@ describe('LokiDatasource', () => {
       });
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
-          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz"} | logfmt | job!="grafana"', ds);
+          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz",job!="grafana"} | logfmt', ds);
         });
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"} | logfmt [5m])', 'rate({bar="baz",job!="grafana"} | logfmt [5m])', ds);
@@ -1001,6 +1014,38 @@ describe('LokiDatasource', () => {
 
         expect(ds.getLogsVolumeDataProvider(options)).not.toBeDefined();
       });
+    });
+  });
+
+  describe('importing queries', () => {
+    it('keeps all labels when no labels are loaded', async () => {
+      const ds = createLokiDSForTests();
+      fetchMock.mockImplementation(() => of(createFetchResponse({ data: [] })));
+      const queries = await ds.importFromAbstractQueries([
+        {
+          refId: 'A',
+          labelMatchers: [
+            { name: 'foo', operator: AbstractLabelOperator.Equal, value: 'bar' },
+            { name: 'foo2', operator: AbstractLabelOperator.Equal, value: 'bar2' },
+          ],
+        },
+      ]);
+      expect(queries[0].expr).toBe('{foo="bar", foo2="bar2"}');
+    });
+
+    it('filters out non existing labels', async () => {
+      const ds = createLokiDSForTests();
+      fetchMock.mockImplementation(() => of(createFetchResponse({ data: ['foo'] })));
+      const queries = await ds.importFromAbstractQueries([
+        {
+          refId: 'A',
+          labelMatchers: [
+            { name: 'foo', operator: AbstractLabelOperator.Equal, value: 'bar' },
+            { name: 'foo2', operator: AbstractLabelOperator.Equal, value: 'bar2' },
+          ],
+        },
+      ]);
+      expect(queries[0].expr).toBe('{foo="bar"}');
     });
   });
 });

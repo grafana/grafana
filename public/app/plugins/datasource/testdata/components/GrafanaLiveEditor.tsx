@@ -15,6 +15,11 @@ const liveTestDataChannels = [
     description: 'Stream that returns data in random intervals',
   },
   {
+    label: 'random-labeled-stream',
+    value: 'random-labeled-stream',
+    description: 'Value with moving labels',
+  },
+  {
     label: 'random-20Hz-stream',
     value: 'random-20Hz-stream',
     description: 'Random stream with points in 20Hz',

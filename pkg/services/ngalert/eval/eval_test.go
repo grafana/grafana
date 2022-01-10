@@ -304,11 +304,11 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 		}
 		v := evaluateExecutionResult(results, time.Time{})
 		require.Len(t, v, 1)
-		require.Equal(t, data.Labels{"datasource_uid": "1"}, v[0].Instance)
+		require.Equal(t, data.Labels{"datasource_uid": "1", "ref_id": "A"}, v[0].Instance)
 		require.Equal(t, NoData, v[0].State)
 	})
 
-	t.Run("no data for Ref IDs will produce NoData result for each data source", func(t *testing.T) {
+	t.Run("no data for Ref IDs will produce NoData result for each Ref ID", func(t *testing.T) {
 		results := ExecutionResults{
 			NoData: map[string]string{
 				"A": "1",
@@ -318,16 +318,25 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 		}
 		v := evaluateExecutionResult(results, time.Time{})
 		require.Len(t, v, 2)
-		require.Equal(t, NoData, v[0].State)
-		require.Equal(t, NoData, v[1].State)
 
 		datasourceUIDs := make([]string, 0, len(v))
+		refIDs := make([]string, 0, len(v))
+
 		for _, next := range v {
+			require.Equal(t, NoData, next.State)
+
 			datasourceUID, ok := next.Instance["datasource_uid"]
 			require.True(t, ok)
 			require.NotEqual(t, "", datasourceUID)
 			datasourceUIDs = append(datasourceUIDs, datasourceUID)
+
+			refID, ok := next.Instance["ref_id"]
+			require.True(t, ok)
+			require.NotEqual(t, "", refID)
+			refIDs = append(refIDs, refID)
 		}
+
 		require.ElementsMatch(t, []string{"1", "2"}, datasourceUIDs)
+		require.ElementsMatch(t, []string{"A,B", "C"}, refIDs)
 	})
 }

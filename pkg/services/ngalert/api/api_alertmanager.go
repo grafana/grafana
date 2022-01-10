@@ -30,7 +30,7 @@ const (
 type AlertmanagerSrv struct {
 	mam     *notifier.MultiOrgAlertmanager
 	secrets secrets.Service
-	store   store.AlertingStore
+	store   AlertingStore
 	log     log.Logger
 }
 
@@ -361,7 +361,10 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 
 	am, errResp := srv.AlertmanagerFor(c.OrgId)
 	if errResp != nil {
-		return errResp
+		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
+		if !errors.Is(errResp.Err(), notifier.ErrAlertmanagerNotReady) {
+			return errResp
+		}
 	}
 
 	if err := am.SaveAndApplyConfig(&body); err != nil {
@@ -376,7 +379,7 @@ func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.P
 	return NotImplementedResp
 }
 
-func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigParams) response.Response {
+func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return accessForbiddenResp()
 	}
@@ -517,11 +520,11 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response
 	}
 
 	if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-		return nil, response.Error(http.StatusNotFound, err.Error(), nil)
+		return nil, response.Error(http.StatusNotFound, err.Error(), err)
 	}
 
 	if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
-		return nil, response.Error(http.StatusConflict, err.Error(), nil)
+		return am, response.Error(http.StatusConflict, err.Error(), err)
 	}
 
 	srv.log.Error("unable to obtain the org's Alertmanager", "err", err)

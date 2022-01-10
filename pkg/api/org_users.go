@@ -3,21 +3,33 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // POST /api/org/users
-func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext, cmd models.AddOrgUserCommand) response.Response {
+func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Response {
+	cmd := models.AddOrgUserCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.OrgId
 	return hs.addOrgUserHelper(c.Req.Context(), cmd)
 }
 
 // POST /api/orgs/:orgId/users
-func (hs *HTTPServer) AddOrgUser(c *models.ReqContext, cmd models.AddOrgUserCommand) response.Response {
+func (hs *HTTPServer) AddOrgUser(c *models.ReqContext) response.Response {
+	cmd := models.AddOrgUserCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	return hs.addOrgUserHelper(c.Req.Context(), cmd)
 }
@@ -55,7 +67,7 @@ func (hs *HTTPServer) addOrgUserHelper(ctx context.Context, cmd models.AddOrgUse
 
 // GET /api/org/users
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(c.Req.Context(), &models.GetOrgUsersQuery{
+	result, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
@@ -70,7 +82,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 
 // GET /api/org/users/lookup
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
-	orgUsers, err := hs.getOrgUsersHelper(c.Req.Context(), &models.GetOrgUsersQuery{
+	orgUsers, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
@@ -93,9 +105,22 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 	return response.JSON(200, result)
 }
 
+func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, resourceIDs map[string]bool) (map[string]accesscontrol.Metadata, error) {
+	if hs.AccessControl == nil || hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
+		return nil, nil
+	}
+
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	if err != nil || len(userPermissions) == 0 {
+		return nil, err
+	}
+
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "users", resourceIDs), nil
+}
+
 // GET /api/orgs/:orgId/users
 func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(c.Req.Context(), &models.GetOrgUsersQuery{
+	result, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
 		OrgId: c.ParamsInt64(":orgId"),
 		Query: "",
 		Limit: 0,
@@ -108,19 +133,34 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	return response.JSON(200, result)
 }
 
-func (hs *HTTPServer) getOrgUsersHelper(ctx context.Context, query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
-	if err := hs.SQLStore.GetOrgUsers(ctx, query); err != nil {
+func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
+	if err := hs.SQLStore.GetOrgUsers(c.Req.Context(), query); err != nil {
 		return nil, err
 	}
 
 	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result))
+	userIDs := map[string]bool{}
 	for _, user := range query.Result {
 		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
 			continue
 		}
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
 
+		userIDs[fmt.Sprint(user.UserId)] = true
 		filteredUsers = append(filteredUsers, user)
+	}
+
+	accessControlMetadata, errAC := hs.getUserAccessControlMetadata(c, userIDs)
+	if errAC != nil {
+		hs.log.Error("Failed to get access control metadata", "error", errAC)
+
+		return filteredUsers, nil
+	} else if accessControlMetadata == nil {
+		return filteredUsers, nil
+	}
+
+	for i := range filteredUsers {
+		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserId)]
 	}
 
 	return filteredUsers, nil
@@ -128,7 +168,8 @@ func (hs *HTTPServer) getOrgUsersHelper(ctx context.Context, query *models.GetOr
 
 // SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.
 // GET /api/org/users/search
-func (hs *HTTPServer) SearchOrgUsersWithPaging(ctx context.Context, c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Response {
+	ctx := c.Req.Context()
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -168,14 +209,22 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(ctx context.Context, c *models.Re
 }
 
 // PATCH /api/org/users/:userId
-func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
+func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
+	cmd := models.UpdateOrgUserCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.ParamsInt64(":userId")
 	return hs.updateOrgUserHelper(c.Req.Context(), cmd)
 }
 
 // PATCH /api/orgs/:orgId/users/:userId
-func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
+func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext) response.Response {
+	cmd := models.UpdateOrgUserCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	cmd.UserId = c.ParamsInt64(":userId")
 	return hs.updateOrgUserHelper(c.Req.Context(), cmd)

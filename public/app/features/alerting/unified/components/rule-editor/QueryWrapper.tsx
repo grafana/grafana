@@ -71,6 +71,7 @@ export const QueryWrapper: FC<Props> = ({
   return (
     <div className={styles.wrapper}>
       <QueryEditorRow<DataQuery>
+        alerting
         dataSource={dsSettings}
         onChangeDataSource={!isExpression ? (settings) => onChangeDataSource(settings, index) : undefined}
         id={query.refId}

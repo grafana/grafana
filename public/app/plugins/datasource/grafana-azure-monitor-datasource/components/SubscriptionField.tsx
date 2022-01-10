@@ -85,6 +85,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
         onChange={handleChange}
         options={options}
         width={38}
+        allowCustomValue
       />
     </Field>
   );

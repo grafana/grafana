@@ -15,15 +15,16 @@ export function NavBarSection({ children, className }: Props) {
   const styles = getStyles(theme, newNavigationEnabled);
 
   return (
-    <div data-testid="navbar-section" className={cx(styles.container, className)}>
+    <ul data-testid="navbar-section" className={cx(styles.container, className)}>
       {children}
-    </div>
+    </ul>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
   container: css`
     display: none;
+    list-style: none;
 
     ${theme.breakpoints.up('md')} {
       background-color: ${newNavigationEnabled ? theme.colors.background.primary : 'inherit'};

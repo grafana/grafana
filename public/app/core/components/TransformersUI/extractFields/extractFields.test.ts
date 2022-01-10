@@ -14,23 +14,28 @@ describe('Fields from JSON', () => {
 
     const frames = extractFieldsTransformer.transformer(cfg)([data]);
     expect(frames.length).toEqual(1);
-    expect(frames[0].fields.map((v) => v.name)).toMatchInlineSnapshot(`
-      Array [
-        "a",
-        "av",
-        "c",
-        "e",
-        "ev",
-        "h",
-        "l",
-        "o",
-        "op",
-        "s",
-        "sym",
-        "v",
-        "vw",
-        "z",
-      ]
+    expect(
+      frames[0].fields.reduce((acc, v) => {
+        acc[v.name] = v.type;
+        return acc;
+      }, {} as any)
+    ).toMatchInlineSnapshot(`
+      Object {
+        "a": "string",
+        "av": "number",
+        "c": "string",
+        "e": "number",
+        "ev": "string",
+        "h": "string",
+        "l": "string",
+        "o": "string",
+        "op": "string",
+        "s": "number",
+        "sym": "string",
+        "v": "number",
+        "vw": "string",
+        "z": "number",
+      }
     `);
   });
 });

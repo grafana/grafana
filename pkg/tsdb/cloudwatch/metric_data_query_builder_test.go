@@ -7,21 +7,63 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMetricDataQueryBuilder_buildSearchExpression(t *testing.T) {
+func TestMetricDataQueryBuilder(t *testing.T) {
 	t.Run("buildMetricDataQuery", func(t *testing.T) {
+		t.Run("should use metric stat", func(t *testing.T) {
+			executor := newExecutor(nil, nil, newTestConfig(), fakeSessionCache{})
+			query := getBaseQuery()
+			query.MetricEditorMode = MetricEditorModeBuilder
+			query.MetricQueryType = MetricQueryTypeSearch
+			mdq, err := executor.buildMetricDataQuery(query)
+			require.NoError(t, err)
+			require.Empty(t, mdq.Expression)
+			assert.Equal(t, query.MetricName, *mdq.MetricStat.Metric.MetricName)
+			assert.Equal(t, query.Namespace, *mdq.MetricStat.Metric.Namespace)
+		})
+
+		t.Run("should use custom built expression", func(t *testing.T) {
+			executor := newExecutor(nil, nil, newTestConfig(), fakeSessionCache{})
+			query := getBaseQuery()
+			query.MetricEditorMode = MetricEditorModeBuilder
+			query.MetricQueryType = MetricQueryTypeSearch
+			query.MatchExact = false
+			mdq, err := executor.buildMetricDataQuery(query)
+			require.NoError(t, err)
+			require.Nil(t, mdq.MetricStat)
+			assert.Equal(t, `REMOVE_EMPTY(SEARCH('Namespace="AWS/EC2" MetricName="CPUUtilization" "LoadBalancer"="lb1"', '', 300))`, *mdq.Expression)
+		})
+
+		t.Run("should use sql expression", func(t *testing.T) {
+			executor := newExecutor(nil, nil, newTestConfig(), fakeSessionCache{})
+			query := getBaseQuery()
+			query.MetricEditorMode = MetricEditorModeRaw
+			query.MetricQueryType = MetricQueryTypeQuery
+			query.SqlExpression = `SELECT SUM(CPUUTilization) FROM "AWS/EC2"`
+			mdq, err := executor.buildMetricDataQuery(query)
+			require.NoError(t, err)
+			require.Nil(t, mdq.MetricStat)
+			assert.Equal(t, query.SqlExpression, *mdq.Expression)
+		})
+
+		t.Run("should use user defined math expression", func(t *testing.T) {
+			executor := newExecutor(nil, nil, newTestConfig(), fakeSessionCache{})
+			query := getBaseQuery()
+			query.MetricEditorMode = MetricEditorModeRaw
+			query.MetricQueryType = MetricQueryTypeSearch
+			query.Expression = `SUM(x+y)`
+			mdq, err := executor.buildMetricDataQuery(query)
+			require.NoError(t, err)
+			require.Nil(t, mdq.MetricStat)
+			assert.Equal(t, query.Expression, *mdq.Expression)
+		})
+
 		t.Run("should set period in user defined expression", func(t *testing.T) {
 			executor := newExecutor(nil, nil, newTestConfig(), fakeSessionCache{})
-			query := &cloudWatchQuery{
-				Namespace:  "AWS/EC2",
-				MetricName: "CPUUtilization",
-				Dimensions: map[string][]string{
-					"LoadBalancer": {"lb1"},
-				},
-				Period:     300,
-				Expression: "SUM([a,b])",
-				MatchExact: true,
-			}
+			query := getBaseQuery()
+			query.MetricEditorMode = MetricEditorModeRaw
+			query.MetricQueryType = MetricQueryTypeSearch
 			query.MatchExact = false
+			query.Expression = `SUM([a,b])`
 			mdq, err := executor.buildMetricDataQuery(query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
@@ -234,4 +276,18 @@ func TestMetricDataQueryBuilder_buildSearchExpression(t *testing.T) {
 
 		assert.Contains(t, res, `lb4\"\"`, "Expected escape double quotes")
 	})
+}
+
+func getBaseQuery() *cloudWatchQuery {
+	query := &cloudWatchQuery{
+		Namespace:  "AWS/EC2",
+		MetricName: "CPUUtilization",
+		Dimensions: map[string][]string{
+			"LoadBalancer": {"lb1"},
+		},
+		Period:     300,
+		Expression: "",
+		MatchExact: true,
+	}
+	return query
 }

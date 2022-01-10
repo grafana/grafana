@@ -4,24 +4,20 @@ import LRU from 'lru-cache';
 
 // Services & Utils
 import {
+  extractLabelMatchers,
   parseSelector,
-  labelRegexp,
-  selectorRegexp,
   processLabels,
+  toPromLikeExpr,
 } from 'app/plugins/datasource/prometheus/language_utils';
 import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 
 // Types
-import { LokiQuery } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, DataQuery, DataSourceApi } from '@grafana/data';
-import { PromQuery } from '../prometheus/types';
-import { GraphiteQuery } from '../graphite/types';
+import { LokiQuery, LokiQueryType } from './types';
+import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
-import { Grammar } from 'prismjs';
-import fromGraphite from './importing/fromGraphite';
-import { GraphiteDatasource } from '../graphite/datasource';
+import Prism, { Grammar } from 'prismjs';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -335,75 +331,24 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return { context, suggestions };
   }
 
-  async importQueries(
-    queries: PromQuery[] | GraphiteQuery[] | DataQuery[],
-    originDataSource: DataSourceApi
-  ): Promise<LokiQuery[]> {
-    const datasourceType = originDataSource.meta.id;
-    if (datasourceType === 'prometheus') {
-      return Promise.all(
-        [...(queries as PromQuery[])].map(async (query) => {
-          const expr = await this.importPrometheusQuery(query.expr);
-          const { refId } = query;
-          return {
-            expr,
-            refId,
-            range: true,
-          };
-        })
-      );
-    }
-    if (datasourceType === 'graphite') {
-      return fromGraphite(queries, originDataSource as GraphiteDatasource);
-    }
-    // Return a cleaned LokiQuery
-    return queries.map((query) => ({
-      refId: query.refId,
-      expr: '',
-    }));
+  importFromAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
+    return {
+      refId: labelBasedQuery.refId,
+      expr: toPromLikeExpr(labelBasedQuery),
+      queryType: LokiQueryType.Range,
+    };
   }
 
-  async importPrometheusQuery(query: string): Promise<string> {
-    if (!query) {
-      return '';
+  exportToAbstractQuery(query: LokiQuery): AbstractQuery {
+    const lokiQuery = query.expr;
+    if (!lokiQuery || lokiQuery.length === 0) {
+      return { refId: query.refId, labelMatchers: [] };
     }
-
-    // Consider only first selector in query
-    const selectorMatch = query.match(selectorRegexp);
-    if (!selectorMatch) {
-      return '';
-    }
-
-    const selector = selectorMatch[0];
-    const labels: { [key: string]: { value: any; operator: any } } = {};
-    selector.replace(labelRegexp, (_, key, operator, value) => {
-      labels[key] = { value, operator };
-      return '';
-    });
-
-    // Keep only labels that exist on origin and target datasource
-    await this.start(); // fetches all existing label keys
-    const existingKeys = this.labelKeys;
-    let labelsToKeep: { [key: string]: { value: any; operator: any } } = {};
-    if (existingKeys && existingKeys.length) {
-      // Check for common labels
-      for (const key in labels) {
-        if (existingKeys && existingKeys.includes(key)) {
-          // Should we check for label value equality here?
-          labelsToKeep[key] = labels[key];
-        }
-      }
-    } else {
-      // Keep all labels by default
-      labelsToKeep = labels;
-    }
-
-    const labelKeys = Object.keys(labelsToKeep).sort();
-    const cleanSelector = labelKeys
-      .map((key) => `${key}${labelsToKeep[key].operator}${labelsToKeep[key].value}`)
-      .join(',');
-
-    return ['{', cleanSelector, '}'].join('');
+    const tokens = Prism.tokenize(lokiQuery, syntax);
+    return {
+      refId: query.refId,
+      labelMatchers: extractLabelMatchers(tokens),
+    };
   }
 
   async getSeriesLabels(selector: string) {

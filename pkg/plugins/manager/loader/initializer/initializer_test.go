@@ -37,6 +37,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: setting.NewCfg(),
+			log: &fakeLogger{},
 		}
 
 		err := i.Initialize(p)
@@ -71,6 +72,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: setting.NewCfg(),
+			log: fakeLogger{},
 		}
 
 		err := i.Initialize(p)
@@ -117,6 +119,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			cfg: &setting.Cfg{
 				AppSubURL: "appSubURL",
 			},
+			log: fakeLogger{},
 		}
 
 		err := i.Initialize(p)
@@ -163,6 +166,7 @@ func TestInitializer_InitializeWithFactory(t *testing.T) {
 			cfg: &setting.Cfg{
 				AppSubURL: "appSubURL",
 			},
+			log: fakeLogger{},
 		}
 
 		factoryInvoked := false
@@ -202,6 +206,7 @@ func TestInitializer_InitializeWithFactory(t *testing.T) {
 			cfg: &setting.Cfg{
 				AppSubURL: "appSubURL",
 			},
+			log: fakeLogger{},
 		}
 
 		err := i.InitializeWithFactory(p, nil)
@@ -222,8 +227,8 @@ func TestInitializer_envVars(t *testing.T) {
 		}
 
 		licensing := &testLicensingService{
-			edition:    "test",
-			hasLicense: true,
+			edition:  "test",
+			tokenRaw: "token",
 		}
 
 		i := &Initializer{
@@ -236,6 +241,7 @@ func TestInitializer_envVars(t *testing.T) {
 				},
 			},
 			license: licensing,
+			log:     fakeLogger{},
 		}
 
 		envVars := i.envVars(p)
@@ -243,8 +249,8 @@ func TestInitializer_envVars(t *testing.T) {
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
 		assert.Equal(t, "GF_VERSION=", envVars[1])
 		assert.Equal(t, "GF_EDITION=test", envVars[2])
-		assert.Equal(t, "GF_ENTERPRISE_license_PATH=/path/to/ent/license", envVars[3])
-		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=", envVars[4])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[3])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[4])
 	})
 }
 
@@ -252,6 +258,7 @@ func TestInitializer_setPathsBasedOnApp(t *testing.T) {
 	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
 		i := &Initializer{
 			cfg: setting.NewCfg(),
+			log: fakeLogger{},
 		}
 
 		child := &plugins.Plugin{
@@ -307,13 +314,8 @@ func Test_pluginSettings_ToEnv(t *testing.T) {
 }
 
 type testLicensingService struct {
-	edition    string
-	hasLicense bool
-	tokenRaw   string
-}
-
-func (t *testLicensingService) HasLicense() bool {
-	return t.hasLicense
+	edition  string
+	tokenRaw string
 }
 
 func (t *testLicensingService) Expiry() int64 {
@@ -336,14 +338,30 @@ func (t *testLicensingService) LicenseURL(showAdminLicensingPage bool) string {
 	return ""
 }
 
-func (t *testLicensingService) HasValidLicense() bool {
-	return false
-}
-
 func (t *testLicensingService) Environment() map[string]string {
 	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
 }
 
+func (*testLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
+}
+
+func (*testLicensingService) FeatureEnabled(feature string) bool {
+	return false
+}
+
 type testPlugin struct {
 	backendplugin.Plugin
+}
+
+type fakeLogger struct {
+	log.MultiLoggers
+}
+
+func (f fakeLogger) New(_ ...interface{}) log.MultiLoggers {
+	return log.MultiLoggers{}
+}
+
+func (f fakeLogger) Warn(_ string, _ ...interface{}) {
+
 }

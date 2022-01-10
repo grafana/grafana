@@ -4,7 +4,7 @@ import {
   DataTransformerID,
   Field,
   FieldType,
-  guessFieldTypeForField,
+  getFieldTypeFromValue,
   SynchronousDataTransformerInfo,
 } from '@grafana/data';
 import { findField } from 'app/features/dimensions';
@@ -72,14 +72,13 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
   }
 
   const fields = names.map((name) => {
-    const f: Field = {
+    const buffer = values.get(name);
+    return {
       name,
-      values: new ArrayVector(values.get(name)),
-      type: FieldType.boolean,
+      values: new ArrayVector(buffer),
+      type: buffer ? getFieldTypeFromValue(buffer.find((v) => v != null)) : FieldType.other,
       config: {},
-    };
-    f.type = guessFieldTypeForField(f) ?? FieldType.other;
-    return f;
+    } as Field;
   });
 
   if (!options.replace) {

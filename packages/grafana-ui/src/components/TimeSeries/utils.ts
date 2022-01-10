@@ -11,10 +11,10 @@ import {
   getFieldColorModeForField,
   getFieldSeriesColor,
   getFieldDisplayName,
+  getDisplayProcessor,
 } from '@grafana/data';
 
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
-import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -24,11 +24,11 @@ import {
   ScaleDirection,
   ScaleOrientation,
   VizLegendOptions,
-  ScaleDistributionConfig,
-  ScaleDistribution,
+  StackingMode,
 } from '@grafana/schema';
 import { collectStackingGroups, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
+import { buildScaleKey } from '../GraphNG/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -137,8 +137,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     // TODO: skip this for fields with custom renderers?
     field.state!.seriesIndex = seriesIndex++;
 
-    const fmt = field.display ?? defaultFormatter;
-
+    let fmt = field.display ?? defaultFormatter;
+    if (field.config.custom?.stacking?.mode === StackingMode.Percent) {
+      fmt = getDisplayProcessor({
+        field: {
+          ...field,
+          config: {
+            ...field.config,
+            unit: 'percentunit',
+          },
+        },
+        theme,
+      });
+    }
     const scaleKey = buildScaleKey(config);
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
@@ -309,7 +320,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   }
 
   if (stackingGroups.size !== 0) {
-    builder.setStacking(true);
     for (const [_, seriesIds] of stackingGroups.entries()) {
       const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
       for (let j = seriesIdxs.length - 1; j > 0; j--) {
@@ -322,11 +332,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
   // hook up custom/composite renderers
   renderers?.forEach((r) => {
+    if (!indexByName) {
+      indexByName = getNamesToFieldIndex(frame, allFrames);
+    }
     let fieldIndices: Record<string, number> = {};
 
     for (let key in r.fieldMap) {
       let dispName = r.fieldMap[key];
-      fieldIndices[key] = indexByName!.get(dispName)!;
+      fieldIndices[key] = indexByName.get(dispName)!;
     }
 
     r.init(builder, fieldIndices);
@@ -344,19 +357,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       let seriesData = self.data[seriesIdx];
 
       if (seriesData[hoveredIdx] == null) {
-        let nonNullLft = hoveredIdx,
-          nonNullRgt = hoveredIdx,
+        let nonNullLft = null,
+          nonNullRgt = null,
           i;
 
         i = hoveredIdx;
-        while (nonNullLft === hoveredIdx && i-- > 0) {
+        while (nonNullLft == null && i-- > 0) {
           if (seriesData[i] != null) {
             nonNullLft = i;
           }
         }
 
         i = hoveredIdx;
-        while (nonNullRgt === hoveredIdx && i++ < seriesData.length) {
+        while (nonNullRgt == null && i++ < seriesData.length) {
           if (seriesData[i] != null) {
             nonNullRgt = i;
           }
@@ -365,19 +378,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
         let xVals = self.data[0];
 
         let curPos = self.valToPos(cursorXVal, 'x');
-        let rgtPos = self.valToPos(xVals[nonNullRgt], 'x');
-        let lftPos = self.valToPos(xVals[nonNullLft], 'x');
+        let rgtPos = nonNullRgt == null ? Infinity : self.valToPos(xVals[nonNullRgt], 'x');
+        let lftPos = nonNullLft == null ? -Infinity : self.valToPos(xVals[nonNullLft], 'x');
 
         let lftDelta = curPos - lftPos;
         let rgtDelta = rgtPos - curPos;
 
         if (lftDelta <= rgtDelta) {
           if (lftDelta <= hoverProximityPx) {
-            hoveredIdx = nonNullLft;
+            hoveredIdx = nonNullLft!;
           }
         } else {
           if (rgtDelta <= hoverProximityPx) {
-            hoveredIdx = nonNullRgt;
+            hoveredIdx = nonNullRgt!;
           }
         }
       }
@@ -440,35 +453,4 @@ export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): 
     }
   });
   return originNames;
-}
-
-function buildScaleKey(config: FieldConfig<GraphFieldConfig>) {
-  const defaultPart = 'na';
-
-  const scaleRange = `${config.min !== undefined ? config.min : defaultPart}-${
-    config.max !== undefined ? config.max : defaultPart
-  }`;
-
-  const scaleSoftRange = `${config.custom?.axisSoftMin !== undefined ? config.custom.axisSoftMin : defaultPart}-${
-    config.custom?.axisSoftMax !== undefined ? config.custom.axisSoftMax : defaultPart
-  }`;
-
-  const scalePlacement = `${config.custom?.axisPlacement !== undefined ? config.custom?.axisPlacement : defaultPart}`;
-
-  const scaleUnit = config.unit ?? FIXED_UNIT;
-
-  const scaleDistribution = config.custom?.scaleDistribution
-    ? getScaleDistributionPart(config.custom.scaleDistribution)
-    : ScaleDistribution.Linear;
-
-  const scaleLabel = Boolean(config.custom?.axisLabel) ? config.custom!.axisLabel : defaultPart;
-
-  return `${scaleUnit}/${scaleRange}/${scaleSoftRange}/${scalePlacement}/${scaleDistribution}/${scaleLabel}`;
-}
-
-function getScaleDistributionPart(config: ScaleDistributionConfig) {
-  if (config.type === ScaleDistribution.Log) {
-    return `${config.type}${config.log}`;
-  }
-  return config.type;
 }

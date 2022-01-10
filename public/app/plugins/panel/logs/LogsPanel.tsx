@@ -15,6 +15,7 @@ import { Options } from './types';
 import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { COMMON_LABELS } from '../../../core/logs_model';
+import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -32,6 +33,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     enableLogDetails,
   },
   title,
+  id,
 }) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles(title, isAscending));
@@ -80,12 +82,8 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     [data]
   );
 
-  if (!data) {
-    return (
-      <div className="panel-empty">
-        <p>No data found in response</p>
-      </div>
-    );
+  if (!data || logRows.length === 0) {
+    return <PanelDataErrorView panelId={id} data={data} needsStringField />;
   }
 
   const renderCommonLabels = () => (
