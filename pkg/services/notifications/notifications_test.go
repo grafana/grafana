@@ -81,6 +81,34 @@ func TestNotificationService(t *testing.T) {
 		require.Len(t, mailer.Sent, 3)
 	})
 
+	t.Run("When attaching files to emails", func(t *testing.T) {
+		_, mailer := createSut(t, bus)
+		cmd := &models.SendEmailCommandSync{
+			SendEmailCommand: models.SendEmailCommand{
+				Subject:     "subject",
+				To:          []string{"asdf@grafana.com"},
+				SingleEmail: true,
+				Template:    "welcome_on_signup",
+				AttachedFiles: []*models.SendEmailAttachFile{
+					{
+						Name:    "attachment.txt",
+						Content: []byte("text file content"),
+					},
+				},
+			},
+		}
+
+		err := bus.Dispatch(context.Background(), cmd)
+		require.NoError(t, err)
+
+		require.NotEmpty(t, mailer.Sent)
+		sent := mailer.Sent[len(mailer.Sent)-1]
+		require.Len(t, sent.AttachedFiles, 1)
+		file := sent.AttachedFiles[len(sent.AttachedFiles)-1]
+		require.Equal(t, "attachment.txt", file.Name)
+		require.Equal(t, []byte("text file content"), file.Content)
+	})
+
 	t.Run("When SMTP disabled in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.Enabled = false
@@ -90,7 +118,7 @@ func TestNotificationService(t *testing.T) {
 			SendEmailCommand: models.SendEmailCommand{
 				Subject:     "subject",
 				To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
-				SingleEmail: false,
+				SingleEmail: true,
 				Template:    "welcome_on_signup",
 			},
 		}

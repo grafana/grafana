@@ -127,6 +127,7 @@ func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, 
 		To:            cmd.To,
 		SingleEmail:   cmd.SingleEmail,
 		EmbeddedFiles: cmd.EmbeddedFiles,
+		AttachedFiles: cmd.AttachedFiles,
 		Subject:       cmd.Subject,
 		ReplyTo:       cmd.ReplyTo,
 	})
