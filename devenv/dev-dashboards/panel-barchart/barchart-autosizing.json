@@ -19,8 +19,11 @@
     ]
   },
   "editable": true,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 718,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
       "fieldConfig": {
@@ -39,14 +42,18 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -65,6 +72,7 @@
       },
       "id": 9,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 0.82,
         "legend": {
@@ -81,7 +89,8 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0
       },
       "targets": [
         {
@@ -91,6 +100,85 @@
         }
       ],
       "title": "Auto  sizing & auto show values",
+      "type": "barchart"
+    },
+    {
+      "description": "Should be smaller given the longer value",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 8,
+        "x": 7,
+        "y": 0
+      },
+      "id": 15,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 1,
+        "groupWidth": 0.82,
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "right"
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "text": {},
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0
+      },
+      "targets": [
+        {
+          "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, 5\nLondon, 10, 1\nNegative, 15, -5\nLong value, 15,10",
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Auto sizing & auto show values",
       "type": "barchart"
     },
     {
@@ -184,7 +272,8 @@
         "showValue": "auto",
         "stacking": "none",
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         },
         "xField": "Time",
         "xTickLabelRotation": 0,
@@ -193,7 +282,10 @@
       "targets": [
         {
           "csvContent": "Time,Duration,Status,Job\n2020-01-01T00:00:00Z,10,OK,j10\n2020-01-02T00:00:00Z,19,OK,j11\n2020-01-03T00:00:00Z,10,WARN,j21\n2020-01-04T00:00:00Z,15,OK,j11\n2020-01-05T00:00:00Z,15,ERROR,j23\n2020-01-06T00:00:00Z,5,WARN,j22\n2020-01-07T00:00:00Z,10,OK,j13\n2020-01-08T00:00:00Z,19,OK,j14\n2020-01-09T00:00:00Z,10,WARN,j25\n2020-01-10T00:00:00Z,15,OK,j17\n2020-01-11T00:00:00Z,15,ERROR,j38\n2020-01-12T00:00:00Z,5,WARN,j27\n2020-01-13T00:00:00Z,10,OK,j18\n2020-01-14T00:00:00Z,19,OK,j16\n2020-01-15T00:00:00Z,10,WARN,j33",
-          "datasource": "gdev-testdata",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
           "refId": "A",
           "scenarioId": "csv_content"
         }
@@ -202,7 +294,6 @@
       "type": "barchart"
     },
     {
-      "description": "Should be smaller given the longer value",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -219,86 +310,18 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
-          },
-          "decimals": 2,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,        
-        "w": 8,
-        "x": 7,
-        "y": 0
-      },
-      "id": 15,
-      "options": {
-        "barWidth": 1,
-        "groupWidth": 0.82,
-        "legend": {
-          "calcs": [
-            "max"
-          ],
-          "displayMode": "list",
-          "placement": "right"
-        },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "text": {},
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, 5\nLondon, 10, 1\nNegative, 15, -5\nLong value, 15,10",
-          "refId": "A",
-          "scenarioId": "csv_content"
-        }
-      ],
-      "title": "Auto sizing & auto show values",
-      "type": "barchart"
-    },
-    {
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "axisSoftMin": 0,
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -317,6 +340,7 @@
       },
       "id": 16,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
@@ -333,7 +357,8 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0
       },
       "targets": [
         {
@@ -362,14 +387,18 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -388,6 +417,7 @@
       },
       "id": 17,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
@@ -404,7 +434,8 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0
       },
       "targets": [
         {
@@ -417,7 +448,10 @@
       "type": "barchart"
     },
     {
-      "datasource": "-- Dashboard --",
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -434,14 +468,18 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -460,6 +498,7 @@
       },
       "id": 10,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 1,
         "legend": {
@@ -477,7 +516,8 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0
       },
       "targets": [
         {
@@ -505,7 +545,10 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "decimals": 7,
           "mappings": [],
@@ -513,7 +556,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -532,6 +576,7 @@
       },
       "id": 18,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 0.82,
         "legend": {
@@ -548,7 +593,8 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0
       },
       "targets": [
         {
@@ -578,14 +624,18 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -604,6 +654,7 @@
       },
       "id": 19,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
@@ -620,7 +671,8 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0
       },
       "targets": [
         {
@@ -634,7 +686,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 30,
+  "schemaVersion": 34,
   "style": "dark",
   "tags": [
     "gdev",
@@ -653,5 +705,6 @@
   "timezone": "",
   "title": "BarChart - Panel Tests - Value sizing",
   "uid": "WFlOM-jM1",
-  "version": 9
+  "version": 21,
+  "weekStart": ""
 }
