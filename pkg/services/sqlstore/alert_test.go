@@ -334,12 +334,13 @@ func TestPausingAlerts(t *testing.T) {
 	})
 }
 func pauseAlert(t *testing.T, orgId int64, alertId int64, pauseState bool) (int64, error) {
+	sqlStore := InitTestDB(t)
 	cmd := &models.PauseAlertCommand{
 		OrgId:    orgId,
 		AlertIds: []int64{alertId},
 		Paused:   pauseState,
 	}
-	err := PauseAlert(context.Background(), cmd)
+	err := sqlStore.PauseAlert(context.Background(), cmd)
 	require.Nil(t, err)
 	return cmd.ResultCount, err
 }
@@ -377,10 +378,11 @@ func getAlertById(t *testing.T, id int64, ss *SQLStore) (*models.Alert, error) {
 }
 
 func pauseAllAlerts(t *testing.T, pauseState bool) error {
+	sqlStore := InitTestDB(t)
 	cmd := &models.PauseAllAlertCommand{
 		Paused: pauseState,
 	}
-	err := PauseAllAlerts(context.Background(), cmd)
+	err := sqlStore.PauseAllAlerts(context.Background(), cmd)
 	require.Nil(t, err)
 	return err
 }

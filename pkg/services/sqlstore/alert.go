@@ -15,7 +15,7 @@ import (
 var timeNow = time.Now
 
 func (ss *SQLStore) addAlertQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.SaveAlerts)
+	bus.AddHandler("sql", SaveAlerts)
 	bus.AddHandler("sql", ss.HandleAlertsQuery)
 	bus.AddHandler("sql", ss.GetAlertById)
 	bus.AddHandler("sql", ss.GetAllAlertQueryHandler)
