@@ -24,11 +24,11 @@ func Filter(ctx context.Context, dialect SQLDialect, sqlID, prefix, action strin
 		return "", nil, errors.New("sqlID is not in the accept list")
 	}
 
-	var scopes []string
-	if user.Permissions != nil && user.Permissions[user.OrgId] != nil {
-		scopes = append(scopes, user.Permissions[user.OrgId][action]...)
+	if user.Permissions == nil || user.Permissions[user.OrgId] == nil {
+		return "", nil, errors.New("missing permissions")
 	}
 
+	scopes := user.Permissions[user.OrgId][action]
 	if len(scopes) == 0 {
 		scopes = append(scopes, "no:access")
 	}
