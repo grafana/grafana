@@ -30,10 +30,10 @@ To authenticate the Grafana plugin with the Google API, create a Google Cloud Pl
 
 ## Using GCE Default Service Account
 
-If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to automatically retrieve default credentials from the metadata server. This has the advantage of not needing to generate a private key file for the service account and also not having to upload the file to Grafana. However for this to work, there are a few preconditions that need to be met.
+When Grafana is running on a Google Compute Engine (GCE) virtual machine, Grafana can automatically retrieve default credentials from the metadata server. As a result, there is no need to generate a private key file for the service account. You also do not need to upload the file to Grafana. The following preconditions must be met before Grafana can retrieve default credentials.
 
 - You must create a Service Account for use by the GCE virtual machine. For more information, refer to [Create new service account](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#createanewserviceaccount).
--  Verify that the GCE virtual machine instance is running as the service account that you created. For more information, refer to [setting up an instance to run as a service account](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#using).
--  Allow access to the specified API scope.
+- Verify that the GCE virtual machine instance is running as the service account that you created. For more information, refer to [setting up an instance to run as a service account](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#using).
+- Allow access to the specified API scope.
 
 For more information about creating and enabling service accounts for GCE instances, refer to [enabling service accounts for instances in Google documentation](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
