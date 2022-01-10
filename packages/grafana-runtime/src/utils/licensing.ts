@@ -5,7 +5,7 @@ export const featureEnabled = (feature: boolean | undefined | keyof FeatureToggl
   if (feature === true || feature === false) {
     return feature;
   }
-  if (feature == null) {
+  if (feature == null || !config?.featureToggles) {
     return false;
   }
   return Boolean(config.featureToggles[feature]);

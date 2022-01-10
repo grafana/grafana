@@ -35,7 +35,7 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 			continue
 		}
 
-		// Selectivly update properties
+		// Selectively update properties
 		if add.Description != flag.Description {
 			flag.Description = add.Description
 		}
@@ -125,7 +125,9 @@ func (fm *FeatureManager) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer watcher.Close()
+	defer func() {
+		_ = watcher.Close()
+	}()
 
 	if err := watcher.Add(fm.config); err != nil {
 		return err
@@ -186,17 +188,16 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 	return v
 }
 
-func (ff FeatureManager) HandleGetSettings(c *models.ReqContext) {
+func (fm *FeatureManager) HandleGetSettings(c *models.ReqContext) {
 	res := make(map[string]interface{}, 3)
-	res["enabled"] = ff.enabled
+	res["enabled"] = fm.GetEnabled(c.Req.Context())
 
-	vv := make([]*FeatureFlag, 0, len(ff.flags))
-	for _, v := range ff.flags {
+	vv := make([]*FeatureFlag, 0, len(fm.flags))
+	for _, v := range fm.flags {
 		vv = append(vv, v)
 	}
 
 	res["info"] = vv
-	//res["notice"] = ft.notice
 
 	response.JSON(200, res).WriteTo(c)
 }

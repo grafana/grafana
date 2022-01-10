@@ -150,7 +150,7 @@ var (
 		},
 		{
 			Name:            "showFeatureFlagsInUI",
-			Description:     "Show feature flags in the settigns UI",
+			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},

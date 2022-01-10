@@ -35,20 +35,21 @@ func (s FeatureToggleState) String() string {
 		return "stable"
 	case FeatureStateDeprecated:
 		return "deprecated"
+	case FeatureStateUnknown:
 	}
 	return "unknown"
 }
 
 // MarshalJSON marshals the enum as a quoted json string
-func (p FeatureToggleState) MarshalJSON() ([]byte, error) {
+func (s FeatureToggleState) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBufferString(`"`)
-	buffer.WriteString(p.String())
+	buffer.WriteString(s.String())
 	buffer.WriteString(`"`)
 	return buffer.Bytes(), nil
 }
 
 // UnmarshalJSON unmarshals a quoted json string to the enum value
-func (p *FeatureToggleState) UnmarshalJSON(b []byte) error {
+func (s *FeatureToggleState) UnmarshalJSON(b []byte) error {
 	var j string
 	err := json.Unmarshal(b, &j)
 	if err != nil {
@@ -57,19 +58,19 @@ func (p *FeatureToggleState) UnmarshalJSON(b []byte) error {
 
 	switch j {
 	case "alpha":
-		*p = FeatureStateAlpha
+		*s = FeatureStateAlpha
 
 	case "beta":
-		*p = FeatureStateBeta
+		*s = FeatureStateBeta
 
 	case "stable":
-		*p = FeatureStateStable
+		*s = FeatureStateStable
 
 	case "deprecated":
-		*p = FeatureStateDeprecated
+		*s = FeatureStateDeprecated
 
 	default:
-		*p = FeatureStateUnknown
+		*s = FeatureStateUnknown
 
 	}
 	return nil
@@ -86,10 +87,10 @@ type FeatureFlag struct {
 
 	// Special behavior flags
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
-	RequiresRestart bool `json:"requiresRestart,omitempty"` // The server must be initalized with the value
+	RequiresRestart bool `json:"requiresRestart,omitempty"` // The server must be initialized with the value
 	RequiresLicense bool `json:"requiresLicense,omitempty"` // Must be enabled in the license
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 
 	// Internal properties
-	expr string `json:-`
+	// expr string `json:-`
 }

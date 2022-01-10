@@ -23,6 +23,8 @@ type configBody struct {
 func readConfigFile(filename string) (*configBody, error) {
 	cfg := &configBody{}
 
+	// Can ignore gosec G304 because the file path is forced within config subfolder
+	//nolint:gosec
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return cfg, err
