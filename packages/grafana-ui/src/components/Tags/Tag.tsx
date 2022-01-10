@@ -52,6 +52,7 @@ const getTagStyles = (theme: GrafanaTheme, name: string, colorIndex?: number) =>
   }
   return {
     wrapper: css`
+      appearance: none;
       border-style: none;
       font-weight: ${theme.typography.weight.semibold};
       font-size: ${theme.typography.size.sm};
