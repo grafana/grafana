@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 export interface ShareModalTabProps {
@@ -10,5 +10,6 @@ export interface ShareModalTabProps {
 export interface ShareModalTabModel {
   label: string;
   value: string;
+  labelSuffix?: FC;
   component: React.ComponentType<ShareModalTabProps>;
 }
