@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -22,9 +23,20 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, expressionService *expr.Service,
-	pluginRequestValidator models.PluginRequestValidator, SecretsService secrets.Service,
-	pluginClient plugins.Client, OAuthTokenService oauthtoken.OAuthTokenService) *Service {
+const (
+	headerName  = "httpHeaderName"
+	headerValue = "httpHeaderValue"
+)
+
+func ProvideService(
+	cfg *setting.Cfg,
+	dataSourceCache datasources.CacheService,
+	expressionService *expr.Service,
+	pluginRequestValidator models.PluginRequestValidator,
+	SecretsService secrets.Service,
+	pluginClient plugins.Client,
+	oAuthTokenService oauthtoken.OAuthTokenService,
+) *Service {
 	g := &Service{
 		cfg:                    cfg,
 		dataSourceCache:        dataSourceCache,
@@ -32,14 +44,13 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		pluginRequestValidator: pluginRequestValidator,
 		secretsService:         SecretsService,
 		pluginClient:           pluginClient,
-		oAuthTokenService:      OAuthTokenService,
+		oAuthTokenService:      oAuthTokenService,
 		log:                    log.New("query_data"),
 	}
 	g.log.Info("Query Service initialization")
 	return g
 }
 
-// Gateway receives data and translates it to Grafana Live publications.
 type Service struct {
 	cfg                    *setting.Cfg
 	dataSourceCache        datasources.CacheService
@@ -135,6 +146,10 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 		}
 	}
 
+	for k, v := range customHeaders(ds.JsonData, instanceSettings.DecryptedSecureJSONData) {
+		req.Headers[k] = v
+	}
+
 	for _, q := range parsedReq.parsedQueries {
 		req.Queries = append(req.Queries, q.query)
 	}
@@ -150,6 +165,26 @@ type parsedQuery struct {
 type parsedRequest struct {
 	hasExpression bool
 	parsedQueries []parsedQuery
+}
+
+func customHeaders(jsonData *simplejson.Json, decryptedJsonData map[string]string) map[string]string {
+	if jsonData == nil {
+		return nil
+	}
+
+	data := jsonData.MustMap()
+
+	headers := map[string]string{}
+	for k := range data {
+		if strings.HasPrefix(k, headerName) {
+			if header, ok := data[k].(string); ok {
+				valueKey := strings.ReplaceAll(k, headerName, headerValue)
+				headers[header] = decryptedJsonData[valueKey]
+			}
+		}
+	}
+
+	return headers
 }
 
 func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {

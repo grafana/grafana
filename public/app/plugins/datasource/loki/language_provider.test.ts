@@ -6,6 +6,7 @@ import { TypeaheadInput } from '@grafana/ui';
 import { makeMockLokiDatasource } from './mocks';
 import LokiDatasource from './datasource';
 import { AbstractLabelOperator } from '@grafana/data';
+import { LokiQueryType } from './types';
 
 jest.mock('app/store/store', () => ({
   store: {
@@ -248,7 +249,7 @@ describe('Query imports', () => {
   it('returns empty queries', async () => {
     const instance = new LanguageProvider(datasource);
     const result = await instance.importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
-    expect(result).toEqual({ refId: 'bar', expr: '', range: true });
+    expect(result).toEqual({ refId: 'bar', expr: '', queryType: LokiQueryType.Range });
   });
 
   describe('exporting to abstract query', () => {

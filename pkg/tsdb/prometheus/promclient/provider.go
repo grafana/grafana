@@ -14,11 +14,6 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-const (
-	authHeader    = "Authorization"
-	idTokenHeader = "X-ID-Token"
-)
-
 type Provider struct {
 	settings       backend.DataSourceInstanceSettings
 	jsonData       JsonData
@@ -41,9 +36,8 @@ func NewProvider(
 }
 
 type JsonData struct {
-	Method        string `json:"httpMethod"`
-	OauthPassThru bool   `json:"oauthPassThru"`
-	TimeInterval  string `json:"timeInterval"`
+	Method       string `json:"httpMethod"`
+	TimeInterval string `json:"timeInterval"`
 }
 
 func (p *Provider) GetClient(headers map[string]string) (apiv1.API, error) {
@@ -53,9 +47,7 @@ func (p *Provider) GetClient(headers map[string]string) (apiv1.API, error) {
 	}
 
 	opts.Middlewares = p.middlewares()
-	if p.jsonData.OauthPassThru {
-		opts.Headers = authHeaders(headers)
-	}
+	opts.Headers = reqHeaders(headers)
 
 	// Set SigV4 service namespace
 	if opts.SigV4 != nil {
@@ -92,15 +84,11 @@ func (p *Provider) middlewares() []sdkhttpclient.Middleware {
 	return middlewares
 }
 
-func authHeaders(headers map[string]string) map[string]string {
-	authHeaders := make(map[string]string)
-	if v, ok := headers[authHeader]; ok {
-		authHeaders[authHeader] = v
+func reqHeaders(headers map[string]string) map[string]string {
+	// copy to avoid changing the original map
+	h := make(map[string]string, len(headers))
+	for k, v := range headers {
+		h[k] = v
 	}
-
-	if v, ok := headers[idTokenHeader]; ok {
-		authHeaders[idTokenHeader] = v
-	}
-
-	return authHeaders
+	return h
 }
