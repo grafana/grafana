@@ -40,7 +40,7 @@ func newSimpleCrawler(folder string, renderService rendering.Service, gl *live.G
 	c := &simpleCrawler{
 		screenshotsFolder: folder,
 		renderService:     renderService,
-		threadCount:       2,
+		threadCount:       5,
 		glive:             gl,
 		status: crawlStatus{
 			State:    "init",
@@ -139,10 +139,11 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rend
 
 	r.mode = mode
 	r.opts = rendering.Opts{
-		OrgID:   c.OrgId,
-		UserID:  c.UserId,
-		OrgRole: c.OrgRole,
-		Theme:   theme,
+		OrgID:           c.OrgId,
+		UserID:          c.UserId,
+		OrgRole:         c.OrgRole,
+		Theme:           theme,
+		ConcurrentLimit: 10,
 	}
 	r.queue = queue
 	r.status = crawlStatus{
