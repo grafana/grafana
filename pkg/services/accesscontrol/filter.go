@@ -11,8 +11,7 @@ import (
 )
 
 var sqlIDAcceptList = map[string]struct{}{
-	"u.id":        {},
-	"org_user.id": {},
+	"org_user.user_id": {},
 }
 
 type SQLDialect interface {

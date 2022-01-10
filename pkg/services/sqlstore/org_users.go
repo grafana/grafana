@@ -113,7 +113,7 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = false", x.Dialect().Quote("user")))
 
 	if ss.Cfg.FeatureToggles["accesscontrol"] {
-		q, args, err := accesscontrol.Filter(ctx, ss.Dialect, "org_user.id", "users", "org.users:read", query.User)
+		q, args, err := accesscontrol.Filter(ctx, ss.Dialect, "org_user.user_id", "users", "org.users:read", query.User)
 		if err != nil {
 			return err
 		}
@@ -144,6 +144,7 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 		"org_user.role",
 		"user.last_seen_at",
 	)
+
 	sess.Asc("user.email", "user.login")
 
 	if err := sess.Find(&query.Result); err != nil {
@@ -176,7 +177,7 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = false", x.Dialect().Quote("user")))
 
 	if ss.Cfg.FeatureToggles["accesscontrol"] {
-		q, args, err := accesscontrol.Filter(ctx, ss.Dialect, "org_user.id", "users", "org.users:read", query.User)
+		q, args, err := accesscontrol.Filter(ctx, ss.Dialect, "org_user.user_id", "users", "org.users:read", query.User)
 		if err != nil {
 			return err
 		}
