@@ -14,6 +14,7 @@
 
 import memoizeOne from 'memoize-one';
 import { GrafanaTheme2 } from '@grafana/data';
+import { colors } from '@grafana/ui';
 
 // TS needs the precise return type
 function strToRgb(s: string): [number, number, number] {
@@ -84,57 +85,9 @@ export function clear() {
 }
 
 export function getColorByKey(key: string, theme: GrafanaTheme2) {
-  return getGenerator(getColors(theme)).getColorByKey(key);
+  return getGenerator(colors).getColorByKey(key);
 }
 
 export function getRgbColorByKey(key: string, theme: GrafanaTheme2): [number, number, number] {
-  return getGenerator(getColors(theme)).getRgbColorByKey(key);
+  return getGenerator(colors).getRgbColorByKey(key);
 }
-
-function getColors(theme: GrafanaTheme2): string[] {
-  return theme.isDark ? COLORS_HEX_DARK : COLORS_HEX;
-}
-
-const COLORS_HEX = [
-  '#17B8BE',
-  '#F8DCA1',
-  '#B7885E',
-  '#FFCB99',
-  '#F89570',
-  '#829AE3',
-  '#E79FD5',
-  '#1E96BE',
-  '#89DAC1',
-  '#B3AD9E',
-  '#12939A',
-  '#DDB27C',
-  '#88572C',
-  '#FF9833',
-  '#EF5D28',
-  '#162A65',
-  '#DA70BF',
-  '#125C77',
-  '#4DC19C',
-  '#776E57',
-];
-
-const COLORS_HEX_DARK = [
-  '#17B8BE',
-  '#F8DCA1',
-  '#B7885E',
-  '#FFCB99',
-  '#F89570',
-  '#829AE3',
-  '#E79FD5',
-  '#1E96BE',
-  '#89DAC1',
-  '#B3AD9E',
-  '#12939A',
-  '#DDB27C',
-  '#88572C',
-  '#FF9833',
-  '#EF5D28',
-  '#DA70BF',
-  '#4DC19C',
-  '#776E57',
-];
