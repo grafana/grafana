@@ -1,5 +1,7 @@
 package notifications
 
+import "fmt"
+
 type FakeMailer struct {
 	Sent []*Message
 }
@@ -17,4 +19,14 @@ func (fm *FakeMailer) Send(messages ...*Message) (int, error) {
 		sentEmailsCount++
 	}
 	return sentEmailsCount, nil
+}
+
+type FakeDisconnectedMailer struct{}
+
+func NewFakeDisconnectedMailer() *FakeDisconnectedMailer {
+	return &FakeDisconnectedMailer{}
+}
+
+func (fdm *FakeDisconnectedMailer) Send(messages ...*Message) (int, error) {
+	return 0, fmt.Errorf("connect: connection refused")
 }
