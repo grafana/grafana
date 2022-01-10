@@ -1,4 +1,4 @@
-import React, { HTMLProps } from 'react';
+import React, { HTMLProps, RefObject } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,9 +8,12 @@ import { IconName } from '../../types';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { Counter } from './Counter';
 import { getFocusStyles } from '../../themes/mixins';
+import { Node } from '@react-types/shared';
+import { TabListState } from '@react-stately/tabs';
+import { useTab } from '@react-aria/tabs';
 
 export interface TabProps extends HTMLProps<HTMLAnchorElement> {
-  label: string;
+  label: string | undefined;
   active?: boolean;
   /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
   href?: string;
@@ -18,12 +21,19 @@ export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
+  item?: any;
+  state?: TabListState<{}>;
 }
 
 export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
-  ({ label, active, icon, onChangeTab, counter, className, href, ...otherProps }, ref) => {
+  ({ item, state, label, active, icon, counter, className, href, ...otherProps }, ref) => {
     const theme = useTheme2();
     const tabsStyles = getTabStyles(theme);
+    const mainTabRef = React.useRef(null);
+    const { key } = item;
+    const { tabProps } = useTab({ key }, state!, mainTabRef as RefObject<HTMLElement>);
+    const isSelected = state?.selectedKey === key;
+
     const content = () => (
       <>
         {icon && <Icon name={icon} />}
@@ -32,17 +42,17 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
       </>
     );
 
-    const linkClass = cx(tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
-
+    const linkClass = cx(tabsStyles.link, isSelected ? tabsStyles.activeStyle : tabsStyles.notActive);
+    console.log(tabProps);
     return (
       <li className={tabsStyles.item}>
         <a
           href={href}
           className={linkClass}
           {...otherProps}
-          onClick={onChangeTab}
-          aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
-          ref={ref}
+          aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label!)}
+          {...tabProps}
+          ref={mainTabRef}
         >
           {content()}
         </a>

@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { HTMLAttributes, ReactNode } from 'react';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
@@ -9,6 +9,7 @@ export interface Props {
   className?: string;
   /** For hiding the bottom border (on PageHeader for example) */
   hideBorder?: boolean;
+  tabListProps?: HTMLAttributes<HTMLElement>;
 }
 
 const getTabsBarStyles = stylesFactory((theme: GrafanaTheme2, hideBorder = false) => {
@@ -26,15 +27,17 @@ const getTabsBarStyles = stylesFactory((theme: GrafanaTheme2, hideBorder = false
   };
 });
 
-export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder }, ref) => {
-  const theme = useTheme2();
-  const tabsStyles = getTabsBarStyles(theme, hideBorder);
+export const TabsBar = React.forwardRef<HTMLDivElement, Props>(
+  ({ children, className, hideBorder, tabListProps }, ref) => {
+    const theme = useTheme2();
+    const tabsStyles = getTabsBarStyles(theme, hideBorder);
 
-  return (
-    <div className={cx(tabsStyles.tabsWrapper, className)} ref={ref}>
-      <ul className={tabsStyles.tabs}>{children}</ul>
-    </div>
-  );
-});
+    return (
+      <div className={cx(tabsStyles.tabsWrapper, className)} {...tabListProps} ref={ref}>
+        <ul className={tabsStyles.tabs}>{children}</ul>
+      </div>
+    );
+  }
+);
 
 TabsBar.displayName = 'TabsBar';

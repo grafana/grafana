@@ -4,6 +4,8 @@ import { css } from '@emotion/css';
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { IconName, TabsBar, Tab, IconButton, CustomScrollbar, TabContent } from '../..';
+import { Tabs } from './Tabs';
+import { Item } from '@react-stately/collections';
 
 export interface TabConfig {
   label: string;
@@ -60,22 +62,12 @@ export function TabbedContainer(props: TabbedContainerProps) {
   const styles = getStyles(theme);
 
   return (
-    <div className={styles.container}>
-      <TabsBar className={styles.tabs}>
-        {tabs.map((t) => (
-          <Tab
-            key={t.value}
-            label={t.label}
-            active={t.value === activeTab}
-            onChangeTab={() => onSelectTab(t)}
-            icon={t.icon}
-          />
-        ))}
-        <IconButton className={styles.close} onClick={onClose} name="times" title={closeIconTooltip ?? 'Close'} />
-      </TabsBar>
-      <CustomScrollbar autoHeightMin="100%">
-        <TabContent className={styles.tabContent}>{tabs.find((t) => t.value === activeTab)?.content}</TabContent>
-      </CustomScrollbar>
-    </div>
+    <Tabs>
+      {tabs.map((t) => (
+        <Item key={t.value} title={t.value} aria-label={t.label}>
+          {t.content}
+        </Item>
+      ))}
+    </Tabs>
   );
 }
