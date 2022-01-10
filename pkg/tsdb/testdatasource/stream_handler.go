@@ -37,7 +37,7 @@ func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStrea
 		}
 	}
 
-	if s.features != nil && s.features.IsLivePipelineEnabled() {
+	if s.features.IsLivePipelineEnabled() {
 		// While developing Live pipeline avoid sending initial data.
 		initialData = nil
 	}
