@@ -273,7 +273,7 @@ func TestMetrics(t *testing.T) {
 			})
 			usageStatsURL = ts.URL
 
-			err = uss.sendUsageStats(context.Background())
+			err := uss.sendUsageStats(context.Background())
 			require.NoError(t, err)
 
 			// Wait for fake HTTP server to receive a request

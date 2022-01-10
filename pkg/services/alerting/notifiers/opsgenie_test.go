@@ -115,6 +115,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				}
 				return err
 			})
+
 			alertErr := opsgenieNotifier.createAlert(evalContext)
 
 			require.Nil(t, notifierErr)

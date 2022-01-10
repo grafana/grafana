@@ -56,7 +56,6 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 			),
 			expectedCode: http.StatusOK,
 		}
-
 		serviceAccountDeletionScenario(t, http.MethodDelete, serviceaccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
 			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock)
