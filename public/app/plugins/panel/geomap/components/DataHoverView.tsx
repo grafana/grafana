@@ -38,14 +38,18 @@ export class DataHoverView extends PureComponent<Props> {
       return null;
     }
 
-    const displayValues: Array<[string, string]> = [];
+    const displayValues: Array<[string, any, string]> = [];
     const visibleFields = data.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
 
     if (visibleFields.length === 0) {
       return null;
     }
     for (let i = 0; i < visibleFields.length; i++) {
-      displayValues.push([getFieldDisplayName(visibleFields[i], data), fmt(visibleFields[i], rowIndex!)]);
+      displayValues.push([
+        getFieldDisplayName(visibleFields[i], data),
+        visibleFields[i].values.get(rowIndex!),
+        fmt(visibleFields[i], rowIndex),
+      ]);
     }
 
     if (sortOrder && sortOrder !== SortOrder.None) {
@@ -58,7 +62,7 @@ export class DataHoverView extends PureComponent<Props> {
           {displayValues.map((v, i) => (
             <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? this.style.highlight : ''}>
               <th>{v[0]}:</th>
-              <td>{v[1]}</td>
+              <td>{v[2]}</td>
             </tr>
           ))}
         </tbody>
