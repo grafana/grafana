@@ -40,3 +40,69 @@ func TestBuildMail(t *testing.T) {
 		assert.Less(t, strings.Index(buf.String(), "Some plain text body"), strings.Index(buf.String(), "Some HTML body"))
 	})
 }
+
+func TestSmtpDialer(t *testing.T) {
+	t.Run("When SMTP hostname is invalid", func(t *testing.T) {
+		cfg := createSmtpConfig()
+		cfg.Smtp.Host = "invalid%hostname:123:456"
+		client, err := ProvideSmtpService(cfg)
+		require.NoError(t, err)
+		message := &Message{
+			To:          []string{"asdf@grafana.com"},
+			SingleEmail: true,
+			Subject:     "subject",
+			Body: map[string]string{
+				"text/html":  "body",
+				"text/plain": "body",
+			},
+		}
+
+		count, err := client.Send(message)
+
+		require.Equal(t, 0, count)
+		require.Error(t, err)
+	})
+
+	t.Run("When SMTP port is invalid", func(t *testing.T) {
+		cfg := createSmtpConfig()
+		cfg.Smtp.Host = "invalid%hostname:123a"
+		client, err := ProvideSmtpService(cfg)
+		require.NoError(t, err)
+		message := &Message{
+			To:          []string{"asdf@grafana.com"},
+			SingleEmail: true,
+			Subject:     "subject",
+			Body: map[string]string{
+				"text/html":  "body",
+				"text/plain": "body",
+			},
+		}
+
+		count, err := client.Send(message)
+
+		require.Equal(t, 0, count)
+		require.Error(t, err)
+	})
+
+	t.Run("When TLS certificate does not exist", func(t *testing.T) {
+		cfg := createSmtpConfig()
+		cfg.Smtp.Host = "localhost:1234"
+		cfg.Smtp.CertFile = "/var/certs/does-not-exist.pem"
+		client, err := ProvideSmtpService(cfg)
+		require.NoError(t, err)
+		message := &Message{
+			To:          []string{"asdf@grafana.com"},
+			SingleEmail: true,
+			Subject:     "subject",
+			Body: map[string]string{
+				"text/html":  "body",
+				"text/plain": "body",
+			},
+		}
+
+		count, err := client.Send(message)
+
+		require.Equal(t, 0, count)
+		require.Error(t, err)
+	})
+}
