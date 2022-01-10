@@ -182,7 +182,7 @@
     "glob": "7.2.0",
     "html-loader": "3.0.1",
     "html-webpack-plugin": "5.5.0",
-    "http-server": "14.0.0",
+    "http-server": "14.1.0",
     "husky": "^7.0.0",
     "iconscout-unicons-tarball": "https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28",
     "jest": "27.4.7",
