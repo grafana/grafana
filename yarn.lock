@@ -4130,7 +4130,7 @@ __metadata:
     react-custom-scrollbars-2: 4.4.0
     react-docgen-typescript-loader: 3.7.2
     react-dom: 17.0.2
-    react-dropzone: 11.4.2
+    react-dropzone: 11.5.1
     react-highlight-words: 0.17.0
     react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
@@ -29681,16 +29681,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dropzone@npm:11.4.2":
-  version: 11.4.2
-  resolution: "react-dropzone@npm:11.4.2"
+"react-dropzone@npm:11.5.1":
+  version: 11.5.1
+  resolution: "react-dropzone@npm:11.5.1"
   dependencies:
     attr-accept: ^2.2.1
     file-selector: ^0.2.2
     prop-types: ^15.7.2
   peerDependencies:
     react: ">= 16.8"
-  checksum: f8dc6af69193133efe30ed11dd8c2212a180abd3833e91d03dab4bdc9546d47dcad311d7f72b4968b7d016871884555b9e16f7a490913b78dbfec8ce8f569193
+  checksum: 54d801ca5b952d9e00913c516bcb3b961d34058116d0444ac3ce911e98e777fbd936fb60e81c0739664f68bf1dd1bdc6a1477d0b50b46ffe986140671562110d
   languageName: node
   linkType: hard
 
