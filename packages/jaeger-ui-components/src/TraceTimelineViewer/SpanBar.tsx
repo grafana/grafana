@@ -17,14 +17,16 @@ import { css } from '@emotion/css';
 import { groupBy as _groupBy } from 'lodash';
 import React from 'react';
 import { compose, onlyUpdateForKeys, withProps, withState } from 'recompose';
-import { autoColor, createStyle, Theme } from '../Theme';
+import { GrafanaTheme2 } from '@grafana/data';
+import { stylesFactory } from '@grafana/ui';
+import { autoColor } from '../Theme';
 import { TraceSpan } from '../types/trace';
 import { TNil } from '../types';
 import { UIPopover } from '../uiElementsContext';
 import AccordianLogs from './SpanDetail/AccordianLogs';
 import { ViewedBoundsFunctionType } from './utils';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       label: wrapper;
@@ -105,7 +107,7 @@ type TCommonProps = {
   span: TraceSpan;
   className?: string;
   labelClassName?: string;
-  theme: Theme;
+  theme: GrafanaTheme2;
 };
 
 type TInnerProps = {
