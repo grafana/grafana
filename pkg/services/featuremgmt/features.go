@@ -71,7 +71,6 @@ func (s *FeatureToggleState) UnmarshalJSON(b []byte) error {
 
 	default:
 		*s = FeatureStateUnknown
-
 	}
 	return nil
 }
