@@ -10533,7 +10533,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -10670,7 +10671,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [

@@ -19,7 +19,8 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if c.OrgRole == models.ROLE_VIEWER {
+	accessControlEnabled := hs.Cfg.FeatureToggles["accesscontrol"]
+	if !accessControlEnabled && c.OrgRole == models.ROLE_VIEWER {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
 
@@ -31,7 +32,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to create Team", err)
 	}
 
-	if c.OrgRole == models.ROLE_EDITOR && hs.Cfg.EditorsCanAdmin {
+	if accessControlEnabled || (c.OrgRole == models.ROLE_EDITOR && hs.Cfg.EditorsCanAdmin) {
 		// if the request is authenticated using API tokens
 		// the SignedInUser is an empty struct therefore
 		// an additional check whether it is an actual user is required
