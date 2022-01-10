@@ -359,10 +359,10 @@ func (rs *RenderingService) generateAndStoreRenderKey(ctx context.Context, orgId
 }
 
 func (rs *RenderingService) deleteRenderKey(ctx context.Context, key string) {
-	err := rs.RemoteCacheService.Delete(ctx, fmt.Sprintf(renderKeyPrefix, key))
-	if err != nil {
-		rs.log.Error("Failed to delete render key", "error", err)
-	}
+	//err := rs.RemoteCacheService.Delete(ctx, fmt.Sprintf(renderKeyPrefix, key))
+	//if err != nil {
+	//	rs.log.Error("Failed to delete render key", "error", err)
+	//}
 }
 
 func isoTimeOffsetToPosixTz(isoOffset string) string {
