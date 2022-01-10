@@ -22,6 +22,6 @@ Grafana plugins must adhere to the following criteria when being reviewed for pu
 
 ## Commercial
 
-- Usage of 3rd party software or dependencies within the plugin must be licensed for the intended use. For example, using open source dependencies must be credited/licensed;  embedding logos or trademarks;
+- Usage of 3rd party software or dependencies within the plugin must be licensed for the intended use. For example, using open source dependencies must be credited/licensed; embedding logos or trademarks;
 
 Grafana Labs reserves the right to decline or remove any plugin at its discretion. Failure to comply with publishing and signing criteria may result in immediate removal from the Grafana plugin catalog.
