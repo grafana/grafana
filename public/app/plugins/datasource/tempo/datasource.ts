@@ -313,8 +313,8 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
       nodes.fields[0].config = {
         links: [
-          makePromLink('Total requests', totalsMetric, datasourceUid),
-          makePromLink('Failed requests', failedMetric, datasourceUid),
+          makePromLink('Request rate', `rate(${totalsMetric}[5m])`, datasourceUid),
+          makePromLink('Failed request rate', `rate(${failedMetric}[5m])`, datasourceUid),
         ],
       };
 
