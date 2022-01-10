@@ -433,6 +433,11 @@ func (cfg Cfg) IsLiveConfigEnabled() bool {
 	return cfg.FeatureToggles["live-config"]
 }
 
+// IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
+func (cfg Cfg) IsDashboardPreviesEnabled() bool {
+	return cfg.FeatureToggles["dashboardPreviews"]
+}
+
 // IsTrimDefaultsEnabled returns whether the standalone trim dashboard default feature is enabled.
 func (cfg Cfg) IsTrimDefaultsEnabled() bool {
 	return cfg.FeatureToggles["trimDefaults"]
@@ -452,6 +457,10 @@ func (cfg Cfg) IsHTTPRequestHistogramDisabled() bool {
 
 func (cfg Cfg) IsNewNavigationEnabled() bool {
 	return cfg.FeatureToggles["newNavigation"]
+}
+
+func (cfg Cfg) IsServiceAccountEnabled() bool {
+	return cfg.FeatureToggles["service-accounts"]
 }
 
 type CommandLineArgs struct {

@@ -2000,7 +2000,7 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
           },
           {
             key: 'span.kind',
-            value: 'producer',
+            value: 'client',
           },
         ],
       ],

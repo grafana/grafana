@@ -11,24 +11,43 @@ on:
         description: Needs to match, exactly, the name of a version
         required: true
         type: string
+    secrets:
+        token:
+          required: true
+        metricsWriteAPIKey:
+          required: true
 jobs:
   main:
     runs-on: ubuntu-latest
     steps:
     # This is a basic workflow to help you get started with Actions
       - uses: actions-ecosystem/action-regex-match@v2.0.2
+        if: ${{ github.event.inputs.version != '' }}
         id: regex-match
         with:
           text: ${{ github.event.inputs.version }}
           regex: '^(\d+.\d+).\d+(?:-beta.\d+)?$'
-
+      - uses: actions-ecosystem/action-regex-match@v2.0.2
+        if: ${{ inputs.version_call != '' }}
+        id: regex-match-version-call
+        with:
+          text: ${{ inputs.version_call }}
+          regex: '^(\d+.\d+).\d+(?:-beta\d+)?$'
       - name: Validate input version
-        if: ${{ steps.regex-match.outputs.match == '' }}
+        if: ${{ steps.regex-match.outputs.match == '' && github.event.inputs.version != '' }}
         run: |
           echo "The input version format is not correct, please respect:\
           major.minor.patch or major.minor.patch-beta.number format. \
           example: 7.4.3 or 7.4.3-beta.1"
           exit 1
+      - name: Validate input version call
+        if: ${{ inputs.version_call != '' && steps.regex-match-version-call.outputs.match == '' }}
+        run: |
+          echo "The input version format is not correct, please respect:\
+          major.minor.patch or major.minor.patch-beta<number> format. \
+          example: 7.4.3 or 7.4.3-beta1"
+          exit 1
+
       - uses: actions/checkout@v2
 
       - name: Set intermedia variables
@@ -40,13 +59,13 @@ jobs:
           echo "::set-output name=branch_exist::$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)"
 
       - name: Check input version is aligned with branch(not main)
-        if: ${{ github.event.inputs.version != '' }} && steps.intermedia.outputs.branch_exist != '0' && !contains(steps.intermedia.outputs.short_ref, steps.intermedia.outputs.branch_name)
+        if: ${{ github.event.inputs.version != '' && steps.intermedia.outputs.branch_exist != '0' && !contains(steps.intermedia.outputs.short_ref, steps.intermedia.outputs.branch_name) }}
         run: |
           echo " You need to run the workflow on branch v${{steps.regex-match.outputs.group1}}.x
           exit 1
 
       - name: Check input version is aligned with branch(main)
-        if: ${{ github.event.inputs.version != '' }} && steps.intermedia.outputs.branch_exist == '0' && !contains(steps.intermedia.outputs.short_ref, 'main')
+        if: ${{ github.event.inputs.version != '' && steps.intermedia.outputs.branch_exist == '0' && !contains(steps.intermedia.outputs.short_ref, 'main') }}
         run: |
           echo "When you want to deliver a new new minor version, you might want to create a new branch first \
           with naming convention v[major].[minor].x, and just run the workflow on that branch. \
@@ -68,13 +87,12 @@ jobs:
         if: ${{ github.event.inputs.version != '' }}
         uses: ./actions/bump-version
         with:
-          version: ${{ github.event.inputs.version }}
-          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+          metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
       - name: Run bump version (workflow invoked)
         if: ${{ inputs.version_call != '' }}
         uses: ./actions/bump-version
         with:
-          version: ${{ inputs.version_call }}
-          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          version_call: ${{ inputs.version_call }}
+          token: ${{ secrets.token }}
+          metricsWriteAPIKey: ${{ secrets.metricsWriteAPIKey }}

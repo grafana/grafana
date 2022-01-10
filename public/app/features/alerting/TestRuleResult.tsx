@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
-import { LoadingPlaceholder, JSONFormatter, Icon, HorizontalGroup } from '@grafana/ui';
+import { LoadingPlaceholder, JSONFormatter, Icon, HorizontalGroup, ClipboardButton } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { DashboardModel, PanelModel } from '../dashboard/state';
 import { getBackendSrv } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
@@ -107,9 +106,9 @@ export class TestRuleResult extends PureComponent<Props, State> {
         <div className="pull-right">
           <HorizontalGroup spacing="md">
             <div onClick={this.onToggleExpand}>{this.renderExpandCollapse()}</div>
-            <CopyToClipboard elType="div" text={this.getTextForClipboard} onSuccess={this.onClipboardSuccess}>
-              <Icon name="copy" /> Copy to Clipboard
-            </CopyToClipboard>
+            <ClipboardButton getText={this.getTextForClipboard} onClipboardCopy={this.onClipboardSuccess} icon="copy">
+              Copy to Clipboard
+            </ClipboardButton>
           </HorizontalGroup>
         </div>
 

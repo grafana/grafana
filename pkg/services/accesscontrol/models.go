@@ -243,6 +243,7 @@ type GetResourcesPermissionsQuery struct {
 	Actions     []string
 	Resource    string
 	ResourceIDs []string
+	OnlyManaged bool
 }
 
 const (
