@@ -178,16 +178,16 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// team (admin permission required)
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Post("/", routing.Wrap(hs.CreateTeam))
-			teamsRoute.Put("/:teamId", routing.Wrap(hs.UpdateTeam))
-			teamsRoute.Delete("/:teamId", routing.Wrap(hs.DeleteTeamByID))
-			teamsRoute.Get("/:teamId/members", routing.Wrap(hs.GetTeamMembers))
-			teamsRoute.Post("/:teamId/members", routing.Wrap(hs.AddTeamMember))
-			teamsRoute.Put("/:teamId/members/:userId", routing.Wrap(hs.UpdateTeamMember))
-			teamsRoute.Delete("/:teamId/members/:userId", routing.Wrap(hs.RemoveTeamMember))
-			teamsRoute.Get("/:teamId/preferences", routing.Wrap(hs.GetTeamPreferences))
-			teamsRoute.Put("/:teamId/preferences", routing.Wrap(hs.UpdateTeamPreferences))
-		}, reqCanAccessTeams)
+			teamsRoute.Post("/", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsCreate)), routing.Wrap(hs.CreateTeam))
+			teamsRoute.Put("/:teamId", reqCanAccessTeams, routing.Wrap(hs.UpdateTeam))
+			teamsRoute.Delete("/:teamId", reqCanAccessTeams, routing.Wrap(hs.DeleteTeamByID))
+			teamsRoute.Get("/:teamId/members", reqCanAccessTeams, routing.Wrap(hs.GetTeamMembers))
+			teamsRoute.Post("/:teamId/members", reqCanAccessTeams, routing.Wrap(hs.AddTeamMember))
+			teamsRoute.Put("/:teamId/members/:userId", reqCanAccessTeams, routing.Wrap(hs.UpdateTeamMember))
+			teamsRoute.Delete("/:teamId/members/:userId", reqCanAccessTeams, routing.Wrap(hs.RemoveTeamMember))
+			teamsRoute.Get("/:teamId/preferences", reqCanAccessTeams, routing.Wrap(hs.GetTeamPreferences))
+			teamsRoute.Put("/:teamId/preferences", reqCanAccessTeams, routing.Wrap(hs.UpdateTeamPreferences))
+		})
 
 		// team without requirement of user to be org admin
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
