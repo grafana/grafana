@@ -90,7 +90,7 @@ dt {
   font-weight: $font-weight-semi-bold;
 }
 dd {
-  margin-left: $line-height-base / 2;
+  margin-left: calc($line-height-base / 2);
 }
 // Horizontal layout (like forms)
 .dl-horizontal {

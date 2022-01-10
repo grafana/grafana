@@ -86,7 +86,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -528,7 +529,8 @@
 				"showValue": "auto",
 				"text": {},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "8.1.0-pre",
