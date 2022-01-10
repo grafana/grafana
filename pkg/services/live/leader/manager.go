@@ -7,11 +7,12 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+// Manager of channel leadership.
 type Manager interface {
-	GetOrCreateLeader(ctx context.Context, ch string, currentNodeID string, newLeadershipID string) (string, string, error)
-	GetLeader(ctx context.Context, ch string) (bool, string, string, error)
-	RefreshLeader(ctx context.Context, ch string, currentLeadershipID string) (bool, error)
-	CleanLeader(ctx context.Context, ch string) error
+	GetOrCreateLeader(ctx context.Context, channel string, currentNodeID string, newLeadershipID string) (string, string, error)
+	GetLeader(ctx context.Context, channel string) (bool, string, string, error)
+	RefreshLeader(ctx context.Context, channel string, currentLeadershipID string) (bool, error)
+	CleanLeader(ctx context.Context, channel string) error
 }
 
 type RedisManager struct {

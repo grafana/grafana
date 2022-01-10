@@ -68,49 +68,7 @@ this may lead to an increased leadership loss detection with a delay which seems
 
 ### Failure scenario #5: Existing subscription consumes events from a stream with another leadershipID 
 
-0s
-...
-message
-message
-10s
-
-But what if we are getting messages from another acquired leadership? Maybe attach leadership ID to publications?
-
-```
-node.Publish(channel, data, WithMeta(map[string]string{"leadershipId": "xyz"}))
-```
-
-Then have a callback:
-
-```
-client.OnTransportWrite(TransportWriteEvent)
-
-type TransportWriteEvent struct {
-  Data []byte
-  Reply *protocol.Reply
-}
-```
-
-Reply {
-  Data bytes
-}
-
-Reply {
- Push {
-   Publication:
-    - meta
-   Join
-   Leave
- }
-}
-
-Centrifuge:
-
-Pub -> Redis -> Node1 -> Broadcast -> Put msg into client queue -> Consume queue (OnTransportWrite)
---------------> Node2 -> Broadcast -> Put msg into client queue -> Consume queue (OnTransportWrite).
-
-Having this implemented makes #4 possible to avoid an immediate disconnect and let client fail
-several leader check in a row.
+Not possible with Centrifuge positioning feature if we set a stream epoch to be equal to leadershipID.
 
 ### Failure scenario #6: Leadership changed in the middle of subscribe survey
 
@@ -139,6 +97,6 @@ Possible solutions:
 * Send empty message?
 * Send special frame field?
 
-### TODO
+### Diagram
 
-1. Draw a diagram where we can find more failing points
+https://swimlanes.io/u/c97HXDAGj
