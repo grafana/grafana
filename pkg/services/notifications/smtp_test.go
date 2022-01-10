@@ -11,10 +11,11 @@ import (
 )
 
 func TestBuildMail(t *testing.T) {
-	ns := &NotificationService{
-		Cfg: setting.NewCfg(),
-	}
-	ns.Cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
+	cfg := setting.NewCfg()
+	cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
+
+	sc, err := NewSmtpClient(cfg.Smtp)
+	require.NoError(t, err)
 
 	message := &Message{
 		To:      []string{"to@address.com"},
@@ -28,7 +29,7 @@ func TestBuildMail(t *testing.T) {
 	}
 
 	t.Run("When building email", func(t *testing.T) {
-		email := ns.buildEmail(message)
+		email := sc.buildEmail(message)
 
 		buf := new(bytes.Buffer)
 		_, err := email.WriteTo(buf)
