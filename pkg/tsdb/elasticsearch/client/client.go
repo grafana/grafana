@@ -13,9 +13,10 @@ import (
 	"strings"
 	"time"
 
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,7 +27,7 @@ import (
 
 type DatasourceInfo struct {
 	ID                         int64
-	HTTPClientOpts             sdkhttpclient.Options
+	Settings                   backend.DataSourceInstanceSettings
 	URL                        string
 	Database                   string
 	ESVersion                  *semver.Version
@@ -44,10 +45,6 @@ var (
 	clientLog = log.New(loggerName)
 )
 
-var newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *DatasourceInfo) (*http.Client, error) {
-	return httpClientProvider.New(ds.HTTPClientOpts)
-}
-
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
 	GetVersion() *semver.Version
@@ -59,7 +56,7 @@ type Client interface {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *DatasourceInfo, timeRange backend.TimeRange) (Client, error) {
+func NewClient(ctx context.Context, httpClientProvider httpclient.Provider, ds *DatasourceInfo, timeRange backend.TimeRange, headers map[string]string) (Client, error) {
 	ip, err := newIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
 		return nil, err
@@ -75,6 +72,7 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 	return &baseClientImpl{
 		ctx:                ctx,
 		httpClientProvider: httpClientProvider,
+		headers:            headers,
 		ds:                 ds,
 		version:            ds.ESVersion,
 		timeField:          ds.TimeField,
@@ -86,6 +84,7 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 type baseClientImpl struct {
 	ctx                context.Context
 	httpClientProvider httpclient.Provider
+	headers            map[string]string
 	ds                 *DatasourceInfo
 	version            *semver.Version
 	timeField          string
@@ -182,7 +181,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 
 	req.Header.Set("Content-Type", "application/x-ndjson")
 
-	httpClient, err := newDatasourceHttpClient(c.httpClientProvider, c.ds)
+	httpClient, err := c.newDatasourceHttpClient()
 	if err != nil {
 		return nil, err
 	}
@@ -201,6 +200,23 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		httpResponse: resp,
 		reqInfo:      reqInfo,
 	}, nil
+}
+
+func (c *baseClientImpl) newDatasourceHttpClient() (*http.Client, error) {
+	httpCliOpts, err := c.ds.Settings.HTTPClientOptions()
+	if err != nil {
+		return nil, fmt.Errorf("error getting http options: %w", err)
+	}
+
+	// Set SigV4 service namespace
+	if httpCliOpts.SigV4 != nil {
+		httpCliOpts.SigV4.Service = "es"
+	}
+
+	httpCliOpts.Middlewares = []sdkhttpclient.Middleware{sdkhttpclient.CustomHeadersMiddleware()}
+	httpCliOpts.Headers = c.headers
+
+	return c.httpClientProvider.New(httpCliOpts)
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {

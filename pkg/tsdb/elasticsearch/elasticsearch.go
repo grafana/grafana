@@ -67,7 +67,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, err
 	}
 
-	client, err := es.NewClient(ctx, s.HTTPClientProvider, dsInfo, req.Queries[0].TimeRange)
+	client, err := es.NewClient(ctx, s.HTTPClientProvider, dsInfo, req.Queries[0].TimeRange, req.Headers)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -82,15 +82,6 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
-		httpCliOpts, err := settings.HTTPClientOptions()
-		if err != nil {
-			return nil, fmt.Errorf("error getting http options: %w", err)
-		}
-
-		// Set SigV4 service namespace
-		if httpCliOpts.SigV4 != nil {
-			httpCliOpts.SigV4.Service = "es"
 		}
 
 		version, err := coerceVersion(jsonData["esVersion"])
@@ -136,7 +127,7 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 		model := es.DatasourceInfo{
 			ID:                         settings.ID,
 			URL:                        settings.URL,
-			HTTPClientOpts:             httpCliOpts,
+			Settings:                   settings,
 			Database:                   settings.Database,
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
 			ESVersion:                  version,

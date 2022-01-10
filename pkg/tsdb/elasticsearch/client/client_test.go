@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -21,82 +23,40 @@ import (
 func TestNewClient(t *testing.T) {
 	t.Run("When using legacy version numbers", func(t *testing.T) {
 		t.Run("When version 2 should return v2 client", func(t *testing.T) {
-			version, err := semver.NewVersion("2.0.0")
-			require.NoError(t, err)
-			ds := &DatasourceInfo{
-				ESVersion: version,
-				TimeField: "@timestamp",
-			}
-
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), dsInfo("2.0.0"), backend.TimeRange{}, nil)
 			require.NoError(t, err)
 			assert.Equal(t, "2.0.0", c.GetVersion().String())
 		})
 
 		t.Run("When version 5 should return v5 client", func(t *testing.T) {
-			version, err := semver.NewVersion("5.0.0")
-			require.NoError(t, err)
-			ds := &DatasourceInfo{
-				ESVersion: version,
-				TimeField: "@timestamp",
-			}
-
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), dsInfo("5.0.0"), backend.TimeRange{}, nil)
 			require.NoError(t, err)
 			assert.Equal(t, "5.0.0", c.GetVersion().String())
 		})
 
 		t.Run("When version 56 should return v5.6 client", func(t *testing.T) {
-			version, err := semver.NewVersion("5.6.0")
-			require.NoError(t, err)
-			ds := &DatasourceInfo{
-				ESVersion: version,
-				TimeField: "@timestamp",
-			}
-
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), dsInfo("5.6.0"), backend.TimeRange{}, nil)
 			require.NoError(t, err)
 			assert.Equal(t, "5.6.0", c.GetVersion().String())
 		})
 
 		t.Run("When version 60 should return v6.0 client", func(t *testing.T) {
-			version, err := semver.NewVersion("6.0.0")
-			require.NoError(t, err)
-			ds := &DatasourceInfo{
-				ESVersion: version,
-				TimeField: "@timestamp",
-			}
-
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), dsInfo("6.0.0"), backend.TimeRange{}, nil)
 			require.NoError(t, err)
 			assert.Equal(t, "6.0.0", c.GetVersion().String())
 		})
 
 		t.Run("When version 70 should return v7.0 client", func(t *testing.T) {
-			version, err := semver.NewVersion("7.0.0")
-			require.NoError(t, err)
-			ds := &DatasourceInfo{
-				ESVersion: version,
-				TimeField: "@timestamp",
-			}
-
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), dsInfo("7.0.0"), backend.TimeRange{}, nil)
 			require.NoError(t, err)
 			assert.Equal(t, "7.0.0", c.GetVersion().String())
 		})
 	})
 
 	t.Run("When version is a valid semver string should create a client", func(t *testing.T) {
-		version, err := semver.NewVersion("7.2.4")
+		c, err := NewClient(context.Background(), httpclient.NewProvider(), dsInfo("7.2.4"), backend.TimeRange{}, nil)
 		require.NoError(t, err)
-		ds := &DatasourceInfo{
-			ESVersion: version,
-			TimeField: "@timestamp",
-		}
-
-		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
-		require.NoError(t, err)
-		assert.Equal(t, version.String(), c.GetVersion().String())
+		assert.Equal(t, "7.2.4", c.GetVersion().String())
 	})
 }
 
@@ -283,6 +243,10 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		res, err := sc.client.ExecuteMultisearch(ms)
 		require.NoError(t, err)
 
+		opts := sc.httpClientProvider.opts[0]
+		require.Equal(t, map[string]string{"header-1": "header-value-1"}, opts.Headers)
+		require.Equal(t, sdkhttpclient.CustomHeadersMiddlewareName, (opts.Middlewares[0].(sdkhttpclient.MiddlewareName)).MiddlewareName())
+
 		require.NotNil(t, sc.request)
 		assert.Equal(t, http.MethodPost, sc.request.Method)
 		assert.Equal(t, "/_msearch", sc.request.URL.Path)
@@ -315,6 +279,18 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 	})
 }
 
+func dsInfo(v string) *DatasourceInfo {
+	version, err := semver.NewVersion(v)
+	if err != nil {
+		panic(err)
+	}
+
+	return &DatasourceInfo{
+		ESVersion: version,
+		TimeField: "@timestamp",
+	}
+}
+
 func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, error) {
 	t.Helper()
 
@@ -330,12 +306,25 @@ func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, erro
 	return msb.Build()
 }
 
+type fakeClientProvider struct {
+	httpclient.Provider
+
+	opts   []sdkhttpclient.Options
+	client *http.Client
+}
+
+func (c *fakeClientProvider) New(opts ...sdkhttpclient.Options) (*http.Client, error) {
+	c.opts = opts
+	return c.client, nil
+}
+
 type scenarioContext struct {
-	client         Client
-	request        *http.Request
-	requestBody    *bytes.Buffer
-	responseStatus int
-	responseBody   string
+	client             Client
+	httpClientProvider *fakeClientProvider
+	request            *http.Request
+	requestBody        *bytes.Buffer
+	responseStatus     int
+	responseBody       string
 }
 
 type scenarioFunc func(*scenarioContext)
@@ -369,20 +358,14 @@ func httpClientScenario(t *testing.T, desc string, ds *DatasourceInfo, fn scenar
 			To:   to,
 		}
 
-		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, timeRange)
+		sc.httpClientProvider = &fakeClientProvider{client: ts.Client()}
+		c, err := NewClient(context.Background(), sc.httpClientProvider, ds, timeRange, map[string]string{"header-1": "header-value-1"})
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		sc.client = c
 
-		currentNewDatasourceHTTPClient := newDatasourceHttpClient
-
-		newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *DatasourceInfo) (*http.Client, error) {
-			return ts.Client(), nil
-		}
-
 		t.Cleanup(func() {
 			ts.Close()
-			newDatasourceHttpClient = currentNewDatasourceHTTPClient
 		})
 
 		fn(sc)
