@@ -45,7 +45,7 @@ export class ServiceAccountsListPage extends PureComponent<Props, State> {
         <ServiceAccountsTable
           serviceAccounts={paginatedServiceAccounts}
           onRoleChange={(role, serviceAccount) => this.onRoleChange(role, serviceAccount)}
-          onRemoveServiceaccount={(serviceAccount) => this.props.removeServiceAccount(serviceAccount.serviceAccountId)}
+          onRemoveServiceAccount={(serviceAccount) => this.props.removeServiceAccount(serviceAccount.serviceAccountId)}
         />
         <HorizontalGroup justify="flex-end">
           <Pagination
