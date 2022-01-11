@@ -43,6 +43,7 @@ export interface FeatureToggles {
   accesscontrol: boolean;
   tempoServiceGraph: boolean;
   tempoSearch: boolean;
+  tempoBackendSearch: boolean;
   recordedQueries: boolean;
   newNavigation: boolean;
   fullRangeLogsVolume: boolean;

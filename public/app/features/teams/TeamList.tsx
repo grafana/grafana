@@ -3,7 +3,7 @@ import Page from 'app/core/components/Page/Page';
 import { DeleteButton, LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { OrgRole, Role, StoreState, Team } from 'app/types';
+import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 import { deleteTeam, loadTeams } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount, getTeamsSearchPage, isPermissionTeamAdmin } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -122,10 +122,10 @@ export class TeamList extends PureComponent<Props, State> {
   };
 
   renderTeamList() {
-    const { teams, searchQuery, editorsCanAdmin, signedInUser, setTeamsSearchPage } = this.props;
-    const isCanAdminAndViewer = editorsCanAdmin && signedInUser.orgRole === OrgRole.Viewer;
-    const disabledClass = isCanAdminAndViewer ? ' disabled' : '';
-    const newTeamHref = isCanAdminAndViewer ? '#' : 'org/teams/new';
+    const { teams, searchQuery, editorsCanAdmin } = this.props;
+    const teamAdmin = contextSrv.hasRole('Admin') || (editorsCanAdmin && contextSrv.hasRole('Editor'));
+    const canCreate = contextSrv.hasAccess(AccessControlAction.ActionTeamsCreate, teamAdmin);
+    const newTeamHref = canCreate ? 'org/teams/new' : '#';
     const paginatedTeams = this.getPaginatedTeams(teams);
     const totalPages = Math.ceil(teams.length / pageLimit);
 
@@ -136,7 +136,7 @@ export class TeamList extends PureComponent<Props, State> {
             <FilterInput placeholder="Search teams" value={searchQuery} onChange={this.onSearchQueryChange} />
           </div>
 
-          <LinkButton className={disabledClass} href={newTeamHref}>
+          <LinkButton href={newTeamHref} disabled={!canCreate}>
             New Team
           </LinkButton>
         </div>
