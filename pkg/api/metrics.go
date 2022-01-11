@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -16,6 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+)
+
+const (
+	headerName  = "httpHeaderName"
+	headerValue = "httpHeaderValue"
 )
 
 // QueryMetricsV2 returns query metrics.
@@ -238,6 +244,10 @@ func (hs *HTTPServer) createRequest(ctx context.Context, ds *models.DataSource, 
 		}
 	}
 
+	for k, v := range customHeaders(ds.JsonData, instanceSettings.DecryptedSecureJSONData) {
+		query.Headers[k] = v
+	}
+
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			OrgID:                      ds.OrgId,
@@ -268,4 +278,24 @@ func (hs *HTTPServer) createRequest(ctx context.Context, ds *models.DataSource, 
 	}
 
 	return req, nil
+}
+
+func customHeaders(jsonData *simplejson.Json, decryptedJsonData map[string]string) map[string]string {
+	if jsonData == nil {
+		return nil
+	}
+
+	data := jsonData.MustMap()
+
+	headers := map[string]string{}
+	for k := range data {
+		if strings.HasPrefix(k, headerName) {
+			if header, ok := data[k].(string); ok {
+				valueKey := strings.ReplaceAll(k, headerName, headerValue)
+				headers[header] = decryptedJsonData[valueKey]
+			}
+		}
+	}
+
+	return headers
 }
