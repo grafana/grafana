@@ -5,7 +5,7 @@ interface Props {
   data: any;
 }
 
-const useNewData = ({ data }: Props) => {
+const usePopulateData = ({ data }: Props) => {
   const [newData, setNewData] = useState(data);
   const [externalLogs, setExternalLogs] = useState<any>([]);
 
@@ -23,7 +23,7 @@ const useNewData = ({ data }: Props) => {
     //@ts-ignore
     containerId.values.add('fusebit');
     //@ts-ignore
-    hostname.values.add('fusebit');
+    hostname.values.add(msg);
     data.series[lastFrame].length++;
     return data;
   };
@@ -61,4 +61,4 @@ const useNewData = ({ data }: Props) => {
   };
 };
 
-export default useNewData;
+export default usePopulateData;

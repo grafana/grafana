@@ -17,7 +17,7 @@ import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { COMMON_LABELS } from '../../../core/logs_model';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import usePanelScroll from './usePanelScroll';
-import useNewData from './useNewData';
+import usePopulateData from './usePopulateData';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -41,7 +41,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   const style = useStyles2(getStyles(title, isAscending));
 
   const { eventBus } = usePanelContext();
-  const { newData, externalLogs } = useNewData({ data });
+  const { newData, externalLogs } = usePopulateData({ data });
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
       if (!row) {
