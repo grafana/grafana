@@ -1,8 +1,14 @@
 package thumbs
 
-import "encoding/json"
+import (
+	"time"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
+)
 
 type PreviewSize string
+type CrawlerMode string
 
 const (
 	// PreviewSizeThumb is a small 320x240 preview
@@ -13,6 +19,15 @@ const (
 
 	// PreviewSizeLarge is a large image 512x????
 	PreviewSizeTall PreviewSize = "tall"
+
+	// CrawlerModeThumbs will create small thumbnails for everything
+	CrawlerModeThumbs CrawlerMode = "thumbs"
+
+	// CrawlerModeAnalytics will get full page results for everythign
+	CrawlerModeAnalytics CrawlerMode = "analytics"
+
+	// CrawlerModeMigrate will migrate all dashboards with old schema
+	CrawlerModeMigrate CrawlerMode = "migrate"
 )
 
 // IsKnownSize checks if the value is a standard size
@@ -39,22 +54,21 @@ func getPreviewSize(str string) (PreviewSize, bool) {
 	return PreviewSizeThumb, false
 }
 
-func getTheme(str string) (string, bool) {
+func getTheme(str string) (rendering.Theme, bool) {
 	switch str {
 	case "light":
-		return str, true
+		return rendering.ThemeLight, true
 	case "dark":
-		return str, true
+		return rendering.ThemeDark, true
 	}
-	return "dark", false
+	return rendering.ThemeDark, false
 }
 
 type previewRequest struct {
-	Kind  string      `json:"kind"`
-	OrgID int64       `json:"orgId"`
-	UID   string      `json:"uid"`
-	Size  PreviewSize `json:"size"`
-	Theme string      `json:"theme"`
+	OrgID int64           `json:"orgId"`
+	UID   string          `json:"uid"`
+	Size  PreviewSize     `json:"size"`
+	Theme rendering.Theme `json:"theme"`
 }
 
 type previewResponse struct {
@@ -63,35 +77,19 @@ type previewResponse struct {
 	URL  string `json:"url"`  // redirect to this URL
 }
 
-// export enum CrawlerMode {
-// 	Thumbs = 'thumbs',
-// 	Analytics = 'analytics', // Enterprise only
-// 	Migrate = 'migrate',
-//   }
-
-//   export enum CrawlerAction {
-// 	Run = 'run',
-// 	Stop = 'stop',
-// 	Queue = 'queue', // TODO (later!) move some to the front
-//   }
-
 type crawlCmd struct {
-	Mode        string `json:"mode"`        // thumbs | analytics | migrate
-	Action      string `json:"action"`      // run | stop | queue
-	Theme       string `json:"theme"`       // light | dark
-	User        string `json:"user"`        // :(
-	Password    string `json:"password"`    // :(
-	Concurrency int    `json:"concurrency"` // number of pages to run in parallel
-
-	Path string `json:"path"` // eventually for queue
+	Mode  CrawlerMode     `json:"mode"`  // thumbs | analytics | migrate
+	Theme rendering.Theme `json:"theme"` // light | dark
 }
 
-type crawConfig struct {
-	crawlCmd
-
-	// Sent to the crawler with each command
-	URL               string `json:"url"`
-	ScreenshotsFolder string `json:"screenshotsFolder"`
+type crawlStatus struct {
+	State    string    `json:"state"`
+	Started  time.Time `json:"started,omitempty"`
+	Finished time.Time `json:"finished,omitempty"`
+	Complete int       `json:"complete"`
+	Errors   int       `json:"errors"`
+	Queue    int       `json:"queue"`
+	Last     time.Time `json:"last,omitempty"`
 }
 
 type dashRenderer interface {
@@ -99,5 +97,11 @@ type dashRenderer interface {
 	GetPreview(req *previewRequest) *previewResponse
 
 	// Assumes you have already authenticated as admin
-	CrawlerCmd(cfg *crawlCmd) (json.RawMessage, error)
+	Start(c *models.ReqContext, mode CrawlerMode, theme rendering.Theme) (crawlStatus, error)
+
+	// Assumes you have already authenticated as admin
+	Stop() (crawlStatus, error)
+
+	// Assumes you have already authenticated as admin
+	Status() (crawlStatus, error)
 }

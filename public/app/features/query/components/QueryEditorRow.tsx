@@ -51,6 +51,7 @@ interface Props<TQuery extends DataQuery> {
   app?: CoreApp;
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
+  alerting?: boolean;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -361,7 +362,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
-    const { query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras } = this.props;
+    const { alerting, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras } = this.props;
 
     return (
       <QueryEditorRowHeader
@@ -374,6 +375,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
         renderExtras={renderHeaderExtras}
+        alerting={alerting}
       />
     );
   };

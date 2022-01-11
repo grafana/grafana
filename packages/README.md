@@ -47,6 +47,7 @@ Every commit to main that has changes within the `packages` directory is a subje
 
    - When releasing a prerelease run `packages:publishNext` to publish new versions.
    - When releasing a stable version run `packages:publishLatest` to publish new versions.
+   - When releasing a test version run `packages:publishTest` to publish test versions.
 
 5. Push version commit to the release branch.
 

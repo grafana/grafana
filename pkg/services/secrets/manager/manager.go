@@ -24,10 +24,10 @@ type SecretsService struct {
 	settings   setting.Provider
 	usageStats usagestats.Service
 
-	currentProvider string
-	providers       map[string]secrets.Provider
-	dataKeyCache    map[string]dataKeyCacheItem
-	log             log.Logger
+	currentProviderID secrets.ProviderID
+	providers         map[secrets.ProviderID]secrets.Provider
+	dataKeyCache      map[string]dataKeyCacheItem
+	log               log.Logger
 }
 
 func ProvideSecretsService(
@@ -44,27 +44,27 @@ func ProvideSecretsService(
 
 	logger := log.New("secrets")
 	enabled := settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle)
-	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
+	currentProviderID := readCurrentProviderID(settings)
 
-	if _, ok := providers[currentProvider]; enabled && !ok {
-		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProvider)
+	if _, ok := providers[currentProviderID]; enabled && !ok {
+		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
 
-	if !enabled && currentProvider != kmsproviders.Default {
+	if !enabled && currentProviderID != kmsproviders.Default {
 		logger.Warn("Changing encryption provider requires enabling envelope encryption feature")
 	}
 
-	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProvider)
+	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProviderID)
 
 	s := &SecretsService{
-		store:           store,
-		enc:             enc,
-		settings:        settings,
-		usageStats:      usageStats,
-		providers:       providers,
-		currentProvider: currentProvider,
-		dataKeyCache:    make(map[string]dataKeyCacheItem),
-		log:             logger,
+		store:             store,
+		enc:               enc,
+		settings:          settings,
+		usageStats:        usageStats,
+		providers:         providers,
+		currentProviderID: currentProviderID,
+		dataKeyCache:      make(map[string]dataKeyCacheItem),
+		log:               logger,
 	}
 
 	s.registerUsageMetrics()
@@ -72,15 +72,48 @@ func ProvideSecretsService(
 	return s, nil
 }
 
+func readCurrentProviderID(settings setting.Provider) secrets.ProviderID {
+	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
+	if currentProvider == kmsproviders.Legacy {
+		currentProvider = kmsproviders.Default
+	}
+
+	return secrets.ProviderID(currentProvider)
+}
+
 func (s *SecretsService) registerUsageMetrics() {
 	s.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
-		enabled := 0
+		usageMetrics := make(map[string]interface{})
+
+		// Enabled / disabled
+		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
 		if s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
-			enabled = 1
+			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
 		}
-		return map[string]interface{}{
-			"stats.encryption.envelope_encryption_enabled.count": enabled,
-		}, nil
+
+		// Current provider
+		kind, err := s.currentProviderID.Kind()
+		if err != nil {
+			return nil, err
+		}
+		usageMetrics[fmt.Sprintf("stats.encryption.current_provider.%s.count", kind)] = 1
+
+		// Count by kind
+		countByKind := make(map[string]int)
+		for id := range s.providers {
+			kind, err := id.Kind()
+			if err != nil {
+				return nil, err
+			}
+
+			countByKind[kind]++
+		}
+
+		for kind, count := range countByKind {
+			usageMetrics[fmt.Sprintf(`stats.encryption.providers.%s.count`, kind)] = count
+		}
+
+		return usageMetrics, nil
 	})
 }
 
@@ -135,7 +168,7 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 }
 
 func (s *SecretsService) keyName(scope string) string {
-	return fmt.Sprintf("%s/%s@%s", now().Format("2006-01-02"), scope, s.currentProvider)
+	return fmt.Sprintf("%s/%s@%s", now().Format("2006-01-02"), scope, s.currentProviderID)
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
@@ -237,9 +270,9 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	if err != nil {
 		return nil, err
 	}
-	provider, exists := s.providers[s.currentProvider]
+	provider, exists := s.providers[s.currentProviderID]
 	if !exists {
-		return nil, fmt.Errorf("could not find encryption provider '%s'", s.currentProvider)
+		return nil, fmt.Errorf("could not find encryption provider '%s'", s.currentProviderID)
 	}
 
 	// 2. Encrypt it
@@ -252,7 +285,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	dek := secrets.DataKey{
 		Active:        true, // TODO: right now we never mark a key as deactivated
 		Name:          name,
-		Provider:      s.currentProvider,
+		Provider:      s.currentProviderID,
 		EncryptedData: encrypted,
 		Scope:         scope,
 	}
@@ -310,7 +343,7 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	return decrypted, nil
 }
 
-func (s *SecretsService) GetProviders() map[string]secrets.Provider {
+func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider {
 	return s.providers
 }
 

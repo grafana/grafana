@@ -141,7 +141,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
 		apiRoute.Group("/user", func(userRoute routing.RouteRegister) {
-			userRoute.Get("/", routing.Wrap(GetSignedInUser))
+			userRoute.Get("/", routing.Wrap(hs.GetSignedInUser))
 			userRoute.Put("/", routing.Wrap(UpdateSignedInUser))
 			userRoute.Post("/using/:id", routing.Wrap(UserSetUsingOrg))
 			userRoute.Get("/orgs", routing.Wrap(GetSignedInUserOrgList))
@@ -167,7 +167,7 @@ func (hs *HTTPServer) registerRoutes() {
 			userIDScope := ac.Scope("global", "users", "id", ac.Parameter(":id"))
 			usersRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsers))
 			usersRoute.Get("/search", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsersWithPaging))
-			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(GetUserByID))
+			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserByID))
 			usersRoute.Get("/:id/teams", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersTeamRead, userIDScope)), routing.Wrap(GetUserTeams))
 			usersRoute.Get("/:id/orgs", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(GetUserOrgList))
 			// query parameters /users/lookup?loginOrEmail=admin@example.com
@@ -178,16 +178,16 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// team (admin permission required)
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Post("/", routing.Wrap(hs.CreateTeam))
-			teamsRoute.Put("/:teamId", routing.Wrap(hs.UpdateTeam))
-			teamsRoute.Delete("/:teamId", routing.Wrap(hs.DeleteTeamByID))
-			teamsRoute.Get("/:teamId/members", routing.Wrap(hs.GetTeamMembers))
-			teamsRoute.Post("/:teamId/members", routing.Wrap(hs.AddTeamMember))
-			teamsRoute.Put("/:teamId/members/:userId", routing.Wrap(hs.UpdateTeamMember))
-			teamsRoute.Delete("/:teamId/members/:userId", routing.Wrap(hs.RemoveTeamMember))
-			teamsRoute.Get("/:teamId/preferences", routing.Wrap(hs.GetTeamPreferences))
-			teamsRoute.Put("/:teamId/preferences", routing.Wrap(hs.UpdateTeamPreferences))
-		}, reqCanAccessTeams)
+			teamsRoute.Post("/", authorize(reqCanAccessTeams, ac.EvalPermission(ActionTeamsCreate)), routing.Wrap(hs.CreateTeam))
+			teamsRoute.Put("/:teamId", reqCanAccessTeams, routing.Wrap(hs.UpdateTeam))
+			teamsRoute.Delete("/:teamId", reqCanAccessTeams, routing.Wrap(hs.DeleteTeamByID))
+			teamsRoute.Get("/:teamId/members", reqCanAccessTeams, routing.Wrap(hs.GetTeamMembers))
+			teamsRoute.Post("/:teamId/members", reqCanAccessTeams, routing.Wrap(hs.AddTeamMember))
+			teamsRoute.Put("/:teamId/members/:userId", reqCanAccessTeams, routing.Wrap(hs.UpdateTeamMember))
+			teamsRoute.Delete("/:teamId/members/:userId", reqCanAccessTeams, routing.Wrap(hs.RemoveTeamMember))
+			teamsRoute.Get("/:teamId/preferences", reqCanAccessTeams, routing.Wrap(hs.GetTeamPreferences))
+			teamsRoute.Put("/:teamId/preferences", reqCanAccessTeams, routing.Wrap(hs.UpdateTeamPreferences))
+		})
 
 		// team without requirement of user to be org admin
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
@@ -460,6 +460,12 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetSettings))
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(PauseAllAlerts))
+
+		if hs.ThumbService != nil {
+			adminRoute.Post("/crawler/start", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.StartCrawler))
+			adminRoute.Post("/crawler/stop", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.StopCrawler))
+			adminRoute.Get("/crawler/status", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.CrawlerStatus))
+		}
 
 		adminRoute.Post("/provisioning/dashboards/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDashboards)), routing.Wrap(hs.AdminProvisioningReloadDashboards))
 		adminRoute.Post("/provisioning/plugins/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersPlugins)), routing.Wrap(hs.AdminProvisioningReloadPlugins))
