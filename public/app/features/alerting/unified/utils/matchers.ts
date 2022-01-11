@@ -19,16 +19,10 @@ export const getMatcherQueryParams = (labels: Labels) => {
     ([labelKey]) => !(labelKey.startsWith('__') && labelKey.endsWith('__'))
   );
 
-  var uniqueMatcherLabelPairs = new Map<string, string>();
-  validMatcherLabels.forEach(
-    ([labelKey, labelValue]) =>
-      uniqueMatcherLabelPairs.has(labelKey) === false && uniqueMatcherLabelPairs.set(labelKey, labelValue)
-  );
-
   const matcherUrlParams = new URLSearchParams();
-  uniqueMatcherLabelPairs.forEach(([labekKey, labelValue]) => {
-    matcherUrlParams.append('matchers', `${labekKey}=${labelValue}`);
-  });
+  validMatcherLabels.forEach(([labelKey, labelValue]) =>
+    matcherUrlParams.append('matchers', `${labelKey}=${labelValue}`)
+  );
 
   return matcherUrlParams;
 };
