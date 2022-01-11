@@ -3565,14 +3565,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@es-joy/jsdoccomment@npm:0.14.2":
-  version: 0.14.2
-  resolution: "@es-joy/jsdoccomment@npm:0.14.2"
+"@es-joy/jsdoccomment@npm:~0.17.0":
+  version: 0.17.0
+  resolution: "@es-joy/jsdoccomment@npm:0.17.0"
   dependencies:
     comment-parser: 1.3.0
     esquery: ^1.4.0
-    jsdoc-type-pratt-parser: 2.0.2
-  checksum: babc7f975782a0b07c90d7823dbfeaa06ba7cbe779708cc2e997d049a4e7b592ae59226abf05caffc08fc84001683bfbddfd7a1943dca5f7c38afc706a8cafaf
+    jsdoc-type-pratt-parser: ~2.2.1
+  checksum: 8fc1fc2d01fdf18c033a70939ce61c4fa5cb648bd42987ffe6025b78e1ebbceda6f44f9868d26d51112fc9f743d1e66d0830436697fd60de327fcc9d7ae8c2e9
   languageName: node
   linkType: hard
 
@@ -17585,22 +17585,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:37.5.1":
-  version: 37.5.1
-  resolution: "eslint-plugin-jsdoc@npm:37.5.1"
+"eslint-plugin-jsdoc@npm:37.6.1":
+  version: 37.6.1
+  resolution: "eslint-plugin-jsdoc@npm:37.6.1"
   dependencies:
-    "@es-joy/jsdoccomment": 0.14.2
+    "@es-joy/jsdoccomment": ~0.17.0
     comment-parser: 1.3.0
     debug: ^4.3.3
     escape-string-regexp: ^4.0.0
     esquery: ^1.4.0
-    jsdoc-type-pratt-parser: ^2.0.2
     regextras: ^0.8.0
     semver: ^7.3.5
     spdx-expression-parse: ^3.0.1
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0
-  checksum: 8f5c3edbd3685df3b4d22c6896c4a4c75d96e3e641f45fef717c61cc8a1be17012cadd8fa90caf7aa2c8330dd35aae6aaed7b6806d97e9326ea96e307b6a3b39
+  checksum: 646bb7cd52221cd4764bdcfe545fbcbf0087e18a3c85ea62e7009a2bba66dcc605f6eb9a3c15dc1be56674465d7883fdc234c70f34b769b4afd5dc5ec205136b
   languageName: node
   linkType: hard
 
@@ -19854,7 +19853,7 @@ __metadata:
     enzyme-to-json: 3.6.2
     eslint: 7.28.0
     eslint-config-prettier: 8.3.0
-    eslint-plugin-jsdoc: 37.5.1
+    eslint-plugin-jsdoc: 37.6.1
     eslint-plugin-lodash: ^7.2.0
     eslint-plugin-no-only-tests: 2.6.0
     eslint-plugin-prettier: 4.0.0
@@ -23397,10 +23396,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsdoc-type-pratt-parser@npm:2.0.2, jsdoc-type-pratt-parser@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "jsdoc-type-pratt-parser@npm:2.0.2"
-  checksum: c04e0aec3eab6983956d2a23e778581eb90e69b5123e0da12a8fc9ecda967092443a67b12a878f280eed056a4a7d9b0bb3b35d04f1affb8eb5b003ccb51ea51f
+"jsdoc-type-pratt-parser@npm:~2.2.1":
+  version: 2.2.1
+  resolution: "jsdoc-type-pratt-parser@npm:2.2.1"
+  checksum: 1cb5c9b49009e7cf4f1d126cbc6b2cc90279fb78275bef6705dd319f86f2ccb60be7600190dcf6fb8ad041f40ed206a619b90291e65f1ddb12397a8294fe11b7
   languageName: node
   linkType: hard
 
