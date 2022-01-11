@@ -91,7 +91,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		stateDateBeforePause := alert.NewStateDate
 
 		t.Run("can pause all alerts", func(t *testing.T) {
-			err := pauseAllAlerts(t, true)
+			err := sqlStore.pauseAllAlerts(t, true)
 			require.Nil(t, err)
 
 			t.Run("cannot updated paused alert", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			})
 
 			t.Run("unpausing alerts should update their NewStateDate again", func(t *testing.T) {
-				err := pauseAllAlerts(t, false)
+				err := sqlStore.pauseAllAlerts(t, false)
 				require.Nil(t, err)
 				alert, _ = getAlertById(t, insertedAlert.Id, sqlStore)
 				stateDateAfterUnpause := alert.NewStateDate
@@ -307,7 +307,7 @@ func TestPausingAlerts(t *testing.T) {
 		insertedAlert := alertQuery.Result[0]
 
 		t.Run("when paused", func(t *testing.T) {
-			_, err := pauseAlert(t, testDash.OrgId, insertedAlert.Id, true)
+			_, err := sqlStore.pauseAlert(t, testDash.OrgId, insertedAlert.Id, true)
 			require.Nil(t, err)
 
 			t.Run("the NewStateDate should be updated", func(t *testing.T) {
@@ -320,7 +320,7 @@ func TestPausingAlerts(t *testing.T) {
 		})
 
 		t.Run("when unpaused", func(t *testing.T) {
-			_, err := pauseAlert(t, testDash.OrgId, insertedAlert.Id, false)
+			_, err := sqlStore.pauseAlert(t, testDash.OrgId, insertedAlert.Id, false)
 			require.Nil(t, err)
 
 			t.Run("the NewStateDate should be updated again", func(t *testing.T) {
@@ -333,14 +333,13 @@ func TestPausingAlerts(t *testing.T) {
 		})
 	})
 }
-func pauseAlert(t *testing.T, orgId int64, alertId int64, pauseState bool) (int64, error) {
-	sqlStore := InitTestDB(t)
+func (ss *SQLStore) pauseAlert(t *testing.T, orgId int64, alertId int64, pauseState bool) (int64, error) {
 	cmd := &models.PauseAlertCommand{
 		OrgId:    orgId,
 		AlertIds: []int64{alertId},
 		Paused:   pauseState,
 	}
-	err := sqlStore.PauseAlert(context.Background(), cmd)
+	err := ss.PauseAlert(context.Background(), cmd)
 	require.Nil(t, err)
 	return cmd.ResultCount, err
 }
@@ -377,12 +376,11 @@ func getAlertById(t *testing.T, id int64, ss *SQLStore) (*models.Alert, error) {
 	return q.Result, err
 }
 
-func pauseAllAlerts(t *testing.T, pauseState bool) error {
-	sqlStore := InitTestDB(t)
+func (ss *SQLStore) pauseAllAlerts(t *testing.T, pauseState bool) error {
 	cmd := &models.PauseAllAlertCommand{
 		Paused: pauseState,
 	}
-	err := sqlStore.PauseAllAlerts(context.Background(), cmd)
+	err := ss.PauseAllAlerts(context.Background(), cmd)
 	require.Nil(t, err)
 	return err
 }
