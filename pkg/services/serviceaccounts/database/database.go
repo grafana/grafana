@@ -92,8 +92,8 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, 
 		var sess *xorm.Session
 
 		sess = dbSession.Limit(100, 0).
-			Join("inner", "user", "user.id = apikey.service_account_id").
-			Where("org_id=? and ( expires IS NULL or expires >= ?)", orgID, time.Now().Unix()).
+			Join("inner", "user", "user.id = api_key.service_account_id").
+			Where("user.org_id=? AND user.id=? AND ( expires IS NULL or expires >= ?)", orgID, serviceAccount, time.Now().Unix()).
 			Asc("name")
 
 		return sess.Find(&result)
