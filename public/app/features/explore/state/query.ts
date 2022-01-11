@@ -40,7 +40,7 @@ import { localStorageFullAction, richHistoryLimitExceededAction, richHistoryUpda
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
-import { createCacheKey, getResultsFromCache } from './utils';
+import { createCacheKey, getResultsFromCache, addQueryToQueryHistory, getQueriesFromQueryHistory } from './utils';
 import deepEqual from 'fast-deep-equal';
 
 //
@@ -305,7 +305,7 @@ export function modifyQueries(
   };
 }
 
-function handleHistory(
+async function handleHistory(
   dispatch: ThunkDispatch,
   state: ExploreState,
   history: Array<HistoryItem<DataQuery>>,
@@ -315,6 +315,13 @@ function handleHistory(
 ) {
   const datasourceId = datasource.meta.id;
   const nextHistory = updateHistory(history, datasourceId, queries);
+  const uid = queries[0]?.datasource?.uid;
+  if (uid) {
+    addQueryToQueryHistory(uid, queries);
+    //WIP: Currently here to test development
+    console.log(await getQueriesFromQueryHistory(uid));
+  }
+
   const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(
     state.richHistory || [],
     datasourceId,
@@ -369,7 +376,7 @@ export const runQueries = (
     } = exploreItemState;
     let newQuerySub;
 
-    const queries = exploreItemState.queries.map((query) => ({
+    const queries: DataQuery[] = exploreItemState.queries.map((query) => ({
       ...query,
       datasource: query.datasource || datasourceInstance?.getRef(),
     }));

@@ -7,8 +7,9 @@ import {
   HistoryItem,
   LoadingState,
   PanelData,
+  DataQuery,
 } from '@grafana/data';
-
+import { getBackendSrv } from '@grafana/runtime';
 import { ExploreItemState } from 'app/types/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import store from '../../../core/store';
@@ -136,4 +137,17 @@ export function getResultsFromCache(
   const cacheIdx = cache.findIndex((c) => c.key === cacheKey);
   const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
   return cacheValue;
+}
+
+export function addQueryToQueryHistory(datasourceUid: string, queries: DataQuery[]): void {
+  getBackendSrv().post(`/api/query-history`, {
+    datasourceUid: datasourceUid,
+    queries: JSON.stringify(queries),
+  });
+}
+
+export async function getQueriesFromQueryHistory(dataSourceUid: string): Promise<any[]> {
+  return await getBackendSrv().get(`/api/query-history`, {
+    dataSourceUid,
+  });
 }
