@@ -120,7 +120,7 @@ const ServiceAccountsTable: FC<Props> = (props) => {
       </table>
       {toRemove !== null && (
         <ConfirmModal
-          body={`Are you sure you want to delete serviceaccount ${toRemove.login}?`}
+          body={`Are you sure you want to delete ${toRemove.login} service account?`}
           confirmText="Delete"
           title="Delete"
           onDismiss={() => setToRemove(null)}
