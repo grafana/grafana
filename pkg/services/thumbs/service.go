@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -28,29 +29,27 @@ var (
 type Service interface {
 	Enabled() bool
 	GetImage(c *models.ReqContext)
+
+	// Form post (from dashboard page)
 	SetImage(c *models.ReqContext)
 
 	// Must be admin
 	StartCrawler(c *models.ReqContext) response.Response
 	StopCrawler(c *models.ReqContext) response.Response
+	CrawlerStatus(c *models.ReqContext) response.Response
 }
 
-func ProvideService(cfg *setting.Cfg, renderService rendering.Service) Service {
+func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.GrafanaLive) Service {
 	if !cfg.IsDashboardPreviesEnabled() {
 		return &dummyService{}
 	}
 
 	root := filepath.Join(cfg.DataPath, "crawler", "preview")
-	url := strings.TrimSuffix(cfg.RendererUrl, "/render") + "/scan"
-
-	renderer := newRenderHttp(url, crawConfig{
-		URL:               strings.TrimSuffix(cfg.RendererCallbackUrl, "/"),
-		ScreenshotsFolder: root,
-	})
-
 	tempdir := filepath.Join(cfg.DataPath, "temp")
+	_ = os.MkdirAll(root, 0700)
 	_ = os.MkdirAll(tempdir, 0700)
 
+	renderer := newSimpleCrawler(root, renderService, gl)
 	return &thumbService{
 		renderer: renderer,
 		root:     root,
@@ -84,7 +83,6 @@ func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *pre
 	}
 
 	req := &previewRequest{
-		Kind:  "dash",
 		OrgID: c.OrgId,
 		UID:   params[":uid"],
 		Theme: theme,
@@ -137,6 +135,7 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	c.JSON(500, map[string]string{"path": rsp.Path, "error": "unknown!"})
 }
 
+// Hack for now -- lets you upload images explicitly
 func (hs *thumbService) SetImage(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
@@ -217,29 +216,30 @@ func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "error parsing bytes", err)
 	}
-	cmd.Action = "start"
-
-	msg, err := hs.renderer.CrawlerCmd(cmd)
+	if cmd.Mode == "" {
+		cmd.Mode = CrawlerModeThumbs
+	}
+	msg, err := hs.renderer.Start(c, cmd.Mode, cmd.Theme)
 	if err != nil {
 		return response.Error(500, "error starting", err)
 	}
-
-	header := make(http.Header)
-	header.Set("Content-Type", "application/json")
-	return response.CreateNormalResponse(header, msg, 200)
+	return response.JSON(200, msg)
 }
 
 func (hs *thumbService) StopCrawler(c *models.ReqContext) response.Response {
-	_, err := hs.renderer.CrawlerCmd(&crawlCmd{
-		Action: "stop",
-	})
+	msg, err := hs.renderer.Stop()
 	if err != nil {
-		return response.Error(500, "error stopping crawler", err)
+		return response.Error(500, "error starting", err)
 	}
+	return response.JSON(200, msg)
+}
 
-	result := make(map[string]string)
-	result["message"] = "Stopping..."
-	return response.JSON(200, result)
+func (hs *thumbService) CrawlerStatus(c *models.ReqContext) response.Response {
+	msg, err := hs.renderer.Status()
+	if err != nil {
+		return response.Error(500, "error starting", err)
+	}
+	return response.JSON(200, msg)
 }
 
 // Ideally this service would not require first looking up the full dashboard just to bet the id!

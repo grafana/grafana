@@ -29,7 +29,8 @@
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],
-      "extends": ["schedule:monthly"]
+      "extends": ["schedule:monthly"],
+      "groupName": "Monthly patch updates"
     }
   ],
   "pin": {

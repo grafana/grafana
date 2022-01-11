@@ -227,8 +227,8 @@ func TestInitializer_envVars(t *testing.T) {
 		}
 
 		licensing := &testLicensingService{
-			edition:    "test",
-			hasLicense: true,
+			edition:  "test",
+			tokenRaw: "token",
 		}
 
 		i := &Initializer{
@@ -249,8 +249,8 @@ func TestInitializer_envVars(t *testing.T) {
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
 		assert.Equal(t, "GF_VERSION=", envVars[1])
 		assert.Equal(t, "GF_EDITION=test", envVars[2])
-		assert.Equal(t, "GF_ENTERPRISE_license_PATH=/path/to/ent/license", envVars[3])
-		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=", envVars[4])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[3])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[4])
 	})
 }
 
@@ -314,13 +314,8 @@ func Test_pluginSettings_ToEnv(t *testing.T) {
 }
 
 type testLicensingService struct {
-	edition    string
-	hasLicense bool
-	tokenRaw   string
-}
-
-func (t *testLicensingService) HasLicense() bool {
-	return t.hasLicense
+	edition  string
+	tokenRaw string
 }
 
 func (t *testLicensingService) Expiry() int64 {
@@ -343,12 +338,16 @@ func (t *testLicensingService) LicenseURL(showAdminLicensingPage bool) string {
 	return ""
 }
 
-func (t *testLicensingService) HasValidLicense() bool {
-	return false
-}
-
 func (t *testLicensingService) Environment() map[string]string {
 	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
+}
+
+func (*testLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
+}
+
+func (*testLicensingService) FeatureEnabled(feature string) bool {
+	return false
 }
 
 type testPlugin struct {
