@@ -9,6 +9,8 @@ var (
 	ErrHealthCheckFailed = errors.New("health check failed")
 	// ErrPluginUnavailable error returned when plugin is unavailable.
 	ErrPluginUnavailable = errors.New("plugin unavailable")
+	// ErrPluginConnectionFailure error returned when plugin connection failed.
+	ErrPluginConnectionFailure = errors.New("plugin connection failed")
 	// ErrMethodNotImplemented error returned when plugin method not implemented.
 	ErrMethodNotImplemented = errors.New("method not implemented")
 )
