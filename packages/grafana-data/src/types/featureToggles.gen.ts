@@ -1,16 +1,14 @@
-// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
-// To change feature flags, edit:
-//  pkg/setting/setting_feature_toggles_registry.go
-
 /**
  * Describes available feature toggles in Grafana. These can be configured via
  * conf/custom.ini to enable features under development or not yet available in
  * stable version.
  *
+ * Only enabled values will be returned in this interface
+ *
  * @public
  */
 export interface FeatureToggles {
-  // [name: string]?: boolean; // support any string value
+  [name: string]: boolean | undefined; // support any string value
 
   recordedQueries?: boolean;
   teamsync?: boolean;
