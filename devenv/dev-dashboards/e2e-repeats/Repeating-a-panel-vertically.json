@@ -25,6 +25,9 @@
   "liveNow": false,
   "panels": [
     {
+      "datasource": {
+        "type": "testdata"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {

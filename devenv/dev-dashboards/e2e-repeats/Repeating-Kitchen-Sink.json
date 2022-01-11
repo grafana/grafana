@@ -26,6 +26,9 @@
   "liveNow": false,
   "panels": [
     {
+      "datasource": {
+        "type": "testdata"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -111,6 +114,9 @@
       "type": "row"
     },
     {
+      "datasource": {
+        "type": "testdata"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -185,6 +191,9 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "testdata"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -257,6 +266,9 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "testdata"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {

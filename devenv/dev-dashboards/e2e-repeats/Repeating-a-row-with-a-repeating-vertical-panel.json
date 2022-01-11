@@ -40,6 +40,9 @@
       "type": "row"
     },
     {
+      "datasource": {
+        "type": "testdata"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
