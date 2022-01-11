@@ -122,7 +122,7 @@ var (
 		},
 		{
 			Name:         "tempoServiceGraph",
-			Description:  "show service ",
+			Description:  "show service",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
