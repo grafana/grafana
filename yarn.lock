@@ -19871,7 +19871,7 @@ __metadata:
     glob: 7.2.0
     history: 4.10.1
     hoist-non-react-statics: 3.3.2
-    html-loader: 3.0.1
+    html-loader: 3.1.0
     html-webpack-plugin: 5.5.0
     http-server: 14.1.0
     husky: ^7.0.0
@@ -20465,15 +20465,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-loader@npm:3.0.1":
-  version: 3.0.1
-  resolution: "html-loader@npm:3.0.1"
+"html-loader@npm:3.1.0":
+  version: 3.1.0
+  resolution: "html-loader@npm:3.1.0"
   dependencies:
     html-minifier-terser: ^6.0.2
     parse5: ^6.0.1
   peerDependencies:
     webpack: ^5.0.0
-  checksum: 9963912f20c14ac2303d262778ea230e66bb7953db004ae55787a55ae4baecc350ce6ddb89ff8bdf5d3cf715ee8460545c2d2109304be3246bbad2123f7c9a57
+  checksum: 4c383d103c10465964924f31eeb2876df941df6515b52a7be517eb01d59ff8f5ae344a3ca428469029c999c73f5ae5dac3431701886ca16617a670a0991bd3a2
   languageName: node
   linkType: hard
 
