@@ -89,9 +89,8 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 
 	builtinRoles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
-	fixedRoleGrants := accesscontrol.GetFixedRoleGrants(ac.Cfg)
 	for _, builtin := range builtinRoles {
-		if roleNames, ok := fixedRoleGrants[builtin]; ok {
+		if roleNames, ok := accesscontrol.FixedRoleGrants[builtin]; ok {
 			for _, name := range roleNames {
 				role, exists := accesscontrol.FixedRoles[name]
 				if !exists {
@@ -142,8 +141,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 	for _, builtInRole := range builtInRoles {
 		// Only record new assignments
 		alreadyAssigned := false
-		fixedRoleGrants := accesscontrol.GetFixedRoleGrants(ac.Cfg)
-		assignments, ok := fixedRoleGrants[builtInRole]
+		assignments, ok := accesscontrol.FixedRoleGrants[builtInRole]
 		if ok {
 			for _, assignedRole := range assignments {
 				if assignedRole == role.Name {
@@ -154,7 +152,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 		}
 		if !alreadyAssigned {
 			assignments = append(assignments, role.Name)
-			accesscontrol.AssignFixedRoles(builtInRole, assignments)
+			accesscontrol.FixedRoleGrants[builtInRole] = assignments
 		}
 	}
 }

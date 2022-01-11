@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type RoleRegistry interface {
@@ -198,19 +197,6 @@ var (
 			},
 		}),
 	}
-
-	teamsWriterRole = RoleDTO{
-		Name:        teamsWriter,
-		DisplayName: "Teams writer",
-		Description: "Create teams.",
-		Group:       "Teams",
-		Version:     1,
-		Permissions: []Permission{
-			{
-				Action: ActionTeamsCreate,
-			},
-		},
-	}
 )
 
 // Role names definitions
@@ -224,7 +210,6 @@ const (
 	statsReader         = "fixed:stats:reader"
 	usersReader         = "fixed:users:reader"
 	usersWriter         = "fixed:users:writer"
-	teamsWriter         = "fixed:teams:writer"
 )
 
 var (
@@ -232,7 +217,7 @@ var (
 	// assigned to a set of users. When adding a new resource protected by
 	// Grafana access control the default permissions should be added to a
 	// new fixed role in this set so that users can access the new
-	// resource. fixedRoleGrants lists which built-in roles are
+	// resource. FixedRoleGrants lists which built-in roles are
 	// assigned which fixed roles in this list.
 	FixedRoles = map[string]RoleDTO{
 		datasourcesExplorer: datasourcesExplorerRole,
@@ -244,12 +229,11 @@ var (
 		statsReader:         statsReaderRole,
 		usersReader:         usersReaderRole,
 		usersWriter:         usersWriterRole,
-		teamsWriter:         teamsWriterRole,
 	}
 
-	// fixedRoleGrants specifies which built-in roles are assigned
+	// FixedRoleGrants specifies which built-in roles are assigned
 	// to which set of FixedRoles by default. Alphabetically sorted.
-	fixedRoleGrants = map[string][]string{
+	FixedRoleGrants = map[string][]string{
 		RoleGrafanaAdmin: {
 			ldapReader,
 			ldapWriter,
@@ -263,26 +247,12 @@ var (
 		string(models.ROLE_ADMIN): {
 			orgUsersReader,
 			orgUsersWriter,
-			teamsWriter,
 		},
 		string(models.ROLE_EDITOR): {
 			datasourcesExplorer,
 		},
 	}
 )
-
-func GetFixedRoleGrants(cfg *setting.Cfg) map[string][]string {
-	if cfg.EditorsCanAdmin {
-		fixedRoleGrants[string(models.ROLE_EDITOR)] = append(fixedRoleGrants[string(models.ROLE_EDITOR)], teamsWriter)
-	}
-
-	return fixedRoleGrants
-}
-
-func AssignFixedRoles(builtInRole string, assignments []string) {
-	fixedRoleGrants[builtInRole] = assignments
-
-}
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {
 	if permissions == nil {
