@@ -8,9 +8,8 @@ import (
 
 func TestCleanRelativePath(t *testing.T) {
 	testcases := []struct {
-		input         string
-		expectedPath  string
-		expectedError error
+		input        string
+		expectedPath string
 	}{
 		{
 			input:        "",
@@ -32,11 +31,7 @@ func TestCleanRelativePath(t *testing.T) {
 
 	for _, tt := range testcases {
 		path, err := CleanRelativePath(tt.input)
-		if tt.expectedError != nil {
-			assert.Error(t, err)
-		} else {
-			assert.NoError(t, err)
-		}
+		assert.NoError(t, err)
 		assert.Equal(t, tt.expectedPath, path)
 	}
 }
