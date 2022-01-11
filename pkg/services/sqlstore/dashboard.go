@@ -26,10 +26,10 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 	[]string{"equal", "error"},
 )
 
-func init() {
+func (ss *SQLStore) init() {
 	bus.AddHandler("sql", GetDashboard)
 	bus.AddHandler("sql", GetDashboards)
-	bus.AddHandler("sql", DeleteDashboard)
+	bus.AddHandler("sql", ss.DeleteDashboard)
 	bus.AddHandler("sql", GetDashboardTags)
 	bus.AddHandler("sql", GetDashboardSlugById)
 	bus.AddHandler("sql", GetDashboardsByPluginId)
@@ -410,8 +410,8 @@ func GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) 
 	return err
 }
 
-func DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		return deleteDashboard(cmd, sess)
 	})
 }
