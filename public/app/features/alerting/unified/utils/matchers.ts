@@ -6,6 +6,7 @@ import { parseMatcher } from './alertmanager';
 export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
   const parsedMatchers = matcherPairs.filter((x) => !!x.trim()).map((x) => parseMatcher(x.trim()));
 
+  // Due to inconsistent labelling of alert rules, we want to make sure there are no duplicate labels
   const uniqueMatchersMap = new Map<string, Matcher>();
   parsedMatchers.forEach(
     (matcher) => uniqueMatchersMap.has(matcher.name) === false && uniqueMatchersMap.set(matcher.name, matcher)
