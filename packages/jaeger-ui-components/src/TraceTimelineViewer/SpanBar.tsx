@@ -18,7 +18,7 @@ import { groupBy as _groupBy } from 'lodash';
 import React from 'react';
 import { compose, onlyUpdateForKeys, withProps, withState } from 'recompose';
 import { GrafanaTheme2 } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { autoColor } from '../Theme';
 import { TraceSpan } from '../types/trace';
 import { TNil } from '../types';
@@ -26,7 +26,7 @@ import { UIPopover } from '../uiElementsContext';
 import AccordianLogs from './SpanDetail/AccordianLogs';
 import { ViewedBoundsFunctionType } from './utils';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       label: wrapper;
@@ -88,7 +88,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
     `,
   };
-});
+};
 
 type TCommonProps = {
   color: string;
@@ -107,7 +107,6 @@ type TCommonProps = {
   span: TraceSpan;
   className?: string;
   labelClassName?: string;
-  theme: GrafanaTheme2;
 };
 
 type TInnerProps = {
@@ -138,7 +137,6 @@ function SpanBar(props: TInnerProps) {
     rpc,
     traceStartTime,
     span,
-    theme,
     className,
     labelClassName,
   } = props;
@@ -148,7 +146,7 @@ function SpanBar(props: TInnerProps) {
     // round to the nearest 0.2%
     return toPercent(Math.round(posPercent * 500) / 500);
   });
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <div
