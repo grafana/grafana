@@ -25,10 +25,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "${DS_GDEV-TESTDATA}"
-      },
+      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
