@@ -231,12 +231,14 @@ func (r *simpleCrawler) walk() {
 			r.status.Errors++
 		} else {
 
+			// TODO extract to a separate method
 			file, err := os.Open(res.FilePath)
 			if err != nil {
 				r.status.Errors++
 				tlog.Warn("error opening file", "err", err)
 			} else {
 				reader := bufio.NewReader(file)
+				// TODO remove the file right after this operation succeeds? or create it with a "temp" flag?
 				content, err := ioutil.ReadAll(reader)
 				if err != nil {
 					r.status.Errors++
@@ -256,9 +258,9 @@ func (r *simpleCrawler) walk() {
 					cmd := &models.SaveDashboardThumbnailCommand{
 						DashboardID: item.id,
 						PanelID:     0,
-						Kind:        "thumb",
+						Kind:        "thumb", // TODO use enum?
 						Image:       fmt.Sprintf("data:%s;base64,%s", mimeType, base64Image),
-						Theme:       "dark", // how do I convert the r.opts.Theme enum to string ???????
+						Theme:       "dark", // TODO: how do I convert the r.opts.Theme enum to string ???????
 					}
 					_, err = r.store.SaveThumbnail(cmd)
 					if err != nil {

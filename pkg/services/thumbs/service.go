@@ -112,13 +112,14 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	query := &models.GetDashboardThumbnailCommand{
 		DashboardUID: req.UID,
 		PanelID:      0,
-		Kind:         "thumb",
+		Kind:         "thumb", // TODO: use enums. can we use the same enums everywhere?
 		Theme:        "dark",
 	}
 	res, err := hs.store.GetThumbnail(query)
 	if err != nil {
 
 		if err == models.ErrDashboardThumbnailNotFound {
+			// TODO maybe just return a json and 200 in all cases?
 			tlog.Info("Thumbnail not found", "dashboardUid", req.UID)
 			c.Resp.WriteHeader(404)
 

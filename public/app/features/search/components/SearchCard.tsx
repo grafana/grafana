@@ -54,7 +54,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   const theme = useTheme2();
   const thumbnailUrl = getThumbnailURL(item.uid!, theme.isLight);
 
-  fetch(thumbnailUrl)
+  fetch(thumbnailUrl) // TODO lazify
     .then((res) => {
       if (res.status === 200) {
         return res.text();

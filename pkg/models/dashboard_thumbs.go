@@ -4,12 +4,12 @@ import (
 	"time"
 )
 
-// A DashboardThumbnail includes all metadata for a dashbaord thumbnail
+// A DashboardThumbnail includes all metadata for a dashboard thumbnail
 type DashboardThumbnail struct {
 	Id           int64     `json:"id"`
 	DashboardId  int64     `json:"dashboardId"`
 	PanelId      int64     `json:"panelId,omitempty"`
-	Kind         string    `json:"kind"`
+	Kind         string    `json:"kind"` // TODO use enums here?
 	Theme        string    `json:"theme"`
 	ImageDataUrl string    `json:"imageDataUrl"`
 	Updated      time.Time `json:"updated"`
@@ -22,7 +22,7 @@ type DashboardThumbnail struct {
 type GetDashboardThumbnailCommand struct {
 	DashboardUID string
 	PanelID      int64
-	Kind         string
+	Kind         string // TODO use enums here?
 	Theme        string
 
 	Result *DashboardThumbnail
@@ -31,7 +31,7 @@ type GetDashboardThumbnailCommand struct {
 type SaveDashboardThumbnailCommand struct {
 	DashboardID int64
 	PanelID     int64
-	Kind        string
+	Kind        string // TODO use enums here?
 	Theme       string
 	Image       string
 

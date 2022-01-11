@@ -21,6 +21,7 @@ type Store interface {
 	// SaveAlerts saves dashboard alerts.
 	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
 
+	// TODO do I need to have these methods here if accessing store via sqlstore?
 	GetThumbnail(query *models.GetDashboardThumbnailCommand) (*models.DashboardThumbnail, error)
 	SaveThumbnail(cmd *models.SaveDashboardThumbnailCommand) (*models.DashboardThumbnail, error)
 }
