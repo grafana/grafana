@@ -194,7 +194,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	teamsWriterRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:teams:writer",
-			DisplayName: "Teams writer",
+			DisplayName: "Team writer",
 			Description: "Create teams.",
 			Group:       "Teams",
 			Version:     1,
