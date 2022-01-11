@@ -24,10 +24,10 @@
 	"links": [],
 	"panels": [
 		{
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -83,10 +83,10 @@
 			"transformations": []
 		},
 		{
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -303,10 +303,10 @@
 			"repeatDirection": "h"
 		},
 		{
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -362,10 +362,10 @@
 			"transformations": []
 		},
 		{
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {

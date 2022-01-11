@@ -86,10 +86,10 @@
 			"transformations": []
 		},
 		{
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
