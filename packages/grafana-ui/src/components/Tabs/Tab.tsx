@@ -1,4 +1,4 @@
-import React, { FC, HTMLProps } from 'react';
+import React, { HTMLProps } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -18,7 +18,7 @@ export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
-  suffix?: FC;
+  suffix?: () => JSX.Element;
 }
 
 export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
@@ -30,7 +30,7 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
         {icon && <Icon name={icon} />}
         {label}
         {typeof counter === 'number' && <Counter value={counter} />}
-        {suffix && <span>{suffix({})}</span>}
+        {suffix && suffix()}
       </>
     );
 

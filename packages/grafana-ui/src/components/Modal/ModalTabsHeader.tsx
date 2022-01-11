@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { IconName } from '../../types';
 import { TabsBar } from '../Tabs/TabsBar';
 import { Tab } from '../Tabs/Tab';
@@ -8,7 +8,7 @@ interface ModalTab {
   value: string;
   label: string;
   icon?: IconName;
-  labelSuffix?: FC;
+  labelSuffix?: () => JSX.Element;
 }
 
 interface Props {
