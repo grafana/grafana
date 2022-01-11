@@ -14,7 +14,7 @@ import (
 )
 
 type configReader interface {
-	readConfig(path string) ([]*pluginsAsConfig, error)
+	readConfig(ctx context.Context, path string) ([]*pluginsAsConfig, error)
 }
 
 type configReaderImpl struct {
@@ -26,7 +26,7 @@ func newConfigReader(logger log.Logger, pluginStore plugins.Store) configReader 
 	return &configReaderImpl{log: logger, pluginStore: pluginStore}
 }
 
-func (cr *configReaderImpl) readConfig(path string) ([]*pluginsAsConfig, error) {
+func (cr *configReaderImpl) readConfig(ctx context.Context, path string) ([]*pluginsAsConfig, error) {
 	var apps []*pluginsAsConfig
 	cr.log.Debug("Looking for plugin provisioning files", "path", path)
 
@@ -57,7 +57,7 @@ func (cr *configReaderImpl) readConfig(path string) ([]*pluginsAsConfig, error) 
 
 	checkOrgIDAndOrgName(apps)
 
-	err = cr.validatePluginsConfig(apps)
+	err = cr.validatePluginsConfig(ctx, apps)
 	if err != nil {
 		return nil, err
 	}
@@ -107,14 +107,14 @@ func validateRequiredField(apps []*pluginsAsConfig) error {
 	return nil
 }
 
-func (cr *configReaderImpl) validatePluginsConfig(apps []*pluginsAsConfig) error {
+func (cr *configReaderImpl) validatePluginsConfig(ctx context.Context, apps []*pluginsAsConfig) error {
 	for i := range apps {
 		if apps[i].Apps == nil {
 			continue
 		}
 
 		for _, app := range apps[i].Apps {
-			if _, exists := cr.pluginStore.Plugin(context.TODO(), app.PluginID); !exists {
+			if _, exists := cr.pluginStore.Plugin(ctx, app.PluginID); !exists {
 				return fmt.Errorf("plugin not installed: %q", app.PluginID)
 			}
 		}

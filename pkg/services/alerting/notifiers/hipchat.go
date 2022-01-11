@@ -177,7 +177,7 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	hc.log.Info("Request payload", "json", string(data))
 	cmd := &models.SendWebhookSync{Url: hipURL, Body: string(data)}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		hc.log.Error("Failed to send hipchat notification", "error", err, "webhook", hc.Name)
 		return err
 	}

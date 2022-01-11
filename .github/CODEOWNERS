@@ -43,6 +43,11 @@ go.sum @grafana/backend-platform
 /pkg/tsdb/zipkin @grafana/observability-squad
 /pkg/tsdb/tempo @grafana/observability-squad
 
+# BI backend code
+/pkg/tsdb/mysql @grafana/grafana-bi-squad
+/pkg/tsdb/postgres @grafana/grafana-bi-squad
+/pkg/tsdb/mssql @grafana/grafana-bi-squad
+
 # Database migrations
 /pkg/services/sqlstore/migrations @grafana/backend-platform @grafana/hosted-grafana-team
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
@@ -64,6 +69,9 @@ go.sum @grafana/backend-platform
 /pkg/services/datasourceproxy @grafana/plugins-platform-backend
 /pkg/services/datasources @grafana/plugins-platform-backend
 
+# Dashboard previews / crawler (behind feature flag)
+/pkg/services/thumbs @grafana/grafana-edge-squad
+
 # Backend code docs
 /contribute/style-guides/backend.md @grafana/backend-platform
 /contribute/architecture/backend @grafana/backend-platform
@@ -83,7 +91,7 @@ go.sum @grafana/backend-platform
 /packages/grafana-ui/src/utils/storybook @grafana/plugins-platform-frontend
 /packages/jaeger-ui-components/ @grafana/observability-squad
 /plugins-bundled @grafana/plugins-platform-frontend
-/public @grafana/user-essentials
+# public folder
 /public/app/core/components/TimePicker @grafana/grafana-bi-squad
 /public/app/core/components/Layers @grafana/grafana-edge-squad
 /public/app/features/canvas/ @grafana/grafana-edge-squad
@@ -133,10 +141,10 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/influxdb @grafana/observability-squad
 /public/app/plugins/datasource/jaeger @grafana/observability-squad
 /public/app/plugins/datasource/loki @grafana/observability-squad
-/public/app/plugins/datasource/mssql @grafana/backend-platform
-/public/app/plugins/datasource/mysql @grafana/backend-platform
+/public/app/plugins/datasource/mssql @grafana/grafana-bi-squad
+/public/app/plugins/datasource/mysql @grafana/grafana-bi-squad
 /public/app/plugins/datasource/opentsdb @grafana/backend-platform
-/public/app/plugins/datasource/postgres @grafana/backend-platform
+/public/app/plugins/datasource/postgres @grafana/grafana-bi-squad
 /public/app/plugins/datasource/prometheus @grafana/observability-squad
 /public/app/plugins/datasource/cloud-monitoring @grafana/cloud-datasources
 /public/app/plugins/datasource/zipkin @grafana/observability-squad
