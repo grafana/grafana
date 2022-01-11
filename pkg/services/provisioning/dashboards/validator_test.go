@@ -20,7 +20,7 @@ func TestDuplicatesValidator(t *testing.T) {
 	bus.ClearBusHandlers()
 	fakeService = mockDashboardProvisioningService()
 
-	bus.AddHandlerCtx("test", mockGetDashboardQuery)
+	bus.AddHandler("test", mockGetDashboardQuery)
 	cfg := &config{
 		Name:    "Default",
 		Type:    "file",

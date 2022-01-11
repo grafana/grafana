@@ -20,12 +20,12 @@ func ProvideService(enc encryption.Internal, settings setting.Provider) Service 
 	}
 }
 
-func (s Service) Provide() (map[string]secrets.Provider, error) {
+func (s Service) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
 	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
 		return nil, nil
 	}
 
-	return map[string]secrets.Provider{
+	return map[secrets.ProviderID]secrets.Provider{
 		kmsproviders.Default: grafana.New(s.settings, s.enc),
 	}, nil
 }

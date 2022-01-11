@@ -14,12 +14,14 @@ jest.mock('react-use/lib/useMeasure', () => {
 });
 
 describe('NodeGraph', () => {
-  it('doesnt fail without any data', async () => {
+  it('shows no data message without any data', async () => {
     render(<NodeGraph dataFrames={[]} getLinks={() => []} />);
+
+    await screen.findByText('No data');
   });
 
   it('can zoom in and out', async () => {
-    render(<NodeGraph dataFrames={[]} getLinks={() => []} />);
+    render(<NodeGraph dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([[0, 1]])]} getLinks={() => []} />);
     const zoomIn = await screen.findByTitle(/Zoom in/);
     const zoomOut = await screen.findByTitle(/Zoom out/);
 
