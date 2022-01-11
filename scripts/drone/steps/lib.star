@@ -11,7 +11,7 @@ windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
 
-disable_tests = True
+disable_tests = False
 
 def slack_step(channel, template, secret):
     return {
