@@ -48,8 +48,8 @@ exports[`Render should render teams table 1`] = `
         />
       </div>
       <LinkButton
-        className=""
-        href="org/teams/new"
+        disabled={true}
+        href="#"
       >
         New Team
       </LinkButton>
@@ -388,7 +388,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
         />
       </div>
       <LinkButton
-        className=" disabled"
+        disabled={true}
         href="#"
       >
         New Team
@@ -512,7 +512,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
         />
       </div>
       <LinkButton
-        className=""
+        disabled={false}
         href="org/teams/new"
       >
         New Team

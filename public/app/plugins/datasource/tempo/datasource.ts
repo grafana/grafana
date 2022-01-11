@@ -1,4 +1,4 @@
-import { from, merge, Observable, of, throwError } from 'rxjs';
+import { EMPTY, from, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
 import {
   DataQuery,
@@ -11,7 +11,7 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
-import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import { config, BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
@@ -41,7 +41,7 @@ export interface TempoJsonData extends DataSourceJsonData {
   nodeGraph?: NodeGraphOptions;
 }
 
-export type TempoQuery = {
+export interface TempoQuery extends DataQuery {
   query: string;
   // Query to find list of traces, e.g., via Loki
   linkedQuery?: LokiQuery;
@@ -53,7 +53,16 @@ export type TempoQuery = {
   maxDuration?: string;
   limit?: number;
   serviceMapQuery?: string;
-} & DataQuery;
+}
+
+interface SearchQueryParams {
+  minDuration?: string;
+  maxDuration?: string;
+  limit?: number;
+  tags: string;
+  start?: number;
+  end?: number;
+}
 
 export const DEFAULT_LIMIT = 20;
 
@@ -116,7 +125,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.nativeSearch?.length) {
       try {
-        const searchQuery = this.buildSearchQuery(targets.nativeSearch[0]);
+        const timeRange = config.featureToggles.tempoBackendSearch
+          ? { startTime: options.range.from.unix(), endTime: options.range.to.unix() }
+          : undefined;
+        const searchQuery = this.buildSearchQuery(targets.nativeSearch[0], timeRange);
         subQueries.push(
           this._request('/api/search', searchQuery).pipe(
             map((response) => {
@@ -152,20 +164,36 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (targets.traceId?.length > 0) {
-      const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: targets.traceId };
-      subQueries.push(
-        super.query(traceRequest).pipe(
-          map((response) => {
-            if (response.error) {
-              return response;
-            }
-            return transformTrace(response, this.nodeGraph?.enabled);
-          })
-        )
-      );
+      subQueries.push(this.handleTraceIdQuery(options, targets.traceId));
     }
 
     return merge(...subQueries);
+  }
+
+  /**
+   * Handles the simplest of the queries where we have just a trace id and return trace data for it.
+   * @param options
+   * @param targets
+   * @private
+   */
+  private handleTraceIdQuery(
+    options: DataQueryRequest<TempoQuery>,
+    targets: TempoQuery[]
+  ): Observable<DataQueryResponse> {
+    const validTargets = targets.filter((t) => t.query);
+    if (!validTargets.length) {
+      return EMPTY;
+    }
+
+    const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: validTargets };
+    return super.query(traceRequest).pipe(
+      map((response) => {
+        if (response.error) {
+          return response;
+        }
+        return transformTrace(response, this.nodeGraph?.enabled);
+      })
+    );
   }
 
   async metadataRequest(url: string, params = {}) {
@@ -206,7 +234,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return query.query;
   }
 
-  buildSearchQuery(query: TempoQuery) {
+  buildSearchQuery(query: TempoQuery, timeRange?: { startTime: number; endTime?: number }): SearchQueryParams {
     let tags = query.search ?? '';
 
     let tempoQuery = pick(query, ['minDuration', 'maxDuration', 'limit']);
@@ -243,7 +271,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       throw new Error('Please enter a valid limit.');
     }
 
-    return { tags, ...tempoQuery };
+    let searchQuery: SearchQueryParams = { tags, ...tempoQuery };
+
+    if (timeRange) {
+      searchQuery.start = timeRange.startTime;
+      searchQuery.end = timeRange.endTime;
+    }
+
+    return searchQuery;
   }
 
   async getServiceGraphLabels() {

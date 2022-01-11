@@ -128,6 +128,29 @@ export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
 }
 
 /**
+ * Forces the timepicker's time into absolute time.
+ * The conversion is applied to all Explore panes.
+ * Useful to produce a bookmarkable URL that points to the same data.
+ */
+export function makeAbsoluteTime(): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const timeZone = getTimeZone(getState().user);
+    const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
+    const leftState = getState().explore.left;
+    const leftRange = getTimeRange(timeZone, leftState.range.raw, fiscalYearStartMonth);
+    const leftAbsoluteRange: AbsoluteTimeRange = { from: leftRange.from.valueOf(), to: leftRange.to.valueOf() };
+    dispatch(updateTime({ exploreId: ExploreId.left, absoluteRange: leftAbsoluteRange }));
+    const rightState = getState().explore.right!;
+    if (rightState) {
+      const rightRange = getTimeRange(timeZone, rightState.range.raw, fiscalYearStartMonth);
+      const rightAbsoluteRange: AbsoluteTimeRange = { from: rightRange.from.valueOf(), to: rightRange.to.valueOf() };
+      dispatch(updateTime({ exploreId: ExploreId.right, absoluteRange: rightAbsoluteRange }));
+    }
+    dispatch(stateSave());
+  };
+}
+
+/**
  * Reducer for an Explore area, to be used by the global Explore reducer.
  */
 // Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.

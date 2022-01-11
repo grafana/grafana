@@ -7,7 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/go-kit/log"
+	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,14 +29,14 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (*RemoteCache, error) {
-	client, err := createClient(context.Background(), cfg.RemoteCacheOptions, sqlStore)
+	client, err := createClient(cfg.RemoteCacheOptions, sqlStore)
 	if err != nil {
 		return nil, err
 	}
 	s := &RemoteCache{
 		SQLStore: sqlStore,
 		Cfg:      cfg,
-		log:      log.New("cache.remote"),
+		log:      glog.New("cache.remote"),
 		client:   client,
 	}
 	return s, nil
@@ -95,7 +96,7 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(ctx context.Context, opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SQLStore) (CacheStorage, error) {
+func createClient(opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SQLStore) (CacheStorage, error) {
 	if opts.Name == redisCacheType {
 		return newRedisStorage(opts)
 	}

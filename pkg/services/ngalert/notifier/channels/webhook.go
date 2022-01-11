@@ -92,7 +92,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		GroupKey:        groupKey.String(),
 		TruncatedAlerts: numTruncated,
 		OrgID:           wn.orgID,
-		Title:           tmpl(`{{ template "default.title" . }}`),
+		Title:           tmpl(DefaultMessageTitleEmbed),
 		Message:         tmpl(`{{ template "default.message" . }}`),
 	}
 	if types.Alerts(as...).Status() == model.AlertFiring {
@@ -102,7 +102,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		wn.log.Debug("failed to template webhook message", "err", tmplErr.Error())
+		wn.log.Warn("failed to template webhook message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(msg)
@@ -118,7 +118,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		HttpMethod: wn.HTTPMethod,
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		return false, err
 	}
 
