@@ -3,9 +3,10 @@ package featuremgmt
 import "github.com/grafana/grafana/pkg/services/secrets"
 
 var (
-	FLAG_database_metrics = "database_metrics"
-	FLAG_live_config      = "live-config"
-	FLAG_live_pipeline    = "live-pipeline"
+	FLAG_database_metrics               = "database_metrics"
+	FLAG_live_config                    = "live-config"
+	FLAG_live_pipeline                  = "live-pipeline"
+	FLAG_disable_http_request_histogram = "disable_http_request_histogram"
 
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{

@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"unicode"
@@ -87,7 +88,8 @@ func TestGenerateToggleHelpers(t *testing.T) {
 		if e2 != nil {
 			t.Errorf("error writing file: %s", e2.Error())
 		}
-		t.Errorf("feature toggle helpers do not match: %s", err.Error())
+		abs, _ := filepath.Abs(fpath)
+		t.Errorf("feature toggle helpers do not match: %s (%s)", err.Error(), abs)
 		t.Fail()
 	}
 }

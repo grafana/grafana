@@ -127,7 +127,7 @@ func (s *Service) runTestStream(ctx context.Context, path string, conf testStrea
 			}
 
 			mode := data.IncludeDataOnly
-			if s.features.IsLivePipelineEnabled() {
+			if s.cfg.IsFeatureToggleEnabled(featuremgmt.FLAG_live_pipeline) {
 				mode = data.IncludeAll
 			}
 
