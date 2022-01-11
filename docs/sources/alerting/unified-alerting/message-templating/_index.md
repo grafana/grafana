@@ -56,7 +56,7 @@ Use caution when deleting a template since Grafana does not prevent you from del
 
 You can embed templates within other templates.
 
-For example, you can define a template fragment can using the `define` keyword:
+For example, you can define a template fragment using the `define` keyword:
 
 ```
 {{ define "mytemplate" }}
