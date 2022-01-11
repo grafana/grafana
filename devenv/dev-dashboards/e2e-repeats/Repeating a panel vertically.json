@@ -1,35 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_GDEV-TESTDATA",
-      "label": "gdev-testdata",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "testdata",
-      "pluginName": "TestData DB"
-    }
-  ],
-  "__elements": [],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "8.3.3"
-    },
-    {
-      "type": "datasource",
-      "id": "testdata",
-      "name": "TestData DB",
-      "version": "1.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "timeseries",
-      "name": "Time series",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -52,8 +21,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
-  "iteration": 1640181132304,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -231,6 +198,6 @@
   "timezone": "utc",
   "title": "Repeating a panel vertically",
   "uid": "OY8Ghjt7k",
-  "version": 7,
+  "version": 1,
   "weekStart": ""
 }
