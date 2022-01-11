@@ -62,7 +62,7 @@ import {
   isPrometheusRuleIdentifier,
   isRulerNotSupportedResponse,
 } from '../utils/rules';
-import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
+import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import * as ruleId from '../utils/rule-id';
 import { isEmpty } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
@@ -654,6 +654,41 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
     );
   }
 );
+
+export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimingName: string): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const config = getState().unifiedAlerting.amConfigs[alertManagerSourceName].result;
+
+    const muteIntervals =
+      config?.alertmanager_config?.mute_time_intervals?.filter(({ name }) => name !== muteTimingName) ?? [];
+
+    if (config) {
+      withAppEvents(
+        dispatch(
+          updateAlertManagerConfigAction({
+            alertManagerSourceName,
+            oldConfig: config,
+            newConfig: {
+              ...config,
+              alertmanager_config: {
+                ...config.alertmanager_config,
+                route: config.alertmanager_config.route
+                  ? removeMuteTimingFromRoute(muteTimingName, config.alertmanager_config?.route)
+                  : undefined,
+                mute_time_intervals: muteIntervals,
+              },
+            },
+            refetch: true,
+          })
+        ),
+        {
+          successMessage: `Deleted "${muteTimingName}" from Alertmanager configuration`,
+          errorMessage: 'Failed to delete mute timing',
+        }
+      );
+    }
+  };
+};
 
 interface TestReceiversOptions {
   alertManagerSourceName: string;

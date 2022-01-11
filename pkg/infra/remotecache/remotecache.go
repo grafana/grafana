@@ -7,7 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/go-kit/log"
+	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,7 +36,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (*RemoteCache
 	s := &RemoteCache{
 		SQLStore: sqlStore,
 		Cfg:      cfg,
-		log:      log.New("cache.remote"),
+		log:      glog.New("cache.remote"),
 		client:   client,
 	}
 	return s, nil

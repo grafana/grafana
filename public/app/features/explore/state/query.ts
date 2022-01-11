@@ -449,8 +449,8 @@ export const runQueries = (
             )
           )
         )
-        .subscribe(
-          (data) => {
+        .subscribe({
+          next(data) {
             dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
             // Keep scanning for results if this was the last scanning transaction
@@ -465,12 +465,20 @@ export const runQueries = (
               }
             }
           },
-          (error) => {
+          error(error) {
             dispatch(notifyApp(createErrorNotification('Query processing error', error)));
             dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
             console.error(error);
-          }
-        );
+          },
+          complete() {
+            // In case we don't get any response at all but the observable completed, make sure we stop loading state.
+            // This is for cases when some queries are noop like running first query after load but we don't have any
+            // actual query input.
+            if (getState().explore[exploreId]!.queryResponse.state === LoadingState.Loading) {
+              dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
+            }
+          },
+        });
 
       if (live) {
         dispatch(

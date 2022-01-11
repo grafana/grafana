@@ -6,12 +6,14 @@ jobs:
   build:
     name: Detect
     runs-on: ubuntu-latest
+    env:
+      GITHUB_STEP_NUMBER: 7
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Setup environment
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v2.5.1
       with:
         node-version: '16'
 
@@ -35,15 +37,18 @@ jobs:
       env:
         FORCE_COLOR: 3
         GITHUB_JOB_LINK: ${{ steps.job.outputs.link }}
-        GITHUB_STEP_NUMBER: 7
 
     - name: Persisting the check output
       run: |
           mkdir -p ./levitate
-          echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.mesage }}\", \"job_link\": \"${{ steps.job.outputs.link }}\" }" > ./levitate/result.json
+          echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"job_link\": \"${{ steps.job.outputs.link }}#step:${GITHUB_STEP_NUMBER}:1\" }" > ./levitate/result.json
 
     - name: Upload check output as artifact
       uses: actions/upload-artifact@v2
       with:
         name: levitate
         path: levitate/
+      
+    - name: Exit
+      run: exit ${{ steps.breaking-changes.outputs.is_breaking }}
+      shell: bash

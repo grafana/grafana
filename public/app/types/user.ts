@@ -24,7 +24,7 @@ export interface User {
 
 export type Unit = { name: string; url: string };
 
-export interface UserDTO {
+export interface UserDTO extends WithAccessControlMetadata {
   id: number;
   login: string;
   email: string;

@@ -283,23 +283,32 @@ func setInitCtxSignedInViewer(initCtx *models.ReqContext) {
 	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_VIEWER, Login: testUserLogin}
 }
 
+func setInitCtxSignedInEditor(initCtx *models.ReqContext) {
+	initCtx.IsSignedIn = true
+	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_EDITOR, Login: testUserLogin}
+}
+
 func setInitCtxSignedInOrgAdmin(initCtx *models.ReqContext) {
 	initCtx.IsSignedIn = true
 	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_ADMIN, Login: testUserLogin}
 }
 
 func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
-	t.Helper()
-
-	var acmock *accesscontrolmock.Mock
-	var ac *ossaccesscontrol.OSSAccessControlService
-
 	// Use a new conf
 	cfg := setting.NewCfg()
 	cfg.FeatureToggles = make(map[string]bool)
 	if enableAccessControl {
 		cfg.FeatureToggles["accesscontrol"] = enableAccessControl
 	}
+
+	return setupHTTPServerWithCfg(t, useFakeAccessControl, enableAccessControl, cfg)
+}
+
+func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
+	t.Helper()
+
+	var acmock *accesscontrolmock.Mock
+	var ac *ossaccesscontrol.OSSAccessControlService
 
 	// Use a test DB
 	db := sqlstore.InitTestDB(t)
