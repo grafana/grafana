@@ -63,7 +63,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			UserId:      1,
 		}
 
-		err = SaveAlerts(context.Background(), &cmd)
+		err = sqlStore.SaveAlerts(context.Background(), &cmd)
 		require.Nil(t, err)
 	}
 
@@ -169,7 +169,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			Alerts:      modifiedItems,
 		}
 
-		err := SaveAlerts(context.Background(), &modifiedCmd)
+		err := sqlStore.SaveAlerts(context.Background(), &modifiedCmd)
 
 		t.Run("Can save alerts with same dashboard and panel id", func(t *testing.T) {
 			require.Nil(t, err)
@@ -189,7 +189,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		t.Run("Updates without changes should be ignored", func(t *testing.T) {
-			err3 := SaveAlerts(context.Background(), &modifiedCmd)
+			err3 := sqlStore.SaveAlerts(context.Background(), &modifiedCmd)
 			require.Nil(t, err3)
 		})
 	})
@@ -221,7 +221,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		}
 
 		cmd.Alerts = multipleItems
-		err := SaveAlerts(context.Background(), &cmd)
+		err := sqlStore.SaveAlerts(context.Background(), &cmd)
 
 		t.Run("Should save 3 dashboards", func(t *testing.T) {
 			require.Nil(t, err)
@@ -237,7 +237,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			missingOneAlert := multipleItems[:2]
 
 			cmd.Alerts = missingOneAlert
-			err = SaveAlerts(context.Background(), &cmd)
+			err = sqlStore.SaveAlerts(context.Background(), &cmd)
 
 			t.Run("should delete the missing alert", func(t *testing.T) {
 				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
@@ -266,7 +266,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			UserId:      1,
 		}
 
-		err := SaveAlerts(context.Background(), &cmd)
+		err := sqlStore.SaveAlerts(context.Background(), &cmd)
 		require.Nil(t, err)
 
 		err = DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
@@ -363,7 +363,7 @@ func insertTestAlert(title string, message string, orgId int64, dashId int64, se
 		UserId:      1,
 	}
 
-	err := SaveAlerts(context.Background(), &cmd)
+	err := sqlStore.SaveAlerts(context.Background(), &cmd)
 	return cmd.Alerts[0], err
 }
 
