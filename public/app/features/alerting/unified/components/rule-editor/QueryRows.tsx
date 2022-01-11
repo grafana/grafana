@@ -108,6 +108,15 @@ export class QueryRows extends PureComponent<Props, State> {
         return item;
       }
 
+      const previous = getDataSourceSrv().getInstanceSettings(item.datasourceUid);
+
+      if (previous?.type === settings.uid) {
+        return {
+          ...item,
+          datasourceUid: settings.uid,
+        };
+      }
+
       return {
         ...item,
         datasourceUid: settings.uid,
