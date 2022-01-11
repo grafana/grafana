@@ -224,16 +224,16 @@ def get_oss_pipelines(trigger, ver_mode):
         name='oss-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
         steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
         platform='windows', depends_on=[
-            'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
+            # 'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
         ],
     )
     pipelines = [
-        pipeline(
-            name='oss-build-publish{}-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                  build_steps + package_steps + publish_steps,
-            volumes=volumes,
-        ),
+        # pipeline(
+        #     name='oss-build-publish{}-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
+        #     steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
+        #           build_steps + package_steps + publish_steps,
+        #     volumes=volumes,
+        # ),
     ]
     if not disable_tests:
         pipelines.extend([
@@ -271,16 +271,16 @@ def get_enterprise_pipelines(trigger, ver_mode):
         name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
         steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
         platform='windows', depends_on=[
-            'enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
+            # 'enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
         ],
     )
     pipelines = [
-        pipeline(
-            name='enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                  build_steps + package_steps + publish_steps,
-            volumes=volumes,
-        ),
+        # pipeline(
+        #     name='enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
+        #     steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
+        #           build_steps + package_steps + publish_steps,
+        #     volumes=volumes,
+        # ),
     ]
     if not disable_tests:
         pipelines.extend([
