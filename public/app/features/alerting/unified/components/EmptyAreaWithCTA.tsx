@@ -20,29 +20,32 @@ export const EmptyAreaWithCTA: FC<EmptyAreaWithCTAProps> = ({
   buttonLabel,
   buttonSize = 'lg',
   buttonVariant = 'primary',
-  onButtonClick = () => {},
+  onButtonClick,
   text,
   href,
 }) => {
   const styles = useStyles(getStyles);
 
-  const ButtonComponent = href ? LinkButton : Button;
-  const actionProps = href ? { href } : { onButtonClick };
+  const commonProps = {
+    className: styles.button,
+    icon: buttonIcon,
+    size: buttonSize,
+    variant: buttonVariant,
+  };
 
   return (
     <EmptyArea>
       <>
         <p className={styles.text}>{text}</p>
-        <ButtonComponent
-          className={styles.button}
-          icon={buttonIcon}
-          size={buttonSize}
-          type="button"
-          variant={buttonVariant}
-          {...actionProps}
-        >
-          {buttonLabel}
-        </ButtonComponent>
+        {href ? (
+          <LinkButton href={href} type="button" {...commonProps}>
+            {buttonLabel}
+          </LinkButton>
+        ) : (
+          <Button onClick={onButtonClick} type="button" {...commonProps}>
+            {buttonLabel}
+          </Button>
+        )}
       </>
     </EmptyArea>
   );
