@@ -11,6 +11,7 @@ import (
 	"testing"
 	"unicode"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 )
 
@@ -79,8 +80,11 @@ func TestGenerateToggleHelpers(t *testing.T) {
 
 	fpath := "toggles_gen.go"
 	body, err := ioutil.ReadFile(fpath)
-	if err == nil && tsgen != string(body) {
-		err = fmt.Errorf("feature toggle helpers does not exist")
+	if err == nil {
+		if diff := cmp.Diff(tsgen, string(body)); diff != "" {
+			str := fmt.Sprintf("body mismatch (-want +got):\n%s\n", diff)
+			err = fmt.Errorf(str)
+		}
 	}
 
 	if err != nil {
@@ -96,8 +100,7 @@ func TestGenerateToggleHelpers(t *testing.T) {
 
 func generateRegistry() (string, error) {
 	tmpl, err := template.New("fn").Parse(`
-// {{.CamleCase}} checks for the flag: {{.Flag.Name}}
-// {{.Flag.Description}}
+// {{.CamleCase}} checks for the flag: {{.Flag.Name}}{{.Ext}}
 func (ft *FeatureToggles) Is{{.CamleCase}}Enabled() bool {
 	return ft.manager.IsEnabled("{{.Flag.Name}}")
 }
@@ -109,6 +112,7 @@ func (ft *FeatureToggles) Is{{.CamleCase}}Enabled() bool {
 	data := struct {
 		CamleCase string
 		Flag      FeatureFlag
+		Ext       string
 	}{
 		CamleCase: "?",
 	}
@@ -124,6 +128,11 @@ package featuremgmt
 	for _, flag := range standardFeatureFlags {
 		data.CamleCase = asCamelCase(flag.Name)
 		data.Flag = flag
+		data.Ext = ""
+
+		if flag.Description != "" {
+			data.Ext += "\n// " + flag.Description
+		}
 
 		if err := tmpl.Execute(&buff, data); err != nil {
 			return buff.String(), err
@@ -132,5 +141,3 @@ package featuremgmt
 
 	return buff.String(), nil
 }
-
-//

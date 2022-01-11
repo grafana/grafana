@@ -57,7 +57,6 @@ func (ft *FeatureToggles) IsEnvelopeEncryptionEnabled() bool {
 }
 
 // HttpclientproviderAzureAuth checks for the flag: httpclientprovider_azure_auth
-//
 func (ft *FeatureToggles) IsHttpclientproviderAzureAuthEnabled() bool {
 	return ft.manager.IsEnabled("httpclientprovider_azure_auth")
 }
@@ -153,7 +152,6 @@ func (ft *FeatureToggles) IsShowFeatureFlagsInUIEnabled() bool {
 }
 
 // DisableHttpRequestHistogram checks for the flag: disable_http_request_histogram
-//
 func (ft *FeatureToggles) IsDisableHttpRequestHistogramEnabled() bool {
 	return ft.manager.IsEnabled("disable_http_request_histogram")
 }
