@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -52,7 +53,7 @@ func ProvideBackgroundServiceRegistry(
 	_ *influxdb.Service, _ *loki.Service, _ *opentsdb.Service, _ *prometheus.Service, _ *tempo.Service,
 	_ *testdatasource.Service, _ *plugindashboards.Service, _ *dashboardsnapshots.Service,
 	_ *postgres.Service, _ *mysql.Service, _ *mssql.Service, _ *grafanads.Service, _ *cloudmonitoring.Service,
-	_ *pluginsettings.Service, _ *alerting.AlertNotificationService, _ serviceaccounts.Service,
+	_ *pluginsettings.Service, _ *alerting.AlertNotificationService, _ serviceaccounts.Service, _ *resourceservices.ResourceServices,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
