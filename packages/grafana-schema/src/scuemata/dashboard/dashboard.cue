@@ -350,6 +350,8 @@ Family: scuemata.#Family & {
                     }
                     id: number
                     panels: [...(#Panel | #GraphPanel)]
+                    // Name of template variable to repeat for.
+                    repeat?: string
                 }
                 // Support for legacy graph panels.
                 #GraphPanel: {
