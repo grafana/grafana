@@ -18,7 +18,9 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     tabContent: css`
-      background: ${theme.colors.background.primary};
+      padding: ${theme.spacing(2)};
+      background-color: ${theme.colors.background.primary};
+      height: 100%;
     `,
     container: css`
       height: 100%;
@@ -46,7 +48,7 @@ export const Tabs: FC<Props> = ({ children, className, ...restProps }) => {
         ))}
       </TabsBar>
       <CustomScrollbar autoHeightMin="100%">
-        <TabContent key={state.selectedItem?.key} state={state} />
+        <TabContent className={styles.tabContent} key={state.selectedItem?.key} state={state} />
       </CustomScrollbar>
     </div>
   );

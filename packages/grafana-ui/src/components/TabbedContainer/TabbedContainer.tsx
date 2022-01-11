@@ -26,11 +26,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     container: css`
       height: 100%;
     `,
-    tabContent: css`
-      padding: ${theme.spacing(2)};
-      background-color: ${theme.colors.background.primary};
-      height: 100%;
-    `,
     close: css`
       position: absolute;
       right: 16px;
