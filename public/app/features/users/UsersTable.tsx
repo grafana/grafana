@@ -40,7 +40,6 @@ const UsersTable: FC<Props> = (props) => {
 
   return (
     <>
-      {' '}
       <table className="filter-table form-inline">
         <thead>
           <tr>
