@@ -4,17 +4,29 @@ import { parseMatcher } from './alertmanager';
 
 // Parses a list of entries like like "['foo=bar', 'baz=~bad*']" into SilenceMatcher[]
 export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
-  return matcherPairs.filter((x) => !!x.trim()).map((x) => parseMatcher(x.trim()));
+  const parsedMatchers = matcherPairs.filter((x) => !!x.trim()).map((x) => parseMatcher(x.trim()));
+
+  const uniqueMatchersMap = new Map<string, Matcher>();
+  parsedMatchers.forEach(
+    (matcher) => uniqueMatchersMap.has(matcher.name) === false && uniqueMatchersMap.set(matcher.name, matcher)
+  );
+
+  return Array.from(uniqueMatchersMap.values());
 }
 
 export const getMatcherQueryParams = (labels: Labels) => {
-  const matcherUrlParams = new URLSearchParams();
-
-  const matcherLabels = Object.entries(labels).filter(
+  const validMatcherLabels = Object.entries(labels).filter(
     ([labelKey]) => !(labelKey.startsWith('__') && labelKey.endsWith('__'))
   );
 
-  matcherLabels.forEach(([labekKey, labelValue]) => {
+  var uniqueMatcherLabelPairs = new Map<string, string>();
+  validMatcherLabels.forEach(
+    ([labelKey, labelValue]) =>
+      uniqueMatcherLabelPairs.has(labelKey) === false && uniqueMatcherLabelPairs.set(labelKey, labelValue)
+  );
+
+  const matcherUrlParams = new URLSearchParams();
+  uniqueMatcherLabelPairs.forEach(([labekKey, labelValue]) => {
     matcherUrlParams.append('matchers', `${labekKey}=${labelValue}`);
   });
 
