@@ -177,7 +177,7 @@ providers:
 				expErrReason:  models.ErrDashboardCannotSaveProvisionedDashboard.Reason,
 			},
 			{
-				desc:          "when updating dashboard using unknown ID, it should succeed",
+				desc:          "when updating dashboard using unknown ID, it should fail",
 				dashboardData: `{"title":"just testing", "id": 42, "version": 1}`,
 				expStatus:     http.StatusNotFound,
 				expErrReason:  models.ErrDashboardNotFound.Reason,
