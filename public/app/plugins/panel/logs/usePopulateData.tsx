@@ -5,11 +5,16 @@ interface Props {
   data: any;
 }
 
+interface ExternalLog {
+  msg: string;
+  timestamp: number;
+}
+
 const usePopulateData = ({ data }: Props) => {
   const [newData, setNewData] = useState(data);
-  const [externalLogs, setExternalLogs] = useState<any>([]);
+  const [externalLogs, setExternalLogs] = useState<ExternalLog[]>([]);
 
-  const addMessageToData = (data: any, msg: string, timestamp: number) => {
+  const addMessageToData = (data: any, log: ExternalLog) => {
     const lastFrame = data.series.length - 1;
     const fields = data.series[lastFrame].fields;
     const time = fields[0];
@@ -17,21 +22,21 @@ const usePopulateData = ({ data }: Props) => {
     const containerId = fields[2];
     const hostname = fields[3];
     //@ts-ignore
-    time.values.add(timestamp);
+    time.values.add(log.timestamp);
     //@ts-ignore
-    message.values.add(msg);
+    message.values.add(log.msg);
     //@ts-ignore
     containerId.values.add('fusebit');
     //@ts-ignore
-    hostname.values.add(msg);
+    hostname.values.add(log.msg);
     data.series[lastFrame].length++;
     return data;
   };
 
   useEffect(() => {
     let clonedData = cloneDeep(data);
-    externalLogs.forEach((log: any) => {
-      clonedData = addMessageToData(clonedData, log.msg, log.timestamp);
+    externalLogs.forEach((log: ExternalLog) => {
+      clonedData = addMessageToData(clonedData, log);
     });
     setNewData(clonedData);
 
@@ -40,12 +45,16 @@ const usePopulateData = ({ data }: Props) => {
 
   useEffect(() => {
     const postMessage = ({ data }: any) => {
-      const message = JSON.stringify(data);
-      const logs = [...externalLogs];
-      logs.push({ msg: message, timestamp: Date.now() });
+      const msg = JSON.stringify(data);
+      const logs: ExternalLog[] = [...externalLogs];
+      const newLog: ExternalLog = {
+        msg,
+        timestamp: Date.now(),
+      };
+      logs.push(newLog);
       setExternalLogs(logs);
       const clonedData = cloneDeep(newData);
-      const updatedData = addMessageToData(clonedData, message, Date.now());
+      const updatedData = addMessageToData(clonedData, newLog);
       setNewData(updatedData);
     };
 
