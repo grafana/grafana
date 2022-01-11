@@ -2,7 +2,6 @@
 
 exports[`Render should render component 1`] = `
 <Fragment>
-   
   <table
     className="filter-table form-inline"
   >
@@ -40,7 +39,6 @@ exports[`Render should render component 1`] = `
 
 exports[`Render should render users table 1`] = `
 <Fragment>
-   
   <table
     className="filter-table form-inline"
   >
