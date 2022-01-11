@@ -10,7 +10,7 @@ failure_template = 'Build {{build.number}} failed for commit: <https://github.co
 drone_change_template = '`.drone.yml` and `starlark` files have been changed on the OSS repo, by: {{build.author}}. \nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>'
 
 def pipeline(
-    name, edition, trigger, steps, services=[], platform='linux', depends_on=[], volumes=[],
+    name, edition, trigger, steps, services=[], platform='linux', depends_on=[], environment=None, volumes=[],
     ):
     if platform != 'windows':
         platform_conf = {
@@ -48,6 +48,11 @@ def pipeline(
         }],
         'depends_on': depends_on,
     }
+    if environment:
+        pipeline.update({
+            'environment': environment,
+        })
+
     pipeline['volumes'].extend(volumes)
     pipeline.update(platform_conf)
 
