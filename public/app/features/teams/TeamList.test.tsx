@@ -6,7 +6,7 @@ import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
 import { User } from 'app/core/services/context_srv';
 import { NavModel } from '@grafana/data';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
-import { setSearchQuery } from './state/reducers';
+import { setSearchQuery, setTeamsSearchPage } from './state/reducers';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -22,7 +22,9 @@ const setup = (propOverrides?: object) => {
     loadTeams: jest.fn(),
     deleteTeam: jest.fn(),
     setSearchQuery: mockToolkitActionCreator(setSearchQuery),
+    setTeamsSearchPage: mockToolkitActionCreator(setTeamsSearchPage),
     searchQuery: '',
+    searchPage: 1,
     teamsCount: 0,
     hasFetched: false,
     editorsCanAdmin: false,
