@@ -5,11 +5,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestMiddlewareJWTAuth(t *testing.T) {
@@ -102,7 +103,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-email": myEmail,
 			}, nil
 		}
-		bus.AddHandlerCtx("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			return models.ErrUserNotFound
 		})
 
@@ -123,7 +124,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-email": myEmail,
 			}, nil
 		}
-		bus.AddHandlerCtx("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{
 				UserId: id,
 				OrgId:  orgID,
@@ -131,7 +132,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 			}
 			return nil
 		})
-		bus.AddHandlerCtx("upsert-user", func(ctx context.Context, command *models.UpsertUserCommand) error {
+		bus.AddHandler("upsert-user", func(ctx context.Context, command *models.UpsertUserCommand) error {
 			command.Result = &models.User{
 				Id:    id,
 				Name:  command.ExternalUser.Name,
