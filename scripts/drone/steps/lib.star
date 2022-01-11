@@ -11,6 +11,7 @@ windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
 
+disable_tests = False
 
 def slack_step(channel, template, secret):
     return {
@@ -277,13 +278,7 @@ def store_storybook_step(edition, ver_mode):
     return {
         'name': 'store-storybook',
         'image': publish_image,
-        'depends_on': [
-            'build-storybook',
-            'end-to-end-tests-dashboards-suite',
-            'end-to-end-tests-panels-suite',
-            'end-to-end-tests-smoke-tests-suite',
-            'end-to-end-tests-various-suite',
-        ],
+        'depends_on': ['build-storybook',] + end_to_end_tests_deps(edition),
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
@@ -624,7 +619,6 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
         sfx = '-enterprise2'
         deps.extend([
             'build-backend' + sfx,
-            'test-backend' + sfx,
         ])
 
     variants_str = ''
@@ -916,12 +910,7 @@ def release_canary_npm_packages_step(edition):
     return {
         'name': 'release-canary-npm-packages',
         'image': build_image,
-        'depends_on': [
-            'end-to-end-tests-dashboards-suite',
-            'end-to-end-tests-panels-suite',
-            'end-to-end-tests-smoke-tests-suite',
-            'end-to-end-tests-various-suite',
-        ],
+        'depends_on': end_to_end_tests_deps(edition),
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
         },
@@ -953,21 +942,12 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
 
     deps = []
-    if edition in 'enterprise2':
+    if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
         deps.extend([
             'package' + enterprise2_suffix(edition),
             ])
     else:
-        deps.extend([
-            'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
-            'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
-            'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
-            'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
-            ])
-
-    if edition in ('enterprise', 'enterprise2'):
-        deps.append('redis-integration-tests')
-        deps.append('memcached-integration-tests')
+        deps.extend(end_to_end_tests_deps(edition))
 
     return {
         'name': 'upload-packages' + enterprise2_suffix(edition),
@@ -1186,3 +1166,13 @@ def ensure_cuetsified_step():
             'git stash pop',
         ],
     }
+
+def end_to_end_tests_deps(edition):
+    if disable_tests:
+        return []
+    return [
+        'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
+    ]

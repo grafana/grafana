@@ -21,19 +21,19 @@ func (ss *SQLStore) addUserQueryAndCommandHandlers() {
 	ss.Bus.AddHandler(ss.GetSignedInUserWithCacheCtx)
 
 	bus.AddHandler("sql", GetUserById)
-	bus.AddHandler("sql", UpdateUser)
-	bus.AddHandler("sql", ChangeUserPassword)
+	bus.AddHandler("sql", ss.UpdateUser)
+	bus.AddHandler("sql", ss.ChangeUserPassword)
 	bus.AddHandler("sql", ss.GetUserByLogin)
 	bus.AddHandler("sql", ss.GetUserByEmail)
-	bus.AddHandler("sql", SetUsingOrg)
-	bus.AddHandler("sql", UpdateUserLastSeenAt)
+	bus.AddHandler("sql", ss.SetUsingOrg)
+	bus.AddHandler("sql", ss.UpdateUserLastSeenAt)
 	bus.AddHandler("sql", ss.GetUserProfile)
 	bus.AddHandler("sql", SearchUsers)
 	bus.AddHandler("sql", GetUserOrgList)
 	bus.AddHandler("sql", DisableUser)
-	bus.AddHandler("sql", BatchDisableUsers)
-	bus.AddHandler("sql", DeleteUser)
-	bus.AddHandler("sql", SetUserHelpFlag)
+	bus.AddHandler("sql", ss.BatchDisableUsers)
+	bus.AddHandler("sql", ss.DeleteUser)
+	bus.AddHandler("sql", ss.SetUserHelpFlag)
 }
 
 func getOrgIdForNewUser(sess *DBSession, cmd models.CreateUserCommand) (int64, error) {
@@ -87,7 +87,7 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args userCreationArgs) (
 	return ss.getOrCreateOrg(sess, orgName)
 }
 
-// createUser creates a user in the database.
+// createUser creates a user in the database
 func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCreationArgs, skipOrgSetup bool) (models.User, error) {
 	var user models.User
 	var orgID int64 = -1
@@ -392,8 +392,8 @@ func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByE
 	})
 }
 
-func UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := models.User{
 			Name:    cmd.Name,
 			Email:   cmd.Email,
@@ -418,8 +418,8 @@ func UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
 	})
 }
 
-func ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := models.User{
 			Password: cmd.NewPassword,
 			Updated:  time.Now(),
@@ -430,8 +430,8 @@ func ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordComma
 	})
 }
 
-func UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := models.User{
 			Id:         cmd.UserId,
 			LastSeenAt: time.Now(),
@@ -442,7 +442,7 @@ func UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtC
 	})
 }
 
-func SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
+func (ss *SQLStore) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 	getOrgsForUserCmd := &models.GetUserOrgListQuery{UserId: cmd.UserId}
 	if err := GetUserOrgList(ctx, getOrgsForUserCmd); err != nil {
 		return err
@@ -458,7 +458,7 @@ func SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 		return fmt.Errorf("user does not belong to org")
 	}
 
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		return setUsingOrgInTransaction(sess, cmd.UserId, cmd.OrgId)
 	})
 }
@@ -738,8 +738,8 @@ func DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error {
 	return err
 }
 
-func BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		userIds := cmd.UserIds
 
 		if len(userIds) == 0 {
@@ -763,8 +763,8 @@ func BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand
 	})
 }
 
-func DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		return deleteUserInTransaction(sess, cmd)
 	})
 }
@@ -835,8 +835,8 @@ func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 	})
 }
 
-func SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := models.User{
 			Id:         cmd.UserId,
 			HelpFlags1: cmd.HelpFlags1,
