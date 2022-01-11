@@ -121,16 +121,14 @@ def release_npm_packages_step(edition, ver_mode):
 
 
 def get_steps(edition, ver_mode):
-    build_steps = []
     package_steps = []
-    windows_package_steps = []
     publish_steps = []
     should_publish = ver_mode in ('release', 'test-release',)
     should_upload = should_publish or ver_mode in ('release-branch',)
     include_enterprise2 = edition == 'enterprise'
     edition2 = 'enterprise2'
 
-    build_steps = [
+    test_steps = [
         codespell_step(),
         shellcheck_step(),
         lint_backend_step(edition=edition),
@@ -138,8 +136,9 @@ def get_steps(edition, ver_mode):
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
-        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
-        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
+    ]
+
+    build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
@@ -147,11 +146,19 @@ def get_steps(edition, ver_mode):
         ensure_cuetsified_step(),
     ]
 
+    integration_test_steps = [
+        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
+        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
+    ]
+
+
     if include_enterprise2:
-        build_steps.extend([
+        test_steps.extend([
             lint_backend_step(edition=edition2),
             test_backend_step(edition=edition2),
             test_backend_integration_step(edition=edition2),
+        ])
+        build_steps.extend([
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
         ])
 
@@ -174,7 +181,7 @@ def get_steps(edition, ver_mode):
         build_steps.append(build_storybook)
 
     if include_enterprise2:
-      build_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
+      integration_test_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
 
     if should_upload:
         publish_steps.append(upload_cdn_step(edition=edition, ver_mode=ver_mode))
@@ -200,24 +207,36 @@ def get_steps(edition, ver_mode):
             if step:
                 publish_steps.append(step)
 
-    return build_steps, package_steps, windows_package_steps, publish_steps
+    return test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps
 
 def get_oss_pipelines(trigger, ver_mode):
     edition = 'oss'
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
-    build_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
+    test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
     return [
         pipeline(
-            name='oss-build-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
+            name='oss-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-              build_steps + package_steps + publish_steps,
+              test_steps,
+            volumes=[],
+        ),
+        pipeline(
+            name='oss-build-e2e-publish-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
+                  build_steps + package_steps + publish_steps,
+            volumes=volumes,
+        ),
+        pipeline(
+            name='oss-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
+                  integration_test_steps,
             volumes=volumes,
         ),
         pipeline(
             name='oss-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
             steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
-            platform='windows', depends_on=['oss-build-{}'.format(ver_mode)],
+            platform='windows', depends_on=['oss-test-{}'.format(ver_mode), 'oss-build-e2e-publish-{}'.format(ver_mode), 'oss-integration-tests-{}'.format(ver_mode)],
         ),
     ]
 
@@ -225,18 +244,30 @@ def get_enterprise_pipelines(trigger, ver_mode):
     edition = 'enterprise'
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
-    build_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
+    test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
     return [
         pipeline(
-            name='enterprise-build-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
+            name='enterprise-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-              build_steps + package_steps + publish_steps,
+              test_steps,
+            volumes=[],
+        ),
+        pipeline(
+            name='enterprise-build-e2e-publish-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
+                  build_steps + package_steps + publish_steps,
+            volumes=volumes,
+        ),
+        pipeline(
+            name='enterprise-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
+            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
+                  integration_test_steps,
             volumes=volumes,
         ),
         pipeline(
             name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
             steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
-            platform='windows', depends_on=['enterprise-build-{}'.format(ver_mode)],
+            platform='windows', depends_on=['enterprise-test-{}'.format(ver_mode), 'enterprise-build-e2e-publish-{}'.format(ver_mode), 'enterprise-integration-tests-{}'.format(ver_mode)],
         ),
     ]
 

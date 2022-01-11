@@ -624,7 +624,6 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
         sfx = '-enterprise2'
         deps.extend([
             'build-backend' + sfx,
-            'test-backend' + sfx,
         ])
 
     variants_str = ''
@@ -964,10 +963,6 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
             'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
             'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
             ])
-
-    if edition in ('enterprise', 'enterprise2'):
-        deps.append('redis-integration-tests')
-        deps.append('memcached-integration-tests')
 
     return {
         'name': 'upload-packages' + enterprise2_suffix(edition),
