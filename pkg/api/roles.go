@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // API related actions
@@ -152,6 +153,22 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER), accesscontrol.RoleGrafanaAdmin},
 	}
 
+	var orgCreatorGrants []string
+	if setting.AllowUserOrgCreate {
+		orgCreatorGrants = []string{string(models.ROLE_VIEWER)}
+	}
+	orgCreatorRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     1,
+			Name:        "fixed:organization:creator",
+			DisplayName: "Organization creator",
+			Description: "Create an organization.",
+			Group:       "Organizations",
+			Permissions: []accesscontrol.Permission{{Action: ActionOrgsCreate}},
+		},
+		Grants: orgCreatorGrants,
+	}
+
 	orgWriterRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Version:     5,
@@ -187,7 +204,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole,
+		datasourcesCompatibilityReaderRole, orgReaderRole, orgCreatorRole, orgWriterRole, orgMaintainerRole,
 	)
 }
 
