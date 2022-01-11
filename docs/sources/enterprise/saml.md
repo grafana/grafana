@@ -227,7 +227,7 @@ assertion_attribute_org = Org
 role_values_editor = editor, developer
 role_values_admin = admin, operator
 role_values_grafana_admin = superadmin
-org_mapping = Engineering:2, Sales:3
+org_mapping = Engineering:2:Editor, Engineering:3:Viewer, Sales:3:Editor, *:1:Editor
 allowed_organizations = Engineering, Sales
 ```
 
