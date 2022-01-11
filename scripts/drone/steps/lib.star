@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = '2.7.9'
+grabpl_version = 'v2.7.7'
 build_image = 'grafana/build-container:1.4.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -154,7 +154,7 @@ def download_grabpl_step():
         'image': curl_image,
         'commands': [
             'mkdir -p bin',
-            'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
+            'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/grabpl'.format(
                 grabpl_version
             ),
             'chmod +x bin/grabpl',
@@ -987,7 +987,7 @@ def store_packages_step(edition, ver_mode, is_downstream=False):
         'name': 'store-packages-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
-            'initialize',
+            'grabpl',
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
@@ -1016,7 +1016,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     else:
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
                 grabpl_version),
         ])
     steps = [
@@ -1092,7 +1092,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
         download_grabpl_step_cmds = [
             '$$ProgressPreference = "SilentlyContinue"',
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
                 grabpl_version),
         ]
         clone_cmds = [
