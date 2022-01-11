@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,10 +44,18 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider) *
 		executors: executors,
 	}
 
-	resourceMux := http.NewServeMux()
-	s.registerRoutes(resourceMux)
+	s.queryMux = s.newQueryMux()
+	s.resourceHandler = httpadapter.New(s.newResourceMux())
 
 	return s
+}
+
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return s.queryMux.QueryData(ctx, req)
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return s.resourceHandler.CallResource(ctx, req, sender)
 }
 
 type serviceProxy interface {
@@ -55,6 +65,9 @@ type serviceProxy interface {
 type Service struct {
 	im        instancemgmt.InstanceManager
 	executors map[string]azDatasourceExecutor
+
+	queryMux        *datasource.QueryTypeMux
+	resourceHandler backend.CallResourceHandler
 }
 
 type azureMonitorSettings struct {
@@ -163,7 +176,7 @@ func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (dat
 	return dsInfo, nil
 }
 
-func (s *Service) newMux() *datasource.QueryTypeMux {
+func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 	mux := datasource.NewQueryTypeMux()
 	for dsType := range s.executors {
 		// Make a copy of the string to keep the reference after the iterator
