@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var random20HzStreamRegex = regexp.MustCompile(`random-20Hz-stream(-\d+)?`)
@@ -37,7 +38,7 @@ func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStrea
 		}
 	}
 
-	if s.features.IsLivePipelineEnabled() {
+	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FLAG_live_pipeline) {
 		// While developing Live pipeline avoid sending initial data.
 		initialData = nil
 	}

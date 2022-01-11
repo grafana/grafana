@@ -487,6 +487,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		// set test db config
 		cfg := setting.NewCfg()
+		cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			return nil, err

@@ -5,6 +5,7 @@ import "github.com/grafana/grafana/pkg/services/secrets"
 var (
 	FLAG_database_metrics = "database_metrics"
 	FLAG_live_config      = "live-config"
+	FLAG_live_pipeline    = "live-pipeline"
 
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
@@ -93,7 +94,7 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "live-pipeline",
+			Name:        FLAG_live_pipeline,
 			Description: "enable a generic live processing pipeline",
 			State:       FeatureStateAlpha,
 		},

@@ -12,15 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 const pluginID = "testdata"
 
-func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, features *featuremgmt.FeatureToggles) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) (*Service, error) {
 	s := &Service{
-		features:  features,
 		queryMux:  datasource.NewQueryTypeMux(),
 		scenarios: map[string]*Scenario{},
 		frame: data.NewFrame("testdata",
@@ -59,7 +57,6 @@ func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, features *featu
 
 type Service struct {
 	cfg        *setting.Cfg
-	features   *featuremgmt.FeatureToggles
 	logger     log.Logger
 	scenarios  map[string]*Scenario
 	frame      *data.Frame
