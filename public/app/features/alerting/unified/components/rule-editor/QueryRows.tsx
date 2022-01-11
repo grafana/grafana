@@ -5,7 +5,6 @@ import {
   DataSourceInstanceSettings,
   LoadingState,
   PanelData,
-  PluginType,
   RelativeTimeRange,
   ThresholdsConfig,
   ThresholdsMode,
@@ -17,6 +16,7 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 import { queriesWithUpdatedReferences } from './util';
 import { Button, Card, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props {
   // The query configuration
@@ -241,7 +241,10 @@ export class QueryRows extends PureComponent<Props, State> {
                         index={index}
                         model={query.model}
                         onUpdateDatasource={() => {
-                          this.onChangeDataSource(createDummyDatasource(), index);
+                          const defaultDataSource = getDatasourceSrv().getInstanceSettings(null);
+                          if (defaultDataSource) {
+                            this.onChangeDataSource(defaultDataSource, index);
+                          }
                         }}
                         onRemoveQuery={() => {
                           this.onRemoveQuery(query);
@@ -342,36 +345,3 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
     </EmptyQueryWrapper>
   );
 };
-
-function createDummyDatasource(): DataSourceInstanceSettings {
-  return {
-    id: -1,
-    uid: 'unknown',
-    name: 'unknown',
-    type: '',
-    meta: {
-      builtIn: true,
-      id: '',
-      name: 'unknown',
-      type: PluginType.datasource,
-      info: {
-        author: {
-          name: '',
-        },
-        description: '',
-        links: [],
-        logos: {
-          large: '',
-          small: '',
-        },
-        screenshots: [],
-        updated: '',
-        version: '',
-      },
-      module: '',
-      baseUrl: '',
-    },
-    jsonData: {},
-    access: 'direct',
-  };
-}
