@@ -1,14 +1,4 @@
 {
-  "__inputs": [],
-  "__elements": [],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "8.3.3"
-    }
-  ],
   "annotations": {
     "list": [
       {

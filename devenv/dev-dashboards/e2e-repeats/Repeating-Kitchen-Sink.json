@@ -1,35 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_GDEV-TESTDATA",
-      "label": "gdev-testdata",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "testdata",
-      "pluginName": "TestData DB"
-    }
-  ],
-  "__elements": [],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "8.3.3"
-    },
-    {
-      "type": "datasource",
-      "id": "testdata",
-      "name": "TestData DB",
-      "version": "1.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "timeseries",
-      "name": "Time series",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -57,10 +26,6 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "${DS_GDEV-TESTDATA}"
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -145,10 +110,6 @@
       "type": "row"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "${DS_GDEV-TESTDATA}"
-      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -222,10 +183,6 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "${DS_GDEV-TESTDATA}"
-      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -297,10 +254,6 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "${DS_GDEV-TESTDATA}"
-      },
       "description": "",
       "fieldConfig": {
         "defaults": {
