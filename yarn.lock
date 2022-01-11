@@ -13909,7 +13909,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chalk@npm:^4.0.0, chalk@npm:^4.1.0, chalk@npm:^4.1.1":
+"chalk@npm:^4.0.0, chalk@npm:^4.1.0, chalk@npm:^4.1.1, chalk@npm:^4.1.2":
   version: 4.1.2
   resolution: "chalk@npm:4.1.2"
   dependencies:
@@ -14435,7 +14435,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"colors@npm:^1.1.2, colors@npm:^1.4.0":
+"colors@npm:^1.1.2":
   version: 1.4.0
   resolution: "colors@npm:1.4.0"
   checksum: 98aa2c2418ad87dedf25d781be69dc5fc5908e279d9d30c34d8b702e586a0474605b3a189511482b9d5ed0d20c867515d22749537f7bc546256c6014f3ebdcec
@@ -19873,7 +19873,7 @@ __metadata:
     hoist-non-react-statics: 3.3.2
     html-loader: 3.0.1
     html-webpack-plugin: 5.5.0
-    http-server: 14.0.0
+    http-server: 14.1.0
     husky: ^7.0.0
     iconscout-unicons-tarball: "https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28"
     immer: 9.0.7
@@ -20712,12 +20712,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"http-server@npm:14.0.0":
-  version: 14.0.0
-  resolution: "http-server@npm:14.0.0"
+"http-server@npm:14.1.0":
+  version: 14.1.0
+  resolution: "http-server@npm:14.1.0"
   dependencies:
     basic-auth: ^2.0.1
-    colors: ^1.4.0
+    chalk: ^4.1.2
     corser: ^2.0.1
     he: ^1.2.0
     html-encoding-sniffer: ^3.0.0
@@ -20731,7 +20731,7 @@ __metadata:
     url-join: ^4.0.1
   bin:
     http-server: bin/http-server
-  checksum: 2b7d0f86e7779aafca3a19c5f6a2452c54e3d1cb31656f0ea26b45e86ebbaea713634d9d04eb48101bb84dcce5ebad4c0359d43c7f5f51c5846cda257a30b20b
+  checksum: 9a88fb47aa25aff445183da7d801d849e0dc0ae7decbc7580cded2d32c7d17c88405a88a69e7b10c77320ecdc6f67cb71b4973afe66b5898c95f9b186bad67af
   languageName: node
   linkType: hard
 
