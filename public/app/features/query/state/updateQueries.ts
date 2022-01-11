@@ -17,6 +17,7 @@ export async function updateQueries(
       return queries;
     } else {
       const dataSourceSrv = getDatasourceSrv();
+
       let datasource: DataSourceApi;
 
       try {
@@ -24,28 +25,28 @@ export async function updateQueries(
       } catch (error) {
         datasource = await dataSourceSrv.get();
       }
+      const clearedQueries = [{ refId: 'A', datasource }];
 
-      let migratedQueries: DataQuery[] | false = false;
       try {
         const dsPlugin = await importDataSourcePlugin(datasource.meta);
         if (dsPlugin.onDatasourceChange) {
-          migratedQueries = await dsPlugin.onDatasourceChange(
-            dsSettings!,
-            newSettings,
-            queries.map((q) => ({
-              ...q,
-              datasource,
-            }))
+          return (
+            (await dsPlugin.onDatasourceChange(
+              dsSettings!,
+              newSettings,
+              queries.map((q) => ({
+                ...q,
+                datasource,
+              }))
+            )) || clearedQueries
           );
         }
       } catch (err) {
         appEvents.emit(AppEvents.alertError, [datasource.name, ' plugin failed', err.toString()]);
       }
 
-      return migratedQueries || [{ refId: 'A', datasource }];
-
-      // Changing to another datasource type clear queries
-      return [{ refId: 'A', datasource }];
+      // Changing to another datasource type clear queries if no change handler is provided
+      return clearedQueries;
     }
   }
 
