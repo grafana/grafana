@@ -295,6 +295,20 @@ func setInitCtxSignedInOrgAdmin(initCtx *models.ReqContext) {
 	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_ADMIN, Login: testUserLogin}
 }
 
+func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
+	if features == nil {
+		features = featuremgmt.WithFeatures()
+	}
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
+
+	return &HTTPServer{
+		Cfg:      cfg,
+		Features: features,
+		Bus:      bus.GetBus(),
+	}
+}
+
 func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
 	// Use a new conf
 	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
