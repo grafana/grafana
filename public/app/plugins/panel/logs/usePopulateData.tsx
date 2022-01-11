@@ -31,7 +31,7 @@ const usePopulateData = ({ data }: Props) => {
   useEffect(() => {
     let clonedData = cloneDeep(data);
     externalLogs.forEach((log: any) => {
-      clonedData = addMessageToData(clonedData, JSON.stringify(log.msg), log.timestamp);
+      clonedData = addMessageToData(clonedData, log.msg, log.timestamp);
     });
     setNewData(clonedData);
 
@@ -39,12 +39,13 @@ const usePopulateData = ({ data }: Props) => {
   }, [data]);
 
   useEffect(() => {
-    const postMessage = (msg: any) => {
+    const postMessage = ({ data }: any) => {
+      const message = JSON.stringify(data);
       const logs = [...externalLogs];
-      logs.push({ msg: msg.data, timestamp: Date.now() });
+      logs.push({ msg: message, timestamp: Date.now() });
       setExternalLogs(logs);
       const clonedData = cloneDeep(newData);
-      const updatedData = addMessageToData(clonedData, msg.data, Date.now());
+      const updatedData = addMessageToData(clonedData, message, Date.now());
       setNewData(updatedData);
     };
 
