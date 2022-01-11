@@ -238,8 +238,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.contextGetter = liveplugin.NewContextGetter(g.PluginContextProvider)
 	pipelinedChannelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, g.Pipeline, g.leaderManager != nil)
-	numLocalSubscribersGetter := liveplugin.NewNumLocalSubscribersGetter(node)
-	g.runStreamManager = runstream.NewManager(pipelinedChannelLocalPublisher, numLocalSubscribersGetter, g.contextGetter, g.leaderManager, g)
+	numSubscribersGetter := liveplugin.NewNumSubscribersGetter(node)
+	g.runStreamManager = runstream.NewManager(pipelinedChannelLocalPublisher, numSubscribersGetter, g.contextGetter, g.leaderManager, g)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{

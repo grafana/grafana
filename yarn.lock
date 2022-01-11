@@ -13879,12 +13879,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@centrifugal/centrifuge-js#a24c1992d4e0bcdb4ba9006947f157d588838260":
+"centrifuge@centrifugal/centrifuge-js#28e31389fbd8b5d314bd99d5d08fcde3fa4a3675":
   version: 2.8.4
-  resolution: "centrifuge@https://github.com/centrifugal/centrifuge-js.git#commit=a24c1992d4e0bcdb4ba9006947f157d588838260"
+  resolution: "centrifuge@https://github.com/centrifugal/centrifuge-js.git#commit=28e31389fbd8b5d314bd99d5d08fcde3fa4a3675"
   dependencies:
     protobufjs: ^6.11.2
-  checksum: 384186755432a68126b4568e4dbc8a353f5432af907a4da18ab6a286e07e18527f66f8b712b0080c2b05203cc9360f1a89f7be7bbd85b5fdf8df097e004f61ae
+  checksum: a5cd2d987d9fb04745daa4835b93f6bb933c14ed2998deb79fada77512271e70e4cafdd24fb17e3d2a223fb8e3e5daadf55bf8d86dd188b48467e144dc359558
   languageName: node
   linkType: hard
 
@@ -19834,7 +19834,7 @@ __metadata:
     baron: 3.0.3
     brace: 0.11.1
     calculate-size: 1.1.1
-    centrifuge: "centrifugal/centrifuge-js#a24c1992d4e0bcdb4ba9006947f157d588838260"
+    centrifuge: "centrifugal/centrifuge-js#28e31389fbd8b5d314bd99d5d08fcde3fa4a3675"
     classnames: 2.3.1
     comlink: 4.3.1
     common-tags: 1.8.2

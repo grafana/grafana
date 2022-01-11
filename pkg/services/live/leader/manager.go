@@ -33,7 +33,6 @@ const (
 // Returns leader nodeID and current leadershipID.
 const getOrCreateScriptSource = `
 if redis.call('exists', KEYS[1]) ~= 0 then
-	redis.call("expire", KEYS[1], ARGV[1])
 	return redis.call("hmget", KEYS[1], "n", "l")
 end
 redis.call("hmset", KEYS[1], "n", ARGV[2], "l", ARGV[3])

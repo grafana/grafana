@@ -64,16 +64,24 @@ func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte, leader
 	return nil
 }
 
-type NumLocalSubscribersGetter struct {
+type NumSubscribersGetter struct {
 	node *centrifuge.Node
 }
 
-func NewNumLocalSubscribersGetter(node *centrifuge.Node) *NumLocalSubscribersGetter {
-	return &NumLocalSubscribersGetter{node: node}
+func NewNumSubscribersGetter(node *centrifuge.Node) *NumSubscribersGetter {
+	return &NumSubscribersGetter{node: node}
 }
 
-func (p *NumLocalSubscribersGetter) GetNumLocalSubscribers(channelID string) (int, error) {
+func (p *NumSubscribersGetter) GetNumLocalSubscribers(channelID string) (int, error) {
 	return p.node.Hub().NumSubscribers(channelID), nil
+}
+
+func (p *NumSubscribersGetter) GetNumSubscribers(channelID string) (int, error) {
+	presenceStats, err := p.node.PresenceStats(channelID)
+	if err != nil {
+		return 0, err
+	}
+	return presenceStats.NumClients, nil
 }
 
 type ContextGetter struct {

@@ -2,6 +2,7 @@ package features
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/util"
@@ -171,7 +172,7 @@ func (r *PluginPathRunner) handleHASubscribe(ctx context.Context, user *models.S
 		return models.SubscribeReply{}, status, nil
 	}
 	reply.LeadershipID = leadershipID
-	logger.Debug("Subscribe reply from leader received", "reply", reply)
+	logger.Debug("Subscribe reply from leader received", "reply", fmt.Sprintf("%#v", reply))
 	return reply, status, nil
 }
 

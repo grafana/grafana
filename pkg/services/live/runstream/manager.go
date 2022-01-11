@@ -30,8 +30,10 @@ type PluginContextGetter interface {
 }
 
 type NumLocalSubscribersGetter interface {
-	// GetNumLocalSubscribers returns number of channel subscribers throughout all nodes.
+	// GetNumLocalSubscribers returns number of channel subscribers on local node.
 	GetNumLocalSubscribers(channel string) (int, error)
+	// GetNumSubscribers returns number of channel subscribers throughout all nodes.
+	GetNumSubscribers(channel string) (int, error)
 }
 
 type StreamRunner interface {
@@ -257,7 +259,15 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 				}
 			}
 		case <-presenceTicker.C:
-			numSubscribers, err := s.presenceGetter.GetNumLocalSubscribers(sr.Channel)
+			var (
+				numSubscribers int
+				err            error
+			)
+			if s.leaderManager != nil {
+				numSubscribers, err = s.presenceGetter.GetNumSubscribers(sr.Channel)
+			} else {
+				numSubscribers, err = s.presenceGetter.GetNumLocalSubscribers(sr.Channel)
+			}
 			if err != nil {
 				logger.Error("Error checking num subscribers", "channel", sr.Channel, "path", sr.Path, "error", err)
 				continue
