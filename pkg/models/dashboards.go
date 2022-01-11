@@ -108,6 +108,11 @@ var (
 		StatusCode: 404,
 		Status:     "not-found",
 	}
+	ErrDashboardThumbnailNotFound = DashboardErr{
+		Reason:     "Dashboard thumbnail not found",
+		StatusCode: 404,
+		Status:     "not-found",
+	}
 )
 
 // DashboardErr represents a dashboard error.

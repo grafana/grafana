@@ -2,20 +2,18 @@ package thumbs
 
 import (
 	"fmt"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -39,7 +37,7 @@ type Service interface {
 	CrawlerStatus(c *models.ReqContext) response.Response
 }
 
-func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.GrafanaLive) Service {
+func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) Service {
 	if !cfg.IsDashboardPreviesEnabled() {
 		return &dummyService{}
 	}
@@ -49,9 +47,10 @@ func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.
 	_ = os.MkdirAll(root, 0700)
 	_ = os.MkdirAll(tempdir, 0700)
 
-	renderer := newSimpleCrawler(root, renderService, gl)
+	renderer := newSimpleCrawler(root, renderService, gl, store)
 	return &thumbService{
 		renderer: renderer,
+		store:    store,
 		root:     root,
 		tempdir:  tempdir,
 	}
@@ -59,6 +58,7 @@ func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.
 
 type thumbService struct {
 	renderer dashRenderer
+	store    *sqlstore.SQLStore
 	root     string
 	tempdir  string
 }
@@ -109,30 +109,32 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		return // already returned value
 	}
 
-	rsp := hs.renderer.GetPreview(req)
-	if rsp.Code == 200 {
-		if rsp.Path != "" {
-			if strings.HasSuffix(rsp.Path, ".webp") {
-				c.Resp.Header().Set("Content-Type", "image/webp")
-			} else if strings.HasSuffix(rsp.Path, ".png") {
-				c.Resp.Header().Set("Content-Type", "image/png")
-			}
-			c.Resp.Header().Set("Content-Type", "image/png")
-			http.ServeFile(c.Resp, c.Req, rsp.Path)
-			return
-		}
-		if rsp.URL != "" {
-			// todo redirect
-			fmt.Printf("TODO redirect: %s\n", rsp.URL)
-		}
+	query := &models.GetDashboardThumbnailCommand{
+		DashboardUID: req.UID,
+		PanelID:      0,
+		Kind:         "thumb",
+		Theme:        "dark",
 	}
+	res, err := hs.store.GetThumbnail(query)
+	if err != nil {
 
-	if rsp.Code == 202 {
-		c.JSON(202, map[string]string{"path": rsp.Path, "todo": "queue processing"})
+		if err == models.ErrDashboardThumbnailNotFound {
+			tlog.Info("Thumbnail not found", "dashboardUid", req.UID)
+			c.Resp.WriteHeader(404)
+
+		} else {
+			tlog.Info("Error when retrieving thumbnail", "dashboardUid", req.UID, "error", err.Error())
+			c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown!"})
+		}
+
 		return
 	}
 
-	c.JSON(500, map[string]string{"path": rsp.Path, "error": "unknown!"})
+	c.Resp.Header().Set("Content-Type", "text/plain; charset=UTF-8")
+	_, err = c.Resp.Write([]byte(res.ImageDataUrl))
+
+	c.Resp.WriteHeader(200)
+	return
 }
 
 // Hack for now -- lets you upload images explicitly

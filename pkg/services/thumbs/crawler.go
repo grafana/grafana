@@ -1,10 +1,14 @@
 package thumbs
 
 import (
+	"bufio"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"strings"
@@ -21,6 +25,7 @@ import (
 type dashItem struct {
 	uid string
 	url string
+	id  int64
 }
 
 type simpleCrawler struct {
@@ -29,6 +34,7 @@ type simpleCrawler struct {
 	threadCount       int
 
 	glive  *live.GrafanaLive
+	store  *sqlstore.SQLStore
 	mode   CrawlerMode
 	opts   rendering.Opts
 	status crawlStatus
@@ -36,12 +42,13 @@ type simpleCrawler struct {
 	mu     sync.Mutex
 }
 
-func newSimpleCrawler(folder string, renderService rendering.Service, gl *live.GrafanaLive) dashRenderer {
+func newSimpleCrawler(folder string, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) dashRenderer {
 	c := &simpleCrawler{
 		screenshotsFolder: folder,
 		renderService:     renderService,
-		threadCount:       5,
+		threadCount:       1,
 		glive:             gl,
+		store:             store,
 		status: crawlStatus{
 			State:    "init",
 			Complete: 0,
@@ -131,6 +138,7 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rend
 			queue = append(queue, dashItem{
 				uid: v.UID,
 				url: v.URL,
+				id:  v.ID,
 			})
 		}
 	}
@@ -222,6 +230,46 @@ func (r *simpleCrawler) walk() {
 			tlog.Warn("error getting image... internal result", "img", res.FilePath)
 			r.status.Errors++
 		} else {
+
+			file, err := os.Open(res.FilePath)
+			if err != nil {
+				r.status.Errors++
+				tlog.Warn("error opening file", "err", err)
+			} else {
+				reader := bufio.NewReader(file)
+				content, err := ioutil.ReadAll(reader)
+				if err != nil {
+					r.status.Errors++
+					tlog.Warn("error reading file", "err", err)
+				} else {
+
+					var mimeType string
+					if strings.HasSuffix(res.FilePath, ".webp") {
+						mimeType = "image/webp"
+					} else if strings.HasSuffix(res.FilePath, ".png") {
+						mimeType = "image/png"
+					} else {
+						mimeType = "image/png"
+					}
+
+					base64Image := base64.StdEncoding.EncodeToString(content)
+					cmd := &models.SaveDashboardThumbnailCommand{
+						DashboardID: item.id,
+						PanelID:     0,
+						Kind:        "thumb",
+						Image:       fmt.Sprintf("data:%s;base64,%s", mimeType, base64Image),
+						Theme:       "dark", // how do I convert the r.opts.Theme enum to string ???????
+					}
+					_, err = r.store.SaveThumbnail(cmd)
+					if err != nil {
+						r.status.Errors++
+						tlog.Warn("error saving to the db", "err", err)
+
+					}
+					tlog.Info("saved thumbnail", "panel", panelURL, "resultId", cmd.Result.Id)
+				}
+			}
+
 			p := getFilePath(r.screenshotsFolder, &previewRequest{
 				UID:   item.uid,
 				OrgID: r.opts.OrgID,

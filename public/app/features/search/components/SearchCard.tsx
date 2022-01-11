@@ -23,7 +23,7 @@ export function getThumbnailURL(uid: string, isLight?: boolean) {
 }
 
 export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
-  const [hasImage, setHasImage] = useState(true);
+  const [imageSrc, setImageSrc] = useState<string | undefined>(undefined);
   const [lastUpdated, setLastUpdated] = useState<string>();
   const [showExpandedView, setShowExpandedView] = useState(false);
   const timeout = useRef<number | null>(null);
@@ -52,7 +52,21 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   });
 
   const theme = useTheme2();
-  const imageSrc = getThumbnailURL(item.uid!, theme.isLight);
+  const thumbnailUrl = getThumbnailURL(item.uid!, theme.isLight);
+
+  fetch(thumbnailUrl)
+    .then((res) => {
+      if (res.status === 200) {
+        return res.text();
+      }
+      return undefined;
+    })
+    .then((textBody) => {
+      if (textBody) {
+        setImageSrc(textBody);
+      }
+    });
+
   const styles = getStyles(
     theme,
     markerElement?.getBoundingClientRect().width,
@@ -119,8 +133,8 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
           checked={item.checked}
           onClick={onCheckboxClick}
         />
-        {hasImage ? (
-          <img loading="lazy" className={styles.image} src={imageSrc} onError={() => setHasImage(false)} />
+        {imageSrc ? (
+          <img loading="lazy" className={styles.image} src={imageSrc} />
         ) : (
           <div className={styles.imagePlaceholder}>
             <Icon name="apps" size="xl" />
