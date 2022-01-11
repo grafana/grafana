@@ -1,6 +1,7 @@
 +++
 title = "About thresholds"
 weight = 10
+aliases = ["/docs/sources/panels/specify-thresholds/about-thresholds/"]
 +++
 
 # About thresholds

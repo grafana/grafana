@@ -1,19 +1,20 @@
 +++
 title = "Add a query"
 weight = 30
+aliases = ["/docs/sources/panels/query-a-data-source/add-a-query/"]
 +++
 
 # Add a query
 
 A query returns data that Grafana visualizes in dashboards. When you create a panel, Grafana automatically selects the default data source.
 
-Before you begin:
+## Before you begin
 
 - Add a data source.
 - Ensure that you know the query language of the data source.
 - [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
-To add a query:
+**To add a query**:
 
 1. Edit the panel to which you are adding a query.
 1. Click the **Query** tab.

@@ -1,6 +1,6 @@
 +++
 title = "Reference: Query options"
-aliases = []
+aliases = ["/docs/sources/panels/reference-query-options/"]
 weight = 1100
 +++
 

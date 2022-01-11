@@ -1,17 +1,18 @@
 +++
 title = "Manage Grafana library panels"
 weight = 40
+aliases = ["/docs/sources/panels/library-panels/manage-library-panel/"]
 +++
 
 # Manage Grafana library panels
 
 You can adjust library panel configuration at any time.
 
-Before you begin:
+## Before you begin
 
 - [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
-To view and manage a library panel:
+**To view and manage a library panel**:
 
 1. Hover over the **Dashboard** option on the left menu, then click **Library panels**.
 

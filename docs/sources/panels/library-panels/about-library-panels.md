@@ -1,6 +1,7 @@
 +++
 title = "About Grafana library panels"
 weight = 10
+aliases = ["/docs/sources/panels/library-panels/about-library-panels/"]
 +++
 
 # About Grafana panel libraries

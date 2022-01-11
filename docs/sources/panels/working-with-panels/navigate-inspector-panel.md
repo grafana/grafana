@@ -1,6 +1,6 @@
 +++
 title = "Navigate the Grafana Inspector panel"
-aliases = []
+aliases = ["/docs/sources/panels/working-with-panels/navigate-inspector-panel/"]
 weight = 90
 +++
 

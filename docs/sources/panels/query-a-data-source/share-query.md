@@ -1,6 +1,7 @@
 +++
 title = "Share query results with another panel"
 weight = 90
+aliases = ["/docs/sources/panels/query-a-data-source/share-query/"]
 +++
 
 # Share query results with another panel
@@ -11,7 +12,7 @@ The Dashboard data source lets you select a panel in your dashboard that contain
 
 This strategy can drastically reduce the number of queries being made when you for example have several panels visualizing the same data.
 
-To share data source queries with another panel:
+**To share data source queries with another panel**:
 
 1. [Create a dashboard]({{< relref "../../getting-started/getting-started.md/#step-3-create-a-dashboard" >}}).
 1. [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).

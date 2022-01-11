@@ -1,6 +1,6 @@
 +++
 title = "Add a link to a panel"
-aliases = []
+aliases = ["/docs/sources/panels/working-with-panels/add-link-to-panel/"]
 weight = 60
 +++
 

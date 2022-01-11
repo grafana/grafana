@@ -1,6 +1,7 @@
 +++
 title = "Navigate the query tab"
 weight = 20
+aliases = ["/docs/sources/panels/query-a-data-source/navigate-query-tab/"]
 +++
 
 # Navigate the query tab

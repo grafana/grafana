@@ -1,6 +1,7 @@
 +++
 title = "About expressions"
 weight = 10
+aliases = ["/docs/sources/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/"]
 +++
 
 # About expressions

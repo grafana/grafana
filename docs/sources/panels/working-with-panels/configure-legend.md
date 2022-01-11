@@ -1,6 +1,6 @@
 +++
 title = "Configure a legend"
-aliases = []
+aliases = ["/docs/sources/panels/working-with-panels/configure-legend/"]
 weight = 70
 +++
 
@@ -14,11 +14,11 @@ Visualizations can often be visually complex, and include many data series. You 
 
 When you apply your changes, the visualization changes appear to all users of the panel.
 
-Before you begin:
+### Before you begin
 
 - [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
-To isolate series data in a visualization:
+**To isolate series data in a visualization**:
 
 1. Open the panel.
 
@@ -45,11 +45,11 @@ This topic currently applies to the following visualizations:
 
 As way to add more context to a visualization, you can add series data values to a legend. You can add as many values as you'd like; after you apply your changes, you can horizontally scroll the legend to see all values.
 
-Before you begin:
+### Before you begin
 
 - Add a panel
 
-To add values to a legend, complete the following steps:
+**To add values to a legend**:
 
 1. Open a panel.
 
@@ -65,11 +65,11 @@ To add values to a legend, complete the following steps:
 
 By default, Grafana specifies the color of your series data, which you can change.
 
-Before you begin:
+### Before you begin
 
 - Add a panel
 
-To change a series color, perform the following steps:
+**To change a series color, perform the following steps**:
 
 1. Open the panel.
 

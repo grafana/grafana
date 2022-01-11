@@ -1,6 +1,7 @@
 +++
 title = "Configure repeating rows"
 weight = 30
+aliases = ["/docs/sources/panels/add-panels-dynamically/configure-repeating-rows/"]
 +++
 
 # Configure repeating rows
@@ -8,11 +9,11 @@ weight = 30
 As seen above with the panels you can also repeat rows if you have variables set with `Multi-value` or
 `Include all value` selection option.
 
-Before you begin:
+## Before you begin
 
 - Ensure that the query includes a multi-value variable.
 
-To configure repeating rows:
+**To configure repeating rows**:
 
 1. On the dashboard home page, click **Add panel**.
 

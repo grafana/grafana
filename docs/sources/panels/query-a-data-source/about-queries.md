@@ -1,6 +1,7 @@
 +++
 title = "About queries"
 weight = 10
+aliases = ["/docs/sources/panels/query-a-data-source/about-queries/"]
 +++
 
 # About queries

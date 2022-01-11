@@ -1,6 +1,6 @@
 +++
 title = "Add a panel to a dashboard"
-aliases = []
+aliases = ["/docs/sources/panels/working-with-panels/add-panel/"]
 weight = 20
 +++
 
@@ -8,14 +8,14 @@ weight = 20
 
 Panels allow you to show your data in visual form. Each panel needs at least one query to display a visualization.
 
-Before you begin:
+## Before you begin
 
 - Ensure that you have the proper [organization role]({{< relref "../../permissions/organization_roles.md" >}}) or [permissions]({{< relref "../../permissions/_index.md" >}}).
 - Identify the dashboard to which you want to add the panel.
 - Understand the query language of the target data source.
 - Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source]({{< relref "../../datasources/add-a-data-source.md" >}}) if you need instructions.
 
-To add a panel to a dashboard:
+**To add a panel to a dashboard**:
 
 1. Navigate to the dashboard to which you want to add a panel.
 1. Click the **Add panel** icon.

@@ -1,6 +1,7 @@
 +++
 title = "About value mapping"
 weight = 10
+aliases = ["/docs/sources/panels/format-data/about-value-mapping/"]
 +++
 
 # About value mapping

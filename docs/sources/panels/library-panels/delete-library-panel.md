@@ -1,17 +1,18 @@
 +++
 title = "Delete a Grafana library panel"
 weight = 60
+aliases = ["/docs/sources/panels/library-panels/delete-library-panel/"]
 +++
 
 # Delete a Grafana library panel
 
 Delete a library panel when you no longer need it.
 
-Before you begin:
+## Before you begin
 
 - Verify that the panel does not appear on a dashboard.
 
-To delete a library panel:
+**To delete a library panel**:
 
 1. Hover over **Dashboard** on the left menu, and select Library panels from the drop-down options.
 1. Select a library panel that is being used in different dashboards.

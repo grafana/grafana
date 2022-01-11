@@ -1,6 +1,6 @@
 +++
 title = "Organize a dashboard"
-aliases = []
+aliases = ["/docs/sources/panels/working-with-panels/organize-dashboard/"]
 weight = 80
 +++
 
@@ -8,12 +8,12 @@ weight = 80
 
 You can place any panel in any location you want and controls its size. The changes you make impact other users of the dashboard.
 
-Before you begin:
+## Before you begin:
 
 - Add two or more panels
 - Ensure that you sign in with Editor permissions
 
-To organize a dashboard:
+**To organize a dashboard**:
 
 1. Hover your cursor over the panel, and click-and-drag the panel to its new location.
 

@@ -1,6 +1,7 @@
 +++
 title = "Configure repeating panels"
 weight = 20
+aliases = ["/docs/sources/panels/add-panels-dynamically/configure-repeating-panels/"]
 +++
 
 # Configure repeating panels
@@ -9,11 +10,11 @@ For queries that return multiple values for a variable, you can configure Grafan
 
 > **Note:** Repeating panels require variables to have one or more items selected; you cannot repeat a panel zero times to hide it.
 
-Before you begin:
+## Before you begin
 
 - Ensure that the query includes a multi-value variable.
 
-To configure repeating panels:
+**To configure repeating panels**:
 
 1. Edit the panel you want to repeat.
 

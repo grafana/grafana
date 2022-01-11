@@ -1,6 +1,6 @@
 +++
 title = "Add a title and description to a panel"
-aliases = []
+aliases = ["/docs/sources/panels/working-with-panels/add-title-and-description/"]
 weight = 30
 +++
 
@@ -8,11 +8,11 @@ weight = 30
 
 Add a title and description to a panel to share with users any important information about the visualization. For example, use the description to document the purpose of the visualization.
 
-Before you begin:
+## Before you begin:
 
 - [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
-To add a title and description to a panel:
+**To add a title and description to a panel**:
 
 1. Open a panel.
 

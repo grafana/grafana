@@ -1,6 +1,7 @@
 +++
 title = "Manage queries"
 weight = 80
+aliases = ["/docs/sources/panels/query-a-data-source/manage-queries/"]
 +++
 
 # Manage queries

@@ -1,18 +1,19 @@
 +++
 title = "View field overrides"
 weight = 20
+aliases = ["/docs/sources/panels/override-field-values/view-field-override/"]
 +++
 
 # View field overrides
 
 You can view field overrides in the panel display options.
 
-Before you begin:
+## Before you begin
 
 - [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 - [Add a field override]({{< relref "../override-field-values/add-a-field-override.md" >}}).
 
-To view field overrides:
+**To view field overrides**:
 
 1. Open for edit the panel that contains the overrides you want to view.
 1. In the panel display options, click the **Overrides** tab.

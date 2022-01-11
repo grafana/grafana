@@ -1,6 +1,7 @@
 +++
 title = "About field overrides"
 weight = 10
+aliases = ["/docs/sources/panels/override-field-values/about-field-overrides/"]
 +++
 
 # About field overrides

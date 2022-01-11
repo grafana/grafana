@@ -1,6 +1,6 @@
 +++
 title = "Apply color to series and fields"
-aliases = []
+aliases = ["/docs/sources/panels/working-with-panels/apply-color-to-series/"]
 weight = 50
 +++
 
@@ -11,11 +11,11 @@ In addition to specifying color based on thresholds, you can configure the color
 You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 Continuous color interpolates a color using the percentage of a value relative to min and max.
 
-Before you begin:
+## Before you begin
 
 - [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
-To apply color to series and fields:
+**To apply color to series and fields**:
 
 1. In panel display options, scroll to the **Standard options** or **override** section.
 

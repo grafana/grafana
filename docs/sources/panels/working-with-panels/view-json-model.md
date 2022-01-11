@@ -1,6 +1,6 @@
 +++
 title = "View a panel JSON model"
-aliases = []
+aliases = ["/docs/sources/panels/working-with-panels/view-json-model/"]
 weight = 100
 +++
 
@@ -8,11 +8,11 @@ weight = 100
 
 Explore and export panel, panel data, and data frame JSON models.
 
-Before you begin:
+## Before you begin:
 
 - [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 
-To view a panel JSON model:
+**To view a panel JSON model**:
 
 1. Open the panel inspector and then click the **JSON** tab or in the panel menu click **Inspect > Panel JSON**.
 

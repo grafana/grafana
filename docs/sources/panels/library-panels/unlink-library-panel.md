@@ -1,15 +1,16 @@
 +++
 title = "Unlink a Grafana library panel"
 weight = 50
+aliases = ["/docs/sources/panels/library-panels/unlink-library-panel/"]
 +++
 
 # Unlink a Grafana library panel
 
 Unlink a library panel when you want to make a change to the panel and not affect other instances of the library panel.
 
-Before you unlink a library panel:
+## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- Identify the panel you want to unlink.
 
 To unlink a library panel from a dashboard:
 

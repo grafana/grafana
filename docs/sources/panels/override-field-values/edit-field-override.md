@@ -1,18 +1,19 @@
 +++
 title = "Edit a field overrides"
 weight = 30
+aliases = ["/docs/sources/panels/override-field-values/edit-field-override/"]
 +++
 
 # Edit a field override
 
 Edit a field override when you want to make changes to an override setting.
 
-Before you begin:
+## Before you begin
 
 - [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 - [Add a field override]({{< relref "../override-field-values/add-a-field-override.md" >}}).
 
-To edit a field override:
+**To edit a field override**:
 
 1. Edit the panel that contains the overrides you want to edit.
 1. In the panel display options, click the **Overrides** tab.
