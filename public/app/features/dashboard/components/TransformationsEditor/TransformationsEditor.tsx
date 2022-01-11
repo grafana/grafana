@@ -375,10 +375,10 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
   return (
     <Card
       className={styles.card}
-      heading={transform.name}
       aria-label={selectors.components.TransformTab.newTransform(transform.name)}
       onClick={onClick}
     >
+      <Card.Heading>{transform.name}</Card.Heading>
       <Card.Meta>{transform.description}</Card.Meta>
       {transform.state && (
         <Card.Tags>
@@ -393,10 +393,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css`
       margin: 0;
-
-      > div {
-        padding: ${theme.spacing(1)};
-      }
+      padding: ${theme.spacing(1)};
     `,
   };
 };

@@ -17,10 +17,12 @@ import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
 import MdKeyboardArrowRight from 'react-icons/lib/md/keyboard-arrow-right';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import SpanGraph from './SpanGraph';
 import TracePageSearchBar from './TracePageSearchBar';
-import { autoColor, Theme, TUpdateViewRangeTimeFunction, useTheme, ViewRange, ViewRangeTimeUpdate } from '..';
+import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '..';
 import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
 import { getTraceName } from '../model/trace-viewer';
@@ -30,11 +32,9 @@ import { formatDuration } from '../utils/date';
 import { getTraceLinks } from '../model/link-patterns';
 
 import ExternalLinks from '../common/ExternalLinks';
-import { createStyle } from '../Theme';
 import { uTxMuted } from '../uberUtilityStyles';
-import { dateTimeFormat, TimeZone } from '@grafana/data';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     TracePageHeader: css`
       label: TracePageHeader;
@@ -135,7 +135,7 @@ const getStyles = createStyle((theme: Theme) => {
       white-space: nowrap;
     `,
   };
-});
+};
 
 type TracePageHeaderEmbedProps = {
   canCollapse: boolean;
@@ -225,7 +225,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     timeZone,
   } = props;
 
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
   const links = React.useMemo(() => {
     if (!trace) {
       return [];

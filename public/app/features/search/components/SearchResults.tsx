@@ -1,6 +1,7 @@
 import React, { FC, memo } from 'react';
 import { css } from '@emotion/css';
-import { FixedSizeList } from 'react-window';
+import classNames from 'classnames';
+import { FixedSizeList, FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
 import { Spinner, stylesFactory, useTheme } from '@grafana/ui';
@@ -8,6 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
 import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 import { SearchItem } from './SearchItem';
+import { SearchCard } from './SearchCard';
 import { SectionHeader } from './SectionHeader';
 
 export interface Props {
@@ -17,13 +19,14 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
   onToggleSection: (section: DashboardSection) => void;
   results: DashboardSection[];
+  showPreviews?: boolean;
   layout?: string;
 }
 
-const { sectionV2: sectionLabel, itemsV2: itemsLabel } = selectors.components.Search;
+const { sectionV2: sectionLabel, itemsV2: itemsLabel, cards: cardsLabel } = selectors.components.Search;
 
 export const SearchResults: FC<Props> = memo(
-  ({ editable, loading, onTagSelected, onToggleChecked, onToggleSection, results, layout }) => {
+  ({ editable, loading, onTagSelected, onToggleChecked, onToggleSection, results, showPreviews, layout }) => {
     const theme = useTheme();
     const styles = getSectionStyles(theme);
     const itemProps = { editable, onToggleChecked, onTagSelected };
@@ -36,13 +39,20 @@ export const SearchResults: FC<Props> = memo(
                 {section.title && (
                   <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
                 )}
-                {section.expanded && (
-                  <div data-testid={itemsLabel} className={styles.sectionItems}>
-                    {section.items.map((item) => (
-                      <SearchItem key={item.id} {...itemProps} item={item} />
-                    ))}
-                  </div>
-                )}
+                {section.expanded &&
+                  (showPreviews ? (
+                    <div data-testid={cardsLabel} className={classNames(styles.sectionItems, styles.gridContainer)}>
+                      {section.items.map((item) => (
+                        <SearchCard {...itemProps} key={item.uid} item={item} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div data-testid={itemsLabel} className={styles.sectionItems}>
+                      {section.items.map((item) => (
+                        <SearchItem key={item.id} {...itemProps} item={item} />
+                      ))}
+                    </div>
+                  ))}
               </div>
             );
           })}
@@ -53,28 +63,57 @@ export const SearchResults: FC<Props> = memo(
       const items = results[0]?.items;
       return (
         <div className={styles.listModeWrapper}>
-          <AutoSizer disableWidth>
-            {({ height }) => (
-              <FixedSizeList
-                className={styles.wrapper}
-                innerElementType="ul"
-                itemSize={SEARCH_ITEM_HEIGHT + SEARCH_ITEM_MARGIN}
-                height={height}
-                itemCount={items.length}
-                width="100%"
-              >
-                {({ index, style }) => {
-                  const item = items[index];
-                  // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
-                  // And without this wrapper there is no room for that margin
-                  return (
-                    <li style={style}>
-                      <SearchItem key={item.id} {...itemProps} item={item} />
-                    </li>
-                  );
-                }}
-              </FixedSizeList>
-            )}
+          <AutoSizer>
+            {({ height, width }) => {
+              const numColumns = Math.ceil(width / 320);
+              const cellWidth = width / numColumns;
+              const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
+              const numRows = Math.ceil(items.length / numColumns);
+              return showPreviews ? (
+                <FixedSizeGrid
+                  columnCount={numColumns}
+                  columnWidth={cellWidth}
+                  rowCount={numRows}
+                  rowHeight={cellHeight}
+                  className={styles.wrapper}
+                  innerElementType="ul"
+                  height={height}
+                  width={width}
+                >
+                  {({ columnIndex, rowIndex, style }) => {
+                    const index = rowIndex * numColumns + columnIndex;
+                    const item = items[index];
+                    // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
+                    // And without this wrapper there is no room for that margin
+                    return item ? (
+                      <li style={style} className={styles.virtualizedGridItemWrapper}>
+                        <SearchCard key={item.id} {...itemProps} item={item} />
+                      </li>
+                    ) : null;
+                  }}
+                </FixedSizeGrid>
+              ) : (
+                <FixedSizeList
+                  className={styles.wrapper}
+                  innerElementType="ul"
+                  itemSize={SEARCH_ITEM_HEIGHT + SEARCH_ITEM_MARGIN}
+                  height={height}
+                  itemCount={items.length}
+                  width={width}
+                >
+                  {({ index, style }) => {
+                    const item = items[index];
+                    // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
+                    // And without this wrapper there is no room for that margin
+                    return (
+                      <li style={style}>
+                        <SearchItem key={item.id} {...itemProps} item={item} />
+                      </li>
+                    );
+                  }}
+                </FixedSizeList>
+              );
+            }}
           </AutoSizer>
         </div>
       );
@@ -97,12 +136,19 @@ export const SearchResults: FC<Props> = memo(
 SearchResults.displayName = 'SearchResults';
 
 const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
-  const { md } = theme.spacing;
+  const { md, sm } = theme.spacing;
 
   return {
+    virtualizedGridItemWrapper: css`
+      padding: 4px;
+    `,
     wrapper: css`
       display: flex;
       flex-direction: column;
+
+      > ul {
+        list-style: none;
+      }
     `,
     section: css`
       display: flex;
@@ -118,6 +164,12 @@ const getSectionStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: center;
       align-items: center;
       min-height: 100px;
+    `,
+    gridContainer: css`
+      display: grid;
+      gap: ${sm};
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      margin-bottom: ${md};
     `,
     resultsContainer: css`
       position: relative;

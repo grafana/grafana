@@ -9,8 +9,8 @@ import (
 )
 
 func init() {
-	bus.AddHandlerCtx("sql", UnprovisionDashboard)
-	bus.AddHandlerCtx("sql", DeleteOrphanedProvisionedDashboards)
+	bus.AddHandler("sql", UnprovisionDashboard)
+	bus.AddHandler("sql", DeleteOrphanedProvisionedDashboards)
 }
 
 type DashboardExtras struct {

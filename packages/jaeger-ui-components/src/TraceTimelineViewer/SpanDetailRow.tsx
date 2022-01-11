@@ -19,12 +19,14 @@ import SpanDetail from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
 import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
-import { autoColor, createStyle, Theme, withTheme } from '../Theme';
+import { autoColor } from '../Theme';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink } from '../types/trace';
 import { SpanLinkFunc } from '../types';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     expandedAccent: css`
       cursor: pointer;
@@ -85,7 +87,7 @@ type SpanDetailRowProps = {
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
-  theme: Theme;
+  theme: GrafanaTheme2;
   createSpanLink?: SpanLinkFunc;
 };
 
@@ -166,4 +168,4 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
   }
 }
 
-export default withTheme(UnthemedSpanDetailRow);
+export default withTheme2(UnthemedSpanDetailRow);

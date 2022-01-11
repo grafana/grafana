@@ -9,11 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
@@ -31,9 +29,8 @@ const (
 
 // Sender is responsible for dispatching alert notifications to an external Alertmanager service.
 type Sender struct {
-	logger      log.Logger
-	gokitLogger gokit_log.Logger
-	wg          sync.WaitGroup
+	logger log.Logger
+	wg     sync.WaitGroup
 
 	manager *notifier.Manager
 
@@ -45,19 +42,18 @@ func New(_ *metrics.Scheduler) (*Sender, error) {
 	l := log.New("sender")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &Sender{
-		logger:      l,
-		gokitLogger: gokit_log.NewLogfmtLogger(logging.NewWrapper(l)),
-		sdCancel:    sdCancel,
+		logger:   l,
+		sdCancel: sdCancel,
 	}
 
 	s.manager = notifier.NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
 		&notifier.Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
-		s.gokitLogger,
+		s.logger,
 	)
 
-	s.sdManager = discovery.NewManager(sdCtx, s.gokitLogger)
+	s.sdManager = discovery.NewManager(sdCtx, s.logger)
 
 	return s, nil
 }

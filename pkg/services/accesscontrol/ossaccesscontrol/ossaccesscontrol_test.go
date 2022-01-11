@@ -562,7 +562,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			// Test
-			userPerms, err := ac.GetUserPermissions(context.TODO(), &tt.user)
+			userPerms, err := ac.GetUserPermissions(context.Background(), &tt.user)
 			if tt.wantErr {
 				assert.Error(t, err, "Expected an error with GetUserPermissions.")
 				return

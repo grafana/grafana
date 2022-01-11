@@ -66,9 +66,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
     trimDefaults: false,
     tempoServiceGraph: false,
     tempoSearch: false,
+    tempoBackendSearch: false,
     recordedQueries: false,
     newNavigation: false,
     fullRangeLogsVolume: false,
+    queryOverLive: false,
+    dashboardPreviews: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
@@ -122,7 +125,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
         version: 'v1.0',
         commit: '1',
         env: 'production',
-        isEnterprise: false,
       },
       viewersCanEdit: false,
       editorsCanAdmin: false,

@@ -313,7 +313,7 @@ func syncUser(
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
 	}
-	if err := bus.DispatchCtx(ctx.Req.Context(), cmd); err != nil {
+	if err := bus.Dispatch(ctx.Req.Context(), cmd); err != nil {
 		return nil, err
 	}
 
