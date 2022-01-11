@@ -1,5 +1,6 @@
 load(
     'scripts/drone/steps/lib.star',
+    'disable_tests',
     'download_grabpl_step',
     'initialize_step',
     'lint_drone_step',
@@ -54,7 +55,6 @@ load(
 )
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-disable_tests = False
 
 def build_npm_packages_step(edition, ver_mode):
     if edition == 'enterprise' or ver_mode != 'release':
@@ -167,16 +167,20 @@ def get_steps(edition, ver_mode):
     # Insert remaining steps
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2),
-        e2e_tests_server_step(edition=edition),
-        e2e_tests_step('dashboards-suite', edition=edition, tries=3),
-        e2e_tests_step('smoke-tests-suite', edition=edition, tries=3),
-        e2e_tests_step('panels-suite', edition=edition, tries=3),
-        e2e_tests_step('various-suite', edition=edition, tries=3),
-        e2e_tests_artifacts(edition=edition),
         copy_packages_for_docker_step(),
         package_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
         package_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
+        e2e_tests_server_step(edition=edition),
     ])
+
+    if not disable_tests:
+        build_steps.extend([
+            e2e_tests_step('dashboards-suite', edition=edition, tries=3),
+            e2e_tests_step('smoke-tests-suite', edition=edition, tries=3),
+            e2e_tests_step('panels-suite', edition=edition, tries=3),
+            e2e_tests_step('various-suite', edition=edition, tries=3),
+            e2e_tests_artifacts(edition=edition),
+        ])
 
     build_storybook = build_storybook_step(edition=edition, ver_mode=ver_mode)
     if build_storybook:
@@ -220,12 +224,12 @@ def get_oss_pipelines(trigger, ver_mode):
         name='oss-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
         steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
         platform='windows', depends_on=[
-            'oss-build-e2e-publish-{}'.format(ver_mode),
+            'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
         ],
     )
     pipelines = [
         pipeline(
-            name='oss-build-e2e-publish-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
+            name='oss-build-publish{}-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                   build_steps + package_steps + publish_steps,
             volumes=volumes,
@@ -248,7 +252,7 @@ def get_oss_pipelines(trigger, ver_mode):
         ])
         deps = {
             'depends_on': [
-                'oss-build-e2e-publish-{}'.format(ver_mode),
+                'oss-build-publish{}-{}'.format(get_e2e_suffix(), ver_mode),
                 'oss-test-{}'.format(ver_mode),
                 'oss-integration-tests-{}'.format(ver_mode)
             ]
@@ -267,12 +271,12 @@ def get_enterprise_pipelines(trigger, ver_mode):
         name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
         steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
         platform='windows', depends_on=[
-            'enterprise-build-e2e-publish-{}'.format(ver_mode),
+            'enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
         ],
     )
     pipelines = [
         pipeline(
-            name='enterprise-build-e2e-publish-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
+            name='enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                   build_steps + package_steps + publish_steps,
             volumes=volumes,
@@ -295,7 +299,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
         ])
         deps = {
             'depends_on': [
-                'enterprise-build-e2e-publish-{}'.format(ver_mode),
+                'enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
                 'enterprise-test-{}'.format(ver_mode),
                 'enterprise-integration-tests-{}'.format(ver_mode)
             ]
@@ -376,3 +380,8 @@ def test_release_pipelines():
     ))
 
     return pipelines
+
+def get_e2e_suffix():
+    if not disable_tests:
+        return '-e2e'
+    return ''
