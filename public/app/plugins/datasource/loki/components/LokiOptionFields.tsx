@@ -6,27 +6,29 @@ import { map } from 'lodash';
 // Types
 import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
-import { LokiQuery } from '../types';
+import { LokiQuery, LokiQueryType } from '../types';
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
   resolution: number;
-  queryType: LokiQueryType;
   query: LokiQuery;
   onChange: (value: LokiQuery) => void;
   onRunQuery: () => void;
   runOnBlur?: boolean;
 }
 
-type LokiQueryType = 'instant' | 'range';
-
 const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
-  { value: 'range', label: 'Range', description: 'Run query over a range of time.' },
+  { value: LokiQueryType.Range, label: 'Range', description: 'Run query over a range of time.' },
   {
-    value: 'instant',
+    value: LokiQueryType.Instant,
     label: 'Instant',
     description: 'Run query against a single point in time. For this query, the "To" time is used.',
   },
+  // {
+  //   value: LokiQueryType.Stream,
+  //   label: 'Stream',
+  //   description: 'Run a query and keep sending results on an interval',
+  // },
 ];
 
 export const DEFAULT_RESOLUTION: SelectableValue<number> = {
@@ -42,21 +44,18 @@ const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = [DEFAULT_RESOLUTION].
 );
 
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
-  const { lineLimitValue, resolution, queryType, query, onRunQuery, runOnBlur, onChange } = props;
+  const { lineLimitValue, resolution, onRunQuery, runOnBlur, onChange } = props;
+  const query = props.query ?? {};
+  let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
 
   function onChangeQueryLimit(value: string) {
     const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
     onChange(nextQuery);
   }
 
-  function onQueryTypeChange(value: LokiQueryType) {
-    let nextQuery;
-    if (value === 'instant') {
-      nextQuery = { ...query, instant: true, range: false };
-    } else {
-      nextQuery = { ...query, instant: false, range: true };
-    }
-    onChange(nextQuery);
+  function onQueryTypeChange(queryType: LokiQueryType) {
+    const { instant, range, ...rest } = query;
+    onChange({ ...rest, queryType });
   }
 
   function preprocessMaxLines(value: string): number {
@@ -155,6 +154,7 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             options={RESOLUTION_OPTIONS}
             value={resolution}
             aria-label="Select resolution"
+            menuShouldPortal
           />
         </InlineField>
       </div>

@@ -79,7 +79,8 @@
         "stacking": "none",
         "text": {},
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -151,7 +152,8 @@
         "stacking": "none",
         "text": {},
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -221,7 +223,8 @@
         "stacking": "none",
         "text": {},
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -291,7 +294,8 @@
         "stacking": "none",
         "text": {},
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -363,7 +367,8 @@
           "valueSize": 25
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -433,7 +438,8 @@
         "stacking": "none",
         "text": {},
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -504,7 +510,8 @@
         "stacking": "none",
         "text": {},
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [

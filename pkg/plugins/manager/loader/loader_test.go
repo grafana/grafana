@@ -862,13 +862,8 @@ func newLoader(cfg *plugins.Cfg) *Loader {
 }
 
 type fakeLicensingService struct {
-	edition    string
-	hasLicense bool
-	tokenRaw   string
-}
-
-func (t *fakeLicensingService) HasLicense() bool {
-	return t.hasLicense
+	edition  string
+	tokenRaw string
 }
 
 func (t *fakeLicensingService) Expiry() int64 {
@@ -891,12 +886,16 @@ func (t *fakeLicensingService) LicenseURL(_ bool) string {
 	return ""
 }
 
-func (t *fakeLicensingService) HasValidLicense() bool {
-	return false
-}
-
 func (t *fakeLicensingService) Environment() map[string]string {
 	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
+}
+
+func (*fakeLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
+}
+
+func (*fakeLicensingService) FeatureEnabled(feature string) bool {
+	return false
 }
 
 type fakeLogger struct {

@@ -11,7 +11,7 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
-import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import { config, BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
@@ -53,6 +53,15 @@ export interface TempoQuery extends DataQuery {
   maxDuration?: string;
   limit?: number;
   serviceMapQuery?: string;
+}
+
+interface SearchQueryParams {
+  minDuration?: string;
+  maxDuration?: string;
+  limit?: number;
+  tags: string;
+  start?: number;
+  end?: number;
 }
 
 export const DEFAULT_LIMIT = 20;
@@ -116,7 +125,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.nativeSearch?.length) {
       try {
-        const searchQuery = this.buildSearchQuery(targets.nativeSearch[0]);
+        const timeRange = config.featureToggles.tempoBackendSearch
+          ? { startTime: options.range.from.unix(), endTime: options.range.to.unix() }
+          : undefined;
+        const searchQuery = this.buildSearchQuery(targets.nativeSearch[0], timeRange);
         subQueries.push(
           this._request('/api/search', searchQuery).pipe(
             map((response) => {
@@ -222,7 +234,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return query.query;
   }
 
-  buildSearchQuery(query: TempoQuery) {
+  buildSearchQuery(query: TempoQuery, timeRange?: { startTime: number; endTime?: number }): SearchQueryParams {
     let tags = query.search ?? '';
 
     let tempoQuery = pick(query, ['minDuration', 'maxDuration', 'limit']);
@@ -259,7 +271,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       throw new Error('Please enter a valid limit.');
     }
 
-    return { tags, ...tempoQuery };
+    let searchQuery: SearchQueryParams = { tags, ...tempoQuery };
+
+    if (timeRange) {
+      searchQuery.start = timeRange.startTime;
+      searchQuery.end = timeRange.endTime;
+    }
+
+    return searchQuery;
   }
 
   async getServiceGraphLabels() {

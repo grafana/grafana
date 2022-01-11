@@ -43,6 +43,11 @@ go.sum @grafana/backend-platform
 /pkg/tsdb/zipkin @grafana/observability-squad
 /pkg/tsdb/tempo @grafana/observability-squad
 
+# BI backend code
+/pkg/tsdb/mysql @grafana/grafana-bi-squad
+/pkg/tsdb/postgres @grafana/grafana-bi-squad
+/pkg/tsdb/mssql @grafana/grafana-bi-squad
+
 # Database migrations
 /pkg/services/sqlstore/migrations @grafana/backend-platform @grafana/hosted-grafana-team
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
@@ -136,10 +141,10 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/influxdb @grafana/observability-squad
 /public/app/plugins/datasource/jaeger @grafana/observability-squad
 /public/app/plugins/datasource/loki @grafana/observability-squad
-/public/app/plugins/datasource/mssql @grafana/backend-platform
-/public/app/plugins/datasource/mysql @grafana/backend-platform
+/public/app/plugins/datasource/mssql @grafana/grafana-bi-squad
+/public/app/plugins/datasource/mysql @grafana/grafana-bi-squad
 /public/app/plugins/datasource/opentsdb @grafana/backend-platform
-/public/app/plugins/datasource/postgres @grafana/backend-platform
+/public/app/plugins/datasource/postgres @grafana/grafana-bi-squad
 /public/app/plugins/datasource/prometheus @grafana/observability-squad
 /public/app/plugins/datasource/cloud-monitoring @grafana/cloud-datasources
 /public/app/plugins/datasource/zipkin @grafana/observability-squad
