@@ -3,10 +3,8 @@ package featuremgmt
 import "github.com/grafana/grafana/pkg/services/secrets"
 
 var (
-	FLAG_database_metrics               = "database_metrics"
-	FLAG_live_config                    = "live-config"
-	FLAG_live_pipeline                  = "live-pipeline"
-	FLAG_disable_http_request_histogram = "disable_http_request_histogram"
+	FLAG_database_metrics = "database_metrics"
+	FLAG_live_config      = "live-config"
 
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
@@ -95,7 +93,7 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        FLAG_live_pipeline,
+			Name:        "live-pipeline",
 			Description: "enable a generic live processing pipeline",
 			State:       FeatureStateAlpha,
 		},
