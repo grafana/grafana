@@ -25,6 +25,12 @@ export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQu
 // Utility type to extract the options type TOptions from a class extending DataSourceApi<TQuery, TOptions>
 export type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, infer TOptions> ? TOptions : never;
 
+type DatasourceChangeHandler<TQuery> = (
+  prevSettings: DataSourceInstanceSettings,
+  newSettings: DataSourceInstanceSettings,
+  queries: TQuery[]
+) => Promise<TQuery[]> | false;
+
 export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
@@ -32,6 +38,11 @@ export class DataSourcePlugin<
   TSecureOptions = {}
 > extends GrafanaPlugin<DataSourcePluginMeta<TOptions>> {
   components: DataSourcePluginComponents<DSType, TQuery, TOptions, TSecureOptions> = {};
+
+  /**
+   * @alpha
+   */
+  onDatasourceChange?: DatasourceChangeHandler<TQuery>;
 
   constructor(public DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>) {
     super();
@@ -111,6 +122,16 @@ export class DataSourcePlugin<
     this.components.QueryEditor = pluginExports.QueryEditor;
     this.components.QueryEditorHelp = pluginExports.QueryEditorHelp;
     this.components.VariableQueryEditor = pluginExports.VariableQueryEditor;
+  }
+
+  /**
+   * @alpha
+   * Sets handler that will be called against panel queries when the datasource type is changed.
+   * Allows migrating queries from one type of the datasource to another.
+   */
+  setDataSourceChangeHandler(handler: DatasourceChangeHandler<TQuery>) {
+    this.onDatasourceChange = handler;
+    return this;
   }
 }
 
