@@ -37,9 +37,9 @@ var (
 		"teams:delete",
 		"teams:read",
 		"teams:write",
-		"teams.members:remove",
-		"teams.members:add",
-		"teams.members:read",
+		// "teams.members:remove",
+		// "teams.members:add",
+		// "teams.members:read",
 		"teams.permissions:read",
 		"teams.permissions:write",
 	}

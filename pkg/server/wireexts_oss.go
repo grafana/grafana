@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -45,6 +46,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(models.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
 	provisioning.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
+	resourceservices.ProvideResourceServices,
 	backgroundsvcs.ProvideBackgroundServiceRegistry,
 	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
 	datasources.ProvideCacheService,
