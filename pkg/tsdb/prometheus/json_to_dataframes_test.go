@@ -78,7 +78,7 @@ type storedPrometheusQuery struct {
 }
 
 func loadStoredPrometheusQuery(t *testing.T, fileName string) PrometheusQuery {
-	bytes, err := os.ReadFile(filepath.Clean(fileName))
+	bytes, err := os.ReadFile(fileName)
 	require.NoError(t, err)
 
 	var query storedPrometheusQuery
@@ -103,7 +103,7 @@ func testScenario(t *testing.T, name string) {
 	responseFileName := filepath.Join("testdata", name+".result.json")
 	goldenFileName := filepath.Join("testdata", name+".result.golden.txt")
 	query := loadStoredPrometheusQuery(t, queryFileName)
-	responseBytes, err := os.ReadFile(filepath.Clean(responseFileName))
+	responseBytes, err := os.ReadFile(responseFileName)
 	require.NoError(t, err)
 
 	api, err := makeMockedApi(responseBytes)
