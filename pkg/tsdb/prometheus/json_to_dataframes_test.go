@@ -65,7 +65,9 @@ func makeMockedApi(responseBytes []byte) (apiv1.API, error) {
 }
 
 // we store the prometheus query data in a json file, here is some minimal code
-// to be able to read it back
+// to be able to read it back. unfortunately we cannot use the PrometheusQuery
+// struct here, because it has `time.time` and `time.duration` fields that
+// cannot be unmarshalled from JSON automatically.
 type storedPrometheusQuery struct {
 	RefId      string
 	RangeQuery bool
