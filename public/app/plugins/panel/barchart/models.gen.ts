@@ -28,7 +28,7 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   stacking: StackingMode.None,
   orientation: VizOrientation.Auto,
   xTickLabelRotation: 0,
-  xTickLabelMaxLength: 0,
+  xTickLabelSpacing: 0,
   showValue: VisibilityMode.Auto,
   groupWidth: 0.7,
   barWidth: 0.97,

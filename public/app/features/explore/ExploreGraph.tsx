@@ -16,7 +16,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode } from '@grafana/schema';
+import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import {
   Icon,
   PanelContext,
@@ -165,7 +165,7 @@ export function ExploreGraph({
         timeZone={timeZone}
         options={
           {
-            tooltip: { mode: tooltipDisplayMode },
+            tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
             legend: { displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] },
           } as TimeSeriesOptions
         }
