@@ -46,7 +46,7 @@ var (
 func provideTeamPermissions(router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource:    "teams",
-		OnlyManaged: false,
+		OnlyManaged: true,
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			id, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {
