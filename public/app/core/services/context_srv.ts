@@ -143,6 +143,14 @@ export class ContextSrv {
     return this.hasPermission(action);
   }
 
+  // TODO find a better name?
+  hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean) {
+    if (!config.featureToggles['accesscontrol']) {
+      return fallBack;
+    }
+    return this.hasPermissionInMetadata(action, object);
+  }
+
   // evaluates access control permissions, granting access if the user has any of them; uses fallback if access control is disabled
   evaluatePermission(fallback: () => string[], actions: string[]) {
     if (!this.accessControlEnabled()) {

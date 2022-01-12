@@ -207,18 +207,33 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/teams',
-      roles: () => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']),
+      // TODO why the legacy condition is: "editorsCanAdmin ? [] : ['Editor', 'Admin']"
+      // instead of:                       "editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']""
+      roles: () =>
+        contextSrv.evaluatePermission(() => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']), [
+          AccessControlAction.ActionTeamsRead,
+        ]),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList')),
     },
     {
       path: '/org/teams/new',
-
-      roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
+      // TODO why the legacy condition is: "editorsCanAdmin ? [] : ['Admin']"
+      // instead of:                       "editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']""
+      roles: () =>
+        contextSrv.evaluatePermission(() => (config.editorsCanAdmin ? [] : ['Admin']), [
+          AccessControlAction.ActionTeamsCreate,
+        ]),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
     },
     {
       path: '/org/teams/edit/:id/:page?',
-      roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
+      // TODO why the legacy condition is: "editorsCanAdmin ? [] : ['Admin']"
+      // instead of:                       "editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']""
+      roles: () =>
+        contextSrv.evaluatePermission(() => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']), [
+          AccessControlAction.ActionTeamsWrite,
+          AccessControlAction.ActionTeamsPermissionsWrite,
+        ]),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
     },
     {
