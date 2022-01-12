@@ -34,6 +34,8 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   const theme = useTheme2();
 
   useEffect(() => {
+    // TODO: the useEffect will keep refetching the thumbnails as we scroll down and up through the list
+    // store them in redux store??
     const thumbnailUrl = getThumbnailURL(item.uid!, theme.isLight);
     const fetchThumbnail = async () => {
       const res = await fetch(thumbnailUrl);
