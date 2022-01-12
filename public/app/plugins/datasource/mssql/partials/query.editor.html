@@ -1,7 +1,7 @@
 <query-editor-row query-ctrl="ctrl" can-collapse="false">
 	<div class="gf-form-inline">
 		<div class="gf-form gf-form--grow">
-			<code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sqlserver">
+			<code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sqlserver" textarea-label="Query Editor">
 			</code-editor>
 		</div>
 	</div>
@@ -10,7 +10,7 @@
     <div class="gf-form">
 			<label class="gf-form-label query-keyword">Format as</label>
 			<div class="gf-form-select-wrapper">
-				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()" aria-label="Format as"></select>
 			</div>
 		</div>
 		<div class="gf-form">
