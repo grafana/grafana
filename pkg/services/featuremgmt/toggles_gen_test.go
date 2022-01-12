@@ -34,7 +34,9 @@ func TestFeatureToggleTypeScript(t *testing.T) {
 func generateTypeScript() string {
 	buf := `// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
 // To change feature flags, edit:
-//  pkg/setting/setting_feature_toggles_registry.go
+//  pkg/services/featuremgmt/registry.go
+// Then run tests in:
+//  pkg/services/featuremgmt/toggles_gen_test.go
 
 /**
  * Describes available feature toggles in Grafana. These can be configured via

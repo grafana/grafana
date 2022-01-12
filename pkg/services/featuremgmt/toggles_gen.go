@@ -9,19 +9,19 @@ func (ft *FeatureToggles) IsRecordedQueriesEnabled() bool {
 }
 
 // Teamsync checks for the flag: teamsync
-// Team sync
+// Team sync lets you set up synchronization between your auth providers teams and teams in Grafana
 func (ft *FeatureToggles) IsTeamsyncEnabled() bool {
 	return ft.manager.IsEnabled("teamsync")
 }
 
 // Ldapsync checks for the flag: ldapsync
-// LDAP sync
+// Enhanced LDAP integration
 func (ft *FeatureToggles) IsLdapsyncEnabled() bool {
 	return ft.manager.IsEnabled("ldapsync")
 }
 
 // Caching checks for the flag: caching
-// Caching
+// Temporarily store data source query results.
 func (ft *FeatureToggles) IsCachingEnabled() bool {
 	return ft.manager.IsEnabled("caching")
 }
@@ -74,13 +74,13 @@ func (ft *FeatureToggles) IsDatabaseMetricsEnabled() bool {
 }
 
 // DashboardPreviews checks for the flag: dashboardPreviews
-// support showing thumbnails id dashboard search results
+// Create and show thumbnails for dahsboard search results
 func (ft *FeatureToggles) IsDashboardPreviewsEnabled() bool {
 	return ft.manager.IsEnabled("dashboardPreviews")
 }
 
 // LiveConfig checks for the flag: live-config
-// live should be able to save configs to SQL tables
+// Save grafana live configuration in SQL tables
 func (ft *FeatureToggles) IsLiveConfigEnabled() bool {
 	return ft.manager.IsEnabled("live-config")
 }
@@ -98,19 +98,19 @@ func (ft *FeatureToggles) IsLiveServiceWebWorkerEnabled() bool {
 }
 
 // QueryOverLive checks for the flag: queryOverLive
-// Send queries over live websocket rather than HTTP requests
+// Use grafana live websocket to execute backend queries
 func (ft *FeatureToggles) IsQueryOverLiveEnabled() bool {
 	return ft.manager.IsEnabled("queryOverLive")
 }
 
 // TempoSearch checks for the flag: tempoSearch
-// enable searching in tempo datasources
+// Enable searching in tempo datasources
 func (ft *FeatureToggles) IsTempoSearchEnabled() bool {
 	return ft.manager.IsEnabled("tempoSearch")
 }
 
 // TempoBackendSearch checks for the flag: tempoBackendSearch
-// use backend for tempo search
+// Use backend for tempo search
 func (ft *FeatureToggles) IsTempoBackendSearchEnabled() bool {
 	return ft.manager.IsEnabled("tempoBackendSearch")
 }
