@@ -142,7 +142,23 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       percent = scaleResult.percent;
     }
 
-    return { text, numeric, prefix, suffix, color, icon, percent };
+    const display: DisplayValue = {
+      text,
+      numeric,
+      prefix,
+      suffix,
+      color,
+    };
+
+    if (icon != null) {
+      display.icon = icon;
+    }
+
+    if (percent != null) {
+      display.percent = percent;
+    }
+
+    return display;
   };
 }
 

@@ -49,7 +49,6 @@ describe('prepare timeseries graph', () => {
     expect(field!.display!(1)).toMatchInlineSnapshot(`
       Object {
         "color": "#808080",
-        "icon": undefined,
         "numeric": 1,
         "percent": 1,
         "prefix": undefined,
