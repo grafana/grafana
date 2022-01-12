@@ -81,7 +81,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 	var err error
 	if hs.Cfg.FeatureToggles["service-accounts"] {
 		// Api keys should now be created with addadditionalapikey endpoint
-		return response.Error(400, "Api keys should now be added via the AdditionalAPIKey endpoint.", err)
+		return response.Error(400, "API keys should now be added via the AdditionalAPIKey endpoint.", err)
 	}
 
 	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
