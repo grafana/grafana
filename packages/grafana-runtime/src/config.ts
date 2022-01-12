@@ -61,18 +61,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: PreloadPlugin[] = [];
-  featureToggles: FeatureToggles = {
-    accesscontrol: false,
-    trimDefaults: false,
-    tempoServiceGraph: false,
-    tempoSearch: false,
-    tempoBackendSearch: false,
-    recordedQueries: false,
-    newNavigation: false,
-    fullRangeLogsVolume: false,
-    queryOverLive: false,
-    dashboardPreviews: false,
-  };
+  featureToggles: FeatureToggles = {};
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   rendererVersion = '';
