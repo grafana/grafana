@@ -94,7 +94,6 @@ const getDefaultFormValues = (searchParams: URLSearchParams, silence?: Silence):
 
 export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) => {
   const [urlSearchParams] = useURLSearchParams();
-  console.log(urlSearchParams);
 
   const defaultValues = useMemo(() => getDefaultFormValues(urlSearchParams, silence), [silence, urlSearchParams]);
   const formAPI = useForm({ defaultValues });
