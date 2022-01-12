@@ -84,6 +84,7 @@ export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, o
             )}
 
             <Select
+              aria-label="Permission Level"
               width={25}
               menuShouldPortal
               value={permissions.find((p) => p === permission)}
