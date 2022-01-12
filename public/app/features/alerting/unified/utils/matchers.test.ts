@@ -5,7 +5,7 @@ describe('Unified Alerting matchers', () => {
     it('Should create an entry for each label', () => {
       const params = getMatcherQueryParams({ foo: 'bar', alertname: 'TestData - No data', rule_uid: 'YNZBpGJnk' });
 
-      const matcherParams = params.getAll('matchers');
+      const matcherParams = params.getAll('matcher');
 
       expect(matcherParams).toHaveLength(3);
       expect(matcherParams).toContain('foo=bar');

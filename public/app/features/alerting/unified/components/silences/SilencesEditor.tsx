@@ -36,7 +36,7 @@ const defaultsFromQuery = (searchParams: URLSearchParams): Partial<SilenceFormFi
   const defaults: Partial<SilenceFormFields> = {};
 
   const comment = searchParams.get('comment');
-  const matchers = searchParams.getAll('matchers');
+  const matchers = searchParams.getAll('matcher');
 
   const formMatchers = parseQueryParamMatchers(matchers);
   if (formMatchers.length) {

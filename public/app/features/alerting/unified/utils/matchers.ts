@@ -1,6 +1,7 @@
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from '@grafana/data';
 import { parseMatcher } from './alertmanager';
+import { uniqBy } from 'lodash';
 
 // Parses a list of entries like like "['foo=bar', 'baz=~bad*']" into SilenceMatcher[]
 export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
@@ -8,12 +9,7 @@ export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
 
   // Due to migration, old alert rules might have a duplicated alertname label
   // To handle that case want to filter out duplicates and make sure there are only unique labels
-  const uniqueMatchersMap = new Map<string, Matcher>();
-  parsedMatchers.forEach(
-    (matcher) => uniqueMatchersMap.has(matcher.name) === false && uniqueMatchersMap.set(matcher.name, matcher)
-  );
-
-  return Array.from(uniqueMatchersMap.values());
+  return uniqBy(parsedMatchers, (matcher) => matcher.name);
 }
 
 export const getMatcherQueryParams = (labels: Labels) => {
@@ -23,7 +19,7 @@ export const getMatcherQueryParams = (labels: Labels) => {
 
   const matcherUrlParams = new URLSearchParams();
   validMatcherLabels.forEach(([labelKey, labelValue]) =>
-    matcherUrlParams.append('matchers', `${labelKey}=${labelValue}`)
+    matcherUrlParams.append('matcher', `${labelKey}=${labelValue}`)
   );
 
   return matcherUrlParams;
