@@ -259,6 +259,10 @@ steps:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
   name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -685,6 +689,10 @@ steps:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
   name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -1287,6 +1295,10 @@ steps:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
   name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -1886,6 +1898,10 @@ steps:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
   name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
@@ -3033,6 +3049,10 @@ steps:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
   name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -3588,6 +3608,10 @@ steps:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
   name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
   depends_on:
@@ -4352,6 +4376,10 @@ steps:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
   name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -4880,6 +4908,10 @@ steps:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
   name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -5467,6 +5499,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: fff4f33f3f6c6ec46c3dcbae5f5906129322400683f2bbf708c6cf4d7d5228c0
+hmac: 81173294ad474a12cbb622d9e963e208ddd2a2ac42a30dde6396794923b158a0
 
 ...

@@ -296,6 +296,12 @@ def e2e_tests_artifacts(edition):
             'end-to-end-tests-smoke-tests-suite',
             'end-to-end-tests-various-suite',
         ],
+        'when': {
+            'status': [
+                'success',
+                'failure',
+            ]
+        },
         'environment': {
             'GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY': from_secret('gcp_upload_artifacts_key'),
             'E2E_TEST_ARTIFACTS_BUCKET': 'releng-pipeline-artifacts-dev',
