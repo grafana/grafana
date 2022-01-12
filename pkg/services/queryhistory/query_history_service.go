@@ -18,6 +18,7 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *QueryHistoryService {
 type Service interface {
 	CreateQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, datasourceUid string) (*models.QueryHistory, error)
 	GetQueryHistory(ctx context.Context, user *models.SignedInUser, datasourceUid string) ([]models.QueryHistory, error)
+	DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, queryId string) error
 }
 
 type QueryHistoryService struct {
@@ -60,6 +61,22 @@ func (s QueryHistoryService) GetQueryHistory(ctx context.Context, user *models.S
 	}
 
 	return queryHistory, nil
+}
+
+func (s QueryHistoryService) DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, queryId string) error {
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		id, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, queryId).Delete(models.QueryHistory{})
+		if id == 0 {
+			return models.ErrQueryNotFound
+		}
+		return err
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 var _ Service = &QueryHistoryService{}

@@ -40,7 +40,13 @@ import { localStorageFullAction, richHistoryLimitExceededAction, richHistoryUpda
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
-import { createCacheKey, getResultsFromCache, addQueryToQueryHistory, getQueriesFromQueryHistory } from './utils';
+import {
+  createCacheKey,
+  getResultsFromCache,
+  addQueryToQueryHistory,
+  getQueriesFromQueryHistory,
+  deleteQueryFromQueryHistory,
+} from './utils';
 import deepEqual from 'fast-deep-equal';
 
 //
@@ -319,7 +325,8 @@ async function handleHistory(
   if (uid) {
     addQueryToQueryHistory(uid, queries);
     //WIP: Currently here to test development
-    console.log(await getQueriesFromQueryHistory(uid));
+    // console.log(await getQueriesFromQueryHistory(uid));
+    deleteQueryFromQueryHistory('P8zM2I1nz');
   }
 
   const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(

@@ -1,5 +1,13 @@
 package models
 
+import (
+	"errors"
+)
+
+var (
+	ErrQueryNotFound = errors.New("query not found")
+)
+
 type QueryHistory struct {
 	Id            int64
 	Uid           string
