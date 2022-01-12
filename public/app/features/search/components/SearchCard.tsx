@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { usePopper } from 'react-popper';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -22,11 +22,37 @@ export function getThumbnailURL(uid: string, isLight?: boolean) {
   return `/api/dashboards/uid/${uid}/img/thumb/${isLight ? 'light' : 'dark'}`;
 }
 
+type GetThumbnailResponse = {
+  imageDataUrl?: string;
+};
+
 export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
   const [imageSrc, setImageSrc] = useState<string | undefined>(undefined);
   const [lastUpdated, setLastUpdated] = useState<string>();
   const [showExpandedView, setShowExpandedView] = useState(false);
   const timeout = useRef<number | null>(null);
+  const theme = useTheme2();
+
+  useEffect(() => {
+    const thumbnailUrl = getThumbnailURL(item.uid!, theme.isLight);
+    const fetchThumbnail = async () => {
+      const res = await fetch(thumbnailUrl);
+      if (res.status !== 200) {
+        return;
+      }
+
+      const resBody: GetThumbnailResponse = await res.json();
+      const imageDataUrl = resBody?.imageDataUrl;
+
+      if (!imageDataUrl?.length) {
+        return;
+      }
+
+      setImageSrc(imageDataUrl);
+    };
+
+    fetchThumbnail();
+  }, [item.uid, theme.isLight]);
 
   // Popper specific logic
   const offsetCallback = useCallback(({ placement, reference, popper }) => {
@@ -50,22 +76,6 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       },
     ],
   });
-
-  const theme = useTheme2();
-  const thumbnailUrl = getThumbnailURL(item.uid!, theme.isLight);
-
-  fetch(thumbnailUrl) // TODO lazify
-    .then((res) => {
-      if (res.status === 200) {
-        return res.text();
-      }
-      return undefined;
-    })
-    .then((textBody) => {
-      if (textBody) {
-        setImageSrc(textBody);
-      }
-    });
 
   const styles = getStyles(
     theme,

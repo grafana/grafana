@@ -116,26 +116,19 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		Theme:        string(rendering.ThemeDark),
 	}
 	res, err := hs.store.GetThumbnail(query)
-	if err != nil {
 
-		if err == models.ErrDashboardThumbnailNotFound {
-			// TODO maybe just return a json and 200 in all cases?
-			tlog.Info("Thumbnail not found", "dashboardUid", req.UID)
-			c.Resp.WriteHeader(404)
-
-		} else {
-			tlog.Info("Error when retrieving thumbnail", "dashboardUid", req.UID, "error", err.Error())
-			c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown!"})
-		}
-
+	if err == nil {
+		c.JSON(200, map[string]string{"dashboardUID": req.UID, "imageDataUrl": res.ImageDataUrl})
 		return
 	}
 
-	c.Resp.Header().Set("Content-Type", "text/plain; charset=UTF-8")
-	_, err = c.Resp.Write([]byte(res.ImageDataUrl))
+	if err == models.ErrDashboardThumbnailNotFound {
+		c.JSON(200, map[string]string{"dashboardUID": req.UID, "error": "thumbnail not found!"})
+		return
+	}
 
-	c.Resp.WriteHeader(200)
-	return
+	tlog.Info("Error when retrieving thumbnail", "dashboardUid", req.UID, "error", err.Error())
+	c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown!"})
 }
 
 // Hack for now -- lets you upload images explicitly
