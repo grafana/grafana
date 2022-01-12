@@ -74,7 +74,7 @@ func (ft *FeatureToggles) IsDatabaseMetricsEnabled() bool {
 }
 
 // DashboardPreviews checks for the flag: dashboardPreviews
-// Create and show thumbnails for dahsboard search results
+// Create and show thumbnails for dashboard search results
 func (ft *FeatureToggles) IsDashboardPreviewsEnabled() bool {
 	return ft.manager.IsEnabled("dashboardPreviews")
 }

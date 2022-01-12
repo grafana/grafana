@@ -84,7 +84,7 @@ var (
 		},
 		{
 			Name:        "dashboardPreviews",
-			Description: "Create and show thumbnails for dahsboard search results",
+			Description: "Create and show thumbnails for dashboard search results",
 			State:       FeatureStateAlpha,
 		},
 		{

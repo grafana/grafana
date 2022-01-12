@@ -44,6 +44,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 	}
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
+		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeAll)), routing.Wrap(api.ListServiceAccounts))
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
 		serviceAccountsRoute.Get("/upgrade", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.UpgradeServiceAccounts))
 		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.CreateServiceAccount))
@@ -82,4 +83,12 @@ func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) re
 	} else {
 		return response.Error(500, "Internal server error", err)
 	}
+}
+
+func (api *ServiceAccountsAPI) ListServiceAccounts(ctx *models.ReqContext) response.Response {
+	serviceAccounts, err := api.store.ListServiceAccounts(ctx.Req.Context(), ctx.OrgId)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to list roles", err)
+	}
+	return response.JSON(http.StatusOK, serviceAccounts)
 }

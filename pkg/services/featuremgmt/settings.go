@@ -12,7 +12,6 @@ type configBody struct {
 
 	// Runtime loaded properties
 	filename string
-	included map[string]*configBody
 }
 
 // will read a single configfile
