@@ -8,7 +8,7 @@ aliases = ["/docs/sources/panels/transform-data/delete-transformation/"]
 
 We recommend that you remove transformations that you don't need. When you delete a transformation, you remove the data from the visualization.
 
-## Before you begin:
+## Before you begin
 
 - Identify all dashboards that rely on the transformation and inform impacted dashboard users.
 

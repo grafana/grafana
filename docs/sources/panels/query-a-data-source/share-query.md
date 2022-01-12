@@ -1,6 +1,6 @@
 +++
 title = "Share query results with another panel"
-weight = 90
+weight = 60
 aliases = ["/docs/sources/panels/query-a-data-source/share-query/"]
 +++
 

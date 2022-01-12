@@ -1,6 +1,6 @@
 +++
 title = "Inspect query performance"
-weight = 70
+weight = 80
 aliases = ["/docs/sources/panels/query-a-data-source/inspect-query-performance/"]
 +++
 

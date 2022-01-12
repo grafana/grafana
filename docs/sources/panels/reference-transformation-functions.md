@@ -1,7 +1,7 @@
 +++
 title = "Reference: Transformation functions"
 aliases = ["/docs/grafana/latest/panels/transformations/types-options/", "docs/sources/panels/reference-transformation-functions/"]
-weight = 1200
+weight = 1000
 +++
 
 # Reference: Transformation functions

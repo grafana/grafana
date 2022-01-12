@@ -1,12 +1,12 @@
 +++
 title = "Inspect query request and response data"
-weight = 50
+weight = 90
 aliases = ["/docs/sources/panels/query-a-data-source/inspect-request-and-response-data/"]
 +++
 
 # Inspect query request and response data
 
-After you have written a query, inspect the data that the system returns to ensure it's correct. Fine-tuning your query ensures that your visualization is providing the required data.
+Inspect query request and response data when you want to troubleshoot a query that returns unexpected results, or fails to return expected results.
 
 ## Before you begin
 

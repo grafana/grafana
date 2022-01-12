@@ -6,18 +6,21 @@ aliases = ["/docs/sources/panels/query-a-data-source/use-expressions-to-manipula
 
 # Write an expression
 
-NEW! topic - need help with documenting the steps.
-
 If your data source supports them, then Grafana displays the **Expression** button and shows any existing expressions in the query editor list.
 
 For more information about expressions, refer to [About expressions]({{< relref "./about-expressions.md" >}}).
 
 ## Before you begin
 
-- xxx
-- xxx
+- [Add a panel]({{< relref "../../working-with-panels/add-panel.md" >}}).
 
 **To write an expression**:
 
-1. xxx
-1. xxx
+1. Open the panel.
+1. Below the query, click **Expression**.
+1. In the **Operation** field, select the type of expression you want to write.
+
+   For more information about expression operations, refer to [About expressions]({{< relref "./about-expressions.md" >}}).
+
+1. Write the expression.
+1. Click **Apply**.

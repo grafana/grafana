@@ -1,7 +1,7 @@
 +++
 title = "Reference: Query options"
 aliases = ["/docs/sources/panels/reference-query-options/"]
-weight = 1100
+weight = 900
 +++
 
 # Reference: Query options

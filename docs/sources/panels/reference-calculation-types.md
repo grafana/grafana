@@ -1,7 +1,7 @@
 +++
 title = "Reference: Calculation types"
 aliases = ["/docs/grafana/latest/panels/calculations-list/", "/docs/sources/panels/reference-calculation-types/"]
-weight = 900
+weight = 1100
 +++
 
 # Reference: Calculations

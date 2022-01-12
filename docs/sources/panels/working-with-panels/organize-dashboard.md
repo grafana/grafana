@@ -8,7 +8,7 @@ weight = 80
 
 You can place any panel in any location you want and controls its size. The changes you make impact other users of the dashboard.
 
-## Before you begin:
+## Before you begin
 
 - Add two or more panels
 - Ensure that you sign in with Editor permissions

@@ -1,6 +1,6 @@
 +++
 title = "Delete a threshold"
-weight = 40
+weight = 30
 aliases = ["/docs/sources/panels/specify-thresholds/delete-a-threshold/"]
 +++
 

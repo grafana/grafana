@@ -1,7 +1,7 @@
 +++
 title = "Reference: Standard field definitions"
 aliases = ["/docs/sources/panels/reference-standard-field-definitions/"]
-weight = 1000
+weight = 1200
 +++
 
 # Reference: Standard field definitions

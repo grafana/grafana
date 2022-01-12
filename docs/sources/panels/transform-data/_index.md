@@ -15,4 +15,6 @@ With transformations, you can:
 - Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
 
+This section includes the following topics:
+
 {{< section >}}

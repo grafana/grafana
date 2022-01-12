@@ -1,6 +1,6 @@
 +++
 title = "Edit a field overrides"
-weight = 30
+weight = 40
 aliases = ["/docs/sources/panels/override-field-values/edit-field-override/"]
 +++
 

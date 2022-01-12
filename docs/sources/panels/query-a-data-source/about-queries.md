@@ -10,7 +10,7 @@ _Queries_ are how Grafana panels communicate with data sources to get data for t
 
 Use you a query editor to write a query. Each data source has its own query editor that we have customized to include the features and capabilities of the data source. Grafana supports up to 26 queries per panel.
 
-> Important! You must be familiar with the query language of the data source.
+> Important! You must be familiar with the query language of the data source. For more information about data sources, refer to [Data sources](../../../datasources/).
 
 ## Query editors
 
