@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 // updateDashboardACL updates a dashboard's ACL items.

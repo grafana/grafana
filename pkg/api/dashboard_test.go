@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -15,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -613,7 +613,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				Message:   "msg",
 			}
 
-			mock := &dashboards.FakeDashboardService{
+			mock := &manager.FakeDashboardService{
 				SaveDashboardResult: &models.Dashboard{
 					Id:      dashID,
 					Uid:     "uid",
@@ -659,7 +659,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				Message:   "msg",
 			}
 
-			mock := &dashboards.FakeDashboardService{
+			mock := &manager.FakeDashboardService{
 				SaveDashboardResult: &models.Dashboard{
 					Id:      dashID,
 					Uid:     "uid",
@@ -708,7 +708,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				Message:   "msg",
 			}
 
-			mock := &dashboards.FakeDashboardService{
+			mock := &manager.FakeDashboardService{
 				SaveDashboardResult: &models.Dashboard{
 					Id:      dashID,
 					Uid:     "uid",
@@ -762,7 +762,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}
 
 			for _, tc := range testCases {
-				mock := &dashboards.FakeDashboardService{
+				mock := &manager.FakeDashboardService{
 					SaveDashboardError: tc.SaveError,
 				}
 
@@ -851,7 +851,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			})
 		}
 
-		mock := &dashboards.FakeDashboardService{
+		mock := &manager.FakeDashboardService{
 			SaveDashboardResult: &models.Dashboard{
 				Id:      2,
 				Uid:     "uid",
@@ -899,7 +899,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			})
 		}
 
-		mock := &dashboards.FakeDashboardService{
+		mock := &manager.FakeDashboardService{
 			SaveDashboardResult: &models.Dashboard{
 				Id:      2,
 				Uid:     "uid",
@@ -938,14 +938,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				query.Result = &models.Dashboard{Id: 1, Data: dataValue}
 				return nil
 			})
-
-			origGetProvisionedData := dashboards.GetProvisionedData
-			t.Cleanup(func() {
-				dashboards.GetProvisionedData = origGetProvisionedData
-			})
-			dashboards.GetProvisionedData = func(dboards.Store, int64) (*models.DashboardProvisioning, error) {
-				return &models.DashboardProvisioning{ExternalId: "/tmp/grafana/dashboards/test/dashboard1.json"}, nil
-			}
 
 			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = []*models.DashboardAclInfoDTO{
@@ -1101,7 +1093,7 @@ func callPostDashboardShouldReturnSuccess(sc *scenarioContext) {
 }
 
 func postDashboardScenario(t *testing.T, desc string, url string, routePattern string,
-	mock *dashboards.FakeDashboardService, mockFolder *fakeFolderService, cmd models.SaveDashboardCommand,
+	mock *manager.FakeDashboardService, mockFolder *fakeFolderService, cmd models.SaveDashboardCommand,
 	fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
@@ -1128,20 +1120,6 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 
 			return hs.PostDashboard(c)
 		})
-
-		origNewDashboardService := dashboards.NewService
-		origProvisioningService := dashboards.NewProvisioningService
-		origNewFolderService := dashboards.NewFolderService
-		t.Cleanup(func() {
-			dashboards.NewService = origNewDashboardService
-			dashboards.NewProvisioningService = origProvisioningService
-			dashboards.NewFolderService = origNewFolderService
-		})
-		dashboards.MockDashboardService(mock)
-		dashboards.NewProvisioningService = func(dboards.Store) dashboards.DashboardProvisioningService {
-			return mockDashboardProvisioningService{}
-		}
-		mockFolderService(mockFolder)
 
 		sc.m.Post(routePattern, sc.defaultHandler)
 
@@ -1173,7 +1151,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 }
 
 func restoreDashboardVersionScenario(t *testing.T, desc string, url string, routePattern string,
-	mock *dashboards.FakeDashboardService, cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc) {
+	mock *manager.FakeDashboardService, cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
@@ -1200,17 +1178,6 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 
 			return hs.RestoreDashboardVersion(c)
 		})
-
-		origProvisioningService := dashboards.NewProvisioningService
-		origNewDashboardService := dashboards.NewService
-		t.Cleanup(func() {
-			dashboards.NewService = origNewDashboardService
-			dashboards.NewProvisioningService = origProvisioningService
-		})
-		dashboards.NewProvisioningService = func(dboards.Store) dashboards.DashboardProvisioningService {
-			return mockDashboardProvisioningService{}
-		}
-		dashboards.MockDashboardService(mock)
 
 		sc.m.Post(routePattern, sc.defaultHandler)
 

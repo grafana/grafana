@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	dashboards2 "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
@@ -33,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -185,10 +185,11 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(teamguardian.TeamGuardian), new(*teamguardianManager.Service)),
 	dashboardservice.ProvideDashboardService,
 	dashboardservice.ProvideFolderService,
+	dashboardstore.ProvideDashboardStore,
 	wire.Bind(new(dashboards.DashboardService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.FolderService), new(*dashboardservice.FolderServiceImpl)),
-	wire.Bind(new(dashboards2.Store), new(*sqlstore.SQLStore)),
+	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
 )
 
 var wireSet = wire.NewSet(

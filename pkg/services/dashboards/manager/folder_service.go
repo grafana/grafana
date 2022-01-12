@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	store "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -16,11 +15,11 @@ import (
 
 type FolderServiceImpl struct {
 	dashboardService dashboards.DashboardService
-	dashboardStore   store.Store
+	dashboardStore   dashboards.Store
 	log              log.Logger
 }
 
-func ProvideFolderService(dashboardService dashboards.DashboardService, dashboardStore store.Store) *FolderServiceImpl {
+func ProvideFolderService(dashboardService dashboards.DashboardService, dashboardStore dashboards.Store) *FolderServiceImpl {
 	return &FolderServiceImpl{
 		dashboardService: dashboardService,
 		dashboardStore:   dashboardStore,

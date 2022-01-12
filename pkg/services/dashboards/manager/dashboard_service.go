@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -20,11 +19,11 @@ import (
 )
 
 type DashboardServiceImpl struct {
-	dashboardStore dashboards.Store
+	dashboardStore m.Store
 	log            log.Logger
 }
 
-func ProvideDashboardService(store dashboards.Store) *DashboardServiceImpl {
+func ProvideDashboardService(store m.Store) *DashboardServiceImpl {
 	return &DashboardServiceImpl{
 		dashboardStore: store,
 		log:            log.New("dashboard-service"),
@@ -167,7 +166,7 @@ func validateDashboardRefreshInterval(dash *models.Dashboard) error {
 // UpdateAlerting updates alerting.
 //
 // Stubbable by tests.
-var UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+var UpdateAlerting = func(ctx context.Context, store m.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
 	extractor := alerting.NewDashAlertExtractor(dashboard, orgID, user)
 	alerts, err := extractor.GetAlerts(ctx)
 	if err != nil {

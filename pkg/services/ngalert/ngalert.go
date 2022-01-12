@@ -2,6 +2,7 @@ package ngalert
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"net/url"
 	"time"
 
@@ -40,7 +41,7 @@ const (
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, secretsService secrets.Service, m *metrics.NGAlert) (*AlertNG, error) {
+	quotaService *quota.QuotaService, secretsService secrets.Service, m *metrics.NGAlert, folderService dashboards.FolderService) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:               cfg,
 		DataSourceCache:   dataSourceCache,
@@ -53,6 +54,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		SecretsService:    secretsService,
 		Metrics:           m,
 		Log:               log.New("ngalert"),
+		folderService:     folderService,
 	}
 
 	if ng.IsDisabled() {
@@ -81,6 +83,7 @@ type AlertNG struct {
 	Log               log.Logger
 	schedule          schedule.ScheduleService
 	stateManager      *state.Manager
+	folderService     dashboards.FolderService
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -100,6 +103,7 @@ func (ng *AlertNG) init() error {
 		DefaultInterval: ng.getRuleDefaultInterval(),
 		SQLStore:        ng.SQLStore,
 		Logger:          ng.Log,
+		FolderService:   ng.folderService,
 	}
 
 	decryptFn := ng.SecretsService.GetDecryptedValue

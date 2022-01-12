@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
@@ -155,14 +154,7 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 			return hs.CreateFolder(c)
 		})
 
-		origNewFolderService := dashboards.NewFolderService
-		mockFolderService(mock)
-
 		sc.m.Post(routePattern, sc.defaultHandler)
-
-		defer func() {
-			dashboards.NewFolderService = origNewFolderService
-		}()
 
 		fn(sc)
 	})
@@ -189,12 +181,6 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 
 			return hs.UpdateFolder(c)
 		})
-
-		origNewFolderService := dashboards.NewFolderService
-		t.Cleanup(func() {
-			dashboards.NewFolderService = origNewFolderService
-		})
-		mockFolderService(mock)
 
 		sc.m.Put(routePattern, sc.defaultHandler)
 
@@ -244,11 +230,4 @@ func (s *fakeFolderService) UpdateFolder(ctx context.Context, existingUID string
 func (s *fakeFolderService) DeleteFolder(ctx context.Context, uid string, forceDeleteRules bool) (*models.Folder, error) {
 	s.DeletedFolderUids = append(s.DeletedFolderUids, uid)
 	return s.DeleteFolderResult, s.DeleteFolderError
-}
-
-func mockFolderService(mock *fakeFolderService) {
-	dashboards.NewFolderService = func(orgId int64, user *models.SignedInUser,
-		dashboardStore dboards.Store) dashboards.FolderService {
-		return mock
-	}
 }
