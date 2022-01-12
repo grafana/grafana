@@ -104,7 +104,7 @@ func (fm *FeatureManager) readFile() error {
 		return nil // not configured
 	}
 
-	cfg, err := readConfigFileWithIncludes(fm.config)
+	cfg, err := readConfigFile(fm.config)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (fm *FeatureManager) Run(ctx context.Context) error {
 		select {
 		// watch for events
 		case event := <-watcher.Events:
-			cfg, err := readConfigFileWithIncludes(fm.config)
+			cfg, err := readConfigFile(fm.config)
 			if err != nil {
 				if err != nil {
 					fm.log.Error("failed to read features file", "event", event, "error", err)

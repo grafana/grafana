@@ -16,21 +16,21 @@ var (
 		},
 		{
 			Name:            "teamsync",
-			Description:     "Team sync",
+			Description:     "Team sync lets you set up synchronization between your auth providers teams and teams in Grafana",
 			State:           FeatureStateStable,
 			DocsURL:         "https://grafana.com/docs/grafana/latest/enterprise/team-sync/",
 			RequiresLicense: true,
 		},
 		{
 			Name:            "ldapsync",
-			Description:     "LDAP sync",
+			Description:     "Enhanced LDAP integration",
 			State:           FeatureStateStable,
 			DocsURL:         "https://grafana.com/docs/grafana/latest/enterprise/enhanced_ldap/",
 			RequiresLicense: true,
 		},
 		{
 			Name:            "caching",
-			Description:     "Caching",
+			Description:     "Temporarily store data source query results.",
 			State:           FeatureStateStable,
 			DocsURL:         "https://grafana.com/docs/grafana/latest/enterprise/query-caching/",
 			RequiresLicense: true,
@@ -84,12 +84,12 @@ var (
 		},
 		{
 			Name:        "dashboardPreviews",
-			Description: "support showing thumbnails id dashboard search results",
+			Description: "Create and show thumbnails for dahsboard search results",
 			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        FLAG_live_config,
-			Description: "live should be able to save configs to SQL tables",
+			Description: "Save grafana live configuration in SQL tables",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -105,19 +105,19 @@ var (
 		},
 		{
 			Name:         "queryOverLive",
-			Description:  "Send queries over live websocket rather than HTTP requests",
+			Description:  "Use grafana live websocket to execute backend queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
 			Name:         "tempoSearch",
-			Description:  "enable searching in tempo datasources",
+			Description:  "Enable searching in tempo datasources",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
 		{
 			Name:        "tempoBackendSearch",
-			Description: "use backend for tempo search",
+			Description: "Use backend for tempo search",
 			State:       FeatureStateBeta,
 		},
 		{
