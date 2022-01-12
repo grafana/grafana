@@ -38,7 +38,7 @@
     "rollup-plugin-copy": "3.4.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "webpack": "5.65.0"
+    "webpack": "5.66.0"
   },
   "types": "src/index.ts",
   "dependencies": {
