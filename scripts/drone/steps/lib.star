@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.8.1'
+grabpl_version = 'v2.8.2'
 build_image = 'grafana/build-container:1.4.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -288,7 +288,7 @@ def store_storybook_step(edition, ver_mode):
 
 def e2e_tests_artifacts(edition):
     return {
-        'name': 'e2e_tests_artifacts_upload' + enterprise2_suffix(edition),
+        'name': 'e2e-tests-artifacts-upload' + enterprise2_suffix(edition),
         'image': 'google/cloud-sdk:367.0.0',
         'depends_on': [
             'end-to-end-tests-dashboards-suite',
@@ -296,6 +296,12 @@ def e2e_tests_artifacts(edition):
             'end-to-end-tests-smoke-tests-suite',
             'end-to-end-tests-various-suite',
         ],
+        'when': {
+            'status': [
+                'success',
+                'failure',
+            ]
+        },
         'environment': {
             'GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY': from_secret('gcp_upload_artifacts_key'),
             'E2E_TEST_ARTIFACTS_BUCKET': 'releng-pipeline-artifacts-dev',

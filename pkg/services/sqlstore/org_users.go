@@ -109,7 +109,7 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 
 	// TODO: add to chore, for cleaning up after we have created
 	// service accounts table in the modelling
-	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = false", x.Dialect().Quote("user")))
+	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
 
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"
@@ -163,7 +163,7 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 
 	// TODO: add to chore, for cleaning up after we have created
 	// service accounts table in the modelling
-	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = false", x.Dialect().Quote("user")))
+	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
 
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"

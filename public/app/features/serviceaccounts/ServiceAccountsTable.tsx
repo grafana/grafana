@@ -80,7 +80,6 @@ const ServiceAccountsTable: FC<Props> = (props) => {
                     {serviceAccount.name}
                   </span>
                 </td>
-                <td className="width-1">{serviceAccount.lastSeenAtAge}</td>
 
                 <td className="width-8">
                   {contextSrv.accessControlEnabled() ? (

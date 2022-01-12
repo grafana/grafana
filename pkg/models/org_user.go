@@ -107,18 +107,20 @@ type UpdateOrgUserCommand struct {
 // QUERIES
 
 type GetOrgUsersQuery struct {
-	OrgId int64
-	Query string
-	Limit int
+	OrgId            int64
+	Query            string
+	Limit            int
+	IsServiceAccount bool
 
 	Result []*OrgUserDTO
 }
 
 type SearchOrgUsersQuery struct {
-	OrgID int64
-	Query string
-	Page  int
-	Limit int
+	OrgID            int64
+	Query            string
+	Page             int
+	Limit            int
+	IsServiceAccount bool
 
 	Result SearchOrgUsersQueryResult
 }
