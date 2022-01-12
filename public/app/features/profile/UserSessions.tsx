@@ -3,6 +3,7 @@ import { UserSession } from 'app/types';
 import { Button, Icon, LoadingPlaceholder } from '@grafana/ui';
 import { withI18n, withI18nProps } from '@lingui/react';
 import { t, Trans } from '@lingui/macro';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props extends withI18nProps {
   sessions: UserSession[];
@@ -24,7 +25,7 @@ class UserSessions extends PureComponent<Props> {
           <>
             <h3 className="page-sub-heading">Sessions</h3>
             <div className="gf-form-group">
-              <table className="filter-table form-inline" aria-label="User sessions table">
+              <table className="filter-table form-inline" aria-label={selectors.components.UserProfile.sessionsTable}>
                 <thead>
                   <tr>
                     <th>

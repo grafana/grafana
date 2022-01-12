@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { UserDTO, UserOrg } from 'app/types';
 import { Button, LoadingPlaceholder } from '@grafana/ui';
 import { Trans } from '@lingui/macro';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   user: UserDTO | null;
@@ -29,7 +30,7 @@ export class UserOrganizations extends PureComponent<Props> {
         </h3>
 
         <div className="gf-form-group">
-          <table className="filter-table form-inline" aria-label="User organizations table">
+          <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.orgsTable}>
             <thead>
               <tr>
                 <th>

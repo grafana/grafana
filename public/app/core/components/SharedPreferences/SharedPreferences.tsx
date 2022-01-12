@@ -209,7 +209,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               </Field>
 
               <div className="gf-form-button-row">
-                <Button variant="primary" aria-label="User preferences save button">
+                <Button variant="primary" data-testid={selectors.components.SharedPreferences.save}>
                   <Trans id="common.save">Save</Trans>
                 </Button>
               </div>

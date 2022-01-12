@@ -90,18 +90,18 @@ function getSelectors() {
   const dashboardSelect = () => screen.getByTestId('User preferences home dashboard drop down');
   const timepickerSelect = () => screen.getByTestId(selectors.components.TimeZonePicker.containerV2);
   const teamsTable = () => screen.getByRole('table', { name: /user teams table/i });
-  const orgsTable = () => screen.getByRole('table', { name: /user organizations table/i });
-  const sessionsTable = () => screen.getByRole('table', { name: /user sessions table/i });
+  const orgsTable = () => screen.getByRole('table', { name: selectors.components.UserProfile.orgsTable });
+  const sessionsTable = () => screen.getByRole('table', { name: selectors.components.UserProfile.sessionsTable });
   return {
     name: () => screen.getByRole('textbox', { name: /^name$/i }),
     email: () => screen.getByRole('textbox', { name: /email/i }),
     username: () => screen.getByRole('textbox', { name: /username/i }),
-    saveProfile: () => screen.getByRole('button', { name: /edit user profile save button/i }),
+    saveProfile: () => screen.getByRole('button', { name: selectors.components.UserProfile.profileSaveButton }),
     dashboardSelect,
     dashboardValue: () => within(dashboardSelect()).getByText(/default/i),
     timepickerSelect,
     timepickerValue: () => within(timepickerSelect()).getByText(/coordinated universal time/i),
-    savePreferences: () => screen.getByRole('button', { name: /user preferences save button/i }),
+    savePreferences: () => screen.getByRole('button', { name: selectors.components.UserProfile.preferencesSaveButton }),
     teamsTable,
     teamsRow: () => within(teamsTable()).getByRole('row', { name: /team one team.one@test\.com 2000/i }),
     orgsTable,
