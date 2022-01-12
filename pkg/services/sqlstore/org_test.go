@@ -251,7 +251,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 				t.Run("Can set using org", func(t *testing.T) {
 					cmd := models.SetUsingOrgCommand{UserId: ac2.Id, OrgId: ac1.OrgId}
-					err := SetUsingOrg(context.Background(), &cmd)
+					err := sqlStore.SetUsingOrg(context.Background(), &cmd)
 					require.NoError(t, err)
 
 					t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
