@@ -3,7 +3,7 @@ title = "License restrictions"
 description = "Grafana Enterprise license restrictions"
 keywords = ["grafana", "licensing", "enterprise"]
 aliases = ["/docs/grafana/latest/enterprise/license-restrictions"]
-weight = 50
+weight = 300
 +++
 
 # Understanding Grafana Enterprise licensing

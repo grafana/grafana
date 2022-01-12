@@ -13,6 +13,7 @@ import { getTeamLoadingNav } from './state/navModel';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { NavModel } from '@grafana/data';
+import { featureEnabled } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 interface TeamPageRouteParams {
@@ -67,7 +68,7 @@ export class TeamPages extends PureComponent<Props, State> {
 
     this.state = {
       isLoading: false,
-      isSyncEnabled: config.licenseInfo.hasLicense,
+      isSyncEnabled: featureEnabled('teamsync'),
     };
   }
 

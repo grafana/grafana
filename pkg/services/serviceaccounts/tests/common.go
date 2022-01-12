@@ -37,6 +37,10 @@ func (s *ServiceAccountMock) DeleteServiceAccount(ctx context.Context, orgID, se
 	return nil
 }
 
+func (s *ServiceAccountMock) Migrated(ctx context.Context, orgID int64) bool {
+	return false
+}
+
 func SetupMockAccesscontrol(t *testing.T, userpermissionsfunc func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error), disableAccessControl bool) *accesscontrolmock.Mock {
 	t.Helper()
 	acmock := accesscontrolmock.New()
@@ -53,6 +57,7 @@ var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 
 type Calls struct {
 	CreateServiceAccount   []interface{}
+	ListServiceAccounts    []interface{}
 	DeleteServiceAccount   []interface{}
 	UpgradeServiceAccounts []interface{}
 }
@@ -76,4 +81,9 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
 	s.Calls.DeleteServiceAccount = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
 	return nil
+}
+
+func (s *ServiceAccountsStoreMock) ListServiceAccounts(ctx context.Context, orgID int64) ([]*models.OrgUserDTO, error) {
+	s.Calls.ListServiceAccounts = append(s.Calls.ListServiceAccounts, []interface{}{ctx, orgID})
+	return nil, nil
 }

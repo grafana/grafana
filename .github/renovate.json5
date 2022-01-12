@@ -29,12 +29,10 @@
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],
-      "extends": ["schedule:monthly"]
+      "extends": ["schedule:monthly"],
+      "groupName": "Monthly patch updates"
     }
   ],
-  "patch": {
-    "enabled": false
-  },
   "pin": {
     "enabled": false
   },
