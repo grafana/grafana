@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"time"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -13,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"time"
 )
 
 type ServiceAccountsAPI struct {
