@@ -1,6 +1,6 @@
 package database
 
-//nolint:goimports,gosimple
+//nolint:goimports
 import (
 	"context"
 	"fmt"
@@ -88,6 +88,7 @@ func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) e
 	return nil
 }
 
+//nolint:gosimple
 func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error) {
 	result := make([]*models.ApiKey, 0)
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
