@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cloneDeep } from 'lodash';
+import { ArrayVector } from '@grafana/data';
 
 interface Props {
   data: any;
@@ -17,19 +18,65 @@ const usePopulateData = ({ data }: Props) => {
   const addMessageToData = (data: any, log: ExternalLog) => {
     const lastFrame = data.series.length - 1;
     const fields = data.series[lastFrame].fields;
+
+    if (!fields[0] || !fields[1] || !fields[2] || !fields[3]) {
+      const timeInitData = {
+        name: 'ts',
+        type: 'time',
+        values: new ArrayVector([]),
+        config: {
+          displayName: 'Time',
+        },
+      };
+
+      const messageInitdata = {
+        name: 'line',
+        type: 'string',
+        values: new ArrayVector([]),
+        config: {},
+      };
+
+      const containerIdInitData = {
+        name: 'id',
+        type: 'string',
+        values: new ArrayVector([]),
+        config: {},
+      };
+
+      const hostnameInitData = {
+        name: 'tsNs',
+        type: 'time',
+        values: new ArrayVector([]),
+        config: {
+          displayName: 'Time ns',
+        },
+      };
+
+      const initData = [timeInitData, messageInitdata, containerIdInitData, hostnameInitData];
+
+      for (let i = 0; i < 4; i++) {
+        if (!fields[i]) {
+          fields[i] = initData[i];
+        }
+      }
+    }
+
     const time = fields[0];
     const message = fields[1];
     const containerId = fields[2];
     const hostname = fields[3];
+
     //@ts-ignore
     time.values.add(log.timestamp);
     //@ts-ignore
     message.values.add(log.msg);
     //@ts-ignore
-    containerId.values.add('fusebit');
+    containerId.values.add(log.timestamp);
     //@ts-ignore
     hostname.values.add(log.msg);
+
     data.series[lastFrame].length++;
+
     return data;
   };
 

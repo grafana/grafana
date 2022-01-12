@@ -1,0 +1,30 @@
+version: "3"
+services:
+
+#  tempo:
+#    image: grafana/tempo:latest
+#    command: ["-config.file=/etc/tempo.yaml"]
+#    volumes:
+#      - ./tempo-config.yaml:/etc/tempo.yaml
+#      - ./tempo-data:/tmp/tempo
+#    ports:
+#      - "4317:4317/udp"  # grpc ingest
+#      - "4317:4317/tcp"  # grpc ingest
+#      - "3200:3200/tcp"  # Grafana Query
+
+  loki:
+    image: grafana/loki:2.3.0
+    command: ["-config.file=/etc/loki/loki-config.yaml"]
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+    ports:
+      - "3100:3100"     # loki needs to be exposed so it receives logs
+
+#  grafana:
+#    image: fusebit/grafana:dev
+#    command: ["--config=conf/grafana-config.ini"]
+#    volumes:
+#      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+#      - ./grafana-config.ini:/usr/share/grafana/conf/grafana-config.ini
+#    ports:
+#      - "3000:3000"

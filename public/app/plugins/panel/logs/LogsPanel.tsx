@@ -42,6 +42,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   const { eventBus } = usePanelContext();
   const { newData, externalLogs } = usePopulateData({ data });
+  console.log(newData);
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
       if (!row) {
