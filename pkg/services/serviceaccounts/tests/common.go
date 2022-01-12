@@ -57,6 +57,7 @@ var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 
 type Calls struct {
 	CreateServiceAccount   []interface{}
+	ListServiceAccounts    []interface{}
 	DeleteServiceAccount   []interface{}
 	UpgradeServiceAccounts []interface{}
 	ListTokens             []interface{}
@@ -85,5 +86,9 @@ func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) e
 
 func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error) {
 	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, orgID, serviceAccount})
+	return nil, nil
+}
+func (s *ServiceAccountsStoreMock) ListServiceAccounts(ctx context.Context, orgID int64) ([]*models.OrgUserDTO, error) {
+	s.Calls.ListServiceAccounts = append(s.Calls.ListServiceAccounts, []interface{}{ctx, orgID})
 	return nil, nil
 }
