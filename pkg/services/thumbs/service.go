@@ -177,25 +177,25 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 		_ = tempFile.Close()
 	}()
 
-	// read all of the contents of our uploaded file into a
-	// byte array
-	fileBytes, err := ioutil.ReadAll(file)
+	// TODO avoid fetching dashboardID twice
+	dashboardID, err := hs.getDashboardId(c, req.UID)
 	if err != nil {
-		fmt.Println(err)
-	}
-	// write this byte array to our temporary file
-	_, err = tempFile.Write(fileBytes)
-	if err != nil {
-		c.JSON(400, map[string]string{"error": "error writing file"})
-		fmt.Println("error", err)
-
+		c.JSON(400, map[string]string{"error": "dashboard not found"})
 		return
 	}
 
-	p := getFilePath(hs.root, req)
-	err = os.Rename(tempFile.Name(), p)
+	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
-		c.JSON(400, map[string]string{"error": "unable to rename file"})
+		fmt.Println(err)
+		c.JSON(400, map[string]string{"error": "error reading file"})
+		return
+
+	}
+
+	_, err = hs.renderer.SaveThumbnailFromBytes(fileBytes, hs.renderer.GetMimeType(handler.Filename), dashboardID, req.UID, req.Theme, req.Kind)
+	if err != nil {
+		c.JSON(400, map[string]string{"error": "error saving thumbnail file"})
+		fmt.Println("error", err)
 		return
 	}
 
@@ -240,15 +240,12 @@ func (hs *thumbService) CrawlerStatus(c *models.ReqContext) response.Response {
 
 // Ideally this service would not require first looking up the full dashboard just to bet the id!
 func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bool) int {
-	query := models.GetDashboardQuery{Uid: uid, OrgId: c.OrgId}
-
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
-		return 404 // not found
+	dashboardID, err := hs.getDashboardId(c, uid)
+	if err != nil {
+		return 404
 	}
 
-	dash := query.Result
-
-	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
 	if checkSave {
 		if canSave, err := guardian.CanSave(); err != nil || !canSave {
 			return 403 // forbidden
@@ -261,4 +258,14 @@ func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bo
 	}
 
 	return 200 // found and OK
+}
+
+func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64, error) {
+	query := models.GetDashboardQuery{Uid: uid, OrgId: c.OrgId}
+
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+		return 0, err
+	}
+
+	return query.Result.Id, nil
 }

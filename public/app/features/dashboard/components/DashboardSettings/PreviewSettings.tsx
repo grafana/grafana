@@ -1,15 +1,48 @@
 import React, { PureComponent } from 'react';
-import { CollapsableSection, FileUpload } from '@grafana/ui';
-import { getThumbnailURL } from 'app/features/search/components/SearchCard';
+import { CollapsableSection, FileUpload, Icon } from '@grafana/ui';
+import { fetchThumbnail, getThumbnailURL } from 'app/features/search/components/SearchCard';
+import { GrafanaThemeType } from '@grafana/data/src';
 
 interface Props {
   uid: string;
 }
 
-interface State {}
+interface State {
+  thumbnailDataUrls: {
+    [GrafanaThemeType.Light]: string;
+    [GrafanaThemeType.Dark]: string;
+  };
+}
 
 export class PreviewSettings extends PureComponent<Props, State> {
-  state: State = {};
+  state: State = {
+    thumbnailDataUrls: {
+      [GrafanaThemeType.Dark]: '',
+      [GrafanaThemeType.Light]: '',
+    },
+  };
+
+  componentDidMount() {
+    this.refetchThumbnails();
+  }
+
+  async refetchThumbnails() {
+    await Promise.all([this.refetchThumbnail(GrafanaThemeType.Light), this.refetchThumbnail(GrafanaThemeType.Dark)]);
+  }
+
+  async refetchThumbnail(theme: GrafanaThemeType) {
+    const imageDataUrl = await fetchThumbnail(this.props.uid, theme === GrafanaThemeType.Light);
+
+    if (imageDataUrl) {
+      this.setState((prevState) => ({
+        ...prevState,
+        thumbnailDataUrls: {
+          ...prevState.thumbnailDataUrls,
+          [theme]: imageDataUrl,
+        },
+      }));
+    }
+  }
 
   doUpload = (evt: EventTarget & HTMLInputElement, isLight?: boolean) => {
     const file = evt?.files && evt.files[0];
@@ -29,7 +62,7 @@ export class PreviewSettings extends PureComponent<Props, State> {
       .then((response) => response.json())
       .then((result) => {
         console.log('Success:', result);
-        location.reload(); //HACK
+        return this.refetchThumbnail(isLight ? GrafanaThemeType.Light : GrafanaThemeType.Dark);
       })
       .catch((error) => {
         console.error('Error:', error);
@@ -37,7 +70,6 @@ export class PreviewSettings extends PureComponent<Props, State> {
   };
 
   render() {
-    const { uid } = this.props;
     const imgstyle = { maxWidth: 300, maxHeight: 300 };
     return (
       <CollapsableSection label="Preview settings" isOpen={true}>
@@ -52,10 +84,22 @@ export class PreviewSettings extends PureComponent<Props, State> {
           <tbody>
             <tr>
               <td>
-                <img src={getThumbnailURL(uid, false)} style={imgstyle} />
+                {this.state.thumbnailDataUrls[GrafanaThemeType.Dark].length ? (
+                  <img src={this.state.thumbnailDataUrls[GrafanaThemeType.Dark]} style={imgstyle} />
+                ) : (
+                  <div style={imgstyle}>
+                    <Icon name="apps" size="xl" />
+                  </div>
+                )}{' '}
               </td>
               <td>
-                <img src={getThumbnailURL(uid, true)} style={imgstyle} />
+                {this.state.thumbnailDataUrls[GrafanaThemeType.Light].length ? (
+                  <img src={this.state.thumbnailDataUrls[GrafanaThemeType.Light]} style={imgstyle} />
+                ) : (
+                  <div style={imgstyle}>
+                    <Icon name="apps" size="xl" />
+                  </div>
+                )}{' '}
               </td>
             </tr>
             <tr>

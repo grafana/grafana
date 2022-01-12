@@ -18,12 +18,22 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
 }
 
-export function getThumbnailURL(uid: string, isLight?: boolean) {
-  return `/api/dashboards/uid/${uid}/img/thumb/${isLight ? 'light' : 'dark'}`;
-}
+export const getThumbnailURL = (uid: string, isLight?: boolean) =>
+  `/api/dashboards/uid/${uid}/img/thumb/${isLight ? 'light' : 'dark'}`;
 
-type GetThumbnailResponse = {
+export type GetThumbnailResponse = {
   imageDataUrl?: string;
+};
+
+export const fetchThumbnail = async (uid: string, isLight?: boolean) => {
+  const url = getThumbnailURL(uid, isLight);
+  const res = await fetch(url);
+  if (res.status !== 200) {
+    return;
+  }
+
+  const resBody: GetThumbnailResponse = await res.json();
+  return resBody?.imageDataUrl;
 };
 
 export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
@@ -36,24 +46,11 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   useEffect(() => {
     // TODO: the useEffect will keep refetching the thumbnails as we scroll down and up through the list
     // store them in redux store??
-    const thumbnailUrl = getThumbnailURL(item.uid!, theme.isLight);
-    const fetchThumbnail = async () => {
-      const res = await fetch(thumbnailUrl);
-      if (res.status !== 200) {
-        return;
+    fetchThumbnail(item.uid!, theme.isLight).then((imageDataUrl) => {
+      if (imageDataUrl) {
+        setImageSrc(imageDataUrl);
       }
-
-      const resBody: GetThumbnailResponse = await res.json();
-      const imageDataUrl = resBody?.imageDataUrl;
-
-      if (!imageDataUrl?.length) {
-        return;
-      }
-
-      setImageSrc(imageDataUrl);
-    };
-
-    fetchThumbnail();
+    });
   }, [item.uid, theme.isLight]);
 
   // Popper specific logic

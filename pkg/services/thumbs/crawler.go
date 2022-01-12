@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"io/ioutil"
@@ -88,18 +87,6 @@ func (r *simpleCrawler) broadcastStatus() {
 	if err != nil {
 		tlog.Warn("error Publish message")
 		return
-	}
-}
-
-func (r *simpleCrawler) GetPreview(req *previewRequest) *previewResponse {
-	p := getFilePath(r.screenshotsFolder, req)
-	if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
-		return r.queueRender(p, req)
-	}
-
-	return &previewResponse{
-		Path: p,
-		Code: 200,
 	}
 }
 
@@ -232,7 +219,7 @@ func (r *simpleCrawler) walk() {
 			tlog.Warn("error getting image... internal result", "img", res.FilePath)
 			r.status.Errors++
 		} else {
-			thumbnailId, err := r.saveThumbnail(res, item)
+			thumbnailId, err := r.SaveThumbnailFromFile(res.FilePath, item.id, item.uid, r.opts.Theme, r.thumbnailKind)
 			if err != nil {
 				r.status.Errors++
 			} else {
@@ -251,12 +238,18 @@ func (r *simpleCrawler) walk() {
 	r.broadcastStatus()
 }
 
-func (r *simpleCrawler) saveThumbnail(res *rendering.RenderResult, item *dashItem) (int64, error) {
-	defer removeThumbnailFile(res, item)
+// TODO extract the three methods below from this file
+func (r *simpleCrawler) SaveThumbnailFromFile(tempFilePath string, dashboardID int64, dashboardUID string, theme rendering.Theme, kind models.ThumbnailKind) (int64, error) {
+	defer func() {
+		err := os.Remove(tempFilePath)
+		if err != nil {
+			tlog.Error("failed to remove thumbnail temp file", "dashboardUID", dashboardUID, "err", err)
+		}
+	}()
 
-	file, err := os.Open(res.FilePath)
+	file, err := os.Open(tempFilePath)
 	if err != nil {
-		tlog.Error("error opening file", "url", item.url, "err", err)
+		tlog.Error("error opening file", "dashboardUID", dashboardUID, "err", err)
 		return 0, err
 	}
 
@@ -264,37 +257,36 @@ func (r *simpleCrawler) saveThumbnail(res *rendering.RenderResult, item *dashIte
 	content, err := ioutil.ReadAll(reader)
 
 	if err != nil {
-		r.status.Errors++
-		tlog.Error("error reading file", "url", item.url, "err", err)
+		tlog.Error("error reading file", "dashboardUID", dashboardUID, "err", err)
 		return 0, err
 	}
 
-	var mimeType = "image/png"
-	if strings.HasSuffix(res.FilePath, ".webp") {
-		mimeType = "image/webp"
+	return r.SaveThumbnailFromBytes(content, r.GetMimeType(tempFilePath), dashboardID, dashboardUID, theme, kind)
+}
+
+func (r *simpleCrawler) GetMimeType(filePath string) string {
+	if strings.HasSuffix(filePath, ".webp") {
+		return "image/webp"
 	}
 
+	return "image/png"
+}
+
+func (r *simpleCrawler) SaveThumbnailFromBytes(content []byte, mimeType string, dashboardID int64, dashboardUID string, theme rendering.Theme, kind models.ThumbnailKind) (int64, error) {
 	base64Image := base64.StdEncoding.EncodeToString(content)
 	cmd := &models.SaveDashboardThumbnailCommand{
-		DashboardID: item.id,
+		DashboardID: dashboardID,
 		PanelID:     0,
-		Kind:        r.thumbnailKind,
+		Kind:        kind,
 		Image:       fmt.Sprintf("data:%s;base64,%s", mimeType, base64Image),
-		Theme:       string(r.opts.Theme),
+		Theme:       string(theme),
 	}
 
-	_, err = r.store.SaveThumbnail(cmd)
+	_, err := r.store.SaveThumbnail(cmd)
 	if err != nil {
-		tlog.Error("error saving to the db", "url", item.url, "err", err)
+		tlog.Error("error saving to the db", "dashboardUID", dashboardUID, "err", err)
 		return 0, err
 	}
 
 	return cmd.Result.Id, nil
-}
-
-func removeThumbnailFile(res *rendering.RenderResult, item *dashItem) {
-	err := os.Remove(res.FilePath)
-	if err != nil {
-		tlog.Error("failed to remove thumbnail file", "url", item.url, "err", err)
-	}
 }

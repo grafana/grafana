@@ -50,8 +50,6 @@ type crawlStatus struct {
 }
 
 type dashRenderer interface {
-	// Assumes you have already authenticated as admin
-	GetPreview(req *previewRequest) *previewResponse
 
 	// Assumes you have already authenticated as admin
 	Start(c *models.ReqContext, mode CrawlerMode, theme rendering.Theme, kind models.ThumbnailKind) (crawlStatus, error)
@@ -61,4 +59,8 @@ type dashRenderer interface {
 
 	// Assumes you have already authenticated as admin
 	Status() (crawlStatus, error)
+
+	SaveThumbnailFromFile(tempFilePath string, dashboardID int64, dashboardUID string, theme rendering.Theme, kind models.ThumbnailKind) (int64, error)
+	SaveThumbnailFromBytes(content []byte, mimeType string, dashboardID int64, dashboardUID string, theme rendering.Theme, kind models.ThumbnailKind) (int64, error)
+	GetMimeType(filePath string) string
 }
