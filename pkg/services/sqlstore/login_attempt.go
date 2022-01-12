@@ -11,7 +11,7 @@ import (
 
 var getTimeNow = time.Now
 
-func (ss *SQLStore) init() {
+func (ss *SQLStore) addLoginAttemptQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.CreateLoginAttempt)
 	bus.AddHandler("sql", ss.DeleteOldLoginAttempts)
 	bus.AddHandler("sql", GetUserLoginAttemptCount)

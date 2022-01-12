@@ -8,9 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func init() {
+func (ss *SQLStore) addDashboardProvisioningQueryAndCommandHandlers() {
 	bus.AddHandler("sql", UnprovisionDashboard)
-	bus.AddHandler("sql", DeleteOrphanedProvisionedDashboards)
+	bus.AddHandler("sql", ss.DeleteOrphanedProvisionedDashboards)
 }
 
 type DashboardExtras struct {

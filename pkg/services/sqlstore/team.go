@@ -11,12 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (ss *SQLStore) init() {
+func (ss *SQLStore) addTeamQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.UpdateTeam)
 	bus.AddHandler("sql", ss.DeleteTeam)
 	bus.AddHandler("sql", SearchTeams)
 	bus.AddHandler("sql", GetTeamById)
-	bus.AddHandler("sql", GetTeamsByUser)
+	bus.AddHandler("sql", ss.GetTeamsByUser)
 
 	bus.AddHandler("sql", ss.UpdateTeamMember)
 	bus.AddHandler("sql", ss.RemoveTeamMember)
@@ -264,17 +264,19 @@ func GetTeamById(ctx context.Context, query *models.GetTeamByIdQuery) error {
 }
 
 // GetTeamsByUser is used by the Guardian when checking a users' permissions
-func GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-	query.Result = make([]*models.TeamDTO, 0)
+func (ss *SQLStore) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		query.Result = make([]*models.TeamDTO, 0)
 
-	var sql bytes.Buffer
+		var sql bytes.Buffer
 
-	sql.WriteString(getTeamSelectSQLBase([]string{}))
-	sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
-	sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
+		sql.WriteString(getTeamSelectSQLBase([]string{}))
+		sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
+		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
 
-	err := x.SQL(sql.String(), query.OrgId, query.UserId).Find(&query.Result)
-	return err
+		err := sess.SQL(sql.String(), query.OrgId, query.UserId).Find(&query.Result)
+		return err
+	})
 }
 
 // AddTeamMember adds a user to a team

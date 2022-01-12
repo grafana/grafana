@@ -15,7 +15,7 @@ import (
 // MainOrgName is the name of the main organization.
 const MainOrgName = "Main Org."
 
-func (ss *SQLStore) init() {
+func (ss *SQLStore) addOrgQueryAndCommandHandlers() {
 	bus.AddHandler("sql", GetOrgById)
 	bus.AddHandler("sql", CreateOrg)
 	bus.AddHandler("sql", ss.UpdateOrg)
