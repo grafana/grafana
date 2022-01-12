@@ -1,9 +1,10 @@
 import { cx } from '@emotion/css';
-import { Checkbox, Icon, IconButton, LoadingPlaceholder, useStyles2, useTheme2, FadeTransition } from '@grafana/ui';
+import { Checkbox, FadeTransition, Icon, IconButton, LoadingPlaceholder, useStyles2, useTheme2 } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
+
 import { Space } from '../Space';
 import getStyles from './styles';
-import { ResourceRowType, ResourceRow, ResourceRowGroup } from './types';
+import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { findRow } from './utils';
 
 interface NestedRowsProps {
@@ -181,6 +182,13 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
   );
 
   const checkboxId = `checkbox_${entry.id}`;
+
+  // Scroll to the selected element if it's not in the view
+  useEffect(() => {
+    if (isSelected) {
+      document.getElementById(checkboxId)?.focus();
+    }
+  });
 
   return (
     <div className={styles.nestedEntry} style={{ marginLeft: level * (3 * theme.spacing.gridSize) }}>
