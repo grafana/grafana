@@ -49,7 +49,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
 		serviceAccountsRoute.Get("/upgrade", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.UpgradeServiceAccounts))
 		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.CreateServiceAccount))
-		serviceAccountsRoute.Get("/listtokens/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
+		serviceAccountsRoute.Get("/tokens/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
 	})
 }
 
@@ -88,10 +88,10 @@ func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) re
 }
 
 func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Response {
-	SAid := ctx.ParamsInt64(":serviceAccountId")
-	if SA_tokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, SAid); err == nil {
-		result := make([]*models.ApiKeyDTO, len(SA_tokens))
-		for i, t := range SA_tokens {
+	saID := ctx.ParamsInt64(":serviceAccountId")
+	if saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID); err == nil {
+		result := make([]*models.ApiKeyDTO, len(saTokens))
+		for i, t := range saTokens {
 			var expiration *time.Time = nil
 			if t.Expires != nil {
 				v := time.Unix(*t.Expires, 0)
