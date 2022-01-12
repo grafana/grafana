@@ -46,7 +46,7 @@ func (mockedRT *mockedRoundTripper) RoundTrip(req *http.Request) (*http.Response
 	}, nil
 }
 
-func makeMockedClient(responseBytes []byte) (apiv1.API, error) {
+func makeMockedApi(responseBytes []byte) (apiv1.API, error) {
 	roundTripper := mockedRoundTripper{responseBytes: responseBytes}
 
 	cfg := api.Config{
@@ -59,9 +59,9 @@ func makeMockedClient(responseBytes []byte) (apiv1.API, error) {
 		return nil, err
 	}
 
-	client2 := apiv1.NewAPI(client)
+	api := apiv1.NewAPI(client)
 
-	return client2, nil
+	return api, nil
 }
 
 // we store the prometheus query data in a json file, here is some minimal code
@@ -104,10 +104,10 @@ func testScenario(t *testing.T, name string) {
 	responseBytes, err := os.ReadFile(filepath.Clean(responseFileName))
 	require.NoError(t, err)
 
-	client, err := makeMockedClient(responseBytes)
+	api, err := makeMockedApi(responseBytes)
 	require.NoError(t, err)
 
-	result, err := runQueries(context.Background(), client, []*PrometheusQuery{&query})
+	result, err := runQueries(context.Background(), api, []*PrometheusQuery{&query})
 	require.NoError(t, err)
 	require.Len(t, result.Responses, 1)
 
