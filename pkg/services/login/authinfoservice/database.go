@@ -38,7 +38,7 @@ func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *
 }
 
 func (s *Implementation) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
-	if query.UserId == 0 {
+	if query.UserId == 0 && query.AuthId == "" {
 		return models.ErrUserNotFound
 	}
 
