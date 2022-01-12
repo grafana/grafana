@@ -155,3 +155,7 @@ export async function getQueriesFromQueryHistory(dataSourceUid: string): Promise
 export function deleteQueryFromQueryHistory(queryId: string): void {
   getBackendSrv().delete(`/api/query-history/${queryId}`);
 }
+
+export function updateCommentForQueryInQueryHistory(queryId: string, comment: string): void {
+  getBackendSrv().put(`/api/query-history/${queryId}`, { comment });
+}

@@ -5,8 +5,6 @@ type QueryHistory struct {
 	Queries       string `json:"queries"`
 }
 
-type GetQueryHistory struct {
-	DataSourceUid string `json:"datasourceUid"`
-
-	Result []QueryHistory
+type UpdateQueryInQueryHistory struct {
+	Comment string `json:"comment"`
 }

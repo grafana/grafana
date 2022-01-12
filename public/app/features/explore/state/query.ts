@@ -46,6 +46,7 @@ import {
   addQueryToQueryHistory,
   getQueriesFromQueryHistory,
   deleteQueryFromQueryHistory,
+  updateCommentForQueryInQueryHistory,
 } from './utils';
 import deepEqual from 'fast-deep-equal';
 
@@ -326,7 +327,8 @@ async function handleHistory(
     addQueryToQueryHistory(uid, queries);
     //WIP: Currently here to test development
     // console.log(await getQueriesFromQueryHistory(uid));
-    deleteQueryFromQueryHistory('P8zM2I1nz');
+    // deleteQueryFromQueryHistory('P8zM2I1nz');
+    updateCommentForQueryInQueryHistory('ND2zoS17k', 'test comment');
   }
 
   const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(

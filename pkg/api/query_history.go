@@ -45,3 +45,21 @@ func (hs *HTTPServer) deleteQueryFromQueryHistory(c *models.ReqContext) response
 
 	return response.Success("Query deleted")
 }
+
+func (hs *HTTPServer) updateQueryInQueryHistory(c *models.ReqContext) response.Response {
+	cmd := dtos.UpdateQueryInQueryHistory{}
+	queryId := web.Params(c.Req)[":uid"]
+
+	query, err := hs.QueryHistoryService.GetQueryInQueryHistoryByUid(c.Req.Context(), c.SignedInUser, queryId)
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	err = hs.QueryHistoryService.UpdateComment(c.Req.Context(), c.SignedInUser, query, cmd.Comment)
+
+	if err != nil {
+		return response.Error(500, "Failed to update comment in query history", err)
+	}
+
+	return response.Success("Query comment updated")
+}

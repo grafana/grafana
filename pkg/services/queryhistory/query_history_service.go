@@ -19,6 +19,8 @@ type Service interface {
 	CreateQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, datasourceUid string) (*models.QueryHistory, error)
 	GetQueryHistory(ctx context.Context, user *models.SignedInUser, datasourceUid string) ([]models.QueryHistory, error)
 	DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, queryId string) error
+	UpdateComment(ctx context.Context, user *models.SignedInUser, query *models.QueryHistory, comment string) error
+	GetQueryInQueryHistoryByUid(ctx context.Context, user *models.SignedInUser, queryId string) (*models.QueryHistory, error)
 }
 
 type QueryHistoryService struct {
@@ -63,12 +65,46 @@ func (s QueryHistoryService) GetQueryHistory(ctx context.Context, user *models.S
 	return queryHistory, nil
 }
 
+func (s QueryHistoryService) GetQueryInQueryHistoryByUid(ctx context.Context, user *models.SignedInUser, queryId string) (*models.QueryHistory, error) {
+	var queryHistory models.QueryHistory
+
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		exists, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, queryId).Get(&queryHistory)
+
+		if !exists {
+			return models.ErrQueryNotFound
+		}
+
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &queryHistory, nil
+}
+
 func (s QueryHistoryService) DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, queryId string) error {
 	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
 		id, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, queryId).Delete(models.QueryHistory{})
 		if id == 0 {
 			return models.ErrQueryNotFound
 		}
+		return err
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s QueryHistoryService) UpdateComment(ctx context.Context, user *models.SignedInUser, query *models.QueryHistory, comment string) error {
+	query.Comment = comment
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		_, err := session.ID(query.Id).Update(query)
 		return err
 	})
 

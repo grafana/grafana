@@ -459,6 +459,7 @@ func (hs *HTTPServer) registerRoutes() {
 			queryHistoryRoute.Post("/", routing.Wrap(hs.createQueryHistory))
 			queryHistoryRoute.Get("/", routing.Wrap(hs.getQueryHistory))
 			queryHistoryRoute.Delete("/:uid", routing.Wrap(hs.deleteQueryFromQueryHistory))
+			queryHistoryRoute.Put("/:uid", routing.Wrap(hs.updateQueryInQueryHistory))
 		})
 	}, reqSignedIn)
 
