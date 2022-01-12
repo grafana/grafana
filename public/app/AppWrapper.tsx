@@ -92,7 +92,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   render() {
     navigationLogger('AppWrapper', false, 'rendering');
 
-    const newNavigationEnabled = config.featureToggles.newNavigation;
+    const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
 
     return (
       <Provider store={store}>

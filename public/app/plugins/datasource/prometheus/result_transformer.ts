@@ -122,10 +122,11 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
 
   // Group results by refId and process dataFrames with the same refId as 1 dataFrame
   const dataFramesByRefId = groupBy(dfs, 'refId');
+  const refIds = Object.keys(dataFramesByRefId);
 
-  const frames = Object.keys(dataFramesByRefId).map((refId) => {
+  const frames = refIds.map((refId) => {
     // Create timeField, valueField and labelFields
-    const valueText = getValueText(dfs.length, refId);
+    const valueText = getValueText(refIds.length, refId);
     const valueField = getValueField({ data: [], valueName: valueText });
     const timeField = getTimeField([]);
     const labelFields: MutableField[] = [];

@@ -118,7 +118,14 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       seriesIdx = info.aligned.fields.findIndex((f) => disp === getFieldDisplayName(f, info.aligned));
     }
 
-    return <DataHoverView data={info.aligned} rowIndex={datapointIdx} columnIndex={seriesIdx} />;
+    return (
+      <DataHoverView
+        data={info.aligned}
+        rowIndex={datapointIdx}
+        columnIndex={seriesIdx}
+        sortOrder={options.tooltip.sort}
+      />
+    );
   };
 
   const renderLegend = (config: UPlotConfigBuilder) => {
