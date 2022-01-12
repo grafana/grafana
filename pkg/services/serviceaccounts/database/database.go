@@ -1,5 +1,6 @@
 package database
 
+//nolint:goimports,gosimple
 import (
 	"context"
 	"fmt"
