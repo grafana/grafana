@@ -15,7 +15,7 @@ import (
 )
 
 func setUpGetTeamMembersHandler() {
-	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetTeamMembersQuery) error {
+	bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamMembersQuery) error {
 		query.Result = []*models.TeamMemberDTO{
 			{Email: "testUser@grafana.com", Login: testUserLogin},
 			{Email: "user1@grafana.com", Login: "user1"},

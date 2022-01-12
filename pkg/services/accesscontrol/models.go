@@ -243,6 +243,7 @@ type GetResourcesPermissionsQuery struct {
 	Actions     []string
 	Resource    string
 	ResourceIDs []string
+	OnlyManaged bool
 }
 
 const (
@@ -309,6 +310,9 @@ const (
 	ActionLicensingUpdate      = "licensing:update"
 	ActionLicensingDelete      = "licensing:delete"
 	ActionLicensingReportsRead = "licensing.reports:read"
+
+	// Team actions
+	ActionTeamsCreate = "teams:create"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

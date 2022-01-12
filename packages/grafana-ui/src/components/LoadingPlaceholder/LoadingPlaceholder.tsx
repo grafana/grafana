@@ -8,7 +8,7 @@ import { useStyles } from '../../themes';
  * @public
  */
 export interface LoadingPlaceholderProps extends HTMLAttributes<HTMLDivElement> {
-  text: string;
+  text: React.ReactNode;
 }
 
 /**
