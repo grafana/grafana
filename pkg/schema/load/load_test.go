@@ -60,9 +60,9 @@ var doTestAgainstDevenv = func(sch schema.VersionedCueSchema, validdir string, f
 				t.Logf("no schemaVersion in %s", path)
 				return nil
 			} else {
-				if !(oldschemav.(float64) > 29) {
+				if !(oldschemav.(float64) > 32) {
 					if testing.Verbose() {
-						t.Logf("schemaVersion is %v, older than 30, skipping %s", oldschemav, path)
+						t.Logf("schemaVersion is %v, older than 33, skipping %s", oldschemav, path)
 					}
 					return nil
 				}

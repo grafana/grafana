@@ -323,13 +323,13 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	if dash.Id != 0 {
 		data, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 		if err != nil {
-			return response.Error(500, "Error while checking if dashboard is provisioned", err)
+			return response.Error(500, "Error while checking if dashboard is provisioned using ID", err)
 		}
 		provisioningData = data
 	} else if dash.Uid != "" {
 		data, err := svc.GetProvisionedDashboardDataByDashboardUID(dash.OrgId, dash.Uid)
-		if err != nil && !errors.Is(err, models.ErrProvisionedDashboardNotFound) {
-			return response.Error(500, "Error while checking if dashboard is provisioned", err)
+		if err != nil && (!errors.Is(err, models.ErrProvisionedDashboardNotFound) && !errors.Is(err, models.ErrDashboardNotFound)) {
+			return response.Error(500, "Error while checking if dashboard is provisioned using UID", err)
 		}
 		provisioningData = data
 	}

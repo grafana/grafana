@@ -3565,14 +3565,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@es-joy/jsdoccomment@npm:0.14.2":
-  version: 0.14.2
-  resolution: "@es-joy/jsdoccomment@npm:0.14.2"
+"@es-joy/jsdoccomment@npm:~0.17.0":
+  version: 0.17.0
+  resolution: "@es-joy/jsdoccomment@npm:0.17.0"
   dependencies:
     comment-parser: 1.3.0
     esquery: ^1.4.0
-    jsdoc-type-pratt-parser: 2.0.2
-  checksum: babc7f975782a0b07c90d7823dbfeaa06ba7cbe779708cc2e997d049a4e7b592ae59226abf05caffc08fc84001683bfbddfd7a1943dca5f7c38afc706a8cafaf
+    jsdoc-type-pratt-parser: ~2.2.1
+  checksum: 8fc1fc2d01fdf18c033a70939ce61c4fa5cb648bd42987ffe6025b78e1ebbceda6f44f9868d26d51112fc9f743d1e66d0830436697fd60de327fcc9d7ae8c2e9
   languageName: node
   linkType: hard
 
@@ -3801,7 +3801,7 @@ __metadata:
     tslib: 2.3.1
     typescript: 4.5.4
     uuid: 8.3.2
-    webpack: 5.65.0
+    webpack: 5.66.0
     yaml: ^1.8.3
   bin:
     grafana-e2e: bin/grafana-e2e.js
@@ -4130,7 +4130,7 @@ __metadata:
     react-custom-scrollbars-2: 4.4.0
     react-docgen-typescript-loader: 3.7.2
     react-dom: 17.0.2
-    react-dropzone: 11.4.2
+    react-dropzone: 11.5.1
     react-highlight-words: 0.17.0
     react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
@@ -4160,7 +4160,7 @@ __metadata:
     typescript: 4.5.4
     uplot: 1.6.18
     uuid: 8.3.2
-    webpack: 5.65.0
+    webpack: 5.66.0
     webpack-filter-warnings-plugin: 1.2.1
   languageName: unknown
   linkType: soft
@@ -13909,7 +13909,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chalk@npm:^4.0.0, chalk@npm:^4.1.0, chalk@npm:^4.1.1":
+"chalk@npm:^4.0.0, chalk@npm:^4.1.0, chalk@npm:^4.1.1, chalk@npm:^4.1.2":
   version: 4.1.2
   resolution: "chalk@npm:4.1.2"
   dependencies:
@@ -14435,7 +14435,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"colors@npm:^1.1.2, colors@npm:^1.4.0":
+"colors@npm:^1.1.2":
   version: 1.4.0
   resolution: "colors@npm:1.4.0"
   checksum: 98aa2c2418ad87dedf25d781be69dc5fc5908e279d9d30c34d8b702e586a0474605b3a189511482b9d5ed0d20c867515d22749537f7bc546256c6014f3ebdcec
@@ -17585,22 +17585,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:37.5.1":
-  version: 37.5.1
-  resolution: "eslint-plugin-jsdoc@npm:37.5.1"
+"eslint-plugin-jsdoc@npm:37.6.1":
+  version: 37.6.1
+  resolution: "eslint-plugin-jsdoc@npm:37.6.1"
   dependencies:
-    "@es-joy/jsdoccomment": 0.14.2
+    "@es-joy/jsdoccomment": ~0.17.0
     comment-parser: 1.3.0
     debug: ^4.3.3
     escape-string-regexp: ^4.0.0
     esquery: ^1.4.0
-    jsdoc-type-pratt-parser: ^2.0.2
     regextras: ^0.8.0
     semver: ^7.3.5
     spdx-expression-parse: ^3.0.1
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0
-  checksum: 8f5c3edbd3685df3b4d22c6896c4a4c75d96e3e641f45fef717c61cc8a1be17012cadd8fa90caf7aa2c8330dd35aae6aaed7b6806d97e9326ea96e307b6a3b39
+  checksum: 646bb7cd52221cd4764bdcfe545fbcbf0087e18a3c85ea62e7009a2bba66dcc605f6eb9a3c15dc1be56674465d7883fdc234c70f34b769b4afd5dc5ec205136b
   languageName: node
   linkType: hard
 
@@ -19691,6 +19690,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"graceful-fs@npm:^4.2.9":
+  version: 4.2.9
+  resolution: "graceful-fs@npm:4.2.9"
+  checksum: 68ea4e07ff2c041ada184f9278b830375f8e0b75154e3f080af6b70f66172fabb4108d19b3863a96b53fc068a310b9b6493d86d1291acc5f3861eb4b79d26ad6
+  languageName: node
+  linkType: hard
+
 "grafana@workspace:.":
   version: 0.0.0-use.local
   resolution: "grafana@workspace:."
@@ -19854,7 +19860,7 @@ __metadata:
     enzyme-to-json: 3.6.2
     eslint: 7.28.0
     eslint-config-prettier: 8.3.0
-    eslint-plugin-jsdoc: 37.5.1
+    eslint-plugin-jsdoc: 37.6.1
     eslint-plugin-lodash: ^7.2.0
     eslint-plugin-no-only-tests: 2.6.0
     eslint-plugin-prettier: 4.0.0
@@ -19872,9 +19878,9 @@ __metadata:
     glob: 7.2.0
     history: 4.10.1
     hoist-non-react-statics: 3.3.2
-    html-loader: 3.0.1
+    html-loader: 3.1.0
     html-webpack-plugin: 5.5.0
-    http-server: 14.0.0
+    http-server: 14.1.0
     husky: ^7.0.0
     iconscout-unicons-tarball: "https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28"
     immer: 9.0.7
@@ -19985,7 +19991,7 @@ __metadata:
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
     wait-on: 6.0.0
-    webpack: 5.65.0
+    webpack: 5.66.0
     webpack-bundle-analyzer: 4.5.0
     webpack-cli: 4.9.1
     webpack-dev-server: 4.7.2
@@ -20466,15 +20472,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-loader@npm:3.0.1":
-  version: 3.0.1
-  resolution: "html-loader@npm:3.0.1"
+"html-loader@npm:3.1.0":
+  version: 3.1.0
+  resolution: "html-loader@npm:3.1.0"
   dependencies:
     html-minifier-terser: ^6.0.2
     parse5: ^6.0.1
   peerDependencies:
     webpack: ^5.0.0
-  checksum: 9963912f20c14ac2303d262778ea230e66bb7953db004ae55787a55ae4baecc350ce6ddb89ff8bdf5d3cf715ee8460545c2d2109304be3246bbad2123f7c9a57
+  checksum: 4c383d103c10465964924f31eeb2876df941df6515b52a7be517eb01d59ff8f5ae344a3ca428469029c999c73f5ae5dac3431701886ca16617a670a0991bd3a2
   languageName: node
   linkType: hard
 
@@ -20713,12 +20719,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"http-server@npm:14.0.0":
-  version: 14.0.0
-  resolution: "http-server@npm:14.0.0"
+"http-server@npm:14.1.0":
+  version: 14.1.0
+  resolution: "http-server@npm:14.1.0"
   dependencies:
     basic-auth: ^2.0.1
-    colors: ^1.4.0
+    chalk: ^4.1.2
     corser: ^2.0.1
     he: ^1.2.0
     html-encoding-sniffer: ^3.0.0
@@ -20732,7 +20738,7 @@ __metadata:
     url-join: ^4.0.1
   bin:
     http-server: bin/http-server
-  checksum: 2b7d0f86e7779aafca3a19c5f6a2452c54e3d1cb31656f0ea26b45e86ebbaea713634d9d04eb48101bb84dcce5ebad4c0359d43c7f5f51c5846cda257a30b20b
+  checksum: 9a88fb47aa25aff445183da7d801d849e0dc0ae7decbc7580cded2d32c7d17c88405a88a69e7b10c77320ecdc6f67cb71b4973afe66b5898c95f9b186bad67af
   languageName: node
   linkType: hard
 
@@ -23397,10 +23403,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsdoc-type-pratt-parser@npm:2.0.2, jsdoc-type-pratt-parser@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "jsdoc-type-pratt-parser@npm:2.0.2"
-  checksum: c04e0aec3eab6983956d2a23e778581eb90e69b5123e0da12a8fc9ecda967092443a67b12a878f280eed056a4a7d9b0bb3b35d04f1affb8eb5b003ccb51ea51f
+"jsdoc-type-pratt-parser@npm:~2.2.1":
+  version: 2.2.1
+  resolution: "jsdoc-type-pratt-parser@npm:2.2.1"
+  checksum: 1cb5c9b49009e7cf4f1d126cbc6b2cc90279fb78275bef6705dd319f86f2ccb60be7600190dcf6fb8ad041f40ed206a619b90291e65f1ddb12397a8294fe11b7
   languageName: node
   linkType: hard
 
@@ -29681,16 +29687,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dropzone@npm:11.4.2":
-  version: 11.4.2
-  resolution: "react-dropzone@npm:11.4.2"
+"react-dropzone@npm:11.5.1":
+  version: 11.5.1
+  resolution: "react-dropzone@npm:11.5.1"
   dependencies:
     attr-accept: ^2.2.1
     file-selector: ^0.2.2
     prop-types: ^15.7.2
   peerDependencies:
     react: ">= 16.8"
-  checksum: f8dc6af69193133efe30ed11dd8c2212a180abd3833e91d03dab4bdc9546d47dcad311d7f72b4968b7d016871884555b9e16f7a490913b78dbfec8ce8f569193
+  checksum: 54d801ca5b952d9e00913c516bcb3b961d34058116d0444ac3ce911e98e777fbd936fb60e81c0739664f68bf1dd1bdc6a1477d0b50b46ffe986140671562110d
   languageName: node
   linkType: hard
 
@@ -35832,9 +35838,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5.65.0":
-  version: 5.65.0
-  resolution: "webpack@npm:5.65.0"
+"webpack@npm:5.66.0":
+  version: 5.66.0
+  resolution: "webpack@npm:5.66.0"
   dependencies:
     "@types/eslint-scope": ^3.7.0
     "@types/estree": ^0.0.50
@@ -35850,7 +35856,7 @@ __metadata:
     eslint-scope: 5.1.1
     events: ^3.2.0
     glob-to-regexp: ^0.4.1
-    graceful-fs: ^4.2.4
+    graceful-fs: ^4.2.9
     json-parse-better-errors: ^1.0.2
     loader-runner: ^4.2.0
     mime-types: ^2.1.27
@@ -35865,7 +35871,7 @@ __metadata:
       optional: true
   bin:
     webpack: bin/webpack.js
-  checksum: 221ab8ccd440cb678269e86689704bbef81cf41393eb266625873e30c6980ffaa055bb1a7d14bf9fc0f5a2e6f03d15d068cbb995bc876757c01a4ca27fd2870c
+  checksum: 5a44664a840fd64c5383aa78847b205ae0b42b607f85ee1d6a568617a210c1b9caab1822bce40a89a3b5eb0f626a83fb5fe2055c638aa230897bf224030d28e8
   languageName: node
   linkType: hard
 
