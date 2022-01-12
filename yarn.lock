@@ -3747,7 +3747,7 @@ __metadata:
     sinon: 12.0.1
     tinycolor2: 1.4.2
     tslib: 2.3.1
-    typescript: 4.5.4
+    typescript: 4.5.2
     uplot: 1.6.18
     xss: 1.0.10
   languageName: unknown
@@ -3766,7 +3766,7 @@ __metadata:
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     tslib: 2.3.1
-    typescript: 4.5.4
+    typescript: 4.5.2
   languageName: unknown
   linkType: soft
 
@@ -3799,7 +3799,7 @@ __metadata:
     rollup-plugin-terser: 7.0.2
     ts-loader: 6.2.1
     tslib: 2.3.1
-    typescript: 4.5.4
+    typescript: 4.5.2
     uuid: 8.3.2
     webpack: 5.66.0
     yaml: ^1.8.3
@@ -3872,7 +3872,7 @@ __metadata:
     rxjs: 7.5.1
     systemjs: 0.20.19
     tslib: 2.3.1
-    typescript: 4.5.4
+    typescript: 4.5.2
   languageName: unknown
   linkType: soft
 
@@ -3890,7 +3890,7 @@ __metadata:
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     tslib: 2.3.1
-    typescript: 4.5.4
+    typescript: 4.5.2
   languageName: unknown
   linkType: soft
 
@@ -4157,7 +4157,7 @@ __metadata:
     tinycolor2: 1.4.2
     ts-loader: 8.0.11
     tslib: 2.3.1
-    typescript: 4.5.4
+    typescript: 4.5.2
     uplot: 1.6.18
     uuid: 8.3.2
     webpack: 5.66.0
@@ -4280,7 +4280,7 @@ __metadata:
     tinycolor2: 1.4.2
     tslib: 2.3.1
     tween-functions: ^1.2.0
-    typescript: 4.5.4
+    typescript: 4.5.2
   languageName: unknown
   linkType: soft
 
@@ -19985,7 +19985,7 @@ __metadata:
     ts-loader: 9.2.6
     ts-node: 10.4.0
     tslib: 2.3.1
-    typescript: 4.5.4
+    typescript: 4.5.2
     uplot: 1.6.18
     uuid: 8.3.2
     vendor: "link:./public/vendor"
@@ -34522,7 +34522,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.5.4, typescript@npm:~4.5.2":
+"typescript@npm:4.5.2":
+  version: 4.5.2
+  resolution: "typescript@npm:4.5.2"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 74f9ce65d532bdf5d0214b3f60cf37992180023388c87a11ee6f838a803067ef0b63c600fa501b0deb07f989257dce1e244c9635ed79feca40bbccf6e0aa1ebc
+  languageName: node
+  linkType: hard
+
+"typescript@npm:~4.5.2":
   version: 4.5.4
   resolution: "typescript@npm:4.5.4"
   bin:
@@ -34552,7 +34562,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@4.5.4#~builtin<compat/typescript>, typescript@patch:typescript@~4.5.2#~builtin<compat/typescript>":
+"typescript@patch:typescript@4.5.2#~builtin<compat/typescript>":
+  version: 4.5.2
+  resolution: "typescript@patch:typescript@npm%3A4.5.2#~builtin<compat/typescript>::version=4.5.2&hash=493e53"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 53838d56aba6fcc947d63aa0771e5d966b1b648fddafed6e221d7f38c71219c4e036ece8cfe9e35ed80cf5a35ff4eb958934c993f99c3233773ec4f9ccd53f69
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@~4.5.2#~builtin<compat/typescript>":
   version: 4.5.4
   resolution: "typescript@patch:typescript@npm%3A4.5.4#~builtin<compat/typescript>::version=4.5.4&hash=493e53"
   bin:
