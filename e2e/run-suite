@@ -1,7 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -xeo pipefail
 
 . e2e/variables
+
+if ((BASH_VERSINFO[0] < 4)); then
+  echo "Bash ver >= 4 is needed to run this script"
+  echo "Please upgrade your bash - run 'brew install bash' if you use Homebrew on MacOS"
+  exit 1;
+fi
 
 HOST=${HOST:-$DEFAULT_HOST}
 PORT=${PORT:-$DEFAULT_PORT}
