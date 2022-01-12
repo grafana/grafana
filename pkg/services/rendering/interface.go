@@ -26,6 +26,16 @@ const (
 	ThemeDark  Theme = "dark"
 )
 
+func ParseTheme(str string) (Theme, error) {
+	switch str {
+	case string(ThemeLight):
+		return ThemeLight, nil
+	case string(ThemeDark):
+		return ThemeDark, nil
+	}
+	return ThemeDark, errors.New("unknown theme " + str)
+}
+
 type Opts struct {
 	Width             int
 	Height            int

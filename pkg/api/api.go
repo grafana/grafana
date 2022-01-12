@@ -329,8 +329,8 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Delete("/uid/:uid", routing.Wrap(hs.DeleteDashboardByUID))
 
 			if hs.ThumbService != nil {
-				dashboardRoute.Get("/uid/:uid/img/:size/:theme", hs.ThumbService.GetImage)
-				dashboardRoute.Post("/uid/:uid/img/:size/:theme", hs.ThumbService.SetImage)
+				dashboardRoute.Get("/uid/:uid/img/:kind/:theme", hs.ThumbService.GetImage)
+				dashboardRoute.Post("/uid/:uid/img/:kind/:theme", hs.ThumbService.SetImage)
 			}
 
 			dashboardRoute.Post("/calculate-diff", routing.Wrap(CalculateDashboardDiff))

@@ -33,13 +33,14 @@ type simpleCrawler struct {
 	renderService     rendering.Service
 	threadCount       int
 
-	glive  *live.GrafanaLive
-	store  *sqlstore.SQLStore
-	mode   CrawlerMode
-	opts   rendering.Opts
-	status crawlStatus
-	queue  []dashItem
-	mu     sync.Mutex
+	glive         *live.GrafanaLive
+	store         *sqlstore.SQLStore
+	mode          CrawlerMode
+	thumbnailKind models.ThumbnailKind
+	opts          rendering.Opts
+	status        crawlStatus
+	queue         []dashItem
+	mu            sync.Mutex
 }
 
 func newSimpleCrawler(folder string, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) dashRenderer {
@@ -113,7 +114,7 @@ func (r *simpleCrawler) queueRender(p string, req *previewRequest) *previewRespo
 	}
 }
 
-func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rendering.Theme) (crawlStatus, error) {
+func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rendering.Theme, thumbnailKind models.ThumbnailKind) (crawlStatus, error) {
 	if r.status.State == "running" {
 		tlog.Info("already running")
 		return r.Status()
@@ -146,6 +147,7 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rend
 	rand.Shuffle(len(queue), func(i, j int) { queue[i], queue[j] = queue[j], queue[i] })
 
 	r.mode = mode
+	r.thumbnailKind = thumbnailKind
 	r.opts = rendering.Opts{
 		OrgID:           c.OrgId,
 		UserID:          c.UserId,
@@ -258,9 +260,9 @@ func (r *simpleCrawler) walk() {
 					cmd := &models.SaveDashboardThumbnailCommand{
 						DashboardID: item.id,
 						PanelID:     0,
-						Kind:        "thumb", // TODO use enum?
+						Kind:        r.thumbnailKind,
 						Image:       fmt.Sprintf("data:%s;base64,%s", mimeType, base64Image),
-						Theme:       "dark", // TODO: how do I convert the r.opts.Theme enum to string ???????
+						Theme:       string(r.opts.Theme),
 					}
 					_, err = r.store.SaveThumbnail(cmd)
 					if err != nil {
@@ -276,7 +278,7 @@ func (r *simpleCrawler) walk() {
 				UID:   item.uid,
 				OrgID: r.opts.OrgID,
 				Theme: r.opts.Theme,
-				Size:  PreviewSizeThumb,
+				Kind:  r.thumbnailKind,
 			})
 			err = os.Rename(res.FilePath, p)
 			if err != nil {

@@ -7,18 +7,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
-type PreviewSize string
 type CrawlerMode string
 
 const (
-	// PreviewSizeThumb is a small 320x240 preview
-	PreviewSizeThumb PreviewSize = "thumb"
-
-	// PreviewSizeLarge is a large image 2000x1500
-	PreviewSizeLarge PreviewSize = "large"
-
-	// PreviewSizeLarge is a large image 512x????
-	PreviewSizeTall PreviewSize = "tall"
 
 	// CrawlerModeThumbs will create small thumbnails for everything
 	CrawlerModeThumbs CrawlerMode = "thumbs"
@@ -30,45 +21,11 @@ const (
 	CrawlerModeMigrate CrawlerMode = "migrate"
 )
 
-// IsKnownSize checks if the value is a standard size
-func (p PreviewSize) IsKnownSize() bool {
-	switch p {
-	case
-		PreviewSizeThumb,
-		PreviewSizeLarge,
-		PreviewSizeTall:
-		return true
-	}
-	return false
-}
-
-func getPreviewSize(str string) (PreviewSize, bool) {
-	switch str {
-	case string(PreviewSizeThumb):
-		return PreviewSizeThumb, true
-	case string(PreviewSizeLarge):
-		return PreviewSizeLarge, true
-	case string(PreviewSizeTall):
-		return PreviewSizeTall, true
-	}
-	return PreviewSizeThumb, false
-}
-
-func getTheme(str string) (rendering.Theme, bool) {
-	switch str {
-	case "light":
-		return rendering.ThemeLight, true
-	case "dark":
-		return rendering.ThemeDark, true
-	}
-	return rendering.ThemeDark, false
-}
-
 type previewRequest struct {
-	OrgID int64           `json:"orgId"`
-	UID   string          `json:"uid"`
-	Size  PreviewSize     `json:"size"`
-	Theme rendering.Theme `json:"theme"`
+	OrgID int64                `json:"orgId"`
+	UID   string               `json:"uid"`
+	Kind  models.ThumbnailKind `json:"kind"`
+	Theme rendering.Theme      `json:"theme"`
 }
 
 type previewResponse struct {
@@ -97,7 +54,7 @@ type dashRenderer interface {
 	GetPreview(req *previewRequest) *previewResponse
 
 	// Assumes you have already authenticated as admin
-	Start(c *models.ReqContext, mode CrawlerMode, theme rendering.Theme) (crawlStatus, error)
+	Start(c *models.ReqContext, mode CrawlerMode, theme rendering.Theme, kind models.ThumbnailKind) (crawlStatus, error)
 
 	// Assumes you have already authenticated as admin
 	Stop() (crawlStatus, error)

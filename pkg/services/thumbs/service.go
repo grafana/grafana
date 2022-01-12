@@ -70,14 +70,14 @@ func (hs *thumbService) Enabled() bool {
 func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *previewRequest {
 	params := web.Params(c.Req)
 
-	size, ok := getPreviewSize(params[":size"])
-	if !ok {
+	kind, err := models.ParseThumbnailKind(params[":kind"])
+	if err != nil {
 		c.JSON(400, map[string]string{"error": "invalid size"})
 		return nil
 	}
 
-	theme, ok := getTheme(params[":theme"])
-	if !ok {
+	theme, err := rendering.ParseTheme(params[":theme"])
+	if err != nil {
 		c.JSON(400, map[string]string{"error": "invalid theme"})
 		return nil
 	}
@@ -86,7 +86,7 @@ func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *pre
 		OrgID: c.OrgId,
 		UID:   params[":uid"],
 		Theme: theme,
-		Size:  size,
+		Kind:  kind,
 	}
 
 	if len(req.UID) < 1 {
@@ -112,8 +112,8 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	query := &models.GetDashboardThumbnailCommand{
 		DashboardUID: req.UID,
 		PanelID:      0,
-		Kind:         "thumb", // TODO: use enums. can we use the same enums everywhere?
-		Theme:        "dark",
+		Kind:         models.ThumbnailKindDefault,
+		Theme:        string(rendering.ThemeDark),
 	}
 	res, err := hs.store.GetThumbnail(query)
 	if err != nil {
@@ -222,7 +222,7 @@ func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 	if cmd.Mode == "" {
 		cmd.Mode = CrawlerModeThumbs
 	}
-	msg, err := hs.renderer.Start(c, cmd.Mode, cmd.Theme)
+	msg, err := hs.renderer.Start(c, cmd.Mode, cmd.Theme, models.ThumbnailKindDefault)
 	if err != nil {
 		return response.Error(500, "error starting", err)
 	}
