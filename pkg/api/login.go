@@ -349,7 +349,7 @@ func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err erro
 }
 
 func (hs *HTTPServer) samlEnabled() bool {
-	return hs.SettingsProvider.KeyValue("auth.saml", "enabled").MustBool(false) && hs.License.HasValidLicense()
+	return hs.SettingsProvider.KeyValue("auth.saml", "enabled").MustBool(false) && hs.License.FeatureEnabled("saml")
 }
 
 func (hs *HTTPServer) samlName() string {

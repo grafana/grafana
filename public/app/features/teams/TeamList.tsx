@@ -3,7 +3,7 @@ import Page from 'app/core/components/Page/Page';
 import { DeleteButton, LinkButton, FilterInput } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { OrgRole, StoreState, Team } from 'app/types';
+import { AccessControlAction, StoreState, Team } from 'app/types';
 import { deleteTeam, loadTeams } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount, isPermissionTeamAdmin } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -94,10 +94,10 @@ export class TeamList extends PureComponent<Props, any> {
   }
 
   renderTeamList() {
-    const { teams, searchQuery, editorsCanAdmin, signedInUser } = this.props;
-    const isCanAdminAndViewer = editorsCanAdmin && signedInUser.orgRole === OrgRole.Viewer;
-    const disabledClass = isCanAdminAndViewer ? ' disabled' : '';
-    const newTeamHref = isCanAdminAndViewer ? '#' : 'org/teams/new';
+    const { teams, searchQuery, editorsCanAdmin } = this.props;
+    const teamAdmin = contextSrv.hasRole('Admin') || (editorsCanAdmin && contextSrv.hasRole('Editor'));
+    const canCreate = contextSrv.hasAccess(AccessControlAction.ActionTeamsCreate, teamAdmin);
+    const newTeamHref = canCreate ? 'org/teams/new' : '#';
 
     return (
       <>
@@ -106,7 +106,7 @@ export class TeamList extends PureComponent<Props, any> {
             <FilterInput placeholder="Search teams" value={searchQuery} onChange={this.onSearchQueryChange} />
           </div>
 
-          <LinkButton className={disabledClass} href={newTeamHref}>
+          <LinkButton href={newTeamHref} disabled={!canCreate}>
             New Team
           </LinkButton>
         </div>
