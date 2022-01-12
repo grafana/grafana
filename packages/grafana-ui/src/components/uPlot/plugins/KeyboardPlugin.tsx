@@ -1,4 +1,5 @@
 import React, { useLayoutEffect } from 'react';
+import { clamp } from 'lodash';
 import uPlot from 'uplot';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
@@ -9,10 +10,6 @@ interface KeyboardPluginProps {
 const PIXELS_PER_MS = 0.1 as const;
 const SHIFT_MULTIPLIER = 2 as const;
 const KNOWN_KEYS = new Set(['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Shift', ' ']);
-
-function minMax(n: number, min: number, max: number) {
-  return Math.min(Math.max(min, n), max);
-}
 
 const initHook = (u: uPlot) => {
   let vizLayoutViz: HTMLElement | null = u.root.closest('[tabindex]');
@@ -26,7 +23,7 @@ const initHook = (u: uPlot) => {
 
   const moveCursor = (dx: number, dy: number) => {
     const { cursor } = u;
-    if (cursor.left === undefined) {
+    if (cursor.left === undefined || cursor.top === undefined) {
       return;
     }
 
@@ -34,8 +31,8 @@ const initHook = (u: uPlot) => {
     const [maxX, maxY] = [Math.floor(parseFloat(width)), Math.floor(parseFloat(height))];
 
     u.setCursor({
-      left: minMax(cursor.left! + dx, 0, maxX),
-      top: minMax(cursor.top! + dy, 0, maxY),
+      left: clamp(cursor.left + dx, 0, maxX),
+      top: clamp(cursor.top + dy, 0, maxY),
     });
   };
 

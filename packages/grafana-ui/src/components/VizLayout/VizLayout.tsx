@@ -37,7 +37,11 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   const [legendRef, legendMeasure] = useMeasure<HTMLDivElement>();
 
   if (!legend) {
-    return <div style={containerStyle}>{children(width, height)}</div>;
+    return (
+      <div tabIndex={0} style={containerStyle} className={styles.viz}>
+        {children(width, height)}
+      </div>
+    );
   }
 
   const { placement, maxHeight = '35%', maxWidth = '60%' } = legend.props;
