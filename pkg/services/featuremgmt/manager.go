@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -113,46 +112,6 @@ func (fm *FeatureManager) readFile() error {
 	fm.vars = cfg.Vars
 
 	return nil
-}
-
-// Run is called by background services
-func (fm *FeatureManager) Run(ctx context.Context) error {
-	if fm.config == "" {
-		return nil // no config file found
-	}
-
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = watcher.Close()
-	}()
-
-	if err := watcher.Add(fm.config); err != nil {
-		return err
-	}
-
-	for {
-		select {
-		// watch for events
-		case event := <-watcher.Events:
-			cfg, err := readConfigFile(fm.config)
-			if err != nil {
-				if err != nil {
-					fm.log.Error("failed to read features file", "event", event, "error", err)
-				} else {
-					fm.log.Info("reloading features file", "path", fm.config)
-					fm.registerFlags(cfg.Flags...)
-				}
-			}
-
-		case err := <-watcher.Errors:
-			fm.log.Error("failed to watch features file", "error", err)
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
 }
 
 // IsEnabled checks if a feature is enabled
