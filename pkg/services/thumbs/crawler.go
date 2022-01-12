@@ -232,61 +232,12 @@ func (r *simpleCrawler) walk() {
 			tlog.Warn("error getting image... internal result", "img", res.FilePath)
 			r.status.Errors++
 		} else {
-
-			// TODO extract to a separate method
-			file, err := os.Open(res.FilePath)
+			thumbnailId, err := r.saveThumbnail(res, item)
 			if err != nil {
 				r.status.Errors++
-				tlog.Warn("error opening file", "err", err)
 			} else {
-				reader := bufio.NewReader(file)
-				// TODO remove the file right after this operation succeeds? or create it with a "temp" flag?
-				content, err := ioutil.ReadAll(reader)
-				if err != nil {
-					r.status.Errors++
-					tlog.Warn("error reading file", "err", err)
-				} else {
-
-					var mimeType string
-					if strings.HasSuffix(res.FilePath, ".webp") {
-						mimeType = "image/webp"
-					} else if strings.HasSuffix(res.FilePath, ".png") {
-						mimeType = "image/png"
-					} else {
-						mimeType = "image/png"
-					}
-
-					base64Image := base64.StdEncoding.EncodeToString(content)
-					cmd := &models.SaveDashboardThumbnailCommand{
-						DashboardID: item.id,
-						PanelID:     0,
-						Kind:        r.thumbnailKind,
-						Image:       fmt.Sprintf("data:%s;base64,%s", mimeType, base64Image),
-						Theme:       string(r.opts.Theme),
-					}
-					_, err = r.store.SaveThumbnail(cmd)
-					if err != nil {
-						r.status.Errors++
-						tlog.Warn("error saving to the db", "err", err)
-
-					}
-					tlog.Info("saved thumbnail", "panel", panelURL, "resultId", cmd.Result.Id)
-				}
-			}
-
-			p := getFilePath(r.screenshotsFolder, &previewRequest{
-				UID:   item.uid,
-				OrgID: r.opts.OrgID,
-				Theme: r.opts.Theme,
-				Kind:  r.thumbnailKind,
-			})
-			err = os.Rename(res.FilePath, p)
-			if err != nil {
-				r.status.Errors++
-				tlog.Warn("error moving image", "err", err)
-			} else {
+				tlog.Info("saved thumbnail", "img", item.url, "thumbnailId", thumbnailId)
 				r.status.Complete++
-				tlog.Info("saved thumbnail", "img", item.url)
 			}
 		}
 
@@ -298,4 +249,52 @@ func (r *simpleCrawler) walk() {
 	r.status.State = "stopped"
 	r.status.Finished = time.Now()
 	r.broadcastStatus()
+}
+
+func (r *simpleCrawler) saveThumbnail(res *rendering.RenderResult, item *dashItem) (int64, error) {
+	defer removeThumbnailFile(res, item)
+
+	file, err := os.Open(res.FilePath)
+	if err != nil {
+		tlog.Error("error opening file", "url", item.url, "err", err)
+		return 0, err
+	}
+
+	reader := bufio.NewReader(file)
+	content, err := ioutil.ReadAll(reader)
+
+	if err != nil {
+		r.status.Errors++
+		tlog.Error("error reading file", "url", item.url, "err", err)
+		return 0, err
+	}
+
+	var mimeType = "image/png"
+	if strings.HasSuffix(res.FilePath, ".webp") {
+		mimeType = "image/webp"
+	}
+
+	base64Image := base64.StdEncoding.EncodeToString(content)
+	cmd := &models.SaveDashboardThumbnailCommand{
+		DashboardID: item.id,
+		PanelID:     0,
+		Kind:        r.thumbnailKind,
+		Image:       fmt.Sprintf("data:%s;base64,%s", mimeType, base64Image),
+		Theme:       string(r.opts.Theme),
+	}
+
+	_, err = r.store.SaveThumbnail(cmd)
+	if err != nil {
+		tlog.Error("error saving to the db", "url", item.url, "err", err)
+		return 0, err
+	}
+
+	return cmd.Result.Id, nil
+}
+
+func removeThumbnailFile(res *rendering.RenderResult, item *dashItem) {
+	err := os.Remove(res.FilePath)
+	if err != nil {
+		tlog.Error("failed to remove thumbnail file", "url", item.url, "err", err)
+	}
 }
