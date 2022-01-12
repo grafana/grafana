@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -29,19 +30,16 @@ type ResourceServices struct {
 var (
 	// probably should contain team reader action
 	TeamMemberActions = []string{
-		"teams:read",
+		api.ActionTeamsRead,
 	}
 
 	TeamAdminActions = []string{
-		"teams:create",
-		"teams:delete",
-		"teams:read",
-		"teams:write",
-		// "teams.members:remove",
-		// "teams.members:add",
-		// "teams.members:read",
-		"teams.permissions:read",
-		"teams.permissions:write",
+		api.ActionTeamsCreate,
+		api.ActionTeamsDelete,
+		api.ActionTeamsWrite,
+		api.ActionTeamsRead,
+		api.ActionTeamsPermissionsRead,
+		api.ActionTeamsPermissionsWrite,
 	}
 )
 

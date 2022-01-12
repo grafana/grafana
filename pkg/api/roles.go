@@ -25,7 +25,12 @@ const (
 	ActionOrgsDelete           = "orgs:delete"
 	ActionOrgsCreate           = "orgs:create"
 
-	ActionTeamsCreate = "teams:create"
+	ActionTeamsCreate           = "teams:create"
+	ActionTeamsDelete           = "teams:delete"
+	ActionTeamsRead             = "teams:read"
+	ActionTeamsWrite            = "teams:write"
+	ActionTeamsPermissionsRead  = "teams.permissions:read"
+	ActionTeamsPermissionsWrite = "teams.permissions:write"
 )
 
 // API related scopes
@@ -40,6 +45,8 @@ var (
 	ScopeDatasourceID   = accesscontrol.Scope("datasources", "id", accesscontrol.Parameter(":id"))
 	ScopeDatasourceUID  = accesscontrol.Scope("datasources", "uid", accesscontrol.Parameter(":uid"))
 	ScopeDatasourceName = accesscontrol.Scope("datasources", "name", accesscontrol.Parameter(":name"))
+
+	ScopeTeamsID = accesscontrol.Scope("teams", "id", accesscontrol.Parameter(":teamId"))
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
