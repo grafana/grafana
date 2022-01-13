@@ -254,8 +254,8 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   );
 
   const originPanelId = parsedSegments.find((segment) => isSegment(segment, 'originPanelId'));
-  const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'));
-  return { datasource, queries, range, originPanelId, panelsState: panelsState };
+  const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'))?.__panelsState;
+  return { datasource, queries, range, originPanelId, panelsState };
 }
 
 export function generateKey(index = 0): string {
