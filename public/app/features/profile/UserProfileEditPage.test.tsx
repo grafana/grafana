@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { within } from '@testing-library/dom';
 import { OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import TestProvider from '../../../test/helpers/TestProvider';
 
 import { Props, UserProfileEditPage } from './UserProfileEditPage';
 import { initialUserState } from './state/reducers';
@@ -111,7 +112,7 @@ function getSelectors() {
     sessionsTable,
     sessionsRow: () =>
       within(sessionsTable()).getByRole('row', {
-        name: /now 2021-01-01 04:00:00 localhost chrome on mac os x 11/i,
+        name: /now January 1, 2021 localhost chrome on mac os x 11/i,
       }),
   };
 }
@@ -125,7 +126,11 @@ async function getTestContext(overrides: Partial<Props> = {}) {
   const searchSpy = jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
   const props = { ...defaultProps, ...overrides };
-  const { rerender } = render(<UserProfileEditPage {...props} />);
+  const { rerender } = render(
+    <TestProvider>
+      <UserProfileEditPage {...props} />
+    </TestProvider>
+  );
 
   await waitFor(() => expect(props.initUserProfilePage).toHaveBeenCalledTimes(1));
 
