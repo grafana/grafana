@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -359,6 +361,20 @@ var (
 func (s *SecretsService) Run(ctx context.Context) error {
 	gc := time.NewTicker(gcInterval)
 
+	for _, p := range s.providers {
+		if svc, ok := p.(registry.BackgroundService); ok {
+			var err error
+
+			go func() {
+				err = svc.Run(ctx)
+			}()
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	for {
 		select {
 		case <-gc.C:
@@ -371,6 +387,7 @@ func (s *SecretsService) Run(ctx context.Context) error {
 			return nil
 		}
 	}
+
 }
 
 func (s *SecretsService) removeExpiredItems() {
