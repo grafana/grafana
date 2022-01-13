@@ -2,22 +2,19 @@ package thumbs
 
 import (
 	"fmt"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/live"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"io"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/segmentio/encoding/json"
+	"io"
+	"io/ioutil"
 )
 
 var (
@@ -42,19 +39,12 @@ func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.
 		return &dummyService{}
 	}
 
-	root := filepath.Join(cfg.DataPath, "crawler", "preview")
-	tempdir := filepath.Join(cfg.DataPath, "temp")
-	_ = os.MkdirAll(root, 0700)
-	_ = os.MkdirAll(tempdir, 0700)
-
 	thumbnailRepo := newThumbnailRepo(store)
 
-	renderer := newSimpleCrawler(root, renderService, gl, thumbnailRepo)
+	renderer := newSimpleCrawler(renderService, gl, thumbnailRepo)
 	return &thumbService{
 		renderer:      renderer,
 		thumbnailRepo: thumbnailRepo,
-		root:          root,
-		tempdir:       tempdir,
 	}
 }
 
@@ -163,19 +153,6 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 	tlog.Info("Uploaded File: %+v\n", handler.Filename)
 	tlog.Info("File Size: %+v\n", handler.Size)
 	tlog.Info("MIME Header: %+v\n", handler.Header)
-
-	// Create a temporary file within our temp-images directory that follows
-	// a particular naming pattern
-	tempFile, err := ioutil.TempFile(hs.tempdir, "upload-*")
-	if err != nil {
-		c.JSON(400, map[string]string{"error": "error creating temp file"})
-		fmt.Println("error", err)
-		tlog.Info("ERROR", "err", handler.Header)
-		return
-	}
-	defer func() {
-		_ = tempFile.Close()
-	}()
 
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {

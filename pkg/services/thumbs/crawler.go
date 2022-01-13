@@ -24,9 +24,8 @@ type dashItem struct {
 }
 
 type simpleCrawler struct {
-	screenshotsFolder string
-	renderService     rendering.Service
-	threadCount       int
+	renderService rendering.Service
+	threadCount   int
 
 	glive         *live.GrafanaLive
 	thumbnailRepo thumbnailRepo
@@ -38,13 +37,12 @@ type simpleCrawler struct {
 	mu            sync.Mutex
 }
 
-func newSimpleCrawler(folder string, renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo) dashRenderer {
+func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo) dashRenderer {
 	c := &simpleCrawler{
-		screenshotsFolder: folder,
-		renderService:     renderService,
-		threadCount:       1,
-		glive:             gl,
-		thumbnailRepo:     repo,
+		renderService: renderService,
+		threadCount:   1,
+		glive:         gl,
+		thumbnailRepo: repo,
 		status: crawlStatus{
 			State:    "init",
 			Complete: 0,
