@@ -13,7 +13,7 @@ import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { GazetteerPathEditor } from 'app/plugins/panel/geomap/editor/GazetteerPathEditor';
 import { GazetteerPathEditorConfigSettings } from 'app/plugins/panel/geomap/types';
-import { FieldLookupOptions, fieldLookupTransformer } from './fieldLookup';
+import { SetGeometryOptions, setGeometryTransformer } from './setGeometry';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: {
@@ -27,11 +27,11 @@ const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePick
   editor: () => null,
 };
 
-const fieldLookupSettings: StandardEditorsRegistryItem<string, GazetteerPathEditorConfigSettings> = {
+const setGeometrySettings: StandardEditorsRegistryItem<string, GazetteerPathEditorConfigSettings> = {
   settings: {},
 } as any;
 
-export const FieldLookupTransformerEditor: React.FC<TransformerUIProps<FieldLookupOptions>> = ({
+export const SetGeometryTransformerEditor: React.FC<TransformerUIProps<SetGeometryOptions>> = ({
   input,
   options,
   onChange,
@@ -72,7 +72,7 @@ export const FieldLookupTransformerEditor: React.FC<TransformerUIProps<FieldLook
           <GazetteerPathEditor
             value={options?.gazetteer ?? ''}
             context={{ data: input }}
-            item={fieldLookupSettings}
+            item={setGeometrySettings}
             onChange={onPickGazetteer}
           />
         </InlineField>
@@ -81,10 +81,10 @@ export const FieldLookupTransformerEditor: React.FC<TransformerUIProps<FieldLook
   );
 };
 
-export const fieldLookupTransformRegistryItem: TransformerRegistryItem<FieldLookupOptions> = {
-  id: DataTransformerID.fieldLookup,
-  editor: FieldLookupTransformerEditor,
-  transformation: fieldLookupTransformer,
+export const setGeometryTransformRegistryItem: TransformerRegistryItem<SetGeometryOptions> = {
+  id: DataTransformerID.setGeometry,
+  editor: SetGeometryTransformerEditor,
+  transformation: setGeometryTransformer,
   name: 'Field lookup',
   description: `Use a field value to lookup additional fields from an external source.  This currently supports spatial data, but will eventually support more formats`,
   state: PluginState.alpha,

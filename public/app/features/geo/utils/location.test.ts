@@ -1,6 +1,6 @@
 import { toDataFrame, FieldType, FrameGeometrySourceMode } from '@grafana/data';
 import { toLonLat } from 'ol/proj';
-import { dataFrameToPoints, getLocationFields, getLocationMatchers } from './location';
+import { getLocationFields, getLocationMatchers, setGeometryOnFrame } from './location';
 
 const longitude = [0, -74.1];
 const latitude = [0, 40.7];
@@ -23,8 +23,10 @@ describe('handle location parsing', () => {
     expect(fields.geohash).toBeDefined();
     expect(fields.geohash?.name).toEqual('geohash');
 
-    const info = dataFrameToPoints(frame, matchers);
-    expect(info.points.map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
+    const out = setGeometryOnFrame(frame, matchers);
+    const geo = out.fields[0];
+    expect(geo.type).toBe(FieldType.geo);
+    expect(geo.values.toArray().map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
         Array [
           Array [
             -122.01416015625001,
@@ -49,8 +51,17 @@ describe('handle location parsing', () => {
     });
 
     const matchers = await getLocationMatchers();
-    const info = dataFrameToPoints(frame, matchers);
-    expect(info.points.map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
+    const out = setGeometryOnFrame(frame, matchers);
+    const geo = out.fields[0];
+    expect(out.fields.map((f) => f.name)).toMatchInlineSnapshot(`
+      Array [
+        "point",
+        "name",
+        "latitude",
+        "longitude",
+      ]
+    `);
+    expect(geo.values.toArray().map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
       Array [
         Array [
           0,

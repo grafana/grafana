@@ -7,8 +7,10 @@ import {
   DataFrame,
   Field,
   getFieldDisplayName,
+  FieldType,
+  ArrayVector,
 } from '@grafana/data';
-import { Point } from 'ol/geom';
+import { Geometry } from 'ol/geom';
 import { getGazetteer, Gazetteer } from '../gazetteer/gazetteer';
 import { pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
 
@@ -50,6 +52,7 @@ export interface LocationFieldMatchers {
   h3: FieldFinder;
   wkt: FieldFinder;
   lookup: FieldFinder;
+  geo: FieldFinder;
   gazetteer?: Gazetteer;
 }
 
@@ -61,6 +64,7 @@ const defaultMatchers: LocationFieldMatchers = {
   h3: matchLowerNames(new Set(['h3'])),
   wkt: matchLowerNames(new Set(['wkt'])),
   lookup: matchLowerNames(new Set(['lookup'])),
+  geo: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.geo),
 };
 
 export async function getLocationMatchers(src?: FrameGeometrySource): Promise<LocationFieldMatchers> {
@@ -101,6 +105,7 @@ export interface LocationFields {
   h3?: Field;
   wkt?: Field;
   lookup?: Field;
+  geo?: Field<Geometry>;
 }
 
 export function getLocationFields(frame: DataFrame, location: LocationFieldMatchers): LocationFields {
@@ -110,6 +115,11 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
 
   // Find the best option
   if (fields.mode === FrameGeometrySourceMode.Auto) {
+    fields.geo = location.geo(frame);
+    if (fields.geo) {
+      return fields;
+    }
+
     fields.latitude = location.latitude(frame);
     fields.longitude = location.longitude(frame);
     if (fields.latitude && fields.longitude) {
@@ -144,64 +154,76 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
   return fields;
 }
 
-export interface LocationInfo {
-  warning?: string;
-  points: Point[];
-}
-
-export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatchers): LocationInfo {
-  const info: LocationInfo = {
-    points: [],
-  };
-  if (!frame?.length) {
-    return info;
-  }
+export function setGeometryOnFrame(frame: DataFrame, location: LocationFieldMatchers): DataFrame {
+  let warning: string | undefined = undefined;
+  let geo: Field | undefined = undefined;
   const fields = getLocationFields(frame, location);
   switch (fields.mode) {
+    case FrameGeometrySourceMode.Auto:
+      if (fields.geo) {
+        return frame;
+      }
+      warning = 'Unable to find location fields';
+      break;
+
     case FrameGeometrySourceMode.Coords:
       if (fields.latitude && fields.longitude) {
-        info.points = pointFieldFromLonLat(fields.longitude, fields.latitude).values.toArray();
+        geo = pointFieldFromLonLat(fields.longitude, fields.latitude);
       } else {
-        info.warning = 'Missing latitude/longitude fields';
+        warning = 'Missing latitude/longitude fields';
       }
       break;
 
     case FrameGeometrySourceMode.Geohash:
       if (fields.geohash) {
-        info.points = pointFieldFromGeohash(fields.geohash).values.toArray();
+        geo = pointFieldFromGeohash(fields.geohash);
       } else {
-        info.warning = 'Missing geohash field';
+        warning = 'Missing geohash field';
       }
       break;
 
     case FrameGeometrySourceMode.Lookup:
       if (fields.lookup) {
         if (location.gazetteer) {
-          info.points = getPointsFromGazetteer(location.gazetteer, fields.lookup);
+          geo = getGeoFieldFromGazetteer(location.gazetteer, fields.lookup);
         } else {
-          info.warning = 'Gazetteer not found';
+          warning = 'Gazetteer not found';
         }
       } else {
-        info.warning = 'Missing lookup field';
+        warning = 'Missing lookup field';
       }
       break;
-
-    case FrameGeometrySourceMode.Auto:
-      info.warning = 'Unable to find location fields';
   }
 
-  return info;
+  if (warning || !geo) {
+    const meta = frame.meta ?? {};
+    meta.notices = [
+      {
+        severity: 'error',
+        text: warning ?? 'Unable to set geometry field',
+      },
+    ];
+    return {
+      ...frame,
+      meta,
+    };
+  }
+  return {
+    ...frame,
+    fields: [geo, ...frame.fields],
+  };
 }
 
-function getPointsFromGazetteer(gaz: Gazetteer, field: Field<string>): Point[] {
+function getGeoFieldFromGazetteer(gaz: Gazetteer, field: Field<string>): Field<Geometry | undefined> {
   const count = field.values.length;
-  const points = new Array<Point>(count);
+  const geo = new Array<Geometry | undefined>(count);
   for (let i = 0; i < count; i++) {
-    const info = gaz.find(field.values.get(i));
-    const v = info?.point();
-    if (v) {
-      points[i] = v;
-    }
+    geo[i] = gaz.find(field.values.get(i))?.geometry();
   }
-  return points;
+  return {
+    name: 'Geometry',
+    type: FieldType.geo,
+    values: new ArrayVector(geo),
+    config: {},
+  };
 }

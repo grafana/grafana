@@ -31,6 +31,10 @@ async function doGazetteerXform(frames: DataFrame[], options: FieldLookupOptions
 
   const gaz = await getGazetteer(options?.gazetteer ?? COUNTRIES_GAZETTEER_PATH);
 
+  if (!gaz.frame) {
+    return Promise.reject('missng frame in gazeeteer');
+  }
+
   return addFieldsFromGazetteer(frames, gaz, fieldMatches);
 }
 
@@ -49,12 +53,9 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gaz: Gazetteer, matc
 
         //for each value find the corresponding value in the gazetteer
         for (let v = 0; v < values.length; v++) {
-          const foundMatchingValue = gaz.find(values[v]);
-
-          const point = foundMatchingValue?.point();
-          if (point) {
-            lon[v] = point.getCoordinates()[0];
-            lat[v] = point.getCoordinates()[1];
+          const found = gaz.find(values[v]);
+          if (found?.index != null) {
+            // TODO -- add the additional field metadata
           }
         }
         fields.push({ name: 'lon', type: FieldType.number, values: new ArrayVector(lon), config: {} });
