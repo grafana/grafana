@@ -180,7 +180,7 @@ export class LokiDatasource
         target.queryType === LokiQueryType.Stream &&
         options.rangeRaw?.to === 'now'
       ) {
-        subQueries.push(doLokiChannelStream(target, this, options.range));
+        subQueries.push(doLokiChannelStream(target, this, options));
       } else {
         subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
       }

@@ -1,6 +1,10 @@
 package loki
 
-import "time"
+import (
+	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+)
 
 type lokiQuery struct {
 	Expr         string
@@ -16,6 +20,6 @@ type lokiResponse struct {
 }
 
 type lokiStream struct {
-	Stream map[string]string `json:"stream"`
-	Values [][2]string       `json:"values"`
+	Stream data.Labels `json:"stream"`
+	Values [][2]string `json:"values"`
 }

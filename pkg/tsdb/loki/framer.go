@@ -2,14 +2,12 @@ package loki
 
 import (
 	"encoding/json"
-	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// Will return a simple frame with:
-// labels,time,line
 func lokiBytesToLabeledFrame(msg []byte) (*data.Frame, error) {
 	rsp := &lokiResponse{}
 	err := json.Unmarshal(msg, rsp)
@@ -22,13 +20,17 @@ func lokiBytesToLabeledFrame(msg []byte) (*data.Frame, error) {
 	lineField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 
 	labelField.Name = "__labels" // for now, avoid automatically spreading this by labels
-	labelField.Name = "Time"
-	labelField.Name = "Line"
+	timeField.Name = "Time"
+	lineField.Name = "Line"
 
 	for _, stream := range rsp.Streams {
-		label := toLabelString(stream.Stream)
+		label := stream.Stream.String() // TODO -- make it match prom labels!
 		for _, value := range stream.Values {
-			ts := time.Now() // TODO! parse [0]
+			n, err := strconv.ParseInt(value[0], 10, 64)
+			if err != nil {
+				continue
+			}
+			ts := time.Unix(0, n)
 			line := value[1]
 
 			labelField.Append(label)
@@ -38,9 +40,4 @@ func lokiBytesToLabeledFrame(msg []byte) (*data.Frame, error) {
 	}
 
 	return data.NewFrame("", labelField, timeField, lineField), nil
-}
-
-// TODO!  actual formatting
-func toLabelString(vals map[string]string) string {
-	return fmt.Sprintf("%v", vals)
 }

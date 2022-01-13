@@ -3,6 +3,7 @@ package loki
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -67,20 +68,22 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	params := url.Values{}
 	params.Add("query", query.Expr)
 
+	isV1 := false
 	wsurl, _ := url.Parse(dsInfo.URL)
+
+	// Check if the v2alpha endpoint exists
+	wsurl.Path = "/loki/api/v2alpha/tail"
+	if s.is404(wsurl) {
+		isV1 = true
+		wsurl.Path = "/loki/api/v1/tail"
+	}
+
 	if wsurl.Scheme == "https" {
 		wsurl.Scheme = "wss"
 	} else {
 		wsurl.Scheme = "ws"
 	}
 	wsurl.RawQuery = params.Encode()
-
-	isV1 := true
-	if isV1 {
-		wsurl.Path = "/loki/api/v1/tail"
-	} else {
-		wsurl.Path = "/loki/api/v2alpha/tail"
-	}
 
 	s.plog.Info("connecting to websocket", "url", wsurl)
 	c, _, err := websocket.DefaultDialer.Dial(wsurl.String(), nil)
@@ -105,7 +108,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 				return
 			}
 			if isV1 {
-				//fmt.Printf("\n\n%s\n", string(message))
+				// fmt.Printf("\n\n%s\n", string(message))
 				var f *data.Frame
 				f, err = lokiBytesToLabeledFrame(message)
 				if err == nil {
@@ -143,4 +146,11 @@ func (s *Service) PublishStream(_ context.Context, _ *backend.PublishStreamReque
 	return &backend.PublishStreamResponse{
 		Status: backend.PublishStreamStatusPermissionDenied,
 	}, nil
+}
+
+func (s *Service) is404(url *url.URL) bool {
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", url.String(), nil)
+	resp, _ := client.Do(req)
+	return resp.StatusCode == 400 // will be true
 }
