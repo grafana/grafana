@@ -42,7 +42,11 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   const { eventBus } = usePanelContext();
   const { newData, externalLogs } = usePopulateData({ data });
-  console.log(newData);
+  const { scrollTop } = usePanelScroll({
+    isAscending,
+    messages: newData?.series[0]?.fields[1]?.values?.buffer || [''],
+  });
+
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
       if (!row) {
@@ -70,8 +74,6 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newData, externalLogs, dedupStrategy]);
-
-  const { scrollTop } = usePanelScroll({ isAscending, logRows });
 
   const getFieldLinks = useCallback(
     (field: Field, rowIndex: number) => {

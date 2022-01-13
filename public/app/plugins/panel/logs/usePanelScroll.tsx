@@ -1,16 +1,15 @@
-import { useLayoutEffect, useState, useMemo, useRef } from 'react';
-import { LogRowModel } from '@grafana/data';
+import { useLayoutEffect, useState, useRef, useEffect } from 'react';
 
 interface Props {
   isAscending: boolean;
-  logRows: LogRowModel[];
+  messages: string[];
 }
 
-const usePanelScroll = ({ isAscending, logRows }: Props) => {
+const usePanelScroll = ({ isAscending, messages }: Props) => {
   const [scrollTop, setScrollTop] = useState(0);
-  const prevScrollPosition = useRef(null);
+  const prevScrollPosition = useRef<number>(0);
 
-  useMemo(() => {
+  useEffect(() => {
     const scrollbar = document.querySelector('.scrollbar-view');
     scrollbar?.addEventListener('scroll', (e: any) => {
       prevScrollPosition.current = e.target.scrollTop;
@@ -18,10 +17,10 @@ const usePanelScroll = ({ isAscending, logRows }: Props) => {
 
     return () => {
       scrollbar?.removeEventListener('scroll', () => {
-        prevScrollPosition.current = null;
+        prevScrollPosition.current = 0;
       });
     };
-  }, []);
+  }, [messages]);
 
   useLayoutEffect(() => {
     const scrollbar = document.querySelector('.scrollbar-view');
@@ -37,10 +36,10 @@ const usePanelScroll = ({ isAscending, logRows }: Props) => {
         // if the scrollbar is present, we check if the user is scrolled at the bottom to
         // determine if we are gonna scroll all the way down when a new log comes in
         // or if we are gonna keep our scroll position
-        if (scrollbar.scrollHeight - scrollbar.scrollTop === newLogHeight) {
+        if (scrollbar.scrollHeight - prevScrollPosition.current === newLogHeight) {
           setScrollTop(scrollbar.scrollHeight);
         } else {
-          setScrollTop(scrollbar.scrollTop);
+          setScrollTop(prevScrollPosition.current);
         }
       } else {
         // if the scrollbar is not present, we scroll to the bottom by default
@@ -49,9 +48,13 @@ const usePanelScroll = ({ isAscending, logRows }: Props) => {
         setScrollTop(prevScrollPosition.current || 0);
       }
     } else if (!isAscending && scrollbar) {
-      setScrollTop(prevScrollPosition.current || 0);
+      if (prevScrollPosition.current === 0) {
+        setScrollTop(prevScrollPosition.current);
+      } else {
+        setScrollTop(prevScrollPosition.current + (logRowHeight || 0));
+      }
     }
-  }, [isAscending, logRows]);
+  }, [isAscending, messages]);
 
   return {
     scrollTop,
