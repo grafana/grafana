@@ -1,14 +1,16 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -23,7 +25,8 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 
 	filteredMembers := make([]*models.TeamMemberDTO, 0, len(query.Result))
 	for _, member := range query.Result {
-		if dtos.IsHiddenUser(member.Login, c.SignedInUser, hs.Cfg) {
+		// TODO: when FGAC is enabled, use SQL filtering to filter out for users that the caller has permissions to see
+		if !hs.Cfg.FeatureToggles["accesscontrol"] && dtos.IsHiddenUser(member.Login, c.SignedInUser, hs.Cfg) {
 			continue
 		}
 
@@ -50,11 +53,13 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 	cmd.OrgId = c.OrgId
 	cmd.TeamId = c.ParamsInt64(":teamId")
 
-	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.TeamId, c.SignedInUser); err != nil {
-		return response.Error(403, "Not allowed to add team member", err)
+	if !hs.Cfg.FeatureToggles["accesscontrol"] {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.TeamId, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to add team member", err)
+		}
 	}
 
-	err := addTeamMember(hs.SQLStore, cmd.UserId, cmd.OrgId, cmd.TeamId, cmd.External, cmd.Permission)
+	err := addTeamMember(hs.TeamPermissionsService, cmd.UserId, cmd.OrgId, cmd.TeamId, cmd.External, cmd.Permission)
 	if err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
@@ -134,7 +139,14 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 // addTeamMember adds a team member.
 //
 // Stubbable by tests.
-var addTeamMember = func(sqlStore *sqlstore.SQLStore, userID, orgID, teamID int64, isExternal bool,
+var addTeamMember = func(resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
 	permission models.PermissionType) error {
-	return sqlStore.AddTeamMember(userID, orgID, teamID, isExternal, permission)
+	if permission == 0 {
+		permission = models.PERMISSION_VIEW
+	}
+	actions := resourcePermissionService.MapPermission(permission.String())
+	teamIDString := strconv.FormatInt(teamID, 10)
+	_, err := resourcePermissionService.SetUserPermission(context.TODO(), orgID, userID, teamIDString, actions)
+
+	return err
 }

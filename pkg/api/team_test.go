@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -115,7 +116,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		}
 
 		addTeamMemberCalled := 0
-		addTeamMember = func(sqlStore *sqlstore.SQLStore, userID, orgID, teamID int64, isExternal bool,
+		addTeamMember = func(resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
 			permission models.PermissionType) error {
 			addTeamMemberCalled++
 			return nil

@@ -2,9 +2,9 @@ package resourceservices
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -13,7 +13,7 @@ import (
 )
 
 func ProvideResourceServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*ResourceServices, error) {
-	teamPermissions, err := provideTeamPermissions(router, ac, store)
+	teamPermissions, err := provideTeamPermissions(router, sql, ac, store)
 	if err != nil {
 		return nil, err
 	}
@@ -27,23 +27,36 @@ type ResourceServices struct {
 	services map[string]*resourcepermissions.Service
 }
 
+func (s *ResourceServices) GetTeamService() *resourcepermissions.Service {
+	return s.services["teams"]
+}
+
+var (
+	ActionTeamsCreate           = "teams:create"
+	ActionTeamsDelete           = "teams:delete"
+	ActionTeamsRead             = "teams:read"
+	ActionTeamsWrite            = "teams:write"
+	ActionTeamsPermissionsRead  = "teams.permissions:read"
+	ActionTeamsPermissionsWrite = "teams.permissions:write"
+)
+
 var (
 	// probably should contain team reader action
 	TeamMemberActions = []string{
-		api.ActionTeamsRead,
+		ActionTeamsRead,
 	}
 
 	TeamAdminActions = []string{
-		api.ActionTeamsCreate,
-		api.ActionTeamsDelete,
-		api.ActionTeamsWrite,
-		api.ActionTeamsRead,
-		api.ActionTeamsPermissionsRead,
-		api.ActionTeamsPermissionsWrite,
+		ActionTeamsCreate,
+		ActionTeamsDelete,
+		ActionTeamsWrite,
+		ActionTeamsRead,
+		ActionTeamsPermissionsRead,
+		ActionTeamsPermissionsWrite,
 	}
 )
 
-func provideTeamPermissions(router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*resourcepermissions.Service, error) {
+func provideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource:    "teams",
 		OnlyManaged: true,
@@ -69,8 +82,8 @@ func provideTeamPermissions(router routing.RouteRegister, ac accesscontrol.Acces
 			BuiltInRoles: false,
 		},
 		PermissionsToActions: map[string][]string{
-			"Member": TeamMemberActions,
-			"Admin":  TeamAdminActions,
+			"View":  TeamMemberActions,
+			"Admin": TeamAdminActions,
 		},
 		ReaderRoleName: "Team permission reader",
 		WriterRoleName: "Team permission writer",
@@ -79,10 +92,22 @@ func provideTeamPermissions(router routing.RouteRegister, ac accesscontrol.Acces
 			switch permission {
 			case "":
 				// call handler remove user from team
-			case "Member":
-				// call handler to add member
+			case "View":
+				// TODO: isExternal is used by team sync - check if team sync uses the endpoints for which these hooks have been added
+				teamId, err := strconv.ParseInt(resourceID, 10, 64)
+				if err != nil {
+					return err
+				}
+				return sql.AddTeamMember(userID, orgID, teamId, false, models.PERMISSION_VIEW)
 			case "Admin":
-				// call handler to add admin
+				// TODO: isExternal is used by team sync - check if team sync uses the endpoints for which these hooks have been added
+				teamId, err := strconv.ParseInt(resourceID, 10, 64)
+				if err != nil {
+					return err
+				}
+				return sql.AddTeamMember(userID, orgID, teamId, false, models.PERMISSION_VIEW)
+			default:
+				return fmt.Errorf("invalid team permission type %d", permission)
 			}
 			return nil
 		},
