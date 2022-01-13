@@ -8,4 +8,7 @@ export const NotificationChannelService = {
   async add(): Promise<void> {
     return Promise.resolve();
   },
+  async remove(): Promise<void> {
+    return Promise.resolve();
+  },
 };

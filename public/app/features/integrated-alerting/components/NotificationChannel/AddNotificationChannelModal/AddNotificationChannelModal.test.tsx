@@ -4,15 +4,10 @@ import { act } from 'react-dom/test-utils';
 import { dataQa } from '@percona/platform-core';
 import { AddNotificationChannelModal } from './AddNotificationChannelModal';
 import { TYPE_OPTIONS } from './AddNotificationChannel.constants';
+import { notificationChannelStubs } from '../__mocks__/notificationChannelStubs';
 
 jest.mock('../NotificationChannel.service');
-jest.mock('app/core/app_events', () => {
-  return {
-    appEvents: {
-      emit: jest.fn(),
-    },
-  };
-});
+jest.mock('app/core/app_events');
 
 describe('AddNotificationChannelModal', () => {
   it('should render modal with correct fields', () => {
@@ -52,5 +47,18 @@ describe('AddNotificationChannelModal', () => {
     });
 
     expect(setVisible).toHaveBeenCalledWith(false);
+  });
+
+  it('should render with notification channel', async () => {
+    const setVisible = jest.fn();
+    const wrapper = mount(
+      <AddNotificationChannelModal
+        notificationChannel={notificationChannelStubs[0]}
+        setVisible={setVisible}
+        isVisible
+      />
+    );
+
+    expect(wrapper.find(dataQa('name-text-input')).prop('value')).toEqual(notificationChannelStubs[0].summary);
   });
 });

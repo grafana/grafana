@@ -136,3 +136,29 @@ export const isSearchActive = (location: Location<unknown>) => {
   const query = new URLSearchParams(location.search);
   return query.get('search') === 'open';
 };
+
+export function getNavModelItemKey(item: NavModelItem) {
+  return item.id ?? item.text;
+}
+
+export const buildIntegratedAlertingMenuItem = (mainLinks: NavModelItem[]): NavModelItem[] => {
+  const integratedAlertingLink = {
+    id: 'integrated-alerting',
+    text: 'Integrated Alerting',
+    icon: 'list-ul',
+    url: `${getConfig().appSubUrl}/integrated-alerting`,
+  };
+  const divider = {
+    id: 'divider',
+    text: 'Divider',
+    divider: true,
+    hideFromTabs: true,
+  };
+  const alertingIndex = mainLinks.findIndex(({ id }) => id === 'alerting');
+
+  if (alertingIndex >= 0) {
+    mainLinks[alertingIndex].children.unshift(integratedAlertingLink, divider);
+  }
+
+  return mainLinks;
+};

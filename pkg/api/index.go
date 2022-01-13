@@ -421,9 +421,6 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 
 func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext, uaVisibleForOrg bool) []*dtos.NavLink {
 	alertChildNavs := []*dtos.NavLink{
-		// NOTE: this will be enabled after the Integrated Alerting page will be populated
-		// {Text: "Integrated Alerting", Id: "integrated-alerting", Url: hs.Cfg.AppSubURL + "/integrated-alerting", Icon: "list-ul"},
-		// {Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true},
 		{Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul"},
 	}
 
