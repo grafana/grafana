@@ -73,7 +73,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 
 	// Check if the v2alpha endpoint exists
 	wsurl.Path = "/loki/api/v2alpha/tail"
-	if s.is404(wsurl) {
+	if !s.is400(wsurl) {
 		isV1 = true
 		wsurl.Path = "/loki/api/v1/tail"
 	}
@@ -148,7 +148,8 @@ func (s *Service) PublishStream(_ context.Context, _ *backend.PublishStreamReque
 	}, nil
 }
 
-func (s *Service) is404(url *url.URL) bool {
+// if the v2 endpoint exists it will give a 400
+func (s *Service) is400(url *url.URL) bool {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", url.String(), nil)
 	resp, _ := client.Do(req)
