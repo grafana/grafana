@@ -23,6 +23,8 @@ import { debounce } from 'lodash';
 import { dispatch } from 'app/store/store';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { updateTimeRange } from 'app/features/explore/state/time';
+import { ExploreId } from 'app/types';
 
 interface Props {
   datasource: TempoDatasource;
@@ -103,6 +105,16 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     };
     fetchAutocomplete();
   }, [languageProvider, fetchServiceNameOptions, fetchSpanNameOptions]);
+
+  useEffect(() => {
+    // Default time picker to 15 minutes to reduce server load for search
+    dispatch(
+      updateTimeRange({
+        exploreId: ExploreId.left,
+        rawRange: { from: 'now-15m', to: 'now' },
+      })
+    );
+  }, []);
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     return await languageProvider.provideCompletionItems(typeahead);

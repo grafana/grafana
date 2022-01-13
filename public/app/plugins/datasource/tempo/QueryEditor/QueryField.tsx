@@ -133,20 +133,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             />
           </InlineField>
         </InlineFieldRow>
-        {query.queryType === 'nativeSearch' && (
-          <p style={{ maxWidth: '65ch' }}>
-            <Badge icon="rocket" text="Beta" color="blue" />
-            {config.featureToggles.tempoBackendSearch ? (
-              <>&nbsp;Tempo search is currently in beta.</>
-            ) : (
-              <>
-                &nbsp;Tempo search is currently in beta and is designed to return recent traces only. It ignores the
-                time range picker. We are actively working on full backend search. Look for improvements in the near
-                future!
-              </>
-            )}
-          </p>
-        )}
         {query.queryType === 'search' && (
           <SearchSection
             linkedDatasourceUid={logsDatasourceUid}
@@ -156,13 +142,27 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
           />
         )}
         {query.queryType === 'nativeSearch' && (
-          <NativeSearch
-            datasource={this.props.datasource}
-            query={query}
-            onChange={onChange}
-            onBlur={this.props.onBlur}
-            onRunQuery={this.props.onRunQuery}
-          />
+          <>
+            <p style={{ maxWidth: '65ch' }}>
+              <Badge icon="rocket" text="Beta" color="blue" />
+              {config.featureToggles.tempoBackendSearch ? (
+                <>&nbsp;Tempo search is currently in beta.</>
+              ) : (
+                <>
+                  &nbsp;Tempo search is currently in beta and is designed to return recent traces only. It ignores the
+                  time range picker. We are actively working on full backend search. Look for improvements in the near
+                  future!
+                </>
+              )}
+            </p>
+            <NativeSearch
+              datasource={this.props.datasource}
+              query={query}
+              onChange={onChange}
+              onBlur={this.props.onBlur}
+              onRunQuery={this.props.onRunQuery}
+            />
+          </>
         )}
         {query.queryType === 'upload' && (
           <div className={css({ padding: this.props.theme.spacing(2) })}>
