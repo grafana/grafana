@@ -26,7 +26,6 @@ import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate
 import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
 import { getTraceName } from '../model/trace-viewer';
-import { TNil } from '../types';
 import { Trace } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getTraceLinks } from '../model/link-patterns';
@@ -149,15 +148,12 @@ type TracePageHeaderEmbedProps = {
   prevResult: () => void;
   resultCount: number;
   slimView: boolean;
-  textFilter: string | TNil;
   trace: Trace;
-  traceGraphView: boolean;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
   searchValue: string;
   onSearchValueChange: (value: string) => void;
-  hideSearchButtons?: boolean;
   timeZone: TimeZone;
 };
 
@@ -213,15 +209,12 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     prevResult,
     resultCount,
     slimView,
-    textFilter,
     trace,
-    traceGraphView,
     updateNextViewRangeTime,
     updateViewRangeTime,
     viewRange,
     searchValue,
     onSearchValueChange,
-    hideSearchButtons,
     timeZone,
   } = props;
 
@@ -280,11 +273,10 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
           nextResult={nextResult}
           prevResult={prevResult}
           resultCount={resultCount}
-          textFilter={textFilter}
-          navigable={!traceGraphView}
+          // TODO: we can change this when we have scroll to span functionality
+          navigable={false}
           searchValue={searchValue}
           onSearchValueChange={onSearchValueChange}
-          hideSearchButtons={hideSearchButtons}
         />
       </div>
       {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}

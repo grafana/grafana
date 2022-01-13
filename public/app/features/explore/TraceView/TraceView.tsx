@@ -65,7 +65,7 @@ export function TraceView(props: Props) {
   const [slim, setSlim] = useState(false);
 
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
-  const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
+  const { search, setSearch, spanFindMatches, clearSearch } = useSearch(traceProp?.spans);
   const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
     ?.tracesToLogs;
@@ -97,7 +97,7 @@ export function TraceView(props: Props) {
     <UIElementsContext.Provider value={UIElements}>
       <TracePageHeader
         canCollapse={false}
-        clearSearch={noop}
+        clearSearch={clearSearch}
         focusUiFindMatches={noop}
         hideMap={false}
         hideSummary={false}
@@ -105,17 +105,14 @@ export function TraceView(props: Props) {
         onSlimViewClicked={onSlimViewClicked}
         onTraceGraphViewClicked={noop}
         prevResult={noop}
-        resultCount={0}
+        resultCount={spanFindMatches?.size ?? 0}
         slimView={slim}
-        textFilter={null}
         trace={traceProp}
-        traceGraphView={false}
         updateNextViewRangeTime={updateNextViewRangeTime}
         updateViewRangeTime={updateViewRangeTime}
         viewRange={viewRange}
         searchValue={search}
         onSearchValueChange={setSearch}
-        hideSearchButtons={true}
         timeZone={timeZone}
       />
       <TraceTimelineViewer
