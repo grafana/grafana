@@ -141,7 +141,13 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 // Stubbable by tests.
 var addTeamMember = func(resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
 	permission models.PermissionType) error {
-	actions := resourcePermissionService.MapPermission(permission.String())
+	permissionString := permission.String()
+	// Team member permission is 0, which maps to an empty string.
+	// However, we want the team permission service to display "Member" for team members. This is a hack to make it work.
+	if permissionString == "" {
+		permissionString = "Member"
+	}
+	actions := resourcePermissionService.MapPermission(permissionString)
 	teamIDString := strconv.FormatInt(teamID, 10)
 	_, err := resourcePermissionService.SetUserPermission(context.TODO(), orgID, userID, teamIDString, actions)
 

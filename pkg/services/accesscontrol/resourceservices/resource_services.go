@@ -32,27 +32,18 @@ func (s *ResourceServices) GetTeamService() *resourcepermissions.Service {
 }
 
 var (
-	ActionTeamsCreate           = "teams:create"
-	ActionTeamsDelete           = "teams:delete"
-	ActionTeamsRead             = "teams:read"
-	ActionTeamsWrite            = "teams:write"
-	ActionTeamsPermissionsRead  = "teams.permissions:read"
-	ActionTeamsPermissionsWrite = "teams.permissions:write"
-)
-
-var (
-	// probably should contain team reader action
 	TeamMemberActions = []string{
-		ActionTeamsRead,
+		"teams:read",
 	}
 
 	TeamAdminActions = []string{
-		ActionTeamsCreate,
-		ActionTeamsDelete,
-		ActionTeamsWrite,
-		ActionTeamsRead,
-		ActionTeamsPermissionsRead,
-		ActionTeamsPermissionsWrite,
+		"teams:read",
+		"teams:delete",
+		"teams:write",
+		"teams.permissions:read",
+		"teams.permissions:write",
+		"teams.preferences:read",
+		"teams.preferences:write",
 	}
 )
 
@@ -82,15 +73,15 @@ func provideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 			BuiltInRoles: false,
 		},
 		PermissionsToActions: map[string][]string{
-			"":      TeamMemberActions,
-			"Admin": TeamAdminActions,
+			"Member": TeamMemberActions,
+			"Admin":  TeamAdminActions,
 		},
 		ReaderRoleName: "Team permission reader",
 		WriterRoleName: "Team permission writer",
 		RoleGroup:      "Teams",
 		OnSetUser: func(ctx context.Context, orgID, userID int64, resourceID, permission string) error {
 			switch permission {
-			case "":
+			case "Member":
 				// TODO: isExternal is used by team sync - check if team sync uses the endpoints for which these hooks have been added
 				teamId, err := strconv.ParseInt(resourceID, 10, 64)
 				if err != nil {

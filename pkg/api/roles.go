@@ -31,6 +31,8 @@ const (
 	ActionTeamsWrite            = "teams:write"
 	ActionTeamsPermissionsRead  = "teams.permissions:read"
 	ActionTeamsPermissionsWrite = "teams.permissions:write"
+	ActionTeamsPreferencesRead  = "teams.preferences:read"
+	ActionTeamsPreferencesWrite = "teams.preferences:write"
 )
 
 // API related scopes
