@@ -20,15 +20,15 @@ const INITIAL_DESCRIPTION: Description = {
 };
 
 export type Props = {
+  title?: string;
   resource: string;
   resourceId: number;
 
   canListUsers: boolean;
   canSetPermissions: boolean;
-  title?: string;
 };
 
-export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissions, title }: Props) => {
+export const Permissions = ({ title, resource, resourceId, canListUsers, canSetPermissions }: Props) => {
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
