@@ -433,6 +433,15 @@ export function getAppRoutes(): RouteDescriptor[] {
           )
       ),
     },
+    {
+      path: '/integrated-alerting/:tab',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "IntegratedAlertingPage" */ 'app/features/integrated-alerting/IntegratedAlertingPage'
+          )
+      ),
+    },
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
