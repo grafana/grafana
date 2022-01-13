@@ -10,7 +10,7 @@ import { appEvents } from 'app/core/core';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
-import { createExploreLink, createViewLink, makeSilenceLink } from '../../utils/misc';
+import { createExploreLink, createViewLink, makeRuleBasedSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { deleteRuleAction } from '../../state/actions';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
@@ -140,7 +140,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
         key="silence"
         icon="bell-slash"
         target="__blank"
-        href={makeSilenceLink(alertmanagerSourceName, rule)}
+        href={makeRuleBasedSilenceLink(alertmanagerSourceName, rule)}
       >
         Silence
       </LinkButton>

@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -354,6 +355,8 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		initCtx.Logger = log.New("api-test")
 		c.Map(initCtx)
 	})
+
+	m.Use(acmiddleware.LoadPermissionsMiddleware(hs.AccessControl))
 
 	// Register all routes
 	hs.registerRoutes()

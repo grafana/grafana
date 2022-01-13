@@ -268,15 +268,24 @@ export class DatasourceSrv implements DataSourceService {
 
     if (!filters.pluginId && !filters.alerting) {
       if (filters.mixed) {
-        base.push(this.getInstanceSettings('-- Mixed --')!);
+        const mixedInstanceSettings = this.getInstanceSettings('-- Mixed --');
+        if (mixedInstanceSettings) {
+          base.push(mixedInstanceSettings);
+        }
       }
 
       if (filters.dashboard) {
-        base.push(this.getInstanceSettings('-- Dashboard --')!);
+        const dashboardInstanceSettings = this.getInstanceSettings('-- Dashboard --');
+        if (dashboardInstanceSettings) {
+          base.push(dashboardInstanceSettings);
+        }
       }
 
       if (!filters.tracing) {
-        base.push(this.getInstanceSettings('-- Grafana --')!);
+        const grafanaInstanceSettings = this.getInstanceSettings('-- Grafana --');
+        if (grafanaInstanceSettings) {
+          base.push(grafanaInstanceSettings);
+        }
       }
     }
 
