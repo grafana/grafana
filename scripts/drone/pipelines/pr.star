@@ -45,6 +45,11 @@ load(
     'pipeline',
 )
 
+load(
+    'scripts/drone/opts.star',
+    'can_ensure_cuetsified',
+)
+
 ver_mode = 'pr'
 
 def pr_pipelines(edition):
@@ -67,8 +72,10 @@ def pr_pipelines(edition):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
-        ensure_cuetsified_step(),
     ]
+    if can_ensure_cuetsified:
+      build_steps.append(ensure_cuetsified_step())
+
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),

@@ -52,6 +52,11 @@ load(
     'notify_pipeline',
 )
 
+load(
+    'scripts/drone/opts.star',
+    'can_ensure_cuetsified',
+)
+
 ver_mode = 'main'
 
 def get_steps(edition, is_downstream=False):
@@ -74,8 +79,10 @@ def get_steps(edition, is_downstream=False):
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
-        ensure_cuetsified_step(),
     ]
+    if can_ensure_cuetsified:
+      build_steps.append(ensure_cuetsified_step())
+
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),

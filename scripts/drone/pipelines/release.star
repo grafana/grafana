@@ -51,7 +51,13 @@ load(
     'pipeline',
     'notify_pipeline',
 )
+
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
+
+load(
+    'scripts/drone/opts.star',
+    'can_ensure_cuetsified',
+)
 
 
 def build_npm_packages_step(edition, ver_mode):
@@ -199,8 +205,10 @@ def get_steps(edition, ver_mode):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
-        ensure_cuetsified_step(),
     ]
+
+    if can_ensure_cuetsified:
+        build_steps.append(ensure_cuetsified_step())
 
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
