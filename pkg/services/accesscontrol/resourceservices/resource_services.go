@@ -82,7 +82,7 @@ func provideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 			BuiltInRoles: false,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  TeamMemberActions,
+			"":      TeamMemberActions,
 			"Admin": TeamAdminActions,
 		},
 		ReaderRoleName: "Team permission reader",
@@ -91,21 +91,19 @@ func provideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 		OnSetUser: func(ctx context.Context, orgID, userID int64, resourceID, permission string) error {
 			switch permission {
 			case "":
-				// call handler remove user from team
-			case "View":
 				// TODO: isExternal is used by team sync - check if team sync uses the endpoints for which these hooks have been added
 				teamId, err := strconv.ParseInt(resourceID, 10, 64)
 				if err != nil {
 					return err
 				}
-				return sql.AddTeamMember(userID, orgID, teamId, false, models.PERMISSION_VIEW)
+				return sql.AddTeamMember(userID, orgID, teamId, false, 0)
 			case "Admin":
 				// TODO: isExternal is used by team sync - check if team sync uses the endpoints for which these hooks have been added
 				teamId, err := strconv.ParseInt(resourceID, 10, 64)
 				if err != nil {
 					return err
 				}
-				return sql.AddTeamMember(userID, orgID, teamId, false, models.PERMISSION_VIEW)
+				return sql.AddTeamMember(userID, orgID, teamId, false, models.PERMISSION_ADMIN)
 			default:
 				return fmt.Errorf("invalid team permission type %d", permission)
 			}

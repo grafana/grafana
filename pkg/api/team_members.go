@@ -141,9 +141,6 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 // Stubbable by tests.
 var addTeamMember = func(resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
 	permission models.PermissionType) error {
-	if permission == 0 {
-		permission = models.PERMISSION_VIEW
-	}
 	actions := resourcePermissionService.MapPermission(permission.String())
 	teamIDString := strconv.FormatInt(teamID, 10)
 	_, err := resourcePermissionService.SetUserPermission(context.TODO(), orgID, userID, teamIDString, actions)
