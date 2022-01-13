@@ -375,7 +375,19 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/integrated-alerting',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "IntegratedAlertingPage" */ 'app/features/integrated-alerting/IntegratedAlertingPage')
+        () =>
+          import(
+            /* webpackChunkName: "IntegratedAlertingPage" */ 'app/features/integrated-alerting/IntegratedAlertingPage'
+          )
+      ),
+    },
+    {
+      path: '/integrated-alerting/:tab',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "IntegratedAlertingPage" */ 'app/features/integrated-alerting/IntegratedAlertingPage'
+          )
       ),
     },
     ...getPluginCatalogRoutes(),

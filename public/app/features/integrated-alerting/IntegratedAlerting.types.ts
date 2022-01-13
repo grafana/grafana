@@ -1,6 +1,6 @@
 export enum TabKeys {
   alerts = 'alerts',
-  alertRules = 'alertRules',
-  alertRuleTemplates = 'alertRuleTemplates',
-  notificationChannels = 'notificationChannels',
+  alertRules = 'alert-rules',
+  alertRuleTemplates = 'alert-rule-templates',
+  notificationChannels = 'notification-channels',
 }
