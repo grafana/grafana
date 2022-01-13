@@ -8,11 +8,11 @@ exports[`<CopyIcon /> renders as expected 1`] = `
   placement="left"
   title="tooltipTitleValue"
 >
-  <UIButton
+  <Button
     className="css-oqwzau classNameValue"
-    htmlType="button"
     icon="copy"
     onClick={[Function]}
+    type="button"
   />
 </UITooltip>
 `;

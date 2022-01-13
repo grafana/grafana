@@ -127,26 +127,6 @@ export const UIMenuItem = function UIMenuItem(props: MenuItemProps) {
   );
 };
 
-export type ButtonHTMLType = 'submit' | 'button' | 'reset';
-export type ButtonProps = {
-  children?: React.ReactNode;
-  className?: string;
-  htmlType?: ButtonHTMLType;
-  icon?: string;
-  onClick?: React.MouseEventHandler<HTMLButtonElement>;
-  disabled?: boolean;
-};
-
-export const UIButton = function UIButton(props: ButtonProps) {
-  return (
-    <GetElementsContext>
-      {(elements: Elements) => {
-        return <elements.Button {...props} />;
-      }}
-    </GetElementsContext>
-  );
-};
-
 export type InputProps = {
   autosize?: boolean | null;
   placeholder?: string;
@@ -189,7 +169,6 @@ export type Elements = {
   Dropdown: React.ComponentType<DropdownProps>;
   Menu: React.ComponentType<MenuProps>;
   MenuItem: React.ComponentType<MenuItemProps>;
-  Button: React.ComponentType<ButtonProps>;
   Input: React.ComponentType<InputProps>;
   InputGroup: React.ComponentType<InputGroupProps>;
 };

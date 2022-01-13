@@ -15,8 +15,8 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import * as copy from 'copy-to-clipboard';
-import { UIButton, UITooltip } from '../uiElementsContext';
-
+import { Button } from '@grafana/ui';
+import { UITooltip } from '../uiElementsContext';
 import CopyIcon from './CopyIcon';
 
 jest.mock('copy-to-clipboard');
@@ -47,7 +47,7 @@ describe('<CopyIcon />', () => {
     expect(wrapper.state().hasCopied).toBe(false);
     expect(copySpy).not.toHaveBeenCalled();
 
-    wrapper.find(UIButton).simulate('click');
+    wrapper.find(Button).simulate('click');
     expect(wrapper.state().hasCopied).toBe(true);
     expect(copySpy).toHaveBeenCalledWith(props.copyText);
   });

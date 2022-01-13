@@ -1,5 +1,5 @@
-import { Button, Input, Popover, PopoverController, Tooltip as GrafanaTooltip } from '@grafana/ui';
-import { ButtonProps, Elements, PopoverProps, TooltipProps } from '@jaegertracing/jaeger-ui-components';
+import { Input, Popover, PopoverController, Tooltip as GrafanaTooltip } from '@grafana/ui';
+import { Elements, PopoverProps, TooltipProps } from '@jaegertracing/jaeger-ui-components';
 import React, { useRef } from 'react';
 
 /**
@@ -45,13 +45,6 @@ export const UIElements: Elements = {
   Dropdown: (() => null as any) as any,
   Menu: (() => null as any) as any,
   MenuItem: (() => null as any) as any,
-  Button({ onClick, children, className }: ButtonProps) {
-    return (
-      <Button variant="secondary" onClick={onClick} className={className}>
-        {children}
-      </Button>
-    );
-  },
   Input(props) {
     return <Input {...props} />;
   },

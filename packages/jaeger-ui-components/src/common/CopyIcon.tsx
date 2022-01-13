@@ -16,9 +16,9 @@ import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import copy from 'copy-to-clipboard';
-import { stylesFactory } from '@grafana/ui';
+import { Button, IconName, stylesFactory } from '@grafana/ui';
 
-import { UITooltip, TooltipPlacement, UIButton } from '../uiElementsContext';
+import { UITooltip, TooltipPlacement } from '../uiElementsContext';
 
 const getStyles = stylesFactory(() => {
   return {
@@ -40,7 +40,7 @@ const getStyles = stylesFactory(() => {
 type PropsType = {
   className?: string;
   copyText: string;
-  icon?: string;
+  icon?: IconName;
   placement?: TooltipPlacement;
   tooltipTitle: string;
 };
@@ -85,9 +85,9 @@ export default class CopyIcon extends React.PureComponent<PropsType, StateType> 
         placement={this.props.placement}
         title={this.state.hasCopied ? 'Copied' : this.props.tooltipTitle}
       >
-        <UIButton
+        <Button
           className={cx(styles.CopyIcon, this.props.className)}
-          htmlType="button"
+          type="button"
           icon={this.props.icon}
           onClick={this.handleClick}
         />
