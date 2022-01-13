@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/api"
@@ -20,20 +22,51 @@ import (
 
 func TestMatrixResponses(t *testing.T) {
 	t.Run("parse a simple matrix response", func(t *testing.T) {
-		testScenario(t, "range_simple")
+		err := testScenario("range_simple")
+		require.NoError(t, err)
 	})
 
 	t.Run("parse a simple matrix response with value missing steps", func(t *testing.T) {
-		testScenario(t, "range_missing")
+		err := testScenario("range_missing")
+		require.NoError(t, err)
 	})
 
 	t.Run("parse a response with Infinity", func(t *testing.T) {
-		testScenario(t, "range_infinity")
+		err := testScenario("range_infinity")
+		require.NoError(t, err)
 	})
 
 	t.Run("parse a response with NaN", func(t *testing.T) {
-		testScenario(t, "range_nan")
+		err := testScenario("range_nan")
+		require.NoError(t, err)
 	})
+}
+
+// when memory-profiling this benchmark, these commands are recommended:
+// - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkJson$ github.com/grafana/grafana/pkg/tsdb/prometheus
+// - go tool pprof -http=localhost:6061 memprofile.out
+func BenchmarkJson(b *testing.B) {
+	bytes, query := createJsonTestData(1642000000, 1, 300, 400)
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		result, err := runQuery(bytes, query)
+		if err != nil {
+			b.Error(err)
+		}
+		if len(result.Responses) != 1 {
+			b.Error(fmt.Errorf("result.Responses length must be 1"))
+		}
+
+		dr, found := result.Responses["A"]
+		if !found {
+			b.Error(fmt.Errorf("result.Responses[A] not found"))
+		}
+
+		if dr.Error != nil {
+			b.Error(dr.Error)
+		}
+	}
 }
 
 type mockedRoundTripper struct {
@@ -78,14 +111,18 @@ type storedPrometheusQuery struct {
 	Expr       string
 }
 
-func loadStoredPrometheusQuery(t *testing.T, fileName string) PrometheusQuery {
+func loadStoredPrometheusQuery(fileName string) (PrometheusQuery, error) {
 	bytes, err := os.ReadFile(fileName)
-	require.NoError(t, err)
+	if err != nil {
+		return PrometheusQuery{}, err
+	}
 
 	var query storedPrometheusQuery
 
 	err = json.Unmarshal(bytes, &query)
-	require.NoError(t, err)
+	if err != nil {
+		return PrometheusQuery{}, err
+	}
 
 	return PrometheusQuery{
 		RefId:      query.RefId,
@@ -94,33 +131,57 @@ func loadStoredPrometheusQuery(t *testing.T, fileName string) PrometheusQuery {
 		End:        time.Unix(query.End, 0),
 		Step:       time.Second * time.Duration(query.Step),
 		Expr:       query.Expr,
+	}, nil
+}
+
+func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataResponse, error) {
+	api, err := makeMockedApi(response)
+	if err != nil {
+		return nil, err
 	}
+
+	tracer, err := tracing.InitializeTracerForTest()
+	if err != nil {
+		return nil, err
+	}
+
+	s := Service{tracer: tracer}
+	return s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
 }
 
 // we run the mocked query, and extract the DataResponse.
 // we assume and verify that there is exactly one DataResponse returned.
-func testScenario(t *testing.T, name string) {
+func testScenario(name string) error {
 	queryFileName := filepath.Join("testdata", name+".query.json")
 	responseFileName := filepath.Join("testdata", name+".result.json")
 	goldenFileName := filepath.Join("testdata", name+".result.golden.txt")
-	query := loadStoredPrometheusQuery(t, queryFileName)
+
+	query, err := loadStoredPrometheusQuery(queryFileName)
+	if err != nil {
+		return err
+	}
+
 	responseBytes, err := os.ReadFile(responseFileName)
-	require.NoError(t, err)
+	if err != nil {
+		return err
+	}
 
-	api, err := makeMockedApi(responseBytes)
-	require.NoError(t, err)
-
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	s := Service{tracer: tracer}
-	result, err := s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
-	require.NoError(t, err)
-	require.Len(t, result.Responses, 1)
+	result, err := runQuery(responseBytes, query)
+	if err != nil {
+		return err
+	}
+	if len(result.Responses) != 1 {
+		return fmt.Errorf("result.Responses length must be 1")
+	}
 
 	dr, found := result.Responses["A"]
-	require.True(t, found)
-	require.NoError(t, dr.Error)
+	if !found {
+		return fmt.Errorf("result.Responses[A] not found")
+	}
 
-	err = experimental.CheckGoldenDataResponse(goldenFileName, &dr, true)
-	require.NoError(t, err)
+	if dr.Error != nil {
+		return dr.Error
+	}
+
+	return experimental.CheckGoldenDataResponse(goldenFileName, &dr, true)
 }
