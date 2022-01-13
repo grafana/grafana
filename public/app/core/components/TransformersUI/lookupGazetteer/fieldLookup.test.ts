@@ -32,8 +32,9 @@ describe('Lookup gazetteer', () => {
       ],
     });
     const gaz = frameAsGazetter(frame, { path: 'path/to/gaz.json' });
+    const out = await addFieldsFromGazetteer([data], gaz, matcher)[0];
 
-    expect(await addFieldsFromGazetteer([data], gaz, matcher)[0].fields).toMatchInlineSnapshot(`
+    expect(out.fields).toMatchInlineSnapshot(`
       Array [
         Object {
           "config": Object {},
@@ -49,11 +50,35 @@ describe('Lookup gazetteer', () => {
         },
         Object {
           "config": Object {},
-          "name": "lon",
+          "name": "id",
+          "type": "string",
+          "values": Array [
+            "AL",
+            "AK",
+            ,
+            ,
+            ,
+          ],
+        },
+        Object {
+          "config": Object {},
+          "name": "name",
+          "type": "string",
+          "values": Array [
+            "Alabama",
+            "Arkansas",
+            ,
+            ,
+            ,
+          ],
+        },
+        Object {
+          "config": Object {},
+          "name": "lng",
           "type": "number",
           "values": Array [
-            -9004752.054206103,
-            -11231141.870071575,
+            -80.891064,
+            -100.891064,
             ,
             ,
             ,
@@ -64,8 +89,8 @@ describe('Lookup gazetteer', () => {
           "name": "lat",
           "type": "number",
           "values": Array [
-            1396788.7250766128,
-            2808150.5459182193,
+            12.448457,
+            24.448457,
             ,
             ,
             ,
