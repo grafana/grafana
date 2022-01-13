@@ -1,6 +1,6 @@
 package tracing
 
-func InitializeTracerForTest() (TracerService, error) {
+func InitializeTracerForTest() (Tracer, error) {
 	ots := &Opentelemetry{}
 	err := ots.initOpentelemetryTracer()
 	if err != nil {
@@ -9,7 +9,7 @@ func InitializeTracerForTest() (TracerService, error) {
 	return ots, err
 }
 
-func InitializeForBus() TracerService {
+func InitializeForBus() Tracer {
 	ots := &Opentelemetry{}
 	_ = ots.initOpentelemetryTracer()
 	return ots

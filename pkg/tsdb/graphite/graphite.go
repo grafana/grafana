@@ -35,7 +35,7 @@ import (
 type Service struct {
 	logger log.Logger
 	im     instancemgmt.InstanceManager
-	tracer tracing.TracerService
+	tracer tracing.Tracer
 }
 
 const (
@@ -44,7 +44,7 @@ const (
 	TargetModelField     = "target"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store, tracer tracing.TracerService) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store, tracer tracing.Tracer) (*Service, error) {
 	s := &Service{
 		logger: log.New("tsdb.graphite"),
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),

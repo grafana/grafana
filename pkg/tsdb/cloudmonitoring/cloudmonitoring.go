@@ -73,7 +73,7 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store,
-	dsService *datasources.Service, tracer tracing.TracerService) *Service {
+	dsService *datasources.Service, tracer tracing.Tracer) *Service {
 	s := &Service{
 		httpClientProvider: httpClientProvider,
 		cfg:                cfg,
@@ -141,7 +141,7 @@ type Service struct {
 	cfg                *setting.Cfg
 	im                 instancemgmt.InstanceManager
 	dsService          *datasources.Service
-	tracer             tracing.TracerService
+	tracer             tracing.Tracer
 }
 
 type QueryModel struct {

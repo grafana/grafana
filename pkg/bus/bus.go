@@ -56,10 +56,10 @@ type InProcBus struct {
 	listeners        map[string][]HandlerFunc
 	listenersWithCtx map[string][]HandlerFunc
 	txMng            TransactionManager
-	tracer           tracing.TracerService
+	tracer           tracing.Tracer
 }
 
-func ProvideBus(tracer tracing.TracerService) *InProcBus {
+func ProvideBus(tracer tracing.Tracer) *InProcBus {
 	globalBus.tracer = tracer
 	return globalBus
 }

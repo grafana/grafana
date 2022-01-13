@@ -39,7 +39,7 @@ type AlertEngine struct {
 	log               log.Logger
 	resultHandler     resultHandler
 	usageStatsService usagestats.Service
-	tracer            tracing.TracerService
+	tracer            tracing.Tracer
 }
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
@@ -50,7 +50,7 @@ func (e *AlertEngine) IsDisabled() bool {
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
-	cfg *setting.Cfg, tracer tracing.TracerService) *AlertEngine {
+	cfg *setting.Cfg, tracer tracing.Tracer) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:               cfg,
 		RenderService:     renderer,

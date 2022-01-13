@@ -43,7 +43,7 @@ type DataSourceProxy struct {
 	clientProvider     httpclient.Provider
 	oAuthTokenService  oauthtoken.OAuthTokenService
 	dataSourcesService *datasources.Service
-	tracer             tracing.TracerService
+	tracer             tracing.Tracer
 }
 
 type handleResponseTransport struct {
@@ -78,7 +78,7 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.Route, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService *datasources.Service,
-	tracer tracing.TracerService) (*DataSourceProxy, error) {
+	tracer tracing.Tracer) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {
 		return nil, err

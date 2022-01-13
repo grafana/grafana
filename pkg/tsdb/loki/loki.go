@@ -34,10 +34,10 @@ const pluginID = "loki"
 type Service struct {
 	im     instancemgmt.InstanceManager
 	plog   log.Logger
-	tracer tracing.TracerService
+	tracer tracing.Tracer
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store, tracer tracing.TracerService) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store, tracer tracing.Tracer) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 	s := &Service{
 		im:     im,

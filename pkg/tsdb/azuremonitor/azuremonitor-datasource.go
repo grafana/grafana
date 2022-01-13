@@ -45,7 +45,7 @@ func (e *AzureMonitorDatasource) resourceRequest(rw http.ResponseWriter, req *ht
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
 func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
-	url string, tracer tracing.TracerService) (*backend.QueryDataResponse, error) {
+	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries, dsInfo)
@@ -150,7 +150,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 }
 
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, dsInfo datasourceInfo, cli *http.Client,
-	url string, tracer tracing.TracerService) backend.DataResponse {
+	url string, tracer tracing.Tracer) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	req, err := e.createRequest(ctx, dsInfo, url)

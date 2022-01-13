@@ -31,7 +31,7 @@ var (
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, pluginStore plugins.Store, tracer tracing.TracerService) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, pluginStore plugins.Store, tracer tracing.Tracer) *Service {
 	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &AzureMonitorDatasource{proxy: proxy},
@@ -73,7 +73,7 @@ type Service struct {
 	Cfg       *setting.Cfg
 	im        instancemgmt.InstanceManager
 	executors map[string]azDatasourceExecutor
-	tracer    tracing.TracerService
+	tracer    tracing.Tracer
 }
 
 type azureMonitorSettings struct {
@@ -165,7 +165,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, e
 }
 
 type azDatasourceExecutor interface {
-	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string, tracer tracing.TracerService) (*backend.QueryDataResponse, error)
+	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error)
 	resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client)
 }
 

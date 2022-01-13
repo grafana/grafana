@@ -87,7 +87,7 @@ func (f *fakeExecutor) resourceRequest(rw http.ResponseWriter, req *http.Request
 }
 
 func (f *fakeExecutor) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
-	url string, tracer tracing.TracerService) (*backend.QueryDataResponse, error) {
+	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	if client == nil {
 		f.t.Errorf("The HTTP client for %s is missing", f.queryType)
 	} else {

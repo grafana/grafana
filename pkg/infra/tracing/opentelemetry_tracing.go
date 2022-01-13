@@ -18,7 +18,7 @@ import (
 	trace "go.opentelemetry.io/otel/trace"
 )
 
-type TracerService interface {
+type Tracer interface {
 	Run(context.Context) error
 	Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span)
 	Inject(context.Context, http.Header, Span)

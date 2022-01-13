@@ -41,7 +41,7 @@ func RouteOperationNameFromContext(ctx context.Context) (string, bool) {
 	return "", false
 }
 
-func RequestTracing(tracer tracing.TracerService) web.Handler {
+func RequestTracing(tracer tracing.Tracer) web.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		if strings.HasPrefix(c.Req.URL.Path, "/public/") ||
 			c.Req.URL.Path == "robots.txt" {

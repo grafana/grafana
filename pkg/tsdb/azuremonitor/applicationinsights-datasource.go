@@ -50,7 +50,7 @@ func (e *ApplicationInsightsDatasource) resourceRequest(rw http.ResponseWriter, 
 
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
 	originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
-	url string, tracer tracing.TracerService) (*backend.QueryDataResponse, error) {
+	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries)
@@ -130,7 +130,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []backend.DataQuery
 	return applicationInsightsQueries, nil
 }
 
-func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo datasourceInfo, client *http.Client, url string, tracer tracing.TracerService) (
+func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo datasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (
 	backend.DataResponse, error) {
 	dataResponse := backend.DataResponse{}
 

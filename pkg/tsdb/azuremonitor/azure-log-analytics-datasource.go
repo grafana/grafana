@@ -48,7 +48,7 @@ func (e *AzureLogAnalyticsDatasource) resourceRequest(rw http.ResponseWriter, re
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
 func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
-	url string, tracer tracing.TracerService) (*backend.QueryDataResponse, error) {
+	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries, dsInfo)
@@ -128,7 +128,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery, 
 }
 
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo datasourceInfo, client *http.Client,
-	url string, tracer tracing.TracerService) backend.DataResponse {
+	url string, tracer tracing.Tracer) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	dataResponseErrorWithExecuted := func(err error) backend.DataResponse {

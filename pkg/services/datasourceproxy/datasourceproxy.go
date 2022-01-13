@@ -20,7 +20,7 @@ import (
 
 func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator models.PluginRequestValidator,
 	pluginStore plugins.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
-	oauthTokenService *oauthtoken.Service, dsService *datasources.Service, tracer tracing.TracerService) *DataSourceProxyService {
+	oauthTokenService *oauthtoken.Service, dsService *datasources.Service, tracer tracing.Tracer) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:        dataSourceCache,
 		PluginRequestValidator: plugReqValidator,
@@ -41,7 +41,7 @@ type DataSourceProxyService struct {
 	HTTPClientProvider     httpclient.Provider
 	OAuthTokenService      *oauthtoken.Service
 	DataSourcesService     *datasources.Service
-	tracer                 tracing.TracerService
+	tracer                 tracing.Tracer
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {

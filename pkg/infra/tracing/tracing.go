@@ -26,7 +26,7 @@ const (
 	envJaegerAgentPort = "JAEGER_AGENT_PORT"
 )
 
-func ProvideService(cfg *setting.Cfg) (TracerService, error) {
+func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 	ts := &Opentracing{
 		Cfg: cfg,
 		log: log.New("tracing"),

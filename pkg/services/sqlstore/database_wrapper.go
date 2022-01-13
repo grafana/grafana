@@ -38,7 +38,7 @@ func init() {
 // WrapDatabaseDriverWithHooks creates a fake database driver that
 // executes pre and post functions which we use to gather metrics about
 // database queries. It also registers the metrics.
-func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.TracerService) string {
+func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
 	drivers := map[string]driver.Driver{
 		migrator.SQLite:   &sqlite3.SQLiteDriver{},
 		migrator.MySQL:    &mysql.MySQLDriver{},
@@ -60,7 +60,7 @@ func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.TracerService) st
 // which allow us to wrap all SQL queries with a `Before` & `After` hook.
 type databaseQueryWrapper struct {
 	log    log.Logger
-	tracer tracing.TracerService
+	tracer tracing.Tracer
 }
 
 // databaseQueryWrapperKey is used as key to save values in `context.Context`

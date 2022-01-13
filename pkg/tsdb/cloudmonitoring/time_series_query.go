@@ -21,7 +21,7 @@ import (
 )
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.TracerService) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
 	projectName := timeSeriesQuery.ProjectName
 

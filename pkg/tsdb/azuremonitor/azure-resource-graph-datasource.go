@@ -50,7 +50,7 @@ func (e *AzureResourceGraphDatasource) resourceRequest(rw http.ResponseWriter, r
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
 func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
-	url string, tracer tracing.TracerService) (*backend.QueryDataResponse, error) {
+	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
@@ -104,7 +104,7 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery,
 }
 
 func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo datasourceInfo, client *http.Client,
-	dsURL string, tracer tracing.TracerService) backend.DataResponse {
+	dsURL string, tracer tracing.Tracer) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	params := url.Values{}

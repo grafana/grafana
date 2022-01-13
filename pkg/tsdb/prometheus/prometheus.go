@@ -33,10 +33,10 @@ const pluginID = "prometheus"
 type Service struct {
 	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
-	tracer             tracing.TracerService
+	tracer             tracing.Tracer
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store, tracer tracing.TracerService) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store, tracer tracing.Tracer) (*Service, error) {
 	plog.Debug("initializing")
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 
