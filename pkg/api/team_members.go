@@ -59,16 +59,16 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 		}
 	}
 
-	err := addTeamMember(hs.TeamPermissionsService, cmd.UserId, cmd.OrgId, cmd.TeamId, cmd.External, cmd.Permission)
+	isTeamMember, err := hs.SQLStore.IsTeamMember(c.OrgId, cmd.TeamId, cmd.UserId)
 	if err != nil {
-		if errors.Is(err, models.ErrTeamNotFound) {
-			return response.Error(404, "Team not found", nil)
-		}
+		return response.Error(500, "Failed to update team member.", err)
+	}
+	if isTeamMember {
+		return response.Error(400, "User is already added to this team", nil)
+	}
 
-		if errors.Is(err, models.ErrTeamMemberAlreadyAdded) {
-			return response.Error(400, "User is already added to this team", nil)
-		}
-
+	err = addOrUpdateTeamMember(hs.TeamPermissionsService, cmd.UserId, cmd.OrgId, cmd.TeamId, cmd.External, cmd.Permission)
+	if err != nil {
 		return response.Error(500, "Failed to add Member to Team", err)
 	}
 
@@ -84,24 +84,25 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	teamId := c.ParamsInt64(":teamId")
+	userId := c.ParamsInt64(":userId")
 	orgId := c.OrgId
 
-	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
-		return response.Error(403, "Not allowed to update team member", err)
-	}
-
-	if c.OrgRole != models.ROLE_ADMIN {
-		cmd.ProtectLastAdmin = true
-	}
-
-	cmd.TeamId = teamId
-	cmd.UserId = c.ParamsInt64(":userId")
-	cmd.OrgId = orgId
-
-	if err := hs.Bus.Dispatch(c.Req.Context(), &cmd); err != nil {
-		if errors.Is(err, models.ErrTeamMemberNotFound) {
-			return response.Error(404, "Team member not found.", nil)
+	if !hs.Cfg.FeatureToggles["accesscontrol"] {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to update team member", err)
 		}
+	}
+
+	isTeamMember, err := hs.SQLStore.IsTeamMember(orgId, teamId, userId)
+	if err != nil {
+		return response.Error(500, "Failed to update team member.", err)
+	}
+	if !isTeamMember {
+		return response.Error(404, "Team member not found.", nil)
+	}
+
+	err = addOrUpdateTeamMember(hs.TeamPermissionsService, userId, orgId, teamId, false, cmd.Permission)
+	if err != nil {
 		return response.Error(500, "Failed to update team member.", err)
 	}
 	return response.Success("Team member updated")
@@ -136,10 +137,10 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	return response.Success("Team Member removed")
 }
 
-// addTeamMember adds a team member.
+// addOrUpdateTeamMember adds or updates a team member.
 //
 // Stubbable by tests.
-var addTeamMember = func(resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
+var addOrUpdateTeamMember = func(resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
 	permission models.PermissionType) error {
 	permissionString := permission.String()
 	// Team member permission is 0, which maps to an empty string.

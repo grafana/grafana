@@ -102,11 +102,11 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		teamName := "team foo"
 
 		// TODO: Use a fake SQLStore when it's represented by an interface
-		origCreateTeam := createTeam
-		origAddTeamMember := addTeamMember
+		orgCreateTeam := createTeam
+		orgAddTeamMember := addOrUpdateTeamMember
 		t.Cleanup(func() {
-			createTeam = origCreateTeam
-			addTeamMember = origAddTeamMember
+			createTeam = orgCreateTeam
+			addOrUpdateTeamMember = orgAddTeamMember
 		})
 
 		createTeamCalled := 0
@@ -116,7 +116,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		}
 
 		addTeamMemberCalled := 0
-		addTeamMember = func(resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
+		addOrUpdateTeamMember = func(resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
 			permission models.PermissionType) error {
 			addTeamMemberCalled++
 			return nil
