@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, useRef, useEffect } from 'react';
+import { useLayoutEffect, useRef, useEffect } from 'react';
 
 interface Props {
   isAscending: boolean;
@@ -6,7 +6,6 @@ interface Props {
 }
 
 const usePanelScroll = ({ isAscending, messages }: Props) => {
-  const [scrollTop, setScrollTop] = useState(0);
   const prevScrollPosition = useRef<number>(0);
 
   useEffect(() => {
@@ -33,33 +32,15 @@ const usePanelScroll = ({ isAscending, messages }: Props) => {
 
     if (isAscending && scrollbar) {
       if (newLogHeight < scrollbar.scrollHeight) {
-        // if the scrollbar is present, we check if the user is scrolled at the bottom to
-        // determine if we are gonna scroll all the way down when a new log comes in
-        // or if we are gonna keep our scroll position
+        // if the scrollbar is present, we check if the user is scrolled at the bottom.
+        // if he is, then we automatically scroll once a new log comes in, otherwise
+        // we keep the scroll position
         if (scrollbar.scrollHeight - prevScrollPosition.current === newLogHeight) {
-          setScrollTop(scrollbar.scrollHeight);
           scrollbar.scrollTo(0, scrollbar.scrollHeight);
-        } else {
-          setScrollTop(prevScrollPosition.current);
         }
-      } else {
-        // if the scrollbar is not present, we scroll to the bottom by default
-        // so when it starts to be present, its at the bottom position by default
-        // until the user scrolls up
-        setScrollTop(prevScrollPosition.current || 0);
-      }
-    } else if (!isAscending && scrollbar) {
-      if (prevScrollPosition.current === 0) {
-        setScrollTop(prevScrollPosition.current);
-      } else {
-        setScrollTop(prevScrollPosition.current + (logRowHeight || 0));
       }
     }
   }, [isAscending, messages]);
-
-  return {
-    scrollTop,
-  };
 };
 
 export default usePanelScroll;

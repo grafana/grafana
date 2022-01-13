@@ -42,7 +42,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   const { eventBus } = usePanelContext();
   const { newData, externalLogs } = usePopulateData({ data });
-  const { scrollTop } = usePanelScroll({
+  usePanelScroll({
     isAscending,
     messages: newData?.series[0]?.fields[1]?.values?.buffer || [''],
   });
@@ -92,8 +92,6 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
       <LogLabels labels={commonLabels ? (commonLabels.value as Labels) : { labels: '(no common labels)' }} />
     </div>
   );
-
-  console.log(scrollTop);
 
   return (
     <CustomScrollbar autoHide>
