@@ -106,26 +106,26 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
 }
 
 // PUT /api/org
-func UpdateCurrentOrg(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateCurrentOrg(c *models.ReqContext) response.Response {
 	form := dtos.UpdateOrgForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return updateOrgHelper(c.Req.Context(), form, c.OrgId)
+	return hs.updateOrgHelper(c.Req.Context(), form, c.OrgId)
 }
 
 // PUT /api/orgs/:orgId
-func UpdateOrg(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateOrg(c *models.ReqContext) response.Response {
 	form := dtos.UpdateOrgForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return updateOrgHelper(c.Req.Context(), form, c.ParamsInt64(":orgId"))
+	return hs.updateOrgHelper(c.Req.Context(), form, c.ParamsInt64(":orgId"))
 }
 
-func updateOrgHelper(ctx context.Context, form dtos.UpdateOrgForm, orgID int64) response.Response {
+func (hs *HTTPServer) updateOrgHelper(ctx context.Context, form dtos.UpdateOrgForm, orgID int64) response.Response {
 	cmd := models.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
-	if err := sqlstore.UpdateOrg(ctx, &cmd); err != nil {
+	if err := hs.SQLStore.UpdateOrg(ctx, &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgNameTaken) {
 			return response.Error(400, "Organization name taken", err)
 		}
@@ -136,12 +136,12 @@ func updateOrgHelper(ctx context.Context, form dtos.UpdateOrgForm, orgID int64) 
 }
 
 // PUT /api/org/address
-func UpdateCurrentOrgAddress(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateCurrentOrgAddress(c *models.ReqContext) response.Response {
 	form := dtos.UpdateOrgAddressForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return updateOrgAddressHelper(c.Req.Context(), form, c.OrgId)
+	return hs.updateOrgAddressHelper(c.Req.Context(), form, c.OrgId)
 }
 
 // PUT /api/orgs/:orgId/address
@@ -153,7 +153,7 @@ func UpdateOrgAddress(c *models.ReqContext) response.Response {
 	return updateOrgAddressHelper(c.Req.Context(), form, c.ParamsInt64(":orgId"))
 }
 
-func updateOrgAddressHelper(ctx context.Context, form dtos.UpdateOrgAddressForm, orgID int64) response.Response {
+func (hs *HTTPServer) updateOrgAddressHelper(ctx context.Context, form dtos.UpdateOrgAddressForm, orgID int64) response.Response {
 	cmd := models.UpdateOrgAddressCommand{
 		OrgId: orgID,
 		Address: models.Address{
@@ -166,7 +166,7 @@ func updateOrgAddressHelper(ctx context.Context, form dtos.UpdateOrgAddressForm,
 		},
 	}
 
-	if err := sqlstore.UpdateOrgAddress(ctx, &cmd); err != nil {
+	if err := hs.SQLStore.UpdateOrgAddress(ctx, &cmd); err != nil {
 		return response.Error(500, "Failed to update org address", err)
 	}
 
