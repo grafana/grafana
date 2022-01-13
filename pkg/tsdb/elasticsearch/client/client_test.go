@@ -247,6 +247,8 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.Equal(t, map[string]string{"header-1": "header-value-1"}, opts.Headers)
 		require.Equal(t, sdkhttpclient.CustomHeadersMiddlewareName, (opts.Middlewares[0].(sdkhttpclient.MiddlewareName)).MiddlewareName())
 
+		require.Equal(t, "es", opts.SigV4.Service)
+
 		require.NotNil(t, sc.request)
 		assert.Equal(t, http.MethodPost, sc.request.Method)
 		assert.Equal(t, "/_msearch", sc.request.URL.Path)
@@ -350,6 +352,9 @@ func httpClientScenario(t *testing.T, desc string, ds *DatasourceInfo, fn scenar
 			rw.WriteHeader(sc.responseStatus)
 		}))
 		ds.URL = ts.URL
+		ds.Settings = backend.DataSourceInstanceSettings{
+			JSONData: []byte(`{"sigV4Auth":true}`),
+		}
 
 		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
