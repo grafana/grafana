@@ -386,7 +386,6 @@ func (s *SecretsService) Run(ctx context.Context) error {
 			return nil
 		}
 	}
-
 }
 
 func (s *SecretsService) removeExpiredItems() {
