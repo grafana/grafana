@@ -8,11 +8,10 @@ import {
   Field,
   getFieldDisplayName,
   FieldType,
-  ArrayVector,
 } from '@grafana/data';
 import { Geometry } from 'ol/geom';
 import { getGazetteer, Gazetteer } from '../gazetteer/gazetteer';
-import { pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
+import { getGeoFieldFromGazetteer, pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
 
 export type FieldFinder = (frame: DataFrame) => Field | undefined;
 
@@ -211,19 +210,5 @@ export function setGeometryOnFrame(frame: DataFrame, location: LocationFieldMatc
   return {
     ...frame,
     fields: [geo, ...frame.fields],
-  };
-}
-
-function getGeoFieldFromGazetteer(gaz: Gazetteer, field: Field<string>): Field<Geometry | undefined> {
-  const count = field.values.length;
-  const geo = new Array<Geometry | undefined>(count);
-  for (let i = 0; i < count; i++) {
-    geo[i] = gaz.find(field.values.get(i))?.geometry();
-  }
-  return {
-    name: 'Geometry',
-    type: FieldType.geo,
-    values: new ArrayVector(geo),
-    config: {},
   };
 }

@@ -11,9 +11,9 @@ import {
 
 import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
-import { GazetteerPathEditor } from 'app/plugins/panel/geomap/editor/GazetteerPathEditor';
 import { GazetteerPathEditorConfigSettings } from 'app/plugins/panel/geomap/types';
 import { FieldLookupOptions, fieldLookupTransformer } from './fieldLookup';
+import { GazetteerPathEditor } from 'app/features/geo/editor/GazetteerPathEditor';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: {

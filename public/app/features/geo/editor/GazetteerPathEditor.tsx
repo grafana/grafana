@@ -1,9 +1,9 @@
 import React, { FC, useMemo, useState, useEffect } from 'react';
 import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Select, stylesFactory, useTheme2 } from '@grafana/ui';
-import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from '../../../../features/geo/gazetteer/gazetteer';
+import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
 import { css } from '@emotion/css';
-import { GazetteerPathEditorConfigSettings } from '../types';
+import { GazetteerPathEditorConfigSettings } from '../../../plugins/panel/geomap/types';
 
 const defaultPaths: Array<SelectableValue<string>> = [
   {

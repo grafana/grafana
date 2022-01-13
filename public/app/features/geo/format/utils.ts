@@ -1,6 +1,7 @@
-import { ArrayVector, Field, FieldType } from '@grafana/data';
-import { Point } from 'ol/geom';
+import { ArrayVector, Field, FieldConfig, FieldType } from '@grafana/data';
+import { Geometry, Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
+import { Gazetteer } from '../gazetteer/gazetteer';
 import { decodeGeohash } from './geohash';
 
 export function pointFieldFromGeohash(geohash: Field<string>): Field<Point> {
@@ -16,7 +17,7 @@ export function pointFieldFromGeohash(geohash: Field<string>): Field<Point> {
         return undefined;
       })
     ),
-    config: {},
+    config: hiddenTooltipField,
   };
 }
 
@@ -30,6 +31,26 @@ export function pointFieldFromLonLat(lon: Field, lat: Field): Field<Point> {
     name: 'point',
     type: FieldType.geo,
     values: new ArrayVector(buffer),
-    config: {},
+    config: hiddenTooltipField,
   };
 }
+
+export function getGeoFieldFromGazetteer(gaz: Gazetteer, field: Field<string>): Field<Geometry | undefined> {
+  const count = field.values.length;
+  const geo = new Array<Geometry | undefined>(count);
+  for (let i = 0; i < count; i++) {
+    geo[i] = gaz.find(field.values.get(i))?.geometry();
+  }
+  return {
+    name: 'Geometry',
+    type: FieldType.geo,
+    values: new ArrayVector(geo),
+    config: hiddenTooltipField,
+  };
+}
+
+const hiddenTooltipField: FieldConfig = Object.freeze({
+  custom: {
+    hideFrom: { tooltip: true },
+  },
+});
