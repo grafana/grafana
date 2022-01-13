@@ -108,11 +108,12 @@ func (ots *Opentelemetry) Run(ctx context.Context) error {
 	<-ctx.Done()
 
 	ots.log.Info("Closing tracing")
-	ctxShutdown, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel()
 	if ots.tracerProvider == nil {
 		return nil
 	}
+	ctxShutdown, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
 	if err := ots.tracerProvider.Shutdown(ctxShutdown); err != nil {
 		return err
 	}

@@ -32,8 +32,8 @@ func TracingMiddleware(logger log.Logger, tracer tracing.Tracer) httpclient.Midd
 			tracer.Inject(ctx, req.Header, span)
 			res, err := next.RoundTrip(req)
 
-			span.SetAttributes(attribute.String("HTTP request URL", req.URL.String()))
-			span.SetAttributes(attribute.String("HTTP request method", req.Method))
+			span.SetAttributes(attribute.String("http.url", req.URL.String()))
+			span.SetAttributes(attribute.String("http.method", req.Method))
 			// ext.SpanKind.Set(span, ext.SpanKindRPCClientEnum)
 
 			if err != nil {
@@ -48,7 +48,7 @@ func TracingMiddleware(logger log.Logger, tracer tracing.Tracer) httpclient.Midd
 					span.SetAttributes(attribute.Key(httpContentLengthTagKey).Int64(res.ContentLength))
 				}
 
-				// ext.HTTPStatusCode.Set(span, uint16(res.StatusCode))
+				span.SetAttributes(attribute.Int("http.status_code", res.StatusCode))
 				if res.StatusCode >= 400 {
 					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(res.StatusCode)))
 				}
