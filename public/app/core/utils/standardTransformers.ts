@@ -43,8 +43,9 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     configFromQueryTransformRegistryItem,
     prepareTimeseriesTransformerRegistryItem,
     convertFieldTypeTransformRegistryItem,
-    fieldLookupTransformRegistryItem,
-    setGeometryTransformRegistryItem,
     extractFieldsTransformRegistryItem,
   ];
 };
+
+// Not yet registered by default (both alpha)
+export const notYetStandard = [setGeometryTransformRegistryItem, fieldLookupTransformRegistryItem];
