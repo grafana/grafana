@@ -16,9 +16,9 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 // eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
+import { Input } from '@grafana/ui';
 
 import UiFindInput from './UiFindInput';
-import { UIInput } from '../uiElementsContext';
 
 const debounceMock = jest.spyOn(_, 'debounce').mockImplementation((func) => {
   return Object.assign(func, { cancel: jest.fn(), flush: jest.fn() });
@@ -62,7 +62,7 @@ describe('UiFindInput', () => {
 
     it('renders props.uiFind when state.ownInputValue is `undefined`', () => {
       wrapper.setProps({ value: uiFind });
-      expect(wrapper.find(UIInput).prop('value')).toBe(uiFind);
+      expect(wrapper.find(Input).prop('value')).toBe(uiFind);
     });
   });
 });

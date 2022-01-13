@@ -1,4 +1,4 @@
-import { Input, Popover, PopoverController, Tooltip as GrafanaTooltip } from '@grafana/ui';
+import { Popover, PopoverController, Tooltip as GrafanaTooltip } from '@grafana/ui';
 import { Elements, PopoverProps, TooltipProps } from '@jaegertracing/jaeger-ui-components';
 import React, { useRef } from 'react';
 
@@ -45,9 +45,6 @@ export const UIElements: Elements = {
   Dropdown: (() => null as any) as any,
   Menu: (() => null as any) as any,
   MenuItem: (() => null as any) as any,
-  Input(props) {
-    return <Input {...props} />;
-  },
   InputGroup({ children, className, style }) {
     return (
       <span className={className} style={style}>

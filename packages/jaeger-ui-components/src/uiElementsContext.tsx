@@ -126,25 +126,6 @@ export const UIMenuItem = function UIMenuItem(props: MenuItemProps) {
     </GetElementsContext>
   );
 };
-
-export type InputProps = {
-  autosize?: boolean | null;
-  placeholder?: string;
-  onChange: (value: React.ChangeEvent<HTMLInputElement>) => void;
-  suffix: React.ReactNode;
-  value?: string;
-};
-
-export const UIInput: React.FC<InputProps> = function UIInput(props: InputProps) {
-  return (
-    <GetElementsContext>
-      {(elements: Elements) => {
-        return <elements.Input {...props} />;
-      }}
-    </GetElementsContext>
-  );
-};
-
 export type InputGroupProps = {
   className?: string;
   compact?: boolean;
@@ -169,7 +150,6 @@ export type Elements = {
   Dropdown: React.ComponentType<DropdownProps>;
   Menu: React.ComponentType<MenuProps>;
   MenuItem: React.ComponentType<MenuItemProps>;
-  Input: React.ComponentType<InputProps>;
   InputGroup: React.ComponentType<InputGroupProps>;
 };
 
