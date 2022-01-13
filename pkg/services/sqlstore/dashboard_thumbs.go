@@ -9,29 +9,10 @@ import (
 func (ss *SQLStore) GetThumbnail(query *models.GetDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
 
 	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-
-		result := &models.DashboardThumbnail{}
-
-		sess.Table("dashboard_thumbnail")
-		sess.Join("INNER", "dashboard", "dashboard.id = dashboard_thumbnail.dashboard_id")
-		sess.Where("dashboard.uid = ? AND panel_id = ? AND kind = ? AND theme = ?", query.DashboardUID, query.PanelID, query.Kind, query.Theme)
-		sess.Cols("dashboard_thumbnail.id",
-			"dashboard_thumbnail.dashboard_id",
-			"dashboard_thumbnail.panel_id",
-			"dashboard_thumbnail.image_data_url",
-			"dashboard_thumbnail.kind",
-			"dashboard_thumbnail.theme",
-			"dashboard_thumbnail.updated")
-		exists, err := sess.Get(result)
-
-		if !exists {
-			return models.ErrDashboardThumbnailNotFound
-		}
-
+		result, err := findThumbnailByMeta(sess, query.DashboardThumbnailMeta)
 		if err != nil {
 			return err
 		}
-
 		query.Result = result
 		return nil
 	})
@@ -105,12 +86,12 @@ func findThumbnailByMeta(sess *DBSession, meta models.DashboardThumbnailMeta) (*
 
 func findDashboardIDByUID(sess *DBSession, dashboardUID string) (int64, error) {
 	result := &struct {
-		dashboardID int64
+		Id int64
 	}{
-		dashboardID: 0,
+		Id: 0,
 	}
 
-	sess.Table("dashboard").Where("dashboard.uid = ?", dashboardUID).Cols("dashboard_id")
+	sess.Table("dashboard").Where("dashboard.uid = ?", dashboardUID).Cols("id")
 	exists, err := sess.Get(result)
 
 	if err != nil {
@@ -120,5 +101,5 @@ func findDashboardIDByUID(sess *DBSession, dashboardUID string) (int64, error) {
 		return 0, models.ErrDashboardNotFound
 	}
 
-	return result.dashboardID, err
+	return result.Id, err
 }
