@@ -87,6 +87,7 @@ func (hs *HTTPServer) getDataSourceAccessControlMetadata(c *models.ReqContext, d
 	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "datasources", dsIDs)[key], nil
 }
 
+// GET /api/datasources/:id
 func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -123,6 +124,7 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 	return response.JSON(200, &dto)
 }
 
+// DELETE /api/datasources/:id
 func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -220,6 +222,7 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 	})
 }
 
+// DELETE /api/datasources/name/:name
 func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Response {
 	name := web.Params(c.Req)[":name"]
 
@@ -265,6 +268,7 @@ func validateURL(tp string, u string) response.Response {
 	return nil
 }
 
+// POST /api/datasources/
 func AddDataSource(c *models.ReqContext) response.Response {
 	cmd := models.AddDataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -293,6 +297,7 @@ func AddDataSource(c *models.ReqContext) response.Response {
 	})
 }
 
+// PUT /api/datasources/:id
 func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 	cmd := models.UpdateDataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
