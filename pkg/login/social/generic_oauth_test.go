@@ -7,15 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/level"
 )
 
 func newLogger(name string, lev string) log.Logger {
-	logger := log.Root.New("logger", name)
+	logger := log.New(name)
 	logger.AddLogger(logger, lev, map[string]level.Option{})
 	return logger
 }
