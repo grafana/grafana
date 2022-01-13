@@ -271,7 +271,7 @@ func (tn *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		tn.log.Error("Failed to send webhook", "error", err, "webhook", tn.Name)
 		return err
 	}

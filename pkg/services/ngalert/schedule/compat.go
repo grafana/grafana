@@ -6,6 +6,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
@@ -19,6 +20,7 @@ import (
 
 const (
 	NoDataAlertName = "DatasourceNoData"
+	ErrorAlertName  = "DatasourceError"
 
 	Rulename = "rulename"
 )
@@ -50,6 +52,10 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 
 	if alertState.State == eval.NoData {
 		return noDataAlert(nL, nA, alertState, urlStr)
+	}
+
+	if alertState.State == eval.Error {
+		return errorAlert(nL, nA, alertState, urlStr)
 	}
 
 	return &models.PostableAlert{
@@ -84,6 +90,25 @@ func noDataAlert(labels data.Labels, annotations data.Labels, alertState *state.
 	}
 }
 
+// errorAlert is a special alert sent when evaluation of an alert rule failed due to an error. Like noDataAlert, it
+// replaces the old behaviour of "Keep Last State" creating a separate alert called DatasourceError.
+func errorAlert(labels, annotations data.Labels, alertState *state.State, urlStr string) *models.PostableAlert {
+	if name, ok := labels[model.AlertNameLabel]; ok {
+		labels[Rulename] = name
+	}
+	labels[model.AlertNameLabel] = ErrorAlertName
+
+	return &models.PostableAlert{
+		Annotations: models.LabelSet(annotations),
+		StartsAt:    strfmt.DateTime(alertState.StartsAt),
+		EndsAt:      strfmt.DateTime(alertState.EndsAt),
+		Alert: models.Alert{
+			Labels:       models.LabelSet(labels),
+			GeneratorURL: strfmt.URI(urlStr),
+		},
+	}
+}
+
 func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *state.Manager, appURL *url.URL) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	var sentAlerts []*state.State
@@ -99,5 +124,21 @@ func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *s
 		sentAlerts = append(sentAlerts, alertState)
 	}
 	stateManager.Put(sentAlerts)
+	return alerts
+}
+
+// FromAlertsStateToStoppedAlert converts firingStates that have evaluation state either eval.Alerting or eval.NoData or eval.Error to models.PostableAlert that are accepted by notifiers.
+// Returns a list of alert instances that have expiration time.Now
+func FromAlertsStateToStoppedAlert(firingStates []*state.State, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
+	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
+	ts := clock.Now()
+	for _, alertState := range firingStates {
+		if alertState.State == eval.Normal || alertState.State == eval.Pending {
+			continue
+		}
+		postableAlert := stateToPostableAlert(alertState, appURL)
+		postableAlert.EndsAt = strfmt.DateTime(ts)
+		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
+	}
 	return alerts
 }

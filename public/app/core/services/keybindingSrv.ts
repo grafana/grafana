@@ -14,6 +14,7 @@ import {
   ShiftTimeEventPayload,
   ShowModalReactEvent,
   ZoomOutEvent,
+  AbsoluteTimeEvent,
 } from '../../types/events';
 import { contextSrv } from '../core';
 import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
@@ -34,6 +35,7 @@ export class KeybindingSrv {
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
       this.bind('s o', this.openSearch);
+      this.bind('t a', this.makeAbsoluteTime);
       this.bind('f', this.openSearch);
       this.bind('esc', this.exit);
       this.bindGlobal('esc', this.globalEsc);
@@ -87,6 +89,10 @@ export class KeybindingSrv {
 
   private goToProfile() {
     locationService.push('/profile');
+  }
+
+  private makeAbsoluteTime() {
+    appEvents.publish(new AbsoluteTimeEvent());
   }
 
   private showHelpModal() {
@@ -173,14 +179,16 @@ export class KeybindingSrv {
     });
 
     this.bind('mod+s', () => {
-      appEvents.publish(
-        new ShowModalReactEvent({
-          component: SaveDashboardModalProxy,
-          props: {
-            dashboard,
-          },
-        })
-      );
+      if (dashboard.meta.canSave) {
+        appEvents.publish(
+          new ShowModalReactEvent({
+            component: SaveDashboardModalProxy,
+            props: {
+              dashboard,
+            },
+          })
+        );
+      }
     });
 
     this.bind('t z', () => {

@@ -43,18 +43,22 @@ const numericFieldFilter = (f: Field) => f.type === FieldType.number;
 function addFieldPicker(
   builder: PanelOptionsEditorBuilder<CandlestickOptions>,
   info: FieldPickerInfo,
-  data: CandlestickData
+  data: CandlestickData | null
 ) {
-  const current = data[info.key] as Field;
   let placeholderText = 'Auto ';
-  if (current?.config) {
-    placeholderText += '= ' + getFieldDisplayName(current);
 
-    if (current === data?.open && info.key !== 'open') {
-      placeholderText += ` (${info.defaults.join(',')})`;
+  if (data) {
+    const current = data[info.key] as Field;
+
+    if (current?.config) {
+      placeholderText += '= ' + getFieldDisplayName(current);
+
+      if (current === data?.open && info.key !== 'open') {
+        placeholderText += ` (${info.defaults.join(',')})`;
+      }
+    } else {
+      placeholderText += `(${info.defaults.join(',')})`;
     }
-  } else {
-    placeholderText += `(${info.defaults.join(',')})`;
   }
 
   builder.addFieldNamePicker({

@@ -30,7 +30,7 @@ func NewDashAlertExtractor(dash *models.Dashboard, orgID int64, user *models.Sig
 	}
 }
 
-func (e *DashAlertExtractor) lookupQueryDataSource(panel *simplejson.Json, panelQuery *simplejson.Json) (*models.DataSource, error) {
+func (e *DashAlertExtractor) lookupQueryDataSource(ctx context.Context, panel *simplejson.Json, panelQuery *simplejson.Json) (*models.DataSource, error) {
 	dsName := ""
 	dsUid := ""
 
@@ -48,14 +48,14 @@ func (e *DashAlertExtractor) lookupQueryDataSource(panel *simplejson.Json, panel
 
 	if dsName == "" && dsUid == "" {
 		query := &models.GetDefaultDataSourceQuery{OrgId: e.OrgID}
-		if err := bus.DispatchCtx(context.TODO(), query); err != nil {
+		if err := bus.Dispatch(ctx, query); err != nil {
 			return nil, err
 		}
 		return query.Result, nil
 	}
 
 	query := &models.GetDataSourceQuery{Name: dsName, Uid: dsUid, OrgId: e.OrgID}
-	if err := bus.DispatchCtx(context.TODO(), query); err != nil {
+	if err := bus.Dispatch(ctx, query); err != nil {
 		return nil, err
 	}
 
@@ -80,6 +80,25 @@ func copyJSON(in json.Marshaler) (*simplejson.Json, error) {
 	}
 
 	return simplejson.NewJson(rawJSON)
+}
+
+// UAEnabled takes a context and returns true if Unified Alerting is enabled
+// and false if it is disabled or the setting is not present in the context
+type uaEnabledKeyType string
+
+const uaEnabledKey uaEnabledKeyType = "unified_alerting_enabled"
+
+func WithUAEnabled(ctx context.Context, enabled bool) context.Context {
+	retCtx := context.WithValue(ctx, uaEnabledKey, enabled)
+	return retCtx
+}
+
+func UAEnabled(ctx context.Context) bool {
+	enabled, ok := ctx.Value(uaEnabledKey).(bool)
+	if !ok {
+		return false
+	}
+	return enabled
 }
 
 func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) bool, logTranslationFailures bool) ([]*models.Alert, error) {
@@ -170,11 +189,16 @@ func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPan
 			panelQuery := findPanelQueryByRefID(panel, queryRefID)
 
 			if panelQuery == nil {
-				reason := fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefID)
+				var reason string
+				if UAEnabled(ctx) {
+					reason = fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found. Legacy alerting queries are not able to be removed at this time in order to preserve the ability to rollback to previous versions of Grafana", alert.PanelId, queryRefID)
+				} else {
+					reason = fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefID)
+				}
 				return nil, ValidationError{Reason: reason}
 			}
 
-			datasource, err := e.lookupQueryDataSource(panel, panelQuery)
+			datasource, err := e.lookupQueryDataSource(ctx, panel, panelQuery)
 			if err != nil {
 				return nil, err
 			}
@@ -184,7 +208,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPan
 				Datasources: []*models.DataSource{datasource},
 			}
 
-			if err := bus.Dispatch(&dsFilterQuery); err != nil {
+			if err := bus.Dispatch(ctx, &dsFilterQuery); err != nil {
 				if !errors.Is(err, bus.ErrHandlerNotFound) {
 					return nil, err
 				}

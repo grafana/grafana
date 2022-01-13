@@ -35,6 +35,7 @@ interface RolePickerMenuProps {
   options: Role[];
   appliedRoles: Role[];
   showGroups?: boolean;
+  builtinRolesDisabled?: boolean;
   onSelect: (roles: Role[]) => void;
   onBuiltInRoleSelect?: (role: OrgRole) => void;
   onUpdate: (newBuiltInRole: OrgRole, newRoles: string[]) => void;
@@ -47,6 +48,7 @@ export const RolePickerMenu = ({
   options,
   appliedRoles,
   showGroups,
+  builtinRolesDisabled,
   onSelect,
   onBuiltInRoleSelect,
   onUpdate,
@@ -181,6 +183,7 @@ export const RolePickerMenu = ({
               value={selectedBuiltInRole}
               onChange={onSelectedBuiltinRoleChange}
               fullWidth={true}
+              disabled={builtinRolesDisabled}
             />
           </div>
           {!!fixedRoles.length &&

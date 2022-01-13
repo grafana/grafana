@@ -7,12 +7,11 @@ import {
   FrameGeometrySourceMode,
 } from '@grafana/data';
 import Map from 'ol/Map';
-import Feature from 'ol/Feature';
+import Feature, { FeatureLike } from 'ol/Feature';
 import { Point } from 'ol/geom';
-import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import { getScaledDimension, getColorDimension, getTextDimension } from 'app/features/dimensions';
+import { getScaledDimension, getColorDimension, getTextDimension, getScalarDimension } from 'app/features/dimensions';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReplaySubject } from 'rxjs';
@@ -20,6 +19,8 @@ import { getFeatures } from '../../utils/getFeatures';
 import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
 import { StyleEditor } from './StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
+import VectorLayer from 'ol/layer/Vector';
+import { isNumber } from 'lodash';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -42,6 +43,7 @@ export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
   location: {
     mode: FrameGeometrySourceMode.Auto,
   },
+  tooltip: true,
 };
 
 /**
@@ -60,7 +62,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    */
   create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2) => {
     const matchers = await getLocationMatchers(options.location);
-    const vectorLayer = new layer.Vector({});
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -73,12 +74,41 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
 
-    // Set the default style
     const style = await getStyleConfigState(config.style);
-    if (!style.fields) {
-      vectorLayer.setStyle(style.maker(style.base));
-    }
 
+    // eventually can also use resolution for dynamic style
+    const vectorLayer = new VectorLayer();
+
+    if(!style.fields) {
+      // Set a global style
+      vectorLayer.setStyle(style.maker(style.base));
+    } else {
+      vectorLayer.setStyle((feature: FeatureLike) => {
+        const idx = feature.get("rowIndex") as number;
+        const dims = style.dims;
+        if(!dims || !(isNumber(idx))) {
+          return style.maker(style.base);
+        }
+
+        const values = {...style.base};
+
+        if (dims.color) {
+          values.color = dims.color.get(idx);
+        }
+        if (dims.size) {
+          values.size = dims.size.get(idx);
+        }
+        if (dims.text) {
+          values.text = dims.text.get(idx);
+        }
+        if (dims.rotation) {
+          values.rotation = dims.rotation.get(idx);
+        }
+        return style.maker(values)
+      }
+      );
+    }
+    
     return {
       init: () => vectorLayer,
       legend: legend,
@@ -107,10 +137,13 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             if (style.fields.text) {
               dims.text = getTextDimension(frame, style.config.text!);
             }
+            if (style.fields.rotation) {
+              dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
+            }
             style.dims = dims;
           }
 
-          const frameFeatures = getFeatures(frame, info, style);
+          const frameFeatures = getFeatures(frame, info);
 
           if (frameFeatures) {
             features.push(...frameFeatures);
@@ -139,7 +172,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             path: 'config.style',
             name: 'Styles',
             editor: StyleEditor,
-            settings: {},
+            settings: {
+              displayRotation: true,
+            },
             defaultValue: defaultOptions.style,
           })
           .addBooleanSwitch({

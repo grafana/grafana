@@ -15,6 +15,14 @@ type FakeConfigStore struct {
 	configs map[int64]*models.AlertConfiguration
 }
 
+func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) FakeConfigStore {
+	t.Helper()
+
+	return FakeConfigStore{
+		configs: configs,
+	}
+}
+
 func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
 	result := make([]*models.AlertConfiguration, 0, len(f.configs))
 	for _, configuration := range f.configs {
@@ -63,6 +71,14 @@ type FakeOrgStore struct {
 	orgs []int64
 }
 
+func NewFakeOrgStore(t *testing.T, orgs []int64) FakeOrgStore {
+	t.Helper()
+
+	return FakeOrgStore{
+		orgs: orgs,
+	}
+}
+
 func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
 }
@@ -72,7 +88,7 @@ type FakeKVStore struct {
 	store map[int64]map[string]map[string]string
 }
 
-func newFakeKVStore(t *testing.T) *FakeKVStore {
+func NewFakeKVStore(t *testing.T) *FakeKVStore {
 	t.Helper()
 
 	return &FakeKVStore{

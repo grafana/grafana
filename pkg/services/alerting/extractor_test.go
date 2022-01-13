@@ -24,12 +24,12 @@ func TestAlertRuleExtraction(t *testing.T) {
 	influxDBDs := &models.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB", Uid: "InfluxDB-uid"}
 	prom := &models.DataSource{Id: 17, OrgId: 1, Name: "Prometheus", Uid: "Prometheus-uid"}
 
-	bus.AddHandler("test", func(query *models.GetDefaultDataSourceQuery) error {
+	bus.AddHandler("test", func(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
 		query.Result = defaultDs
 		return nil
 	})
 
-	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
+	bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
 		if query.Name == defaultDs.Name || query.Uid == defaultDs.Uid {
 			query.Result = defaultDs
 		}
@@ -147,6 +147,18 @@ func TestAlertRuleExtraction(t *testing.T) {
 		_, err = extractor.GetAlerts(context.Background())
 
 		require.NotNil(t, err)
+	})
+
+	t.Run("Cannot save panel with query that is referenced by legacy alerting", func(t *testing.T) {
+		panelWithQuery, err := ioutil.ReadFile("./testdata/panel-with-bad-query-id.json")
+		require.Nil(t, err)
+		dashJSON, err := simplejson.NewJson(panelWithQuery)
+		require.Nil(t, err)
+		dash := models.NewDashboardFromJson(dashJSON)
+		extractor := NewDashAlertExtractor(dash, 1, nil)
+
+		_, err = extractor.GetAlerts(WithUAEnabled(context.Background(), true))
+		require.Equal(t, "alert validation error: Alert on PanelId: 2 refers to query(B) that cannot be found. Legacy alerting queries are not able to be removed at this time in order to preserve the ability to rollback to previous versions of Grafana", err.Error())
 	})
 
 	t.Run("Panel does not have datasource configured, use the default datasource", func(t *testing.T) {

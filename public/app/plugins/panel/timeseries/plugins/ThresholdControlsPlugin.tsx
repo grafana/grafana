@@ -1,6 +1,6 @@
 import React, { useState, useLayoutEffect, useMemo, useRef } from 'react';
-import { FieldConfigSource, ThresholdsConfig, getValueFormat, FieldConfig } from '@grafana/data';
-import { UPlotConfigBuilder, buildScaleKey, GraphFieldConfig } from '@grafana/ui';
+import { FieldConfigSource, ThresholdsConfig, getValueFormat } from '@grafana/data';
+import { UPlotConfigBuilder, buildScaleKey } from '@grafana/ui';
 import { ThresholdDragHandle } from './ThresholdDragHandle';
 import uPlot from 'uplot';
 
@@ -42,7 +42,7 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
     if (!thresholds) {
       return null;
     }
-    const scale = buildScaleKey(fieldConfig as FieldConfig<GraphFieldConfig>);
+    const scale = buildScaleKey(fieldConfig.defaults);
 
     const decimals = fieldConfig.defaults.decimals;
     const handles = [];
@@ -54,16 +54,15 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
       if (Number.isNaN(yPos) || !Number.isFinite(yPos)) {
         continue;
       }
-      if (yPos < 0 || yPos > plot.bbox.height / window.devicePixelRatio) {
-        continue;
-      }
+
+      const height = plot.bbox.height / window.devicePixelRatio;
 
       const handle = (
         <ThresholdDragHandle
           key={`${step.value}-${i}`}
           step={step}
           y={yPos}
-          dragBounds={{ top: 0, bottom: plot.bbox.height / window.devicePixelRatio }}
+          dragBounds={{ top: 0, bottom: height }}
           mapPositionToValue={(y) => plot.posToVal(y, scale)}
           formatValue={(v) => getValueFormat(scale)(v, decimals).text}
           onChange={(value) => {
@@ -80,6 +79,7 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
           }}
         />
       );
+
       handles.push(handle);
     }
 

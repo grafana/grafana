@@ -1,7 +1,9 @@
 import React, { FC, memo, useState } from 'react';
+import { useLocalStorage } from 'react-use';
 import { css } from '@emotion/css';
 import { stylesFactory, useTheme, Spinner, FilterInput } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { FolderDTO } from 'app/types';
@@ -13,6 +15,7 @@ import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
+import { PREVIEWS_LOCAL_STORAGE_KEY } from '../constants';
 
 export interface Props {
   folder?: FolderDTO;
@@ -21,6 +24,11 @@ export interface Props {
 const { isEditor } = contextSrv;
 
 export const ManageDashboards: FC<Props> = memo(({ folder }) => {
+  const previewsEnabled = Boolean(config.featureToggles.dashboardPreviews);
+  const [showPreviews, setShowPreviews] = useLocalStorage<boolean>(PREVIEWS_LOCAL_STORAGE_KEY, true);
+  const onShowPreviewsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setShowPreviews(event.target.checked);
+  };
   const folderId = folder?.id;
   const folderUid = folder?.uid;
   const theme = useTheme();
@@ -106,11 +114,13 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
           canMove={hasEditPermissionInFolders && canMove}
           deleteItem={onItemDelete}
           moveTo={onMoveTo}
+          onShowPreviewsChange={onShowPreviewsChange}
           onToggleAllChecked={onToggleAllChecked}
           onStarredFilterChange={onStarredFilterChange}
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           query={query}
+          showPreviews={previewsEnabled && showPreviews}
           hideLayout={!!folderUid}
           onLayoutChange={onLayoutChange}
           editable={hasEditPermissionInFolders}
@@ -123,6 +133,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
           onToggleSection={onToggleSection}
           onToggleChecked={onToggleChecked}
           layout={query.layout}
+          showPreviews={previewsEnabled && showPreviews}
         />
       </div>
       <ConfirmDeleteModal
@@ -140,6 +151,8 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     </div>
   );
 });
+
+ManageDashboards.displayName = 'ManageDashboards';
 
 export default ManageDashboards;
 

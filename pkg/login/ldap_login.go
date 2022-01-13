@@ -43,7 +43,7 @@ var loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery) (bo
 	if err != nil {
 		if errors.Is(err, ldap.ErrCouldNotFindUser) {
 			// Ignore the error since user might not be present anyway
-			if err := DisableExternalUser(query.Username); err != nil {
+			if err := DisableExternalUser(ctx, query.Username); err != nil {
 				ldapLogger.Debug("Failed to disable external user", "err", err)
 			}
 
@@ -58,7 +58,7 @@ var loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery) (bo
 		ExternalUser:  externalUser,
 		SignupAllowed: setting.LDAPAllowSignup,
 	}
-	err = bus.DispatchCtx(ctx, upsert)
+	err = bus.Dispatch(ctx, upsert)
 	if err != nil {
 		return true, err
 	}
@@ -68,13 +68,13 @@ var loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery) (bo
 }
 
 // DisableExternalUser marks external user as disabled in Grafana db
-func DisableExternalUser(username string) error {
+func DisableExternalUser(ctx context.Context, username string) error {
 	// Check if external user exist in Grafana
 	userQuery := &models.GetExternalUserInfoByLoginQuery{
 		LoginOrEmail: username,
 	}
 
-	if err := bus.Dispatch(userQuery); err != nil {
+	if err := bus.Dispatch(ctx, userQuery); err != nil {
 		return err
 	}
 
@@ -92,7 +92,7 @@ func DisableExternalUser(username string) error {
 			IsDisabled: true,
 		}
 
-		if err := bus.Dispatch(disableUserCmd); err != nil {
+		if err := bus.Dispatch(ctx, disableUserCmd); err != nil {
 			ldapLogger.Debug(
 				"Error disabling external user",
 				"user",

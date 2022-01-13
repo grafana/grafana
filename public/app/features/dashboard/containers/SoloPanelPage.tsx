@@ -115,7 +115,7 @@ export const SoloPanel = ({ dashboard, notFound, panel, panelId }: SoloPanelProp
               panel={panel}
               isEditing={false}
               isViewing={false}
-              isInView={true}
+              lazy={false}
             />
           );
         }}

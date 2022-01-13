@@ -1,9 +1,5 @@
 import { DataFrame, DataFrameView, SplitOpen, TraceSpanRow } from '@grafana/data';
-import { colors, useTheme } from '@grafana/ui';
 import {
-  ThemeOptions,
-  ThemeProvider,
-  ThemeType,
   Trace,
   TracePageHeader,
   TraceProcess,
@@ -18,9 +14,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import { isEqual } from 'lodash';
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
-import { usePrevious } from 'react-use';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { createSpanLinkFactory } from './createSpanLink';
 import { UIElements } from './uiElements';
@@ -38,12 +32,12 @@ type Props = {
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
+  scrollElement?: Element;
 };
 
 export function TraceView(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
-  const prevFrame = usePrevious(frame);
 
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
   const {
@@ -56,15 +50,7 @@ export function TraceView(props: Props) {
     detailTagsToggle,
     detailWarningsToggle,
     detailStackTracesToggle,
-    clearDetailStates,
-  } = useDetailState();
-
-  // Clear detail state when new trace arrives
-  useEffect(() => {
-    if (frame && prevFrame && !isEqual(prevFrame, frame)) {
-      clearDetailStates();
-    }
-  }, [frame, prevFrame, clearDetailStates]);
+  } = useDetailState(frame);
 
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
@@ -85,21 +71,6 @@ export function TraceView(props: Props) {
     ?.tracesToLogs;
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
 
-  const theme = useTheme();
-  const traceTheme = useMemo(
-    () =>
-      ({
-        type: theme.isDark ? ThemeType.Dark : ThemeType.Light,
-        servicesColorPalette: colors,
-        components: {
-          TraceName: {
-            fontSize: theme.typography.size.lg,
-          },
-        },
-      } as ThemeOptions),
-    [theme]
-  );
-
   const traceTimeline: TTraceTimeline = useMemo(
     () => ({
       childrenHiddenIDs,
@@ -116,7 +87,6 @@ export function TraceView(props: Props) {
     () => createSpanLinkFactory({ splitOpenFn: props.splitOpenFn, traceToLogsOptions, dataFrame: frame }),
     [props.splitOpenFn, traceToLogsOptions, frame]
   );
-  const scrollElement = document.getElementsByClassName('scrollbar-view')[0];
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
 
   if (!props.dataFrames?.length || !traceProp) {
@@ -124,67 +94,65 @@ export function TraceView(props: Props) {
   }
 
   return (
-    <ThemeProvider value={traceTheme}>
-      <UIElementsContext.Provider value={UIElements}>
-        <TracePageHeader
-          canCollapse={false}
-          clearSearch={noop}
-          focusUiFindMatches={noop}
-          hideMap={false}
-          hideSummary={false}
-          nextResult={noop}
-          onSlimViewClicked={onSlimViewClicked}
-          onTraceGraphViewClicked={noop}
-          prevResult={noop}
-          resultCount={0}
-          slimView={slim}
-          textFilter={null}
-          trace={traceProp}
-          traceGraphView={false}
-          updateNextViewRangeTime={updateNextViewRangeTime}
-          updateViewRangeTime={updateViewRangeTime}
-          viewRange={viewRange}
-          searchValue={search}
-          onSearchValueChange={setSearch}
-          hideSearchButtons={true}
-          timeZone={timeZone}
-        />
-        <TraceTimelineViewer
-          registerAccessors={noop}
-          scrollToFirstVisibleSpan={noop}
-          findMatchesIDs={spanFindMatches}
-          trace={traceProp}
-          traceTimeline={traceTimeline}
-          updateNextViewRangeTime={updateNextViewRangeTime}
-          updateViewRangeTime={updateViewRangeTime}
-          viewRange={viewRange}
-          focusSpan={noop}
-          createLinkToExternalSpan={noop as any}
-          setSpanNameColumnWidth={setSpanNameColumnWidth}
-          collapseAll={collapseAll}
-          collapseOne={collapseOne}
-          expandAll={expandAll}
-          expandOne={expandOne}
-          childrenToggle={childrenToggle}
-          clearShouldScrollToFirstUiFindMatch={noop}
-          detailLogItemToggle={detailLogItemToggle}
-          detailLogsToggle={detailLogsToggle}
-          detailWarningsToggle={detailWarningsToggle}
-          detailStackTracesToggle={detailStackTracesToggle}
-          detailReferencesToggle={detailReferencesToggle}
-          detailProcessToggle={detailProcessToggle}
-          detailTagsToggle={detailTagsToggle}
-          detailToggle={toggleDetail}
-          setTrace={noop}
-          addHoverIndentGuideId={addHoverIndentGuideId}
-          removeHoverIndentGuideId={removeHoverIndentGuideId}
-          linksGetter={noop as any}
-          uiFind={search}
-          createSpanLink={createSpanLink}
-          scrollElement={scrollElement}
-        />
-      </UIElementsContext.Provider>
-    </ThemeProvider>
+    <UIElementsContext.Provider value={UIElements}>
+      <TracePageHeader
+        canCollapse={false}
+        clearSearch={noop}
+        focusUiFindMatches={noop}
+        hideMap={false}
+        hideSummary={false}
+        nextResult={noop}
+        onSlimViewClicked={onSlimViewClicked}
+        onTraceGraphViewClicked={noop}
+        prevResult={noop}
+        resultCount={0}
+        slimView={slim}
+        textFilter={null}
+        trace={traceProp}
+        traceGraphView={false}
+        updateNextViewRangeTime={updateNextViewRangeTime}
+        updateViewRangeTime={updateViewRangeTime}
+        viewRange={viewRange}
+        searchValue={search}
+        onSearchValueChange={setSearch}
+        hideSearchButtons={true}
+        timeZone={timeZone}
+      />
+      <TraceTimelineViewer
+        registerAccessors={noop}
+        scrollToFirstVisibleSpan={noop}
+        findMatchesIDs={spanFindMatches}
+        trace={traceProp}
+        traceTimeline={traceTimeline}
+        updateNextViewRangeTime={updateNextViewRangeTime}
+        updateViewRangeTime={updateViewRangeTime}
+        viewRange={viewRange}
+        focusSpan={noop}
+        createLinkToExternalSpan={noop as any}
+        setSpanNameColumnWidth={setSpanNameColumnWidth}
+        collapseAll={collapseAll}
+        collapseOne={collapseOne}
+        expandAll={expandAll}
+        expandOne={expandOne}
+        childrenToggle={childrenToggle}
+        clearShouldScrollToFirstUiFindMatch={noop}
+        detailLogItemToggle={detailLogItemToggle}
+        detailLogsToggle={detailLogsToggle}
+        detailWarningsToggle={detailWarningsToggle}
+        detailStackTracesToggle={detailStackTracesToggle}
+        detailReferencesToggle={detailReferencesToggle}
+        detailProcessToggle={detailProcessToggle}
+        detailTagsToggle={detailTagsToggle}
+        detailToggle={toggleDetail}
+        setTrace={noop}
+        addHoverIndentGuideId={addHoverIndentGuideId}
+        removeHoverIndentGuideId={removeHoverIndentGuideId}
+        linksGetter={noop as any}
+        uiFind={search}
+        createSpanLink={createSpanLink}
+        scrollElement={props.scrollElement}
+      />
+    </UIElementsContext.Provider>
   );
 }
 

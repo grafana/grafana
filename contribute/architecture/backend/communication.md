@@ -109,7 +109,7 @@ ctx := req.Request.Context()
 query := &models.FindDashboardQuery{
     ID: "foo",
 }
-if err := bus.DispatchCtx(ctx, query); err != nil {
+if err := bus.Dispatch(ctx, query); err != nil {
     return err
 }
 // The query now contains a result.

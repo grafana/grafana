@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -41,7 +42,7 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 
 	var path string
 	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
-		ds, err := srv.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
+		ds, err := srv.DatasourceCache.GetDatasource(context.Background(), datasourceID, c.SignedInUser, c.SkipCache)
 		if err != nil {
 			return ErrResp(http.StatusInternalServerError, err, "failed to get datasource")
 		}
@@ -81,11 +82,11 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 		now = timeNow()
 	}
 
-	if _, err := validateQueriesAndExpressions(cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+	if _, err := validateQueriesAndExpressions(c.Req.Context(), cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid queries or expressions")
 	}
 
-	evaluator := eval.Evaluator{Cfg: srv.Cfg, Log: srv.log}
+	evaluator := eval.Evaluator{Cfg: srv.Cfg, Log: srv.log, DataSourceCache: srv.DatasourceCache}
 	evalResults, err := evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.ExpressionService)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")

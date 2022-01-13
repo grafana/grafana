@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -45,7 +46,7 @@ func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimod
 		return apimodels.GrafanaBackend, nil
 	}
 	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
-		if ds, err := cache.GetDatasource(datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
+		if ds, err := cache.GetDatasource(ctx.Req.Context(), datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
 			switch ds.Type {
 			case "loki", "prometheus":
 				return apimodels.LoTexRulerBackend, nil
@@ -116,7 +117,10 @@ func (p *AlertingProxy) withReq(
 			var m map[string]interface{}
 			if err := json.Unmarshal(resp.Body(), &m); err == nil {
 				if message, ok := m["message"]; ok {
-					errMessage = message.(string)
+					errMessageStr, isString := message.(string)
+					if isString {
+						errMessage = errMessageStr
+					}
 				}
 			}
 		} else if strings.HasPrefix(resp.Header().Get("Content-Type"), "text/html") {
@@ -173,12 +177,12 @@ func messageExtractor(resp *response.NormalResponse) (interface{}, error) {
 	return map[string]string{"message": string(resp.Body())}, nil
 }
 
-func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
+func validateCondition(ctx context.Context, c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
 	if len(c.Data) == 0 {
 		return nil
 	}
 
-	refIDs, err := validateQueriesAndExpressions(c.Data, user, skipCache, datasourceCache)
+	refIDs, err := validateQueriesAndExpressions(ctx, c.Data, user, skipCache, datasourceCache)
 	if err != nil {
 		return err
 	}
@@ -193,7 +197,7 @@ func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCach
 	return nil
 }
 
-func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
+func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
 	refIDs := make(map[string]struct{})
 	if len(data) == 0 {
 		return nil, nil
@@ -214,7 +218,7 @@ func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.Sign
 			continue
 		}
 
-		_, err = datasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
+		_, err = datasourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)
 		if err != nil {
 			return nil, fmt.Errorf("invalid query %s: %w: %s", query.RefID, err, datasourceUID)
 		}
@@ -229,7 +233,7 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 		OrgID:     c.SignedInUser.OrgId,
 		Data:      cmd.Data,
 	}
-	if err := validateCondition(evalCond, c.SignedInUser, c.SkipCache, datasourceCache); err != nil {
+	if err := validateCondition(c.Req.Context(), evalCond, c.SignedInUser, c.SkipCache, datasourceCache); err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
 
@@ -238,7 +242,7 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 		now = timeNow()
 	}
 
-	evaluator := eval.Evaluator{Cfg: cfg, Log: log}
+	evaluator := eval.Evaluator{Cfg: cfg, Log: log, DataSourceCache: datasourceCache}
 	evalResults, err := evaluator.ConditionEval(&evalCond, now, expressionService)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
@@ -255,7 +259,7 @@ func ErrResp(status int, err error, msg string, args ...interface{}) *response.N
 	if msg != "" {
 		err = errors.WithMessagef(err, msg, args...)
 	}
-	return response.Error(status, err.Error(), nil)
+	return response.Error(status, "API error", err)
 }
 
 // accessForbiddenResp creates a response of forbidden access.
