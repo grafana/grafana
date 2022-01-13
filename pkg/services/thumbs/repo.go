@@ -22,7 +22,7 @@ type sqlThumbnailRepository struct {
 	store *sqlstore.SQLStore
 }
 
-func (r *sqlThumbnailRepository) SaveFromFile(filePath string, meta models.DashboardThumbnailMeta) (int64, error) {
+func (r *sqlThumbnailRepository) saveFromFile(filePath string, meta models.DashboardThumbnailMeta) (int64, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		tlog.Error("error opening file", "dashboardUID", meta.DashboardUID, "err", err)
@@ -37,7 +37,7 @@ func (r *sqlThumbnailRepository) SaveFromFile(filePath string, meta models.Dashb
 		return 0, err
 	}
 
-	return r.SaveFromBytes(content, getMimeType(filePath), meta)
+	return r.saveFromBytes(content, getMimeType(filePath), meta)
 }
 
 func getMimeType(filePath string) string {
@@ -48,7 +48,7 @@ func getMimeType(filePath string) string {
 	return "image/png"
 }
 
-func (r *sqlThumbnailRepository) SaveFromBytes(content []byte, mimeType string, meta models.DashboardThumbnailMeta) (int64, error) {
+func (r *sqlThumbnailRepository) saveFromBytes(content []byte, mimeType string, meta models.DashboardThumbnailMeta) (int64, error) {
 	base64Image := base64.StdEncoding.EncodeToString(content)
 	cmd := &models.SaveDashboardThumbnailCommand{
 		DashboardThumbnailMeta: meta,
@@ -64,7 +64,7 @@ func (r *sqlThumbnailRepository) SaveFromBytes(content []byte, mimeType string, 
 	return cmd.Result.Id, nil
 }
 
-func (r *sqlThumbnailRepository) Get(meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error) {
+func (r *sqlThumbnailRepository) getThumbnail(meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error) {
 	query := &models.GetDashboardThumbnailCommand{
 		DashboardThumbnailMeta: meta,
 	}

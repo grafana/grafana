@@ -101,7 +101,7 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		return // already returned value
 	}
 
-	res, err := hs.thumbnailRepo.Get(models.DashboardThumbnailMeta{
+	res, err := hs.thumbnailRepo.getThumbnail(models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		Theme:        string(req.Theme),
 		Kind:         models.ThumbnailKindDefault,
@@ -162,7 +162,7 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 
 	}
 
-	_, err = hs.thumbnailRepo.SaveFromBytes(fileBytes, getMimeType(handler.Filename), models.DashboardThumbnailMeta{
+	_, err = hs.thumbnailRepo.saveFromBytes(fileBytes, getMimeType(handler.Filename), models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		Theme:        string(req.Theme),
 		Kind:         req.Kind,

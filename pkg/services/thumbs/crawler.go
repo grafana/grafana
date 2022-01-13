@@ -221,7 +221,7 @@ func (r *simpleCrawler) walk() {
 					}
 				}()
 
-				thumbnailId, err := r.thumbnailRepo.SaveFromFile(res.FilePath, models.DashboardThumbnailMeta{
+				thumbnailId, err := r.thumbnailRepo.saveFromFile(res.FilePath, models.DashboardThumbnailMeta{
 					DashboardUID: item.uid,
 					Theme:        string(r.opts.Theme),
 					Kind:         r.thumbnailKind,
