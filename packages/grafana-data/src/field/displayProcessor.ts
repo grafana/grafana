@@ -84,6 +84,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     let prefix: string | undefined;
     let suffix: string | undefined;
     let color: string | undefined;
+    let icon: string | undefined;
     let percent: number | undefined;
 
     if (mappings && mappings.length > 0) {
@@ -96,6 +97,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
         if (mappingResult.color != null) {
           color = options.theme.visualization.getColorByName(mappingResult.color);
+        }
+
+        if (mappingResult.icon != null) {
+          icon = mappingResult.icon;
         }
       }
     }
@@ -137,7 +142,23 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       percent = scaleResult.percent;
     }
 
-    return { text, numeric, prefix, suffix, color, percent };
+    const display: DisplayValue = {
+      text,
+      numeric,
+      prefix,
+      suffix,
+      color,
+    };
+
+    if (icon != null) {
+      display.icon = icon;
+    }
+
+    if (percent != null) {
+      display.percent = percent;
+    }
+
+    return display;
   };
 }
 

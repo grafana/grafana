@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	serviceaccountIDPath = "/api/serviceaccounts/%s"
+	serviceaccountIDPath = "/api/org/serviceaccounts/%s"
 )
 
 // test the accesscontrol endpoints
