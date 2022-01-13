@@ -18,7 +18,6 @@ func init() {
 	bus.AddHandler("sql", GetTeamById)
 	bus.AddHandler("sql", GetTeamsByUser)
 
-	bus.AddHandler("sql", UpdateTeamMember)
 	bus.AddHandler("sql", RemoveTeamMember)
 	bus.AddHandler("sql", GetTeamMembers)
 	bus.AddHandler("sql", IsAdminOfTeams)
@@ -287,22 +286,7 @@ func (ss *SQLStore) AddTeamMember(userID, orgID, teamID int64, isExternal bool, 
 			return models.ErrTeamMemberAlreadyAdded
 		}
 
-		if _, err := teamExists(orgID, teamID, sess); err != nil {
-			return err
-		}
-
-		entity := models.TeamMember{
-			OrgId:      orgID,
-			TeamId:     teamID,
-			UserId:     userID,
-			External:   isExternal,
-			Created:    time.Now(),
-			Updated:    time.Now(),
-			Permission: permission,
-		}
-
-		_, err := sess.Insert(&entity)
-		return err
+		return addTeamMember(sess, orgID, teamID, userID, isExternal, permission)
 	})
 }
 
@@ -321,30 +305,84 @@ func getTeamMember(sess *DBSession, orgId int64, teamId int64, userId int64) (mo
 	return member, nil
 }
 
-// UpdateTeamMember updates a team member
-func UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		member, err := getTeamMember(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
+func (ss *SQLStore) IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error) {
+	var isMember bool
+
+	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		var err error
+		isMember, err = isTeamMember(sess, orgId, teamId, userId)
+		return err
+	})
+
+	return isMember, err
+}
+
+func isTeamMember(sess *DBSession, orgId int64, teamId int64, userId int64) (bool, error) {
+	if res, err := sess.Query("SELECT 1 FROM team_member WHERE org_id=? and team_id=? and user_id=?", orgId, teamId, userId); err != nil {
+		return false, err
+	} else if len(res) != 1 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// SaveTeamMember adds user to a team or updates user permissions in a team
+func (ss *SQLStore) SaveTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
+	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		isMember, err := isTeamMember(sess, orgID, teamID, userID)
 		if err != nil {
 			return err
 		}
 
-		if cmd.ProtectLastAdmin {
-			_, err := isLastAdmin(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
-			if err != nil {
-				return err
-			}
+		if isMember {
+			err = updateTeamMember(sess, orgID, teamID, userID, permission)
+		} else {
+			err = addTeamMember(sess, orgID, teamID, userID, isExternal, permission)
 		}
-
-		if cmd.Permission != models.PERMISSION_ADMIN { // make sure we don't get invalid permission levels in store
-			cmd.Permission = 0
-		}
-
-		member.Permission = cmd.Permission
-		_, err = sess.Cols("permission").Where("org_id=? and team_id=? and user_id=?", cmd.OrgId, cmd.TeamId, cmd.UserId).Update(member)
 
 		return err
 	})
+}
+
+func addTeamMember(sess *DBSession, orgID, teamID, userID int64, isExternal bool, permission models.PermissionType) error {
+	if _, err := teamExists(orgID, teamID, sess); err != nil {
+		return err
+	}
+
+	entity := models.TeamMember{
+		OrgId:      orgID,
+		TeamId:     teamID,
+		UserId:     userID,
+		External:   isExternal,
+		Created:    time.Now(),
+		Updated:    time.Now(),
+		Permission: permission,
+	}
+
+	_, err := sess.Insert(&entity)
+	return err
+}
+
+func updateTeamMember(sess *DBSession, orgID, teamID, userID int64, permission models.PermissionType) error {
+	member, err := getTeamMember(sess, orgID, teamID, userID)
+	if err != nil {
+		return err
+	}
+
+	if permission != models.PERMISSION_ADMIN {
+		permission = 0 // make sure we don't get invalid permission levels in store
+
+		// protect the last team admin
+		_, err := isLastAdmin(sess, orgID, teamID, userID)
+		if err != nil {
+			return err
+		}
+	}
+
+	member.Permission = permission
+	_, err = sess.Cols("permission").Where("org_id=? and team_id=? and user_id=?", orgID, teamID, userID).Update(member)
+	return err
 }
 
 // RemoveTeamMember removes a member from a team

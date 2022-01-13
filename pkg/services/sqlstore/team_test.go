@@ -54,9 +54,9 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, team1.OrgId, testOrgID)
 				require.EqualValues(t, team1.MemberCount, 0)
 
-				err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
+				err = sqlStore.SaveTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
 				require.NoError(t, err)
-				err = sqlStore.AddTeamMember(userIds[1], testOrgID, team1.Id, true, 0)
+				err = sqlStore.SaveTeamMember(userIds[1], testOrgID, team1.Id, true, 0)
 				require.NoError(t, err)
 
 				q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id}
@@ -107,7 +107,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 				team1 := teamQuery.Result.Teams[0]
 
-				err = sqlStore.AddTeamMember(userId, testOrgID, team1.Id, true, 0)
+				err = sqlStore.SaveTeamMember(userId, testOrgID, team1.Id, true, 0)
 				require.NoError(t, err)
 
 				memberQuery := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true}
@@ -123,7 +123,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			t.Run("Should be able to update users in a team", func(t *testing.T) {
 				userId := userIds[0]
 				team := team1
-				err = sqlStore.AddTeamMember(userId, testOrgID, team.Id, false, 0)
+				err = sqlStore.SaveTeamMember(userId, testOrgID, team.Id, false, 0)
 				require.NoError(t, err)
 
 				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
@@ -131,12 +131,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.EqualValues(t, qBeforeUpdate.Result[0].Permission, 0)
 
-				err = UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-					UserId:     userId,
-					OrgId:      testOrgID,
-					TeamId:     team.Id,
-					Permission: models.PERMISSION_ADMIN,
-				})
+				err = sqlStore.SaveTeamMember(userId, testOrgID, team.Id, false, models.PERMISSION_ADMIN)
 
 				require.NoError(t, err)
 
@@ -151,7 +146,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				setup()
 				userID := userIds[0]
 				team := team1
-				err = sqlStore.AddTeamMember(userID, testOrgID, team.Id, false, 0)
+				err = sqlStore.SaveTeamMember(userID, testOrgID, team.Id, false, 0)
 				require.NoError(t, err)
 
 				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
@@ -160,12 +155,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, qBeforeUpdate.Result[0].Permission, 0)
 
 				invalidPermissionLevel := models.PERMISSION_EDIT
-				err = UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-					UserId:     userID,
-					OrgId:      testOrgID,
-					TeamId:     team.Id,
-					Permission: invalidPermissionLevel,
-				})
+				err = sqlStore.SaveTeamMember(userID, testOrgID, team.Id, false, invalidPermissionLevel)
 
 				require.NoError(t, err)
 
@@ -173,19 +163,6 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = GetTeamMembers(context.Background(), qAfterUpdate)
 				require.NoError(t, err)
 				require.EqualValues(t, qAfterUpdate.Result[0].Permission, 0)
-			})
-
-			t.Run("Shouldn't be able to update a user not in the team.", func(t *testing.T) {
-				sqlStore = InitTestDB(t)
-				setup()
-				err = UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-					UserId:     1,
-					OrgId:      testOrgID,
-					TeamId:     team1.Id,
-					Permission: models.PERMISSION_ADMIN,
-				})
-
-				require.Error(t, err, models.ErrTeamMemberNotFound)
 			})
 
 			t.Run("Should be able to search for teams", func(t *testing.T) {
@@ -205,7 +182,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				sqlStore = InitTestDB(t)
 				setup()
 				groupId := team2.Id
-				err := sqlStore.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
+				err := sqlStore.SaveTeamMember(userIds[0], testOrgID, groupId, false, 0)
 				require.NoError(t, err)
 
 				query := &models.GetTeamsByUserQuery{OrgId: testOrgID, UserId: userIds[0]}
@@ -217,7 +194,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to remove users from a group", func(t *testing.T) {
-				err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
+				err = sqlStore.SaveTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
 				require.NoError(t, err)
 
 				err = RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0]})
@@ -229,8 +206,8 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, len(q2.Result), 0)
 			})
 
-			t.Run("When ProtectLastAdmin is set to true", func(t *testing.T) {
-				err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
+			t.Run("Should never remove the last admin of a team", func(t *testing.T) {
+				err = sqlStore.SaveTeamMember(userIds[0], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
 				require.NoError(t, err)
 
 				t.Run("A user should not be able to remove the last admin", func(t *testing.T) {
@@ -239,14 +216,14 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				})
 
 				t.Run("A user should be able to remove an admin if there are other admins", func(t *testing.T) {
-					err = sqlStore.AddTeamMember(userIds[1], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
+					err = sqlStore.SaveTeamMember(userIds[1], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
 					require.NoError(t, err)
-					err = RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], ProtectLastAdmin: true})
+					err = RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[1], ProtectLastAdmin: true})
 					require.NoError(t, err)
 				})
 
 				t.Run("A user should not be able to remove the admin permission for the last admin", func(t *testing.T) {
-					err = UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], Permission: 0, ProtectLastAdmin: true})
+					err = sqlStore.SaveTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
 					require.Error(t, err, models.ErrLastTeamAdmin)
 				})
 
@@ -254,21 +231,21 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 					sqlStore = InitTestDB(t)
 					setup()
 
-					err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
+					err = sqlStore.SaveTeamMember(userIds[0], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
 					require.NoError(t, err)
 
-					err = sqlStore.AddTeamMember(userIds[1], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
+					err = sqlStore.SaveTeamMember(userIds[1], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
 					require.NoError(t, err)
-					err = UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], Permission: 0, ProtectLastAdmin: true})
+					err = sqlStore.SaveTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
 					require.NoError(t, err)
 				})
 			})
 
 			t.Run("Should be able to remove a group with users and permissions", func(t *testing.T) {
 				groupId := team2.Id
-				err := sqlStore.AddTeamMember(userIds[1], testOrgID, groupId, false, 0)
+				err := sqlStore.SaveTeamMember(userIds[1], testOrgID, groupId, false, 0)
 				require.NoError(t, err)
-				err = sqlStore.AddTeamMember(userIds[2], testOrgID, groupId, false, 0)
+				err = sqlStore.SaveTeamMember(userIds[2], testOrgID, groupId, false, 0)
 				require.NoError(t, err)
 				err = testHelperUpdateDashboardAcl(t, sqlStore, 1, models.DashboardAcl{
 					DashboardID: 1, OrgID: testOrgID, Permission: models.PERMISSION_EDIT, TeamID: groupId,
@@ -292,9 +269,9 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				sqlStore = InitTestDB(t)
 				setup()
 				groupId := team2.Id
-				err := sqlStore.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
+				err := sqlStore.SaveTeamMember(userIds[0], testOrgID, groupId, false, 0)
 				require.NoError(t, err)
-				err = sqlStore.AddTeamMember(userIds[1], testOrgID, groupId, false, models.PERMISSION_ADMIN)
+				err = sqlStore.SaveTeamMember(userIds[1], testOrgID, groupId, false, models.PERMISSION_ADMIN)
 				require.NoError(t, err)
 
 				query := &models.IsAdminOfTeamsQuery{SignedInUser: &models.SignedInUser{OrgId: testOrgID, UserId: userIds[0]}}
@@ -315,11 +292,11 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				hiddenUsers := map[string]struct{}{"loginuser0": {}, "loginuser1": {}}
 
 				teamId := team1.Id
-				err = sqlStore.AddTeamMember(userIds[0], testOrgID, teamId, false, 0)
+				err = sqlStore.SaveTeamMember(userIds[0], testOrgID, teamId, false, 0)
 				require.NoError(t, err)
-				err = sqlStore.AddTeamMember(userIds[1], testOrgID, teamId, false, 0)
+				err = sqlStore.SaveTeamMember(userIds[1], testOrgID, teamId, false, 0)
 				require.NoError(t, err)
-				err = sqlStore.AddTeamMember(userIds[2], testOrgID, teamId, false, 0)
+				err = sqlStore.SaveTeamMember(userIds[2], testOrgID, teamId, false, 0)
 				require.NoError(t, err)
 
 				searchQuery := &models.SearchTeamsQuery{OrgId: testOrgID, Page: 1, Limit: 10, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}

@@ -82,19 +82,17 @@ func provideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 		OnSetUser: func(ctx context.Context, orgID, userID int64, resourceID, permission string) error {
 			switch permission {
 			case "Member":
-				// TODO: isExternal is used by team sync - check if team sync uses the endpoints for which these hooks have been added
 				teamId, err := strconv.ParseInt(resourceID, 10, 64)
 				if err != nil {
 					return err
 				}
-				return sql.AddTeamMember(userID, orgID, teamId, false, 0)
+				return sql.SaveTeamMember(userID, orgID, teamId, false, 0)
 			case "Admin":
-				// TODO: isExternal is used by team sync - check if team sync uses the endpoints for which these hooks have been added
 				teamId, err := strconv.ParseInt(resourceID, 10, 64)
 				if err != nil {
 					return err
 				}
-				return sql.AddTeamMember(userID, orgID, teamId, false, models.PERMISSION_ADMIN)
+				return sql.SaveTeamMember(userID, orgID, teamId, false, models.PERMISSION_ADMIN)
 			default:
 				return fmt.Errorf("invalid team permission type %d", permission)
 			}
