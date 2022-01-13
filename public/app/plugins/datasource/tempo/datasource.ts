@@ -315,12 +315,12 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         links: [
           makePromLink(
             'Request rate',
-            `rate(${totalsMetric}{server="\${__data.fields.title}"}[$__interval])`,
+            `rate(${totalsMetric}{server="\${__data.fields.id}"}[$__interval])`,
             datasourceUid
           ),
           makePromLink(
             'Failed request rate',
-            `rate(${failedMetric}{server="\${__data.fields.title}"}[$__interval])`,
+            `rate(${failedMetric}{server="\${__data.fields.id}"}[$__interval])`,
             datasourceUid
           ),
         ],
