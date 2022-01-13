@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cloneDeep } from 'lodash';
-import { ArrayVector } from '@grafana/data';
+import { DEFAULT_CONTAINER_ID, DEFAULT_HOSTNAME, DEFAULT_MESSAGE, DEFAULT_TIME } from './constants';
 
 interface Props {
   data: any;
@@ -24,46 +24,20 @@ const usePopulateData = ({ data }: Props) => {
     const fields = series.fields;
     data.series[index] = series;
 
-    if (!fields[0] || !fields[1] || !fields[2] || !fields[3]) {
-      const timeInitData = {
-        name: 'ts',
-        type: 'time',
-        values: new ArrayVector([]),
-        config: {
-          displayName: 'Time',
-        },
-      };
+    if (!fields[0]) {
+      fields[0] = DEFAULT_TIME;
+    }
 
-      const messageInitdata = {
-        name: 'line',
-        type: 'string',
-        values: new ArrayVector([]),
-        config: {},
-      };
+    if (!fields[1]) {
+      fields[1] = DEFAULT_MESSAGE;
+    }
 
-      const containerIdInitData = {
-        name: 'id',
-        type: 'string',
-        values: new ArrayVector([]),
-        config: {},
-      };
+    if (!fields[2]) {
+      fields[2] = DEFAULT_CONTAINER_ID;
+    }
 
-      const hostnameInitData = {
-        name: 'tsNs',
-        type: 'time',
-        values: new ArrayVector([]),
-        config: {
-          displayName: 'Time ns',
-        },
-      };
-
-      const initData = [timeInitData, messageInitdata, containerIdInitData, hostnameInitData];
-
-      for (let i = 0; i < 4; i++) {
-        if (!fields[i]) {
-          fields[i] = initData[i];
-        }
-      }
+    if (!fields[3]) {
+      fields[3] = DEFAULT_HOSTNAME;
     }
 
     const time = fields[0];
