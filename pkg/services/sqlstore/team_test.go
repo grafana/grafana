@@ -197,7 +197,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.SaveTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
 				require.NoError(t, err)
 
-				err = RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0]})
+				err = sqlStore.RemoveTeamMember(testOrgID, team1.Id, userIds[0])
 				require.NoError(t, err)
 
 				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id}
@@ -211,14 +211,14 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 
 				t.Run("A user should not be able to remove the last admin", func(t *testing.T) {
-					err = RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], ProtectLastAdmin: true})
+					err = sqlStore.RemoveTeamMember(testOrgID, team1.Id, userIds[0])
 					require.Equal(t, err, models.ErrLastTeamAdmin)
 				})
 
 				t.Run("A user should be able to remove an admin if there are other admins", func(t *testing.T) {
 					err = sqlStore.SaveTeamMember(userIds[1], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
 					require.NoError(t, err)
-					err = RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[1], ProtectLastAdmin: true})
+					err = sqlStore.RemoveTeamMember(testOrgID, team1.Id, userIds[1])
 					require.NoError(t, err)
 				})
 

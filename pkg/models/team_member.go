@@ -42,10 +42,9 @@ type UpdateTeamMemberCommand struct {
 }
 
 type RemoveTeamMemberCommand struct {
-	OrgId            int64 `json:"-"`
-	UserId           int64
-	TeamId           int64
-	ProtectLastAdmin bool `json:"-"`
+	OrgId  int64 `json:"-"`
+	UserId int64
+	TeamId int64
 }
 
 // ----------------------

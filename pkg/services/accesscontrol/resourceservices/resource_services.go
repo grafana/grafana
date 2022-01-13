@@ -80,19 +80,17 @@ func provideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 		WriterRoleName: "Team permission writer",
 		RoleGroup:      "Teams",
 		OnSetUser: func(ctx context.Context, orgID, userID int64, resourceID, permission string) error {
+			teamId, err := strconv.ParseInt(resourceID, 10, 64)
+			if err != nil {
+				return err
+			}
 			switch permission {
 			case "Member":
-				teamId, err := strconv.ParseInt(resourceID, 10, 64)
-				if err != nil {
-					return err
-				}
 				return sql.SaveTeamMember(userID, orgID, teamId, false, 0)
 			case "Admin":
-				teamId, err := strconv.ParseInt(resourceID, 10, 64)
-				if err != nil {
-					return err
-				}
 				return sql.SaveTeamMember(userID, orgID, teamId, false, models.PERMISSION_ADMIN)
+			case "":
+				return sql.RemoveTeamMember(orgID, teamId, userID)
 			default:
 				return fmt.Errorf("invalid team permission type %d", permission)
 			}

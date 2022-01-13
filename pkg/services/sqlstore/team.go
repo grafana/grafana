@@ -18,7 +18,6 @@ func init() {
 	bus.AddHandler("sql", GetTeamById)
 	bus.AddHandler("sql", GetTeamsByUser)
 
-	bus.AddHandler("sql", RemoveTeamMember)
 	bus.AddHandler("sql", GetTeamMembers)
 	bus.AddHandler("sql", IsAdminOfTeams)
 }
@@ -386,21 +385,19 @@ func updateTeamMember(sess *DBSession, orgID, teamID, userID int64, permission m
 }
 
 // RemoveTeamMember removes a member from a team
-func RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
+func (ss *SQLStore) RemoveTeamMember(orgID, teamID, userID int64) error {
+	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		if _, err := teamExists(orgID, teamID, sess); err != nil {
 			return err
 		}
 
-		if cmd.ProtectLastAdmin {
-			_, err := isLastAdmin(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
-			if err != nil {
-				return err
-			}
+		_, err := isLastAdmin(sess, orgID, teamID, userID)
+		if err != nil {
+			return err
 		}
 
 		var rawSQL = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
-		res, err := sess.Exec(rawSQL, cmd.OrgId, cmd.TeamId, cmd.UserId)
+		res, err := sess.Exec(rawSQL, orgID, teamID, userID)
 		if err != nil {
 			return err
 		}

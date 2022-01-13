@@ -114,16 +114,14 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	teamId := c.ParamsInt64(":teamId")
 	userId := c.ParamsInt64(":userId")
 
-	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
-		return response.Error(403, "Not allowed to remove team member", err)
+	if !hs.Cfg.FeatureToggles["accesscontrol"] {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to remove team member", err)
+		}
 	}
 
-	protectLastAdmin := false
-	if c.OrgRole != models.ROLE_ADMIN {
-		protectLastAdmin = true
-	}
-
-	if err := hs.Bus.Dispatch(c.Req.Context(), &models.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
+	teamIDString := strconv.FormatInt(teamId, 10)
+	if _, err := hs.TeamPermissionsService.SetUserPermission(context.TODO(), orgId, userId, teamIDString, []string{}); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
 		}
