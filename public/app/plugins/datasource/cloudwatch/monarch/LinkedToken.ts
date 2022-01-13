@@ -7,42 +7,43 @@ export class LinkedToken {
     public value: string,
     public range: monacoTypes.IRange,
     public previous: LinkedToken | null,
-    public next: LinkedToken | null
+    public next: LinkedToken | null,
+    public tokenTypes: TokenType
   ) {}
 
   isKeyword(): boolean {
-    return this.type === TokenType.Keyword;
+    return this.type === this.tokenTypes.Keyword;
   }
 
   isWhiteSpace(): boolean {
-    return this.type === TokenType.Whitespace;
+    return this.type === this.tokenTypes.Whitespace;
   }
 
   isParenthesis(): boolean {
-    return this.type === TokenType.Parenthesis;
+    return this.type === this.tokenTypes.Parenthesis;
   }
 
   isIdentifier(): boolean {
-    return this.type === TokenType.Identifier;
+    return this.type === this.tokenTypes.Identifier;
   }
 
   isString(): boolean {
-    return this.type === TokenType.String;
+    return this.type === this.tokenTypes.String;
   }
 
   isDoubleQuotedString(): boolean {
-    return this.type === TokenType.Type;
+    return this.type === this.tokenTypes.Type;
   }
 
   isVariable(): boolean {
-    return this.type === TokenType.Variable;
+    return this.type === this.tokenTypes.Variable;
   }
 
   isFunction(): boolean {
-    return this.type === TokenType.Function;
+    return this.type === this.tokenTypes.Function;
   }
 
-  is(type: TokenType, value?: string | number | boolean): boolean {
+  is(type: string, value?: string | number | boolean): boolean {
     const isType = this.type === type;
     return value !== undefined ? isType && this.value === value : isType;
   }
@@ -58,7 +59,7 @@ export class LinkedToken {
     return null;
   }
 
-  getPreviousOfType(type: TokenType, value?: string): LinkedToken | null {
+  getPreviousOfType(type: string, value?: string): LinkedToken | null {
     let curr = this.previous;
     while (curr != null) {
       const isType = curr.type === type;
@@ -70,7 +71,7 @@ export class LinkedToken {
     return null;
   }
 
-  getPreviousUntil(type: TokenType, ignoreTypes: TokenType[], value?: string): LinkedToken[] | null {
+  getPreviousUntil(type: string, ignoreTypes: string[], value?: string): LinkedToken[] | null {
     let tokens: LinkedToken[] = [];
     let curr = this.previous;
     while (curr != null) {
@@ -92,7 +93,7 @@ export class LinkedToken {
     return tokens;
   }
 
-  getNextUntil(type: TokenType, ignoreTypes: TokenType[], value?: string): LinkedToken[] | null {
+  getNextUntil(type: string, ignoreTypes: string[], value?: string): LinkedToken[] | null {
     let tokens: LinkedToken[] = [];
     let curr = this.next;
     while (curr != null) {
@@ -136,7 +137,7 @@ export class LinkedToken {
     return null;
   }
 
-  getNextOfType(type: TokenType, value?: string): LinkedToken | null {
+  getNextOfType(type: string, value?: string): LinkedToken | null {
     let curr = this.next;
     while (curr != null) {
       const isType = curr.type === type;
