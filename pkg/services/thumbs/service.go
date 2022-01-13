@@ -47,20 +47,22 @@ func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.
 	_ = os.MkdirAll(root, 0700)
 	_ = os.MkdirAll(tempdir, 0700)
 
-	renderer := newSimpleCrawler(root, renderService, gl, store)
+	thumbnailRepo := newThumbnailRepo(store)
+
+	renderer := newSimpleCrawler(root, renderService, gl, thumbnailRepo)
 	return &thumbService{
-		renderer: renderer,
-		store:    store,
-		root:     root,
-		tempdir:  tempdir,
+		renderer:      renderer,
+		thumbnailRepo: thumbnailRepo,
+		root:          root,
+		tempdir:       tempdir,
 	}
 }
 
 type thumbService struct {
-	renderer dashRenderer
-	store    *sqlstore.SQLStore
-	root     string
-	tempdir  string
+	renderer      dashRenderer
+	thumbnailRepo thumbnailRepo
+	root          string
+	tempdir       string
 }
 
 func (hs *thumbService) Enabled() bool {
@@ -109,13 +111,11 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		return // already returned value
 	}
 
-	query := &models.GetDashboardThumbnailCommand{
+	res, err := hs.thumbnailRepo.Get(models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
-		PanelID:      0,
+		Theme:        string(req.Theme),
 		Kind:         models.ThumbnailKindDefault,
-		Theme:        string(rendering.ThemeDark),
-	}
-	res, err := hs.store.GetThumbnail(query)
+	})
 
 	if err == nil {
 		c.JSON(200, map[string]string{"dashboardUID": req.UID, "imageDataUrl": res.ImageDataUrl})
@@ -177,13 +177,6 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 		_ = tempFile.Close()
 	}()
 
-	// TODO avoid fetching dashboardID twice
-	dashboardID, err := hs.getDashboardId(c, req.UID)
-	if err != nil {
-		c.JSON(400, map[string]string{"error": "dashboard not found"})
-		return
-	}
-
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		fmt.Println(err)
@@ -192,7 +185,12 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 
 	}
 
-	_, err = hs.renderer.SaveThumbnailFromBytes(fileBytes, hs.renderer.GetMimeType(handler.Filename), dashboardID, req.UID, req.Theme, req.Kind)
+	_, err = hs.thumbnailRepo.SaveFromBytes(fileBytes, getMimeType(handler.Filename), models.DashboardThumbnailMeta{
+		DashboardUID: req.UID,
+		Theme:        string(req.Theme),
+		Kind:         req.Kind,
+	})
+
 	if err != nil {
 		c.JSON(400, map[string]string{"error": "error saving thumbnail file"})
 		fmt.Println("error", err)

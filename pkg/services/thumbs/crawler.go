@@ -1,13 +1,9 @@
 package thumbs
 
 import (
-	"bufio"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"strings"
@@ -33,7 +29,7 @@ type simpleCrawler struct {
 	threadCount       int
 
 	glive         *live.GrafanaLive
-	store         *sqlstore.SQLStore
+	thumbnailRepo thumbnailRepo
 	mode          CrawlerMode
 	thumbnailKind models.ThumbnailKind
 	opts          rendering.Opts
@@ -42,13 +38,13 @@ type simpleCrawler struct {
 	mu            sync.Mutex
 }
 
-func newSimpleCrawler(folder string, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) dashRenderer {
+func newSimpleCrawler(folder string, renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo) dashRenderer {
 	c := &simpleCrawler{
 		screenshotsFolder: folder,
 		renderService:     renderService,
 		threadCount:       1,
 		glive:             gl,
-		store:             store,
+		thumbnailRepo:     repo,
 		status: crawlStatus{
 			State:    "init",
 			Complete: 0,
@@ -219,13 +215,27 @@ func (r *simpleCrawler) walk() {
 			tlog.Warn("error getting image... internal result", "img", res.FilePath)
 			r.status.Errors++
 		} else {
-			thumbnailId, err := r.SaveThumbnailFromFile(res.FilePath, item.id, item.uid, r.opts.Theme, r.thumbnailKind)
-			if err != nil {
-				r.status.Errors++
-			} else {
-				tlog.Info("saved thumbnail", "img", item.url, "thumbnailId", thumbnailId)
-				r.status.Complete++
-			}
+			func() {
+				defer func() {
+					err := os.Remove(res.FilePath)
+					if err != nil {
+						tlog.Error("failed to remove thumbnail temp file", "dashboardUID", item.uid, "err", err)
+					}
+				}()
+
+				thumbnailId, err := r.thumbnailRepo.SaveFromFile(res.FilePath, models.DashboardThumbnailMeta{
+					DashboardUID: item.uid,
+					Theme:        string(r.opts.Theme),
+					Kind:         r.thumbnailKind,
+				})
+
+				if err != nil {
+					r.status.Errors++
+				} else {
+					tlog.Info("saved thumbnail", "img", item.url, "thumbnailId", thumbnailId)
+					r.status.Complete++
+				}
+			}()
 		}
 
 		time.Sleep(5 * time.Second)
@@ -236,57 +246,4 @@ func (r *simpleCrawler) walk() {
 	r.status.State = "stopped"
 	r.status.Finished = time.Now()
 	r.broadcastStatus()
-}
-
-// TODO extract the three methods below from this file
-func (r *simpleCrawler) SaveThumbnailFromFile(tempFilePath string, dashboardID int64, dashboardUID string, theme rendering.Theme, kind models.ThumbnailKind) (int64, error) {
-	defer func() {
-		err := os.Remove(tempFilePath)
-		if err != nil {
-			tlog.Error("failed to remove thumbnail temp file", "dashboardUID", dashboardUID, "err", err)
-		}
-	}()
-
-	file, err := os.Open(tempFilePath)
-	if err != nil {
-		tlog.Error("error opening file", "dashboardUID", dashboardUID, "err", err)
-		return 0, err
-	}
-
-	reader := bufio.NewReader(file)
-	content, err := ioutil.ReadAll(reader)
-
-	if err != nil {
-		tlog.Error("error reading file", "dashboardUID", dashboardUID, "err", err)
-		return 0, err
-	}
-
-	return r.SaveThumbnailFromBytes(content, r.GetMimeType(tempFilePath), dashboardID, dashboardUID, theme, kind)
-}
-
-func (r *simpleCrawler) GetMimeType(filePath string) string {
-	if strings.HasSuffix(filePath, ".webp") {
-		return "image/webp"
-	}
-
-	return "image/png"
-}
-
-func (r *simpleCrawler) SaveThumbnailFromBytes(content []byte, mimeType string, dashboardID int64, dashboardUID string, theme rendering.Theme, kind models.ThumbnailKind) (int64, error) {
-	base64Image := base64.StdEncoding.EncodeToString(content)
-	cmd := &models.SaveDashboardThumbnailCommand{
-		DashboardID: dashboardID,
-		PanelID:     0,
-		Kind:        kind,
-		Image:       fmt.Sprintf("data:%s;base64,%s", mimeType, base64Image),
-		Theme:       string(theme),
-	}
-
-	_, err := r.store.SaveThumbnail(cmd)
-	if err != nil {
-		tlog.Error("error saving to the db", "dashboardUID", dashboardUID, "err", err)
-		return 0, err
-	}
-
-	return cmd.Result.Id, nil
 }

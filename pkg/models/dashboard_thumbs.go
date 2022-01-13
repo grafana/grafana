@@ -50,21 +50,23 @@ type DashboardThumbnail struct {
 // Commands
 //
 
-type GetDashboardThumbnailCommand struct {
+// DashboardThumbnailMeta uniquely identifies a thumbnail; a natural key
+type DashboardThumbnailMeta struct {
 	DashboardUID string
 	PanelID      int64
 	Kind         ThumbnailKind
 	Theme        string // TODO: same as above
+}
+
+type GetDashboardThumbnailCommand struct {
+	DashboardThumbnailMeta
 
 	Result *DashboardThumbnail
 }
 
 type SaveDashboardThumbnailCommand struct {
-	DashboardID int64
-	PanelID     int64
-	Kind        ThumbnailKind
-	Theme       string // TODO: same as above
-	Image       string
+	DashboardThumbnailMeta
+	Image string
 
 	Result *DashboardThumbnail
 }

@@ -59,8 +59,10 @@ type dashRenderer interface {
 
 	// Assumes you have already authenticated as admin
 	Status() (crawlStatus, error)
+}
 
-	SaveThumbnailFromFile(tempFilePath string, dashboardID int64, dashboardUID string, theme rendering.Theme, kind models.ThumbnailKind) (int64, error)
-	SaveThumbnailFromBytes(content []byte, mimeType string, dashboardID int64, dashboardUID string, theme rendering.Theme, kind models.ThumbnailKind) (int64, error)
-	GetMimeType(filePath string) string
+type thumbnailRepo interface {
+	SaveFromFile(filePath string, meta models.DashboardThumbnailMeta) (int64, error)
+	SaveFromBytes(bytes []byte, mimeType string, meta models.DashboardThumbnailMeta) (int64, error)
+	Get(meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error)
 }

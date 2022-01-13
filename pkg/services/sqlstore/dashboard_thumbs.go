@@ -41,32 +41,84 @@ func (ss *SQLStore) GetThumbnail(query *models.GetDashboardThumbnailCommand) (*m
 
 func (ss *SQLStore) SaveThumbnail(cmd *models.SaveDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
 	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-		result := &models.DashboardThumbnail{}
-		exists, err := sess.Where("dashboard_id = ? AND panel_id = ? AND kind = ? AND theme = ?", cmd.DashboardID, cmd.PanelID, cmd.Kind, cmd.Theme).Get(result)
+		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
+
+		if err != nil && err != models.ErrDashboardThumbnailNotFound {
+			return err
+		}
+
+		if existing != nil {
+			existing.ImageDataUrl = cmd.Image
+			existing.Updated = time.Now()
+			_, err = sess.ID(existing.Id).Update(existing)
+			cmd.Result = existing
+			return err
+		}
+
+		thumb := &models.DashboardThumbnail{}
+
+		dashboardID, err := findDashboardIDByUID(sess, cmd.DashboardUID)
 
 		if err != nil {
-
 			return err
 		}
 
-		if exists {
-			result.ImageDataUrl = cmd.Image
-			result.Updated = time.Now()
-			_, err = sess.ID(result.Id).Update(result)
-			cmd.Result = result
-			return err
-		} else {
-			result.Updated = time.Now()
-			result.Theme = cmd.Theme
-			result.Kind = cmd.Kind
-			result.ImageDataUrl = cmd.Image
-			result.DashboardId = cmd.DashboardID
-			result.PanelId = cmd.PanelID
-			_, err := sess.Insert(result)
-			cmd.Result = result
-			return err
-		}
+		thumb.Updated = time.Now()
+		thumb.Theme = cmd.Theme
+		thumb.Kind = cmd.Kind
+		thumb.ImageDataUrl = cmd.Image
+		thumb.DashboardId = dashboardID
+		thumb.PanelId = cmd.PanelID
+		_, err = sess.Insert(thumb)
+		cmd.Result = thumb
+		return err
 	})
 
 	return cmd.Result, err
+}
+
+func findThumbnailByMeta(sess *DBSession, meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error) {
+	result := &models.DashboardThumbnail{}
+
+	sess.Table("dashboard_thumbnail")
+	sess.Join("INNER", "dashboard", "dashboard.id = dashboard_thumbnail.dashboard_id")
+	sess.Where("dashboard.uid = ? AND panel_id = ? AND kind = ? AND theme = ?", meta.DashboardUID, meta.PanelID, meta.Kind, meta.Theme)
+	sess.Cols("dashboard_thumbnail.id",
+		"dashboard_thumbnail.dashboard_id",
+		"dashboard_thumbnail.panel_id",
+		"dashboard_thumbnail.image_data_url",
+		"dashboard_thumbnail.kind",
+		"dashboard_thumbnail.theme",
+		"dashboard_thumbnail.updated")
+	exists, err := sess.Get(result)
+
+	if !exists {
+		return nil, models.ErrDashboardThumbnailNotFound
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func findDashboardIDByUID(sess *DBSession, dashboardUID string) (int64, error) {
+	result := &struct {
+		dashboardID int64
+	}{
+		dashboardID: 0,
+	}
+
+	sess.Table("dashboard").Where("dashboard.uid = ?", dashboardUID).Cols("dashboard_id")
+	exists, err := sess.Get(result)
+
+	if err != nil {
+		return 0, err
+	}
+	if !exists {
+		return 0, models.ErrDashboardNotFound
+	}
+
+	return result.dashboardID, err
 }
