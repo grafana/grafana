@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { usePopper } from 'react-popper';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,6 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { SearchCardExpanded } from './SearchCardExpanded';
+import { useThumbnail } from '../hooks/useThumbnail';
 
 const DELAY_BEFORE_EXPANDING = 500;
 
@@ -18,40 +19,12 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
 }
 
-export const getThumbnailURL = (uid: string, isLight?: boolean) =>
-  `/api/dashboards/uid/${uid}/img/thumb/${isLight ? 'light' : 'dark'}`;
-
-export type GetThumbnailResponse = {
-  imageDataUrl?: string;
-};
-
-export const fetchThumbnail = async (uid: string, isLight?: boolean) => {
-  const url = getThumbnailURL(uid, isLight);
-  const res = await fetch(url);
-  if (res.status !== 200) {
-    return;
-  }
-
-  const resBody: GetThumbnailResponse = await res.json();
-  return resBody?.imageDataUrl;
-};
-
 export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
-  const [imageSrc, setImageSrc] = useState<string | undefined>(undefined);
   const [lastUpdated, setLastUpdated] = useState<string>();
   const [showExpandedView, setShowExpandedView] = useState(false);
   const timeout = useRef<number | null>(null);
   const theme = useTheme2();
-
-  useEffect(() => {
-    // TODO: the useEffect will keep refetching the thumbnails as we scroll down and up through the list
-    // store them in redux store??
-    fetchThumbnail(item.uid!, theme.isLight).then((imageDataUrl) => {
-      if (imageDataUrl) {
-        setImageSrc(imageDataUrl);
-      }
-    });
-  }, [item.uid, theme.isLight]);
+  const thumb = useThumbnail(item.uid!, theme.isLight);
 
   // Popper specific logic
   const offsetCallback = useCallback(({ placement, reference, popper }) => {
@@ -142,8 +115,8 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
           checked={item.checked}
           onClick={onCheckboxClick}
         />
-        {imageSrc ? (
-          <img loading="lazy" className={styles.image} src={imageSrc} />
+        {thumb.imageSrc ? (
+          <img loading="lazy" className={styles.image} src={thumb.imageSrc} />
         ) : (
           <div className={styles.imagePlaceholder}>
             <Icon name="apps" size="xl" />
