@@ -15,6 +15,7 @@ export interface PluginDashboard {
   revision: number;
   slug: string;
   title: string;
+  uid: string;
 }
 
 export interface PanelPluginsIndex {
