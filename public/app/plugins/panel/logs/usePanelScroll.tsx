@@ -20,7 +20,7 @@ const usePanelScroll = ({ isAscending, messages }: Props) => {
         prevScrollPosition.current = 0;
       });
     };
-  }, [messages]);
+  }, []);
 
   useLayoutEffect(() => {
     const scrollbar = document.querySelector('.scrollbar-view');
@@ -38,6 +38,7 @@ const usePanelScroll = ({ isAscending, messages }: Props) => {
         // or if we are gonna keep our scroll position
         if (scrollbar.scrollHeight - prevScrollPosition.current === newLogHeight) {
           setScrollTop(scrollbar.scrollHeight);
+          scrollbar.scrollTo(0, scrollbar.scrollHeight);
         } else {
           setScrollTop(prevScrollPosition.current);
         }
