@@ -9455,6 +9455,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-table@npm:^7.0.25":
+  version: 7.7.9
+  resolution: "@types/react-table@npm:7.7.9"
+  dependencies:
+    "@types/react": "*"
+  checksum: 3f6c847c8e904479875bb249af02b70e271c5480d0f8b94f7da96eb3980a83cf011d7e558e885259851e3af8defb6493deb147227242766ebca37c9cb630c306
+  languageName: node
+  linkType: hard
+
 "@types/react-test-renderer@npm:*, @types/react-test-renderer@npm:17.0.1, @types/react-test-renderer@npm:>=16.9.0":
   version: 17.0.1
   resolution: "@types/react-test-renderer@npm:17.0.1"
@@ -9464,7 +9473,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-transition-group@npm:*":
+"@types/react-transition-group@npm:*, @types/react-transition-group@npm:^4.4.0":
   version: 4.4.4
   resolution: "@types/react-transition-group@npm:4.4.4"
   dependencies:
@@ -20120,6 +20129,7 @@ __metadata:
     "@types/react-redux": 7.1.20
     "@types/react-router-dom": ^5.1.7
     "@types/react-select": 4.0.13
+    "@types/react-table": ^7.0.25
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.0
     "@types/react-virtualized-auto-sizer": 1.0.0
@@ -20279,6 +20289,7 @@ __metadata:
     react-select: 4.3.0
     react-select-event: ^5.1.0
     react-split-pane: 0.1.89
+    react-table: ^7.6.2
     react-test-renderer: 17.0.1
     react-transition-group: 4.4.1
     react-use: 17.2.4
@@ -31906,7 +31917,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-table@npm:7.7.0":
+"react-table@npm:7.7.0, react-table@npm:^7.6.2":
   version: 7.7.0
   resolution: "react-table@npm:7.7.0"
   peerDependencies:
