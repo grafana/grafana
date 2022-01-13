@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.8.2'
+grabpl_version = 'v2.8.3'
 build_image = 'grafana/build-container:1.4.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -940,7 +940,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
               '--packages-bucket grafana-downloads-test'
     elif ver_mode == 'release':
-        packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}/${{DRONE_TAG}}'.format(enterprise2_suffix(edition))
+        packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}'.format(enterprise2_suffix(edition))
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
     elif edition == 'enterprise2':
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads-enterprise2'.format(edition)
@@ -1067,6 +1067,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'release', 'test-release',
         ):
             installer_commands.extend([
+                '.\\grabpl.exe gen-version {}'.format(ver_part),
                 '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
                 '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
                 'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),
