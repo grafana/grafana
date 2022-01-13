@@ -1,6 +1,5 @@
 import React from 'react';
-import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
-const { Switch, Select, Input, FormField } = LegacyForms;
+import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
 import { ElasticsearchOptions, Interval } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { gte, lt, valid } from 'semver';
@@ -45,140 +44,116 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
       : undefined;
   return (
     <>
-      <h3 className="page-heading">Elasticsearch details</h3>
-
-      <div className="gf-form-group">
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <FormField
-              labelWidth={10}
-              inputWidth={15}
-              label="Index name"
-              value={value.database || ''}
-              onChange={changeHandler('database', value, onChange)}
-              placeholder={'es-index-name'}
-              required
-            />
-          </div>
-
-          <div className="gf-form">
-            <FormField
-              labelWidth={10}
-              label="Pattern"
-              inputEl={
-                <Select
-                  menuShouldPortal
-                  options={indexPatternTypes}
-                  onChange={intervalHandler(value, onChange)}
-                  value={indexPatternTypes.find(
-                    (pattern) =>
-                      pattern.value === (value.jsonData.interval === undefined ? 'none' : value.jsonData.interval)
-                  )}
-                />
-              }
-            />
-          </div>
-        </div>
-
-        <div className="gf-form max-width-25">
-          <FormField
-            labelWidth={10}
-            inputWidth={15}
-            label="Time field name"
-            value={value.jsonData.timeField || ''}
-            onChange={jsonDataChangeHandler('timeField', value, onChange)}
+      <FieldSet label="Elasticsearch details">
+        <InlineField label="Index name" labelWidth={26}>
+          <Input
+            id="es_config_indexName"
+            value={value.database || ''}
+            onChange={changeHandler('database', value, onChange)}
+            width={24}
+            placeholder="es-index-name"
             required
           />
-        </div>
+        </InlineField>
 
-        <div className="gf-form">
-          <FormField
-            labelWidth={10}
-            label="Version"
-            inputEl={
-              <Select
-                menuShouldPortal
-                options={[customOption, ...esVersions].filter(isTruthy)}
-                onChange={(option) => {
-                  const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
-                    value.jsonData.maxConcurrentShardRequests,
-                    option.value!
-                  );
-                  onChange({
-                    ...value,
-                    jsonData: {
-                      ...value.jsonData,
-                      esVersion: option.value!,
-                      maxConcurrentShardRequests,
-                    },
-                  });
-                }}
-                value={currentVersion || customOption}
-              />
-            }
+        <InlineField label="Pattern" labelWidth={26}>
+          <Select
+            inputId="es_config_indexPattern"
+            value={indexPatternTypes.find(
+              (pattern) => pattern.value === (value.jsonData.interval === undefined ? 'none' : value.jsonData.interval)
+            )}
+            options={indexPatternTypes}
+            onChange={intervalHandler(value, onChange)}
+            width={24}
+            menuShouldPortal
           />
-        </div>
+        </InlineField>
+
+        <InlineField label="Time field name" labelWidth={26}>
+          <Input
+            id="es_config_timeField"
+            value={value.jsonData.timeField || ''}
+            onChange={jsonDataChangeHandler('timeField', value, onChange)}
+            width={24}
+            placeholder="@timestamp"
+            required
+          />
+        </InlineField>
+
+        <InlineField label="ElasticSearch version" labelWidth={26}>
+          <Select
+            inputId="es_config_version"
+            options={[customOption, ...esVersions].filter(isTruthy)}
+            onChange={(option) => {
+              const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
+                value.jsonData.maxConcurrentShardRequests,
+                option.value!
+              );
+              onChange({
+                ...value,
+                jsonData: {
+                  ...value.jsonData,
+                  esVersion: option.value!,
+                  maxConcurrentShardRequests,
+                },
+              });
+            }}
+            value={currentVersion || customOption}
+            width={24}
+            menuShouldPortal
+          />
+        </InlineField>
+
         {gte(value.jsonData.esVersion, '5.6.0') && (
-          <div className="gf-form max-width-30">
-            <FormField
-              aria-label={'Max concurrent Shard Requests input'}
-              labelWidth={15}
-              label="Max concurrent Shard Requests"
+          <InlineField label="Max concurrent Shard Requests" labelWidth={26}>
+            <Input
+              id="es_config_shardRequests"
               value={value.jsonData.maxConcurrentShardRequests || ''}
               onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
+              width={24}
             />
-          </div>
+          </InlineField>
         )}
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <FormField
-              labelWidth={10}
-              label="Min time interval"
-              inputEl={
-                <Input
-                  className={'width-6'}
-                  value={value.jsonData.timeInterval || ''}
-                  onChange={jsonDataChangeHandler('timeInterval', value, onChange)}
-                  placeholder="10s"
-                  validationEvents={{
-                    [EventsWithValidation.onBlur]: [
-                      regexValidation(
-                        /^\d+(ms|[Mwdhmsy])$/,
-                        'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
-                      ),
-                    ],
-                  }}
-                />
-              }
-              tooltip={
-                <>
-                  A lower limit for the auto group by time interval. Recommended to be set to write frequency, for
-                  example <code>1m</code> if your data is written every minute.
-                </>
-              }
-            />
-          </div>
-        </div>
-        <div className="gf-form-inline">
-          <Switch
-            label="X-Pack enabled"
-            labelClass="width-10"
+
+        <InlineField
+          label="Min time interval"
+          labelWidth={26}
+          tooltip={
+            <>
+              A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example{' '}
+              <code>1m</code> if your data is written every minute.
+            </>
+          }
+          error="Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s"
+          invalid={!!value.jsonData.timeInterval && !/^\d+(ms|[Mwdhmsy])$/.test(value.jsonData.timeInterval)}
+        >
+          <Input
+            id="es_config_minTimeInterval"
+            value={value.jsonData.timeInterval || ''}
+            onChange={jsonDataChangeHandler('timeInterval', value, onChange)}
+            width={24}
+            placeholder="10s"
+          />
+        </InlineField>
+
+        <InlineField label="X-Pack enabled" labelWidth={26}>
+          <InlineSwitch
+            id="es_config_xpackEnabled"
             checked={value.jsonData.xpack || false}
             onChange={jsonDataSwitchChangeHandler('xpack', value, onChange)}
           />
-        </div>
+        </InlineField>
 
         {gte(value.jsonData.esVersion, '6.6.0') && value.jsonData.xpack && (
-          <div className="gf-form-inline">
-            <Switch
-              label="Include frozen indices"
-              labelClass="width-10"
+          <InlineField label="Include Frozen Indices" labelWidth={26}>
+            <InlineSwitch
+              id="es_config_frozenIndices"
               checked={value.jsonData.includeFrozen ?? false}
               onChange={jsonDataSwitchChangeHandler('includeFrozen', value, onChange)}
             />
-          </div>
+          </InlineField>
         )}
-      </div>
+      </FieldSet>
     </>
   );
 };

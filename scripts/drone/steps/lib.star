@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = '2.7.9'
+grabpl_version = 'v2.8.2'
 build_image = 'grafana/build-container:1.4.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -11,6 +11,7 @@ windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
 
+disable_tests = False
 
 def slack_step(channel, template, secret):
     return {
@@ -153,7 +154,7 @@ def download_grabpl_step():
         'image': curl_image,
         'commands': [
             'mkdir -p bin',
-            'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
+            'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/grabpl'.format(
                 grabpl_version
             ),
             'chmod +x bin/grabpl',
@@ -277,13 +278,7 @@ def store_storybook_step(edition, ver_mode):
     return {
         'name': 'store-storybook',
         'image': publish_image,
-        'depends_on': [
-            'build-storybook',
-            'end-to-end-tests-dashboards-suite',
-            'end-to-end-tests-panels-suite',
-            'end-to-end-tests-smoke-tests-suite',
-            'end-to-end-tests-various-suite',
-        ],
+        'depends_on': ['build-storybook',] + end_to_end_tests_deps(edition),
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
@@ -293,7 +288,7 @@ def store_storybook_step(edition, ver_mode):
 
 def e2e_tests_artifacts(edition):
     return {
-        'name': 'e2e_tests_artifacts_upload' + enterprise2_suffix(edition),
+        'name': 'e2e-tests-artifacts-upload' + enterprise2_suffix(edition),
         'image': 'google/cloud-sdk:367.0.0',
         'depends_on': [
             'end-to-end-tests-dashboards-suite',
@@ -301,6 +296,12 @@ def e2e_tests_artifacts(edition):
             'end-to-end-tests-smoke-tests-suite',
             'end-to-end-tests-various-suite',
         ],
+        'when': {
+            'status': [
+                'success',
+                'failure',
+            ]
+        },
         'environment': {
             'GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY': from_secret('gcp_upload_artifacts_key'),
             'E2E_TEST_ARTIFACTS_BUCKET': 'releng-pipeline-artifacts-dev',
@@ -624,7 +625,6 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
         sfx = '-enterprise2'
         deps.extend([
             'build-backend' + sfx,
-            'test-backend' + sfx,
         ])
 
     variants_str = ''
@@ -916,12 +916,7 @@ def release_canary_npm_packages_step(edition):
     return {
         'name': 'release-canary-npm-packages',
         'image': build_image,
-        'depends_on': [
-            'end-to-end-tests-dashboards-suite',
-            'end-to-end-tests-panels-suite',
-            'end-to-end-tests-smoke-tests-suite',
-            'end-to-end-tests-various-suite',
-        ],
+        'depends_on': end_to_end_tests_deps(edition),
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
         },
@@ -953,21 +948,12 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
 
     deps = []
-    if edition in 'enterprise2':
+    if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
         deps.extend([
             'package' + enterprise2_suffix(edition),
             ])
     else:
-        deps.extend([
-            'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
-            'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
-            'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
-            'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
-            ])
-
-    if edition in ('enterprise', 'enterprise2'):
-        deps.append('redis-integration-tests')
-        deps.append('memcached-integration-tests')
+        deps.extend(end_to_end_tests_deps(edition))
 
     return {
         'name': 'upload-packages' + enterprise2_suffix(edition),
@@ -1007,7 +993,7 @@ def store_packages_step(edition, ver_mode, is_downstream=False):
         'name': 'store-packages-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
-            'initialize',
+            'grabpl',
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
@@ -1036,7 +1022,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     else:
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
                 grabpl_version),
         ])
     steps = [
@@ -1112,7 +1098,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
         download_grabpl_step_cmds = [
             '$$ProgressPreference = "SilentlyContinue"',
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
                 grabpl_version),
         ]
         clone_cmds = [
@@ -1186,3 +1172,13 @@ def ensure_cuetsified_step():
             'git stash pop',
         ],
     }
+
+def end_to_end_tests_deps(edition):
+    if disable_tests:
+        return []
+    return [
+        'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
+    ]

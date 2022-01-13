@@ -13,13 +13,12 @@
 // limitations under the License.
 
 import React from 'react';
+import { css } from '@emotion/css';
+import { useStyles2 } from '@grafana/ui';
 
 import { formatDuration } from '../../utils/date';
 
-import { createStyle } from '../../Theme';
-import { css } from '@emotion/css';
-
-const getStyles = createStyle(() => {
+const getStyles = () => {
   return {
     TickLabels: css`
       label: TickLabels;
@@ -34,7 +33,7 @@ const getStyles = createStyle(() => {
       user-select: none;
     `,
   };
-});
+};
 
 type TickLabelsProps = {
   numTicks: number;
@@ -43,7 +42,7 @@ type TickLabelsProps = {
 
 export default function TickLabels(props: TickLabelsProps) {
   const { numTicks, duration } = props;
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
 
   const ticks = [];
   for (let i = 0; i < numTicks + 1; i++) {
