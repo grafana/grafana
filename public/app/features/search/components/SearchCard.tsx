@@ -8,7 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { SearchCardExpanded } from './SearchCardExpanded';
-import { useThumbnail } from '../hooks/useThumbnail';
+import { useThumbnailImage } from '../hooks/useThumbnailImage';
 
 const DELAY_BEFORE_EXPANDING = 500;
 
@@ -24,7 +24,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
   const [showExpandedView, setShowExpandedView] = useState(false);
   const timeout = useRef<number | null>(null);
   const theme = useTheme2();
-  const thumb = useThumbnail(item.uid!, theme.isLight);
+  const thumb = useThumbnailImage(item.uid!, theme.isLight);
 
   // Popper specific logic
   const offsetCallback = useCallback(({ placement, reference, popper }) => {

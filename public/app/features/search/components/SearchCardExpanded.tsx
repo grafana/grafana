@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Spinner, TagList, useTheme2 } from '@grafana/ui';
 import { DashboardSectionItem } from '../types';
-import { useThumbnail } from '../hooks/useThumbnail';
+import { useThumbnailImage } from '../hooks/useThumbnailImage';
 
 export interface Props {
   className?: string;
@@ -17,7 +17,7 @@ export interface Props {
 export function SearchCardExpanded({ className, imageHeight, imageWidth, item, lastUpdated }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, imageHeight, imageWidth);
-  const thumb = useThumbnail(item.uid!, theme.isLight);
+  const thumb = useThumbnailImage(item.uid!, theme.isLight);
 
   const folderTitle = item.folderTitle || 'General';
 

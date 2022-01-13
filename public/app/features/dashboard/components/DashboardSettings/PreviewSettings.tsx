@@ -1,14 +1,14 @@
 import React from 'react';
 import { CollapsableSection, FileUpload, Icon } from '@grafana/ui';
-import { useThumbnail } from 'app/features/search/hooks/useThumbnail';
+import { useThumbnailImage } from 'app/features/search/hooks/useThumbnailImage';
 
 interface Props {
   uid: string;
 }
 
 export const PreviewSettings = (props: Props) => {
-  const lightThumb = useThumbnail(props.uid, true);
-  const darkThumb = useThumbnail(props.uid, false);
+  const lightThumb = useThumbnailImage(props.uid, true);
+  const darkThumb = useThumbnailImage(props.uid, false);
 
   const doUpload = (evt: EventTarget & HTMLInputElement, isLight?: boolean) => {
     const file = evt?.files && evt.files[0];
