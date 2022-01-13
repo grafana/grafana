@@ -178,6 +178,24 @@ describe('Tempo data source', () => {
     });
   });
 
+  it('should include time range if provided', () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const tempoQuery: TempoQuery = {
+      queryType: 'search',
+      refId: 'A',
+      query: '',
+      search: '',
+    };
+    const timeRange = { startTime: 0, endTime: 1000 };
+    const builtQuery = ds.buildSearchQuery(tempoQuery, timeRange);
+    expect(builtQuery).toStrictEqual({
+      tags: '',
+      limit: DEFAULT_LIMIT,
+      start: timeRange.startTime,
+      end: timeRange.endTime,
+    });
+  });
+
   it('formats native search query history correctly', () => {
     const ds = new TempoDatasource(defaultSettings);
     const tempoQuery: TempoQuery = {
