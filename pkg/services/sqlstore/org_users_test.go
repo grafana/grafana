@@ -16,7 +16,6 @@ import (
 type getOrgUsersTestCase struct {
 	desc             string
 	query            *models.GetOrgUsersQuery
-	expectedErr      error
 	expectedNumUsers int
 }
 
@@ -67,7 +66,6 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-
 			err := store.GetOrgUsers(context.Background(), tt.query)
 			require.NoError(t, err)
 			require.Len(t, tt.query.Result, tt.expectedNumUsers)
@@ -84,7 +82,6 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 type searchOrgUsersTestCase struct {
 	desc             string
 	query            *models.SearchOrgUsersQuery
-	expectedErr      error
 	expectedNumUsers int
 }
 
@@ -135,9 +132,9 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-
 			err := store.SearchOrgUsers(context.Background(), tt.query)
 			require.NoError(t, err)
+			assert.Len(t, tt.query.Result.OrgUsers, tt.expectedNumUsers)
 
 			if !hasWildcardScope(tt.query.User, ac.ActionOrgUsersRead) {
 				for _, u := range tt.query.Result.OrgUsers {
