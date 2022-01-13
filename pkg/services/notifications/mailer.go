@@ -51,7 +51,7 @@ func (ns *NotificationService) Send(msg *Message) (int, error) {
 		}
 	}
 
-	return ns.client.Send(messages...)
+	return ns.mailer.Send(messages...)
 }
 
 func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (*Message, error) {

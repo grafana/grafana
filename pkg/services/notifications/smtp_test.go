@@ -60,7 +60,7 @@ func TestSmtpDialer(t *testing.T) {
 		count, err := client.Send(message)
 
 		require.Equal(t, 0, count)
-		require.Error(t, err)
+		require.EqualError(t, err, "address invalid%hostname:123:456: too many colons in address")
 	})
 
 	t.Run("When SMTP port is invalid", func(t *testing.T) {
@@ -81,7 +81,7 @@ func TestSmtpDialer(t *testing.T) {
 		count, err := client.Send(message)
 
 		require.Equal(t, 0, count)
-		require.Error(t, err)
+		require.EqualError(t, err, "strconv.Atoi: parsing \"123a\": invalid syntax")
 	})
 
 	t.Run("When TLS certificate does not exist", func(t *testing.T) {
@@ -103,6 +103,6 @@ func TestSmtpDialer(t *testing.T) {
 		count, err := client.Send(message)
 
 		require.Equal(t, 0, count)
-		require.Error(t, err)
+		require.EqualError(t, err, "could not load cert or key file: open /var/certs/does-not-exist.pem: no such file or directory")
 	})
 }

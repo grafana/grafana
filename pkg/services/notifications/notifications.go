@@ -29,7 +29,7 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*Notification
 		log:          log.New("notifications"),
 		mailQueue:    make(chan *Message, 10),
 		webhookQueue: make(chan *Webhook, 10),
-		client:       mailer,
+		mailer:       mailer,
 	}
 
 	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
@@ -71,7 +71,7 @@ type NotificationService struct {
 
 	mailQueue    chan *Message
 	webhookQueue chan *Webhook
-	client       Mailer
+	mailer       Mailer
 	log          log.Logger
 }
 
