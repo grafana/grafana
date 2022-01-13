@@ -28,6 +28,7 @@ import { preloadPlugins } from './features/plugins/pluginPreloader';
 import {
   locationService,
   registerEchoBackend,
+  reportExperimentview,
   setBackendSrv,
   setDataSourceSrv,
   setEchoSrv,
@@ -136,6 +137,9 @@ export class GrafanaApp {
 
       // Preload selected app plugins
       await preloadPlugins(config.pluginsToPreload);
+
+      // Report experimentation views
+      reportExperimentview('feature-highlights', config.featureHighlights.enabled ? 'test' : 'control', '');
 
       ReactDOM.render(
         React.createElement(AppWrapper, {

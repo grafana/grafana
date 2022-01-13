@@ -1,5 +1,6 @@
 import { getEchoSrv, EchoEventType } from '../services/EchoSrv';
 import {
+  ExperimentviewEchoEvent,
   InteractionEchoEvent,
   MetaAnalyticsEvent,
   MetaAnalyticsEventPayload,
@@ -47,6 +48,22 @@ export const reportInteraction = (interactionName: string, properties?: Record<s
     payload: {
       interactionName,
       properties,
+    },
+  });
+};
+
+/**
+ * Helper function to report experimentview events to the {@link EchoSrv}.
+ *
+ * @public
+ */
+export const reportExperimentview = (id: string, group: string, variant: string) => {
+  getEchoSrv().addEvent<ExperimentviewEchoEvent>({
+    type: EchoEventType.Experimentview,
+    payload: {
+      experimentId: id,
+      experimentGroup: group,
+      experimentVariant: variant,
     },
   });
 };
