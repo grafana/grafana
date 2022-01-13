@@ -102,9 +102,9 @@
 
   <div class="gf-form-inline">
     <div class="gf-form">
-      <label class="gf-form-label query-keyword">Format as</label>
+      <label class="gf-form-label query-keyword" id="format-label-{{ ctrl.target.refId }}">Format As</label>
       <div class="gf-form-select-wrapper">
-        <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()" aria-label="Format as"></select>
+        <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()" aria-labelledby="format-label-{{ ctrl.target.refId }}"></select>
       </div>
     </div>
     <div class="gf-form">
