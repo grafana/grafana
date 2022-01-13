@@ -27,7 +27,10 @@ func (hs *HTTPServer) createQueryHistory(c *models.ReqContext) response.Response
 
 func (hs *HTTPServer) searchInQueryHistory(c *models.ReqContext) response.Response {
 	dataSourceUIDs := c.QueryStrings("dataSourceUid")
-	queryHistory, err := hs.QueryHistoryService.GetQueryHistory(c.Req.Context(), c.SignedInUser, dataSourceUIDs)
+	query := c.Query("query")
+	sort := c.Query("sort")
+
+	queryHistory, err := hs.QueryHistoryService.GetQueryHistory(c.Req.Context(), c.SignedInUser, dataSourceUIDs, query, sort)
 	if err != nil {
 		return response.Error(500, "Failed to get query history", err)
 	}

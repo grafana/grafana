@@ -147,7 +147,9 @@ export function addQueryToQueryHistory(datasourceUid: string, queries: DataQuery
 }
 
 export async function getQueriesFromQueryHistory(dataSourceUids: string[]): Promise<any[]> {
-  const params = dataSourceUids.map((uid) => `dataSourceUid=${encodeURIComponent(uid)}`).join('&');
+  const params = `${dataSourceUids
+    .map((uid) => `dataSourceUid=${encodeURIComponent(uid)}`)
+    .join('&')}&query=ALERTS&sort=time-desc`;
   return await getBackendSrv().get(`/api/query-history?${params}`);
 }
 
