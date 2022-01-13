@@ -19,7 +19,7 @@ const defaultDingdingMsgType = "link"
 // NewDingDingNotifier is the constructor for the Dingding notifier
 func NewDingDingNotifier(model *NotificationChannelConfig, t *template.Template) (*DingDingNotifier, error) {
 	if model.Settings == nil {
-		return nil, receiverInitError{Reason: "no settings supplied", Cfg: *model}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	url := model.Settings.Get("url").MustString()
@@ -74,7 +74,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	tmpl, _ := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
 
 	message := tmpl(dd.Message)
-	title := tmpl(`{{ template "default.title" . }}`)
+	title := tmpl(DefaultMessageTitleEmbed)
 
 	var bodyMsg map[string]interface{}
 	if tmpl(dd.MsgType) == "actionCard" {
@@ -102,7 +102,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 
 	u := tmpl(dd.URL)
 	if tmplErr != nil {
-		dd.log.Debug("failed to template DingDing message", "err", tmplErr.Error())
+		dd.log.Warn("failed to template DingDing message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsg)
@@ -115,7 +115,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		Body: string(body),
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to dingding: %w", err)
 	}
 

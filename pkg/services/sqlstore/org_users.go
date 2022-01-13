@@ -12,10 +12,10 @@ import (
 )
 
 func (ss *SQLStore) addOrgUsersQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.AddOrgUser)
-	bus.AddHandlerCtx("sql", ss.RemoveOrgUser)
-	bus.AddHandlerCtx("sql", ss.GetOrgUsers)
-	bus.AddHandlerCtx("sql", ss.UpdateOrgUser)
+	bus.AddHandler("sql", ss.AddOrgUser)
+	bus.AddHandler("sql", ss.RemoveOrgUser)
+	bus.AddHandler("sql", ss.GetOrgUsers)
+	bus.AddHandler("sql", ss.UpdateOrgUser)
 }
 
 func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserCommand) error {
@@ -107,6 +107,10 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 	whereConditions = append(whereConditions, "org_user.org_id = ?")
 	whereParams = append(whereParams, query.OrgId)
 
+	// TODO: add to chore, for cleaning up after we have created
+	// service accounts table in the modelling
+	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
+
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"
 		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
@@ -157,6 +161,10 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 	whereConditions = append(whereConditions, "org_user.org_id = ?")
 	whereParams = append(whereParams, query.OrgID)
 
+	// TODO: add to chore, for cleaning up after we have created
+	// service accounts table in the modelling
+	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
+
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"
 		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
@@ -189,7 +197,8 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 
 	// get total count
 	orgUser := models.OrgUser{}
-	countSess := x.Table("org_user")
+	countSess := x.Table("org_user").
+		Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
 
 	if len(whereConditions) > 0 {
 		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)

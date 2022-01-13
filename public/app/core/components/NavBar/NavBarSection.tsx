@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
-import config from '../../config';
+import { config } from '@grafana/runtime';
 
 export interface Props {
   children: ReactNode;
@@ -10,20 +10,21 @@ export interface Props {
 }
 
 export function NavBarSection({ children, className }: Props) {
-  const newNavigationEnabled = config.featureToggles.newNavigation;
+  const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
   const theme = useTheme2();
   const styles = getStyles(theme, newNavigationEnabled);
 
   return (
-    <div data-testid="navbar-section" className={cx(styles.container, className)}>
+    <ul data-testid="navbar-section" className={cx(styles.container, className)}>
       {children}
-    </div>
+    </ul>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
   container: css`
     display: none;
+    list-style: none;
 
     ${theme.breakpoints.up('md')} {
       background-color: ${newNavigationEnabled ? theme.colors.background.primary : 'inherit'};

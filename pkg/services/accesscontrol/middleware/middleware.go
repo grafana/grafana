@@ -64,7 +64,7 @@ func Deny(c *models.ReqContext, evaluator accesscontrol.Evaluator, err error) {
 	// internal server error or access denied.
 	c.JSON(http.StatusForbidden, map[string]string{
 		"title":         "Access denied", // the component needs to pick this up
-		"message":       fmt.Sprintf("Your user account does not have permissions to do the action. We recorded your attempt with log message %s. Contact your administrator for help.", id),
+		"message":       fmt.Sprintf("You'll need additional permissions to perform this action. Refer your administrator to a Grafana log with the reference %s to identify which permissions to add.", id),
 		"accessErrorId": id,
 	})
 }
@@ -136,4 +136,33 @@ func UseOrgFromContextParams(c *models.ReqContext) (int64, error) {
 
 func UseGlobalOrg(c *models.ReqContext) (int64, error) {
 	return accesscontrol.GlobalOrgID, nil
+}
+
+// Disable returns http 404 if shouldDisable is set to true
+func Disable(shouldDisable bool) web.Handler {
+	return func(c *models.ReqContext) {
+		if shouldDisable {
+			c.Resp.WriteHeader(http.StatusNotFound)
+			return
+		}
+	}
+}
+
+func LoadPermissionsMiddleware(ac accesscontrol.AccessControl) web.Handler {
+	return func(c *models.ReqContext) {
+		if ac.IsDisabled() {
+			return
+		}
+
+		permissions, err := ac.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+		if err != nil {
+			c.JsonApiErr(http.StatusForbidden, "", err)
+			return
+		}
+
+		if c.SignedInUser.Permissions == nil {
+			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+		}
+		c.SignedInUser.Permissions[c.OrgId] = accesscontrol.GroupScopesByAction(permissions)
+	}
 }

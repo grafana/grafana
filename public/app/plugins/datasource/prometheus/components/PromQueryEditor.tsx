@@ -161,6 +161,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
               <input
                 type="text"
                 className="gf-form-input width-8"
+                aria-label="Set lower limit for the step parameter"
                 placeholder={interval}
                 onChange={this.onIntervalChange}
                 onBlur={this.onRunQuery}
@@ -171,6 +172,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
             <div className="gf-form">
               <div className="gf-form-label">Resolution</div>
               <Select
+                aria-label="Select resolution"
                 menuShouldPortal
                 isSearchable={false}
                 options={INTERVAL_FACTOR_OPTIONS}
@@ -189,6 +191,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 options={FORMAT_OPTIONS}
                 onChange={this.onFormatChange}
                 value={formatOption}
+                aria-label="Select format"
               />
               <Switch label="Instant" checked={instant} onChange={this.onInstantChange} />
 

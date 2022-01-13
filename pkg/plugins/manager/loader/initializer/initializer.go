@@ -23,17 +23,17 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var logger = log.New("plugin.initializer")
-
 type Initializer struct {
 	cfg     *setting.Cfg
 	license models.Licensing
+	log     log.Logger
 }
 
 func New(cfg *setting.Cfg, license models.Licensing) Initializer {
 	return Initializer{
 		cfg:     cfg,
 		license: license,
+		log:     log.New("plugin.initializer"),
 	}
 }
 
@@ -80,7 +80,7 @@ func (i *Initializer) Initialize(p *plugins.Plugin) error {
 		}
 	}
 
-	pluginLog := logger.New("pluginID", p.ID)
+	pluginLog := i.log.New("pluginID", p.ID)
 	p.SetLogger(pluginLog)
 
 	if p.Backend {
@@ -123,7 +123,7 @@ func (i *Initializer) InitializeWithFactory(p *plugins.Plugin, factory backendpl
 		}
 		p.RegisterClient(f)
 	} else {
-		logger.Warn("Could not initialize core plugin process", "pluginID", p.ID)
+		i.log.Warn("Could not initialize core plugin process", "pluginID", p.ID)
 		return fmt.Errorf("could not initialize plugin %s", p.ID)
 	}
 
@@ -196,11 +196,11 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 		fmt.Sprintf("GF_VERSION=%s", i.cfg.BuildVersion),
 	}
 
-	if i.license != nil && i.license.HasLicense() {
+	if i.license != nil {
 		hostEnv = append(
 			hostEnv,
 			fmt.Sprintf("GF_EDITION=%s", i.license.Edition()),
-			fmt.Sprintf("GF_ENTERPRISE_license_PATH=%s", i.cfg.EnterpriseLicensePath),
+			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", i.cfg.EnterpriseLicensePath),
 		)
 
 		if envProvider, ok := i.license.(models.LicenseEnvironment); ok {

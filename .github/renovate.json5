@@ -8,12 +8,16 @@
     "@types/d3-force", // we should bump this once we move to esm modules
     "@types/d3-interpolate", // we should bump this once we move to esm modules
     "@types/d3-scale-chromatic", // we should bump this once we move to esm modules
+    "@types/react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead
     "d3",
     "d3-force", // we should bump this once we move to esm modules
     "d3-interpolate", // we should bump this once we move to esm modules
     "d3-scale-chromatic", // we should bump this once we move to esm modules
     "eslint", // wait until `eslint-plugin-react-hooks>4.2.0` is released
-    "globby", // we should bump this once we move to esm modules
+    "execa", // we should bump this once we move to esm modules
+    "history", // we should bump this together with react-router-dom
+    "react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead
+    "react-router-dom", // we should bump this together with history
     "slate",
     "slate-plain-serializer",
     "systemjs",
@@ -22,12 +26,13 @@
   ],
   "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
   "labels": ["area/frontend", "dependencies"],
-  "minor": {
-    "enabled": false
-  },
-  "patch": {
-    "enabled": false
-  },
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch"],
+      "extends": ["schedule:monthly"],
+      "groupName": "Monthly patch updates"
+    }
+  ],
   "pin": {
     "enabled": false
   },

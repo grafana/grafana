@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,7 +33,9 @@ func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template, 
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
-
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find URL property in settings"}
@@ -118,7 +119,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 				},
 			},
 			"output":   tmpl(sn.Message),
-			"issued":   time.Now().Unix(),
+			"issued":   timeNow().Unix(),
 			"interval": 86400,
 			"status":   status,
 			"handlers": handlers,
@@ -127,7 +128,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		sn.log.Debug("failed to template sensugo message", "err", tmplErr.Error())
+		sn.log.Warn("failed to template sensugo message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsgType)
@@ -144,7 +145,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			"Authorization": fmt.Sprintf("Key %s", sn.APIKey),
 		},
 	}
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		sn.log.Error("Failed to send Sensu Go event", "error", err, "sensugo", sn.Name)
 		return false, err
 	}

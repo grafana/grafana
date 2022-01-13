@@ -35,7 +35,9 @@ func NewThreemaNotifier(model *NotificationChannelConfig, t *template.Template, 
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
-
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 	gatewayID := model.Settings.Get("gateway_id").MustString()
 	recipientID := model.Settings.Get("recipient_id").MustString()
 	apiSecret := fn(context.Background(), model.SecureSettings, "api_secret", model.Settings.Get("api_secret").MustString())
@@ -99,14 +101,14 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	// Build message
 	message := fmt.Sprintf("%s%s\n\n*Message:*\n%s\n*URL:* %s\n",
 		stateEmoji,
-		tmpl(`{{ template "default.title" . }}`),
+		tmpl(DefaultMessageTitleEmbed),
 		tmpl(`{{ template "default.message" . }}`),
 		path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
 	)
 	data.Set("text", message)
 
 	if tmplErr != nil {
-		tn.log.Debug("failed to template Threema message", "err", tmplErr.Error())
+		tn.log.Warn("failed to template Threema message", "err", tmplErr.Error())
 	}
 
 	cmd := &models.SendWebhookSync{
@@ -117,7 +119,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			"Content-Type": "application/x-www-form-urlencoded",
 		},
 	}
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		tn.log.Error("Failed to send threema notification", "error", err, "webhook", tn.Name)
 		return false, err
 	}

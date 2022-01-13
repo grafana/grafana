@@ -141,7 +141,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[2].name).toEqual('label2');
       expect(series.data[0].fields[3].name).toEqual('label3');
       expect(series.data[0].fields[4].name).toEqual('label4');
-      expect(series.data[0].fields[5].name).toEqual('Value #A');
+      expect(series.data[0].fields[5].name).toEqual('Value');
       expect(series.data[0].meta?.preferredVisualisationType).toEqual('table');
     });
 

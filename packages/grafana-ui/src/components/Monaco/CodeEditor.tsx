@@ -97,7 +97,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     const { onEditorDidMount } = this.props;
     this.getEditorValue = () => editor.getValue();
 
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, this.onSave);
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, this.onSave);
     const languagePromise = this.loadCustomLanguage();
 
     if (onEditorDidMount) {
@@ -131,6 +131,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
         top: 0.5 * theme.spacing.gridSize,
         bottom: 0.5 * theme.spacing.gridSize,
       },
+      fixedOverflowWidgets: true, // Ensures suggestions menu is drawn on top
     };
 
     if (!showLineNumbers) {

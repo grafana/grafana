@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { findField } from 'app/features/dimensions';
 import { prepareGraphableFields } from '../timeseries/utils';
-import { CandlestickOptions, CandlestickFieldMap } from './models.gen';
+import { CandlestickOptions, CandlestickFieldMap, VizDisplayMode } from './models.gen';
 
 export interface FieldPickerInfo {
   /** property name */
@@ -59,8 +59,6 @@ export const candlestickFieldsInfo: Record<keyof CandlestickFieldMap, FieldPicke
 };
 
 export interface CandlestickData {
-  warn?: string;
-  noTimeField?: boolean;
   autoOpenClose?: boolean;
 
   // Special fields
@@ -97,30 +95,37 @@ export function prepareCandlestickFields(
   series: DataFrame[] | undefined,
   options: CandlestickOptions,
   theme: GrafanaTheme2
-): CandlestickData {
+): CandlestickData | null {
   if (!series?.length) {
-    return { warn: 'No data' } as CandlestickData;
+    return null;
   }
 
   // All fields
   const fieldMap = options.fields ?? {};
   const aligned = series.length === 1 ? series[0] : outerJoinDataFrames({ frames: series, enforceSort: true });
   if (!aligned?.length) {
-    return { warn: 'No data found' } as CandlestickData;
+    return null;
   }
+
   const data: CandlestickData = { aligned, frame: aligned, names: {} };
 
   // Apply same filter as everythign else in timeseries
-  const norm = prepareGraphableFields([aligned], theme);
-  if (norm.warn || norm.noTimeField || !norm.frames?.length) {
-    return norm as CandlestickData;
+  const timeSeriesFrames = prepareGraphableFields([aligned], theme);
+  if (!timeSeriesFrames) {
+    return null;
   }
-  data.frame = norm.frames[0];
+
+  const frame = (data.frame = timeSeriesFrames[0]);
+  const timeIndex = frame.fields.findIndex((f) => f.type === FieldType.time);
+
+  if (timeIndex < 0) {
+    return null;
+  }
 
   // Find the known fields
   const used = new Set<Field>();
   for (const info of Object.values(candlestickFieldsInfo)) {
-    const field = findFieldOrAuto(data.frame, info, fieldMap);
+    const field = findFieldOrAuto(frame, info, fieldMap);
     if (field) {
       data[info.key] = field;
       used.add(field);
@@ -129,7 +134,7 @@ export function prepareCandlestickFields(
 
   // Use first numeric value as open
   if (!data.open && !data.close) {
-    data.open = data.frame.fields.find((f) => f.type === FieldType.number);
+    data.open = frame.fields.find((f) => f.type === FieldType.number);
     if (data.open) {
       used.add(data.open);
     }
@@ -145,7 +150,8 @@ export function prepareCandlestickFields(
       name: 'Next open',
       state: undefined,
     };
-    data.frame.fields.push(data.close);
+    used.add(data.close);
+    frame.fields.push(data.close);
     data.autoOpenClose = true;
   }
 
@@ -153,14 +159,15 @@ export function prepareCandlestickFields(
   if (data.close && !data.open && !fieldMap.open) {
     const values = data.close.values.toArray().slice();
     values.unshift(values[0]); // duplicate first value
-    values.length = data.frame.length;
+    values.length = frame.length;
     data.open = {
       ...data.close,
       values: new ArrayVector(values),
       name: 'Previous close',
       state: undefined,
     };
-    data.frame.fields.push(data.open);
+    used.add(data.open);
+    frame.fields.push(data.open);
     data.autoOpenClose = true;
   }
 
@@ -172,12 +179,67 @@ export function prepareCandlestickFields(
     data.low = data.open;
   }
 
+  // unmap low and high fields in volume-only mode, and volume field in candles-only mode
+  // so they fall through to unmapped fields and get appropriate includeAllFields treatment
+  if (options.mode === VizDisplayMode.Volume) {
+    if (data.high) {
+      if (data.high !== data.open) {
+        used.delete(data.high);
+      }
+      data.high = undefined;
+    }
+    if (data.low) {
+      if (data.low !== data.open) {
+        used.delete(data.low);
+      }
+      data.low = undefined;
+    }
+  } else if (options.mode === VizDisplayMode.Candles) {
+    if (data.volume) {
+      used.delete(data.volume);
+      data.volume = undefined;
+    }
+  }
+
   // Register the name of each mapped field
   for (const info of Object.values(candlestickFieldsInfo)) {
     const f = data[info.key];
     if (f) {
       data.names[info.key] = getFieldDisplayName(f, data.frame);
     }
+  }
+
+  const timeField = frame.fields[timeIndex];
+
+  // Make sure first field is time!
+  const fields: Field[] = [timeField];
+
+  if (!options.includeAllFields) {
+    fields.push(...used);
+  } else {
+    fields.push(...frame.fields.filter((f) => f !== timeField));
+  }
+
+  data.frame = {
+    ...data.frame,
+    fields,
+  };
+
+  // Force update all the indicies
+  for (let i = 0; i < data.frame.fields.length; i++) {
+    const field = data.frame.fields[i];
+
+    field.state = {
+      ...field.state,
+
+      // time is unused (-1), y series enumerate from 0
+      seriesIndex: i - 1,
+
+      origin: {
+        fieldIndex: i,
+        frameIndex: 0,
+      },
+    };
   }
 
   return data;

@@ -70,11 +70,11 @@ describe('Process simple display values', () => {
   });
 
   it('array of text', () => {
-    assertSame(['a', 'b', 'c'], processors, { text: 'a,b,c', numeric: NaN });
+    assertSame(['a', 'b', 'c'], processors, { text: 'a, b, c', numeric: NaN });
   });
 
   it('array of numbers', () => {
-    assertSame([1, 2, 3], processors, { text: '1,2,3', numeric: NaN });
+    assertSame([1, 2, 3], processors, { text: '1, 2, 3', numeric: NaN });
   });
 
   it('empty object', () => {

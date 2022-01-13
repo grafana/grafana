@@ -33,7 +33,7 @@ import { TransformationsEditorTransformation } from './types';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 import { AppNotificationSeverity } from '../../../../types';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
-import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
+import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 const LOCAL_STORAGE_KEY = 'dashboard.components.TransformationEditor.featureInfoBox.isDismissed';
 
@@ -375,10 +375,10 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
   return (
     <Card
       className={styles.card}
-      heading={transform.name}
       aria-label={selectors.components.TransformTab.newTransform(transform.name)}
       onClick={onClick}
     >
+      <Card.Heading>{transform.name}</Card.Heading>
       <Card.Meta>{transform.description}</Card.Meta>
       {transform.state && (
         <Card.Tags>
@@ -393,10 +393,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css`
       margin: 0;
-
-      > div {
-        padding: ${theme.spacing(1)};
-      }
+      padding: ${theme.spacing(1)};
     `,
   };
 };

@@ -109,46 +109,8 @@ describe('Azure Monitor QueryEditor', () => {
       azureMonitor: {
         ...mockQuery.azureMonitor,
         metricName: 'metric-b',
-      },
-    });
-  });
-
-  it('should auto select a default aggregation if none exists once a metric is selected', async () => {
-    const mockDatasource = createMockDatasource();
-    const onChange = jest.fn();
-    const mockQuery = createMockQuery();
-    (mockQuery.azureMonitor ?? {}).aggregation = undefined;
-    mockDatasource.getMetricNames = jest.fn().mockResolvedValue([
-      {
-        value: 'metric-a',
-        text: 'Metric A',
-      },
-      {
-        value: 'metric-b',
-        text: 'Metric B',
-      },
-    ]);
-    render(
-      <MetricsQueryEditor
-        subscriptionId="123"
-        query={createMockQuery()}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={onChange}
-        setError={() => {}}
-      />
-    );
-    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
-
-    const metrics = await screen.findByLabelText('Metric');
-    await selectOptionInTest(metrics, 'Metric B');
-
-    expect(onChange).toHaveBeenLastCalledWith({
-      ...mockQuery,
-      azureMonitor: {
-        ...mockQuery.azureMonitor,
-        metricName: 'metric-b',
-        aggregation: 'Average',
+        aggregation: undefined,
+        timeGrain: '',
       },
     });
   });

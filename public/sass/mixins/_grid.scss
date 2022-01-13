@@ -5,8 +5,8 @@
 @mixin make-container($gutter: $grid-gutter-width) {
   margin-left: auto;
   margin-right: auto;
-  padding-left: ($gutter / 2);
-  padding-right: ($gutter / 2);
+  padding-left: calc($gutter / 2);
+  padding-right: calc($gutter / 2);
   @if not $enable-flex {
     @include clearfix();
   }
@@ -28,38 +28,38 @@
   } @else {
     @include clearfix();
   }
-  margin-left: ($gutter / -2);
-  margin-right: ($gutter / -2);
+  margin-left: calc($gutter / -2);
+  margin-right: calc($gutter / -2);
 }
 
 @mixin make-col($size, $columns: $grid-columns) {
   position: relative;
   min-height: 1px;
-  padding-right: ($grid-gutter-width / 2);
-  padding-left: ($grid-gutter-width / 2);
+  padding-right: calc($grid-gutter-width / 2);
+  padding-left: calc($grid-gutter-width / 2);
 
   @if $enable-flex {
-    flex: 0 0 percentage($size / $columns);
+    flex: 0 0 percentage(calc($size / $columns));
     // Add a `max-width` to ensure content within each column does not blow out
     // the width of the column. Applies to IE10+ and Firefox. Chrome and Safari
     // do not appear to require this.
-    max-width: percentage($size / $columns);
+    max-width: percentage(calc($size / $columns));
   } @else {
     float: left;
-    width: percentage($size / $columns);
+    width: percentage(calc($size / $columns));
   }
 }
 
 @mixin make-col-offset($size, $columns: $grid-columns) {
-  margin-left: percentage($size / $columns);
+  margin-left: percentage(calc($size / $columns));
 }
 
 @mixin make-col-push($size, $columns: $grid-columns) {
-  left: if($size > 0, percentage($size / $columns), auto);
+  left: if($size > 0, percentage(calc($size / $columns)), auto);
 }
 
 @mixin make-col-pull($size, $columns: $grid-columns) {
-  right: if($size > 0, percentage($size / $columns), auto);
+  right: if($size > 0, percentage(calc($size / $columns)), auto);
 }
 
 @mixin make-col-modifier($type, $size, $columns) {

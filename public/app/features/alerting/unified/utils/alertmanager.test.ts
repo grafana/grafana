@@ -1,6 +1,12 @@
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { Matcher, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
-import { parseMatcher, parseMatchers, stringifyMatcher, labelsMatchMatchers } from './alertmanager';
+import {
+  parseMatcher,
+  parseMatchers,
+  stringifyMatcher,
+  labelsMatchMatchers,
+  removeMuteTimingFromRoute,
+} from './alertmanager';
 
 describe('Alertmanager utils', () => {
   describe('parseMatcher', () => {
@@ -88,6 +94,13 @@ describe('Alertmanager utils', () => {
         { name: 'bar', value: 'bazz', isEqual: true, isRegex: false },
       ]);
     });
+
+    it('should parse matchers for key with special characters', () => {
+      expect(parseMatchers('foo.bar-baz="bar",baz-bar.foo=bazz')).toEqual<Matcher[]>([
+        { name: 'foo.bar-baz', value: 'bar', isRegex: false, isEqual: true },
+        { name: 'baz-bar.foo', value: 'bazz', isEqual: true, isRegex: false },
+      ]);
+    });
   });
 
   describe('labelsMatchMatchers', () => {
@@ -117,6 +130,48 @@ describe('Alertmanager utils', () => {
       };
       const matchers = parseMatchers('foo!=bazz,bar=~ba.+');
       expect(labelsMatchMatchers(labels, matchers)).toBe(true);
+    });
+  });
+
+  describe('removeMuteTimingFromRoute', () => {
+    const route: Route = {
+      receiver: 'gmail',
+      object_matchers: [['foo', MatcherOperator.equal, 'bar']],
+      mute_time_intervals: ['test1', 'test2'],
+      routes: [
+        {
+          receiver: 'slack',
+          object_matchers: [['env', MatcherOperator.equal, 'prod']],
+          mute_time_intervals: ['test2'],
+        },
+        {
+          receiver: 'pagerduty',
+          object_matchers: [['env', MatcherOperator.equal, 'eu']],
+          mute_time_intervals: ['test1'],
+        },
+      ],
+    };
+
+    it('should remove mute timings from routes', () => {
+      expect(removeMuteTimingFromRoute('test1', route)).toEqual({
+        mute_time_intervals: ['test2'],
+        object_matchers: [['foo', '=', 'bar']],
+        receiver: 'gmail',
+        routes: [
+          {
+            mute_time_intervals: ['test2'],
+            object_matchers: [['env', '=', 'prod']],
+            receiver: 'slack',
+            routes: undefined,
+          },
+          {
+            mute_time_intervals: [],
+            object_matchers: [['env', '=', 'eu']],
+            receiver: 'pagerduty',
+            routes: undefined,
+          },
+        ],
+      });
     });
   });
 });

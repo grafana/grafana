@@ -158,7 +158,7 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 		HttpMethod: "POST",
 		HttpHeader: headers,
 	}
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		notifier.log.Error("Failed to send webhook", "error", err, "webhook", notifier.Name)
 		return err
 	}

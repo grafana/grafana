@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/toolkit",
-  "version": "8.3.0-pre",
+  "version": "8.4.0-pre",
   "description": "Grafana Toolkit",
   "keywords": [
     "grafana",
@@ -28,10 +28,10 @@
   "dependencies": {
     "@babel/core": "7.13.14",
     "@babel/preset-env": "7.13.12",
-    "@grafana/data": "8.3.0-pre",
+    "@grafana/data": "8.4.0-pre",
     "@grafana/eslint-config": "2.5.1",
     "@grafana/tsconfig": "^1.0.0-rc1",
-    "@grafana/ui": "8.3.0-pre",
+    "@grafana/ui": "8.4.0-pre",
     "@jest/core": "26.6.3",
     "@rushstack/eslint-patch": "1.0.6",
     "@types/command-exists": "^1.2.0",

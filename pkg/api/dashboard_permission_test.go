@@ -26,7 +26,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 		t.Run("Given dashboard not exists", func(t *testing.T) {
 			setUp := func() {
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					return models.ErrDashboardNotFound
 				})
 			}
@@ -68,7 +68,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			getDashboardQueryResult := models.NewDashboard("Dash")
 
 			setUp := func() {
-				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -120,7 +120,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -173,7 +173,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -214,7 +214,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -285,7 +285,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -336,7 +336,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -433,11 +433,12 @@ func updateDashboardPermissionScenario(t *testing.T, ctx updatePermissionContext
 		sc := setupScenarioContext(t, ctx.url)
 
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(ctx.cmd)
 			sc.context = c
 			sc.context.OrgId = testOrgID
 			sc.context.UserId = testUserID
 
-			return hs.UpdateDashboardPermissions(c, ctx.cmd)
+			return hs.UpdateDashboardPermissions(c)
 		})
 
 		sc.m.Post(ctx.routePattern, sc.defaultHandler)

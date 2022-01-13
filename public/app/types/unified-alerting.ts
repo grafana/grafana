@@ -1,6 +1,6 @@
 /* Prometheus internal models */
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
 import {
   PromAlertingRuleState,
   PromRuleType,
@@ -139,4 +139,36 @@ export interface FilterState {
 export interface SilenceFilterState {
   queryString?: string;
   silenceState?: string;
+}
+
+interface EvalMatch {
+  metric: string;
+  tags?: any;
+  value: number;
+}
+
+export interface StateHistoryItemData {
+  noData: boolean;
+  evalMatches?: EvalMatch[];
+}
+
+export interface StateHistoryItem {
+  id: number;
+  alertId: number;
+  alertName: string;
+  dashboardId: number;
+  panelId: number;
+  userId: number;
+  newState: AlertState;
+  prevState: AlertState;
+  created: number;
+  updated: number;
+  time: number;
+  timeEnd: number;
+  text: string;
+  tags: any[];
+  login: string;
+  email: string;
+  avatarUrl: string;
+  data: StateHistoryItemData;
 }

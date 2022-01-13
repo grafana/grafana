@@ -5,20 +5,26 @@ import { Icon } from '..';
 import { GrafanaTheme2 } from '@grafana/data';
 
 export interface Props {
-  label: string;
+  label: ReactNode;
   isOpen: boolean;
+  /** Callback for the toggle functionality */
+  onToggle?: (isOpen: boolean) => void;
   children: ReactNode;
 }
 
-export const CollapsableSection: FC<Props> = ({ label, isOpen, children }) => {
+export const CollapsableSection: FC<Props> = ({ label, isOpen, onToggle, children }) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
   const headerStyle = open ? styles.header : styles.headerCollapsed;
   const tooltip = `Click to ${open ? 'collapse' : 'expand'}`;
+  const onClick = () => {
+    onToggle?.(!open);
+    toggleOpen(!open);
+  };
 
   return (
     <div>
-      <div onClick={() => toggleOpen(!open)} className={headerStyle} title={tooltip}>
+      <div onClick={onClick} className={headerStyle} title={tooltip}>
         {label}
         <Icon name={open ? 'angle-down' : 'angle-right'} size="xl" className={styles.icon} />
       </div>

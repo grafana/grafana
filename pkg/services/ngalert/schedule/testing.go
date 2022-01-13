@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/annotations"
+
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -49,7 +51,13 @@ func waitForErrChannel(t *testing.T, ch chan error) error {
 }
 
 func newFakeRuleStore(t *testing.T) *fakeRuleStore {
-	return &fakeRuleStore{t: t, rules: map[int64]map[string]map[string][]*models.AlertRule{}}
+	return &fakeRuleStore{
+		t:     t,
+		rules: map[int64]map[string]map[string][]*models.AlertRule{},
+		hook: func(interface{}) error {
+			return nil
+		},
+	}
 }
 
 // FakeRuleStore mocks the RuleStore of the scheduler.
@@ -57,6 +65,7 @@ type fakeRuleStore struct {
 	t           *testing.T
 	mtx         sync.Mutex
 	rules       map[int64]map[string]map[string][]*models.AlertRule
+	hook        func(cmd interface{}) error // use hook if you need to intercept some query and return an error
 	recordedOps []interface{}
 }
 
@@ -67,6 +76,22 @@ func (f *fakeRuleStore) putRule(r *models.AlertRule) {
 	f.rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = []*models.AlertRule{
 		r,
 	}
+}
+
+// getRecordedCommands filters recorded commands using predicate function. Returns the subset of the recorded commands that meet the predicate
+func (f *fakeRuleStore) getRecordedCommands(predicate func(cmd interface{}) (interface{}, bool)) []interface{} {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	result := make([]interface{}, 0, len(f.recordedOps))
+	for _, op := range f.recordedOps {
+		cmd, ok := predicate(op)
+		if !ok {
+			continue
+		}
+		result = append(result, cmd)
+	}
+	return result
 }
 
 func (f *fakeRuleStore) DeleteAlertRuleByUID(_ int64, _ string) error { return nil }
@@ -81,6 +106,9 @@ func (f *fakeRuleStore) GetAlertRuleByUID(q *models.GetAlertRuleByUIDQuery) erro
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
+	if err := f.hook(*q); err != nil {
+		return err
+	}
 	rgs, ok := f.rules[q.OrgID]
 	if !ok {
 		return nil
@@ -105,6 +133,9 @@ func (f *fakeRuleStore) GetAlertRulesForScheduling(q *models.ListAlertRulesQuery
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
+	if err := f.hook(*q); err != nil {
+		return err
+	}
 	for _, rg := range f.rules {
 		for _, n := range rg {
 			for _, r := range n {
@@ -131,6 +162,9 @@ func (f *fakeRuleStore) GetRuleGroupAlertRules(q *models.ListRuleGroupAlertRules
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
+	if err := f.hook(*q); err != nil {
+		return err
+	}
 	rgs, ok := f.rules[q.OrgID]
 	if !ok {
 		return nil
@@ -166,6 +200,9 @@ func (f *fakeRuleStore) GetOrgRuleGroups(q *models.ListOrgRuleGroupsQuery) error
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
+	if err := f.hook(*q); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -173,12 +210,18 @@ func (f *fakeRuleStore) UpsertAlertRules(q []store.UpsertRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, q)
+	if err := f.hook(q); err != nil {
+		return err
+	}
 	return nil
 }
 func (f *fakeRuleStore) UpdateRuleGroup(cmd store.UpdateRuleGroupCmd) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, cmd)
+	if err := f.hook(cmd); err != nil {
+		return err
+	}
 	rgs, ok := f.rules[cmd.OrgID]
 	if !ok {
 		f.rules[cmd.OrgID] = map[string]map[string][]*models.AlertRule{}
@@ -378,4 +421,48 @@ func (am *FakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *htt
 
 func (am *FakeExternalAlertmanager) Close() {
 	am.server.Close()
+}
+
+type FakeAnnotationsRepo struct {
+	mtx   sync.Mutex
+	items []*annotations.Item
+}
+
+func NewFakeAnnotationsRepo() *FakeAnnotationsRepo {
+	return &FakeAnnotationsRepo{
+		items: make([]*annotations.Item, 0),
+	}
+}
+
+func (repo *FakeAnnotationsRepo) Len() int {
+	repo.mtx.Lock()
+	defer repo.mtx.Unlock()
+	return len(repo.items)
+}
+
+func (repo *FakeAnnotationsRepo) Delete(params *annotations.DeleteParams) error {
+	return nil
+}
+
+func (repo *FakeAnnotationsRepo) Save(item *annotations.Item) error {
+	repo.mtx.Lock()
+	defer repo.mtx.Unlock()
+	repo.items = append(repo.items, item)
+
+	return nil
+}
+func (repo *FakeAnnotationsRepo) Update(item *annotations.Item) error {
+	return nil
+}
+
+func (repo *FakeAnnotationsRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	annotations := []*annotations.ItemDTO{{Id: 1}}
+	return annotations, nil
+}
+
+func (repo *FakeAnnotationsRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	result := annotations.FindTagsResult{
+		Tags: []*annotations.TagsDTO{},
+	}
+	return result, nil
 }

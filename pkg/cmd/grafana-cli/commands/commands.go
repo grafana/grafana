@@ -6,6 +6,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
@@ -17,7 +18,6 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// nolint: unused,deadcode
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.Runner) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
@@ -160,12 +160,23 @@ var adminCommands = []*cli.Command{
 	},
 	{
 		Name:  "data-migration",
-		Usage: "Runs a script that migrates or cleanups data in your db",
+		Usage: "Runs a script that migrates or cleanups data in your database",
 		Subcommands: []*cli.Command{
 			{
 				Name:   "encrypt-datasource-passwords",
 				Usage:  "Migrates passwords from unsecured fields to secure_json_data field. Return ok unless there is an error. Safe to execute multiple times.",
 				Action: runDbCommand(datamigrations.EncryptDatasourcePasswords),
+			},
+		},
+	},
+	{
+		Name:  "secrets-migration",
+		Usage: "Runs a script that migrates secrets in your database",
+		Subcommands: []*cli.Command{
+			{
+				Name:   "re-encrypt",
+				Usage:  "Re-encrypts secrets by decrypting and re-encrypting them with the currently configured encryption. Returns ok unless there is an error. Safe to execute multiple times.",
+				Action: runRunnerCommand(secretsmigrations.ReEncryptSecrets),
 			},
 		},
 	},
@@ -199,6 +210,22 @@ so must be recompiled to validate newly-added CUE files.`,
 			&cli.BoolFlag{
 				Name:  "base-only",
 				Usage: "validate using only base schema, not dist (includes plugin schema)",
+				Value: false,
+			},
+		},
+	},
+	{
+		Name:   "trim-resource",
+		Usage:  "trim schema-specified defaults from a resource",
+		Action: runCueCommand(cmd.trimResource),
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "dashboard",
+				Usage: "path to file containing (valid) dashboard JSON",
+			},
+			&cli.BoolFlag{
+				Name:  "apply",
+				Usage: "invert the operation: apply defaults instead of trimming them",
 				Value: false,
 			},
 		},

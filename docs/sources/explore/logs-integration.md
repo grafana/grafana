@@ -29,7 +29,7 @@ If the data source does not support loading full range log volume histogram, the
 
 #### Log level
 
-For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we parse the log to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level.
+For logs where a level label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we try to parse the log using logfmt and JSON parsers to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with an unknown log level.
 
 **Supported log levels and mapping of log level abbreviation and expressions:**
 

@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
@@ -79,6 +80,7 @@ func TestLoader_Load(t *testing.T) {
 						Metrics:      true,
 						Alerting:     true,
 						Logs:         true,
+						Backend:      true,
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
 					Module:    "app/plugins/datasource/cloudwatch/module",
@@ -887,17 +889,13 @@ func newLoader(cfg *setting.Cfg) *Loader {
 		pluginInitializer:  initializer.New(cfg, &fakeLicensingService{}),
 		signatureValidator: signature.NewValidator(&signature.UnsignedPluginAuthorizer{Cfg: cfg}),
 		errs:               make(map[string]*plugins.SignatureError),
+		log:                &fakeLogger{},
 	}
 }
 
 type fakeLicensingService struct {
-	edition    string
-	hasLicense bool
-	tokenRaw   string
-}
-
-func (t *fakeLicensingService) HasLicense() bool {
-	return t.hasLicense
+	edition  string
+	tokenRaw string
 }
 
 func (t *fakeLicensingService) Expiry() int64 {
@@ -916,14 +914,34 @@ func (t *fakeLicensingService) ContentDeliveryPrefix() string {
 	return ""
 }
 
-func (t *fakeLicensingService) LicenseURL(showAdminLicensingPage bool) string {
+func (t *fakeLicensingService) LicenseURL(_ bool) string {
 	return ""
-}
-
-func (t *fakeLicensingService) HasValidLicense() bool {
-	return false
 }
 
 func (t *fakeLicensingService) Environment() map[string]string {
 	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
+}
+
+func (*fakeLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
+}
+
+func (*fakeLicensingService) FeatureEnabled(feature string) bool {
+	return false
+}
+
+type fakeLogger struct {
+	log.Logger
+}
+
+func (fl fakeLogger) Info(_ string, _ ...interface{}) {
+
+}
+
+func (fl fakeLogger) Debug(_ string, _ ...interface{}) {
+
+}
+
+func (fl fakeLogger) Warn(_ string, _ ...interface{}) {
+
 }

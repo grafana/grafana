@@ -29,7 +29,7 @@ type EmailNotifier struct {
 // for the EmailNotifier.
 func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*EmailNotifier, error) {
 	if model.Settings == nil {
-		return nil, receiverInitError{Reason: "no settings supplied", Cfg: *model}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	addressesString := model.Settings.Get("addresses").MustString()
@@ -63,7 +63,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	var tmplErr error
 	tmpl, data := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
 
-	title := tmpl(`{{ template "default.title" . }}`)
+	title := tmpl(DefaultMessageTitleEmbed)
 
 	alertPageURL := en.tmpl.ExternalURL.String()
 	ruleURL := en.tmpl.ExternalURL.String()
@@ -100,10 +100,10 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if tmplErr != nil {
-		en.log.Debug("failed to template email message", "err", tmplErr.Error())
+		en.log.Warn("failed to template email message", "err", tmplErr.Error())
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		return false, err
 	}
 

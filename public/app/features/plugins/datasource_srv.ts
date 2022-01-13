@@ -62,7 +62,10 @@ export class DatasourceSrv implements DataSourceService {
     return this.settingsMapByUid[uid];
   }
 
-  getInstanceSettings(ref: string | null | undefined | DataSourceRef): DataSourceInstanceSettings | undefined {
+  getInstanceSettings(
+    ref: string | null | undefined | DataSourceRef,
+    scopedVars?: ScopedVars
+  ): DataSourceInstanceSettings | undefined {
     const isstring = typeof ref === 'string';
     let nameOrUid = isstring ? (ref as string) : ((ref as any)?.uid as string | undefined);
 
@@ -81,7 +84,7 @@ export class DatasourceSrv implements DataSourceService {
     // Complex logic to support template variable data source names
     // For this we just pick the current or first data source in the variable
     if (nameOrUid[0] === '$') {
-      const interpolatedName = this.templateSrv.replace(nameOrUid, {}, variableInterpolation);
+      const interpolatedName = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
 
       let dsSettings;
 
@@ -202,9 +205,6 @@ export class DatasourceSrv implements DataSourceService {
         return false;
       }
       if (filters.metrics && !x.meta.metrics) {
-        return false;
-      }
-      if (filters.alerting && !x.meta.alerting) {
         return false;
       }
       if (filters.tracing && !x.meta.tracing) {

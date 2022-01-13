@@ -9,10 +9,14 @@ import { ComparisonOperation, FeatureRuleConfig, FeatureStyleConfig } from '../.
 import { Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { defaultStyleConfig, StyleConfig, StyleConfigState } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { polyStyle } from '../../style/markers';
 import { StyleEditor } from './StyleEditor';
+import { ReplaySubject } from 'rxjs';
+import { map as rxjsmap, first } from 'rxjs/operators';
+import { getLayerPropertyInfo } from '../../utils/getFeatures';
+
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
@@ -31,8 +35,9 @@ const defaultOptions: GeoJSONMapperConfig = {
 };
 
 interface StyleCheckerState {
-  poly: Style | Style[];
-  point: Style | Style[];
+  state: StyleConfigState;
+  poly?: Style | Style[];
+  point?: Style | Style[];
   rule?: FeatureRuleConfig;
 }
 
@@ -64,16 +69,13 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       format: new GeoJSON(),
     });
 
+    const features = new ReplaySubject<FeatureLike[]>();
+
     const key = source.on('change', () => {
+      //one geojson loads
       if (source.getState() == 'ready') {
         unByKey(key);
-        // var olFeatures = source.getFeatures(); // olFeatures.length === 1
-        // window.setTimeout(function () {
-        //     var olFeatures = source.getFeatures(); // olFeatures.length > 1
-        //     // Only after using setTimeout can I search the feature list... :(
-        // }, 100)
-
-        console.log('SOURCE READY!!!', source.getFeatures().length);
+        features.next(source.getFeatures());
       }
     });
 
@@ -83,8 +85,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         if (r.style) {
           const s = await getStyleConfigState(r.style);
           styles.push({
-            point: s.maker(s.base),
-            poly: polyStyle(s.base),
+            state: s,
             rule: r.check,
           });
         }
@@ -93,8 +94,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     if (true) {
       const s = await getStyleConfigState(config.style);
       styles.push({
-        point: s.maker(s.base),
-        poly: polyStyle(s.base),
+        state: s,
       });
     }
 
@@ -107,7 +107,33 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           if (check.rule && !checkFeatureMatchesStyleRule(check.rule, feature)) {
             continue;
           }
-          return isPoint ? check.point : check.poly;
+
+          // Support dynamic values
+          if (check.state.fields) {
+            const values = { ...check.state.base };
+            const { text } = check.state.fields;
+
+            if (text) {
+              values.text = `${feature.get(text)}`;
+            }
+            if (isPoint) {
+              return check.state.maker(values);
+            }
+            return polyStyle(values);
+          }
+
+          // Lazy create the style object
+          if (isPoint) {
+            if (!check.point) {
+              check.point = check.state.maker(check.state.base);
+            }
+            return check.point;
+          }
+
+          if (!check.poly) {
+            check.poly = polyStyle(check.state.base);
+          }
+          return check.poly;
         }
         return undefined; // unreachable
       },
@@ -117,17 +143,13 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       init: () => vectorLayer,
       update: (data: PanelData) => {
         console.log('todo... find values matching the ID and update');
-
-        // // Update each feature
-        // source.getFeatures().forEach((f) => {
-        //   console.log('Find: ', f.getId(), f.getProperties());
-        // });
       },
-
-      // Geojson source url
       registerOptionsUI: (builder) => {
-        const features = source.getFeatures();
-        console.log('FEATURES', source.getState(), features.length, options);
+        // get properties for first feature to use as ui options
+        const layerInfo = features.pipe(
+          first(),
+          rxjsmap((v) => getLayerPropertyInfo(v))
+        );
 
         builder
           .addSelect({
@@ -144,15 +166,6 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             defaultValue: defaultOptions.src,
           })
           .addCustomEditor({
-            id: 'config.rules',
-            path: 'config.rules',
-            name: 'Style Rules',
-            description: 'Apply styles based on feature properties',
-            editor: GeomapStyleRulesEditor,
-            settings: {},
-            defaultValue: [],
-          })
-          .addCustomEditor({
             id: 'config.style',
             path: 'config.style',
             name: 'Default Style',
@@ -160,8 +173,21 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             editor: StyleEditor,
             settings: {
               simpleFixedValues: true,
+              layerInfo,
             },
             defaultValue: defaultOptions.style,
+          })
+          .addCustomEditor({
+            id: 'config.rules',
+            path: 'config.rules',
+            name: 'Style Rules',
+            description: 'Apply styles based on feature properties',
+            editor: GeomapStyleRulesEditor,
+            settings: {
+              features,
+              layerInfo,
+            },
+            defaultValue: [],
           });
       },
     };
