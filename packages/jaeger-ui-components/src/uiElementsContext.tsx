@@ -147,21 +147,6 @@ export const UIButton = function UIButton(props: ButtonProps) {
   );
 };
 
-export type DividerProps = {
-  className?: string;
-  type?: 'vertical' | 'horizontal';
-};
-
-export const UIDivider = function UIDivider(props: DividerProps) {
-  return (
-    <GetElementsContext>
-      {(elements: Elements) => {
-        return <elements.Divider {...props} />;
-      }}
-    </GetElementsContext>
-  );
-};
-
 export type InputProps = {
   autosize?: boolean | null;
   placeholder?: string;
@@ -205,7 +190,6 @@ export type Elements = {
   Menu: React.ComponentType<MenuProps>;
   MenuItem: React.ComponentType<MenuItemProps>;
   Button: React.ComponentType<ButtonProps>;
-  Divider: React.ComponentType<DividerProps>;
   Input: React.ComponentType<InputProps>;
   InputGroup: React.ComponentType<InputGroupProps>;
 };

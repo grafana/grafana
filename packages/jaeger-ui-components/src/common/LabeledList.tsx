@@ -18,7 +18,7 @@ import cx from 'classnames';
 import { useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { UIDivider } from '../uiElementsContext';
+import { Divider } from './Divider';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -42,19 +42,18 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 type LabeledListProps = {
   className?: string;
-  dividerClassName?: string;
   items: Array<{ key: string; label: React.ReactNode; value: React.ReactNode }>;
 };
 
 export default function LabeledList(props: LabeledListProps) {
-  const { className, dividerClassName, items } = props;
+  const { className, items } = props;
   const styles = useStyles2(getStyles);
   return (
     <ul className={cx(styles.LabeledList, className)}>
       {items.map(({ key, label, value }, i) => {
         const divider = i < items.length - 1 && (
           <li className={styles.LabeledListItem} key={`${key}--divider`}>
-            <UIDivider className={dividerClassName} type="vertical" />
+            <Divider />
           </li>
         );
         return [

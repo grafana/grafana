@@ -164,7 +164,7 @@ type TracePageHeaderEmbedProps = {
 export const HEADER_ITEMS = [
   {
     key: 'timestamp',
-    label: 'Trace Start',
+    label: 'Trace Start:',
     renderer(trace: Trace, timeZone: TimeZone, styles: ReturnType<typeof getStyles>) {
       // Convert date from micro to milli seconds
       const dateStr = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
@@ -181,22 +181,22 @@ export const HEADER_ITEMS = [
   },
   {
     key: 'duration',
-    label: 'Duration',
+    label: 'Duration:',
     renderer: (trace: Trace) => formatDuration(trace.duration),
   },
   {
     key: 'service-count',
-    label: 'Services',
+    label: 'Services:',
     renderer: (trace: Trace) => new Set(_values(trace.processes).map((p) => p.serviceName)).size,
   },
   {
     key: 'depth',
-    label: 'Depth',
+    label: 'Depth:',
     renderer: (trace: Trace) => _get(_maxBy(trace.spans, 'depth'), 'depth', 0) + 1,
   },
   {
     key: 'span-count',
-    label: 'Total Spans',
+    label: 'Total Spans:',
     renderer: (trace: Trace) => trace.spans.length,
   },
 ];

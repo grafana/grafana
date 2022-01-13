@@ -1,16 +1,5 @@
-import { GrafanaTheme } from '@grafana/data';
-import {
-  Button,
-  Input,
-  Popover,
-  PopoverController,
-  stylesFactory,
-  Tooltip as GrafanaTooltip,
-  useTheme,
-} from '@grafana/ui';
+import { Button, Input, Popover, PopoverController, Tooltip as GrafanaTooltip } from '@grafana/ui';
 import { ButtonProps, Elements, PopoverProps, TooltipProps } from '@jaegertracing/jaeger-ui-components';
-import cx from 'classnames';
-import { css } from '@emotion/css';
 import React, { useRef } from 'react';
 
 /**
@@ -63,7 +52,6 @@ export const UIElements: Elements = {
       </Button>
     );
   },
-  Divider,
   Input(props) {
     return <Input {...props} />;
   },
@@ -75,21 +63,3 @@ export const UIElements: Elements = {
     );
   },
 };
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    Divider: css`
-      display: inline-block;
-      background: ${theme.isDark ? '#242424' : '#e8e8e8'};
-      width: 1px;
-      height: 0.9em;
-      margin: 0 8px;
-      vertical-align: middle;
-    `,
-  };
-});
-
-function Divider({ className }: { className?: string }) {
-  const styles = getStyles(useTheme());
-  return <div style={{}} className={cx(styles.Divider, className)} />;
-}
