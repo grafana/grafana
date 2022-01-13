@@ -258,7 +258,11 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
-  name: e2e_tests_artifacts_upload
+  name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -684,7 +688,11 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
-  name: e2e_tests_artifacts_upload
+  name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -1286,7 +1294,11 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
-  name: e2e_tests_artifacts_upload
+  name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -1885,7 +1897,11 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
-  name: e2e_tests_artifacts_upload
+  name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
@@ -3032,7 +3048,11 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
-  name: e2e_tests_artifacts_upload
+  name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -3587,7 +3607,11 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
-  name: e2e_tests_artifacts_upload
+  name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
   depends_on:
@@ -4351,7 +4375,11 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
-  name: e2e_tests_artifacts_upload
+  name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -4879,7 +4907,11 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   image: google/cloud-sdk:367.0.0
-  name: e2e_tests_artifacts_upload
+  name: e2e-tests-artifacts-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -5467,6 +5499,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: e990d6f5836b0a633877cf673e2e47e6d43443050d3fcae5e3a869fc00c62a0d
+hmac: 81173294ad474a12cbb622d9e963e208ddd2a2ac42a30dde6396794923b158a0
 
 ...
