@@ -3782,14 +3782,19 @@ __metadata:
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-node-resolve": 13.1.3
+    "@types/chrome-remote-interface": 0.31.4
+    "@types/lodash": 4.14.149
     "@types/node": 16.11.19
     "@types/uuid": 8.3.4
     babel-loader: 8.2.3
     blink-diff: 1.0.13
+    chrome-remote-interface: 0.31.1
     commander: 8.3.0
     cypress: 9.2.0
     cypress-file-upload: 5.0.8
+    devtools-protocol: 0.0.927104
     execa: 5.1.1
+    lodash: 4.17.21
     mocha: 9.1.3
     resolve-as-bin: 2.1.0
     rimraf: 3.0.2
@@ -3797,6 +3802,7 @@ __metadata:
     rollup-plugin-copy: 3.4.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
+    tracelib: 1.0.1
     ts-loader: 6.2.1
     tslib: 2.3.1
     typescript: 4.5.4
@@ -8946,6 +8952,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/chrome-remote-interface@npm:0.31.4":
+  version: 0.31.4
+  resolution: "@types/chrome-remote-interface@npm:0.31.4"
+  dependencies:
+    devtools-protocol: 0.0.927104
+  checksum: 91c6cf9c749adedc08458b772db12f4142172f36fe885dc741921d259bdb7ec47d64b9e294d793a6c36f0435c6855d6470754fd143711e0b2ff204878dd4f721
+  languageName: node
+  linkType: hard
+
 "@types/classnames@npm:2.3.0, @types/classnames@npm:^2.2.7":
   version: 2.3.0
   resolution: "@types/classnames@npm:2.3.0"
@@ -14078,6 +14093,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chrome-remote-interface@npm:0.31.1":
+  version: 0.31.1
+  resolution: "chrome-remote-interface@npm:0.31.1"
+  dependencies:
+    commander: 2.11.x
+    ws: ^7.2.0
+  bin:
+    chrome-remote-interface: bin/client.js
+  checksum: fbc7776abaa58b1d9b517ce93c479c0cb5da287df4a97908675f77cc261c145a772d2ba19d4d23845b7800eae1354008278b0a4e410ff419f641a3f43bbcef15
+  languageName: node
+  linkType: hard
+
 "chrome-trace-event@npm:^1.0.2":
   version: 1.0.3
   resolution: "chrome-trace-event@npm:1.0.3"
@@ -14507,6 +14534,13 @@ __metadata:
   version: 2.20.3
   resolution: "commander@npm:2.20.3"
   checksum: ab8c07884e42c3a8dbc5dd9592c606176c7eb5c1ca5ff274bcf907039b2c41de3626f684ea75ccf4d361ba004bbaff1f577d5384c155f3871e456bdf27becf9e
+  languageName: node
+  linkType: hard
+
+"commander@npm:2.11.x":
+  version: 2.11.0
+  resolution: "commander@npm:2.11.0"
+  checksum: 0d0c622d129a801699b9bbf6fa518108c7e221e51ae12457119aec52f1142ab759b6cd3348ee253604e934639e200c8f0e1cf8342a2ba4b28b3565a7322ead14
   languageName: node
   linkType: hard
 
@@ -16639,6 +16673,13 @@ __metadata:
     detect: ./bin/detect-port
     detect-port: ./bin/detect-port
   checksum: 93c40febe714f56711d1fedc2b7a9cc4cbaa0fcddec0509876c46b9dd6099ed6bfd6662a4f35e5fa0301660f48ed516829253ab0fc90b9e79b823dd77786b379
+  languageName: node
+  linkType: hard
+
+"devtools-protocol@npm:0.0.927104":
+  version: 0.0.927104
+  resolution: "devtools-protocol@npm:0.0.927104"
+  checksum: 13617e735f326b9822e64480060e59068434e937a6141ffe18353d0c7626be890e94d3118e7c262e6fd17eea3a4a2a18c221d0ff1eb31768ebcf0a0b95475d32
   languageName: node
   linkType: hard
 
@@ -34063,6 +34104,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tracelib@npm:1.0.1":
+  version: 1.0.1
+  resolution: "tracelib@npm:1.0.1"
+  checksum: b4b7899491b6a2279e297d3fffca60ae330992a18af5a9cc85436159b8e313f42bc54794d61f504619b271531feea74bcd5b99950a1bed3a51378c23c3fa2e4a
+  languageName: node
+  linkType: hard
+
 "traverse@npm:^0.6.6":
   version: 0.6.6
   resolution: "traverse@npm:0.6.6"
@@ -36228,6 +36276,21 @@ __metadata:
     utf-8-validate:
       optional: true
   checksum: bd2b437256012af526c69c03d6670a132e7ab0fe5853f3b7092826acea4203fad4ee2a8d0d9bd44834b2b968e747bf34f753ab535f4a3edf40d262da4b1d0805
+  languageName: node
+  linkType: hard
+
+"ws@npm:^7.2.0":
+  version: 7.5.6
+  resolution: "ws@npm:7.5.6"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ^5.0.2
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: 0c2ffc9a539dd61dd2b00ff6cc5c98a3371e2521011fe23da4b3578bb7ac26cbdf7ca8a68e8e08023c122ae247013216dde2a20c908de415a6bcc87bdef68c87
   languageName: node
   linkType: hard
 
