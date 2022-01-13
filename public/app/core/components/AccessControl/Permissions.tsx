@@ -28,7 +28,7 @@ export type Props = {
   canSetPermissions: boolean;
 };
 
-export const Permissions = ({ title, resource, resourceId, canListUsers, canSetPermissions }: Props) => {
+export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissions, title='Permissions' }: Props) => {
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
