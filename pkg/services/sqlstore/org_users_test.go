@@ -60,11 +60,12 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 		},
 	}
 
+	store := InitTestDB(t)
+	store.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+	seedOrgUsers(t, store, 1)
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store := InitTestDB(t)
-			store.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
-			seedOrgUsers(t, store, tt.query.OrgId)
 
 			err := store.GetOrgUsers(context.Background(), tt.query)
 			require.NoError(t, err)
@@ -127,11 +128,12 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 		},
 	}
 
+	store := InitTestDB(t)
+	store.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+	seedOrgUsers(t, store, 10)
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store := InitTestDB(t)
-			store.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
-			seedOrgUsers(t, store, tt.query.OrgID)
 
 			err := store.SearchOrgUsers(context.Background(), tt.query)
 			require.NoError(t, err)
@@ -145,13 +147,13 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 	}
 }
 
-func seedOrgUsers(t *testing.T, store *SQLStore, orgID int64) {
+func seedOrgUsers(t *testing.T, store *SQLStore, numUsers int) {
 	t.Helper()
 	// Seed users
-	for i := 1; i <= 10; i++ {
+	for i := numUsers; i <= numUsers; i++ {
 		user, err := store.CreateUser(context.Background(), models.CreateUserCommand{
 			Login: fmt.Sprintf("user-%d", i),
-			OrgId: orgID,
+			OrgId: 1,
 		})
 		require.NoError(t, err)
 
