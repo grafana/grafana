@@ -65,6 +65,12 @@ import { getStatementPosition as getSQLStatementPosition } from './cloudwatch-sq
 import cloudWatchSqlLanguageDefinition from './cloudwatch-sql/definition';
 import { SQLTokenType } from './cloudwatch-sql/completion/types';
 
+import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
+import { getSuggestionKinds as getMetricMathSuggestionKinds } from './metric-math/completion/suggestionKind';
+import { getStatementPosition as getMetricMathStatementPosition } from './metric-math/completion/statementPosition';
+import cloudWatchMetricMathLanguageDefinition from './metric-math/definition';
+import { MetricMathTokenType } from './metric-math/completion/types';
+
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
 // Constants also defined in tsdb/cloudwatch/cloudwatch.go
@@ -95,6 +101,8 @@ export class CloudWatchDatasource
   datasourceName: string;
   languageProvider: CloudWatchLanguageProvider;
   sqlCompletionItemProvider: SQLCompletionItemProvider;
+
+  metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
 
   tracingDataSourceUid?: string;
   logsTimeout: string;
@@ -131,6 +139,14 @@ export class CloudWatchDatasource
       SQLTokenType,
       getSQLStatementPosition,
       getSQLSuggestionKinds
+    );
+    this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(
+      this,
+      this.templateSrv,
+      cloudWatchMetricMathLanguageDefinition,
+      MetricMathTokenType,
+      getMetricMathStatementPosition,
+      getMetricMathSuggestionKinds
     );
   }
 
