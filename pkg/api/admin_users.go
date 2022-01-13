@@ -112,7 +112,7 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	err := updateUserPermissions(hs.SQLStore, userID, form.IsGrafanaAdmin)
+	err = updateUserPermissions(hs.SQLStore, userID, form.IsGrafanaAdmin)
 	if err != nil {
 		if errors.Is(err, models.ErrLastGrafanaAdmin) {
 			return response.Error(400, models.ErrLastGrafanaAdmin.Error(), nil)
@@ -163,7 +163,7 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to disable user", err)
 	}
 
-	err := hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
+	err = hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
 	if err != nil {
 		return response.Error(500, "Failed to disable user", err)
 	}

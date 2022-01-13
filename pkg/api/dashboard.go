@@ -666,7 +666,12 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, c.ParamsInt64(":dashboardId"), "")
+	dashboardId, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	}
+
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashboardId, "")
 	if rsp != nil {
 		return rsp
 	}

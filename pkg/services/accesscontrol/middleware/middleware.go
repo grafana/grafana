@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -128,11 +127,9 @@ func AuthorizeInOrgMiddleware(ac accesscontrol.AccessControl, db *sqlstore.SQLSt
 
 func UseOrgFromContextParams(c *models.ReqContext) (int64, error) {
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
-	}
+
 	// Special case of macaron handling invalid params
-	if orgID == 0 {
+	if orgID == 0 || err != nil {
 		return 0, models.ErrOrgNotFound
 	}
 

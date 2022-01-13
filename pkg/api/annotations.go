@@ -281,7 +281,7 @@ func DeleteAnnotationByID(c *models.ReqContext) response.Response {
 		return resp
 	}
 
-	err := repo.Delete(&annotations.DeleteParams{
+	err = repo.Delete(&annotations.DeleteParams{
 		OrgId: c.OrgId,
 		Id:    annotationID,
 	})

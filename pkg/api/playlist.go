@@ -14,10 +14,11 @@ import (
 func ValidateOrgPlaylist(c *models.ReqContext) {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
+		c.JsonApiErr(http.StatusBadRequest, "id is invalid", nil)
+		return
 	}
 	query := models.GetPlaylistByIdQuery{Id: id}
-	err := bus.Dispatch(c.Req.Context(), &query)
+	err = bus.Dispatch(c.Req.Context(), &query)
 
 	if err != nil {
 		c.JsonApiErr(404, "Playlist not found", err)
@@ -176,7 +177,11 @@ func UpdatePlaylist(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgId
-	cmd.Id = c.ParamsInt64(":id")
+	var err error
+	cmd.Id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to save playlist", err)

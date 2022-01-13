@@ -23,7 +23,8 @@ import (
 func ValidateOrgAlert(c *models.ReqContext) {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "alertId is invalid", err)
+		c.JsonApiErr(http.StatusBadRequest, "alertId is invalid", nil)
+		return
 	}
 	query := models.GetAlertByIdQuery{Id: id}
 
@@ -246,9 +247,13 @@ func getAlertNotificationsInternal(c *models.ReqContext) ([]*models.AlertNotific
 }
 
 func GetAlertNotificationByID(c *models.ReqContext) response.Response {
+	notificationId, err := strconv.ParseInt(web.Params(c.Req)[":notificationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "notificationId is invalid", err)
+	}
 	query := &models.GetAlertNotificationsQuery{
 		OrgId: c.OrgId,
-		Id:    c.ParamsInt64(":notificationId"),
+		Id:    notificationId,
 	}
 
 	if query.Id == 0 {
@@ -432,9 +437,14 @@ func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *
 }
 
 func DeleteAlertNotification(c *models.ReqContext) response.Response {
+	notificationId, err := strconv.ParseInt(web.Params(c.Req)[":notificationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "notificationId is invalid", err)
+	}
+
 	cmd := models.DeleteAlertNotificationCommand{
 		OrgId: c.OrgId,
-		Id:    c.ParamsInt64(":notificationId"),
+		Id:    notificationId,
 	}
 
 	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {

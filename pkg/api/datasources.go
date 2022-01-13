@@ -83,8 +83,12 @@ func (hs *HTTPServer) getDataSourceAccessControlMetadata(c *models.ReqContext, d
 }
 
 func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response {
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 	query := models.GetDataSourceQuery{
-		Id:    c.ParamsInt64(":id"),
+		Id:    id,
 		OrgId: c.OrgId,
 	}
 
@@ -283,12 +287,16 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 	}
 	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
-	cmd.Id = c.ParamsInt64(":id")
+	var err error
+	cmd.Id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
 		return resp
 	}
 
-	err := hs.fillWithSecureJSONData(c.Req.Context(), &cmd)
+	err = hs.fillWithSecureJSONData(c.Req.Context(), &cmd)
 	if err != nil {
 		return response.Error(500, "Failed to update datasource", err)
 	}
@@ -416,7 +424,8 @@ func GetDataSourceIdByName(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	datasourceID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
+		c.JsonApiErr(http.StatusBadRequest, "id is invalid", err)
+		return
 	}
 	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {

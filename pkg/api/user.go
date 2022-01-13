@@ -24,7 +24,11 @@ func (hs *HTTPServer) GetSignedInUser(c *models.ReqContext) response.Response {
 
 // GET /api/users/:id
 func (hs *HTTPServer) GetUserByID(c *models.ReqContext) response.Response {
-	return hs.getUserUserProfile(c, c.ParamsInt64(":id"))
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	return hs.getUserUserProfile(c, id)
 }
 
 func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) response.Response {
@@ -117,10 +121,14 @@ func UpdateSignedInUser(c *models.ReqContext) response.Response {
 // POST /api/users/:id
 func UpdateUser(c *models.ReqContext) response.Response {
 	cmd := models.UpdateUserCommand{}
+	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.UserId = c.ParamsInt64(":id")
+	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 	return handleUpdateUser(c.Req.Context(), cmd)
 }
 
@@ -175,7 +183,11 @@ func GetSignedInUserTeamList(c *models.ReqContext) response.Response {
 
 // GET /api/users/:id/teams
 func GetUserTeams(c *models.ReqContext) response.Response {
-	return getUserTeamList(c.Req.Context(), c.OrgId, c.ParamsInt64(":id"))
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	return getUserTeamList(c.Req.Context(), c.OrgId, id)
 }
 
 func getUserTeamList(ctx context.Context, orgID int64, userID int64) response.Response {
@@ -193,7 +205,11 @@ func getUserTeamList(ctx context.Context, orgID int64, userID int64) response.Re
 
 // GET /api/users/:id/orgs
 func GetUserOrgList(c *models.ReqContext) response.Response {
-	return getUserOrgList(c.Req.Context(), c.ParamsInt64(":id"))
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	return getUserOrgList(c.Req.Context(), id)
 }
 
 func getUserOrgList(ctx context.Context, userID int64) response.Response {
@@ -248,7 +264,8 @@ func UserSetUsingOrg(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *models.ReqContext) {
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
+		c.JsonApiErr(http.StatusBadRequest, "id is invalid", err)
+		return
 	}
 
 	if !validateUsingOrg(c.Req.Context(), c.UserId, orgID) {

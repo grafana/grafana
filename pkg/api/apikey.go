@@ -49,7 +49,7 @@ func DeleteAPIKey(c *models.ReqContext) response.Response {
 
 	cmd := &models.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
 
-	err := bus.Dispatch(c.Req.Context(), cmd)
+	err = bus.Dispatch(c.Req.Context(), cmd)
 	if err != nil {
 		var status int
 		if errors.Is(err, models.ErrApiKeyNotFound) {

@@ -56,11 +56,15 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 // PUT /api/teams/:teamId
 func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
 	cmd := models.UpdateTeamCommand{}
+	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgId
-	cmd.Id = c.ParamsInt64(":teamId")
+	cmd.Id, err = strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
 
 	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to update team", err)
@@ -141,9 +145,13 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 
 // GET /api/teams/:teamId
 func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
+	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
 	query := models.GetTeamByIdQuery{
 		OrgId:        c.OrgId,
-		Id:           c.ParamsInt64(":teamId"),
+		Id:           teamId,
 		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
 	}
