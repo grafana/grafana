@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState, useMemo, useRef } from 'react';
 import { LogRowModel } from '@grafana/data';
 
 interface Props {
@@ -8,6 +8,20 @@ interface Props {
 
 const usePanelScroll = ({ isAscending, logRows }: Props) => {
   const [scrollTop, setScrollTop] = useState(0);
+  const prevScrollPosition = useRef(null);
+
+  useMemo(() => {
+    const scrollbar = document.querySelector('.scrollbar-view');
+    scrollbar?.addEventListener('scroll', (e: any) => {
+      prevScrollPosition.current = e.target.scrollTop;
+    });
+
+    return () => {
+      scrollbar?.removeEventListener('scroll', () => {
+        prevScrollPosition.current = null;
+      });
+    };
+  }, []);
 
   useLayoutEffect(() => {
     const scrollbar = document.querySelector('.scrollbar-view');
@@ -32,10 +46,10 @@ const usePanelScroll = ({ isAscending, logRows }: Props) => {
         // if the scrollbar is not present, we scroll to the bottom by default
         // so when it starts to be present, its at the bottom position by default
         // until the user scrolls up
-        setScrollTop(scrollbar.scrollHeight);
+        setScrollTop(prevScrollPosition.current || 0);
       }
     } else if (!isAscending && scrollbar) {
-      setScrollTop(scrollbar.scrollTop);
+      setScrollTop(prevScrollPosition.current || 0);
     }
   }, [isAscending, logRows]);
 

@@ -16,8 +16,13 @@ const usePopulateData = ({ data }: Props) => {
   const [externalLogs, setExternalLogs] = useState<ExternalLog[]>([]);
 
   const addMessageToData = (data: any, log: ExternalLog) => {
+    data.series = data.series || [];
     const lastFrame = data.series.length - 1;
-    const fields = data.series[lastFrame].fields;
+    const index = lastFrame < 0 ? 0 : lastFrame;
+    const series = data.series[index] || {};
+    series.fields = series.fields || [];
+    const fields = series.fields;
+    data.series[index] = series;
 
     if (!fields[0] || !fields[1] || !fields[2] || !fields[3]) {
       const timeInitData = {
@@ -75,7 +80,7 @@ const usePopulateData = ({ data }: Props) => {
     //@ts-ignore
     hostname.values.add(log.msg);
 
-    data.series[lastFrame].length++;
+    data.series[index].length = data.series[index].length ? data.series[index].length + 1 : 1;
 
     return data;
   };
