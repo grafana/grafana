@@ -13,14 +13,26 @@ export interface Props {
   onToggle?: (isOpen: boolean) => void;
   children: ReactNode;
   className?: string;
+  contentClassName?: string;
   loading?: boolean;
 }
 
-export const CollapsableSection: FC<Props> = ({ label, isOpen, onToggle, className, children, loading = false }) => {
+export const CollapsableSection: FC<Props> = ({
+  label,
+  isOpen,
+  onToggle,
+  className,
+  contentClassName,
+  children,
+  loading = false,
+}) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
   const tooltip = `Click to ${open ? 'collapse' : 'expand'}`;
-  const onClick = () => {
+  const onClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     onToggle?.(!open);
     toggleOpen(!open);
   };
@@ -32,23 +44,20 @@ export const CollapsableSection: FC<Props> = ({ label, isOpen, onToggle, classNa
         <button
           id={`collapse-button-${id}`}
           className={styles.button}
-          onClick={(e) => {
-            e.preventDefault();
-            onClick();
-          }}
+          onClick={onClick}
           aria-controls={`collapse-content-${id}`}
         >
           {loading ? (
             <Spinner className={styles.spinner} />
           ) : (
-            <Icon name={open ? 'angle-down' : 'angle-right'} size="xl" className={styles.icon} />
+            <Icon name={open ? 'angle-down' : 'angle-right'} className={styles.icon} />
           )}
         </button>
         <div className={styles.label}>{label}</div>
       </div>
       <div
         id={`collapse-content-${id}`}
-        className={styles.content}
+        className={cx(styles.content, contentClassName)}
         aria-labelledby={`collapse-button-${id}`}
         aria-expanded={open && !loading}
       >
@@ -91,10 +100,9 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   spinner: css({
-    height: '100%',
-    width: theme.v1.spacing.lg,
-    marginBottom: theme.v1.spacing.xxs,
-    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    width: theme.v1.spacing.md,
   }),
   label: css({
     display: 'flex',

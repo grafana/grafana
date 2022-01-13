@@ -34,13 +34,10 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
 
   const handleCheckboxClick = useCallback(
     (ev: React.MouseEvent) => {
-      console.log('section header handleCheckboxClick');
       ev.stopPropagation();
       ev.preventDefault();
 
-      if (onToggleChecked) {
-        onToggleChecked(section);
-      }
+      onToggleChecked?.(section);
     },
     [onToggleChecked, section]
   );
@@ -50,6 +47,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
       isOpen={section.expanded ?? false}
       onToggle={onSectionExpand}
       className={styles.wrapper}
+      contentClassName={styles.content}
       loading={section.itemsFetching}
       label={
         <>
@@ -90,6 +88,7 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
         font-size: ${theme.typography.size.base};
         padding: 12px;
         color: ${theme.colors.textWeak};
+        z-index: 1;
 
         &:hover,
         &.selected {
@@ -125,6 +124,10 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
     `,
     separator: css`
       margin-right: 6px;
+    `,
+    content: css`
+      padding-top: 0px;
+      padding-bottom: 0px;
     `,
   };
 });
