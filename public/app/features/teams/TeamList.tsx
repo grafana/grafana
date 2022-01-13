@@ -42,7 +42,9 @@ export class TeamList extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.fetchTeams();
-    this.fetchRoleOptions();
+    if (contextSrv.accessControlEnabled()) {
+      this.fetchRoleOptions();
+    }
   }
 
   async fetchTeams() {
@@ -86,9 +88,11 @@ export class TeamList extends PureComponent<Props, State> {
         <td className="link-td">
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
-        <td>
-          <TeamRolePicker teamId={team.id} getRoleOptions={async () => this.state.roleOptions} />
-        </td>
+        {contextSrv.accessControlEnabled() && (
+          <td>
+            <TeamRolePicker teamId={team.id} getRoleOptions={async () => this.state.roleOptions} />
+          </td>
+        )}
         <td className="text-right">
           <DeleteButton
             aria-label="Delete team"
