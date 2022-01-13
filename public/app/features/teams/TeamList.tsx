@@ -154,7 +154,7 @@ export class TeamList extends PureComponent<Props, State> {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Members</th>
-                  <th>Roles</th>
+                  {contextSrv.accessControlEnabled() && <th>Roles</th>}
                   <th style={{ width: '1%' }} />
                 </tr>
               </thead>
