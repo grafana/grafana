@@ -34,8 +34,9 @@ type User struct {
 	HelpFlags1    HelpFlags1
 	IsDisabled    bool
 
-	IsAdmin bool
-	OrgId   int64
+	IsAdmin          bool
+	IsServiceAccount bool
+	OrgId            int64
 
 	Created    time.Time
 	Updated    time.Time
@@ -182,6 +183,8 @@ type SignedInUser struct {
 	HelpFlags1     HelpFlags1
 	LastSeenAt     time.Time
 	Teams          []int64
+	// Permissions grouped by orgID and actions
+	Permissions map[int64]map[string][]string
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -223,19 +226,20 @@ func (u *SignedInUser) IsRealUser() bool {
 }
 
 type UserProfileDTO struct {
-	Id             int64     `json:"id"`
-	Email          string    `json:"email"`
-	Name           string    `json:"name"`
-	Login          string    `json:"login"`
-	Theme          string    `json:"theme"`
-	OrgId          int64     `json:"orgId"`
-	IsGrafanaAdmin bool      `json:"isGrafanaAdmin"`
-	IsDisabled     bool      `json:"isDisabled"`
-	IsExternal     bool      `json:"isExternal"`
-	AuthLabels     []string  `json:"authLabels"`
-	UpdatedAt      time.Time `json:"updatedAt"`
-	CreatedAt      time.Time `json:"createdAt"`
-	AvatarUrl      string    `json:"avatarUrl"`
+	Id             int64           `json:"id"`
+	Email          string          `json:"email"`
+	Name           string          `json:"name"`
+	Login          string          `json:"login"`
+	Theme          string          `json:"theme"`
+	OrgId          int64           `json:"orgId"`
+	IsGrafanaAdmin bool            `json:"isGrafanaAdmin"`
+	IsDisabled     bool            `json:"isDisabled"`
+	IsExternal     bool            `json:"isExternal"`
+	AuthLabels     []string        `json:"authLabels"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	AvatarUrl      string          `json:"avatarUrl"`
+	AccessControl  map[string]bool `json:"accessControl,omitempty"`
 }
 
 type UserSearchHitDTO struct {

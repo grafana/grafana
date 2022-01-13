@@ -19,7 +19,7 @@ func TestTransaction(t *testing.T) {
 
 	cmd := &models.AddApiKeyCommand{Key: "secret-key", Name: "key", OrgId: 1}
 	t.Run("can update key", func(t *testing.T) {
-		err := AddAPIKey(context.Background(), cmd)
+		err := ss.AddAPIKey(context.Background(), cmd)
 		require.Nil(t, err)
 
 		err = ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
@@ -29,12 +29,12 @@ func TestTransaction(t *testing.T) {
 		require.Nil(t, err)
 
 		query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
-		err = GetApiKeyById(query)
+		err = ss.GetApiKeyById(context.Background(), query)
 		require.Equal(t, models.ErrInvalidApiKey, err)
 	})
 
 	t.Run("won't update if one handler fails", func(t *testing.T) {
-		err := AddAPIKey(context.Background(), cmd)
+		err := ss.AddAPIKey(context.Background(), cmd)
 		require.Nil(t, err)
 
 		err = ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
@@ -49,7 +49,7 @@ func TestTransaction(t *testing.T) {
 		require.Equal(t, ErrProvokedError, err)
 
 		query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
-		err = GetApiKeyById(query)
+		err = ss.GetApiKeyById(context.Background(), query)
 		require.Nil(t, err)
 		require.Equal(t, cmd.Result.Id, query.Result.Id)
 	})

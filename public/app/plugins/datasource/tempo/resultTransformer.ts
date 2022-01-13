@@ -10,7 +10,7 @@ import {
   TraceLog,
   TraceSpanRow,
 } from '@grafana/data';
-import { SpanKind, SpanStatus, SpanStatusCode } from '@opentelemetry/api';
+import { SpanStatus, SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { createGraphFrames } from './graphTransform';
@@ -114,15 +114,25 @@ export function transformTraceList(
 
 // Don't forget to change the backend code when the id representation changed
 function transformBase64IDToHexString(base64: string) {
-  const buffer = Buffer.from(base64, 'base64');
-  const id = buffer.toString('hex');
-  return id.length > 16 ? id.slice(16) : id;
+  const raw = atob(base64);
+  let result = '';
+  for (let i = 0; i < raw.length; i++) {
+    const hex = raw.charCodeAt(i).toString(16);
+    result += hex.length === 2 ? hex : '0' + hex;
+  }
+
+  return result.length > 16 ? result.slice(16) : result;
 }
 
 function transformHexStringToBase64ID(hex: string) {
-  const buffer = Buffer.from(hex, 'hex');
-  const id = buffer.toString('base64');
-  return id;
+  const hexArray = hex.match(/\w{2}/g) || [];
+  return btoa(
+    hexArray
+      .map(function (a) {
+        return String.fromCharCode(parseInt(a, 16));
+      })
+      .join('')
+  );
 }
 
 function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.AnyValue): any {
@@ -206,13 +216,11 @@ function getSpanTags(
     }
   }
 
-  if (
-    span.kind !== undefined &&
-    span.kind !== collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind.SPAN_KIND_INTERNAL
-  ) {
+  if (span.kind !== undefined) {
+    const split = span.kind.toString().toLowerCase().split('_');
     spanTags.push({
       key: 'span.kind',
-      value: SpanKind[collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind[span.kind] as any].toLowerCase(),
+      value: split.length ? split[split.length - 1] : span.kind.toString(),
     });
   }
 
@@ -281,7 +289,8 @@ export function transformFromOTLP(
       }
     }
   } catch (error) {
-    return { error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] };
+    console.error(error);
+    return { error: { message: 'JSON is not valid OpenTelemetry format: ' + error }, data: [] };
   }
 
   let data = [frame];

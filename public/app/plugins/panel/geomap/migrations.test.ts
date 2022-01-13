@@ -47,6 +47,7 @@ describe('Worldmap Migrations', () => {
         },
         "options": Object {
           "basemap": Object {
+            "name": "Basemap",
             "type": "default",
           },
           "controls": Object {
@@ -108,164 +109,77 @@ const simpleWorldmapConfig = {
 
 describe('geomap migrations', () => {
   it('updates marker', () => {
-    const panel = {
-      id: 2,
-      gridPos: {
-        h: 9,
-        w: 12,
-        x: 0,
-        y: 0,
-      },
+    const panel = ({
       type: 'geomap',
-      title: 'Panel Title',
-      fieldConfig: {
-        defaults: {
-          thresholds: {
-            mode: 'absolute',
-            steps: [
-              {
-                color: 'green',
-                value: null,
-              },
-              {
-                color: 'red',
-                value: 80,
-              },
-            ],
-          },
-          mappings: [],
-          color: {
-            mode: 'thresholds',
-          },
-        },
-        overrides: [],
-      },
       options: {
-        view: {
-          id: 'zero',
-          lat: 0,
-          lon: 0,
-          zoom: 1,
-        },
-        basemap: {
-          type: 'default',
-          config: {},
-        },
         layers: [
           {
+            type: 'markers',
             config: {
-              color: {
-                fixed: 'dark-green',
-              },
-              fillOpacity: 0.4,
-              markerSymbol: {
-                fixed: '',
-                mode: 'fixed',
-              },
-              shape: 'circle',
-              showLegend: true,
               size: {
                 fixed: 5,
-                max: 15,
                 min: 2,
+                max: 15,
+                field: 'Count',
               },
+              color: {
+                fixed: 'dark-green',
+                field: 'Price',
+              },
+              fillOpacity: 0.4,
+              shape: 'triangle',
+              showLegend: true,
             },
-            location: {
-              mode: 'auto',
-            },
-            type: 'markers',
           },
         ],
-        controls: {
-          showZoom: true,
-          mouseWheelZoom: true,
-          showAttribution: true,
-          showScale: false,
-          showDebug: false,
-        },
       },
-      pluginVersion: '8.3.0-pre',
-      datasource: null,
-    } as PanelModel;
+      pluginVersion: '8.2.0',
+    } as any) as PanelModel;
     panel.options = mapMigrationHandler(panel);
 
     expect(panel).toMatchInlineSnapshot(`
       Object {
-        "datasource": null,
-        "fieldConfig": Object {
-          "defaults": Object {
-            "color": Object {
-              "mode": "thresholds",
-            },
-            "mappings": Array [],
-            "thresholds": Object {
-              "mode": "absolute",
-              "steps": Array [
-                Object {
-                  "color": "green",
-                  "value": null,
-                },
-                Object {
-                  "color": "red",
-                  "value": 80,
-                },
-              ],
-            },
-          },
-          "overrides": Array [],
-        },
-        "gridPos": Object {
-          "h": 9,
-          "w": 12,
-          "x": 0,
-          "y": 0,
-        },
-        "id": 2,
         "options": Object {
-          "basemap": Object {
-            "config": Object {},
-            "type": "default",
-          },
-          "controls": Object {
-            "mouseWheelZoom": true,
-            "showAttribution": true,
-            "showDebug": false,
-            "showScale": false,
-            "showZoom": true,
-          },
           "layers": Array [
             Object {
               "config": Object {
-                "color": Object {
-                  "fixed": "dark-green",
-                },
-                "fillOpacity": 0.4,
-                "markerSymbol": Object {
-                  "fixed": "img/icons/marker/circle.svg",
-                  "mode": "fixed",
-                },
                 "showLegend": true,
-                "size": Object {
-                  "fixed": 5,
-                  "max": 15,
-                  "min": 2,
+                "style": Object {
+                  "color": Object {
+                    "field": "Price",
+                    "fixed": "dark-green",
+                  },
+                  "opacity": 0.4,
+                  "rotation": Object {
+                    "fixed": 0,
+                    "max": 360,
+                    "min": -360,
+                    "mode": "mod",
+                  },
+                  "size": Object {
+                    "field": "Count",
+                    "fixed": 5,
+                    "max": 15,
+                    "min": 2,
+                  },
+                  "symbol": Object {
+                    "fixed": "img/icons/marker/triangle.svg",
+                    "mode": "fixed",
+                  },
+                  "textConfig": Object {
+                    "fontSize": 12,
+                    "offsetX": 0,
+                    "offsetY": 0,
+                    "textAlign": "center",
+                    "textBaseline": "middle",
+                  },
                 },
-              },
-              "location": Object {
-                "mode": "auto",
               },
               "type": "markers",
             },
           ],
-          "view": Object {
-            "id": "zero",
-            "lat": 0,
-            "lon": 0,
-            "zoom": 1,
-          },
         },
-        "pluginVersion": "8.3.0-pre",
-        "title": "Panel Title",
+        "pluginVersion": "8.2.0",
         "type": "geomap",
       }
     `);

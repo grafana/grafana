@@ -85,7 +85,6 @@ export interface PanelChangeViewPayload {}
 
 export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
 export const dsRequestError = eventFactory<any>('ds-request-error');
-export const toggleSidemenuMobile = eventFactory('toggle-sidemenu-mobile');
 export const toggleSidemenuHidden = eventFactory('toggle-sidemenu-hidden');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
 export const graphClicked = eventFactory<GraphClickedPayload>('graph-click');
@@ -143,6 +142,10 @@ export enum ShiftTimeEventPayload {
 }
 export class ShiftTimeEvent extends BusEventWithPayload<ShiftTimeEventPayload> {
   static type = 'shift-time';
+}
+
+export class AbsoluteTimeEvent extends BusEventBase {
+  static type = 'absolute-time';
 }
 
 export class RemovePanelEvent extends BusEventWithPayload<number> {

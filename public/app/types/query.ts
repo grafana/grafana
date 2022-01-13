@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/data';
+import { DataQuery, DataSourceRef } from '@grafana/data';
 import { ExpressionQuery } from '../features/expressions/types';
 
 export interface QueryGroupOptions {
@@ -14,8 +14,7 @@ export interface QueryGroupOptions {
   };
 }
 
-export interface QueryGroupDataSource {
+export interface QueryGroupDataSource extends DataSourceRef {
   name?: string | null;
-  uid?: string;
   default?: boolean;
 }

@@ -37,6 +37,7 @@ const dummyProps: Props = {
   isLive: false,
   syncedTimes: false,
   updateTimeRange: jest.fn(),
+  makeAbsoluteTime: jest.fn(),
   graphResult: [],
   absoluteRange: {
     from: 0,
@@ -85,6 +86,8 @@ const dummyProps: Props = {
   splitOpen: (() => {}) as any,
   logsVolumeData: undefined,
   loadLogsVolumeData: () => {},
+  changeGraphStyle: () => {},
+  graphStyle: 'lines',
 };
 
 describe('Explore', () => {

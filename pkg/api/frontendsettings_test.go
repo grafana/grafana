@@ -8,11 +8,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
@@ -35,21 +35,20 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	pm := &manager.PluginManager{Cfg: cfg, SQLStore: sqlStore}
-
-	r := &rendering.RenderingService{
-		Cfg:           cfg,
-		PluginManager: pm,
-	}
 
 	hs := &HTTPServer{
-		Cfg:           cfg,
-		Bus:           bus.GetBus(),
-		License:       &licensing.OSSLicensingService{Cfg: cfg},
-		RenderService: r,
-		SQLStore:      sqlStore,
-		PluginManager: pm,
-		AccessControl: accesscontrolmock.New().WithDisabled(),
+		Cfg:     cfg,
+		Bus:     bus.GetBus(),
+		License: &licensing.OSSLicensingService{Cfg: cfg},
+		RenderService: &rendering.RenderingService{
+			Cfg:                   cfg,
+			RendererPluginManager: &fakeRendererManager{},
+		},
+		SQLStore:         sqlStore,
+		SettingsProvider: setting.ProvideProvider(cfg),
+		pluginStore:      &fakePluginStore{},
+		updateChecker:    &updatechecker.Service{},
+		AccessControl:    accesscontrolmock.New().WithDisabled(),
 	}
 
 	m := web.New()
@@ -60,7 +59,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer
 	return m, hs
 }
 
-func TestHTTPServer_GetFrontendSettings_hideVersionAnonyomus(t *testing.T) {
+func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	type buildInfo struct {
 		Version string `json:"version"`
 		Commit  string `json:"commit"`

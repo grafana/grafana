@@ -13,12 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -29,10 +28,10 @@ const (
 )
 
 type AlertmanagerSrv struct {
-	mam   *notifier.MultiOrgAlertmanager
-	enc   encryption.Service
-	store store.AlertingStore
-	log   log.Logger
+	mam     *notifier.MultiOrgAlertmanager
+	secrets secrets.Service
+	store   AlertingStore
+	log     log.Logger
 }
 
 type UnknownReceiverError struct {
@@ -108,7 +107,7 @@ func (srv AlertmanagerSrv) getDecryptedSecret(r *apimodels.PostableGrafanaReceiv
 		return "", err
 	}
 
-	decryptedValue, err := srv.enc.Decrypt(context.Background(), decodeValue, setting.SecretKey)
+	decryptedValue, err := srv.secrets.Decrypt(context.Background(), decodeValue)
 	if err != nil {
 		return "", err
 	}
@@ -356,13 +355,16 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	if err := body.ProcessConfig(srv.enc.Encrypt); err != nil {
+	if err := body.ProcessConfig(srv.secrets.Encrypt); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}
 
 	am, errResp := srv.AlertmanagerFor(c.OrgId)
 	if errResp != nil {
-		return errResp
+		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
+		if !errors.Is(errResp.Err(), notifier.ErrAlertmanagerNotReady) {
+			return errResp
+		}
 	}
 
 	if err := am.SaveAndApplyConfig(&body); err != nil {
@@ -377,7 +379,7 @@ func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.P
 	return NotImplementedResp
 }
 
-func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigParams) response.Response {
+func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return accessForbiddenResp()
 	}
@@ -390,7 +392,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body api
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	if err := body.ProcessConfig(srv.enc.Encrypt); err != nil {
+	if err := body.ProcessConfig(srv.secrets.Encrypt); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}
 
@@ -518,11 +520,11 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response
 	}
 
 	if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-		return nil, response.Error(http.StatusNotFound, err.Error(), nil)
+		return nil, response.Error(http.StatusNotFound, err.Error(), err)
 	}
 
 	if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
-		return nil, response.Error(http.StatusConflict, err.Error(), nil)
+		return am, response.Error(http.StatusConflict, err.Error(), err)
 	}
 
 	srv.log.Error("unable to obtain the org's Alertmanager", "err", err)

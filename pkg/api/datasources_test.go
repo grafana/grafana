@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -29,7 +30,7 @@ const (
 func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
-		bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourcesQuery) error {
 			assert.Equal(t, testOrgID, query.OrgId)
 			query.Result = []*models.DataSource{
 				{Name: "mmm"},
@@ -42,9 +43,9 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 
 		// handler func being tested
 		hs := &HTTPServer{
-			Bus:           bus.GetBus(),
-			Cfg:           setting.NewCfg(),
-			PluginManager: &fakePluginManager{},
+			Bus:         bus.GetBus(),
+			Cfg:         setting.NewCfg(),
+			pluginStore: &fakePluginStore{},
 		}
 		sc.handlerFunc = hs.GetDataSources
 		sc.fakeReq("GET", "/api/datasources").exec()
@@ -63,9 +64,9 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		"/api/datasources/name/12345", func(sc *scenarioContext) {
 			// handler func being tested
 			hs := &HTTPServer{
-				Bus:           bus.GetBus(),
-				Cfg:           setting.NewCfg(),
-				PluginManager: &fakePluginManager{},
+				Bus:         bus.GetBus(),
+				Cfg:         setting.NewCfg(),
+				pluginStore: &fakePluginStore{},
 			}
 			sc.handlerFunc = hs.DeleteDataSourceByName
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
@@ -80,10 +81,13 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		return AddDataSource(c, models.AddDataSourceCommand{
-			Name: "Test",
-			Url:  "invalid:url",
+		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+			Name:   "Test",
+			Url:    "invalid:url",
+			Access: "direct",
+			Type:   "test",
 		})
+		return AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -99,7 +103,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	const url = "localhost:5432"
 
 	// Stub handler
-	bus.AddHandler("sql", func(cmd *models.AddDataSourceCommand) error {
+	bus.AddHandler("sql", func(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 		assert.Equal(t, name, cmd.Name)
 		assert.Equal(t, url, cmd.Url)
 
@@ -110,10 +114,13 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		return AddDataSource(c, models.AddDataSourceCommand{
-			Name: name,
-			Url:  url,
+		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+			Name:   name,
+			Url:    url,
+			Access: "direct",
+			Type:   "test",
 		})
+		return AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -128,10 +135,13 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		return AddDataSource(c, models.AddDataSourceCommand{
-			Name: "Test",
-			Url:  "invalid:url",
+		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+			Name:   "Test",
+			Url:    "invalid:url",
+			Access: "direct",
+			Type:   "test",
 		})
+		return AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
@@ -147,7 +157,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	const url = "localhost:5432"
 
 	// Stub handler
-	bus.AddHandler("sql", func(cmd *models.AddDataSourceCommand) error {
+	bus.AddHandler("sql", func(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 		assert.Equal(t, name, cmd.Name)
 		assert.Equal(t, url, cmd.Url)
 
@@ -158,10 +168,13 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		return AddDataSource(c, models.AddDataSourceCommand{
-			Name: name,
-			Url:  url,
+		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+			Name:   name,
+			Url:    url,
+			Access: "direct",
+			Type:   "test",
 		})
+		return AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
@@ -179,26 +192,26 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		Type:   "postgresql",
 		Access: "Proxy",
 	}
-	getDatasourceStub := func(query *models.GetDataSourceQuery) error {
+	getDatasourceStub := func(ctx context.Context, query *models.GetDataSourceQuery) error {
 		result := testDatasource
 		result.Id = query.Id
 		result.OrgId = query.OrgId
 		query.Result = &result
 		return nil
 	}
-	getDatasourcesStub := func(cmd *models.GetDataSourcesQuery) error {
+	getDatasourcesStub := func(ctx context.Context, cmd *models.GetDataSourcesQuery) error {
 		cmd.Result = []*models.DataSource{}
 		return nil
 	}
-	addDatasourceStub := func(cmd *models.AddDataSourceCommand) error {
+	addDatasourceStub := func(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 		cmd.Result = &testDatasource
 		return nil
 	}
-	updateDatasourceStub := func(cmd *models.UpdateDataSourceCommand) error {
+	updateDatasourceStub := func(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 		cmd.Result = &testDatasource
 		return nil
 	}
-	deleteDatasourceStub := func(cmd *models.DeleteDataSourceCommand) error {
+	deleteDatasourceStub := func(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
 		cmd.DeletedDatasourcesCount = 1
 		return nil
 	}

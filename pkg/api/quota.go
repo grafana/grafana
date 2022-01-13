@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -8,31 +10,43 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func GetOrgQuotas(c *models.ReqContext) response.Response {
-	if !setting.Quota.Enabled {
+func (hs *HTTPServer) GetCurrentOrgQuotas(c *models.ReqContext) response.Response {
+	return hs.getOrgQuotasHelper(c, c.OrgId)
+}
+
+func (hs *HTTPServer) GetOrgQuotas(c *models.ReqContext) response.Response {
+	return hs.getOrgQuotasHelper(c, c.ParamsInt64(":orgId"))
+}
+
+func (hs *HTTPServer) getOrgQuotasHelper(c *models.ReqContext, orgID int64) response.Response {
+	if !hs.Cfg.Quota.Enabled {
 		return response.Error(404, "Quotas not enabled", nil)
 	}
-	query := models.GetOrgQuotasQuery{OrgId: c.ParamsInt64(":orgId")}
+	query := models.GetOrgQuotasQuery{OrgId: orgID}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetOrgQuotas(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get org quotas", err)
 	}
 
 	return response.JSON(200, query.Result)
 }
 
-func UpdateOrgQuota(c *models.ReqContext, cmd models.UpdateOrgQuotaCmd) response.Response {
-	if !setting.Quota.Enabled {
+func (hs *HTTPServer) UpdateOrgQuota(c *models.ReqContext) response.Response {
+	cmd := models.UpdateOrgQuotaCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	if !hs.Cfg.Quota.Enabled {
 		return response.Error(404, "Quotas not enabled", nil)
 	}
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	cmd.Target = web.Params(c.Req)[":target"]
 
-	if _, ok := setting.Quota.Org.ToMap()[cmd.Target]; !ok {
+	if _, ok := hs.Cfg.Quota.Org.ToMap()[cmd.Target]; !ok {
 		return response.Error(404, "Invalid quota target", nil)
 	}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.UpdateOrgQuota(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update org quotas", err)
 	}
 	return response.Success("Organization quota updated")
@@ -44,14 +58,18 @@ func GetUserQuotas(c *models.ReqContext) response.Response {
 	}
 	query := models.GetUserQuotasQuery{UserId: c.ParamsInt64(":id")}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get org quotas", err)
 	}
 
 	return response.JSON(200, query.Result)
 }
 
-func UpdateUserQuota(c *models.ReqContext, cmd models.UpdateUserQuotaCmd) response.Response {
+func UpdateUserQuota(c *models.ReqContext) response.Response {
+	cmd := models.UpdateUserQuotaCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if !setting.Quota.Enabled {
 		return response.Error(404, "Quotas not enabled", nil)
 	}
@@ -62,7 +80,7 @@ func UpdateUserQuota(c *models.ReqContext, cmd models.UpdateUserQuotaCmd) respon
 		return response.Error(404, "Invalid quota target", nil)
 	}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update org quotas", err)
 	}
 	return response.Success("Organization quota updated")

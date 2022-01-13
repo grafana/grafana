@@ -13,6 +13,7 @@ export const CSVFileEditor = ({ onChange, query }: EditorProps) => {
     'population_by_state.csv',
     'gdp_per_capita.csv',
     'js_libraries.csv',
+    'ohlc_dogecoin.csv',
     'weight_height.csv',
     'browser_marketshare.csv',
   ].map((name) => ({ label: name, value: name }));

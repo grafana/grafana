@@ -19,6 +19,10 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => {
     return {
       getInstanceSettings: () => ({ name: 'prometheus' }),
+      get: () =>
+        Promise.resolve({
+          filterQuery: () => true,
+        }),
     };
   },
 }));

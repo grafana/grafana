@@ -7,6 +7,18 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+func GetResourceScope(resource string, resourceID string) string {
+	return Scope(resource, "id", resourceID)
+}
+
+func GetResourceAllScope(resource string) string {
+	return Scope(resource, "*")
+}
+
+func GetResourceAllIDScope(resource string) string {
+	return Scope(resource, "id", "*")
+}
+
 // Scope builds scope from parts
 // e.g. Scope("users", "*") return "users:*"
 func Scope(parts ...string) string {
@@ -42,14 +54,9 @@ type ScopeResolver struct {
 func NewScopeResolver() ScopeResolver {
 	return ScopeResolver{
 		keywordResolvers: map[string]KeywordScopeResolveFunc{
-			"orgs:current": resolveCurrentOrg,
-			"users:self":   resolveUserSelf,
+			"users:self": resolveUserSelf,
 		},
 	}
-}
-
-func resolveCurrentOrg(u *models.SignedInUser) (string, error) {
-	return Scope("orgs", "id", fmt.Sprintf("%v", u.OrgId)), nil
 }
 
 func resolveUserSelf(u *models.SignedInUser) (string, error) {

@@ -36,7 +36,9 @@ jest.mock('./Seg', () => {
 function assertEditor(query: InfluxQuery, textContent: string) {
   const onChange = jest.fn();
   const onRunQuery = jest.fn();
-  const datasource: InfluxDatasource = {} as InfluxDatasource;
+  const datasource: InfluxDatasource = ({
+    metricFindQuery: () => Promise.resolve([]),
+  } as unknown) as InfluxDatasource;
   const { container } = render(
     <Editor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
   );

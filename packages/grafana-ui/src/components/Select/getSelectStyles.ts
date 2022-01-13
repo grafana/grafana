@@ -57,9 +57,16 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     optionSelected: css`
       background: ${theme.colors.action.selected};
     `,
+    optionDisabled: css`
+      label: grafana-select-option-disabled;
+      background-color: ${theme.colors.action.disabledBackground};
+      color: ${theme.colors.action.disabledText};
+      cursor: not-allowed;
+    `,
     singleValue: css`
       label: grafana-select-single-value;
       color: ${theme.components.input.text};
+      grid-area: 1 / 1 / 2 / 3;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -69,7 +76,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     valueContainer: css`
       label: grafana-select-value-container;
       align-items: center;
-      display: flex;
+      display: grid;
       position: relative;
       box-sizing: border-box;
       flex: 1 1 0%;
@@ -79,6 +86,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     valueContainerMulti: css`
       label: grafana-select-value-container-multi;
       flex-wrap: wrap;
+      display: flex;
     `,
     loadingMessage: css`
       label: grafana-select-loading-message;

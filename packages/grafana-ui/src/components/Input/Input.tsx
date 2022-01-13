@@ -25,7 +25,7 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
 
 interface StyleDeps {
   theme: GrafanaTheme2;
-  invalid: boolean;
+  invalid?: boolean;
   width?: number;
 }
 
@@ -58,8 +58,8 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
           className={styles.input}
           {...restProps}
           style={{
-            paddingLeft: prefixRect ? prefixRect.width + 12 : undefined,
-            paddingRight: suffixRect && (suffix || loading) ? suffixRect.width + 12 : undefined,
+            paddingLeft: prefix ? prefixRect.width + 12 : undefined,
+            paddingRight: suffix || loading ? suffixRect.width + 12 : undefined,
           }}
         />
 

@@ -17,6 +17,9 @@ import { css } from '@emotion/css';
 
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+
 import ListView from './ListView';
 import SpanBarRow from './SpanBarRow';
 import DetailState from './SpanDetail/DetailState';
@@ -31,19 +34,16 @@ import {
 } from './utils';
 import { Accessors } from '../ScrollManager';
 import { getColorByKey } from '../utils/color-generator';
-import { TNil } from '../types';
+import { SpanLinkFunc, TNil } from '../types';
 import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { PEER_SERVICE } from '../constants/tag-keys';
-
-import { createStyle, Theme, withTheme } from '../Theme';
-import { CreateSpanLink } from './types';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
 };
 
-const getStyles = createStyle(() => {
+const getStyles = stylesFactory(() => {
   return {
     rowsWrapper: css`
       width: 100%;
@@ -83,8 +83,8 @@ type TVirtualizedTraceViewOwnProps = {
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
-  theme: Theme;
-  createSpanLink?: CreateSpanLink;
+  theme: GrafanaTheme2;
+  createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
 };
 
@@ -287,17 +287,18 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   // https://github.com/facebook/flow/issues/3076#issuecomment-290944051
   getKeyFromIndex = (index: number) => {
     const { isDetail, span } = this.getRowStates()[index];
-    return `${span.spanID}--${isDetail ? 'detail' : 'bar'}`;
+    return `${span.traceID}--${span.spanID}--${isDetail ? 'detail' : 'bar'}`;
   };
 
   getIndexFromKey = (key: string) => {
     const parts = key.split('--');
-    const _spanID = parts[0];
-    const _isDetail = parts[1] === 'detail';
+    const _traceID = parts[0];
+    const _spanID = parts[1];
+    const _isDetail = parts[2] === 'detail';
     const max = this.getRowStates().length;
     for (let i = 0; i < max; i++) {
       const { span, isDetail } = this.getRowStates()[i];
-      if (span.spanID === _spanID && isDetail === _isDetail) {
+      if (span.spanID === _spanID && span.traceID === _traceID && isDetail === _isDetail) {
         return i;
       }
     }
@@ -486,4 +487,4 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 }
 
-export default withTheme(UnthemedVirtualizedTraceView);
+export default withTheme2(UnthemedVirtualizedTraceView);

@@ -11,13 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
 // TeamsNotifier is responsible for sending
 // alert notifications to Microsoft teams.
 type TeamsNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	URL     string
 	Message string
 	tmpl    *template.Template
@@ -36,7 +35,7 @@ func NewTeamsNotifier(model *NotificationChannelConfig, t *template.Template) (*
 	}
 
 	return &TeamsNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
@@ -57,7 +56,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	ruleURL := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log)
 
-	title := tmpl(`{{ template "default.title" . }}`)
+	title := tmpl(DefaultMessageTitleEmbed)
 	body := map[string]interface{}{
 		"@type":    "MessageCard",
 		"@context": "http://schema.org/extensions",
@@ -89,7 +88,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	u := tmpl(tn.URL)
 	if tmplErr != nil {
-		tn.log.Debug("failed to template Teams message", "err", tmplErr.Error())
+		tn.log.Warn("failed to template Teams message", "err", tmplErr.Error())
 	}
 
 	b, err := json.Marshal(&body)
@@ -98,7 +97,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 	cmd := &models.SendWebhookSync{Url: u, Body: string(b)}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		return false, errors.Wrap(err, "send notification to Teams")
 	}
 

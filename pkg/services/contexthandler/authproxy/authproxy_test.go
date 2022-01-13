@@ -1,6 +1,7 @@
 package authproxy
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -86,7 +87,7 @@ func TestMiddlewareContext(t *testing.T) {
 		h, err := HashCacheKey(hdrName)
 		require.NoError(t, err)
 		key := fmt.Sprintf(CachePrefix, h)
-		err = cache.Set(key, id, 0)
+		err = cache.Set(context.Background(), key, id, 0)
 		require.NoError(t, err)
 		// Set up the middleware
 		auth := prepareMiddleware(t, cache, nil)
@@ -108,7 +109,7 @@ func TestMiddlewareContext(t *testing.T) {
 		h, err := HashCacheKey(hdrName + "-" + group + "-" + role)
 		require.NoError(t, err)
 		key := fmt.Sprintf(CachePrefix, h)
-		err = cache.Set(key, id, 0)
+		err = cache.Set(context.Background(), key, id, 0)
 		require.NoError(t, err)
 
 		auth := prepareMiddleware(t, cache, func(req *http.Request, cfg *setting.Cfg) {
@@ -130,7 +131,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 	t.Run("Logs in via LDAP", func(t *testing.T) {
 		const id int64 = 42
 
-		bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+		bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 			cmd.Result = &models.User{
 				Id: id,
 			}

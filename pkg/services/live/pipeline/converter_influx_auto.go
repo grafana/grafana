@@ -6,11 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/convert"
 )
 
-// AutoInfluxConverterConfig ...
-type AutoInfluxConverterConfig struct {
-	FrameFormat string `json:"frameFormat"`
-}
-
 // AutoInfluxConverter decodes Influx line protocol input and transforms it
 // to several ChannelFrame objects where Channel is constructed from original
 // channel + / + <metric_name>.

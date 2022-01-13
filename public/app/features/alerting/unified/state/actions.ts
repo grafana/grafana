@@ -4,12 +4,14 @@ import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
+  ExternalAlertmanagersResponse,
   Receiver,
   Silence,
   SilenceCreatePayload,
+  TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
-import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
+import { RuleIdentifier, RuleNamespace, RuleWithLocation, StateHistoryItem } from 'app/types/unified-alerting';
 import {
   PostableRulerRuleGroupDTO,
   RulerGrafanaRuleDTO,
@@ -17,6 +19,7 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 import { fetchNotifiers } from '../api/grafana';
+import { fetchAnnotations } from '../api/annotations';
 import {
   expireSilence,
   fetchAlertManagerConfig,
@@ -28,6 +31,9 @@ import {
   fetchStatus,
   deleteAlertManagerConfig,
   testReceivers,
+  addAlertManagers,
+  fetchExternalAlertmanagers,
+  fetchExternalAlertmanagerConfig,
 } from '../api/alertmanager';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
@@ -56,7 +62,7 @@ import {
   isPrometheusRuleIdentifier,
   isRulerNotSupportedResponse,
 } from '../utils/rules';
-import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
+import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import * as ruleId from '../utils/rule-id';
 import { isEmpty } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
@@ -104,6 +110,20 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
         });
       })()
     )
+);
+
+export const fetchExternalAlertmanagersAction = createAsyncThunk(
+  'unifiedAlerting/fetchExternalAlertmanagers',
+  (): Promise<ExternalAlertmanagersResponse> => {
+    return withSerializedError(fetchExternalAlertmanagers());
+  }
+);
+
+export const fetchExternalAlertmanagersConfigAction = createAsyncThunk(
+  'unifiedAlerting/fetchExternAlertmanagersConfig',
+  (): Promise<{ alertmanagers: string[] }> => {
+    return withSerializedError(fetchExternalAlertmanagerConfig());
+  }
 );
 
 export const fetchRulerRulesAction = createAsyncThunk(
@@ -427,6 +447,11 @@ export const fetchGrafanaNotifiersAction = createAsyncThunk(
   (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
 );
 
+export const fetchGrafanaAnnotationsAction = createAsyncThunk(
+  'unifiedalerting/fetchGrafanaAnnotations',
+  (alertId: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(alertId))
+);
+
 interface UpdateAlertManagerConfigActionOptions {
   alertManagerSourceName: string;
   oldConfig: AlertManagerCortexConfig; // it will be checked to make sure it didn't change in the meanwhile
@@ -630,15 +655,51 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
   }
 );
 
+export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimingName: string): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const config = getState().unifiedAlerting.amConfigs[alertManagerSourceName].result;
+
+    const muteIntervals =
+      config?.alertmanager_config?.mute_time_intervals?.filter(({ name }) => name !== muteTimingName) ?? [];
+
+    if (config) {
+      withAppEvents(
+        dispatch(
+          updateAlertManagerConfigAction({
+            alertManagerSourceName,
+            oldConfig: config,
+            newConfig: {
+              ...config,
+              alertmanager_config: {
+                ...config.alertmanager_config,
+                route: config.alertmanager_config.route
+                  ? removeMuteTimingFromRoute(muteTimingName, config.alertmanager_config?.route)
+                  : undefined,
+                mute_time_intervals: muteIntervals,
+              },
+            },
+            refetch: true,
+          })
+        ),
+        {
+          successMessage: `Deleted "${muteTimingName}" from Alertmanager configuration`,
+          errorMessage: 'Failed to delete mute timing',
+        }
+      );
+    }
+  };
+};
+
 interface TestReceiversOptions {
   alertManagerSourceName: string;
   receivers: Receiver[];
+  alert?: TestReceiversAlert;
 }
 
 export const testReceiversAction = createAsyncThunk(
   'unifiedalerting/testReceivers',
-  ({ alertManagerSourceName, receivers }: TestReceiversOptions): Promise<void> => {
-    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers)), {
+  ({ alertManagerSourceName, receivers, alert }: TestReceiversOptions): Promise<void> => {
+    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers, alert)), {
       errorMessage: 'Failed to send test alert.',
       successMessage: 'Test alert sent.',
     });
@@ -726,6 +787,24 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
       {
         errorMessage: 'Failed to update namespace / group',
         successMessage: 'Update successful',
+      }
+    );
+  }
+);
+
+export const addExternalAlertmanagersAction = createAsyncThunk(
+  'unifiedAlerting/addExternalAlertmanagers',
+  async (alertManagerUrls: string[], thunkAPI): Promise<void> => {
+    return withAppEvents(
+      withSerializedError(
+        (async () => {
+          await addAlertManagers(alertManagerUrls);
+          thunkAPI.dispatch(fetchExternalAlertmanagersConfigAction());
+        })()
+      ),
+      {
+        errorMessage: 'Failed adding alertmanagers',
+        successMessage: 'Alertmanagers updated',
       }
     );
   }

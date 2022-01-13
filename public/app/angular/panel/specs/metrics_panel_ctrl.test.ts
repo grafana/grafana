@@ -17,8 +17,6 @@ jest.mock('app/core/config', () => {
   };
 });
 
-// @ts-ignore
-import q from 'q';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { MetricsPanelCtrl } from '../metrics_panel_ctrl';
 
@@ -35,9 +33,6 @@ function setupController({ hasAccessToExplore } = { hasAccessToExplore: false })
   const injectorStub = {
     get: (type: any) => {
       switch (type) {
-        case '$q': {
-          return q;
-        }
         case 'contextSrv': {
           return { hasAccessToExplore: () => hasAccessToExplore };
         }

@@ -89,6 +89,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             render={({ field: { onChange, ref, ...field } }) => (
               <Select
                 menuShouldPortal
+                aria-label="Rule type"
                 {...field}
                 options={alertTypeOptions}
                 onChange={(v: SelectableValue) => onChange(v?.value)}

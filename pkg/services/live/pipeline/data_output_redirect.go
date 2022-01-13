@@ -5,11 +5,6 @@ import (
 	"fmt"
 )
 
-// RedirectDataOutputConfig ...
-type RedirectDataOutputConfig struct {
-	Channel string `json:"channel"`
-}
-
 // RedirectDataOutput passes processing control to the rule defined
 // for a configured channel.
 type RedirectDataOutput struct {

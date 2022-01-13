@@ -11,10 +11,10 @@ import { locationService } from '@grafana/runtime';
 const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
   const url = '/explore';
   const panel: Partial<PanelModel> = {
-    datasource: 'mocked datasource',
+    datasource: { uid: 'mocked datasource' },
     targets: [{ refId: 'A' }],
   };
-  const datasource = new MockDataSourceApi(panel.datasource!);
+  const datasource = new MockDataSourceApi(panel.datasource!.uid!);
   const get = jest.fn().mockResolvedValue(datasource);
   const getDataSourceSrv = jest.fn().mockReturnValue({ get });
   const getTimeSrv = jest.fn();

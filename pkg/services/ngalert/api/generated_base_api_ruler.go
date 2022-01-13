@@ -4,12 +4,11 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
+
 package api
 
 import (
 	"net/http"
-
-	"github.com/go-macaron/binding"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -17,7 +16,17 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/web"
 )
+
+type RulerApiForkingService interface {
+	RouteDeleteNamespaceRulesConfig(*models.ReqContext) response.Response
+	RouteDeleteRuleGroupConfig(*models.ReqContext) response.Response
+	RouteGetNamespaceRulesConfig(*models.ReqContext) response.Response
+	RouteGetRulegGroupConfig(*models.ReqContext) response.Response
+	RouteGetRulesConfig(*models.ReqContext) response.Response
+	RoutePostNameRulesConfig(*models.ReqContext) response.Response
+}
 
 type RulerApiService interface {
 	RouteDeleteNamespaceRulesConfig(*models.ReqContext) response.Response
@@ -28,7 +37,35 @@ type RulerApiService interface {
 	RoutePostNameRulesConfig(*models.ReqContext, apimodels.PostableRuleGroupConfig) response.Response
 }
 
-func (api *API) RegisterRulerApiEndpoints(srv RulerApiService, m *metrics.API) {
+func (f *ForkedRulerApi) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteDeleteNamespaceRulesConfig(ctx)
+}
+
+func (f *ForkedRulerApi) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteDeleteRuleGroupConfig(ctx)
+}
+
+func (f *ForkedRulerApi) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetNamespaceRulesConfig(ctx)
+}
+
+func (f *ForkedRulerApi) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetRulegGroupConfig(ctx)
+}
+
+func (f *ForkedRulerApi) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetRulesConfig(ctx)
+}
+
+func (f *ForkedRulerApi) RoutePostNameRulesConfig(ctx *models.ReqContext) response.Response {
+	conf := apimodels.PostableRuleGroupConfig{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePostNameRulesConfig(ctx, conf)
+}
+
+func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
 			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
@@ -77,7 +114,6 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiService, m *metrics.API) {
 		)
 		group.Post(
 			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
-			binding.Bind(apimodels.PostableRuleGroupConfig{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}",

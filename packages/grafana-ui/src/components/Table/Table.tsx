@@ -160,7 +160,7 @@ export const Table: FC<Props> = memo((props: Props) => {
       stateReducer: stateReducer,
       initialState: getInitialState(initialSortBy, memoizedColumns),
       sortTypes: {
-        number: sortNumber, // should be replace with the builtin number when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
+        number: sortNumber, // the builtin number type on react-table does not handle NaN values
         'alphanumeric-insensitive': sortCaseInsensitive, // should be replace with the builtin string when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
       },
     }),
@@ -175,8 +175,6 @@ export const Table: FC<Props> = memo((props: Props) => {
     useResizeColumns
   );
 
-  const { fields } = data;
-
   const RenderRow = React.useCallback(
     ({ index: rowIndex, style }) => {
       const row = rows[rowIndex];
@@ -186,7 +184,6 @@ export const Table: FC<Props> = memo((props: Props) => {
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
-              field={fields[index]}
               tableStyles={tableStyles}
               cell={cell}
               onCellFilterAdded={onCellFilterAdded}
@@ -197,7 +194,7 @@ export const Table: FC<Props> = memo((props: Props) => {
         </div>
       );
     },
-    [fields, onCellFilterAdded, prepareRow, rows, tableStyles]
+    [onCellFilterAdded, prepareRow, rows, tableStyles]
   );
 
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;

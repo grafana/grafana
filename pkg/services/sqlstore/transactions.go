@@ -12,6 +12,8 @@ import (
 	"xorm.io/xorm"
 )
 
+var tsclogger = log.New("sqlstore.transactions")
+
 // WithTransactionalDbSession calls the callback with a session within a transaction.
 func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback dbTransactionFunc) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, callback, 0)
@@ -66,8 +68,8 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 
 	if len(sess.events) > 0 {
 		for _, e := range sess.events {
-			if err = bus.Publish(e); err != nil {
-				log.Errorf(3, "Failed to publish event after commit. error: %v", err)
+			if err = bus.Publish(ctx, e); err != nil {
+				tsclogger.Error("Failed to publish event after commit.", "error", err)
 			}
 		}
 	}

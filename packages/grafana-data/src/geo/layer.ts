@@ -49,7 +49,7 @@ export interface FrameGeometrySource {
  */
 export interface MapLayerOptions<TConfig = any> {
   type: string;
-  name?: string; // configured display name
+  name: string; // configured unique display name
 
   // Custom options depending on the type
   config?: TConfig;
@@ -61,15 +61,23 @@ export interface MapLayerOptions<TConfig = any> {
   // https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
   // Layer opacity (0-1)
   opacity?: number;
+
+  //Check tooltip
+  tooltip?: boolean;
 }
 
 /**
  * @alpha
  */
-export interface MapLayerHandler {
+export interface MapLayerHandler<TConfig = any> {
   init: () => BaseLayer;
   update?: (data: PanelData) => void;
   legend?: ReactNode;
+
+  /**
+   * Show custom elements in the panel edit UI
+   */
+  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<MapLayerOptions<TConfig>>) => void;
 }
 
 /**
@@ -98,9 +106,4 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * @param options
    */
   create: (map: Map, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => Promise<MapLayerHandler>;
-
-  /**
-   * Show custom elements in the panel edit UI
-   */
-  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<MapLayerOptions<TConfig>>) => void;
 }

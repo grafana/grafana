@@ -227,11 +227,12 @@ In DingTalk PC Client:
 To set up Discord, you must create a Discord channel webhook. For instructions on how to create the channel, refer to
 [Intro to Webhooks](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
 
-| Setting         | Description                                                                       |
-| --------------- | --------------------------------------------------------------------------------- |
-| Webhook URL     | Discord webhook URL.                                                              |
-| Message Content | Mention a group using @ or a user using <@ID> when notifying in a channel.        |
-| Avatar URL      | Optionally, provide a URL to an image to use as the avatar for the bot's message. |
+| Setting                        | Description                                                                                           |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Webhook URL                    | Discord webhook URL.                                                                                  |
+| Message Content                | Mention a group using @ or a user using <@ID> when notifying in a channel.                            |
+| Avatar URL                     | Optionally, provide a URL to an image to use as the avatar for the bot's message.                     |
+| Use Discord's Webhook Username | Use the username configured in Discord's webhook settings. Otherwise, the username will be 'Grafana.' |
 
 Alternately, use the [Slack](#slack) notifier by appending `/slack` to a Discord webhook URL.
 

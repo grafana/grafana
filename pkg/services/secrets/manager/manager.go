@@ -9,42 +9,112 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	grafana "github.com/grafana/grafana/pkg/services/secrets/defaultprovider"
 	"github.com/grafana/grafana/pkg/setting"
+	"xorm.io/xorm"
 )
 
-const defaultProvider = "secretKey"
-
 type SecretsService struct {
-	store    secrets.Store
-	bus      bus.Bus
-	enc      encryption.Service
-	settings setting.Provider
+	store      secrets.Store
+	enc        encryption.Internal
+	settings   setting.Provider
+	usageStats usagestats.Service
 
-	defaultProvider string
-	providers       map[string]secrets.Provider
-	dataKeyCache    map[string]dataKeyCacheItem
+	currentProviderID secrets.ProviderID
+	providers         map[secrets.ProviderID]secrets.Provider
+	dataKeyCache      map[string]dataKeyCacheItem
+	log               log.Logger
 }
 
-func ProvideSecretsService(store secrets.Store, bus bus.Bus, enc encryption.Service, settings setting.Provider) *SecretsService {
-	providers := map[string]secrets.Provider{
-		defaultProvider: grafana.New(settings, enc),
+func ProvideSecretsService(
+	store secrets.Store,
+	kmsProvidersService kmsproviders.Service,
+	enc encryption.Internal,
+	settings setting.Provider,
+	usageStats usagestats.Service,
+) (*SecretsService, error) {
+	providers, err := kmsProvidersService.Provide()
+	if err != nil {
+		return nil, err
 	}
+
+	logger := log.New("secrets")
+	enabled := settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle)
+	currentProviderID := readCurrentProviderID(settings)
+
+	if _, ok := providers[currentProviderID]; enabled && !ok {
+		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
+	}
+
+	if !enabled && currentProviderID != kmsproviders.Default {
+		logger.Warn("Changing encryption provider requires enabling envelope encryption feature")
+	}
+
+	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProviderID)
 
 	s := &SecretsService{
-		store:           store,
-		bus:             bus,
-		enc:             enc,
-		settings:        settings,
-		defaultProvider: defaultProvider,
-		providers:       providers,
-		dataKeyCache:    make(map[string]dataKeyCacheItem),
+		store:             store,
+		enc:               enc,
+		settings:          settings,
+		usageStats:        usageStats,
+		providers:         providers,
+		currentProviderID: currentProviderID,
+		dataKeyCache:      make(map[string]dataKeyCacheItem),
+		log:               logger,
 	}
 
-	return s
+	s.registerUsageMetrics()
+
+	return s, nil
+}
+
+func readCurrentProviderID(settings setting.Provider) secrets.ProviderID {
+	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
+	if currentProvider == kmsproviders.Legacy {
+		currentProvider = kmsproviders.Default
+	}
+
+	return secrets.ProviderID(currentProvider)
+}
+
+func (s *SecretsService) registerUsageMetrics() {
+	s.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
+		usageMetrics := make(map[string]interface{})
+
+		// Enabled / disabled
+		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
+		if s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
+		}
+
+		// Current provider
+		kind, err := s.currentProviderID.Kind()
+		if err != nil {
+			return nil, err
+		}
+		usageMetrics[fmt.Sprintf("stats.encryption.current_provider.%s.count", kind)] = 1
+
+		// Count by kind
+		countByKind := make(map[string]int)
+		for id := range s.providers {
+			kind, err := id.Kind()
+			if err != nil {
+				return nil, err
+			}
+
+			countByKind[kind]++
+		}
+
+		for kind, count := range countByKind {
+			usageMetrics[fmt.Sprintf(`stats.encryption.providers.%s.count`, kind)] = count
+		}
+
+		return usageMetrics, nil
+	})
 }
 
 type dataKeyCacheItem struct {
@@ -55,13 +125,23 @@ type dataKeyCacheItem struct {
 var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
+	return s.EncryptWithDBSession(ctx, payload, opt, nil)
+}
+
+func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
+	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
+	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
+	}
+
+	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
 	scope := opt()
-	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.defaultProvider)
+	keyName := s.keyName(scope)
 
 	dataKey, err := s.dataKey(ctx, keyName)
 	if err != nil {
 		if errors.Is(err, secrets.ErrDataKeyNotFound) {
-			dataKey, err = s.newDataKey(ctx, keyName, scope)
+			dataKey, err = s.newDataKey(ctx, keyName, scope, sess)
 			if err != nil {
 				return nil, err
 			}
@@ -87,7 +167,17 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 	return blob, nil
 }
 
+func (s *SecretsService) keyName(scope string) string {
+	return fmt.Sprintf("%s/%s@%s", now().Format("2006-01-02"), scope, s.currentProviderID)
+}
+
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
+	// Use legacy encryption service if secrets.EnvelopeEncryptionFeatureToggle toggle is off
+	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
+	}
+
+	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
 	if len(payload) == 0 {
 		return nil, fmt.Errorf("unable to decrypt empty payload")
 	}
@@ -113,6 +203,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 
 		dataKey, err = s.dataKey(ctx, string(key))
 		if err != nil {
+			s.log.Error("Failed to lookup data key", "name", string(key), "error", err)
 			return nil, err
 		}
 	}
@@ -121,9 +212,13 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 }
 
 func (s *SecretsService) EncryptJsonData(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions) (map[string][]byte, error) {
+	return s.EncryptJsonDataWithDBSession(ctx, kv, opt, nil)
+}
+
+func (s *SecretsService) EncryptJsonDataWithDBSession(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions, sess *xorm.Session) (map[string][]byte, error) {
 	encrypted := make(map[string][]byte)
 	for key, value := range kv {
-		encryptedData, err := s.Encrypt(ctx, []byte(value), opt)
+		encryptedData, err := s.EncryptWithDBSession(ctx, []byte(value), opt, sess)
 		if err != nil {
 			return nil, err
 		}
@@ -169,15 +264,15 @@ func newRandomDataKey() ([]byte, error) {
 }
 
 // newDataKey creates a new random DEK, caches it and returns its value
-func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string) ([]byte, error) {
+func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string, sess *xorm.Session) ([]byte, error) {
 	// 1. Create new DEK
 	dataKey, err := newRandomDataKey()
 	if err != nil {
 		return nil, err
 	}
-	provider, exists := s.providers[s.defaultProvider]
+	provider, exists := s.providers[s.currentProviderID]
 	if !exists {
-		return nil, fmt.Errorf("could not find encryption provider '%s'", s.defaultProvider)
+		return nil, fmt.Errorf("could not find encryption provider '%s'", s.currentProviderID)
 	}
 
 	// 2. Encrypt it
@@ -187,20 +282,27 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	}
 
 	// 3. Store its encrypted value in db
-	err = s.store.CreateDataKey(ctx, secrets.DataKey{
+	dek := secrets.DataKey{
 		Active:        true, // TODO: right now we never mark a key as deactivated
 		Name:          name,
-		Provider:      s.defaultProvider,
+		Provider:      s.currentProviderID,
 		EncryptedData: encrypted,
 		Scope:         scope,
-	})
+	}
+
+	if sess == nil {
+		err = s.store.CreateDataKey(ctx, dek)
+	} else {
+		err = s.store.CreateDataKeyWithDBSession(ctx, dek, sess)
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	// 4. Cache its unencrypted value and return it
 	s.dataKeyCache[name] = dataKeyCacheItem{
-		expiry:  time.Now().Add(15 * time.Minute),
+		expiry:  now().Add(dekTTL),
 		dataKey: dataKey,
 	}
 
@@ -210,11 +312,9 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 // dataKey looks up DEK in cache or database, and decrypts it
 func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, error) {
 	if item, exists := s.dataKeyCache[name]; exists {
-		if item.expiry.Before(time.Now()) && !item.expiry.IsZero() {
-			delete(s.dataKeyCache, name)
-		} else {
-			return item.dataKey, nil
-		}
+		item.expiry = now().Add(dekTTL)
+		s.dataKeyCache[name] = item
+		return item.dataKey, nil
 	}
 
 	// 1. get encrypted data key from database
@@ -236,9 +336,47 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 
 	// 3. cache data key
 	s.dataKeyCache[name] = dataKeyCacheItem{
-		expiry:  time.Now().Add(15 * time.Minute),
+		expiry:  now().Add(dekTTL),
 		dataKey: decrypted,
 	}
 
 	return decrypted, nil
+}
+
+func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider {
+	return s.providers
+}
+
+// These variables are used to test the code
+// responsible for periodically cleaning up
+// data encryption keys cache.
+var (
+	now        = time.Now
+	dekTTL     = 15 * time.Minute
+	gcInterval = time.Minute
+)
+
+func (s *SecretsService) Run(ctx context.Context) error {
+	gc := time.NewTicker(gcInterval)
+
+	for {
+		select {
+		case <-gc.C:
+			s.log.Debug("removing expired data encryption keys from cache...")
+			s.removeExpiredItems()
+			s.log.Debug("done removing expired data encryption keys from cache")
+		case <-ctx.Done():
+			s.log.Debug("grafana is shutting down; stopping...")
+			gc.Stop()
+			return nil
+		}
+	}
+}
+
+func (s *SecretsService) removeExpiredItems() {
+	for id, dek := range s.dataKeyCache {
+		if dek.expiry.Before(now()) {
+			delete(s.dataKeyCache, id)
+		}
+	}
 }

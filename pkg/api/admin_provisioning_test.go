@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -143,7 +144,7 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
 
 			// Setup the mock
-			provisioningMock := provisioning.NewProvisioningServiceMock()
+			provisioningMock := provisioning.NewProvisioningServiceMock(context.Background())
 			hs.ProvisioningService = provisioningMock
 
 			sc.resp = httptest.NewRecorder()

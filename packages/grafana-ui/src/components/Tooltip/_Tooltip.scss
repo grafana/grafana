@@ -19,8 +19,11 @@ $popper-margin-from-ref: 5px;
     color: lighten($textColor, 20%);
   }
   a {
-    color: $white;
+    color: $tooltipLinkColor;
     text-decoration: underline;
+  }
+  a.external-link {
+    color: $tooltipExternalLinkColor;
   }
 }
 

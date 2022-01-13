@@ -19,6 +19,7 @@ export interface DateHistogram extends BucketAggregationWithField {
     min_doc_count?: string;
     trimEdges?: string;
     offset?: string;
+    timeZone?: string;
   };
 }
 

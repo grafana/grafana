@@ -5,7 +5,7 @@
 
   fake-opentsdb-data:
     image: grafana/fake-data-gen
-    network_mode: bridge
     environment:
       FD_DATASOURCE: opentsdb
+      FD_PORT: 4242
 

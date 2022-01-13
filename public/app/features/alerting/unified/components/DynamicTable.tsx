@@ -96,6 +96,7 @@ export const DynamicTable = <T extends object>({
             {isExpandable && (
               <div className={cx(styles.cell, styles.expandCell)}>
                 <IconButton
+                  aria-label={`${isItemExpanded ? 'Collapse' : 'Expand'} row`}
                   size="xl"
                   data-testid="collapse-toggle"
                   className={styles.expandButton}

@@ -5,7 +5,7 @@ import { appEvents } from 'app/core/core';
 import { useAsync } from 'react-use';
 import { getPanelOptionsWithDefaults, OptionDefaults } from '../../dashboard/state/getPanelOptionsWithDefaults';
 import { importPanelPlugin } from '../../plugins/importPanelPlugin';
-import { useTheme2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 
 const defaultFieldConfig = { defaults: {}, overrides: [] };
 
@@ -51,24 +51,26 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   const PanelComponent = plugin.panel;
 
   return (
-    <PanelComponent
-      id={1}
-      data={dataWithOverrides}
-      title={title}
-      timeRange={dataWithOverrides.timeRange}
-      timeZone={timeZone}
-      options={optionsWithDefaults!.options}
-      fieldConfig={localFieldConfig}
-      transparent={false}
-      width={width}
-      height={height}
-      renderCounter={0}
-      replaceVariables={(str: string) => str}
-      onOptionsChange={onOptionsChange}
-      onFieldConfigChange={setFieldConfig}
-      onChangeTimeRange={onChangeTimeRange}
-      eventBus={appEvents}
-    />
+    <ErrorBoundaryAlert dependencies={[plugin, data]}>
+      <PanelComponent
+        id={1}
+        data={dataWithOverrides}
+        title={title}
+        timeRange={dataWithOverrides.timeRange}
+        timeZone={timeZone}
+        options={optionsWithDefaults!.options}
+        fieldConfig={localFieldConfig}
+        transparent={false}
+        width={width}
+        height={height}
+        renderCounter={0}
+        replaceVariables={(str: string) => str}
+        onOptionsChange={onOptionsChange}
+        onFieldConfigChange={setFieldConfig}
+        onChangeTimeRange={onChangeTimeRange}
+        eventBus={appEvents}
+      />
+    </ErrorBoundaryAlert>
   );
 }
 

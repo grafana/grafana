@@ -30,6 +30,7 @@ function setupTestContext(options: Partial<Props>) {
     timeRange: jest.fn(),
   } as unknown) as TimeSrv;
   setTimeSrv(timeSrv);
+
   const defaults: Props = {
     panel: ({
       id: 123,
@@ -54,6 +55,7 @@ function setupTestContext(options: Partial<Props>) {
     isInView: false,
     width: 100,
     height: 100,
+    onInstanceStateChange: () => {},
   };
 
   const props = { ...defaults, ...options };

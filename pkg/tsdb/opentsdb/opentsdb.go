@@ -2,6 +2,7 @@ package opentsdb
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,8 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"encoding/json"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -20,18 +19,20 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/net/context/ctxhttp"
 )
+
+const pluginID = "opentsdb"
 
 type Service struct {
 	logger log.Logger
 	im     instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, manager backendplugin.Manager) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 	s := &Service{
 		logger: log.New("tsdb.opentsdb"),
@@ -41,8 +42,8 @@ func ProvideService(httpClientProvider httpclient.Provider, manager backendplugi
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
-	err := manager.RegisterAndStart(context.Background(), "opentsdb", factory)
-	if err != nil {
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		return nil, err
 	}
 

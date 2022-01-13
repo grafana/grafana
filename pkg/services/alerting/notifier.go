@@ -152,7 +152,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 		Version: notifierState.state.Version,
 	}
 
-	return bus.DispatchCtx(evalContext.Ctx, cmd)
+	return bus.Dispatch(evalContext.Ctx, cmd)
 }
 
 func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *notifierState) error {
@@ -163,7 +163,7 @@ func (n *notificationService) sendNotification(evalContext *EvalContext, notifie
 			AlertRuleStateUpdatedVersion: evalContext.Rule.StateChanges,
 		}
 
-		err := bus.DispatchCtx(evalContext.Ctx, setPendingCmd)
+		err := bus.Dispatch(evalContext.Ctx, setPendingCmd)
 		if err != nil {
 			if errors.Is(err, models.ErrAlertNotificationStateVersionConflict) {
 				return nil
@@ -206,6 +206,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		OrgID:           evalCtx.Rule.OrgID,
 		OrgRole:         models.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
+		Theme:           rendering.ThemeDark,
 	}
 
 	ref, err := evalCtx.GetDashboardUID()
@@ -246,7 +247,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
 	query := &models.GetAlertNotificationsWithUidToSendQuery{OrgId: orgID, Uids: notificationUids}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, query); err != nil {
 		return nil, err
 	}
 
@@ -264,7 +265,7 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 			OrgId:      evalContext.Rule.OrgID,
 		}
 
-		err = bus.DispatchCtx(evalContext.Ctx, query)
+		err = bus.Dispatch(evalContext.Ctx, query)
 		if err != nil {
 			n.log.Error("Could not get notification state.", "notifier", notification.Id, "error", err)
 			continue

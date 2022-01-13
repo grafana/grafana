@@ -12,8 +12,8 @@ import {
   Select,
   stylesFactory,
   TimeZonePicker,
-  WeekStartPicker,
   Tooltip,
+  WeekStartPicker,
 } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -24,6 +24,7 @@ import { PreferencesService } from 'app/core/services/PreferencesService';
 
 export interface Props {
   resourceUri: string;
+  disabled?: boolean;
 }
 
 export interface State {
@@ -126,13 +127,14 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   render() {
     const { theme, timezone, weekStart, homeDashboardId, dashboards } = this.state;
+    const { disabled } = this.props;
     const styles = getStyles();
 
     return (
       <Form onSubmit={this.onSubmitForm}>
         {() => {
           return (
-            <FieldSet label="Preferences">
+            <FieldSet label="Preferences" disabled={disabled}>
               <Field label="UI Theme">
                 <RadioButtonGroup
                   options={themes}
@@ -150,7 +152,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                     </Tooltip>
                   </Label>
                 }
-                aria-label="User preferences home dashboard drop down"
+                data-testid="User preferences home dashboard drop down"
               >
                 <Select
                   menuShouldPortal
@@ -166,12 +168,21 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 />
               </Field>
 
-              <Field label="Timezone" aria-label={selectors.components.TimeZonePicker.container}>
-                <TimeZonePicker includeInternal={true} value={timezone} onChange={this.onTimeZoneChanged} />
+              <Field label="Timezone" data-testid={selectors.components.TimeZonePicker.containerV2}>
+                <TimeZonePicker
+                  includeInternal={true}
+                  value={timezone}
+                  onChange={this.onTimeZoneChanged}
+                  inputId={'shared-preferences-timezone-picker'}
+                />
               </Field>
 
-              <Field label="Week start" aria-label={selectors.components.WeekStartPicker.container}>
-                <WeekStartPicker value={weekStart} onChange={this.onWeekStartChanged} />
+              <Field label="Week start" data-testid={selectors.components.WeekStartPicker.containerV2}>
+                <WeekStartPicker
+                  value={weekStart}
+                  onChange={this.onWeekStartChanged}
+                  inputId={'shared-preferences-week-start-picker'}
+                />
               </Field>
               <div className="gf-form-button-row">
                 <Button variant="primary" aria-label="User preferences save button">

@@ -1,4 +1,17 @@
 <div class="gf-form-group">
+  <div class="grafana-info-box">
+    <h5>Migration</h5>
+    <p>
+      Consider switching to the Time series visualization type. It is a more capable and performant version of this panel.
+    </p>
+    <p>
+      <button class="btn btn-primary" ng-click="ctrl.migrateToReact()">
+        Migrate
+      </button>
+    </p>
+    <p>Some features like colored time regions and negative transforms are not supported in the new panel yet.</p>    
+  </div>
+
   <gf-form-switch
     class="gf-form"
     label="Bars"

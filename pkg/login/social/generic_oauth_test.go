@@ -4,29 +4,19 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
+	"testing"
 	"time"
 
-	"github.com/inconshreveable/log15"
-	"github.com/mattn/go-isatty"
-	"github.com/stretchr/testify/require"
-
-	"testing"
-
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/level"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 )
 
-func getLogFormat() log15.Format {
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		return log15.TerminalFormat()
-	}
-	return log15.LogfmtFormat()
-}
-
-func newLogger(name string, level log15.Lvl) log.Logger {
+func newLogger(name string, lev string) log.Logger {
 	logger := log.Root.New("logger", name)
-	logger.SetHandler(log15.LvlFilterHandler(level, log15.StreamHandler(os.Stdout, getLogFormat())))
+	logger.AddLogger(logger, lev, map[string]level.Option{})
 	return logger
 }
 
@@ -34,7 +24,7 @@ func TestSearchJSONForEmail(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 		}
 
@@ -122,7 +112,7 @@ func TestSearchJSONForGroups(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 		}
 
@@ -185,7 +175,7 @@ func TestSearchJSONForRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 		}
 
@@ -248,7 +238,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 			emailAttributePath: "email",
 		}
@@ -457,7 +447,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 			loginAttributePath: "login",
 		}
@@ -552,7 +542,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 			nameAttributePath: "name",
 		}
@@ -646,10 +636,79 @@ func TestUserInfoSearchesForName(t *testing.T) {
 	})
 }
 
+func TestUserInfoSearchesForGroup(t *testing.T) {
+	t.Run("Given a generic OAuth provider", func(t *testing.T) {
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: newLogger("generic_oauth_test", "debug"),
+			},
+		}
+
+		tests := []struct {
+			name                string
+			groupsAttributePath string
+			responseBody        interface{}
+			expectedResult      []string
+		}{
+			{
+				name:                "If groups are not set, user groups are nil",
+				groupsAttributePath: "",
+				expectedResult:      nil,
+			},
+			{
+				name:                "If groups are empty, user groups are nil",
+				groupsAttributePath: "info.groups",
+				responseBody: map[string]interface{}{
+					"info": map[string]interface{}{
+						"groups": []string{},
+					},
+				},
+				expectedResult: nil,
+			},
+			{
+				name:                "If groups are set, user groups are set",
+				groupsAttributePath: "info.groups",
+				responseBody: map[string]interface{}{
+					"info": map[string]interface{}{
+						"groups": []string{"foo", "bar"},
+					},
+				},
+				expectedResult: []string{"foo", "bar"},
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				provider.groupsAttributePath = test.groupsAttributePath
+				body, err := json.Marshal(test.responseBody)
+				require.NoError(t, err)
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Header().Set("Content-Type", "application/json")
+					t.Log("Writing fake API response body", "body", test.responseBody)
+					_, err := w.Write(body)
+					require.NoError(t, err)
+				}))
+				provider.apiUrl = ts.URL
+				token := &oauth2.Token{
+					AccessToken:  "",
+					TokenType:    "",
+					RefreshToken: "",
+					Expiry:       time.Now(),
+				}
+
+				userInfo, err := provider.UserInfo(ts.Client(), token)
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedResult, userInfo.Groups)
+			})
+		}
+	})
+}
+
 func TestPayloadCompression(t *testing.T) {
 	provider := SocialGenericOAuth{
 		SocialBase: &SocialBase{
-			log: newLogger("generic_oauth_test", log15.LvlDebug),
+			log: newLogger("generic_oauth_test", "debug"),
 		},
 		emailAttributePath: "email",
 	}

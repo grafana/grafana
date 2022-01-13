@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
 const defaultDingdingMsgType = "link"
@@ -20,7 +19,7 @@ const defaultDingdingMsgType = "link"
 // NewDingDingNotifier is the constructor for the Dingding notifier
 func NewDingDingNotifier(model *NotificationChannelConfig, t *template.Template) (*DingDingNotifier, error) {
 	if model.Settings == nil {
-		return nil, receiverInitError{Reason: "no settings supplied", Cfg: *model}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	url := model.Settings.Get("url").MustString()
@@ -31,7 +30,7 @@ func NewDingDingNotifier(model *NotificationChannelConfig, t *template.Template)
 	msgType := model.Settings.Get("msgType").MustString(defaultDingdingMsgType)
 
 	return &DingDingNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
@@ -48,7 +47,7 @@ func NewDingDingNotifier(model *NotificationChannelConfig, t *template.Template)
 
 // DingDingNotifier is responsible for sending alert notifications to ding ding.
 type DingDingNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	MsgType string
 	URL     string
 	Message string
@@ -75,7 +74,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	tmpl, _ := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
 
 	message := tmpl(dd.Message)
-	title := tmpl(`{{ template "default.title" . }}`)
+	title := tmpl(DefaultMessageTitleEmbed)
 
 	var bodyMsg map[string]interface{}
 	if tmpl(dd.MsgType) == "actionCard" {
@@ -103,7 +102,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 
 	u := tmpl(dd.URL)
 	if tmplErr != nil {
-		dd.log.Debug("failed to template DingDing message", "err", tmplErr.Error())
+		dd.log.Warn("failed to template DingDing message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsg)
@@ -116,7 +115,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		Body: string(body),
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to dingding: %w", err)
 	}
 

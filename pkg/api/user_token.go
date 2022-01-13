@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
@@ -19,14 +21,18 @@ func (hs *HTTPServer) GetUserAuthTokens(c *models.ReqContext) response.Response 
 }
 
 // POST /api/user/revoke-auth-token
-func (hs *HTTPServer) RevokeUserAuthToken(c *models.ReqContext, cmd models.RevokeAuthTokenCmd) response.Response {
+func (hs *HTTPServer) RevokeUserAuthToken(c *models.ReqContext) response.Response {
+	cmd := models.RevokeAuthTokenCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	return hs.revokeUserAuthTokenInternal(c, c.UserId, cmd)
 }
 
 func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, userID int64) response.Response {
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
-	if err := bus.DispatchCtx(ctx, &userQuery); err != nil {
+	if err := bus.Dispatch(ctx, &userQuery); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, "User not found", err)
 		}
@@ -46,7 +52,7 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int64) response.Response {
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &userQuery); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &userQuery); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, "User not found", err)
 		}
@@ -113,7 +119,7 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int
 func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID int64, cmd models.RevokeAuthTokenCmd) response.Response {
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &userQuery); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &userQuery); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, "User not found", err)
 		}

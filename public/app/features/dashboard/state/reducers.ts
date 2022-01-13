@@ -8,7 +8,6 @@ import {
 } from 'app/types';
 import { AngularComponent } from '@grafana/runtime';
 import { processAclItems } from 'app/core/utils/acl';
-import { panelEditorReducer } from '../components/PanelEditor/state/reducers';
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
 import { PanelPlugin } from '@grafana/data';
@@ -22,7 +21,7 @@ export const initialState: DashboardState = {
   initError: null,
 };
 
-const dashbardSlice = createSlice({
+const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
   reducers: {
@@ -94,11 +93,10 @@ export const {
   setDashboardQueriesToUpdateOnLoad,
   clearDashboardQueriesToUpdateOnLoad,
   addPanel,
-} = dashbardSlice.actions;
+} = dashboardSlice.actions;
 
-export const dashboardReducer = dashbardSlice.reducer;
+export const dashboardReducer = dashboardSlice.reducer;
 
 export default {
   dashboard: dashboardReducer,
-  panelEditor: panelEditorReducer,
 };

@@ -1,4 +1,7 @@
+import { Subscription } from 'rxjs';
 import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/data';
+
 import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
@@ -12,7 +15,6 @@ import {
 import { changeVariableProp } from '../state/sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
-import { Subscription } from 'rxjs';
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 import { QueryVariableEditorState } from './reducer';
@@ -60,7 +62,7 @@ export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkRe
 
 export const changeQueryVariableDataSource = (
   identifier: VariableIdentifier,
-  name: string | null
+  name: DataSourceRef | null
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {

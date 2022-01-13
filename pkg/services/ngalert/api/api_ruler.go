@@ -6,26 +6,28 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota"
+
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/prometheus/common/model"
 )
 
 type RulerSrv struct {
 	store           store.RuleStore
 	DatasourceCache datasources.CacheService
 	QuotaService    *quota.QuotaService
-	manager         *state.Manager
+	scheduleService schedule.ScheduleService
 	log             log.Logger
 }
 
@@ -42,7 +44,10 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 	}
 
 	for _, uid := range uids {
-		srv.manager.RemoveByRuleUID(c.SignedInUser.OrgId, uid)
+		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
+			OrgID: c.SignedInUser.OrgId,
+			UID:   uid,
+		})
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "namespace rules deleted"})
@@ -65,7 +70,10 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 	}
 
 	for _, uid := range uids {
-		srv.manager.RemoveByRuleUID(c.SignedInUser.OrgId, uid)
+		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
+			OrgID: c.SignedInUser.OrgId,
+			UID:   uid,
+		})
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group deleted"})
@@ -151,6 +159,12 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
+	result := apimodels.NamespaceConfigResponse{}
+
+	if len(namespaceMap) == 0 {
+		srv.log.Debug("User has no access to any namespaces")
+		return response.JSON(http.StatusOK, result)
+	}
 
 	namespaceUIDs := make([]string, len(namespaceMap))
 	for k := range namespaceMap {
@@ -214,7 +228,6 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 		}
 	}
 
-	result := apimodels.NamespaceConfigResponse{}
 	for namespace, m := range configs {
 		for _, ruleGroupConfig := range m {
 			result[namespace] = append(result[namespace], ruleGroupConfig)
@@ -242,7 +255,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 			OrgID:     c.SignedInUser.OrgId,
 			Data:      r.GrafanaManagedAlert.Data,
 		}
-		if err := validateCondition(cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+		if err := validateCondition(c.Req.Context(), cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
 			return ErrResp(http.StatusBadRequest, err, "failed to validate alert rule %q", r.GrafanaManagedAlert.Title)
 		}
 		if r.GrafanaManagedAlert.UID != "" {
@@ -283,7 +296,10 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	}
 
 	for uid := range alertRuleUIDs {
-		srv.manager.RemoveByRuleUID(c.OrgId, uid)
+		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
+			OrgID: c.SignedInUser.OrgId,
+			UID:   uid,
+		})
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})

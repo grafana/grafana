@@ -1,5 +1,5 @@
 import React, { memo, FC, useEffect } from 'react';
-import { QueryEditorProps } from '@grafana/data';
+import { QueryEditorProps, CoreApp } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
 import PromQueryField from './PromQueryField';
@@ -19,13 +19,15 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       onChange({ ...query, exemplar: true });
     }
 
-    if (!query.instant && !query.range) {
+    // Override query type to "Both" only for new queries (no query.expr).
+    if (!query.instant && !query.range && !query.expr) {
       onChange({ ...query, instant: true, range: true });
     }
   }, [onChange, query]);
 
   return (
     <PromQueryField
+      app={CoreApp.Explore}
       datasource={datasource}
       query={query}
       range={range}
@@ -34,6 +36,7 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       onBlur={() => {}}
       history={history}
       data={data}
+      data-testid={testIds.editor}
       ExtraFieldElement={
         <PromExploreExtraField query={query} onChange={onChange} datasource={datasource} onRunQuery={onRunQuery} />
       }
@@ -42,3 +45,7 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
 };
 
 export default memo(PromExploreQueryEditor);
+
+export const testIds = {
+  editor: 'prom-editor-explore',
+};

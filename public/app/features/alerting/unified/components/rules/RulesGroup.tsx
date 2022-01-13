@@ -54,12 +54,20 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
       const baseUrl = `/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
       if (folder?.canSave) {
         actionIcons.push(
-          <ActionIcon key="edit" icon="pen" tooltip="edit" to={baseUrl + '/settings'} target="__blank" />
+          <ActionIcon
+            aria-label="edit folder"
+            key="edit"
+            icon="pen"
+            tooltip="edit folder"
+            to={baseUrl + '/settings'}
+            target="__blank"
+          />
         );
       }
       if (folder?.canAdmin) {
         actionIcons.push(
           <ActionIcon
+            aria-label="manage permissions"
             key="manage-perms"
             icon="lock"
             tooltip="manage permissions"
@@ -72,10 +80,11 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
   } else if (hasRuler(rulesSource)) {
     actionIcons.push(
       <ActionIcon
+        aria-label="edit rule group"
         data-testid="edit-group"
         key="edit"
         icon="pen"
-        tooltip="edit"
+        tooltip="edit rule group"
         onClick={() => setIsEditingGroup(true)}
       />
     );
@@ -95,7 +104,11 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
         <Icon name={isCollapsed ? 'folder' : 'folder-open'} />
         {isCloudRulesSource(rulesSource) && (
           <Tooltip content={rulesSource.name} placement="top">
-            <img className={styles.dataSourceIcon} src={rulesSource.meta.info.logos.small} />
+            <img
+              alt={rulesSource.meta.name}
+              className={styles.dataSourceIcon}
+              src={rulesSource.meta.info.logos.small}
+            />
           </Tooltip>
         )}
         <h6 className={styles.heading}>{groupName}</h6>

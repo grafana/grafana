@@ -1,7 +1,7 @@
 import config from '../../core/config';
 import { extend } from 'lodash';
-import coreModule from 'app/core/core_module';
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil, WithAccessControlMetadata } from '@grafana/data';
+import { featureEnabled } from '@grafana/runtime';
 import { AccessControlAction, UserPermission } from 'app/types';
 
 export class User {
@@ -75,7 +75,25 @@ export class ContextSrv {
   }
 
   hasRole(role: string) {
-    return this.user.orgRole === role;
+    if (role === 'ServerAdmin') {
+      return this.isGrafanaAdmin;
+    } else {
+      return this.user.orgRole === role;
+    }
+  }
+
+  accessControlEnabled(): boolean {
+    return featureEnabled('accesscontrol') && Boolean(config.featureToggles['accesscontrol']);
+  }
+
+  // Checks whether user has required permission
+  hasPermissionInMetadata(action: AccessControlAction | string, object: WithAccessControlMetadata): boolean {
+    // Fallback if access control disabled
+    if (!config.featureToggles['accesscontrol']) {
+      return true;
+    }
+
+    return !!object.accessControl?.[action];
   }
 
   // Checks whether user has required permission
@@ -143,7 +161,3 @@ export const setContextSrv = (override: ContextSrv) => {
   }
   contextSrv = override;
 };
-
-coreModule.factory('contextSrv', () => {
-  return contextSrv;
-});

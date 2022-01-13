@@ -5,13 +5,15 @@ import {
   StandardEditorProps,
   StandardEditorsRegistryItem,
 } from '@grafana/data';
-import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Button, Modal, Input, useStyles2 } from '@grafana/ui';
+import SVG from 'react-inlinesvg';
+import { css } from '@emotion/css';
+
+import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 import { ResourcePicker } from './ResourcePicker';
 import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
-import SVG from 'react-inlinesvg';
-import { css } from '@emotion/css';
+
 const resourceOptions = [
   { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
   { label: 'Field', value: ResourceDimensionMode.Field, description: 'Use a string field result' },
@@ -61,6 +63,11 @@ export const ResourceDimensionEditor: FC<
     [onChange, value]
   );
 
+  const onClear = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    onChange({ mode: ResourceDimensionMode.Fixed, fixed: '', field: '' });
+  };
+
   const openModal = useCallback(() => {
     setOpen(true);
   }, []);
@@ -69,13 +76,26 @@ export const ResourceDimensionEditor: FC<
   const showSourceRadio = item.settings?.showSourceRadio ?? true;
   const mediaType = item.settings?.resourceType ?? 'icon';
   const folderName = item.settings?.folderName ?? ResourceFolderName.Icon;
-  const srcPath = mediaType === 'icon' && value ? getPublicOrAbsoluteUrl(value?.fixed) : '';
+  let srcPath = '';
+  if (mediaType === 'icon') {
+    if (value?.fixed) {
+      srcPath = getPublicOrAbsoluteUrl(value.fixed);
+    } else if (item.settings?.placeholderValue) {
+      srcPath = getPublicOrAbsoluteUrl(item.settings.placeholderValue);
+    }
+  }
 
   return (
     <>
       {isOpen && (
         <Modal isOpen={isOpen} title={`Select ${mediaType}`} onDismiss={() => setOpen(false)} closeOnEscape>
-          <ResourcePicker onChange={onFixedChange} value={value?.fixed} mediaType={mediaType} folderName={folderName} />
+          <ResourcePicker
+            onChange={onFixedChange}
+            value={value?.fixed}
+            mediaType={mediaType}
+            folderName={folderName}
+            setOpen={setOpen}
+          />
         </Modal>
       )}
       {showSourceRadio && (
@@ -98,17 +118,16 @@ export const ResourceDimensionEditor: FC<
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Fixed && (
-        <InlineFieldRow>
+        <InlineFieldRow onClick={openModal} className={styles.pointer}>
           <InlineField label={null} grow>
             <Input
-              value={niceName(value?.fixed)}
-              placeholder="Resource URL"
+              value={niceName(value?.fixed) ?? ''}
+              placeholder={item.settings?.placeholderText ?? 'Select a value'}
               readOnly={true}
-              onClick={openModal}
               prefix={srcPath && <SVG src={srcPath} className={styles.icon} />}
+              suffix={<Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClear} />}
             />
           </InlineField>
-          <Button icon="folder-open" variant="secondary" onClick={openModal} />
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Mapping && (
@@ -138,5 +157,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     vertical-align: middle;
     display: inline-block;
     fill: currentColor;
+    max-width: 25px;
+  `,
+  pointer: css`
+    cursor: pointer;
+    input[readonly] {
+      cursor: pointer;
+    }
   `,
 });

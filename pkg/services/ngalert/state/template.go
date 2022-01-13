@@ -2,6 +2,8 @@ package state
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"math"
 	"net/url"
 	"strconv"
@@ -29,7 +31,7 @@ func (v templateCaptureValue) String() string {
 	return strconv.FormatFloat(v.Value, 'f', -1, 64)
 }
 
-func expandTemplate(name, text string, labels map[string]string, alertInstance eval.Result, externalURL *url.URL) (result string, resultErr error) {
+func expandTemplate(ctx context.Context, name, text string, labels map[string]string, alertInstance eval.Result, externalURL *url.URL) (result string, resultErr error) {
 	name = "__alert_" + name
 	text = "{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}" + text
 	data := struct {
@@ -43,7 +45,7 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 	}
 
 	expander := template.NewTemplateExpander(
-		context.TODO(), // This context is only used with the `query()` function - which we don't support yet.
+		ctx, // This context is only used with the `query()` function - which we don't support yet.
 		text,
 		name,
 		data,
@@ -52,18 +54,15 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 			return nil, nil
 		},
 		externalURL,
-		[]string{"missingkey=error"},
+		[]string{"missingkey=invalid"},
 	)
 
 	expander.Funcs(text_template.FuncMap{
-		// These three functions are no-ops for now.
+		"graphLink": graphLink,
+		"tableLink": tableLink,
+
+		// This function is a no-op for now.
 		"strvalue": func(value templateCaptureValue) string {
-			return ""
-		},
-		"graphLink": func() string {
-			return ""
-		},
-		"tableLink": func() string {
 			return ""
 		},
 	})
@@ -86,4 +85,35 @@ func newTemplateCaptureValues(values map[string]eval.NumberValueCapture) map[str
 		}
 	}
 	return m
+}
+
+type query struct {
+	Datasource string `json:"datasource"`
+	Expr       string `json:"expr"`
+}
+
+func graphLink(rawQuery string) string {
+	var q query
+	if err := json.Unmarshal([]byte(rawQuery), &q); err != nil {
+		return ""
+	}
+
+	escapedExpression := url.QueryEscape(q.Expr)
+	escapedDatasource := url.QueryEscape(q.Datasource)
+
+	return fmt.Sprintf(
+		`/explore?left=["now-1h","now",%[1]q,{"datasource":%[1]q,"expr":%q,"instant":false,"range":true}]`, escapedDatasource, escapedExpression)
+}
+
+func tableLink(rawQuery string) string {
+	var q query
+	if err := json.Unmarshal([]byte(rawQuery), &q); err != nil {
+		return ""
+	}
+
+	escapedExpression := url.QueryEscape(q.Expr)
+	escapedDatasource := url.QueryEscape(q.Datasource)
+
+	return fmt.Sprintf(
+		`/explore?left=["now-1h","now",%[1]q,{"datasource":%[1]q,"expr":%q,"instant":true,"range":false}]`, escapedDatasource, escapedExpression)
 }

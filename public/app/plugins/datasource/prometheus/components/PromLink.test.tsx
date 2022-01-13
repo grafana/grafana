@@ -44,6 +44,18 @@ const getDataSource = (datasourceOverrides?: Partial<PrometheusDatasource>) => {
   return (Object.assign(datasource, datasourceOverrides) as unknown) as PrometheusDatasource;
 };
 
+const getDataSourceWithCustomQueryParameters = (datasourceOverrides?: Partial<PrometheusDatasource>) => {
+  const datasource = {
+    getPrometheusTime: () => 124,
+    createQuery: () => ({ expr: 'up', step: 20 }),
+    directUrl: 'prom3',
+    getRateIntervalScopedVariable: jest.fn(() => ({ __rate_interval: { text: '60s', value: '60s' } })),
+    customQueryParameters: new URLSearchParams('g0.foo=1'),
+  };
+
+  return (Object.assign(datasource, datasourceOverrides) as unknown) as PrometheusDatasource;
+};
+
 describe('PromLink', () => {
   it('should show correct link for 1 component', async () => {
     render(
@@ -84,5 +96,20 @@ describe('PromLink', () => {
       </div>
     );
     expect(screen.getByText('Prometheus')).toHaveAttribute('href', 'about:blank');
+  });
+  it('should add custom query parameters when it is configured', async () => {
+    render(
+      <div>
+        <PromLink
+          datasource={getDataSourceWithCustomQueryParameters()}
+          panelData={getPanelData()}
+          query={{} as PromQuery}
+        />
+      </div>
+    );
+    expect(screen.getByText('Prometheus')).toHaveAttribute(
+      'href',
+      'prom3/graph?g0.foo=1&g0.expr=up&g0.range_input=0s&g0.end_input=undefined&g0.step_input=20&g0.tab=0'
+    );
   });
 });

@@ -2,7 +2,9 @@ import React, { FC, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { useLocalStorage } from 'react-use';
 import { GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
+
 import { DashboardSection, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { getSectionIcon, getSectionStorageKey } from '../utils';
@@ -46,7 +48,11 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
     <div
       className={styles.wrapper}
       onClick={onSectionExpand}
-      aria-label={section.expanded ? `Collapse folder ${section.id}` : `Expand folder ${section.id}`}
+      data-testid={
+        section.expanded
+          ? selectors.components.Search.collapseFolder(section.id?.toString())
+          : selectors.components.Search.expandFolder(section.id?.toString())
+      }
     >
       <SearchCheckbox
         className={styles.checkbox}

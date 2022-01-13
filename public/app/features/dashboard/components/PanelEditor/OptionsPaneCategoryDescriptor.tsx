@@ -57,8 +57,8 @@ export class OptionsPaneCategoryDescriptor {
 
     return (
       <OptionsPaneCategory key={this.props.title} {...this.props}>
-        {this.items.map((item) => item.render())}
-        {this.categories.map((category) => category.render())}
+        {this.items.map((item) => item.render(searchQuery))}
+        {this.categories.map((category) => category.render(searchQuery))}
       </OptionsPaneCategory>
     );
   }

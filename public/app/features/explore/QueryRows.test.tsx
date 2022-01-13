@@ -12,13 +12,15 @@ import { DataQuery } from '../../../../packages/grafana-data/src';
 function setup(queries: DataQuery[]) {
   const defaultDs = {
     name: 'newDs',
+    uid: 'newDs-uid',
     meta: { id: 'newDs' },
   };
 
   const datasources: Record<string, any> = {
-    newDs: defaultDs,
-    someDs: {
+    'newDs-uid': defaultDs,
+    'someDs-uid': {
       name: 'someDs',
+      uid: 'someDs-uid',
       meta: { id: 'someDs' },
       components: {
         QueryEditor: () => 'someDs query editor',
@@ -30,11 +32,11 @@ function setup(queries: DataQuery[]) {
     getList() {
       return Object.values(datasources).map((d) => ({ name: d.name }));
     },
-    getInstanceSettings(name: string) {
-      return datasources[name] || defaultDs;
+    getInstanceSettings(uid: string) {
+      return datasources[uid] || defaultDs;
     },
-    get(name?: string) {
-      return Promise.resolve(name ? datasources[name] || defaultDs : defaultDs);
+    get(uid?: string) {
+      return Promise.resolve(uid ? datasources[uid] || defaultDs : defaultDs);
     },
   } as any);
 
@@ -42,7 +44,7 @@ function setup(queries: DataQuery[]) {
   const initialState: ExploreState = {
     left: {
       ...leftState,
-      datasourceInstance: datasources.someDs,
+      datasourceInstance: datasources['someDs-uid'],
       queries,
     },
     syncedTimes: false,

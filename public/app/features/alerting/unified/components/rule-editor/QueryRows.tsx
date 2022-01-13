@@ -9,10 +9,11 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { QueryWrapper } from './QueryWrapper';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { queriesWithUpdatedReferences } from './util';
 
 interface Props {
   // The query configuration
@@ -128,14 +129,20 @@ export class QueryRows extends PureComponent<Props, State> {
   onChangeQuery = (query: DataQuery, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
+    // find what queries still have a reference to the old name
+    const previousRefId = queries[index].refId;
+    const newRefId = query.refId;
+
     onQueriesChange(
-      queries.map((item, itemIndex) => {
+      queriesWithUpdatedReferences(queries, previousRefId, newRefId).map((item, itemIndex) => {
         if (itemIndex !== index) {
           return item;
         }
+
         return {
           ...item,
           refId: query.refId,
+          queryType: item.model.queryType ?? '',
           model: {
             ...item.model,
             ...query,
@@ -204,7 +211,7 @@ export class QueryRows extends PureComponent<Props, State> {
             steps: [
               {
                 value: -Infinity,
-                color: 'green',
+                color: config.theme2.colors.success.main,
               },
             ],
           };
@@ -212,7 +219,7 @@ export class QueryRows extends PureComponent<Props, State> {
 
         record[refId].steps.push({
           value: threshold,
-          color: 'red',
+          color: config.theme2.colors.error.main,
         });
       });
     }

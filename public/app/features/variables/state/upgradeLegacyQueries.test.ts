@@ -13,7 +13,13 @@ interface Args {
 }
 function getTestContext({ query = '', variable, datasource }: Args = {}) {
   variable =
-    variable ?? queryBuilder().withId('query').withName('query').withQuery(query).withDatasource('test-data').build();
+    variable ??
+    queryBuilder()
+      .withId('query')
+      .withName('query')
+      .withQuery(query)
+      .withDatasource({ uid: 'test-data', type: 'test-data' })
+      .build();
   const state = {
     templating: {
       variables: {
@@ -56,7 +62,7 @@ describe('upgradeLegacyQueries', () => {
         }),
       ]);
       expect(get).toHaveBeenCalledTimes(1);
-      expect(get).toHaveBeenCalledWith('test-data');
+      expect(get).toHaveBeenCalledWith({ uid: 'test-data', type: 'test-data' });
     });
   });
 
@@ -70,7 +76,7 @@ describe('upgradeLegacyQueries', () => {
 
       expect(dispatchedActions).toEqual([]);
       expect(get).toHaveBeenCalledTimes(1);
-      expect(get).toHaveBeenCalledWith('test-data');
+      expect(get).toHaveBeenCalledWith({ uid: 'test-data', type: 'test-data' });
     });
   });
 
@@ -88,7 +94,7 @@ describe('upgradeLegacyQueries', () => {
 
       expect(dispatchedActions).toEqual([]);
       expect(get).toHaveBeenCalledTimes(1);
-      expect(get).toHaveBeenCalledWith('test-data');
+      expect(get).toHaveBeenCalledWith({ uid: 'test-data', type: 'test-data' });
     });
   });
 
@@ -107,7 +113,7 @@ describe('upgradeLegacyQueries', () => {
 
       expect(dispatchedActions).toEqual([]);
       expect(get).toHaveBeenCalledTimes(1);
-      expect(get).toHaveBeenCalledWith('test-data');
+      expect(get).toHaveBeenCalledWith({ uid: 'test-data', type: 'test-data' });
     });
   });
 
@@ -126,7 +132,7 @@ describe('upgradeLegacyQueries', () => {
 
       expect(dispatchedActions).toEqual([]);
       expect(get).toHaveBeenCalledTimes(1);
-      expect(get).toHaveBeenCalledWith('test-data');
+      expect(get).toHaveBeenCalledWith({ uid: 'test-data', type: 'test-data' });
     });
   });
 

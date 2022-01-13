@@ -23,10 +23,15 @@ import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsole
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { expect } from '../../../../test/lib/common';
 import { TemplatingState } from './reducers';
+import { appEvents } from '../../../core/core';
 
 variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantVariableAdapter()]);
 
+const dashboard = new DashboardModel({});
+
 const getTestContext = () => {
+  jest.clearAllMocks();
+
   const interval = intervalBuilder()
     .withId('interval-0')
     .withName('interval-0')
@@ -52,21 +57,19 @@ const getTestContext = () => {
   };
   const updateTimeRangeMock = jest.fn();
   const templateSrvMock = ({ updateTimeRange: updateTimeRangeMock } as unknown) as TemplateSrv;
-  const dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrvMock };
+  const dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrvMock, events: appEvents };
   const templateVariableValueUpdatedMock = jest.fn();
-  const setChangeAffectsAllPanelsMock = jest.fn();
-  const dashboard = ({
-    getModel: () =>
-      (({
-        templateVariableValueUpdated: templateVariableValueUpdatedMock,
-        startRefresh: startRefreshMock,
-        setChangeAffectsAllPanels: setChangeAffectsAllPanelsMock,
-      } as unknown) as DashboardModel),
-  } as unknown) as DashboardState;
   const startRefreshMock = jest.fn();
+  const dashboardState = ({
+    getModel: () => {
+      dashboard.templateVariableValueUpdated = templateVariableValueUpdatedMock;
+      dashboard.startRefresh = startRefreshMock;
+      return dashboard;
+    },
+  } as unknown) as DashboardState;
   const adapter = variableAdapters.get('interval');
   const preloadedState = ({
-    dashboard,
+    dashboard: dashboardState,
     templating: ({
       variables: {
         'interval-0': { ...interval },
@@ -84,7 +87,6 @@ const getTestContext = () => {
     updateTimeRangeMock,
     templateVariableValueUpdatedMock,
     startRefreshMock,
-    setChangeAffectsAllPanelsMock,
   };
 };
 
@@ -98,7 +100,6 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         updateTimeRangeMock,
         templateVariableValueUpdatedMock,
         startRefreshMock,
-        setChangeAffectsAllPanelsMock,
       } = getTestContext();
 
       const tester = await reduxTester<RootReducerType>({ preloadedState })
@@ -121,7 +122,6 @@ describe('when onTimeRangeUpdated is dispatched', () => {
       expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
       expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(1);
       expect(startRefreshMock).toHaveBeenCalledTimes(1);
-      expect(setChangeAffectsAllPanelsMock).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -135,7 +135,6 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         updateTimeRangeMock,
         templateVariableValueUpdatedMock,
         startRefreshMock,
-        setChangeAffectsAllPanelsMock,
       } = getTestContext();
 
       const base = await reduxTester<RootReducerType>({ preloadedState })
@@ -160,7 +159,6 @@ describe('when onTimeRangeUpdated is dispatched', () => {
       expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
       expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(0);
       expect(startRefreshMock).toHaveBeenCalledTimes(1);
-      expect(setChangeAffectsAllPanelsMock).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -175,7 +173,6 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         updateTimeRangeMock,
         templateVariableValueUpdatedMock,
         startRefreshMock,
-        setChangeAffectsAllPanelsMock,
       } = getTestContext();
 
       adapter.updateOptions = jest.fn().mockRejectedValue(new Error('Something broke'));
@@ -204,7 +201,6 @@ describe('when onTimeRangeUpdated is dispatched', () => {
       expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
       expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(0);
       expect(startRefreshMock).toHaveBeenCalledTimes(0);
-      expect(setChangeAffectsAllPanelsMock).toHaveBeenCalledTimes(0);
     });
   });
 });

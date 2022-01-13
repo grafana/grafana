@@ -15,12 +15,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
+
+const pluginID = "influxdb"
 
 type Service struct {
 	QueryParser    *InfluxdbQueryParser
@@ -32,7 +34,7 @@ type Service struct {
 
 var ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 
-func ProvideService(httpClient httpclient.Provider, backendPluginManager backendplugin.Manager) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, httpClient httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClient))
 	s := &Service{
 		QueryParser:    &InfluxdbQueryParser{},
@@ -45,7 +47,8 @@ func ProvideService(httpClient httpclient.Provider, backendPluginManager backend
 		QueryDataHandler: s,
 	})
 
-	if err := backendPluginManager.Register("influxdb", factory); err != nil {
+	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
+	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
 		s.glog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

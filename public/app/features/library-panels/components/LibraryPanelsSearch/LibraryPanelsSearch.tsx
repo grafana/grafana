@@ -131,7 +131,6 @@ function getStyles(theme: GrafanaTheme2) {
       width: 100%;
       overflow-y: auto;
       padding: ${theme.spacing(1)};
-      min-height: 400px;
     `,
     buttonRow: css`
       display: flex;

@@ -121,6 +121,7 @@ describe('When adding and updating range map', () => {
   it('should add new range map', async () => {
     const onChangeSpy = jest.fn();
     setup(onChangeSpy, { value: [] });
+    screen.getAllByTestId('remove-value-mapping')[0].click();
 
     fireEvent.click(screen.getByLabelText(selectors.components.ValuePicker.button('Add a new mapping')));
     const selectComponent = await screen.findByLabelText(selectors.components.ValuePicker.select('Add a new mapping'));
@@ -148,10 +149,11 @@ describe('When adding and updating range map', () => {
   });
 });
 
-describe('When adding and updating tegex map', () => {
+describe('When adding and updating regex map', () => {
   it('should add new regex map', async () => {
     const onChangeSpy = jest.fn();
     setup(onChangeSpy, { value: [] });
+    screen.getAllByTestId('remove-value-mapping')[0].click();
 
     fireEvent.click(screen.getByLabelText(selectors.components.ValuePicker.button('Add a new mapping')));
     const selectComponent = await screen.findByLabelText(selectors.components.ValuePicker.select('Add a new mapping'));
