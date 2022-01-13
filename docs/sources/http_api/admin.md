@@ -282,6 +282,54 @@ Content-Type: application/json
 }
 ```
 
+## Grafana Usage Report preview
+
+`GET /api/admin/usage-report-preview`
+
+Preview usage report to be sent to vendor.
+
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+
+| Action            | Scope |
+| ----------------- | ----- |
+| server.stats:read | n/a   |
+
+**Example Request**:
+
+```http
+GET /api/admin/usage-report-preview
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"version": "8_4_0",
+	"metrics": {
+		"stats.active_admins.count": 1,
+		"stats.active_editors.count": 1,
+		"stats.active_sessions.count": 0,
+		"stats.active_users.count": 2,
+		"stats.active_viewers.count": 0,
+		"stats.admins.count": 1,
+		"stats.alert_rules.count": 0,
+		"stats.alerting.ds.other.count": 0,
+		"stats.alerts.count": 5,
+		"stats.annotations.count": 6,
+		"stats.api_keys.count": 1
+  }
+}
+```
+
 ## Global Users
 
 `POST /api/admin/users`
