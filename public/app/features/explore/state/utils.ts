@@ -146,10 +146,9 @@ export function addQueryToQueryHistory(datasourceUid: string, queries: DataQuery
   });
 }
 
-export async function getQueriesFromQueryHistory(dataSourceUid: string): Promise<any[]> {
-  return await getBackendSrv().get(`/api/query-history`, {
-    dataSourceUid,
-  });
+export async function getQueriesFromQueryHistory(dataSourceUids: string[]): Promise<any[]> {
+  const params = dataSourceUids.map((uid) => `dataSourceUid=${encodeURIComponent(uid)}`).join('&');
+  return await getBackendSrv().get(`/api/query-history?${params}`);
 }
 
 export function deleteQueryFromQueryHistory(queryId: string): void {

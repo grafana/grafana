@@ -324,11 +324,11 @@ async function handleHistory(
   const nextHistory = updateHistory(history, datasourceId, queries);
   const uid = queries[0]?.datasource?.uid;
   if (uid) {
-    addQueryToQueryHistory(uid, queries);
+    // addQueryToQueryHistory(uid, queries);
     //WIP: Currently here to test development
-    // console.log(await getQueriesFromQueryHistory(uid));
+    console.log(await getQueriesFromQueryHistory([uid, 'gdev-jaeger']));
     // deleteQueryFromQueryHistory('P8zM2I1nz');
-    updateCommentForQueryInQueryHistory('ND2zoS17k', 'test comment');
+    // updateCommentForQueryInQueryHistory('ND2zoS17k', 'test comment');
   }
 
   const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(

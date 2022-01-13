@@ -25,9 +25,9 @@ func (hs *HTTPServer) createQueryHistory(c *models.ReqContext) response.Response
 	return response.Success("Query created")
 }
 
-func (hs *HTTPServer) getQueryHistory(c *models.ReqContext) response.Response {
-	dataSourceUid := c.Query("dataSourceUid")
-	queryHistory, err := hs.QueryHistoryService.GetQueryHistory(c.Req.Context(), c.SignedInUser, dataSourceUid)
+func (hs *HTTPServer) searchInQueryHistory(c *models.ReqContext) response.Response {
+	dataSourceUIDs := c.QueryStrings("dataSourceUid")
+	queryHistory, err := hs.QueryHistoryService.GetQueryHistory(c.Req.Context(), c.SignedInUser, dataSourceUIDs)
 	if err != nil {
 		return response.Error(500, "Failed to get query history", err)
 	}

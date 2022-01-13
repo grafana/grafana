@@ -17,7 +17,7 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *QueryHistoryService {
 
 type Service interface {
 	CreateQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, datasourceUid string) (*models.QueryHistory, error)
-	GetQueryHistory(ctx context.Context, user *models.SignedInUser, datasourceUid string) ([]models.QueryHistory, error)
+	GetQueryHistory(ctx context.Context, user *models.SignedInUser, datasourceUids []string) ([]models.QueryHistory, error)
 	DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, queryId string) error
 	UpdateComment(ctx context.Context, user *models.SignedInUser, query *models.QueryHistory, comment string) error
 	GetQueryInQueryHistoryByUid(ctx context.Context, user *models.SignedInUser, queryId string) (*models.QueryHistory, error)
@@ -50,11 +50,11 @@ func (s QueryHistoryService) CreateQueryHistory(ctx context.Context, user *model
 	return &queryHistory, nil
 }
 
-func (s QueryHistoryService) GetQueryHistory(ctx context.Context, user *models.SignedInUser, dataSourceUid string) ([]models.QueryHistory, error) {
+func (s QueryHistoryService) GetQueryHistory(ctx context.Context, user *models.SignedInUser, dataSourceUids []string) ([]models.QueryHistory, error) {
 	var queryHistory []models.QueryHistory
 
 	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-		err := session.Where("org_id = ? AND created_by = ? AND datasource_uid = ?", user.OrgId, user.UserId, dataSourceUid).Desc("created_at").Find(&queryHistory)
+		err := session.Where("org_id = ? AND created_by = ?", user.OrgId, user.UserId).In("datasource_uid", dataSourceUids).Desc("created_at").Find(&queryHistory)
 		return err
 	})
 
