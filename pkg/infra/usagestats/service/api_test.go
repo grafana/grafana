@@ -32,11 +32,11 @@ func TestApi_getUsageStats(t *testing.T) {
 			expectedStatus: 200,
 		},
 		{
-			desc:           "expect http status 401 when disabling feature",
+			desc:           "expect usage stat preview still there after disabling",
 			enabled:        false,
 			IsGrafanaAdmin: true,
-			expectedCall:   false,
-			expectedStatus: 401,
+			expectedCall:   true,
+			expectedStatus: 200,
 		},
 		{
 			desc:           "expect http status 403 when not admin",
