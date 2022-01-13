@@ -99,3 +99,12 @@ func postgresQuery(scopes []string, sqlID, prefix string) (string, []interface{}
 		)
 	`, sqlID, sqlID), args
 }
+
+// SetAcceptListForTest allow us to mutate the list for blackbox testing
+func SetAcceptListForTest(list map[string]struct{}) func() {
+	original := sqlIDAcceptList
+	sqlIDAcceptList = list
+	return func() {
+		sqlIDAcceptList = original
+	}
+}
