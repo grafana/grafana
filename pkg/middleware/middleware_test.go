@@ -407,6 +407,62 @@ func TestMiddlewareContext(t *testing.T) {
 			cfg.AuthProxyAutoSignUp = false
 		})
 
+		middlewareScenario(t, "Should create a superadmin from headers", func(t *testing.T, sc *scenarioContext) {
+			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+				if query.UserId > 0 {
+					query.Result = &models.SignedInUser{OrgId: query.OrgId, UserId: userID, IsGrafanaAdmin: true}
+					return nil
+				}
+				return models.ErrUserNotFound
+			})
+
+			bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
+				cmd.Result = &models.User{Id: userID}
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
+			sc.req.Header.Set("X-WEBAUTH-ADMIN", "1")
+			sc.exec()
+
+			assert.True(t, sc.context.IsSignedIn)
+			assert.Equal(t, userID, sc.context.UserId)
+			assert.Equal(t, true, sc.context.SignedInUser.IsGrafanaAdmin)
+		}, func(cfg *setting.Cfg) {
+			configure(cfg)
+			cfg.LDAPEnabled = false
+			cfg.AuthProxyAutoSignUp = true
+		})
+
+		middlewareScenario(t, "Should revoke superadmin rights for user via headers", func(t *testing.T, sc *scenarioContext) {
+			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+				if query.UserId > 0 {
+					query.Result = &models.SignedInUser{OrgId: query.OrgId, UserId: userID}
+					return nil
+				}
+				return models.ErrUserNotFound
+			})
+
+			bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
+				cmd.Result = &models.User{Id: userID}
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
+			sc.req.Header.Set("X-WEBAUTH-ADMIN", "0")
+			sc.exec()
+
+			assert.True(t, sc.context.IsSignedIn)
+			assert.Equal(t, userID, sc.context.UserId)
+			assert.Equal(t, false, sc.context.IsGrafanaAdmin)
+		}, func(cfg *setting.Cfg) {
+			configure(cfg)
+			cfg.LDAPEnabled = false
+			cfg.AuthProxyAutoSignUp = true
+		})
+
 		middlewareScenario(t, "Should create an user from a header", func(t *testing.T, sc *scenarioContext) {
 			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				if query.UserId > 0 {

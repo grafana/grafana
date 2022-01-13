@@ -45,7 +45,7 @@ var isLDAPEnabled = func(cfg *setting.Cfg) bool {
 var newLDAP = multildap.New
 
 // supportedHeaders states the supported headers configuration fields
-var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups", "Role"}
+var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups", "Role", "SuperAdmin"}
 
 // AuthProxy struct
 type AuthProxy struct {
@@ -293,6 +293,12 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 					}
 					extUser.OrgRoles[orgID] = rt
 				}
+			}
+		case "SuperAdmin":
+			if header != "" {
+				var IsGrafanaAdmin = new(bool)
+				*IsGrafanaAdmin = (header == "1")
+				extUser.IsGrafanaAdmin = IsGrafanaAdmin
 			}
 		default:
 			reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(header)
