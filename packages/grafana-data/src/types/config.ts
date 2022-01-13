@@ -4,6 +4,7 @@ import { GrafanaTheme } from './theme';
 import { SystemDateFormatSettings } from '../datetime';
 import { GrafanaTheme2 } from '../themes';
 import { MapLayerOptions } from '../geo/layer';
+import { FeatureToggles } from './featureToggles.gen';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -27,27 +28,6 @@ export enum GrafanaEdition {
   OpenSource = 'Open Source',
   Pro = 'Pro',
   Enterprise = 'Enterprise',
-}
-
-/**
- * Describes available feature toggles in Grafana. These can be configured via the
- * `conf/custom.ini` to enable features under development or not yet available in
- * stable version.
- *
- * @public
- */
-export interface FeatureToggles {
-  [name: string]: boolean;
-
-  trimDefaults: boolean;
-  accesscontrol: boolean;
-  tempoServiceGraph: boolean;
-  tempoSearch: boolean;
-  recordedQueries: boolean;
-  newNavigation: boolean;
-  fullRangeLogsVolume: boolean;
-  queryOverLive: boolean;
-  dashboardPreviews: boolean;
 }
 
 /**

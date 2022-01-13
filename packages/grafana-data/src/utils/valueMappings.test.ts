@@ -7,6 +7,14 @@ const testSet1: ValueMapping[] = [
     options: { '11': { text: 'elva' } },
   },
   {
+    type: MappingType.ValueToText,
+    options: { Infinity: { text: 'wow infinity!' } },
+  },
+  {
+    type: MappingType.ValueToText,
+    options: { '-Infinity': { text: 'wow negative infinity!' } },
+  },
+  {
     type: MappingType.RangeToText,
     options: {
       from: 1,
@@ -92,6 +100,16 @@ describe('Format value with value mappings', () => {
   it('should return match result with string value match', () => {
     const value = '11';
     expect(getValueMappingResult(testSet1, value)).toEqual({ text: 'elva' });
+  });
+
+  it('should return match result for Infinity', () => {
+    const value = Infinity;
+    expect(getValueMappingResult(testSet1, value)).toEqual({ text: 'wow infinity!' });
+  });
+
+  it('should return match result for -Infinity', () => {
+    const value = -Infinity;
+    expect(getValueMappingResult(testSet1, value)).toEqual({ text: 'wow negative infinity!' });
   });
 
   it('should return match result with number value', () => {
