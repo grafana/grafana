@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 type getOrgUsersTestCase struct {
@@ -27,7 +28,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 				OrgId: 1,
 				User: &models.SignedInUser{
 					OrgId:       1,
-					Permissions: map[int64]map[string][]string{1: {"org.users:read": {"users:*"}}},
+					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
 				},
 			},
 			expectedNumUsers: 10,
@@ -38,7 +39,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 				OrgId: 1,
 				User: &models.SignedInUser{
 					OrgId:       1,
-					Permissions: map[int64]map[string][]string{1: {"org.users:read": {""}}},
+					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {""}}},
 				},
 			},
 			expectedNumUsers: 0,
@@ -49,7 +50,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 				OrgId: 1,
 				User: &models.SignedInUser{
 					OrgId: 1,
-					Permissions: map[int64]map[string][]string{1: {"org.users:read": {
+					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {
 						"users:id:1",
 						"users:id:5",
 						"users:id:9",
@@ -62,7 +63,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 
 	store := InitTestDB(t)
 	store.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
-	seedOrgUsers(t, store, 1)
+	seedOrgUsers(t, store, 10)
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -71,9 +72,9 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, tt.query.Result, tt.expectedNumUsers)
 
-			if !hasWildcardScope(tt.query.User, "org.users:read") {
+			if !hasWildcardScope(tt.query.User, ac.ActionOrgUsersRead) {
 				for _, u := range tt.query.Result {
-					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgId]["org.users:read"], fmt.Sprintf("users:id:%d", u.UserId))
+					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgId][ac.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserId))
 				}
 			}
 		})
@@ -95,7 +96,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 				OrgID: 1,
 				User: &models.SignedInUser{
 					OrgId:       1,
-					Permissions: map[int64]map[string][]string{1: {"org.users:read": {"users:*"}}},
+					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
 				},
 			},
 			expectedNumUsers: 10,
@@ -106,7 +107,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 				OrgID: 1,
 				User: &models.SignedInUser{
 					OrgId:       1,
-					Permissions: map[int64]map[string][]string{1: {"org.users:read": {""}}},
+					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {""}}},
 				},
 			},
 			expectedNumUsers: 0,
@@ -117,7 +118,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 				OrgID: 1,
 				User: &models.SignedInUser{
 					OrgId: 1,
-					Permissions: map[int64]map[string][]string{1: {"org.users:read": {
+					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {
 						"users:id:1",
 						"users:id:5",
 						"users:id:9",
@@ -138,9 +139,9 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 			err := store.SearchOrgUsers(context.Background(), tt.query)
 			require.NoError(t, err)
 
-			if !hasWildcardScope(tt.query.User, "org.users:read") {
+			if !hasWildcardScope(tt.query.User, ac.ActionOrgUsersRead) {
 				for _, u := range tt.query.Result.OrgUsers {
-					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgId]["org.users:read"], fmt.Sprintf("users:id:%d", u.UserId))
+					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgId][ac.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserId))
 				}
 			}
 		})
@@ -150,7 +151,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 func seedOrgUsers(t *testing.T, store *SQLStore, numUsers int) {
 	t.Helper()
 	// Seed users
-	for i := numUsers; i <= numUsers; i++ {
+	for i := 1; i <= numUsers; i++ {
 		user, err := store.CreateUser(context.Background(), models.CreateUserCommand{
 			Login: fmt.Sprintf("user-%d", i),
 			OrgId: 1,
