@@ -114,7 +114,7 @@ func (m *PluginManager) init() error {
 func (m *PluginManager) Run(ctx context.Context) error {
 	if m.cfg.CheckForUpdates {
 		go func() {
-			m.checkForUpdates()
+			m.checkForUpdates(ctx)
 
 			ticker := time.NewTicker(time.Minute * 10)
 			run := true
@@ -122,7 +122,7 @@ func (m *PluginManager) Run(ctx context.Context) error {
 			for run {
 				select {
 				case <-ticker.C:
-					m.checkForUpdates()
+					m.checkForUpdates(ctx)
 				case <-ctx.Done():
 					run = false
 				}
