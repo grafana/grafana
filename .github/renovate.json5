@@ -22,6 +22,7 @@
     "slate-plain-serializer",
     "systemjs",
     "ts-loader", // we should remove ts-loader and use babel-loader instead
+    "typescript", // >4.5.x doesn't seem to work on windows with pnp currently. probably similar to https://github.com/yarnpkg/berry/issues/3722
     "ora" // we should bump this once we move to esm modules
   ],
   "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
