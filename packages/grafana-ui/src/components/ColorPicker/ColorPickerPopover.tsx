@@ -160,6 +160,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
           outline: none;
           box-shadow: none;
         }
+
+        :focus-visible {
+          position: relative;
+        }
       }
 
       .ColorPickerPopover__tab--active {

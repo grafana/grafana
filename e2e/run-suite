@@ -1,7 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -xeo pipefail
 
 . e2e/variables
+
+if ((BASH_VERSINFO[0] < 4)); then
+  echo "Bash ver >= 4 is needed to run this script"
+  echo "Please upgrade your bash - run 'brew install bash' if you use Homebrew on MacOS"
+  exit 1;
+fi
 
 HOST=${HOST:-$DEFAULT_HOST}
 PORT=${PORT:-$DEFAULT_PORT}
@@ -12,31 +18,79 @@ args=("$@")
 
 CMD="start"
 PARAMS=""
-SLOWMO=0
-URL=${BASE_URL:-"http://$HOST:$PORT"}
-integrationFolder=../../e2e 
-testFiles=*-suite/*spec.ts
+
+declare -A env=(
+  [BASE_URL]=${BASE_URL:-"http://$HOST:$PORT"}
+  [SLOWMO]=0
+)
+
+testFilesForSingleSuite="*.spec.ts"
+
+declare -A cypressConfig=(
+  [integrationFolder]=../../e2e
+  [screenshotsFolder]=../../e2e/"${args[0]}"/screenshots
+  [videosFolder]=../../e2e/"${args[0]}"/videos
+  [fileServerFolder]=./cypress
+  [testFiles]=*-suite/*spec.ts
+  [defaultCommandTimeout]=30000
+  [viewportWidth]=1920
+  [viewportHeight]=1080
+  [trashAssetsBeforeRuns]=false
+  [videoUploadOnPasses]=false
+)
+
 
 cd packages/grafana-e2e
 
-case "$1" in 
+case "$1" in
     "debug")
         echo -e "Debug mode"
-        SLOWMO=1
+        env[SLOWMO]=1
         PARAMS="--no-exit"
         ;;
     "dev")
         echo "Dev mode"
         CMD="open"
         ;;
+    "benchmark")
+        echo "Benchmark"
+        PARAMS="--headed"
+        CMD="start-benchmark"
+        env[BENCHMARK_PLUGIN_ENABLED]=true
+        env[BENCHMARK_PLUGIN_RESULTS_FOLDER]=../../e2e/benchmarks/"${args[1]}"/results
+        cypressConfig[video]=false
+        cypressConfig[integrationFolder]=../../e2e/benchmarks/"${args[1]}"
+        cypressConfig[screenshotsFolder]=../../e2e/benchmarks/"${args[1]}"/screenshots
+        cypressConfig[testFiles]=$testFilesForSingleSuite
+        ;;
     "")
         ;;
     *)
-        integrationFolder=../../e2e/"${args[0]}"
-        testFiles="*.spec.ts"
+        cypressConfig[integrationFolder]=../../e2e/"${args[0]}"
+        cypressConfig[testFiles]=$testFilesForSingleSuite
         ;;
 esac
 
-yarn $CMD --env BASE_URL=$URL,SLOWMO=$SLOWMO \
-  --config defaultCommandTimeout=30000,testFiles=$testFiles,integrationFolder=$integrationFolder,screenshotsFolder=../../e2e/"${args[0]}"/screenshots,videosFolder=../../e2e/"${args[0]}"/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false,videoUploadOnPasses=false \
+function join () {
+  local -n map=$1
+  local delimiter=","
+
+  local res=""
+
+  for key in "${!map[@]}"
+  do
+    value=${map[$key]}
+    if [ -z "${res}" ]; then
+      res=$key=$value
+    else
+      res=$res$delimiter$key=$value
+    fi
+  done
+
+  echo "$res"
+}
+
+
+yarn $CMD --env "$(join env)" \
+  --config "$(join cypressConfig)" \
   $PARAMS

@@ -41,17 +41,34 @@ export const ActionIcon: FC<Props> = ({
 
   return (
     <Tooltip content={tooltip} placement={tooltipPlacement}>
-      {(() => {
-        if (to) {
-          return (
-            <Link to={to} target={target}>
-              {iconEl}
-            </Link>
-          );
-        }
-        return iconEl;
-      })()}
+      {to ? (
+        <GoTo url={to} label={ariaLabel} target={target}>
+          {iconEl}
+        </GoTo>
+      ) : (
+        iconEl
+      )}
     </Tooltip>
+  );
+};
+
+interface GoToProps {
+  url: string;
+  label?: string;
+  target?: string;
+}
+
+const GoTo: FC<GoToProps> = ({ url, label, target, children }) => {
+  const absoluteUrl = url?.startsWith('http');
+
+  return absoluteUrl ? (
+    <a aria-label={label} href={url} target={target}>
+      {children}
+    </a>
+  ) : (
+    <Link aria-label={label} to={url} target={target}>
+      {children}
+    </Link>
   );
 };
 

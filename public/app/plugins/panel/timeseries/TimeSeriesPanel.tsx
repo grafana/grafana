@@ -61,6 +61,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                 data={alignedDataFrame}
                 config={config}
                 mode={options.tooltip.mode}
+                sortOrder={options.tooltip.sort}
                 sync={sync}
                 timeZone={timeZone}
               />
