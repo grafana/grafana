@@ -5,7 +5,7 @@ import { serviceAccountsLoaded } from './reducers';
 
 export function loadServiceAccounts(): ThunkResult<void> {
   return async (dispatch) => {
-    const serviceAccounts = await getBackendSrv().get('/api/serviceaccounts');
+    const serviceAccounts = await getBackendSrv().get('/api/org/serviceaccounts');
     dispatch(serviceAccountsLoaded(serviceAccounts));
   };
 }
@@ -13,7 +13,7 @@ export function loadServiceAccounts(): ThunkResult<void> {
 export function updateServiceAccount(serviceAccount: OrgServiceAccount): ThunkResult<void> {
   return async (dispatch) => {
     // TODO: implement on backend
-    await getBackendSrv().patch(`/api/serviceaccounts/${serviceAccount.serviceAccountId}`, {
+    await getBackendSrv().patch(`/api/org/serviceaccounts/${serviceAccount.serviceAccountId}`, {
       role: serviceAccount.role,
     });
     dispatch(loadServiceAccounts());
@@ -22,7 +22,7 @@ export function updateServiceAccount(serviceAccount: OrgServiceAccount): ThunkRe
 
 export function removeServiceAccount(serviceAccountId: number): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().delete(`/api/serviceaccounts/${serviceAccountId}`);
+    await getBackendSrv().delete(`/api/org/serviceaccounts/${serviceAccountId}`);
     dispatch(loadServiceAccounts());
   };
 }
