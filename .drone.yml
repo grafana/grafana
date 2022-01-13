@@ -157,27 +157,6 @@ steps:
     image: grafana/build-container:1.4.9
     name: validate-scuemata
   - commands:
-      - '# Make sure the git tree is clean.'
-      - '# Stashing changes, since packages that were produced in build-backend step are
-        needed.'
-      - git stash
-      - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-      - '# The above command generates Typescript files (*.gen.ts) from all appropriate
-        .cue files.'
-      - '# It is required that the generated Typescript be in sync with the input CUE
-        files.'
-      - '# ...Modulo eslint auto-fixes...:'
-      - yarn run eslint . --ext .gen.ts --fix
-      - '# If any filenames are emitted by the below script, run the generator command
-        `grafana-cli cue gen-ts` locally and commit the result.'
-      - ./scripts/clean-git-or-error.sh
-      - '# Un-stash changes.'
-      - git stash pop
-    depends_on:
-      - validate-scuemata
-    image: grafana/build-container:1.4.9
-    name: ensure-cuetsified
-  - commands:
       - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
         --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64,armv6
     depends_on:
@@ -576,27 +555,6 @@ steps:
       - build-backend
     image: grafana/build-container:1.4.9
     name: validate-scuemata
-  - commands:
-      - '# Make sure the git tree is clean.'
-      - '# Stashing changes, since packages that were produced in build-backend step are
-        needed.'
-      - git stash
-      - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-      - '# The above command generates Typescript files (*.gen.ts) from all appropriate
-        .cue files.'
-      - '# It is required that the generated Typescript be in sync with the input CUE
-        files.'
-      - '# ...Modulo eslint auto-fixes...:'
-      - yarn run eslint . --ext .gen.ts --fix
-      - '# If any filenames are emitted by the below script, run the generator command
-        `grafana-cli cue gen-ts` locally and commit the result.'
-      - ./scripts/clean-git-or-error.sh
-      - '# Un-stash changes.'
-      - git stash pop
-    depends_on:
-      - validate-scuemata
-    image: grafana/build-container:1.4.9
-    name: ensure-cuetsified
   - commands:
       - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
         --sign
@@ -1121,27 +1079,6 @@ steps:
       - build-backend
     image: grafana/build-container:1.4.9
     name: validate-scuemata
-  - commands:
-      - '# Make sure the git tree is clean.'
-      - '# Stashing changes, since packages that were produced in build-backend step are
-        needed.'
-      - git stash
-      - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-      - '# The above command generates Typescript files (*.gen.ts) from all appropriate
-        .cue files.'
-      - '# It is required that the generated Typescript be in sync with the input CUE
-        files.'
-      - '# ...Modulo eslint auto-fixes...:'
-      - yarn run eslint . --ext .gen.ts --fix
-      - '# If any filenames are emitted by the below script, run the generator command
-        `grafana-cli cue gen-ts` locally and commit the result.'
-      - ./scripts/clean-git-or-error.sh
-      - '# Un-stash changes.'
-      - git stash pop
-    depends_on:
-      - validate-scuemata
-    image: grafana/build-container:1.4.9
-    name: ensure-cuetsified
   - commands:
       - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
         --sign ${DRONE_TAG}
@@ -1703,27 +1640,6 @@ steps:
       - build-backend
     image: grafana/build-container:1.4.9
     name: validate-scuemata
-  - commands:
-      - '# Make sure the git tree is clean.'
-      - '# Stashing changes, since packages that were produced in build-backend step are
-        needed.'
-      - git stash
-      - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-      - '# The above command generates Typescript files (*.gen.ts) from all appropriate
-        .cue files.'
-      - '# It is required that the generated Typescript be in sync with the input CUE
-        files.'
-      - '# ...Modulo eslint auto-fixes...:'
-      - yarn run eslint . --ext .gen.ts --fix
-      - '# If any filenames are emitted by the below script, run the generator command
-        `grafana-cli cue gen-ts` locally and commit the result.'
-      - ./scripts/clean-git-or-error.sh
-      - '# Un-stash changes.'
-      - git stash pop
-    depends_on:
-      - validate-scuemata
-    image: grafana/build-container:1.4.9
-    name: ensure-cuetsified
   - commands:
       - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
         --no-pull-enterprise ${DRONE_TAG}
@@ -2388,27 +2304,6 @@ steps:
     image: grafana/build-container:1.4.9
     name: validate-scuemata
   - commands:
-      - '# Make sure the git tree is clean.'
-      - '# Stashing changes, since packages that were produced in build-backend step are
-        needed.'
-      - git stash
-      - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-      - '# The above command generates Typescript files (*.gen.ts) from all appropriate
-        .cue files.'
-      - '# It is required that the generated Typescript be in sync with the input CUE
-        files.'
-      - '# ...Modulo eslint auto-fixes...:'
-      - yarn run eslint . --ext .gen.ts --fix
-      - '# If any filenames are emitted by the below script, run the generator command
-        `grafana-cli cue gen-ts` locally and commit the result.'
-      - ./scripts/clean-git-or-error.sh
-      - '# Un-stash changes.'
-      - git stash pop
-    depends_on:
-      - validate-scuemata
-    image: grafana/build-container:1.4.9
-    name: ensure-cuetsified
-  - commands:
       - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
         --sign v7.3.0-test
     depends_on:
@@ -2925,27 +2820,6 @@ steps:
       - build-backend
     image: grafana/build-container:1.4.9
     name: validate-scuemata
-  - commands:
-      - '# Make sure the git tree is clean.'
-      - '# Stashing changes, since packages that were produced in build-backend step are
-        needed.'
-      - git stash
-      - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-      - '# The above command generates Typescript files (*.gen.ts) from all appropriate
-        .cue files.'
-      - '# It is required that the generated Typescript be in sync with the input CUE
-        files.'
-      - '# ...Modulo eslint auto-fixes...:'
-      - yarn run eslint . --ext .gen.ts --fix
-      - '# If any filenames are emitted by the below script, run the generator command
-        `grafana-cli cue gen-ts` locally and commit the result.'
-      - ./scripts/clean-git-or-error.sh
-      - '# Un-stash changes.'
-      - git stash pop
-    depends_on:
-      - validate-scuemata
-    image: grafana/build-container:1.4.9
-    name: ensure-cuetsified
   - commands:
       - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
         --no-pull-enterprise v7.3.0-test
@@ -3701,27 +3575,6 @@ steps:
     image: grafana/build-container:1.4.9
     name: validate-scuemata
   - commands:
-      - '# Make sure the git tree is clean.'
-      - '# Stashing changes, since packages that were produced in build-backend step are
-        needed.'
-      - git stash
-      - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-      - '# The above command generates Typescript files (*.gen.ts) from all appropriate
-        .cue files.'
-      - '# It is required that the generated Typescript be in sync with the input CUE
-        files.'
-      - '# ...Modulo eslint auto-fixes...:'
-      - yarn run eslint . --ext .gen.ts --fix
-      - '# If any filenames are emitted by the below script, run the generator command
-        `grafana-cli cue gen-ts` locally and commit the result.'
-      - ./scripts/clean-git-or-error.sh
-      - '# Un-stash changes.'
-      - git stash pop
-    depends_on:
-      - validate-scuemata
-    image: grafana/build-container:1.4.9
-    name: ensure-cuetsified
-  - commands:
       - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
         --sign
     depends_on:
@@ -4213,27 +4066,6 @@ steps:
       - build-backend
     image: grafana/build-container:1.4.9
     name: validate-scuemata
-  - commands:
-      - '# Make sure the git tree is clean.'
-      - '# Stashing changes, since packages that were produced in build-backend step are
-        needed.'
-      - git stash
-      - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-      - '# The above command generates Typescript files (*.gen.ts) from all appropriate
-        .cue files.'
-      - '# It is required that the generated Typescript be in sync with the input CUE
-        files.'
-      - '# ...Modulo eslint auto-fixes...:'
-      - yarn run eslint . --ext .gen.ts --fix
-      - '# If any filenames are emitted by the below script, run the generator command
-        `grafana-cli cue gen-ts` locally and commit the result.'
-      - ./scripts/clean-git-or-error.sh
-      - '# Un-stash changes.'
-      - git stash pop
-    depends_on:
-      - validate-scuemata
-    image: grafana/build-container:1.4.9
-    name: ensure-cuetsified
   - commands:
       - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
         --variants linux-x64 --no-pull-enterprise
