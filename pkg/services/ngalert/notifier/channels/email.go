@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -24,6 +25,7 @@ type EmailNotifier struct {
 	log         log.Logger
 	ns          notifications.EmailSender
 	tmpl        *template.Template
+	bus         bus.Bus
 }
 
 // NewEmailNotifier is the constructor function
