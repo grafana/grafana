@@ -117,6 +117,6 @@ func testScenario(t *testing.T, name string) {
 	require.True(t, found)
 	require.NoError(t, dr.Error)
 
-	err = experimental.CheckGoldenDataResponse(goldenFileName, &dr, true)
+	err = experimental.CheckGoldenDataResponse(goldenFileName, &dr, false)
 	require.NoError(t, err)
 }
