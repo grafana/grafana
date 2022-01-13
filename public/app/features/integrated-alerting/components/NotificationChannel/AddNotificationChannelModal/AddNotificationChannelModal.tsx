@@ -14,18 +14,27 @@ import { TYPE_OPTIONS, TYPE_FIELDS_COMPONENT } from './AddNotificationChannel.co
 import { Messages } from './AddNotificationChannelModal.messages';
 import { getStyles } from './AddNotificationChannelModal.styles';
 import { AddNotificationChannelModalProps } from './AddNotificationChannelModal.types';
+import { getInitialValues } from './AddNotificationChannelModal.utils';
 
 const { required } = validators;
-const initialValues = { type: TYPE_OPTIONS[0] };
 
-export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> = ({ isVisible, setVisible }) => {
+export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> = ({
+  isVisible,
+  notificationChannel,
+  setVisible,
+}) => {
   const styles = useStyles(getStyles);
+  const initialValues = getInitialValues(notificationChannel);
   const { getNotificationChannels } = useContext(NotificationChannelProvider);
   const onSubmit = async (values: NotificationChannelRenderProps) => {
     try {
-      await NotificationChannelService.add(values);
+      if (notificationChannel) {
+        await NotificationChannelService.change(notificationChannel.channelId, values);
+      } else {
+        await NotificationChannelService.add(values);
+      }
       setVisible(false);
-      appEvents.emit(AppEvents.alertSuccess, [Messages.addSuccess]);
+      appEvents.emit(AppEvents.alertSuccess, [notificationChannel ? Messages.editSuccess : Messages.addSuccess]);
       getNotificationChannels();
     } catch (e) {
       logger.error(e);
@@ -65,7 +74,7 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
                   disabled={!valid || pristine}
                   loading={submitting}
                 >
-                  {Messages.addAction}
+                  {notificationChannel ? Messages.editAction : Messages.addAction}
                 </LoaderButton>
                 <Button
                   data-qa="notification-channel-cancel-button"

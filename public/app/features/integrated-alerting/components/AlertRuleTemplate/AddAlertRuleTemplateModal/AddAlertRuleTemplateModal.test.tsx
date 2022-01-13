@@ -6,13 +6,7 @@ import { act } from 'react-dom/test-utils';
 import { AddAlertRuleTemplateModal } from './AddAlertRuleTemplateModal';
 
 jest.mock('../AlertRuleTemplate.service');
-jest.mock('app/core/app_events', () => {
-  return {
-    appEvents: {
-      emit: jest.fn(),
-    },
-  };
-});
+jest.mock('app/core/app_events');
 
 describe('AddAlertRuleTemplateModal', () => {
   it('should render component correctly', () => {

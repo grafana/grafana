@@ -3,17 +3,13 @@ import { mount } from 'enzyme';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 
+import { notificationChannelStubs } from '../__mocks__/notificationChannelStubs';
+
 import { TYPE_OPTIONS } from './AddNotificationChannel.constants';
 import { AddNotificationChannelModal } from './AddNotificationChannelModal';
 
 jest.mock('../NotificationChannel.service');
-jest.mock('app/core/app_events', () => {
-  return {
-    appEvents: {
-      emit: jest.fn(),
-    },
-  };
-});
+jest.mock('app/core/app_events');
 
 describe('AddNotificationChannelModal', () => {
   it('should render modal with correct fields', () => {
@@ -53,5 +49,18 @@ describe('AddNotificationChannelModal', () => {
     });
 
     expect(setVisible).toHaveBeenCalledWith(false);
+  });
+
+  it('should render with notification channel', async () => {
+    const setVisible = jest.fn();
+    const wrapper = mount(
+      <AddNotificationChannelModal
+        notificationChannel={notificationChannelStubs[0]}
+        setVisible={setVisible}
+        isVisible
+      />
+    );
+
+    expect(wrapper.find(dataQa('name-text-input')).prop('value')).toEqual(notificationChannelStubs[0].summary);
   });
 });

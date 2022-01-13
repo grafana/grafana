@@ -4,6 +4,7 @@ export const Messages = {
   emptyTable: 'No notification channels found',
   nameColumn: 'Name',
   typeColumn: 'Type',
+  actionsColumn: 'Actions',
   typeLabel: {
     [NotificationChannelType.email]: 'Email',
     [NotificationChannelType.pagerDuty]: 'Pager Duty',

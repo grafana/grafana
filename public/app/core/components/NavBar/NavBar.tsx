@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, getBackendSrv } from '@grafana/runtime';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
@@ -18,7 +18,14 @@ import NavBarItem from './NavBarItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenu } from './NavBarMenu';
 import { NavBarSection } from './NavBarSection';
-import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
+import {
+  buildIntegratedAlertingMenuItem,
+  enrichConfigItems,
+  getActiveItem,
+  isMatchOrChildMatch,
+  isSearchActive,
+  SEARCH_ITEM_ID,
+} from './utils';
 
 const homeUrl = config.appSubUrl || '/';
 
@@ -52,8 +59,8 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
   };
-  const navTree = cloneDeep(navBarTree);
-  const topItems = navTree.filter((item) => item.section === NavSection.Core);
+  const navTree: NavModelItem[] = cloneDeep(navBarTree);
+  const [topItems, setTopItems] = useState(navTree.filter((item) => item.section === NavSection.Core));
   const bottomItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
     location,
@@ -62,6 +69,31 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const updateMenu = async () => {
+      const { settings } = await getBackendSrv().post(`${window.location.origin}/v1/Settings/Get`);
+      const newItems: NavModelItem[] = [...topItems];
+
+      if (settings.alerting_enabled) {
+        buildIntegratedAlertingMenuItem(newItems);
+      }
+
+      if (settings.dbaas_enabled) {
+        newItems.push({
+          id: 'dbaas',
+          text: 'DBaaS',
+          icon: 'database',
+          url: '/graph/d/pmm-dbaas/pmm-dbaas',
+        });
+      }
+
+      setTopItems(newItems);
+    };
+    if (config.bootData.user.isGrafanaAdmin) {
+      updateMenu();
+    }
+  }, [topItems]);
 
   if (kiosk !== KioskMode.Off) {
     return null;

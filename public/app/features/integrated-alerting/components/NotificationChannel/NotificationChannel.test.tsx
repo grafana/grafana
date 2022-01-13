@@ -1,8 +1,9 @@
 import { dataQa } from '@percona/platform-core';
-import { mount, ReactWrapper } from 'enzyme';
+import { mount, shallow, ReactWrapper, ShallowWrapper } from 'enzyme';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 
+import { DeleteNotificationChannelModal } from './DeleteNotificationChannelModal/DeleteNotificationChannelModal';
 import { NotificationChannel } from './NotificationChannel';
 
 jest.mock('./NotificationChannel.service');
@@ -34,5 +35,15 @@ describe('NotificationChannel', () => {
     wrapper.find(dataQa('notification-channel-add-modal-button')).find('button').simulate('click');
 
     expect(wrapper.find(dataQa('modal-wrapper'))).toBeTruthy();
+  });
+
+  it('should render delete modal', async () => {
+    let wrapper: ShallowWrapper;
+
+    await act(async () => {
+      wrapper = shallow(<NotificationChannel />);
+    });
+
+    expect(wrapper.find(DeleteNotificationChannelModal).length).toBe(1);
   });
 });

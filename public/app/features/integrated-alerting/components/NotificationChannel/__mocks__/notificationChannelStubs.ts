@@ -4,6 +4,7 @@ import {
   EmailNotificationChannel,
   PagerDutylNotificationChannel,
   SlackNotificationChannel,
+  NotificationChannelContext,
 } from '../NotificationChannel.types';
 
 export const notificationChannelResponseStubs: NotificationChannelAPI[] = [
@@ -66,3 +67,10 @@ export const notificationChannelStubs: Array<
     channel: 'pmm-dev',
   },
 ];
+
+export const notificationChannelContextStub: NotificationChannelContext = {
+  setSelectedNotificationChannel: jest.fn(),
+  setAddModalVisible: jest.fn(),
+  getNotificationChannels: jest.fn(),
+  setDeleteModalVisible: jest.fn(),
+};
