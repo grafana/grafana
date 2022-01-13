@@ -13,9 +13,9 @@
 	</div>
 
 	<div class="gf-form">
-		<label class="gf-form-label width-7" id="auth-label">Authentication</label>
+		<label class="gf-form-label width-7" for="auth-select">Authentication</label>
 		<div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
-			<select class="gf-form-input" ng-model="ctrl.current.jsonData.authenticationType" ng-options="mode for mode in ['Windows Authentication', 'SQL Server Authentication']" ng-init="ctrl.current.jsonData.authenticationType" ng-change="ctrl.onAuthenticationTypeChange()" aria-labelledby="auth-label"></select>
+			<select id="auth-select" class="gf-form-input" ng-model="ctrl.current.jsonData.authenticationType" ng-options="mode for mode in ['Windows Authentication', 'SQL Server Authentication']" ng-init="ctrl.current.jsonData.authenticationType" ng-change="ctrl.onAuthenticationTypeChange()"></select>
 			<info-popover mode="right-absolute">
 				<ul>
 					<li><i>SQL Server Authentication</i> This is the default mechanism to connect to MS SQL Server. Enter the SQL Server Authentication login or the Windows Authentication login in the DOMAIN\User format.</li>
@@ -37,6 +37,7 @@
 				on-change="ctrl.onPasswordChange"
 				labelWidth="7"
 				inputWidth="7"
+				aria-label="'Password'"
 			/>
 		</div>
 	</div>
