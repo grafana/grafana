@@ -1,8 +1,8 @@
-import { DataFrame, FieldType } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
 import { Feature } from 'ol';
 import { Geometry } from 'ol/geom';
 import VectorSource from 'ol/source/Vector';
-import { LocationFieldMatchers, setGeometryOnFrame } from './location';
+import { getGeometryField, LocationFieldMatchers } from './location';
 
 export interface FrameVectorSourceOptions {}
 
@@ -21,11 +21,10 @@ export class FrameVectorSource extends VectorSource<Geometry> {
     });
   }
 
-  update(input: DataFrame) {
+  update(frame: DataFrame) {
     this.clear(true);
-    const frame = setGeometryOnFrame(input, this.location);
-    const geo = frame.fields.find((f) => f.type === FieldType.geo);
-    if (!geo) {
+    const info = getGeometryField(frame, this.location);
+    if (!info.field) {
       this.changed();
       return;
     }
@@ -35,7 +34,7 @@ export class FrameVectorSource extends VectorSource<Geometry> {
         new Feature({
           frame,
           rowIndex: i,
-          geometry: geo.values.get(i),
+          geometry: info.field.values.get(i),
         })
       );
     }

@@ -1,5 +1,5 @@
 import { DataFrame, DataTransformerID, DataTransformerInfo, FrameGeometrySource } from '@grafana/data';
-import { getLocationMatchers, setGeometryOnFrame } from 'app/features/geo/utils/location';
+import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 import { mergeMap, from } from 'rxjs';
 
 export interface SetGeometryOptions {
@@ -19,6 +19,13 @@ async function doGazetteerXform(frames: DataFrame[], options: SetGeometryOptions
   const location = await getLocationMatchers(options.source);
 
   return frames.map((frame) => {
-    return setGeometryOnFrame(frame, location);
+    const info = getGeometryField(frame, location);
+    if (info.field && info.derived) {
+      return {
+        ...frame,
+        fields: [info.field, ...frame.fields],
+      };
+    }
+    return frame;
   });
 }

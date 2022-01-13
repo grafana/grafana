@@ -153,62 +153,63 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
   return fields;
 }
 
-export function setGeometryOnFrame(frame: DataFrame, location: LocationFieldMatchers): DataFrame {
-  let warning: string | undefined = undefined;
-  let geo: Field | undefined = undefined;
+export interface FrameGeometryField {
+  field?: Field<Geometry | undefined>;
+  warning?: string;
+  derived?: boolean;
+}
+
+export function getGeometryField(frame: DataFrame, location: LocationFieldMatchers): FrameGeometryField {
   const fields = getLocationFields(frame, location);
   switch (fields.mode) {
     case FrameGeometrySourceMode.Auto:
       if (fields.geo) {
-        return frame;
+        return {
+          field: fields.geo,
+        };
       }
-      warning = 'Unable to find location fields';
-      break;
+      return {
+        warning: 'Unable to find location fields',
+      };
 
     case FrameGeometrySourceMode.Coords:
       if (fields.latitude && fields.longitude) {
-        geo = pointFieldFromLonLat(fields.longitude, fields.latitude);
-      } else {
-        warning = 'Missing latitude/longitude fields';
+        return {
+          field: pointFieldFromLonLat(fields.longitude, fields.latitude),
+          derived: true,
+        };
       }
-      break;
+      return {
+        warning: 'Missing latitude/longitude fields',
+      };
 
     case FrameGeometrySourceMode.Geohash:
       if (fields.geohash) {
-        geo = pointFieldFromGeohash(fields.geohash);
-      } else {
-        warning = 'Missing geohash field';
+        return {
+          field: pointFieldFromGeohash(fields.geohash),
+          derived: true,
+        };
       }
-      break;
+      return {
+        warning: 'Missing geohash field',
+      };
 
     case FrameGeometrySourceMode.Lookup:
       if (fields.lookup) {
         if (location.gazetteer) {
-          geo = getGeoFieldFromGazetteer(location.gazetteer, fields.lookup);
-        } else {
-          warning = 'Gazetteer not found';
+          return {
+            field: getGeoFieldFromGazetteer(location.gazetteer, fields.lookup),
+            derived: true,
+          };
         }
-      } else {
-        warning = 'Missing lookup field';
+        return {
+          warning: 'Gazetteer not found',
+        };
       }
-      break;
+      return {
+        warning: 'Missing lookup field',
+      };
   }
 
-  if (warning || !geo) {
-    const meta = frame.meta ?? {};
-    meta.notices = [
-      {
-        severity: 'error',
-        text: warning ?? 'Unable to set geometry field',
-      },
-    ];
-    return {
-      ...frame,
-      meta,
-    };
-  }
-  return {
-    ...frame,
-    fields: [geo, ...frame.fields],
-  };
+  return { warning: 'unable to find geometry' };
 }
