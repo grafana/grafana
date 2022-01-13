@@ -3,7 +3,9 @@ import React, { FC, useState } from 'react';
 import { Button, useStyles } from '@grafana/ui';
 import { Messages } from 'app/features/integrated-alerting/IntegratedAlerting.messages';
 
-import { AddAlertRuleTemplateModal } from './AddAlertRuleTemplateModal/AddAlertRuleTemplateModal';
+import { AlertRuleTemplatesTable } from '..';
+
+import { AddAlertRuleTemplateModal } from './AddAlertRuleTemplateModal';
 import { getStyles } from './AlertRuleTemplate.styles';
 
 export const AlertRuleTemplate: FC = () => {
@@ -11,7 +13,7 @@ export const AlertRuleTemplate: FC = () => {
   const [addModalVisible, setAddModalVisible] = useState(false);
 
   return (
-    <div>
+    <>
       <div className={styles.actionsWrapper}>
         <Button
           size="md"
@@ -24,6 +26,7 @@ export const AlertRuleTemplate: FC = () => {
         </Button>
       </div>
       <AddAlertRuleTemplateModal isVisible={addModalVisible} setVisible={setAddModalVisible} />
-    </div>
+      <AlertRuleTemplatesTable />
+    </>
   );
 };

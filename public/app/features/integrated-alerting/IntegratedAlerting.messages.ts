@@ -15,5 +15,13 @@ export const Messages = {
         alertRuleTemplate: 'Alert Rule Template',
       },
     },
+    table: {
+      noData: 'No templates found',
+      columns: {
+        name: 'Name',
+        source: 'Source',
+        createdAt: 'Created',
+      },
+    },
   },
 };
