@@ -6127,10 +6127,6 @@
       "description": "COMMANDS",
       "type": "object",
       "properties": {
-        "createServiceAccount": {
-          "type": "boolean",
-          "x-go-name": "CreateNewServiceAccount"
-        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
@@ -6142,11 +6138,6 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "SecondsToLive"
-        },
-        "serviceAccount": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "ServiceAccountId"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -7554,6 +7545,9 @@
         "access": {
           "$ref": "#/definitions/DsAccess"
         },
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "basicAuth": {
           "type": "boolean",
           "x-go-name": "BasicAuth"
@@ -8457,6 +8451,14 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
     },
+    "Metadata": {
+      "description": "Metadata contains user accesses for a given resource\nEx: map[string]bool{\"create\":true, \"delete\": true}",
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/accesscontrol"
+    },
     "MetricRequest": {
       "description": "MetricRequest same as dtos.MetricRequest but with swagger annotations",
       "type": "object",
@@ -8599,6 +8601,13 @@
     "OrgUserDTO": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "x-go-name": "AccessControl"
+        },
         "avatarUrl": {
           "type": "string",
           "x-go-name": "AvatarUrl"
@@ -9628,6 +9637,13 @@
     "UserProfileDTO": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "x-go-name": "AccessControl"
+        },
         "authLabels": {
           "type": "array",
           "items": {
