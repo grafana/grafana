@@ -65,6 +65,7 @@ export function SQLBuilderEditor({ query, datasource, onChange, onRunQuery }: Re
 
         <EditorField label="Limit" optional>
           <Input
+            aria-label="Limit"
             value={sql.limit}
             onChange={(e) => {
               const val = e.currentTarget.valueAsNumber;
