@@ -18,10 +18,6 @@ msgstr ""
 msgid "common.save"
 msgstr "Save"
 
-#: public/app/features/profile/UserProfileEditForm.tsx
-#~ msgid "edit-user-profile.title"
-#~ msgstr "Edit profile"
-
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"
 msgstr "Timezone"

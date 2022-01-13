@@ -25,7 +25,7 @@ class UserSessions extends PureComponent<Props> {
           <>
             <h3 className="page-sub-heading">Sessions</h3>
             <div className="gf-form-group">
-              <table className="filter-table form-inline" aria-label={selectors.components.UserProfile.sessionsTable}>
+              <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.sessionsTable}>
                 <thead>
                   <tr>
                     <th>

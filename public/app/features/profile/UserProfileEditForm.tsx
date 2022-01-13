@@ -25,7 +25,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
         return (
           <FieldSet label={<Trans id="user-profile.title">Edit profile</Trans>}>
             <Field
-              label={<Trans id="user-profile.fields.name-label">Name</Trans>}
+              label={t({ id: 'user-profile.fields.name-label', message: 'Name' })}
               invalid={!!errors.name}
               error={<Trans id="user-profile.fields.name-error">Name is required</Trans>}
               disabled={disableLoginForm}
@@ -40,7 +40,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
             </Field>
 
             <Field
-              label={<Trans id="user-profile.fields.email-label">Email</Trans>}
+              label={t({ id: 'user-profile.fields.email-label', message: 'Email' })}
               invalid={!!errors.email}
               error={<Trans id="user-profile.fields.email-error">Email is required</Trans>}
               disabled={disableLoginForm}
@@ -54,7 +54,10 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
               />
             </Field>
 
-            <Field label={<Trans id="user-profile.fields.username-label">Username</Trans>} disabled={disableLoginForm}>
+            <Field
+              label={t({ id: 'user-profile.fields.username-label', message: 'Username' })}
+              disabled={disableLoginForm}
+            >
               <Input
                 {...register('login')}
                 id="edit-user-profile-username"
