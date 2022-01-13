@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
@@ -11,7 +12,10 @@ import (
 )
 
 func ValidateOrgPlaylist(c *models.ReqContext) {
-	id := c.ParamsInt64(":id")
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 	query := models.GetPlaylistByIdQuery{Id: id}
 	err := bus.Dispatch(c.Req.Context(), &query)
 
@@ -54,7 +58,10 @@ func SearchPlaylists(c *models.ReqContext) response.Response {
 }
 
 func GetPlaylist(c *models.ReqContext) response.Response {
-	id := c.ParamsInt64(":id")
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 	cmd := models.GetPlaylistByIdQuery{Id: id}
 
 	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
@@ -107,7 +114,10 @@ func LoadPlaylistItems(ctx context.Context, id int64) ([]models.PlaylistItem, er
 }
 
 func GetPlaylistItems(c *models.ReqContext) response.Response {
-	id := c.ParamsInt64(":id")
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	playlistDTOs, err := LoadPlaylistItemDTOs(c.Req.Context(), id)
 
@@ -119,7 +129,10 @@ func GetPlaylistItems(c *models.ReqContext) response.Response {
 }
 
 func GetPlaylistDashboards(c *models.ReqContext) response.Response {
-	playlistID := c.ParamsInt64(":id")
+	playlistID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	playlists, err := LoadPlaylistDashboards(c.Req.Context(), c.OrgId, c.SignedInUser, playlistID)
 	if err != nil {
@@ -130,7 +143,10 @@ func GetPlaylistDashboards(c *models.ReqContext) response.Response {
 }
 
 func DeletePlaylist(c *models.ReqContext) response.Response {
-	id := c.ParamsInt64(":id")
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	cmd := models.DeletePlaylistCommand{Id: id, OrgId: c.OrgId}
 	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {

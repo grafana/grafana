@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -125,8 +126,14 @@ func UpdateUser(c *models.ReqContext) response.Response {
 
 // POST /api/users/:id/using/:orgId
 func UpdateUserActiveOrg(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":id")
-	orgID := c.ParamsInt64(":orgId")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
 
 	if !validateUsingOrg(c.Req.Context(), userID, orgID) {
 		return response.Error(401, "Not a valid organization", nil)
@@ -219,7 +226,10 @@ func validateUsingOrg(ctx context.Context, userID int64, orgID int64) bool {
 
 // POST /api/user/using/:id
 func UserSetUsingOrg(c *models.ReqContext) response.Response {
-	orgID := c.ParamsInt64(":id")
+	orgID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	if !validateUsingOrg(c.Req.Context(), c.UserId, orgID) {
 		return response.Error(401, "Not a valid organization", nil)
@@ -236,7 +246,10 @@ func UserSetUsingOrg(c *models.ReqContext) response.Response {
 
 // GET /profile/switch-org/:id
 func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *models.ReqContext) {
-	orgID := c.ParamsInt64(":id")
+	orgID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	if !validateUsingOrg(c.Req.Context(), c.UserId, orgID) {
 		hs.NotFoundHandler(c)
@@ -298,7 +311,10 @@ func redirectToChangePassword(c *models.ReqContext) {
 }
 
 func SetHelpFlag(c *models.ReqContext) response.Response {
-	flag := c.ParamsInt64(":id")
+	flag, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	bitmask := &c.HelpFlags1
 	bitmask.AddFlag(models.HelpFlags1(flag))

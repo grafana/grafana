@@ -21,7 +21,10 @@ import (
 )
 
 func ValidateOrgAlert(c *models.ReqContext) {
-	id := c.ParamsInt64(":alertId")
+	id, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "alertId is invalid", err)
+	}
 	query := models.GetAlertByIdQuery{Id: id}
 
 	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
@@ -178,7 +181,10 @@ func (hs *HTTPServer) AlertTest(c *models.ReqContext) response.Response {
 
 // GET /api/alerts/:id
 func GetAlert(c *models.ReqContext) response.Response {
-	id := c.ParamsInt64(":alertId")
+	id, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "alertId is invalid", err)
+	}
 	query := models.GetAlertByIdQuery{Id: id}
 
 	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
@@ -496,7 +502,10 @@ func PauseAlert(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &dto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	alertID := c.ParamsInt64(":alertId")
+	alertID, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "alertId is invalid", err)
+	}
 	result := make(map[string]interface{})
 	result["alertId"] = alertID
 

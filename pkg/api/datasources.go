@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/datasource"
@@ -111,7 +112,10 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 }
 
 func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Response {
-	id := c.ParamsInt64(":id")
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	if id <= 0 {
 		return response.Error(400, "Missing valid datasource id", nil)
@@ -410,7 +414,10 @@ func GetDataSourceIdByName(c *models.ReqContext) response.Response {
 
 // /api/datasources/:id/resources/*
 func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
-	datasourceID := c.ParamsInt64(":id")
+	datasourceID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
@@ -465,7 +472,10 @@ func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 // CheckDatasourceHealth sends a health check request to the plugin datasource
 // /api/datasource/:id/health
 func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Response {
-	datasourceID := c.ParamsInt64(":id")
+	datasourceID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {

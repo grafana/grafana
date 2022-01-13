@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -78,7 +79,10 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	teamId := c.ParamsInt64(":teamId")
+	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
 	orgId := c.OrgId
 
 	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
@@ -105,8 +109,14 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 // DELETE /api/teams/:teamId/members/:userId
 func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	orgId := c.OrgId
-	teamId := c.ParamsInt64(":teamId")
-	userId := c.ParamsInt64(":userId")
+	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
+	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "userId is invalid", err)
+	}
 
 	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to remove team member", err)

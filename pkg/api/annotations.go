@@ -199,7 +199,10 @@ func PatchAnnotation(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	annotationID := c.ParamsInt64(":annotationId")
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
 
 	repo := annotations.GetRepository()
 
@@ -269,7 +272,10 @@ func DeleteAnnotations(c *models.ReqContext) response.Response {
 
 func DeleteAnnotationByID(c *models.ReqContext) response.Response {
 	repo := annotations.GetRepository()
-	annotationID := c.ParamsInt64(":annotationId")
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
 
 	if resp := canSave(c, repo, annotationID); resp != nil {
 		return resp
