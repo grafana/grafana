@@ -18,8 +18,10 @@ import importDashboardReducers from 'app/features/manage-dashboards/state/reduce
 import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
 import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers';
+import thumbsReducers from 'app/features/search/reducers/thumbnails';
 
 const rootReducers = {
+  ...thumbsReducers,
   ...sharedReducers,
   ...alertingReducers,
   ...teamsReducers,
