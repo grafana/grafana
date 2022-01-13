@@ -115,7 +115,7 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
   return (
     <div>
       <div className="page-action-bar">
-        <h3 className="page-sub-heading">{title ? title : 'Permissions'}</h3>
+        <h3 className="page-sub-heading">{title}</h3>
         <div className="page-action-bar__spacer" />
         {canSetPermissions && (
           <Button variant={'primary'} key="add-permission" onClick={() => setIsAdding(true)}>
