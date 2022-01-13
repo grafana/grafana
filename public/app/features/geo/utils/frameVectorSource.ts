@@ -8,17 +8,7 @@ export interface FrameVectorSourceOptions {}
 
 export class FrameVectorSource extends VectorSource<Geometry> {
   constructor(private location: LocationFieldMatchers) {
-    super({
-      // attributions?: import("./Source.js").AttributionLike;
-      // features?: Array<Feature<any>> | Collection<Feature<any>>;
-      // format?: import("../format/Feature.js").default;
-      // loader?: import("../featureloader.js").FeatureLoader;
-      // overlaps?: boolean;
-      // strategy?: LoadingStrategy;
-      // url?: string | import("../featureloader.js").FeatureUrlFunction;
-      // useSpatialIndex?: boolean;
-      // wrapX?: boolean;
-    });
+    super({});
   }
 
   update(frame: DataFrame) {

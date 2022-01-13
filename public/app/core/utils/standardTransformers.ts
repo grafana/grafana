@@ -20,7 +20,6 @@ import { prepareTimeseriesTransformerRegistryItem } from '../components/Transfor
 import { convertFieldTypeTransformRegistryItem } from '../components/TransformersUI/ConvertFieldTypeTransformerEditor';
 import { fieldLookupTransformRegistryItem } from '../components/TransformersUI/lookupGazetteer/FieldLookupTransformerEditor';
 import { extractFieldsTransformRegistryItem } from '../components/TransformersUI/extractFields/ExtractFieldsTransformerEditor';
-import { setGeometryTransformRegistryItem } from '../components/TransformersUI/setGeometry/SetGeometryTransformerEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
@@ -43,9 +42,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     configFromQueryTransformRegistryItem,
     prepareTimeseriesTransformerRegistryItem,
     convertFieldTypeTransformRegistryItem,
+    fieldLookupTransformRegistryItem,
     extractFieldsTransformRegistryItem,
   ];
 };
-
-// Not yet registered by default (both alpha)
-export const notYetStandard = [setGeometryTransformRegistryItem, fieldLookupTransformRegistryItem];
