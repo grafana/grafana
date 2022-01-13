@@ -58,7 +58,12 @@ import { increasingInterval } from './utils/rxjs/increasingInterval';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import { addDataLinksToLogsResponse } from './utils/datalinks';
 import { runWithRetry } from './utils/logsRetry';
-import { CompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
+
+import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
+import { getSuggestionKinds as getSQLSuggestionKinds } from './cloudwatch-sql/completion/suggestionKind';
+import { getStatementPosition as getSQLStatementPosition } from './cloudwatch-sql/completion/statementPosition';
+import cloudWatchSqlLanguageDefinition from './cloudwatch-sql/definition';
+import { SQLTokenType } from './cloudwatch-sql/completion/types';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -89,7 +94,8 @@ export class CloudWatchDatasource
   defaultRegion: any;
   datasourceName: string;
   languageProvider: CloudWatchLanguageProvider;
-  sqlCompletionItemProvider: CompletionItemProvider;
+  sqlCompletionItemProvider: SQLCompletionItemProvider;
+
   tracingDataSourceUid?: string;
   logsTimeout: string;
 
@@ -118,7 +124,14 @@ export class CloudWatchDatasource
     this.languageProvider = new CloudWatchLanguageProvider(this);
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
     this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
-    this.sqlCompletionItemProvider = new CompletionItemProvider(this);
+    this.sqlCompletionItemProvider = new SQLCompletionItemProvider(
+      this,
+      this.templateSrv,
+      cloudWatchSqlLanguageDefinition,
+      SQLTokenType,
+      getSQLStatementPosition,
+      getSQLSuggestionKinds
+    );
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {

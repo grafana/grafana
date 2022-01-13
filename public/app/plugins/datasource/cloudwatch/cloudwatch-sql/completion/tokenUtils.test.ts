@@ -1,5 +1,4 @@
 import { monacoTypes } from '@grafana/ui';
-import { LinkedToken } from './LinkedToken';
 import MonacoMock from '../../__mocks__/cloudwatch-sql/Monaco';
 import TextModel from '../../__mocks__/cloudwatch-sql/TextModel';
 import {
@@ -8,10 +7,12 @@ import {
   singleLineTwoQueries,
   multiLineIncompleteQueryWithoutNamespace,
 } from '../../__mocks__/cloudwatch-sql/test-data';
-import { linkedTokenBuilder } from './linkedTokenBuilder';
-import { TokenType } from './types';
+import { LinkedToken } from '../../monarch/LinkedToken';
+import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';
+import { SQLTokenType } from './types';
 import { getMetricNameToken, getNamespaceToken, getSelectStatisticToken, getSelectToken } from './tokenUtils';
 import { SELECT } from '../language';
+import cloudWatchMetricMathLanguageDefinition from '../../metric-math/definition';
 
 const getToken = (
   query: string,
@@ -19,7 +20,13 @@ const getToken = (
   invokeFunction: (token: LinkedToken | null) => LinkedToken | null
 ) => {
   const testModel = TextModel(query);
-  const current = linkedTokenBuilder(MonacoMock, testModel as monacoTypes.editor.ITextModel, position);
+  const current = linkedTokenBuilder(
+    MonacoMock,
+    cloudWatchMetricMathLanguageDefinition,
+    testModel as monacoTypes.editor.ITextModel,
+    position,
+    SQLTokenType
+  );
   return invokeFunction(current);
 };
 
@@ -33,7 +40,7 @@ describe('tokenUtils', () => {
     const token = getToken(query, position, getSelectToken);
     expect(token).not.toBeNull();
     expect(token?.value).toBe(SELECT);
-    expect(token?.type).toBe(TokenType.Keyword);
+    expect(token?.type).toBe(SQLTokenType.Keyword);
   });
 
   test.each([
@@ -44,7 +51,7 @@ describe('tokenUtils', () => {
   ])('getSelectToken should return the right token', (query: string, position: monacoTypes.IPosition) => {
     const token = getToken(query, position, getSelectStatisticToken);
     expect(token).not.toBeNull();
-    expect(token?.type).toBe(TokenType.Function);
+    expect(token?.type).toBe(SQLTokenType.Function);
   });
 
   test.each([
@@ -58,7 +65,7 @@ describe('tokenUtils', () => {
       const token = getToken(query, position, getSelectStatisticToken);
       expect(token).not.toBeNull();
       expect(token?.value).toBe(value);
-      expect(token?.type).toBe(TokenType.Function);
+      expect(token?.type).toBe(SQLTokenType.Function);
     }
   );
 
@@ -73,19 +80,19 @@ describe('tokenUtils', () => {
       const token = getToken(query, position, getMetricNameToken);
       expect(token).not.toBeNull();
       expect(token?.value).toBe(value);
-      expect(token?.type).toBe(TokenType.Identifier);
+      expect(token?.type).toBe(SQLTokenType.Identifier);
     }
   );
 
   test.each([
-    [singleLineFullQuery.query, '"AWS/EC2"', TokenType.Type, { lineNumber: 1, column: 50 }],
-    [multiLineFullQuery.query, '"AWS/ECS"', TokenType.Type, { lineNumber: 5, column: 10 }],
-    [singleLineTwoQueries.query, '"AWS/EC2"', TokenType.Type, { lineNumber: 1, column: 30 }],
-    [singleLineTwoQueries.query, '"AWS/ECS"', TokenType.Type, { lineNumber: 1, column: 185 }],
+    [singleLineFullQuery.query, '"AWS/EC2"', SQLTokenType.Type, { lineNumber: 1, column: 50 }],
+    [multiLineFullQuery.query, '"AWS/ECS"', SQLTokenType.Type, { lineNumber: 5, column: 10 }],
+    [singleLineTwoQueries.query, '"AWS/EC2"', SQLTokenType.Type, { lineNumber: 1, column: 30 }],
+    [singleLineTwoQueries.query, '"AWS/ECS"', SQLTokenType.Type, { lineNumber: 1, column: 185 }],
     [multiLineIncompleteQueryWithoutNamespace.query, undefined, undefined, { lineNumber: 2, column: 5 }],
   ])(
     'getNamespaceToken should return the right token',
-    (query: string, value: string | undefined, tokenType: TokenType | undefined, position: monacoTypes.IPosition) => {
+    (query: string, value: string | undefined, tokenType: string | undefined, position: monacoTypes.IPosition) => {
       const token = getToken(query, position, getNamespaceToken);
       expect(token?.value).toBe(value);
       expect(token?.type).toBe(tokenType);

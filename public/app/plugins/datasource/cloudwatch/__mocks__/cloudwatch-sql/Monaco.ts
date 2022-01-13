@@ -1,5 +1,5 @@
 import { monacoTypes } from '@grafana/ui';
-import { Monaco } from '../../cloudwatch-sql/completion/types';
+import { Monaco } from '../../monarch/types';
 import {
   multiLineFullQuery,
   singleLineFullQuery,

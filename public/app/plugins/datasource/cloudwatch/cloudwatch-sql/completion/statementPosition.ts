@@ -1,16 +1,17 @@
 import { AND, ASC, BY, DESC, EQUALS, FROM, GROUP, NOT_EQUALS, ORDER, SCHEMA, SELECT, WHERE } from '../language';
-import { LinkedToken } from './LinkedToken';
-import { StatementPosition, TokenType } from './types';
+import { LinkedToken } from '../../monarch/LinkedToken';
+import { StatementPosition } from '../../monarch/types';
+import { SQLTokenType } from './types';
 
 export function getStatementPosition(currentToken: LinkedToken | null): StatementPosition {
   const previousNonWhiteSpace = currentToken?.getPreviousNonWhiteSpaceToken();
   const previousKeyword = currentToken?.getPreviousKeyword();
 
-  const previousIsSlash = currentToken?.getPreviousNonWhiteSpaceToken()?.is(TokenType.Operator, '/');
+  const previousIsSlash = currentToken?.getPreviousNonWhiteSpaceToken()?.is(SQLTokenType.Operator, '/');
   if (
     currentToken === null ||
     (currentToken.isWhiteSpace() && currentToken.previous === null) ||
-    (currentToken.is(TokenType.Keyword, SELECT) && currentToken.previous === null) ||
+    (currentToken.is(SQLTokenType.Keyword, SELECT) && currentToken.previous === null) ||
     previousIsSlash ||
     (currentToken.isIdentifier() && (previousIsSlash || currentToken?.previous === null))
   ) {
@@ -22,7 +23,7 @@ export function getStatementPosition(currentToken: LinkedToken | null): Statemen
   }
 
   if (
-    (previousNonWhiteSpace?.is(TokenType.Parenthesis, '(') || currentToken?.is(TokenType.Parenthesis, '()')) &&
+    (previousNonWhiteSpace?.is(SQLTokenType.Parenthesis, '(') || currentToken?.is(SQLTokenType.Parenthesis, '()')) &&
     previousKeyword?.value === SELECT
   ) {
     return StatementPosition.AfterSelectFuncFirstArgument;
@@ -37,20 +38,20 @@ export function getStatementPosition(currentToken: LinkedToken | null): Statemen
   }
 
   if (
-    (previousNonWhiteSpace?.is(TokenType.Parenthesis, '(') || currentToken?.is(TokenType.Parenthesis, '()')) &&
+    (previousNonWhiteSpace?.is(SQLTokenType.Parenthesis, '(') || currentToken?.is(SQLTokenType.Parenthesis, '()')) &&
     previousKeyword?.value === SCHEMA
   ) {
     return StatementPosition.SchemaFuncFirstArgument;
   }
 
-  if (previousKeyword?.value === SCHEMA && previousNonWhiteSpace?.is(TokenType.Delimiter, ',')) {
+  if (previousKeyword?.value === SCHEMA && previousNonWhiteSpace?.is(SQLTokenType.Delimiter, ',')) {
     return StatementPosition.SchemaFuncExtraArgument;
   }
 
   if (
     (previousKeyword?.value === FROM && previousNonWhiteSpace?.isDoubleQuotedString()) ||
     (previousKeyword?.value === FROM && previousNonWhiteSpace?.isVariable()) ||
-    (previousKeyword?.value === SCHEMA && previousNonWhiteSpace?.is(TokenType.Parenthesis, ')'))
+    (previousKeyword?.value === SCHEMA && previousNonWhiteSpace?.is(SQLTokenType.Parenthesis, ')'))
   ) {
     return StatementPosition.AfterFrom;
   }
@@ -58,8 +59,8 @@ export function getStatementPosition(currentToken: LinkedToken | null): Statemen
   if (
     previousKeyword?.value === WHERE &&
     (previousNonWhiteSpace?.isKeyword() ||
-      previousNonWhiteSpace?.is(TokenType.Parenthesis, '(') ||
-      previousNonWhiteSpace?.is(TokenType.Operator, AND))
+      previousNonWhiteSpace?.is(SQLTokenType.Parenthesis, '(') ||
+      previousNonWhiteSpace?.is(SQLTokenType.Operator, AND))
   ) {
     return StatementPosition.WhereKey;
   }
@@ -73,51 +74,52 @@ export function getStatementPosition(currentToken: LinkedToken | null): Statemen
 
   if (
     previousKeyword?.value === WHERE &&
-    (previousNonWhiteSpace?.is(TokenType.Operator, EQUALS) || previousNonWhiteSpace?.is(TokenType.Operator, NOT_EQUALS))
+    (previousNonWhiteSpace?.is(SQLTokenType.Operator, EQUALS) ||
+      previousNonWhiteSpace?.is(SQLTokenType.Operator, NOT_EQUALS))
   ) {
     return StatementPosition.WhereValue;
   }
 
   if (
     previousKeyword?.value === WHERE &&
-    (previousNonWhiteSpace?.isString() || previousNonWhiteSpace?.is(TokenType.Parenthesis, ')'))
+    (previousNonWhiteSpace?.isString() || previousNonWhiteSpace?.is(SQLTokenType.Parenthesis, ')'))
   ) {
     return StatementPosition.AfterWhereValue;
   }
 
   if (
-    previousKeyword?.is(TokenType.Keyword, BY) &&
-    previousKeyword?.getPreviousKeyword()?.is(TokenType.Keyword, GROUP) &&
-    (previousNonWhiteSpace?.is(TokenType.Keyword, BY) || previousNonWhiteSpace?.is(TokenType.Delimiter, ','))
+    previousKeyword?.is(SQLTokenType.Keyword, BY) &&
+    previousKeyword?.getPreviousKeyword()?.is(SQLTokenType.Keyword, GROUP) &&
+    (previousNonWhiteSpace?.is(SQLTokenType.Keyword, BY) || previousNonWhiteSpace?.is(SQLTokenType.Delimiter, ','))
   ) {
     return StatementPosition.AfterGroupByKeywords;
   }
 
   if (
-    previousKeyword?.is(TokenType.Keyword, BY) &&
-    previousKeyword?.getPreviousKeyword()?.is(TokenType.Keyword, GROUP) &&
+    previousKeyword?.is(SQLTokenType.Keyword, BY) &&
+    previousKeyword?.getPreviousKeyword()?.is(SQLTokenType.Keyword, GROUP) &&
     (previousNonWhiteSpace?.isIdentifier() || previousNonWhiteSpace?.isDoubleQuotedString())
   ) {
     return StatementPosition.AfterGroupBy;
   }
 
   if (
-    previousNonWhiteSpace?.is(TokenType.Keyword, BY) &&
-    previousNonWhiteSpace?.getPreviousKeyword()?.is(TokenType.Keyword, ORDER)
+    previousNonWhiteSpace?.is(SQLTokenType.Keyword, BY) &&
+    previousNonWhiteSpace?.getPreviousKeyword()?.is(SQLTokenType.Keyword, ORDER)
   ) {
     return StatementPosition.AfterOrderByKeywords;
   }
 
   if (
-    previousKeyword?.is(TokenType.Keyword, BY) &&
-    previousKeyword?.getPreviousKeyword()?.is(TokenType.Keyword, ORDER) &&
-    previousNonWhiteSpace?.is(TokenType.Parenthesis) &&
-    previousNonWhiteSpace?.getPreviousNonWhiteSpaceToken()?.is(TokenType.Function)
+    previousKeyword?.is(SQLTokenType.Keyword, BY) &&
+    previousKeyword?.getPreviousKeyword()?.is(SQLTokenType.Keyword, ORDER) &&
+    previousNonWhiteSpace?.is(SQLTokenType.Parenthesis) &&
+    previousNonWhiteSpace?.getPreviousNonWhiteSpaceToken()?.is(SQLTokenType.Function)
   ) {
     return StatementPosition.AfterOrderByFunction;
   }
 
-  if (previousKeyword?.is(TokenType.Keyword, DESC) || previousKeyword?.is(TokenType.Keyword, ASC)) {
+  if (previousKeyword?.is(SQLTokenType.Keyword, DESC) || previousKeyword?.is(SQLTokenType.Keyword, ASC)) {
     return StatementPosition.AfterOrderByDirection;
   }
 

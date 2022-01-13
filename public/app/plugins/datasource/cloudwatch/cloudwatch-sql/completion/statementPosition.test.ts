@@ -7,14 +7,22 @@ import {
   singleLineEmptyQuery,
   singleLineTwoQueries,
 } from '../../__mocks__/cloudwatch-sql/test-data';
-import { linkedTokenBuilder } from './linkedTokenBuilder';
-import { StatementPosition } from './types';
+import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';
+import { StatementPosition } from '../../monarch/types';
 import { getStatementPosition } from './statementPosition';
+import cloudWatchSqlLanguageDefinition from '../definition';
+import { SQLTokenType } from './types';
 
 describe('statementPosition', () => {
   function assertPosition(query: string, position: monacoTypes.IPosition, expected: StatementPosition) {
     const testModel = TextModel(query);
-    const current = linkedTokenBuilder(MonacoMock, testModel as monacoTypes.editor.ITextModel, position);
+    const current = linkedTokenBuilder(
+      MonacoMock,
+      cloudWatchSqlLanguageDefinition,
+      testModel as monacoTypes.editor.ITextModel,
+      position,
+      SQLTokenType
+    );
     const statementPosition = getStatementPosition(current);
     expect(statementPosition).toBe(expected);
   }
