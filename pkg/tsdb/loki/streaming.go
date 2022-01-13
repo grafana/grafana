@@ -11,6 +11,7 @@ import (
 	"cuelang.org/go/pkg/strings"
 	"github.com/gorilla/websocket"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
@@ -35,7 +36,7 @@ func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStrea
 		}, fmt.Errorf("missing expr in channel (subscribe)")
 	}
 
-	s.plog.Info("TODO: backfill query", "query", query, "ds", dsInfo)
+	s.plog.Info("TODO: backfill query", "query", query.Expr, "ds", dsInfo.URL)
 
 	// nothing yet
 	return &backend.SubscribeStreamResponse{
@@ -72,9 +73,14 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	} else {
 		wsurl.Scheme = "ws"
 	}
-	wsurl.Path = "/loki/api/v2alpha/tail"
 	wsurl.RawQuery = params.Encode()
-	// limit, start
+
+	isV1 := true
+	if isV1 {
+		wsurl.Path = "/loki/api/v1/tail"
+	} else {
+		wsurl.Path = "/loki/api/v2alpha/tail"
+	}
 
 	s.plog.Info("connecting to websocket", "url", wsurl)
 	c, _, err := websocket.DefaultDialer.Dial(wsurl.String(), nil)
@@ -98,7 +104,16 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 				s.plog.Error("websocket read:", "err", err)
 				return
 			}
-			err = sender.SendBytes(message)
+			if isV1 {
+				//fmt.Printf("\n\n%s\n", string(message))
+				var f *data.Frame
+				f, err = lokiBytesToLabeledFrame(message)
+				if err == nil {
+					err = sender.SendFrame(f, data.IncludeAll)
+				}
+			} else {
+				err = sender.SendBytes(message)
+			}
 			if err != nil {
 				s.plog.Error("websocket write:", "err", err)
 				return
