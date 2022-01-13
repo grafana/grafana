@@ -221,7 +221,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		}
 
 		cmd.Alerts = multipleItems
-		err := sqlStore.SaveAlerts(context.Background(), cmd.DashboardId, items)
+		err := sqlStore.SaveAlerts(context.Background(), cmd.DashboardId, multipleItems)
 
 		t.Run("Should save 3 dashboards", func(t *testing.T) {
 			require.Nil(t, err)
@@ -237,7 +237,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			missingOneAlert := multipleItems[:2]
 
 			cmd.Alerts = missingOneAlert
-			err = sqlStore.SaveAlerts(context.Background(), cmd.DashboardId, items)
+			err = sqlStore.SaveAlerts(context.Background(), cmd.DashboardId, missingOneAlert)
 
 			t.Run("should delete the missing alert", func(t *testing.T) {
 				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
@@ -293,7 +293,7 @@ func TestPausingAlerts(t *testing.T) {
 		sqlStore := InitTestDB(t)
 
 		testDash := insertTestDashboard(t, sqlStore, "dashboard with alerts", 1, 0, false, "alert")
-		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgId, testDash.Id, simplejson.New())
+		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgId, testDash.Id, simplejson.New(), sqlStore)
 		require.Nil(t, err)
 
 		stateDateBeforePause := alert.NewStateDate
@@ -343,7 +343,7 @@ func (ss *SQLStore) pauseAlert(t *testing.T, orgId int64, alertId int64, pauseSt
 	require.Nil(t, err)
 	return cmd.ResultCount, err
 }
-func insertTestAlert(title string, message string, orgId int64, dashId int64, settings *simplejson.Json) (*models.Alert, error) {
+func insertTestAlert(title string, message string, orgId int64, dashId int64, settings *simplejson.Json, ss *SQLStore) (*models.Alert, error) {
 	items := []*models.Alert{
 		{
 			PanelId:     1,
@@ -363,7 +363,7 @@ func insertTestAlert(title string, message string, orgId int64, dashId int64, se
 		UserId:      1,
 	}
 
-	err := sqlStore.SaveAlerts(context.Background(), &cmd)
+	err := ss.SaveAlerts(context.Background(), cmd.DashboardId, items)
 	return cmd.Alerts[0], err
 }
 
