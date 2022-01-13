@@ -31,7 +31,7 @@ async function doGazetteerXform(frames: DataFrame[], options: FieldLookupOptions
   const gaz = await getGazetteer(options?.gazetteer ?? COUNTRIES_GAZETTEER_PATH);
 
   if (!gaz.frame) {
-    return Promise.reject('missng frame in gazeeteer');
+    return Promise.reject('missing frame in gazetteer');
   }
 
   return addFieldsFromGazetteer(frames, gaz, fieldMatches);
