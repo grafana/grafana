@@ -30,7 +30,3 @@ func NewFakeDisconnectedMailer() *FakeDisconnectedMailer {
 func (fdm *FakeDisconnectedMailer) Send(messages ...*Message) (int, error) {
 	return 0, fmt.Errorf("connect: connection refused")
 }
-
-func (ns *NotificationService) MailQueuePop() *Message {
-	return <-ns.mailQueue
-}
