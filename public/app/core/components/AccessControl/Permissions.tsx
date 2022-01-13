@@ -25,9 +25,10 @@ export type Props = {
 
   canListUsers: boolean;
   canSetPermissions: boolean;
+  title?: string;
 };
 
-export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissions }: Props) => {
+export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissions, title }: Props) => {
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
@@ -114,7 +115,7 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
   return (
     <div>
       <div className="page-action-bar">
-        <h3 className="page-sub-heading">Permissions</h3>
+        <h3 className="page-sub-heading">{title ? title : 'Permissions'}</h3>
         <div className="page-action-bar__spacer" />
         {canSetPermissions && (
           <Button variant={'primary'} key="add-permission" onClick={() => setIsAdding(true)}>
