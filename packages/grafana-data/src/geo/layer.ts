@@ -1,10 +1,11 @@
 import { RegistryItemWithOptions } from '../utils/Registry';
-import BaseLayer from 'ol/layer/Base';
-import Map from 'ol/Map';
 import { PanelData } from '../types';
 import { GrafanaTheme2 } from '../themes';
 import { PanelOptionsEditorBuilder } from '../utils';
 import { ReactNode } from 'react';
+import { PluggableMap } from 'ol';
+import { Layer } from 'ol/layer';
+import { Source } from 'ol/source';
 
 /**
  * @alpha
@@ -70,7 +71,7 @@ export interface MapLayerOptions<TConfig = any> {
  * @alpha
  */
 export interface MapLayerHandler<TConfig = any> {
-  init: () => BaseLayer;
+  init: () => Layer<Source, any>;
   update?: (data: PanelData) => void;
   legend?: ReactNode;
 
@@ -105,5 +106,5 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => Promise<MapLayerHandler>;
+  create: (map: PluggableMap, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => Promise<MapLayerHandler>;
 }

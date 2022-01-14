@@ -1,8 +1,9 @@
 import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
 import { HideableFieldConfig } from '@grafana/schema';
 import { LayerElement } from 'app/core/components/Layers/types';
-import BaseLayer from 'ol/layer/Base';
+import { Layer } from 'ol/layer';
 import { Units } from 'ol/proj/Units';
+import { Source } from 'ol/source';
 import { StyleConfig } from './style/types';
 import { MapCenterID } from './view';
 
@@ -80,7 +81,7 @@ export interface GazetteerPathEditorConfigSettings {
 export interface MapLayerState<TConfig = any> extends LayerElement {
   options: MapLayerOptions<TConfig>;
   handler: MapLayerHandler;
-  layer: BaseLayer; // the openlayers instance
+  layer: Layer<Source, any>; // the openlayers instance
   onChange: (cfg: MapLayerOptions<TConfig>) => void;
   isBasemap?: boolean;
 }
