@@ -74,5 +74,10 @@ export const getSettingsStyles = stylesFactory((theme: GrafanaTheme) => {
     emailForm: css`
       margin-top: ${spacing.md};
     `,
+    emptyBlock: css`
+      margin-top: 40px;
+      padding: 8px;
+      width: 100%;
+    `,
   };
 });

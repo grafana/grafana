@@ -10,8 +10,8 @@ export type LoadingCallback = (value: boolean) => void;
 export type SettingsCallback = (settings: Settings) => void;
 
 export const SettingsService = {
-  async getSettings(token?: CancelToken): Promise<Settings> {
-    const { settings }: SettingsAPIResponse = await api.post('/v1/Settings/Get', {}, false, token);
+  async getSettings(token?: CancelToken, disableNotifications = false): Promise<Settings> {
+    const { settings }: SettingsAPIResponse = await api.post('/v1/Settings/Get', {}, disableNotifications, token);
     return toModel(settings);
   },
   async setSettings(

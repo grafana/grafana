@@ -97,4 +97,5 @@ export const Messages = {
     communication: 'Communication',
   },
   tooltipLinkText: 'Read more',
+  unauthorized: 'Insufficient access permissions.',
 };

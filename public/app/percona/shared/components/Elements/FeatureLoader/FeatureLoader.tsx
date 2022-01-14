@@ -20,6 +20,7 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
   const styles = useStyles(getStyles);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [featureEnabled, setFeatureEnabled] = useState(false);
+  const [hasNoAccess, setHasNoAccess] = useState(false);
   const [generateToken] = useCancelToken();
 
   useEffect(() => {
@@ -27,11 +28,14 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
       setLoadingSettings(true);
 
       try {
-        const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN));
+        const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN, true));
         setFeatureEnabled(!!settings[featureFlag]);
       } catch (e) {
         if (isApiCancelError(e)) {
           return;
+        }
+        if (e.response?.status === 401) {
+          setHasNoAccess(true);
         }
         logger.error(e);
         onError(e);
@@ -51,6 +55,8 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
       <EmptyBlock dataQa="empty-block">
         {loadingSettings ? (
           <Spinner />
+        ) : hasNoAccess ? (
+          <div data-qa="unauthorized">{Messages.unauthorized}</div>
         ) : (
           <>
             {Messages.featureDisabled(featureName)}&nbsp;

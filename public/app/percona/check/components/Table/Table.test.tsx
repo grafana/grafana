@@ -23,12 +23,4 @@ describe('Table::', () => {
     expect(table.find(TableHeader).length).toEqual(1);
     expect(table.find(TableBody).length).toEqual(1);
   });
-
-  it('should render the table with a message when the user only has reader access', () => {
-    const root = shallow(<Table columns={COLUMNS} hasNoAccess />);
-
-    const empty = root.find('[data-qa="db-check-panel-no-access"]');
-
-    expect(empty.text()).toEqual('Insufficient access rights.');
-  });
 });
