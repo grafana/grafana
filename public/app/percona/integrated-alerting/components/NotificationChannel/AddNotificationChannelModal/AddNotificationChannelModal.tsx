@@ -3,8 +3,9 @@ import React, { FC, useContext } from 'react';
 import { withTypes, Field } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';
-import { HorizontalGroup, Select, Button, useStyles } from '@grafana/ui';
+import { HorizontalGroup, Button } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
+import { SelectField } from 'app/percona/shared/components/Form/SelectField';
 
 import { NotificationChannelProvider } from '../NotificationChannel.provider';
 import { NotificationChannelService } from '../NotificationChannel.service';
@@ -16,7 +17,6 @@ import {
 
 import { TYPE_OPTIONS } from './AddNotificationChannel.constants';
 import { Messages } from './AddNotificationChannelModal.messages';
-import { getStyles } from './AddNotificationChannelModal.styles';
 import { AddNotificationChannelModalProps } from './AddNotificationChannelModal.types';
 import { getInitialValues } from './AddNotificationChannelModal.utils';
 import { EmailFields } from './EmailFields/EmailFields';
@@ -47,7 +47,6 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
   notificationChannel,
   setVisible,
 }) => {
-  const styles = useStyles(getStyles);
   const initialValues = getInitialValues(notificationChannel);
   const { getNotificationChannels } = useContext(NotificationChannelProvider);
   const onSubmit = async (values: NotificationChannelRenderProps) => {
@@ -83,14 +82,7 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
             <>
               <TextInputField name="name" label={Messages.fields.name} validators={[required]} />
               <Field name="type">
-                {({ input }) => (
-                  <>
-                    <label className={styles.label} data-qa="type-field-label">
-                      {Messages.fields.type}
-                    </label>
-                    <Select className={styles.select} options={TYPE_OPTIONS} {...input} />
-                  </>
-                )}
+                {({ input }) => <SelectField label={Messages.fields.type} options={TYPE_OPTIONS} {...input} />}
               </Field>
               <TypeField values={values} />
               <HorizontalGroup justify="center" spacing="md">

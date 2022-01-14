@@ -2,17 +2,16 @@ import { LoaderButton, Modal, TextareaInputField, TextInputField, validators } f
 import React, { FC } from 'react';
 import { Field, withTypes } from 'react-final-form';
 
-import { Button, HorizontalGroup, AsyncSelect, useStyles } from '@grafana/ui';
+import { Button, HorizontalGroup } from '@grafana/ui';
+import { AsyncSelectField } from 'app/percona/shared/components/Form/AsyncSelectField';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 
 import { Messages } from './AddBackupModal.messages';
 import { AddBackupModalService } from './AddBackupModal.service';
-import { getStyles } from './AddBackupModal.styles';
 import { AddBackupFormProps, AddBackupModalProps } from './AddBackupModal.types';
 import { toFormBackup } from './AddBackupModal.utils';
 
 export const AddBackupModal: FC<AddBackupModalProps> = ({ backup, isVisible, onClose, onBackup }) => {
-  const styles = useStyles(getStyles);
   const initialValues = toFormBackup(backup);
   const { Form } = withTypes<AddBackupFormProps>();
 
@@ -29,14 +28,11 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({ backup, isVisible, onC
             <Field name="service" validate={validators.required}>
               {({ input }) => (
                 <div>
-                  <label className={styles.label} data-qa="service-select-label">
-                    {Messages.serviceName}
-                  </label>
-                  <AsyncSelect
+                  <AsyncSelectField
+                    label={Messages.serviceName}
                     isSearchable={false}
                     loadOptions={AddBackupModalService.loadServiceOptions}
                     defaultOptions
-                    className={styles.select}
                     {...input}
                     data-qa="service-select-input"
                   />
@@ -55,11 +51,8 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({ backup, isVisible, onC
             <Field name="location" validate={validators.required}>
               {({ input }) => (
                 <div>
-                  <label className={styles.label} data-qa="location-select-label">
-                    {Messages.location}
-                  </label>
-                  <AsyncSelect
-                    className={styles.select}
+                  <AsyncSelectField
+                    label={Messages.location}
                     isSearchable={false}
                     loadOptions={AddBackupModalService.loadLocationOptions}
                     defaultOptions

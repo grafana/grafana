@@ -13,10 +13,4 @@ export const getStyles = ({ colors, spacing, typography }: GrafanaTheme) => ({
     padding: ${spacing.formLabelPadding};
     color: ${colors.formLabel};
   `,
-  select: css`
-    margin-bottom: ${spacing.xl};
-    div[class$='-input-wrapper'] {
-      padding: 7px 8px;
-    }
-  `,
 });
