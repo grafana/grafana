@@ -1,7 +1,7 @@
 export const Messages = {
   tabs: {
     inventory: 'Backup Inventory',
-    scheduled: 'Scheduled Inventory',
+    scheduled: 'Scheduled Backups',
     locations: 'Storage Locations',
   },
 };

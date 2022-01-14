@@ -8,6 +8,7 @@ export const stubLocations: StorageLocationListReponse = {
       name: 'first location',
       description: 'description_1',
       s3_config: {
+        bucket_name: 'bucket',
         endpoint: 's3://foo/bar',
         access_key: 'access',
         secret_key: 'secret',

@@ -4,6 +4,7 @@ import { useStyles } from '@grafana/ui';
 
 import { DBIcon } from '../../DBIcon';
 
+import { Messages } from './StorageLocationsActions.messages';
 import { getStyles } from './StorageLocationsActions.styles';
 import { StorageLocatationsActionProps } from './StorageLocationsActions.types';
 
@@ -15,8 +16,20 @@ export const StorageLocationsActions: FC<StorageLocatationsActionProps> = ({ loc
 
   return (
     <div className={styles.actionsWrapper}>
-      <DBIcon type="edit" data-qa="edit-storage-location-button" role="button" onClick={handleUpdateClick} />
-      <DBIcon type="delete" data-qa="delete-storage-location-button" role="button" onClick={onDeleteClick} />
+      <DBIcon
+        tooltipText={Messages.editStorageLocation}
+        type="edit"
+        data-qa="edit-storage-location-button"
+        role="button"
+        onClick={handleUpdateClick}
+      />
+      <DBIcon
+        tooltipText={Messages.deleteStorageLocation}
+        type="delete"
+        data-qa="delete-storage-location-button"
+        role="button"
+        onClick={onDeleteClick}
+      />
     </div>
   );
 };
