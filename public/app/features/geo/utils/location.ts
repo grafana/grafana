@@ -7,11 +7,11 @@ import {
   DataFrame,
   Field,
   getFieldDisplayName,
+  FieldType,
 } from '@grafana/data';
-import { Point } from 'ol/geom';
-import { fromLonLat } from 'ol/proj';
+import { Geometry } from 'ol/geom';
 import { getGazetteer, Gazetteer } from '../gazetteer/gazetteer';
-import { decodeGeohash } from './geohash';
+import { getGeoFieldFromGazetteer, pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
 
 export type FieldFinder = (frame: DataFrame) => Field | undefined;
 
@@ -51,6 +51,7 @@ export interface LocationFieldMatchers {
   h3: FieldFinder;
   wkt: FieldFinder;
   lookup: FieldFinder;
+  geo: FieldFinder;
   gazetteer?: Gazetteer;
 }
 
@@ -62,6 +63,7 @@ const defaultMatchers: LocationFieldMatchers = {
   h3: matchLowerNames(new Set(['h3'])),
   wkt: matchLowerNames(new Set(['wkt'])),
   lookup: matchLowerNames(new Set(['lookup'])),
+  geo: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.geo),
 };
 
 export async function getLocationMatchers(src?: FrameGeometrySource): Promise<LocationFieldMatchers> {
@@ -102,6 +104,7 @@ export interface LocationFields {
   h3?: Field;
   wkt?: Field;
   lookup?: Field;
+  geo?: Field<Geometry>;
 }
 
 export function getLocationFields(frame: DataFrame, location: LocationFieldMatchers): LocationFields {
@@ -111,6 +114,11 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
 
   // Find the best option
   if (fields.mode === FrameGeometrySourceMode.Auto) {
+    fields.geo = location.geo(frame);
+    if (fields.geo) {
+      return fields;
+    }
+
     fields.latitude = location.latitude(frame);
     fields.longitude = location.longitude(frame);
     if (fields.latitude && fields.longitude) {
@@ -145,84 +153,63 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
   return fields;
 }
 
-export interface LocationInfo {
+export interface FrameGeometryField {
+  field?: Field<Geometry | undefined>;
   warning?: string;
-  points: Point[];
+  derived?: boolean;
 }
 
-export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatchers): LocationInfo {
-  const info: LocationInfo = {
-    points: [],
-  };
-  if (!frame?.length) {
-    return info;
-  }
+export function getGeometryField(frame: DataFrame, location: LocationFieldMatchers): FrameGeometryField {
   const fields = getLocationFields(frame, location);
   switch (fields.mode) {
+    case FrameGeometrySourceMode.Auto:
+      if (fields.geo) {
+        return {
+          field: fields.geo,
+        };
+      }
+      return {
+        warning: 'Unable to find location fields',
+      };
+
     case FrameGeometrySourceMode.Coords:
       if (fields.latitude && fields.longitude) {
-        info.points = getPointsFromLonLat(fields.longitude, fields.latitude);
-      } else {
-        info.warning = 'Missing latitude/longitude fields';
+        return {
+          field: pointFieldFromLonLat(fields.longitude, fields.latitude),
+          derived: true,
+        };
       }
-      break;
+      return {
+        warning: 'Missing latitude/longitude fields',
+      };
 
     case FrameGeometrySourceMode.Geohash:
       if (fields.geohash) {
-        info.points = getPointsFromGeohash(fields.geohash);
-      } else {
-        info.warning = 'Missing geohash field';
+        return {
+          field: pointFieldFromGeohash(fields.geohash),
+          derived: true,
+        };
       }
-      break;
+      return {
+        warning: 'Missing geohash field',
+      };
 
     case FrameGeometrySourceMode.Lookup:
       if (fields.lookup) {
         if (location.gazetteer) {
-          info.points = getPointsFromGazetteer(location.gazetteer, fields.lookup);
-        } else {
-          info.warning = 'Gazetteer not found';
+          return {
+            field: getGeoFieldFromGazetteer(location.gazetteer, fields.lookup),
+            derived: true,
+          };
         }
-      } else {
-        info.warning = 'Missing lookup field';
+        return {
+          warning: 'Gazetteer not found',
+        };
       }
-      break;
-
-    case FrameGeometrySourceMode.Auto:
-      info.warning = 'Unable to find location fields';
+      return {
+        warning: 'Missing lookup field',
+      };
   }
 
-  return info;
-}
-
-function getPointsFromLonLat(lon: Field<number>, lat: Field<number>): Point[] {
-  const count = lat.values.length;
-  const points = new Array<Point>(count);
-  for (let i = 0; i < count; i++) {
-    points[i] = new Point(fromLonLat([lon.values.get(i), lat.values.get(i)]));
-  }
-  return points;
-}
-
-function getPointsFromGeohash(field: Field<string>): Point[] {
-  const count = field.values.length;
-  const points = new Array<Point>(count);
-  for (let i = 0; i < count; i++) {
-    const coords = decodeGeohash(field.values.get(i));
-    if (coords) {
-      points[i] = new Point(fromLonLat(coords));
-    }
-  }
-  return points;
-}
-
-function getPointsFromGazetteer(gaz: Gazetteer, field: Field<string>): Point[] {
-  const count = field.values.length;
-  const points = new Array<Point>(count);
-  for (let i = 0; i < count; i++) {
-    const info = gaz.find(field.values.get(i));
-    if (info?.coords) {
-      points[i] = new Point(fromLonLat(info.coords));
-    }
-  }
-  return points;
+  return { warning: 'unable to find geometry' };
 }
