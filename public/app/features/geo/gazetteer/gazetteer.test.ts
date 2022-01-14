@@ -57,26 +57,22 @@ describe('Placename lookup from geojson format', () => {
     backendResults = geojsonObject;
     const gaz = await getGazetteer('local');
     expect(gaz.error).toBeUndefined();
-    expect(gaz.find('A')).toMatchInlineSnapshot(`
-      Object {
-        "coords": Array [
-          0,
-          0,
-        ],
-      }
+    expect(gaz.find('A')?.point()?.getCoordinates()).toMatchInlineSnapshot(`
+      Array [
+        0,
+        0,
+      ]
     `);
   });
   it('can look up by a code', async () => {
     backendResults = geojsonObject;
     const gaz = await getGazetteer('airports');
     expect(gaz.error).toBeUndefined();
-    expect(gaz.find('B')).toMatchInlineSnapshot(`
-      Object {
-        "coords": Array [
-          1,
-          1,
-        ],
-      }
+    expect(gaz.find('B')?.point()?.getCoordinates()).toMatchInlineSnapshot(`
+      Array [
+        1,
+        1,
+      ]
     `);
   });
 
@@ -84,13 +80,11 @@ describe('Placename lookup from geojson format', () => {
     backendResults = geojsonObject;
     const gaz = await getGazetteer('airports');
     expect(gaz.error).toBeUndefined();
-    expect(gaz.find('C')).toMatchInlineSnapshot(`
-      Object {
-        "coords": Array [
-          2,
-          2,
-        ],
-      }
+    expect(gaz.find('C')?.point()?.getCoordinates()).toMatchInlineSnapshot(`
+      Array [
+        2,
+        2,
+      ]
     `);
   });
 });

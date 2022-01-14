@@ -1,4 +1,4 @@
-import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
+import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
 import { HideableFieldConfig } from '@grafana/schema';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { Layer } from 'ol/layer';
@@ -70,9 +70,6 @@ export enum ComparisonOperation {
   LTE = 'lte',
   GT = 'gt',
   GTE = 'gte',
-}
-export interface GazetteerPathEditorConfigSettings {
-  options?: Array<SelectableValue<string>>;
 }
 
 //-------------------
