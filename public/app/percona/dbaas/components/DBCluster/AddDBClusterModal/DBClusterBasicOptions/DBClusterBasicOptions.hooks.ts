@@ -19,7 +19,9 @@ export const useDatabaseVersions = (
 
       setLoadingDatabaseVersions(true);
 
-      const databaseVersions = await dbClusterService.getDatabaseVersions(kubernetesCluster.value);
+      const databaseVersions = await (await dbClusterService.getDatabaseVersions(kubernetesCluster.value)).filter(
+        ({ disabled }) => !disabled
+      );
 
       setDatabaseVersions(databaseVersions);
       form.change(AddDBClusterFields.databaseVersion, findDefaultDatabaseVersion(databaseVersions));

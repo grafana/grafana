@@ -89,6 +89,7 @@ describe('CheckPanel::', () => {
     const text = `${Messages.pmmSettings}`;
 
     expect(wrapper.find(dataQa('db-check-panel-settings-link')).text()).toEqual(text);
+
     spy.mockClear();
     wrapper.unmount();
   });

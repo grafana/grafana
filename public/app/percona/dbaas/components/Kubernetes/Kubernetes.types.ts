@@ -5,11 +5,11 @@ export interface KubernetesListAPI {
   kubernetes_clusters: KubernetesAPI[];
 }
 
-interface Operator {
+export interface Operator {
   status: KubernetesOperatorStatus;
 }
 
-interface OperatorsList {
+export interface OperatorsList {
   psmdb: Operator;
   xtradb: Operator;
 }

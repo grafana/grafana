@@ -3,7 +3,7 @@ import { styles } from './OptionContent.styles';
 
 interface OptionContentProps {
   title: string;
-  description: string;
+  description?: string;
   tags: string[];
   disabledTags?: string[];
   dataQa?: string;

@@ -1,5 +1,6 @@
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
-import { DBClusterServiceDatabasesMap } from './DBCluster.types';
+import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
+import { DatabaseOperatorsMap, DBClusterServiceDatabasesMap } from './DBCluster.types';
 import { PSMDBService } from './PSMDB.service';
 import { XtraDBService } from './XtraDB.service';
 
@@ -24,3 +25,8 @@ export const SERVICE_MAP: Partial<DBClusterServiceDatabasesMap> = {
 export const THOUSAND = 1000;
 export const BILLION = 10 ** 9;
 export const RESOURCES_PRECISION = 2;
+
+export const DATABASE_OPERATORS: Partial<DatabaseOperatorsMap> = {
+  [Operators.xtradb]: Databases.mysql,
+  [Operators.psmdb]: Databases.mongodb,
+};

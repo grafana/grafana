@@ -13,6 +13,7 @@ import { OperatorStatusItem } from './OperatorStatusItem/OperatorStatusItem';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus';
 import { clusterActionsRender } from './ColumnRenderers/ColumnRenderers';
 import { ViewClusterConfigModal } from './ViewClusterConfigModal/ViewClusterConfigModal';
+import { ManageComponentsVersionsModal } from './ManageComponentsVersionsModal/ManageComponentsVersionsModal';
 
 export const KubernetesInventory: FC<KubernetesProps> = ({ kubernetes, deleteKubernetes, addKubernetes, loading }) => {
   const styles = useStyles(getStyles);
@@ -20,6 +21,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({ kubernetes, deleteKub
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [viewConfigModalVisible, setViewConfigModalVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [manageComponentsModalVisible, setManageComponentsModalVisible] = useState(false);
   const { required } = validators;
 
   const deleteKubernetesCluster = useCallback(
@@ -57,6 +59,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({ kubernetes, deleteKub
           setSelectedCluster,
           setDeleteModalVisible,
           setViewConfigModalVisible,
+          setManageComponentsModalVisible,
         })(kubernetesCluster),
     },
   ];
@@ -158,6 +161,13 @@ export const KubernetesInventory: FC<KubernetesProps> = ({ kubernetes, deleteKub
           )}
         />
       </Modal>
+      {selectedCluster && manageComponentsModalVisible && (
+        <ManageComponentsVersionsModal
+          selectedKubernetes={selectedCluster}
+          isVisible={manageComponentsModalVisible}
+          setVisible={setManageComponentsModalVisible}
+        />
+      )}
       <Table columns={columns} data={kubernetes} loading={loading} noData={<AddNewClusterButton />} />
     </div>
   );

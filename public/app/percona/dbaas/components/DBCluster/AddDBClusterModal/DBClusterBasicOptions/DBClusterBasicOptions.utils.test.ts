@@ -7,11 +7,13 @@ describe('DBClusterBasicOptions.utils::', () => {
         label: 'db1',
         value: 'db1',
         default: false,
+        disabled: false,
       },
       {
         label: 'db2',
         value: 'db2',
         default: true,
+        disabled: false,
       },
     ];
 

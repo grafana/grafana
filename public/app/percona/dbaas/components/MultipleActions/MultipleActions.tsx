@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import React, { FC } from 'react';
+import React, { FC, Fragment } from 'react';
 import { IconButton, useTheme } from '@grafana/ui';
 import { Dropdown } from '@percona/platform-core';
 import { MultipleActionsProps } from './MultipleActions.types';
@@ -16,17 +16,9 @@ export const MultipleActions: FC<MultipleActionsProps> = ({ actions, disabled, d
   return (
     <Dropdown toggle={Toggle}>
       {actions.map(({ title, action, disabled }) => (
-        <>
-          {disabled ? (
-            <span key={title} className={styles.disabledButton}>
-              {title}
-            </span>
-          ) : (
-            <span key={title} onClick={action}>
-              {title}
-            </span>
-          )}
-        </>
+        <Fragment key={title}>
+          {disabled ? <span className={styles.disabledButton}>{title}</span> : <span onClick={action}>{title}</span>}
+        </Fragment>
       ))}
     </Dropdown>
   );
