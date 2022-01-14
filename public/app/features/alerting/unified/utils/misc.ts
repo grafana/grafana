@@ -1,9 +1,10 @@
-import { urlUtil, UrlQueryMap } from '@grafana/data';
+import { urlUtil, UrlQueryMap, Labels } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
 import * as ruleId from './rule-id';
+import { getMatcherQueryParams } from './matchers';
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string {
   const sourceName = getRulesSourceName(ruleSource);
@@ -57,13 +58,23 @@ export function makeAMLink(path: string, alertManagerName?: string): string {
   return `${path}${alertManagerName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${encodeURIComponent(alertManagerName)}` : ''}`;
 }
 
-export function makeSilenceLink(alertmanagerSourceName: string, rule: CombinedRule) {
-  return (
-    `${config.appSubUrl}/alerting/silence/new?alertmanager=${alertmanagerSourceName}` +
-    `&matchers=alertname=${rule.name},${Object.entries(rule.labels)
-      .map(([key, value]) => encodeURIComponent(`${key}=${value}`))
-      .join(',')}`
-  );
+export function makeRuleBasedSilenceLink(alertManagerSourceName: string, rule: CombinedRule) {
+  const labels: Labels = {
+    alertname: rule.name,
+    ...rule.labels,
+  };
+
+  return makeLabelBasedSilenceLink(alertManagerSourceName, labels);
+}
+
+export function makeLabelBasedSilenceLink(alertManagerSourceName: string, labels: Labels) {
+  const silenceUrlParams = new URLSearchParams();
+  silenceUrlParams.append('alertmanager', alertManagerSourceName);
+
+  const matcherParams = getMatcherQueryParams(labels);
+  matcherParams.forEach((value, key) => silenceUrlParams.append(key, value));
+
+  return `${config.appSubUrl}/alerting/silence/new?${silenceUrlParams.toString()}`;
 }
 
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet

@@ -174,9 +174,10 @@ describe('Silence edit', () => {
   it(
     'prefills the matchers field with matchers params',
     async () => {
-      renderSilences(
-        `${baseUrlPath}?matchers=${encodeURIComponent('foo=bar,bar=~ba.+,hello!=world,cluster!~us-central.*')}`
-      );
+      const matchersParams = ['foo=bar', 'bar=~ba.+', 'hello!=world', 'cluster!~us-central.*'];
+      const matchersQueryString = matchersParams.map((matcher) => `matcher=${encodeURIComponent(matcher)}`).join('&');
+
+      renderSilences(`${baseUrlPath}?${matchersQueryString}`);
       await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
 
       const matchers = ui.editor.matchersField.queryAll();
