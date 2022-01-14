@@ -1,28 +1,38 @@
 import { logger } from '@percona/platform-core';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useState, useCallback } from 'react';
 
+import { useStyles } from '@grafana/ui';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
-import { DISCOVERY_RDS_CANCEL_TOKEN } from './Discovery.constants';
+import { DISCOVERY_RDS_CANCEL_TOKEN, INITIAL_CREDENTIALS } from './Discovery.constants';
 import DiscoveryService from './Discovery.service';
 import { getStyles } from './Discovery.styles';
 import { DiscoverySearchPanelProps } from './Discovery.types';
 import Credentials from './components/Credentials/Credentials';
+import { CredentialsForm } from './components/Credentials/Credentials.types';
+import { DiscoveryDocs } from './components/DiscoveryDocs/DiscoveryDocs';
 import Instances from './components/Instances/Instances';
 
 const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
-  const styles = getStyles();
+  const styles = useStyles(getStyles);
 
   const [instances, setInstances] = useState([] as any);
-  const [credentials, setCredentials] = useState({ aws_secret_key: '', aws_access_key: '' });
+  const [credentials, setCredentials] = useState(INITIAL_CREDENTIALS);
   const [loading, startLoading] = useState(false);
   const [generateToken] = useCancelToken();
 
-  useEffect(() => {
-    const updateInstances = async () => {
+  const discover = useCallback(
+    async (credentials: CredentialsForm, disableNotifications = false) => {
       try {
-        const result = await DiscoveryService.discoveryRDS(credentials, generateToken(DISCOVERY_RDS_CANCEL_TOKEN));
+        setCredentials(credentials);
+        startLoading(true);
+
+        const result = await DiscoveryService.discoveryRDS(
+          credentials,
+          generateToken(DISCOVERY_RDS_CANCEL_TOKEN),
+          disableNotifications
+        );
 
         if (result) {
           setInstances(result.rds_instances);
@@ -32,21 +42,23 @@ const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
           return;
         }
         logger.error(e);
+      } finally {
+        startLoading(false);
       }
-      startLoading(false);
-    };
+    },
+    [setCredentials, setInstances, generateToken]
+  );
 
-    if (credentials.aws_secret_key && credentials.aws_access_key) {
-      startLoading(true);
-      updateInstances();
-    }
-  }, [credentials, setInstances, generateToken]);
+  useEffect(() => {
+    discover(INITIAL_CREDENTIALS, true);
+  }, [discover]);
 
   return (
     <>
       <div className={styles.content}>
-        <Credentials onSetCredentials={setCredentials} selectInstance={selectInstance} />
+        <Credentials discover={discover} selectInstance={selectInstance} />
         <Instances instances={instances} selectInstance={selectInstance} credentials={credentials} loading={loading} />
+        <DiscoveryDocs />
       </div>
     </>
   );

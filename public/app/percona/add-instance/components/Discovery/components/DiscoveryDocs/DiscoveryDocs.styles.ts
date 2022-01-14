@@ -4,12 +4,6 @@ import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 
 export const getStyles = stylesFactory(({ colors, spacing }: GrafanaTheme) => ({
-  content: css`
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    width: 100%;
-  `,
   infoWrapper: css`
     display: flex;
     flex-direction: column;
@@ -17,6 +11,12 @@ export const getStyles = stylesFactory(({ colors, spacing }: GrafanaTheme) => ({
     padding: ${spacing.sm};
     margin-top: ${spacing.md};
     margin-bottom: ${spacing.md};
+    button {
+      height: 100%;
+      span {
+        white-space: break-spaces;
+      }
+    }
   `,
   infoItems: css`
     list-style-position: inside;
