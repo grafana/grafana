@@ -11,7 +11,8 @@ import { config } from 'app/core/config';
 import { contextSrv, User } from 'app/core/services/context_srv';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 import { setSearchQuery, setTeamsSearchPage } from './state/reducers';
-import { TeamRolePicker, fetchRoleOptions } from 'app/core/components/RolePicker/TeamRolePicker';
+import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
+import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 
 const pageLimit = 30;
 
