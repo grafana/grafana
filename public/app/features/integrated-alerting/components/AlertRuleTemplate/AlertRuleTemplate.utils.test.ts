@@ -1,5 +1,5 @@
-import { formatTemplate, formatTemplates } from './AlertRuleTemplate.utils';
-import { Template } from './AlertRuleTemplate.types';
+import { formatTemplate, formatTemplates, beautifyUnit } from './AlertRuleTemplate.utils';
+import { Template, TemplateParamUnit } from './AlertRuleTemplate.types';
 
 const moment = jest.requireActual('moment-timezone');
 moment.tz.setDefault('UTC');
@@ -41,5 +41,10 @@ describe('AlertRuleTemplatesTable utils', () => {
     };
 
     expect(formatTemplates([testTemplate, testTemplate])).toEqual([expectedTemplate, expectedTemplate]);
+  });
+
+  test('beautifyUnit', () => {
+    expect(beautifyUnit(TemplateParamUnit.PERCENTAGE)).toBe('%');
+    expect(beautifyUnit(TemplateParamUnit.SECONDS)).toBe('seconds');
   });
 });

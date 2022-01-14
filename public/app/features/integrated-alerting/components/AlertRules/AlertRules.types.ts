@@ -1,3 +1,5 @@
+import { TemplateParam } from '../AlertRuleTemplate/AlertRuleTemplate.types';
+
 export interface AlertRulesContext {
   selectedRuleDetails: AlertRule;
   getAlertRules: () => void;
@@ -15,25 +17,10 @@ export enum AlertRulesListPayloadTemplateParamUnits {
   PERCENTAGE = '%',
 }
 
-export interface AlertRulesListPayloadTemplateParam {
-  [AlertRuleParamType.BOOL]?: {
-    default: boolean;
-  };
-  [AlertRuleParamType.FLOAT]?: {
-    default: number;
-  };
-  [AlertRuleParamType.STRING]?: {
-    default: string;
-  };
-  name: string;
-  unit?: keyof typeof AlertRulesListPayloadTemplateParamUnits;
-  type: keyof typeof AlertRuleParamType;
-}
-
 export interface AlertRulesListPayloadTemplate {
   name: string;
   summary: string;
-  params: AlertRulesListPayloadTemplateParam[];
+  params: TemplateParam[];
   yaml?: string;
 }
 
@@ -53,10 +40,12 @@ export interface AlertRule {
   lastNotified: string;
   severity: AlertRuleSeverity[keyof AlertRuleSeverity];
   summary: string;
-  threshold: string;
   rawValues: AlertRulesListResponseRule;
+  params: AlertRulesParsedParam[];
   expr: string;
 }
+
+export type AlertRulesParsedParam = TemplateParam & { value: string | boolean | number };
 
 export interface AlertRulesListPayloadFilter {
   key: string;
@@ -65,18 +54,17 @@ export interface AlertRulesListPayloadFilter {
 }
 
 export enum AlertRuleParamType {
-  PARAM_TYPE_INVALID = 'Invalid type',
   BOOL = 'bool',
   FLOAT = 'float',
   STRING = 'string',
 }
 
 export interface AlertRulesListResponseParam {
+  name: string;
+  type: keyof typeof AlertRuleParamType;
   [AlertRuleParamType.BOOL]?: boolean;
   [AlertRuleParamType.FLOAT]?: number;
-  name: string;
   [AlertRuleParamType.STRING]?: string;
-  type: keyof typeof AlertRuleParamType;
 }
 
 export interface AlertRulesListResponseChannel {

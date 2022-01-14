@@ -10,20 +10,26 @@ import { templateStubs } from '../AlertRuleTemplate/__mocks__/alertRuleTemplateS
 import { AlertRulesService } from './AlertRules.service';
 
 const notificationChannelsServiceList = jest.spyOn(NotificationChannelService, 'list').mockImplementation(() =>
-  Promise.resolve([
-    {
-      type: NotificationChannelType.email,
-      channelId: 'testId',
-      summary: 'test',
-      disabled: false,
+  Promise.resolve({
+    totals: {
+      total_items: 2,
+      total_pages: 1,
     },
-    {
-      type: NotificationChannelType.email,
-      channelId: 'testId',
-      summary: 'test',
-      disabled: false,
-    },
-  ])
+    channels: [
+      {
+        type: NotificationChannelType.email,
+        channelId: 'testId',
+        summary: 'test',
+        disabled: false,
+      },
+      {
+        type: NotificationChannelType.email,
+        channelId: 'testId',
+        summary: 'test',
+        disabled: false,
+      },
+    ],
+  })
 );
 
 const alertRuleTemplateServiceList = jest.spyOn(AlertRuleTemplateService, 'list').mockImplementation(() =>

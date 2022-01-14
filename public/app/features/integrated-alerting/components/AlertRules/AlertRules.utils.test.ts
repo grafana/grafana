@@ -1,88 +1,14 @@
-import { formatDuration, formatFilter, formatRule, formatRules, formatThreshold } from './AlertRules.utils';
+import { TemplateParamType, TemplateParamUnit } from '../AlertRuleTemplate/AlertRuleTemplate.types';
+import { AlertRule } from './AlertRules.types';
+import { formatDuration, formatFilter, formatRule, formatRules } from './AlertRules.utils';
 import { rulesStubs } from './__mocks__/alertRulesStubs';
-import { AlertRulesListPayloadTemplate } from './AlertRules.types';
 
 const moment = jest.requireActual('moment-timezone');
 moment.tz.setDefault('UTC');
 
-const testTemplate1: AlertRulesListPayloadTemplate = {
-  name: 'test1',
-  summary: 'Test1',
-  params: [
-    {
-      name: 'threshold',
-      float: {
-        default: 70,
-      },
-      unit: 'PERCENTAGE',
-      type: 'FLOAT',
-    },
-  ],
-};
-
-const testTemplate2: AlertRulesListPayloadTemplate = {
-  name: 'test2',
-  summary: 'Test2',
-  params: [],
-};
-
-const testTemplate3: AlertRulesListPayloadTemplate = {
-  name: 'test3',
-  summary: 'Test3',
-  params: [
-    {
-      name: 'threshold',
-      bool: {
-        default: true,
-      },
-      type: 'BOOL',
-    },
-  ],
-};
-
 describe('AlertRulesTable utils', () => {
   test('formatFilter', () => {
     expect(formatFilter({ key: 'testKey', type: 'EQUAL', value: '1337' })).toEqual('testKey=1337');
-  });
-
-  test('formatThreshold', () => {
-    expect(formatThreshold(testTemplate1, undefined)).toEqual('70 %');
-
-    expect(formatThreshold(testTemplate1, [])).toEqual('70 %');
-
-    expect(formatThreshold(testTemplate2, undefined)).toEqual('');
-
-    expect(formatThreshold(testTemplate2, [])).toEqual('');
-
-    expect(
-      formatThreshold(testTemplate2, [
-        {
-          name: 'threshold',
-          float: 70,
-          type: 'FLOAT',
-        },
-      ])
-    ).toEqual('');
-
-    expect(
-      formatThreshold(testTemplate1, [
-        {
-          name: 'threshold',
-          float: 70,
-          type: 'FLOAT',
-        },
-      ])
-    ).toEqual('70 %');
-
-    expect(
-      formatThreshold(testTemplate3, [
-        {
-          name: 'threshold',
-          type: 'BOOL',
-          bool: true,
-        },
-      ])
-    ).toEqual('true');
   });
 
   test('formatDuration', () => {
@@ -95,7 +21,7 @@ describe('AlertRulesTable utils', () => {
   });
 
   test('formatRule', () => {
-    expect(formatRule(rulesStubs[0])).toEqual({
+    expect(formatRule(rulesStubs[0])).toEqual<AlertRule>({
       rawValues: {
         channels: [],
         rule_id: 'test 1',
@@ -122,9 +48,9 @@ describe('AlertRulesTable utils', () => {
         last_notified: '2020-11-25T16:53:39.366Z',
         params: [
           {
-            bool: true,
+            float: 15,
             name: 'threshold',
-            type: 'BOOL',
+            type: 'FLOAT',
           },
         ],
         severity: 'SEVERITY_CRITICAL',
@@ -133,11 +59,16 @@ describe('AlertRulesTable utils', () => {
           name: 'test 1',
           params: [
             {
-              bool: {
-                default: true,
-              },
               name: 'threshold',
-              type: 'BOOL',
+              type: TemplateParamType.FLOAT,
+              unit: TemplateParamUnit.PERCENTAGE,
+              summary: 'a threshold',
+              float: {
+                hasDefault: true,
+                hasMin: false,
+                hasMax: false,
+                default: 10,
+              },
             },
           ],
           summary: 'Test 1',
@@ -145,6 +76,21 @@ describe('AlertRulesTable utils', () => {
         expr:
           'sum by (node_name) (mongodb_ss_connections{conn_type="current"}) * 1024 * 1024↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> [[ .threshold ]]',
       },
+      params: [
+        {
+          name: 'threshold',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
+          float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
+            default: 10,
+          },
+          value: 15,
+        },
+      ],
       ruleId: 'test 1',
       createdAt: '2020-11-25 16:53:39.366',
       disabled: false,
@@ -152,13 +98,12 @@ describe('AlertRulesTable utils', () => {
       filters: ['environment=prod', 'app=wordpress', 'cluster=PXCCluster1'],
       severity: 'Critical',
       summary: 'Database down - HR - Prod',
-      threshold: 'true',
       lastNotified: '2020-11-25 16:53:39.366',
       expr:
         'sum by (node_name) (mongodb_ss_connections{conn_type="current"}) * 1024 * 1024↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> [[ .threshold ]]',
     });
 
-    expect(formatRule(rulesStubs[3])).toEqual({
+    expect(formatRule(rulesStubs[3])).toEqual<AlertRule>({
       rawValues: {
         channels: [
           {
@@ -206,11 +151,15 @@ describe('AlertRulesTable utils', () => {
           params: [
             {
               float: {
+                hasDefault: true,
+                hasMin: false,
+                hasMax: false,
                 default: 75,
               },
               name: 'threshold',
-              type: 'FLOAT',
-              unit: 'PERCENTAGE',
+              summary: 'a threshold',
+              type: TemplateParamType.FLOAT,
+              unit: TemplateParamUnit.PERCENTAGE,
             },
           ],
           summary: 'Test 4',
@@ -218,6 +167,21 @@ describe('AlertRulesTable utils', () => {
         expr:
           'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
       },
+      params: [
+        {
+          name: 'threshold',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
+          float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
+            default: 75,
+          },
+          value: 75,
+        },
+      ],
       ruleId: 'test 4',
       createdAt: '2020-11-25 16:53:39.366',
       disabled: true,
@@ -225,7 +189,6 @@ describe('AlertRulesTable utils', () => {
       filters: ['environment=prod', 'app=wordpress', 'cluster=PXCCluster1'],
       severity: 'Warning',
       summary: 'High network throughput in - Mnfcg - Dev',
-      threshold: '75 %',
       lastNotified: '',
       expr:
         'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
@@ -239,7 +202,7 @@ describe('AlertRulesTable utils', () => {
 
     expect(formatRules([])).toEqual([]);
 
-    expect(formatRules([rulesStubs[0], rulesStubs[3]])).toEqual([
+    expect(formatRules([rulesStubs[0], rulesStubs[3]])).toEqual<AlertRule[]>([
       {
         rawValues: {
           channels: [],
@@ -267,9 +230,9 @@ describe('AlertRulesTable utils', () => {
           last_notified: '2020-11-25T16:53:39.366Z',
           params: [
             {
-              bool: true,
+              float: 15,
               name: 'threshold',
-              type: 'BOOL',
+              type: 'FLOAT',
             },
           ],
           severity: 'SEVERITY_CRITICAL',
@@ -278,11 +241,16 @@ describe('AlertRulesTable utils', () => {
             name: 'test 1',
             params: [
               {
-                bool: {
-                  default: true,
+                float: {
+                  hasDefault: true,
+                  hasMin: false,
+                  hasMax: false,
+                  default: 10,
                 },
                 name: 'threshold',
-                type: 'BOOL',
+                summary: 'a threshold',
+                type: TemplateParamType.FLOAT,
+                unit: TemplateParamUnit.PERCENTAGE,
               },
             ],
             summary: 'Test 1',
@@ -290,6 +258,21 @@ describe('AlertRulesTable utils', () => {
           expr:
             'sum by (node_name) (mongodb_ss_connections{conn_type="current"}) * 1024 * 1024↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> [[ .threshold ]]',
         },
+        params: [
+          {
+            name: 'threshold',
+            type: TemplateParamType.FLOAT,
+            unit: TemplateParamUnit.PERCENTAGE,
+            summary: 'a threshold',
+            float: {
+              hasDefault: true,
+              hasMin: false,
+              hasMax: false,
+              default: 10,
+            },
+            value: 15,
+          },
+        ],
         ruleId: 'test 1',
         createdAt: '2020-11-25 16:53:39.366',
         disabled: false,
@@ -297,7 +280,6 @@ describe('AlertRulesTable utils', () => {
         filters: ['environment=prod', 'app=wordpress', 'cluster=PXCCluster1'],
         severity: 'Critical',
         summary: 'Database down - HR - Prod',
-        threshold: 'true',
         lastNotified: '2020-11-25 16:53:39.366',
         expr:
           'sum by (node_name) (mongodb_ss_connections{conn_type="current"}) * 1024 * 1024↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> [[ .threshold ]]',
@@ -350,11 +332,15 @@ describe('AlertRulesTable utils', () => {
             params: [
               {
                 float: {
+                  hasDefault: true,
+                  hasMin: false,
+                  hasMax: false,
                   default: 75,
                 },
                 name: 'threshold',
-                type: 'FLOAT',
-                unit: 'PERCENTAGE',
+                summary: 'a threshold',
+                type: TemplateParamType.FLOAT,
+                unit: TemplateParamUnit.PERCENTAGE,
               },
             ],
             summary: 'Test 4',
@@ -362,6 +348,21 @@ describe('AlertRulesTable utils', () => {
           expr:
             'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
         },
+        params: [
+          {
+            name: 'threshold',
+            type: TemplateParamType.FLOAT,
+            unit: TemplateParamUnit.PERCENTAGE,
+            summary: 'a threshold',
+            float: {
+              hasDefault: true,
+              hasMin: false,
+              hasMax: false,
+              default: 75,
+            },
+            value: 75,
+          },
+        ],
         ruleId: 'test 4',
         createdAt: '2020-11-25 16:53:39.366',
         disabled: true,
@@ -369,7 +370,6 @@ describe('AlertRulesTable utils', () => {
         filters: ['environment=prod', 'app=wordpress', 'cluster=PXCCluster1'],
         severity: 'Warning',
         summary: 'High network throughput in - Mnfcg - Dev',
-        threshold: '75 %',
         lastNotified: '',
         expr:
           'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',

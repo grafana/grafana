@@ -1,3 +1,4 @@
+import { TemplateParamType, TemplateParamUnit } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
 import { AlertRulesListResponseRule } from '../AlertRules.types';
 import { formatRules } from '../AlertRules.utils';
 
@@ -31,8 +32,8 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     params: [
       {
         name: 'threshold',
-        type: 'BOOL',
-        bool: true,
+        type: 'FLOAT',
+        float: 15,
       },
     ],
     template: {
@@ -41,9 +42,14 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          type: 'BOOL',
-          bool: {
-            default: true,
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
+          float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
+            default: 10,
           },
         },
       ],
@@ -90,11 +96,15 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          type: 'FLOAT',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
           float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
             default: 75,
           },
-          unit: 'PERCENTAGE',
         },
       ],
     },
@@ -106,6 +116,13 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     channels: [{ channel_id: 'test_ch', summary: 'Test Channel' }],
     created_at: '2020-11-25T16:53:39.366Z',
     disabled: false,
+    params: [
+      {
+        name: 'threshold',
+        type: 'FLOAT',
+        float: 70,
+      },
+    ],
     filters: [
       {
         key: 'environment',
@@ -133,11 +150,15 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          type: 'FLOAT',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
           float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
             default: 80,
           },
-          unit: 'PERCENTAGE',
         },
       ],
     },
@@ -186,11 +207,15 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          type: 'FLOAT',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
           float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
             default: 75,
           },
-          unit: 'PERCENTAGE',
         },
       ],
     },
@@ -223,17 +248,28 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     last_notified: '2020-11-25T16:53:39.366Z',
     severity: 'SEVERITY_NOTICE',
     summary: 'Low memory consumption - Sales - Dev',
+    params: [
+      {
+        name: 'threshold',
+        type: 'FLOAT',
+        float: 75,
+      },
+    ],
     template: {
       name: 'test 5',
       summary: 'Test 5',
       params: [
         {
           name: 'threshold',
-          type: 'FLOAT',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
           float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
             default: 75,
           },
-          unit: 'PERCENTAGE',
         },
       ],
     },
@@ -272,11 +308,15 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          type: 'FLOAT',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
           float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
             default: 75,
           },
-          unit: 'PERCENTAGE',
         },
       ],
     },

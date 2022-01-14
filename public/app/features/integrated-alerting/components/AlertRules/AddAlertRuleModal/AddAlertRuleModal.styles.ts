@@ -24,4 +24,7 @@ export const getStyles = ({ colors, typography, spacing }: GrafanaTheme) => ({
   form: css`
     width: 100%;
   `,
+  templateParsedField: css`
+    margin-bottom: ${spacing.formInputMargin};
+  `,
 });
