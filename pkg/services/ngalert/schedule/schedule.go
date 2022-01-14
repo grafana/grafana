@@ -488,7 +488,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 
 		if len(alerts.PostableAlerts) == 0 {
-			logger.Debug("no alerts to put in the notifier or to send to external Alertmanager(s)", "org", alertRule.OrgID)
+			logger.Debug("no alerts to put in the notifier or to send to external Alertmanager(s)")
 			return nil
 		}
 
@@ -496,9 +496,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		// or if no external AMs have been discovered yet.
 		var localNotifierExist, externalNotifierExist bool
 		if sch.sendAlertsTo[alertRule.OrgID] == models.ExternalAlertmanagers && len(sch.AlertmanagersFor(alertRule.OrgID)) > 0 {
-			logger.Debug("no alerts to put in the notifier", "org", alertRule.OrgID)
+			logger.Debug("no alerts to put in the notifier")
 		} else {
-			logger.Debug("sending alerts to local notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
+			logger.Debug("sending alerts to local notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
 			n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)
 			if err == nil {
 				localNotifierExist = true
@@ -520,7 +520,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		defer sch.adminConfigMtx.RUnlock()
 		s, ok := sch.senders[alertRule.OrgID]
 		if ok && sch.sendAlertsTo[alertRule.OrgID] != models.InternalAlertmanager {
-			logger.Debug("sending alerts to external notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
+			logger.Debug("sending alerts to external notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
 			s.SendAlerts(alerts)
 			externalNotifierExist = true
 		}
