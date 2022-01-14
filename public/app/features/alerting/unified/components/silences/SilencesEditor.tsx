@@ -15,6 +15,7 @@ import { useDebounce } from 'react-use';
 import { config } from '@grafana/runtime';
 import { pickBy } from 'lodash';
 import MatchersField from './MatchersField';
+import { MatchedSilencedRules } from './MatchedSilencedRules';
 import { useForm, FormProvider } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
 import { useDispatch } from 'react-redux';
@@ -210,6 +211,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
           >
             <Input {...register('createdBy', { required: { value: true, message: 'Required.' } })} placeholder="User" />
           </Field>
+          <MatchedSilencedRules />
         </FieldSet>
         <div className={styles.flexRow}>
           {loading && (

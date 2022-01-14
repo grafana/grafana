@@ -53,7 +53,7 @@
     "rollup": "2.63.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "typescript": "4.5.4"
+    "typescript": "4.4.4"
   },
   "types": "src/index.ts"
 }
