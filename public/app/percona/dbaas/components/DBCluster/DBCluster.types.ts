@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import { Databases } from 'app/percona/shared/core';
 import { Kubernetes } from '../Kubernetes/Kubernetes.types';
 import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
@@ -24,6 +25,7 @@ export interface DBCluster {
   resume?: boolean;
   finishedSteps?: number;
   totalSteps?: number;
+  databaseImage?: string;
 }
 
 export enum DBClusterStatus {
@@ -107,6 +109,10 @@ export enum CpuUnits {
   MILLI = 'CPU',
 }
 
+export interface DatabaseVersion extends SelectableValue {
+  default: boolean;
+}
+
 export interface DBClusterPayload {
   kubernetes_cluster_name: string;
   name: string;
@@ -127,11 +133,13 @@ interface DBClusterParamsAPI {
   pxc?: DBClusterContainerAPI;
   proxysql?: DBClusterContainerAPI;
   replicaset?: DBClusterContainerAPI;
+  image?: string;
 }
 
 interface DBClusterContainerAPI {
   compute_resources: DBClusterComputeResourcesAPI;
   disk_size: number;
+  image?: string;
 }
 
 interface DBClusterComputeResourcesAPI {
@@ -172,4 +180,35 @@ interface ResourcesAPI {
   cpu_m: number;
   disk_size: number;
   memory_bytes: number;
+}
+
+export interface DBClusterComponentsAPI {
+  versions: DBClusterVersionAPI[];
+}
+
+export interface DBClusterVersionAPI {
+  product: string;
+  operator: string;
+  matrix: DBClusterMatrixAPI;
+}
+
+export interface DBClusterMatrixAPI {
+  mongod: DBClusterComponentAPI;
+  pxc: DBClusterComponentAPI;
+  pmm: DBClusterComponentAPI;
+  proxysql: DBClusterComponentAPI;
+  haproxy: DBClusterComponentAPI;
+  backup: DBClusterComponentAPI;
+  operator: DBClusterComponentAPI;
+  log_collector: DBClusterComponentAPI;
+}
+
+export interface DBClusterComponentAPI {
+  [key: string]: {
+    image_path: string;
+    image_hash: string;
+    status: string;
+    critical: boolean;
+    default: boolean;
+  };
 }

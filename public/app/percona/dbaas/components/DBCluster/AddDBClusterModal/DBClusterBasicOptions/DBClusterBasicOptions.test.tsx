@@ -1,6 +1,7 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import { Form, FormRenderProps } from 'react-final-form';
+import { dataQa } from '@percona/platform-core';
 import { DBClusterBasicOptions } from './DBClusterBasicOptions';
 import { AddDBClusterFields } from '../AddDBClusterModal.types';
 import { kubernetesClusterNameValidator } from './DBClusterBasicOptions.utils';
@@ -15,10 +16,13 @@ describe('DBClusterBasicOptions::', () => {
         render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
       />
     );
+    const databaseVersionField = root.find(dataQa('dbcluster-database-version-field'));
 
-    expect(root.find('[data-qa="name-text-input"]')).toBeTruthy();
-    expect(root.find('[data-qa="dbcluster-kubernetes-cluster-field"]')).toBeTruthy();
-    expect(root.find('[data-qa="dbcluster-database-type-field"]')).toBeTruthy();
+    expect(root.find(dataQa('name-text-input'))).toBeTruthy();
+    expect(root.find(dataQa('dbcluster-kubernetes-cluster-field'))).toBeTruthy();
+    expect(root.find(dataQa('dbcluster-database-type-field'))).toBeTruthy();
+    expect(databaseVersionField).toBeTruthy();
+    expect(databaseVersionField.find('input').prop('disabled')).toBeTruthy();
   });
   it('renders correctly with default values', () => {
     const root = mount(

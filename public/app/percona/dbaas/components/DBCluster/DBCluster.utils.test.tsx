@@ -1,4 +1,4 @@
-import { isClusterChanging, getClusterStatus, formatResources } from './DBCluster.utils';
+import { isClusterChanging, getClusterStatus, formatResources, isOptionEmpty } from './DBCluster.utils';
 import { dbClustersStub } from './__mocks__/dbClustersStubs';
 import { DBClusterStatus, ResourcesUnits } from './DBCluster.types';
 
@@ -91,5 +91,11 @@ describe('DBCluster.utils::', () => {
       units: ResourcesUnits.TB,
       original: 6244440000000,
     });
+  });
+  it('indentifies empty option correctly', () => {
+    expect(isOptionEmpty(undefined)).toBeTruthy();
+    expect(isOptionEmpty({})).toBeTruthy();
+    expect(isOptionEmpty({ label: 'test label' })).toBeTruthy();
+    expect(isOptionEmpty({ value: 'test value' })).toBeFalsy();
   });
 });
