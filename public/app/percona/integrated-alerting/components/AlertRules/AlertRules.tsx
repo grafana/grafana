@@ -7,6 +7,7 @@ import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Table } from '../Table/Table';
 import { AddAlertRuleModal } from './AddAlertRuleModal';
+import { Severity } from '../Severity';
 import { getStyles } from './AlertRules.styles';
 import { AlertRulesProvider } from './AlertRules.provider';
 import { AlertRulesService } from './AlertRules.service';
@@ -105,6 +106,7 @@ export const AlertRules: FC = () => {
       {
         Header: severityColumn,
         accessor: 'severity',
+        Cell: ({ value }) => <Severity severity={value} />,
         width: '5%',
       } as Column,
       {
