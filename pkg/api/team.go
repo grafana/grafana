@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -20,7 +19,8 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if c.OrgRole == models.ROLE_VIEWER {
+	accessControlEnabled := hs.Cfg.FeatureToggles["accesscontrol"]
+	if !accessControlEnabled && c.OrgRole == models.ROLE_VIEWER {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
 
@@ -32,7 +32,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to create Team", err)
 	}
 
-	if c.OrgRole == models.ROLE_EDITOR && hs.Cfg.EditorsCanAdmin {
+	if accessControlEnabled || (c.OrgRole == models.ROLE_EDITOR && hs.Cfg.EditorsCanAdmin) {
 		// if the request is authenticated using API tokens
 		// the SignedInUser is an empty struct therefore
 		// an additional check whether it is an actual user is required
@@ -61,7 +61,7 @@ func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":teamId")
 
-	if err := teamguardian.CanAdmin(c.Req.Context(), hs.Bus, cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
+	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to update team", err)
 	}
 
@@ -81,7 +81,7 @@ func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
 	teamId := c.ParamsInt64(":teamId")
 	user := c.SignedInUser
 
-	if err := teamguardian.CanAdmin(c.Req.Context(), hs.Bus, orgId, teamId, user); err != nil {
+	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, user); err != nil {
 		return response.Error(403, "Not allowed to delete team", err)
 	}
 
@@ -161,7 +161,7 @@ func (hs *HTTPServer) GetTeamPreferences(c *models.ReqContext) response.Response
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 
-	if err := teamguardian.CanAdmin(c.Req.Context(), hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
+	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to view team preferences.", err)
 	}
 
@@ -177,7 +177,7 @@ func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext) response.Respo
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 
-	if err := teamguardian.CanAdmin(c.Req.Context(), hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
+	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to update team preferences.", err)
 	}
 

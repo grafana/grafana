@@ -64,7 +64,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		p := promclient.NewProvider(settings, jsonData, httpClientProvider, plog)
-		pc, err := promclient.NewProviderCache(p, jsonData)
+		pc, err := promclient.NewProviderCache(p)
 		if err != nil {
 			return nil, err
 		}

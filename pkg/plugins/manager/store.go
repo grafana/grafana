@@ -104,7 +104,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo 
 		}
 	}
 
-	err := m.loadPlugins(newPluginArchive.Path)
+	err := m.loadPlugins(context.Background(), plugins.External, newPluginArchive.Path)
 	if err != nil {
 		m.log.Error("Could not load plugin", "path", newPluginArchive.Path, "err", err)
 		return err
@@ -113,7 +113,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo 
 	return nil
 }
 
-func (m *PluginManager) AddWithFactory(_ context.Context, pluginID string, factory backendplugin.PluginFactoryFunc,
+func (m *PluginManager) AddWithFactory(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc,
 	pathResolver plugins.PluginPathResolver) error {
 	if m.isRegistered(pluginID) {
 		return fmt.Errorf("plugin %s is already registered", pluginID)
@@ -124,7 +124,7 @@ func (m *PluginManager) AddWithFactory(_ context.Context, pluginID string, facto
 		return err
 	}
 
-	p, err := m.pluginLoader.LoadWithFactory(path, factory)
+	p, err := m.pluginLoader.LoadWithFactory(ctx, plugins.Core, path, factory)
 	if err != nil {
 		return err
 	}

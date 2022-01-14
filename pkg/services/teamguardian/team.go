@@ -3,34 +3,13 @@ package teamguardian
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func CanAdmin(ctx context.Context, bus bus.Bus, orgId int64, teamId int64, user *models.SignedInUser) error {
-	if user.OrgRole == models.ROLE_ADMIN {
-		return nil
-	}
+type TeamGuardian interface {
+	CanAdmin(ctx context.Context, orgId int64, teamId int64, user *models.SignedInUser) error
+}
 
-	if user.OrgId != orgId {
-		return models.ErrNotAllowedToUpdateTeamInDifferentOrg
-	}
-
-	cmd := models.GetTeamMembersQuery{
-		OrgId:  orgId,
-		TeamId: teamId,
-		UserId: user.UserId,
-	}
-
-	if err := bus.Dispatch(ctx, &cmd); err != nil {
-		return err
-	}
-
-	for _, member := range cmd.Result {
-		if member.UserId == user.UserId && member.Permission == models.PERMISSION_ADMIN {
-			return nil
-		}
-	}
-
-	return models.ErrNotAllowedToUpdateTeam
+type Store interface {
+	GetTeamMembers(ctx context.Context, query models.GetTeamMembersQuery) ([]*models.TeamMemberDTO, error)
 }

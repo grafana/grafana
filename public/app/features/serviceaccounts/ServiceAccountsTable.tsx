@@ -9,19 +9,20 @@ import { fetchBuiltinRoles, fetchRoleOptions, UserRolePicker } from 'app/core/co
 export interface Props {
   serviceAccounts: OrgServiceAccount[];
   orgId?: number;
-  onRoleChange: (role: OrgRole, serviceaccount: OrgServiceAccount) => void;
-  onRemoveServiceaccount: (serviceaccount: OrgServiceAccount) => void;
+  onRoleChange: (role: OrgRole, serviceAccount: OrgServiceAccount) => void;
+  onRemoveServiceAccount: (serviceAccount: OrgServiceAccount) => void;
 }
 
-const ServiceaccountsTable: FC<Props> = (props) => {
-  const { serviceAccounts, orgId, onRoleChange, onRemoveServiceaccount: onRemoveserviceaccount } = props;
+const ServiceAccountsTable: FC<Props> = (props) => {
+  const { serviceAccounts, orgId, onRoleChange, onRemoveServiceAccount } = props;
   const canUpdateRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
   const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
   const rolePickerDisabled = !canUpdateRole;
 
-  const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const [toRemove, setToRemove] = useState<OrgServiceAccount | null>(null);
   const [builtinRoles, setBuiltinRoles] = useState<Record<string, Role[]>>({});
+  const [showRemoveModal, setShowRemoveModal] = useState<boolean | string>(false);
 
   useEffect(() => {
     async function fetchOptions() {
@@ -43,91 +44,91 @@ const ServiceaccountsTable: FC<Props> = (props) => {
   const getBuiltinRoles = async () => builtinRoles;
 
   return (
-    <table className="filter-table form-inline">
-      <thead>
-        <tr>
-          <th />
-          <th>Login</th>
-          <th>Email</th>
-          <th>Name</th>
-          <th>Seen</th>
-          <th>Role</th>
-          <th style={{ width: '34px' }} />
-        </tr>
-      </thead>
-      <tbody>
-        {serviceAccounts.map((serviceAccount, index) => {
-          return (
-            <tr key={`${serviceAccount.serviceAccountId}-${index}`}>
-              <td className="width-2 text-center">
-                <img className="filter-table__avatar" src={serviceAccount.avatarUrl} alt="serviceaccount avatar" />
-              </td>
-              <td className="max-width-6">
-                <span className="ellipsis" title={serviceAccount.login}>
-                  {serviceAccount.login}
-                </span>
-              </td>
-
-              <td className="max-width-5">
-                <span className="ellipsis" title={serviceAccount.email}>
-                  {serviceAccount.email}
-                </span>
-              </td>
-              <td className="max-width-5">
-                <span className="ellipsis" title={serviceAccount.name}>
-                  {serviceAccount.name}
-                </span>
-              </td>
-              <td className="width-1">{serviceAccount.lastSeenAtAge}</td>
-
-              <td className="width-8">
-                {contextSrv.accessControlEnabled() ? (
-                  <UserRolePicker
-                    userId={serviceAccount.serviceAccountId}
-                    orgId={orgId}
-                    builtInRole={serviceAccount.role}
-                    onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
-                    getRoleOptions={getRoleOptions}
-                    getBuiltinRoles={getBuiltinRoles}
-                    disabled={rolePickerDisabled}
-                  />
-                ) : (
-                  <OrgRolePicker
-                    aria-label="Role"
-                    value={serviceAccount.role}
-                    disabled={!canUpdateRole}
-                    onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
-                  />
-                )}
-              </td>
-
-              {canRemoveFromOrg && (
-                <td>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => setShowRemoveModal(Boolean(serviceAccount.login))}
-                    icon="times"
-                    aria-label="Delete serviceaccount"
-                  />
-                  <ConfirmModal
-                    body={`Are you sure you want to delete serviceaccount ${serviceAccount.login}?`}
-                    confirmText="Delete"
-                    title="Delete"
-                    onDismiss={() => setShowRemoveModal(false)}
-                    isOpen={Boolean(serviceAccount.login) === showRemoveModal}
-                    onConfirm={() => {
-                      onRemoveserviceaccount(serviceAccount);
-                    }}
-                  />
+    <>
+      <table className="filter-table form-inline">
+        <thead>
+          <tr>
+            <th />
+            <th>Login</th>
+            <th>Email</th>
+            <th>Name</th>
+            <th>Seen</th>
+            <th>Role</th>
+            <th style={{ width: '34px' }} />
+          </tr>
+        </thead>
+        <tbody>
+          {serviceAccounts.map((serviceAccount, index) => {
+            return (
+              <tr key={`${serviceAccount.serviceAccountId}-${index}`}>
+                <td className="width-2 text-center">
+                  <img className="filter-table__avatar" src={serviceAccount.avatarUrl} alt="serviceaccount avatar" />
                 </td>
-              )}
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+                <td className="max-width-6">
+                  <span className="ellipsis" title={serviceAccount.login}>
+                    {serviceAccount.login}
+                  </span>
+                </td>
+
+                <td className="max-width-5">
+                  <span className="ellipsis" title={serviceAccount.email}>
+                    {serviceAccount.email}
+                  </span>
+                </td>
+                <td className="max-width-5">
+                  <span className="ellipsis" title={serviceAccount.name}>
+                    {serviceAccount.name}
+                  </span>
+                </td>
+
+                <td className="width-8">
+                  {contextSrv.accessControlEnabled() ? (
+                    <UserRolePicker
+                      userId={serviceAccount.serviceAccountId}
+                      orgId={orgId}
+                      builtInRole={serviceAccount.role}
+                      onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
+                      getRoleOptions={getRoleOptions}
+                      getBuiltinRoles={getBuiltinRoles}
+                      disabled={rolePickerDisabled}
+                    />
+                  ) : (
+                    <OrgRolePicker
+                      aria-label="Role"
+                      value={serviceAccount.role}
+                      disabled={!canUpdateRole}
+                      onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
+                    />
+                  )}
+                </td>
+                {canRemoveFromOrg && (
+                  <td>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setShowRemoveModal(serviceAccount.login)}
+                      icon="times"
+                      aria-label="Delete serviceaccount"
+                    />
+                  </td>
+                )}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {toRemove !== null && (
+        <ConfirmModal
+          body={`Are you sure you want to delete ${toRemove.login} service account?`}
+          confirmText="Delete"
+          title="Delete"
+          onDismiss={() => setToRemove(null)}
+          isOpen={toRemove.login === showRemoveModal}
+          onConfirm={() => onRemoveServiceAccount(toRemove)}
+        />
+      )}
+    </>
   );
 };
 
-export default ServiceaccountsTable;
+export default ServiceAccountsTable;

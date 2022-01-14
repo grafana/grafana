@@ -71,6 +71,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
+		User:  c.SignedInUser,
 	}, c.SignedInUser)
 
 	if err != nil {
@@ -86,6 +87,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
+		User:  c.SignedInUser,
 	}, c.SignedInUser)
 
 	if err != nil {
@@ -124,6 +126,7 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 		OrgId: c.ParamsInt64(":orgId"),
 		Query: "",
 		Limit: 0,
+		User:  c.SignedInUser,
 	}, c.SignedInUser)
 
 	if err != nil {
@@ -183,8 +186,9 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 	query := &models.SearchOrgUsersQuery{
 		OrgID: c.OrgId,
 		Query: c.Query("query"),
-		Limit: perPage,
 		Page:  page,
+		Limit: perPage,
+		User:  c.SignedInUser,
 	}
 
 	if err := hs.SQLStore.SearchOrgUsers(ctx, query); err != nil {

@@ -189,7 +189,8 @@
 				"rowHeight": 0.99,
 				"showValue": "auto",
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -388,7 +389,7 @@
 				"showCommonLabels": false,
 				"showLabels": false,
 				"showTime": false,
-				"sortOrder": "Descending",
+				"sort": "Descending",
 				"wrapLogMessage": false
 			},
 			"targets": [
@@ -477,7 +478,7 @@
 				"dashboardAlerts": false,
 				"maxItems": 20,
 				"showInstances": false,
-				"sortOrder": 1,
+				"sort": 1,
 				"stateFilter": {
 					"firing": true,
 					"inactive": false,
@@ -651,7 +652,8 @@
 					"values": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -937,7 +939,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -1015,7 +1018,8 @@
 				"stacking": "none",
 				"text": {},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -1064,7 +1068,7 @@
 		}
 	],
 	"refresh": "",
-	"schemaVersion": 30,
+	"schemaVersion": 33,
 	"style": "dark",
 	"tags": [
 		"gdev",

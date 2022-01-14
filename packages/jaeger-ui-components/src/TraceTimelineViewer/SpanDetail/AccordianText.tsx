@@ -17,13 +17,16 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
+import { useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+
 import TextList from './TextList';
 import { TNil } from '../../types';
 import { getStyles as getAccordianKeyValuesStyles } from './AccordianKeyValues';
-import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
+import { autoColor } from '../../Theme';
 import { uAlignIcon } from '../../uberUtilityStyles';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css`
       cursor: pointer;
@@ -36,7 +39,7 @@ const getStyles = createStyle((theme: Theme) => {
       }
     `,
   };
-});
+};
 
 type AccordianTextProps = {
   className?: string | TNil;
@@ -66,7 +69,7 @@ export default function AccordianText(props: AccordianTextProps) {
     TextComponent = DefaultTextComponent,
   } = props;
   const isEmpty = !Array.isArray(data) || !data.length;
-  const accordianKeyValuesStyles = getAccordianKeyValuesStyles(useTheme());
+  const accordianKeyValuesStyles = useStyles2(getAccordianKeyValuesStyles);
   const iconCls = cx(uAlignIcon, { [accordianKeyValuesStyles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;
@@ -78,7 +81,7 @@ export default function AccordianText(props: AccordianTextProps) {
       role: 'switch',
     };
   }
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
   return (
     <div className={className || ''}>
       <div className={cx(styles.header, headerClassName)} {...headerProps} data-test-id="AccordianText--header">

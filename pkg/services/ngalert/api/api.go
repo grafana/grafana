@@ -95,7 +95,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		RulerSrv{DatasourceCache: api.DatasourceCache, QuotaService: api.QuotaService, manager: api.StateManager, store: api.RuleStore, log: logger},
+		RulerSrv{DatasourceCache: api.DatasourceCache, QuotaService: api.QuotaService, scheduleService: api.Schedule, store: api.RuleStore, log: logger},
 	), m)
 	api.RegisterTestingApiEndpoints(NewForkedTestingApi(
 		TestingApiSrv{
