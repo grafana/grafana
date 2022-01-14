@@ -31,11 +31,11 @@
   </div>
 
   <div class="gf-form">
-    <label class="gf-form-label width-10" id="tls-mode-label">TLS/SSL Mode</label>
+    <label class="gf-form-label width-10" for="tls-mode-select">TLS/SSL Mode</label>
     <div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
-      <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode"
+      <select id="tls-mode-select" class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode"
         ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']"
-        ng-init="ctrl.current.jsonData.sslmode" ng-change="ctrl.tlsModeMapping()" aria-labelledby="tls-mode-label"></select>
+        ng-init="ctrl.current.jsonData.sslmode" ng-change="ctrl.tlsModeMapping()"></select>
       <info-popover mode="right-absolute">
         This option determines whether or with what priority a secure TLS/SSL TCP/IP connection will be negotiated with the server.
       </info-popover>
