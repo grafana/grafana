@@ -99,7 +99,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 		query := queryContext(`{
 			"expr": "go_goroutines",
 			"format": "time_series",
-			"refId": "A",
+			"refId": "A"
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
