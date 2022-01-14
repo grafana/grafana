@@ -1,10 +1,11 @@
 import React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, act, waitFor } from '@testing-library/react';
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import '@testing-library/jest-dom';
 import { CloudWatchMetricsQuery } from '../../types';
 import userEvent from '@testing-library/user-event';
 import { MetricStatEditor } from '..';
+import { MetricName } from 'lezer-promql';
 
 const ds = setupMockedDataSource({
   variables: [],
@@ -97,6 +98,92 @@ describe('MetricStatEditor', () => {
     it('should be unchecked when value is false', () => {
       render(<MetricStatEditor {...props} query={{ ...props.query, matchExact: false }} disableExpressions={false} />);
       expect(screen.getByLabelText('Match exact - optional')).not.toBeChecked();
+    });
+  });
+
+  describe('validating Query namespace / metricName', () => {
+    const namespaces = [
+      { value: 'n1', label: 'n1', text: 'n1' },
+      { value: 'n2', label: 'n2', text: 'n2' },
+    ];
+    const metrics = [
+      { value: 'm1', label: 'm1', text: 'm1' },
+      { value: 'm2', label: 'm2', text: 'm2' },
+    ];
+    const keyDownEvent = {
+      key: 'ArrowDown',
+    };
+
+    // Todo: Delete this? Not sure this test is necessary.
+    it('should select namespace and metric name correctly', async () => {
+      const onChange = jest.fn();
+      const onRunQuery = jest.fn();
+
+      props.datasource.getNamespaces = jest.fn().mockResolvedValue(namespaces);
+      props.datasource.getMetrics = jest.fn().mockResolvedValue(metrics);
+
+      await act(async () => {
+        render(<MetricStatEditor {...props} onChange={onChange} onRunQuery={onRunQuery} />);
+      });
+      const namespaceSelect = screen.getByLabelText('Namespace');
+      const metricsSelect = screen.getByLabelText('Metric name');
+
+      fireEvent.keyDown(namespaceSelect, keyDownEvent);
+      await waitFor(() => screen.getByText('n1'));
+      fireEvent.click(screen.getByText('n1'));
+
+      fireEvent.keyDown(metricsSelect, keyDownEvent);
+      await waitFor(() => screen.getByText('m1'));
+      fireEvent.click(screen.getByText('m1'));
+
+      expect(onChange.mock.calls).toEqual([
+        [{ ...props.query, namespace: 'n1' }], // First call, namespace select
+        [{ ...props.query, metricName: 'm1' }], // Second call, metric select
+      ]);
+      expect(onRunQuery).toHaveBeenCalledTimes(2);
+    });
+
+    it('should remove metricName from query if it does not exist in new namespace', async () => {
+      const onChange = jest.fn();
+
+      props.datasource.getNamespaces = jest.fn().mockResolvedValue(namespaces);
+      props.datasource.getMetrics = jest.fn().mockResolvedValue(metrics);
+      props.query.metricName = 'oldNamespaceMetric';
+
+      await act(async () => {
+        render(<MetricStatEditor {...props} onChange={onChange} />);
+      });
+      const namespaceSelect = screen.getByLabelText('Namespace');
+
+      fireEvent.keyDown(namespaceSelect, keyDownEvent);
+      await waitFor(() => screen.getByText('n1'));
+      fireEvent.click(screen.getByText('n1'));
+
+      expect(onChange.mock.calls).toEqual([
+        [{ ...props.query, metricName: '', namespace: 'n1' }], // namespace select, metricName should have been removed
+      ]);
+    });
+
+    it('should not remove metricName from query if it does exist in new namespace', async () => {
+      const onChange = jest.fn();
+
+      props.datasource.getNamespaces = jest.fn().mockResolvedValue(namespaces);
+      props.datasource.getMetrics = jest.fn().mockResolvedValue(metrics);
+      props.query.namespace = 'n1';
+      props.query.metricName = 'm1';
+
+      await act(async () => {
+        render(<MetricStatEditor {...props} onChange={onChange} />);
+      });
+      const namespaceSelect = screen.getByLabelText('Namespace');
+
+      fireEvent.keyDown(namespaceSelect, keyDownEvent);
+      await waitFor(() => screen.getByText('n2'));
+      fireEvent.click(screen.getByText('n2'));
+
+      expect(onChange.mock.calls).toEqual([
+        [{ ...props.query, metricName: 'm1', namespace: 'n2' }], // namespace select, metricName should stay the same
+      ]);
     });
   });
 });
