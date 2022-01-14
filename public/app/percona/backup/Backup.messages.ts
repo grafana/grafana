@@ -4,4 +4,5 @@ export const Messages = {
     scheduled: 'Scheduled Backups',
     locations: 'Storage Locations',
   },
+  backupManagement: 'Backup Management',
 };

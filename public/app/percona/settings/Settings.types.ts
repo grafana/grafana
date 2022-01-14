@@ -31,7 +31,7 @@ export interface AlertManagerChangePayload extends AlertManagerPayload {
 
 export interface AdvancedPayload {
   data_retention: string;
-  pmm_public_address: string;
+  pmm_public_address?: string;
 }
 
 export interface AdvancedChangePayload extends AdvancedPayload {
@@ -42,6 +42,8 @@ export interface AdvancedChangePayload extends AdvancedPayload {
   remove_pmm_public_address: boolean;
   enable_alerting?: boolean;
   disable_alerting?: boolean;
+  enable_backup_management: boolean;
+  disable_backup_management: boolean;
   disable_azurediscover?: boolean;
   enable_azurediscover?: boolean;
 }
@@ -62,6 +64,10 @@ export interface SSHPayload {
   ssh_key: string;
 }
 
+export interface SettingsAPIResponse {
+  settings: SettingsPayload;
+}
+
 export interface SettingsPayload
   extends AlertManagerPayload,
     AdvancedPayload,
@@ -76,6 +82,7 @@ export interface SettingsPayload
   stt_enabled: boolean;
   dbaas_enabled: boolean;
   alerting_enabled: boolean;
+  backup_management_enabled: boolean;
   azurediscover_enabled: boolean;
 }
 
@@ -89,6 +96,7 @@ export type SettingsAPIChangePayload = AlertManagerChangePayload &
 export interface Settings {
   updatesDisabled: boolean;
   telemetryEnabled: boolean;
+  backupEnabled: boolean;
   metricsResolutions: MetricsResolutions;
   dataRetention: string;
   sshKey: string;

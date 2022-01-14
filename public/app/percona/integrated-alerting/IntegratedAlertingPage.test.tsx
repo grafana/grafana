@@ -2,7 +2,6 @@ import React from 'react';
 import { act } from 'react-dom/test-utils';
 import { mount, ReactWrapper, shallow, ShallowWrapper } from 'enzyme';
 import IntegratedAlertingPage from './IntegratedAlertingPage';
-import { IntegratedAlertingContent } from './components/IntegratedAlertingContent';
 import { getLocationSrv } from '@grafana/runtime';
 import { Tab, TabContent } from '@grafana/ui';
 import { useSelector } from 'react-redux';
@@ -10,7 +9,7 @@ import { DEFAULT_TAB } from './IntegratedAlerting.constants';
 
 const fakeLocationUpdate = jest.fn();
 
-jest.mock('./IntegratedAlerting.service');
+jest.mock('app/percona/settings/Settings.service');
 jest.mock('./components/Alerts/Alerts.service');
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -34,14 +33,6 @@ describe('IntegratedAlertingPage', () => {
     (useSelector as jest.Mock).mockClear();
     (getLocationSrv as jest.Mock).mockClear();
     fakeLocationUpdate.mockClear();
-  });
-
-  let wrapper: ShallowWrapper;
-  it('should output IntegratedAlertingContent', async () => {
-    await act(async () => {
-      wrapper = await shallow(<IntegratedAlertingPage />);
-    });
-    expect(wrapper.find(IntegratedAlertingContent).exists()).toBeTruthy();
   });
 
   it('should show all tabs', async () => {

@@ -58,7 +58,6 @@ const required = [validators.required];
 export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
   isVisible,
   location = null,
-  showLocationValidation = false,
   waitingLocationValidation = false,
   onClose = () => null,
   onAdd = () => null,
@@ -97,19 +96,17 @@ export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
               >
                 {location ? Messages.editAction : Messages.addAction}
               </LoaderButton>
-              {showLocationValidation ? (
-                <LoaderButton
-                  type="button"
-                  className={cx(styles.button, styles.testButton)}
-                  data-qa="storage-location-test-button"
-                  size="md"
-                  loading={waitingLocationValidation}
-                  disabled={!valid}
-                  onClick={() => handleTest(values)}
-                >
-                  {Messages.test}
-                </LoaderButton>
-              ) : null}
+              <LoaderButton
+                type="button"
+                className={cx(styles.button, styles.testButton)}
+                data-qa="storage-location-test-button"
+                size="md"
+                loading={waitingLocationValidation}
+                disabled={!valid}
+                onClick={() => handleTest(values)}
+              >
+                {Messages.test}
+              </LoaderButton>
               <Button
                 className={styles.button}
                 data-qa="storage-location-cancel-button"
