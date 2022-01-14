@@ -42,6 +42,7 @@ const NavBarItem = ({
     menuItemType: NavMenuItemType.Section,
   };
   const items: NavModelItem[] = [section].concat(filteredItems);
+
   const onNavigate = (item: NavModelItem) => {
     const { url, target, onClick } = item;
     if (!url) {
@@ -56,7 +57,7 @@ const NavBarItem = ({
     }
   };
 
-  return showMenu ? (
+  return showMenu && !link.highlighted ? (
     <li className={cx(styles.container, className)}>
       <NavBarItemMenuTrigger item={section} isActive={isActive} label={link.text}>
         <NavBarItemMenu
@@ -107,6 +108,7 @@ const NavBarItem = ({
       url={link.url}
       onClick={link.onClick}
       target={link.target}
+      highlighted={link.highlighted}
     >
       {children}
     </NavBarItemWithoutMenu>
