@@ -48,7 +48,7 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 
 		// calculating Firing based on operator
 		if cr.Operator == "or" {
-			firing = firing || cr.Firingimport
+			firing = firing || cr.Firing
 		} else {
 			firing = firing && cr.Firing
 		}
