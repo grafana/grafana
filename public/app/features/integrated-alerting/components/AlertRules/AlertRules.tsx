@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useState, useCallback } from 'react';
 import { Column } from 'react-table';
 import { Button, useStyles, IconButton } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
@@ -12,6 +12,8 @@ import { Messages } from '../../IntegratedAlerting.messages';
 import { formatRules } from './AlertRules.utils';
 import { AlertRule } from './AlertRules.types';
 import { AlertRulesActions } from './AlertRulesActions';
+import { ALERT_RULES_TABLE_ID } from './AlertRules.constants';
+import { useStoredTablePageSize } from '../Table/Pagination';
 
 const { noData, columns } = Messages.alertRules.table;
 
@@ -32,18 +34,29 @@ export const AlertRules: FC = () => {
   const [selectedAlertRule, setSelectedAlertRule] = useState<AlertRule | null>();
   const [selectedRuleDetails, setSelectedRuleDetails] = useState<AlertRule | null>();
   const [data, setData] = useState<AlertRule[]>([]);
+  const [pageSize, setPageSize] = useStoredTablePageSize(ALERT_RULES_TABLE_ID);
+  const [pageIndex, setPageindex] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  const getAlertRules = async () => {
+  const getAlertRules = useCallback(async () => {
     setPendingRequest(true);
     try {
-      const { rules } = await AlertRulesService.list();
+      const { rules = [], totals } = await AlertRulesService.list({
+        page_params: {
+          index: pageIndex,
+          page_size: pageSize as number,
+        },
+      });
       setData(formatRules(rules));
+      setTotalItems(totals.total_items || 0);
+      setTotalPages(totals.total_pages || 0);
     } catch (e) {
       logger.error(e);
     } finally {
       setPendingRequest(false);
     }
-  };
+  }, [pageIndex, pageSize]);
 
   const columns = React.useMemo(
     () => [
@@ -112,14 +125,22 @@ export const AlertRules: FC = () => {
     [selectedRuleDetails, styles.filter, styles.filtersWrapper, styles.nameWrapper]
   );
 
-  useEffect(() => {
-    getAlertRules();
-  }, []);
+  const onPaginationChanged = useCallback(
+    (pageSize: number, pageIndex: number) => {
+      setPageSize(pageSize);
+      setPageindex(pageIndex);
+    },
+    [setPageindex, setPageSize]
+  );
 
   const handleAddButton = () => {
     setSelectedAlertRule(null);
     setAddModalVisible((currentValue) => !currentValue);
   };
+
+  useEffect(() => {
+    getAlertRules();
+  }, [pageSize, pageIndex, getAlertRules]);
 
   return (
     <AlertRulesProvider.Provider
@@ -137,7 +158,18 @@ export const AlertRules: FC = () => {
         </Button>
       </div>
       <AddAlertRuleModal isVisible={addModalVisible} setVisible={setAddModalVisible} alertRule={selectedAlertRule} />
-      <Table data={data} columns={columns} pendingRequest={pendingRequest} emptyMessage={noData}>
+      <Table
+        showPagination
+        totalItems={totalItems}
+        totalPages={totalPages}
+        pageSize={pageSize as number}
+        pageIndex={pageIndex}
+        onPaginationChanged={onPaginationChanged}
+        data={data}
+        columns={columns}
+        pendingRequest={pendingRequest}
+        emptyMessage={noData}
+      >
         {(rows, table) =>
           rows.map((row) => {
             const { prepareRow } = table;

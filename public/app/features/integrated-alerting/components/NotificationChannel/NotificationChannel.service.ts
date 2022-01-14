@@ -9,6 +9,8 @@ import { TO_MODEL, TO_API, getType } from './NotificationChannel.utils';
 const BASE_URL = `/v1/management/ia/Channels`;
 
 export const NotificationChannelService = {
+  // TODO pageIndex and pageSize should be sent to the API
+  // Also, totalPages and totalItems should be returned
   async list(): Promise<NotificationChannel[]> {
     return api
       .post(`${BASE_URL}/List`, {})

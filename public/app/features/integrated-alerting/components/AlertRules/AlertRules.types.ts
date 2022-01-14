@@ -100,8 +100,14 @@ export interface AlertRulesListResponseRule {
   custom_labels?: AlertRulePayloadCustomLabels;
 }
 
+export interface AlertRulesTotals {
+  total_items: number;
+  total_pages: number;
+}
+
 export interface AlertRulesListResponse {
   rules: AlertRulesListResponseRule[];
+  totals: AlertRulesTotals;
 }
 
 export interface AlertRulePayloadCustomLabels {
@@ -124,6 +130,13 @@ export interface AlertRuleCreatePayload {
   severity: keyof typeof AlertRuleSeverity;
   summary: string;
   template_name: string;
+}
+
+export interface AlertRuleGetPayload {
+  page_params: {
+    page_size: number;
+    index: number;
+  };
 }
 
 export interface AlertRuleUpdatePayload extends AlertRuleCreatePayload {
