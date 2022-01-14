@@ -3,7 +3,6 @@ import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/da
 import { Alert, Select, stylesFactory, useTheme2 } from '@grafana/ui';
 import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
 import { css } from '@emotion/css';
-import { GazetteerPathEditorConfigSettings } from '../types';
 
 const defaultPaths: Array<SelectableValue<string>> = [
   {
@@ -22,6 +21,10 @@ const defaultPaths: Array<SelectableValue<string>> = [
     value: 'public/gazetteer/airports.geojson',
   },
 ];
+
+export interface GazetteerPathEditorConfigSettings {
+  options?: Array<SelectableValue<string>>;
+}
 
 export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any, GazetteerPathEditorConfigSettings>> = ({
   value,

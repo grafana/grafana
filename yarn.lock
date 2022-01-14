@@ -3733,7 +3733,7 @@ __metadata:
     marked: 4.0.9
     moment: 2.29.1
     moment-timezone: 0.5.34
-    ol: 6.9.0
+    ol: 6.11.0
     papaparse: 5.3.1
     react: 17.0.2
     react-dom: 17.0.2
@@ -8853,13 +8853,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/arcgis-rest-api@npm:*":
-  version: 10.4.5
-  resolution: "@types/arcgis-rest-api@npm:10.4.5"
-  checksum: 876840ee8d467a4d5ae31d4ea79cdd14b469b5e37546065e8dab12ffcf72510215442256fa8573920253a17c927f92e2dafc1a42e482e69ce7842fb88a68dee0
-  languageName: node
-  linkType: hard
-
 "@types/argparse@npm:1.0.38":
   version: 1.0.38
   resolution: "@types/argparse@npm:1.0.38"
@@ -9900,18 +9893,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ol@npm:^6.5.1":
-  version: 6.5.3
-  resolution: "@types/ol@npm:6.5.3"
-  dependencies:
-    "@types/arcgis-rest-api": "*"
-    "@types/geojson": "*"
-    "@types/rbush": "*"
-    "@types/topojson-specification": "*"
-  checksum: 7627fd4e0a00ec8aef41d47937cee499d9abd7cb7b9251fdfd5146cf3e1f735342699686c441fb0b49fc94b2e9d72ee2521d0bb3a6563cea4589324f34ecdf51
-  languageName: node
-  linkType: hard
-
 "@types/overlayscrollbars@npm:^1.12.0":
   version: 1.12.1
   resolution: "@types/overlayscrollbars@npm:1.12.1"
@@ -9995,13 +9976,6 @@ __metadata:
   version: 1.2.4
   resolution: "@types/range-parser@npm:1.2.4"
   checksum: b7c0dfd5080a989d6c8bb0b6750fc0933d9acabeb476da6fe71d8bdf1ab65e37c136169d84148034802f48378ab94e3c37bb4ef7656b2bec2cb9c0f8d4146a95
-  languageName: node
-  linkType: hard
-
-"@types/rbush@npm:*":
-  version: 3.0.0
-  resolution: "@types/rbush@npm:3.0.0"
-  checksum: 050eb2af4d7cb59c5b3dddfb9af93e4abfcffb1766d82fdcd4d37e03cff374f7cf761eef3b8cd48f976416ee3dd7ee4991bde938698865ed0c660317f3a020c2
   languageName: node
   linkType: hard
 
@@ -10506,15 +10480,6 @@ __metadata:
   version: 0.1.0
   resolution: "@types/tmp@npm:0.1.0"
   checksum: 14f894120775e639e27dab3f7c1ab2186911e8f61e2b7a12c9600374ddcbc26dd966544879055feea863bb68a28cb738ae5b3556a564b104177af6a1942a6d97
-  languageName: node
-  linkType: hard
-
-"@types/topojson-specification@npm:*":
-  version: 1.0.2
-  resolution: "@types/topojson-specification@npm:1.0.2"
-  dependencies:
-    "@types/geojson": "*"
-  checksum: ad1a759cc9cb76d388140eaac160794d0ea33f8b4ba5b75bad4a48b6b0a28c72e031fca78d564871759eb6a8b4173a5e19baedb79f2c5b5eaa18c9b808248a89
   languageName: node
   linkType: hard
 
@@ -19830,7 +19795,6 @@ __metadata:
     "@types/lru-cache": ^5.1.0
     "@types/mousetrap": 1.6.3
     "@types/node": 16.11.19
-    "@types/ol": ^6.5.1
     "@types/papaparse": 5.3.1
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.16.6
@@ -19955,7 +19919,7 @@ __metadata:
     ngtemplate-loader: 2.1.0
     node-notifier: ^10.0.0
     nodemon: 2.0.15
-    ol: 6.9.0
+    ol: 6.11.0
     papaparse: 5.3.1
     pluralize: ^8.0.0
     postcss: 8.4.5
@@ -26438,26 +26402,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-mapbox-style@npm:^6.5.1":
-  version: 6.8.1
-  resolution: "ol-mapbox-style@npm:6.8.1"
+"ol-mapbox-style@npm:^6.7.0":
+  version: 6.8.2
+  resolution: "ol-mapbox-style@npm:6.8.2"
   dependencies:
     "@mapbox/mapbox-gl-style-spec": ^13.20.1
     mapbox-to-css-font: ^2.4.0
     webfont-matcher: ^1.1.0
-  checksum: 1202f77de603f929f56d30ec28656f110c4b2e0829aa0bc5ff11e4a3badd8def7a01d88529c59907ae7795839e0669ec9bf60401df51c247c226d4d3a5547333
+  checksum: b7b6f631870dd0e78d217edda52eecb6b8b15cb1120ea8ed14376fa17f231ac39412346c4f9b417badc772161a70d06a6b65deaf00a7db4adcab466c1df8d081
   languageName: node
   linkType: hard
 
-"ol@npm:6.9.0":
-  version: 6.9.0
-  resolution: "ol@npm:6.9.0"
+"ol@npm:6.11.0":
+  version: 6.11.0
+  resolution: "ol@npm:6.11.0"
   dependencies:
     geotiff: ^1.0.8
-    ol-mapbox-style: ^6.5.1
+    ol-mapbox-style: ^6.7.0
     pbf: 3.2.1
     rbush: ^3.0.1
-  checksum: 79872ea243e5d40515e9a52f9ad3405d67672ab617b3bd2e721d088cd1673cd2c7c1d9cc57f64617a28ed47a1102aaae9e1599cbeb6ba4c453b9fb4a3995e273
+  checksum: beca107ffc2d53701601ef55bc386b430f52386b029b5cabf883909bc118693a1ff3653b4abf8235f65316ebf50b40f315e75d579626d584353c30295a9066c7
   languageName: node
   linkType: hard
 
