@@ -1,5 +1,5 @@
 import { logger } from '@percona/platform-core';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
@@ -9,6 +9,7 @@ import DiscoveryService from './Discovery.service';
 import { getStyles } from './Discovery.styles';
 import { DiscoverySearchPanelProps } from './Discovery.types';
 import Credentials from './components/Credentials/Credentials';
+import { CredentialsForm } from './components/Credentials/Credentials.types';
 import Instances from './components/Instances/Instances';
 
 const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
@@ -19,9 +20,11 @@ const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
   const [loading, startLoading] = useState(false);
   const [generateToken] = useCancelToken();
 
-  useEffect(() => {
-    const updateInstances = async () => {
+  const discover = useCallback(
+    async (credentials: CredentialsForm) => {
       try {
+        setCredentials(credentials);
+        startLoading(true);
         const result = await DiscoveryService.discoveryRDS(credentials, generateToken(DISCOVERY_RDS_CANCEL_TOKEN));
 
         if (result) {
@@ -32,23 +35,17 @@ const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
           return;
         }
         logger.error(e);
+      } finally {
+        startLoading(false);
       }
-      startLoading(false);
-    };
-
-    if (
-      (credentials.aws_secret_key && credentials.aws_access_key) ||
-      (!credentials.aws_secret_key && !credentials.aws_access_key)
-    ) {
-      startLoading(true);
-      updateInstances();
-    }
-  }, [credentials, generateToken]);
+    },
+    [setCredentials, setInstances, generateToken]
+  );
 
   return (
     <>
       <div className={styles.content}>
-        <Credentials onSetCredentials={setCredentials} selectInstance={selectInstance} />
+        <Credentials discover={discover} selectInstance={selectInstance} />
         <Instances instances={instances} selectInstance={selectInstance} credentials={credentials} loading={loading} />
       </div>
     </>
