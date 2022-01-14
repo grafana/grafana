@@ -2,7 +2,7 @@ import React, { FC, useState, useMemo } from 'react';
 
 import { IconButton, useStyles } from '@grafana/ui';
 
-import { SourceDescription } from '../AlertRuleTemplatesTable/AlertRuleTemplatesTable.types';
+import { SourceDescription } from '../AlertRuleTemplate.types';
 import { DeleteRuleTemplateModal } from '../DeleteRuleTemplateModal/DeleteRuleTemplateModal';
 import { EditAlertRuleTemplateModal } from '../EditAlertRuleTemplateModal/EditAlertRuleTemplateModal';
 

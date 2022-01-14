@@ -1,5 +1,5 @@
-import { Template } from './AlertRuleTemplatesTable.types';
-import { formatTemplate, formatTemplates } from './AlertRuleTemplatesTable.utils';
+import { Template } from './AlertRuleTemplate.types';
+import { formatTemplate, formatTemplates } from './AlertRuleTemplate.utils';
 
 const moment = jest.requireActual('moment-timezone');
 moment.tz.setDefault('UTC');

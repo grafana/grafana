@@ -14,6 +14,15 @@ jest.mock('./AlertRuleTemplate.service', () => ({
     }),
   },
 }));
+jest.mock('@percona/platform-core', () => {
+  const originalModule = jest.requireActual('@percona/platform-core');
+  return {
+    ...originalModule,
+    logger: {
+      error: jest.fn(),
+    },
+  };
+});
 
 describe('AlertRuleTemplate', () => {
   afterEach(() => {
@@ -24,7 +33,7 @@ describe('AlertRuleTemplate', () => {
     let wrapper: ReactWrapper;
 
     await act(async () => {
-      wrapper = mount(<AlertRuleTemplate />);
+      wrapper = await mount(<AlertRuleTemplate />);
     });
 
     expect(wrapper.find('textarea')).toBeTruthy();
@@ -39,14 +48,14 @@ describe('AlertRuleTemplate', () => {
     let wrapper: ReactWrapper;
 
     await act(async () => {
-      wrapper = mount(<AlertRuleTemplate />);
+      wrapper = await mount(<AlertRuleTemplate />);
     });
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('alert-rule-templates-table-thead')).find('tr')).toHaveLength(1);
-    expect(wrapper.find(dataQa('alert-rule-templates-table-tbody')).find('tr')).toHaveLength(3);
-    expect(wrapper.find(dataQa('alert-rule-templates-table-no-data'))).toHaveLength(0);
+    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(1);
+    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(3);
+    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(0);
   });
 
   it('should render correctly without data', async () => {
@@ -57,11 +66,25 @@ describe('AlertRuleTemplate', () => {
     let wrapper: ReactWrapper;
 
     await act(async () => {
-      wrapper = mount(<AlertRuleTemplate />);
+      wrapper = await mount(<AlertRuleTemplate />);
     });
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('alert-rule-templates-table-no-data'))).toHaveLength(1);
+    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(0);
+    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(0);
+    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(1);
+  });
+
+  it('should have table initially loading', async () => {
+    let wrapper: ReactWrapper;
+
+    await act(async () => {
+      wrapper = await mount(<AlertRuleTemplate />);
+    });
+
+    expect(wrapper.find(dataQa('table-loading'))).toHaveLength(1);
+    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(0);
+    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(0);
   });
 });

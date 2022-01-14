@@ -5,25 +5,35 @@ import { act } from 'react-dom/test-utils';
 
 import { AlertRulesProvider } from '../AlertRules.provider';
 import { AlertRulesService } from '../AlertRules.service';
+import { AlertRulesContext } from '../AlertRules.types';
 import { rulesStubs, formattedRulesStubs } from '../__mocks__/alertRulesStubs';
 
 import { AlertRulesActions } from './AlertRulesActions';
 import { Messages } from './AlertRulesActions.messages';
 
+const mockContext = () => ({
+  setAddModalVisible: jest.fn(),
+  setSelectedAlertRule: jest.fn(),
+  setSelectedRuleDetails: jest.fn(),
+  getAlertRules: jest.fn(),
+  selectedRuleDetails: formattedRulesStubs[0],
+});
 jest.mock('../AlertRules.service');
-jest.mock('app/core/app_events');
-
+jest.mock('app/core/core', () => ({
+  appEvents: {
+    emit: jest.fn(),
+  },
+}));
 const alertRulesServiceCreate = jest.spyOn(AlertRulesService, 'create');
+const withContext = (values: AlertRulesContext, wrapper: JSX.Element) => (
+  <AlertRulesProvider.Provider value={values}>{wrapper}</AlertRulesProvider.Provider>
+);
 
 describe('AlertRulesActions', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('calls the API to crate an alert rule on copy', async () => {
     const testRule = rulesStubs[1];
 
-    const wrapper = mount(<AlertRulesActions alertRule={formattedRulesStubs[1]} />);
+    const wrapper = mount(withContext(mockContext(), <AlertRulesActions alertRule={formattedRulesStubs[1]} />));
 
     const expectedResult = {
       ...testRule,
@@ -43,28 +53,18 @@ describe('AlertRulesActions', () => {
   });
 
   it('calls the API to update an alert rule on edit', async () => {
-    const alertRulesContext = {
-      getAlertRules: jest.fn(),
-      setAddModalVisible: jest.fn(),
-      setSelectedAlertRule: jest.fn(),
-      setSelectedRuleDetails: jest.fn(),
-      selectedRuleDetails: formattedRulesStubs[0],
-    };
-    const wrapper = mount(
-      <AlertRulesProvider.Provider value={alertRulesContext}>
-        <AlertRulesActions alertRule={formattedRulesStubs[0]} />
-      </AlertRulesProvider.Provider>
-    );
+    const context = mockContext();
+    const wrapper = mount(withContext(context, <AlertRulesActions alertRule={formattedRulesStubs[0]} />));
 
     await act(async () => {
       wrapper.find(dataQa('edit-alert-rule-button')).at(0).simulate('click');
     });
 
-    expect(alertRulesContext.setSelectedAlertRule).toBeCalledTimes(1);
+    expect(context.setSelectedAlertRule).toBeCalledTimes(1);
   });
 
   it('calls the API to delete an alert rule', async () => {
-    const wrapper = mount(<AlertRulesActions alertRule={formattedRulesStubs[1]} />);
+    const wrapper = mount(withContext(mockContext(), <AlertRulesActions alertRule={formattedRulesStubs[1]} />));
 
     expect(wrapper.find(dataQa('modal-wrapper'))).toHaveLength(0);
 
@@ -78,14 +78,16 @@ describe('AlertRulesActions', () => {
   });
 
   it('renders an enabled switch for an enabled alert rule', () => {
-    const wrapper = mount(<AlertRulesActions alertRule={formattedRulesStubs[0]} />);
+    const wrapper = mount(withContext(mockContext(), <AlertRulesActions alertRule={formattedRulesStubs[0]} />));
     const toggle = wrapper.find(dataQa('toggle-alert-rule')).find('input');
 
     expect(toggle.prop('checked')).toBeTruthy();
   });
 
   it('renders a disabled switch for a disabled alert rule', () => {
-    const wrapper = mount(<AlertRulesActions alertRule={{ ...formattedRulesStubs[0], disabled: true }} />);
+    const wrapper = mount(
+      withContext(mockContext(), <AlertRulesActions alertRule={{ ...formattedRulesStubs[0], disabled: true }} />)
+    );
 
     const toggle = wrapper.find(dataQa('toggle-alert-rule')).find('input');
 
@@ -93,23 +95,12 @@ describe('AlertRulesActions', () => {
   });
 
   it('calls getAlertRules on toggle', async () => {
-    const alertRulesContext = {
-      getAlertRules: jest.fn(),
-      setAddModalVisible: jest.fn(),
-      setSelectedAlertRule: jest.fn(),
-      setSelectedRuleDetails: jest.fn(),
-      selectedRuleDetails: formattedRulesStubs[0],
-    };
-    const wrapper = mount(
-      <AlertRulesProvider.Provider value={alertRulesContext}>
-        <AlertRulesActions alertRule={formattedRulesStubs[0]} />
-      </AlertRulesProvider.Provider>
-    );
-
+    const context = mockContext();
+    const wrapper = mount(withContext(context, <AlertRulesActions alertRule={formattedRulesStubs[0]} />));
     await act(async () => {
       wrapper.find(dataQa('toggle-alert-rule')).find('input').simulate('click');
     });
 
-    expect(alertRulesContext.getAlertRules).toHaveBeenCalled();
+    expect(context.getAlertRules).toHaveBeenCalled();
   });
 });

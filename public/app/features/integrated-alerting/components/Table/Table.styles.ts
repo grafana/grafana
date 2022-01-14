@@ -15,8 +15,6 @@ export const getStyles = (theme: GrafanaTheme) => {
       border: 1px solid ${borderColor};
       display: block;
       max-width: 100%;
-      max-height: 500px;
-      overflow: auto;
     `,
     table: css`
       /* This is required to make the table full-width */
@@ -35,6 +33,7 @@ export const getStyles = (theme: GrafanaTheme) => {
             th {
               position: sticky;
               top: 0;
+              cursor: pointer;
             }
           }
         }

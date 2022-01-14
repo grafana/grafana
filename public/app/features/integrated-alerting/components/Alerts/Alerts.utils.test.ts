@@ -1,9 +1,9 @@
 import { GrafanaTheme } from '@grafana/data';
 
-import { AlertRuleSeverity } from '../../AlertRules/AlertRules.types';
-import { alertsStubs } from '../__mocks__/alertsStubs';
+import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
 
-import { formatAlert, formatAlerts, formatLabel, formatLabels, getSeverityColors } from './AlertsTable.utils';
+import { formatAlert, formatAlerts, formatLabel, formatLabels, getSeverityColors } from './Alerts.utils';
+import { alertsStubs } from './__mocks__/alertsStubs';
 
 const moment = jest.requireActual('moment-timezone');
 moment.tz.setDefault('UTC');

@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 
-import { Template } from '../../AlertRuleTemplate/AlertRuleTemplatesTable/AlertRuleTemplatesTable.types';
+import { Template } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
 import { NotificationChannel } from '../../NotificationChannel/NotificationChannel.types';
 import {
   AlertRule,
