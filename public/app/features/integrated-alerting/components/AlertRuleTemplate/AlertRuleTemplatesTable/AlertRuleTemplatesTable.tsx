@@ -1,10 +1,12 @@
 import { css } from 'emotion';
+/* eslint-disable react/display-name */
 import React, { FC } from 'react';
 import { useTable, Column } from 'react-table';
 
 import { Spinner, useStyles } from '@grafana/ui';
 
 import { Messages } from '../../../IntegratedAlerting.messages';
+import { EmptyBlock } from '../../EmptyBlock';
 import { AlertRuleTemplateActions } from '../AlertRuleTemplateActions/AlertRuleTemplateActions';
 
 import { getStyles } from './AlertRuleTemplatesTable.styles';
@@ -55,14 +57,12 @@ export const AlertRuleTemplatesTable: FC<AlertRuleTemplatesTableProps> = ({
     <div className={style.tableWrap} data-qa="alert-rule-templates-table-outer-wrapper">
       <div className={style.table} data-qa="alert-rule-templates-inner-wrapper">
         {pendingRequest ? (
-          <div data-qa="alert-rule-templates-table-loading" className={style.empty}>
+          <EmptyBlock dataQa="alert-rule-templates-table-loading">
             <Spinner />
-          </div>
+          </EmptyBlock>
         ) : null}
         {!rows.length && !pendingRequest ? (
-          <div data-qa="alert-rule-templates-table-no-data" className={style.empty}>
-            {<h1>{noData}</h1>}
-          </div>
+          <EmptyBlock dataQa="alert-rule-templates-table-no-data">{<h1>{noData}</h1>}</EmptyBlock>
         ) : null}
         {rows.length && !pendingRequest ? (
           <table {...getTableProps()} data-qa="alert-rule-templates-table">

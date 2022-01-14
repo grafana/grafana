@@ -1,32 +1,27 @@
-import { mount, ReactWrapper } from 'enzyme';
+import { mount, ReactWrapper, shallow, ShallowWrapper } from 'enzyme';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 import { useSelector } from 'react-redux';
 
 import { getLocationSrv } from '@grafana/runtime';
+import { Tab, TabContent } from '@grafana/ui';
 
-import { Messages } from './IntegratedAlerting.messages';
+import { DEFAULT_TAB } from './IntegratedAlerting.constants';
 import IntegratedAlertingPage from './IntegratedAlertingPage';
-import { alertsStubs } from './components/Alerts/__mocks__/alertsStubs';
+import { IntegratedAlertingContent } from './components/IntegratedAlertingContent';
 
+const fakeLocationUpdate = jest.fn();
+
+jest.mock('./IntegratedAlerting.service');
+jest.mock('./components/Alerts/Alerts.service');
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
   useSelector: jest.fn(),
 }));
 
-const fakeLocationUpdate = jest.fn();
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getLocationSrv: jest.fn().mockImplementation(() => ({ update: fakeLocationUpdate })),
-}));
-
-jest.mock('./components/Alerts/Alerts.service', () => ({
-  AlertsService: {
-    list: () => ({
-      alerts: alertsStubs,
-    }),
-  },
 }));
 
 describe('IntegratedAlertingPage', () => {
@@ -41,16 +36,23 @@ describe('IntegratedAlertingPage', () => {
     fakeLocationUpdate.mockClear();
   });
 
-  it('renders the page', async () => {
-    let wrapper: ReactWrapper<any, Readonly<{}>, React.Component<{}, {}, any>>;
+  let wrapper: ShallowWrapper;
+  it('should output IntegratedAlertingContent', async () => {
+    await act(async () => {
+      wrapper = await shallow(<IntegratedAlertingPage />);
+    });
+    expect(wrapper.find(IntegratedAlertingContent).exists()).toBeTruthy();
+  });
+
+  it('should show all tabs', async () => {
+    let wrapper: ShallowWrapper;
 
     await act(async () => {
-      wrapper = mount(<IntegratedAlertingPage />);
+      wrapper = await shallow(<IntegratedAlertingPage />);
     });
-    const tabs = wrapper.find('ul');
 
-    expect(tabs.children().length).toBe(4);
-    expect(tabs.find('li').at(0).text()).toEqual(Messages.tabs.alerts);
+    expect(wrapper.find(Tab)).toHaveLength(4);
+    expect(wrapper.find(TabContent).exists()).toBeTruthy();
   });
 
   it('changes location when clicking on a tab', async () => {

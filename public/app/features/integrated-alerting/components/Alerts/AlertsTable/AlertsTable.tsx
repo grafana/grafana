@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import { logger } from '@percona/platform-core';
 import { cx, css } from 'emotion';
 import React, { useEffect, useState, useMemo } from 'react';
@@ -7,6 +8,7 @@ import { Spinner, useStyles, useTheme } from '@grafana/ui';
 
 import { Messages } from '../../../IntegratedAlerting.messages';
 import { AlertRuleSeverity } from '../../AlertRules/AlertRules.types';
+import { EmptyBlock } from '../../EmptyBlock';
 import { AlertsService } from '../Alerts.service';
 import { Alert, AlertStatus } from '../Alerts.types';
 import { AlertsActions } from '../AlertsActions/AlertsActions';
@@ -112,23 +114,21 @@ export const AlertsTable = () => {
     <div className={style.tableWrap} data-qa="alerts-table-outer-wrapper">
       <div className={style.table} data-qa="alerts-inner-wrapper">
         {pendingRequest ? (
-          <div data-qa="alerts-table-loading" className={style.empty}>
+          <EmptyBlock dataQa="alerts-table-loading">
             <Spinner />
-          </div>
+          </EmptyBlock>
         ) : null}
         {!rows.length && !pendingRequest ? (
-          <div data-qa="alerts-table-no-data" className={style.empty}>
-            {<h1>{noData}</h1>}
-          </div>
+          <EmptyBlock dataQa="alerts-table-no-data">{<h1>{noData}</h1>}</EmptyBlock>
         ) : null}
         {rows.length && !pendingRequest ? (
           <table {...getTableProps()} data-qa="alerts-table">
             <thead data-qa="alerts-table-thead">
               {headerGroups.map((headerGroup) => (
-                // eslint-disable-next-line react/jsx-key
+                /* eslint-disable-next-line react/jsx-key */
                 <tr {...headerGroup.getHeaderGroupProps()}>
                   {headerGroup.headers.map((column) => (
-                    // eslint-disable-next-line react/jsx-key
+                    /* eslint-disable-next-line react/jsx-key */
                     <th
                       className={css`
                         cursor: pointer;
@@ -146,13 +146,13 @@ export const AlertsTable = () => {
               {rows.map((row) => {
                 prepareRow(row);
                 return (
-                  // eslint-disable-next-line react/jsx-key
+                  /* eslint-disable-next-line react/jsx-key */
                   <tr
                     {...row.getRowProps()}
                     className={(row.original as Alert).status === 'Silenced' ? style.disabledRow : ''}
                   >
                     {row.cells.map((cell) => (
-                      // eslint-disable-next-line react/jsx-key
+                      /* eslint-disable-next-line react/jsx-key */
                       <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
                     ))}
                   </tr>
