@@ -82,25 +82,12 @@ func TestInitializer_Initialize(t *testing.T) {
 	t.Run("non backend plugin app", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
-				ID:   "parent-plugin",
-				Type: plugins.App,
-				Includes: []*plugins.Includes{
-					{
-						Type:       "page",
-						DefaultNav: true,
-						Slug:       "myCustomSlug",
-					},
-				},
 				Backend: false,
 			},
-			PluginDir: absCurPath,
-			Class:     plugins.External,
 		}
 
 		i := &Initializer{
-			cfg: &plugins.Cfg{
-				AppSubURL: "appSubURL",
-			},
+			cfg: &plugins.Cfg{},
 			log: fakeLogger{},
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
@@ -118,25 +105,9 @@ func TestInitializer_Initialize(t *testing.T) {
 
 func TestInitializer_InitializeWithFactory(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
-		p := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID:   "test-plugin",
-				Type: plugins.App,
-				Includes: []*plugins.Includes{
-					{
-						Type:       "page",
-						DefaultNav: true,
-						Slug:       "myCustomSlug",
-					},
-				},
-			},
-			PluginDir: "test/folder",
-			Class:     plugins.External,
-		}
+		p := &plugins.Plugin{}
 		i := &Initializer{
-			cfg: &plugins.Cfg{
-				AppSubURL: "appSubURL",
-			},
+			cfg: &plugins.Cfg{},
 			log: fakeLogger{},
 		}
 
@@ -157,25 +128,9 @@ func TestInitializer_InitializeWithFactory(t *testing.T) {
 	})
 
 	t.Run("invalid factory", func(t *testing.T) {
-		p := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID:   "test-plugin",
-				Type: plugins.App,
-				Includes: []*plugins.Includes{
-					{
-						Type:       "page",
-						DefaultNav: true,
-						Slug:       "myCustomSlug",
-					},
-				},
-			},
-			PluginDir: "test/folder",
-			Class:     plugins.External,
-		}
+		p := &plugins.Plugin{}
 		i := &Initializer{
-			cfg: &plugins.Cfg{
-				AppSubURL: "appSubURL",
-			},
+			cfg: &plugins.Cfg{},
 			log: fakeLogger{},
 			backendProvider: &fakeBackendProvider{
 				plugin: p,

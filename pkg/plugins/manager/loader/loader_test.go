@@ -340,6 +340,56 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:  "Load an app with includes",
+			class: plugins.External,
+			cfg: &plugins.Cfg{
+				PluginsPath:          filepath.Join(parentDir),
+				PluginsAllowUnsigned: []string{"test-app"},
+			},
+			pluginPaths: []string{"../testdata/test-app-with-includes"},
+			want: []*plugins.Plugin{
+				{JSONData: plugins.JSONData{
+					ID:   "test-app",
+					Type: "app",
+					Name: "Test App",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Test Inc.",
+							URL:  "http://test.com",
+						},
+						Description: "Official Grafana Test App & Dashboard bundle",
+						Version:     "1.0.0",
+						Links: []plugins.InfoLink{
+							{Name: "Project site", URL: "http://project.com"},
+							{Name: "License & Terms", URL: "http://license.com"},
+						},
+						Logos: plugins.Logos{
+							Small: "public/img/icn-app.svg",
+							Large: "public/img/icn-app.svg",
+						},
+						Updated: "2015-02-10",
+					},
+					Dependencies: plugins.Dependencies{
+						GrafanaDependency: ">=8.0.0",
+						GrafanaVersion:    "*",
+						Plugins:           []plugins.Dependency{},
+					},
+					Includes: []*plugins.Includes{
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory", DefaultNav: true},
+						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+					},
+					Backend: false,
+				},
+					DefaultNavURL: "/plugins/test-app/page/root-page-react",
+					PluginDir:     filepath.Join(parentDir, "testdata/test-app-with-includes"),
+					Class:         plugins.External,
+					Signature:     plugins.SignatureUnsigned,
+					Module:        "plugins/test-app/module",
+					BaseURL:       "public/plugins/test-app",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		l := newLoader(tt.cfg)
