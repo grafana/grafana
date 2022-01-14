@@ -10,4 +10,5 @@ export const DATABASE_LABELS = {
   [Databases.mongodb]: 'MongoDB',
   [Databases.postgresql]: 'PostgreSQL',
   [Databases.proxysql]: 'ProxySQL',
+  [Databases.mariadb]: 'MariaDB',
 };

@@ -28,6 +28,13 @@ export interface AddNode {
   node_type: string;
 }
 
+export enum DefaultPorts {
+  small = 'small',
+  medium = 'medium',
+  large = 'large',
+  custom = 'custom',
+}
+
 export interface RemoteInstanceExternalservicePayload {
   custom_labels: {};
   service_name: string;
@@ -35,4 +42,14 @@ export interface RemoteInstanceExternalservicePayload {
   add_node: AddNode;
   listen_port: string;
   metrics_mode: number;
+}
+
+export interface RemoteInstancePayload {
+  custom_labels: {};
+  service_name: string;
+  address?: string;
+  listen_port: string;
+  metrics_mode: number;
+  node_name?: string;
+  qan?: string;
 }
