@@ -151,7 +151,7 @@ clean: ## Clean up intermediate build artifacts.
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
 drone:
-	$(DRONE) starlark convert
+	$(DRONE) starlark --format
 	$(DRONE) lint --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
 
