@@ -4,8 +4,7 @@ import { GrafanaTheme2 } from '../themes';
 import { PanelOptionsEditorBuilder } from '../utils';
 import { ReactNode } from 'react';
 import { PluggableMap } from 'ol';
-import { Layer } from 'ol/layer';
-import { Source } from 'ol/source';
+import BaseLayer from 'ol/layer/Base';
 
 /**
  * @alpha
@@ -71,7 +70,7 @@ export interface MapLayerOptions<TConfig = any> {
  * @alpha
  */
 export interface MapLayerHandler<TConfig = any> {
-  init: () => Layer<Source, any>;
+  init: () => BaseLayer;
   update?: (data: PanelData) => void;
   legend?: ReactNode;
 

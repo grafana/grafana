@@ -1,9 +1,8 @@
 import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
 import { HideableFieldConfig } from '@grafana/schema';
 import { LayerElement } from 'app/core/components/Layers/types';
-import { Layer } from 'ol/layer';
+import BaseLayer from 'ol/layer/Base';
 import { Units } from 'ol/proj/Units';
-import { Source } from 'ol/source';
 import { StyleConfig } from './style/types';
 import { MapCenterID } from './view';
 
@@ -78,7 +77,7 @@ export enum ComparisonOperation {
 export interface MapLayerState<TConfig = any> extends LayerElement {
   options: MapLayerOptions<TConfig>;
   handler: MapLayerHandler;
-  layer: Layer<Source, any>; // the openlayers instance
+  layer: BaseLayer; // the openlayers instance
   onChange: (cfg: MapLayerOptions<TConfig>) => void;
   isBasemap?: boolean;
 }
