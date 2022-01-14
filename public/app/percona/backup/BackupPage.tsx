@@ -7,9 +7,11 @@ import { Tab, TabContent, TabsBar, useStyles } from '@grafana/ui';
 import { Breadcrumb } from 'app/core/components/Breadcrumb';
 import { StoreState } from 'app/types';
 
+import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
+
 import { getStyles } from './Backup.styles';
 import { TabKeys } from './Backup.types';
-import { PAGE_MODEL, PAGE_TABS, DEFAULT_TAB } from './BackupPage.constants';
+import { DEFAULT_TAB, PAGE_MODEL, PAGE_TABS } from './BackupPage.constants';
 import { StorageLocations } from './components/StorageLocations';
 
 const BackupPage: FC = () => {
@@ -46,6 +48,7 @@ const BackupPage: FC = () => {
   return (
     <div className={styles.backupWrapper}>
       <Breadcrumb pageModel={PAGE_MODEL} />
+      <TechnicalPreview />
       <TabsBar>
         {PAGE_TABS.map((tab) => (
           <Tab key={tab.id} label={tab.title} active={tab.id === activeTab} onChangeTab={() => setActiveTab(tab.id)} />

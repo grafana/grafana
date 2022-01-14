@@ -18,5 +18,6 @@ export interface AdditionalOptionsFormPartProps {
 }
 
 export interface PostgreSQLAdditionalOptionsProps {
-  isRDS: boolean;
+  isRDS?: boolean;
+  isAzure?: boolean;
 }

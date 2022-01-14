@@ -4,6 +4,8 @@ import React from 'react';
 import { Button } from '@grafana/ui';
 import { DATABASE_LABELS, Databases } from 'app/percona/shared/core';
 
+import { styles } from './Instances.styles';
+
 const getEngineType = (type?: string) => {
   switch (type) {
     case 'DISCOVER_RDS_MYSQL':
@@ -62,9 +64,11 @@ export const getInstancesColumns = (credentials, onSelectInstance) => [
       };
 
       return (
-        <Button variant="primary" onClick={selectionHandler}>
-          Start monitoring
-        </Button>
+        <div className={styles.actionButtonWrapper}>
+          <Button variant="primary" onClick={selectionHandler}>
+            Start monitoring
+          </Button>
+        </div>
       );
     },
   },

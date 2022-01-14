@@ -1,4 +1,5 @@
 /* eslint-disable react/display-name */
+import { logger } from '@percona/platform-core';
 import { FormApi } from 'final-form';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { Form as FormFinal } from 'react-final-form';
@@ -23,10 +24,14 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
 
   const { remoteInstanceCredentials, discoverName } = getInstanceData(type, credentials);
   const [loading, setLoading] = useState<boolean>(false);
-  const initialValues: any = { ...remoteInstanceCredentials, tracking: 'qan_postgresql_pgstatements_agent' };
+  const initialValues: any = { ...remoteInstanceCredentials };
 
-  if (type === Databases.mysql) {
+  if (type === Databases.mysql || type === Databases.mariadb) {
     initialValues.qan_mysql_perfschema = true;
+  }
+
+  if (type === Databases.postgresql) {
+    initialValues.tracking = 'qan_postgresql_pgstatements_agent';
   }
 
   const onSubmit = useCallback(
@@ -36,13 +41,15 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
 
         if (values.isRDS) {
           await AddRemoteInstanceService.addRDS(toPayload(values, discoverName));
+        } else if (values.isAzure) {
+          await AddRemoteInstanceService.addAzure(toPayload(values, discoverName));
         } else {
           await AddRemoteInstanceService.addRemote(type, values);
         }
 
         window.location.href = '/graph/inventory/';
       } catch (e) {
-        console.error(e);
+        logger.error(e);
       } finally {
         setLoading(false);
       }

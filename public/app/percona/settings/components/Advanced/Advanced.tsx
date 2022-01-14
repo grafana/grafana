@@ -10,7 +10,7 @@ import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import validators from 'app/percona/shared/helpers/validators';
 
-import { SECONDS_IN_DAY, MIN_DAYS, MAX_DAYS } from './Advanced.constants';
+import { SECONDS_IN_DAY, MIN_DAYS, MAX_DAYS, TECHNICAL_PREVIEW_DOC_URL } from './Advanced.constants';
 import { getStyles } from './Advanced.styles';
 import { AdvancedProps } from './Advanced.types';
 import { transformSecondsToDays } from './Advanced.utils';
@@ -23,6 +23,7 @@ export const Advanced: FC<AdvancedProps> = ({
   sttEnabled,
   dbaasEnabled,
   alertingEnabled,
+  azureDiscoverEnabled,
   publicAddress,
   updateSettings,
 }) => {
@@ -52,6 +53,12 @@ export const Advanced: FC<AdvancedProps> = ({
       alertingLabel,
       alertingTooltip,
       alertingLink,
+      azureDiscoverLabel,
+      azureDiscoverTooltip,
+      azureDiscoverLink,
+      technicalPreviewLegend,
+      technicalPreviewDescription,
+      technicalPreviewLinkText,
     },
     tooltipLinkText,
   } = Messages;
@@ -61,12 +68,13 @@ export const Advanced: FC<AdvancedProps> = ({
     updates: !updatesDisabled,
     stt: sttEnabled,
     dbaas: dbaasEnabled,
+    azureDiscover: azureDiscoverEnabled,
     publicAddress,
     alerting: alertingEnabled,
   };
   const [loading, setLoading] = useState(false);
   // @ts-ignore
-  const applyChanges = ({ retention, telemetry, stt, publicAddress, alerting }) => {
+  const applyChanges = ({ retention, telemetry, stt, publicAddress, alerting, azureDiscover }) => {
     const refresh = !!alerting !== alertingEnabled;
     const body = {
       data_retention: `${+retention * SECONDS_IN_DAY}s`,
@@ -74,6 +82,8 @@ export const Advanced: FC<AdvancedProps> = ({
       enable_telemetry: telemetry,
       disable_stt: !stt,
       enable_stt: stt,
+      disable_azurediscover: !azureDiscover,
+      enable_azurediscover: azureDiscover,
       pmm_public_address: publicAddress,
       remove_pmm_public_address: !publicAddress,
       enable_alerting: alerting ? true : undefined,
@@ -123,18 +133,6 @@ export const Advanced: FC<AdvancedProps> = ({
               component={SwitchRow}
             />
             <Field
-              name="updates"
-              type="checkbox"
-              label={updatesLabel}
-              tooltip={updatesTooltip}
-              tooltipLinkText={tooltipLinkText}
-              link={updatesLink}
-              className={styles.switchDisabled}
-              disabled
-              dataQa="advanced-updates"
-              component={SwitchRow}
-            />
-            <Field
               name="stt"
               type="checkbox"
               label={sttLabel}
@@ -146,28 +144,16 @@ export const Advanced: FC<AdvancedProps> = ({
               dataQa="advanced-stt"
               component={SwitchRow}
             />
-            {dbaasEnabled && (
-              <Field
-                name="dbaas"
-                type="checkbox"
-                label={dbaasLabel}
-                tooltip={dbaasTooltip}
-                className={styles.switchDisabled}
-                disabled
-                dataQa="advanced-dbaas"
-                component={SwitchRow}
-              />
-            )}
             <Field
-              name="alerting"
+              name="updates"
               type="checkbox"
-              label={alertingLabel}
-              tooltip={alertingTooltip}
+              label={updatesLabel}
+              tooltip={updatesTooltip}
               tooltipLinkText={tooltipLinkText}
-              link={alertingLink}
-              className={cx({ [styles.switchDisabled]: !values.telemetry })}
-              disabled={!values.telemetry}
-              dataQa="advanced-alerting"
+              link={updatesLink}
+              className={styles.switchDisabled}
+              disabled
+              dataQa="advanced-updates"
               component={SwitchRow}
             />
             <div className={styles.advancedRow}>
@@ -191,6 +177,52 @@ export const Advanced: FC<AdvancedProps> = ({
                 </Button>
               </div>
             </div>
+            <fieldset className={styles.technicalPreview}>
+              <legend>{technicalPreviewLegend}</legend>
+              <p className={styles.technicalPreviewDoc}>
+                <Icon name="info-circle" size={'xl'} className={styles.technicalPreviewIcon} />
+                <p>
+                  {technicalPreviewDescription}{' '}
+                  <a href={TECHNICAL_PREVIEW_DOC_URL} target="_blank" rel="noreferrer">
+                    {technicalPreviewLinkText}
+                  </a>
+                </p>
+              </p>
+              {dbaasEnabled && (
+                <Field
+                  name="dbaas"
+                  type="checkbox"
+                  label={dbaasLabel}
+                  tooltip={dbaasTooltip}
+                  className={styles.switchDisabled}
+                  disabled
+                  dataQa="advanced-dbaas"
+                  component={SwitchRow}
+                />
+              )}
+              <Field
+                name="alerting"
+                type="checkbox"
+                label={alertingLabel}
+                tooltip={alertingTooltip}
+                tooltipLinkText={tooltipLinkText}
+                link={alertingLink}
+                className={cx({ [styles.switchDisabled]: !values.telemetry })}
+                disabled={!values.telemetry}
+                dataQa="advanced-alerting"
+                component={SwitchRow}
+              />
+              <Field
+                name="azureDiscover"
+                type="checkbox"
+                label={azureDiscoverLabel}
+                tooltip={azureDiscoverTooltip}
+                tooltipLinkText={tooltipLinkText}
+                link={azureDiscoverLink}
+                dataQa="advanced-azure-discover"
+                component={SwitchRow}
+              />
+            </fieldset>
             <Button
               className={settingsStyles.actionButton}
               type="submit"

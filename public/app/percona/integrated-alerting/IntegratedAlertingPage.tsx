@@ -8,6 +8,8 @@ import { Tab, TabContent, TabsBar, useStyles } from '@grafana/ui';
 import { Breadcrumb } from 'app/core/components/Breadcrumb';
 import { StoreState } from 'app/types';
 
+import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
+
 import { DEFAULT_TAB, PAGE_MODEL, PAGE_TABS } from './IntegratedAlerting.constants';
 import { IntegratedAlertingService } from './IntegratedAlerting.service';
 import { getStyles } from './IntegratedAlerting.styles';
@@ -86,6 +88,7 @@ const IntegratedAlertingPage: FC = () => {
   return (
     <div className={styles.integratedAlertingWrapper}>
       <Breadcrumb pageModel={PAGE_MODEL} />
+      <TechnicalPreview />
       <TabsBar>
         {PAGE_TABS.map((tab) => (
           <Tab key={tab.id} label={tab.title} active={tab.id === activeTab} onChangeTab={() => selectTab(tab.id)} />

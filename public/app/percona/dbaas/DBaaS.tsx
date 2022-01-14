@@ -6,6 +6,7 @@ import { getLocationSrv } from '@grafana/runtime';
 import { Tab, TabContent, TabsBar, useStyles } from '@grafana/ui';
 
 import { StoreState } from '../../types';
+import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 
 import { DEFAULT_TAB, PAGE_MODEL } from './DBaaS.constants';
@@ -68,6 +69,7 @@ export const DBaaS: FC = () => {
 
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
+      <TechnicalPreview />
       <div className={styles.panelContentWrapper}>
         <TabsBar>
           {tabs.map((tab, index) => (

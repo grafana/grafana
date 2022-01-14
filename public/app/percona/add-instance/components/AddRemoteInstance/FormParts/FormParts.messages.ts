@@ -42,6 +42,7 @@ export const Messages = {
         disableBasicMetrics: 'Disable Basic Metrics',
         disableEnchancedMetrics: 'Disable Enhanced Metrics',
         tablestatOptions: 'Table statistics limit',
+        azureDatabaseExporter: 'Enable Monitoring by Azure Metrics Exporter',
       },
     },
     placeholders: {

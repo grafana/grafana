@@ -1,4 +1,5 @@
 import { Databases } from 'app/percona/shared/core';
+
 import { KubernetesOperatorStatus } from './KubernetesOperatorStatus.types';
 
 export const OPERATORS_DOCS_URL = {
@@ -6,6 +7,7 @@ export const OPERATORS_DOCS_URL = {
   [Databases.mongodb]: 'https://per.co.na/03Clok',
   [Databases.postgresql]: '',
   [Databases.proxysql]: '',
+  [Databases.mariadb]: '',
 };
 
 export const STATUS_DATA_QA = {
