@@ -137,7 +137,7 @@ const getRolePickerInputStyles = (
         `,
       disabled && styles.inputDisabled,
       css`
-        min-width: 520px;
+        width: 520px;
         min-height: 32px;
         height: auto;
         flex-direction: row;
