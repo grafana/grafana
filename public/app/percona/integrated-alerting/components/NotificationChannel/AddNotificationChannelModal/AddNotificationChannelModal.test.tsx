@@ -1,6 +1,6 @@
 import React from 'react';
 import { ReactWrapper } from 'enzyme';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { getMount, asyncAct } from 'app/percona/shared/helpers/testUtils';
 import { AddNotificationChannelModal } from './AddNotificationChannelModal';
 import { TYPE_OPTIONS } from './AddNotificationChannel.constants';
@@ -29,7 +29,7 @@ const withContext = (wrapper: JSX.Element) => (
 );
 
 const findFormButton = (wrapper: ReactWrapper) =>
-  wrapper.find(dataQa('notification-channel-add-button')).find('button');
+  wrapper.find(dataTestId('notification-channel-add-button')).find('button');
 
 xdescribe('AddNotificationChannelModal', () => {
   it('should render modal with correct fields', async () => {
@@ -37,9 +37,9 @@ xdescribe('AddNotificationChannelModal', () => {
 
     expect(wrapper.find('[className$="-singleValue"]').text()).toEqual(TYPE_OPTIONS[0].label);
     expect(wrapper.find('input').length).toBe(2);
-    expect(wrapper.find(dataQa('emails-textarea-input')).length).toBe(1);
-    expect(wrapper.find(dataQa('notification-channel-add-button')).find('button').length).toBe(1);
-    expect(wrapper.find(dataQa('notification-channel-cancel-button')).find('button').length).toBe(1);
+    expect(wrapper.find(dataTestId('emails-textarea-input')).length).toBe(1);
+    expect(wrapper.find(dataTestId('notification-channel-add-button')).find('button').length).toBe(1);
+    expect(wrapper.find(dataTestId('notification-channel-cancel-button')).find('button').length).toBe(1);
   });
 
   it('should not render modal when visible is set to false', async () => {
@@ -47,14 +47,14 @@ xdescribe('AddNotificationChannelModal', () => {
       withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible={false} />)
     );
 
-    expect(wrapper.find(dataQa('emails-textarea-input')).length).toBe(0);
+    expect(wrapper.find(dataTestId('emails-textarea-input')).length).toBe(0);
   });
 
   it('should call setVisible on close', async () => {
     const setVisible = jest.fn();
     const wrapper = await getMount(withContext(<AddNotificationChannelModal setVisible={setVisible} isVisible />));
 
-    await asyncAct(() => wrapper.find(dataQa('modal-background')).simulate('click'));
+    await asyncAct(() => wrapper.find(dataTestId('modal-background')).simulate('click'));
 
     expect(setVisible).toHaveBeenCalled();
   });
@@ -63,7 +63,7 @@ xdescribe('AddNotificationChannelModal', () => {
     const setVisible = jest.fn();
     const wrapper = await getMount(withContext(<AddNotificationChannelModal setVisible={setVisible} isVisible />));
 
-    wrapper.find(dataQa('name-text-input')).simulate('change', { target: { value: 'Email test' } });
+    wrapper.find(dataTestId('name-text-input')).simulate('change', { target: { value: 'Email test' } });
     wrapper.find('textarea').simulate('change', { target: { value: 'test1@percona.com' } });
     await asyncAct(() => wrapper.find('form').simulate('submit'));
 
@@ -82,7 +82,7 @@ xdescribe('AddNotificationChannelModal', () => {
       )
     );
 
-    expect(wrapper.find(dataQa('name-text-input')).prop('value')).toEqual(notificationChannelStubs[0].summary);
+    expect(wrapper.find(dataTestId('name-text-input')).prop('value')).toEqual(notificationChannelStubs[0].summary);
   });
 
   it('should have the submit button initially disabled', async () => {
@@ -111,11 +111,11 @@ xdescribe('AddNotificationChannelModal', () => {
       const wrapper = await getMount(
         withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible notificationChannel={channel} />)
       );
-      await asyncAct(() => wrapper.find(dataQa('keyType-radio-button')).at(1).simulate('change'));
+      await asyncAct(() => wrapper.find(dataTestId('keyType-radio-button')).at(1).simulate('change'));
 
       wrapper.update();
       await asyncAct(() =>
-        wrapper.find(dataQa('service-text-input')).simulate('change', { target: { value: 'new_service_key' } })
+        wrapper.find(dataTestId('service-text-input')).simulate('change', { target: { value: 'new_service_key' } })
       );
       await asyncAct(() => wrapper.find('form').simulate('submit'));
 

@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 export interface OverlayProps {
   children: ReactNode;
   className?: string;
-  dataQa?: string;
+  dataTestId?: string;
   isPending?: boolean;
   size?: number;
 }

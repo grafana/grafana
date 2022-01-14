@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { Databases } from 'app/percona/shared/core';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { KubernetesOperatorStatus as Status } from './KubernetesOperatorStatus.types';
 import { KubernetesOperatorStatus } from './KubernetesOperatorStatus';
 import { kubernetesStub } from '../../__mocks__/kubernetesStubs';
@@ -19,7 +19,7 @@ describe('KubernetesOperatorStatus::', () => {
       />
     );
 
-    expect(root.find(dataQa('cluster-link'))).toBeTruthy();
+    expect(root.find(dataTestId('cluster-link'))).toBeTruthy();
   });
 
   it("doesn't render link when installed", () => {
@@ -34,7 +34,7 @@ describe('KubernetesOperatorStatus::', () => {
       />
     );
 
-    expect(root.contains(dataQa('cluster-link'))).toBeFalsy();
+    expect(root.contains(dataTestId('cluster-link'))).toBeFalsy();
   });
 
   it('renders link when available new version is available', () => {
@@ -49,6 +49,6 @@ describe('KubernetesOperatorStatus::', () => {
       />
     );
 
-    expect(root.find(dataQa('cluster-link'))).toBeTruthy();
+    expect(root.find(dataTestId('cluster-link'))).toBeTruthy();
   });
 });

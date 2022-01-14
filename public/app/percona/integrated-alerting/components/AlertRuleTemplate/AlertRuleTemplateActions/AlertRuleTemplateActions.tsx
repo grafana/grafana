@@ -18,13 +18,13 @@ export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ te
   return (
     <div className={styles.actionsWrapper}>
       <IconButton
-        data-qa="edit-template-button"
+        data-testid="edit-template-button"
         name="pen"
         disabled={isActionDisabled}
         onClick={() => setEditModalVisible(true)}
       />
       <IconButton
-        data-qa="delete-template-button"
+        data-testid="delete-template-button"
         name="times"
         disabled={isActionDisabled}
         onClick={() => setDeleteModalVisible(true)}

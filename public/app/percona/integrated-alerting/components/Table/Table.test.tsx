@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { Table } from './Table';
 
 const columns = [
@@ -33,9 +33,9 @@ describe('Table', () => {
       />
     );
 
-    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(1);
-    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(2);
-    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(0);
+    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(1);
+    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(2);
+    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(0);
   });
 
   it('should render the loader when data fetch is pending', async () => {
@@ -50,9 +50,9 @@ describe('Table', () => {
       />
     );
 
-    expect(wrapper.find(dataQa('table-loading'))).toHaveLength(1);
-    expect(wrapper.find(dataQa('table'))).toHaveLength(1);
-    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(0);
+    expect(wrapper.find(dataTestId('table-loading'))).toHaveLength(1);
+    expect(wrapper.find(dataTestId('table'))).toHaveLength(1);
+    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(0);
   });
 
   it('should display the noData section when no data is passed', async () => {
@@ -66,10 +66,10 @@ describe('Table', () => {
         pageSize={10}
       />
     );
-    const noData = wrapper.find(dataQa('table-no-data'));
+    const noData = wrapper.find(dataTestId('table-no-data'));
 
-    expect(wrapper.find(dataQa('table-loading'))).toHaveLength(0);
-    expect(wrapper.find(dataQa('table'))).toHaveLength(0);
+    expect(wrapper.find(dataTestId('table-loading'))).toHaveLength(0);
+    expect(wrapper.find(dataTestId('table'))).toHaveLength(0);
     expect(noData).toHaveLength(1);
     expect(noData.text()).toEqual('empty');
   });
@@ -91,7 +91,7 @@ describe('Table', () => {
       />
     );
 
-    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(100);
+    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(100);
   });
 
   it('should display partial data with showPagination using controlled pagination', () => {
@@ -114,8 +114,8 @@ describe('Table', () => {
       />
     );
 
-    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(10);
-    expect(wrapper.find(dataQa('page-button')).hostNodes()).toHaveLength(10);
+    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(10);
+    expect(wrapper.find(dataTestId('page-button')).hostNodes()).toHaveLength(10);
   });
 
   it('should display partial data with showPagination using uncontrolled pagination', () => {
@@ -138,7 +138,7 @@ describe('Table', () => {
       />
     );
 
-    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(5);
-    expect(wrapper.find(dataQa('page-button')).hostNodes()).toHaveLength(20);
+    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(5);
+    expect(wrapper.find(dataTestId('page-button')).hostNodes()).toHaveLength(20);
   });
 });

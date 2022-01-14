@@ -8,8 +8,8 @@ export interface DeleteModalProps {
   showForce?: boolean;
   forceLabel?: string;
   initialForceValue?: boolean;
-  cancelButtonDataQa?: string;
-  confirmButtonDataQa?: string;
+  cancelButtondataTestId?: string;
+  confirmButtondataTestId?: string;
   setVisible: (value: boolean) => void;
   onDelete: (force?: boolean) => void;
 }

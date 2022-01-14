@@ -27,20 +27,20 @@ export const SSHKey: FC<SSHKeyProps> = ({ sshKey, updateSettings }) => {
         initialValues={{ key: sshKey }}
         render={({ handleSubmit, pristine }) => (
           <form onSubmit={handleSubmit}>
-            <div className={settingsStyles.labelWrapper} data-qa="ssh-key-label">
+            <div className={settingsStyles.labelWrapper} data-testid="ssh-key-label">
               <span>{label}</span>
               <LinkTooltip tooltipText={tooltip} link={link} linkText={tooltipLinkText} icon="info-circle" />
             </div>
             <Field
               name="key"
               isEqual={isEqual}
-              render={({ input }) => <TextArea {...input} className={styles.textarea} data-qa="ssh-key" />}
+              render={({ input }) => <TextArea {...input} className={styles.textarea} data-testid="ssh-key" />}
             />
             <Button
               className={settingsStyles.actionButton}
               type="submit"
               disabled={pristine || loading}
-              data-qa="ssh-key-button"
+              data-testid="ssh-key-button"
             >
               {loading && <Spinner />}
               {action}

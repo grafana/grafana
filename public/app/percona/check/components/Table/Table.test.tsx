@@ -8,7 +8,7 @@ describe('Table::', () => {
   it('should display a custom message if STT is enabled and data is empty', () => {
     const root = shallow(<Table columns={COLUMNS} data={[]} />);
 
-    const emptyDiv = root.find('[data-qa="db-check-panel-table-empty"]');
+    const emptyDiv = root.find('[data-testid="db-check-panel-table-empty"]');
 
     expect(emptyDiv.length).toEqual(1);
     expect(emptyDiv.text()).toEqual('No failed checks.');
@@ -17,7 +17,7 @@ describe('Table::', () => {
   it('should render the table with a header and a body if STT is enabled and data is not empty', () => {
     const root = shallow(<Table columns={COLUMNS} data={activeCheckStub} />);
 
-    const table = root.find('[data-qa="db-check-panel-table"]');
+    const table = root.find('[data-testid="db-check-panel-table"]');
 
     expect(table.length).toEqual(1);
     expect(table.find(TableHeader).length).toEqual(1);

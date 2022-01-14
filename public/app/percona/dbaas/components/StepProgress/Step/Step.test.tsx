@@ -9,7 +9,7 @@ describe('Step::', () => {
         Test content
       </Step>
     );
-    const header = wrapper.find('[data-qa="step-header"]');
+    const header = wrapper.find('[data-testid="step-header"]');
     const number = header.find('div').at(1);
     const title = wrapper.find('div').at(3);
 
@@ -18,7 +18,7 @@ describe('Step::', () => {
   });
   it('renders step header correctly without title and number', () => {
     const wrapper = shallow(<Step onClick={() => {}}>Test content</Step>);
-    const header = wrapper.find('[data-qa="step-header"]');
+    const header = wrapper.find('[data-testid="step-header"]');
     const number = header.find('div').at(1);
     const title = wrapper.find('div').at(3);
 
@@ -31,7 +31,7 @@ describe('Step::', () => {
         Test content
       </Step>
     );
-    const header = wrapper.find('[data-qa="step-header"]');
+    const header = wrapper.find('[data-testid="step-header"]');
 
     expect(header.find('svg')).toBeTruthy();
   });
@@ -44,7 +44,7 @@ describe('Step::', () => {
   it('calls step action', () => {
     const action = jest.fn();
     const wrapper = shallow(<Step onClick={action}>Test content</Step>);
-    const header = wrapper.find('[data-qa="step-header"]');
+    const header = wrapper.find('[data-testid="step-header"]');
 
     header.simulate('click');
 

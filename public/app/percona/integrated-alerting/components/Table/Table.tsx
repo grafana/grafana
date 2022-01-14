@@ -88,12 +88,12 @@ export const Table: FC<TableProps> = ({
 
   return (
     <>
-      <Overlay dataQa="table-loading" isPending={pendingRequest}>
-        <div className={style.tableWrap} data-qa="table-outer-wrapper">
-          <div className={style.table} data-qa="table-inner-wrapper">
+      <Overlay dataTestId="table-loading" isPending={pendingRequest}>
+        <div className={style.tableWrap} data-testid="table-outer-wrapper">
+          <div className={style.table} data-testid="table-inner-wrapper">
             <TableContent loading={pendingRequest} hasData={hasData} emptyMessage={emptyMessage}>
-              <table {...getTableProps()} data-qa="table">
-                <thead data-qa="table-thead">
+              <table {...getTableProps()} data-testid="table">
+                <thead data-testid="table-thead">
                   {headerGroups.map((headerGroup) => (
                     /* eslint-disable-next-line react/jsx-key */
                     <tr {...headerGroup.getHeaderGroupProps()}>
@@ -118,7 +118,7 @@ export const Table: FC<TableProps> = ({
                     </tr>
                   ))}
                 </thead>
-                <tbody {...getTableBodyProps()} data-qa="table-tbody">
+                <tbody {...getTableBodyProps()} data-testid="table-tbody">
                   {children
                     ? children(showPagination ? page : rows, tableInstance)
                     : (showPagination ? page : rows).map((row) => {

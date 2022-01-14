@@ -19,7 +19,7 @@ export const KubernetesClusterStatus: FC<KubernetesClusterStatusProps> = ({ stat
 
   return (
     <div className={styles.clusterStatusWrapper}>
-      <span className={cx(styles.status, statusStyles)} data-qa={`cluster-status-${STATUS_DATA_QA[status]}`}>
+      <span className={cx(styles.status, statusStyles)} data-testid={`cluster-status-${STATUS_DATA_QA[status]}`}>
         {Messages.kubernetes.kubernetesStatus[status]}
       </span>
     </div>

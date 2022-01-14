@@ -50,16 +50,16 @@ export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isV
       <Modal title={Messages.title} isVisible={isVisible} onClose={() => setVisible(false)}>
         <div className={styles.modalWrapper}>
           {loading ? (
-            <div data-qa="dbcluster-logs-loading" className={styles.spinnerWrapper}>
+            <div data-testid="dbcluster-logs-loading" className={styles.spinnerWrapper}>
               <Spinner />
             </div>
           ) : (
             <>
               {!logs || logs.pods.length <= 0 ? (
-                <span data-qa="dbcluster-no-logs">{Messages.noLogs}</span>
+                <span data-testid="dbcluster-no-logs">{Messages.noLogs}</span>
               ) : (
                 <>
-                  <div data-qa="dbcluster-logs-actions" className={styles.header}>
+                  <div data-testid="dbcluster-logs-actions" className={styles.header}>
                     <span className={styles.podsLabel}>{Messages.pods}</span>
                     <Button variant="secondary" onClick={() => toggleCollapse()} className={styles.expandButton}>
                       {expanded ? Messages.collapse : Messages.expand}

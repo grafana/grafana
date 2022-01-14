@@ -6,11 +6,11 @@ interface OptionContentProps {
   description?: string;
   tags: string[];
   disabledTags?: string[];
-  dataQa?: string;
+  dataTestId?: string;
 }
 
-export const OptionContent: FC<OptionContentProps> = ({ title, description, tags, disabledTags, dataQa }) => (
-  <div className={styles.optionWrapper} data-qa={dataQa}>
+export const OptionContent: FC<OptionContentProps> = ({ title, description, tags, disabledTags, dataTestId }) => (
+  <div className={styles.optionWrapper} data-testid={dataTestId}>
     <div className={styles.optionText}>
       <span className={styles.optionTitle}>{title}</span>
       <span className={styles.optionDescription}>{description}</span>

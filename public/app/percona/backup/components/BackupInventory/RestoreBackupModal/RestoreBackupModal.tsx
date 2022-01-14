@@ -69,7 +69,7 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
                         loadOptions={() => RestoreBackupModalService.loadLocationOptions(backup!.id)}
                         defaultOptions
                         {...input}
-                        data-qa="service-select-input"
+                        data-testid="service-select-input"
                       />
                     </div>
                   )}
@@ -79,7 +79,7 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
             </div>
             <HorizontalGroup justify="center" spacing="md">
               <LoaderButton
-                data-qa="restore-button"
+                data-testid="restore-button"
                 size="md"
                 variant="primary"
                 disabled={!valid || (values.serviceType === ServiceTypeSelect.SAME && noService)}
@@ -87,11 +87,11 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
               >
                 {Messages.restore}
               </LoaderButton>
-              <Button data-qa="restore-cancel-button" variant="secondary" onClick={onClose}>
+              <Button data-testid="restore-cancel-button" variant="secondary" onClick={onClose}>
                 {Messages.close}
               </Button>
             </HorizontalGroup>
-            <div className={styles.errorLine} data-qa="backup-modal-error">
+            <div className={styles.errorLine} data-testid="backup-modal-error">
               {values.serviceType === ServiceTypeSelect.SAME && noService && Messages.noService}
             </div>
           </form>

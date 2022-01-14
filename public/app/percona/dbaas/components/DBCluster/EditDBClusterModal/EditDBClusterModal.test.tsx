@@ -1,5 +1,5 @@
 import React from 'react';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { EditDBClusterModal } from './EditDBClusterModal';
 import { setVisibleStub, onDBClusterAddedStub } from './__mocks__/editDBClusterModalStubs';
 import { dbClustersStub } from '../__mocks__/dbClustersStubs';
@@ -21,11 +21,11 @@ xdescribe('EditDBClusterModal::', () => {
       />
     );
 
-    expect(root.find(dataQa('resources-radio-button'))).toBeTruthy();
-    expect(root.find(dataQa('memory-field-container'))).toBeTruthy();
-    expect(root.find(dataQa('cpu-field-container'))).toBeTruthy();
-    expect(root.find(dataQa('disk-field-container'))).toBeTruthy();
-    expect(root.find(dataQa('disk-number-input')).prop('disabled')).toBeTruthy();
-    expect(root.find(dataQa('resources-bar'))).toBeTruthy();
+    expect(root.find(dataTestId('resources-radio-button'))).toBeTruthy();
+    expect(root.find(dataTestId('memory-field-container'))).toBeTruthy();
+    expect(root.find(dataTestId('cpu-field-container'))).toBeTruthy();
+    expect(root.find(dataTestId('disk-field-container'))).toBeTruthy();
+    expect(root.find(dataTestId('disk-number-input')).prop('disabled')).toBeTruthy();
+    expect(root.find(dataTestId('resources-bar'))).toBeTruthy();
   });
 });

@@ -82,13 +82,13 @@ export const MetricsResolution: FC<MetricsResolutionProps> = ({ metricsResolutio
         initialValues={initialValues}
         render={({ form, handleSubmit, valid, pristine }) => (
           <form onSubmit={handleSubmit} onChange={() => updateResolutions(form)}>
-            <div className={settingsStyles.labelWrapper} data-qa="metrics-resolution-label">
+            <div className={settingsStyles.labelWrapper} data-testid="metrics-resolution-label">
               <span>{label}</span>
               <LinkTooltip tooltipText={tooltip} link={link} linkText={tooltipLinkText} icon="info-circle" />
             </div>
             <RadioButtonGroupField
               name="resolutions"
-              data-qa="metrics-resolution-radio-button-group"
+              data-testid="metrics-resolution-radio-button-group"
               options={resolutionsOptions}
             />
             <div className={styles.numericFieldWrapper}>
@@ -96,7 +96,7 @@ export const MetricsResolution: FC<MetricsResolutionProps> = ({ metricsResolutio
                 label={low}
                 name={MetricsResolutionIntervals.lr}
                 disabled={resolution !== MetricsResolutionPresets.custom}
-                data-qa="metrics-resolution-lr-input"
+                data-testid="metrics-resolution-lr-input"
                 validators={resolutionValidators}
               />
             </div>
@@ -105,7 +105,7 @@ export const MetricsResolution: FC<MetricsResolutionProps> = ({ metricsResolutio
                 label={medium}
                 name={MetricsResolutionIntervals.mr}
                 disabled={resolution !== MetricsResolutionPresets.custom}
-                data-qa="metrics-resolution-mr-input"
+                data-testid="metrics-resolution-mr-input"
                 validators={resolutionValidators}
               />
             </div>
@@ -114,7 +114,7 @@ export const MetricsResolution: FC<MetricsResolutionProps> = ({ metricsResolutio
                 label={high}
                 name={MetricsResolutionIntervals.hr}
                 disabled={resolution !== MetricsResolutionPresets.custom}
-                data-qa="metrics-resolution-hr-input"
+                data-testid="metrics-resolution-hr-input"
                 validators={resolutionValidators}
               />
             </div>
@@ -122,7 +122,7 @@ export const MetricsResolution: FC<MetricsResolutionProps> = ({ metricsResolutio
               className={settingsStyles.actionButton}
               type="submit"
               disabled={!valid || pristine || loading}
-              data-qa="metrics-resolution-button"
+              data-testid="metrics-resolution-button"
             >
               {loading && <Spinner />}
               {action}

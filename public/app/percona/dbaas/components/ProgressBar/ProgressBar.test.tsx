@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { ProgressBar } from './ProgressBar';
 import { ProgressBarStatus } from './ProgressBar.types';
 
@@ -9,9 +9,9 @@ describe('ProgressBar::', () => {
     const wrapper = mount(
       <ProgressBar finishedSteps={5} totalSteps={10} status={ProgressBarStatus.progress} message="test message" />
     );
-    const steps = wrapper.find(dataQa('progress-bar-steps'));
-    const message = wrapper.find(dataQa('progress-bar-message'));
-    const content = wrapper.find(dataQa('progress-bar-content')).childAt(0);
+    const steps = wrapper.find(dataTestId('progress-bar-steps'));
+    const message = wrapper.find(dataTestId('progress-bar-message'));
+    const content = wrapper.find(dataTestId('progress-bar-content')).childAt(0);
 
     expect(steps.text()).toEqual('5/10');
     expect(message.text()).toEqual('test message');
@@ -21,9 +21,9 @@ describe('ProgressBar::', () => {
 
   it('renders without message and rounds float width to nearest integer', () => {
     const wrapper = mount(<ProgressBar finishedSteps={4} totalSteps={7} status={ProgressBarStatus.progress} />);
-    const steps = wrapper.find(dataQa('progress-bar-steps'));
-    const message = wrapper.find(dataQa('progress-bar-message'));
-    const content = wrapper.find(dataQa('progress-bar-content')).childAt(0);
+    const steps = wrapper.find(dataTestId('progress-bar-steps'));
+    const message = wrapper.find(dataTestId('progress-bar-message'));
+    const content = wrapper.find(dataTestId('progress-bar-content')).childAt(0);
 
     expect(steps.text()).toEqual('4/7');
     expect(message.text()).toEqual('');
@@ -34,9 +34,9 @@ describe('ProgressBar::', () => {
     const wrapper = mount(
       <ProgressBar finishedSteps={0} totalSteps={1} message="test message" status={ProgressBarStatus.error} />
     );
-    const steps = wrapper.find(dataQa('progress-bar-steps'));
-    const message = wrapper.find(dataQa('progress-bar-message'));
-    const content = wrapper.find(dataQa('progress-bar-content')).childAt(0);
+    const steps = wrapper.find(dataTestId('progress-bar-steps'));
+    const message = wrapper.find(dataTestId('progress-bar-message'));
+    const content = wrapper.find(dataTestId('progress-bar-content')).childAt(0);
 
     expect(steps.text()).toEqual('0/1');
     expect(message.text()).toEqual('test message');
@@ -46,7 +46,7 @@ describe('ProgressBar::', () => {
 
   it('handles invalid total steps', () => {
     const wrapper = mount(<ProgressBar finishedSteps={5} totalSteps={0} status={ProgressBarStatus.progress} />);
-    const content = wrapper.find(dataQa('progress-bar-content')).childAt(0);
+    const content = wrapper.find(dataTestId('progress-bar-content')).childAt(0);
 
     expect(getComputedStyle(content.getDOMNode()).getPropertyValue('width')).toEqual('0%');
   });

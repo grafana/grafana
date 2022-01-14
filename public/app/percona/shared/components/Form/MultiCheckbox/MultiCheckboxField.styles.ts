@@ -36,7 +36,7 @@ export const getStyles = (theme: GrafanaTheme) => {
     optionWrapper: css`
       display: flex;
       margin: ${spacing.xs} 0;
-      div[data-qa$='-error-message'] {
+      div[data-testid$='-error-message'] {
         display: none;
       }
       label {

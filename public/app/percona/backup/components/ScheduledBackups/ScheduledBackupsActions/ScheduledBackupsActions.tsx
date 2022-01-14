@@ -23,10 +23,10 @@ export const ScheduledBackupsActions: FC<ScheduledBackupsActionsProps> = ({
         <Spinner />
       ) : (
         <>
-          <Switch value={backup.enabled} onClick={handleToggle} data-qa="toggle-scheduled-backpup" />
-          <IconButton data-qa="edit-scheduled-backpup-button" name="pen" onClick={handleEdit} />
-          <IconButton data-qa="delete-scheduled-backpup-button" name="times" onClick={handleDelete} />
-          <IconButton data-qa="copy-alert-scheduled-backup-button" name="copy" onClick={handleCopy} />
+          <Switch value={backup.enabled} onClick={handleToggle} data-testid="toggle-scheduled-backpup" />
+          <IconButton data-testid="edit-scheduled-backpup-button" name="pen" onClick={handleEdit} />
+          <IconButton data-testid="delete-scheduled-backpup-button" name="times" onClick={handleDelete} />
+          <IconButton data-testid="copy-alert-scheduled-backup-button" name="copy" onClick={handleCopy} />
         </>
       )}
     </div>

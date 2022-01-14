@@ -14,11 +14,11 @@ export const BreadcrumbSections: FC<BreadcrumbProps> = ({ pageModel, currentLoca
   );
 
   return (
-    <span data-qa="breadcrumb-section" className={cx(isCurrentPage && styles.currentPage)}>
+    <span data-testid="breadcrumb-section" className={cx(isCurrentPage && styles.currentPage)}>
       {isCurrentPage ? (
         title
       ) : (
-        <a data-qa="breadcrumb-section-link" className={styles.link} href={modelPath}>
+        <a data-testid="breadcrumb-section-link" className={styles.link} href={modelPath}>
           {title}
         </a>
       )}

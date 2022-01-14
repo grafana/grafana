@@ -57,7 +57,7 @@ export const AddAlertRuleTemplateModal: FC<AddAlertRuleTemplateModalProps> = ({
               />
               <Button
                 type="button"
-                data-qa="alert-rule-template-upload-button"
+                data-testid="alert-rule-template-upload-button"
                 size="md"
                 variant="secondary"
                 className={styles.uploadAction}
@@ -68,7 +68,7 @@ export const AddAlertRuleTemplateModal: FC<AddAlertRuleTemplateModalProps> = ({
               </Button>
               <HorizontalGroup justify="center" spacing="md">
                 <LoaderButton
-                  data-qa="alert-rule-template-add-button"
+                  data-testid="alert-rule-template-add-button"
                   size="md"
                   variant="primary"
                   disabled={!valid || pristine}
@@ -77,7 +77,7 @@ export const AddAlertRuleTemplateModal: FC<AddAlertRuleTemplateModalProps> = ({
                   {Messages.alertRuleTemplate.addModal.confirm}
                 </LoaderButton>
                 <Button
-                  data-qa="alert-rule-template-cancel-button"
+                  data-testid="alert-rule-template-cancel-button"
                   variant="secondary"
                   onClick={() => setVisible(false)}
                 >

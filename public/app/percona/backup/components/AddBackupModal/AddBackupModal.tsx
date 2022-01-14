@@ -81,7 +81,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                           input.onChange(service);
                           form.mutators.changeVendor(service.value!.vendor);
                         }}
-                        data-qa="service-select-input"
+                        data-testid="service-select-input"
                       />
                     </div>
                   )}
@@ -100,7 +100,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                         loadOptions={AddBackupModalService.loadLocationOptions}
                         defaultOptions
                         {...input}
-                        data-qa="location-select-input"
+                        data-testid="location-select-input"
                       />
                     </div>
                   )}
@@ -117,7 +117,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
             {!scheduleMode && <RetryModeSelector retryMode={values.retryMode} />}
             <TextareaInputField name="description" label={Messages.description} />
             {scheduleMode && (
-              <div className={styles.advancedGroup} data-qa="advanced-backup-fields">
+              <div className={styles.advancedGroup} data-testid="advanced-backup-fields">
                 <h6 className={styles.advancedTitle}>{Messages.scheduleSection}</h6>
                 <div>
                   <div className={styles.advancedRow}>
@@ -231,7 +231,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
             )}
             <HorizontalGroup justify="center" spacing="md">
               <LoaderButton
-                data-qa="backup-add-button"
+                data-testid="backup-add-button"
                 size="md"
                 variant="primary"
                 disabled={!valid || pristine}
@@ -239,7 +239,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
               >
                 {Messages.getSubmitButtonText(scheduleMode, !!backup)}
               </LoaderButton>
-              <Button data-qa="storage-location-cancel-button" variant="secondary" onClick={onClose}>
+              <Button data-testid="storage-location-cancel-button" variant="secondary" onClick={onClose}>
                 {Messages.cancelAction}
               </Button>
             </HorizontalGroup>

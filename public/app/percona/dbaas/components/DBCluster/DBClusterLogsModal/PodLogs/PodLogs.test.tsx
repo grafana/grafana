@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { PodLogs } from './PodLogs';
 
 describe('PodLogs::', () => {
@@ -28,8 +28,8 @@ describe('PodLogs::', () => {
     );
 
     expect(root.text().includes('Pod name')).toBeTruthy();
-    expect(root.find(dataQa('dbcluster-pod-events')).text()).toEqual('Test events');
-    expect(root.find(dataQa('dbcluster-containers')).children().length).toBe(2);
+    expect(root.find(dataTestId('dbcluster-pod-events')).text()).toEqual('Test events');
+    expect(root.find(dataTestId('dbcluster-containers')).children().length).toBe(2);
   });
 
   it("doesn't render logs when collapsed", () => {
@@ -50,7 +50,7 @@ describe('PodLogs::', () => {
       />
     );
 
-    expect(root).not.toContain(dataQa('dbcluster-pod-events'));
-    expect(root).not.toContain(dataQa('dbcluster-containers'));
+    expect(root).not.toContain(dataTestId('dbcluster-pod-events'));
+    expect(root).not.toContain(dataTestId('dbcluster-containers'));
   });
 });

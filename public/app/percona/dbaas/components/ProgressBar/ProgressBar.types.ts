@@ -8,5 +8,5 @@ export interface ProgressBarProps {
   finishedSteps: number;
   status: ProgressBarStatus;
   message?: string;
-  dataQa?: string;
+  dataTestId?: string;
 }

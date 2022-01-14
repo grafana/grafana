@@ -11,22 +11,22 @@ describe('DBClusterConnection::', () => {
   it('renders correctly connection items', async () => {
     const root = await getMount(<DBClusterConnection dbCluster={dbClustersStub[0]} />);
 
-    expect(root.find('[data-qa="cluster-connection-host"]')).toBeTruthy();
-    expect(root.find('[data-qa="cluster-connection-port"]')).toBeTruthy();
-    expect(root.find('[data-qa="cluster-connection-username"]')).toBeTruthy();
-    expect(root.find('[data-qa="cluster-connection-password"]')).toBeTruthy();
+    expect(root.find('[data-testid="cluster-connection-host"]')).toBeTruthy();
+    expect(root.find('[data-testid="cluster-connection-port"]')).toBeTruthy();
+    expect(root.find('[data-testid="cluster-connection-username"]')).toBeTruthy();
+    expect(root.find('[data-testid="cluster-connection-password"]')).toBeTruthy();
   });
   it('renders correctly connection items with MongoDB cluster', async () => {
     const root = await getMount(<DBClusterConnection dbCluster={dbClustersStub[2]} />);
 
     root.update();
 
-    const host = root.find('[data-qa="cluster-connection-host"]');
+    const host = root.find('[data-testid="cluster-connection-host"]');
 
     expect(host).toBeTruthy();
     expect(host.text()).toContain(mongoDBClusterConnectionStub.host);
-    expect(root.find('[data-qa="cluster-connection-port"]')).toBeTruthy();
-    expect(root.find('[data-qa="cluster-connection-username"]')).toBeTruthy();
-    expect(root.find('[data-qa="cluster-connection-password"]')).toBeTruthy();
+    expect(root.find('[data-testid="cluster-connection-port"]')).toBeTruthy();
+    expect(root.find('[data-testid="cluster-connection-username"]')).toBeTruthy();
+    expect(root.find('[data-testid="cluster-connection-password"]')).toBeTruthy();
   });
 });

@@ -8,7 +8,7 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
     pointerEvents: 'none',
   } as CSSProperties,
   panelContentWrapper: css`
-    div[data-qa='modal-body'] {
+    div[data-testid='modal-body'] {
       left: 30%;
       max-width: 750px;
       top: 10%;

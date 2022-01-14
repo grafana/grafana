@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { Breadcrumb } from './Breadcrumb';
 import { getMount } from 'app/percona/shared/helpers/testUtils';
 
@@ -31,6 +31,6 @@ describe('Breadcrumb', () => {
   it('renders the breadcrumb', async () => {
     const wrapper = await getMount(<Breadcrumb pageModel={pageModel} currentLocation="root/child-one" />);
 
-    expect(wrapper.find(dataQa('breadcrumb'))).toHaveLength(1);
+    expect(wrapper.find(dataTestId('breadcrumb'))).toHaveLength(1);
   });
 });

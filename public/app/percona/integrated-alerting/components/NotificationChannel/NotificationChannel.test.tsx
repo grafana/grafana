@@ -1,5 +1,5 @@
 import React from 'react';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { NotificationChannel } from './NotificationChannel';
 import { DeleteNotificationChannelModal } from './DeleteNotificationChannelModal/DeleteNotificationChannelModal';
 import { getMount } from 'app/percona/shared/helpers/testUtils';
@@ -12,19 +12,19 @@ xdescribe('NotificationChannel', () => {
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(1);
-    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(3);
-    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(0);
+    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(1);
+    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(3);
+    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(0);
   });
 
   it('should render add modal', async () => {
     const wrapper = await getMount(<NotificationChannel />);
 
-    expect(wrapper.contains(dataQa('modal-wrapper'))).toBeFalsy();
+    expect(wrapper.contains(dataTestId('modal-wrapper'))).toBeFalsy();
 
-    wrapper.find(dataQa('notification-channel-add-modal-button')).find('button').simulate('click');
+    wrapper.find(dataTestId('notification-channel-add-modal-button')).find('button').simulate('click');
 
-    expect(wrapper.find(dataQa('modal-wrapper'))).toBeTruthy();
+    expect(wrapper.find(dataTestId('modal-wrapper'))).toBeTruthy();
   });
 
   it('should render delete modal', async () => {

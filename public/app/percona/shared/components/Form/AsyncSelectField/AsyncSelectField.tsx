@@ -6,7 +6,7 @@ import { AsyncSelectFieldProps } from './AsyncSelectField.types';
 
 const AsyncSelectFieldWrapper: FC<AsyncSelectFieldProps<any>> = ({ label, name, ...props }) => (
   <>
-    <Label label={label} dataQa={`${name}-select-label`} />
+    <Label label={label} dataTestId={`${name}-select-label`} />
     <AsyncSelect {...props} />
   </>
 );

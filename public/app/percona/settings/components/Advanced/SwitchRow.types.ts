@@ -5,6 +5,6 @@ export interface SwitchRowProps {
   link?: string;
   disabled?: boolean;
   className?: string;
-  dataQa?: string;
+  dataTestId?: string;
   input: any;
 }

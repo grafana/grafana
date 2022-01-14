@@ -16,21 +16,21 @@ export const RestoreHistoryActions: FC<BackupInventoryActionsProps> = ({ restore
       <DBIcon
         tooltipText={Messages.cancelRestore}
         type="cancel"
-        data-qa="restore-backup-artifact-button"
+        data-testid="restore-backup-artifact-button"
         role="button"
         onClick={handleCancel}
       />
       <DBIcon
         tooltipText={Messages.repeatRestore}
         type="restore"
-        data-qa="restore-button"
+        data-testid="restore-button"
         role="button"
         onClick={handleRestore}
       />
       <DBIcon
         tooltipText={Messages.deleteRestore}
         type="delete"
-        data-qa="restore-backup-artifact-button"
+        data-testid="restore-backup-artifact-button"
         role="button"
         onClick={handleDelete}
       />

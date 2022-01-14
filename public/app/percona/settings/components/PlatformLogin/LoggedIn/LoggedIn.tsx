@@ -28,13 +28,13 @@ export const LoggedIn: FC<LoggedInProps> = ({ email, getSettings }) => {
   };
 
   return (
-    <section data-qa="logged-in-wrapper" className={styles.wrapper}>
+    <section data-testid="logged-in-wrapper" className={styles.wrapper}>
       <header className={styles.title}>{Messages.title}</header>
       <p>{Messages.info}</p>
       <p className={styles.email}>
-        <u data-qa="logged-in-email">{email}</u>
+        <u data-testid="logged-in-email">{email}</u>
       </p>
-      <Button data-qa="logged-in-sign-out-link" variant="link" onClick={signOut}>
+      <Button data-testid="logged-in-sign-out-link" variant="link" onClick={signOut}>
         {Messages.signOut}
       </Button>
     </section>

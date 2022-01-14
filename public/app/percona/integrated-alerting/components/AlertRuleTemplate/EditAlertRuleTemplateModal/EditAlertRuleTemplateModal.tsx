@@ -48,10 +48,10 @@ export const EditAlertRuleTemplateModal: FC<EditAlertRuleTemplateModalProps> = (
                 validators={[required]}
                 className={styles.alertRuleTemplate}
               />
-              <WarningBlock message={Messages.nameNotEditable} type="warning" dataQa="alert-rule-name-warning" />
+              <WarningBlock message={Messages.nameNotEditable} type="warning" dataTestId="alert-rule-name-warning" />
               <HorizontalGroup justify="center" spacing="md">
                 <LoaderButton
-                  data-qa="alert-rule-template-edit-button"
+                  data-testid="alert-rule-template-edit-button"
                   size="md"
                   variant="primary"
                   disabled={!valid || pristine}
@@ -60,7 +60,7 @@ export const EditAlertRuleTemplateModal: FC<EditAlertRuleTemplateModalProps> = (
                   {Messages.submitButton}
                 </LoaderButton>
                 <Button
-                  data-qa="alert-rule-template-cancel-button"
+                  data-testid="alert-rule-template-cancel-button"
                   variant="secondary"
                   onClick={() => setVisible(false)}
                 >

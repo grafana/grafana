@@ -4,11 +4,11 @@ import { DescriptionBlockProps } from './DescriptionBlock.types';
 import { Messages } from './DescriptionBlock.messages';
 import { getStyles } from './DescriptionBlock.styles';
 
-export const DescriptionBlock: FC<DescriptionBlockProps> = ({ description, dataQa }) => {
+export const DescriptionBlock: FC<DescriptionBlockProps> = ({ description, dataTestId }) => {
   const styles = useStyles(getStyles);
 
   return (
-    <div data-qa={dataQa} className={styles.descriptionWrapper}>
+    <div data-testid={dataTestId} className={styles.descriptionWrapper}>
       <span>{Messages.description}</span>
       <pre>{description}</pre>
     </div>

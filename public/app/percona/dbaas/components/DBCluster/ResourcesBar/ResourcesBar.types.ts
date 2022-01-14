@@ -7,6 +7,6 @@ export interface ResourcesBarProps {
   expected: ResourcesWithUnits | undefined;
   resourceLabel: string;
   icon?: ReactNode;
-  dataQa?: string;
+  dataTestId?: string;
   className?: string;
 }

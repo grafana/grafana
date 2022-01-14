@@ -3,14 +3,14 @@ import { mount } from 'enzyme';
 import { MetricsResolution } from './MetricsResolution';
 import { defaultResolutions } from './MetricsResolution.constants';
 import { removeUnits } from './MetricsResolution.utils';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 
 xdescribe('MetricsResolution::', () => {
   it('Renders correctly with props for standard resolution', () => {
     const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[1]} updateSettings={() => {}} />);
-    const lrInput = root.find('[data-qa="lr-number-input"]');
-    const mrInput = root.find('[data-qa="mr-number-input"]');
-    const hrInput = root.find('[data-qa="hr-number-input"]');
+    const lrInput = root.find('[data-testid="lr-number-input"]');
+    const mrInput = root.find('[data-testid="mr-number-input"]');
+    const hrInput = root.find('[data-testid="hr-number-input"]');
     const standardRes = removeUnits(defaultResolutions[1]);
 
     expect(lrInput.find('input').prop('value')).toEqual(standardRes.lr);
@@ -21,9 +21,9 @@ xdescribe('MetricsResolution::', () => {
   it('Renders correctly with props for rare resolution', () => {
     const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
 
-    const lrInput = root.find('[data-qa="lr-number-input"]');
-    const mrInput = root.find('[data-qa="mr-number-input"]');
-    const hrInput = root.find('[data-qa="hr-number-input"]');
+    const lrInput = root.find('[data-testid="lr-number-input"]');
+    const mrInput = root.find('[data-testid="mr-number-input"]');
+    const hrInput = root.find('[data-testid="hr-number-input"]');
     const standardRes = removeUnits(defaultResolutions[0]);
 
     expect(lrInput.find('input').prop('value')).toEqual(standardRes.lr);
@@ -34,9 +34,9 @@ xdescribe('MetricsResolution::', () => {
   it('Renders correctly with props for frequent resolution', () => {
     const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[2]} updateSettings={() => {}} />);
 
-    const lrInput = root.find('[data-qa="lr-number-input"]');
-    const mrInput = root.find('[data-qa="mr-number-input"]');
-    const hrInput = root.find('[data-qa="hr-number-input"]');
+    const lrInput = root.find('[data-testid="lr-number-input"]');
+    const mrInput = root.find('[data-testid="mr-number-input"]');
+    const hrInput = root.find('[data-testid="hr-number-input"]');
     const standardRes = removeUnits(defaultResolutions[2]);
 
     expect(lrInput.find('input').prop('value')).toEqual(standardRes.lr);
@@ -49,9 +49,9 @@ xdescribe('MetricsResolution::', () => {
       <MetricsResolution metricsResolutions={{ lr: '400s', mr: '100s', hr: '50s' }} updateSettings={() => {}} />
     );
 
-    const lrInput = root.find('[data-qa="lr-number-input"]');
-    const mrInput = root.find('[data-qa="mr-number-input"]');
-    const hrInput = root.find('[data-qa="hr-number-input"]');
+    const lrInput = root.find('[data-testid="lr-number-input"]');
+    const mrInput = root.find('[data-testid="mr-number-input"]');
+    const hrInput = root.find('[data-testid="hr-number-input"]');
 
     expect(lrInput.find('input').prop('value')).toEqual('400');
     expect(mrInput.find('input').prop('value')).toEqual('100');
@@ -60,13 +60,13 @@ xdescribe('MetricsResolution::', () => {
 
   it('Changes input values when changing resolution', () => {
     const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
-    let radio = root.find(dataQa('resolutions-radio-button')).at(2);
+    let radio = root.find(dataTestId('resolutions-radio-button')).at(2);
 
     radio.simulate('click');
 
-    const lrInput = root.find('[data-qa="lr-number-input"]');
-    const mrInput = root.find('[data-qa="mr-number-input"]');
-    const hrInput = root.find('[data-qa="hr-number-input"]');
+    const lrInput = root.find('[data-testid="lr-number-input"]');
+    const mrInput = root.find('[data-testid="mr-number-input"]');
+    const hrInput = root.find('[data-testid="hr-number-input"]');
     const standardRes = removeUnits(defaultResolutions[0]);
 
     expect(lrInput.find('input').prop('value')).toEqual(standardRes.lr);
@@ -88,7 +88,7 @@ xdescribe('MetricsResolution::', () => {
     );
 
     root
-      .find('[data-qa="lr-number-input"]')
+      .find('[data-testid="lr-number-input"]')
       .find('input')
       .simulate('change', { target: { value: '70' } });
     root.find('form').simulate('submit');

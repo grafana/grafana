@@ -38,7 +38,7 @@ export const KubernetesOperatorStatus: FC<KubernetesOperatorStatusProps> = ({
           href={getStatusLink(status, databaseType, availableVersion)}
           target="_blank"
           rel="noopener noreferrer"
-          data-qa="cluster-link"
+          data-testid="cluster-link"
         >
           <OperatorStatus operator={operator} />
         </a>
@@ -46,7 +46,7 @@ export const KubernetesOperatorStatus: FC<KubernetesOperatorStatusProps> = ({
         <OperatorStatus operator={operator} />
       )}
       {isVersionAvailable && (
-        <Button data-qa="update-operator-button" size="md" onClick={updateOperator} icon="upload" variant="link">
+        <Button data-testid="update-operator-button" size="md" onClick={updateOperator} icon="upload" variant="link">
           {Messages.kubernetes.updateOperator}
         </Button>
       )}

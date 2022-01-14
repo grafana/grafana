@@ -11,17 +11,17 @@ export const RestoreHistoryDetails: FC<RestoreHistoryDetailsProps> = ({ name, fi
   const dataModelMsg = formatDataModel(dataModel);
 
   return (
-    <div className={styles.detailsWrapper} data-qa="restore-details-wrapper">
-      <span data-qa="restore-details-name">
+    <div className={styles.detailsWrapper} data-testid="restore-details-wrapper">
+      <span data-testid="restore-details-name">
         <span className={styles.detailLabel}>{Messages.backupName}</span> <span>{name}</span>
       </span>
       {finished ? (
-        <span data-qa="restore-details-finished">
+        <span data-testid="restore-details-finished">
           <span className={styles.detailLabel}>{Messages.finished}</span>
           <DetailedDate date={finished} />
         </span>
       ) : null}
-      <span data-qa="restore-details-data-model">
+      <span data-testid="restore-details-data-model">
         <span className={styles.detailLabel}>{Messages.dataModel}</span> <span>{dataModelMsg}</span>
       </span>
     </div>

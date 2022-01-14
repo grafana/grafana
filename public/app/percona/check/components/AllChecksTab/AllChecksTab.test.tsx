@@ -1,5 +1,5 @@
 import React from 'react';
-import { logger, dataQa } from '@percona/platform-core';
+import { logger, dataTestId } from '@percona/platform-core';
 import { CheckService } from 'app/percona/check/Check.service';
 import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { Interval } from 'app/percona/check/types';
@@ -86,10 +86,10 @@ describe('AllChecksTab::', () => {
 
     wrapper.update();
 
-    const tbody = dataQa('db-checks-all-checks-tbody');
+    const tbody = dataTestId('db-checks-all-checks-tbody');
 
-    expect(wrapper.find(dataQa('db-checks-all-checks-table'))).toHaveLength(1);
-    expect(wrapper.find(dataQa('db-checks-all-checks-thead'))).toHaveLength(1);
+    expect(wrapper.find(dataTestId('db-checks-all-checks-table'))).toHaveLength(1);
+    expect(wrapper.find(dataTestId('db-checks-all-checks-thead'))).toHaveLength(1);
     expect(wrapper.find(tbody)).toHaveLength(1);
     expect(wrapper.find(tbody).find('tr > td')).toHaveLength(10);
     expect(wrapper.find(tbody).find('tr > td').at(0).text()).toBe('Test');

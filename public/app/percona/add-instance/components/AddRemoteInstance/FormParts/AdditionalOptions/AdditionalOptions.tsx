@@ -39,7 +39,7 @@ export const PostgreSQLAdditionalOptions: FC<PostgreSQLAdditionalOptionsProps> =
   <>
     <RadioButtonGroupField
       name="tracking"
-      data-qa="tracking-options-radio-button-group"
+      data-testid="tracking-options-radio-button-group"
       options={isRDS || isAzure ? rdsTrackingOptions : trackingOptions}
       label={Messages.form.labels.trackingOptions}
     />
@@ -68,7 +68,7 @@ const MySQLOptions = ({ form }: { form: FormApi }) => {
     <>
       <RadioButtonGroupField
         name="tablestat-options"
-        data-qa="tablestat-options-radio-button-group"
+        data-testid="tablestat-options-radio-button-group"
         defaultValue={selectedValue}
         options={tablestatOptions}
         label={Messages.form.labels.additionalOptions.tablestatOptions}

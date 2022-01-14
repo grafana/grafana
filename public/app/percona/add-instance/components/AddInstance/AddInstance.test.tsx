@@ -21,7 +21,7 @@ describe('AddInstance page::', () => {
     expect(onSelectInstanceType).toBeCalledTimes(0);
 
     wrapper.update();
-    wrapper.find('[data-qa="rds-instance"]').simulate('click');
+    wrapper.find('[data-testid="rds-instance"]').simulate('click');
 
     expect(onSelectInstanceType).toBeCalledTimes(1);
     expect(onSelectInstanceType.mock.calls[0][0]).toStrictEqual({ type: 'rds' });

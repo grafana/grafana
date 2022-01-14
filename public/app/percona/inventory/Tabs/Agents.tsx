@@ -109,7 +109,7 @@ export const Agents = () => {
                   {selected.length === 1 ? 'agent' : 'agents'}?
                 </h4>
                 <FormElement
-                  dataQa="form-field-force"
+                  dataTestId="form-field-force"
                   label="Force mode"
                   element={<CheckboxField name="force" label="Force mode is going to delete all associated agents" />}
                 />
@@ -135,7 +135,7 @@ export const Agents = () => {
           )}
         />
       </Modal>
-      <div className={styles.tableInnerWrapper} data-qa="table-inner-wrapper">
+      <div className={styles.tableInnerWrapper} data-testid="table-inner-wrapper">
         <Table
           className={styles.table}
           columns={AGENTS_COLUMNS}

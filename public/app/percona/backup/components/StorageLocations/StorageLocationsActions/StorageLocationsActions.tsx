@@ -16,14 +16,14 @@ export const StorageLocationsActions: FC<StorageLocatationsActionProps> = ({ loc
       <DBIcon
         tooltipText={Messages.editStorageLocation}
         type="edit"
-        data-qa="edit-storage-location-button"
+        data-testid="edit-storage-location-button"
         role="button"
         onClick={handleUpdateClick}
       />
       <DBIcon
         tooltipText={Messages.deleteStorageLocation}
         type="delete"
-        data-qa="delete-storage-location-button"
+        data-testid="delete-storage-location-button"
         role="button"
         onClick={onDeleteClick}
       />

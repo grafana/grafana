@@ -18,14 +18,14 @@ export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({ backup
         tooltipText={Messages.restoreBackup}
         type="restore"
         disabled={backup.status !== BackupStatus.BACKUP_STATUS_SUCCESS}
-        data-qa="restore-backup-artifact-button"
+        data-testid="restore-backup-artifact-button"
         role="button"
         onClick={handeClick}
       />
       <DBIcon
         tooltipText={Messages.addBackup}
         type="backup"
-        data-qa="restore-backup-artifact-button"
+        data-testid="restore-backup-artifact-button"
         role="button"
         onClick={handleBackup}
       />
@@ -37,7 +37,7 @@ export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({ backup
           backup.status === BackupStatus.BACKUP_STATUS_PENDING ||
           backup.status === BackupStatus.BACKUP_STATUS_DELETING
         }
-        data-qa="delete-backup-artifact-button"
+        data-testid="delete-backup-artifact-button"
         role="button"
         onClick={handleDelete}
       />

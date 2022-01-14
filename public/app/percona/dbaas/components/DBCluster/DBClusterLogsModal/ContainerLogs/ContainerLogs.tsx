@@ -7,7 +7,7 @@ export const ContainerLogs: FC<ContainerLogsProps> = ({ containerLogs }) => {
   const [isOpen, setIsOpen] = useState(isContainerOpen);
 
   return (
-    <div data-qa="dbcluster-logs">
+    <div data-testid="dbcluster-logs">
       <Collapse collapsible label={name} isOpen={isOpen} onToggle={() => setIsOpen(!isOpen)}>
         <pre>{logs}</pre>
       </Collapse>

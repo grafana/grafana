@@ -26,15 +26,15 @@ export const CheckPanel: FC = () => {
   );
 
   return (
-    <PageWrapper pageModel={PAGE_MODEL} dataQa="db-check-panel">
+    <PageWrapper pageModel={PAGE_MODEL} dataTestId="db-check-panel">
       <TabbedContent
         tabs={tabs}
         basePath={basePath}
-        tabsDataQa="db-check-tabs-bar"
-        contentDataQa="db-check-tab-content"
+        tabsdataTestId="db-check-tabs-bar"
+        contentdataTestId="db-check-tab-content"
         renderTab={({ Content }) => (
           <FeatureLoader
-            messageDataQa="db-check-panel-settings-link"
+            messagedataTestId="db-check-panel-settings-link"
             featureName={Messages.stt}
             featureFlag="sttEnabled"
           >

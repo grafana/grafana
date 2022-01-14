@@ -88,14 +88,14 @@ export const AlertRulesActions: FC<AlertRulesActionsProps> = ({ alertRule }) => 
         <Spinner />
       ) : (
         <>
-          <Switch value={!disabled} onClick={toggleAlertRule} data-qa="toggle-alert-rule" />
-          <IconButton data-qa="edit-alert-rule-button" name="pen" onClick={handleEditClick} />
-          <IconButton data-qa="delete-alert-rule-button" name="times" onClick={handleDeleteClick} />
-          <IconButton data-qa="copy-alert-rule-button" name="copy" onClick={handleCopyClick} />
+          <Switch value={!disabled} onClick={toggleAlertRule} data-testid="toggle-alert-rule" />
+          <IconButton data-testid="edit-alert-rule-button" name="pen" onClick={handleEditClick} />
+          <IconButton data-testid="delete-alert-rule-button" name="times" onClick={handleDeleteClick} />
+          <IconButton data-testid="copy-alert-rule-button" name="copy" onClick={handleCopyClick} />
         </>
       )}
       <DeleteModal
-        data-qa="alert-rule-delete-modal"
+        data-testid="alert-rule-delete-modal"
         title={Messages.deleteModalTitle}
         message={Messages.getDeleteModalMessage(summary)}
         loading={pendingRequest}

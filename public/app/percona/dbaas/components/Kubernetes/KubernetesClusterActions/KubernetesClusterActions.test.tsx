@@ -1,5 +1,5 @@
 import React from 'react';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions/MultipleActions';
 import { KubernetesClusterActions } from './KubernetesClusterActions';
 import { kubernetesStub } from '../__mocks__/kubernetesStubs';
@@ -42,7 +42,7 @@ describe('KubernetesClusterActions::', () => {
 
     root.update();
 
-    const menu = root.find(dataQa('dropdown-menu-menu'));
+    const menu = root.find(dataTestId('dropdown-menu-menu'));
     const action = menu.find('span').at(0);
 
     action.simulate('click');
@@ -74,7 +74,7 @@ describe('KubernetesClusterActions::', () => {
 
     root.update();
 
-    const menu = root.find(dataQa('dropdown-menu-menu'));
+    const menu = root.find(dataTestId('dropdown-menu-menu'));
     const action = menu.find('span').at(1);
 
     action.simulate('click');

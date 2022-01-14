@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { Backup } from '../BackupInventory.types';
 import { RestoreBackupModal } from './RestoreBackupModal';
 import { BackupStatus, DataModel } from 'app/percona/backup/Backup.types';
@@ -22,9 +22,9 @@ xdescribe('RestoreBackupModal', () => {
 
   it('should render', () => {
     const wrapper = mount(<RestoreBackupModal isVisible backup={backup} onClose={jest.fn()} onRestore={jest.fn()} />);
-    expect(wrapper.find(dataQa('restore-button')).exists()).toBeTruthy();
-    expect(wrapper.find(dataQa('restore-cancel-button')).exists()).toBeTruthy();
-    expect(wrapper.find(dataQa('backup-modal-error')).text()).toHaveLength(0);
+    expect(wrapper.find(dataTestId('restore-button')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('restore-cancel-button')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('backup-modal-error')).text()).toHaveLength(0);
   });
 
   it('should block restore button and show error when noService is passed and same service is selected', () => {
@@ -32,8 +32,8 @@ xdescribe('RestoreBackupModal', () => {
       <RestoreBackupModal isVisible noService backup={backup} onClose={jest.fn()} onRestore={jest.fn()} />
     );
 
-    expect(wrapper.find(dataQa('backup-modal-error')).text()).not.toHaveLength(0);
-    expect(wrapper.find(dataQa('restore-button')).first().prop('disabled')).toBeTruthy();
+    expect(wrapper.find(dataTestId('backup-modal-error')).text()).not.toHaveLength(0);
+    expect(wrapper.find(dataTestId('restore-button')).first().prop('disabled')).toBeTruthy();
   });
 
   it('should not block restore button or show error when noService is passed and compatible service is selected', () => {
@@ -41,9 +41,9 @@ xdescribe('RestoreBackupModal', () => {
       <RestoreBackupModal isVisible noService backup={backup} onClose={jest.fn()} onRestore={jest.fn()} />
     );
 
-    wrapper.find(dataQa('serviceType-radio-button')).at(1).simulate('change');
+    wrapper.find(dataTestId('serviceType-radio-button')).at(1).simulate('change');
 
-    expect(wrapper.find(dataQa('backup-modal-error')).text()).toHaveLength(0);
-    expect(wrapper.find(dataQa('restore-button')).first().prop('disabled')).toBeFalsy();
+    expect(wrapper.find(dataTestId('backup-modal-error')).text()).toHaveLength(0);
+    expect(wrapper.find(dataTestId('restore-button')).first().prop('disabled')).toBeFalsy();
   });
 });

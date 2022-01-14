@@ -50,14 +50,14 @@ export const MultiCheckboxField: FC<MultiCheckboxFieldProps> = React.memo(
           const validationError = meta.error && typeof meta.error === 'string' ? meta.error : undefined;
 
           return (
-            <div className={styles.field} data-qa={`${name}-field-container`}>
-              {label && <Label label={`${label}${required ? ' *' : ''}`} dataQa={`${name}-field-label`} />}
+            <div className={styles.field} data-testid={`${name}-field-container`}>
+              {label && <Label label={`${label}${required ? ' *' : ''}`} dataTestId={`${name}-field-label`} />}
               <div
                 className={cx(styles.getOptionsWrapperStyles(!!validationError), className)}
-                data-qa={`${name}-options`}
+                data-testid={`${name}-options`}
               >
                 {selectedOptions.map(({ name, label, value }) => (
-                  <div className={styles.optionWrapper} key={name} data-qa={`${name}-option`}>
+                  <div className={styles.optionWrapper} key={name} data-testid={`${name}-option`}>
                     <span className={styles.optionLabel}>{label}</span>
                     {recommendedOptions.some((r) => r.name === name) && (
                       <span className={styles.recommendedLabel}>{recommendedLabel}</span>
@@ -73,7 +73,7 @@ export const MultiCheckboxField: FC<MultiCheckboxFieldProps> = React.memo(
                   </div>
                 ))}
               </div>
-              <div data-qa={`${name}-field-error-message`} className={styles.errorMessage}>
+              <div data-testid={`${name}-field-error-message`} className={styles.errorMessage}>
                 {validationError}
               </div>
             </div>
