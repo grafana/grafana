@@ -7,6 +7,7 @@ import { stubs } from './__mocks__/BackupInventory.service';
 import { BackupInventory } from './BackupInventory';
 
 jest.mock('./BackupInventory.service');
+jest.mock('../../hooks/recurringCall.hook');
 
 describe('BackupInventory', () => {
   it('should send correct data to Table', async () => {

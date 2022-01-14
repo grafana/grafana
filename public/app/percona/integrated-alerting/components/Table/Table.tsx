@@ -24,6 +24,8 @@ export const Table: FC<TableProps> = ({
   pageIndex: propPageIndex = 0,
   pagesPerView,
   children,
+  autoResetExpanded = true,
+  autoResetPage = true,
   renderExpandedRow = () => <></>,
   getHeaderProps = defaultPropGetter,
   getRowProps = defaultPropGetter,
@@ -40,6 +42,8 @@ export const Table: FC<TableProps> = ({
     data,
     initialState,
     manualPagination,
+    autoResetExpanded,
+    autoResetPage,
   };
   const plugins: any[] = [useExpanded];
 

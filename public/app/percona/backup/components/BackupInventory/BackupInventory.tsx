@@ -19,7 +19,13 @@ import { Backup } from './BackupInventory.types';
 import { BackupInventoryService } from './BackupInventory.service';
 import { RestoreBackupModal } from './RestoreBackupModal';
 import { getStyles } from './BackupInventory.styles';
-import { BACKUP_CANCEL_TOKEN, LIST_ARTIFACTS_CANCEL_TOKEN, RESTORE_CANCEL_TOKEN } from './BackupInventory.constants';
+import { useRecurringCall } from '../../hooks/recurringCall.hook';
+import {
+  BACKUP_CANCEL_TOKEN,
+  LIST_ARTIFACTS_CANCEL_TOKEN,
+  RESTORE_CANCEL_TOKEN,
+  DATA_INTERVAL,
+} from './BackupInventory.constants';
 
 const { columns, noData } = Messages;
 const { name, created, location, vendor, status, actions } = columns;
@@ -30,6 +36,7 @@ export const BackupInventory: FC = () => {
   const [selectedBackup, setSelectedBackup] = useState<Backup | null>(null);
   const [backupModalVisible, setBackupModalVisible] = useState(false);
   const [data, setData] = useState<Backup[]>([]);
+  const [triggerTimeout] = useRecurringCall();
   const [generateToken] = useCancelToken();
   const columns = useMemo(
     (): Column[] => [
@@ -92,20 +99,23 @@ export const BackupInventory: FC = () => {
     }
   };
 
-  const getData = useCallback(async () => {
-    setPending(true);
+  const getData = useCallback(
+    async (showLoading = false) => {
+      showLoading && setPending(true);
 
-    try {
-      const backups = await BackupInventoryService.list(generateToken(LIST_ARTIFACTS_CANCEL_TOKEN));
-      setData(backups);
-    } catch (e) {
-      if (isApiCancelError(e)) {
-        return;
+      try {
+        const backups = await BackupInventoryService.list(generateToken(LIST_ARTIFACTS_CANCEL_TOKEN));
+        setData(backups);
+      } catch (e) {
+        if (isApiCancelError(e)) {
+          return;
+        }
+        logger.error(e);
       }
-      logger.error(e);
-    }
-    setPending(false);
-  }, [generateToken]);
+      setPending(false);
+    },
+    [generateToken]
+  );
 
   const renderSelectedSubRow = React.useCallback(
     (row: Row<Backup>) => (
@@ -134,7 +144,7 @@ export const BackupInventory: FC = () => {
       );
       setBackupModalVisible(false);
       setSelectedBackup(null);
-      getData();
+      getData(true);
     } catch (e) {
       if (isApiCancelError(e)) {
         return;
@@ -144,8 +154,8 @@ export const BackupInventory: FC = () => {
   };
 
   useEffect(() => {
-    getData();
-  }, [getData]);
+    getData(true).then(() => triggerTimeout(getData, DATA_INTERVAL));
+  }, [getData, triggerTimeout]);
 
   return (
     <>
@@ -166,6 +176,7 @@ export const BackupInventory: FC = () => {
         columns={columns}
         emptyMessage={noData}
         pendingRequest={pending}
+        autoResetExpanded={false}
         renderExpandedRow={renderSelectedSubRow}
       ></Table>
       <RestoreBackupModal
