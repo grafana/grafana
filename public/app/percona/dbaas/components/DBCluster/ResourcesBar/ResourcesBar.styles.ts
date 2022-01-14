@@ -1,4 +1,5 @@
 import { css } from 'emotion';
+
 import { GrafanaTheme } from '@grafana/data';
 
 const expectedColor = '#043464';
@@ -44,6 +45,9 @@ export const getStyles = ({ colors, palette, spacing, typography }: GrafanaTheme
   expectedSquare: css`
     background-color: ${expectedColor};
   `,
+  expectedAllocatedSquare: css`
+    background-color: ${palette.greenBase};
+  `,
   captionLabel: css`
     color: ${colors.textSemiWeak};
     font-size: ${typography.size.sm};
@@ -60,6 +64,9 @@ export const getStyles = ({ colors, palette, spacing, typography }: GrafanaTheme
   `,
   filledExpected: css`
     background-color: ${expectedColor};
+  `,
+  filledExpectedAllocated: css`
+    background-color: ${palette.greenBase};
   `,
   filledInsufficient: css`
     background-color: ${palette.brandDanger};

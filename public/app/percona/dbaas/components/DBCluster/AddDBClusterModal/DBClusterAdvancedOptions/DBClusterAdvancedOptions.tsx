@@ -1,12 +1,21 @@
+import { NumberInputField, RadioButtonGroupField, logger } from '@percona/platform-core';
+import { cx } from 'emotion';
 import React, { FC, useCallback, useState, useMemo, useEffect } from 'react';
 import { FormRenderProps } from 'react-final-form';
-import { cx } from 'emotion';
+
 import { Icon, useStyles } from '@grafana/ui';
-import { NumberInputField, RadioButtonGroupField, logger } from '@percona/platform-core';
-import validators from 'app/percona/shared/helpers/validators';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
-import { Databases } from 'app/percona/shared/core';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
+import { Databases } from 'app/percona/shared/core';
+import validators from 'app/percona/shared/helpers/validators';
+
+import { CPU, Disk, Memory } from '../../../DBaaSIcons';
+import { DBClusterService } from '../../DBCluster.service';
+import { DBClusterAllocatedResources, DBClusterExpectedResources } from '../../DBCluster.types';
+import { newDBClusterService } from '../../DBCluster.utils';
+import { ResourcesBar } from '../../ResourcesBar/ResourcesBar';
+import { AddDBClusterFields } from '../AddDBClusterModal.types';
+
 import {
   TOPOLOGY_OPTIONS,
   RESOURCES_OPTIONS,
@@ -18,14 +27,8 @@ import {
   EXPECTED_DELAY,
 } from './DBClusterAdvancedOptions.constants';
 import { getStyles } from './DBClusterAdvancedOptions.styles';
-import { AddDBClusterFields } from '../AddDBClusterModal.types';
 import { DBClusterTopology, DBClusterResources } from './DBClusterAdvancedOptions.types';
 import { canGetExpectedResources, resourceValidator } from './DBClusterAdvancedOptions.utils';
-import { ResourcesBar } from '../../ResourcesBar/ResourcesBar';
-import { CPU, Disk, Memory } from '../../../DBaaSIcons';
-import { DBClusterService } from '../../DBCluster.service';
-import { DBClusterAllocatedResources, DBClusterExpectedResources } from '../../DBCluster.types';
-import { newDBClusterService } from '../../DBCluster.utils';
 
 export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) => {
   const styles = useStyles(getStyles);
@@ -187,15 +190,15 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
       <div className={styles.resourcesWrapper}>
         <div className={styles.resourcesInputCol}>
           <NumberInputField
-            name={AddDBClusterFields.memory}
-            label={Messages.dbcluster.addModal.fields.memory}
+            name={AddDBClusterFields.cpu}
+            label={Messages.dbcluster.addModal.fields.cpu}
             validators={parameterValidators}
             disabled={resources !== DBClusterResources.custom}
             inputProps={resourcesInputProps}
           />
           <NumberInputField
-            name={AddDBClusterFields.cpu}
-            label={Messages.dbcluster.addModal.fields.cpu}
+            name={AddDBClusterFields.memory}
+            label={Messages.dbcluster.addModal.fields.memory}
             validators={parameterValidators}
             disabled={resources !== DBClusterResources.custom}
             inputProps={resourcesInputProps}
@@ -211,15 +214,6 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
         <div className={styles.resourcesBarCol}>
           <Overlay isPending={loadingAllocatedResources || loadingExpectedResources}>
             <ResourcesBar
-              resourceLabel={Messages.dbcluster.addModal.resourcesBar.memory}
-              icon={<Memory />}
-              total={allocatedResources?.total.memory}
-              allocated={allocatedResources?.allocated.memory}
-              expected={expectedResources?.expected.memory}
-              className={cx(resourcesBarStyles)}
-              dataQa="dbcluster-resources-bar-memory"
-            />
-            <ResourcesBar
               resourceLabel={Messages.dbcluster.addModal.resourcesBar.cpu}
               icon={<CPU />}
               total={allocatedResources?.total.cpu}
@@ -227,6 +221,15 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
               expected={expectedResources?.expected.cpu}
               className={cx(resourcesBarStyles)}
               dataQa="dbcluster-resources-bar-cpu"
+            />
+            <ResourcesBar
+              resourceLabel={Messages.dbcluster.addModal.resourcesBar.memory}
+              icon={<Memory />}
+              total={allocatedResources?.total.memory}
+              allocated={allocatedResources?.allocated.memory}
+              expected={expectedResources?.expected.memory}
+              className={cx(resourcesBarStyles)}
+              dataQa="dbcluster-resources-bar-memory"
             />
             <ResourcesBar
               resourceLabel={Messages.dbcluster.addModal.resourcesBar.disk}

@@ -1,12 +1,14 @@
 import { SelectableValue } from '@grafana/data';
+
 import { DBCluster } from '../DBCluster.types';
+
 import { DBClusterResources } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
 
 export interface EditDBClusterModalProps {
   isVisible: boolean;
   setVisible: (value: boolean) => void;
   onDBClusterChanged: () => void;
-  selectedCluster?: DBCluster;
+  selectedCluster: DBCluster;
 }
 
 export interface EditDBClusterRenderProps {

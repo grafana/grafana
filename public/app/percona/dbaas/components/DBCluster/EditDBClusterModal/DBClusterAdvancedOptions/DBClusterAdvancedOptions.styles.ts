@@ -1,6 +1,7 @@
-import { stylesFactory } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
+
+import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory } from '@grafana/ui';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const { spacing, colors } = theme;
@@ -38,6 +39,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     resourcesBar: css`
+      height: 74px;
       margin-top: ${spacing.lg};
       margin-bottom: ${spacing.xl};
     `,
@@ -46,7 +48,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-bottom: 78px;
     `,
     resourcesBarLast: css`
-      margin-top: ${spacing.lg};
+      margin-bottom: 0;
     `,
     resourcesInfoWrapper: css`
       display: flex;

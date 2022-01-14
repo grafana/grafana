@@ -1,9 +1,11 @@
-import React from 'react';
-import { mount } from 'enzyme';
 import { dataQa } from '@percona/platform-core';
+import { mount } from 'enzyme';
+import React from 'react';
+
+import { ResourcesUnits } from '../DBCluster.types';
+
 import { ResourcesBar } from './ResourcesBar';
 import { Messages } from './ResourcesBar.messages';
-import { ResourcesUnits } from '../DBCluster.types';
 
 describe('ResourcesBar::', () => {
   it('renders correctly with icon, allocated, expected and label', () => {
@@ -44,5 +46,24 @@ describe('ResourcesBar::', () => {
     expect(wrapper.find(dataQa('resources-bar-insufficient-resources')).text()).toEqual(
       Messages.buildInsufficientLabel(expected, resourceLabel)
     );
+  });
+  it('renders correctly when expected value is negative', () => {
+    const allocated = { value: 4, units: ResourcesUnits.GB, original: 4 };
+    const total = { value: 10, units: ResourcesUnits.GB, original: 10 };
+    const expected = { value: -2, units: ResourcesUnits.GB, original: -2 };
+    const wrapper = mount(
+      <ResourcesBar
+        icon={<div>Test icon</div>}
+        allocated={allocated}
+        expected={expected}
+        total={total}
+        resourceLabel="Test label"
+      />
+    );
+
+    const resourcesBar = wrapper.find(dataQa('resources-bar'));
+
+    expect(resourcesBar.children().length).toBe(1);
+    expect(resourcesBar.childAt(0).children().length).toBe(1);
   });
 });
