@@ -8,7 +8,6 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { SearchCardExpanded } from './SearchCardExpanded';
-import { useThumbnailImage } from '../hooks/useThumbnailImage';
 
 const DELAY_BEFORE_EXPANDING = 500;
 
@@ -19,12 +18,15 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
 }
 
+export function getThumbnailURL(uid: string, isLight?: boolean) {
+  return `/api/dashboards/uid/${uid}/img/thumb/${isLight ? 'light' : 'dark'}`;
+}
+
 export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
+  const [hasImage, setHasImage] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>();
   const [showExpandedView, setShowExpandedView] = useState(false);
   const timeout = useRef<number | null>(null);
-  const theme = useTheme2();
-  const thumb = useThumbnailImage(item.uid!, theme.isLight);
 
   // Popper specific logic
   const offsetCallback = useCallback(({ placement, reference, popper }) => {
@@ -49,6 +51,8 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
     ],
   });
 
+  const theme = useTheme2();
+  const imageSrc = getThumbnailURL(item.uid!, theme.isLight);
   const styles = getStyles(
     theme,
     markerElement?.getBoundingClientRect().width,
@@ -115,8 +119,8 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
           checked={item.checked}
           onClick={onCheckboxClick}
         />
-        {thumb.imageSrc ? (
-          <img loading="lazy" className={styles.image} src={thumb.imageSrc} />
+        {hasImage ? (
+          <img loading="lazy" className={styles.image} src={imageSrc} onError={() => setHasImage(false)} />
         ) : (
           <div className={styles.imagePlaceholder}>
             <Icon name="apps" size="xl" />

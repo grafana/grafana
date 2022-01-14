@@ -40,10 +40,8 @@ func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.
 	}
 
 	thumbnailRepo := newThumbnailRepo(store)
-
-	renderer := newSimpleCrawler(renderService, gl, thumbnailRepo)
 	return &thumbService{
-		renderer:      renderer,
+		renderer:      newSimpleCrawler(renderService, gl, thumbnailRepo),
 		thumbnailRepo: thumbnailRepo,
 	}
 }
@@ -51,8 +49,6 @@ func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.
 type thumbService struct {
 	renderer      dashRenderer
 	thumbnailRepo thumbnailRepo
-	root          string
-	tempdir       string
 }
 
 func (hs *thumbService) Enabled() bool {
@@ -107,18 +103,21 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		Kind:         models.ThumbnailKindDefault,
 	})
 
-	if err == nil {
-		c.JSON(200, map[string]string{"dashboardUID": req.UID, "imageDataUrl": res.ImageDataUrl})
-		return
-	}
-
 	if err == models.ErrDashboardThumbnailNotFound {
-		c.JSON(200, map[string]string{"dashboardUID": req.UID, "error": "thumbnail not found!"})
+		c.Resp.WriteHeader(404)
 		return
 	}
 
-	tlog.Info("Error when retrieving thumbnail", "dashboardUid", req.UID, "error", err.Error())
-	c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown!"})
+	if err != nil {
+		tlog.Error("Error when retrieving thumbnail", "dashboardUid", req.UID, "err", err.Error())
+		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return
+	}
+
+	c.Resp.Header().Set("Content-Type", res.MimeType)
+	if _, err := c.Resp.Write(res.Image); err != nil {
+		tlog.Error("Error writing to response", "dashboardUid", req.UID, "err", err)
+	}
 }
 
 // Hack for now -- lets you upload images explicitly

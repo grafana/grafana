@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import classNames from 'classnames';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Spinner, TagList, useTheme2 } from '@grafana/ui';
 import { DashboardSectionItem } from '../types';
-import { useThumbnailImage } from '../hooks/useThumbnailImage';
+import { getThumbnailURL } from './SearchCard';
 
 export interface Props {
   className?: string;
@@ -16,16 +16,23 @@ export interface Props {
 
 export function SearchCardExpanded({ className, imageHeight, imageWidth, item, lastUpdated }: Props) {
   const theme = useTheme2();
+  const [hasImage, setHasImage] = useState(true);
+  const imageSrc = getThumbnailURL(item.uid!, theme.isLight);
   const styles = getStyles(theme, imageHeight, imageWidth);
-  const thumb = useThumbnailImage(item.uid!, theme.isLight);
 
   const folderTitle = item.folderTitle || 'General';
 
   return (
     <a className={classNames(className, styles.card)} key={item.uid} href={item.url}>
       <div className={styles.imageContainer}>
-        {thumb.imageSrc ? (
-          <img loading="lazy" className={styles.image} src={thumb.imageSrc} />
+        {hasImage ? (
+          <img
+            loading="lazy"
+            className={styles.image}
+            src={imageSrc}
+            onLoad={() => setHasImage(true)}
+            onError={() => setHasImage(false)}
+          />
         ) : (
           <div className={styles.imagePlaceholder}>
             <Icon name="apps" size="xl" />

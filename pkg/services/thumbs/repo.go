@@ -2,8 +2,6 @@ package thumbs
 
 import (
 	"bufio"
-	"encoding/base64"
-	"fmt"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"io/ioutil"
@@ -49,10 +47,10 @@ func getMimeType(filePath string) string {
 }
 
 func (r *sqlThumbnailRepository) saveFromBytes(content []byte, mimeType string, meta models.DashboardThumbnailMeta) (int64, error) {
-	base64Image := base64.StdEncoding.EncodeToString(content)
 	cmd := &models.SaveDashboardThumbnailCommand{
 		DashboardThumbnailMeta: meta,
-		Image:                  fmt.Sprintf("data:%s;base64,%s", mimeType, base64Image),
+		Image:                  content,
+		MimeType:               mimeType,
 	}
 
 	_, err := r.store.SaveThumbnail(cmd)

@@ -29,7 +29,8 @@ func (ss *SQLStore) SaveThumbnail(cmd *models.SaveDashboardThumbnailCommand) (*m
 		}
 
 		if existing != nil {
-			existing.ImageDataUrl = cmd.Image
+			existing.Image = cmd.Image
+			existing.MimeType = cmd.MimeType
 			existing.Updated = time.Now()
 			_, err = sess.ID(existing.Id).Update(existing)
 			cmd.Result = existing
@@ -47,7 +48,8 @@ func (ss *SQLStore) SaveThumbnail(cmd *models.SaveDashboardThumbnailCommand) (*m
 		thumb.Updated = time.Now()
 		thumb.Theme = cmd.Theme
 		thumb.Kind = cmd.Kind
-		thumb.ImageDataUrl = cmd.Image
+		thumb.Image = cmd.Image
+		thumb.MimeType = cmd.MimeType
 		thumb.DashboardId = dashboardID
 		thumb.PanelId = cmd.PanelID
 		_, err = sess.Insert(thumb)
@@ -67,8 +69,9 @@ func findThumbnailByMeta(sess *DBSession, meta models.DashboardThumbnailMeta) (*
 	sess.Cols("dashboard_thumbnail.id",
 		"dashboard_thumbnail.dashboard_id",
 		"dashboard_thumbnail.panel_id",
-		"dashboard_thumbnail.image_data_url",
+		"dashboard_thumbnail.image",
 		"dashboard_thumbnail.kind",
+		"dashboard_thumbnail.mime_type",
 		"dashboard_thumbnail.theme",
 		"dashboard_thumbnail.updated")
 	exists, err := sess.Get(result)
