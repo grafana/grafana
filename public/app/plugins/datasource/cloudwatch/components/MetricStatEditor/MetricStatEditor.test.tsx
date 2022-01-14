@@ -129,7 +129,7 @@ describe('MetricStatEditor', () => {
 
       fireEvent.keyDown(namespaceSelect, keyDownEvent);
       await waitFor(() => screen.getByText('n1'));
-      fireEvent.click(screen.getByText('n1'));
+      await waitFor(() => fireEvent.click(screen.getByText('n1')));
 
       fireEvent.keyDown(metricsSelect, keyDownEvent);
       await waitFor(() => screen.getByText('m1'));
@@ -156,11 +156,9 @@ describe('MetricStatEditor', () => {
 
       fireEvent.keyDown(namespaceSelect, keyDownEvent);
       await waitFor(() => screen.getByText('n1'));
-      fireEvent.click(screen.getByText('n1'));
+      await waitFor(() => fireEvent.click(screen.getByText('n1')));
 
-      expect(onChange.mock.calls).toEqual([
-        [{ ...props.query, metricName: '', namespace: 'n1' }], // namespace select, metricName should have been removed
-      ]);
+      expect(onChange.mock.calls).toEqual([[{ ...props.query, metricName: '', namespace: 'n1' }]]);
     });
 
     it('should not remove metricName from query if it does exist in new namespace', async () => {
@@ -178,11 +176,9 @@ describe('MetricStatEditor', () => {
 
       fireEvent.keyDown(namespaceSelect, keyDownEvent);
       await waitFor(() => screen.getByText('n2'));
-      fireEvent.click(screen.getByText('n2'));
+      await waitFor(() => fireEvent.click(screen.getByText('n2')));
 
-      expect(onChange.mock.calls).toEqual([
-        [{ ...props.query, metricName: 'm1', namespace: 'n2' }], // namespace select, metricName should stay the same
-      ]);
+      expect(onChange.mock.calls).toEqual([[{ ...props.query, metricName: 'm1', namespace: 'n2' }]]);
     });
   });
 });
