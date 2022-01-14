@@ -32,7 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   queryFieldWrapper: css`
     flex-grow: 1;
-    margin-right: ${theme.spacing(0.5)};
+    margin: 0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0;
   `,
 });
 
