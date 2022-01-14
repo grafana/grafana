@@ -30,7 +30,7 @@ export enum AlertRuleSeverity {
 }
 
 export interface AlertRule {
-  ruleId?: string;
+  ruleId: string;
   createdAt: string;
   disabled: boolean;
   duration: string;
@@ -108,7 +108,7 @@ export interface AlertRuleCreateResponse {
 
 export interface AlertRuleCreatePayload {
   channel_ids: string[];
-  custom_labels: AlertRulePayloadCustomLabels;
+  custom_labels?: AlertRulePayloadCustomLabels;
   disabled: boolean;
   filters: AlertRulesListPayloadFilter[];
   for: string;

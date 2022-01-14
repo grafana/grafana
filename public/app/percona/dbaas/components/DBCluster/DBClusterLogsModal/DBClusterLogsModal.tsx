@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useState, useCallback } from 'react';
 import { Button, Icon, Spinner, useStyles } from '@grafana/ui';
 import { Modal, logger } from '@percona/platform-core';
 import { DBClusterLogsModalProps } from './DBClusterLogsModal.types';
@@ -14,7 +14,7 @@ export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isV
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState<DBClusterLogs>({ pods: [] });
   const [expanded, setExpanded] = useState(false);
-  const getClusterLogs = async () => {
+  const getClusterLogs = useCallback(async () => {
     if (!dbCluster) {
       return;
     }
@@ -27,10 +27,10 @@ export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isV
     } finally {
       setLoading(false);
     }
-  };
+  }, [dbCluster, logs]);
   const toggleCollapse = () => {
     setLogs({ pods: toggleLogs(logs.pods, !expanded) });
-    setExpanded(currentValue => !currentValue);
+    setExpanded((currentValue) => !currentValue);
   };
   const refresh = () => {
     getClusterLogs();
@@ -39,7 +39,7 @@ export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isV
 
   useEffect(() => {
     getClusterLogs();
-  }, [dbCluster]);
+  }, [dbCluster, getClusterLogs]);
 
   useEffect(() => {
     setExpanded(false);
@@ -68,7 +68,7 @@ export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isV
                       <Icon name="sync" />
                     </Button>
                   </div>
-                  {logs.pods.map(pod => (
+                  {logs.pods.map((pod) => (
                     <PodLogs key={`${pod.name}${pod.isOpen}`} podLogs={pod} />
                   ))}
                 </>

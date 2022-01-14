@@ -181,6 +181,7 @@ export const getAvailableIcons = () =>
     'wrap-text',
     'x',
     'percona-database',
+    'percona-database-checks',
     'percona-analytics',
     'percona-cluster',
     'percona-cluster-network',

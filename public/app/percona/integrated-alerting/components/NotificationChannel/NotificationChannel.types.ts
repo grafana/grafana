@@ -19,25 +19,25 @@ export enum PagerDutyKeyType {
 }
 export interface NotificationChannel {
   type: NotificationChannelType;
-  channelId: string;
+  channelId?: string;
   summary: string;
-  disabled: boolean;
+  disabled?: boolean;
 }
 
 export interface EmailNotificationChannel extends NotificationChannel {
-  sendResolved: boolean;
-  emails: string[];
+  sendResolved?: boolean;
+  emails?: string[];
 }
 
 export interface PagerDutylNotificationChannel extends NotificationChannel {
-  sendResolved: boolean;
-  routingKey: string;
-  serviceKey: string;
+  sendResolved?: boolean;
+  routingKey?: string;
+  serviceKey?: string;
 }
 
 export interface SlackNotificationChannel extends NotificationChannel {
-  sendResolved: boolean;
-  channel: string;
+  sendResolved?: boolean;
+  channel?: string;
 }
 
 export interface NotificationChannelTotals {
@@ -73,23 +73,23 @@ export interface NotificationChannelAPI {
 
 export interface EmailNotificationChannelAPI {
   send_resolved?: boolean;
-  to: string[];
+  to?: string[];
 }
 
 export interface PagerDutyNotificationChannelAPI {
   send_resolved?: boolean;
-  routing_key: string;
-  service_key: string;
+  routing_key?: string;
+  service_key?: string;
 }
 
 export interface SlackNotificationChannelAPI {
   send_resolved?: boolean;
-  channel: string;
+  channel?: string;
 }
 
 export interface NotificationChannelRenderProps {
   name: string;
-  type: SelectableValue<NotificationChannelType>;
+  type?: SelectableValue<NotificationChannelType>;
   emails?: string;
   keyType?: PagerDutyKeyType;
   routing?: string;

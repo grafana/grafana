@@ -33,12 +33,7 @@ describe('RestoreBackupModal', () => {
     );
 
     expect(wrapper.find(dataQa('backup-modal-error')).text()).not.toHaveLength(0);
-    expect(
-      wrapper
-        .find(dataQa('restore-button'))
-        .first()
-        .prop('disabled')
-    ).toBeTruthy();
+    expect(wrapper.find(dataQa('restore-button')).first().prop('disabled')).toBeTruthy();
   });
 
   it('should not block restore button or show error when noService is passed and compatible service is selected', () => {
@@ -46,17 +41,9 @@ describe('RestoreBackupModal', () => {
       <RestoreBackupModal isVisible noService backup={backup} onClose={jest.fn()} onRestore={jest.fn()} />
     );
 
-    wrapper
-      .find(dataQa('serviceType-radio-button'))
-      .at(1)
-      .simulate('change');
+    wrapper.find(dataQa('serviceType-radio-button')).at(1).simulate('change');
 
     expect(wrapper.find(dataQa('backup-modal-error')).text()).toHaveLength(0);
-    expect(
-      wrapper
-        .find(dataQa('restore-button'))
-        .first()
-        .prop('disabled')
-    ).toBeFalsy();
+    expect(wrapper.find(dataQa('restore-button')).first().prop('disabled')).toBeFalsy();
   });
 });
