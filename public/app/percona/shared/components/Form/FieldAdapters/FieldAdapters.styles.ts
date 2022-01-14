@@ -17,4 +17,12 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => ({
       min-height: 37px;
     }
   `,
+  asyncSelectWrapper: css`
+    position: relative;
+  `,
+  selectSpinner: css`
+    position: absolute;
+    right: ${theme.spacing.xl};
+    top: ${theme.spacing.sm};
+  `,
 }));

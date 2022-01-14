@@ -64,6 +64,7 @@ export const Messages = {
         clusterName: 'Cluster Name',
         kubernetesCluster: 'Kubernetes Cluster',
         databaseType: 'Database Type',
+        databaseVersion: 'Database Version',
         topology: 'Topology',
         nodes: 'Number of Nodes',
         resources: 'Resources per Node',
@@ -88,7 +89,7 @@ export const Messages = {
       validationMessages: {
         clusterName: 'Cluster name should start with a letter, be alphanumeric, and may contain a dash',
         notInstalledOperator: 'Operators must be installed to use database type',
-        requiredDatabaseType: 'Required field',
+        requiredField: 'Required field',
       },
       noOperatorsMessage: 'No clusters found with installed operators',
       resourcesBar: {

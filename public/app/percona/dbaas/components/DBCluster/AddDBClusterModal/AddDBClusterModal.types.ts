@@ -12,6 +12,7 @@ export enum AddDBClusterFields {
   name = 'name',
   kubernetesCluster = 'kubernetesCluster',
   databaseType = 'databaseType',
+  databaseVersion = 'databaseVersion',
   topology = 'topology',
   nodes = 'nodes',
   single = 'single',
