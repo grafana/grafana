@@ -60,3 +60,4 @@ export const apiQAN = new ApiRequest({ baseURL: '/v0/qan' });
 export const apiManagement = new ApiRequest({ baseURL: '/v1/management' });
 export const apiInventory = new ApiRequest({ baseURL: '/v1/inventory' });
 export const apiSettings = new ApiRequest({ baseURL: '/v1/Settings' });
+export const isApiCancelError = (e: any) => axios.isCancel(e);

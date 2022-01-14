@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button, HorizontalGroup, Modal } from '@grafana/ui';
+import { logger, CheckboxField } from '@percona/platform-core';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Form } from 'react-final-form';
 import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { FormElement } from 'app/percona/shared/components/Form';
@@ -8,9 +11,8 @@ import { InventoryDataService } from 'app/percona/inventory/Inventory.tools';
 import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table/Table.types';
 import { InventoryService } from '../Inventory.service';
 import { NodesList } from '../Inventory.types';
-import { NODES_COLUMNS } from '../Inventory.constants';
+import { GET_NODES_CANCEL_TOKEN, NODES_COLUMNS } from '../Inventory.constants';
 import { styles } from './Tabs.styles';
-import { CheckboxField } from '@percona/platform-core';
 import { appEvents } from '../../../core/app_events';
 import { AppEvents } from '@grafana/data';
 
@@ -26,19 +28,22 @@ export const NodesTab = () => {
   const [data, setData] = useState<any[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selected, setSelectedRows] = useState([]);
+  const [generateToken] = useCancelToken();
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const result: NodesList = await InventoryService.getNodes();
+      const result: NodesList = await InventoryService.getNodes(generateToken(GET_NODES_CANCEL_TOKEN));
 
       setData(InventoryDataService.getNodeModel(result));
     } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      if (isApiCancelError(e)) {
+        return;
+      }
+      logger.error(e);
     }
-  }, []);
+    setLoading(false);
+  }, [generateToken]);
 
   useEffect(() => {
     loadData();
@@ -60,11 +65,13 @@ export const NodesTab = () => {
           `${successfullyDeleted} of ${nodes.length} nodes successfully deleted`,
         ]);
       } catch (e) {
-        console.error(e);
-      } finally {
-        setSelectedRows([]);
-        loadData();
+        if (isApiCancelError(e)) {
+          return;
+        }
+        logger.error(e);
       }
+      setSelectedRows([]);
+      loadData();
     },
     [loadData]
   );

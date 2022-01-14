@@ -2,13 +2,15 @@
 import React, { FC, useMemo, useState, useEffect } from 'react';
 import { Button, useStyles } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { NotificationChannelService } from './NotificationChannel.service';
 import { Table } from '../Table/Table';
 import { useStoredTablePageSize } from '../Table/Pagination';
 import { NotificationChannel as Channel } from './NotificationChannel.types';
 import { Messages } from './NotificationChannel.messages';
 import { NotificationChannelProvider } from './NotificationChannel.provider';
-import { NOTIFICATION_CHANNEL_TABLE_ID } from './NotificationChannel.constants';
+import { GET_CHANNELS_CANCEL_TOKEN, NOTIFICATION_CHANNEL_TABLE_ID } from './NotificationChannel.constants';
 import { getStyles } from './NotificationChannel.styles';
 import { AddNotificationChannelModal } from './AddNotificationChannelModal';
 import { NotificationChannelActions } from './NotificationChannelActions/NotificationChannelActions';
@@ -27,6 +29,7 @@ export const NotificationChannel: FC = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [selectedNotificationChannel, setSelectedNotificationChannel] = useState<Channel | null>();
+  const [generateToken] = useCancelToken();
 
   const columns = useMemo(
     () => [
@@ -53,21 +56,26 @@ export const NotificationChannel: FC = () => {
   const getNotificationChannels = useCallback(async () => {
     setPendingRequest(true);
     try {
-      const { channels, totals } = await NotificationChannelService.list({
-        page_params: {
-          index: pageIndex,
-          page_size: pageSize as number,
+      const { channels, totals } = await NotificationChannelService.list(
+        {
+          page_params: {
+            index: pageIndex,
+            page_size: pageSize as number,
+          },
         },
-      });
+        generateToken(GET_CHANNELS_CANCEL_TOKEN)
+      );
       setData(channels);
       setTotalItems(totals.total_items || 0);
       setTotalPages(totals.total_pages || 0);
     } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
+      }
       logger.error(e);
-    } finally {
-      setPendingRequest(false);
     }
-  }, [pageIndex, pageSize]);
+    setPendingRequest(false);
+  }, [generateToken, pageIndex, pageSize]);
 
   const handlePaginationChanged = useCallback(
     (pageSize: number, pageIndex: number) => {

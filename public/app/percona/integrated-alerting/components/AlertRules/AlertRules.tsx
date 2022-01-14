@@ -3,6 +3,8 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Cell, Column, Row } from 'react-table';
 import { Button, useStyles, IconButton } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Table } from '../Table/Table';
 import { AddAlertRuleModal } from './AddAlertRuleModal';
 import { getStyles } from './AlertRules.styles';
@@ -12,7 +14,7 @@ import { Messages } from '../../IntegratedAlerting.messages';
 import { formatRules } from './AlertRules.utils';
 import { AlertRule } from './AlertRules.types';
 import { AlertRulesActions } from './AlertRulesActions';
-import { ALERT_RULES_TABLE_ID } from './AlertRules.constants';
+import { ALERT_RULES_TABLE_ID, GET_ALERT_RULES_CANCEL_TOKEN } from './AlertRules.constants';
 import { useStoredTablePageSize } from '../Table/Pagination';
 import { AlertRulesParamsDetails } from './AlertRulesParamsDetails';
 
@@ -38,25 +40,31 @@ export const AlertRules: FC = () => {
   const [pageIndex, setPageindex] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [generateToken] = useCancelToken();
 
   const getAlertRules = useCallback(async () => {
     setPendingRequest(true);
     try {
-      const { rules = [], totals } = await AlertRulesService.list({
-        page_params: {
-          index: pageIndex,
-          page_size: pageSize as number,
+      const { rules = [], totals } = await AlertRulesService.list(
+        {
+          page_params: {
+            index: pageIndex,
+            page_size: pageSize as number,
+          },
         },
-      });
+        generateToken(GET_ALERT_RULES_CANCEL_TOKEN)
+      );
       setData(formatRules(rules));
       setTotalItems(totals.total_items || 0);
       setTotalPages(totals.total_pages || 0);
     } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
+      }
       logger.error(e);
-    } finally {
-      setPendingRequest(false);
     }
-  }, [pageIndex, pageSize]);
+    setPendingRequest(false);
+  }, [generateToken, pageIndex, pageSize]);
 
   const columns = React.useMemo(
     () => [
