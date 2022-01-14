@@ -289,6 +289,7 @@
     "comlink": "4.3.1",
     "common-tags": "^1.8.0",
     "core-js": "3.10.0",
+    "cronstrue": "^1.114.0",
     "d3": "5.15.0",
     "d3-force": "^2.1.1",
     "d3-scale-chromatic": "1.5.0",

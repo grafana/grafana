@@ -13,7 +13,7 @@ export const StorageLocationDetails: FC<StorageLocationDetailsProps> = ({ locati
 
   return (
     <div data-qa="storage-location-wrapper" className={styles.wrapper}>
-      <DescriptionBlock description={description} />
+      <DescriptionBlock description={description} dataQa="storage-location-description" />
       {isS3Location(location) ? (
         <>
           <BucketBlock bucketName={location.bucketName} />
