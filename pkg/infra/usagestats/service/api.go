@@ -20,7 +20,7 @@ func (uss *UsageStats) registerAPIEndpoints() {
 func (uss *UsageStats) getUsageReportPreview(ctx *models.ReqContext) response.Response {
 	usageReport, err := uss.GetUsageReport(ctx.Req.Context())
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to get summary for dashboard", err)
+		return response.Error(http.StatusInternalServerError, "failed to get usage report", err)
 	}
 
 	return response.JSON(http.StatusOK, usageReport)
