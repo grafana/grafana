@@ -7,9 +7,10 @@ weight = 10
 
 # Grafana Enterprise license
 
-To run Grafana Enterprise, you need a valid license. [Contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise) to obtain the license. For information on how to activate your license, refer to [Activate an Enterprise license]({{< relref "./activate-license.md" >}}).
+When you become a Grafana Enterprise customer, you gain access to Grafana's premium observability features, including enterprise data source plugins, reporting, and fine-grained access control. In order to use these [enhanced features of Grafana Enterprise]({{< relref "../_index.md" >}}), you must purchase and activate a Grafana Enterprise license.
 
-See also:
+To purchase a license directly from Grafana Labs, [Contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise). To activate an Enterprise license purchased from Grafana Labs, refer to [Activate an Enterprise license]({{< relref "./activate-license.md" >}}).
 
-- [License expiration]({{< relref "./license-expiration.md" >}})
-- [License restrictions]({{< relref "./license-restrictions.md" >}})
+You can also purchase a Grafana Enterprise license through the AWS Marketplace. To learn more about activating a license purchased through AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../license/activate-aws-marketplace-license" >}}).
+
+{{< section >}}

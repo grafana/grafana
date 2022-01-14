@@ -46,7 +46,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sort": "none",
     },
   },
 }
@@ -74,6 +75,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "single",
+      "sort": "none",
     },
   },
 }
@@ -99,6 +101,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "single",
+      "sort": "none",
     },
   },
 }
@@ -153,7 +156,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sort": "none",
     },
   },
 }
@@ -208,7 +212,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sort": "none",
     },
   },
 }
@@ -236,6 +241,7 @@ Object {
     },
     "tooltip": Object {
       "mode": "single",
+      "sort": "none",
     },
   },
 }
@@ -321,7 +327,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sort": "none",
     },
   },
 }
@@ -377,7 +384,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sort": "none",
     },
   },
 }
@@ -417,7 +425,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sort": "none",
     },
   },
 }
@@ -465,7 +474,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sort": "none",
     },
   },
 }
@@ -550,7 +560,8 @@ Object {
       "placement": "bottom",
     },
     "tooltip": Object {
-      "mode": "single",
+      "mode": "multi",
+      "sort": "none",
     },
   },
 }

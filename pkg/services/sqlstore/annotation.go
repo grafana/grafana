@@ -237,32 +237,33 @@ func (r *SQLAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 func (r *SQLAnnotationRepo) Delete(params *annotations.DeleteParams) error {
 	return inTransaction(func(sess *DBSession) error {
 		var (
-			sql         string
-			annoTagSQL  string
-			queryParams []interface{}
+			sql        string
+			annoTagSQL string
 		)
 
 		sqlog.Info("delete", "orgId", params.OrgId)
 		if params.Id != 0 {
 			annoTagSQL = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE id = ? AND org_id = ?)"
 			sql = "DELETE FROM annotation WHERE id = ? AND org_id = ?"
-			queryParams = []interface{}{params.Id, params.OrgId}
+
+			if _, err := sess.Exec(annoTagSQL, params.Id, params.OrgId); err != nil {
+				return err
+			}
+
+			if _, err := sess.Exec(sql, params.Id, params.OrgId); err != nil {
+				return err
+			}
 		} else {
 			annoTagSQL = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE dashboard_id = ? AND panel_id = ? AND org_id = ?)"
 			sql = "DELETE FROM annotation WHERE dashboard_id = ? AND panel_id = ? AND org_id = ?"
-			queryParams = []interface{}{params.DashboardId, params.PanelId, params.OrgId}
-		}
 
-		sqlOrArgs := append([]interface{}{annoTagSQL}, queryParams...)
+			if _, err := sess.Exec(annoTagSQL, params.DashboardId, params.PanelId, params.OrgId); err != nil {
+				return err
+			}
 
-		if _, err := sess.Exec(sqlOrArgs...); err != nil {
-			return err
-		}
-
-		sqlOrArgs = append([]interface{}{sql}, queryParams...)
-
-		if _, err := sess.Exec(sqlOrArgs...); err != nil {
-			return err
+			if _, err := sess.Exec(sql, params.DashboardId, params.PanelId, params.OrgId); err != nil {
+				return err
+			}
 		}
 
 		return nil

@@ -18,7 +18,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 	if c.OrgId != 0 {
 		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
-		err := bus.DispatchCtx(c.Req.Context(), &query)
+		err := bus.Dispatch(c.Req.Context(), &query)
 
 		if err != nil {
 			return nil, err
@@ -241,15 +241,13 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"latestVersion": hs.updateChecker.LatestGrafanaVersion(),
 			"hasUpdate":     hs.updateChecker.GrafanaUpdateAvailable(),
 			"env":           setting.Env,
-			"isEnterprise":  hs.License.HasValidLicense(),
 		},
 		"licenseInfo": map[string]interface{}{
-			"hasLicense":      hs.License.HasLicense(),
-			"hasValidLicense": hs.License.HasValidLicense(),
 			"expiry":          hs.License.Expiry(),
 			"stateInfo":       hs.License.StateInfo(),
 			"licenseUrl":      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, accesscontrol.LicensingPageReaderAccess)),
 			"edition":         hs.License.Edition(),
+			"enabledFeatures": hs.License.EnabledFeatures(),
 		},
 		"featureToggles":                   hs.Cfg.FeatureToggles,
 		"rendererAvailable":                hs.RenderService.IsAvailable(),
@@ -274,6 +272,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(false),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
+		"featureHighlights": map[string]bool{
+			"enabled": hs.SettingsProvider.Section("feature_highlights").KeyValue("enabled").MustBool(false),
+		},
 	}
 
 	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {

@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 import {
+  arrayUtils,
   CartesianCoords2D,
   DashboardCursorSync,
   DataFrame,
@@ -12,7 +13,7 @@ import {
   getFieldDisplayName,
   TimeZone,
 } from '@grafana/data';
-import { TooltipDisplayMode } from '@grafana/schema';
+import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { Portal } from '../../Portal/Portal';
 import { SeriesTable, SeriesTableRowProps, VizTooltipContainer } from '../../VizTooltip';
@@ -24,6 +25,7 @@ interface TooltipPluginProps {
   data: DataFrame;
   config: UPlotConfigBuilder;
   mode?: TooltipDisplayMode;
+  sortOrder?: SortOrder;
   sync?: DashboardCursorSync;
   // Allows custom tooltip content rendering. Exposes aligned data frame with relevant indexes for data inspection
   // Use field.state.origin indexes from alignedData frame field to get access to original data frame and field index.
@@ -37,6 +39,7 @@ const TOOLTIP_OFFSET = 10;
  */
 export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   mode = TooltipDisplayMode.Single,
+  sortOrder = SortOrder.None,
   sync,
   timeZone,
   config,
@@ -63,7 +66,15 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   useLayoutEffect(() => {
     let bbox: DOMRect | undefined = undefined;
 
-    const plotMouseLeave = () => {
+    const plotEnter = () => {
+      if (!isMounted()) {
+        return;
+      }
+      setIsActive(true);
+      plotInstance.current?.root.classList.add('plot-active');
+    };
+
+    const plotLeave = () => {
       if (!isMounted()) {
         return;
       }
@@ -72,22 +83,17 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       plotInstance.current?.root.classList.remove('plot-active');
     };
 
-    const plotMouseEnter = () => {
-      if (!isMounted()) {
-        return;
-      }
-      setIsActive(true);
-      plotInstance.current?.root.classList.add('plot-active');
-    };
-
     // cache uPlot plotting area bounding box
     config.addHook('syncRect', (u, rect) => (bbox = rect));
 
     config.addHook('init', (u) => {
       plotInstance.current = u;
 
-      u.over.addEventListener('mouseleave', plotMouseLeave);
-      u.over.addEventListener('mouseenter', plotMouseEnter);
+      u.root.parentElement?.addEventListener('focus', plotEnter);
+      u.over.addEventListener('mouseenter', plotEnter);
+
+      u.root.parentElement?.addEventListener('blur', plotLeave);
+      u.over.addEventListener('mouseleave', plotLeave);
 
       if (sync === DashboardCursorSync.Crosshair) {
         u.root.classList.add('shared-crosshair');
@@ -154,8 +160,10 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     return () => {
       setCoords(null);
       if (plotInstance.current) {
-        plotInstance.current.over.removeEventListener('mouseleave', plotMouseLeave);
-        plotInstance.current.over.removeEventListener('mouseenter', plotMouseEnter);
+        plotInstance.current.over.removeEventListener('mouseleave', plotLeave);
+        plotInstance.current.over.removeEventListener('mouseenter', plotEnter);
+        plotInstance.current.root.parentElement?.removeEventListener('focus', plotEnter);
+        plotInstance.current.root.parentElement?.removeEventListener('blur', plotLeave);
       }
     };
   }, [config, setCoords, setIsActive, setFocusedPointIdx, setFocusedPointIdxs]);
@@ -206,6 +214,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       let series: SeriesTableRowProps[] = [];
       const frame = otherProps.data;
       const fields = frame.fields;
+      const sortIdx: Array<[number, number]> = [];
 
       for (let i = 0; i < fields.length; i++) {
         const field = frame.fields[i];
@@ -220,14 +229,19 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
           continue;
         }
 
-        const display = field.display!(otherProps.data.fields[i].values.get(focusedPointIdxs[i]!));
-
+        const v = otherProps.data.fields[i].values.get(focusedPointIdxs[i]!);
+        const display = field.display!(v);
+        sortIdx.push([series.length, v]);
         series.push({
           color: display.color || FALLBACK_COLOR,
           label: getFieldDisplayName(field, frame),
           value: display ? formattedValueToString(display) : null,
           isActive: focusedSeriesIdx === i,
         });
+      }
+
+      if (sortOrder !== SortOrder.None) {
+        series.sort((a, b) => arrayUtils.sortValues(sortOrder)(a.value, b.value));
       }
 
       tooltip = <SeriesTable series={series} timestamp={xVal} />;
