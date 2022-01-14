@@ -1,21 +1,14 @@
-import React, { FC } from 'react';
+// @ts-nocheck
 import { cx } from 'emotion';
+import React from 'react';
+
 import { Select, Spinner, useTheme } from '@grafana/ui';
-import { getStyles } from './FieldAdapters.styles';
+
 import { Field } from './Field';
 import { Messages } from './FieldAdapters.messages';
+import { getStyles } from './FieldAdapters.styles';
 
-// TODO: remove this once Select is available in platform-core
-export const SelectFieldAdapter: FC<any> = ({
-  input,
-  className,
-  options,
-  label,
-  meta,
-  dataQa,
-  noOptionsMessage,
-  ...props
-}) => {
+export const SelectFieldAdapter = ({ input, className, options, label, meta, dataQa, noOptionsMessage, ...props }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 

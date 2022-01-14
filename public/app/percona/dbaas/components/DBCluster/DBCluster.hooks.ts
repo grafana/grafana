@@ -1,11 +1,14 @@
-import { useEffect, useState, useCallback } from 'react';
 import { logger } from '@percona/platform-core';
-import { FulfilledPromiseResult, processPromiseResults } from 'app/percona/shared/helpers/promises';
+import { useEffect, useState, useCallback } from 'react';
+
 import { Databases } from 'app/percona/shared/core';
+import { FulfilledPromiseResult, processPromiseResults } from 'app/percona/shared/helpers/promises';
+
 import { Kubernetes } from '../Kubernetes/Kubernetes.types';
-import { DBCluster, GetDBClustersAction, DBClusterPayload, OperatorDatabasesMap } from './DBCluster.types';
-import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { KubernetesOperatorStatus } from '../Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
+
+import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
+import { DBCluster, GetDBClustersAction, DBClusterPayload, OperatorDatabasesMap } from './DBCluster.types';
 import { newDBClusterService } from './DBCluster.utils';
 
 const RECHECK_INTERVAL = 10000;
@@ -49,7 +52,7 @@ export const useDBClusters = (kubernetes: Kubernetes[]): [DBCluster[], GetDBClus
     let timer: NodeJS.Timeout = setInterval(() => getDBClusters(false), RECHECK_INTERVAL);
 
     return () => clearTimeout(timer);
-  }, [getDBClusters]);
+  }, [kubernetes, getDBClusters]);
 
   return [dbClusters, getDBClusters, loading];
 };

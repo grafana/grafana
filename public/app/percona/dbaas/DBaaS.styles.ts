@@ -1,5 +1,6 @@
-import { CSSProperties } from 'react';
 import { css } from 'emotion';
+import { CSSProperties } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
 
 export const getStyles = ({ spacing }: GrafanaTheme) => ({
@@ -8,7 +9,6 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
     pointerEvents: 'none',
   } as CSSProperties,
   panelContentWrapper: css`
-    margin: ${spacing.lg};
     div[data-qa='modal-body'] {
       left: 30%;
       max-width: 750px;

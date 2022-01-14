@@ -19833,7 +19833,7 @@ __metadata:
     fork-ts-checker-webpack-plugin: 7.2.11
     fs-extra: 10.1.0
     glob: 8.0.3
-    history: 4.10.1
+    history: ^4.10.1
     hoist-non-react-statics: 3.3.2
     html-loader: 3.1.0
     html-webpack-plugin: 5.5.0
@@ -20274,7 +20274,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"history@npm:4.10.1, history@npm:^4.9.0":
+"history@npm:4.10.1, history@npm:^4.10.1, history@npm:^4.9.0":
   version: 4.10.1
   resolution: "history@npm:4.10.1"
   dependencies:
@@ -30102,7 +30102,7 @@ __metadata:
   dependencies:
     call-bind: ^1.0.2
     define-properties: ^1.1.3
-  checksum: 343595db5a6bbbb3bfbda881f9c74832cfa9fc0039e64a43843f6bb9158b78b921055266510800ed69d4997638890b17a46d55fd9f32961f53ae56ac3ec4dd05
+  checksum: 77944a3ea5ae84f391fa80bff9babfedc47eadc9dc38e282b5fd746368fb787deec89c68ce3114195bf6b5782b160280a278b62d41ccc6e125afab1a7f816de8
   languageName: node
   linkType: hard
 
@@ -31045,7 +31045,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"schema-utils@npm:^2.6.5, schema-utils@npm:^2.7.0":
+"schema-utils@npm:^2.5.0, schema-utils@npm:^2.6.5, schema-utils@npm:^2.7.0":
   version: 2.7.1
   resolution: "schema-utils@npm:2.7.1"
   dependencies:
@@ -34284,16 +34284,16 @@ __metadata:
   version: 4.1.1
   resolution: "url-loader@npm:4.1.1"
   dependencies:
-    loader-utils: ^2.0.0
-    mime-types: ^2.1.27
-    schema-utils: ^3.0.0
+    loader-utils: ^1.2.3
+    mime: ^2.4.4
+    schema-utils: ^2.5.0
   peerDependencies:
     file-loader: "*"
-    webpack: ^4.0.0 || ^5.0.0
+    webpack: ^4.0.0
   peerDependenciesMeta:
     file-loader:
       optional: true
-  checksum: c1122a992c6cff70a7e56dfc2b7474534d48eb40b2cc75467cde0c6972e7597faf8e43acb4f45f93c2473645dfd803bcbc20960b57544dd1e4c96e77f72ba6fd
+  checksum: c0a8a6e728331e2189a6538373b9ce4b5589389805c4e98a0386ee5d18cc4ba4c5dec5514d8c852dd533b857461c30c3efc135ed07b6b31a96c5a6fb812a4757
   languageName: node
   linkType: hard
 

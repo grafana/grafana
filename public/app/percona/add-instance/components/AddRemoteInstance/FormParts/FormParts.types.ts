@@ -1,0 +1,22 @@
+import { FormApi } from 'final-form';
+
+import { InstanceTypes, RemoteInstanceCredentials } from 'app/percona/add-instance/panel.types';
+
+export interface MainDetailsFormPartProps {
+  remoteInstanceCredentials: RemoteInstanceCredentials;
+}
+
+export interface ExternalServiceConnectionDetailsFormPartProps {
+  form: FormApi;
+}
+
+export interface AdditionalOptionsFormPartProps {
+  instanceType: InstanceTypes;
+  loading: boolean;
+  remoteInstanceCredentials: RemoteInstanceCredentials;
+  form: FormApi;
+}
+
+export interface PostgreSQLAdditionalOptionsProps {
+  isRDS: boolean;
+}

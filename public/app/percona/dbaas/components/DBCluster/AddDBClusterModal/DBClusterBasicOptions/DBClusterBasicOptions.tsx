@@ -1,18 +1,24 @@
+import { TextInputField, validators } from '@percona/platform-core';
 import React, { FC, useCallback, useState, useMemo } from 'react';
 import { Field } from 'react-final-form';
-import { TextInputField, validators } from '@percona/platform-core';
-import { DATABASE_LABELS, Databases } from 'app/percona/shared/core';
-import { SelectFieldAdapter, AsyncSelectFieldAdapter } from 'app/percona/shared/components/Form/FieldAdapters';
+
+import { SelectableValue } from '@grafana/data';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
-import { DatabaseOption, DBClusterBasicOptionsProps } from './DBClusterBasicOptions.types';
+import {
+  SelectFieldAdapter,
+  AsyncSelectFieldAdapter,
+} from 'app/percona/shared/components/Form/FieldAdapters/FieldAdapters';
+import { DATABASE_LABELS, Databases } from 'app/percona/shared/core';
+
+import { KubernetesOperatorStatus } from '../../../Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 import { DATABASE_OPTIONS } from '../../DBCluster.constants';
+import { isOptionEmpty } from '../../DBCluster.utils';
 import { AddDBClusterFields } from '../AddDBClusterModal.types';
 import { DBClusterTopology } from '../DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
-import { getKubernetesOptions, kubernetesClusterNameValidator, optionRequired } from './DBClusterBasicOptions.utils';
-import { KubernetesOperatorStatus } from '../../../Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
-import { SelectableValue } from '@grafana/data';
-import { isOptionEmpty } from '../../DBCluster.utils';
+
 import { useDatabaseVersions } from './DBClusterBasicOptions.hooks';
+import { DatabaseOption, DBClusterBasicOptionsProps } from './DBClusterBasicOptions.types';
+import { getKubernetesOptions, kubernetesClusterNameValidator, optionRequired } from './DBClusterBasicOptions.utils';
 
 export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernetes, form }) => {
   const { required } = validators;
