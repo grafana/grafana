@@ -184,11 +184,15 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
   const checkboxId = `checkbox_${entry.id}`;
 
   // Scroll to the selected element if it's not in the view
+  // Only do it once, when the component is mounted
   useEffect(() => {
     if (isSelected) {
-      document.getElementById(checkboxId)?.focus();
+      document.getElementById(checkboxId)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
     }
-  });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={styles.nestedEntry} style={{ marginLeft: level * (3 * theme.spacing.gridSize) }}>
