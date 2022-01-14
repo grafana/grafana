@@ -5,7 +5,7 @@ import { TabKeys } from './IntegratedAlerting.types';
 
 export const DEFAULT_TAB = TabKeys.alerts;
 
-export const PAGE_TABS = [
+export const PAGE_TABS: PageModel[] = [
   {
     title: Messages.tabs.alerts,
     id: TabKeys.alerts,
