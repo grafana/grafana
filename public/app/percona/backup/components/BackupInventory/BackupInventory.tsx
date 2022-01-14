@@ -7,17 +7,16 @@ import { Button, useStyles } from '@grafana/ui';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell/ExpandableCell';
-import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { Messages } from '../../Backup.messages';
 import { useRecurringCall } from '../../hooks/recurringCall.hook';
+import { AddBackupModal } from '../AddBackupModal';
+import { AddBackupFormProps } from '../AddBackupModal/AddBackupModal.types';
 import { DetailedDate } from '../DetailedDate';
 import { Status } from '../Status';
 
-import { AddBackupModal } from './AddBackupModal';
-import { AddBackupFormProps } from './AddBackupModal/AddBackupModal.types';
 import {
   BACKUP_CANCEL_TOKEN,
   LIST_ARTIFACTS_CANCEL_TOKEN,

@@ -10,6 +10,7 @@ import { TabKeys } from './Backup.types';
 import { PAGE_MODEL } from './BackupPage.constants';
 import { BackupInventory } from './components/BackupInventory';
 import { RestoreHistory } from './components/RestoreHistory';
+import { ScheduledBackups } from './components/ScheduledBackups';
 import { StorageLocations } from './components/StorageLocations';
 
 const BackupPage: FC = () => {
@@ -24,6 +25,11 @@ const BackupPage: FC = () => {
         key: TabKeys.restore,
         label: Messages.tabs.restore,
         component: <RestoreHistory />,
+      },
+      {
+        key: TabKeys.scheduled,
+        label: Messages.tabs.scheduled,
+        component: <ScheduledBackups />,
       },
       {
         key: TabKeys.locations,

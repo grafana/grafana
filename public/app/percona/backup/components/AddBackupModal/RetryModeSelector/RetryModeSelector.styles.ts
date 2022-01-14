@@ -2,7 +2,7 @@ import { css } from 'emotion';
 
 import { GrafanaTheme } from '@grafana/data';
 
-export const getStyles = ({ colors, typography, spacing }: GrafanaTheme) => ({
+export const getStyles = ({ colors, typography, spacing, border }: GrafanaTheme) => ({
   retryFields: css`
     display: flex;
   `,

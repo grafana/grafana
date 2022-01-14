@@ -1,8 +1,9 @@
-import { AddBackupModalService } from './AddBackupModal.service';
 import { SelectableValue } from '@grafana/data';
-import { Databases } from 'app/percona/shared/core';
-import { SelectableService } from './AddBackupModal.types';
 import { InventoryService } from 'app/percona/inventory/Inventory.service';
+import { Databases } from 'app/percona/shared/core';
+
+import { AddBackupModalService } from './AddBackupModal.service';
+import { SelectableService } from './AddBackupModal.types';
 
 describe('AddBackupModalService', () => {
   it('should return only supported services', async () => {
