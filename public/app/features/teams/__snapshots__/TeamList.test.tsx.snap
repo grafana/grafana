@@ -75,9 +75,6 @@ exports[`Render should render teams table 1`] = `
               <th>
                 Members
               </th>
-              <th>
-                Roles
-              </th>
               <th
                 style={
                   Object {
@@ -432,9 +429,6 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
               <th>
                 Members
               </th>
-              <th>
-                Roles
-              </th>
               <th
                 style={
                   Object {
@@ -572,9 +566,6 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
               </th>
               <th>
                 Members
-              </th>
-              <th>
-                Roles
               </th>
               <th
                 style={
