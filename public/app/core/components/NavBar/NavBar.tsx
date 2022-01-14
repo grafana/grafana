@@ -84,7 +84,7 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
           id: 'dbaas',
           text: 'DBaaS',
           icon: 'database',
-          url: '/graph/d/pmm-dbaas/pmm-dbaas',
+          url: `${config.appSubUrl}/dbaas`,
         });
       }
 
