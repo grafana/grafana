@@ -72,6 +72,17 @@ export interface DBClusterContainerLogs {
   logs: string;
 }
 
+export interface DBClusterAllocatedResources {
+  total: DBClusterResources;
+  allocated: DBClusterResources;
+}
+
+interface DBClusterResources {
+  cpu: number;
+  disk: number;
+  memory: number;
+}
+
 export interface DBClusterPayload {
   kubernetes_cluster_name: string;
   name: string;
@@ -122,4 +133,17 @@ export interface DBClusterLogAPI {
   pod: string;
   container?: string;
   logs: string[];
+}
+
+export interface DBClusterAllocatedResourcesAPI {
+  all: {
+    cpu_m: number;
+    disk_size: number;
+    memory_bytes: number;
+  };
+  available: {
+    cpu_m: number;
+    disk_size: number;
+    memory_bytes: number;
+  };
 }
