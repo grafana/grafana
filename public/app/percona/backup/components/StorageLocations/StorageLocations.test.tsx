@@ -5,7 +5,6 @@ import { act } from 'react-dom/test-utils';
 import { Table } from 'app/percona/integrated-alerting/components/Table/Table';
 import { StorageLocationsService } from './StorageLocations.service';
 import { stubLocations } from './__mocks__/StorageLocations.service';
-import { DBIcon } from '../DBIcon';
 import { RemoveStorageLocationModal } from './RemoveStorageLocationModal';
 import { StorageLocations } from './StorageLocations';
 import { AddStorageLocationModal } from './AddStorageLocationModal';
@@ -33,7 +32,7 @@ describe('StorageLocations', () => {
     wrapper.update();
 
     expect(wrapper.find(RemoveStorageLocationModal).prop('isVisible')).toBe(false);
-    wrapper.find(DBIcon).last().simulate('click');
+    wrapper.find(dataQa('delete-storage-location-button')).last().simulate('click');
     expect(wrapper.find(RemoveStorageLocationModal).prop('isVisible')).toBe(true);
   });
 
