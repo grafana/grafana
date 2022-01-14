@@ -1,4 +1,5 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
+import { useAsync } from 'react-use';
 import { getBackendSrv } from '@grafana/runtime';
 import { Role } from 'app/types';
 import { RolePicker } from './RolePicker';
@@ -16,23 +17,19 @@ export const TeamRolePicker: FC<Props> = ({ teamId, orgId, getRoleOptions, disab
   const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchOptions() {
-      try {
-        let options = await (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId));
-        setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
+  useAsync(async () => {
+    try {
+      let options = await (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId));
+      setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
 
-        const teamRoles = await fetchTeamRoles(teamId, orgId);
-        setAppliedRoles(teamRoles);
-      } catch (e) {
-        // TODO handle error
-        console.error('Error loading options');
-      } finally {
-        setIsLoading(false);
-      }
+      const teamRoles = await fetchTeamRoles(teamId, orgId);
+      setAppliedRoles(teamRoles);
+    } catch (e) {
+      // TODO handle error
+      console.error('Error loading options');
+    } finally {
+      setIsLoading(false);
     }
-
-    fetchOptions();
   }, [getRoleOptions, orgId, teamId]);
 
   return (
