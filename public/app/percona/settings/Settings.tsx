@@ -3,6 +3,7 @@ import React, { FC, useEffect, useMemo, useState, useCallback } from 'react';
 
 import { Spinner, useTheme } from '@grafana/ui';
 
+import { EmptyBlock } from '../shared/components/Elements/EmptyBlock';
 import { ContentTab, TabbedContent, TabOrientation } from '../shared/components/Elements/TabbedContent';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
@@ -11,7 +12,7 @@ import { GET_SETTINGS_CANCEL_TOKEN, SET_SETTINGS_CANCEL_TOKEN, PAGE_MODEL } from
 import { Messages } from './Settings.messages';
 import { LoadingCallback, SettingsService } from './Settings.service';
 import { getSettingsStyles } from './Settings.styles';
-import { Settings, SettingsAPIChangePayload } from './Settings.types';
+import { Settings, SettingsAPIChangePayload, TabKeys } from './Settings.types';
 import { Advanced, AlertManager, Diagnostics, MetricsResolution, PlatformLogin, SSHKey } from './components';
 import { Communication } from './components/Communication/Communication';
 
@@ -21,6 +22,7 @@ export const SettingsPanel: FC = () => {
 
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
+  const [hasNoAccess, setHasNoAccess] = useState(false);
   const styles = getSettingsStyles(theme);
   const { metrics, advanced, ssh, alertManager, perconaPlatform, communication } = Messages.tabs;
   const [settings, setSettings] = useState<Settings>();
@@ -54,23 +56,14 @@ export const SettingsPanel: FC = () => {
       const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN));
       setSettings(settings);
     } catch (e) {
+      if (e.response?.status === 401) {
+        setHasNoAccess(true);
+      }
       logger.error(e);
     } finally {
       setLoading(false);
     }
   }, [generateToken]);
-
-  const getSettings = async () => {
-    try {
-      setLoading(true);
-      const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN));
-      setSettings(settings);
-    } catch (e) {
-      logger.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const tabs: ContentTab[] = useMemo(
     (): ContentTab[] =>
@@ -147,20 +140,27 @@ export const SettingsPanel: FC = () => {
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
       <div className={styles.settingsWrapper}>
-        {loading ? (
-          <Spinner />
-        ) : (
-          <TabbedContent
-            className={styles.tabsWrapper}
-            tabs={tabs}
-            basePath={basePath}
-            orientation={TabOrientation.Vertical}
-            tabsDataQa="settings-tabs"
-            contentDataQa="settings-tab-content"
-            renderTab={({ Content }) => <Content className={styles.tabContentWrapper} />}
-          ></TabbedContent>
+        {(loading || hasNoAccess) && (
+          <div className={styles.emptyBlock}>
+            <EmptyBlock dataQa="empty-block">
+              {loading ? <Spinner /> : hasNoAccess && <div data-qa="unauthorized">{Messages.unauthorized}</div>}
+            </EmptyBlock>
+          </div>
         )}
-        <Diagnostics />
+        {!loading && !hasNoAccess && (
+          <>
+            <TabbedContent
+              className={styles.tabsWrapper}
+              tabs={tabs}
+              basePath={basePath}
+              orientation={TabOrientation.Vertical}
+              tabsDataQa="settings-tabs"
+              contentDataQa="settings-tab-content"
+              renderTab={({ Content }) => <Content className={styles.tabContentWrapper} />}
+            />
+            <Diagnostics />
+          </>
+        )}
       </div>
     </PageWrapper>
   );

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 
 import { useStyles } from '@grafana/ui';
 
+import { CheckPermissions } from '../shared/components/Elements/CheckPermissions/CheckPermissions';
 import { TabbedContent, ContentTab } from '../shared/components/Elements/TabbedContent';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 
@@ -41,7 +42,15 @@ export const InventoryPanel = () => {
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
       <div className={styles.inventoryWrapper}>
-        <TabbedContent tabs={tabs} basePath={basePath} />
+        <TabbedContent
+          tabs={tabs}
+          basePath={basePath}
+          renderTab={({ Content }) => (
+            <CheckPermissions>
+              <Content />
+            </CheckPermissions>
+          )}
+        />
       </div>
     </PageWrapper>
   );

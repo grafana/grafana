@@ -3,23 +3,22 @@ import React, { FC, useEffect, useState, useCallback } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { Spinner, Switch, useStyles } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { AlertsReloadContext } from 'app/percona/check/Check.context';
 import { CheckService } from 'app/percona/check/Check.service';
-import { COLUMNS } from 'app/percona/check/CheckPanel.constants';
-import { Table } from 'app/percona/check/components';
-import { ActiveCheck } from 'app/percona/check/types';
+import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
-import { appEvents } from '../../../../core/app_events';
+import { COLUMNS } from '../../CheckPanel.constants';
+import { ActiveCheck } from '../../types';
 
 import { GET_ACTIVE_ALERTS_CANCEL_TOKEN } from './FailedChecksTab.constants';
 import { Messages } from './FailedChecksTab.messages';
 import { getStyles } from './FailedChecksTab.styles';
 import { loadShowSilencedValue, saveShowSilencedValue } from './FailedChecksTab.utils';
-import { FailedChecksTabProps } from './types';
 
-export const FailedChecksTab: FC<FailedChecksTabProps> = ({ hasNoAccess }) => {
+export const FailedChecksTab: FC = () => {
   const [fetchAlertsPending, setFetchAlertsPending] = useState(true);
   const [runChecksPending, setRunChecksPending] = useState(false);
   const [showSilenced, setShowSilenced] = useState(loadShowSilencedValue());
@@ -83,7 +82,6 @@ export const FailedChecksTab: FC<FailedChecksTabProps> = ({ hasNoAccess }) => {
             type="button"
             size="md"
             loading={runChecksPending}
-            disabled={hasNoAccess}
             onClick={handleRunChecksClick}
             className={styles.runChecksButton}
           >
@@ -97,7 +95,7 @@ export const FailedChecksTab: FC<FailedChecksTabProps> = ({ hasNoAccess }) => {
             <Spinner />
           </div>
         ) : (
-          <Table data={dataSource} columns={COLUMNS} hasNoAccess={hasNoAccess} />
+          <Table data={dataSource} columns={COLUMNS} />
         )}
       </AlertsReloadContext.Provider>
     </>

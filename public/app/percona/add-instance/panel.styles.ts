@@ -10,9 +10,6 @@ export const getStyles = stylesFactory(() => ({
     align-items: center;
     width: 100%;
   `,
-  contentPadding: css`
-    padding-top: 20px;
-  `,
   returnButton: css`
     position: absolute;
     left: 50px;
