@@ -35,7 +35,9 @@ describe('AlertsTable', () => {
   });
 
   it('should render correctly without data', async () => {
-    jest.spyOn(AlertsService, 'list').mockReturnValueOnce(Promise.resolve({ alerts: [] }));
+    jest
+      .spyOn(AlertsService, 'list')
+      .mockReturnValueOnce(Promise.resolve({ alerts: [], totals: { total_items: 0, total_pages: 1 } }));
     const wrapper = await getMount(<Alerts />);
 
     wrapper.update();
