@@ -37,6 +37,7 @@ import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsole
 import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunner';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { variablesInitTransaction } from '../state/transactionReducer';
 
 const mocks: Record<string, any> = {
   datasource: {
@@ -78,6 +79,22 @@ describe('query actions', () => {
 
   variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
+  describe('when updateQueryVariableOptions is dispatched but there is no ongoing transaction', () => {
+    it('then correct actions are dispatched', async () => {
+      const variable = createVariable({ includeAll: false });
+      const optionsMetrics = [createMetric('A'), createMetric('B')];
+
+      mockDatasourceMetrics(variable, optionsMetrics);
+
+      const tester = await reduxTester<RootReducerType>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
+
+      tester.thenNoActionsWhereDispatched();
+    });
+  });
+
   describe('when updateQueryVariableOptions is dispatched for variable without both tags and includeAll', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: false });
@@ -88,6 +105,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption('A');
@@ -110,6 +128,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
@@ -136,6 +155,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
@@ -164,6 +184,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable), 'search'), true);
 
@@ -191,6 +212,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
         .whenAsyncActionIsDispatched(updateOptions(toVariablePayload(variable)), true);
 
@@ -227,6 +249,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
@@ -256,6 +279,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
@@ -284,6 +308,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
@@ -306,6 +331,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
@@ -330,6 +356,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(
           changeQueryVariableDataSource(toVariablePayload(variable), { uid: 'datasource' }),
           true
@@ -365,6 +392,7 @@ describe('query actions', () => {
           .whenActionIsDispatched(
             addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable }))
           )
+          .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
           .whenAsyncActionIsDispatched(
             changeQueryVariableDataSource(toVariablePayload(variable), { uid: 'datasource' }),
             true
@@ -402,6 +430,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(
           changeQueryVariableDataSource(toVariablePayload(variable), { uid: 'datasource' }),
           true
@@ -436,6 +465,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(changeQueryVariableQuery(toVariablePayload(variable), query, definition), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
@@ -466,6 +496,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(changeQueryVariableQuery(toVariablePayload(variable), query, definition), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
@@ -495,6 +526,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(changeQueryVariableQuery(toVariablePayload(variable), query, definition), true);
 
       const option = createOption('A');
@@ -521,6 +553,7 @@ describe('query actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(changeQueryVariableQuery(toVariablePayload(variable), query, definition), true);
 
       const errorText = 'Query cannot contain a reference to itself. Variable: $' + variable.name;
