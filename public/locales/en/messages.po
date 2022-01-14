@@ -118,5 +118,13 @@ msgid "user-session.ip-column"
 msgstr "IP address"
 
 #: public/app/features/profile/UserSessions.tsx
+msgid "user-session.revoke"
+msgstr "Revoke user session"
+
+#: public/app/features/profile/UserSessions.tsx
 msgid "user-session.seen-at-column"
 msgstr "Last seen"
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-sessions.loading"
+msgstr "Loading sessions..."

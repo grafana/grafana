@@ -118,5 +118,13 @@ msgid "user-session.ip-column"
 msgstr ""
 
 #: public/app/features/profile/UserSessions.tsx
+msgid "user-session.revoke"
+msgstr ""
+
+#: public/app/features/profile/UserSessions.tsx
 msgid "user-session.seen-at-column"
+msgstr ""
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-sessions.loading"
 msgstr ""
