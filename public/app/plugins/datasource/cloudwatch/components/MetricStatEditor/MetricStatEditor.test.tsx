@@ -5,7 +5,6 @@ import '@testing-library/jest-dom';
 import { CloudWatchMetricsQuery } from '../../types';
 import userEvent from '@testing-library/user-event';
 import { MetricStatEditor } from '..';
-import { MetricName } from 'lezer-promql';
 
 const ds = setupMockedDataSource({
   variables: [],
