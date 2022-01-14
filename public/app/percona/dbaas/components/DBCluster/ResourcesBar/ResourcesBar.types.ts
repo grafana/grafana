@@ -1,11 +1,11 @@
 import { ReactNode } from 'react';
+import { ResourcesWithUnits } from '../DBCluster.types';
 
 export interface ResourcesBarProps {
-  total: number | undefined;
-  allocated: number | undefined;
-  expected: number | undefined;
+  total: ResourcesWithUnits | undefined;
+  allocated: ResourcesWithUnits | undefined;
+  expected: ResourcesWithUnits | undefined;
   resourceLabel: string;
-  units: string;
   icon?: ReactNode;
   dataQa?: string;
   className?: string;

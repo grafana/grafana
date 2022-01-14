@@ -1,8 +1,8 @@
 import React from 'react';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { Databases } from 'app/percona/shared/core';
-import { DBCluster, DBClusterStatus, DBClusterStatusMap } from './DBCluster.types';
-import { ADVANCED_SETTINGS_URL, SERVICE_MAP } from './DBCluster.constants';
+import { DBCluster, DBClusterStatus, DBClusterStatusMap, ResourcesUnits, ResourcesWithUnits } from './DBCluster.types';
+import { ADVANCED_SETTINGS_URL, SERVICE_MAP, THOUSAND } from './DBCluster.constants';
 import { DBClusterService } from './DBCluster.service';
 
 export const isClusterChanging = ({ status }: DBCluster) => {
@@ -33,4 +33,11 @@ export const newDBClusterService = (type: Databases): DBClusterService => {
   const service = SERVICE_MAP[type] as DBClusterService;
 
   return service || SERVICE_MAP[Databases.mysql];
+};
+
+export const formatResources = (bytes: number, decimals: number): ResourcesWithUnits => {
+  const i = Math.floor(Math.log(bytes) / Math.log(THOUSAND));
+  const units = Object.values(ResourcesUnits)[i];
+
+  return { value: parseFloat((bytes / Math.pow(THOUSAND, i)).toFixed(decimals)), units, original: bytes };
 };

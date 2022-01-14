@@ -7,6 +7,10 @@ import { EditDBClusterFields } from '../EditDBClusterModal.types';
 import { DBClusterResources } from './DBClusterAdvancedOptions.types';
 import { dbClustersStub } from '../../__mocks__/dbClustersStubs';
 
+jest.mock('../../DBCluster.service');
+jest.mock('../../PSMDB.service');
+jest.mock('../../XtraDB.service');
+
 describe('DBClusterAdvancedOptions::', () => {
   it('renders correctly', () => {
     const root = mount(

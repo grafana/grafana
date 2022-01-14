@@ -11,16 +11,15 @@ export const ResourcesBar: FC<ResourcesBarProps> = ({
   allocated,
   expected,
   resourceLabel,
-  units,
   icon,
   dataQa,
   className,
 }) => {
   const styles = useStyles(getStyles);
-  const requiredResources = allocated && expected ? allocated + expected : undefined;
-  const allocatedWidth = getResourcesWidth(allocated, total);
-  const expectedWidth = getResourcesWidth(requiredResources, total);
-  const isResourceInsufficient = requiredResources && total ? requiredResources > total : false;
+  const requiredResources = allocated && expected ? allocated.original + expected.original : undefined;
+  const allocatedWidth = getResourcesWidth(allocated?.original, total?.original);
+  const expectedWidth = getResourcesWidth(requiredResources, total?.original);
+  const isResourceInsufficient = requiredResources && total ? requiredResources > total.original : false;
 
   return (
     <div data-qa={dataQa} className={cx(styles.resourcesBarWrapper, className)}>
@@ -42,10 +41,10 @@ export const ResourcesBar: FC<ResourcesBarProps> = ({
         </div>
         {allocated && total && (
           <span data-qa="resources-bar-label" className={styles.resourcesBarLabel}>
-            {Messages.buildResourcesLabel(formatResources(allocated), allocatedWidth, formatResources(total), units)}
+            {Messages.buildResourcesLabel(formatResources(allocated), allocatedWidth, formatResources(total))}
           </span>
         )}
-        {allocated && !isResourceInsufficient && (
+        {allocated && (
           <div className={styles.captionWrapper}>
             <div className={cx(styles.captionSquare, styles.allocatedSquare)}></div>
             <span data-qa="resources-bar-allocated-caption" className={styles.captionLabel}>
@@ -53,19 +52,19 @@ export const ResourcesBar: FC<ResourcesBarProps> = ({
             </span>
           </div>
         )}
-        {expected && (
+        {expected && !isResourceInsufficient && (
           <div className={styles.captionWrapper}>
             <div className={cx(styles.captionSquare, styles.expectedSquare)}></div>
             <span data-qa="resources-bar-expected-caption" className={styles.captionLabel}>
-              {Messages.buildExpectedLabel(formatResources(expected), resourceLabel, units)}
+              {Messages.buildExpectedLabel(formatResources(expected), resourceLabel)}
             </span>
           </div>
         )}
-        {isResourceInsufficient && (
+        {expected && isResourceInsufficient && (
           <div className={styles.captionWrapper}>
             <Icon className={styles.insufficientIcon} name="exclamation-triangle" />
             <span data-qa="resources-bar-insufficient-resources" className={styles.captionLabel}>
-              {Messages.buildInsufficientLabel(resourceLabel)}
+              {Messages.buildInsufficientLabel(formatResources(expected), resourceLabel)}
             </span>
           </div>
         )}
