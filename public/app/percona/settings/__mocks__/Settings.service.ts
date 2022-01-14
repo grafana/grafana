@@ -1,32 +1,33 @@
 import * as settingsService from '../Settings.service';
+import { Settings } from '../Settings.types';
 
 export const SettingsService = jest.genMockFromModule<typeof settingsService>('../Settings.service').SettingsService;
+export const stub: Settings = {
+  updatesDisabled: true,
+  telemetryEnabled: true,
+  backupEnabled: false,
+  metricsResolutions: {
+    lr: '10s',
+    hr: '15s',
+    mr: '20s',
+  },
+  dataRetention: '',
+  sshKey: 'key',
+  awsPartitions: [],
+  alertManagerUrl: 'alert.foo.com',
+  alertManagerRules: '',
+  sttEnabled: true,
+  alertingEnabled: true,
+  alertingSettings: {
+    email: {
+      from: 'from',
+      smarthost: 'host',
+      hello: 'hello',
+    },
+    slack: {
+      url: 'slack.foo.com',
+    },
+  },
+};
 
-SettingsService.getSettings = () =>
-  Promise.resolve({
-    updatesDisabled: true,
-    telemetryEnabled: true,
-    backupEnabled: false,
-    metricsResolutions: {
-      lr: '10s',
-      hr: '15s',
-      mr: '20s',
-    },
-    dataRetention: '',
-    sshKey: 'key',
-    awsPartitions: [],
-    alertManagerUrl: 'alert.foo.com',
-    alertManagerRules: '',
-    sttEnabled: true,
-    alertingEnabled: true,
-    alertingSettings: {
-      email: {
-        from: 'from',
-        smarthost: 'host',
-        hello: 'hello',
-      },
-      slack: {
-        url: 'slack.foo.com',
-      },
-    },
-  });
+SettingsService.getSettings = () => Promise.resolve(stub);

@@ -1,4 +1,4 @@
-import { HOW_TO_DOC_URL } from 'app/percona/settings/Settings.constants';
+import { HOW_TO_DOC_URL } from 'app/percona/settings/Settings.messages';
 
 const COMMUNICATION_LINK = `${HOW_TO_DOC_URL}/configure.html#communication`;
 

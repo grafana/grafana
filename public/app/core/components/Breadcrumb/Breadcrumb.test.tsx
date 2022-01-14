@@ -30,7 +30,7 @@ describe('Breadcrumb', () => {
     let wrapper: ReactWrapper<any, Readonly<{}>, React.Component<{}, {}, any>>;
 
     await act(async () => {
-      wrapper = mount(<Breadcrumb pageModel={pageModel} />);
+      wrapper = mount(<Breadcrumb pageModel={pageModel} currentLocation="root/child-one" />);
     });
 
     expect(wrapper.find(dataQa('breadcrumb'))).toHaveLength(1);

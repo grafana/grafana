@@ -59,7 +59,7 @@ describe('BreadcrumbSections', () => {
     let wrapper: ReactWrapper<any, Readonly<{}>, React.Component<{}, {}, any>>;
 
     await act(async () => {
-      wrapper = mount(<BreadcrumbSections pageModel={pageModel} />);
+      wrapper = mount(<BreadcrumbSections pageModel={pageModel} currentLocation="root/child-one" />);
     });
 
     expect(wrapper.find(dataQa('breadcrumb-section'))).toHaveLength(2);
@@ -74,7 +74,7 @@ describe('BreadcrumbSections', () => {
     let wrapper: ReactWrapper<any, Readonly<{}>, React.Component<{}, {}, any>>;
 
     await act(async () => {
-      wrapper = mount(<BreadcrumbSections pageModel={pageModel} />);
+      wrapper = mount(<BreadcrumbSections pageModel={pageModel} currentLocation="root/child-two/leaf-one" />);
     });
 
     expect(wrapper.find(dataQa('breadcrumb-section'))).toHaveLength(3);
@@ -89,7 +89,7 @@ describe('BreadcrumbSections', () => {
     let wrapper: ReactWrapper<any, Readonly<{}>, React.Component<{}, {}, any>>;
 
     await act(async () => {
-      wrapper = mount(<BreadcrumbSections pageModel={pageModel} />);
+      wrapper = mount(<BreadcrumbSections pageModel={pageModel} currentLocation="root/wrong-one/leaf-two" />);
     });
 
     expect(wrapper.find(dataQa('breadcrumb-section'))).toHaveLength(1);
