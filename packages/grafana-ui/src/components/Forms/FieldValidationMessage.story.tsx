@@ -1,9 +1,9 @@
 import React from 'react';
 import { Meta, Story } from '@storybook/react';
-import { FieldValidationMessage, FieldValidationMessageProps } from './FieldValidationMessage';
+import { FieldValidationMessage } from './FieldValidationMessage';
 import mdx from './FieldValidationMessage.mdx';
 
-export default {
+const story = {
   title: 'Forms/FieldValidationMessage',
   component: FieldValidationMessage,
   parameters: {
@@ -21,8 +21,12 @@ export default {
   argTypes: {
     children: { name: 'message' },
   },
-} as Meta;
+};
 
-export const Basic: Story<FieldValidationMessageProps> = (args) => {
+export default story as Meta;
+
+type Args = typeof story['args'];
+
+export const Basic: Story<Args> = (args) => {
   return <FieldValidationMessage horizontal={args.horizontal}>{args.children}</FieldValidationMessage>;
 };

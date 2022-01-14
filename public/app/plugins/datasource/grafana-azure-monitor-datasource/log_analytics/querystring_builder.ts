@@ -5,7 +5,7 @@ export default class LogAnalyticsQuerystringBuilder {
 
   generate() {
     let queryString = this.rawQueryString;
-    const macroRegexp = /\$__([_a-zA-Z0-9]+)\(([^\)]*)\)/gi;
+    const macroRegexp = /\$__([_a-zA-Z0-9]+)\(([^()]*)\)/gi;
     queryString = queryString.replace(macroRegexp, (match, p1, p2) => {
       if (p1 === 'contains') {
         return this.getMultiContains(p2);

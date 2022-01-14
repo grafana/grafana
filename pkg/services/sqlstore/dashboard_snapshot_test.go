@@ -42,7 +42,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 			OrgId:              1,
 		}
 
-		err = sqlstore.CreateDashboardSnapshot(&cmd)
+		err = sqlstore.CreateDashboardSnapshot(context.Background(), &cmd)
 		require.NoError(t, err)
 
 		t.Run("Should be able to get snapshot by key", func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 				UserId: 0,
 				OrgId:  1,
 			}
-			err := sqlstore.CreateDashboardSnapshot(&cmd)
+			err := sqlstore.CreateDashboardSnapshot(context.Background(), &cmd)
 			require.NoError(t, err)
 
 			t.Run("Should not return any snapshots", func(t *testing.T) {
@@ -154,7 +154,7 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 		createTestSnapshot(t, sqlstore, "key2", -1200)
 		createTestSnapshot(t, sqlstore, "key3", -1200)
 
-		err := sqlstore.DeleteExpiredSnapshots(&models.DeleteExpiredSnapshotsCommand{})
+		err := sqlstore.DeleteExpiredSnapshots(context.Background(), &models.DeleteExpiredSnapshotsCommand{})
 		require.NoError(t, err)
 
 		query := models.GetDashboardSnapshotsQuery{
@@ -167,7 +167,7 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 		assert.Len(t, query.Result, 1)
 		assert.Equal(t, nonExpiredSnapshot.Key, query.Result[0].Key)
 
-		err = sqlstore.DeleteExpiredSnapshots(&models.DeleteExpiredSnapshotsCommand{})
+		err = sqlstore.DeleteExpiredSnapshots(context.Background(), &models.DeleteExpiredSnapshotsCommand{})
 		require.NoError(t, err)
 
 		query = models.GetDashboardSnapshotsQuery{
@@ -193,7 +193,7 @@ func createTestSnapshot(t *testing.T, sqlstore *SQLStore, key string, expires in
 		OrgId:   1,
 		Expires: expires,
 	}
-	err := sqlstore.CreateDashboardSnapshot(&cmd)
+	err := sqlstore.CreateDashboardSnapshot(context.Background(), &cmd)
 	require.NoError(t, err)
 
 	// Set expiry date manually - to be able to create expired snapshots

@@ -11,7 +11,7 @@ import (
 )
 
 func TestSearch_SortedResults(t *testing.T) {
-	bus.AddHandlerCtx("test", func(_ context.Context, query *FindPersistedDashboardsQuery) error {
+	bus.AddHandler("test", func(_ context.Context, query *FindPersistedDashboardsQuery) error {
 		query.Result = HitList{
 			&Hit{ID: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
 			&Hit{ID: 10, Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},
@@ -22,12 +22,12 @@ func TestSearch_SortedResults(t *testing.T) {
 		return nil
 	})
 
-	bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetUserStarsQuery) error {
+	bus.AddHandler("test", func(_ context.Context, query *models.GetUserStarsQuery) error {
 		query.Result = map[int64]bool{10: true, 12: true}
 		return nil
 	})
 
-	bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetSignedInUserQuery) error {
+	bus.AddHandler("test", func(_ context.Context, query *models.GetSignedInUserQuery) error {
 		query.Result = &models.SignedInUser{IsGrafanaAdmin: true}
 		return nil
 	})

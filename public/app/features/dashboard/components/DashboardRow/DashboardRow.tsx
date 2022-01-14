@@ -8,6 +8,7 @@ import { RowOptionsButton } from '../RowOptions/RowOptionsButton';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { ShowConfirmModalEvent } from '../../../../types/events';
 import { Unsubscribable } from 'rxjs';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface DashboardRowProps {
   panel: PanelModel;
@@ -84,7 +85,11 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
 
     return (
       <div className={classes}>
-        <a className="dashboard-row__title pointer" onClick={this.onToggle}>
+        <a
+          className="dashboard-row__title pointer"
+          data-testid={selectors.components.DashboardRow.title(title)}
+          onClick={this.onToggle}
+        >
           <Icon name={this.state.collapsed ? 'angle-right' : 'angle-down'} />
           {title}
           <span className="dashboard-row__panel_count">

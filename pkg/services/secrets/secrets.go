@@ -2,6 +2,8 @@ package secrets
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"xorm.io/xorm"
 )
@@ -41,4 +43,17 @@ type Store interface {
 type Provider interface {
 	Encrypt(ctx context.Context, blob []byte) ([]byte, error)
 	Decrypt(ctx context.Context, blob []byte) ([]byte, error)
+}
+
+type ProviderID string
+
+func (id ProviderID) Kind() (string, error) {
+	idStr := string(id)
+
+	parts := strings.SplitN(idStr, ".", 2)
+	if len(parts) != 2 {
+		return "", fmt.Errorf("malformatted provider identifier %s: expected format <provider>.<keyName>", idStr)
+	}
+
+	return parts[0], nil
 }

@@ -38,6 +38,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs := &HTTPServer{Cfg: settings}
 
 	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore.Cfg = settings
 	hs.SQLStore = sqlStore
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", func(sc *scenarioContext) {
@@ -162,7 +163,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 			Updated:     time.Now(),
 		},
 	}
-	err = sc.db.UpdateDashboardACL(folder.Id, acls)
+	err = sc.db.UpdateDashboardACL(context.Background(), folder.Id, acls)
 	require.NoError(t, err)
 
 	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)
@@ -295,6 +296,63 @@ func setupOrgUsersDBForAccessControlTests(t *testing.T, db sqlstore.SQLStore) {
 	require.NoError(t, err)
 	err = db.AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: testEditorOrg1.Login, Role: testEditorOrg1.OrgRole, OrgId: testEditorOrg1.OrgId, UserId: testEditorOrg1.UserId})
 	require.NoError(t, err)
+}
+
+func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
+	url := "/api/orgs/%v/users?accesscontrol=true"
+	type testCase struct {
+		name                string
+		enableAccessControl bool
+		expectedCode        int
+		expectedMetadata    map[string]bool
+		user                models.SignedInUser
+		targetOrg           int64
+	}
+
+	tests := []testCase{
+		{
+			name:                "access control metadata not requested",
+			enableAccessControl: false,
+			expectedCode:        http.StatusOK,
+			expectedMetadata:    nil,
+			user:                testServerAdminViewer,
+			targetOrg:           testServerAdminViewer.OrgId,
+		},
+		{
+			name:                "access control metadata requested",
+			enableAccessControl: true,
+			expectedCode:        http.StatusOK,
+			expectedMetadata: map[string]bool{
+				"org.users.role:update": true,
+				"org.users:add":         true,
+				"org.users:read":        true,
+				"org.users:remove":      true},
+			user:      testServerAdminViewer,
+			targetOrg: testServerAdminViewer.OrgId,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			sc := setupHTTPServer(t, false, tc.enableAccessControl)
+			setupOrgUsersDBForAccessControlTests(t, *sc.db)
+			setInitCtxSignedInUser(sc.initCtx, tc.user)
+
+			// Perform test
+			response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, tc.targetOrg), nil, t)
+			require.Equal(t, tc.expectedCode, response.Code)
+
+			var userList []*models.OrgUserDTO
+			err := json.NewDecoder(response.Body).Decode(&userList)
+			require.NoError(t, err)
+
+			if tc.expectedMetadata != nil {
+				assert.Equal(t, tc.expectedMetadata, userList[0].AccessControl)
+			} else {
+				assert.Nil(t, userList[0].AccessControl)
+			}
+		})
+	}
 }
 
 func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
@@ -499,7 +557,10 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				require.NoError(t, err)
 				assert.EqualValuesf(t, tc.expectedMessage, message, "server did not answer expected message")
 
-				getUsersQuery := models.GetOrgUsersQuery{OrgId: tc.targetOrg}
+				getUsersQuery := models.GetOrgUsersQuery{OrgId: tc.targetOrg, User: &models.SignedInUser{
+					OrgId:       tc.targetOrg,
+					Permissions: map[int64]map[string][]string{tc.targetOrg: {"org.users:read": {"users:*"}}},
+				}}
 				err = sc.db.GetOrgUsers(context.Background(), &getUsersQuery)
 				require.NoError(t, err)
 				assert.Len(t, getUsersQuery.Result, tc.expectedUserCount)
@@ -629,7 +690,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 					UserId: tc.targetUserId,
 					OrgId:  tc.targetOrg,
 				}
-				err = sqlstore.GetSignedInUser(context.TODO(), &getUserQuery)
+				err = sqlstore.GetSignedInUser(context.Background(), &getUserQuery)
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedUserRole, getUserQuery.Result.OrgRole)
 			}
@@ -742,7 +803,13 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedMessage, message)
 
-				getUsersQuery := models.GetOrgUsersQuery{OrgId: tc.targetOrg}
+				getUsersQuery := models.GetOrgUsersQuery{
+					OrgId: tc.targetOrg,
+					User: &models.SignedInUser{
+						OrgId:       tc.targetOrg,
+						Permissions: map[int64]map[string][]string{tc.targetOrg: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+					},
+				}
 				err = sc.db.GetOrgUsers(context.Background(), &getUsersQuery)
 				require.NoError(t, err)
 				assert.Len(t, getUsersQuery.Result, tc.expectedUserCount)
