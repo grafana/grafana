@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ComponentType, ReactNode } from 'react';
 import { Item } from '@react-stately/collections';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, locationUtil, NavMenuItemType, NavModelItem } from '@grafana/data';
@@ -18,6 +18,7 @@ export interface Props {
   reverseMenuDirection?: boolean;
   showMenu?: boolean;
   link: NavModelItem;
+  ExtraContent?: ComponentType;
 }
 
 const NavBarItem = ({
@@ -27,6 +28,7 @@ const NavBarItem = ({
   reverseMenuDirection = false,
   showMenu = true,
   link,
+  ExtraContent,
 }: Props) => {
   const theme = useTheme2();
   const menuItems = link.children ?? [];
@@ -57,7 +59,7 @@ const NavBarItem = ({
     }
   };
 
-  return showMenu && !link.highlighted ? (
+  return showMenu ? (
     <li className={cx(styles.container, className)}>
       <NavBarItemMenuTrigger item={section} isActive={isActive} label={link.text}>
         <NavBarItemMenu
@@ -78,6 +80,7 @@ const NavBarItem = ({
                     url={item.url}
                     onClick={item.onClick}
                     styleOverrides={styles.header}
+                    ExtraContent={ExtraContent}
                   />
                 </Item>
               );
@@ -93,6 +96,7 @@ const NavBarItem = ({
                   text={item.text}
                   url={item.url}
                   styleOverrides={styles.item}
+                  ExtraContent={ExtraContent}
                 />
               </Item>
             );
@@ -108,7 +112,7 @@ const NavBarItem = ({
       url={link.url}
       onClick={link.onClick}
       target={link.target}
-      highlighted={link.highlighted}
+      ExtraContent={ExtraContent}
     >
       {children}
     </NavBarItemWithoutMenu>

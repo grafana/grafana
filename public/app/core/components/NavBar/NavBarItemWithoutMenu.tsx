@@ -1,7 +1,7 @@
-import { GrafanaTheme2 } from '../../../../../packages/grafana-data';
+import React, { ReactNode, ComponentType } from 'react';
 import { css, cx } from '@emotion/css';
-import React, { ReactNode } from 'react';
-import { Link, useStyles2, useTheme2 } from '../../../../../packages/grafana-ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Link, useTheme2 } from '@grafana/ui';
 
 export interface NavBarItemWithoutMenuProps {
   label: string;
@@ -11,7 +11,7 @@ export interface NavBarItemWithoutMenuProps {
   target?: string;
   isActive?: boolean;
   onClick?: () => void;
-  highlighted?: boolean;
+  ExtraContent?: ComponentType;
 }
 
 export function NavBarItemWithoutMenu({
@@ -22,7 +22,7 @@ export function NavBarItemWithoutMenu({
   target,
   isActive = false,
   onClick,
-  highlighted,
+  ExtraContent,
 }: NavBarItemWithoutMenuProps) {
   const theme = useTheme2();
   const styles = getNavBarItemWithoutMenuStyles(theme, isActive);
@@ -32,30 +32,27 @@ export function NavBarItemWithoutMenu({
       {!url && (
         <button className={styles.element} onClick={onClick} aria-label={label}>
           <span className={styles.icon}>{children}</span>
+          {ExtraContent && <ExtraContent />}
         </button>
       )}
       {url && (
         <>
           {!target && url.startsWith('/') ? (
             <Link
-              className={cx(styles.element, highlighted && styles.highlighted)}
+              className={styles.element}
               href={url}
               target={target}
               aria-label={label}
               onClick={onClick}
               aria-haspopup="true"
             >
-              <IconWithHighlight highlighted={highlighted}>{children}</IconWithHighlight>
+              <span className={styles.icon}>{children}</span>
+              {ExtraContent && <ExtraContent />}
             </Link>
           ) : (
-            <a
-              href={url}
-              target={target}
-              className={cx(styles.element, highlighted && styles.highlighted)}
-              onClick={onClick}
-              aria-label={label}
-            >
+            <a href={url} target={target} className={styles.element} onClick={onClick} aria-label={label}>
               <span className={styles.icon}>{children}</span>
+              {ExtraContent && <ExtraContent />}
             </a>
           )}
         </>
@@ -113,10 +110,6 @@ export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: 
       }
     `,
 
-    highlighted: css`
-      color: ${theme.colors.text.disabled} !important;
-    `,
-
     icon: css`
       height: 100%;
       width: 100%;
@@ -129,96 +122,3 @@ export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: 
     `,
   };
 }
-
-export interface IconWithHighlightProps {
-  children: ReactNode;
-  highlighted?: boolean;
-}
-
-export const IconWithHighlight = ({ children, highlighted }: IconWithHighlightProps): JSX.Element => {
-  const styles = useStyles2(getIconStyles);
-  return (
-    <span className={styles.icon}>
-      {children}
-      {highlighted && (
-        <>
-          <span className={styles.badge}>
-            PRO <i />
-          </span>
-          <span className={styles.highlight} />
-        </>
-      )}
-    </span>
-  );
-};
-
-const getIconStyles = (theme: GrafanaTheme2) => {
-  return {
-    icon: css`
-      height: 100%;
-      width: 100%;
-      display: block;
-      position: relative;
-
-      img {
-        border-radius: 50%;
-        height: ${theme.spacing(3)};
-        width: ${theme.spacing(3)};
-      }
-
-      :hover > span {
-        visibility: visible;
-        opacity: 1;
-      }
-    `,
-    badge: css`
-      top: 50%;
-      left: 100%;
-      transform: translate(0, -50%);
-      padding: 4px 8px;
-      color: ${theme.colors.text.maxContrast};
-      background-color: ${theme.colors.success.main};
-      border-radius: 2px;
-      position: absolute;
-      visibility: hidden;
-      opacity: 0;
-      transition: opacity 0.4s;
-      line-height: 1;
-
-      i {
-        position: absolute;
-        top: 50%;
-        right: 100%;
-        margin-top: -12px;
-        width: 7px;
-        height: 24px;
-        overflow: hidden;
-      }
-
-      i::after {
-        content: '';
-        position: absolute;
-        width: 12px;
-        height: 12px;
-        left: 0;
-        top: 50%;
-        transform: translate(50%, -50%) rotate(-45deg);
-        background-color: ${theme.colors.success.main};
-      }
-    `,
-    highlight: css`
-      background-color: ${theme.colors.success.main};
-      border-radius: 50%;
-      width: 6px;
-      height: 6px;
-      display: inline-block;
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-
-      :hover {
-        background-color: ${theme.colors.success.shade};
-      }
-    `,
-  };
-};
