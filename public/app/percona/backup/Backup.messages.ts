@@ -79,6 +79,7 @@ export const Messages = {
     deleteModalTitle: 'Delete scheduled backup',
     copyOf: 'Copy of',
     addSuccess: 'Backup successfully scheduled',
+    unlimited: 'Unlimited',
     getEditSuccess: (name: string) => `Scheduled backup "${name}" successfully updated`,
     getDeleteSuccess: (name: string) => `Scheduled backup "${name}" successfully deleted.`,
     getDeleteMessage: (name: string) => `Are you sure you want to delete the scheduled backup "${name}"?`,

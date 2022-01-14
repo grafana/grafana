@@ -34,6 +34,18 @@ export const ScheduledBackups: FC = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [generateToken] = useCancelToken();
   const styles = useStyles(getStyles);
+
+  const retentionValue = useCallback((n: number) => {
+    if (n < 0) {
+      return '';
+    }
+
+    if (n === 0) {
+      return Messages.scheduledBackups.unlimited;
+    }
+
+    return `${n} backup${n > 1 ? 's' : ''}`;
+  }, []);
   const columns = useMemo(
     (): Array<Column<ScheduledBackup>> => [
       {
@@ -51,6 +63,11 @@ export const ScheduledBackups: FC = () => {
         Header: Messages.scheduledBackups.table.columns.frequency,
         accessor: 'cronExpression',
         Cell: ({ value }) => cronstrue.toString(value),
+      },
+      {
+        Header: Messages.scheduledBackups.table.columns.retention,
+        accessor: 'retention',
+        Cell: ({ value }) => retentionValue(value),
       },
       {
         Header: Messages.scheduledBackups.table.columns.type,
@@ -81,7 +98,7 @@ export const ScheduledBackups: FC = () => {
         ),
       },
     ],
-    [actionPending, handleCopy, handleToggle]
+    [actionPending, handleCopy, handleToggle, retentionValue]
   );
 
   const getData = useCallback(async () => {
@@ -128,6 +145,7 @@ export const ScheduledBackups: FC = () => {
       backupName,
       description,
       active,
+      retention,
     } = backup;
     try {
       const cronExpression = getCronStringFromValues(
@@ -140,7 +158,7 @@ export const ScheduledBackups: FC = () => {
       );
 
       if (id) {
-        await ScheduledBackupsService.change(id, active!, cronExpression, backupName, description);
+        await ScheduledBackupsService.change(id, active!, cronExpression, backupName, description, retention!);
         appEvents.emit(AppEvents.alertSuccess, [Messages.scheduledBackups.getEditSuccess(backupName)]);
       } else {
         await ScheduledBackupsService.schedule(
@@ -149,6 +167,7 @@ export const ScheduledBackups: FC = () => {
           cronExpression,
           backupName,
           description,
+          retention!,
           active!
         );
         appEvents.emit(AppEvents.alertSuccess, [Messages.scheduledBackups.addSuccess]);
@@ -163,11 +182,19 @@ export const ScheduledBackups: FC = () => {
 
   const handleCopy = useCallback(
     async (backup: ScheduledBackup) => {
-      const { serviceId, locationId, cronExpression, name, description } = backup;
+      const { serviceId, locationId, cronExpression, name, description, retention } = backup;
       const newName = `${Messages.scheduledBackups.copyOf} ${name}`;
       setActionPending(true);
       try {
-        await ScheduledBackupsService.schedule(serviceId, locationId, cronExpression, newName, description, false);
+        await ScheduledBackupsService.schedule(
+          serviceId,
+          locationId,
+          cronExpression,
+          newName,
+          description,
+          retention,
+          false
+        );
         getData();
       } catch (e) {
         logger.error(e);
