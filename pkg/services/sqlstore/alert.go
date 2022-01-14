@@ -15,7 +15,6 @@ import (
 var timeNow = time.Now
 
 func (ss *SQLStore) addAlertQueryAndCommandHandlers() {
-	// bus.AddHandler("sql", ss.SaveAlerts)
 	bus.AddHandler("sql", ss.HandleAlertsQuery)
 	bus.AddHandler("sql", ss.GetAlertById)
 	bus.AddHandler("sql", ss.GetAllAlertQueryHandler)
@@ -191,25 +190,6 @@ func (ss *SQLStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*mode
 		return nil
 	})
 }
-
-// func SaveAlerts(ctx context.Context, cmd *models.SaveAlertsCommand) error {
-// 	return inTransaction(func(sess *DBSession) error {
-// 		existingAlerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		if err := updateAlerts(existingAlerts, cmd.Alerts, sess); err != nil {
-// 			return err
-// 		}
-
-// 		if err := deleteMissingAlerts(existingAlerts, cmd.Alerts, sess); err != nil {
-// 			return err
-// 		}
-
-// 		return nil
-// 	})
-// }
 
 func updateAlerts(existingAlerts []*models.Alert, alerts []*models.Alert, sess *DBSession) error {
 	for _, alert := range alerts {
