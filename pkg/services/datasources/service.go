@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -49,7 +51,7 @@ type cachedDecryptedJSON struct {
 	json    map[string]string
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service) *Service {
+func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, ac accesscontrol.AccessControl) *Service {
 	s := &Service{
 		Bus:            bus,
 		SQLStore:       store,
@@ -70,7 +72,26 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 	s.Bus.AddHandler(s.UpdateDataSource)
 	s.Bus.AddHandler(s.GetDefaultDataSource)
 
+	ac.RegisterAttributeScopeResolver(NewDatasourceNameScopeResolver(store))
+
 	return s
+}
+
+// NewDatasourceNameScopeResolver provides an AttributeScopeResolver able to
+// translate a scope prefixed with "datasources:name:" into an id based scope.
+func NewDatasourceNameScopeResolver(db *sqlstore.SQLStore) (string, accesscontrol.AttributeScopeResolveFunc) {
+	dsNameResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+		dsName := strings.Split(initialScope, ":")[2]
+
+		query := models.GetDataSourceQuery{Name: dsName, OrgId: orgID}
+		if err := db.GetDataSource(ctx, &query); err != nil {
+			return "", err
+		}
+
+		return accesscontrol.Scope("datasources", "id", fmt.Sprintf("%v", query.Result.Id)), nil
+	}
+
+	return "datasources:name:", dsNameResolver
 }
 
 func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
