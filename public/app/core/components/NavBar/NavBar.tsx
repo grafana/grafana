@@ -68,7 +68,7 @@ export const NavBar: FC = React.memo(() => {
           id: 'dbaas',
           text: 'DBaaS',
           icon: 'database',
-          url: '/graph/d/pmm-dbaas/pmm-dbaas',
+          url: `${config.appSubUrl}/dbaas`,
         });
       }
 

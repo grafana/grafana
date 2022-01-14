@@ -390,6 +390,10 @@ export function getAppRoutes(): RouteDescriptor[] {
           )
       ),
     },
+    {
+      path: '/dbaas',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "DbaasPage" */ 'app/percona/dbaas/DBaaS')),
+    },
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
