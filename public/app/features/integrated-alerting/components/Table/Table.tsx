@@ -4,6 +4,7 @@ import { css } from 'emotion';
 import { Spinner, useStyles } from '@grafana/ui';
 import { getStyles } from './Table.styles';
 import { TableProps } from './Table.types';
+import { EmptyBlock } from '../EmptyBlock';
 
 export const Table: FC<TableProps> = ({ pendingRequest, data, columns, emptyMessage }) => {
   const style = useStyles(getStyles);
@@ -14,21 +15,21 @@ export const Table: FC<TableProps> = ({ pendingRequest, data, columns, emptyMess
     <div className={style.tableWrap} data-qa="table-outer-wrapper">
       <div className={style.table} data-qa="table-inner-wrapper">
         {pendingRequest ? (
-          <div data-qa="table-loading" className={style.empty}>
+          <EmptyBlock dataQa="table-loading">
             <Spinner />
-          </div>
+          </EmptyBlock>
         ) : null}
         {!rows.length && !pendingRequest ? (
-          <div data-qa="table-no-data" className={style.empty}>
-            {<h1>{emptyMessage}</h1>}
-          </div>
+          <EmptyBlock dataQa="table-no-data">{<h1>{emptyMessage}</h1>}</EmptyBlock>
         ) : null}
         {rows.length && !pendingRequest ? (
           <table {...getTableProps()} data-qa="table">
             <thead data-qa="table-thead">
-              {headerGroups.map(headerGroup => (
+              {headerGroups.map((headerGroup) => (
+                /* eslint-disable-next-line react/jsx-key */
                 <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map(column => (
+                  {headerGroup.headers.map((column) => (
+                    /* eslint-disable-next-line react/jsx-key */
                     <th
                       className={css`
                         cursor: pointer;
@@ -43,11 +44,13 @@ export const Table: FC<TableProps> = ({ pendingRequest, data, columns, emptyMess
               ))}
             </thead>
             <tbody {...getTableBodyProps()} data-qa="table-tbody">
-              {rows.map(row => {
+              {rows.map((row) => {
                 prepareRow(row);
                 return (
+                  /* eslint-disable-next-line react/jsx-key */
                   <tr {...row.getRowProps()}>
-                    {row.cells.map(cell => {
+                    {row.cells.map((cell) => {
+                      /* eslint-disable-next-line react/jsx-key */
                       return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>;
                     })}
                   </tr>

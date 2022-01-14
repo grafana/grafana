@@ -73,13 +73,5 @@ export const getStyles = (theme: GrafanaTheme) => {
         padding: 0.5rem;
       }
     `,
-    empty: css`
-      display: flex;
-      width: 100%;
-      height: 160px;
-      justify-content: center;
-      align-items: center;
-      border: 1px solid ${backgroundColorBody};
-    `,
   };
 };
