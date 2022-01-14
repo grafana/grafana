@@ -148,7 +148,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
         {() => {
           return (
             <FieldSet label={<Trans id="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
-              <Field label={<Trans id="shared-preferences.fields.theme-label">UI Theme</Trans>}>
+              <Field label={t({ id: 'shared-preferences.fields.theme-label', message: 'UI Theme' })}>
                 <RadioButtonGroup
                   options={themes}
                   value={themes.find((item) => item.value === theme)?.value}
@@ -186,7 +186,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               </Field>
 
               <Field
-                label={<Trans id="shared-dashboard.fields.timezone-label">Timezone</Trans>}
+                label={t({ id: 'shared-dashboard.fields.timezone-label', message: 'Timezone' })}
                 data-testid={selectors.components.TimeZonePicker.containerV2}
               >
                 <TimeZonePicker
@@ -198,7 +198,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               </Field>
 
               <Field
-                label={<Trans id="shared-preferences.fields.week-start-label">Week start</Trans>}
+                label={t({ id: 'shared-preferences.fields.week-start-label', message: 'Week start' })}
                 data-testid={selectors.components.WeekStartPicker.containerV2}
               >
                 <WeekStartPicker
