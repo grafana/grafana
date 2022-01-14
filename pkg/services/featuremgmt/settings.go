@@ -7,10 +7,13 @@ import (
 )
 
 type configBody struct {
-	Vars  map[string]interface{} `toml:"vars"`
-	Flags []FeatureFlag          `toml:"flags"`
+	// define variables that can be used in expressions
+	Vars map[string]interface{} `toml:"vars"`
 
-	// Runtime loaded properties
+	// Define and override feature flag properties
+	Flags []FeatureFlag `toml:"flags"`
+
+	// keep track of where the fie was loaded from
 	filename string
 }
 

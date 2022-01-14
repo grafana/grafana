@@ -69,7 +69,7 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 	return mgmt, nil
 }
 
-// interface without control
+// ProvideToggles allows read-only access to the feature state
 func ProvideToggles(mgmt *FeatureManager) *FeatureToggles {
 	return &FeatureToggles{
 		manager: mgmt,
