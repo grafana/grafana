@@ -26,7 +26,6 @@ import {
 import { debounce } from 'lodash';
 import { contextSrv } from 'app/core/core';
 import { addAccessControlQueryParam } from 'app/core/utils/accessControl';
-import { lastValueFrom } from 'rxjs';
 // UserAdminPage
 
 export function loadAdminUserPage(userId: number): ThunkResult<void> {

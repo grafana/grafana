@@ -16,7 +16,7 @@ interface State {
   showLogoutModal: boolean;
 }
 
-class UserSessions extends PureComponent<Props, State> {
+class BaseUserSessions extends PureComponent<Props, State> {
   forceAllLogoutButton = React.createRef<HTMLButtonElement>();
   state: State = {
     showLogoutModal: false,
@@ -115,4 +115,4 @@ class UserSessions extends PureComponent<Props, State> {
   }
 }
 
-export default withI18n()(UserSessions);
+export const UserSessions = withI18n()(BaseUserSessions);

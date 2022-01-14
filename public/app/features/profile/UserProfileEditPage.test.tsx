@@ -56,7 +56,7 @@ const defaultProps: Props = {
       browser: 'Chrome',
       browserVersion: '90',
       clientIp: 'localhost',
-      createdAt: new Date('2021-01-01 04:00:00'),
+      createdAt: '2021-01-01 04:00:00',
       device: 'Macbook Pro',
       isActive: true,
       os: 'Mac OS X',
