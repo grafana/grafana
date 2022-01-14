@@ -1,6 +1,6 @@
-import { isClusterChanging, getClusterStatus } from './DBCluster.utils';
+import { isClusterChanging, getClusterStatus, formatResources } from './DBCluster.utils';
 import { dbClustersStub } from './__mocks__/dbClustersStubs';
-import { DBClusterStatus } from './DBCluster.types';
+import { DBClusterStatus, ResourcesUnits } from './DBCluster.types';
 
 const DBCLUSTER_STATUS_MAP = {
   [DBClusterStatus.invalid]: 'XTRA_DB_CLUSTER_STATE_INVALID',
@@ -71,5 +71,25 @@ describe('DBCluster.utils::', () => {
     const result = getClusterStatus('XTRA_DB_CLUSTER_STATE_UNKNOWN', DBCLUSTER_STATUS_MAP);
 
     expect(result).toBe(DBClusterStatus.unknown);
+  });
+  it('formats resources correctly', () => {
+    expect(formatResources(1000, 2)).toEqual({ value: 1, units: ResourcesUnits.KB, original: 1000 });
+    expect(formatResources(1010, 2)).toEqual({ value: 1.01, units: ResourcesUnits.KB, original: 1010 });
+    expect(formatResources(1010, 1)).toEqual({ value: 1, units: ResourcesUnits.KB, original: 1010 });
+    expect(formatResources(1010, 1)).toEqual({ value: 1, units: ResourcesUnits.KB, original: 1010 });
+    expect(formatResources(1015, 3)).toEqual({ value: 1.015, units: ResourcesUnits.KB, original: 1015 });
+    expect(formatResources(2597, 3)).toEqual({ value: 2.597, units: ResourcesUnits.KB, original: 2597 });
+    expect(formatResources(1500000000, 2)).toEqual({ value: 1.5, units: ResourcesUnits.GB, original: 1500000000 });
+    expect(formatResources(1570000000, 3)).toEqual({ value: 1.57, units: ResourcesUnits.GB, original: 1570000000 });
+    expect(formatResources(6200000000000, 2)).toEqual({
+      value: 6.2,
+      units: ResourcesUnits.TB,
+      original: 6200000000000,
+    });
+    expect(formatResources(6244440000000, 5)).toEqual({
+      value: 6.24444,
+      units: ResourcesUnits.TB,
+      original: 6244440000000,
+    });
   });
 });

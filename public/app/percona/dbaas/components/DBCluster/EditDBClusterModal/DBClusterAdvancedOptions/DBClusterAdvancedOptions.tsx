@@ -20,10 +20,8 @@ import { DBClusterAllocatedResources, DBClusterExpectedResources } from '../../D
 import { DBClusterService } from '../../DBCluster.service';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
 import { ResourcesBar } from '../../ResourcesBar/ResourcesBar';
-import { CPU, Memory } from '../../../DBaaSIcons';
+import { CPU, Disk, Memory } from '../../../DBaaSIcons';
 import {
-  CPU_UNITS,
-  MEMORY_UNITS,
   RECHECK_INTERVAL,
   EXPECTED_DELAY,
 } from '../../AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
@@ -53,6 +51,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
     [allocatedResources, styles.resourcesBar, styles.resourcesBarEmpty]
   );
   const resourcesInputProps = { step: '0.1' };
+  let allocatedTimer: NodeJS.Timeout;
 
   const topologies = useMemo(
     () =>
@@ -62,23 +61,26 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
     [selectedCluster]
   );
 
-  const getResources = useCallback(
-    async (triggerLoading = true) => {
-      try {
-        if (triggerLoading) {
-          setLoadingAllocatedResources(true);
-        }
-        setAllocatedResources(await DBClusterService.getAllocatedResources(selectedCluster.kubernetesClusterName));
-      } catch (e) {
-        logger.error(e);
-      } finally {
-        if (triggerLoading) {
-          setLoadingAllocatedResources(false);
-        }
+  const getAllocatedResources = useCallback(async (triggerLoading = true) => {
+    try {
+      if (allocatedTimer) {
+        clearTimeout(allocatedTimer);
       }
-    },
-    [selectedCluster.kubernetesClusterName]
-  );
+
+      if (triggerLoading) {
+        setLoadingAllocatedResources(true);
+      }
+      setAllocatedResources(await DBClusterService.getAllocatedResources(selectedCluster.kubernetesClusterName));
+    } catch (e) {
+      logger.error(e);
+    } finally {
+      if (triggerLoading) {
+        setLoadingAllocatedResources(false);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      allocatedTimer = setTimeout(() => getAllocatedResources(false), RECHECK_INTERVAL);
+    }
+  }, []);
 
   const getExpectedResources = useCallback(async () => {
     try {
@@ -131,16 +133,12 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
   }, [resources, change, cpu, customCPU, customMemory, memory, prevResources]);
 
   useEffect(() => {
-    let allocatedTimer: NodeJS.Timeout;
-
     if (selectedCluster) {
       getAllocatedResources();
-
-      allocatedTimer = setInterval(() => getAllocatedResources(false), RECHECK_INTERVAL);
     }
 
     return () => clearTimeout(allocatedTimer);
-  }, [selectedCluster, getResources]);
+  }, [selectedCluster, allocatedTimer, getAllocatedResources]);
 
   useEffect(() => {
     let expectedTimer: NodeJS.Timeout;
@@ -222,7 +220,6 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
               allocated={allocatedResources?.allocated.memory}
               expected={expectedResources?.expected.memory}
               className={cx(resourcesBarStyles)}
-              units={MEMORY_UNITS}
               dataQa="dbcluster-resources-bar-memory"
             />
             <ResourcesBar
@@ -232,8 +229,16 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
               allocated={allocatedResources?.allocated.cpu}
               expected={expectedResources?.expected.cpu}
               className={cx(resourcesBarStyles)}
-              units={CPU_UNITS}
               dataQa="dbcluster-resources-bar-cpu"
+            />
+            <ResourcesBar
+              resourceLabel={Messages.dbcluster.addModal.resourcesBar.disk}
+              icon={<Disk />}
+              total={allocatedResources?.total.disk}
+              allocated={allocatedResources?.allocated.disk}
+              expected={undefined}
+              className={cx(resourcesBarStyles)}
+              dataQa="dbcluster-resources-bar-disk"
             />
           </Overlay>
         </div>
