@@ -1,12 +1,6 @@
 import { Matcher, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
-import {
-  parseMatcher,
-  parseMatchers,
-  stringifyMatcher,
-  labelsMatchMatchers,
-  removeMuteTimingFromRoute,
-} from './alertmanager';
+import { parseMatcher, parseMatchers, labelsMatchMatchers, removeMuteTimingFromRoute } from './alertmanager';
 
 describe('Alertmanager utils', () => {
   describe('parseMatcher', () => {
@@ -58,19 +52,6 @@ describe('Alertmanager utils', () => {
         isRegex: true,
         isEqual: true,
       });
-    });
-  });
-
-  describe('stringifyMatcher', () => {
-    it('should stringify matcher correctly', () => {
-      expect(
-        stringifyMatcher({
-          name: 'foo',
-          value: 'boo="bar"',
-          isRegex: true,
-          isEqual: false,
-        })
-      ).toEqual('foo!~"boo=\\"bar\\""');
     });
   });
 
