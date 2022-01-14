@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -7,6 +7,11 @@ import { emptyArrayFieldMatcher, emptyRoute } from '../../utils/amroutes';
 import { EmptyArea } from '../EmptyArea';
 import { AmRoutesTable } from './AmRoutesTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
+import { MatcherFilter } from '../alert-groups/MatcherFilter';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { getFiltersFromUrlParams } from '../../utils/misc';
+import { parseMatchers, matcherFieldToMatcher } from '../../utils/alertmanager';
+import { intersectionWith, isEqual } from 'lodash';
 
 export interface AmSpecificRoutingProps {
   onChange: (routes: FormAmRoute) => void;
@@ -15,6 +20,21 @@ export interface AmSpecificRoutingProps {
   routes: FormAmRoute;
   readOnly?: boolean;
 }
+
+const useFilteredRoutes = (routes: FormAmRoute[], filterQuery?: string) => {
+  const matchers = parseMatchers(filterQuery ?? '');
+
+  const filteredRoutes = useMemo(() => {
+    return matchers.length > 0
+      ? routes.filter((route) => {
+          const routeMatchers = route.object_matchers.map(matcherFieldToMatcher);
+          return intersectionWith(routeMatchers, matchers, isEqual).length > 0;
+        })
+      : routes;
+  }, [matchers, routes]);
+
+  return [filteredRoutes];
+};
 
 export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
   onChange,
@@ -25,6 +45,10 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
 }) => {
   const [actualRoutes, setActualRoutes] = useState(routes.routes);
   const [isAddMode, setIsAddMode] = useState(false);
+  const [queryParams, setQueryParams] = useQueryParams();
+  const { queryString } = getFiltersFromUrlParams(queryParams);
+
+  const [filteredRoutes] = useFilteredRoutes(actualRoutes, queryString);
 
   const styles = useStyles2(getStyles);
 
@@ -58,11 +82,20 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
         )
       ) : actualRoutes.length > 0 ? (
         <>
-          {!isAddMode && !readOnly && (
-            <Button className={styles.addMatcherBtn} icon="plus" onClick={addNewRoute} type="button">
-              New policy
-            </Button>
-          )}
+          {/* TODO If working correctly move to a shared folder */}
+          <div className={styles.searchContainer}>
+            {!isAddMode && (
+              <MatcherFilter
+                onFilterChange={(filter) => setQueryParams({ queryString: filter })}
+                queryString={queryString}
+              />
+            )}
+            {!isAddMode && !readOnly && (
+              <Button className={styles.addMatcherBtn} icon="plus" onClick={addNewRoute} type="button">
+                New policy
+              </Button>
+            )}
+          </div>
           <AmRoutesTable
             isAddMode={isAddMode}
             readOnly={readOnly}
@@ -86,7 +119,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
               }
             }}
             receivers={receivers}
-            routes={actualRoutes}
+            routes={filteredRoutes}
           />
         </>
       ) : readOnly ? (
@@ -110,6 +143,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css`
       display: flex;
       flex-flow: column nowrap;
+    `,
+    searchContainer: css`
+      display: flex;
+      flex-flow: row nowrap;
+      justify-content: space-between;
     `,
     addMatcherBtn: css`
       align-self: flex-end;
