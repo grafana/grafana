@@ -1,16 +1,16 @@
-import { dataQa } from '@percona/platform-core';
-import { mount } from 'enzyme';
+import { shallow } from 'enzyme';
 import React from 'react';
+import Credentials from './components/Credentials/Credentials';
+import { DiscoveryDocs } from './components/DiscoveryDocs/DiscoveryDocs';
+import Instances from './components/Instances/Instances';
 import Discovery from './Discovery';
 
-xdescribe('Discovery instance:: ', () => {
-  it('Should render correct', () => {
-    const selectInstance = jest.fn();
+describe('Discovery:: ', () => {
+  it('should render credentials, instances and docs', () => {
+    const root = shallow(<Discovery selectInstance={jest.fn()} />);
 
-    const root = mount(<Discovery selectInstance={selectInstance} />);
-
-    expect(root.find(dataQa('aws_access_key-text-input')).exists()).toBeTruthy();
-    expect(root.find(dataQa('aws_secret_key-password-input')).exists()).toBeTruthy();
-    expect(root.find(dataQa('credentials-search-button')).exists()).toBeTruthy();
+    expect(root.find(Credentials).exists()).toBeTruthy();
+    expect(root.find(Instances).exists()).toBeTruthy();
+    expect(root.find(DiscoveryDocs).exists()).toBeTruthy();
   });
 });
