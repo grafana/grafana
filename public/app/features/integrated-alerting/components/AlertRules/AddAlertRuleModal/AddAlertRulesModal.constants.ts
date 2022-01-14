@@ -1,5 +1,6 @@
+import { Severity } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
+
 import { Messages } from './AddAlertRuleModal.messages';
-import { Severity } from './AddAlertRuleModal.types';
 
 // TODO: generate SEVERITY_OPTIONS from its type definitions
 export const SEVERITY_OPTIONS = [

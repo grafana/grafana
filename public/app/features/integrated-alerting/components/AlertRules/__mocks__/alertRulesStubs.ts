@@ -1,3 +1,4 @@
+import { TemplateParamType, TemplateParamUnit } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
 import { AlertRulesListResponseRule } from '../AlertRules.types';
 import { formatRules } from '../AlertRules.utils';
 
@@ -31,8 +32,8 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     params: [
       {
         name: 'threshold',
-        type: 'BOOL',
-        bool: true,
+        type: 'FLOAT',
+        float: 15,
       },
     ],
     template: {
@@ -41,15 +42,19 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          type: 'BOOL',
-          bool: {
-            default: true,
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
+          float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
+            default: 10,
           },
         },
       ],
     },
-    expr:
-      'sum by (node_name) (mongodb_ss_connections{conn_type="current"}) * 1024 * 1024↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> [[ .threshold ]]',
+    expr: 'sum by (node_name) (mongodb_ss_connections{conn_type="current"}) * 1024 * 1024↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> [[ .threshold ]]',
   },
   {
     rule_id: 'test 2',
@@ -90,22 +95,32 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          type: 'FLOAT',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
           float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
             default: 75,
           },
-          unit: 'PERCENTAGE',
         },
       ],
     },
-    expr:
-      'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
+    expr: 'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
   },
   {
     rule_id: 'test 3',
     channels: [{ channel_id: 'test_ch', summary: 'Test Channel' }],
     created_at: '2020-11-25T16:53:39.366Z',
     disabled: false,
+    params: [
+      {
+        name: 'threshold',
+        type: 'FLOAT',
+        float: 70,
+      },
+    ],
     filters: [
       {
         key: 'environment',
@@ -133,16 +148,19 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          type: 'FLOAT',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
           float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
             default: 80,
           },
-          unit: 'PERCENTAGE',
         },
       ],
     },
-    expr:
-      'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
+    expr: 'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
   },
   {
     rule_id: 'test 4',
@@ -186,16 +204,19 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          type: 'FLOAT',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
           float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
             default: 75,
           },
-          unit: 'PERCENTAGE',
         },
       ],
     },
-    expr:
-      'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
+    expr: 'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
   },
   {
     rule_id: 'test 5',
@@ -223,22 +244,32 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     last_notified: '2020-11-25T16:53:39.366Z',
     severity: 'SEVERITY_NOTICE',
     summary: 'Low memory consumption - Sales - Dev',
+    params: [
+      {
+        name: 'threshold',
+        type: 'FLOAT',
+        float: 75,
+      },
+    ],
     template: {
       name: 'test 5',
       summary: 'Test 5',
       params: [
         {
           name: 'threshold',
-          type: 'FLOAT',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
           float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
             default: 75,
           },
-          unit: 'PERCENTAGE',
         },
       ],
     },
-    expr:
-      'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
+    expr: 'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
   },
   {
     rule_id: 'test 6',
@@ -272,16 +303,19 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          type: 'FLOAT',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: 'a threshold',
           float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
             default: 75,
           },
-          unit: 'PERCENTAGE',
         },
       ],
     },
-    expr:
-      'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
+    expr: 'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
   },
 ];
 

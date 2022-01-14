@@ -17,6 +17,7 @@ import { getStyles } from './AlertRules.styles';
 import { AlertRule } from './AlertRules.types';
 import { formatRules } from './AlertRules.utils';
 import { AlertRulesActions } from './AlertRulesActions';
+import { AlertRulesParamsDetails } from './AlertRulesParamsDetails';
 
 const { noData, columns } = Messages.alertRules.table;
 
@@ -26,7 +27,7 @@ const {
   filters: filtersColumn,
   severity: severityColumn,
   summary: summaryColumn,
-  threshold: thresholdColumn,
+  params: paramsColumn,
   actions: actionsColumn,
 } = columns;
 
@@ -87,9 +88,13 @@ export const AlertRules: FC = () => {
         width: '25%',
       } as Column,
       {
-        Header: thresholdColumn,
-        accessor: 'threshold',
-        width: '10%',
+        Header: paramsColumn,
+        accessor: 'params',
+        Cell: ({ row }) => {
+          const { values } = row;
+          return <AlertRulesParamsDetails params={values.params} />;
+        },
+        width: '15%',
       } as Column,
       {
         Header: durationColumn,
@@ -112,7 +117,7 @@ export const AlertRules: FC = () => {
             ))}
           </div>
         ),
-        width: '35%',
+        width: '30%',
       } as Column,
       {
         Header: createdAtColumn,

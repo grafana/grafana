@@ -29,7 +29,7 @@ export const Messages = {
         lastNotified: 'Last Notified',
         severity: 'Severity',
         summary: 'Name',
-        threshold: 'Threshold',
+        params: 'Parameters',
         actions: 'Actions',
       },
     },
