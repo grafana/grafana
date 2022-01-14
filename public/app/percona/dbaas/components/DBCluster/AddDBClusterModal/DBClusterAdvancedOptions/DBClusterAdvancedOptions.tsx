@@ -10,6 +10,7 @@ import { Databases } from 'app/percona/shared/core';
 import validators from 'app/percona/shared/helpers/validators';
 
 import { CPU, Disk, Memory } from '../../../DBaaSIcons';
+import { SwitchField } from '../../../Switch/Switch';
 import { DBClusterService } from '../../DBCluster.service';
 import { DBClusterAllocatedResources, DBClusterExpectedResources } from '../../DBCluster.types';
 import { newDBClusterService } from '../../DBCluster.utils';
@@ -176,6 +177,11 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
           />
         )}
       </div>
+      <SwitchField
+        name={AddDBClusterFields.expose}
+        label={Messages.dbcluster.addModal.fields.expose}
+        tooltip={Messages.dbcluster.addModal.exposeTooltip}
+      />
       <div className={styles.resourcesRadioWrapper}>
         <RadioButtonGroupField
           name={AddDBClusterFields.resources}

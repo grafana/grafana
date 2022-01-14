@@ -30,6 +30,7 @@ export interface DBCluster {
   finishedSteps?: number;
   totalSteps?: number;
   databaseImage?: string;
+  expose?: boolean;
 }
 
 export enum DBClusterStatus {
@@ -134,6 +135,8 @@ export interface DBClusterPayload {
   params: DBClusterParamsAPI;
   suspend?: boolean;
   resume?: boolean;
+  expose?: boolean;
+  exposed?: boolean;
 }
 
 export interface DBClusterActionAPI {

@@ -1,14 +1,22 @@
 import React, { FC } from 'react';
+
 import { useStyles } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
-import { DBClusterParametersProps } from './DBClusterParameters.types';
+
 import { DBClusterStatus } from '../DBCluster.types';
-import { getStyles } from './DBClusterParameters.styles';
 import { DBClusterConnectionItem } from '../DBClusterConnection/DBClusterConnectionItem/DBClusterConnectionItem';
+
+import { getStyles } from './DBClusterParameters.styles';
+import { DBClusterParametersProps } from './DBClusterParameters.types';
 
 export const DBClusterParameters: FC<DBClusterParametersProps> = ({ dbCluster }) => {
   const styles = useStyles(getStyles);
   const { status } = dbCluster;
+  const {
+    label: exposeLabel,
+    enabled: exposeEnabled,
+    disabled: exposeDisabled,
+  } = Messages.dbcluster.table.parameters.expose;
 
   return (
     <>
@@ -33,6 +41,11 @@ export const DBClusterParameters: FC<DBClusterParametersProps> = ({ dbCluster })
             label={Messages.dbcluster.table.parameters.disk}
             value={`${dbCluster.disk} GB`}
             dataQa="cluster-parameters-disk"
+          />
+          <DBClusterConnectionItem
+            label={exposeLabel}
+            value={dbCluster.expose ? exposeEnabled : exposeDisabled}
+            dataQa="cluster-parameters-expose"
           />
         </div>
       )}

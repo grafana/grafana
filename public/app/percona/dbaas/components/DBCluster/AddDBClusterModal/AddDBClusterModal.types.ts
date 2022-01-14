@@ -20,4 +20,5 @@ export enum AddDBClusterFields {
   memory = 'memory',
   cpu = 'cpu',
   disk = 'disk',
+  expose = 'expose',
 }

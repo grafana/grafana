@@ -36,7 +36,12 @@ export function Portal(props: PropsWithChildren<Props>) {
     };
   }, [portalRoot]);
 
-  return ReactDOM.createPortal(<div ref={forwardedRef}>{children}</div>, node.current);
+  return ReactDOM.createPortal(
+    <div style={{ zIndex: 1061, position: 'relative' }} ref={forwardedRef}>
+      {children}
+    </div>,
+    node.current
+  );
 }
 
 /** @internal */
