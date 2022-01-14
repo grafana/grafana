@@ -69,3 +69,7 @@ export const MINUTE_OPTIONS: Array<SelectableValue<number>> = Array.from(Array(6
 );
 
 export const MAX_VISIBLE_OPTIONS = 4;
+
+export const MIN_RETENTION = 0;
+
+export const MAX_RETENTION = 99;

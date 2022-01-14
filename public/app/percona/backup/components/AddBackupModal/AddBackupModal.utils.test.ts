@@ -23,6 +23,7 @@ describe('AddBackupModal::utils', () => {
         weekDay: [],
         startHour: [{ value: 0, label: '00' }],
         startMinute: [{ value: 0, label: '00' }],
+        retention: 7,
         logs: false,
         active: true,
       });
@@ -74,6 +75,7 @@ describe('AddBackupModal::utils', () => {
         weekDay: [],
         startHour: [{ value: 0, label: '00' }],
         startMinute: [{ value: 30, label: '30' }],
+        retention: 0,
         logs: false,
         active: true,
       });

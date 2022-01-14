@@ -2,6 +2,7 @@ import {
   CheckboxField,
   LoaderButton,
   Modal,
+  NumberInputField,
   RadioButtonGroupField,
   TextareaInputField,
   TextInputField,
@@ -15,13 +16,16 @@ import { AsyncSelectField } from 'app/percona/shared/components/Form/AsyncSelect
 import { MultiSelectField } from 'app/percona/shared/components/Form/MultiSelectField';
 import { SelectField } from 'app/percona/shared/components/Form/SelectField';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
+import { validators as customValidators } from 'app/percona/shared/helpers/validators';
 
 import {
   DATA_MODEL_OPTIONS,
   DAY_OPTIONS,
   HOUR_OPTIONS,
+  MAX_RETENTION,
   MAX_VISIBLE_OPTIONS,
   MINUTE_OPTIONS,
+  MIN_RETENTION,
   MONTH_OPTIONS,
   WEEKDAY_OPTIONS,
 } from './AddBackupModal.constants';
@@ -42,7 +46,11 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
   const initialValues = toFormBackup(backup);
   const { Form } = withTypes<AddBackupFormProps>();
 
-  const handleSubmit = (values: AddBackupFormProps) => onBackup(values);
+  const handleSubmit = (values: AddBackupFormProps) =>
+    onBackup({
+      ...values,
+      retention: parseInt(`${values.retention}`, 10),
+    });
 
   return (
     <Modal title={Messages.getModalTitle(scheduleMode, !!backup)} isVisible={isVisible} onClose={onClose}>
@@ -198,6 +206,13 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                         </div>
                       )}
                     </Field>
+                  </div>
+                  <div className={styles.advancedRow}>
+                    <NumberInputField
+                      name="retention"
+                      label={Messages.retention}
+                      validators={[validators.required, customValidators.range(MIN_RETENTION, MAX_RETENTION)]}
+                    />
                   </div>
                   <div className={styles.advancedRow}>
                     <CheckboxField fieldClassName={styles.checkbox} name="active" label={Messages.enabled} />

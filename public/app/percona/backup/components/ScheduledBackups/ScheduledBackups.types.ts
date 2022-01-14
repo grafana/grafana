@@ -16,6 +16,7 @@ export interface RawScheduledBackup {
   last_run?: string;
   data_model: DataModel;
   enabled: boolean;
+  retention: number;
 }
 
 export interface ScheduledBackupResponse {

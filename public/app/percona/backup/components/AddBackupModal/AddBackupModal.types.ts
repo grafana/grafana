@@ -26,6 +26,7 @@ export interface AddBackupFormProps {
   backupName: string;
   description: string;
   location: SelectableValue<string>;
+  retention?: number;
   retryMode?: RetryMode;
   retryTimes?: number;
   retryInterval?: number;
