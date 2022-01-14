@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { FC, useState, useEffect } from 'react';
 import { Tab, TabContent, TabsBar, useStyles } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
 import { Breadcrumb } from 'app/core/components/Breadcrumb';
@@ -13,34 +13,31 @@ import { UrlQueryValue } from '@grafana/data';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
 
+const tabComponentMap = [
+  {
+    id: TabKeys.alerts,
+    component: <Alerts key={TabKeys.alerts} />,
+  },
+  {
+    id: TabKeys.alertRules,
+    component: <AlertRules key={TabKeys.alertRules} />,
+  },
+  {
+    id: TabKeys.alertRuleTemplates,
+    component: <AlertRuleTemplate key={TabKeys.alertRuleTemplates} />,
+  },
+  {
+    id: TabKeys.notificationChannels,
+    component: <NotificationChannel key={TabKeys.notificationChannels} />,
+  },
+];
+
 const IntegratedAlertingPage: FC = () => {
   const styles = useStyles(getStyles);
   const tabKey = useSelector((state: StoreState) => state.location.routeParams.tab);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [alertingEnabled, setAlertingEnabled] = useState(false);
   const [activeTab, setActiveTab] = useState(DEFAULT_TAB);
-
-  const tabComponentMap = useMemo(
-    () => [
-      {
-        id: TabKeys.alerts,
-        component: <Alerts key={TabKeys.alerts} />,
-      },
-      {
-        id: TabKeys.alertRules,
-        component: <AlertRules key={TabKeys.alertRules} />,
-      },
-      {
-        id: TabKeys.alertRuleTemplates,
-        component: <AlertRuleTemplate key={TabKeys.alertRuleTemplates} />,
-      },
-      {
-        id: TabKeys.notificationChannels,
-        component: <NotificationChannel key={TabKeys.notificationChannels} />,
-      },
-    ],
-    []
-  );
 
   const { path: basePath } = PAGE_MODEL;
 
@@ -62,12 +59,14 @@ const IntegratedAlertingPage: FC = () => {
   };
 
   const selectTab = useCallback(
-    (tabKey: string) => {
-      getLocationSrv().update({
-        path: `${basePath}/${tabKey}`,
-      });
+    (selectedTabKey: string) => {
+      if (selectedTabKey !== tabKey) {
+        getLocationSrv().update({
+          path: `${basePath}/${selectedTabKey}`,
+        });
+      }
     },
-    [basePath]
+    [basePath, tabKey]
   );
 
   useEffect(() => {
