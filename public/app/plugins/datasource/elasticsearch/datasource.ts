@@ -943,7 +943,7 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
     };
   }
 
-  if (!dataLinks.length || !dataLinks) {
+  if (!dataLinks.length) {
     return;
   }
 
