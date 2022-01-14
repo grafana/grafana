@@ -24,8 +24,8 @@ export const getStyles = (theme: GrafanaTheme) => {
     disabledRow: css`
       background-color: ${colors.dashboardBg} !important;
     `,
-    getSeverityStyle: (color: string) => css`
-      color: ${color};
+    silencedSeverity: css`
+      color: inherit;
     `,
   };
 };

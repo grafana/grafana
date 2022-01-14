@@ -1,7 +1,5 @@
 import moment from 'moment/moment';
 
-import { GrafanaTheme } from '@grafana/data';
-
 import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
 
 import { Alert, AlertsListResponseLabel, AlertsListResponseAlert, AlertStatus } from './Alerts.types';
@@ -31,10 +29,3 @@ export const formatAlert = (rule: AlertsListResponseAlert): Alert => {
 };
 
 export const formatAlerts = (alerts: AlertsListResponseAlert[]): Alert[] => (alerts ? alerts.map(formatAlert) : []);
-
-export const getSeverityColors = ({ palette }: GrafanaTheme) => ({
-  [AlertRuleSeverity.SEVERITY_CRITICAL]: palette.critical,
-  [AlertRuleSeverity.SEVERITY_ERROR]: palette.orange,
-  [AlertRuleSeverity.SEVERITY_NOTICE]: palette.blue80,
-  [AlertRuleSeverity.SEVERITY_WARNING]: palette.yellow,
-});

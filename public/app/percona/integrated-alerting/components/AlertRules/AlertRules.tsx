@@ -7,11 +7,13 @@ import { Button, useStyles, IconButton } from '@grafana/ui';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
+import { Messages } from '../../IntegratedAlerting.messages';
+import { Severity } from '../Severity';
 import { useStoredTablePageSize } from '../Table/Pagination';
 import { Table } from '../Table/Table';
 
 import { AddAlertRuleModal } from './AddAlertRuleModal';
-import { ALERT_RULES_TABLE_ID, GET_ALERT_RULES_CANCEL_TOKEN } from './AlertRules.constants';
+import { GET_ALERT_RULES_CANCEL_TOKEN } from './AlertRules.constants';
 import { AlertRulesProvider } from './AlertRules.provider';
 import { AlertRulesService } from './AlertRules.service';
 import { getStyles } from './AlertRules.styles';
@@ -107,6 +109,7 @@ export const AlertRules: FC = () => {
       {
         Header: severityColumn,
         accessor: 'severity',
+        Cell: ({ value }) => <Severity severity={value} />,
         width: '5%',
       } as Column,
       {

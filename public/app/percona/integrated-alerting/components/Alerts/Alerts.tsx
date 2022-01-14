@@ -1,22 +1,22 @@
 /* eslint-disable react/display-name */
 import { logger } from '@percona/platform-core';
 import { cx } from 'emotion';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Cell, Column } from 'react-table';
 
-import { useStyles, useTheme } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { Messages } from '../../IntegratedAlerting.messages';
-import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
+import { Severity } from '../Severity';
 import { Table } from '../Table/Table';
 
 import { GET_ALERTS_CANCEL_TOKEN } from './Alerts.constants';
 import { AlertsService } from './Alerts.service';
 import { getStyles } from './Alerts.styles';
 import { Alert, AlertStatus } from './Alerts.types';
-import { formatAlerts, getSeverityColors } from './Alerts.utils';
+import { formatAlerts } from './Alerts.utils';
 import { AlertsActions } from './AlertsActions';
 
 const { noData, columns } = Messages.alerts.table;
@@ -32,10 +32,8 @@ const {
 
 export const Alerts: FC = () => {
   const style = useStyles(getStyles);
-  const theme = useTheme();
   const [pendingRequest, setPendingRequest] = useState(true);
   const [data, setData] = useState<Alert[]>([]);
-  const severityColors = useMemo(() => getSeverityColors(theme), [theme]);
   const [generateToken] = useCancelToken();
 
   const getAlerts = useCallback(async () => {
@@ -61,14 +59,12 @@ export const Alerts: FC = () => {
       } as Column,
       {
         Header: severityColumn,
-        accessor: ({ severity, status }: Alert) => (
-          <span
-            className={cx({
-              [style.getSeverityStyle(severityColors[severity as AlertRuleSeverity])]: status !== AlertStatus.SILENCED,
-            })}
-          >
-            {severity}
-          </span>
+        accessor: 'severity',
+        Cell: ({ row, value }) => (
+          <Severity
+            severity={value}
+            className={cx({ [style.silencedSeverity]: (row.original as Alert).status === AlertStatus.SILENCED })}
+          />
         ),
         width: '5%',
       } as Column,
@@ -105,7 +101,7 @@ export const Alerts: FC = () => {
         accessor: (alert: Alert) => <AlertsActions alert={alert} getAlerts={getAlerts} />,
       } as Column,
     ],
-    [severityColors, style, getAlerts]
+    [style, getAlerts]
   );
 
   const getCellProps = useCallback(
