@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
@@ -85,7 +85,7 @@ type CloudWatchService struct {
 }
 
 type SessionCache interface {
-	GetSession(region string, s awsds.AWSDatasourceSettings) (*session.Session, error)
+	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
 func newExecutor(logsService *LogsService, im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
@@ -172,16 +172,20 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 		region = dsInfo.region
 	}
 
-	return e.sessions.GetSession(region, awsds.AWSDatasourceSettings{
-		Profile:       dsInfo.profile,
-		Region:        region,
-		AuthType:      dsInfo.authType,
-		AssumeRoleARN: dsInfo.assumeRoleARN,
-		ExternalID:    dsInfo.externalID,
-		Endpoint:      dsInfo.endpoint,
-		DefaultRegion: dsInfo.region,
-		AccessKey:     dsInfo.accessKey,
-		SecretKey:     dsInfo.secretKey,
+	return e.sessions.GetSession(awsds.SessionConfig{
+		Config: *pluginCtx.DataSourceInstanceSettings,
+		Settings: awsds.AWSDatasourceSettings{
+			Profile:       dsInfo.profile,
+			Region:        region,
+			AuthType:      dsInfo.authType,
+			AssumeRoleARN: dsInfo.assumeRoleARN,
+			ExternalID:    dsInfo.externalID,
+			Endpoint:      dsInfo.endpoint,
+			DefaultRegion: dsInfo.region,
+			AccessKey:     dsInfo.accessKey,
+			SecretKey:     dsInfo.secretKey,
+		},
+		UserAgentName: aws.String("Cloudwatch"),
 	})
 }
 
@@ -383,24 +387,14 @@ func isTerminated(queryStatus string) bool {
 //
 // Stubbable by tests.
 var NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-	client := cloudwatch.New(sess)
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client
+	return cloudwatch.New(sess)
 }
 
 // NewCWLogsClient is a CloudWatch logs client factory.
 //
 // Stubbable by tests.
 var NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
-	client := cloudwatchlogs.New(sess)
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client
+	return cloudwatchlogs.New(sess)
 }
 
 // EC2 client factory.
