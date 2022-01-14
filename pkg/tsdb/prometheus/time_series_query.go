@@ -335,6 +335,11 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 			idx++
 		}
 
+		for t := baseTimestamp; t <= endTimestamp; t += query.Step.Milliseconds() {
+			timeField.Set(idx, time.Unix(0, t*1000000).UTC())
+			idx++
+		}
+
 		name := formatLegend(v.Metric, query)
 		timeField.Name = data.TimeSeriesTimeFieldName
 		valueField.Name = data.TimeSeriesValueFieldName
