@@ -1,3 +1,11 @@
+import { FormRenderProps } from 'react-final-form';
+import { DBCluster } from '../../DBCluster.types';
+
+export interface DBClusterAdvancedOptionsProps {
+  selectedCluster: DBCluster;
+  renderProps: FormRenderProps;
+}
+
 export enum DBClusterTopology {
   cluster = 'cluster',
   single = 'single',

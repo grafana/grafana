@@ -18,6 +18,9 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(root.find('[data-qa="memory-number-input"]')).toBeTruthy();
     expect(root.find('[data-qa="cpu-number-input"]')).toBeTruthy();
     expect(root.find('[data-qa="disk-number-input"]')).toBeTruthy();
+    expect(root.find('[data-qa="dbcluster-resources-bar-memory"]')).toBeTruthy();
+    expect(root.find('[data-qa="dbcluster-resources-bar-cpu"]')).toBeTruthy();
+    expect(root.find('[data-qa="disk-number-input"]')).toBeTruthy();
     expect(root.find('[data-qa="step-progress-submit-button"]')).toBeTruthy();
   });
   it('renders correctly with initial values', () => {

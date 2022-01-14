@@ -91,6 +91,12 @@ export const Messages = {
         requiredDatabaseType: 'Required field',
       },
       noOperatorsMessage: 'No clusters found with installed operators',
+      resourcesBar: {
+        memory: 'Memory',
+        cpu: 'CPU',
+        disk: 'Disk',
+      },
+      resourcesInfo: 'Resource calculations are an estimate',
     },
     deleteModal: {
       cancel: 'Cancel',
