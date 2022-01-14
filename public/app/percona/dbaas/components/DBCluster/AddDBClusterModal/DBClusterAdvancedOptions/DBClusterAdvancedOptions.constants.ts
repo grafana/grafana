@@ -48,3 +48,4 @@ export const MIN_DISK_SIZE = 1;
 export const MEMORY_UNITS = 'GB';
 export const CPU_UNITS = 'CPU';
 export const RECHECK_INTERVAL = 10000;
+export const EXPECTED_DELAY = 250;

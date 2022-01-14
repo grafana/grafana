@@ -45,32 +45,29 @@ export const ResourcesBar: FC<ResourcesBarProps> = ({
             {Messages.buildResourcesLabel(formatResources(allocated), allocatedWidth, formatResources(total), units)}
           </span>
         )}
-        {isResourceInsufficient ? (
+        {allocated && !isResourceInsufficient && (
+          <div className={styles.captionWrapper}>
+            <div className={cx(styles.captionSquare, styles.allocatedSquare)}></div>
+            <span data-qa="resources-bar-allocated-caption" className={styles.captionLabel}>
+              {Messages.buildAllocatedLabel(resourceLabel)}
+            </span>
+          </div>
+        )}
+        {expected && (
+          <div className={styles.captionWrapper}>
+            <div className={cx(styles.captionSquare, styles.expectedSquare)}></div>
+            <span data-qa="resources-bar-expected-caption" className={styles.captionLabel}>
+              {Messages.buildExpectedLabel(formatResources(expected), resourceLabel, units)}
+            </span>
+          </div>
+        )}
+        {isResourceInsufficient && (
           <div className={styles.captionWrapper}>
             <Icon className={styles.insufficientIcon} name="exclamation-triangle" />
             <span data-qa="resources-bar-insufficient-resources" className={styles.captionLabel}>
               {Messages.buildInsufficientLabel(resourceLabel)}
             </span>
           </div>
-        ) : (
-          <>
-            {allocated && (
-              <div className={styles.captionWrapper}>
-                <div className={cx(styles.captionSquare, styles.allocatedSquare)}></div>
-                <span data-qa="resources-bar-allocated-caption" className={styles.captionLabel}>
-                  {Messages.buildAllocatedLabel(resourceLabel)}
-                </span>
-              </div>
-            )}
-            {expected && (
-              <div className={styles.captionWrapper}>
-                <div className={cx(styles.captionSquare, styles.expectedSquare)}></div>
-                <span data-qa="resources-bar-expected-caption" className={styles.captionLabel}>
-                  {Messages.buildExpectedLabel(formatResources(expected), resourceLabel, units)}
-                </span>
-              </div>
-            )}
-          </>
         )}
       </div>
     </div>

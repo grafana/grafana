@@ -20,3 +20,6 @@ export const SERVICE_MAP: Partial<DBClusterServiceDatabasesMap> = {
   [Databases.mysql]: new XtraDBService(),
   [Databases.mongodb]: new PSMDBService(),
 };
+
+export const THOUSAND = 1000;
+export const BILLION = 10 ** 9;
