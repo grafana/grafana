@@ -1,16 +1,15 @@
+import { logger } from '@percona/platform-core';
 import React, { FC, useCallback, useMemo, useState, useEffect } from 'react';
+
 import { useStyles } from '@grafana/ui';
-import { Table } from 'app/percona/shared/components/Elements/Table';
-import { Settings } from 'app/percona/settings/Settings.types';
-import { SettingsService } from 'app/percona/settings/Settings.service';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
+import { SettingsService } from 'app/percona/settings/Settings.service';
+import { Settings } from 'app/percona/settings/Settings.types';
+import { Table } from 'app/percona/shared/components/Elements/Table';
+
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
-import { getStyles } from './DBCluster.styles';
-import { DBCluster as Cluster, DBClusterProps } from './DBCluster.types';
+
 import { AddDBClusterModal } from './AddDBClusterModal/AddDBClusterModal';
-import { EditDBClusterModal } from './EditDBClusterModal/EditDBClusterModal';
-import { DBClusterLogsModal } from './DBClusterLogsModal/DBClusterLogsModal';
-import { useDBClusters } from './DBCluster.hooks';
 import {
   clusterStatusRender,
   connectionRender,
@@ -19,7 +18,12 @@ import {
   clusterNameRender,
   clusterActionsRender,
 } from './ColumnRenderers/ColumnRenderers';
+import { useDBClusters } from './DBCluster.hooks';
+import { getStyles } from './DBCluster.styles';
+import { DBCluster as Cluster, DBClusterProps } from './DBCluster.types';
+import { DBClusterLogsModal } from './DBClusterLogsModal/DBClusterLogsModal';
 import { DeleteDBClusterModal } from './DeleteDBClusterModal/DeleteDBClusterModal';
+import { EditDBClusterModal } from './EditDBClusterModal/EditDBClusterModal';
 
 export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
   const styles = useStyles(getStyles);
@@ -82,11 +86,22 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
     ),
     [addModalVisible, settingsLoading]
   );
-  const getSettings = useCallback(() => {
-    SettingsService.getSettings(setSettingsLoading, setSettings);
-  }, []);
 
-  useEffect(() => getSettings(), [getSettings]);
+  useEffect(() => {
+    const getSettings = async () => {
+      try {
+        setSettingsLoading(true);
+        const settings = await SettingsService.getSettings();
+        setSettings(settings);
+      } catch (e) {
+        logger.error(e);
+      } finally {
+        setSettingsLoading(false);
+      }
+    };
+
+    getSettings();
+  }, []);
 
   return (
     <div>

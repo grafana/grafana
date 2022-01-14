@@ -1,3 +1,4 @@
+import { logger } from '@percona/platform-core';
 import { cx } from 'emotion';
 import React, { FC, useEffect, useMemo, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
@@ -127,8 +128,16 @@ export const SettingsPanel: FC = () => {
     }
   };
 
-  const getSettings = () => {
-    SettingsService.getSettings(setLoading, setSettings).then();
+  const getSettings = async () => {
+    try {
+      setLoading(true);
+      const settings = await SettingsService.getSettings();
+      setSettings(settings);
+    } catch (e) {
+      logger.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -163,6 +172,7 @@ export const SettingsPanel: FC = () => {
                   sttEnabled={!!settings.sttEnabled}
                   dbaasEnabled={!!settings.dbaasEnabled}
                   alertingEnabled={!!settings.alertingEnabled}
+                  backupEnabled={!!settings.backupEnabled}
                   azureDiscoverEnabled={!!settings.azureDiscoverEnabled}
                   publicAddress={settings.publicAddress}
                   updateSettings={updateSettings}

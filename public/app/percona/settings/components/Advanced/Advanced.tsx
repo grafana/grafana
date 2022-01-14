@@ -1,7 +1,7 @@
 import { TextInputField, NumberInputField } from '@percona/platform-core';
 import { cx } from 'emotion';
 import React, { FC, useState } from 'react';
-import { Field, Form } from 'react-final-form';
+import { Field, withTypes } from 'react-final-form';
 
 import { Button, Spinner, useTheme, Icon } from '@grafana/ui';
 import { DATA_RETENTION_URL } from 'app/percona/settings/Settings.constants';
@@ -13,14 +13,16 @@ import validators from 'app/percona/shared/helpers/validators';
 import { AdvancedChangePayload } from '../../Settings.types';
 
 import { SECONDS_IN_DAY, MIN_DAYS, MAX_DAYS, TECHNICAL_PREVIEW_DOC_URL } from './Advanced.constants';
-import { getStyles } from './Advanced.styles';
-import { AdvancedProps } from './Advanced.types';
+import { AdvancedProps, AdvancedFormProps } from './Advanced.types';
 import { transformSecondsToDays } from './Advanced.utils';
 import { SwitchRow } from './SwitchRow';
+
+const refreshingFeatureKeys: Array<keyof AdvancedFormProps> = ['alerting', 'backup'];
 
 export const Advanced: FC<AdvancedProps> = ({
   dataRetention,
   telemetryEnabled,
+  backupEnabled,
   updatesDisabled,
   sttEnabled,
   dbaasEnabled,
@@ -64,10 +66,11 @@ export const Advanced: FC<AdvancedProps> = ({
     },
     tooltipLinkText,
   } = Messages;
-  const initialValues = {
+  const initialValues: AdvancedFormProps = {
     retention: transformSecondsToDays(dataRetention),
     telemetry: telemetryEnabled,
     updates: !updatesDisabled,
+    backup: backupEnabled,
     stt: sttEnabled,
     dbaas: dbaasEnabled,
     azureDiscover: azureDiscoverEnabled,
@@ -76,8 +79,9 @@ export const Advanced: FC<AdvancedProps> = ({
   };
   const [loading, setLoading] = useState(false);
   // @ts-ignore
-  const applyChanges = ({ retention, telemetry, stt, publicAddress, alerting, azureDiscover }) => {
-    const refresh = !!alerting !== alertingEnabled;
+  const applyChanges = (values: AdvancedFormProps) => {
+    const { retention, telemetry, stt, publicAddress, alerting, backup, azureDiscover } = values;
+    const refresh = !!refreshingFeatureKeys.find((feature) => !!values[feature] !== initialValues[feature]);
     const body: AdvancedChangePayload = {
       data_retention: `${+retention * SECONDS_IN_DAY}s`,
       disable_telemetry: !telemetry,
@@ -90,10 +94,13 @@ export const Advanced: FC<AdvancedProps> = ({
       remove_pmm_public_address: !publicAddress,
       enable_alerting: alerting ? true : undefined,
       disable_alerting: !alerting ? true : undefined,
+      enable_backup_management: backup,
+      disable_backup_management: !backup,
     };
 
     updateSettings(body, setLoading, refresh);
   };
+  const { Form } = withTypes<AdvancedFormProps>();
 
   return (
     <div className={styles.advancedWrapper}>
@@ -158,6 +165,19 @@ export const Advanced: FC<AdvancedProps> = ({
               dataQa="advanced-updates"
               component={SwitchRow}
             />
+            {/* TODO remove comment when feature is ready to come out */}
+            {/* <Field
+              name="backup"
+              type="checkbox"
+              label={backupLabel}
+              tooltip={backupTooltip}
+              tooltipLinkText={tooltipLinkText}
+              link={backupLink}
+              className={cx({ [styles.switchDisabled]: !values.backup })}
+              disabled={!values.telemetry}
+              dataQa="advanced-backup"
+              component={SwitchRow}
+            /> */}
             <div className={styles.advancedRow}>
               <div className={cx(styles.advancedCol, styles.publicAddressLabelWrapper)}>
                 <div className={settingsStyles.labelWrapper} data-qa="public-address-label">
