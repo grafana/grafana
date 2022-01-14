@@ -1,13 +1,24 @@
 import React, { FC, useState } from 'react';
+import { IconButton, useStyles } from '@grafana/ui';
+import { LoaderButton } from '@percona/platform-core';
 import { CheckService } from 'app/percona/check/Check.service';
 import { Messages } from './AllChecksTab.messages';
 import { CheckTableRowProps } from './types';
-import { LoaderButton } from '@percona/platform-core';
-import * as styles from './CheckTableRow.styles';
+import { Interval } from 'app/percona/check/types';
+import { ChangeCheckIntervalModal } from './ChangeCheckIntervalModal';
+import { getStyles } from './CheckTableRow.styles';
+
+const formatInterval = (interval: keyof typeof Interval): Interval => Interval[interval];
 
 export const CheckTableRow: FC<CheckTableRowProps> = ({ check, onSuccess }) => {
+  const styles = useStyles(getStyles);
   const [changeCheckPending, setChangeCheckPending] = useState(false);
-  const { name, summary, description, disabled } = check;
+  const [checkIntervalModalVisible, setCheckIntervalModalVisible] = useState(false);
+  const { name, summary, description, disabled, interval } = check;
+
+  const handleChangeCheckInterval = () => {
+    setCheckIntervalModalVisible(true);
+  };
 
   const changeCheck = async () => {
     setChangeCheckPending(true);
@@ -25,22 +36,31 @@ export const CheckTableRow: FC<CheckTableRowProps> = ({ check, onSuccess }) => {
   };
 
   return (
-    <tr key={name}>
-      <td>{summary}</td>
-      <td>{description}</td>
-      <td>{disabled ? Messages.disabled : Messages.enabled}</td>
-      <td>
-        <LoaderButton
-          type="button"
-          size="sm"
-          variant={disabled ? 'primary' : 'destructive'}
-          loading={changeCheckPending}
-          onClick={changeCheck}
-          className={styles.changeChecksButton}
-        >
-          {disabled ? Messages.enable : Messages.disable}
-        </LoaderButton>
-      </td>
-    </tr>
+    <>
+      <tr key={name}>
+        <td>{summary}</td>
+        <td>{description}</td>
+        <td>{disabled ? Messages.disabled : Messages.enabled}</td>
+        <td>{formatInterval(interval)}</td>
+        <td>
+          <div className={styles.actionsWrapper}>
+            <LoaderButton
+              variant={disabled ? 'primary' : 'destructive'}
+              size="sm"
+              loading={changeCheckPending}
+              onClick={changeCheck}
+            >
+              {disabled ? Messages.enable : Messages.disable}
+            </LoaderButton>
+            <IconButton title={Messages.changeIntervalButtonTitle} name="history" onClick={handleChangeCheckInterval} />
+          </div>
+        </td>
+      </tr>
+      <ChangeCheckIntervalModal
+        isVisible={checkIntervalModalVisible}
+        setVisible={setCheckIntervalModalVisible}
+        check={check}
+      />
+    </>
   );
 };

@@ -67,7 +67,7 @@ export const NavBar: FC = React.memo(() => {
         newItems.push({
           id: 'databsase-checks',
           icon: 'percona-database-checks',
-          text: 'PMM Database checks',
+          text: 'Security Checks',
           url: `${config.appSubUrl}/pmm-database-checks`,
         });
       }
