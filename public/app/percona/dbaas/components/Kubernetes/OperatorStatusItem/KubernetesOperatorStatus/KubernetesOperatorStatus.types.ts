@@ -1,5 +1,7 @@
 import { Databases } from 'app/percona/shared/core';
 
+import { Operator } from '../../Kubernetes.types';
+
 export enum KubernetesOperatorStatus {
   ok = 'OPERATORS_STATUS_OK',
   invalid = 'OPERATORS_STATUS_INVALID',
@@ -8,6 +10,6 @@ export enum KubernetesOperatorStatus {
 }
 
 export interface KubernetesOperatorStatusProps {
-  status: KubernetesOperatorStatus;
+  operator: Operator;
   databaseType: Databases;
 }

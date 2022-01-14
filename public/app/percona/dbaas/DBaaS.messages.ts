@@ -34,7 +34,7 @@ export const Messages = {
     table: {
       nameColumn: 'Kubernetes Cluster Name',
       clusterStatusColumn: 'Kubernetes Cluster Status',
-      operatorsStatusColumn: 'Operators Status',
+      operatorsColumn: 'Operators',
       actionsColumn: 'Actions',
     },
     messages: {
@@ -46,6 +46,7 @@ export const Messages = {
       [KubernetesOperatorStatus.unavailable]: 'How to install',
       [KubernetesOperatorStatus.invalid]: 'Invalid',
       errorMessage: 'Cluster creation failed',
+      getNewVersionAvailable: (version?: string) => `(version ${version} available)`,
     },
     kubernetesStatus: {
       [KubernetesClusterStatus.ok]: 'Active',
