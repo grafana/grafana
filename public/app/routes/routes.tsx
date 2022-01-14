@@ -395,12 +395,60 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(() => import(/* webpackChunkName: "DbaasPage" */ 'app/percona/dbaas/DBaaS')),
     },
     {
+      path: '/dbaas/:tab',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "DbaasPage" */ 'app/percona/dbaas/DBaaS')),
+    },
+    {
       path: '/backup',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "BackupPage" */ 'app/percona/backup/BackupPage')),
     },
     {
       path: '/backup/:tab',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "BackupPage" */ 'app/percona/backup/BackupPage')),
+    },
+    {
+      path: '/pmm-database-checks',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "ChecksPage" */ 'app/percona/check/CheckPanel')),
+    },
+    {
+      path: '/pmm-database-checks/:tab',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "ChecksPage" */ 'app/percona/check/CheckPanel')),
+    },
+    {
+      path: '/settings',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SettingsPage" */ 'app/percona/settings/Settings')
+      ),
+    },
+    {
+      path: '/settings/:tab',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SettingsPage" */ 'app/percona/settings/Settings')
+      ),
+    },
+    {
+      path: '/inventory',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "InventoryPage" */ 'app/percona/inventory/Inventory')
+      ),
+    },
+    {
+      path: '/inventory/:tab',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "InventoryPage" */ 'app/percona/inventory/Inventory')
+      ),
+    },
+    {
+      path: '/add-instance',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AddInstancePage" */ 'app/percona/add-instance/panel')
+      ),
+    },
+    {
+      path: '/add-instance/:tab',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AddInstancePage" */ 'app/percona/add-instance/panel')
+      ),
     },
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),

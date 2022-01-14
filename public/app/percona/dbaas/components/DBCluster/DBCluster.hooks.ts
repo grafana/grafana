@@ -49,7 +49,7 @@ export const useDBClusters = (kubernetes: Kubernetes[]): [DBCluster[], GetDBClus
     let timer: NodeJS.Timeout = setInterval(() => getDBClusters(false), RECHECK_INTERVAL);
 
     return () => clearTimeout(timer);
-  }, [getDBClusters]);
+  }, [kubernetes, getDBClusters]);
 
   return [dbClusters, getDBClusters, loading];
 };

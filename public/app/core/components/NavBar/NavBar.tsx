@@ -63,6 +63,15 @@ export const NavBar: FC = React.memo(() => {
         buildIntegratedAlertingMenuItem(newItems);
       }
 
+      if (settings.stt_enabled) {
+        newItems.push({
+          id: 'databsase-checks',
+          icon: 'percona-database-checks',
+          text: 'PMM Database checks',
+          url: `${config.appSubUrl}/pmm-database-checks`,
+        });
+      }
+
       if (settings.dbaas_enabled) {
         newItems.push({
           id: 'dbaas',
