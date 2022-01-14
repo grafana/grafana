@@ -11,6 +11,8 @@ import { AlertRuleTemplateService } from './AlertRuleTemplate.service';
 import { Column } from 'react-table';
 import { AlertRuleTemplateActions } from './AlertRuleTemplateActions/AlertRuleTemplateActions';
 import { FormattedTemplate } from './AlertRuleTemplate.types';
+import { ALERT_RULE_TEMPLATES_TABLE_ID } from './AlertRuleTemplate.constants';
+import { useStoredTablePageSize } from '../Table/Pagination';
 
 const { noData, columns } = Messages.alertRuleTemplate.table;
 
@@ -21,6 +23,10 @@ export const AlertRuleTemplate: FC = () => {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(true);
   const [data, setData] = useState<FormattedTemplate[]>([]);
+  const [pageSize, setPageSize] = useStoredTablePageSize(ALERT_RULE_TEMPLATES_TABLE_ID);
+  const [pageIndex, setPageindex] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const columns = React.useMemo(
     () => [
@@ -46,24 +52,39 @@ export const AlertRuleTemplate: FC = () => {
         ),
       } as Column,
     ],
-    []
+    [getAlertRuleTemplates]
   );
 
-  const getAlertRuleTemplates = async () => {
+  const getAlertRuleTemplates = useCallback(async () => {
     setPendingRequest(true);
     try {
-      const { templates } = await AlertRuleTemplateService.list();
+      const { templates, totals } = await AlertRuleTemplateService.list({
+        page_params: {
+          index: pageIndex,
+          page_size: pageSize as number,
+        },
+      });
       setData(formatTemplates(templates));
+      setTotalItems(totals.total_items || 0);
+      setTotalPages(totals.total_pages || 0);
     } catch (e) {
       logger.error(e);
     } finally {
       setPendingRequest(false);
     }
-  };
+  }, [pageIndex, pageSize]);
+
+  const handlePaginationChanged = useCallback(
+    (pageSize: number, pageIndex: number) => {
+      setPageSize(pageSize);
+      setPageindex(pageIndex);
+    },
+    [setPageSize, setPageindex]
+  );
 
   useEffect(() => {
     getAlertRuleTemplates();
-  }, []);
+  }, [pageSize, pageIndex, getAlertRuleTemplates]);
 
   return (
     <>
@@ -84,7 +105,12 @@ export const AlertRuleTemplate: FC = () => {
         getAlertRuleTemplates={getAlertRuleTemplates}
       />
       <Table
-        totalItems={data.length}
+        showPagination
+        totalItems={totalItems}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        pageIndex={pageIndex}
+        onPaginationChanged={handlePaginationChanged}
         data={data}
         columns={columns}
         pendingRequest={pendingRequest}

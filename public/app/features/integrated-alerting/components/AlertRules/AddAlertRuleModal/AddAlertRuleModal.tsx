@@ -48,7 +48,12 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
             page_size: 100,
           },
         }),
-        AlertRuleTemplateService.list(),
+        AlertRuleTemplateService.list({
+          page_params: {
+            index: 0,
+            page_size: 100,
+          },
+        }),
       ]);
       setChannelsOptions(formatChannelsOptions(channelsListResponse.channels));
       setTemplateOptions(formatTemplateOptions(templatesListResponse.templates));
