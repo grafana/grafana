@@ -1,14 +1,16 @@
 import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
 import { useSelector } from 'react-redux';
 import { dataQa } from '@percona/platform-core';
-import { act } from 'react-dom/test-utils';
 import { BreadcrumbSections } from './BreadcrumbSections';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
 
-jest.mock('react-redux', () => ({
-  ...jest.requireActual('react-redux'),
-  useSelector: jest.fn(),
-}));
+jest.mock('react-redux', () => {
+  const original = jest.requireActual('react-redux');
+  return {
+    ...original,
+    useSelector: jest.fn(),
+  };
+});
 
 const pageModel = {
   title: 'Root',
@@ -56,11 +58,7 @@ describe('BreadcrumbSections', () => {
   });
 
   it('renders breadcrumb sections with correct URLs', async () => {
-    let wrapper: ReactWrapper<any, Readonly<{}>, React.Component<{}, {}, any>>;
-
-    await act(async () => {
-      wrapper = mount(<BreadcrumbSections pageModel={pageModel} currentLocation="root/child-one" />);
-    });
+    const wrapper = await getMount(<BreadcrumbSections pageModel={pageModel} currentLocation="root/child-one" />);
 
     expect(wrapper.find(dataQa('breadcrumb-section'))).toHaveLength(2);
     expect(wrapper.find(dataQa('breadcrumb-section')).at(0).text()).toEqual('Root / Child 1');
@@ -71,11 +69,9 @@ describe('BreadcrumbSections', () => {
       return callback({ location: { path: '/root/child-two/leaf-one' } });
     });
 
-    let wrapper: ReactWrapper<any, Readonly<{}>, React.Component<{}, {}, any>>;
-
-    await act(async () => {
-      wrapper = mount(<BreadcrumbSections pageModel={pageModel} currentLocation="root/child-two/leaf-one" />);
-    });
+    const wrapper = await getMount(
+      <BreadcrumbSections pageModel={pageModel} currentLocation="root/child-two/leaf-one" />
+    );
 
     expect(wrapper.find(dataQa('breadcrumb-section'))).toHaveLength(3);
     expect(wrapper.find(dataQa('breadcrumb-section')).at(0).text()).toEqual('Root / Child 2 / Leaf 1');
@@ -86,11 +82,9 @@ describe('BreadcrumbSections', () => {
       return callback({ location: { path: '/root/wrong-one/leaf-two' } });
     });
 
-    let wrapper: ReactWrapper<any, Readonly<{}>, React.Component<{}, {}, any>>;
-
-    await act(async () => {
-      wrapper = mount(<BreadcrumbSections pageModel={pageModel} currentLocation="root/wrong-one/leaf-two" />);
-    });
+    const wrapper = await getMount(
+      <BreadcrumbSections pageModel={pageModel} currentLocation="root/wrong-one/leaf-two" />
+    );
 
     expect(wrapper.find(dataQa('breadcrumb-section'))).toHaveLength(1);
     expect(wrapper.find(dataQa('breadcrumb-section')).at(0).text()).toEqual('Root');

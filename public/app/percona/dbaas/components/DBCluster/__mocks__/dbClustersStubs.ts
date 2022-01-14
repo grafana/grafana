@@ -7,6 +7,7 @@ import {
   DBClusterStatus,
   ResourcesUnits,
   DBClusterComponentVersionStatus,
+  DBClusterAllocatedResources,
 } from '../DBCluster.types';
 
 export const dbClustersStub: DBCluster[] = [
@@ -121,16 +122,16 @@ export const dbClusterLogsAPI = {
   ],
 };
 
-export const dbCLusterAllocatedResourcesStub = {
+export const dbCLusterAllocatedResourcesStub: DBClusterAllocatedResources = {
   total: {
-    cpu: { value: 10, units: CpuUnits.MILLI },
-    memory: { value: 10, units: ResourcesUnits.GB },
-    disk: { value: 100, units: ResourcesUnits.GB },
+    cpu: { value: 10, units: CpuUnits.MILLI, original: 10 },
+    memory: { value: 10, units: ResourcesUnits.GB, original: 10 },
+    disk: { value: 100, units: ResourcesUnits.GB, original: 100 },
   },
   allocated: {
-    cpu: { value: 1, units: CpuUnits.MILLI },
-    memory: { value: 3, units: ResourcesUnits.GB },
-    disk: { value: 10, units: ResourcesUnits.GB },
+    cpu: { value: 1, units: CpuUnits.MILLI, original: 1 },
+    memory: { value: 3, units: ResourcesUnits.GB, original: 3 },
+    disk: { value: 10, units: ResourcesUnits.GB, original: 10 },
   },
 };
 

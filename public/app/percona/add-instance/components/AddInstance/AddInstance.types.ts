@@ -1,9 +1,9 @@
 export interface SelectInstanceProps {
   type: string;
   title: string;
-  selectInstanceType: (string) => () => void;
+  selectInstanceType: (type: string) => () => void;
 }
 
 export interface AddInstanceProps {
-  onSelectInstanceType: (any) => void;
+  onSelectInstanceType: (arg: { type: string }) => void;
 }

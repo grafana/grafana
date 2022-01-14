@@ -1,16 +1,18 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import { Form } from 'react-final-form';
-import { FormApi } from 'final-form';
-import { rdsTrackingOptions, trackingOptions } from './FormParts.constants';
+import { FormApi, FormState } from 'final-form';
+import { trackingOptions } from './FormParts.constants';
 import { AdditionalOptionsFormPart, getAdditionalOptions } from './AdditionalOptions/AdditionalOptions';
 import { LabelsFormPart } from './Labels/Labels';
 import { MainDetailsFormPart } from './MainDetails/MainDetails';
 import { ExternalServiceConnectionDetails } from './ExternalServiceConnectionDetails/ExternalServiceConnectionDetails';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
+import { InstanceTypes } from 'app/percona/add-instance/panel.types';
 
-const form = {
+const form: Partial<FormApi> = {
   change: jest.fn(),
-  getState: () => ({}),
+  getState: () => ({} as FormState<any>),
 };
 
 describe('MainDetailsFormPart ::', () => {
@@ -74,12 +76,12 @@ describe('LabelsFormPart ::', () => {
 
 describe('AdditionalOptionsFormPart ::', () => {
   it('should render correct for PostgreSQL instance', async () => {
-    const type = 'postgresql';
+    const type = InstanceTypes.postgresql;
     const remoteInstanceCredentials = {
       isRDS: false,
     };
 
-    const root = mount(
+    const root = await getMount(
       <Form
         onSubmit={jest.fn()}
         render={() => (
@@ -101,13 +103,16 @@ describe('AdditionalOptionsFormPart ::', () => {
 
 describe('getAdditionalOptions ::', () => {
   it('should render correct for MongoDB', async () => {
-    const type = 'mongodb';
+    const type = InstanceTypes.mongodb;
     const remoteInstanceCredentials = {
       isRDS: false,
     };
 
-    const root = mount(
-      <Form onSubmit={jest.fn()} render={() => getAdditionalOptions(type, remoteInstanceCredentials, form)} />
+    const root = await getMount(
+      <Form
+        onSubmit={jest.fn()}
+        render={() => getAdditionalOptions(type, remoteInstanceCredentials, form as FormApi)}
+      />
     );
     const fields = root.find('input');
 
@@ -116,13 +121,16 @@ describe('getAdditionalOptions ::', () => {
   });
 
   it('should render correct for MySQL', async () => {
-    const type = 'mysql';
+    const type = InstanceTypes.mysql;
     const remoteInstanceCredentials = {
       isRDS: false,
     };
 
-    const root = mount(
-      <Form onSubmit={jest.fn()} render={() => getAdditionalOptions(type, remoteInstanceCredentials, form)} />
+    const root = await getMount(
+      <Form
+        onSubmit={jest.fn()}
+        render={() => getAdditionalOptions(type, remoteInstanceCredentials, form as FormApi)}
+      />
     );
     const fields = root.find('input');
 
@@ -131,13 +139,16 @@ describe('getAdditionalOptions ::', () => {
   });
 
   it('should render correct for RDS MySQL', async () => {
-    const type = 'mysql';
+    const type = InstanceTypes.mysql;
     const remoteInstanceCredentials = {
       isRDS: true,
     };
 
-    const root = mount(
-      <Form onSubmit={jest.fn()} render={() => getAdditionalOptions(type, remoteInstanceCredentials, form)} />
+    const root = await getMount(
+      <Form
+        onSubmit={jest.fn()}
+        render={() => getAdditionalOptions(type, remoteInstanceCredentials, form as FormApi)}
+      />
     );
     const fields = root.find('input');
 
@@ -148,13 +159,16 @@ describe('getAdditionalOptions ::', () => {
   });
 
   it('should render correct for PostgreSQL', async () => {
-    const type = 'postgresql';
+    const type = InstanceTypes.postgresql;
     const remoteInstanceCredentials = {
       isRDS: true,
     };
 
-    const root = mount(
-      <Form onSubmit={jest.fn()} render={() => getAdditionalOptions(type, remoteInstanceCredentials, form)} />
+    const root = await getMount(
+      <Form
+        onSubmit={jest.fn()}
+        render={() => getAdditionalOptions(type, remoteInstanceCredentials, form as FormApi)}
+      />
     );
     const fields = root.find('input');
 

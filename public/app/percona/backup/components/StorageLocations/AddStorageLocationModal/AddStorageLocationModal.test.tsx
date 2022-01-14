@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import { dataQa, LoaderButton } from '@percona/platform-core';
+import { dataQa } from '@percona/platform-core';
 import { LocationType, S3Location, StorageLocation } from '../StorageLocations.types';
 import { LocalFields } from './LocalFields';
 import { S3Fields } from './S3Fields';

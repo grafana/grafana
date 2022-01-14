@@ -2,8 +2,8 @@ import { mount } from 'enzyme';
 import React from 'react';
 import { dataQa } from '@percona/platform-core';
 import { Form } from 'react-final-form';
-import { act } from 'react-dom/test-utils';
 import { ExternalServiceConnectionDetails } from './ExternalServiceConnectionDetails';
+import { asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 describe('Add remote instance:: ', () => {
   it('should render correct for mysql and highlight empty mandatory fields on submit', async () => {
@@ -23,9 +23,7 @@ describe('Add remote instance:: ', () => {
       .find(dataQa('url-text-input'))
       .simulate('change', { target: { value: 'https://admin:admin@localhost/metrics' } });
 
-    await act(async () => {
-      root.find('button#parseUrl').simulate('click');
-    });
+    await asyncAct(() => root.find('button#parseUrl').simulate('click'));
 
     root.update();
 

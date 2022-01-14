@@ -2,9 +2,9 @@ import React from 'react';
 import { mount, shallow } from 'enzyme';
 import { dataQa } from '@percona/platform-core';
 import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions/MultipleActions';
-import { act } from 'react-dom/test-utils';
 import { dbClustersStub } from '../__mocks__/dbClustersStubs';
 import { DBClusterActions } from './DBClusterActions';
+import { asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 jest.mock('app/core/app_events');
 jest.mock('../XtraDB.service');
@@ -54,7 +54,7 @@ describe('DBClusterActions::', () => {
       />
     );
 
-    await act(async () => {
+    await asyncAct(() => {
       const button = root.find('button');
 
       button.simulate('click');
@@ -84,8 +84,7 @@ describe('DBClusterActions::', () => {
         getDBClusters={jest.fn()}
       />
     );
-
-    await act(async () => {
+    await asyncAct(() => {
       const button = root.find('button');
 
       button.simulate('click');
@@ -115,7 +114,7 @@ describe('DBClusterActions::', () => {
       />
     );
 
-    await act(async () => {
+    await asyncAct(() => {
       const button = root.find('button');
 
       button.simulate('click');
@@ -125,7 +124,7 @@ describe('DBClusterActions::', () => {
 
     const menu = root.find(dataQa('dropdown-menu-menu'));
 
-    await act(async () => {
+    await asyncAct(() => {
       const action = menu.find('span').at(1);
 
       action.simulate('click');

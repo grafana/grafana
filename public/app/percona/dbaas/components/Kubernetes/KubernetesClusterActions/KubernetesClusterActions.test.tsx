@@ -1,14 +1,13 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { dataQa } from '@percona/platform-core';
 import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions/MultipleActions';
-import { act } from 'react-dom/test-utils';
 import { KubernetesClusterActions } from './KubernetesClusterActions';
 import { kubernetesStub } from '../__mocks__/kubernetesStubs';
+import { getMount, asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 describe('KubernetesClusterActions::', () => {
-  it('renders correctly', () => {
-    const root = mount(
+  it('renders correctly', async () => {
+    const root = await getMount(
       <KubernetesClusterActions
         kubernetesCluster={kubernetesStub[0]}
         setSelectedCluster={jest.fn()}
@@ -25,7 +24,7 @@ describe('KubernetesClusterActions::', () => {
   it('Select delete actions', async () => {
     const setSelectedCluster = jest.fn();
     const setDeleteModalVisible = jest.fn();
-    const root = mount(
+    const root = await getMount(
       <KubernetesClusterActions
         kubernetesCluster={kubernetesStub[1]}
         setSelectedCluster={setSelectedCluster}
@@ -35,8 +34,7 @@ describe('KubernetesClusterActions::', () => {
         getDBClusters={jest.fn()}
       />
     );
-
-    await act(async () => {
+    await asyncAct(() => {
       const button = root.find('button');
 
       button.simulate('click');
@@ -57,8 +55,7 @@ describe('KubernetesClusterActions::', () => {
     const setSelectedCluster = jest.fn();
     const setDeleteModalVisible = jest.fn();
     const setViewConfigModalVisible = jest.fn();
-
-    const root = mount(
+    const root = await getMount(
       <KubernetesClusterActions
         kubernetesCluster={kubernetesStub[1]}
         setSelectedCluster={setSelectedCluster}
@@ -69,7 +66,7 @@ describe('KubernetesClusterActions::', () => {
       />
     );
 
-    await act(async () => {
+    await asyncAct(() => {
       const button = root.find('button');
 
       button.simulate('click');

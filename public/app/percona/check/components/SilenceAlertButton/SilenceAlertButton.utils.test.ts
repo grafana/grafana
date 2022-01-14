@@ -4,7 +4,7 @@ import { makeSilencePayload } from './SilenceAlertButton.utils';
 
 const TEST_USER = 'testUser';
 
-window.grafanaBootData = {
+(window as any).grafanaBootData = {
   user: {
     name: TEST_USER,
   },

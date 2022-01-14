@@ -7,30 +7,33 @@ on:
   pull_request:
 
 jobs:
-  build:
-    name: Build a Docker image
-    timeout-minutes: 30
+  test:
+    name: Run Unit tests
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
 
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: percona-platform/checkout@v2
+      - name: Run with Node 12
+        uses: percona-platform/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
 
-      - name: Enable experimental Docker features for --squash flag
-        run: sudo .github/workflows/enable-docker-experimental.sh
+      - name: Get Yarn cache directory
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
 
-      - name: Login to Docker registry
-        run: docker login -u $GITHUB_ACTOR -p ${{ secrets.GITHUB_TOKEN }} docker.pkg.github.com
+      - name: Use Yarn cache
+        uses: percona-platform/cache@v2
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ matrix.node-version }}-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Build a Docker image
-        run: docker build --squash --tag docker.pkg.github.com/percona-platform/grafana/grafana:dev .
+      - name: Install dependencies
+        run: yarn install --prefer-offline --frozen-lockfile --no-progress
 
-      - name: Push the Docker image to the registry
-        run: docker push docker.pkg.github.com/percona-platform/grafana/grafana:dev
-
-      - name: Print usefull info on failure
-        if: ${{ failure() }}
-        run: |
-          pwd
-          git status
-          env
+      - name: Run tests 
+        run: yarn run ci:test-percona-frontend

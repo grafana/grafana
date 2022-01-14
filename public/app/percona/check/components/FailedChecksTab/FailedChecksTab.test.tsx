@@ -1,10 +1,9 @@
 import React from 'react';
-import { ReactWrapper, mount } from 'enzyme';
 import { dataQa, logger, LoaderButton } from '@percona/platform-core';
 import { CheckService } from 'app/percona/check/Check.service';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { Table } from 'app/percona/check/components';
 import { FailedChecksTab } from './FailedChecksTab';
-import { act } from 'react-dom/test-utils';
 
 jest.mock('@percona/platform-core', () => {
   const originalModule = jest.requireActual('@percona/platform-core');
@@ -22,21 +21,14 @@ describe('FailedChecksTab::', () => {
   afterEach(() => getAlertsSpy.mockClear());
 
   it('should fetch active alerts at startup', async () => {
-    const wrapper: ReactWrapper;
+    const wrapper = await getMount(<FailedChecksTab hasNoAccess={false} />);
 
-    await act(async () => {
-      wrapper = await mount(<FailedChecksTab hasNoAccess={false} />);
-    });
     wrapper.update();
     expect(CheckService.getActiveAlerts).toHaveBeenCalledTimes(1);
   });
 
   it('should render a spinner at startup, while loading', async () => {
-    const wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<FailedChecksTab hasNoAccess={false} />);
-    });
+    const wrapper = await getMount(<FailedChecksTab hasNoAccess={false} />);
 
     expect(wrapper.find(dataQa('db-checks-failed-checks-spinner'))).toHaveLength(1);
     wrapper.update();
@@ -49,11 +41,7 @@ describe('FailedChecksTab::', () => {
     });
     const loggerSpy = spyOn(logger, 'error');
 
-    const wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<FailedChecksTab hasNoAccess={false} />);
-    });
+    const wrapper = await getMount(<FailedChecksTab hasNoAccess={false} />);
     wrapper.update();
 
     expect(loggerSpy).toBeCalledTimes(1);
@@ -64,11 +52,7 @@ describe('FailedChecksTab::', () => {
       throw Error('test');
     });
     const loggerSpy = spyOn(logger, 'error');
-    const wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<FailedChecksTab hasNoAccess={false} />);
-    });
+    const wrapper = await getMount(<FailedChecksTab hasNoAccess={false} />);
     wrapper.update();
     const runChecksButton = wrapper.find(LoaderButton);
 
@@ -79,11 +63,7 @@ describe('FailedChecksTab::', () => {
 
   it('should call the API to run checks when the "run checks" button gets clicked', async () => {
     const runChecksSpy = jest.spyOn(CheckService, 'runDbChecks');
-    const wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<FailedChecksTab hasNoAccess={false} />);
-    });
+    const wrapper = await getMount(<FailedChecksTab hasNoAccess={false} />);
     wrapper.update();
     const runChecksButton = wrapper.find(LoaderButton);
 
@@ -95,11 +75,7 @@ describe('FailedChecksTab::', () => {
   });
 
   it('should render a table after having fetched the alerts', async () => {
-    const wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<FailedChecksTab hasNoAccess={false} />);
-    });
+    const wrapper = await getMount(<FailedChecksTab hasNoAccess={false} />);
     expect(wrapper.find(Table)).toHaveLength(0);
     wrapper.update();
 

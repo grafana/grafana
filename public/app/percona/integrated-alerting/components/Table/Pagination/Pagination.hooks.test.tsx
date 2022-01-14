@@ -19,7 +19,7 @@ const TestComponent: FC = () => {
 };
 
 const getDataFromLocalStorage = (): number => {
-  return +localStorage.getItem(TABLE_STORAGE_ID);
+  return parseInt(localStorage.getItem(TABLE_STORAGE_ID) || '0', 10);
 };
 
 const setDataOnLocalStorage = (pageSize: number) => localStorage.setItem(TABLE_STORAGE_ID, `${pageSize}`);
@@ -49,7 +49,7 @@ describe('useStoredTablePageSize', () => {
   });
 
   it('should set the size from previous saves', () => {
-    const value = PAGE_SIZES[1].value;
+    const value = PAGE_SIZES[1].value || 0;
     setDataOnLocalStorage(value);
     const wrapper = mount(<TestComponent />);
     const span = wrapper.find('span').first();

@@ -16,7 +16,7 @@ describe('TopSection.utils', () => {
   ];
 
   it('should return menu item with integrated alerting on top', () => {
-    const result = buildIntegratedAlertingMenuItem(testMenu)[0].children;
+    const result = buildIntegratedAlertingMenuItem(testMenu)[0].children || [];
     const integratedAlertingLink = {
       id: 'integrated-alerting',
       text: 'Integrated Alerting',
