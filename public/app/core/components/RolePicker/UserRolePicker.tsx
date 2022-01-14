@@ -1,4 +1,5 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
+import { useAsync } from 'react-use';
 import { Role, OrgRole } from 'app/types';
 import { RolePicker } from './RolePicker';
 import { fetchBuiltinRoles, fetchRoleOptions, fetchUserRoles, updateUserRoles } from './api';
@@ -29,26 +30,22 @@ export const UserRolePicker: FC<Props> = ({
   const [builtInRoles, setBuiltinRoles] = useState<Record<string, Role[]>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchOptions() {
-      try {
-        let options = await (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId));
-        setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
+  useAsync(async () => {
+    try {
+      let options = await (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId));
+      setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
 
-        const builtInRoles = await (getBuiltinRoles ? getBuiltinRoles() : fetchBuiltinRoles(orgId));
-        setBuiltinRoles(builtInRoles);
+      const builtInRoles = await (getBuiltinRoles ? getBuiltinRoles() : fetchBuiltinRoles(orgId));
+      setBuiltinRoles(builtInRoles);
 
-        const userRoles = await fetchUserRoles(userId, orgId);
-        setAppliedRoles(userRoles);
-      } catch (e) {
-        // TODO handle error
-        console.error('Error loading options');
-      } finally {
-        setIsLoading(false);
-      }
+      const userRoles = await fetchUserRoles(userId, orgId);
+      setAppliedRoles(userRoles);
+    } catch (e) {
+      // TODO handle error
+      console.error('Error loading options');
+    } finally {
+      setIsLoading(false);
     }
-
-    fetchOptions();
   }, [getBuiltinRoles, getRoleOptions, orgId, userId]);
 
   return (
