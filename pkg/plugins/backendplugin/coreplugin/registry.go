@@ -1,10 +1,9 @@
-package provider
+package coreplugin
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -40,36 +39,40 @@ const (
 	Grafana         = "grafana"
 )
 
-type CoreRegistry struct {
+type Registry struct {
 	store map[string]backendplugin.PluginFactoryFunc
+}
+
+func NewRegistry(store map[string]backendplugin.PluginFactoryFunc) *Registry {
+	return &Registry{
+		store: store,
+	}
 }
 
 func ProvideCoreRegistry(am *azuremonitor.Service, cw *cloudwatch.CloudWatchService, cm *cloudmonitoring.Service,
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	ms *mssql.Service, graf *grafanads.Service) *CoreRegistry {
-	return &CoreRegistry{
-		store: map[string]backendplugin.PluginFactoryFunc{
-			CloudWatch:      asBackendPlugin(cw.Executor),
-			CloudMonitoring: asBackendPlugin(cm),
-			AzureMonitor:    asBackendPlugin(am),
-			Elasticsearch:   asBackendPlugin(es),
-			Graphite:        asBackendPlugin(grap),
-			InfluxDB:        asBackendPlugin(idb),
-			Loki:            asBackendPlugin(lk),
-			OpenTSDB:        asBackendPlugin(otsdb),
-			Prometheus:      asBackendPlugin(pr),
-			Tempo:           asBackendPlugin(t),
-			TestData:        asBackendPlugin(td),
-			PostgreSQL:      asBackendPlugin(pg),
-			MySQL:           asBackendPlugin(my),
-			MSSQL:           asBackendPlugin(ms),
-			Grafana:         asBackendPlugin(graf),
-		},
-	}
+	ms *mssql.Service, graf *grafanads.Service) *Registry {
+	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
+		CloudWatch:      asBackendPlugin(cw.Executor),
+		CloudMonitoring: asBackendPlugin(cm),
+		AzureMonitor:    asBackendPlugin(am),
+		Elasticsearch:   asBackendPlugin(es),
+		Graphite:        asBackendPlugin(grap),
+		InfluxDB:        asBackendPlugin(idb),
+		Loki:            asBackendPlugin(lk),
+		OpenTSDB:        asBackendPlugin(otsdb),
+		Prometheus:      asBackendPlugin(pr),
+		Tempo:           asBackendPlugin(t),
+		TestData:        asBackendPlugin(td),
+		PostgreSQL:      asBackendPlugin(pg),
+		MySQL:           asBackendPlugin(my),
+		MSSQL:           asBackendPlugin(ms),
+		Grafana:         asBackendPlugin(graf),
+	})
 }
 
-func (cr *CoreRegistry) Get(pluginID string) backendplugin.PluginFactoryFunc {
+func (cr *Registry) Get(pluginID string) backendplugin.PluginFactoryFunc {
 	return cr.store[pluginID]
 }
 
@@ -90,7 +93,7 @@ func asBackendPlugin(svc interface{}) backendplugin.PluginFactoryFunc {
 
 	if opts.QueryDataHandler != nil || opts.CallResourceHandler != nil ||
 		opts.CheckHealthHandler != nil || opts.StreamHandler != nil {
-		return coreplugin.New(opts)
+		return New(opts)
 	}
 
 	return nil
