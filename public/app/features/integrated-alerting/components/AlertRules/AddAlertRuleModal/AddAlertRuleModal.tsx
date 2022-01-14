@@ -10,8 +10,7 @@ import {
   logger,
   validators,
 } from '@percona/platform-core';
-import { SelectableValue } from '@grafana/data';
-import { AppEvents } from '@grafana/data';
+import { SelectableValue, AppEvents } from '@grafana/data';
 import { Messages } from './AddAlertRuleModal.messages';
 import { AddAlertRuleModalProps, AddAlertRuleFormValues } from './AddAlertRuleModal.types';
 import { getStyles } from './AddAlertRuleModal.styles';
@@ -43,10 +42,15 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
   const getData = async () => {
     try {
       const [channelsListResponse, templatesListResponse] = await Promise.all([
-        NotificationChannelService.list(),
+        NotificationChannelService.list({
+          page_params: {
+            index: 0,
+            page_size: 100,
+          },
+        }),
         AlertRuleTemplateService.list(),
       ]);
-      setChannelsOptions(formatChannelsOptions(channelsListResponse));
+      setChannelsOptions(formatChannelsOptions(channelsListResponse.channels));
       setTemplateOptions(formatTemplateOptions(templatesListResponse.templates));
     } catch (e) {
       logger.error(e);

@@ -11,7 +11,7 @@ describe('AddNotificationChannelModal.utils', () => {
     expect(initialValues).toEqual({
       name: notificationChannel.summary,
       type: TYPE_OPTIONS[0],
-      emails: notificationChannel.emails.join('\n'),
+      emails: notificationChannel.emails?.join('\n'),
     });
   });
 
