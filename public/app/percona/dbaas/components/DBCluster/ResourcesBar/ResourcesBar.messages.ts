@@ -5,6 +5,8 @@ export const Messages = {
     `Using ${allocated.value} ${allocated.units} (${allocatedWidth}%) of ${total.value} ${total.units} in total`,
   buildExpectedLabel: (expected: ResourcesWithUnits, resourceLabel: string) =>
     `Required ${resourceLabel} (${expected.value} ${expected.units})`,
+  buildExpectedAllocatedLabel: (expectedDowsize: ResourcesWithUnits, resourceLabel: string) =>
+    `Expected Consumed ${resourceLabel} (${expectedDowsize.value} ${expectedDowsize.units})`,
   buildAllocatedLabel: (resourceLabel: string) => `Consumed ${resourceLabel}`,
   buildInsufficientLabel: (expected: ResourcesWithUnits, resourceLabel: string) =>
     `Insufficient ${resourceLabel} (${expected.value} ${expected.units} required)`,

@@ -8,6 +8,7 @@ import {
   ResourcesUnits,
   DBClusterComponentVersionStatus,
   DBClusterAllocatedResources,
+  ResourcesWithUnits,
 } from '../DBCluster.types';
 
 export const dbClustersStub: DBCluster[] = [
@@ -183,4 +184,22 @@ export const psmdbComponentsVersionsStubs = {
       },
     },
   ],
+};
+
+export const resourcesA: ResourcesWithUnits = {
+  value: 10,
+  original: 10,
+  units: ResourcesUnits.BYTES,
+};
+
+export const resourcesB: ResourcesWithUnits = {
+  value: 20,
+  original: 20,
+  units: ResourcesUnits.BYTES,
+};
+
+export const resourcesC: ResourcesWithUnits = {
+  value: 20,
+  original: 20,
+  units: ResourcesUnits.GB,
 };

@@ -1,5 +1,11 @@
 import { ResourcesUnits, ResourcesWithUnits } from '../DBCluster.types';
-import { formatResources, getResourcesWidth } from './ResourcesBar.utils';
+import { resourcesA, resourcesB } from '../__mocks__/dbClustersStubs';
+import {
+  formatResources,
+  getExpectedAllocated,
+  getExpectedAllocatedWidth,
+  getResourcesWidth,
+} from './ResourcesBar.utils';
 
 describe('ResourcesBar.utils::', () => {
   it('returns correct width', () => {
@@ -21,5 +27,32 @@ describe('ResourcesBar.utils::', () => {
     expect(formatResources(getValueWithUnits(4.129873))).toEqual(getValueWithUnits(4.13));
     expect(formatResources(getValueWithUnits(0.65))).toEqual(getValueWithUnits(0.65));
     expect(formatResources(getValueWithUnits(6))).toEqual(getValueWithUnits(6));
+  });
+
+  it('returns correct expected allocated width', () => {
+    expect(getExpectedAllocatedWidth(undefined, undefined)).toBe(0);
+    expect(getExpectedAllocatedWidth(resourcesB, resourcesA)).toBe(0);
+    expect(getExpectedAllocatedWidth({ ...resourcesA, original: -40 }, resourcesB)).toBe(0);
+    expect(getExpectedAllocatedWidth(resourcesA, resourcesB)).toBe(50);
+    expect(getExpectedAllocatedWidth({ ...resourcesA, original: -5 }, resourcesB)).toBe(75);
+    expect(getExpectedAllocatedWidth({ ...resourcesA, original: -1 }, { ...resourcesA, original: 4 })).toBe(75);
+  });
+
+  it('returns correct expected allocated value', () => {
+    expect(getExpectedAllocated(undefined, undefined)).toEqual<ResourcesWithUnits>({
+      value: 0,
+      original: 0,
+      units: ResourcesUnits.BYTES,
+    });
+    expect(getExpectedAllocated(resourcesA, resourcesA)).toEqual<ResourcesWithUnits>({
+      value: 20,
+      original: 20,
+      units: ResourcesUnits.BYTES,
+    });
+    expect(getExpectedAllocated(resourcesA, resourcesB)).toEqual<ResourcesWithUnits>({
+      value: 30,
+      original: 30,
+      units: ResourcesUnits.BYTES,
+    });
   });
 });

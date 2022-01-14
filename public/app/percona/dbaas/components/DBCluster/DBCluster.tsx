@@ -99,6 +99,12 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
     getSettings();
   }, []);
 
+  useEffect(() => {
+    if (!deleteModalVisible && !editModalVisible && !logsModalVisible) {
+      setSelectedCluster(undefined);
+    }
+  }, [deleteModalVisible, editModalVisible, logsModalVisible]);
+
   return (
     <div>
       <div className={styles.actionPanel}>
@@ -117,13 +123,17 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
         onClusterDeleted={getDBClusters}
         selectedCluster={selectedCluster}
       />
-      <EditDBClusterModal
-        isVisible={editModalVisible}
-        setVisible={setEditModalVisible}
-        onDBClusterChanged={getDBClusters}
-        selectedCluster={selectedCluster}
-      />
-      <DBClusterLogsModal isVisible={logsModalVisible} setVisible={setLogsModalVisible} dbCluster={selectedCluster} />
+      {selectedCluster && (
+        <EditDBClusterModal
+          isVisible={editModalVisible}
+          setVisible={setEditModalVisible}
+          onDBClusterChanged={getDBClusters}
+          selectedCluster={selectedCluster}
+        />
+      )}
+      {logsModalVisible && (
+        <DBClusterLogsModal isVisible={logsModalVisible} setVisible={setLogsModalVisible} dbCluster={selectedCluster} />
+      )}
       <Table columns={columns} data={dbClusters} loading={loading} noData={<AddNewClusterButton />} />
     </div>
   );
