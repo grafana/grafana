@@ -102,7 +102,7 @@ func TestGenerateToggleHelpers(t *testing.T) {
 
 func generateRegistry() (string, error) {
 	tmpl, err := template.New("fn").Parse(`
-// {{.CamleCase}} checks for the flag: {{.Flag.Name}}{{.Ext}}
+// Is{{.CamleCase}}Enabled checks for the flag: {{.Flag.Name}}{{.Ext}}
 func (ft *FeatureToggles) Is{{.CamleCase}}Enabled() bool {
 	return ft.manager.IsEnabled("{{.Flag.Name}}")
 }
