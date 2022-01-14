@@ -4,6 +4,6 @@ export interface CredentialsForm {
 }
 
 export interface CredentialsProps {
-  onSetCredentials: (credentials: CredentialsForm) => void;
+  discover: (credentials: CredentialsForm) => void;
   selectInstance: (instance: any) => void;
 }
