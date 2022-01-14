@@ -50,29 +50,7 @@ export const RolePickerInput = ({
   return !isFocused ? (
     <div className={styles.selectedRoles} onMouseDown={onOpen}>
       {showBuiltInRole && <ValueContainer>{builtInRole}</ValueContainer>}
-      {!!numberOfRoles ? (
-        <Tooltip
-          content={
-            <div className={styles.tooltip}>
-              {appliedRoles?.map((role) => (
-                <p key={role.uid}>{role.displayName}</p>
-              ))}
-            </div>
-          }
-        >
-          <div>
-            <ValueContainer>{`${showBuiltInRole ? '+' : ''}${numberOfRoles} role${
-              numberOfRoles > 1 ? 's' : ''
-            }`}</ValueContainer>
-          </div>
-        </Tooltip>
-      ) : (
-        !showBuiltInRole && (
-          <div>
-            <ValueContainer>No roles assigned</ValueContainer>
-          </div>
-        )
-      )}
+      <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} />
     </div>
   ) : (
     <div className={styles.wrapper}>
@@ -101,6 +79,44 @@ export const RolePickerInput = ({
 };
 
 RolePickerInput.displayName = 'RolePickerInput';
+
+interface RolesLabelProps {
+  appliedRoles: Role[];
+  showBuiltInRole?: boolean;
+  numberOfRoles: number;
+}
+
+export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: RolesLabelProps): JSX.Element => {
+  const styles = useStyles2((theme) => getTooltipStyles(theme));
+
+  return (
+    <>
+      {!!numberOfRoles ? (
+        <Tooltip
+          content={
+            <div className={styles.tooltip}>
+              {appliedRoles?.map((role) => (
+                <p key={role.uid}>{role.displayName}</p>
+              ))}
+            </div>
+          }
+        >
+          <div>
+            <ValueContainer>{`${showBuiltInRole ? '+' : ''}${numberOfRoles} role${
+              numberOfRoles > 1 ? 's' : ''
+            }`}</ValueContainer>
+          </div>
+        </Tooltip>
+      ) : (
+        !showBuiltInRole && (
+          <div>
+            <ValueContainer>No roles assigned</ValueContainer>
+          </div>
+        )
+      )}
+    </>
+  );
+};
 
 const getRolePickerInputStyles = (
   theme: GrafanaTheme2,
@@ -164,3 +180,11 @@ const getRolePickerInputStyles = (
     `,
   };
 };
+
+const getTooltipStyles = (theme: GrafanaTheme2) => ({
+  tooltip: css`
+    p {
+      margin-bottom: ${theme.spacing(0.5)};
+    }
+  `,
+});
