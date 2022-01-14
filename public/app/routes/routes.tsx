@@ -394,6 +394,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/dbaas',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "DbaasPage" */ 'app/percona/dbaas/DBaaS')),
     },
+    {
+      path: '/backup',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "BackupPage" */ 'app/features/backup/BackupPage')),
+    },
+    {
+      path: '/backup/:tab',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "BackupPage" */ 'app/features/backup/BackupPage')),
+    },
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),

@@ -14,6 +14,7 @@ export interface TableProps {
   pagesPerView?: number;
   onPaginationChanged?: (pageSize: number, pageIndex: number) => void;
   children?: (rows: Row[], table: TableInstance) => React.ReactNode;
+  renderExpandedRow?: (row: Row) => JSX.Element;
 }
 
 export interface PaginatedTableState extends TableState {

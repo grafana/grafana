@@ -72,6 +72,13 @@ export const NavBar: FC = React.memo(() => {
         });
       }
 
+      newItems.push({
+        id: 'backup',
+        icon: 'history',
+        text: 'Backup',
+        url: `${config.appSubUrl}/backup`,
+      });
+
       setTopItems(newItems);
     };
     if (config.bootData.user.isGrafanaAdmin) {
