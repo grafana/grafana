@@ -1,7 +1,7 @@
 import { dataQa } from '@percona/platform-core';
-import { mount, ReactWrapper } from 'enzyme';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
+
+import { getMount } from 'app/percona/shared/helpers/testUtils';
 
 import { Alerts } from './Alerts';
 import { AlertsService } from './Alerts.service';
@@ -21,11 +21,7 @@ describe('AlertsTable', () => {
   });
 
   it('should render the table correctly', async () => {
-    let wrapper: ReactWrapper<any, Readonly<{}>, React.Component<{}, {}, any>>;
-
-    await act(async () => {
-      wrapper = await mount(<Alerts />);
-    });
+    const wrapper = await getMount(<Alerts />);
 
     wrapper.update();
 
@@ -35,22 +31,14 @@ describe('AlertsTable', () => {
   });
 
   it('should have table initially loading', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<Alerts />);
-    });
+    const wrapper = await getMount(<Alerts />);
 
     expect(wrapper.find(dataQa('table-loading')).exists()).toBeTruthy();
   });
 
   it('should render correctly without data', async () => {
     jest.spyOn(AlertsService, 'list').mockReturnValueOnce(Promise.resolve({ alerts: [] }));
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<Alerts />);
-    });
+    const wrapper = await getMount(<Alerts />);
 
     wrapper.update();
 

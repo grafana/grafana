@@ -23,6 +23,9 @@
     "lint:sass": "yarn stylelint '{public/sass,packages}/**/*.scss' --cache",
     "test:ci": "betterer ci && mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
     "lint:fix": "yarn lint:ts --fix",
+    "jest": "jest --notify --watch",
+    "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
+    "jest-percona-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%} --roots public/app/percona",
     "packages:build": "lerna run clean && lerna run build --ignore @grafana-plugins/input-datasource",
     "packages:docsExtract": "rm -rf ./reports/docs && lerna run docsExtract",
     "packages:docsToMarkdown": "api-documenter markdown --input-folder ./reports/docs/ --output-folder ./docs/sources/packages_api/ --hugo",
@@ -53,8 +56,10 @@
     "i18n:extract": "lingui extract",
     "i18n:compile": "lingui compile",
     "postinstall": "husky install",
+    "test-percona": "echo NOT IMPLEMENTED",
     "betterer": "betterer",
-    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
+    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
+    "ci:test-percona-frontend": "yarn run prettier:check && yarn run packages:typecheck && yarn run typecheck && yarn run test-percona"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-5/",

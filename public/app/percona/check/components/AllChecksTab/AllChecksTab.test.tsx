@@ -1,11 +1,10 @@
 import { logger, dataQa } from '@percona/platform-core';
-import { ReactWrapper, mount } from 'enzyme';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
 import { Spinner } from '@grafana/ui';
 import { CheckService } from 'app/percona/check/Check.service';
 import { Interval } from 'app/percona/check/types';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
 
 import { AllChecksTab } from './AllChecksTab';
 import { Messages } from './AllChecksTab.messages';
@@ -25,12 +24,7 @@ jest.mock('@percona/platform-core', () => {
 describe('AllChecksTab::', () => {
   it('should fetch checks at startup', async () => {
     const spy = jest.spyOn(CheckService, 'getAllChecks');
-
-    const wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<AllChecksTab />);
-    });
+    const wrapper = await getMount(<AllChecksTab />);
     wrapper.update();
 
     expect(spy).toBeCalledTimes(1);
@@ -40,11 +34,7 @@ describe('AllChecksTab::', () => {
   });
 
   it('should render a spinner at startup, while loading', async () => {
-    const wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<AllChecksTab />);
-    });
+    const wrapper = await getMount(<AllChecksTab />);
     wrapper.update();
 
     await runAllPromises();
@@ -62,11 +52,7 @@ describe('AllChecksTab::', () => {
     });
     const loggerSpy = jest.spyOn(logger, 'error').mockImplementationOnce(() => null);
 
-    const wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<AllChecksTab />);
-    });
+    const wrapper = await getMount(<AllChecksTab />);
     wrapper.update();
 
     expect(loggerSpy).toBeCalledTimes(1);
@@ -95,11 +81,7 @@ describe('AllChecksTab::', () => {
       ])
     );
 
-    const wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<AllChecksTab />);
-    });
+    const wrapper = await getMount(<AllChecksTab />);
     wrapper.update();
 
     await runAllPromises();

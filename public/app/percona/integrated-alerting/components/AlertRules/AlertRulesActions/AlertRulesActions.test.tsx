@@ -1,7 +1,8 @@
 import { dataQa } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
+
+import { asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 import { AlertRulesProvider } from '../AlertRules.provider';
 import { AlertRulesService } from '../AlertRules.service';
@@ -42,7 +43,7 @@ describe('AlertRulesActions', () => {
       template_name: 'test 2',
     };
 
-    await act(async () => {
+    await asyncAct(() => {
       wrapper.find(dataQa('copy-alert-rule-button')).at(0).simulate('click');
     });
 
@@ -54,7 +55,7 @@ describe('AlertRulesActions', () => {
     const context = mockContext();
     const wrapper = mount(withContext(context, <AlertRulesActions alertRule={formattedRulesStubs[0]} />));
 
-    await act(async () => {
+    await asyncAct(() => {
       wrapper.find(dataQa('edit-alert-rule-button')).at(0).simulate('click');
     });
 
@@ -66,7 +67,7 @@ describe('AlertRulesActions', () => {
 
     expect(wrapper.find(dataQa('modal-wrapper'))).toHaveLength(0);
 
-    await act(async () => {
+    await asyncAct(() => {
       wrapper.find(dataQa('delete-alert-rule-button')).at(0).simulate('click');
     });
 
@@ -95,7 +96,7 @@ describe('AlertRulesActions', () => {
   it('calls getAlertRules on toggle', async () => {
     const context = mockContext();
     const wrapper = mount(withContext(context, <AlertRulesActions alertRule={formattedRulesStubs[0]} />));
-    await act(async () => {
+    await asyncAct(() => {
       wrapper.find(dataQa('toggle-alert-rule')).find('input').simulate('click');
     });
 

@@ -1,8 +1,7 @@
-import { mount, ReactWrapper } from 'enzyme';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
 import { Table } from 'app/percona/integrated-alerting/components/Table';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
 
 import { BackupInventory } from './BackupInventory';
 import { Backup } from './BackupInventory.types';
@@ -13,11 +12,7 @@ jest.mock('../../hooks/recurringCall.hook');
 
 describe('BackupInventory', () => {
   it('should send correct data to Table', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<BackupInventory />);
-    });
+    const wrapper = await getMount(<BackupInventory />);
 
     wrapper.update();
     expect(wrapper.find(Table).prop('data')).toEqual<Backup[]>(stubs);

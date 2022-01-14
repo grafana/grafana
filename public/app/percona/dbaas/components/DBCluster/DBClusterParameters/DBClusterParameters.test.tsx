@@ -1,8 +1,10 @@
 import React from 'react';
-import { act } from 'react-dom/test-utils';
-import { mount, ReactWrapper } from 'enzyme';
-import { DBClusterParameters } from './DBClusterParameters';
+
+import { getMount } from 'app/percona/shared/helpers/testUtils';
+
 import { dbClustersStub } from '../__mocks__/dbClustersStubs';
+
+import { DBClusterParameters } from './DBClusterParameters';
 
 jest.mock('app/core/app_events');
 jest.mock('../XtraDB.service');
@@ -10,11 +12,7 @@ jest.mock('../PSMDB.service');
 
 describe('DBClusterParameters::', () => {
   it('renders parameters items correctly', async () => {
-    let root: ReactWrapper;
-
-    await act(async () => {
-      root = mount(<DBClusterParameters dbCluster={dbClustersStub[0]} />);
-    });
+    const root = await getMount(<DBClusterParameters dbCluster={dbClustersStub[0]} />);
 
     expect(root.find('[data-qa="cluster-parameters-cluster-name"]')).toBeTruthy();
 
@@ -31,11 +29,7 @@ describe('DBClusterParameters::', () => {
   });
 
   it('renders parameters items correctly with MongoDB cluster', async () => {
-    let root: ReactWrapper;
-
-    await act(async () => {
-      root = mount(<DBClusterParameters dbCluster={dbClustersStub[2]} />);
-    });
+    const root = await getMount(<DBClusterParameters dbCluster={dbClustersStub[2]} />);
 
     root.update();
 

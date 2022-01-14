@@ -1,8 +1,9 @@
 import { dataQa } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 import { Form } from 'react-final-form';
+
+import { asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 import { ExternalServiceConnectionDetails } from './ExternalServiceConnectionDetails';
 
@@ -24,9 +25,7 @@ describe('Add remote instance:: ', () => {
       .find(dataQa('url-text-input'))
       .simulate('change', { target: { value: 'https://admin:admin@localhost/metrics' } });
 
-    await act(async () => {
-      root.find('button#parseUrl').simulate('click');
-    });
+    await asyncAct(() => root.find('button#parseUrl').simulate('click'));
 
     root.update();
 

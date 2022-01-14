@@ -1,8 +1,10 @@
 import React from 'react';
-import { act } from 'react-dom/test-utils';
-import { mount, ReactWrapper } from 'enzyme';
-import { DBClusterConnection } from './DBClusterConnection';
+
+import { getMount } from 'app/percona/shared/helpers/testUtils';
+
 import { dbClustersStub, mongoDBClusterConnectionStub } from '../__mocks__/dbClustersStubs';
+
+import { DBClusterConnection } from './DBClusterConnection';
 
 jest.mock('app/core/app_events');
 jest.mock('../XtraDB.service');
@@ -10,11 +12,7 @@ jest.mock('../PSMDB.service');
 
 describe('DBClusterConnection::', () => {
   it('renders correctly connection items', async () => {
-    let root: ReactWrapper;
-
-    await act(async () => {
-      root = mount(<DBClusterConnection dbCluster={dbClustersStub[0]} />);
-    });
+    const root = await getMount(<DBClusterConnection dbCluster={dbClustersStub[0]} />);
 
     expect(root.find('[data-qa="cluster-connection-host"]')).toBeTruthy();
     expect(root.find('[data-qa="cluster-connection-port"]')).toBeTruthy();
@@ -22,11 +20,7 @@ describe('DBClusterConnection::', () => {
     expect(root.find('[data-qa="cluster-connection-password"]')).toBeTruthy();
   });
   it('renders correctly connection items with MongoDB cluster', async () => {
-    let root: ReactWrapper;
-
-    await act(async () => {
-      root = mount(<DBClusterConnection dbCluster={dbClustersStub[2]} />);
-    });
+    const root = await getMount(<DBClusterConnection dbCluster={dbClustersStub[2]} />);
 
     root.update();
 

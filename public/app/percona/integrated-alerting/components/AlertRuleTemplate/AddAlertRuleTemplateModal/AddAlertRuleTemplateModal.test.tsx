@@ -1,7 +1,8 @@
 import { dataQa } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
+
+import { asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 import { AddAlertRuleTemplateModal } from './AddAlertRuleTemplateModal';
 
@@ -50,9 +51,7 @@ describe('AddAlertRuleTemplateModal', () => {
 
     wrapper.find('textarea').simulate('change', { target: { value: 'test content' } });
 
-    await act(async () => {
-      wrapper.find('form').simulate('submit');
-    });
+    await asyncAct(() => wrapper.find('form').simulate('submit'));
 
     expect(setVisible).toHaveBeenCalledWith(false);
     expect(getAlertRuleTemplates).toHaveBeenCalled();

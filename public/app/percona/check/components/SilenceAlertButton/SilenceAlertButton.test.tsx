@@ -1,12 +1,12 @@
 import { LoaderButton, logger } from '@percona/platform-core';
 import { mount, shallow } from 'enzyme';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
 import { AlertsReloadContext } from 'app/percona/check/Check.context';
 import { CheckService } from 'app/percona/check/Check.service';
 import { activeCheckStub } from 'app/percona/check/__mocks__/stubs';
 import { SilenceAlertButton } from 'app/percona/check/components';
+import { asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 import { makeSilencePayload } from './SilenceAlertButton.utils';
 
@@ -43,7 +43,7 @@ describe('SilenceAlertButton::', () => {
   it('should call functions to buind the payload and to call the API to silence an alert on click', async () => {
     const { labels } = activeCheckStub[0].details[0];
 
-    window.grafanaBootData = {
+    (window as any).grafanaBootData = {
       user: {
         name: 'test_user',
       },
@@ -65,9 +65,7 @@ describe('SilenceAlertButton::', () => {
     expect(spy).toBeCalledTimes(0);
     expect(fakeFetchAlerts).toBeCalledTimes(0);
 
-    await act(async () => {
-      wrapper.find(LoaderButton).simulate('click');
-    });
+    await asyncAct(async () => wrapper.find(LoaderButton).simulate('click'));
     wrapper.update();
 
     expect(mockedMakeSilencePayload).toBeCalledTimes(1);
@@ -83,7 +81,7 @@ describe('SilenceAlertButton::', () => {
   it('should call functions to buind the payload and to call the API to silence an alert on click', async () => {
     const { labels } = activeCheckStub[0].details[0];
 
-    window.grafanaBootData = {
+    (window as any).grafanaBootData = {
       user: {
         name: 'test_user',
       },
@@ -97,9 +95,7 @@ describe('SilenceAlertButton::', () => {
 
     const root = shallow(<SilenceAlertButton labels={labels} />);
 
-    await act(async () => {
-      root.simulate('click');
-    });
+    await asyncAct(async () => root.simulate('click'));
 
     expect(logger.error).toBeCalledTimes(1);
     expect(logger.error).toBeCalledWith(Error('Test error'));

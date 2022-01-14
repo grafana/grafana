@@ -1,4 +1,4 @@
-import { dataQa, LoaderButton } from '@percona/platform-core';
+import { dataQa } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 

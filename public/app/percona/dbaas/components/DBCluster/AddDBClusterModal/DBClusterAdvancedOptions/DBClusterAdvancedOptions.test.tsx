@@ -1,9 +1,12 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { Form, FormRenderProps } from 'react-final-form';
+
 import { Databases } from 'app/percona/shared/core';
-import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
+
 import { AddDBClusterFields } from '../AddDBClusterModal.types';
+
+import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions';
 import { DBClusterResources, DBClusterTopology } from './DBClusterAdvancedOptions.types';
 
 jest.mock('../../DBCluster.service');
@@ -11,8 +14,8 @@ jest.mock('../../PSMDB.service');
 jest.mock('../../XtraDB.service');
 
 describe('DBClusterAdvancedOptions::', () => {
-  it('renders correctly', () => {
-    const root = mount(
+  it('renders correctly', async () => {
+    const root = await getMount(
       <Form onSubmit={jest.fn()} render={(renderProps) => <DBClusterAdvancedOptions {...renderProps} />} />
     );
 
@@ -27,8 +30,8 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(root.find('[data-qa="disk-number-input"]')).toBeTruthy();
     expect(root.find('[data-qa="step-progress-submit-button"]')).toBeTruthy();
   });
-  it('renders correctly with initial values', () => {
-    const root = mount(
+  it('renders correctly with initial values', async () => {
+    const root = await getMount(
       <Form
         initialValues={{
           [AddDBClusterFields.topology]: DBClusterTopology.cluster,
@@ -44,16 +47,16 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(nodes.prop('value')).toBe(3);
     expect(topology.prop('value')).toEqual(DBClusterTopology.cluster);
   });
-  it('should set nodes to 1 when topology is single', () => {
-    const root = mount(
+  it('should set nodes to 1 when topology is single', async () => {
+    const root = await getMount(
       <Form onSubmit={jest.fn()} render={(renderProps) => <DBClusterAdvancedOptions {...renderProps} />} />
     );
     root.find('[data-qa="topology-radio-state"]').simulate('change', { target: { value: DBClusterTopology.single } });
 
     expect(root.find('[data-qa="single-number-input"]')).toBeTruthy();
   });
-  it('should disable memory, cpu and disk when resources are not custom', () => {
-    const root = mount(
+  it('should disable memory, cpu and disk when resources are not custom', async () => {
+    const root = await getMount(
       <Form
         initialValues={{
           [AddDBClusterFields.resources]: DBClusterResources.small,
@@ -70,8 +73,8 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(cpu.prop('disabled')).toBeTruthy();
     expect(disk.prop('disabled')).toBeTruthy();
   });
-  it('should enable memory and cpu when resources is custom', () => {
-    const root = mount(
+  it('should enable memory and cpu when resources is custom', async () => {
+    const root = await getMount(
       <Form
         initialValues={{
           [AddDBClusterFields.resources]: DBClusterResources.small,
@@ -90,8 +93,8 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(cpu.prop('disabled')).toBeFalsy();
     expect(disk.prop('disabled')).toBeFalsy();
   });
-  it('should disabled single node topology when database is MongoDB', () => {
-    const root = mount(
+  it('should disabled single node topology when database is MongoDB', async () => {
+    const root = await getMount(
       <Form
         initialValues={{
           [AddDBClusterFields.databaseType]: {
@@ -107,8 +110,8 @@ describe('DBClusterAdvancedOptions::', () => {
 
     expect(topology.prop('disable')).toBeUndefined();
   });
-  it('should enable single node topology when database is MySQL', () => {
-    const root = mount(
+  it('should enable single node topology when database is MySQL', async () => {
+    const root = await getMount(
       <Form
         initialValues={{
           [AddDBClusterFields.databaseType]: {

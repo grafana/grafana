@@ -1,9 +1,9 @@
-import { mount, ReactWrapper } from 'enzyme';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 import { useSelector } from 'react-redux';
 
 import { Tab } from '@grafana/ui';
+
+import { getMount } from '../shared/helpers/testUtils';
 
 import { SettingsPanel } from './Settings';
 import { SettingsService } from './Settings.service';
@@ -13,15 +13,21 @@ const fakeLocationUpdate = jest.fn();
 
 jest.mock('./Settings.service');
 jest.mock('app/percona/shared/components/hooks/parameters.hook');
-jest.mock('react-redux', () => ({
-  ...jest.requireActual('react-redux'),
-  useSelector: jest.fn(),
-}));
+jest.mock('react-redux', () => {
+  const original = jest.requireActual('react-redux');
+  return {
+    ...original,
+    useSelector: jest.fn(),
+  };
+});
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getLocationSrv: jest.fn().mockImplementation(() => ({ update: fakeLocationUpdate })),
-}));
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    getLocationSrv: jest.fn().mockImplementation(() => ({ update: fakeLocationUpdate })),
+  };
+});
 
 describe('SettingsPanel::', () => {
   beforeEach(() => {
@@ -34,11 +40,7 @@ describe('SettingsPanel::', () => {
     jest
       .spyOn(SettingsService, 'getSettings')
       .mockImplementationOnce(() => Promise.resolve({ ...settingsStub, alertingEnabled: false }));
-    let root: ReactWrapper;
-
-    await act(async () => {
-      root = mount(<SettingsPanel />);
-    });
+    const root = await getMount(<SettingsPanel />);
     root.update();
 
     const tabs = root.find(Tab);

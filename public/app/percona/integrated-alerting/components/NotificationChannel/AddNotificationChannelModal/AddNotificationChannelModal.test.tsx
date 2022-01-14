@@ -1,7 +1,8 @@
 import { dataQa } from '@percona/platform-core';
-import { mount, ReactWrapper } from 'enzyme';
+import { ReactWrapper } from 'enzyme';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
+
+import { getMount, asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 import { NotificationChannelProvider } from '../NotificationChannel.provider';
 import { NotificationChannelService } from '../NotificationChannel.service';
@@ -35,11 +36,7 @@ const findFormButton = (wrapper: ReactWrapper) =>
 
 describe('AddNotificationChannelModal', () => {
   it('should render modal with correct fields', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible />));
-    });
+    const wrapper = await getMount(withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible />));
 
     expect(wrapper.find('[className$="-singleValue"]').text()).toEqual(TYPE_OPTIONS[0].label);
     expect(wrapper.find('input').length).toBe(2);
@@ -49,71 +46,50 @@ describe('AddNotificationChannelModal', () => {
   });
 
   it('should not render modal when visible is set to false', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible={false} />));
-    });
+    const wrapper = await getMount(
+      withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible={false} />)
+    );
 
     expect(wrapper.find(dataQa('emails-textarea-input')).length).toBe(0);
   });
 
   it('should call setVisible on close', async () => {
     const setVisible = jest.fn();
-    let wrapper: ReactWrapper;
+    const wrapper = await getMount(withContext(<AddNotificationChannelModal setVisible={setVisible} isVisible />));
 
-    await act(async () => {
-      wrapper = await mount(withContext(<AddNotificationChannelModal setVisible={setVisible} isVisible />));
-    });
-
-    wrapper.find(dataQa('modal-background')).simulate('click');
+    await asyncAct(() => wrapper.find(dataQa('modal-background')).simulate('click'));
 
     expect(setVisible).toHaveBeenCalled();
   });
 
   it('should call setVisible on submit', async () => {
     const setVisible = jest.fn();
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(withContext(<AddNotificationChannelModal setVisible={setVisible} isVisible />));
-    });
+    const wrapper = await getMount(withContext(<AddNotificationChannelModal setVisible={setVisible} isVisible />));
 
     wrapper.find(dataQa('name-text-input')).simulate('change', { target: { value: 'Email test' } });
     wrapper.find('textarea').simulate('change', { target: { value: 'test1@percona.com' } });
-
-    await act(async () => {
-      wrapper.find('form').simulate('submit');
-    });
+    await asyncAct(() => wrapper.find('form').simulate('submit'));
 
     expect(setVisible).toHaveBeenCalledWith(false);
   });
 
   it('should render with notification channel', async () => {
     const setVisible = jest.fn();
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(
-        withContext(
-          <AddNotificationChannelModal
-            notificationChannel={notificationChannelStubs[0]}
-            setVisible={setVisible}
-            isVisible
-          />
-        )
-      );
-    });
+    const wrapper = await getMount(
+      withContext(
+        <AddNotificationChannelModal
+          notificationChannel={notificationChannelStubs[0]}
+          setVisible={setVisible}
+          isVisible
+        />
+      )
+    );
 
     expect(wrapper.find(dataQa('name-text-input')).prop('value')).toEqual(notificationChannelStubs[0].summary);
   });
 
   it('should have the submit button initially disabled', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible />));
-    });
+    const wrapper = await getMount(withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible />));
     const button = findFormButton(wrapper);
 
     expect(button.props().disabled).toBeTruthy();
@@ -133,28 +109,18 @@ describe('AddNotificationChannelModal', () => {
 
     it('should only send one of the keys', async () => {
       const serviceAddMock = jest.fn();
-      let wrapper: ReactWrapper;
       spyOn(NotificationChannelService, 'change').and.callFake(serviceAddMock);
 
-      await act(async () => {
-        wrapper = await mount(
-          withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible notificationChannel={channel} />)
-        );
-      });
-
-      act(() => {
-        wrapper.find(dataQa('keyType-radio-button')).at(1).simulate('change');
-      });
+      const wrapper = await getMount(
+        withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible notificationChannel={channel} />)
+      );
+      await asyncAct(() => wrapper.find(dataQa('keyType-radio-button')).at(1).simulate('change'));
 
       wrapper.update();
-
-      act(() => {
-        wrapper.find(dataQa('service-text-input')).simulate('change', { target: { value: 'new_service_key' } });
-      });
-
-      act(() => {
-        wrapper.find('form').simulate('submit');
-      });
+      await asyncAct(() =>
+        wrapper.find(dataQa('service-text-input')).simulate('change', { target: { value: 'new_service_key' } })
+      );
+      await asyncAct(() => wrapper.find('form').simulate('submit'));
 
       expect(serviceAddMock).toHaveBeenCalledWith('id1', {
         name: 'name',

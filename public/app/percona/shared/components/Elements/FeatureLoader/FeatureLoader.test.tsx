@@ -1,8 +1,7 @@
-import React from 'React';
-import { mount, ReactWrapper } from 'enzyme';
-import { act } from 'react-dom/test-utils';
+import React from 'react';
 
 import { SettingsService } from 'app/percona/settings/Settings.service';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
 
 import { EmptyBlock } from '../EmptyBlock';
 
@@ -21,29 +20,23 @@ jest.mock('@percona/platform-core', () => {
 
 describe('FeatureLoader', () => {
   it('should not have children initially', async () => {
-    let wrapper: ReactWrapper;
     const Dummy = () => <></>;
-    await act(async () => {
-      wrapper = mount(
-        <FeatureLoader featureName="IA" featureFlag="alertingEnabled">
-          <Dummy />
-        </FeatureLoader>
-      );
-    });
+    const wrapper = await getMount(
+      <FeatureLoader featureName="IA" featureFlag="alertingEnabled">
+        <Dummy />
+      </FeatureLoader>
+    );
     expect(wrapper.find(Dummy).exists()).toBeFalsy();
     expect(wrapper.find(EmptyBlock).exists()).toBeTruthy();
   });
 
   it('should show children after loading settings', async () => {
-    let wrapper: ReactWrapper;
     const Dummy = () => <></>;
-    await act(async () => {
-      wrapper = mount(
-        <FeatureLoader featureName="IA" featureFlag="alertingEnabled">
-          <Dummy />
-        </FeatureLoader>
-      );
-    });
+    const wrapper = await getMount(
+      <FeatureLoader featureName="IA" featureFlag="alertingEnabled">
+        <Dummy />
+      </FeatureLoader>
+    );
     wrapper.update();
     expect(wrapper.find(Dummy).exists()).toBeTruthy();
     expect(wrapper.find(EmptyBlock).exists()).toBeFalsy();
@@ -56,10 +49,7 @@ describe('FeatureLoader', () => {
     });
     const spy = jest.fn();
 
-    let wrapper: ReactWrapper;
-    await act(async () => {
-      wrapper = mount(<FeatureLoader featureName="IA" featureFlag="alertingEnabled" onError={spy} />);
-    });
+    const wrapper = await getMount(<FeatureLoader featureName="IA" featureFlag="alertingEnabled" onError={spy} />);
     wrapper.update();
     expect(spy).toHaveBeenCalledWith(errorObj);
   });

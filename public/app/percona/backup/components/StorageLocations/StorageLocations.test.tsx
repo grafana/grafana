@@ -1,9 +1,9 @@
 import { dataQa, LoaderButton } from '@percona/platform-core';
-import { mount, ReactWrapper, shallow } from 'enzyme';
+import { shallow } from 'enzyme';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
 import { Table } from 'app/percona/integrated-alerting/components/Table/Table';
+import { getMount, asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 import { AddStorageLocationModal } from './AddStorageLocationModal';
 import { RemoveStorageLocationModal } from './RemoveStorageLocationModal';
@@ -17,20 +17,14 @@ jest.mock('app/core/app_events');
 
 describe('StorageLocations', () => {
   it('should render table with data', async () => {
-    let wrapper: ReactWrapper;
-    await act(async () => {
-      wrapper = await mount(<StorageLocations />);
-    });
+    const wrapper = await getMount(<StorageLocations />);
     wrapper.update();
 
     expect(wrapper.find(Table).prop('data')).toEqual(formatLocationList(stubLocations));
   });
 
   it('should show delete modal when icon is clicked', async () => {
-    let wrapper: ReactWrapper;
-    await act(async () => {
-      wrapper = await mount(<StorageLocations />);
-    });
+    const wrapper = await getMount(<StorageLocations />);
     wrapper.update();
 
     expect(wrapper.find(RemoveStorageLocationModal).prop('isVisible')).toBe(false);
@@ -40,19 +34,13 @@ describe('StorageLocations', () => {
 
   it('should close delete modal after deletion confirmation', async () => {
     const spy = spyOn(StorageLocationsService, 'delete').and.callThrough();
-    let wrapper: ReactWrapper;
-    await act(async () => {
-      wrapper = await mount(<StorageLocations />);
-    });
+    const wrapper = await getMount(<StorageLocations />);
 
     wrapper.update();
     wrapper.find('tbody tr').first().find(dataQa('delete-storage-location-button')).last().simulate('click');
 
     expect(wrapper.find(RemoveStorageLocationModal).prop('isVisible')).toBe(true);
-
-    await act(async () => {
-      wrapper.find(LoaderButton).simulate('click');
-    });
+    await asyncAct(() => wrapper.find(LoaderButton).simulate('click'));
 
     wrapper.update();
     expect(wrapper.find(RemoveStorageLocationModal).prop('isVisible')).toBe(false);
