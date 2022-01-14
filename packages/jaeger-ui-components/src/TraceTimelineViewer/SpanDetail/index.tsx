@@ -15,6 +15,8 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { DataLinkButton, TextArea, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
@@ -23,16 +25,14 @@ import DetailState from './DetailState';
 import { formatDuration } from '../utils';
 import CopyIcon from '../../common/CopyIcon';
 import LabeledList from '../../common/LabeledList';
-
 import { SpanLinkFunc, TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '../../types/trace';
 import AccordianReferences from './AccordianReferences';
-import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
+import { autoColor } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';
 import { ubFlex, ubFlexAuto, ubItemsCenter, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
-import { DataLinkButton, TextArea } from '@grafana/ui';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     divider: css`
       label: divider;
@@ -100,7 +100,7 @@ const getStyles = createStyle((theme: Theme) => {
       white-space: pre;
     `,
   };
-});
+};
 
 type SpanDetailProps = {
   detailState: DetailState;
@@ -172,7 +172,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     },
   ];
   const deepLinkCopyText = `${window.location.origin}${window.location.pathname}?uiFind=${spanID}`;
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
   const link = createSpanLink?.(span);
 
   return (

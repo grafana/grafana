@@ -19,9 +19,11 @@ import renderIntoCanvas from './render-into-canvas';
 import { getRgbColorByKey } from '../../utils/color-generator';
 import { TNil } from '../../types';
 
-import { autoColor, createStyle, Theme, withTheme } from '../../Theme';
+import { autoColor } from '../../Theme';
+import { withTheme2, stylesFactory } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     CanvasSpanGraph: css`
       label: CanvasSpanGraph;
@@ -36,7 +38,7 @@ const getStyles = createStyle((theme: Theme) => {
 type CanvasSpanGraphProps = {
   items: Array<{ valueWidth: number; valueOffset: number; serviceName: string }>;
   valueWidth: number;
-  theme: Theme;
+  theme: GrafanaTheme2;
 };
 
 export class UnthemedCanvasSpanGraph extends React.PureComponent<CanvasSpanGraphProps> {
@@ -73,4 +75,4 @@ export class UnthemedCanvasSpanGraph extends React.PureComponent<CanvasSpanGraph
   }
 }
 
-export default withTheme(UnthemedCanvasSpanGraph);
+export default withTheme2(UnthemedCanvasSpanGraph);

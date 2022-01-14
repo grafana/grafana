@@ -110,6 +110,7 @@ func TestRenderLimitImage(t *testing.T) {
 			HomePath: path,
 		},
 		inProgressCount: 2,
+		log:             log.New("test"),
 	}
 
 	tests := []struct {

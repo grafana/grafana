@@ -15,27 +15,27 @@
 import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import BreakableText from './BreakableText';
 import LoadingIndicator from './LoadingIndicator';
 import { fetchedState, FALLBACK_TRACE_NAME } from '../constants';
-
 import { FetchedState, TNil } from '../types';
 import { ApiError } from '../types/api-error';
-import { createStyle, safeSize, Theme, useTheme } from '../Theme';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     TraceName: css`
       label: TraceName;
-      font-size: ${safeSize(theme.components?.TraceName?.fontSize, 'unset')};
+      font-size: ${theme.typography.size.lg};
     `,
     TraceNameError: css`
       label: TraceNameError;
       color: #c00;
     `,
   };
-});
+};
 
 type Props = {
   className?: string;
@@ -48,7 +48,7 @@ export default function TraceName(props: Props) {
   const { className, error, state, traceName } = props;
   const isErred = state === fetchedState.ERROR;
   let title: string | React.ReactNode = traceName || FALLBACK_TRACE_NAME;
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
   let errorCssClass = '';
   if (isErred) {
     errorCssClass = styles.TraceNameError;

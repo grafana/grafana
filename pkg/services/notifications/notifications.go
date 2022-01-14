@@ -22,13 +22,14 @@ var tmplResetPassword = "reset_password"
 var tmplSignUpStarted = "signup_started"
 var tmplWelcomeOnSignUp = "welcome_on_signup"
 
-func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error) {
+func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*NotificationService, error) {
 	ns := &NotificationService{
 		Bus:          bus,
 		Cfg:          cfg,
 		log:          log.New("notifications"),
 		mailQueue:    make(chan *Message, 10),
 		webhookQueue: make(chan *Webhook, 10),
+		mailer:       mailer,
 	}
 
 	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
@@ -70,6 +71,7 @@ type NotificationService struct {
 
 	mailQueue    chan *Message
 	webhookQueue chan *Webhook
+	mailer       Mailer
 	log          log.Logger
 }
 
@@ -125,6 +127,7 @@ func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, 
 		To:            cmd.To,
 		SingleEmail:   cmd.SingleEmail,
 		EmbeddedFiles: cmd.EmbeddedFiles,
+		AttachedFiles: cmd.AttachedFiles,
 		Subject:       cmd.Subject,
 		ReplyTo:       cmd.ReplyTo,
 	})
