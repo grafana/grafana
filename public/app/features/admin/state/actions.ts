@@ -143,21 +143,15 @@ export function loadUserSessions(userId: number): ThunkResult<void> {
       return;
     }
 
-    const resp = await lastValueFrom(
-      getBackendSrv().fetch<UserSession[]>({
-        url: `/api/admin/users/${userId}/auth-tokens`,
-      })
-    );
-
-    const tokens = resp.data;
+    const tokens = await getBackendSrv().get(`/api/admin/users/${userId}/auth-tokens`);
     tokens.reverse();
 
-    const sessions = tokens.map((session) => {
+    const sessions = tokens.map((session: UserSession) => {
       return {
         id: session.id,
         isActive: session.isActive,
         seenAt: dateTimeFormatTimeAgo(session.seenAt),
-        createdAt: new Date(session.createdAt),
+        createdAt: session.createdAt,
         clientIp: session.clientIp,
         browser: session.browser,
         browserVersion: session.browserVersion,
