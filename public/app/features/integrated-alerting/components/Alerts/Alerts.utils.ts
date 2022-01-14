@@ -1,7 +1,7 @@
 import moment from 'moment/moment';
 import { GrafanaTheme } from '@grafana/data';
-import { Alert, AlertsListResponseLabel, AlertsListResponseAlert, AlertStatus } from '../Alerts.types';
-import { AlertRuleSeverity } from '../../AlertRules/AlertRules.types';
+import { Alert, AlertsListResponseLabel, AlertsListResponseAlert, AlertStatus } from './Alerts.types';
+import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
 
 export const formatLabel = (label: [string, string]): string => {
   const [key, value] = label;

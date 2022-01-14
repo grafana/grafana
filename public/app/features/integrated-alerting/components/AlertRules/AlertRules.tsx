@@ -1,8 +1,9 @@
+/* eslint-disable react/display-name */
 import React, { FC, useEffect, useState } from 'react';
 import { Column } from 'react-table';
 import { Button, useStyles, IconButton } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
-import { AlertRulesTable } from './AlertRulesTable';
+import { Table } from '../Table/Table';
 import { AddAlertRuleModal } from './AddAlertRuleModal';
 import { getStyles } from './AlertRules.styles';
 import { AlertRulesProvider } from './AlertRules.provider';
@@ -27,9 +28,9 @@ const {
 export const AlertRules: FC = () => {
   const styles = useStyles(getStyles);
   const [addModalVisible, setAddModalVisible] = useState(false);
-  const [pendingRequest, setPendingRequest] = useState(false);
-  const [selectedAlertRule, setSelectedAlertRule] = useState<AlertRule>();
-  const [selectedRuleDetails, setSelectedRuleDetails] = useState<AlertRule>();
+  const [pendingRequest, setPendingRequest] = useState(true);
+  const [selectedAlertRule, setSelectedAlertRule] = useState<AlertRule | null>();
+  const [selectedRuleDetails, setSelectedRuleDetails] = useState<AlertRule | null>();
   const [data, setData] = useState<AlertRule[]>([]);
 
   const getAlertRules = async () => {
@@ -88,7 +89,7 @@ export const AlertRules: FC = () => {
         Header: filtersColumn,
         accessor: ({ filters }: AlertRule) => (
           <div className={styles.filtersWrapper}>
-            {filters.map(filter => (
+            {filters.map((filter) => (
               <span key={filter} className={styles.filter}>
                 {filter}
               </span>
@@ -108,7 +109,7 @@ export const AlertRules: FC = () => {
         accessor: (alertRule: AlertRule) => <AlertRulesActions alertRule={alertRule} />,
       } as Column,
     ],
-    [selectedRuleDetails]
+    [selectedRuleDetails, styles.filter, styles.filtersWrapper, styles.nameWrapper]
   );
 
   useEffect(() => {
@@ -117,7 +118,7 @@ export const AlertRules: FC = () => {
 
   const handleAddButton = () => {
     setSelectedAlertRule(null);
-    setAddModalVisible(currentValue => !currentValue);
+    setAddModalVisible((currentValue) => !currentValue);
   };
 
   return (
@@ -136,7 +137,36 @@ export const AlertRules: FC = () => {
         </Button>
       </div>
       <AddAlertRuleModal isVisible={addModalVisible} setVisible={setAddModalVisible} alertRule={selectedAlertRule} />
-      <AlertRulesTable emptyMessage={noData} data={data} columns={columns} pendingRequest={pendingRequest} />
+      <Table data={data} columns={columns} pendingRequest={pendingRequest} emptyMessage={noData}>
+        {(rows, table) =>
+          rows.map((row) => {
+            const { prepareRow } = table;
+            prepareRow(row);
+            const alertRule = row.original as AlertRule;
+
+            return (
+              <React.Fragment key={alertRule.ruleId}>
+                <tr {...row.getRowProps()} className={alertRule.disabled ? styles.disabledRow : ''}>
+                  {row.cells.map((cell) => (
+                    <td {...cell.getCellProps()} key={cell.column.id}>
+                      {cell.render('Cell')}
+                    </td>
+                  ))}
+                </tr>
+                {selectedRuleDetails && alertRule.ruleId === selectedRuleDetails.ruleId && (
+                  <tr key={selectedRuleDetails.ruleId}>
+                    <td colSpan={columns.length}>
+                      <pre data-qa="alert-rules-details" className={styles.details}>
+                        {alertRule.expr}
+                      </pre>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            );
+          })
+        }
+      </Table>
     </AlertRulesProvider.Provider>
   );
 };

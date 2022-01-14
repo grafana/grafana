@@ -3,7 +3,7 @@ import { IconButton, useStyles } from '@grafana/ui';
 import { EditAlertRuleTemplateModal } from '../EditAlertRuleTemplateModal/EditAlertRuleTemplateModal';
 import { getStyles } from './AlertRuleTemplateActions.styles';
 import { AlertRuleTemplateActionsProps } from './AlertRuleTemplateActions.types';
-import { SourceDescription } from '../AlertRuleTemplatesTable/AlertRuleTemplatesTable.types';
+import { SourceDescription } from '../AlertRuleTemplate.types';
 import { DeleteRuleTemplateModal } from '../DeleteRuleTemplateModal/DeleteRuleTemplateModal';
 
 export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ template, getAlertRuleTemplates }) => {
@@ -11,7 +11,7 @@ export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ te
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const { source, yaml } = template;
-  const isActionDisabled = useMemo(() => source === SourceDescription.BUILT_IN, [template]);
+  const isActionDisabled = useMemo(() => source === SourceDescription.BUILT_IN, [source]);
 
   return (
     <div className={styles.actionsWrapper}>

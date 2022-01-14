@@ -11,13 +11,13 @@ import {
   AlertRulesListResponseChannel,
 } from '../AlertRules.types';
 import { NotificationChannel } from '../../NotificationChannel/NotificationChannel.types';
-import { Template } from '../../AlertRuleTemplate/AlertRuleTemplatesTable/AlertRuleTemplatesTable.types';
+import { Template } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
 import { SelectableValue } from '@grafana/data';
 import { Messages } from './AddAlertRuleModal.messages';
 
 export const formatChannelsOptions = (channels: NotificationChannel[]): Array<SelectableValue<string>> =>
   channels
-    ? channels.map(channel => ({
+    ? channels.map((channel) => ({
         value: channel.channelId,
         label: channel.summary,
       }))
@@ -25,7 +25,7 @@ export const formatChannelsOptions = (channels: NotificationChannel[]): Array<Se
 
 export const formatTemplateOptions = (templates: Template[]): Array<SelectableValue<string>> =>
   templates
-    ? templates.map(template => ({
+    ? templates.map((template) => ({
         value: template.name,
         label: template.summary,
       }))
@@ -102,7 +102,7 @@ export const formatCreateAPIPayload = (data: AddAlertRuleFormValues): AlertRuleC
   const payload: AlertRuleCreatePayload = {
     custom_labels: {},
     disabled: !enabled,
-    channel_ids: notificationChannels ? notificationChannels.map(channel => channel.value) : [],
+    channel_ids: notificationChannels ? notificationChannels.map((channel) => channel.value) : [],
     filters: filters ? formatFilters(filters) : [],
     for: `${duration}s`,
     severity: severity.value,
@@ -158,7 +158,7 @@ export const formatEditNotificationChannels = (
 ): Array<SelectableValue<string>> => (channels ? channels.map(formatEditNotificationChannel) : []);
 
 export const formatEditThreshold = (params: AlertRulesListResponseParam[]): string | null => {
-  const thresholdParam = params?.find(param => param.name === 'threshold');
+  const thresholdParam = params?.find((param) => param.name === 'threshold');
 
   if (!thresholdParam) {
     return null;

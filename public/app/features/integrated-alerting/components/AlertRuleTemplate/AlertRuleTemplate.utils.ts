@@ -1,4 +1,4 @@
-import { SourceDescription, FormattedTemplate, Template } from './AlertRuleTemplatesTable.types';
+import { SourceDescription, FormattedTemplate, Template } from './AlertRuleTemplate.types';
 import moment from 'moment/moment';
 
 export const formatTemplate = (template: Template): FormattedTemplate => {
