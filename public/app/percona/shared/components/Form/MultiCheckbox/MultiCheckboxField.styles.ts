@@ -18,16 +18,6 @@ export const getStyles = (theme: GrafanaTheme) => {
       margin: ${spacing.formValidationMessageMargin};
       padding: ${spacing.formLabelPadding};
     `,
-    label: css`
-      display: block;
-      text-align: left;
-      font-size: ${typography.size.md};
-      font-weight: ${typography.weight.semibold};
-      line-height: 1.25;
-      margin: ${spacing.formLabelMargin};
-      padding: ${spacing.formLabelPadding};
-      color: ${colors.formLabel};
-    `,
     getOptionsWrapperStyles: (invalid: boolean) => {
       const borderColor = invalid ? palette.brandDanger : colors.formInputBorder;
 
