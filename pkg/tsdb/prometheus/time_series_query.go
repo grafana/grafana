@@ -200,7 +200,6 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 		// Interpolate variables in expr
 		timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
 		expr := interpolateVariables(model.Expr, interval, timeRange, s.intervalCalculator, dsInfo.TimeInterval)
-
 		rangeQuery := model.RangeQuery
 		if !model.InstantQuery && !model.RangeQuery {
 			// In older dashboards, we were not setting range query param and !range && !instant was run as range query
@@ -283,7 +282,7 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
-	expr = strings.ReplaceAll(expr, varRateInterval, intervalv2.FormatDuration(calculateRateInterval(interval, timeInterval, intervalCalculator)))
+	expr = strings.ReplaceAll(expr, varRateInterval, calculateRateInterval(interval, timeInterval, intervalCalculator).String())
 
 	// Repetitive code, we should have functionality to unify these
 	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(interval/time.Millisecond), 10))
@@ -291,7 +290,8 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	expr = strings.ReplaceAll(expr, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
-	expr = strings.ReplaceAll(expr, varRateIntervalAlt, intervalv2.FormatDuration(calculateRateInterval(interval, timeInterval, intervalCalculator)))
+	expr = strings.ReplaceAll(expr, varRateIntervalAlt, calculateRateInterval(interval, timeInterval, intervalCalculator).String())
+
 	return expr
 }
 
