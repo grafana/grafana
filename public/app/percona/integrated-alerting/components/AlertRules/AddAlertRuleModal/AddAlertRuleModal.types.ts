@@ -5,7 +5,7 @@ import { AlertRule } from '../AlertRules.types';
 export interface AddAlertRuleModalProps {
   isVisible: boolean;
   setVisible: (value: boolean) => void;
-  alertRule?: AlertRule;
+  alertRule?: AlertRule | null;
 }
 export interface AddAlertRuleFormValues {
   template: SelectableValue<string>;
