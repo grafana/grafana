@@ -12,7 +12,7 @@ const teamsSlice = createSlice({
       return { ...state, hasFetched: true, teams: action.payload };
     },
     setSearchQuery: (state, action: PayloadAction<string>): TeamsState => {
-      return { ...state, searchQuery: action.payload };
+      return { ...state, searchQuery: action.payload, searchPage: initialTeamsState.searchPage };
     },
     setTeamsSearchPage: (state, action: PayloadAction<number>): TeamsState => {
       return { ...state, searchPage: action.payload };

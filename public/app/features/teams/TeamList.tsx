@@ -127,7 +127,7 @@ export class TeamList extends PureComponent<Props, State> {
   };
 
   renderTeamList() {
-    const { teams, searchQuery, editorsCanAdmin } = this.props;
+    const { teams, searchQuery, editorsCanAdmin, searchPage, setTeamsSearchPage } = this.props;
     const teamAdmin = contextSrv.hasRole('Admin') || (editorsCanAdmin && contextSrv.hasRole('Editor'));
     const canCreate = contextSrv.hasAccess(AccessControlAction.ActionTeamsCreate, teamAdmin);
     const newTeamHref = canCreate ? 'org/teams/new' : '#';
@@ -164,7 +164,7 @@ export class TeamList extends PureComponent<Props, State> {
             <HorizontalGroup justify="flex-end">
               <Pagination
                 onNavigate={setTeamsSearchPage}
-                currentPage={this.props.searchPage}
+                currentPage={searchPage}
                 numberOfPages={totalPages}
                 hideWhenSinglePage={true}
               />
