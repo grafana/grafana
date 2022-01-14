@@ -5146,5 +5146,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: b02625cfd53f00cc54a2ae103895b5b6a323566978f5e07b11258980692fa708
+hmac: 390006ba60e87a26bcb898ff230a9218b0c954da09c44c7823cfc8aa0b82cb98
+
 ...
