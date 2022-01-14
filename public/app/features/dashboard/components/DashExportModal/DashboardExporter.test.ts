@@ -179,8 +179,8 @@ it('handles a default datasource in a template variable', async () => {
   };
   const dashboardModel = new DashboardModel(dashboard, {}, () => dashboard.templating.list);
   const exporter = new DashboardExporter();
-  const exported = await exporter.makeExportable(dashboardModel);
-  expect((exported as any).templating.list[0].datasource).toBe('${DS_GFDB}');
+  const exported: any = await exporter.makeExportable(dashboardModel);
+  expect(exported.templating.list[0].datasource).toBe('${DS_GFDB}');
 });
 
 describe('given dashboard with repeated panels', () => {
