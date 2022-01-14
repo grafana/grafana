@@ -2,14 +2,17 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (m *PluginManager) GetPluginDashboards(ctx context.Context, orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
@@ -73,16 +76,43 @@ func (m *PluginManager) GetPluginDashboards(ctx context.Context, orgID int64, pl
 }
 
 func (m *PluginManager) LoadPluginDashboard(ctx context.Context, pluginID, path string) (*models.Dashboard, error) {
+	if len(strings.TrimSpace(pluginID)) == 0 {
+		return nil, fmt.Errorf("pluginID cannot be empty")
+	}
+
+	if len(strings.TrimSpace(path)) == 0 {
+		return nil, fmt.Errorf("path cannot be empty")
+	}
+
 	plugin, exists := m.Plugin(ctx, pluginID)
 	if !exists {
 		return nil, plugins.NotFoundError{PluginID: pluginID}
 	}
 
-	dashboardFilePath := filepath.Join(plugin.PluginDir, path)
+	cleanPath, err := util.CleanRelativePath(path)
+	if err != nil {
+		// CleanRelativePath should clean and make the path relative so this is not expected to fail
+		return nil, err
+	}
+
+	dashboardFilePath := filepath.Join(plugin.PluginDir, cleanPath)
+
+	included := false
+	for _, include := range plugin.DashboardIncludes() {
+		if filepath.Join(plugin.PluginDir, include.Path) == dashboardFilePath {
+			included = true
+			break
+		}
+	}
+
+	if !included {
+		return nil, fmt.Errorf("dashboard not included in plugin")
+	}
+
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `plugin.PluginDir` is based
-	// on plugin folder structure on disk and not user input. `path` comes from the
-	// `plugin.json` configuration file for the loaded plugin
+	// on plugin folder structure on disk and not user input. `path` input validation above
+	// should only allow paths defined in the plugin's plugin.json.
 	reader, err := os.Open(dashboardFilePath)
 	if err != nil {
 		return nil, err
