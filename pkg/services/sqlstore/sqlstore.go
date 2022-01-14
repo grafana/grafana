@@ -12,6 +12,9 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -25,8 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	_ "github.com/lib/pq"
-	"xorm.io/xorm"
 )
 
 var (
@@ -372,7 +373,8 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	if !debugSQL {
 		engine.SetLogger(&xorm.DiscardLogger{})
 	} else {
-		engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
+		// add stack to database calls to be able to see what repository initiated queries. Top 7 items from the stack as they are likely in the xorm library.
+		engine.SetLogger(NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
 		engine.ShowSQL(true)
 		engine.ShowExecTime(true)
 	}

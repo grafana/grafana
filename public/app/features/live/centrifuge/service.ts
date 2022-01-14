@@ -209,6 +209,9 @@ export class CentrifugeService implements CentrifugeSrv {
    * Since the initial request and subscription are on the same socket, this will support HA setups
    */
   getQueryData: CentrifugeSrv['getQueryData'] = async (options) => {
+    if (!this.centrifuge.isConnected()) {
+      await this.connectionBlocker;
+    }
     return this.centrifuge.namedRPC('grafana.query', options.body);
   };
 

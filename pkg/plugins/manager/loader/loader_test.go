@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -337,6 +337,56 @@ func TestLoader_Load(t *testing.T) {
 				"test": {
 					PluginID:  "test",
 					ErrorCode: "signatureModified",
+				},
+			},
+		},
+		{
+			name:  "Load an app with includes",
+			class: plugins.External,
+			cfg: &plugins.Cfg{
+				PluginsPath:          filepath.Join(parentDir),
+				PluginsAllowUnsigned: []string{"test-app"},
+			},
+			pluginPaths: []string{"../testdata/test-app-with-includes"},
+			want: []*plugins.Plugin{
+				{JSONData: plugins.JSONData{
+					ID:   "test-app",
+					Type: "app",
+					Name: "Test App",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Test Inc.",
+							URL:  "http://test.com",
+						},
+						Description: "Official Grafana Test App & Dashboard bundle",
+						Version:     "1.0.0",
+						Links: []plugins.InfoLink{
+							{Name: "Project site", URL: "http://project.com"},
+							{Name: "License & Terms", URL: "http://license.com"},
+						},
+						Logos: plugins.Logos{
+							Small: "public/img/icn-app.svg",
+							Large: "public/img/icn-app.svg",
+						},
+						Updated: "2015-02-10",
+					},
+					Dependencies: plugins.Dependencies{
+						GrafanaDependency: ">=8.0.0",
+						GrafanaVersion:    "*",
+						Plugins:           []plugins.Dependency{},
+					},
+					Includes: []*plugins.Includes{
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory", DefaultNav: true},
+						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+					},
+					Backend: false,
+				},
+					DefaultNavURL: "/plugins/test-app/page/root-page-react",
+					PluginDir:     filepath.Join(parentDir, "testdata/test-app-with-includes"),
+					Class:         plugins.External,
+					Signature:     plugins.SignatureUnsigned,
+					Module:        "plugins/test-app/module",
+					BaseURL:       "public/plugins/test-app",
 				},
 			},
 		},
@@ -854,7 +904,7 @@ func newLoader(cfg *plugins.Cfg) *Loader {
 	return &Loader{
 		cfg:                cfg,
 		pluginFinder:       finder.New(),
-		pluginInitializer:  initializer.New(cfg, &fakeBackendProvider{}, &fakeLicensingService{}),
+		pluginInitializer:  initializer.New(cfg, &provider.Service{}, &fakeLicensingService{}),
 		signatureValidator: signature.NewValidator(&signature.UnsignedPluginAuthorizer{Cfg: cfg}),
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                &fakeLogger{},
@@ -916,13 +966,4 @@ func (fl fakeLogger) Debug(_ string, _ ...interface{}) {
 
 func (fl fakeLogger) Warn(_ string, _ ...interface{}) {
 
-}
-
-type fakeBackendProvider struct {
-}
-
-func (f *fakeBackendProvider) BackendFactory(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
-	return func(_ string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
-		return p, nil
-	}
 }

@@ -51,7 +51,7 @@ func FromGrafanaCfg(grafanaCfg *setting.Cfg) *Cfg {
 	cfg.CheckForUpdates = grafanaCfg.CheckForUpdates
 
 	cfg.BuildVersion = grafanaCfg.BuildVersion
-	cfg.AppSubURL = grafanaCfg.AppURL
+	cfg.AppSubURL = grafanaCfg.AppSubURL
 
 	return cfg
 }

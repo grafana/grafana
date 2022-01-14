@@ -44,12 +44,12 @@ type PluginManager struct {
 	log              log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, requestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
+func ProvideService(grafanaCfg *setting.Cfg, requestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
 	sqlStore *sqlstore.SQLStore) (*PluginManager, error) {
-	pm := New(plugins.FromGrafanaCfg(cfg), requestValidator, map[plugins.Class][]string{
-		plugins.Core:     corePluginPaths(cfg),
-		plugins.Bundled:  {cfg.BundledPluginsPath},
-		plugins.External: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg)...),
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), requestValidator, map[plugins.Class][]string{
+		plugins.Core:     corePluginPaths(grafanaCfg),
+		plugins.Bundled:  {grafanaCfg.BundledPluginsPath},
+		plugins.External: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...),
 	}, pluginLoader, sqlStore)
 	if err := pm.Init(); err != nil {
 		return nil, err
