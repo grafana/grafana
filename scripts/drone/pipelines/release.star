@@ -18,7 +18,6 @@ load(
     'build_frontend_step',
     'build_plugins_step',
     'package_step',
-    'install_cypress_step',
     'e2e_tests_server_step',
     'e2e_tests_step',
     'build_storybook_step',
@@ -237,7 +236,6 @@ def get_steps(edition, ver_mode):
 
     if not disable_tests:
         build_steps.extend([
-            install_cypress_step(),
             e2e_tests_step('dashboards-suite', edition=edition, tries=3),
             e2e_tests_step('smoke-tests-suite', edition=edition, tries=3),
             e2e_tests_step('panels-suite', edition=edition, tries=3),
