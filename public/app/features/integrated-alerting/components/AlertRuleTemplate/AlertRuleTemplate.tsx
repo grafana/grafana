@@ -1,13 +1,16 @@
 /* eslint-disable react/display-name */
-import React, { FC, useState, useEffect } from 'react';
+import { logger } from '@percona/platform-core';
+import React, { FC, useState, useEffect, useCallback } from 'react';
 import { Column } from 'react-table';
 
 import { Button, useStyles } from '@grafana/ui';
 import { Messages } from 'app/features/integrated-alerting/IntegratedAlerting.messages';
 
+import { useStoredTablePageSize } from '../Table/Pagination';
 import { Table } from '../Table/Table';
 
 import { AddAlertRuleTemplateModal } from './AddAlertRuleTemplateModal';
+import { ALERT_RULE_TEMPLATES_TABLE_ID } from './AlertRuleTemplate.constants';
 import { AlertRuleTemplateService } from './AlertRuleTemplate.service';
 import { getStyles } from './AlertRuleTemplate.styles';
 import { FormattedTemplate } from './AlertRuleTemplate.types';
@@ -23,6 +26,29 @@ export const AlertRuleTemplate: FC = () => {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(true);
   const [data, setData] = useState<FormattedTemplate[]>([]);
+  const [pageSize, setPageSize] = useStoredTablePageSize(ALERT_RULE_TEMPLATES_TABLE_ID);
+  const [pageIndex, setPageindex] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  const getAlertRuleTemplates = useCallback(async () => {
+    setPendingRequest(true);
+    try {
+      const { templates, totals } = await AlertRuleTemplateService.list({
+        page_params: {
+          index: pageIndex,
+          page_size: pageSize as number,
+        },
+      });
+      setData(formatTemplates(templates));
+      setTotalItems(totals.total_items || 0);
+      setTotalPages(totals.total_pages || 0);
+    } catch (e) {
+      logger.error(e);
+    } finally {
+      setPendingRequest(false);
+    }
+  }, [pageIndex, pageSize]);
 
   const columns = React.useMemo(
     () => [
@@ -48,24 +74,20 @@ export const AlertRuleTemplate: FC = () => {
         ),
       } as Column,
     ],
-    []
+    [getAlertRuleTemplates]
   );
 
-  const getAlertRuleTemplates = async () => {
-    setPendingRequest(true);
-    try {
-      const { templates } = await AlertRuleTemplateService.list();
-      setData(formatTemplates(templates));
-    } catch (e) {
-      logger.error(e);
-    } finally {
-      setPendingRequest(false);
-    }
-  };
+  const handlePaginationChanged = useCallback(
+    (pageSize: number, pageIndex: number) => {
+      setPageSize(pageSize);
+      setPageindex(pageIndex);
+    },
+    [setPageSize, setPageindex]
+  );
 
   useEffect(() => {
     getAlertRuleTemplates();
-  }, []);
+  }, [pageSize, pageIndex, getAlertRuleTemplates]);
 
   return (
     <>
@@ -86,7 +108,12 @@ export const AlertRuleTemplate: FC = () => {
         getAlertRuleTemplates={getAlertRuleTemplates}
       />
       <Table
-        totalItems={data.length}
+        showPagination
+        totalItems={totalItems}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        pageIndex={pageIndex}
+        onPaginationChanged={handlePaginationChanged}
         data={data}
         columns={columns}
         pendingRequest={pendingRequest}

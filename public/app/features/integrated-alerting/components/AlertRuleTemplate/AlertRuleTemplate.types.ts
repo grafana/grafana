@@ -11,8 +11,21 @@ export interface DeleteAlertRuleTemplatePayload {
   name: string;
 }
 
+export interface AlertRuleTemplateGetPayload {
+  page_params: {
+    page_size: number;
+    index: number;
+  };
+}
+
+interface AlertRuleTemplatesTotals {
+  total_items: number;
+  total_pages: number;
+}
+
 export interface TemplatesList {
   templates: Template[];
+  totals: AlertRuleTemplatesTotals;
 }
 
 export enum SourceDescription {
