@@ -17,7 +17,7 @@ import { AdvancedProps, AdvancedFormProps } from './Advanced.types';
 import { transformSecondsToDays } from './Advanced.utils';
 import { SwitchRow } from './SwitchRow';
 
-const refreshingFeatureKeys: Array<keyof AdvancedFormProps> = ['alerting', 'backup'];
+const refreshingFeatureKeys: Array<keyof AdvancedFormProps> = ['alerting', 'backup', 'stt'];
 
 export const Advanced: FC<AdvancedProps> = ({
   dataRetention,

@@ -8,6 +8,7 @@ import { getStyles as getCheckPanelStyles } from 'app/percona/check/CheckPanel.s
 import { getStyles as getTableStyles } from 'app/percona/check/components/Table/Table.styles';
 import { CheckDetails } from 'app/percona/check/types';
 
+import { ChecksReloadContext } from './AllChecks.context';
 import { Messages } from './AllChecksTab.messages';
 import * as styles from './AllChecksTab.styles';
 import { CheckTableRow } from './CheckTableRow';
@@ -64,6 +65,7 @@ export const AllChecksTab: FC = () => {
             <col className={styles.nameColumn} />
             <col />
             <col className={styles.statusColumn} />
+            <col className={styles.intervalColumn} />
             <col className={styles.actionsColumn} />
           </colgroup>
           <thead data-qa="db-checks-all-checks-thead">
@@ -71,13 +73,16 @@ export const AllChecksTab: FC = () => {
               <th>{Messages.name}</th>
               <th>{Messages.description}</th>
               <th>{Messages.status}</th>
+              <th>{Messages.interval}</th>
               <th>{Messages.actions}</th>
             </tr>
           </thead>
           <tbody data-qa="db-checks-all-checks-tbody">
-            {checks?.map((check) => (
-              <CheckTableRow key={check.name} check={check} onSuccess={updateUI} />
-            ))}
+            <ChecksReloadContext.Provider value={{ fetchChecks }}>
+              {checks?.map((check) => (
+                <CheckTableRow key={check.name} check={check} onSuccess={updateUI} />
+              ))}
+            </ChecksReloadContext.Provider>
           </tbody>
         </table>
       )}
