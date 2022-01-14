@@ -38,9 +38,6 @@ def pipeline(
         'services': services,
         'steps': steps,
         'volumes': [{
-            'name': 'cypress_cache',
-            'temp': {},
-        },{
             'name': 'docker',
             'host': {
                 'path': '/var/run/docker.sock',
