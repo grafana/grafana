@@ -8,8 +8,10 @@ import {
   SelectFieldAdapter,
   AsyncSelectFieldAdapter,
 } from 'app/percona/shared/components/Form/FieldAdapters/FieldAdapters';
-import { DATABASE_LABELS, Databases } from 'app/percona/shared/core';
+import { Databases } from 'app/percona/shared/core';
 
+import { Operator } from '../../../Kubernetes/Kubernetes.types';
+import { getDatabaseOptionFromOperator } from '../../../Kubernetes/Kubernetes.utils';
 import { KubernetesOperatorStatus } from '../../../Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 import { DATABASE_OPTIONS } from '../../DBCluster.constants';
 import { isOptionEmpty } from '../../DBCluster.utils';
@@ -18,7 +20,7 @@ import { DBClusterTopology } from '../DBClusterAdvancedOptions/DBClusterAdvanced
 
 import { CLUSTER_NAME_MAX_LENGTH } from './DBClusterBasicOptions.constants';
 import { useDatabaseVersions } from './DBClusterBasicOptions.hooks';
-import { DatabaseOption, DBClusterBasicOptionsProps } from './DBClusterBasicOptions.types';
+import { DatabaseOption, DBClusterBasicOptionsProps, Operators } from './DBClusterBasicOptions.types';
 import { getKubernetesOptions, kubernetesClusterNameValidator, optionRequired } from './DBClusterBasicOptions.utils';
 
 export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernetes, form }) => {
@@ -46,24 +48,20 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
       const { operators } = selectedKubernetes;
       const availableDatabaseOptions: DatabaseOption[] = [];
 
-      if (operators.xtradb.status === KubernetesOperatorStatus.ok) {
-        availableDatabaseOptions.push({
-          value: Databases.mysql,
-          label: DATABASE_LABELS[Databases.mysql],
-        });
-      }
-
-      if (operators.psmdb.status === KubernetesOperatorStatus.ok) {
-        availableDatabaseOptions.push({
-          value: Databases.mongodb,
-          label: DATABASE_LABELS[Databases.mongodb],
-        });
-      }
-
-      change(AddDBClusterFields.databaseType, {
-        value: undefined,
-        label: undefined,
+      Object.entries(operators).forEach(([operator, { status }]: [Operators, Operator]) => {
+        if (status === KubernetesOperatorStatus.ok) {
+          availableDatabaseOptions.push(getDatabaseOptionFromOperator(operator) as DatabaseOption);
+        }
       });
+
+      if (availableDatabaseOptions.length === 1) {
+        change(AddDBClusterFields.databaseType, availableDatabaseOptions[0]);
+      } else {
+        change(AddDBClusterFields.databaseType, {
+          value: undefined,
+          label: undefined,
+        });
+      }
 
       setDatabaseOptions(availableDatabaseOptions);
       change(AddDBClusterFields.kubernetesCluster, selectedKubernetes);

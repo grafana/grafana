@@ -1,17 +1,21 @@
 /* eslint-disable react/display-name */
-import React, { FC, useMemo } from 'react';
 import { Modal, logger } from '@percona/platform-core';
-import { Messages } from 'app/percona/dbaas/DBaaS.messages';
+import React, { FC, useMemo } from 'react';
+import { FormRenderProps } from 'react-final-form';
+
 import { Icon, useStyles } from '@grafana/ui';
+import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { StepProgress } from 'app/percona/dbaas/components/StepProgress/StepProgress';
+
+import { getActiveOperators, getDatabaseOptionFromOperator } from '../../Kubernetes/Kubernetes.utils';
+import { buildWarningMessage, newDBClusterService } from '../DBCluster.utils';
+
+import { getStyles } from './AddDBClusterModal.styles';
 import { AddDBClusterModalProps, AddDBClusterFields } from './AddDBClusterModal.types';
-import { DBClusterBasicOptions } from './DBClusterBasicOptions/DBClusterBasicOptions';
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions';
 import { INITIAL_VALUES } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
 import { DBClusterTopology } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
-import { buildWarningMessage, newDBClusterService } from '../DBCluster.utils';
-import { getStyles } from './AddDBClusterModal.styles';
-import { FormRenderProps } from 'react-final-form';
+import { DBClusterBasicOptions } from './DBClusterBasicOptions/DBClusterBasicOptions';
 
 export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
   kubernetes,
@@ -22,6 +26,17 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
 }) => {
   const styles = useStyles(getStyles);
 
+  const initialValues = useMemo(() => {
+    const activeOperators = getActiveOperators(kubernetes);
+
+    return {
+      ...INITIAL_VALUES,
+      [AddDBClusterFields.databaseType]:
+        activeOperators.length === 1
+          ? getDatabaseOptionFromOperator(activeOperators[0])
+          : { value: undefined, label: undefined },
+    };
+  }, [kubernetes]);
   const steps = useMemo(
     () => [
       {
@@ -89,7 +104,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
           )}
           <StepProgress
             steps={steps}
-            initialValues={INITIAL_VALUES}
+            initialValues={initialValues}
             submitButtonMessage={Messages.dbcluster.addModal.confirm}
             onSubmit={onSubmit}
           />
