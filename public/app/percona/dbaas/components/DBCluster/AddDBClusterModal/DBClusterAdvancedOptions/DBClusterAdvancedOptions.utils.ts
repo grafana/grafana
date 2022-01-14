@@ -1,4 +1,4 @@
-export const resourceValidator = (value: number) => {
+export const resourceValidator = (value?: number) => {
   if (!value || Math.floor(value) === value) {
     return undefined;
   }

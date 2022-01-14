@@ -16,7 +16,7 @@ import { getStyles } from './DBClusterAdvancedOptions.styles';
 import { EditDBClusterFields } from '../EditDBClusterModal.types';
 import { DBClusterTopology, DBClusterResources, DBClusterAdvancedOptionsProps } from './DBClusterAdvancedOptions.types';
 import { resourceValidator } from '../../AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.utils';
-import { DBClusterAllocatedResources } from '../../DBCluster.types';
+import { DBClusterAllocatedResources, DBClusterExpectedResources } from '../../DBCluster.types';
 import { DBClusterService } from '../../DBCluster.service';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
 import { ResourcesBar } from '../../ResourcesBar/ResourcesBar';
@@ -25,7 +25,9 @@ import {
   CPU_UNITS,
   MEMORY_UNITS,
   RECHECK_INTERVAL,
+  EXPECTED_DELAY,
 } from '../../AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
+import { newDBClusterService } from '../../DBCluster.utils';
 
 export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ selectedCluster, renderProps }) => {
   const { values, form, valid, pristine, submitting } = renderProps;
@@ -34,12 +36,14 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
   const [customMemory, setCustomMemory] = useState(DEFAULT_SIZES.small.memory);
   const [customCPU, setCustomCPU] = useState(DEFAULT_SIZES.small.cpu);
   const [allocatedResources, setAllocatedResources] = useState<DBClusterAllocatedResources>();
-  const [loadingResources, setLoadingResources] = useState(false);
+  const [loadingAllocatedResources, setLoadingAllocatedResources] = useState(false);
+  const [expectedResources, setExpectedResources] = useState<DBClusterExpectedResources>();
+  const [loadingExpectedResources, setLoadingExpectedResources] = useState(false);
   const { required, min } = validators;
   const { change } = form;
   const nodeValidators = [required, min(MIN_NODES)];
   const resourceValidators = [required, min(MIN_RESOURCES), resourceValidator];
-  const { topology, resources, memory, cpu, databaseType } = values;
+  const { topology, resources, memory, cpu, disk, nodes, single } = values;
   const parsePositiveInt = useCallback((value) => (value > 0 && Number.isInteger(+value) ? value : undefined), []);
   const resourcesBarStyles = useMemo(
     () => ({
@@ -52,29 +56,62 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
 
   const topologies = useMemo(
     () =>
-      databaseType?.value !== Databases.mysql
+      selectedCluster.databaseType !== Databases.mysql
         ? [TOPOLOGY_OPTIONS[0], { ...TOPOLOGY_OPTIONS[1], disabled: true }]
         : TOPOLOGY_OPTIONS,
-    [databaseType]
+    [selectedCluster]
   );
 
   const getResources = useCallback(
     async (triggerLoading = true) => {
       try {
         if (triggerLoading) {
-          setLoadingResources(true);
+          setLoadingAllocatedResources(true);
         }
         setAllocatedResources(await DBClusterService.getAllocatedResources(selectedCluster.kubernetesClusterName));
       } catch (e) {
         logger.error(e);
       } finally {
         if (triggerLoading) {
-          setLoadingResources(false);
+          setLoadingAllocatedResources(false);
         }
       }
     },
     [selectedCluster.kubernetesClusterName]
   );
+
+  const getExpectedResources = useCallback(async () => {
+    try {
+      const dbClusterService = newDBClusterService(selectedCluster.databaseType);
+
+      setLoadingExpectedResources(true);
+      setExpectedResources(
+        await dbClusterService.getExpectedResources({
+          clusterName: selectedCluster.clusterName,
+          kubernetesClusterName: selectedCluster.kubernetesClusterName,
+          databaseType: selectedCluster.databaseType,
+          clusterSize: topology === DBClusterTopology.cluster ? nodes : single,
+          cpu,
+          memory,
+          disk,
+        })
+      );
+    } catch (e) {
+      logger.error(e);
+    } finally {
+      setLoadingExpectedResources(false);
+    }
+  }, [
+    cpu,
+    disk,
+    memory,
+    nodes,
+    selectedCluster.clusterName,
+    selectedCluster.databaseType,
+    selectedCluster.kubernetesClusterName,
+    single,
+    topology,
+  ]);
 
   useEffect(() => {
     if (prevResources === DBClusterResources.custom) {
@@ -94,16 +131,30 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
   }, [resources, change, cpu, customCPU, customMemory, memory, prevResources]);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let allocatedTimer: NodeJS.Timeout;
 
     if (selectedCluster) {
-      getResources();
+      getAllocatedResources();
 
-      timer = setInterval(() => getResources(false), RECHECK_INTERVAL);
+      allocatedTimer = setInterval(() => getAllocatedResources(false), RECHECK_INTERVAL);
     }
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(allocatedTimer);
   }, [selectedCluster, getResources]);
+
+  useEffect(() => {
+    let expectedTimer: NodeJS.Timeout;
+
+    if (selectedCluster && memory > 0 && cpu > 0 && disk > 0) {
+      if (expectedTimer) {
+        clearTimeout(expectedTimer);
+      }
+
+      expectedTimer = setTimeout(() => getExpectedResources(), EXPECTED_DELAY);
+    }
+
+    return () => clearTimeout(expectedTimer);
+  }, [memory, cpu, selectedCluster, topology, nodes, single, getExpectedResources, disk]);
 
   return (
     <>
@@ -163,13 +214,13 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
           />
         </div>
         <div className={styles.resourcesBarCol}>
-          <Overlay isPending={loadingResources}>
+          <Overlay isPending={loadingAllocatedResources || loadingExpectedResources}>
             <ResourcesBar
               resourceLabel={Messages.dbcluster.addModal.resourcesBar.memory}
               icon={<Memory />}
               total={allocatedResources?.total.memory}
               allocated={allocatedResources?.allocated.memory}
-              expected={undefined}
+              expected={expectedResources?.expected.memory}
               className={cx(resourcesBarStyles)}
               units={MEMORY_UNITS}
               dataQa="dbcluster-resources-bar-memory"
@@ -179,7 +230,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
               icon={<CPU />}
               total={allocatedResources?.total.cpu}
               allocated={allocatedResources?.allocated.cpu}
-              expected={undefined}
+              expected={expectedResources?.expected.cpu}
               className={cx(resourcesBarStyles)}
               units={CPU_UNITS}
               dataQa="dbcluster-resources-bar-cpu"

@@ -13,7 +13,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       div {
-        white-space: nowrap;
         width: 100px;
       }
       div:not(:last-child) {
@@ -36,7 +35,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     resourcesBar: css`
       margin-top: ${spacing.lg};
-      margin-bottom: 54px;
+      margin-bottom: ${spacing.xl};
     `,
     resourcesBarEmpty: css`
       margin-top: ${spacing.lg};

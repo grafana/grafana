@@ -1,4 +1,4 @@
-import { omit } from 'lodash';
+import { omit, pick } from 'lodash';
 import { Databases } from 'app/percona/shared/core';
 import { apiManagement } from 'app/percona/shared/helpers/api';
 import { Kubernetes } from '../Kubernetes/Kubernetes.types';
@@ -6,11 +6,14 @@ import {
   DBCluster,
   DBClusterActionAPI,
   DBClusterConnectionAPI,
+  DBClusterExpectedResources,
+  DBClusterExpectedResourcesAPI,
   DBClusterPayload,
   DBClusterStatus,
 } from './DBCluster.types';
 import { DBClusterService } from './DBCluster.service';
 import { getClusterStatus } from './DBCluster.utils';
+import { BILLION, THOUSAND } from './DBCluster.constants';
 
 const DBCLUSTER_STATUS_MAP = {
   [DBClusterStatus.invalid]: 'PSMDB_CLUSTER_STATE_INVALID',
@@ -66,15 +69,27 @@ export class PSMDBService extends DBClusterService {
     );
   }
 
+  getExpectedResources(dbCluster: DBCluster): Promise<DBClusterExpectedResources> {
+    return apiManagement
+      .post<any, Partial<DBClusterPayload>>('/DBaaS/PSMDBCluster/Resources/Get', pick(toAPI(dbCluster), ['params']))
+      .then((response: DBClusterExpectedResourcesAPI) => ({
+        expected: {
+          cpu: response.expected.cpu_m / THOUSAND,
+          memory: response.expected.memory_bytes / BILLION,
+          disk: response.expected.disk_size / BILLION,
+        },
+      }));
+  }
+
   toModel(dbCluster: DBClusterPayload, kubernetesClusterName: string, databaseType: Databases): DBCluster {
     return {
       clusterName: dbCluster.name,
       kubernetesClusterName,
       databaseType,
       clusterSize: dbCluster.params.cluster_size,
-      memory: (dbCluster.params.replicaset?.compute_resources?.memory_bytes || 0) / 10 ** 9,
-      cpu: (dbCluster.params.replicaset?.compute_resources?.cpu_m || 0) / 1000,
-      disk: (dbCluster.params.replicaset?.disk_size || 0) / 10 ** 9,
+      memory: (dbCluster.params.replicaset?.compute_resources?.memory_bytes || 0) / BILLION,
+      cpu: (dbCluster.params.replicaset?.compute_resources?.cpu_m || 0) / THOUSAND,
+      disk: (dbCluster.params.replicaset?.disk_size || 0) / BILLION,
       status: getClusterStatus(dbCluster.state, DBCLUSTER_STATUS_MAP),
       message: dbCluster.operation?.message,
       finishedSteps: dbCluster.operation?.finished_steps || 0,
@@ -90,10 +105,10 @@ const toAPI = (dbCluster: DBCluster) => ({
     cluster_size: dbCluster.clusterSize,
     replicaset: {
       compute_resources: {
-        cpu_m: dbCluster.cpu * 1000,
-        memory_bytes: dbCluster.memory * 10 ** 9,
+        cpu_m: dbCluster.cpu * THOUSAND,
+        memory_bytes: dbCluster.memory * BILLION,
       },
-      disk_size: dbCluster.disk * 10 ** 9,
+      disk_size: dbCluster.disk * BILLION,
     },
   },
 });
