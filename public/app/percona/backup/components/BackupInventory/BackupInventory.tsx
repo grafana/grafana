@@ -5,6 +5,7 @@ import { Column, Row } from 'react-table';
 
 import { Button, useStyles } from '@grafana/ui';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
+import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell/ExpandableCell';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
@@ -35,6 +36,7 @@ export const BackupInventory: FC = () => {
   const [restoreModalVisible, setRestoreModalVisible] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<Backup | null>(null);
   const [backupModalVisible, setBackupModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [data, setData] = useState<Backup[]>([]);
   const [triggerTimeout] = useRecurringCall();
   const [generateToken] = useCancelToken();
@@ -70,9 +72,14 @@ export const BackupInventory: FC = () => {
         Header: Messages.backupInventory.table.columns.actions,
         accessor: 'id',
         Cell: ({ row }) => (
-          <BackupInventoryActions onRestore={onRestoreClick} onBackup={onBackupClick} backup={row.original as Backup} />
+          <BackupInventoryActions
+            onRestore={onRestoreClick}
+            onBackup={onBackupClick}
+            backup={row.original as Backup}
+            onDelete={onDeleteClick}
+          />
         ),
-        width: '110px',
+        width: '150px',
       },
     ],
     []
@@ -82,6 +89,11 @@ export const BackupInventory: FC = () => {
   const onRestoreClick = (backup: Backup) => {
     setSelectedBackup(backup);
     setRestoreModalVisible(true);
+  };
+
+  const onDeleteClick = (backup: Backup) => {
+    setSelectedBackup(backup);
+    setDeleteModalVisible(true);
   };
 
   const handleClose = () => {
@@ -115,6 +127,20 @@ export const BackupInventory: FC = () => {
       setPending(false);
     },
     [generateToken]
+  );
+
+  const handleDelete = useCallback(
+    async (force = false) => {
+      try {
+        await BackupInventoryService.delete(selectedBackup!.id, force);
+        setDeleteModalVisible(false);
+        setSelectedBackup(null);
+        getData(true);
+      } catch (e) {
+        logger.error(e);
+      }
+    },
+    [getData, selectedBackup]
   );
 
   const renderSelectedSubRow = React.useCallback(
@@ -191,6 +217,16 @@ export const BackupInventory: FC = () => {
         isVisible={backupModalVisible}
         onClose={handleClose}
         onBackup={handleBackup}
+      />
+      <DeleteModal
+        title={Messages.backupInventory.deleteModalTitle}
+        message={Messages.backupInventory.getDeleteMessage(selectedBackup?.name || '')}
+        isVisible={deleteModalVisible}
+        setVisible={setDeleteModalVisible}
+        forceLabel={Messages.backupInventory.deleteFromStorage}
+        onDelete={handleDelete}
+        initialForceValue={true}
+        showForce
       />
     </>
   );

@@ -33,6 +33,9 @@ export const Messages = {
       },
       actions: 'Actions',
     },
+    deleteModalTitle: 'Delete backup artifact',
+    deleteFromStorage: 'Delete from storage',
+    getDeleteMessage: (name: string) => `Are you sure you want to delete "${name}"?`,
   },
   restoreHistory: {
     table: {

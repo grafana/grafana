@@ -4,4 +4,5 @@ export interface BackupInventoryActionsProps {
   backup: Backup;
   onRestore: (backup: Backup) => void;
   onBackup: (backup: Backup) => void;
+  onDelete: (backup: Backup) => void;
 }
