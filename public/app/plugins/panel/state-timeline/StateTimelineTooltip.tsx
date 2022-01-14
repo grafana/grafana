@@ -57,7 +57,7 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
   let durationFragment = null;
 
   if (nextStateTs) {
-    const duration = nextStateTs && formattedValueToString(getValueFormat('dtdurationms')(nextStateTs - stateTs, 0));
+    const duration = nextStateTs && formattedValueToString(getValueFormat('dtdurationms')(nextStateTs - stateTs, 1));
     durationFragment = (
       <>
         <br />
