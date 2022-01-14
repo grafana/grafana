@@ -14,9 +14,7 @@ import { Messages } from './AlertRulesActions.messages';
 const mockContext = () => ({
   setAddModalVisible: jest.fn(),
   setSelectedAlertRule: jest.fn(),
-  setSelectedRuleDetails: jest.fn(),
   getAlertRules: jest.fn(),
-  selectedRuleDetails: formattedRulesStubs[0],
 });
 jest.mock('../AlertRules.service');
 jest.mock('app/core/core', () => ({
