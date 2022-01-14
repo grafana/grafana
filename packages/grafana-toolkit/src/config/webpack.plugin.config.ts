@@ -99,6 +99,7 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
         // If src/README.md exists use it; otherwise the root README
         { from: hasREADME ? 'README.md' : '../README.md', to: '.', force: true },
         { from: 'plugin.json', to: '.' },
+        { from: '**/README.md', to: '[path]README.md' },
         { from: '../LICENSE', to: '.' },
         { from: '../CHANGELOG.md', to: '.', force: true },
         { from: '**/*.json', to: '.' },
