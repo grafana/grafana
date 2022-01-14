@@ -9,6 +9,11 @@ import { DBClusterConnectionItem } from '../DBClusterConnection/DBClusterConnect
 export const DBClusterParameters: FC<DBClusterParametersProps> = ({ dbCluster }) => {
   const styles = useStyles(getStyles);
   const { status } = dbCluster;
+  const {
+    label: exposeLabel,
+    enabled: exposeEnabled,
+    disabled: exposeDisabled,
+  } = Messages.dbcluster.table.parameters.expose;
 
   return (
     <>
@@ -33,6 +38,11 @@ export const DBClusterParameters: FC<DBClusterParametersProps> = ({ dbCluster })
             label={Messages.dbcluster.table.parameters.disk}
             value={`${dbCluster.disk} GB`}
             dataQa="cluster-parameters-disk"
+          />
+          <DBClusterConnectionItem
+            label={exposeLabel}
+            value={dbCluster.expose ? exposeEnabled : exposeDisabled}
+            dataQa="cluster-parameters-expose"
           />
         </div>
       )}

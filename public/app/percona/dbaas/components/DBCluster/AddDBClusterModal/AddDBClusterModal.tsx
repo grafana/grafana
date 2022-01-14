@@ -68,6 +68,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
     memory,
     cpu,
     disk,
+    expose,
   }: Record<string, any>) => {
     try {
       const dbClusterService = newDBClusterService(databaseType.value);
@@ -81,6 +82,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
         memory,
         disk,
         databaseImage: databaseVersion.value,
+        expose,
       });
       setVisible(false);
       onDBClusterAdded();
