@@ -1,5 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
+load('scripts/drone/opts.star', 'cypress_image')
+
 grabpl_version = 'v2.8.2'
 build_image = 'grafana/build-container:1.4.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
@@ -673,7 +675,7 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
-        'image': 'cypress/included:8.4.1',
+        'image': cypress_image,
         'depends_on': [
             'package',
         ],
