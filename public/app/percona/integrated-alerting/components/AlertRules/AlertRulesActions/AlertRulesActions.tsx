@@ -15,14 +15,11 @@ export const AlertRulesActions: FC<AlertRulesActionsProps> = ({ alertRule }) => 
   const [pendingRequest, setPendingRequest] = useState(false);
   const { rawValues, ruleId, summary, disabled } = alertRule;
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const { setAddModalVisible, setSelectedAlertRule, getAlertRules, setSelectedRuleDetails } = useContext(
-    AlertRulesProvider
-  );
+  const { setAddModalVisible, setSelectedAlertRule, getAlertRules } = useContext(AlertRulesProvider);
 
   const handleEditClick = () => {
     setSelectedAlertRule(alertRule);
     setAddModalVisible(true);
-    setSelectedRuleDetails(null);
   };
 
   const deleteAlertRule = async () => {
@@ -77,7 +74,6 @@ export const AlertRulesActions: FC<AlertRulesActionsProps> = ({ alertRule }) => 
       appEvents.emit(AppEvents.alertSuccess, [
         disabled ? Messages.getEnabledMessage(summary) : Messages.getDisabledMessage(summary),
       ]);
-      setSelectedRuleDetails(null);
       getAlertRules();
     } catch (e) {
       logger.error(e);

@@ -43,14 +43,11 @@ export const getStyles = ({ palette, colors, spacing }: GrafanaTheme) => {
       display: flex;
       justify-content: space-between;
     `,
-    disabledRow: css`
-      & td {
-        color: ${colors.textWeak};
-        background-color: ${colors.dashboardBg} !important;
-      }
-    `,
     details: css`
       margin-top: ${spacing.md};
+    `,
+    disabledRow: css`
+      background-color: ${colors.dashboardBg} !important;
     `,
   };
 };

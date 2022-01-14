@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
-import React, { FC, useEffect, useState, useCallback } from 'react';
-import { Column } from 'react-table';
+import React, { FC, useCallback, useEffect, useState } from 'react';
+import { Cell, Column, Row } from 'react-table';
 import { Button, useStyles, IconButton } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
 import { Table } from '../Table/Table';
@@ -33,7 +33,6 @@ export const AlertRules: FC = () => {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(true);
   const [selectedAlertRule, setSelectedAlertRule] = useState<AlertRule | null>();
-  const [selectedRuleDetails, setSelectedRuleDetails] = useState<AlertRule | null>();
   const [data, setData] = useState<AlertRule[]>([]);
   const [pageSize, setPageSize] = useStoredTablePageSize(ALERT_RULES_TABLE_ID);
   const [pageIndex, setPageindex] = useState(0);
@@ -63,25 +62,22 @@ export const AlertRules: FC = () => {
     () => [
       {
         Header: summaryColumn,
-        accessor: (alertRule: AlertRule) => (
-          <div className={styles.nameWrapper}>
-            {alertRule.summary}
-            {selectedRuleDetails && selectedRuleDetails.ruleId === alertRule.ruleId ? (
-              <IconButton
-                data-qa="hide-alert-rule-details"
-                name="arrow-up"
-                onClick={() => setSelectedRuleDetails(null)}
-              />
-            ) : (
-              <IconButton
-                data-qa="show-alert-rule-details"
-                name="arrow-down"
-                onClick={() => setSelectedRuleDetails(alertRule)}
-                disabled={alertRule.disabled}
-              />
-            )}
-          </div>
-        ),
+        accessor: 'summary',
+        // TODO replace with ExpandableCell after the PR below is merged
+        // https://github.com/percona-platform/grafana/pull/83
+        Cell: ({ row, value }) => {
+          const restProps = row.getToggleRowExpandedProps ? row.getToggleRowExpandedProps() : {};
+          return (
+            <div className={styles.nameWrapper} {...restProps}>
+              <span>{value}</span>
+              {row.isExpanded ? (
+                <IconButton data-qa="hide-alert-rule-details" name="arrow-up" />
+              ) : (
+                <IconButton data-qa="show-alert-rule-details" name="arrow-down" />
+              )}
+            </div>
+          );
+        },
         width: '25%',
       } as Column,
       {
@@ -127,7 +123,7 @@ export const AlertRules: FC = () => {
         accessor: (alertRule: AlertRule) => <AlertRulesActions alertRule={alertRule} />,
       } as Column,
     ],
-    [selectedRuleDetails, styles.filter, styles.filtersWrapper, styles.nameWrapper]
+    [styles.filter, styles.filtersWrapper, styles.nameWrapper]
   );
 
   const onPaginationChanged = useCallback(
@@ -143,14 +139,29 @@ export const AlertRules: FC = () => {
     setAddModalVisible((currentValue) => !currentValue);
   };
 
+  const renderSelectedSubRow = useCallback(
+    ({ original }: Row<AlertRule>) => (
+      <pre data-qa="alert-rules-details" className={styles.details}>
+        {original.expr}
+      </pre>
+    ),
+    [styles.details]
+  );
+
+  const getCellProps = useCallback(
+    (cell: Cell<AlertRule>) => ({
+      className: cell.row.original.disabled ? styles.disabledRow : '',
+      key: cell.row.original.ruleId,
+    }),
+    [styles.disabledRow]
+  );
+
   useEffect(() => {
     getAlertRules();
   }, [pageSize, pageIndex, getAlertRules]);
 
   return (
-    <AlertRulesProvider.Provider
-      value={{ getAlertRules, setAddModalVisible, setSelectedAlertRule, setSelectedRuleDetails, selectedRuleDetails }}
-    >
+    <AlertRulesProvider.Provider value={{ getAlertRules, setAddModalVisible, setSelectedAlertRule }}>
       <div className={styles.actionsWrapper}>
         <Button
           size="md"
@@ -170,40 +181,13 @@ export const AlertRules: FC = () => {
         pageSize={pageSize as number}
         pageIndex={pageIndex}
         onPaginationChanged={onPaginationChanged}
+        renderExpandedRow={renderSelectedSubRow}
         data={data}
         columns={columns}
         pendingRequest={pendingRequest}
         emptyMessage={noData}
-      >
-        {(rows, table) =>
-          rows.map((row) => {
-            const { prepareRow } = table;
-            prepareRow(row);
-            const alertRule = row.original as AlertRule;
-
-            return (
-              <React.Fragment key={alertRule.ruleId}>
-                <tr {...row.getRowProps()} className={alertRule.disabled ? styles.disabledRow : ''}>
-                  {row.cells.map((cell) => (
-                    <td {...cell.getCellProps()} key={cell.column.id}>
-                      {cell.render('Cell')}
-                    </td>
-                  ))}
-                </tr>
-                {selectedRuleDetails && alertRule.ruleId === selectedRuleDetails.ruleId && (
-                  <tr key={selectedRuleDetails.ruleId}>
-                    <td colSpan={columns.length}>
-                      <pre data-qa="alert-rules-details" className={styles.details}>
-                        {alertRule.expr}
-                      </pre>
-                    </td>
-                  </tr>
-                )}
-              </React.Fragment>
-            );
-          })
-        }
-      </Table>
+        getCellProps={getCellProps}
+      />
     </AlertRulesProvider.Provider>
   );
 };
