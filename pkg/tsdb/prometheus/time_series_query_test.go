@@ -710,10 +710,11 @@ func TestPrometheus_matrixToDataFrames(t *testing.T) {
 		query, results := generateMatrixData(5, 10)
 
 		frames := make(data.Frames, 0)
-		frames = matrixToDataFrames(results, query, frames)
+		frames, err := matrixToDataFrames(results, query, frames)
+		require.NoError(t, err)
 		res := &backend.DataResponse{Frames: frames}
 
-		err := experimental.CheckGoldenDataResponse("./testdata/matrix_golden.txt", res, false)
+		err = experimental.CheckGoldenDataResponse("./testdata/matrix_golden.txt", res, false)
 		require.NoError(t, err)
 	})
 }
@@ -731,7 +732,8 @@ func runMatrixBenchmark(series, rows int) func(*testing.B) {
 		query, results := generateMatrixData(series, rows)
 		for i := 0; i < b.N; i++ {
 			frames := make([]*data.Frame, 0)
-			frames = matrixToDataFrames(results, query, frames)
+			frames, err := matrixToDataFrames(results, query, frames)
+			require.NoError(b, err)
 			if len(frames) != series {
 				b.Fatal("wrong frame count", len(frames))
 			}

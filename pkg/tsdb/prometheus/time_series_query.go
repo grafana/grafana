@@ -238,6 +238,7 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 
 func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *PrometheusQuery) (data.Frames, error) {
 	var (
+		err        error
 		frames     = data.Frames{}
 		nextFrames = data.Frames{}
 	)
@@ -248,7 +249,10 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 
 		switch v := value.(type) {
 		case model.Matrix:
-			nextFrames = matrixToDataFrames(v, query, nextFrames)
+			nextFrames, err = matrixToDataFrames(v, query, nextFrames)
+			if err != nil {
+				return frames, err
+			}
 		case model.Vector:
 			nextFrames = vectorToDataFrames(v, query, nextFrames)
 		case *model.Scalar:
@@ -302,51 +306,67 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	return expr
 }
 
-func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
+func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) (data.Frames, error) {
 	var (
 		idx           = 0
 		baseTimestamp = alignTimeRange(query.Start, query.Step, query.UtcOffsetSec).UnixMilli()
 		endTimestamp  = alignTimeRange(query.End, query.Step, query.UtcOffsetSec).UnixMilli()
 		// For each step we create 1 data point. This results in range / step + 1 data points.
 		datapointsCount = int((endTimestamp-baseTimestamp)/query.Step.Milliseconds()) + 1
-		timeField       = data.NewFieldFromFieldType(data.FieldTypeTime, datapointsCount)
+		timestamps      = make([]time.Time, datapointsCount)
 		timeMap         = make(map[int64]int, datapointsCount)
 	)
 
-	timeField.Name = data.TimeSeriesTimeFieldName
-
 	// Fill the time field so we can avoid creating time fields for each matrix result, and
 	// create a map of timestamp -> time field index so that we can look up the index of the matching
-	// timestamp in the loop below.
+	// timestamp in the matrix loop below.
 	for t := baseTimestamp; t <= endTimestamp; t += query.Step.Milliseconds() {
-		timeField.Set(idx, time.Unix(0, t*int64(time.Millisecond)).UTC())
-		timeMap[t*int64(time.Millisecond)] = idx
+		nanos := t * int64(time.Millisecond)
+		timestamps[idx] = time.Unix(0, nanos).UTC()
+		timeMap[nanos] = idx
 		idx++
 	}
+	timeField := data.NewField(data.TimeSeriesTimeFieldName, data.Labels{}, timestamps)
+	timeField.Name = data.TimeSeriesTimeFieldName
 
+	// The frame meta will be the same for all matrix responses,
+	// so we can avoid creating it in every loop.
+	meta := data.FrameMeta{
+		Custom: map[string]string{
+			"resultType": "matrix",
+		},
+	}
+
+	// Loop through each matrix response and build a frame
 	for _, s := range matrix {
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, datapointsCount)
-		valueField.Labels = make(map[string]string, len(s.Metric))
+		values := make([]*float64, datapointsCount)
+		labels := make(map[string]string, len(s.Metric))
 		for k, v := range s.Metric {
-			valueField.Labels[string(k)] = string(v)
+			labels[string(k)] = string(v)
 		}
+		name := formatLegend(s.Metric, query)
+		frame := data.NewFrame(name, timeField)
+		frame.Meta = &meta
 
 		// Using indexes in this for loop instead of range in order to avoid copying the sample pair.
 		for rowIdx := 0; rowIdx < len(s.Values); rowIdx++ {
 			r := &s.Values[rowIdx]
 			if !math.IsNaN(float64(r.Value)) {
-				valueField.Set(timeMap[r.Timestamp.UnixNano()], (*float64)(&r.Value))
+				t, ok := timeMap[r.Timestamp.UnixNano()]
+				if !ok {
+					return nil, fmt.Errorf("unable to match result to expected time range: %s", name)
+				}
+				values[t] = (*float64)(&r.Value)
 			}
 		}
 
-		name := formatLegend(s.Metric, query)
-		valueField.Name = data.TimeSeriesValueFieldName
+		valueField := data.NewField(data.TimeSeriesValueFieldName, labels, values)
 		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
-
-		frames = append(frames, newDataFrame(name, "matrix", timeField, valueField))
+		frame.Fields = append(frame.Fields, valueField)
+		frames = append(frames, frame)
 	}
 
-	return frames
+	return frames, nil
 }
 
 func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, frames data.Frames) data.Frames {
