@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Heatmap (NG)",
+  "id": "heatmap-new",
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/heatmap.svg",
+      "large": "img/heatmap.svg"
+    }
+  }
+}
