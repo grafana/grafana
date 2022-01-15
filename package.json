@@ -236,7 +236,7 @@
     "jquery": "3.5.0",
     "lodash": "4.17.21",
     "lru-cache": "^5.1.1",
-    "marked": "0.7.0",
+    "marked": "4.0.10",
     "md5": "^2.2.1",
     "memoize-one": "5.1.1",
     "moment": "2.24.0",
