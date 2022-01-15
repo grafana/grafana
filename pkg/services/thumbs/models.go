@@ -28,12 +28,6 @@ type previewRequest struct {
 	Theme rendering.Theme      `json:"theme"`
 }
 
-type previewResponse struct {
-	Code int    `json:"code"` // 200 | 202
-	Path string `json:"path"` // local file path to serve
-	URL  string `json:"url"`  // redirect to this URL
-}
-
 type crawlCmd struct {
 	Mode  CrawlerMode     `json:"mode"`  // thumbs | analytics | migrate
 	Theme rendering.Theme `json:"theme"` // light | dark
@@ -62,7 +56,7 @@ type dashRenderer interface {
 }
 
 type thumbnailRepo interface {
-	markAsStale(meta models.DashboardThumbnailMeta) error
+	updateThumbnailState(state models.ThumbnailState, meta models.DashboardThumbnailMeta) error
 	saveFromFile(filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
 	saveFromBytes(bytes []byte, mimeType string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
 	getThumbnail(meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error)

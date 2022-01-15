@@ -63,8 +63,9 @@ func (r *sqlThumbnailRepository) saveFromBytes(content []byte, mimeType string, 
 	return cmd.Result.Id, nil
 }
 
-func (r *sqlThumbnailRepository) markAsStale(meta models.DashboardThumbnailMeta) error {
-	return r.store.MarkAsStale(&models.MarkAsStaleCommand{
+func (r *sqlThumbnailRepository) updateThumbnailState(state models.ThumbnailState, meta models.DashboardThumbnailMeta) error {
+	return r.store.UpdateThumbnailState(&models.UpdateThumbnailStateCommand{
+		State:                  state,
 		DashboardThumbnailMeta: meta,
 	})
 }

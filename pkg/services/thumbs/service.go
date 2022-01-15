@@ -27,7 +27,7 @@ type Service interface {
 
 	// from dashboard page
 	SetImage(c *models.ReqContext) // form post
-	MarkAsStale(c *models.ReqContext)
+	UpdateThumbnailState(c *models.ReqContext)
 
 	// Must be admin
 	StartCrawler(c *models.ReqContext) response.Response
@@ -92,25 +92,45 @@ func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *pre
 	return req
 }
 
-func (hs *thumbService) MarkAsStale(c *models.ReqContext) {
+type updateThumbnailStateRequest struct {
+	State string `json:"state"`
+}
+
+func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
 	}
 
-	err := hs.thumbnailRepo.markAsStale(models.DashboardThumbnailMeta{
+	var body = &updateThumbnailStateRequest{}
+
+	err := web.Bind(c.Req, body)
+	if err != nil {
+		tlog.Error("Error parsing update thumbnail state request", "dashboardUid", req.UID, "err", err.Error())
+		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return
+	}
+
+	newState, err := models.ParseThumbnailState(body.State)
+	if err != nil {
+		tlog.Error("Error parsing update thumbnail state request body", "dashboardUid", req.UID, "err", err.Error())
+		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return
+	}
+
+	err = hs.thumbnailRepo.updateThumbnailState(newState, models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		Theme:        string(req.Theme),
 		Kind:         models.ThumbnailKindDefault,
 	})
 
 	if err != nil {
-		tlog.Error("Error when marking thumbnail as stale", "dashboardUid", req.UID, "err", err.Error())
+		tlog.Error("Error when trying to update thumbnail state", "dashboardUid", req.UID, "err", err.Error(), "newState", newState)
 		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
 		return
 	}
 
-	tlog.Info("Marked dashboard thumbnail as stale", "dashboardUid", req.UID, "theme", req.Theme)
+	tlog.Info("Updated dashboard thumbnail state", "dashboardUid", req.UID, "theme", req.Theme, "newState", newState)
 	c.JSON(200, map[string]string{"success": "true"})
 }
 

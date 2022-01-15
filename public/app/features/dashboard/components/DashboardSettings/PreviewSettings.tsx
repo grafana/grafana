@@ -38,7 +38,7 @@ export class PreviewSettings extends PureComponent<Props, State> {
   };
 
   markAsStale = (isLight: boolean) => async () => {
-    return getBackendSrv().put(getThumbnailURL(this.props.uid, isLight), {});
+    return getBackendSrv().put(getThumbnailURL(this.props.uid, isLight), { state: 'stale' });
   };
 
   render() {

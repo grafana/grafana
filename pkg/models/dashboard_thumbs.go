@@ -6,6 +6,7 @@ import (
 )
 
 type ThumbnailKind string
+type ThumbnailState string
 type CrawlerMode string
 
 const (
@@ -16,6 +17,24 @@ const (
 	// - ThumbnailKindLarge ThumbnailKind = "large"
 	// - ThumbnailKindTall ThumbnailKind = "tall"
 )
+
+const (
+	ThumbnailStateDefault ThumbnailState = "default"
+	ThumbnailStateStale   ThumbnailState = "stale"
+	ThumbnailStateFrozen  ThumbnailState = "frozen"
+)
+
+func ParseThumbnailState(str string) (ThumbnailState, error) {
+	switch str {
+	case string(ThumbnailStateDefault):
+		return ThumbnailStateDefault, nil
+	case string(ThumbnailStateStale):
+		return ThumbnailStateStale, nil
+	case string(ThumbnailStateFrozen):
+		return ThumbnailStateFrozen, nil
+	}
+	return ThumbnailStateDefault, errors.New("unknown thumbnail state " + str)
+}
 
 // IsKnownThumbnailKind checks if the value is supported
 func (p ThumbnailKind) IsKnownThumbnailKind() bool {
@@ -37,16 +56,16 @@ func ParseThumbnailKind(str string) (ThumbnailKind, error) {
 
 // A DashboardThumbnail includes all metadata for a dashboard thumbnail
 type DashboardThumbnail struct {
-	Id               int64         `json:"id"`
-	DashboardId      int64         `json:"dashboardId"`
-	DashboardVersion int           `json:"dashboardVersion"`
-	Stale            bool          `json:"stale"`
-	PanelId          int64         `json:"panelId,omitempty"`
-	Kind             ThumbnailKind `json:"kind"`
-	Theme            string        `json:"theme"` // TODO: changing it from `string` to `rendering.Theme` causes gen-go to fail with undescriptive error
-	Image            []byte        `json:"image"`
-	MimeType         string        `json:"mimeType"`
-	Updated          time.Time     `json:"updated"`
+	Id               int64          `json:"id"`
+	DashboardId      int64          `json:"dashboardId"`
+	DashboardVersion int            `json:"dashboardVersion"`
+	State            ThumbnailState `json:"state"`
+	PanelId          int64          `json:"panelId,omitempty"`
+	Kind             ThumbnailKind  `json:"kind"`
+	Theme            string         `json:"theme"` // TODO: changing it from `string` to `rendering.Theme` causes gen-go to fail with undescriptive error
+	Image            []byte         `json:"image"`
+	MimeType         string         `json:"mimeType"`
+	Updated          time.Time      `json:"updated"`
 }
 
 //
@@ -90,6 +109,7 @@ type SaveDashboardThumbnailCommand struct {
 	Result *DashboardThumbnail
 }
 
-type MarkAsStaleCommand struct {
+type UpdateThumbnailStateCommand struct {
+	State ThumbnailState
 	DashboardThumbnailMeta
 }
