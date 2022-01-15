@@ -53,9 +53,11 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 	}
 
 	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
+		TimeoutOpts: rendering.TimeoutOpts{
+			Timeout: time.Duration(timeout) * time.Second,
+		},
 		Width:             width,
 		Height:            height,
-		Timeout:           time.Duration(timeout) * time.Second,
 		OrgID:             c.OrgId,
 		UserID:            c.UserId,
 		OrgRole:           c.OrgRole,

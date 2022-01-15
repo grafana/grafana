@@ -36,10 +36,23 @@ func ParseTheme(str string) (Theme, error) {
 	return ThemeDark, errors.New("unknown theme " + str)
 }
 
+type TimeoutOpts struct {
+	Timeout                  time.Duration // Timeout param passed to node-renderer service
+	RequestTimeoutMultiplier time.Duration // RequestTimeoutMultiplier used for plugin/HTTP request context timeout
+}
+
+func GetRequestTimeout(opt TimeoutOpts) time.Duration {
+	if opt.RequestTimeoutMultiplier == 0 {
+		return opt.Timeout * 2 // default
+	}
+
+	return opt.Timeout * opt.RequestTimeoutMultiplier
+}
+
 type Opts struct {
+	TimeoutOpts
 	Width             int
 	Height            int
-	Timeout           time.Duration
 	OrgID             int64
 	UserID            int64
 	OrgRole           models.RoleType
@@ -53,7 +66,7 @@ type Opts struct {
 }
 
 type CSVOpts struct {
-	Timeout         time.Duration
+	TimeoutOpts
 	OrgID           int64
 	UserID          int64
 	OrgRole         models.RoleType
