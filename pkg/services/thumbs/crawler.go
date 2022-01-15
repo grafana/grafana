@@ -3,25 +3,15 @@ package thumbs
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"math/rand"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/search"
 )
-
-type dashItem struct {
-	uid string
-	url string
-	id  int64
-}
 
 type simpleCrawler struct {
 	renderService rendering.Service
@@ -33,7 +23,7 @@ type simpleCrawler struct {
 	thumbnailKind models.ThumbnailKind
 	opts          rendering.Opts
 	status        crawlStatus
-	queue         []dashItem
+	queue         []*models.DashboardWithStaleThumbnail
 	mu            sync.Mutex
 }
 
@@ -48,14 +38,14 @@ func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, rep
 			Complete: 0,
 			Queue:    0,
 		},
-		queue: make([]dashItem, 0),
+		queue: nil,
 	}
 	c.broadcastStatus()
 	return c
 }
 
-func (r *simpleCrawler) next() *dashItem {
-	if len(r.queue) < 1 {
+func (r *simpleCrawler) next() *models.DashboardWithStaleThumbnail {
+	if r.queue == nil || len(r.queue) < 1 {
 		return nil
 	}
 	r.mu.Lock()
@@ -63,7 +53,7 @@ func (r *simpleCrawler) next() *dashItem {
 
 	v := r.queue[0]
 	r.queue = r.queue[1:]
-	return &v
+	return v
 }
 
 func (r *simpleCrawler) broadcastStatus() {
@@ -84,17 +74,6 @@ func (r *simpleCrawler) broadcastStatus() {
 	}
 }
 
-func (r *simpleCrawler) queueRender(p string, req *previewRequest) *previewResponse {
-	go func() {
-		fmt.Printf("todo? queue")
-	}()
-
-	return &previewResponse{
-		Code: 202,
-		Path: p,
-	}
-}
-
 func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rendering.Theme, thumbnailKind models.ThumbnailKind) (crawlStatus, error) {
 	if r.status.State == "running" {
 		tlog.Info("already running")
@@ -104,45 +83,43 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rend
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	searchQuery := search.Query{
-		SignedInUser: c.SignedInUser,
-		OrgId:        c.OrgId,
-	}
+	now := time.Now()
 
-	err := bus.Dispatch(context.Background(), &searchQuery)
+	items, err := r.thumbnailRepo.findDashboardsWithStaleThumbnails()
 	if err != nil {
-		return crawlStatus{}, err
-	}
+		tlog.Error("error when fetching stale ", "err", err.Error())
+		return crawlStatus{
+			Started:  now,
+			Finished: now,
+			Last:     now,
+			State:    "stopped",
+			Complete: 0,
+		}, err
 
-	queue := make([]dashItem, 0, len(searchQuery.Result))
-	for _, v := range searchQuery.Result {
-		if v.Type == search.DashHitDB {
-			queue = append(queue, dashItem{
-				uid: v.UID,
-				url: v.URL,
-				id:  v.ID,
-			})
-		}
 	}
-	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(queue), func(i, j int) { queue[i], queue[j] = queue[j], queue[i] })
 
 	r.mode = mode
 	r.thumbnailKind = thumbnailKind
 	r.opts = rendering.Opts{
+		TimeoutOpts: rendering.TimeoutOpts{
+			Timeout:                  10 * time.Second,
+			RequestTimeoutMultiplier: 3,
+		},
 		OrgID:           c.OrgId,
 		UserID:          c.UserId,
 		OrgRole:         c.OrgRole,
 		Theme:           theme,
 		ConcurrentLimit: 10,
 	}
-	r.queue = queue
+	r.queue = items
 	r.status = crawlStatus{
-		Started:  time.Now(),
+		Started:  now,
 		State:    "running",
 		Complete: 0,
 	}
 	r.broadcastStatus()
+
+	tlog.Info("Starting ", "no", len(items))
 
 	// create a pool of workers
 	for i := 0; i < r.threadCount; i++ {
@@ -187,11 +164,13 @@ func (r *simpleCrawler) walk() {
 			break
 		}
 
-		tlog.Info("GET THUMBNAIL", "url", item.url)
+		tlog.Info("GET THUMBNAIL", "url", item.Uid)
 
+		url := models.GetDashboardUrl(item.Uid, item.Slug)
 		// Hack (for now) pick a URL that will render
-		panelURL := strings.TrimPrefix(item.url, "/") + "?kiosk"
+		panelURL := strings.TrimPrefix(url, "/") + "?kiosk"
 		res, err := r.renderService.Render(context.Background(), rendering.Opts{
+			TimeoutOpts:       r.opts.TimeoutOpts,
 			Width:             320,
 			Height:            240,
 			Path:              panelURL,
@@ -200,7 +179,6 @@ func (r *simpleCrawler) walk() {
 			ConcurrentLimit:   r.opts.ConcurrentLimit,
 			OrgRole:           r.opts.OrgRole,
 			Theme:             r.opts.Theme,
-			Timeout:           10 * time.Second,
 			DeviceScaleFactor: -5, // negative numbers will render larger then scale down
 		})
 		if err != nil {
@@ -217,20 +195,20 @@ func (r *simpleCrawler) walk() {
 				defer func() {
 					err := os.Remove(res.FilePath)
 					if err != nil {
-						tlog.Error("failed to remove thumbnail temp file", "dashboardUID", item.uid, "err", err)
+						tlog.Error("failed to remove thumbnail temp file", "dashboardUID", item.Uid, "err", err)
 					}
 				}()
 
 				thumbnailId, err := r.thumbnailRepo.saveFromFile(res.FilePath, models.DashboardThumbnailMeta{
-					DashboardUID: item.uid,
+					DashboardUID: item.Uid,
 					Theme:        string(r.opts.Theme),
 					Kind:         r.thumbnailKind,
-				})
+				}, item.Version)
 
 				if err != nil {
 					r.status.Errors++
 				} else {
-					tlog.Info("saved thumbnail", "img", item.url, "thumbnailId", thumbnailId)
+					tlog.Info("saved thumbnail", "img", url, "thumbnailId", thumbnailId)
 					r.status.Complete++
 				}
 			}()

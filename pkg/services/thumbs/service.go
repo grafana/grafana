@@ -25,8 +25,9 @@ type Service interface {
 	Enabled() bool
 	GetImage(c *models.ReqContext)
 
-	// Form post (from dashboard page)
-	SetImage(c *models.ReqContext)
+	// from dashboard page
+	SetImage(c *models.ReqContext) // form post
+	MarkAsStale(c *models.ReqContext)
 
 	// Must be admin
 	StartCrawler(c *models.ReqContext) response.Response
@@ -89,6 +90,28 @@ func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *pre
 		return nil
 	}
 	return req
+}
+
+func (hs *thumbService) MarkAsStale(c *models.ReqContext) {
+	req := hs.parseImageReq(c, false)
+	if req == nil {
+		return // already returned value
+	}
+
+	err := hs.thumbnailRepo.markAsStale(models.DashboardThumbnailMeta{
+		DashboardUID: req.UID,
+		Theme:        string(req.Theme),
+		Kind:         models.ThumbnailKindDefault,
+	})
+
+	if err != nil {
+		tlog.Error("Error when marking thumbnail as stale", "dashboardUid", req.UID, "err", err.Error())
+		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return
+	}
+
+	tlog.Info("Marked dashboard thumbnail as stale", "dashboardUid", req.UID, "theme", req.Theme)
+	c.JSON(200, map[string]string{"success": "true"})
 }
 
 func (hs *thumbService) GetImage(c *models.ReqContext) {
@@ -165,7 +188,7 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 		DashboardUID: req.UID,
 		Theme:        string(req.Theme),
 		Kind:         req.Kind,
-	})
+	}, models.DashboardVersionForManualThumbnailUpload)
 
 	if err != nil {
 		c.JSON(400, map[string]string{"error": "error saving thumbnail file"})

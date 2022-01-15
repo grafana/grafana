@@ -20,7 +20,7 @@ type sqlThumbnailRepository struct {
 	store *sqlstore.SQLStore
 }
 
-func (r *sqlThumbnailRepository) saveFromFile(filePath string, meta models.DashboardThumbnailMeta) (int64, error) {
+func (r *sqlThumbnailRepository) saveFromFile(filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		tlog.Error("error opening file", "dashboardUID", meta.DashboardUID, "err", err)
@@ -35,7 +35,7 @@ func (r *sqlThumbnailRepository) saveFromFile(filePath string, meta models.Dashb
 		return 0, err
 	}
 
-	return r.saveFromBytes(content, getMimeType(filePath), meta)
+	return r.saveFromBytes(content, getMimeType(filePath), meta, dashboardVersion)
 }
 
 func getMimeType(filePath string) string {
@@ -46,11 +46,12 @@ func getMimeType(filePath string) string {
 	return "image/png"
 }
 
-func (r *sqlThumbnailRepository) saveFromBytes(content []byte, mimeType string, meta models.DashboardThumbnailMeta) (int64, error) {
+func (r *sqlThumbnailRepository) saveFromBytes(content []byte, mimeType string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error) {
 	cmd := &models.SaveDashboardThumbnailCommand{
 		DashboardThumbnailMeta: meta,
 		Image:                  content,
 		MimeType:               mimeType,
+		DashboardVersion:       dashboardVersion,
 	}
 
 	_, err := r.store.SaveThumbnail(cmd)
@@ -62,9 +63,21 @@ func (r *sqlThumbnailRepository) saveFromBytes(content []byte, mimeType string, 
 	return cmd.Result.Id, nil
 }
 
+func (r *sqlThumbnailRepository) markAsStale(meta models.DashboardThumbnailMeta) error {
+	return r.store.MarkAsStale(&models.MarkAsStaleCommand{
+		DashboardThumbnailMeta: meta,
+	})
+}
+
 func (r *sqlThumbnailRepository) getThumbnail(meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error) {
 	query := &models.GetDashboardThumbnailCommand{
 		DashboardThumbnailMeta: meta,
 	}
 	return r.store.GetThumbnail(query)
+}
+
+func (r *sqlThumbnailRepository) findDashboardsWithStaleThumbnails() ([]*models.DashboardWithStaleThumbnail, error) {
+	return r.store.FindDashboardsWithStaleThumbnails(&models.FindDashboardsWithStaleThumbnailsCommand{
+		IncludeManuallyUploadedThumbnails: false,
+	})
 }

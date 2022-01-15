@@ -62,7 +62,9 @@ type dashRenderer interface {
 }
 
 type thumbnailRepo interface {
-	saveFromFile(filePath string, meta models.DashboardThumbnailMeta) (int64, error)
-	saveFromBytes(bytes []byte, mimeType string, meta models.DashboardThumbnailMeta) (int64, error)
+	markAsStale(meta models.DashboardThumbnailMeta) error
+	saveFromFile(filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
+	saveFromBytes(bytes []byte, mimeType string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
 	getThumbnail(meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error)
+	findDashboardsWithStaleThumbnails() ([]*models.DashboardWithStaleThumbnail, error)
 }
