@@ -1,5 +1,6 @@
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { PanelOptions } from './models.gen';
+import { calculateHeatmapFromData } from 'app/core/components/TransformersUI/calculateHeatmap/heatmap';
+import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
 export interface HeatmapData {
   // List of heatmap frames
@@ -19,6 +20,19 @@ export function prepareHeatmapData(
 ): HeatmapData {
   if (!series?.length) {
     return {};
+  }
+
+  const { source } = options;
+  if (source === HeatmapSourceMode.Calculate) {
+    const heatmap = calculateHeatmapFromData(series, options.heatmap ?? {});
+    // TODO, check for error etc
+    return { heatmap };
+  } else if (source === HeatmapSourceMode.Data) {
+    console.log('TODO find heatmap in the data');
+  } else {
+    // AUTO
+    console.log('1. try to find it');
+    console.log('1. calculate');
   }
 
   return {

@@ -6,6 +6,8 @@ const theme = createTheme();
 describe('Heatmap data', () => {
   const options: PanelOptions = {} as PanelOptions;
 
-  expect(theme).toBeDefined();
-  expect(options).toBeDefined();
+  it('simple test stub', () => {
+    expect(theme).toBeDefined();
+    expect(options).toBeDefined();
+  });
 });
