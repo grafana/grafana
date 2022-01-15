@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -41,11 +42,14 @@ func GetAPIKeys(c *models.ReqContext) response.Response {
 
 // DeleteAPIKey deletes an API key
 func DeleteAPIKey(c *models.ReqContext) response.Response {
-	id := c.ParamsInt64(":id")
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	cmd := &models.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
 
-	err := bus.Dispatch(c.Req.Context(), cmd)
+	err = bus.Dispatch(c.Req.Context(), cmd)
 	if err != nil {
 		var status int
 		if errors.Is(err, models.ErrApiKeyNotFound) {

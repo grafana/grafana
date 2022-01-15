@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -69,8 +70,11 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 }
 
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
-	scopeID := ctx.ParamsInt64(":serviceAccountId")
-	err := api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
+	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+	}
+	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
