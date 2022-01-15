@@ -86,13 +86,16 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	wsurl.RawQuery = params.Encode()
 
 	s.plog.Info("connecting to websocket", "url", wsurl)
-	c, _, err := websocket.DefaultDialer.Dial(wsurl.String(), nil)
+	c, r, err := websocket.DefaultDialer.Dial(wsurl.String(), nil)
 	if err != nil {
 		s.plog.Error("error connecting to websocket", "err", err)
 		return fmt.Errorf("error connecting to websocket")
 	}
 
 	defer func() {
+		if r != nil {
+			_ = r.Body.Close()
+		}
 		err = c.Close()
 		s.plog.Error("error closing loki websocket", "err", err)
 	}()
@@ -151,7 +154,15 @@ func (s *Service) PublishStream(_ context.Context, _ *backend.PublishStreamReque
 // if the v2 endpoint exists it will give a 400
 func (s *Service) is400(url *url.URL) bool {
 	client := &http.Client{}
-	req, _ := http.NewRequest("GET", url.String(), nil)
-	resp, _ := client.Do(req)
-	return resp.StatusCode == 400 // will be true
+	req, err := http.NewRequest("GET", url.String(), nil)
+	if err != nil {
+		return false
+	}
+	rsp, err := client.Do(req)
+	if err != nil {
+		return false
+	}
+	defer rsp.Body.Close()
+
+	return rsp.StatusCode == 400 // will be true
 }
