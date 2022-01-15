@@ -37,14 +37,16 @@ func ParseThumbnailKind(str string) (ThumbnailKind, error) {
 
 // A DashboardThumbnail includes all metadata for a dashboard thumbnail
 type DashboardThumbnail struct {
-	Id          int64         `json:"id"`
-	DashboardId int64         `json:"dashboardId"`
-	PanelId     int64         `json:"panelId,omitempty"`
-	Kind        ThumbnailKind `json:"kind"`
-	Theme       string        `json:"theme"` // TODO: changing it from `string` to `rendering.Theme` causes gen-go to fail with undescriptive error
-	Image       []byte        `json:"image"`
-	MimeType    string        `json:"mimeType"`
-	Updated     time.Time     `json:"updated"`
+	Id               int64         `json:"id"`
+	DashboardId      int64         `json:"dashboardId"`
+	DashboardVersion int           `json:"dashboardVersion"`
+	Stale            bool          `json:"stale"`
+	PanelId          int64         `json:"panelId,omitempty"`
+	Kind             ThumbnailKind `json:"kind"`
+	Theme            string        `json:"theme"` // TODO: changing it from `string` to `rendering.Theme` causes gen-go to fail with undescriptive error
+	Image            []byte        `json:"image"`
+	MimeType         string        `json:"mimeType"`
+	Updated          time.Time     `json:"updated"`
 }
 
 //
@@ -65,10 +67,29 @@ type GetDashboardThumbnailCommand struct {
 	Result *DashboardThumbnail
 }
 
+const DashboardVersionForManualThumbnailUpload = -1
+
+type DashboardWithStaleThumbnail struct {
+	Id      int64
+	Uid     string
+	Version int
+	Slug    string
+}
+
+type FindDashboardsWithStaleThumbnailsCommand struct {
+	IncludeManuallyUploadedThumbnails bool
+	Result                            []*DashboardWithStaleThumbnail
+}
+
 type SaveDashboardThumbnailCommand struct {
 	DashboardThumbnailMeta
-	Image    []byte
-	MimeType string
+	DashboardVersion int
+	Image            []byte
+	MimeType         string
 
 	Result *DashboardThumbnail
+}
+
+type MarkAsStaleCommand struct {
+	DashboardThumbnailMeta
 }

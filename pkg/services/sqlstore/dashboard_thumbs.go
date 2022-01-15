@@ -28,10 +28,14 @@ func (ss *SQLStore) SaveThumbnail(cmd *models.SaveDashboardThumbnailCommand) (*m
 			return err
 		}
 
+		sess.UseBool("stale")
+
 		if existing != nil {
 			existing.Image = cmd.Image
 			existing.MimeType = cmd.MimeType
 			existing.Updated = time.Now()
+			existing.DashboardVersion = cmd.DashboardVersion
+			existing.Stale = false
 			_, err = sess.ID(existing.Id).Update(existing)
 			cmd.Result = existing
 			return err
@@ -39,7 +43,7 @@ func (ss *SQLStore) SaveThumbnail(cmd *models.SaveDashboardThumbnailCommand) (*m
 
 		thumb := &models.DashboardThumbnail{}
 
-		dashboardID, err := findDashboardIDByUID(sess, cmd.DashboardUID)
+		dash, err := findDashboardIDByUID(sess, cmd.DashboardUID)
 
 		if err != nil {
 			return err
@@ -50,10 +54,61 @@ func (ss *SQLStore) SaveThumbnail(cmd *models.SaveDashboardThumbnailCommand) (*m
 		thumb.Kind = cmd.Kind
 		thumb.Image = cmd.Image
 		thumb.MimeType = cmd.MimeType
-		thumb.DashboardId = dashboardID
+		thumb.DashboardId = dash.Id
+		thumb.DashboardVersion = cmd.DashboardVersion
+		thumb.Stale = false
 		thumb.PanelId = cmd.PanelID
 		_, err = sess.Insert(thumb)
 		cmd.Result = thumb
+		return err
+	})
+
+	return cmd.Result, err
+}
+
+func (ss *SQLStore) MarkAsStale(cmd *models.MarkAsStaleCommand) error {
+	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
+
+		if err != nil {
+			return err
+		}
+
+		existing.Stale = true
+		_, err = sess.ID(existing.Id).UseBool("stale").Update(existing)
+		return err
+	})
+
+	return err
+}
+
+func (ss *SQLStore) FindDashboardsWithStaleThumbnails(cmd *models.FindDashboardsWithStaleThumbnailsCommand) ([]*models.DashboardWithStaleThumbnail, error) {
+	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		sess.Table("dashboard")
+		sess.Join("LEFT", "dashboard_thumbnail", "dashboard.id = dashboard_thumbnail.dashboard_id")
+		sess.Where("dashboard.is_folder = ?", dialect.BooleanStr(false))
+		sess.Where("(dashboard.version != dashboard_thumbnail.dashboard_version "+
+			"OR dashboard_thumbnail.stale = ? "+
+			"OR dashboard_thumbnail.id IS NULL)", dialect.BooleanStr(true))
+
+		if !cmd.IncludeManuallyUploadedThumbnails {
+			sess.Where("(dashboard_thumbnail.id is not null AND dashboard_thumbnail.dashboard_version != ?) "+
+				"OR dashboard_thumbnail.id is null "+
+				"OR dashboard_thumbnail.stale = ?", models.DashboardVersionForManualThumbnailUpload, dialect.BooleanStr(true))
+		}
+
+		sess.Cols("dashboard.id",
+			"dashboard.uid",
+			"dashboard.version",
+			"dashboard.slug")
+
+		var dashboards = make([]*models.DashboardWithStaleThumbnail, 0)
+		err := sess.Find(&dashboards)
+
+		if err != nil {
+			return err
+		}
+		cmd.Result = dashboards
 		return err
 	})
 
@@ -70,6 +125,8 @@ func findThumbnailByMeta(sess *DBSession, meta models.DashboardThumbnailMeta) (*
 		"dashboard_thumbnail.dashboard_id",
 		"dashboard_thumbnail.panel_id",
 		"dashboard_thumbnail.image",
+		"dashboard_thumbnail.dashboard_version",
+		"dashboard_thumbnail.stale",
 		"dashboard_thumbnail.kind",
 		"dashboard_thumbnail.mime_type",
 		"dashboard_thumbnail.theme",
@@ -87,22 +144,22 @@ func findThumbnailByMeta(sess *DBSession, meta models.DashboardThumbnailMeta) (*
 	return result, nil
 }
 
-func findDashboardIDByUID(sess *DBSession, dashboardUID string) (int64, error) {
-	result := &struct {
-		Id int64
-	}{
-		Id: 0,
-	}
+type dash struct {
+	Id int64
+}
+
+func findDashboardIDByUID(sess *DBSession, dashboardUID string) (*dash, error) {
+	result := &dash{}
 
 	sess.Table("dashboard").Where("dashboard.uid = ?", dashboardUID).Cols("id")
 	exists, err := sess.Get(result)
 
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	if !exists {
-		return 0, models.ErrDashboardNotFound
+		return nil, models.ErrDashboardNotFound
 	}
 
-	return result.Id, err
+	return result, err
 }
