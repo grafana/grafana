@@ -99,7 +99,7 @@ func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) erro
 		return err
 	}
 
-	err := ps.ProvisionDatasources(ctx)
+	err = ps.ProvisionDatasources(ctx)
 	if err != nil {
 		return err
 	}
@@ -156,10 +156,14 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 	return nil
 }
 
-func (ps *provisioningServiceImpl) ProvisionOrgs() error {
-	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "orgs")
-	err := ps.provisionOrgs(datasourcePath)
-	return errutil.Wrap("Org provisioning error", err)
+func (ps *ProvisioningServiceImpl) ProvisionOrgs(ctx context.Context) error {
+	orgPath := filepath.Join(ps.Cfg.ProvisioningPath, "orgs")
+	if err := ps.provisionOrgs(ctx, orgPath); err != nil {
+		err = errutil.Wrap("Org provisioning error", err)
+		ps.log.Error("Failed to provision orgs", "error", err)
+		return err
+	}
+	return nil
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {

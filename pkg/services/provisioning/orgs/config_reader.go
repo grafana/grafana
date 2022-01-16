@@ -1,6 +1,7 @@
 package orgs
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -14,7 +15,7 @@ type configReader struct {
 	log log.Logger
 }
 
-func (cr *configReader) readConfig(path string) ([]*configs, error) {
+func (cr *configReader) readConfig(ctx context.Context, path string) ([]*configs, error) {
 	var orgs []*configs
 
 	files, err := ioutil.ReadDir(path)

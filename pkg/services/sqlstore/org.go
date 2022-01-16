@@ -108,6 +108,14 @@ func isOrgNameTaken(name string, existingId int64, sess *DBSession) (bool, error
 	return false, nil
 }
 
+func insertOrg(sess *DBSession, org *models.Org) (int64, error) {
+	if org.Id != 0 {
+		return sess.InsertId(org)
+	}
+
+	return sess.Insert(org)
+}
+
 func createOrg(id int64, name string, userID int64, engine *xorm.Engine) (models.Org, error) {
 	org := models.Org{
 		Id:      id,
@@ -122,14 +130,8 @@ func createOrg(id int64, name string, userID int64, engine *xorm.Engine) (models
 			return models.ErrOrgNameTaken
 		}
 
-		if org.Id != 0 {
-			if _, err := sess.InsertId(&org); err != nil {
-				return err
-			}
-		} else {
-			if _, err := sess.Insert(&org); err != nil {
-				return err
-			}
+		if _, err := insertOrg(sess, &org); err != nil {
+			return err
 		}
 
 		var err error

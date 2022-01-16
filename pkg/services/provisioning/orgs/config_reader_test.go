@@ -1,6 +1,7 @@
 package orgs
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -33,7 +34,7 @@ func TestOrgAsConfig(t *testing.T) {
 		Convey("Two configured orgs", func() {
 			Convey("no org in database", func() {
 				dc := newOrgProvisioner(logger)
-				err := dc.applyChanges(twoOrgsConfig)
+				err := dc.applyChanges(context.Background(), twoOrgsConfig)
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
 				}
@@ -51,7 +52,7 @@ func TestOrgAsConfig(t *testing.T) {
 
 				Convey("should update one org", func() {
 					dc := newOrgProvisioner(logger)
-					err := dc.applyChanges(twoOrgsConfig)
+					err := dc.applyChanges(context.Background(), twoOrgsConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
@@ -73,7 +74,7 @@ func TestOrgAsConfig(t *testing.T) {
 
 				Convey("should have two new orgs", func() {
 					dc := newOrgProvisioner(logger)
-					err := dc.applyChanges(twoOrgsConfigPurgeOthers)
+					err := dc.applyChanges(context.Background(), twoOrgsConfigPurgeOthers)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
@@ -88,13 +89,13 @@ func TestOrgAsConfig(t *testing.T) {
 
 		Convey("broken yaml should return error", func() {
 			reader := &configReader{}
-			_, err := reader.readConfig(brokenYaml)
+			_, err := reader.readConfig(context.Background(), brokenYaml)
 			So(err, ShouldNotBeNil)
 		})
 
 		Convey("skip invalid directory", func() {
 			cfgProvider := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvider.readConfig("./invalid-directory")
+			cfg, err := cfgProvider.readConfig(context.Background(), "./invalid-directory")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -113,22 +114,22 @@ type fakeRepository struct {
 	loadAll []*models.Org
 }
 
-func mockDelete(cmd *models.DeleteOrgCommand) error {
+func mockDelete(ctx context.Context, cmd *models.DeleteOrgCommand) error {
 	fakeRepo.deleted = append(fakeRepo.deleted, cmd)
 	return nil
 }
 
-func mockUpdate(cmd *models.UpdateOrgCommand) error {
+func mockUpdate(ctx context.Context, cmd *models.UpdateOrgCommand) error {
 	fakeRepo.updated = append(fakeRepo.updated, cmd)
 	return nil
 }
 
-func mockInsert(cmd *models.CreateOrgCommand) error {
+func mockInsert(ctx context.Context, cmd *models.CreateOrgCommand) error {
 	fakeRepo.inserted = append(fakeRepo.inserted, cmd)
 	return nil
 }
 
-func mockGet(cmd *models.GetOrgByIdQuery) error {
+func mockGet(ctx context.Context, cmd *models.GetOrgByIdQuery) error {
 	for _, v := range fakeRepo.loadAll {
 		if cmd.Id == v.Id {
 			cmd.Result = v
@@ -139,7 +140,7 @@ func mockGet(cmd *models.GetOrgByIdQuery) error {
 	return models.ErrOrgNotFound
 }
 
-func mockSavePreferences(cmd *models.SavePreferencesCommand) error {
+func mockSavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
 	fakeRepo.savedPreferences = append(fakeRepo.savedPreferences, cmd)
 	return nil
 }

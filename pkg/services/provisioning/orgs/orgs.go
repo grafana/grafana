@@ -14,7 +14,7 @@ import (
 // and provisions the orgs in those files.
 func Provision(ctx context.Context, configDirectory string) error {
 	provisioner := newOrgProvisioner(log.New("provisioning.orgs"))
-	return provisioner.applyChanges(configDirectory)
+	return provisioner.applyChanges(ctx, configDirectory)
 }
 
 // OrgProvisioner is responsible for provisioning orgs based on
@@ -31,14 +31,14 @@ func newOrgProvisioner(log log.Logger) OrgProvisioner {
 	}
 }
 
-func (provisioner *OrgProvisioner) apply(cfg *configs) error {
-	if err := provisioner.deleteOrgs(cfg.DeleteOrgs); err != nil {
+func (provisioner *OrgProvisioner) apply(ctx context.Context, cfg *configs) error {
+	if err := provisioner.deleteOrgs(ctx, cfg.DeleteOrgs); err != nil {
 		return err
 	}
 
 	for _, org := range cfg.Orgs {
 		cmd := &models.GetOrgByIdQuery{Id: org.Id}
-		err := bus.Dispatch(cmd)
+		err := bus.Dispatch(ctx, cmd)
 		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
 			return err
 		}
@@ -46,13 +46,13 @@ func (provisioner *OrgProvisioner) apply(cfg *configs) error {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			provisioner.log.Info("inserting org from configuration ", "id", org.Id, "name", org.Name)
 			insertCmd := createInsertCommand(org)
-			if err := bus.Dispatch(insertCmd); err != nil {
+			if err := bus.Dispatch(ctx, insertCmd); err != nil {
 				return err
 			}
 		} else {
 			provisioner.log.Debug("updating org from configuration", "id", org.Id, "name", org.Name)
 			updateCmd := createUpdateCommand(org)
-			if err := bus.Dispatch(updateCmd); err != nil {
+			if err := bus.Dispatch(ctx, updateCmd); err != nil {
 				return err
 			}
 		}
@@ -60,7 +60,7 @@ func (provisioner *OrgProvisioner) apply(cfg *configs) error {
 		if savePreferencesCmd := createSavePreferencesCommand(org); savePreferencesCmd != nil {
 			provisioner.log.Debug("updating org preferences from configuration", "id", org.Id, "name", org.Name)
 			fmt.Println(savePreferencesCmd)
-			if err := bus.Dispatch(savePreferencesCmd); err != nil {
+			if err := bus.Dispatch(ctx, savePreferencesCmd); err != nil {
 				return err
 			}
 		}
@@ -69,14 +69,14 @@ func (provisioner *OrgProvisioner) apply(cfg *configs) error {
 	return nil
 }
 
-func (provisioner *OrgProvisioner) applyChanges(configPath string) error {
-	configs, err := provisioner.cfgProvider.readConfig(configPath)
+func (provisioner *OrgProvisioner) applyChanges(ctx context.Context, configPath string) error {
+	configs, err := provisioner.cfgProvider.readConfig(ctx, configPath)
 	if err != nil {
 		return err
 	}
 
 	for _, cfg := range configs {
-		if err := provisioner.apply(cfg); err != nil {
+		if err := provisioner.apply(ctx, cfg); err != nil {
 			return err
 		}
 	}
@@ -84,10 +84,10 @@ func (provisioner *OrgProvisioner) applyChanges(configPath string) error {
 	return nil
 }
 
-func (provisioner *OrgProvisioner) deleteOrgs(orgsToDelete []*deleteOrgConfig) error {
+func (provisioner *OrgProvisioner) deleteOrgs(ctx context.Context, orgsToDelete []*deleteOrgConfig) error {
 	for _, org := range orgsToDelete {
 		cmd := &models.DeleteOrgCommand{Id: org.Id}
-		if err := bus.Dispatch(cmd); err != nil {
+		if err := bus.Dispatch(ctx, cmd); err != nil {
 			return err
 		}
 	}
