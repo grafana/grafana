@@ -62,7 +62,7 @@ function getVariableName(expression: string) {
 export const getUnknownVariableStrings = (variables: VariableModel[], model: any) => {
   variableRegex.lastIndex = 0;
   const unknownVariableNames: string[] = [];
-  const modelAsString = safeStringifyValue(model, 2);
+  const modelAsString = safeStringifyValue(model, 0);
   const matches = modelAsString.match(variableRegex);
 
   if (!matches) {
