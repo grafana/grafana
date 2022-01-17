@@ -3730,10 +3730,10 @@ __metadata:
     date-fns: 2.28.0
     eventemitter3: 4.0.7
     lodash: 4.17.21
-    marked: 4.0.9
+    marked: 4.0.10
     moment: 2.29.1
     moment-timezone: 0.5.34
-    ol: 6.9.0
+    ol: 6.11.0
     papaparse: 5.3.1
     react: 17.0.2
     react-dom: 17.0.2
@@ -3782,14 +3782,19 @@ __metadata:
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-node-resolve": 13.1.3
+    "@types/chrome-remote-interface": 0.31.4
+    "@types/lodash": 4.14.149
     "@types/node": 16.11.19
     "@types/uuid": 8.3.4
     babel-loader: 8.2.3
     blink-diff: 1.0.13
+    chrome-remote-interface: 0.31.1
     commander: 8.3.0
     cypress: 9.2.0
     cypress-file-upload: 5.0.8
+    devtools-protocol: 0.0.927104
     execa: 5.1.1
+    lodash: 4.17.21
     mocha: 9.1.3
     resolve-as-bin: 2.1.0
     rimraf: 3.0.2
@@ -3797,6 +3802,7 @@ __metadata:
     rollup-plugin-copy: 3.4.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
+    tracelib: 1.0.1
     ts-loader: 6.2.1
     tslib: 2.3.1
     typescript: 4.4.4
@@ -8847,13 +8853,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/arcgis-rest-api@npm:*":
-  version: 10.4.5
-  resolution: "@types/arcgis-rest-api@npm:10.4.5"
-  checksum: 876840ee8d467a4d5ae31d4ea79cdd14b469b5e37546065e8dab12ffcf72510215442256fa8573920253a17c927f92e2dafc1a42e482e69ce7842fb88a68dee0
-  languageName: node
-  linkType: hard
-
 "@types/argparse@npm:1.0.38":
   version: 1.0.38
   resolution: "@types/argparse@npm:1.0.38"
@@ -8943,6 +8942,15 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: 2aba93f57c0c88964bd83c3403b1f9ad98c377d00e0d638417a943ab483f0a638925c9a4f2e25d923db2a293ffb59f833cd49fa76c6299684494633becea54de
+  languageName: node
+  linkType: hard
+
+"@types/chrome-remote-interface@npm:0.31.4":
+  version: 0.31.4
+  resolution: "@types/chrome-remote-interface@npm:0.31.4"
+  dependencies:
+    devtools-protocol: 0.0.927104
+  checksum: 91c6cf9c749adedc08458b772db12f4142172f36fe885dc741921d259bdb7ec47d64b9e294d793a6c36f0435c6855d6470754fd143711e0b2ff204878dd4f721
   languageName: node
   linkType: hard
 
@@ -9885,18 +9893,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ol@npm:^6.5.1":
-  version: 6.5.3
-  resolution: "@types/ol@npm:6.5.3"
-  dependencies:
-    "@types/arcgis-rest-api": "*"
-    "@types/geojson": "*"
-    "@types/rbush": "*"
-    "@types/topojson-specification": "*"
-  checksum: 7627fd4e0a00ec8aef41d47937cee499d9abd7cb7b9251fdfd5146cf3e1f735342699686c441fb0b49fc94b2e9d72ee2521d0bb3a6563cea4589324f34ecdf51
-  languageName: node
-  linkType: hard
-
 "@types/overlayscrollbars@npm:^1.12.0":
   version: 1.12.1
   resolution: "@types/overlayscrollbars@npm:1.12.1"
@@ -9980,13 +9976,6 @@ __metadata:
   version: 1.2.4
   resolution: "@types/range-parser@npm:1.2.4"
   checksum: b7c0dfd5080a989d6c8bb0b6750fc0933d9acabeb476da6fe71d8bdf1ab65e37c136169d84148034802f48378ab94e3c37bb4ef7656b2bec2cb9c0f8d4146a95
-  languageName: node
-  linkType: hard
-
-"@types/rbush@npm:*":
-  version: 3.0.0
-  resolution: "@types/rbush@npm:3.0.0"
-  checksum: 050eb2af4d7cb59c5b3dddfb9af93e4abfcffb1766d82fdcd4d37e03cff374f7cf761eef3b8cd48f976416ee3dd7ee4991bde938698865ed0c660317f3a020c2
   languageName: node
   linkType: hard
 
@@ -10491,15 +10480,6 @@ __metadata:
   version: 0.1.0
   resolution: "@types/tmp@npm:0.1.0"
   checksum: 14f894120775e639e27dab3f7c1ab2186911e8f61e2b7a12c9600374ddcbc26dd966544879055feea863bb68a28cb738ae5b3556a564b104177af6a1942a6d97
-  languageName: node
-  linkType: hard
-
-"@types/topojson-specification@npm:*":
-  version: 1.0.2
-  resolution: "@types/topojson-specification@npm:1.0.2"
-  dependencies:
-    "@types/geojson": "*"
-  checksum: ad1a759cc9cb76d388140eaac160794d0ea33f8b4ba5b75bad4a48b6b0a28c72e031fca78d564871759eb6a8b4173a5e19baedb79f2c5b5eaa18c9b808248a89
   languageName: node
   linkType: hard
 
@@ -14078,6 +14058,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chrome-remote-interface@npm:0.31.1":
+  version: 0.31.1
+  resolution: "chrome-remote-interface@npm:0.31.1"
+  dependencies:
+    commander: 2.11.x
+    ws: ^7.2.0
+  bin:
+    chrome-remote-interface: bin/client.js
+  checksum: fbc7776abaa58b1d9b517ce93c479c0cb5da287df4a97908675f77cc261c145a772d2ba19d4d23845b7800eae1354008278b0a4e410ff419f641a3f43bbcef15
+  languageName: node
+  linkType: hard
+
 "chrome-trace-event@npm:^1.0.2":
   version: 1.0.3
   resolution: "chrome-trace-event@npm:1.0.3"
@@ -14507,6 +14499,13 @@ __metadata:
   version: 2.20.3
   resolution: "commander@npm:2.20.3"
   checksum: ab8c07884e42c3a8dbc5dd9592c606176c7eb5c1ca5ff274bcf907039b2c41de3626f684ea75ccf4d361ba004bbaff1f577d5384c155f3871e456bdf27becf9e
+  languageName: node
+  linkType: hard
+
+"commander@npm:2.11.x":
+  version: 2.11.0
+  resolution: "commander@npm:2.11.0"
+  checksum: 0d0c622d129a801699b9bbf6fa518108c7e221e51ae12457119aec52f1142ab759b6cd3348ee253604e934639e200c8f0e1cf8342a2ba4b28b3565a7322ead14
   languageName: node
   linkType: hard
 
@@ -16639,6 +16638,13 @@ __metadata:
     detect: ./bin/detect-port
     detect-port: ./bin/detect-port
   checksum: 93c40febe714f56711d1fedc2b7a9cc4cbaa0fcddec0509876c46b9dd6099ed6bfd6662a4f35e5fa0301660f48ed516829253ab0fc90b9e79b823dd77786b379
+  languageName: node
+  linkType: hard
+
+"devtools-protocol@npm:0.0.927104":
+  version: 0.0.927104
+  resolution: "devtools-protocol@npm:0.0.927104"
+  checksum: 13617e735f326b9822e64480060e59068434e937a6141ffe18353d0c7626be890e94d3118e7c262e6fd17eea3a4a2a18c221d0ff1eb31768ebcf0a0b95475d32
   languageName: node
   linkType: hard
 
@@ -19789,7 +19795,6 @@ __metadata:
     "@types/lru-cache": ^5.1.0
     "@types/mousetrap": 1.6.3
     "@types/node": 16.11.19
-    "@types/ol": ^6.5.1
     "@types/papaparse": 5.3.1
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.16.6
@@ -19914,7 +19919,7 @@ __metadata:
     ngtemplate-loader: 2.1.0
     node-notifier: ^10.0.0
     nodemon: 2.0.15
-    ol: 6.9.0
+    ol: 6.11.0
     papaparse: 5.3.1
     pluralize: ^8.0.0
     postcss: 8.4.5
@@ -19963,7 +19968,7 @@ __metadata:
     rimraf: 3.0.2
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
     rxjs: 7.5.1
-    sass: 1.47.0
+    sass: 1.48.0
     sass-loader: 12.4.0
     search-query-parser: 1.6.0
     selecto: 1.13.2
@@ -24688,12 +24693,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:4.0.9":
-  version: 4.0.9
-  resolution: "marked@npm:4.0.9"
+"marked@npm:4.0.10":
+  version: 4.0.10
+  resolution: "marked@npm:4.0.10"
   bin:
     marked: bin/marked.js
-  checksum: 1381cfa7f650f9f0b83b449d0561669c9751261035135da7ee7d1612828f7ee338fabb52c435ace471566bb64c12b9509edec36626e838306f4636e71d08aef6
+  checksum: 46cd8ef1a7cfcf5e461727c7f3e16dd4244369ef58f60485e75d3f5df9d53a8249b9609e96a336521eaa5c88d9531cbd296509a148718056e9375e69609f4442
   languageName: node
   linkType: hard
 
@@ -26397,26 +26402,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-mapbox-style@npm:^6.5.1":
-  version: 6.8.1
-  resolution: "ol-mapbox-style@npm:6.8.1"
+"ol-mapbox-style@npm:^6.7.0":
+  version: 6.8.2
+  resolution: "ol-mapbox-style@npm:6.8.2"
   dependencies:
     "@mapbox/mapbox-gl-style-spec": ^13.20.1
     mapbox-to-css-font: ^2.4.0
     webfont-matcher: ^1.1.0
-  checksum: 1202f77de603f929f56d30ec28656f110c4b2e0829aa0bc5ff11e4a3badd8def7a01d88529c59907ae7795839e0669ec9bf60401df51c247c226d4d3a5547333
+  checksum: b7b6f631870dd0e78d217edda52eecb6b8b15cb1120ea8ed14376fa17f231ac39412346c4f9b417badc772161a70d06a6b65deaf00a7db4adcab466c1df8d081
   languageName: node
   linkType: hard
 
-"ol@npm:6.9.0":
-  version: 6.9.0
-  resolution: "ol@npm:6.9.0"
+"ol@npm:6.11.0":
+  version: 6.11.0
+  resolution: "ol@npm:6.11.0"
   dependencies:
     geotiff: ^1.0.8
-    ol-mapbox-style: ^6.5.1
+    ol-mapbox-style: ^6.7.0
     pbf: 3.2.1
     rbush: ^3.0.1
-  checksum: 79872ea243e5d40515e9a52f9ad3405d67672ab617b3bd2e721d088cd1673cd2c7c1d9cc57f64617a28ed47a1102aaae9e1599cbeb6ba4c453b9fb4a3995e273
+  checksum: beca107ffc2d53701601ef55bc386b430f52386b029b5cabf883909bc118693a1ff3653b4abf8235f65316ebf50b40f315e75d579626d584353c30295a9066c7
   languageName: node
   linkType: hard
 
@@ -31543,16 +31548,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:1.47.0":
-  version: 1.47.0
-  resolution: "sass@npm:1.47.0"
+"sass@npm:1.48.0":
+  version: 1.48.0
+  resolution: "sass@npm:1.48.0"
   dependencies:
     chokidar: ">=3.0.0 <4.0.0"
     immutable: ^4.0.0
     source-map-js: ">=0.6.2 <2.0.0"
   bin:
     sass: sass.js
-  checksum: e725a37eb7360ad5f96e6e6209d81beeb22ecec70c6f01a1acdf237dbbb6e05e50cc0a0851b16ee1dbc63fbdd7a90405cbbd9911f56b2dba3d5f934f7e291f10
+  checksum: 0fa57d17a9ac9eff914719a3c9cf986cb81c6714cc09214ace65e9f1af0bd47f750793dfc39bbd1b199c9b8c12b1e4aba669ba08dfbd649cfb581c55d20a839f
   languageName: node
   linkType: hard
 
@@ -34063,6 +34068,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tracelib@npm:1.0.1":
+  version: 1.0.1
+  resolution: "tracelib@npm:1.0.1"
+  checksum: b4b7899491b6a2279e297d3fffca60ae330992a18af5a9cc85436159b8e313f42bc54794d61f504619b271531feea74bcd5b99950a1bed3a51378c23c3fa2e4a
+  languageName: node
+  linkType: hard
+
 "traverse@npm:^0.6.6":
   version: 0.6.6
   resolution: "traverse@npm:0.6.6"
@@ -34534,7 +34546,7 @@ __metadata:
 
 "typescript@patch:typescript@4.3.4#~builtin<compat/typescript>":
   version: 4.3.4
-  resolution: "typescript@patch:typescript@npm%3A4.3.4#~builtin<compat/typescript>::version=4.3.4&hash=ddd1e8"
+  resolution: "typescript@patch:typescript@npm%3A4.3.4#~builtin<compat/typescript>::version=4.3.4&hash=493e53"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
@@ -34544,7 +34556,7 @@ __metadata:
 
 "typescript@patch:typescript@4.4.4#~builtin<compat/typescript>":
   version: 4.4.4
-  resolution: "typescript@patch:typescript@npm%3A4.4.4#~builtin<compat/typescript>::version=4.4.4&hash=ddd1e8"
+  resolution: "typescript@patch:typescript@npm%3A4.4.4#~builtin<compat/typescript>::version=4.4.4&hash=493e53"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
@@ -34554,11 +34566,11 @@ __metadata:
 
 "typescript@patch:typescript@~4.5.2#~builtin<compat/typescript>":
   version: 4.5.4
-  resolution: "typescript@patch:typescript@npm%3A4.5.4#~builtin<compat/typescript>::version=4.5.4&hash=ddd1e8"
+  resolution: "typescript@patch:typescript@npm%3A4.5.4#~builtin<compat/typescript>::version=4.5.4&hash=493e53"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 270255355c3236076dbbd0900ff0b7b159fac7e6a95f9ed8c59f57361c7dace9f1fbffd3b5eb21377c7f636027382ad89eb64b2acfbcd9e08574f04cfc75ca3d
+  checksum: 2e488dde7d2c4a2fa2e79cf2470600f8ce81bc0563c276b72df8ff412d74456ae532ba824650ae936ce207440c79720ddcfaa25e3cb4477572b8534fa4e34d49
   languageName: node
   linkType: hard
 
@@ -36228,6 +36240,21 @@ __metadata:
     utf-8-validate:
       optional: true
   checksum: bd2b437256012af526c69c03d6670a132e7ab0fe5853f3b7092826acea4203fad4ee2a8d0d9bd44834b2b968e747bf34f753ab535f4a3edf40d262da4b1d0805
+  languageName: node
+  linkType: hard
+
+"ws@npm:^7.2.0":
+  version: 7.5.6
+  resolution: "ws@npm:7.5.6"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ^5.0.2
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: 0c2ffc9a539dd61dd2b00ff6cc5c98a3371e2521011fe23da4b3578bb7ac26cbdf7ca8a68e8e08023c122ae247013216dde2a20c908de415a6bcc87bdef68c87
   languageName: node
   linkType: hard
 
