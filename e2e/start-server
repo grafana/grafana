@@ -36,6 +36,7 @@ else
   mkdir $PROV_DIR/datasources
   mkdir $PROV_DIR/dashboards
 
+  cp ./e2e/custom.ini $RUNDIR/conf/custom.ini
   cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
 fi
 

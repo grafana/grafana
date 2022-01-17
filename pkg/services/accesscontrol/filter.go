@@ -10,7 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-var sqlIDAcceptList = map[string]struct{}{}
+var sqlIDAcceptList = map[string]struct{}{
+	"org_user.user_id": {},
+}
 
 type SQLDialect interface {
 	DriverName() string
@@ -96,4 +98,13 @@ func postgresQuery(scopes []string, sqlID, prefix string) (string, []interface{}
 			FROM (VALUES (?)`+strings.Repeat(", (?)", len(scopes)-1)+`) as p(scope)
 		)
 	`, sqlID, sqlID), args
+}
+
+// SetAcceptListForTest allow us to mutate the list for blackbox testing
+func SetAcceptListForTest(list map[string]struct{}) func() {
+	original := sqlIDAcceptList
+	sqlIDAcceptList = list
+	return func() {
+		sqlIDAcceptList = original
+	}
 }

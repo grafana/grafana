@@ -1,4 +1,4 @@
-package accesscontrol
+package accesscontrol_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -21,19 +22,20 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 	b.ResetTimer()
 
 	// set sqlIDAcceptList before running tests
-	sqlIDAcceptList = map[string]struct{}{
+	restore := accesscontrol.SetAcceptListForTest(map[string]struct{}{
 		"data_source.id": {},
-	}
+	})
+	defer restore()
 
 	for i := 0; i < b.N; i++ {
 		baseSql := `SELECT data_source.* FROM data_source WHERE`
-		query, args, err := Filter(
+		query, args, err := accesscontrol.Filter(
 			context.Background(),
 			&FakeDriver{name: "sqlite3"},
 			"data_source.id",
 			"datasources",
 			"datasources:read",
-			&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: GroupScopesByAction(permissions)}},
+			&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(permissions)}},
 		)
 		require.NoError(b, err)
 
@@ -46,7 +48,7 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 	}
 }
 
-func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQLStore, []*Permission) {
+func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQLStore, []*accesscontrol.Permission) {
 	b.Helper()
 	store := sqlstore.InitTestDB(b)
 
@@ -62,11 +64,11 @@ func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQ
 		numPermissions = numDs
 	}
 
-	permissions := make([]*Permission, 0, numPermissions)
+	permissions := make([]*accesscontrol.Permission, 0, numPermissions)
 	for i := 1; i <= numPermissions; i++ {
-		permissions = append(permissions, &Permission{
+		permissions = append(permissions, &accesscontrol.Permission{
 			Action: "datasources:read",
-			Scope:  Scope("datasources", "id", strconv.Itoa(i)),
+			Scope:  accesscontrol.Scope("datasources", "id", strconv.Itoa(i)),
 		})
 	}
 

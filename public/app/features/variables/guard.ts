@@ -20,10 +20,10 @@ import {
   ConstantVariableModel,
   QueryVariableModel,
   VariableQueryEditorType,
+  VariableQueryEditorProps,
   VariableWithMultiSupport,
   VariableWithOptions,
 } from './types';
-import { VariableQueryProps } from '../../types';
 import { LEGACY_VARIABLE_QUERY_EDITOR_NAME } from './editor/LegacyVariableQueryEditor';
 
 export const isQuery = (model: VariableModel): model is QueryVariableModel => {
@@ -178,7 +178,7 @@ export function isLegacyQueryEditor<
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>
-): component is ComponentType<VariableQueryProps> {
+): component is ComponentType<VariableQueryEditorProps> {
   if (!component) {
     return false;
   }
