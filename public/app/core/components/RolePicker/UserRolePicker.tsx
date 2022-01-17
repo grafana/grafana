@@ -28,9 +28,8 @@ export const UserRolePicker: FC<Props> = ({
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
   const [builtInRoles, setBuiltinRoles] = useState<Record<string, Role[]>>({});
-  const [isLoading, setIsLoading] = useState(true);
 
-  useAsync(async () => {
+  const { loading } = useAsync(async () => {
     try {
       let options = await (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId));
       setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
@@ -43,8 +42,6 @@ export const UserRolePicker: FC<Props> = ({
     } catch (e) {
       // TODO handle error
       console.error('Error loading options');
-    } finally {
-      setIsLoading(false);
     }
   }, [getBuiltinRoles, getRoleOptions, orgId, userId]);
 
@@ -56,7 +53,7 @@ export const UserRolePicker: FC<Props> = ({
       roleOptions={roleOptions}
       appliedRoles={appliedRoles}
       builtInRoles={builtInRoles}
-      isLoading={isLoading}
+      isLoading={loading}
       disabled={disabled}
       builtinRolesDisabled={builtinRolesDisabled}
       showBuiltInRole
