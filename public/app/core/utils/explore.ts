@@ -8,28 +8,28 @@ import {
   DataQueryRequest,
   DataSourceApi,
   dateMath,
+  DateTime,
   DefaultTimeZone,
+  ExploreUrlState,
   HistoryItem,
   IntervalValues,
+  isDateTime,
   LogsDedupStrategy,
   LogsSortOrder,
+  rangeUtil,
   RawTimeRange,
   TimeFragment,
   TimeRange,
   TimeZone,
   toUtc,
   urlUtil,
-  ExploreUrlState,
-  rangeUtil,
-  DateTime,
-  isDateTime,
 } from '@grafana/data';
 import store from 'app/core/store';
 import { v4 as uuidv4 } from 'uuid';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
-import { ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
+import { EXPLORE_GRAPH_STYLES, ExploreGraphStyle, ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
@@ -200,10 +200,6 @@ export const safeStringifyValue = (value: any, space?: number) => {
 
   return '';
 };
-
-export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
-
-export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
 
 const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
 // we use this function to take any kind of data we loaded

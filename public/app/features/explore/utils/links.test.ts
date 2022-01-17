@@ -9,10 +9,22 @@ import {
   LinkModel,
   TimeRange,
 } from '@grafana/data';
+import { setTemplateSrv } from '@grafana/runtime';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
 import { setContextSrv } from '../../../core/services/context_srv';
 
 describe('getFieldLinksForExplore', () => {
+  beforeEach(() => {
+    setTemplateSrv({
+      replace(target, scopedVars, format) {
+        return target ?? '';
+      },
+      getVariables() {
+        return [];
+      },
+    });
+  });
+
   it('returns correct link model for external link', () => {
     const { field, range } = setup({
       title: 'external',
