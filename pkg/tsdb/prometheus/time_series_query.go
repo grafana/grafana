@@ -47,19 +47,9 @@ const (
 	ExemplarQueryType TimeSeriesQueryType = "exemplar"
 )
 
-func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *DatasourceInfo) (*backend.QueryDataResponse, error) {
-	client, err := dsInfo.getClient(req.Headers)
-	if err != nil {
-		return nil, err
-	}
-
+func runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
-	}
-
-	queries, err := s.parseTimeSeriesQuery(req, dsInfo)
-	if err != nil {
-		return &result, err
 	}
 
 	for _, query := range queries {
@@ -122,6 +112,23 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	}
 
 	return &result, nil
+}
+
+func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *DatasourceInfo) (*backend.QueryDataResponse, error) {
+	client, err := dsInfo.getClient(req.Headers)
+	if err != nil {
+		return nil, err
+	}
+
+	queries, err := s.parseTimeSeriesQuery(req, dsInfo)
+	if err != nil {
+		result := backend.QueryDataResponse{
+			Responses: backend.Responses{},
+		}
+		return &result, err
+	}
+
+	return runQueries(ctx, client, queries)
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
@@ -325,6 +332,11 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 				valueField.Set(idx, &value)
 			}
 			baseTimestamp = timestamp + query.Step.Milliseconds()
+			idx++
+		}
+
+		for t := baseTimestamp; t <= endTimestamp; t += query.Step.Milliseconds() {
+			timeField.Set(idx, time.Unix(0, t*1000000).UTC())
 			idx++
 		}
 

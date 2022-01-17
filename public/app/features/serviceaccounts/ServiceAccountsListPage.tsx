@@ -42,6 +42,7 @@ export class ServiceAccountsListPage extends PureComponent<Props, State> {
 
     return (
       <VerticalGroup spacing="md">
+        <h1>Service Accounts</h1>
         <ServiceAccountsTable
           serviceAccounts={paginatedServiceAccounts}
           onRoleChange={(role, serviceAccount) => this.onRoleChange(role, serviceAccount)}

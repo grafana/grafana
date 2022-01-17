@@ -190,7 +190,10 @@ type errorResponse struct {
 
 // GET /api/alerts/:id
 func GetAlert(c *models.ReqContext) response.Response {
-	id := c.ParamsInt64(":alertId")
+	id, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "alertId is invalid", err)
+	}
 	query := models.GetAlertByIdQuery{Id: id}
 
 	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
@@ -280,9 +283,13 @@ func getAlertNotificationsInternal(c *models.ReqContext) ([]*models.AlertNotific
 }
 
 func GetAlertNotificationByID(c *models.ReqContext) response.Response {
+	notificationId, err := strconv.ParseInt(web.Params(c.Req)[":notificationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "notificationId is invalid", err)
+	}
 	query := &models.GetAlertNotificationsQuery{
 		OrgId: c.OrgId,
-		Id:    c.ParamsInt64(":notificationId"),
+		Id:    notificationId,
 	}
 
 	if query.Id == 0 {
@@ -466,9 +473,14 @@ func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *
 }
 
 func DeleteAlertNotification(c *models.ReqContext) response.Response {
+	notificationId, err := strconv.ParseInt(web.Params(c.Req)[":notificationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "notificationId is invalid", err)
+	}
+
 	cmd := models.DeleteAlertNotificationCommand{
 		OrgId: c.OrgId,
-		Id:    c.ParamsInt64(":notificationId"),
+		Id:    notificationId,
 	}
 
 	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
@@ -536,7 +548,10 @@ func PauseAlert(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &dto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	alertID := c.ParamsInt64(":alertId")
+	alertID, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "alertId is invalid", err)
+	}
 	result := make(map[string]interface{})
 	result["alertId"] = alertID
 

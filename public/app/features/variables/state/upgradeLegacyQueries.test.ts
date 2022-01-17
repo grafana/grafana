@@ -5,13 +5,20 @@ import { upgradeLegacyQueries } from './actions';
 import { changeVariableProp } from './sharedReducer';
 import { thunkTester } from '../../../../test/core/thunk/thunkTester';
 import { VariableModel } from '../types';
+import { TransactionStatus } from './transactionReducer';
 
 interface Args {
   query?: any;
   variable?: VariableModel;
   datasource?: any;
+  transactionStatus?: TransactionStatus;
 }
-function getTestContext({ query = '', variable, datasource }: Args = {}) {
+function getTestContext({
+  query = '',
+  variable,
+  datasource,
+  transactionStatus = TransactionStatus.Fetching,
+}: Args = {}) {
   variable =
     variable ??
     queryBuilder()
@@ -22,6 +29,7 @@ function getTestContext({ query = '', variable, datasource }: Args = {}) {
       .build();
   const state = {
     templating: {
+      transaction: { status: transactionStatus },
       variables: {
         [variable.id]: variable,
       },
@@ -63,6 +71,22 @@ describe('upgradeLegacyQueries', () => {
       ]);
       expect(get).toHaveBeenCalledTimes(1);
       expect(get).toHaveBeenCalledWith({ uid: 'test-data', type: 'test-data' });
+    });
+
+    describe('but there is no ongoing transaction', () => {
+      it('then it should not dispatch changeVariableProp', async () => {
+        const { state, identifier, get, getDatasourceSrv } = getTestContext({
+          query: '*',
+          transactionStatus: TransactionStatus.NotStarted,
+        });
+
+        const dispatchedActions = await thunkTester(state)
+          .givenThunk(upgradeLegacyQueries)
+          .whenThunkIsDispatched(identifier, getDatasourceSrv);
+
+        expect(dispatchedActions).toEqual([]);
+        expect(get).toHaveBeenCalledTimes(0);
+      });
     });
   });
 

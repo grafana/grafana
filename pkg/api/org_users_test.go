@@ -38,9 +38,10 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs := &HTTPServer{Cfg: settings}
 
 	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore.Cfg = settings
 	hs.SQLStore = sqlStore
 
-	loggedInUserScenario(t, "When calling GET on", "api/org/users", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
 		sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
@@ -54,7 +55,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Len(t, resp, 3)
 	})
 
-	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
 		sc.handlerFunc = hs.SearchOrgUsersWithPaging
@@ -72,7 +73,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Equal(t, 1, resp.Page)
 	})
 
-	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
 		sc.handlerFunc = hs.SearchOrgUsersWithPaging
@@ -97,7 +98,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		t.Cleanup(func() { settings.HiddenUsers = make(map[string]struct{}) })
 
-		loggedInUserScenario(t, "When calling GET on", "api/org/users", func(sc *scenarioContext) {
+		loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
 			setUpGetOrgUsersDB(t, sqlStore)
 
 			sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
@@ -556,7 +557,10 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				require.NoError(t, err)
 				assert.EqualValuesf(t, tc.expectedMessage, message, "server did not answer expected message")
 
-				getUsersQuery := models.GetOrgUsersQuery{OrgId: tc.targetOrg}
+				getUsersQuery := models.GetOrgUsersQuery{OrgId: tc.targetOrg, User: &models.SignedInUser{
+					OrgId:       tc.targetOrg,
+					Permissions: map[int64]map[string][]string{tc.targetOrg: {"org.users:read": {"users:*"}}},
+				}}
 				err = sc.db.GetOrgUsers(context.Background(), &getUsersQuery)
 				require.NoError(t, err)
 				assert.Len(t, getUsersQuery.Result, tc.expectedUserCount)
@@ -799,7 +803,13 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedMessage, message)
 
-				getUsersQuery := models.GetOrgUsersQuery{OrgId: tc.targetOrg}
+				getUsersQuery := models.GetOrgUsersQuery{
+					OrgId: tc.targetOrg,
+					User: &models.SignedInUser{
+						OrgId:       tc.targetOrg,
+						Permissions: map[int64]map[string][]string{tc.targetOrg: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+					},
+				}
 				err = sc.db.GetOrgUsers(context.Background(), &getUsersQuery)
 				require.NoError(t, err)
 				assert.Len(t, getUsersQuery.Result, tc.expectedUserCount)
