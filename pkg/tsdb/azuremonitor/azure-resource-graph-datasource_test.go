@@ -150,3 +150,14 @@ func TestGetAzurePortalUrl(t *testing.T) {
 		assert.Equal(t, expectedAzurePortalUrl[cloud], azurePortalUrl)
 	}
 }
+
+func TestUnmarshalResponse(t *testing.T) {
+	datasource := &AzureResourceGraphDatasource{}
+	res, err := datasource.unmarshalResponse(nil)
+	expectedRes := AzureResourceGraphResponse{
+		Data: AzureResponseTable{},
+	}
+
+	assert.NoError(t, err)
+	assert.Equal(t, res, expectedRes)
+}
