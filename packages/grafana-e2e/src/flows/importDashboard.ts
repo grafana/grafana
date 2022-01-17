@@ -13,8 +13,9 @@ export type Dashboard = { title: string; panels: Panel[]; uid: string; [key: str
  * Smoke test a particular dashboard by quickly importing a json file and validate that all the panels finish loading
  * @param dashboardToImport a sample dashboard
  * @param queryTimeout a number of ms to wait for the imported dashboard to finish loading
+ * @param skipPanelValidation skip panel validation
  */
-export const importDashboard = (dashboardToImport: Dashboard, queryTimeout?: number) => {
+export const importDashboard = (dashboardToImport: Dashboard, queryTimeout?: number, skipPanelValidation?: boolean) => {
   e2e().visit(fromBaseUrl('/dashboard/import'));
 
   // Note: normally we'd use 'click' and then 'type' here, but the json object is so big that using 'val' is much faster
@@ -45,21 +46,25 @@ export const importDashboard = (dashboardToImport: Dashboard, queryTimeout?: num
       expect(dashboardToImport.uid).to.equal(uid);
     });
 
-  dashboardToImport.panels.forEach((panel) => {
-    // Look at the json data
-    e2e.components.Panels.Panel.title(panel.title).should('be.visible').click();
-    e2e.components.Panels.Panel.headerItems('Inspect').should('be.visible').click();
-    e2e.components.Tab.title('JSON').should('be.visible').click();
-    e2e.components.PanelInspector.Json.content().should('be.visible').contains('Panel JSON').click({ force: true });
-    e2e.components.Select.option().should('be.visible').contains('Data').click();
+  if (!skipPanelValidation) {
+    dashboardToImport.panels.forEach((panel) => {
+      // Look at the json data
+      e2e.components.Panels.Panel.title(panel.title).should('be.visible').click();
+      e2e.components.Panels.Panel.headerItems('Inspect').should('be.visible').click();
+      e2e.components.Tab.title('JSON').should('be.visible').click();
+      e2e.components.PanelInspector.Json.content().should('be.visible').contains('Panel JSON').click({ force: true });
+      e2e.components.Select.option().should('be.visible').contains('Data').click();
 
-    // ensures that panel has loaded without knowingly hitting an error
-    // note: this does not prove that data came back as we expected it,
-    // it could get `state: Done` for no data for example
-    // but it ensures we didn't hit a 401 or 500 or something like that
-    e2e.components.CodeEditor.container().should('be.visible').contains('"state": "Done"');
+      // ensures that panel has loaded without knowingly hitting an error
+      // note: this does not prove that data came back as we expected it,
+      // it could get `state: Done` for no data for example
+      // but it ensures we didn't hit a 401 or 500 or something like that
+      e2e.components.CodeEditor.container()
+        .should('be.visible')
+        .contains(/"state": "(Done|Streaming)"/);
 
-    // need to close panel
-    e2e.components.Drawer.General.close().click();
-  });
+      // need to close panel
+      e2e.components.Drawer.General.close().click();
+    });
+  }
 };
