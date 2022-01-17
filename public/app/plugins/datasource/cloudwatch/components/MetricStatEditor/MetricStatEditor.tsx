@@ -70,7 +70,7 @@ export function MetricStatEditor({
           <EditorField label="Metric name" width={16}>
             <Select
               aria-label="Metric name"
-              value={query.metricName}
+              value={query.metricName || null}
               allowCustomValue
               options={metrics}
               onChange={({ value: metricName }) => {
