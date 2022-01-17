@@ -1,23 +1,25 @@
 import { ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
-import { OrgServiceAccount as OrgServiceAccount } from 'app/types';
+import { ServiceAccountDTO } from 'app/types';
 import { serviceAccountsLoaded } from './reducers';
 
 const BASE_URL = `/api/org/serviceaccounts`;
 
 export function loadServiceAccounts(): ThunkResult<void> {
   return async (dispatch) => {
-    const serviceAccounts = await getBackendSrv().get(BASE_URL);
-    dispatch(serviceAccountsLoaded(serviceAccounts));
+    try {
+      const serviceAccounts = await getBackendSrv().get(BASE_URL);
+      dispatch(serviceAccountsLoaded(serviceAccounts));
+    } catch (error) {
+      console.error(error);
+    }
   };
 }
 
-export function updateServiceAccount(serviceAccount: OrgServiceAccount): ThunkResult<void> {
+export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkResult<void> {
   return async (dispatch) => {
     // TODO: implement on backend
-    await getBackendSrv().patch(`${BASE_URL}/${serviceAccount.serviceAccountId}`, {
-      role: serviceAccount.role,
-    });
+    await getBackendSrv().patch(`${BASE_URL}/${serviceAccount.userId}`, {});
     dispatch(loadServiceAccounts());
   };
 }

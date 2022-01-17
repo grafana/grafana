@@ -1,9 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { OrgServiceAccount, ServiceAccountsState } from 'app/types';
+import { ServiceAccountDTO, ServiceAccountsState } from 'app/types';
 
 export const initialState: ServiceAccountsState = {
-  serviceAccounts: [] as OrgServiceAccount[],
+  serviceAccounts: [] as ServiceAccountDTO[],
   searchQuery: '',
   searchPage: 1,
   isLoading: true,
@@ -13,8 +13,8 @@ const serviceAccountsSlice = createSlice({
   name: 'serviceaccounts',
   initialState,
   reducers: {
-    serviceAccountsLoaded: (state, action: PayloadAction<OrgServiceAccount[]>): ServiceAccountsState => {
-      return { ...state, isLoading: true, serviceAccounts: action.payload };
+    serviceAccountsLoaded: (state, action: PayloadAction<ServiceAccountDTO[]>): ServiceAccountsState => {
+      return { ...state, isLoading: false, serviceAccounts: action.payload };
     },
     setServiceAccountsSearchQuery: (state, action: PayloadAction<string>): ServiceAccountsState => {
       // reset searchPage otherwise search results won't appear

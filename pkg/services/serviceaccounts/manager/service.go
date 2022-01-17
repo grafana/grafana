@@ -65,5 +65,5 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 func (sa *ServiceAccountsService) Migrated(ctx context.Context, orgID int64) bool {
 	// TODO: implement migration logic
 	// change this to return true for development of service accounts page
-	return false
+	return true
 }
