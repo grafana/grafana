@@ -16,26 +16,25 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *QueryHistoryService {
 }
 
 type Service interface {
-	CreateQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, datasourceUid string) (*models.QueryHistory, error)
-	GetQueryHistory(ctx context.Context, user *models.SignedInUser, datasourceUids []string, searchString string, sort string) ([]models.QueryHistory, error)
+	AddToQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, dataSourceUid string) (*models.QueryHistory, error)
+	ListQueryHistory(ctx context.Context, user *models.SignedInUser, dataSourceUids []string, searchString string, sort string) ([]models.QueryHistory, error)
 	DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, queryId string) error
-	UpdateComment(ctx context.Context, user *models.SignedInUser, query *models.QueryHistory, comment string) error
 	GetQueryInQueryHistoryByUid(ctx context.Context, user *models.SignedInUser, queryId string) (*models.QueryHistory, error)
+	UpdateComment(ctx context.Context, user *models.SignedInUser, query *models.QueryHistory, comment string) error
 }
 
 type QueryHistoryService struct {
 	SQLStore *sqlstore.SQLStore
 }
 
-func (s QueryHistoryService) CreateQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, datasourceUid string) (*models.QueryHistory, error) {
-	now := time.Now().Unix()
+func (s QueryHistoryService) AddToQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, dataSourceUid string) (*models.QueryHistory, error) {
 	queryHistory := models.QueryHistory{
 		OrgId:         user.OrgId,
 		Uid:           util.GenerateShortUID(),
 		Queries:       queries,
-		DatasourceUid: datasourceUid,
+		DatasourceUid: dataSourceUid,
 		CreatedBy:     user.UserId,
-		CreatedAt:     now,
+		CreatedAt:     time.Now().Unix(),
 		Comment:       "",
 	}
 
@@ -50,7 +49,7 @@ func (s QueryHistoryService) CreateQueryHistory(ctx context.Context, user *model
 	return &queryHistory, nil
 }
 
-func (s QueryHistoryService) GetQueryHistory(ctx context.Context, user *models.SignedInUser, dataSourceUids []string, searchString string, sort string) ([]models.QueryHistory, error) {
+func (s QueryHistoryService) ListQueryHistory(ctx context.Context, user *models.SignedInUser, dataSourceUids []string, searchString string, sort string) ([]models.QueryHistory, error) {
 	var queryHistory []models.QueryHistory
 	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
 		session.Table("query_history")

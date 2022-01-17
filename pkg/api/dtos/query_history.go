@@ -1,10 +1,10 @@
 package dtos
 
-type QueryHistory struct {
-	DataSourceUid string `json:"datasourceUid"`
+type AddToQueryHistoryCmd struct {
+	DataSourceUid string `json:"dataSourceUid"`
 	Queries       string `json:"queries"`
 }
 
-type UpdateQueryInQueryHistory struct {
+type UpdateQueryInQueryHistoryCmd struct {
 	Comment string `json:"comment"`
 }

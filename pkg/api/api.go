@@ -456,7 +456,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// query history
 		apiRoute.Group("/query-history", func(queryHistoryRoute routing.RouteRegister) {
-			queryHistoryRoute.Post("/", routing.Wrap(hs.createQueryHistory))
+			queryHistoryRoute.Post("/", routing.Wrap(hs.addToQueryHistory))
 			queryHistoryRoute.Get("/", routing.Wrap(hs.searchInQueryHistory))
 			queryHistoryRoute.Delete("/:uid", routing.Wrap(hs.deleteQueryFromQueryHistory))
 			queryHistoryRoute.Put("/:uid", routing.Wrap(hs.updateQueryInQueryHistory))

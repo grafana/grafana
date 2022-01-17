@@ -134,9 +134,9 @@ export function getResultsFromCache(
   return cacheValue;
 }
 
-export function addQueryToQueryHistory(datasourceUid: string, queries: DataQuery[]): void {
+export function addQueryToQueryHistory(dataSourceUid: string, queries: DataQuery[]): void {
   getBackendSrv().post(`/api/query-history`, {
-    datasourceUid: datasourceUid,
+    dataSourceUid: dataSourceUid,
     queries: JSON.stringify(queries),
   });
 }
