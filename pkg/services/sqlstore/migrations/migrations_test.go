@@ -166,7 +166,7 @@ func TestConcurrentMigrate(t *testing.T) {
 			i := i // capture i variable
 			t.Run(fmt.Sprintf("run migration %d", i), func(t *testing.T) {
 				t.Parallel()
-				err = mg.Start()
+				err := mg.Start()
 				if err != nil {
 					assert.ErrorIs(t, err, ErrDatabaseIsLocked)
 					atomic.AddInt64(&errorNum, 1)
