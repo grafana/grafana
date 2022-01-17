@@ -90,8 +90,8 @@ func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, name string) erro
 
 func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 	ctx context.Context,
-	providers map[string]secrets.Provider,
-	currProvider string,
+	providers map[secrets.ProviderID]secrets.Provider,
+	currProvider secrets.ProviderID,
 ) error {
 	return ss.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		keys := make([]*secrets.DataKey, 0)
