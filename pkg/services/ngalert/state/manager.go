@@ -206,7 +206,7 @@ func (st *Manager) recordMetrics() {
 	for {
 		select {
 		case <-ticker.C:
-			//st.log.Debug("recording state cache metrics", "now", time.Now())
+			st.log.Debug("recording state cache metrics", "now", time.Now())
 			st.cache.recordMetrics()
 		case <-st.quit:
 			st.log.Debug("stopping state cache metrics recording", "now", time.Now())
