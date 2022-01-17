@@ -2,7 +2,7 @@ import { isArray, isEqual } from 'lodash';
 import { ScopedVars, UrlQueryMap, UrlQueryValue, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './state/types';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './constants';
 import { QueryVariableModel, VariableModel, VariableRefresh } from './types';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { variableAdapters } from './adapters';

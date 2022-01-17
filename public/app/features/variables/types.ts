@@ -10,8 +10,8 @@ import {
   VariableType,
 } from '@grafana/data';
 
-import { NEW_VARIABLE_ID } from './state/types';
 import { VariableQueryProps } from '../../types';
+import { NEW_VARIABLE_ID } from './constants';
 
 export enum VariableRefresh {
   never, // removed from the UI
