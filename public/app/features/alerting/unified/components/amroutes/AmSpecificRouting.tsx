@@ -71,6 +71,10 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
     ]);
   };
 
+  const clearFilters = () => {
+    setSearchParams({ queryString: undefined, contactPoint: undefined });
+  };
+
   return (
     <div className={styles.container}>
       <h5>Specific routing</h5>
@@ -90,31 +94,38 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
         )
       ) : actualRoutes.length > 0 ? (
         <>
-          {/* TODO If working correctly move to a shared folder */}
-          <div className={styles.searchContainer}>
+          <div>
             {!isAddMode && (
-              <MatcherFilter
-                onFilterChange={(filter) => setSearchParams({ queryString: filter })}
-                queryString={queryString}
-                className={styles.filterInput}
-              />
-            )}
-            {!isAddMode && (
-              <div className={styles.filterInput}>
-                <Label>Search by contact point</Label>
-                <Input
-                  onChange={(e) => setSearchParams({ contactPoint: e.currentTarget.value })}
-                  defaultValue={contactPoint}
-                  placeholder="Search by contact point"
-                  data-testid="search-query-input"
-                  prefix={<Icon name={'search'} />}
-                />
+              <div className={styles.searchContainer}>
+                <MatcherFilter
+                  onFilterChange={(filter) => setSearchParams({ queryString: filter })}
+                  queryString={queryString ?? ''}
+                  className={styles.filterInput}
+                />{' '}
+                <div className={styles.filterInput}>
+                  <Label>Search by contact point</Label>
+                  <Input
+                    onChange={(e) => setSearchParams({ contactPoint: e.currentTarget.value })}
+                    value={contactPoint ?? ''}
+                    placeholder="Search by contact point"
+                    data-testid="search-query-input"
+                    prefix={<Icon name={'search'} />}
+                  />
+                </div>
+                {(queryString || contactPoint) && (
+                  <Button variant="secondary" icon="times" onClick={clearFilters} className={styles.clearFilterBtn}>
+                    Clear filters
+                  </Button>
+                )}
               </div>
             )}
+
             {!isAddMode && !readOnly && (
-              <Button className={styles.addMatcherBtn} icon="plus" onClick={addNewRoute} type="button">
-                New policy
-              </Button>
+              <div className={styles.addMatcherBtnRow}>
+                <Button className={styles.addMatcherBtn} icon="plus" onClick={addNewRoute} type="button">
+                  New policy
+                </Button>
+              </div>
             )}
           </div>
           <AmRoutesTable
@@ -168,7 +179,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     searchContainer: css`
       display: flex;
       flex-flow: row nowrap;
-      margin-bottom: ${theme.spacing(3.5)};
+      padding-bottom: ${theme.spacing(2)};
+      border-bottom: 1px solid ${theme.colors.border.strong};
+    `,
+    clearFilterBtn: css`
+      align-self: flex-end;
+      margin-left: ${theme.spacing(1)};
     `,
     filterInput: css`
       width: 340px;
@@ -176,9 +192,13 @@ const getStyles = (theme: GrafanaTheme2) => {
         margin-left: ${theme.spacing(1)};
       }
     `,
+    addMatcherBtnRow: css`
+      display: flex;
+      flex-flow: column nowrap;
+      padding: ${theme.spacing(2)} 0;
+    `,
     addMatcherBtn: css`
       align-self: flex-end;
-      margin-left: auto;
     `,
   };
 };
