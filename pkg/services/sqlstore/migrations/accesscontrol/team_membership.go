@@ -31,6 +31,7 @@ func (p *teamPermissionMigrator) Exec(sess *xorm.Session, migrator *migrator.Mig
 	return p.migrateMemberships(sess)
 }
 
+// generateNewRoleUID tries to generate a unique Short UID three times, in case of three conflicts returns an error.
 func generateNewRoleUID(sess *xorm.Session, orgID int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
@@ -48,7 +49,7 @@ func generateNewRoleUID(sess *xorm.Session, orgID int64) (string, error) {
 	return "", fmt.Errorf("could not generate random uid")
 }
 
-// saveRole either creates or role or updates it with additional permissions
+// saveRole either creates a role or updates it with additional permissions
 func (p *teamPermissionMigrator) saveRole(sess *xorm.Session, orgID int64, name string, permissions []accesscontrol.Permission) (int64, bool, error) {
 	role := &accesscontrol.Role{OrgID: orgID, Name: name}
 	has, err := sess.Where("org_id = ? AND name = ?", orgID, name).Get(role)
