@@ -144,10 +144,6 @@ func TestMigrationLock(t *testing.T) {
 
 func TestConcurrentMigrate(t *testing.T) {
 	dbType := getDBType()
-	if dbType == "sqlite" {
-		t.Skip()
-	}
-
 	testDB := getTestDB(dbType)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
