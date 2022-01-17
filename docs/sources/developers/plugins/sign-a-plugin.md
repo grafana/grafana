@@ -41,7 +41,7 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
    npx @grafana/toolkit plugin:sign
    ```
 
-> **Note:** If running NPM 7+ the `npx` commands mentioned in this article may hang. If so use `npx --legacy-peer-deps <command to run>`.
+> **Note:** If running NPM 7+ the `npx` commands mentioned in this article may hang. The workaround is to use `npx --legacy-peer-deps <command to run>`.
 
 ## Sign a private plugin
 
