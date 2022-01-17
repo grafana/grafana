@@ -36,7 +36,7 @@ type Store interface {
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 	SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
-	UpdateDashboardACLCtx(ctx context.Context, uid int64, items []*models.DashboardAcl) error
+	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 	// SaveAlerts saves dashboard alerts.
 	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
 }

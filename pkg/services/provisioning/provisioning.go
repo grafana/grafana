@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	dashboards2 "github.com/grafana/grafana/pkg/services/dashboards"
 	"path/filepath"
 	"sync"
 
@@ -18,11 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugifaces.Store,
-	encryptionService encryption.Internal) (*ProvisioningServiceImpl, error) {
+func ProvideService(cfg *setting.Cfg, pluginStore plugifaces.Store,
+	encryptionService encryption.Internal, dashboardsStore dashboards2.Store) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                     cfg,
-		SQLStore:                sqlStore,
 		pluginStore:             pluginStore,
 		EncryptionService:       encryptionService,
 		log:                     log.New("provisioning"),
@@ -30,6 +30,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 		provisionNotifiers:      notifiers.Provision,
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
+		dashboardsStore:         dashboardsStore,
 	}
 	return s, nil
 }
@@ -85,6 +86,7 @@ type ProvisioningServiceImpl struct {
 	provisionDatasources    func(context.Context, string) error
 	provisionPlugins        func(context.Context, string, plugifaces.Store) error
 	mutex                   sync.Mutex
+	dashboardsStore         dashboards2.Store
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -167,7 +169,7 @@ func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) e
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.SQLStore)
+	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardsStore)
 	if err != nil {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}

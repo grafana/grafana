@@ -48,13 +48,6 @@ func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 
 var generateNewUid func() string = util.GenerateShortUID
 
-func (ss *SQLStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
-	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-		return saveDashboard(sess, &cmd)
-	})
-	return cmd.Result, err
-}
-
 func saveDashboard(sess *DBSession, cmd *models.SaveDashboardCommand) error {
 	dash := cmd.GetDashboardModel()
 
@@ -201,27 +194,6 @@ func (ss *SQLStore) GetDashboard(id, orgID int64, uid, slug string) (*models.Das
 		return nil, models.ErrDashboardNotFound
 	}
 
-	dashboard.SetId(dashboard.Id)
-	dashboard.SetUid(dashboard.Uid)
-	return &dashboard, nil
-}
-
-// GetDashboardByTitle gets a dashboard by its title.
-func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {
-	if title == "" {
-		return nil, models.ErrDashboardIdentifierNotSet
-	}
-
-	// there is a unique constraint on org_id, folder_id, title
-	// there are no nested folders so the parent folder id is always 0
-	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
-	has, err := ss.engine.Table(&models.Dashboard{}).Where("is_folder = " + dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
-	if err != nil {
-		return nil, err
-	}
-	if !has {
-		return nil, models.ErrDashboardNotFound
-	}
 	dashboard.SetId(dashboard.Id)
 	dashboard.SetUid(dashboard.Uid)
 	return &dashboard, nil
@@ -770,30 +742,6 @@ func getExistingDashboardByTitleAndFolder(sess *DBSession, dash *models.Dashboar
 		} else {
 			return isParentFolderChanged, models.ErrDashboardWithSameNameInFolderExists
 		}
-	}
-
-	return isParentFolderChanged, nil
-}
-
-func (ss *SQLStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error) {
-	isParentFolderChanged := false
-	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-		var err error
-		isParentFolderChanged, err = getExistingDashboardByIdOrUidForUpdate(sess, dashboard, overwrite)
-		if err != nil {
-			return err
-		}
-
-		isParentFolderChanged, err = getExistingDashboardByTitleAndFolder(sess, dashboard, overwrite,
-			isParentFolderChanged)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return false, err
 	}
 
 	return isParentFolderChanged, nil

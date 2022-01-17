@@ -299,7 +299,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 		)
 	}
 
-	if err := dr.dashboardStore.UpdateDashboardACLCtx(ctx, dashboardID, items); err != nil {
+	if err := dr.dashboardStore.UpdateDashboardACL(ctx, dashboardID, items); err != nil {
 		return err
 	}
 

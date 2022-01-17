@@ -121,6 +121,7 @@ type HTTPServer struct {
 	dashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                dashboards.FolderService
+	dashboardStore               dashboards.Store
 }
 
 type ServerOptions struct {
@@ -147,7 +148,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
 	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	dashboardService dashboards.DashboardService, dashboardProvisioningService dashboards.DashboardProvisioningService,
-	folderService dashboards.FolderService) (*HTTPServer, error) {
+	folderService dashboards.FolderService, dashboardStore dashboards.Store) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -204,6 +205,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardService:             dashboardService,
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
+		dashboardStore:               dashboardStore,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
