@@ -126,7 +126,6 @@ func TestService_DatasourceNameScopeResolver(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 //nolint:goconst
