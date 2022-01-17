@@ -2,10 +2,10 @@
 // License MIT, Copyright (c) 2015 Mohsen Azimi
 
 /*
- * Escapes `"` characters from string
+ * Escapes `"` characters from string for formatting
  */
-function escapeString(str: string): string {
-  return str.replace('"', '"');
+export function escapeString(str: string): string {
+  return str.replace(/"/g, '\\"');
 }
 
 /*
