@@ -22,6 +22,9 @@ export interface Props {
   link: NavModelItem;
 }
 
+// Maps the ID of the nav item to a translated phrase to later pass to <Trans />
+// Because the navigation content is dynamic (defined in the backend), we can not use
+// the normal inline message definition method.
 // Keys MUST match the ID of the navigation item, defined in the backend.
 // see pkg/api/index.go
 const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {

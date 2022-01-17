@@ -30,8 +30,6 @@ export function NavBarMenuItem({
   const theme = useTheme2();
   const styles = getStyles(theme, isActive, styleOverrides);
 
-  console.log('Rendering NavBarMenuItem', text);
-
   const linkContent = (
     <div className={styles.linkContent}>
       <div>
