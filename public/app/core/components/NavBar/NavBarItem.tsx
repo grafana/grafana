@@ -28,7 +28,6 @@ const NavBarItem = ({
   reverseMenuDirection = false,
   showMenu = true,
   link,
-  ExtraContent,
 }: Props) => {
   const theme = useTheme2();
   const menuItems = link.children ?? [];
@@ -80,7 +79,6 @@ const NavBarItem = ({
                     url={item.url}
                     onClick={item.onClick}
                     styleOverrides={styles.header}
-                    ExtraContent={ExtraContent}
                   />
                 </Item>
               );
@@ -96,7 +94,6 @@ const NavBarItem = ({
                   text={item.text}
                   url={item.url}
                   styleOverrides={styles.item}
-                  ExtraContent={ExtraContent}
                 />
               </Item>
             );
@@ -112,7 +109,7 @@ const NavBarItem = ({
       url={link.url}
       onClick={link.onClick}
       target={link.target}
-      ExtraContent={ExtraContent}
+      highlightText={link.highlightText}
     >
       {children}
     </NavBarItemWithoutMenu>

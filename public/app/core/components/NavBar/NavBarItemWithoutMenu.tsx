@@ -1,7 +1,8 @@
-import React, { ReactNode, ComponentType } from 'react';
+import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Link, useTheme2 } from '@grafana/ui';
+import { NavFeatureHighlight } from './NavFeatureHighlight';
 
 export interface NavBarItemWithoutMenuProps {
   label: string;
@@ -11,7 +12,7 @@ export interface NavBarItemWithoutMenuProps {
   target?: string;
   isActive?: boolean;
   onClick?: () => void;
-  ExtraContent?: ComponentType;
+  highlightText?: string;
 }
 
 export function NavBarItemWithoutMenu({
@@ -22,17 +23,24 @@ export function NavBarItemWithoutMenu({
   target,
   isActive = false,
   onClick,
-  ExtraContent,
+  highlightText,
 }: NavBarItemWithoutMenuProps) {
   const theme = useTheme2();
   const styles = getNavBarItemWithoutMenuStyles(theme, isActive);
+
+  const content = highlightText ? (
+    <NavFeatureHighlight text={highlightText}>
+      <span className={styles.icon}>{children}</span>
+    </NavFeatureHighlight>
+  ) : (
+    <span className={styles.icon}>{children}</span>
+  );
 
   return (
     <li className={cx(styles.container, className)}>
       {!url && (
         <button className={styles.element} onClick={onClick} aria-label={label}>
-          <span className={styles.icon}>{children}</span>
-          {ExtraContent && <ExtraContent />}
+          {content}
         </button>
       )}
       {url && (
@@ -46,13 +54,11 @@ export function NavBarItemWithoutMenu({
               onClick={onClick}
               aria-haspopup="true"
             >
-              <span className={styles.icon}>{children}</span>
-              {ExtraContent && <ExtraContent />}
+              {content}
             </Link>
           ) : (
             <a href={url} target={target} className={styles.element} onClick={onClick} aria-label={label}>
-              <span className={styles.icon}>{children}</span>
-              {ExtraContent && <ExtraContent />}
+              {content}
             </a>
           )}
         </>

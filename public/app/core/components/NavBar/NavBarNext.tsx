@@ -77,8 +77,7 @@ export const NavBarNext = React.memo(({ extraContent }: Props): JSX.Element | nu
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
             link={{ ...link, subTitle: undefined, onClick: undefined }}
-            showMenu={!link.highlighted}
-            ExtraContent={extraContent?.find((c) => c.id === link.id)?.component}
+            showMenu={!link.highlightText}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
