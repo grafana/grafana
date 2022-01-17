@@ -10,7 +10,7 @@ export interface Props {
   onClick?: () => void;
   styleOverrides?: string;
   target?: HTMLAnchorElement['target'];
-  text: string;
+  text: React.ReactNode;
   url?: string;
   adjustHeightForBorder?: boolean;
   isMobile?: boolean;
@@ -29,6 +29,8 @@ export function NavBarMenuItem({
 }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive, styleOverrides);
+
+  console.log('Rendering NavBarMenuItem', text);
 
   const linkContent = (
     <div className={styles.linkContent}>

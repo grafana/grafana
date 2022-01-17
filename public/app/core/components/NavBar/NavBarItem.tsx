@@ -10,6 +10,8 @@ import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarI
 import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
 import { NavBarItemMenu } from './NavBarItemMenu';
 import { getNavModelItemKey } from './utils';
+import { defineMessage, Trans } from '@lingui/macro';
+import { MessageDescriptor } from '@lingui/core';
 
 export interface Props {
   isActive?: boolean;
@@ -19,6 +21,20 @@ export interface Props {
   showMenu?: boolean;
   link: NavModelItem;
 }
+
+// Keys MUST match the ID of the navigation item, defined in the backend.
+// see pkg/api/index.go
+const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
+  home: defineMessage({ id: 'nav.home', message: 'Home' }),
+  dashboards: defineMessage({ id: 'nav.dashboards', message: 'Dashboards' }),
+  'manage-dashboards': defineMessage({ id: 'nav.manage-dashboards', message: 'Browse' }),
+  playlists: defineMessage({ id: 'nav.playlists', message: 'Playlists' }),
+  snapshots: defineMessage({ id: 'nav.snapshots', message: 'Snapshots' }),
+  'library-panels': defineMessage({ id: 'nav.library-panels', message: 'Library panels' }),
+  'new-dashboard': defineMessage({ id: 'nav.new-dashboard', message: 'New dashboard' }),
+  folder: defineMessage({ id: 'nav.folder', message: 'New folder' }),
+  import: defineMessage({ id: 'nav.import', message: 'Import' }),
+};
 
 const NavBarItem = ({
   isActive = false,
@@ -69,12 +85,15 @@ const NavBarItem = ({
           onNavigate={onNavigate}
         >
           {(item: NavModelItem) => {
+            const translationKey = item.id && TRANSLATED_MENU_ITEMS[item.id];
+            const itemText = translationKey ? <Trans id={translationKey.id} /> : item.text;
+
             if (item.menuItemType === NavMenuItemType.Section) {
               return (
                 <Item key={getNavModelItemKey(item)} textValue={item.text}>
                   <NavBarMenuItem
                     target={item.target}
-                    text={item.text}
+                    text={itemText}
                     url={item.url}
                     onClick={item.onClick}
                     styleOverrides={styles.header}
@@ -90,7 +109,7 @@ const NavBarItem = ({
                   icon={item.icon as IconName}
                   onClick={item.onClick}
                   target={item.target}
-                  text={item.text}
+                  text={itemText}
                   url={item.url}
                   styleOverrides={styles.item}
                 />

@@ -18,6 +18,42 @@ msgstr ""
 msgid "common.save"
 msgstr ""
 
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.dashboards"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.folder"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.home"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.import"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.library-panels"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.manage-dashboards"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.new-dashboard"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.playlists"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.snapshots"
+msgstr ""
+
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"
 msgstr ""

@@ -425,7 +425,7 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
 		})
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-			Text: "New dashboard", Icon: "plus", Url: hs.Cfg.AppSubURL + "/dashboard/new", HideFromTabs: true,
+			Text: "New dashboard", Icon: "plus", Url: hs.Cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "new-dashboard",
 		})
 		if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
 			dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
