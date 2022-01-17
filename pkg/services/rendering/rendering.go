@@ -434,6 +434,8 @@ func (r *longLivedRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (st
 }
 
 func (r *longLivedRenderKeyProvider) afterRequest(ctx context.Context, opts AuthOpts, renderKey string) {
+	// do nothing - renderKey from longLivedRenderKeyProvider is deleted only after session expires
+	// or someone calls session.Dispose()
 }
 
 func (r *longLivedRenderKeyProvider) Dispose(ctx context.Context) {
