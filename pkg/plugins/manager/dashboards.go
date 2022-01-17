@@ -41,6 +41,7 @@ func (m *PluginManager) GetPluginDashboards(ctx context.Context, orgID int64, pl
 		}
 
 		res := &plugins.PluginDashboardInfoDTO{}
+		res.UID = dashboard.Uid
 		res.Path = include.Path
 		res.PluginId = plugin.ID
 		res.Title = dashboard.Title
@@ -49,6 +50,7 @@ func (m *PluginManager) GetPluginDashboards(ctx context.Context, orgID int64, pl
 		// find existing dashboard
 		for _, existingDash := range query.Result {
 			if existingDash.Slug == dashboard.Slug {
+				res.UID = existingDash.Uid
 				res.DashboardId = existingDash.Id
 				res.Imported = true
 				res.ImportedUri = "db/" + existingDash.Slug
@@ -65,6 +67,7 @@ func (m *PluginManager) GetPluginDashboards(ctx context.Context, orgID int64, pl
 	for _, dash := range query.Result {
 		if _, exists := existingMatches[dash.Id]; !exists {
 			result = append(result, &plugins.PluginDashboardInfoDTO{
+				UID:         dash.Uid,
 				Slug:        dash.Slug,
 				DashboardId: dash.Id,
 				Removed:     true,
@@ -177,6 +180,7 @@ func (m *PluginManager) ImportDashboard(ctx context.Context, pluginID, path stri
 	}
 
 	return plugins.PluginDashboardInfoDTO{
+		UID:              savedDash.Uid,
 		PluginId:         pluginID,
 		Title:            savedDash.Title,
 		Path:             path,
