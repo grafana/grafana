@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -46,9 +45,10 @@ type RenderingService struct {
 	version         string
 	versionMutex    sync.RWMutex
 
-	Cfg                   *setting.Cfg
-	RemoteCacheService    *remotecache.RemoteCache
-	RendererPluginManager plugins.RendererManager
+	perRequestRenderKeyProvider renderKeyProvider
+	Cfg                         *setting.Cfg
+	RemoteCacheService          *remotecache.RemoteCache
+	RendererPluginManager       plugins.RendererManager
 }
 
 func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm plugins.RendererManager) (*RenderingService, error) {
@@ -81,11 +81,17 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		domain = "localhost"
 	}
 
+	logger := log.New("rendering")
 	s := &RenderingService{
+		perRequestRenderKeyProvider: &perRequestRenderKeyProvider{
+			cache:     remoteCache,
+			log:       logger,
+			keyExpiry: 5 * time.Minute,
+		},
 		Cfg:                   cfg,
 		RemoteCacheService:    remoteCache,
 		RendererPluginManager: rm,
-		log:                   log.New("rendering"),
+		log:                   logger,
 		domain:                domain,
 	}
 	return s, nil
@@ -195,9 +201,14 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 	}
 }
 
-func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) Render(ctx context.Context, opts Opts, session Session) (*RenderResult, error) {
 	startTime := time.Now()
-	result, err := rs.render(ctx, opts)
+
+	renderKeyProvider := rs.perRequestRenderKeyProvider
+	if session != nil {
+		renderKeyProvider = session
+	}
+	result, err := rs.render(ctx, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
 	saveMetrics(elapsedTime, err, RenderPNG)
@@ -205,7 +216,7 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	return result, err
 }
 
-func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProvider renderKeyProvider) (*RenderResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
 		rs.log.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
 
@@ -230,12 +241,12 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor == 0 {
 		opts.DeviceScaleFactor = 1
 	}
-	renderKey, err := rs.generateAndStoreRenderKey(ctx, opts.OrgID, opts.UserID, opts.OrgRole)
+	renderKey, err := renderKeyProvider.get(ctx, opts.AuthOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	defer rs.deleteRenderKey(ctx, renderKey)
+	defer renderKeyProvider.afterRequest(ctx, opts.AuthOpts, renderKey)
 
 	defer func() {
 		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
@@ -245,9 +256,14 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	return rs.renderAction(ctx, renderKey, opts)
 }
 
-func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
+func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error) {
 	startTime := time.Now()
-	result, err := rs.renderCSV(ctx, opts)
+
+	renderKeyProvider := rs.perRequestRenderKeyProvider
+	if session != nil {
+		renderKeyProvider = session
+	}
+	result, err := rs.renderCSV(ctx, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
 	saveMetrics(elapsedTime, err, RenderCSV)
@@ -255,7 +271,7 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*Rende
 	return result, err
 }
 
-func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
+func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderKeyProvider renderKeyProvider) (*RenderCSVResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
 		return nil, ErrConcurrentLimitReached
 	}
@@ -265,12 +281,12 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts) (*Rende
 	}
 
 	rs.log.Info("Rendering", "path", opts.Path)
-	renderKey, err := rs.generateAndStoreRenderKey(ctx, opts.OrgID, opts.UserID, opts.OrgRole)
+	renderKey, err := renderKeyProvider.get(ctx, opts.AuthOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	defer rs.deleteRenderKey(ctx, renderKey)
+	defer renderKeyProvider.afterRequest(ctx, opts.AuthOpts, renderKey)
 
 	defer func() {
 		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
@@ -340,29 +356,91 @@ func (rs *RenderingService) getURL(path string) string {
 	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, rs.Cfg.HTTPPort, subPath, path)
 }
 
-func (rs *RenderingService) generateAndStoreRenderKey(ctx context.Context, orgId, userId int64, orgRole models.RoleType) (string, error) {
+func (rs *RenderingService) CreateRenderingSession(ctx context.Context, opts AuthOpts, sessionOpts SessionOpts) (Session, error) {
+	renderKey, err := generateAndSetRenderKey(rs.RemoteCacheService, ctx, opts, sessionOpts.expiry)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("created rendering session " + renderKey)
+	return &longLivedRenderKeyProvider{
+		log:         rs.log,
+		renderKey:   renderKey,
+		cache:       rs.RemoteCacheService,
+		authOpts:    opts,
+		sessionOpts: sessionOpts,
+	}, nil
+}
+
+func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, renderKey string, expiry time.Duration) error {
+	err := cache.Set(ctx, fmt.Sprintf(renderKeyPrefix, renderKey), &RenderUser{
+		OrgID:   opts.OrgID,
+		UserID:  opts.UserID,
+		OrgRole: string(opts.OrgRole),
+	}, expiry)
+	return err
+}
+
+func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, expiry time.Duration) (string, error) {
 	key, err := util.GetRandomString(32)
 	if err != nil {
 		return "", err
 	}
 
-	err = rs.RemoteCacheService.Set(ctx, fmt.Sprintf(renderKeyPrefix, key), &RenderUser{
-		OrgID:   orgId,
-		UserID:  userId,
-		OrgRole: string(orgRole),
-	}, 5*time.Minute)
+	err = setRenderKey(cache, ctx, opts, key, expiry)
 	if err != nil {
 		return "", err
 	}
 
-	return key, nil
+	return key, err
 }
 
-func (rs *RenderingService) deleteRenderKey(ctx context.Context, key string) {
-	err := rs.RemoteCacheService.Delete(ctx, fmt.Sprintf(renderKeyPrefix, key))
+func deleteRenderKey(cache *remotecache.RemoteCache, log log.Logger, ctx context.Context, renderKey string) {
+	err := cache.Delete(ctx, fmt.Sprintf(renderKeyPrefix, renderKey))
 	if err != nil {
-		rs.log.Error("Failed to delete render key", "error", err)
+		log.Error("Failed to delete render key", "error", err)
 	}
+}
+
+type perRequestRenderKeyProvider struct {
+	cache     *remotecache.RemoteCache
+	log       log.Logger
+	keyExpiry time.Duration
+}
+
+func (r *perRequestRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (string, error) {
+	return generateAndSetRenderKey(r.cache, ctx, opts, r.keyExpiry)
+}
+
+func (r *perRequestRenderKeyProvider) afterRequest(ctx context.Context, opts AuthOpts, renderKey string) {
+	deleteRenderKey(r.cache, r.log, ctx, renderKey)
+}
+
+type longLivedRenderKeyProvider struct {
+	cache       *remotecache.RemoteCache
+	log         log.Logger
+	renderKey   string
+	authOpts    AuthOpts
+	sessionOpts SessionOpts
+}
+
+func (r *longLivedRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (string, error) {
+	fmt.Println("returning session key " + r.renderKey)
+
+	if r.sessionOpts.refreshExpiryOnEachRequest {
+		err := setRenderKey(r.cache, ctx, opts, r.renderKey, r.sessionOpts.expiry)
+		if err != nil {
+			r.log.Error("Failed to refresh render key", "error", err, "renderKey", r.renderKey)
+		}
+	}
+	return r.renderKey, nil
+}
+
+func (r *longLivedRenderKeyProvider) afterRequest(ctx context.Context, opts AuthOpts, renderKey string) {
+}
+
+func (r *longLivedRenderKeyProvider) Dispose(ctx context.Context) {
+	deleteRenderKey(r.cache, r.log, ctx, r.renderKey)
 }
 
 func isoTimeOffsetToPosixTz(isoOffset string) string {

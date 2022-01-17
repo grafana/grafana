@@ -17,20 +17,21 @@ type simpleCrawler struct {
 	renderService rendering.Service
 	threadCount   int
 
-	glive         *live.GrafanaLive
-	thumbnailRepo thumbnailRepo
-	mode          CrawlerMode
-	thumbnailKind models.ThumbnailKind
-	opts          rendering.Opts
-	status        crawlStatus
-	queue         []*models.DashboardWithStaleThumbnail
-	mu            sync.Mutex
+	glive            *live.GrafanaLive
+	thumbnailRepo    thumbnailRepo
+	mode             CrawlerMode
+	thumbnailKind    models.ThumbnailKind
+	opts             rendering.Opts
+	status           crawlStatus
+	queue            []*models.DashboardWithStaleThumbnail
+	mu               sync.Mutex
+	renderingSession rendering.Session
 }
 
 func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo) dashRenderer {
 	c := &simpleCrawler{
 		renderService: renderService,
-		threadCount:   1,
+		threadCount:   5,
 		glive:         gl,
 		thumbnailRepo: repo,
 		status: crawlStatus{
@@ -95,7 +96,6 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rend
 			State:    "stopped",
 			Complete: 0,
 		}, err
-
 	}
 
 	r.mode = mode
@@ -105,12 +105,30 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rend
 			Timeout:                  10 * time.Second,
 			RequestTimeoutMultiplier: 3,
 		},
-		OrgID:           c.OrgId,
-		UserID:          c.UserId,
-		OrgRole:         c.OrgRole,
+		AuthOpts: rendering.AuthOpts{
+			OrgID:   c.OrgId,
+			UserID:  c.UserId,
+			OrgRole: c.OrgRole,
+		},
 		Theme:           theme,
 		ConcurrentLimit: 10,
 	}
+	renderingSession, err := r.renderService.CreateRenderingSession(context.Background(), r.opts.AuthOpts, rendering.SessionOpts{
+		Expiry:                     5 * time.Minute,
+		RefreshExpiryOnEachRequest: true,
+	})
+	if err != nil {
+		tlog.Error("error when creating rendering session", "err", err.Error())
+		return crawlStatus{
+			Started:  now,
+			Finished: now,
+			Last:     now,
+			State:    "stopped",
+			Complete: 0,
+		}, err
+	}
+
+	r.renderingSession = renderingSession
 	r.queue = items
 	r.status = crawlStatus{
 		Started:  now,
@@ -170,17 +188,19 @@ func (r *simpleCrawler) walk() {
 		// Hack (for now) pick a URL that will render
 		panelURL := strings.TrimPrefix(url, "/") + "?kiosk"
 		res, err := r.renderService.Render(context.Background(), rendering.Opts{
-			TimeoutOpts:       r.opts.TimeoutOpts,
+			TimeoutOpts: r.opts.TimeoutOpts,
+			AuthOpts: rendering.AuthOpts{
+				OrgRole: r.opts.OrgRole,
+				OrgID:   r.opts.OrgID,
+				UserID:  r.opts.UserID,
+			},
 			Width:             320,
 			Height:            240,
 			Path:              panelURL,
-			OrgID:             r.opts.OrgID,
-			UserID:            r.opts.UserID,
 			ConcurrentLimit:   r.opts.ConcurrentLimit,
-			OrgRole:           r.opts.OrgRole,
 			Theme:             r.opts.Theme,
 			DeviceScaleFactor: -5, // negative numbers will render larger then scale down
-		})
+		}, r.renderingSession)
 		if err != nil {
 			tlog.Warn("error getting image", "err", err)
 			r.status.Errors++

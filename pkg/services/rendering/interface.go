@@ -41,6 +41,12 @@ type TimeoutOpts struct {
 	RequestTimeoutMultiplier time.Duration // RequestTimeoutMultiplier used for plugin/HTTP request context timeout
 }
 
+type AuthOpts struct {
+	OrgID   int64
+	UserID  int64
+	OrgRole models.RoleType
+}
+
 func GetRequestTimeout(opt TimeoutOpts) time.Duration {
 	if opt.RequestTimeoutMultiplier == 0 {
 		return opt.Timeout * 2 // default
@@ -51,11 +57,9 @@ func GetRequestTimeout(opt TimeoutOpts) time.Duration {
 
 type Opts struct {
 	TimeoutOpts
+	AuthOpts
 	Width             int
 	Height            int
-	OrgID             int64
-	UserID            int64
-	OrgRole           models.RoleType
 	Path              string
 	Encoding          string
 	Timezone          string
@@ -67,9 +71,7 @@ type Opts struct {
 
 type CSVOpts struct {
 	TimeoutOpts
-	OrgID           int64
-	UserID          int64
-	OrgRole         models.RoleType
+	AuthOpts
 	Path            string
 	Encoding        string
 	Timezone        string
@@ -89,11 +91,27 @@ type RenderCSVResult struct {
 type renderFunc func(ctx context.Context, renderKey string, options Opts) (*RenderResult, error)
 type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) (*RenderCSVResult, error)
 
+type renderKeyProvider interface {
+	get(ctx context.Context, opts AuthOpts) (string, error)
+	afterRequest(ctx context.Context, opts AuthOpts, renderKey string)
+}
+
+type SessionOpts struct {
+	Expiry                     time.Duration
+	RefreshExpiryOnEachRequest bool
+}
+
+type Session interface {
+	renderKeyProvider
+	Dispose(ctx context.Context)
+}
+
 type Service interface {
 	IsAvailable() bool
 	Version() string
-	Render(ctx context.Context, opts Opts) (*RenderResult, error)
-	RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error)
+	Render(ctx context.Context, opts Opts, session Session) (*RenderResult, error)
+	RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error)
 	RenderErrorImage(theme Theme, error error) (*RenderResult, error)
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
+	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)
 }
