@@ -1,4 +1,4 @@
-name: Prepare release
+name: Close Milestone
 on:
   workflow_dispatch:
     inputs:
@@ -6,18 +6,16 @@ on:
         description: 'The version to be released please respect: major.minor.patch or major.minor.patch-beta<number> format. example: 7.4.3 or 7.4.3-beta1'
         required: true
 jobs:
-  call-bump-version:
-    uses: grafana/grafana/.github/workflows/bump-version.yml@main
+  call-remove-milestone:
+    uses: grafana/grafana/.github/workflows/remove-milestone.yml@main
     with:
       version_call: ${{ github.event.inputs.version_input }}
     secrets:
       token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
-      metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
-  call-update-changelog:
-    uses: grafana/grafana/.github/workflows/update-changelog.yml@main
+  call-close-milestone:
+    uses: grafana/grafana/.github/workflows/close-milestone.yml@main
     with:
       version_call: ${{ github.event.inputs.version_input }}
     secrets:
       token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
-      metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
-    needs: call-bump-version
+    needs: call-remove-milestone
