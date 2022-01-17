@@ -50,7 +50,7 @@ export const RolePickerInput = ({
   return !isFocused ? (
     <div className={styles.selectedRoles} onMouseDown={onOpen}>
       {showBuiltInRole && <ValueContainer>{builtInRole}</ValueContainer>}
-      <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} />
+      <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBuiltInRole} />
     </div>
   ) : (
     <div className={styles.wrapper}>
