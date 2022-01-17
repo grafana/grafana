@@ -19,14 +19,6 @@ jobs:
     secrets:
       token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
     needs: call-remove-milestone
-  call-bump-version:
-    uses: grafana/grafana/.github/workflows/bump-version.yml@main
-    with:
-      version_call: ${{ github.event.inputs.version_input }}
-    secrets:
-      token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
-      metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
-    needs: call-close-milestone
   call-update-changelog:
     uses: grafana/grafana/.github/workflows/update-changelog.yml@main
     with:
