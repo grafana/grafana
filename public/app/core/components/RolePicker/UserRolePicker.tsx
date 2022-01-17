@@ -1,7 +1,8 @@
-import React, { FC } from 'react';
-import { getBackendSrv } from '@grafana/runtime';
+import React, { FC, useState } from 'react';
+import { useAsync } from 'react-use';
 import { Role, OrgRole } from 'app/types';
 import { RolePicker } from './RolePicker';
+import { fetchBuiltinRoles, fetchRoleOptions, fetchUserRoles, updateUserRoles } from './api';
 
 export interface Props {
   builtInRole: OrgRole;
@@ -24,64 +25,38 @@ export const UserRolePicker: FC<Props> = ({
   disabled,
   builtinRolesDisabled,
 }) => {
+  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
+  const [builtInRoles, setBuiltinRoles] = useState<Record<string, Role[]>>({});
+
+  const { loading } = useAsync(async () => {
+    try {
+      let options = await (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId));
+      setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
+
+      const builtInRoles = await (getBuiltinRoles ? getBuiltinRoles() : fetchBuiltinRoles(orgId));
+      setBuiltinRoles(builtInRoles);
+
+      const userRoles = await fetchUserRoles(userId, orgId);
+      setAppliedRoles(userRoles);
+    } catch (e) {
+      // TODO handle error
+      console.error('Error loading options');
+    }
+  }, [getBuiltinRoles, getRoleOptions, orgId, userId]);
+
   return (
     <RolePicker
       builtInRole={builtInRole}
       onRolesChange={(roles) => updateUserRoles(roles, userId, orgId)}
       onBuiltinRoleChange={onBuiltinRoleChange}
-      getRoleOptions={() => (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId))}
-      getRoles={() => fetchUserRoles(userId, orgId)}
-      getBuiltinRoles={() => (getBuiltinRoles ? getBuiltinRoles() : fetchBuiltinRoles(orgId))}
+      roleOptions={roleOptions}
+      appliedRoles={appliedRoles}
+      builtInRoles={builtInRoles}
+      isLoading={loading}
       disabled={disabled}
       builtinRolesDisabled={builtinRolesDisabled}
+      showBuiltInRole
     />
   );
-};
-
-export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<Role[]> => {
-  let rolesUrl = '/api/access-control/roles?delegatable=true';
-  if (orgId) {
-    rolesUrl += `&targetOrgId=${orgId}`;
-  }
-  const roles = await getBackendSrv().get(rolesUrl);
-  if (!roles || !roles.length) {
-    return [];
-  }
-  return roles;
-};
-
-export const fetchBuiltinRoles = (orgId?: number): Promise<{ [key: string]: Role[] }> => {
-  let builtinRolesUrl = '/api/access-control/builtin-roles';
-  if (orgId) {
-    builtinRolesUrl += `?targetOrgId=${orgId}`;
-  }
-  return getBackendSrv().get(builtinRolesUrl);
-};
-
-export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
-  let userRolesUrl = `/api/access-control/users/${userId}/roles`;
-  if (orgId) {
-    userRolesUrl += `?targetOrgId=${orgId}`;
-  }
-  try {
-    const roles = await getBackendSrv().get(userRolesUrl);
-    if (!roles || !roles.length) {
-      return [];
-    }
-    return roles;
-  } catch (error) {
-    error.isHandled = true;
-    return [];
-  }
-};
-
-export const updateUserRoles = (roleUids: string[], userId: number, orgId?: number) => {
-  let userRolesUrl = `/api/access-control/users/${userId}/roles`;
-  if (orgId) {
-    userRolesUrl += `?targetOrgId=${orgId}`;
-  }
-  return getBackendSrv().put(userRolesUrl, {
-    orgId,
-    roleUids,
-  });
 };
