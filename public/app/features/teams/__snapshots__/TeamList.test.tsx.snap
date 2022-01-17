@@ -364,7 +364,7 @@ exports[`Render should render teams table 1`] = `
             currentPage={1}
             hideWhenSinglePage={true}
             numberOfPages={1}
-            onNavigate={[Function]}
+            onNavigate={[MockFunction]}
           />
         </HorizontalGroup>
       </VerticalGroup>
@@ -502,7 +502,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
             currentPage={1}
             hideWhenSinglePage={true}
             numberOfPages={1}
-            onNavigate={[Function]}
+            onNavigate={[MockFunction]}
           />
         </HorizontalGroup>
       </VerticalGroup>
@@ -640,7 +640,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
             currentPage={1}
             hideWhenSinglePage={true}
             numberOfPages={1}
-            onNavigate={[Function]}
+            onNavigate={[MockFunction]}
           />
         </HorizontalGroup>
       </VerticalGroup>
