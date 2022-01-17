@@ -26,14 +26,14 @@ func TracingMiddleware(logger log.Logger, tracer tracing.Tracer) httpclient.Midd
 
 			req = req.WithContext(ctx)
 			for k, v := range opts.Labels {
-				span.SetAttributes(attribute.Key(k).String(v))
+				span.SetAttributes(k, v, attribute.Key(k).String(v))
 			}
 
 			tracer.Inject(ctx, req.Header, span)
 			res, err := next.RoundTrip(req)
 
-			span.SetAttributes(attribute.String("http.url", req.URL.String()))
-			span.SetAttributes(attribute.String("http.method", req.Method))
+			span.SetAttributes("http.url", req.URL.String(), attribute.String("http.url", req.URL.String()))
+			span.SetAttributes("http.method", req.Method, attribute.String("http.method", req.Method))
 			// ext.SpanKind.Set(span, ext.SpanKindRPCClientEnum)
 
 			if err != nil {
@@ -45,10 +45,10 @@ func TracingMiddleware(logger log.Logger, tracer tracing.Tracer) httpclient.Midd
 				// we avoid measuring contentlength less than zero because it indicates
 				// that the content size is unknown. https://godoc.org/github.com/badu/http#Response
 				if res.ContentLength > 0 {
-					span.SetAttributes(attribute.Key(httpContentLengthTagKey).Int64(res.ContentLength))
+					span.SetAttributes(httpContentLengthTagKey, res.ContentLength, attribute.Key(httpContentLengthTagKey).Int64(res.ContentLength))
 				}
 
-				span.SetAttributes(attribute.Int("http.status_code", res.StatusCode))
+				span.SetAttributes("http.status_code", res.StatusCode, attribute.Int("http.status_code", res.StatusCode))
 				if res.StatusCode >= 400 {
 					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(res.StatusCode)))
 				}

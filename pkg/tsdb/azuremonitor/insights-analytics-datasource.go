@@ -105,9 +105,9 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 	req.URL.RawQuery = query.Params.Encode()
 
 	ctx, span := tracer.Start(ctx, "application insights analytics query")
-	span.SetAttributes(attribute.Key("target").String(query.Target))
-	span.SetAttributes(attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
-	span.SetAttributes(attribute.Key("org_id").Int64(dsInfo.OrgID))
+	span.SetAttributes("target", query.Target, attribute.Key("target").String(query.Target))
+	span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
+	span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
 
 	defer span.End()
 	tracer.Inject(ctx, req.Header, span)

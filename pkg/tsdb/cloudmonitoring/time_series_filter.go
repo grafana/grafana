@@ -57,11 +57,11 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	}
 
 	ctx, span := tracer.Start(ctx, "cloudMonitoring query")
-	span.SetAttributes(attribute.Key("target").String(timeSeriesFilter.Target))
-	span.SetAttributes(attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
-	span.SetAttributes(attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
-	span.SetAttributes(attribute.Key("datasource_id").Int64(dsInfo.id))
-	span.SetAttributes(attribute.Key("org_id").Int64(req.PluginContext.OrgID))
+	span.SetAttributes("target", timeSeriesFilter.Target, attribute.Key("target").String(timeSeriesFilter.Target))
+	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
+	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
+	span.SetAttributes("datasource_id", dsInfo.id, attribute.Key("datasource_id").Int64(dsInfo.id))
+	span.SetAttributes("org_id", req.PluginContext.OrgID, attribute.Key("org_id").Int64(req.PluginContext.OrgID))
 
 	defer span.End()
 	tracer.Inject(ctx, r.Header, span)

@@ -200,11 +200,11 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 
 		e.evalHandler.Eval(evalContext)
 
-		span.SetAttributes(attribute.Key("alertId").Int64(evalContext.Rule.ID))
-		span.SetAttributes(attribute.Key("dashboardId").Int64(evalContext.Rule.DashboardID))
-		span.SetAttributes(attribute.Key("firing").Bool(evalContext.Firing))
-		span.SetAttributes(attribute.Key("nodatapoints").Bool(evalContext.NoDataFound))
-		span.SetAttributes(attribute.Key("attemptID").Int(attemptID))
+		span.SetAttributes("alertId", evalContext.Rule.ID, attribute.Key("alertId").Int64(evalContext.Rule.ID))
+		span.SetAttributes("dashboardId", evalContext.Rule.DashboardID, attribute.Key("dashboardId").Int64(evalContext.Rule.DashboardID))
+		span.SetAttributes("firing", evalContext.Firing, attribute.Key("firing").Bool(evalContext.Firing))
+		span.SetAttributes("nodatapoints", evalContext.NoDataFound, attribute.Key("nodatapoints").Bool(evalContext.NoDataFound))
+		span.SetAttributes("attemptID", attemptID, attribute.Key("attemptID").Int(attemptID))
 
 		if evalContext.Error != nil {
 			span.RecordError(evalContext.Error)

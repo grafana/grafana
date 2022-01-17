@@ -56,9 +56,9 @@ func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*P
 		plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
 		ctx, span := s.tracer.Start(ctx, "datasource.prometheus")
-		span.SetAttributes(attribute.Key("expr").String(query.Expr))
-		span.SetAttributes(attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
-		span.SetAttributes(attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
+		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
+		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
+		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
 		defer span.End()
 
 		response := make(map[TimeSeriesQueryType]interface{})

@@ -57,9 +57,9 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	}
 
 	ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
-	span.SetAttributes(attribute.Key("query").String(timeSeriesQuery.Query))
-	span.SetAttributes(attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
-	span.SetAttributes(attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
+	span.SetAttributes("query", timeSeriesQuery.Query, attribute.Key("query").String(timeSeriesQuery.Query))
+	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
+	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
 
 	defer span.End()
 	tracer.Inject(ctx, r.Header, span)

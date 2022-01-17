@@ -144,9 +144,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	for _, query := range queries {
 		s.plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 		_, span := s.tracer.Start(ctx, "alerting.loki")
-		span.SetAttributes(attribute.Key("expr").String(query.Expr))
-		span.SetAttributes(attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
-		span.SetAttributes(attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
+		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
+		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
+		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
 		defer span.End()
 
 		// `limit` only applies to log-producing queries, and we

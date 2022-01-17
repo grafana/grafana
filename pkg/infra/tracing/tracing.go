@@ -194,10 +194,8 @@ func (s OpentracingSpan) End() {
 	s.span.Finish()
 }
 
-func (s OpentracingSpan) SetAttributes(kv ...attribute.KeyValue) {
-	for k, v := range kv {
-		s.span.SetTag(fmt.Sprint(k), v)
-	}
+func (s OpentracingSpan) SetAttributes(key string, value interface{}, kv attribute.KeyValue) {
+	s.span.SetTag(key, value)
 }
 
 func (s OpentracingSpan) SetName(name string) {

@@ -156,10 +156,10 @@ func (proxy *DataSourceProxy) HandleRequest() {
 
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
 
-	span.SetAttributes(attribute.Key("datasource_name").String(proxy.ds.Name))
-	span.SetAttributes(attribute.Key("datasource_type").String(proxy.ds.Type))
-	span.SetAttributes(attribute.Key("user").String(proxy.ds.Type))
-	span.SetAttributes(attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgId))
+	span.SetAttributes("datasource_name", proxy.ds.Name, attribute.Key("datasource_name").String(proxy.ds.Name))
+	span.SetAttributes("datasource_type", proxy.ds.Type, attribute.Key("datasource_type").String(proxy.ds.Type))
+	span.SetAttributes("user", proxy.ds.Type, attribute.Key("user").String(proxy.ds.Type))
+	span.SetAttributes("org_id", proxy.ctx.SignedInUser.OrgId, attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgId))
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
 	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
@@ -173,7 +173,7 @@ func (proxy *DataSourceProxy) addTraceFromHeaderValue(span tracing.Span, headerN
 	panelId := proxy.ctx.Req.Header.Get(headerName)
 	dashId, err := strconv.Atoi(panelId)
 	if err == nil {
-		span.SetAttributes(attribute.Key(tagName).Int(dashId))
+		span.SetAttributes(tagName, dashId, attribute.Key(tagName).Int(dashId))
 	}
 }
 

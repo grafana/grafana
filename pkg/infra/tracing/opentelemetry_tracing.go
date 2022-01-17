@@ -26,7 +26,7 @@ type Tracer interface {
 
 type Span interface {
 	End()
-	SetAttributes(kv ...attribute.KeyValue)
+	SetAttributes(key string, value interface{}, kv attribute.KeyValue)
 	SetName(name string)
 	SetStatus(code codes.Code, description string)
 	RecordError(err error, options ...trace.EventOption)
@@ -137,8 +137,8 @@ func (s OpentelemetrySpan) End() {
 	s.span.End()
 }
 
-func (s OpentelemetrySpan) SetAttributes(kv ...attribute.KeyValue) {
-	s.span.SetAttributes(kv...)
+func (s OpentelemetrySpan) SetAttributes(key string, value interface{}, kv attribute.KeyValue) {
+	s.span.SetAttributes(kv)
 }
 
 func (s OpentelemetrySpan) SetName(name string) {

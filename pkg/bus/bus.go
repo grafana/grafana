@@ -103,7 +103,7 @@ func (b *InProcBus) Dispatch(ctx context.Context, msg Msg) error {
 	ctx, span := b.tracer.Start(ctx, "bus - "+msgName)
 	defer span.End()
 
-	span.SetAttributes(attribute.Key("msg").String(msgName))
+	span.SetAttributes("msg", msgName, attribute.Key("msg").String(msgName))
 
 	withCtx := true
 	var handler = b.handlersWithCtx[msgName]
@@ -156,7 +156,7 @@ func (b *InProcBus) Publish(ctx context.Context, msg Msg) error {
 	_, span := b.tracer.Start(ctx, "bus - "+msgName)
 	defer span.End()
 
-	span.SetAttributes(attribute.Key("msg").String(msgName))
+	span.SetAttributes("msg", msgName, attribute.Key("msg").String(msgName))
 
 	return nil
 }

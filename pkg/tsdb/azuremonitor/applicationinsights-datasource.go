@@ -144,11 +144,11 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	req.URL.RawQuery = query.Params.Encode()
 
 	ctx, span := tracer.Start(ctx, "application insights query")
-	span.SetAttributes(attribute.Key("target").String(query.Target))
-	span.SetAttributes(attribute.Key("from").Int64(query.TimeRange.From.UnixNano() / int64(time.Millisecond)))
-	span.SetAttributes(attribute.Key("until").Int64(query.TimeRange.To.UnixNano() / int64(time.Millisecond)))
-	span.SetAttributes(attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
-	span.SetAttributes(attribute.Key("org_id").Int64(dsInfo.OrgID))
+	span.SetAttributes("target", query.Target, attribute.Key("target").String(query.Target))
+	span.SetAttributes("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond), attribute.Key("from").Int64(query.TimeRange.From.UnixNano()/int64(time.Millisecond)))
+	span.SetAttributes("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond), attribute.Key("until").Int64(query.TimeRange.To.UnixNano()/int64(time.Millisecond)))
+	span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
+	span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
 
 	defer span.End()
 

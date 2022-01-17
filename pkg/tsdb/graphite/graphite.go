@@ -169,11 +169,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	ctx, span := s.tracer.Start(ctx, "graphite query")
-	span.SetAttributes(attribute.Key("target").String(target))
-	span.SetAttributes(attribute.Key("from").String(from))
-	span.SetAttributes(attribute.Key("until").String(until))
-	span.SetAttributes(attribute.Key("datasource_id").Int64(dsInfo.Id))
-	span.SetAttributes(attribute.Key("org_id").Int64(req.PluginContext.OrgID))
+	span.SetAttributes("target", target, attribute.Key("target").String(target))
+	span.SetAttributes("from", from, attribute.Key("from").String(from))
+	span.SetAttributes("until", until, attribute.Key("until").String(until))
+	span.SetAttributes("datasource_id", dsInfo.Id, attribute.Key("datasource_id").Int64(dsInfo.Id))
+	span.SetAttributes("org_id", req.PluginContext.OrgID, attribute.Key("org_id").Int64(req.PluginContext.OrgID))
 
 	defer span.End()
 	s.tracer.Inject(ctx, graphiteReq.Header, span)

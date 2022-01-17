@@ -68,9 +68,9 @@ func RequestTracing(tracer tracing.Tracer) web.Handler {
 
 		status := rw.Status()
 
-		span.SetAttributes(attribute.Int("http.status_code", status))
-		span.SetAttributes(attribute.String("http.url", req.RequestURI))
-		span.SetAttributes(attribute.String("http.method", req.Method))
+		span.SetAttributes("http.status_code", status, attribute.Int("http.status_code", status))
+		span.SetAttributes("http.url", req.RequestURI, attribute.String("http.url", req.RequestURI))
+		span.SetAttributes("http.method", req.Method, attribute.String("http.method", req.Method))
 		if status >= 400 {
 			span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(status)))
 		}
