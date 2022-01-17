@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"regexp"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -43,6 +45,8 @@ type datasourceInfo struct {
 	secretKey string
 
 	datasourceID int64
+
+	HTTPClient *http.Client
 }
 
 const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
@@ -57,10 +61,10 @@ const pluginID = "cloudwatch"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func ProvideService(cfg *setting.Cfg, logsService *LogsService, pluginStore plugins.Store) (*CloudWatchService, error) {
+func ProvideService(cfg *setting.Cfg, logsService *LogsService, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*CloudWatchService, error) {
 	plog.Debug("initing")
 
-	executor := newExecutor(logsService, datasource.NewInstanceManager(NewInstanceSettings()), cfg, awsds.NewSessionCache())
+	executor := newExecutor(logsService, datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache())
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: executor,
 	})
@@ -97,7 +101,7 @@ func newExecutor(logsService *LogsService, im instancemgmt.InstanceManager, cfg 
 	}
 }
 
-func NewInstanceSettings() datasource.InstanceFactoryFunc {
+func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := struct {
 			Profile       string `json:"profile"`
@@ -173,7 +177,7 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 	}
 
 	return e.sessions.GetSession(awsds.SessionConfig{
-		Config: *pluginCtx.DataSourceInstanceSettings,
+		HTTPClient: dsInfo.HTTPClient,
 		Settings: awsds.AWSDatasourceSettings{
 			Profile:       dsInfo.profile,
 			Region:        region,
