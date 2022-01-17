@@ -19,7 +19,7 @@ var (
 	logger = log.New("live.runstream")
 )
 
-//go:generate mockgen -destination=mock.go -package=runstream github.com/grafana/grafana/pkg/services/live/runstream ChannelLocalPublisher,NumLocalSubscribersGetter,StreamRunner,PluginContextGetter
+//go:generate mockgen -destination=mock.go -package=runstream github.com/grafana/grafana/pkg/services/live/runstream ChannelLocalPublisher,NumSubscribersGetter,StreamRunner,PluginContextGetter
 
 type ChannelLocalPublisher interface {
 	PublishLocal(channel string, data []byte, leadershipID string) error
@@ -29,7 +29,7 @@ type PluginContextGetter interface {
 	GetPluginContext(ctx context.Context, user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error)
 }
 
-type NumLocalSubscribersGetter interface {
+type NumSubscribersGetter interface {
 	// GetNumLocalSubscribers returns number of channel subscribers on local node.
 	GetNumLocalSubscribers(channel string) (int, error)
 	// GetNumSubscribers returns number of channel subscribers throughout all nodes.
@@ -60,7 +60,7 @@ type Manager struct {
 	baseCtx                 context.Context
 	streams                 map[string]streamContext
 	datasourceStreams       map[string]map[string]struct{}
-	presenceGetter          NumLocalSubscribersGetter
+	presenceGetter          NumSubscribersGetter
 	pluginContextGetter     PluginContextGetter
 	channelSender           ChannelLocalPublisher
 	registerCh              chan submitRequest
@@ -92,7 +92,7 @@ const (
 )
 
 // NewManager creates new Manager.
-func NewManager(channelSender ChannelLocalPublisher, presenceGetter NumLocalSubscribersGetter, pluginContextGetter PluginContextGetter, leaderManager leader.Manager, nodeIDGetter NodeIDGetter, opts ...ManagerOption) *Manager {
+func NewManager(channelSender ChannelLocalPublisher, presenceGetter NumSubscribersGetter, pluginContextGetter PluginContextGetter, leaderManager leader.Manager, nodeIDGetter NodeIDGetter, opts ...ManagerOption) *Manager {
 	sm := &Manager{
 		streams:                 make(map[string]streamContext),
 		datasourceStreams:       map[string]map[string]struct{}{},
