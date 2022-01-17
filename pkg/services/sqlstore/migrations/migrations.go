@@ -67,6 +67,9 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addKVStoreMigrations(mg)
 	ualert.AddDashboardUIDPanelIDMigration(mg)
 	accesscontrol.AddMigration(mg)
+	if mg.Cfg != nil && mg.Cfg.FeatureToggles["accesscontrol"] {
+		accesscontrol.AddTeamMembershipMigrations(mg)
+	}
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
