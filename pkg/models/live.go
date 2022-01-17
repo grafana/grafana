@@ -20,8 +20,10 @@ type SubscribeEvent struct {
 	Path    string
 	Data    json.RawMessage
 
-	// TODO: mostly hack for now to re-use plugin OnSubscribe implementation.
-	OnLeader     bool
+	// LeadershipID when set means that call to OnSubscribe executed on
+	// leader node. Currently, Plugin ChannelHandler relies on this to transfer
+	// subscription request to the leader node if there is no LeadershipID in
+	// SubscribeEvent.
 	LeadershipID string
 }
 

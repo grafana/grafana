@@ -161,7 +161,6 @@ func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStrea
 	reply, status, err := handler.OnSubscribe(context.Background(), user, models.SubscribeEvent{
 		Channel:      req.Channel,
 		Path:         parsedChannel.Path,
-		OnLeader:     true,
 		LeadershipID: req.LeadershipID,
 	})
 	if err != nil {

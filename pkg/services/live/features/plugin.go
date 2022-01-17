@@ -99,7 +99,7 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 		return models.SubscribeReply{}, 0, centrifuge.ErrorInternal
 	}
 
-	if r.leaderManager != nil && !e.OnLeader {
+	if r.leaderManager != nil && e.LeadershipID == "" {
 		return r.handleHASubscribe(ctx, user, e)
 	}
 
@@ -142,6 +142,9 @@ const (
 	proxySubscribeTimeout    = 250 * time.Millisecond
 )
 
+// handleHASubscribe transfers subscription request to the channel leader node. This way
+// we can get SubscribeReply and return it back to the client. Stream will be accepted on
+// the leader node – so in this method we should not interact with RunStream Manager.
 func (r *PluginPathRunner) handleHASubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	logger.Debug("Handle ha subscribe", "path", r.path, "currentNodeId", r.nodeIDGetter.GetNodeID())
 	newLeadershipID, err := util.GetRandomString(8)
