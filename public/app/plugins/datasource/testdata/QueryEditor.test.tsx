@@ -37,7 +37,7 @@ describe('Test Datasource Query Editor', () => {
   it('should switch scenario and display its default values', async () => {
     const { rerender } = setup();
 
-    let select = (await screen.findByText('Scenario')).nextSibling!;
+    let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
     await fireEvent.keyDown(select, { keyCode: 40 });
     const scs = screen.getAllByLabelText('Select option');
 

@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -125,9 +126,10 @@ func AuthorizeInOrgMiddleware(ac accesscontrol.AccessControl, db *sqlstore.SQLSt
 }
 
 func UseOrgFromContextParams(c *models.ReqContext) (int64, error) {
-	orgID := c.ParamsInt64(":orgId")
+	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+
 	// Special case of macaron handling invalid params
-	if orgID == 0 {
+	if orgID == 0 || err != nil {
 		return 0, models.ErrOrgNotFound
 	}
 

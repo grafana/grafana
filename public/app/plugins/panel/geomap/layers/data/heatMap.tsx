@@ -7,12 +7,11 @@ import {
   PanelData,
 } from '@grafana/data';
 import Map from 'ol/Map';
-import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
-import * as source from 'ol/source';
-import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
+import { getLocationMatchers } from 'app/features/geo/utils/location';
 import { ScaleDimensionConfig, getScaledDimension } from 'app/features/dimensions';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors';
+import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 
 // Configuration options for Heatmap overlays
 export interface HeatmapConfig {
@@ -47,19 +46,19 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
    */
   create: async (map: Map, options: MapLayerOptions<HeatmapConfig>, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
-    const matchers = await getLocationMatchers(options.location);
-
-    const vectorSource = new source.Vector();
+    
+    const location = await getLocationMatchers(options.location);
+    const source = new FrameVectorSource(location);
+    const WEIGHT_KEY = "_weight";
 
     // Create a new Heatmap layer
     // Weight function takes a feature as attribute and returns a normalized weight value
     const vectorLayer = new layer.Heatmap({
-      source: vectorSource,
+      source,
       blur: config.blur,
       radius: config.radius,
-      weight: function (feature) {
-        var weight = feature.get('value');
-        return weight;
+      weight: (feature) => {
+        return feature.get(WEIGHT_KEY);
       },
     });
 
@@ -67,34 +66,18 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
       init: () => vectorLayer,
       update: (data: PanelData) => {
         const frame = data.series[0];
-
-        // Remove previous data before updating
-        const features = vectorLayer.getSource().getFeatures();
-        features.forEach((feature) => {
-          vectorLayer.getSource().removeFeature(feature);
-        });
-
         if (!frame) {
           return;
         }
-        // Get data points (latitude and longitude coordinates)
-        const info = dataFrameToPoints(frame, matchers);
-        if (info.warning) {
-          console.log('WARN', info.warning);
-          return; // ???
-        }
+        source.update(frame);
 
         const weightDim = getScaledDimension(frame, config.weight);
-
-        // Map each data value into new points
-        for (let i = 0; i < frame.length; i++) {
-          const cluster = new Feature({
-            geometry: info.points[i],
-            value: weightDim.get(i),
-          });
-          vectorSource.addFeature(cluster);
-        }
-        vectorLayer.setSource(vectorSource);
+        source.forEachFeature( (f) => {
+          const idx = f.get('rowIndex') as number;
+          if(idx != null) {
+            f.set(WEIGHT_KEY, weightDim.get(idx));
+          }
+        });
 
         // Set heatmap gradient colors
         let colors = ['#00f', '#0ff', '#0f0', '#ff0', '#f00'];

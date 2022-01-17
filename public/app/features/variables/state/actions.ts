@@ -71,7 +71,13 @@ import {
 } from './transactionReducer';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
-import { ensureStringValues, ExtendedUrlQueryMap, getCurrentText, getVariableRefresh } from '../utils';
+import {
+  ensureStringValues,
+  ExtendedUrlQueryMap,
+  getCurrentText,
+  getVariableRefresh,
+  hasOngoingTransaction,
+} from '../utils';
 import { store } from 'app/store/store';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { cleanEditorState } from '../editor/reducer';
@@ -744,14 +750,19 @@ export const updateOptions = (identifier: VariableIdentifier, rethrow = false): 
   dispatch,
   getState
 ) => {
-  const variableInState = getVariable(identifier.id, getState());
   try {
+    if (!hasOngoingTransaction(getState())) {
+      // we might have cancelled a batch so then variable state is removed
+      return;
+    }
+
+    const variableInState = getVariable(identifier.id, getState());
     dispatch(variableStateFetching(toVariablePayload(variableInState)));
     await dispatch(upgradeLegacyQueries(toVariableIdentifier(variableInState)));
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(completeVariableLoading(identifier));
   } catch (error) {
-    dispatch(variableStateFailed(toVariablePayload(variableInState, { error })));
+    dispatch(variableStateFailed(toVariablePayload(identifier, { error })));
 
     if (!rethrow) {
       console.error(error);
@@ -775,6 +786,11 @@ export const createVariableErrorNotification = (
   );
 
 export const completeVariableLoading = (identifier: VariableIdentifier): ThunkResult<void> => (dispatch, getState) => {
+  if (!hasOngoingTransaction(getState())) {
+    // we might have cancelled a batch so then variable state is removed
+    return;
+  }
+
   const variableInState = getVariable(identifier.id, getState());
 
   if (variableInState.state !== LoadingState.Done) {
@@ -787,6 +803,11 @@ export function upgradeLegacyQueries(
   getDatasourceSrvFunc: typeof getDatasourceSrv = getDatasourceSrv
 ): ThunkResult<void> {
   return async function (dispatch, getState) {
+    if (!hasOngoingTransaction(getState())) {
+      // we might have cancelled a batch so then variable state is removed
+      return;
+    }
+
     const variable = getVariable<QueryVariableModel>(identifier.id, getState());
 
     if (!isQuery(variable)) {

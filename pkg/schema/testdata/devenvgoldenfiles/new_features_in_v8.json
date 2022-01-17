@@ -53,7 +53,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 8,
 				"w": 6,
@@ -91,7 +93,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -195,7 +199,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 15,
 				"w": 6,
@@ -233,7 +239,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-graphite-1.0",
+			"datasource": {
+				"type": "graphite"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -302,7 +310,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-graphite-1.0",
+			"datasource": {
+				"type": "graphite"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -401,7 +411,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 13,
 				"w": 6,
@@ -439,7 +451,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -513,7 +527,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -612,7 +628,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 3,
 				"w": 24,
@@ -650,7 +668,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -777,7 +797,9 @@
 			"repeatDirection": "h"
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -878,7 +900,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 3,
 				"w": 24,
@@ -916,7 +940,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 6,
 				"w": 6,
@@ -954,7 +980,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -1082,7 +1110,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -1210,7 +1240,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -1338,7 +1370,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 8,
 				"w": 6,
@@ -1376,7 +1410,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -1487,7 +1523,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"description": "",
 			"fieldConfig": {
 				"defaults": {
@@ -1601,7 +1639,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"description": "",
 			"fieldConfig": {
 				"defaults": {
@@ -1715,7 +1755,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 5,
 				"w": 6,
@@ -1753,7 +1795,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -1977,7 +2021,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 5,
 				"w": 6,
@@ -2015,7 +2061,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -2347,7 +2395,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -2679,7 +2729,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -2814,7 +2866,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 3,
 				"w": 24,
@@ -2852,7 +2906,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -2964,7 +3020,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -3074,7 +3132,7 @@
 		}
 	],
 	"refresh": false,
-	"schemaVersion": 30,
+	"schemaVersion": 33,
 	"style": "dark",
 	"tags": [
 		"gdev",

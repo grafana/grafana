@@ -1,0 +1,34 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "matrix",
+    "result": [
+      {
+        "metric": {
+          "__name__": "prometheus_http_requests_total",
+          "code": "200",
+          "handler": "/api/v1/query_range",
+          "job": "prometheus"
+        },
+        "values": [
+          [1641889530, "21"],
+          [1641889531, "32"],
+          [1641889532, "43"]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "prometheus_http_requests_total",
+          "code": "400",
+          "handler": "/api/v1/query_range",
+          "job": "prometheus"
+        },
+        "values": [
+          [1641889530, "54"],
+          [1641889531, "65"],
+          [1641889532, "76"]
+        ]
+      }
+    ]
+  }
+}

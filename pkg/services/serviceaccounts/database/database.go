@@ -84,3 +84,12 @@ func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) e
 	}
 	return nil
 }
+
+func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgID int64) ([]*models.OrgUserDTO, error) {
+	query := models.GetOrgUsersQuery{OrgId: orgID, IsServiceAccount: true}
+	err := s.sqlStore.GetOrgUsers(ctx, &query)
+	if err != nil {
+		return nil, err
+	}
+	return query.Result, err
+}

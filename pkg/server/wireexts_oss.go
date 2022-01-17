@@ -7,12 +7,14 @@ import (
 	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -45,6 +47,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(models.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
 	provisioning.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
+	resourceservices.ProvideResourceServices,
 	backgroundsvcs.ProvideBackgroundServiceRegistry,
 	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
 	datasources.ProvideCacheService,
@@ -61,6 +64,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	signature.ProvideService,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
+	provider.ProvideService,
+	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	acdb.ProvideService,
 	wire.Bind(new(accesscontrol.ResourcePermissionsStore), new(*acdb.AccessControlStore)),
 	wire.Bind(new(accesscontrol.PermissionsProvider), new(*acdb.AccessControlStore)),
