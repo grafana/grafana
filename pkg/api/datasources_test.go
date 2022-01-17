@@ -28,7 +28,7 @@ const (
 )
 
 func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
-	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
 		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourcesQuery) error {
 			assert.Equal(t, testOrgID, query.OrgId)
@@ -61,7 +61,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 	})
 
 	loggedInUserScenario(t, "Should be able to save a data source when calling DELETE on non-existing",
-		"/api/datasources/name/12345", func(sc *scenarioContext) {
+		"/api/datasources/name/12345", "/api/datasources/name/:name", func(sc *scenarioContext) {
 			// handler func being tested
 			hs := &HTTPServer{
 				Bus:         bus.GetBus(),

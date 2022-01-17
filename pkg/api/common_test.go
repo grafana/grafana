@@ -36,8 +36,8 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func loggedInUserScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
-	loggedInUserScenarioWithRole(t, desc, "GET", url, url, models.ROLE_EDITOR, fn)
+func loggedInUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
+	loggedInUserScenarioWithRole(t, desc, "GET", url, routePattern, models.ROLE_EDITOR, fn)
 }
 
 func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
