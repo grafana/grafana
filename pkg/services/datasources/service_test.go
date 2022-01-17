@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -65,6 +66,67 @@ func TestService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, sjd, decrypted)
 	})
+}
+
+type dataSourceMockRetriever struct {
+	res *models.DataSource
+}
+
+func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
+	if query.Name == d.res.Name {
+		query.Result = d.res
+
+		return nil
+	}
+	return models.ErrDataSourceNotFound
+}
+
+func TestService_DatasourceNameScopeResolver(t *testing.T) {
+	type testCaseResolver struct {
+		desc    string
+		given   string
+		want    string
+		wantErr error
+	}
+
+	testCases := []testCaseResolver{
+		{
+			desc:    "correct",
+			given:   "datasources:name:test-datasource",
+			want:    "datasources:id:1",
+			wantErr: nil,
+		},
+		{
+			desc:    "unknown datasource",
+			given:   "datasources:name:unknown-datasource",
+			want:    "",
+			wantErr: models.ErrDataSourceNotFound,
+		},
+		{
+			desc:    "malformed scope",
+			given:   "datasources:unknown-datasource",
+			want:    "",
+			wantErr: accesscontrol.ErrInvalidScope,
+		},
+	}
+
+	testDataSource := &models.DataSource{Id: 1, Name: "test-datasource"}
+	prefix, resolver := NewDatasourceNameScopeResolver(&dataSourceMockRetriever{testDataSource})
+	require.Equal(t, "datasources:name:", prefix)
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			resolved, err := resolver(context.Background(), 1, tc.given)
+			if tc.wantErr != nil {
+				require.Error(t, err)
+				require.Equal(t, tc.wantErr, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.want, resolved)
+			}
+		})
+	}
+
 }
 
 //nolint:goconst

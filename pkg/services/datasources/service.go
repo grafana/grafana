@@ -77,11 +77,20 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 	return s
 }
 
+type DataSourceRetriever interface {
+	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
+}
+
 // NewDatasourceNameScopeResolver provides an AttributeScopeResolver able to
 // translate a scope prefixed with "datasources:name:" into an id based scope.
-func NewDatasourceNameScopeResolver(db *sqlstore.SQLStore) (string, accesscontrol.AttributeScopeResolveFunc) {
+func NewDatasourceNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
 	dsNameResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
-		dsName := strings.Split(initialScope, ":")[2]
+		dsNames := strings.Split(initialScope, ":")
+		if dsNames[0] != "datasources" || len(dsNames) != 3 {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		dsName := dsNames[2]
 
 		query := models.GetDataSourceQuery{Name: dsName, OrgId: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
