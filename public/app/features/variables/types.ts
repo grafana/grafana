@@ -13,6 +13,12 @@ import { TemplateSrv } from '@grafana/runtime';
 
 import { NEW_VARIABLE_ID } from './constants';
 
+export enum TransactionStatus {
+  NotStarted = 'Not started',
+  Fetching = 'Fetching',
+  Completed = 'Completed',
+}
+
 export enum VariableRefresh {
   never, // removed from the UI
   onDashboardLoad,

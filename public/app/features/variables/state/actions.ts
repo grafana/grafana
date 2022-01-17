@@ -15,6 +15,7 @@ import {
   initialVariableModelState,
   OrgVariableModel,
   QueryVariableModel,
+  TransactionStatus,
   UserVariableModel,
   VariableHide,
   VariableModel,
@@ -58,7 +59,6 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import {
-  TransactionStatus,
   variablesClearTransaction,
   variablesCompleteTransaction,
   variablesInitTransaction,

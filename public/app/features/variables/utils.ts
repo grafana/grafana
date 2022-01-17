@@ -3,12 +3,11 @@ import { safeStringifyValue, ScopedVars, UrlQueryMap, UrlQueryValue, VariableTyp
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './constants';
-import { QueryVariableModel, VariableModel, VariableRefresh } from './types';
+import { QueryVariableModel, TransactionStatus, VariableModel, VariableRefresh } from './types';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { variableAdapters } from './adapters';
 import { StoreState } from '../../types';
 import { getState } from '../../store/store';
-import { TransactionStatus } from './state/transactionReducer';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
