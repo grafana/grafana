@@ -362,7 +362,6 @@ func (rs *RenderingService) CreateRenderingSession(ctx context.Context, opts Aut
 		return nil, err
 	}
 
-	fmt.Println("created rendering session " + renderKey)
 	return &longLivedRenderKeyProvider{
 		log:         rs.log,
 		renderKey:   renderKey,
@@ -425,8 +424,6 @@ type longLivedRenderKeyProvider struct {
 }
 
 func (r *longLivedRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (string, error) {
-	fmt.Println("returning session key " + r.renderKey)
-
 	if r.sessionOpts.RefreshExpiryOnEachRequest {
 		err := setRenderKey(r.cache, ctx, opts, r.renderKey, r.sessionOpts.Expiry)
 		if err != nil {
