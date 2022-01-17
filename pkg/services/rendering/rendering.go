@@ -357,7 +357,7 @@ func (rs *RenderingService) getURL(path string) string {
 }
 
 func (rs *RenderingService) CreateRenderingSession(ctx context.Context, opts AuthOpts, sessionOpts SessionOpts) (Session, error) {
-	renderKey, err := generateAndSetRenderKey(rs.RemoteCacheService, ctx, opts, sessionOpts.expiry)
+	renderKey, err := generateAndSetRenderKey(rs.RemoteCacheService, ctx, opts, sessionOpts.Expiry)
 	if err != nil {
 		return nil, err
 	}
@@ -427,8 +427,8 @@ type longLivedRenderKeyProvider struct {
 func (r *longLivedRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (string, error) {
 	fmt.Println("returning session key " + r.renderKey)
 
-	if r.sessionOpts.refreshExpiryOnEachRequest {
-		err := setRenderKey(r.cache, ctx, opts, r.renderKey, r.sessionOpts.expiry)
+	if r.sessionOpts.RefreshExpiryOnEachRequest {
+		err := setRenderKey(r.cache, ctx, opts, r.renderKey, r.sessionOpts.Expiry)
 		if err != nil {
 			r.log.Error("Failed to refresh render key", "error", err, "renderKey", r.renderKey)
 		}
