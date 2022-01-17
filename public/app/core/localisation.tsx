@@ -2,15 +2,23 @@ import React, { useState } from 'react';
 import { I18n, i18n } from '@lingui/core';
 import { I18nProvider as LinguiI18nProvider } from '@lingui/react';
 
-import { messages } from '../../locales/en/messages';
+import { messages as enMessages } from '../../locales/en/messages';
+
+interface MessagesData {
+  messages: Record<string, string>;
+}
+
+const localeMap: Record<string, () => Promise<MessagesData>> = {
+  en: () => Promise.resolve({ messages: enMessages }),
+  es: () => import('../../locales/es/messages'),
+  fr: () => import('../../locales/fr/messages'),
+  'pseudo-LOCALE': () => import('../../locales/pseudo-LOCALE/messages'),
+};
 
 let i18nInstance: I18n;
 
-export function getI18n(locale = 'en') {
-  if (i18nInstance) {
-    return i18nInstance;
-  }
-
+function setLocale(locale: string, messages: Record<string, string>) {
+  console.log('setting locale', { locale, messages });
   i18n.load(locale, messages);
 
   // Browser support for Intl.PluralRules is good and covers what we support in .browserlistrc,
@@ -29,7 +37,24 @@ export function getI18n(locale = 'en') {
   }
 
   i18n.activate(locale);
+}
+
+export function getI18n(locale = 'en') {
+  if (i18nInstance) {
+    return i18nInstance;
+  }
+
+  // TODO: this should match the locale being passed in
+  setLocale(locale, enMessages);
   i18nInstance = i18n;
+
+  const localePreference = localStorage.getItem('grafana_locale');
+  if (localePreference && localeMap[localePreference]) {
+    const importMessages = localeMap[localePreference];
+    importMessages().then(({ messages }) => {
+      setLocale(localePreference, messages);
+    });
+  }
 
   return i18nInstance;
 }
