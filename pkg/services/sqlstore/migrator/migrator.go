@@ -5,13 +5,20 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"go.uber.org/atomic"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
+)
+
+var (
+	ErrDatabaseIsLocked   = fmt.Errorf("database is locked")
+	ErrDatabaseIsUnlocked = fmt.Errorf("database is unlocked")
 )
 
 type Migrator struct {
@@ -20,6 +27,7 @@ type Migrator struct {
 	migrations []Migration
 	Logger     log.Logger
 	Cfg        *setting.Cfg
+	isLocked   atomic.Bool
 }
 
 type MigrationLog struct {
@@ -87,7 +95,21 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	return logMap, nil
 }
 
-func (mg *Migrator) Start() error {
+func (mg *Migrator) Start() (err error) {
+	mg.Logger.Info("Locking database")
+	if err := database.CasRestoreOnErr(&mg.isLocked, false, true, ErrDatabaseIsLocked, mg.Dialect.Lock); err != nil {
+		mg.Logger.Error("Failed to lock database", "error", err)
+		return err
+	}
+
+	defer func() {
+		mg.Logger.Info("Unlocking database")
+		err = database.CasRestoreOnErr(&mg.isLocked, true, false, ErrDatabaseIsUnlocked, mg.Dialect.Unlock)
+		if err != nil {
+			mg.Logger.Error("Failed to unlock database", "error", err)
+		}
+	}()
+
 	mg.Logger.Info("Starting DB migrations")
 
 	logMap, err := mg.GetMigrationLog()

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/lib/pq"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -256,4 +257,55 @@ func (db *PostgresDialect) UpsertSQL(tableName string, keyCols, updateCols []str
 		setStr.String(),
 	)
 	return s
+}
+
+func (db *PostgresDialect) Lock() error {
+	sess := db.engine.NewSession()
+	defer sess.Close()
+
+	// trying to obtain the lock for a resource identified by a 64-bit or 32-bit key value
+	// the lock is exclusive: multiple lock requests stack, so that if the same resource is locked three times
+	// it must then be unlocked three times to be released for other sessions' use.
+	// it will either obtain the lock immediately and return true,
+	// or return false if the lock cannot be acquired immediately.
+	query := "SELECT pg_try_advisory_lock(?)"
+	var success bool
+
+	key, err := database.GenerateAdvisoryLockId(db.engine.DataSourceName())
+	if err != nil {
+		return fmt.Errorf("failed to generate advisory lock key")
+	}
+	_, err = sess.SQL(query, key).Get(&success)
+	if err != nil {
+		return err
+	}
+	if !success {
+		return ErrLockDB
+	}
+
+	return nil
+}
+
+func (db *PostgresDialect) Unlock() error {
+	sess := db.engine.NewSession()
+	defer sess.Close()
+
+	// trying to release a previously-acquired exclusive session level advisory lock.
+	// it will either return true if the lock is successfully released or
+	// false if the lock was not held (in addition an SQL warning will be reported by the server)
+	query := "SELECT pg_advisory_unlock(?)"
+	var success bool
+
+	key, err := database.GenerateAdvisoryLockId(db.engine.DataSourceName())
+	if err != nil {
+		return fmt.Errorf("failed to generate advisory lock key")
+	}
+	_, err = sess.SQL(query, key).Get(&success)
+	if err != nil {
+		return err
+	}
+	if !success {
+		return ErrReleaseLockDB
+	}
+	return nil
 }

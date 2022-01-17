@@ -225,3 +225,71 @@ func (db *MySQLDialect) UpsertSQL(tableName string, keyCols, updateCols []string
 	)
 	return s
 }
+
+func (db *MySQLDialect) Lock() error {
+	sess := db.engine.NewSession()
+	defer sess.Close()
+
+	query := "SELECT GET_LOCK(?, ?)"
+	var success bool
+
+	lockName, err := db.getLockName()
+	if err != nil {
+		return fmt.Errorf("failed to generate lock name: %w", err)
+	}
+
+	// trying to obtain the lock with the specific name
+	// the lock is exclusive per session and is released explicitly by executing RELEASE_LOCK() or implicitly when the session terminates
+	// it returns 1 if the lock was obtained successfully,
+	// 0 if the attempt timed out (for example, because another client has previously locked the name),
+	// or NULL if an error occurred
+	// starting from MySQL 5.7 it is even possible for a given session to acquire multiple locks for the same name
+	// however other sessions cannot acquire a lock with that name until the acquiring session releases all its locks for the name.
+	_, err = sess.SQL(query, lockName, 0).Get(&success)
+	if err != nil {
+		return err
+	}
+	if !success {
+		return ErrLockDB
+	}
+	return nil
+}
+
+func (db *MySQLDialect) Unlock() error {
+	sess := db.engine.NewSession()
+	defer sess.Close()
+
+	query := "SELECT RELEASE_LOCK(?)"
+	var success bool
+
+	lockName, err := db.getLockName()
+	if err != nil {
+		return fmt.Errorf("failed to generate lock name: %w", err)
+	}
+
+	// trying to release the lock with the specific name
+	// it returns 1 if the lock was released,
+	// 0 if the lock was not established by this thread (in which case the lock is not released),
+	// and NULL if the named lock did not exist (it was never obtained by a call to GET_LOCK() or if it has previously been released)
+	_, err = sess.SQL(query, lockName).Get(&success)
+	if err != nil {
+		return err
+	}
+	if !success {
+		return ErrReleaseLockDB
+	}
+	return nil
+}
+
+func (db *MySQLDialect) getLockName() (string, error) {
+	cfg, err := mysql.ParseDSN(db.engine.DataSourceName())
+	if err != nil {
+		return "", err
+	}
+
+	s := strings.Join([]string{cfg.Addr, cfg.DBName}, "/")
+
+	// MySQL 5.7 and later enforces a maximum length on lock names of 64 characters.
+	// TODO check lock name length
+	return s, nil
+}
