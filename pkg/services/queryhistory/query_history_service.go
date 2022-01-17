@@ -18,9 +18,11 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *QueryHistoryService {
 type Service interface {
 	AddToQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, dataSourceUid string) (*models.QueryHistory, error)
 	ListQueryHistory(ctx context.Context, user *models.SignedInUser, dataSourceUids []string, searchString string, sort string) ([]models.QueryHistory, error)
-	DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, queryId string) error
-	GetQueryInQueryHistoryByUid(ctx context.Context, user *models.SignedInUser, queryId string) (*models.QueryHistory, error)
+	DeleteQuery(ctx context.Context, user *models.SignedInUser, queryUid string) error
+	GetQueryByUid(ctx context.Context, user *models.SignedInUser, queryUid string) (*models.QueryHistory, error)
 	UpdateComment(ctx context.Context, user *models.SignedInUser, query *models.QueryHistory, comment string) error
+	StarQuery(ctx context.Context, user *models.SignedInUser, queryUid string) error
+	UnstarQuery(ctx context.Context, user *models.SignedInUser, queryUid string) error
 }
 
 type QueryHistoryService struct {
@@ -71,11 +73,11 @@ func (s QueryHistoryService) ListQueryHistory(ctx context.Context, user *models.
 	return queryHistory, nil
 }
 
-func (s QueryHistoryService) GetQueryInQueryHistoryByUid(ctx context.Context, user *models.SignedInUser, queryId string) (*models.QueryHistory, error) {
+func (s QueryHistoryService) GetQueryByUid(ctx context.Context, user *models.SignedInUser, queryUid string) (*models.QueryHistory, error) {
 	var queryHistory models.QueryHistory
 
 	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-		exists, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, queryId).Get(&queryHistory)
+		exists, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, queryUid).Get(&queryHistory)
 
 		if !exists {
 			return models.ErrQueryNotFound
@@ -91,9 +93,9 @@ func (s QueryHistoryService) GetQueryInQueryHistoryByUid(ctx context.Context, us
 	return &queryHistory, nil
 }
 
-func (s QueryHistoryService) DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, queryId string) error {
+func (s QueryHistoryService) DeleteQuery(ctx context.Context, user *models.SignedInUser, queryUid string) error {
 	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-		id, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, queryId).Delete(models.QueryHistory{})
+		id, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, queryUid).Delete(models.QueryHistory{})
 		if id == 0 {
 			return models.ErrQueryNotFound
 		}
@@ -111,6 +113,39 @@ func (s QueryHistoryService) UpdateComment(ctx context.Context, user *models.Sig
 	query.Comment = comment
 	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
 		_, err := session.ID(query.Id).Update(query)
+		return err
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s QueryHistoryService) StarQuery(ctx context.Context, user *models.SignedInUser, queryUid string) error {
+	starredQuery := models.QueryHistoryStar{
+		QueryUid: util.GenerateShortUID(),
+		UserId:   user.UserId,
+	}
+
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		_, err := session.Insert(&starredQuery)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s QueryHistoryService) UnstarQuery(ctx context.Context, user *models.SignedInUser, queryUid string) error {
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		id, err := session.Where("user_id = ? AND query_uid = ?", user.UserId, queryUid).Delete(models.QueryHistoryStar{})
+		if id == 0 {
+			return models.ErrStarredQueryNotFound
+		}
 		return err
 	})
 

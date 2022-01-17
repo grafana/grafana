@@ -39,9 +39,9 @@ func (hs *HTTPServer) searchInQueryHistory(c *models.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) deleteQueryFromQueryHistory(c *models.ReqContext) response.Response {
-	queryId := web.Params(c.Req)[":uid"]
+	queryUid := web.Params(c.Req)[":uid"]
 
-	err := hs.QueryHistoryService.DeleteQueryFromQueryHistory(c.Req.Context(), c.SignedInUser, queryId)
+	err := hs.QueryHistoryService.DeleteQuery(c.Req.Context(), c.SignedInUser, queryUid)
 	if err != nil {
 		return response.Error(500, "Failed to delete query from history", err)
 	}
@@ -51,17 +51,39 @@ func (hs *HTTPServer) deleteQueryFromQueryHistory(c *models.ReqContext) response
 
 func (hs *HTTPServer) updateQueryInQueryHistory(c *models.ReqContext) response.Response {
 	cmd := dtos.UpdateQueryInQueryHistoryCmd{}
-	queryId := web.Params(c.Req)[":uid"]
+	queryUid := web.Params(c.Req)[":uid"]
 
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	query, err := hs.QueryHistoryService.GetQueryInQueryHistoryByUid(c.Req.Context(), c.SignedInUser, queryId)
+	query, err := hs.QueryHistoryService.GetQueryByUid(c.Req.Context(), c.SignedInUser, queryUid)
 	err = hs.QueryHistoryService.UpdateComment(c.Req.Context(), c.SignedInUser, query, cmd.Comment)
 	if err != nil {
 		return response.Error(500, "Failed to update comment in query history", err)
 	}
 
 	return response.Success("Query comment successfully updated in query history")
+}
+
+func (hs *HTTPServer) starQueryInQueryHistory(c *models.ReqContext) response.Response {
+	queryUid := web.Params(c.Req)[":uid"]
+
+	err := hs.QueryHistoryService.StarQuery(c.Req.Context(), c.SignedInUser, queryUid)
+	if err != nil {
+		return response.Error(500, "Failed to star query in query history", err)
+	}
+
+	return response.Success("Query successfully starred")
+}
+
+func (hs *HTTPServer) unstarQueryInQueryHistory(c *models.ReqContext) response.Response {
+	queryUid := web.Params(c.Req)[":uid"]
+
+	err := hs.QueryHistoryService.UnstarQuery(c.Req.Context(), c.SignedInUser, queryUid)
+	if err != nil {
+		return response.Error(500, "Failed to unstar query in query history", err)
+	}
+
+	return response.Success("Query successfully unstarred")
 }

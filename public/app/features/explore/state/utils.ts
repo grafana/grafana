@@ -155,3 +155,11 @@ export function deleteQueryFromQueryHistory(queryId: string): void {
 export function updateCommentForQueryInQueryHistory(queryId: string, comment: string): void {
   getBackendSrv().put(`/api/query-history/${queryId}`, { comment });
 }
+
+export function starQueryInQueryHistory(queryId: string): void {
+  getBackendSrv().post(`/api/query-history/star/${queryId}`);
+}
+
+export function unstarQueryInQueryHistory(queryId: string): void {
+  getBackendSrv().delete(`/api/query-history/star/${queryId}`);
+}

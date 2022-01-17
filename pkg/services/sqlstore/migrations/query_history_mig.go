@@ -17,12 +17,7 @@ func addQueryHistoryMigrations(mg *Migrator) {
 			{Name: "comment", Type: DB_Text, Nullable: false},
 			{Name: "queries", Type: DB_Text, Nullable: false},
 		},
-		Indices: []*Index{
-			{Cols: []string{"org_id", "uid"}, Type: UniqueIndex},
-		},
 	}
 
 	mg.AddMigration("create query_history table v1", NewAddTableMigration(queryHistoryV1))
-
-	mg.AddMigration("add index query_history.org_id-uid", NewAddIndexMigration(queryHistoryV1, queryHistoryV1.Indices[0]))
 }

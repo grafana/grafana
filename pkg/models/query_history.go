@@ -5,7 +5,8 @@ import (
 )
 
 var (
-	ErrQueryNotFound = errors.New("query not found")
+	ErrQueryNotFound        = errors.New("query not found")
+	ErrStarredQueryNotFound = errors.New("starred query not found")
 )
 
 type QueryHistory struct {
@@ -17,4 +18,10 @@ type QueryHistory struct {
 	CreatedAt     int64
 	Comment       string
 	Queries       string
+}
+
+type QueryHistoryStar struct {
+	Id       int64
+	QueryUid string
+	UserId   int64
 }
