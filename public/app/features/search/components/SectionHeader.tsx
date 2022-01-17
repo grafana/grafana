@@ -7,6 +7,7 @@ import { CollapsableSection, Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { getSectionIcon, getSectionStorageKey } from '../utils';
+import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 interface SectionHeaderProps {
   editable?: boolean;
@@ -42,6 +43,9 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
     [onToggleChecked, section]
   );
 
+  const id = useUniqueId();
+  const labelId = `section-header-label-${id}`;
+
   return (
     <CollapsableSection
       isOpen={section.expanded ?? false}
@@ -49,6 +53,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
       className={styles.wrapper}
       contentClassName={styles.content}
       loading={section.itemsFetching}
+      labelId={labelId}
       label={
         <>
           <SearchCheckbox
@@ -64,7 +69,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
           </div>
 
           <div className={styles.text}>
-            {section.title}
+            <span id={labelId}>{section.title}</span>
             {section.url && (
               <a href={section.url} className={styles.link}>
                 <span className={styles.separator}>|</span> <Icon name="folder-upload" /> Go to folder
@@ -87,6 +92,7 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
         align-items: center;
         font-size: ${theme.typography.size.base};
         padding: 12px;
+        border-bottom: none;
         color: ${theme.colors.textWeak};
         z-index: 1;
 

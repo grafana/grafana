@@ -15,6 +15,7 @@ export interface Props {
   className?: string;
   contentClassName?: string;
   loading?: boolean;
+  labelId?: string;
 }
 
 export const CollapsableSection: FC<Props> = ({
@@ -24,6 +25,7 @@ export const CollapsableSection: FC<Props> = ({
   className,
   contentClassName,
   children,
+  labelId,
   loading = false,
 }) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
@@ -38,6 +40,8 @@ export const CollapsableSection: FC<Props> = ({
   };
   const { current: id } = useRef(uniqueId());
 
+  const buttonLabelId = labelId ?? `collapse-label-${id}`;
+
   return (
     <>
       <div onClick={onClick} className={cx(styles.header, className)} title={tooltip}>
@@ -45,7 +49,9 @@ export const CollapsableSection: FC<Props> = ({
           id={`collapse-button-${id}`}
           className={styles.button}
           onClick={onClick}
+          aria-expanded={open && !loading}
           aria-controls={`collapse-content-${id}`}
+          aria-labelledby={buttonLabelId}
         >
           {loading ? (
             <Spinner className={styles.spinner} />
@@ -53,13 +59,14 @@ export const CollapsableSection: FC<Props> = ({
             <Icon name={open ? 'angle-down' : 'angle-right'} className={styles.icon} />
           )}
         </button>
-        <div className={styles.label}>{label}</div>
+        <div className={styles.label} id={`collapse-label-${id}`}>
+          {label}
+        </div>
       </div>
       <div
         id={`collapse-content-${id}`}
-        className={cx(styles.content, contentClassName)}
-        aria-labelledby={`collapse-button-${id}`}
-        aria-expanded={open && !loading}
+        className={cx(styles.content, { [styles.hidden]: !open }, contentClassName)}
+        aria-labelledby={buttonLabelId}
       >
         {open && children}
       </div>
@@ -70,16 +77,17 @@ export const CollapsableSection: FC<Props> = ({
 const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   header: css({
     display: 'flex',
+    cursor: 'pointer',
+    boxSizing: 'border-box',
     flexDirection: 'row-reverse',
     position: 'relative',
     justifyContent: 'space-between',
     fontSize: theme.typography.size.lg,
     padding: `${theme.spacing(0.5)} 0`,
-    cursor: 'pointer',
-    '& + div[aria-expanded=false]': {
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    },
     '&:focus-within': getFocusStyles(theme),
+  }),
+  headerClosed: css({
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
   button: css({
     all: 'unset',
@@ -95,9 +103,9 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   }),
   content: css({
     padding: `${theme.spacing(2)} 0`,
-    '&[aria-expanded=false]': {
-      display: 'none',
-    },
+  }),
+  hidden: css({
+    display: 'none',
   }),
   spinner: css({
     display: 'flex',
