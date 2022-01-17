@@ -4,7 +4,6 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -13,7 +12,7 @@ import (
 )
 
 func ProvideResourceServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*ResourceServices, error) {
-	teamPermissions, err := provideTeamPermissions(router, ac, store)
+	teamPermissions, err := ProvideTeamPermissions(router, sql, ac, store)
 	if err != nil {
 		return nil, err
 	}
@@ -27,23 +26,25 @@ type ResourceServices struct {
 	services map[string]*resourcepermissions.Service
 }
 
+func (s *ResourceServices) GetTeamService() *resourcepermissions.Service {
+	return s.services["teams"]
+}
+
 var (
-	// probably should contain team reader action
 	TeamMemberActions = []string{
-		api.ActionTeamsRead,
+		"teams:read",
 	}
 
 	TeamAdminActions = []string{
-		api.ActionTeamsCreate,
-		api.ActionTeamsDelete,
-		api.ActionTeamsWrite,
-		api.ActionTeamsRead,
-		api.ActionTeamsPermissionsRead,
-		api.ActionTeamsPermissionsWrite,
+		"teams:read",
+		"teams:delete",
+		"teams:write",
+		"teams.permissions:read",
+		"teams.permissions:write",
 	}
 )
 
-func provideTeamPermissions(router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*resourcepermissions.Service, error) {
+func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource:    "teams",
 		OnlyManaged: true,
