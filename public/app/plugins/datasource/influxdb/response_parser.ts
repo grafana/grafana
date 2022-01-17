@@ -92,11 +92,11 @@ function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery):
   dfs[0].fields.forEach((field) => {
     // Time col
     if (field.name === 'time') {
-      table.columns.push(field.name === 'time' ? { text: 'Time', type: FieldType.time } : { text: field.name });
+      table.columns.push({ text: 'Time', type: FieldType.time });
     }
 
-    if (field.name === 'value') {
-      // Group by (label) column(s)
+    // Group by (label) column(s)
+    else if (field.name === 'value') {
       if (field.labels) {
         Object.keys(field.labels).forEach((key) => {
           table.columns.push({ text: key });
@@ -116,10 +116,10 @@ function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery):
 function getTableRows(dfs: DataFrame[], table: TableModel, labels: string[]): TableModel {
   const values = dfs[0].fields[0].values.toArray();
 
-  for (let j = 0; j < values.length; j++) {
-    const time = values[j];
+  for (let i = 0; i < values.length; i++) {
+    const time = values[i];
     const metrics = dfs.map((df: DataFrame) => {
-      return df.fields[1].values.toArray()[j];
+      return df.fields[1].values.toArray()[i];
     });
     table.rows.push([time, ...labels, ...metrics]);
   }
