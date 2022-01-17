@@ -241,8 +241,8 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 
 	// keeps track of which UIDs and titles we have already provisioned
 	dash := jsonFile.dashboard
-	provisioningMetadata.uid = dash.Dashboard.Uid
-	provisioningMetadata.identity = dashboardIdentity{title: dash.Dashboard.Title, folderID: dash.Dashboard.FolderId}
+	provisioningMetadata.uid = uidIdentity{orgId: dash.OrgId, uid: dash.Dashboard.Uid}
+	provisioningMetadata.identity = titleIdentity{orgId: dash.OrgId, title: dash.Dashboard.Title, folderID: dash.Dashboard.FolderId}
 
 	if upToDate {
 		return provisioningMetadata, nil
@@ -448,33 +448,43 @@ func (fr *FileReader) getUsageTracker() *usageTracker {
 }
 
 type provisioningMetadata struct {
-	uid      string
-	identity dashboardIdentity
+	uid      uidIdentity
+	identity titleIdentity
 }
 
-type dashboardIdentity struct {
+type titleIdentity struct {
+	orgId    int64
 	folderID int64
 	title    string
 }
 
-func (d *dashboardIdentity) Exists() bool {
+func (d *titleIdentity) Exists() bool {
 	return len(d.title) > 0
+}
+
+type uidIdentity struct {
+	orgId int64
+	uid   string
+}
+
+func (u *uidIdentity) Exists() bool {
+	return len(u.uid) > 0
 }
 
 func newUsageTracker() *usageTracker {
 	return &usageTracker{
-		uidUsage:   map[string]uint8{},
-		titleUsage: map[dashboardIdentity]uint8{},
+		uidUsage:   map[uidIdentity]uint8{},
+		titleUsage: map[titleIdentity]uint8{},
 	}
 }
 
 type usageTracker struct {
-	uidUsage   map[string]uint8
-	titleUsage map[dashboardIdentity]uint8
+	uidUsage   map[uidIdentity]uint8
+	titleUsage map[titleIdentity]uint8
 }
 
 func (t *usageTracker) track(pm provisioningMetadata) {
-	if len(pm.uid) > 0 {
+	if pm.uid.Exists() {
 		t.uidUsage[pm.uid]++
 	}
 	if pm.identity.Exists() {

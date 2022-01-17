@@ -17,8 +17,8 @@ func newDuplicate() *duplicate {
 }
 
 type duplicateEntries struct {
-	Titles map[dashboardIdentity]*duplicate
-	UIDs   map[string]*duplicate
+	Titles map[titleIdentity]*duplicate
+	UIDs   map[uidIdentity]*duplicate
 }
 
 func (d *duplicateEntries) InvolvedReaders() map[string]struct{} {
@@ -58,8 +58,8 @@ func newDuplicateValidator(logger log.Logger, readers []*FileReader) duplicateVa
 
 func (c *duplicateValidator) getDuplicates() *duplicateEntries {
 	duplicates := duplicateEntries{
-		Titles: make(map[dashboardIdentity]*duplicate),
-		UIDs:   make(map[string]*duplicate),
+		Titles: make(map[titleIdentity]*duplicate),
+		UIDs:   make(map[uidIdentity]*duplicate),
 	}
 
 	for _, reader := range c.readers {
@@ -89,15 +89,15 @@ func (c *duplicateValidator) getDuplicates() *duplicateEntries {
 func (c *duplicateValidator) logWarnings(duplicates *duplicateEntries) {
 	for uid, usage := range duplicates.UIDs {
 		if usage.Sum > 1 {
-			c.logger.Warn("the same UID is used more than once", "uid", uid, "times", usage.Sum, "providers",
-				keysToSlice(usage.InvolvedReaders))
+			c.logger.Warn("the same UID is used more than once", "uid", uid.uid, "times", usage.Sum,
+				"orgId", uid.orgId, "providers", keysToSlice(usage.InvolvedReaders))
 		}
 	}
 
 	for id, usage := range duplicates.Titles {
 		if usage.Sum > 1 {
-			c.logger.Warn("dashboard title is not unique in folder", "title", id.title, "folderID", id.folderID, "times",
-				usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
+			c.logger.Warn("dashboard title is not unique in folder", "title", id.title, "folderID", id.folderID, "times", usage.Sum,
+				"orgId", id.orgId, "providers", keysToSlice(usage.InvolvedReaders))
 		}
 	}
 }
