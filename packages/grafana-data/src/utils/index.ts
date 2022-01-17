@@ -32,3 +32,4 @@ export {
   LegacyBaseMap,
   LegacyMappingType,
 } from './valueMappings';
+export * from './json';
