@@ -96,6 +96,7 @@ go.sum @grafana/backend-platform
 /public/app/core/components/Layers @grafana/grafana-edge-squad
 /public/app/features/canvas/ @grafana/grafana-edge-squad
 /public/app/features/dimensions/ @grafana/grafana-edge-squad
+/public/app/features/geo/ @grafana/grafana-edge-squad
 /public/app/features/live/ @grafana/grafana-edge-squad
 /public/app/features/explore/ @grafana/observability-squad
 /public/app/features/plugins @grafana/plugins-platform-frontend

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/web"
@@ -152,7 +153,12 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 }
 
 func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error) {
-	ds, err := r.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), ctx.ParamsInt64(":Recipient"), ctx.SignedInUser, ctx.SkipCache)
+	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
+	if err != nil {
+		return "", fmt.Errorf("recipient is invalid")
+	}
+
+	ds, err := r.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		return "", err
 	}

@@ -10,15 +10,10 @@ import {
   DataQuery,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { ExploreItemState } from 'app/types/explore';
+import { ExploreItemState, ExploreGraphStyle } from 'app/types/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import store from '../../../core/store';
-import {
-  clearQueryKeys,
-  ExploreGraphStyle,
-  lastUsedDatasourceKeyForOrgId,
-  toGraphStyle,
-} from '../../../core/utils/explore';
+import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
 import { toRawTimeRange } from '../utils/time';
 
 export const DEFAULT_RANGE = {

@@ -4,6 +4,8 @@ on:
     types:
       - opened
       - synchronize
+      - labeled
+      - unlabeled
   issues:
     types:
       - milestoned
