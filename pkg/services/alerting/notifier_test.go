@@ -381,7 +381,7 @@ func (s *testRenderService) Version() string {
 	return ""
 }
 
-func (s *testRenderService) CreateRenderingSession(ctx context.Context, authOpts rendering.AuthOpts, keyExpiry time.Duration) (rendering.Session, error) {
+func (s *testRenderService) CreateRenderingSession(ctx context.Context, authOpts rendering.AuthOpts, sessionOpts rendering.SessionOpts) (rendering.Session, error) {
 	return nil, nil
 }
 
