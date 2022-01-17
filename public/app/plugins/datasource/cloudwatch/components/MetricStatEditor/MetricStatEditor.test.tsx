@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, fireEvent, render, screen, act, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, act } from '@testing-library/react';
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import '@testing-library/jest-dom';
 import { CloudWatchMetricsQuery } from '../../types';
@@ -163,7 +163,7 @@ describe('MetricStatEditor', () => {
 
       expect(onChange.mock.calls).toEqual([[{ ...props.query, metricName: '', namespace: 'n1' }]]);
 
-      // todo: should we test component re-renders when sent different metricname (i.e. shallow comparison = false negative :( )
+      // todo: we should test component re-renders when sent different metricname (i.e. shallow comparison = false negative :( )
       // and check   expect(screen.getByText('oldNamespaceMetric')).not.toBeInTheDocument();
     });
 
