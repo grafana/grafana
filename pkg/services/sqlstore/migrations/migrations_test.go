@@ -59,7 +59,7 @@ func TestMigrations(t *testing.T) {
 
 func TestMigrationLock(t *testing.T) {
 	dbType := getDBType()
-	if dbType == "sqlite" {
+	if dbType == SQLite {
 		t.Skip()
 	}
 
