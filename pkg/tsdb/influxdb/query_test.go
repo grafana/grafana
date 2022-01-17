@@ -66,21 +66,6 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			require.Equal(t, rawQuery, `SELECT mean("value") FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms GROUP BY time(5s) tz('Europe/Paris')`)
 		})
 
-		t.Run("can build query with limit, slimit", func(t *testing.T) {
-			query := &Query{
-				Selects:     []*Select{{*qp1, *qp2}},
-				Measurement: "cpu",
-				GroupBy:     []*QueryPart{groupBy1},
-				Limit:       "1",
-				Slimit:      "1",
-				Interval:    time.Second * 5,
-			}
-
-			rawQuery, err := query.Build(queryContext)
-			require.NoError(t, err)
-			require.Equal(t, rawQuery, `SELECT mean("value") FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms GROUP BY time(5s) limit 1 slimit 1`)
-		})
-
 		t.Run("can build query with tz, limit, slimit, orderByTime and puts them in the correct order", func(t *testing.T) {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2}},
