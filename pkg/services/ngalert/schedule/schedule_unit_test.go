@@ -254,7 +254,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	alertRule := CreateTestAlertRule(t, fakeRuleStore, 1, 1, eval.Alerting)
 
 	// First, let's create an admin configuration that holds an alertmanager
-	// and sends alerts to both internal and external alertmanagers.
+	// and sends alerts to both internal and external alertmanagers (default).
 	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}, SendAlertsTo: models.AllAlertmanagers}
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
