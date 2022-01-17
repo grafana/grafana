@@ -112,6 +112,7 @@ type GetOrgUsersQuery struct {
 	Limit            int
 	IsServiceAccount bool
 
+	User   *SignedInUser
 	Result []*OrgUserDTO
 }
 
@@ -122,6 +123,7 @@ type SearchOrgUsersQuery struct {
 	Limit            int
 	IsServiceAccount bool
 
+	User   *SignedInUser
 	Result SearchOrgUsersQueryResult
 }
 

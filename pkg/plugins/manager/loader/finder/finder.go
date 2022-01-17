@@ -8,17 +8,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type Finder struct {
-	cfg *setting.Cfg
 	log log.Logger
 }
 
-func New(cfg *setting.Cfg) Finder {
-	return Finder{cfg: cfg, log: log.New("plugin.finder")}
+func New() Finder {
+	return Finder{log: log.New("plugin.finder")}
 }
 
 func (f *Finder) Find(pluginDirs []string) ([]string, error) {
