@@ -103,7 +103,7 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.0.0
 	go.opentelemetry.io/otel/sdk v1.0.0
 	go.opentelemetry.io/otel/trace v1.2.0
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
 	golang.org/x/net v0.0.0-20211013171255-e13a2654a71e
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
@@ -254,7 +254,7 @@ require (
 
 require (
 	cloud.google.com/go/kms v1.1.0
-	github.com/golang-migrate/migrate/v4 v4.15.1
+	github.com/golang-migrate/migrate/v4 v4.15.0
 )
 
 require (
