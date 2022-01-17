@@ -1,6 +1,7 @@
 package plugins
 
 type PluginDashboardInfoDTO struct {
+	UID              string `json:"uid"`
 	PluginId         string `json:"pluginId"`
 	Title            string `json:"title"`
 	Imported         bool   `json:"imported"`

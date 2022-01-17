@@ -166,48 +166,14 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 			return nil, err
 		}
 		//Final interval value
-		var interval time.Duration
-
-		//Calculate interval
-		queryInterval := model.Interval
-		//If we are using variable or interval/step, we will replace it with calculated interval
-		if queryInterval == varInterval || queryInterval == varIntervalMs || queryInterval == varRateInterval {
-			queryInterval = ""
-		}
-		//If we are using variable or interval/step with {} syntax, we will replace it with calculated interval
-		//Repetitive code, we should have functionality to unify these
-		if queryInterval == varIntervalAlt || queryInterval == varIntervalMsAlt || queryInterval == varRateIntervalAlt {
-			queryInterval = ""
-		}
-
-		minInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, model.IntervalMS, 15*time.Second)
+		interval, err := calculatePrometheusInterval(model, dsInfo, query, s.intervalCalculator)
 		if err != nil {
 			return nil, err
 		}
 
-		calculatedInterval := s.intervalCalculator.Calculate(query.TimeRange, minInterval, query.MaxDataPoints)
-		safeInterval := s.intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeRes))
-		adjustedInterval := safeInterval.Value
-
-		if calculatedInterval.Value > safeInterval.Value {
-			adjustedInterval = calculatedInterval.Value
-		}
-
-		if queryInterval == varRateInterval || queryInterval == varRateIntervalAlt {
-			// Rate interval is final and is not affected by resolution
-			interval = calculateRateInterval(adjustedInterval, dsInfo.TimeInterval, s.intervalCalculator)
-		} else {
-			intervalFactor := model.IntervalFactor
-			if intervalFactor == 0 {
-				intervalFactor = 1
-			}
-			interval = time.Duration(int64(adjustedInterval) * intervalFactor)
-		}
-
 		// Interpolate variables in expr
 		timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
-		expr := interpolateVariables(model.Expr, interval, timeRange, s.intervalCalculator, dsInfo.TimeInterval)
-
+		expr := interpolateVariables(model, interval, timeRange, s.intervalCalculator, dsInfo.TimeInterval)
 		rangeQuery := model.RangeQuery
 		if !model.InstantQuery && !model.RangeQuery {
 			// In older dashboards, we were not setting range query param and !range && !instant was run as range query
@@ -266,6 +232,38 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 	return frames, nil
 }
 
+func calculatePrometheusInterval(model *QueryModel, dsInfo *DatasourceInfo, query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {
+	queryInterval := model.Interval
+
+	//If we are using variable for interval/step, we will replace it with calculated interval
+	if isVariableInterval(queryInterval) {
+		queryInterval = ""
+	}
+
+	minInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, model.IntervalMS, 15*time.Second)
+	if err != nil {
+		return time.Duration(0), err
+	}
+	calculatedInterval := intervalCalculator.Calculate(query.TimeRange, minInterval, query.MaxDataPoints)
+	safeInterval := intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeRes))
+
+	adjustedInterval := safeInterval.Value
+	if calculatedInterval.Value > safeInterval.Value {
+		adjustedInterval = calculatedInterval.Value
+	}
+
+	if model.Interval == varRateInterval || model.Interval == varRateIntervalAlt {
+		// Rate interval is final and is not affected by resolution
+		return calculateRateInterval(adjustedInterval, dsInfo.TimeInterval, intervalCalculator), nil
+	} else {
+		intervalFactor := model.IntervalFactor
+		if intervalFactor == 0 {
+			intervalFactor = 1
+		}
+		return time.Duration(int64(adjustedInterval) * intervalFactor), nil
+	}
+}
+
 func calculateRateInterval(interval time.Duration, scrapeInterval string, intervalCalculator intervalv2.Calculator) time.Duration {
 	scrape := scrapeInterval
 	if scrape == "" {
@@ -281,16 +279,24 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 	return rateInterval
 }
 
-func interpolateVariables(expr string, interval time.Duration, timeRange time.Duration, intervalCalculator intervalv2.Calculator, timeInterval string) string {
+func interpolateVariables(model *QueryModel, interval time.Duration, timeRange time.Duration, intervalCalculator intervalv2.Calculator, timeInterval string) string {
+	expr := model.Expr
 	rangeMs := timeRange.Milliseconds()
 	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
+
+	var rateInterval time.Duration
+	if model.Interval == varRateInterval || model.Interval == varRateIntervalAlt {
+		rateInterval = interval
+	} else {
+		rateInterval = calculateRateInterval(interval, timeInterval, intervalCalculator)
+	}
 
 	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(interval/time.Millisecond), 10))
 	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(interval))
 	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
-	expr = strings.ReplaceAll(expr, varRateInterval, intervalv2.FormatDuration(calculateRateInterval(interval, timeInterval, intervalCalculator)))
+	expr = strings.ReplaceAll(expr, varRateInterval, rateInterval.String())
 
 	// Repetitive code, we should have functionality to unify these
 	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(interval/time.Millisecond), 10))
@@ -298,7 +304,7 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	expr = strings.ReplaceAll(expr, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
-	expr = strings.ReplaceAll(expr, varRateIntervalAlt, intervalv2.FormatDuration(calculateRateInterval(interval, timeInterval, intervalCalculator)))
+	expr = strings.ReplaceAll(expr, varRateIntervalAlt, rateInterval.String())
 	return expr
 }
 
@@ -536,4 +542,15 @@ func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
 
 func alignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
 	return time.Unix(int64(math.Floor((float64(t.Unix()+offset)/step.Seconds()))*step.Seconds()-float64(offset)), 0)
+}
+
+func isVariableInterval(interval string) bool {
+	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval {
+		return true
+	}
+	//Repetitive code, we should have functionality to unify these
+	if interval == varIntervalAlt || interval == varIntervalMsAlt || interval == varRateIntervalAlt {
+		return true
+	}
+	return false
 }
