@@ -23,7 +23,6 @@ import {
   rangeUtil,
   DateTime,
   isDateTime,
-  safeParseJson,
 } from '@grafana/data';
 import store from 'app/core/store';
 import { v4 as uuidv4 } from 'uuid';
@@ -175,6 +174,32 @@ enum ParseUrlStateIndex {
   Datasource = 2,
   SegmentsStart = 3,
 }
+
+export const safeParseJson = (text?: string): any | undefined => {
+  if (!text) {
+    return;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const safeStringifyValue = (value: any, space?: number) => {
+  if (!value) {
+    return '';
+  }
+
+  try {
+    return JSON.stringify(value, null, space);
+  } catch (error) {
+    console.error(error);
+  }
+
+  return '';
+};
 
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
 

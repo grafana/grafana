@@ -1,10 +1,10 @@
-import { DataLinkBuiltInVars, safeStringifyValue } from '@grafana/data';
-
 import { variableAdapters } from '../adapters';
 import { DashboardModel, PanelModel } from '../../dashboard/state';
 import { isAdHoc } from '../guard';
+import { safeStringifyValue } from '../../../core/utils/explore';
 import { VariableModel } from '../types';
 import { containsVariable, variableRegex, variableRegexExec } from '../utils';
+import { DataLinkBuiltInVars } from '@grafana/data';
 
 export interface GraphNode {
   id: string;
@@ -62,7 +62,7 @@ function getVariableName(expression: string) {
 export const getUnknownVariableStrings = (variables: VariableModel[], model: any) => {
   variableRegex.lastIndex = 0;
   const unknownVariableNames: string[] = [];
-  const modelAsString = safeStringifyValue(model, 0);
+  const modelAsString = safeStringifyValue(model, 2);
   const matches = modelAsString.match(variableRegex);
 
   if (!matches) {
