@@ -956,27 +956,52 @@ describe('enhanceDataFrame', () => {
         url: 'someUrl',
       },
       {
+        field: 'urlField',
+        url: 'someOtherUrl',
+      },
+      {
         field: 'traceField',
         url: 'query',
-        datasourceUid: 'dsUid',
+        datasourceUid: 'ds1',
+      },
+      {
+        field: 'traceField',
+        url: 'otherQuery',
+        datasourceUid: 'ds2',
       },
     ]);
 
-    expect(df.fields[0].config.links!.length).toBe(1);
-    expect(df.fields[0].config.links![0]).toEqual({
+    expect(df.fields[0].config.links).toHaveLength(2);
+    expect(df.fields[0].config.links).toContainEqual({
       title: '',
       url: 'someUrl',
     });
-    expect(df.fields[1].config.links!.length).toBe(1);
-    expect(df.fields[1].config.links![0]).toEqual({
+    expect(df.fields[0].config.links).toContainEqual({
       title: '',
-      url: '',
-      internal: {
-        query: { query: 'query' },
-        datasourceName: 'elastic25',
-        datasourceUid: 'dsUid',
-      },
+      url: 'someOtherUrl',
     });
+
+    expect(df.fields[1].config.links).toHaveLength(2);
+    expect(df.fields[1].config.links).toContainEqual(
+      expect.objectContaining({
+        title: '',
+        url: '',
+        internal: expect.objectContaining({
+          query: { query: 'query' },
+          datasourceUid: 'ds1',
+        }),
+      })
+    );
+    expect(df.fields[1].config.links).toContainEqual(
+      expect.objectContaining({
+        title: '',
+        url: '',
+        internal: expect.objectContaining({
+          query: { query: 'otherQuery' },
+          datasourceUid: 'ds2',
+        }),
+      })
+    );
   });
 
   it('adds limit to dataframe', () => {

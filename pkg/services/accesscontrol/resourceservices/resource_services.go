@@ -42,8 +42,6 @@ var (
 		"teams:write",
 		"teams.permissions:read",
 		"teams.permissions:write",
-		"teams.preferences:read",
-		"teams.preferences:write",
 	}
 )
 

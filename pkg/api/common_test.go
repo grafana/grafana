@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
@@ -37,8 +38,8 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func loggedInUserScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
-	loggedInUserScenarioWithRole(t, desc, "GET", url, url, models.ROLE_EDITOR, fn)
+func loggedInUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
+	loggedInUserScenarioWithRole(t, desc, "GET", url, routePattern, models.ROLE_EDITOR, fn)
 }
 
 func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
@@ -363,6 +364,8 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		initCtx.Logger = log.New("api-test")
 		c.Map(initCtx)
 	})
+
+	m.Use(acmiddleware.LoadPermissionsMiddleware(hs.AccessControl))
 
 	// Register all routes
 	hs.registerRoutes()

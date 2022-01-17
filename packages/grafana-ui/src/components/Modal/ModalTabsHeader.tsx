@@ -8,6 +8,7 @@ interface ModalTab {
   value: string;
   label: string;
   icon?: IconName;
+  labelSuffix?: () => JSX.Element;
 }
 
 interface Props {
@@ -28,6 +29,7 @@ export const ModalTabsHeader: React.FC<Props> = ({ icon, title, tabs, activeTab,
               key={`${t.value}-${index}`}
               label={t.label}
               icon={t.icon}
+              suffix={t.labelSuffix}
               active={t.value === activeTab}
               onChangeTab={() => onChangeTab(t)}
             />
