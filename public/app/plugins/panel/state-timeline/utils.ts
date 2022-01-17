@@ -570,7 +570,7 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
 
 /**
  * Returns the precise duration of a time range passed in milliseconds.
- * This function calculates with 28 days month and 365 days year.
+ * This function calculates with 30 days month and 365 days year.
  * adapted from https://gist.github.com/remino/1563878
  * @param milliSeconds The duration in milliseconds
  * @returns A formated string of the duration
@@ -595,11 +595,9 @@ export function fmtDuration(milliSeconds: number): string {
     d = d % 365;
   }
 
-  console.log({ d });
-
-  mo = Math.floor(d / 28);
+  mo = Math.floor(d / 30);
   if (mo > 0) {
-    d = d % 28;
+    d = d % 30;
   }
 
   wk = Math.floor(d / 7);
@@ -609,7 +607,6 @@ export function fmtDuration(milliSeconds: number): string {
   }
 
   ms = Math.round((milliSeconds % 1000) * 1000) / 1000;
-  console.log({ ms, s, m, h, d, wk, mo, yr });
 
   return (yr > 0
     ? yr + 'y ' + (mo > 0 ? mo + 'mo ' : '') + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
