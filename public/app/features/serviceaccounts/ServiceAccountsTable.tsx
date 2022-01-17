@@ -1,24 +1,29 @@
 import React, { FC, useEffect, useState } from 'react';
-import { AccessControlAction, OrgUser, Role } from 'app/types';
+import { AccessControlAction, Role, OrgServiceAccount } from 'app/types';
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
-import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
 
 export interface Props {
-  users: OrgUser[];
+  serviceAccounts: OrgServiceAccount[];
   orgId?: number;
-  onRoleChange: (role: OrgRole, user: OrgUser) => void;
-  onRemoveUser: (user: OrgUser) => void;
+  onRoleChange: (role: OrgRole, serviceAccount: OrgServiceAccount) => void;
+  onRemoveServiceAccount: (serviceAccount: OrgServiceAccount) => void;
 }
 
-const UsersTable: FC<Props> = (props) => {
-  const { users, orgId, onRoleChange, onRemoveUser } = props;
-  const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
+const ServiceAccountsTable: FC<Props> = (props) => {
+  const { serviceAccounts, orgId, onRoleChange, onRemoveServiceAccount } = props;
+  const canUpdateRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
+  const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
+  const rolePickerDisabled = !canUpdateRole;
+
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
+  const [toRemove, setToRemove] = useState<OrgServiceAccount | null>(null);
+  const [builtinRoles, setBuiltinRoles] = useState<Record<string, Role[]>>({});
+  const [showRemoveModal, setShowRemoveModal] = useState<boolean | string>(false);
 
   useEffect(() => {
     async function fetchOptions() {
@@ -54,61 +59,57 @@ const UsersTable: FC<Props> = (props) => {
           </tr>
         </thead>
         <tbody>
-          {users.map((user, index) => {
+          {serviceAccounts.map((serviceAccount, index) => {
             return (
-              <tr key={`${user.userId}-${index}`}>
+              <tr key={`${serviceAccount.serviceAccountId}-${index}`}>
                 <td className="width-2 text-center">
-                  <img className="filter-table__avatar" src={user.avatarUrl} alt="User avatar" />
+                  <img className="filter-table__avatar" src={serviceAccount.avatarUrl} alt="serviceaccount avatar" />
                 </td>
                 <td className="max-width-6">
-                  <span className="ellipsis" title={user.login}>
-                    {user.login}
+                  <span className="ellipsis" title={serviceAccount.login}>
+                    {serviceAccount.login}
                   </span>
                 </td>
 
                 <td className="max-width-5">
-                  <span className="ellipsis" title={user.email}>
-                    {user.email}
+                  <span className="ellipsis" title={serviceAccount.email}>
+                    {serviceAccount.email}
                   </span>
                 </td>
                 <td className="max-width-5">
-                  <span className="ellipsis" title={user.name}>
-                    {user.name}
+                  <span className="ellipsis" title={serviceAccount.name}>
+                    {serviceAccount.name}
                   </span>
                 </td>
-                <td className="width-1">{user.lastSeenAtAge}</td>
 
                 <td className="width-8">
                   {contextSrv.accessControlEnabled() ? (
                     <UserRolePicker
-                      userId={user.userId}
+                      userId={serviceAccount.serviceAccountId}
                       orgId={orgId}
-                      builtInRole={user.role}
-                      onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
+                      builtInRole={serviceAccount.role}
+                      onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                       getRoleOptions={getRoleOptions}
                       getBuiltinRoles={getBuiltinRoles}
-                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
+                      disabled={rolePickerDisabled}
                     />
                   ) : (
                     <OrgRolePicker
                       aria-label="Role"
-                      value={user.role}
-                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
-                      onChange={(newRole) => onRoleChange(newRole, user)}
+                      value={serviceAccount.role}
+                      disabled={!canUpdateRole}
+                      onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                     />
                   )}
                 </td>
-
-                {contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRemove, user) && (
+                {canRemoveFromOrg && (
                   <td>
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => {
-                        setUserToRemove(user);
-                      }}
+                      onClick={() => setShowRemoveModal(serviceAccount.login)}
                       icon="times"
-                      aria-label="Delete user"
+                      aria-label="Delete serviceaccount"
                     />
                   </td>
                 )}
@@ -117,26 +118,18 @@ const UsersTable: FC<Props> = (props) => {
           })}
         </tbody>
       </table>
-      {Boolean(userToRemove) && (
+      {toRemove !== null && (
         <ConfirmModal
-          body={`Are you sure you want to delete user ${userToRemove?.login}?`}
+          body={`Are you sure you want to delete ${toRemove.login} service account?`}
           confirmText="Delete"
           title="Delete"
-          onDismiss={() => {
-            setUserToRemove(null);
-          }}
-          isOpen={true}
-          onConfirm={() => {
-            if (!userToRemove) {
-              return;
-            }
-            onRemoveUser(userToRemove);
-            setUserToRemove(null);
-          }}
+          onDismiss={() => setToRemove(null)}
+          isOpen={toRemove.login === showRemoveModal}
+          onConfirm={() => onRemoveServiceAccount(toRemove)}
         />
       )}
     </>
   );
 };
 
-export default UsersTable;
+export default ServiceAccountsTable;
