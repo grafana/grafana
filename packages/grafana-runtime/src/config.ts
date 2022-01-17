@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   LicenseInfo,
   PanelPluginMeta,
+  PreloadPlugin,
   systemDateFormats,
   SystemDateFormatSettings,
 } from '@grafana/data';
@@ -57,7 +58,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   liveEnabled = true;
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: string[] = [];
+  pluginsToPreload: PreloadPlugin[] = [];
   featureToggles: FeatureToggles = {
     meta: false,
     ngalert: false,
