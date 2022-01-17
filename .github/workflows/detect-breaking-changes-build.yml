@@ -20,6 +20,7 @@ jobs:
       with:
         node-version: '16'
         cache: 'yarn'
+        path: './pr'
       
     - name: Install dependencies
       run: yarn install --immutable
@@ -51,6 +52,7 @@ jobs:
       with:
         node-version: '16'
         cache: 'yarn'
+        path: './main'
       
     - name: Install dependencies
       run: yarn install --immutable
