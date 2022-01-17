@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
@@ -14,6 +14,7 @@ import { NavBarMenu } from './NavBarMenu';
 import NavBarItem from './NavBarItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { Branding } from '../Branding/Branding';
+import { NavbarExtraContent } from '../../../AppWrapper';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -26,7 +27,11 @@ const searchItem: NavModelItem = {
   icon: 'search',
 };
 
-export const NavBarNext: FC = React.memo(() => {
+export interface Props {
+  extraContent?: NavbarExtraContent[];
+}
+
+export const NavBarNext = React.memo(({ extraContent }: Props): JSX.Element | null => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
@@ -72,6 +77,8 @@ export const NavBarNext: FC = React.memo(() => {
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
             link={{ ...link, subTitle: undefined, onClick: undefined }}
+            showMenu={!link.highlighted}
+            ExtraContent={extraContent?.find((c) => c.id === link.id)?.component}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}

@@ -27,8 +27,14 @@ interface AppWrapperState {
 }
 
 /** Used by enterprise */
+export type NavbarExtraContent = {
+  id: string;
+  component: ComponentType;
+};
+
 let bodyRenderHooks: ComponentType[] = [];
 let pageBanners: ComponentType[] = [];
+let navBarExtraContent: NavbarExtraContent[] = [];
 
 export function addBodyRenderHook(fn: ComponentType) {
   bodyRenderHooks.push(fn);
@@ -37,6 +43,11 @@ export function addBodyRenderHook(fn: ComponentType) {
 export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
+
+export function addNavbarExtraContent(fn: NavbarExtraContent) {
+  navBarExtraContent.push(fn);
+}
+
 export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
   container = React.createRef<HTMLDivElement>();
 
@@ -104,7 +115,11 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                   <GlobalStyles />
                   <div className="grafana-app">
                     <Router history={locationService.getHistory()}>
-                      {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
+                      {newNavigationEnabled ? (
+                        <NavBarNext extraContent={navBarExtraContent} />
+                      ) : (
+                        <NavBar extraContent={navBarExtraContent} />
+                      )}
                       <main className="main-view">
                         {pageBanners.map((Banner, index) => (
                           <Banner key={index.toString()} />

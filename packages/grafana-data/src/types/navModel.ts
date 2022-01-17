@@ -17,6 +17,7 @@ export interface NavModelItem {
   showOrgSwitcher?: boolean;
   onClick?: () => void;
   menuItemType?: NavMenuItemType;
+  highlighted?: boolean;
 }
 
 export enum NavSection {

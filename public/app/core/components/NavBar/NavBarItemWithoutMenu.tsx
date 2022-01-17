@@ -1,7 +1,7 @@
-import { GrafanaTheme2 } from '../../../../../packages/grafana-data';
+import React, { ReactNode, ComponentType } from 'react';
 import { css, cx } from '@emotion/css';
-import React, { ReactNode } from 'react';
-import { Link, useTheme2 } from '../../../../../packages/grafana-ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Link, useTheme2 } from '@grafana/ui';
 
 export interface NavBarItemWithoutMenuProps {
   label: string;
@@ -11,6 +11,7 @@ export interface NavBarItemWithoutMenuProps {
   target?: string;
   isActive?: boolean;
   onClick?: () => void;
+  ExtraContent?: ComponentType;
 }
 
 export function NavBarItemWithoutMenu({
@@ -21,6 +22,7 @@ export function NavBarItemWithoutMenu({
   target,
   isActive = false,
   onClick,
+  ExtraContent,
 }: NavBarItemWithoutMenuProps) {
   const theme = useTheme2();
   const styles = getNavBarItemWithoutMenuStyles(theme, isActive);
@@ -30,6 +32,7 @@ export function NavBarItemWithoutMenu({
       {!url && (
         <button className={styles.element} onClick={onClick} aria-label={label}>
           <span className={styles.icon}>{children}</span>
+          {ExtraContent && <ExtraContent />}
         </button>
       )}
       {url && (
@@ -44,10 +47,12 @@ export function NavBarItemWithoutMenu({
               aria-haspopup="true"
             >
               <span className={styles.icon}>{children}</span>
+              {ExtraContent && <ExtraContent />}
             </Link>
           ) : (
             <a href={url} target={target} className={styles.element} onClick={onClick} aria-label={label}>
               <span className={styles.icon}>{children}</span>
+              {ExtraContent && <ExtraContent />}
             </a>
           )}
         </>
@@ -104,6 +109,7 @@ export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: 
         transition: none;
       }
     `,
+
     icon: css`
       height: 100%;
       width: 100%;
