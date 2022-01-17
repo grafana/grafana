@@ -118,8 +118,8 @@ func (p *teamPermissionMigrator) migrateMemberships(sess *xorm.Session) error {
 
 	// Loop through memberships and generate associated permissions
 	for _, m := range members {
-		userPermissions := userPermissionsByOrg[m.OrgId]
-		if userPermissions == nil {
+		userPermissions, initialized := userPermissionsByOrg[m.OrgId]
+		if !initialized {
 			userPermissions = map[int64][]accesscontrol.Permission{}
 		}
 		userPermissions[m.Id] = append(userPermissions[m.Id], p.mapPermissionToFGAC(m.Permission, m.TeamId)...)
