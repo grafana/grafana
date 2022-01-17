@@ -2,7 +2,9 @@ package azuremonitor
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -149,4 +151,47 @@ func TestGetAzurePortalUrl(t *testing.T) {
 		}
 		assert.Equal(t, expectedAzurePortalUrl[cloud], azurePortalUrl)
 	}
+}
+
+func Test_executeQuery(t *testing.T) {
+	ds := AzureResourceGraphDatasource{}
+	transport := &transportMock{
+		configuredResponse: &http.Response{
+			Status:     "BadRequest",
+			StatusCode: 400,
+			Body: io.NopCloser(strings.NewReader(`{
+   "error":{
+      "code":"BadRequest",
+      "message":"Please provide below info when asking for support: timestamp = 2022-01-17T15:50:07.9782199Z, correlationId = 7ba435e5-6371-458f-a1b5-1c7ffdba6ff4.",
+      "details":[
+         {
+            "code":"InvalidQuery",
+            "message":"Query is invalid. Please refer to the documentation for the Azure Resource Graph service and fix the error before retrying."
+         },
+         {
+            "code":"UnknownFunction",
+            "message":"Unknown function: 'cout'."
+         }
+      ]
+   }
+}`)),
+		},
+		configuredError: nil,
+	}
+	client := &http.Client{
+		Transport: transport,
+	}
+	response := ds.executeQuery(context.Background(), &AzureResourceGraphQuery{JSON: []byte(`{}`)}, datasourceInfo{},
+		client, "http://ds")
+
+	assert.Equal(t, "", response.Error.Error())
+}
+
+type transportMock struct {
+	configuredResponse *http.Response
+	configuredError    error
+}
+
+func (m *transportMock) RoundTrip(req *http.Request) (*http.Response, error) {
+	return m.configuredResponse, m.configuredError
 }
