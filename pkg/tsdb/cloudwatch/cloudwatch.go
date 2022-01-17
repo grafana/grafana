@@ -118,6 +118,11 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
+		httpClient, err := httpClientProvider.New()
+		if err != nil {
+			return nil, fmt.Errorf("error creating http client: %w", err)
+		}
+
 		model := datasourceInfo{
 			profile:       jsonData.Profile,
 			region:        jsonData.Region,
@@ -126,6 +131,7 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			endpoint:      jsonData.Endpoint,
 			namespace:     jsonData.Namespace,
 			datasourceID:  settings.ID,
+			HTTPClient:    httpClient,
 		}
 
 		at := awsds.AuthTypeDefault
