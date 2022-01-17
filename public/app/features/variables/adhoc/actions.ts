@@ -110,7 +110,7 @@ export const changeVariableDatasource = (datasource?: DataSourceRef): ThunkResul
 };
 
 export const initAdHocVariableEditor = (): ThunkResult<void> => (dispatch) => {
-  const dataSources = getDatasourceSrv().getList({ metrics: true, variables: false });
+  const dataSources = getDatasourceSrv().getList({ metrics: true, variables: true });
   const selectable = dataSources.reduce(
     (all: Array<{ text: string; value: DataSourceRef | null }>, ds) => {
       if (ds.meta.mixed) {

@@ -17,6 +17,9 @@ import { css } from '@emotion/css';
 
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+
 import ListView from './ListView';
 import SpanBarRow from './SpanBarRow';
 import DetailState from './SpanDetail/DetailState';
@@ -36,13 +39,11 @@ import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink } from '../typ
 import TTraceTimeline from '../types/TTraceTimeline';
 import { PEER_SERVICE } from '../constants/tag-keys';
 
-import { createStyle, Theme, withTheme } from '../Theme';
-
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
 };
 
-const getStyles = createStyle(() => {
+const getStyles = stylesFactory(() => {
   return {
     rowsWrapper: css`
       width: 100%;
@@ -82,7 +83,7 @@ type TVirtualizedTraceViewOwnProps = {
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
-  theme: Theme;
+  theme: GrafanaTheme2;
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
 };
@@ -486,4 +487,4 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 }
 
-export default withTheme(UnthemedVirtualizedTraceView);
+export default withTheme2(UnthemedVirtualizedTraceView);

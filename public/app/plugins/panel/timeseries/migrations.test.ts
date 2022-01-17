@@ -1,6 +1,7 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
 import { graphPanelChangedHandler } from './migrations';
 import { cloneDeep } from 'lodash';
+import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
 describe('Graph Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
@@ -306,6 +307,87 @@ describe('Graph Migrations', () => {
       panel.options = graphPanelChangedHandler(panel, 'graph', {}, prevFieldConfig);
       expect(panel.fieldConfig.defaults.custom.hideFrom).toEqual({ viz: false, legend: false, tooltip: false });
       expect(panel.fieldConfig.overrides[0].properties[0].value).toEqual({ viz: true, legend: false, tooltip: false });
+    });
+  });
+
+  describe('tooltip', () => {
+    test('tooltip mode', () => {
+      const single: any = {
+        angular: {
+          tooltip: {
+            shared: false,
+          },
+        },
+      };
+      const multi: any = {
+        angular: {
+          tooltip: {
+            shared: true,
+          },
+        },
+      };
+
+      const panel1 = {} as PanelModel;
+      const panel2 = {} as PanelModel;
+
+      panel1.options = graphPanelChangedHandler(panel1, 'graph', single, prevFieldConfig);
+      panel2.options = graphPanelChangedHandler(panel2, 'graph', multi, prevFieldConfig);
+
+      expect(panel1.options.tooltip.mode).toBe(TooltipDisplayMode.Single);
+      expect(panel2.options.tooltip.mode).toBe(TooltipDisplayMode.Multi);
+    });
+
+    test('sort order', () => {
+      const none: any = {
+        angular: {
+          tooltip: {
+            shared: true,
+            sort: 0,
+          },
+        },
+      };
+
+      const asc: any = {
+        angular: {
+          tooltip: {
+            shared: true,
+            sort: 1,
+          },
+        },
+      };
+
+      const desc: any = {
+        angular: {
+          tooltip: {
+            shared: true,
+            sort: 2,
+          },
+        },
+      };
+
+      const singleModeWithUnnecessaryOption: any = {
+        angular: {
+          tooltip: {
+            shared: false,
+            sort: 2,
+          },
+        },
+      };
+
+      const panel1 = {} as PanelModel;
+      const panel2 = {} as PanelModel;
+      const panel3 = {} as PanelModel;
+      const panel4 = {} as PanelModel;
+
+      panel1.options = graphPanelChangedHandler(panel1, 'graph', none, prevFieldConfig);
+      panel2.options = graphPanelChangedHandler(panel2, 'graph', asc, prevFieldConfig);
+      panel3.options = graphPanelChangedHandler(panel3, 'graph', desc, prevFieldConfig);
+      panel4.options = graphPanelChangedHandler(panel4, 'graph', singleModeWithUnnecessaryOption, prevFieldConfig);
+
+      expect(panel1.options.tooltip.sort).toBe(SortOrder.None);
+      expect(panel2.options.tooltip.sort).toBe(SortOrder.Ascending);
+      expect(panel3.options.tooltip.sort).toBe(SortOrder.Descending);
+      expect(panel4.options.tooltip.sort).toBe(SortOrder.None);
     });
   });
 });
