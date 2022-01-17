@@ -11,7 +11,7 @@ import { Echo } from '../../../core/services/echo/Echo';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
-import { TransactionStatus, variablesInitTransaction } from '../../variables/state/transactionReducer';
+import { variablesInitTransaction } from '../../variables/state/transactionReducer';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
@@ -21,6 +21,7 @@ import {
   setDashboardQueryRunnerFactory,
 } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { emptyResult } from '../../query/state/DashboardQueryRunner/utils';
+import { TransactionStatus } from '../../variables/types';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
