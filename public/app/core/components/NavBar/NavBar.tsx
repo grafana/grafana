@@ -8,13 +8,13 @@ import { locationService } from '@grafana/runtime';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
 import { KioskMode } from 'app/types';
+import { NavBarExtraEvents } from 'app/AppWrapper';
 import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 import NavBarItem from './NavBarItem';
 import { NavBarSection } from './NavBarSection';
 import { NavBarMenu } from './NavBarMenu';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
-import { NavbarExtraContent } from '../../../AppWrapper';
 
 const homeUrl = config.appSubUrl || '/';
 
@@ -30,10 +30,10 @@ const searchItem: NavModelItem = {
 };
 
 export interface Props {
-  extraContent?: NavbarExtraContent[];
+  extraEvents?: NavBarExtraEvents[];
 }
 
-export const NavBar = React.memo(({ extraContent }: Props): JSX.Element | null => {
+export const NavBar = React.memo(({ extraEvents }: Props): JSX.Element | null => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
@@ -78,7 +78,11 @@ export const NavBar = React.memo(({ extraContent }: Props): JSX.Element | null =
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
-            link={{ ...link, subTitle: undefined, onClick: undefined }}
+            link={{
+              ...link,
+              subTitle: undefined,
+              onClick: extraEvents?.find((ev) => ev.id === link.id)?.events.onClick,
+            }}
             showMenu={!link.highlightText}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
