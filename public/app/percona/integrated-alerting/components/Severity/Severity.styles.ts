@@ -1,6 +1,6 @@
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
 
 const getSeverityColor = ({ palette }: GrafanaTheme, severity: AlertRuleSeverity) => {

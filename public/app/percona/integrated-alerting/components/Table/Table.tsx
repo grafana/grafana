@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { useTable, usePagination, useExpanded } from 'react-table';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useStyles } from '@grafana/ui';
 import { getStyles } from './Table.styles';
 import { TableProps, PaginatedTableInstance, PaginatedTableOptions, PaginatedTableState } from './Table.types';
