@@ -133,7 +133,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
   const xFieldAxisPlacement =
     frame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden
-      ? vizOrientation.xOri === 0
+      ? vizOrientation.xOri === ScaleOrientation.Horizontal
         ? AxisPlacement.Bottom
         : AxisPlacement.Left
       : AxisPlacement.Hidden;
