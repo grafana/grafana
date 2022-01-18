@@ -18,6 +18,7 @@ import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo'
 
 const mapStateToProps = (state: StoreState) => ({
   permissions: state.dashboard.permissions,
+  hasFolderPermissions: state.folder.permissions.length > 0,
 });
 
 const mapDispatchToProps = {
@@ -77,12 +78,13 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
   };
 
   getFolder() {
-    const { dashboard } = this.props;
+    const { dashboard, hasFolderPermissions } = this.props;
 
     return {
       id: dashboard.meta.folderId,
       title: dashboard.meta.folderTitle,
       url: dashboard.meta.folderUrl,
+      hasFolderPermissions,
     };
   }
 
