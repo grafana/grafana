@@ -76,7 +76,7 @@ export class TimeSrv {
     if (this.dashboard?.timepicker.maxTimeRange) {
       maxTimeRangeInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.maxTimeRange);
     }
-    if (this.dashboard.timepicker.oldestFrom) {
+    if (this.dashboard?.timepicker.oldestFrom) {
       oldestFromInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.oldestFrom);
     }
     let min = 0;
@@ -296,15 +296,15 @@ export class TimeSrv {
   }
 
   setTime(time: RawTimeRange, fromRouteUpdate?: boolean) {
-    let isSetTime = true;
+    let shouldSetTime = true;
     let maxTimeRangeInMillis = 0,
       oldestFromInMillis = 0;
 
-    if (this.dashboard.timepicker.maxTimeRange) {
+    if (this.dashboard?.timepicker.maxTimeRange) {
       maxTimeRangeInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.maxTimeRange);
     }
 
-    if (this.dashboard.timepicker.oldestFrom) {
+    if (this.dashboard?.timepicker.oldestFrom) {
       oldestFromInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.oldestFrom);
     }
 
@@ -324,17 +324,17 @@ export class TimeSrv {
       appEvents.emit(AppEvents.alertWarning, [
         'Timerange can not be longer than ' + this.dashboard?.timepicker.maxTimeRange + '. Please select a shorter duration.',
       ]);
-      isSetTime = false;
+      shouldSetTime = false;
     }
 
     if (oldestFromInMillis !== 0 && Date.now() - from.valueOf() > oldestFromInMillis) {
       appEvents.emit(AppEvents.alertWarning, [
         'The start of the time range can not be more than ' + this.dashboard?.timepicker.oldestFrom + ' ago. Please select a later from time.',
       ]);
-      isSetTime = false;
+      shouldSetTime = false;
     }
 
-    if (!isSetTime) {
+    if (!shouldSetTime) {
       return;
     }
 
