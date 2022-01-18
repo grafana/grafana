@@ -19,7 +19,6 @@ type LogsService struct {
 	channelMu        sync.Mutex
 	responseChannels map[string]chan *backend.QueryDataResponse
 	queues           map[string](chan bool)
-	queueLock        sync.Mutex
 }
 
 func (s *LogsService) AddResponseChannel(name string, channel chan *backend.QueryDataResponse) error {
