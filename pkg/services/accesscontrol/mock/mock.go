@@ -14,13 +14,14 @@ type fullAccessControl interface {
 }
 
 type Calls struct {
-	Evaluate            []interface{}
-	GetUserPermissions  []interface{}
-	GetUserRoles        []interface{}
-	IsDisabled          []interface{}
-	DeclareFixedRoles   []interface{}
-	GetUserBuiltInRoles []interface{}
-	RegisterFixedRoles  []interface{}
+	Evaluate                       []interface{}
+	GetUserPermissions             []interface{}
+	GetUserRoles                   []interface{}
+	IsDisabled                     []interface{}
+	DeclareFixedRoles              []interface{}
+	GetUserBuiltInRoles            []interface{}
+	RegisterFixedRoles             []interface{}
+	RegisterAttributeScopeResolver []interface{}
 }
 
 type Mock struct {
@@ -37,13 +38,14 @@ type Mock struct {
 	Calls Calls
 
 	// Override functions
-	EvaluateFunc            func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
-	GetUserPermissionsFunc  func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
-	GetUserRolesFunc        func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
-	IsDisabledFunc          func() bool
-	DeclareFixedRolesFunc   func(...accesscontrol.RoleRegistration) error
-	GetUserBuiltInRolesFunc func(user *models.SignedInUser) []string
-	RegisterFixedRolesFunc  func() error
+	EvaluateFunc                       func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
+	GetUserPermissionsFunc             func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
+	GetUserRolesFunc                   func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
+	IsDisabledFunc                     func() bool
+	DeclareFixedRolesFunc              func(...accesscontrol.RoleRegistration) error
+	GetUserBuiltInRolesFunc            func(user *models.SignedInUser) []string
+	RegisterFixedRolesFunc             func() error
+	RegisterAttributeScopeResolverFunc func(string, accesscontrol.AttributeScopeResolveFunc)
 }
 
 // Ensure the mock stays in line with the interface
@@ -161,4 +163,14 @@ func (m *Mock) RegisterFixedRoles() error {
 		return m.RegisterFixedRolesFunc()
 	}
 	return nil
+}
+
+// RegisterAttributeScopeResolver allows the caller to register a scope resolver for a
+// specific scope prefix (ex: datasources:name:)
+func (m *Mock) RegisterAttributeScopeResolver(scopePrefix string, resolver accesscontrol.AttributeScopeResolveFunc) {
+	m.Calls.RegisterAttributeScopeResolver = append(m.Calls.RegisterAttributeScopeResolver, []struct{}{})
+	// Use override if provided
+	if m.RegisterAttributeScopeResolverFunc != nil {
+		m.RegisterAttributeScopeResolverFunc(scopePrefix, resolver)
+	}
 }
