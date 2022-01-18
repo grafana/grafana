@@ -23,10 +23,11 @@ import {
   OperatorsList,
   Operator,
   ManageKubernetes,
+  UseKubernetesProps,
 } from './Kubernetes.types';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus.types';
 
-export const useKubernetes = (): ManageKubernetes => {
+export const useKubernetes = ({ settings }: UseKubernetesProps): ManageKubernetes => {
   const [kubernetes, setKubernetes] = useState<Kubernetes[]>([]);
   const [loading, setLoading] = useState(false);
   const [generateToken] = useCancelToken();
@@ -85,8 +86,10 @@ export const useKubernetes = (): ManageKubernetes => {
   };
 
   useEffect(() => {
-    getKubernetes();
-  }, [getKubernetes]);
+    if (settings && settings.dbaasEnabled) {
+      getKubernetes();
+    }
+  }, [getKubernetes, settings]);
 
   return [kubernetes, deleteKubernetes, addKubernetes, getKubernetes, setLoading, loading];
 };

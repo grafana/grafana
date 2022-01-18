@@ -1,7 +1,8 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 
 import { useStyles } from '@grafana/ui';
 
+import { Settings } from '../settings/Settings.types';
 import { FeatureLoader } from '../shared/components/Elements/FeatureLoader';
 import { TabbedContent, ContentTab } from '../shared/components/Elements/TabbedContent';
 import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
@@ -18,9 +19,12 @@ import { KubernetesInventory } from './components/Kubernetes/KubernetesInventory
 
 export const DBaaS: FC = () => {
   const styles = useStyles(getStyles);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const { path: basePath } = PAGE_MODEL;
 
-  const [kubernetes, deleteKubernetes, addKubernetes, getKubernetes, setLoading, kubernetesLoading] = useKubernetes();
+  const [kubernetes, deleteKubernetes, addKubernetes, getKubernetes, setLoading, kubernetesLoading] = useKubernetes({
+    settings,
+  });
   const tabs: ContentTab[] = useMemo(
     (): ContentTab[] => [
       {
@@ -45,7 +49,7 @@ export const DBaaS: FC = () => {
         component: <DBCluster key={TabKeys.dbclusters} kubernetes={kubernetes} />,
       },
     ],
-    [kubernetes, deleteKubernetes, addKubernetes, getKubernetes, setLoading, kubernetesLoading]
+    [kubernetes, kubernetesLoading, addKubernetes, deleteKubernetes, getKubernetes, setLoading]
   );
 
   return (
@@ -56,7 +60,7 @@ export const DBaaS: FC = () => {
           tabs={tabs}
           basePath={basePath}
           renderTab={({ Content }) => (
-            <FeatureLoader featureName={Messages.dbaas} featureFlag="dbaasEnabled">
+            <FeatureLoader featureName={Messages.dbaas} featureFlag="dbaasEnabled" onSettingsLoaded={setSettings}>
               <Content />
             </FeatureLoader>
           )}
