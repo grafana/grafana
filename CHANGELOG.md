@@ -1260,6 +1260,16 @@ Issue [#33352](https://github.com/grafana/grafana/issues/33352)
 
 <!-- 8.0.0-beta1 END -->
 
+<!-- 7.5.13 START -->
+
+# 7.5.13 (2022-01-18)
+
+### Bug fixes
+
+- **[v7.5.x] Alerting:** Fix NoDataFound for alert rules using AND operator (#41305). [#44066](https://github.com/grafana/grafana/pull/44066), [@armandgrillet](https://github.com/armandgrillet)
+
+<!-- 7.5.13 END -->
+
 <!-- 7.5.11 START -->
 
 # 7.5.11 (2021-10-05)
