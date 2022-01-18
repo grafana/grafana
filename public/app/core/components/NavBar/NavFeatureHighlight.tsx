@@ -13,9 +13,7 @@ export const NavFeatureHighlight = ({ children, text }: Props): JSX.Element => {
   return (
     <div className={styles.icon}>
       {children}
-      <span className={styles.badge}>
-        {text} <i />
-      </span>
+      <span className={styles.badge}>{text}</span>
       <span className={styles.highlight} />
     </div>
   );
@@ -42,29 +40,20 @@ const getIconStyles = (theme: GrafanaTheme2) => {
       position: absolute;
       visibility: hidden;
       opacity: 0;
-      transition: opacity 0.2s;
+      transition: opacity ${theme.transitions.duration.shorter};
       line-height: 1;
 
-      i {
-        position: absolute;
-        top: 50%;
-        right: 100%;
-        transform: translateY(-50%);
-        width: 7px;
-        height: 24px;
-        overflow: hidden;
-      }
-
-      i::after {
+      &::before {
         content: '';
         position: absolute;
         width: 12px;
         height: 12px;
-        left: 0;
+        left: -${theme.spacing(1)};
         top: 50%;
         opacity: 1;
         transform: translate(50%, -50%) rotate(-45deg);
         background-color: ${theme.colors.success.main};
+        z-index: -1;
       }
     `,
     highlight: css`
