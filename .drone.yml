@@ -11,7 +11,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -110,7 +110,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -155,6 +155,27 @@ steps:
   image: grafana/build-container:1.4.9
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
+  - '# It is required that the generated Typescript be in sync with the input CUE
+    files.'
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
+  depends_on:
+  - validate-scuemata
+  image: grafana/build-container:1.4.9
+  name: ensure-cuetsified
+- commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
     --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64,armv6
   depends_on:
@@ -180,11 +201,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
@@ -192,11 +210,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
@@ -204,11 +219,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
@@ -216,11 +228,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -241,7 +250,7 @@ steps:
     HOST: end-to-end-tests-server
     PORT: 3001
   failure: always
-  image: hugohaggmark/docker-puppeteer
+  image: grafana/docker-puppeteer:1.0.0
   name: test-a11y-frontend
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
@@ -314,7 +323,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -385,7 +394,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -485,7 +494,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -543,6 +552,27 @@ steps:
   image: grafana/build-container:1.4.9
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
+  - '# It is required that the generated Typescript be in sync with the input CUE
+    files.'
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
+  depends_on:
+  - validate-scuemata
+  image: grafana/build-container:1.4.9
+  name: ensure-cuetsified
+- commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
     --sign
   depends_on:
@@ -578,11 +608,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
@@ -590,11 +617,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
@@ -602,11 +626,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
@@ -614,11 +635,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -656,7 +674,7 @@ steps:
     HOST: end-to-end-tests-server
     PORT: 3001
   failure: ignore
-  image: hugohaggmark/docker-puppeteer
+  image: grafana/docker-puppeteer:1.0.0
   name: test-a11y-frontend
 - commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
@@ -790,7 +808,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -868,7 +886,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -880,6 +898,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe gen-version --build-id $$env:DRONE_BUILD_NUMBER
   - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/main/
@@ -921,7 +940,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1004,7 +1023,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1054,6 +1073,27 @@ steps:
   image: grafana/build-container:1.4.9
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
+  - '# It is required that the generated Typescript be in sync with the input CUE
+    files.'
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
+  depends_on:
+  - validate-scuemata
+  image: grafana/build-container:1.4.9
+  name: ensure-cuetsified
+- commands:
   - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
     --sign ${DRONE_TAG}
   depends_on:
@@ -1073,63 +1113,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.4.9
   name: package
-- commands:
-  - ./e2e/start-server
-  depends_on:
-  - package
-  detach: true
-  environment:
-    PORT: 3001
-  image: grafana/build-container:1.4.9
-  name: end-to-end-tests-server
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -1181,11 +1164,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -1193,11 +1173,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -1205,11 +1182,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
@@ -1217,11 +1191,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -1243,7 +1214,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads/${DRONE_TAG}
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -1324,7 +1295,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1444,7 +1415,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1528,7 +1499,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -1540,6 +1511,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe gen-version ${DRONE_TAG}
   - .\grabpl.exe windows-installer --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/release/
@@ -1586,7 +1558,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1659,6 +1631,27 @@ steps:
   image: grafana/build-container:1.4.9
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
+  - '# It is required that the generated Typescript be in sync with the input CUE
+    files.'
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
+  depends_on:
+  - validate-scuemata
+  image: grafana/build-container:1.4.9
+  name: ensure-cuetsified
+- commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise ${DRONE_TAG}
   depends_on:
@@ -1689,65 +1682,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.4.9
   name: package
-- commands:
-  - ./e2e/start-server
-  depends_on:
-  - package
-  detach: true
-  environment:
-    PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
-    PORT: 3001
-    RUNDIR: e2e/tmp-grafana-enterprise
-  image: grafana/build-container:1.4.9
-  name: end-to-end-tests-server
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -1801,11 +1735,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -1813,11 +1744,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -1825,11 +1753,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
@@ -1837,11 +1762,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
@@ -1854,14 +1776,9 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads/${DRONE_TAG}
+  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
-  - redis-integration-tests
-  - memcached-integration-tests
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -1891,65 +1808,6 @@ steps:
   image: grafana/build-container:1.4.9
   name: package-enterprise2
 - commands:
-  - ./e2e/start-server
-  depends_on:
-  - package-enterprise2
-  detach: true
-  environment:
-    PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
-    PORT: 3002
-    RUNDIR: e2e/tmp-grafana-enterprise2
-  image: grafana/build-container:1.4.9
-  name: end-to-end-tests-server-enterprise2
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3002 --suite dashboards-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-dashboards-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3002 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-smoke-tests-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3002 --suite panels-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-panels-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3002 --suite various-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-various-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
   depends_on:
   - package-enterprise2
@@ -1961,14 +1819,9 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets-enterprise2
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2/${DRONE_TAG}
+  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2
   depends_on:
-  - end-to-end-tests-dashboards-suite-enterprise2
-  - end-to-end-tests-panels-suite-enterprise2
-  - end-to-end-tests-smoke-tests-suite-enterprise2
-  - end-to-end-tests-various-suite-enterprise2
-  - redis-integration-tests
-  - memcached-integration-tests
+  - package-enterprise2
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -2013,7 +1866,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2185,7 +2038,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2313,7 +2166,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2345,6 +2198,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe gen-version ${DRONE_TAG}
   - .\grabpl.exe windows-installer --edition enterprise ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/enterprise/release/
@@ -2387,7 +2241,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2437,6 +2291,27 @@ steps:
   image: grafana/build-container:1.4.9
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
+  - '# It is required that the generated Typescript be in sync with the input CUE
+    files.'
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
+  depends_on:
+  - validate-scuemata
+  image: grafana/build-container:1.4.9
+  name: ensure-cuetsified
+- commands:
   - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
     --sign v7.3.0-test
   depends_on:
@@ -2456,63 +2331,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.4.9
   name: package
-- commands:
-  - ./e2e/start-server
-  depends_on:
-  - package
-  detach: true
-  environment:
-    PORT: 3001
-  image: grafana/build-container:1.4.9
-  name: end-to-end-tests-server
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -2564,11 +2382,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -2576,11 +2391,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -2588,11 +2400,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
@@ -2600,11 +2409,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -2681,7 +2487,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2795,7 +2601,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2873,7 +2679,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -2885,6 +2691,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe gen-version v7.3.0-test
   - .\grabpl.exe windows-installer --edition oss --packages-bucket grafana-downloads-test
     v7.3.0-test
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
@@ -2926,7 +2733,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2998,6 +2805,27 @@ steps:
   image: grafana/build-container:1.4.9
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
+  - '# It is required that the generated Typescript be in sync with the input CUE
+    files.'
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
+  depends_on:
+  - validate-scuemata
+  image: grafana/build-container:1.4.9
+  name: ensure-cuetsified
+- commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise v7.3.0-test
   depends_on:
@@ -3028,65 +2856,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.4.9
   name: package
-- commands:
-  - ./e2e/start-server
-  depends_on:
-  - package
-  detach: true
-  environment:
-    PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
-    PORT: 3001
-    RUNDIR: e2e/tmp-grafana-enterprise
-  image: grafana/build-container:1.4.9
-  name: end-to-end-tests-server
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -3140,11 +2909,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -3152,11 +2918,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -3164,11 +2927,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
@@ -3176,11 +2936,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
   depends_on:
@@ -3195,12 +2952,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads-test
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
-  - redis-integration-tests
-  - memcached-integration-tests
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -3230,65 +2982,6 @@ steps:
   image: grafana/build-container:1.4.9
   name: package-enterprise2
 - commands:
-  - ./e2e/start-server
-  depends_on:
-  - package-enterprise2
-  detach: true
-  environment:
-    PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
-    PORT: 3002
-    RUNDIR: e2e/tmp-grafana-enterprise2
-  image: grafana/build-container:1.4.9
-  name: end-to-end-tests-server-enterprise2
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3002 --suite dashboards-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-dashboards-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3002 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-smoke-tests-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3002 --suite panels-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-panels-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3002 --suite various-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-various-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
   depends_on:
   - package-enterprise2
@@ -3302,12 +2995,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-test
   depends_on:
-  - end-to-end-tests-dashboards-suite-enterprise2
-  - end-to-end-tests-panels-suite-enterprise2
-  - end-to-end-tests-smoke-tests-suite-enterprise2
-  - end-to-end-tests-various-suite-enterprise2
-  - redis-integration-tests
-  - memcached-integration-tests
+  - package-enterprise2
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -3346,7 +3034,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3511,7 +3199,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3632,7 +3320,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -3664,6 +3352,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe gen-version v7.3.0-test
   - .\grabpl.exe windows-installer --edition enterprise --packages-bucket grafana-downloads-test
     v7.3.0-test
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
@@ -3709,7 +3398,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3818,7 +3507,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3865,6 +3554,27 @@ steps:
   image: grafana/build-container:1.4.9
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
+  - '# It is required that the generated Typescript be in sync with the input CUE
+    files.'
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
+  depends_on:
+  - validate-scuemata
+  image: grafana/build-container:1.4.9
+  name: ensure-cuetsified
+- commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
     --sign
   depends_on:
@@ -3884,63 +3594,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.4.9
   name: package
-- commands:
-  - ./e2e/start-server
-  depends_on:
-  - package
-  detach: true
-  environment:
-    PORT: 3001
-  image: grafana/build-container:1.4.9
-  name: end-to-end-tests-server
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -3992,11 +3645,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -4004,11 +3654,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -4016,11 +3663,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
@@ -4028,11 +3672,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -4094,7 +3735,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4207,7 +3848,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4284,7 +3925,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -4332,7 +3973,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4401,6 +4042,27 @@ steps:
   image: grafana/build-container:1.4.9
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - '# Stashing changes, since packages that were produced in build-backend step are
+    needed.'
+  - git stash
+  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
+  - '# The above command generates Typescript files (*.gen.ts) from all appropriate
+    .cue files.'
+  - '# It is required that the generated Typescript be in sync with the input CUE
+    files.'
+  - '# ...Modulo eslint auto-fixes...:'
+  - yarn run eslint . --ext .gen.ts --fix
+  - '# If any filenames are emitted by the below script, run the generator command
+    `grafana-cli cue gen-ts` locally and commit the result.'
+  - ./scripts/clean-git-or-error.sh
+  - '# Un-stash changes.'
+  - git stash pop
+  depends_on:
+  - validate-scuemata
+  image: grafana/build-container:1.4.9
+  name: ensure-cuetsified
+- commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-x64 --no-pull-enterprise
   depends_on:
@@ -4429,65 +4091,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.4.9
   name: package
-- commands:
-  - ./e2e/start-server
-  depends_on:
-  - package
-  detach: true
-  environment:
-    PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
-    PORT: 3001
-    RUNDIR: e2e/tmp-grafana-enterprise
-  image: grafana/build-container:1.4.9
-  name: end-to-end-tests-server
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -4541,11 +4144,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-dashboards-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -4553,11 +4153,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-smoke-tests-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -4565,11 +4162,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-panels-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
@@ -4577,11 +4171,8 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:7.5.0
+  image: cypress/included:8.4.1
   name: end-to-end-tests-various-suite
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
 - commands:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
@@ -4605,12 +4196,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
-  - redis-integration-tests
-  - memcached-integration-tests
+  - package
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -4640,65 +4226,6 @@ steps:
   image: grafana/build-container:1.4.9
   name: package-enterprise2
 - commands:
-  - ./e2e/start-server
-  depends_on:
-  - package-enterprise2
-  detach: true
-  environment:
-    PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
-    PORT: 3002
-    RUNDIR: e2e/tmp-grafana-enterprise2
-  image: grafana/build-container:1.4.9
-  name: end-to-end-tests-server-enterprise2
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3002 --suite dashboards-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-dashboards-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3002 --suite smoke-tests-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-smoke-tests-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3002 --suite panels-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-panels-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
-  - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port 3002 --suite various-suite --tries 3
-  depends_on:
-  - package
-  environment:
-    HOST: end-to-end-tests-server-enterprise2
-  image: cypress/included:7.5.0
-  name: end-to-end-tests-various-suite-enterprise2
-  volumes:
-  - name: cypress_cache
-    path: /root/.cache/Cypress
-- commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
   depends_on:
   - package-enterprise2
@@ -4712,12 +4239,7 @@ steps:
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-enterprise2
   depends_on:
-  - end-to-end-tests-dashboards-suite-enterprise2
-  - end-to-end-tests-panels-suite-enterprise2
-  - end-to-end-tests-smoke-tests-suite-enterprise2
-  - end-to-end-tests-various-suite-enterprise2
-  - redis-integration-tests
-  - memcached-integration-tests
+  - package-enterprise2
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -4756,7 +4278,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4920,7 +4442,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5040,7 +4562,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.2/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -5150,3 +4672,8 @@ get:
   path: infra/data/ci/grafana/prerelease
 kind: secret
 name: prerelease_bucket
+---
+kind: signature
+hmac: e7717bb67d7a1823b7ca6aafb7701048785495c411ae6b3b10450ad439fbcec5
+
+...
