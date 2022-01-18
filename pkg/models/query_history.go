@@ -10,14 +10,14 @@ var (
 )
 
 type QueryHistory struct {
-	Id            int64
-	Uid           string
-	DatasourceUid string
-	OrgId         int64
-	CreatedBy     int64
-	CreatedAt     int64
-	Comment       string
-	Queries       string
+	Id            int64  `json:"id"`
+	Uid           string `json:"uid"`
+	DatasourceUid string `json:"datasourceUid"`
+	OrgId         int64  `json:"orgId"`
+	CreatedBy     int64  `json:"createdBy"`
+	CreatedAt     int64  `json:"createdAt"`
+	Comment       string `json:"comment"`
+	Queries       string `json:"queries"`
 }
 
 type QueryHistoryStar struct {
