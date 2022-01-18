@@ -36,6 +36,11 @@ export interface ServiceAccountDTO extends WithAccessControlMetadata {
   lastSeenAtAge: string;
 }
 
+export interface ServiceAccountProfileState {
+  serviceAccount: ServiceAccountDTO;
+  isLoading: boolean;
+}
+
 export interface ServiceAccountsState {
   serviceAccounts: ServiceAccountDTO[];
   searchQuery: string;

@@ -1,9 +1,20 @@
 import { ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
 import { ServiceAccountDTO } from 'app/types';
-import { serviceAccountsLoaded } from './reducers';
+import { serviceAccountLoaded, serviceAccountsLoaded } from './reducers';
 
 const BASE_URL = `/api/org/serviceaccounts`;
+
+export function loadServiceAccount(id: number): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      const serviceAccount = await getBackendSrv().get(`BASE_URL/${id}`);
+      dispatch(serviceAccountLoaded(serviceAccount));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+}
 
 export function loadServiceAccounts(): ThunkResult<void> {
   return async (dispatch) => {

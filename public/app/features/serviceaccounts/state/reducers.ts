@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { ServiceAccountDTO, ServiceAccountsState } from 'app/types';
+import { ServiceAccountDTO, ServiceAccountProfileState, ServiceAccountsState } from 'app/types';
 
 export const initialState: ServiceAccountsState = {
   serviceAccounts: [] as ServiceAccountDTO[],
@@ -8,6 +8,22 @@ export const initialState: ServiceAccountsState = {
   searchPage: 1,
   isLoading: true,
 };
+
+export const initialStateProfile: ServiceAccountProfileState = {
+  serviceAccount: {} as ServiceAccountDTO,
+  isLoading: true,
+};
+
+export const serviceAccountProfileSlice = createSlice({
+  name: 'serviceaccount',
+  initialState: initialStateProfile,
+  reducers: {
+    serviceAccountLoaded: (state, action: PayloadAction<ServiceAccountDTO>): ServiceAccountProfileState => ({
+      ...state,
+      serviceAccount: action.payload,
+    }),
+  },
+});
 
 const serviceAccountsSlice = createSlice({
   name: 'serviceaccounts',
@@ -32,8 +48,12 @@ export const {
   serviceAccountsLoaded,
 } = serviceAccountsSlice.actions;
 
+export const { serviceAccountLoaded } = serviceAccountProfileSlice.actions;
+
+export const serviceAccountProfileReducer = serviceAccountProfileSlice.reducer;
 export const serviceAccountsReducer = serviceAccountsSlice.reducer;
 
 export default {
+  serviceAccountProfile: serviceAccountProfileReducer,
   serviceAccounts: serviceAccountsReducer,
 };
