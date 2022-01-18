@@ -24,12 +24,12 @@ func TestAlertRuleExtraction(t *testing.T) {
 	influxDBDs := &models.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB", Uid: "InfluxDB-uid"}
 	prom := &models.DataSource{Id: 17, OrgId: 1, Name: "Prometheus", Uid: "Prometheus-uid"}
 
-	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+	bus.AddHandler("test", func(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
 		query.Result = defaultDs
 		return nil
 	})
 
-	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
+	bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
 		if query.Name == defaultDs.Name || query.Uid == defaultDs.Uid {
 			query.Result = defaultDs
 		}

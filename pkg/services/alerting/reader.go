@@ -30,7 +30,7 @@ func newRuleReader() *defaultRuleReader {
 func (arr *defaultRuleReader) fetch(ctx context.Context) []*Rule {
 	cmd := &models.GetAllAlertsQuery{}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		arr.log.Error("Could not load alerts", "error", err)
 		return []*Rule{}
 	}

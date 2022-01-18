@@ -136,6 +136,8 @@ compilation-stats.json
 /e2e/**/screenshots
 !/e2e/**/screenshots/expected/*
 /e2e/**/videos/*
+/e2e/benchmarks/**/results/*
+/e2e/benchmarks/**/results
 
 # a11y tests
 /pa11y-ci-results.json
@@ -150,4 +152,9 @@ compilation-stats.json
 # auto generated Go files
 *_gen.go
 
+# Auto-generated localisation files
+public/locales/_build/
+public/locales/**/*.js
+
 deployment_tools_config.json
+

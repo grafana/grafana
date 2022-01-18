@@ -1,6 +1,5 @@
 import React from 'react';
 import NamedColorsGroup from './NamedColorsGroup';
-import { VerticalGroup } from '../Layout/Layout';
 import { ColorSwatch } from './ColorSwatch';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -21,9 +20,9 @@ export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps)
   }
 
   return (
-    <VerticalGroup spacing="md">
-      <div className={styles.popoverContainer}>{swatches}</div>
-      <div className={styles.container}>
+    <>
+      <div className={styles.swatches}>{swatches}</div>
+      <div className={styles.extraColors}>
         <ColorSwatch
           isSelected={color === 'transparent'}
           color={'rgba(0,0,0,0)'}
@@ -37,21 +36,24 @@ export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps)
           onClick={() => onChange('text')}
         />
       </div>
-    </VerticalGroup>
+    </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      grid-column-gap: ${theme.spacing(2)};
-      grid-row-gap: ${theme.spacing(2)};
-      flex-grow: 1;
-      padding-left: ${theme.spacing(2)};
+      display: flex;
+      flex-direction: column;
     `,
-    popoverContainer: css`
+    extraColors: css`
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: ${theme.spacing(1)};
+      padding: ${theme.spacing(1, 0)};
+    `,
+    swatches: css`
       display: grid;
       flex-grow: 1;
     `,

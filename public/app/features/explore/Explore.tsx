@@ -15,9 +15,9 @@ import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
 import { changeSize, changeGraphStyle } from './state/explorePane';
-import { updateTimeRange } from './state/time';
+import { makeAbsoluteTime, updateTimeRange } from './state/time';
 import { addQueryRow, loadLogsVolumeData, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
@@ -30,7 +30,9 @@ import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { ExploreGraph } from './ExploreGraph';
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { ExploreGraphLabel } from './ExploreGraphLabel';
-import { ExploreGraphStyle } from 'app/core/utils/explore';
+import appEvents from 'app/core/app_events';
+import { AbsoluteTimeEvent } from 'app/types/events';
+import { Unsubscribable } from 'rxjs';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -97,12 +99,21 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
  */
 export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
+  absoluteTimeUnsubsciber: Unsubscribable | undefined;
 
   constructor(props: Props) {
     super(props);
     this.state = {
       openDrawer: undefined,
     };
+  }
+
+  componentDidMount() {
+    this.absoluteTimeUnsubsciber = appEvents.subscribe(AbsoluteTimeEvent, this.onMakeAbsoluteTime);
+  }
+
+  componentWillUnmount() {
+    this.absoluteTimeUnsubsciber?.unsubscribe();
   }
 
   onChangeTime = (rawRange: RawTimeRange) => {
@@ -137,6 +148,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   onClickAddQueryRowButton = () => {
     const { exploreId, queryKeys } = this.props;
     this.props.addQueryRow(exploreId, queryKeys.length);
+  };
+
+  onMakeAbsoluteTime = () => {
+    const { makeAbsoluteTime } = this.props;
+    makeAbsoluteTime();
   };
 
   onModifyQueries = (action: any, index?: number) => {
@@ -447,6 +463,7 @@ const mapDispatchToProps = {
   scanStopAction,
   setQueries,
   updateTimeRange,
+  makeAbsoluteTime,
   loadLogsVolumeData,
   addQueryRow,
   splitOpen,

@@ -207,6 +207,8 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 
 func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+		rs.log.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
+
 		theme := ThemeDark
 		if opts.Theme != "" {
 			theme = opts.Theme
@@ -225,15 +227,15 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	}
 
 	rs.log.Info("Rendering", "path", opts.Path)
-	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor <= 0 {
+	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor == 0 {
 		opts.DeviceScaleFactor = 1
 	}
-	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgID, opts.UserID, opts.OrgRole)
+	renderKey, err := rs.generateAndStoreRenderKey(ctx, opts.OrgID, opts.UserID, opts.OrgRole)
 	if err != nil {
 		return nil, err
 	}
 
-	defer rs.deleteRenderKey(renderKey)
+	defer rs.deleteRenderKey(ctx, renderKey)
 
 	defer func() {
 		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
@@ -263,12 +265,12 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts) (*Rende
 	}
 
 	rs.log.Info("Rendering", "path", opts.Path)
-	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgID, opts.UserID, opts.OrgRole)
+	renderKey, err := rs.generateAndStoreRenderKey(ctx, opts.OrgID, opts.UserID, opts.OrgRole)
 	if err != nil {
 		return nil, err
 	}
 
-	defer rs.deleteRenderKey(renderKey)
+	defer rs.deleteRenderKey(ctx, renderKey)
 
 	defer func() {
 		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
@@ -278,8 +280,8 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts) (*Rende
 	return rs.renderCSVAction(ctx, renderKey, opts)
 }
 
-func (rs *RenderingService) GetRenderUser(key string) (*RenderUser, bool) {
-	val, err := rs.RemoteCacheService.Get(fmt.Sprintf(renderKeyPrefix, key))
+func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
+	val, err := rs.RemoteCacheService.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
 	if err != nil {
 		rs.log.Error("Failed to get render key from cache", "error", err)
 	}
@@ -338,13 +340,13 @@ func (rs *RenderingService) getURL(path string) string {
 	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, rs.Cfg.HTTPPort, subPath, path)
 }
 
-func (rs *RenderingService) generateAndStoreRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {
+func (rs *RenderingService) generateAndStoreRenderKey(ctx context.Context, orgId, userId int64, orgRole models.RoleType) (string, error) {
 	key, err := util.GetRandomString(32)
 	if err != nil {
 		return "", err
 	}
 
-	err = rs.RemoteCacheService.Set(fmt.Sprintf(renderKeyPrefix, key), &RenderUser{
+	err = rs.RemoteCacheService.Set(ctx, fmt.Sprintf(renderKeyPrefix, key), &RenderUser{
 		OrgID:   orgId,
 		UserID:  userId,
 		OrgRole: string(orgRole),
@@ -356,8 +358,8 @@ func (rs *RenderingService) generateAndStoreRenderKey(orgId, userId int64, orgRo
 	return key, nil
 }
 
-func (rs *RenderingService) deleteRenderKey(key string) {
-	err := rs.RemoteCacheService.Delete(fmt.Sprintf(renderKeyPrefix, key))
+func (rs *RenderingService) deleteRenderKey(ctx context.Context, key string) {
+	err := rs.RemoteCacheService.Delete(ctx, fmt.Sprintf(renderKeyPrefix, key))
 	if err != nil {
 		rs.log.Error("Failed to delete render key", "error", err)
 	}

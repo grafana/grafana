@@ -7,6 +7,7 @@ import (
 	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
@@ -61,8 +62,10 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	signature.ProvideService,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
+	provider.ProvideService,
+	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	acdb.ProvideService,
-	wire.Bind(new(accesscontrol.ResourceStore), new(*acdb.AccessControlStore)),
+	wire.Bind(new(accesscontrol.ResourcePermissionsStore), new(*acdb.AccessControlStore)),
 	wire.Bind(new(accesscontrol.PermissionsProvider), new(*acdb.AccessControlStore)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),

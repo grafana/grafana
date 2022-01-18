@@ -29,6 +29,7 @@ const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryCha
       <EditorField label="Order by" optional width={16}>
         <>
           <Select
+            aria-label="Order by"
             onChange={({ value }) => value && onQueryChange(setOrderBy(query, value))}
             options={appendTemplateVariables(datasource, STATISTICS.map(toOption))}
             value={orderBy ? toOption(orderBy) : null}
@@ -47,6 +48,7 @@ const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryCha
 
       <EditorField label="Direction" width={16}>
         <Select
+          aria-label="Direction"
           inputId="cloudwatch-sql-order-by-direction"
           disabled={!orderBy}
           value={orderByDirection ? toOption(orderByDirection) : orderByDirections[0]}
