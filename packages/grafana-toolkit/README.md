@@ -15,6 +15,8 @@ yarn install
 yarn dev
 ```
 
+> **Note:** If running NPM 7+ the `npx` commands mentioned in this article may hang. The workaround is to use `npx --legacy-peer-deps <command to run>`.
+
 ## Update your plugin to use grafana-toolkit
 
 Follow the steps below to start using grafana-toolkit in your existing plugin.

@@ -13,6 +13,118 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 #: public/app/features/profile/UserProfileEditForm.tsx
-msgid "edit-user-profile.title"
+msgid "common.save"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-dashboard.fields.timezone-label"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.home-dashboard-label"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.home-dashboard-placeholder"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.home-dashboard-tooltip"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.theme-label"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.week-start-label"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.theme.dark-label"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.theme.default-label"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.theme.light-label"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.title"
+msgstr ""
+
+#: public/app/features/profile/UserOrganizations.tsx
+msgid "user-orgs.current-org-button"
+msgstr ""
+
+#: public/app/features/profile/UserOrganizations.tsx
+msgid "user-orgs.name-column"
+msgstr ""
+
+#: public/app/features/profile/UserOrganizations.tsx
+msgid "user-orgs.role-column"
+msgstr ""
+
+#: public/app/features/profile/UserOrganizations.tsx
+msgid "user-orgs.select-org-button"
+msgstr ""
+
+#: public/app/features/profile/UserOrganizations.tsx
+msgid "user-orgs.title"
+msgstr ""
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "user-profile.fields.email-error"
+msgstr ""
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "user-profile.fields.email-label"
+msgstr ""
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "user-profile.fields.name-error"
+msgstr ""
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "user-profile.fields.name-label"
+msgstr ""
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "user-profile.fields.username-label"
+msgstr ""
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "user-profile.title"
 msgstr "Editer le profil"
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-session.browser-column"
+msgstr ""
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-session.created-at-column"
+msgstr ""
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-session.ip-column"
+msgstr ""
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-session.revoke"
+msgstr ""
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-session.seen-at-column"
+msgstr ""
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-sessions.loading"
+msgstr ""
