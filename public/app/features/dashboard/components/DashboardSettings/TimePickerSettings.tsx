@@ -116,7 +116,8 @@ export class TimePickerSettings extends PureComponent<Props, State> {
         </Field>
         <Field
            label="Max time range"
-           description="Prevent users from choosing a time range larger than a specified time interval. The supported units are y(years), M(months), w(weeks), d(days), h(hours), m(minutes), s(seconds)."
+           description="Limits users to the specified time interval. The supported units are y(years), M(months), w(weeks), d(days), h(hours), m(minutes), s(seconds).
+"
         >
           <Input
             invalid={!this.state.isMaxTimeRangeValid}
