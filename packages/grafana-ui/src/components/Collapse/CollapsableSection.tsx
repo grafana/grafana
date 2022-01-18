@@ -63,13 +63,15 @@ export const CollapsableSection: FC<Props> = ({
           {label}
         </div>
       </div>
-      <div
-        id={`collapse-content-${id}`}
-        className={cx(styles.content, { [styles.hidden]: !open }, contentClassName)}
-        aria-labelledby={buttonLabelId}
-      >
-        {open && children}
-      </div>
+      {open && (
+        <div
+          id={`collapse-content-${id}`}
+          className={cx(styles.content, contentClassName)}
+          aria-labelledby={buttonLabelId}
+        >
+          {children}
+        </div>
+      )}
     </>
   );
 };
@@ -103,9 +105,6 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   }),
   content: css({
     padding: `${theme.spacing(2)} 0`,
-  }),
-  hidden: css({
-    display: 'none',
   }),
   spinner: css({
     display: 'flex',
