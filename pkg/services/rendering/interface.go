@@ -27,7 +27,7 @@ const (
 )
 
 type TimeoutOpts struct {
-	Timeout                  time.Duration // Timeout param passed to node-renderer service
+	Timeout                  time.Duration // Timeout param passed to image-renderer service
 	RequestTimeoutMultiplier time.Duration // RequestTimeoutMultiplier used for plugin/HTTP request context timeout
 }
 
