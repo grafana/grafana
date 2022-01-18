@@ -391,7 +391,7 @@ func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context
 		return "", err
 	}
 
-	return key, err
+	return key, nil
 }
 
 func deleteRenderKey(cache *remotecache.RemoteCache, log log.Logger, ctx context.Context, renderKey string) {
