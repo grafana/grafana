@@ -150,6 +150,7 @@ var wireBasicSet = wire.NewSet(
 	libraryelements.ProvideService,
 	wire.Bind(new(libraryelements.Service), new(*libraryelements.LibraryElementService)),
 	notifications.ProvideService,
+	notifications.ProvideSmtpService,
 	tracing.ProvideService,
 	metrics.ProvideService,
 	testdatasource.ProvideService,

@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"time"
 
@@ -45,7 +46,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 		return
 	}
 	auth := acmiddleware.Middleware(api.accesscontrol)
-	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
+	api.RouterRegister.Group("/api/org/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeAll)), routing.Wrap(api.ListServiceAccounts))
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
 		serviceAccountsRoute.Get("/upgrade", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.UpgradeServiceAccounts))
@@ -72,8 +73,11 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 }
 
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
-	scopeID := ctx.ParamsInt64(":serviceAccountId")
-	err := api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
+	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+	}
+	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}

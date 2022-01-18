@@ -175,6 +175,7 @@ github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53/go.mod h1:+3
 github.com/CloudyKit/jet/v3 v3.0.0/go.mod h1:HKQPgSJmdK8hdoAbKUUWajkHyHo4RaU5rMdUywE7VMo=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DATA-DOG/go-sqlmock v1.4.1/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
+github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DataDog/datadog-go v2.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/zstd v1.4.1/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t7BBo=
@@ -1234,9 +1235,14 @@ github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5J
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/grafana/grafana-aws-sdk v0.7.0 h1:D+Lhxi3P/7vpyDHUK/fdX9bL2mRz8hLG04ucNf1E02o=
 github.com/grafana/grafana-aws-sdk v0.7.0/go.mod h1:+pPo5U+pX0zWimR7YBc7ASeSQfbRkcTyQYqMiAj7G5U=
+github.com/grafana/grafana-aws-sdk v0.9.0 h1:oAEpSlNaD09S25F2TX8WwxCwnKk/ModUh0Uxgl+NP6M=
+github.com/grafana/grafana-aws-sdk v0.9.0/go.mod h1:6KaQ8uUD4KpXr/b7bAC7zbfSXTVOiTk4XhIrwkGWn4w=
+github.com/grafana/grafana-aws-sdk v0.9.1 h1:jMZlsLsWnqOwLt2UNcLUsJ2z6289hLYlscK35QgS158=
+github.com/grafana/grafana-aws-sdk v0.9.1/go.mod h1:6KaQ8uUD4KpXr/b7bAC7zbfSXTVOiTk4XhIrwkGWn4w=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58 h1:2ud7NNM7LrGPO4x0NFR8qLq68CqI4SmB7I2yRN2w9oE=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
 github.com/grafana/grafana-plugin-sdk-go v0.79.0/go.mod h1:NvxLzGkVhnoBKwzkst6CFfpMFKwAdIUZ1q8ssuLeF60=
+github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW39s+c+LetqSCjFj7xxPC5+M=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.121.0 h1:4+dXoezL9L40iu7ym4u7ZJ4OE57NaVc4WSHlbxtCtGM=
 github.com/grafana/grafana-plugin-sdk-go v0.121.0/go.mod h1:Mhy+5mC6rSqEhnzop1wEh//n/fgkzNK5pRgg3DfCp4g=
@@ -1244,6 +1250,7 @@ github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa h1:+pXjAxavVR2FKKNs
 github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa/go.mod h1:0O8o/juxNSKN/e+DzWDTRkl7Zm8CkZcz0NDqEdojlrk=
 github.com/grafana/saml v0.0.0-20211007135653-aed1b2edd86b h1:YiSGp34F4V0G08HHx1cJBf2GVgwYAkXQjzuVs1t8jYk=
 github.com/grafana/saml v0.0.0-20211007135653-aed1b2edd86b/go.mod h1:q83kyQoMD0vhy+RzFLlbw0UgHJ6TAihQpuXvdFmm4s4=
+github.com/grafana/sqlds/v2 v2.3.2/go.mod h1:34uyqPBWsEvg4V/xxh6V4uIqwu1qLfOfsmScll/ukrk=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
