@@ -1,4 +1,4 @@
-import React, { ComponentType } from 'react';
+import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -14,7 +14,6 @@ export interface Props {
   url?: string;
   adjustHeightForBorder?: boolean;
   isMobile?: boolean;
-  ExtraContent?: ComponentType;
 }
 
 export function NavBarMenuItem({
@@ -26,7 +25,6 @@ export function NavBarMenuItem({
   target,
   text,
   url,
-  ExtraContent,
   isMobile = false,
 }: Props) {
   const theme = useTheme2();
@@ -47,7 +45,6 @@ export function NavBarMenuItem({
   let element = (
     <button className={styles.element} onClick={onClick} tabIndex={-1}>
       {linkContent}
-      {ExtraContent && <ExtraContent />}
     </button>
   );
 
@@ -56,12 +53,10 @@ export function NavBarMenuItem({
       !target && url.startsWith('/') ? (
         <Link className={styles.element} href={url} target={target} onClick={onClick} tabIndex={!isMobile ? -1 : 0}>
           {linkContent}
-          {ExtraContent && <ExtraContent />}
         </Link>
       ) : (
         <a href={url} target={target} className={styles.element} onClick={onClick} tabIndex={!isMobile ? -1 : 0}>
           {linkContent}
-          {ExtraContent && <ExtraContent />}
         </a>
       );
   }

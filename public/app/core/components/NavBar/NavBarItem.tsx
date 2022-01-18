@@ -1,4 +1,4 @@
-import React, { ComponentType, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { Item } from '@react-stately/collections';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, locationUtil, NavMenuItemType, NavModelItem } from '@grafana/data';
@@ -18,7 +18,6 @@ export interface Props {
   reverseMenuDirection?: boolean;
   showMenu?: boolean;
   link: NavModelItem;
-  ExtraContent?: ComponentType;
 }
 
 const NavBarItem = ({
