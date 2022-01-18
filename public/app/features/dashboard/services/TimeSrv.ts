@@ -58,7 +58,7 @@ export class TimeSrv {
     this.initTimeFromUrl();
     this.parseTime();
 
-    if (this.dashboard.timepicker.maxTimeRange || this.dashboard.timepicker.oldestFrom) {
+    if (this.dashboard?.timepicker.maxTimeRange || this.dashboard?.timepicker.oldestFrom) {
       this.checkTimeAtLoad();
     }
 
