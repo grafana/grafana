@@ -26,10 +26,9 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 	[]string{"equal", "error"},
 )
 
-func (ss *SQLStore) init() {
+func init() {
 	bus.AddHandler("sql", GetDashboard)
 	bus.AddHandler("sql", GetDashboards)
-	bus.AddHandler("sql", ss.DeleteDashboard)
 	bus.AddHandler("sql", GetDashboardTags)
 	bus.AddHandler("sql", GetDashboardSlugById)
 	bus.AddHandler("sql", GetDashboardsByPluginId)
@@ -44,6 +43,7 @@ func (ss *SQLStore) init() {
 func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetDashboardUIDById)
 	bus.AddHandler("sql", ss.SearchDashboards)
+	bus.AddHandler("sql", ss.DeleteDashboard)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
