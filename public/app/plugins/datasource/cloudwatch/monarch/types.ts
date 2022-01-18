@@ -37,6 +37,8 @@ export enum StatementPosition {
   // metric math
   PredefinedFunction,
   SecondaryArgAfterPredefinedFunction,
+  SearchFunction,
+  AfterFunction,
 }
 
 export enum SuggestionKind {
@@ -59,6 +61,7 @@ export enum SuggestionKind {
 
   // metricmath,
   KeywordArguments,
+  Operators,
 }
 
 export enum CompletionItemPriority {

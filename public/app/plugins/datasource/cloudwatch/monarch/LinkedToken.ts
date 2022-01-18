@@ -43,9 +43,17 @@ export class LinkedToken {
     return this.type === this.tokenTypes.Function;
   }
 
+  isNumber(): boolean {
+    return this.type === this.tokenTypes.Number;
+  }
+
   is(type: string, value?: string | number | boolean): boolean {
     const isType = this.type === type;
     return value !== undefined ? isType && this.value === value : isType;
+  }
+
+  endsWith(value: string | number | boolean): boolean {
+    return this.value === value || this.value[this.value.length - 1] === value;
   }
 
   getPreviousNonWhiteSpaceToken(): LinkedToken | null {

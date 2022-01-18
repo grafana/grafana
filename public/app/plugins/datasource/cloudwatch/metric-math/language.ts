@@ -43,7 +43,23 @@ export const METRIC_MATH_FNS = [
 
 export const METRIC_MATH_KEYWORDS = ['REPEAT', 'LINEAR', 'ASC', 'DSC']; // standalone magic arguments to functions
 
-const METRIC_MATH_OPERATORS = ['+', '-', '*', '/', '^', '==', '!=', '<=', '>=', '<', '>', 'AND', '&&', 'OR', '||'];
+export const METRIC_MATH_OPERATORS = [
+  '+',
+  '-',
+  '*',
+  '/',
+  '^',
+  '==',
+  '!=',
+  '<=',
+  '>=',
+  '<',
+  '>',
+  'AND',
+  '&&',
+  'OR',
+  '||',
+];
 
 export const language: monacoType.languages.IMonarchLanguage = {
   id: 'metricMath',

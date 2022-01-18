@@ -2,7 +2,7 @@ import type { Monaco, monacoTypes } from '@grafana/ui';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
 import { SuggestionKind, CompletionItemPriority, StatementPosition } from '../../monarch/types';
 import { LinkedToken } from '../../monarch/LinkedToken';
-import { METRIC_MATH_FNS, METRIC_MATH_KEYWORDS } from '../language';
+import { METRIC_MATH_FNS, METRIC_MATH_KEYWORDS, METRIC_MATH_OPERATORS } from '../language';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
 
 type CompletionItem = monacoTypes.languages.CompletionItem;
@@ -41,7 +41,7 @@ export class MetricMathCompletionItemProvider extends CompletionItemProvider {
         case SuggestionKind.FunctionsWithArguments:
           METRIC_MATH_FNS.map((f) =>
             addSuggestion(f, {
-              insertText: `${f}($0)`,
+              insertText: f === 'SEARCH' ? `${f}('$0')` : `${f}($0)`,
               insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
               command: TRIGGER_SUGGEST,
               kind: monaco.languages.CompletionItemKind.Function,
@@ -57,6 +57,14 @@ export class MetricMathCompletionItemProvider extends CompletionItemProvider {
             })
           );
           break;
+
+        case SuggestionKind.Operators:
+          METRIC_MATH_OPERATORS.map((s) =>
+            addSuggestion(s, {
+              insertText: `${s} `,
+              command: TRIGGER_SUGGEST,
+            })
+          );
       }
     }
 
