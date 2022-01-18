@@ -106,8 +106,8 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 
 	serviceAccount, err := api.store.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
 	if err != nil {
-		switch err {
-		case serviceaccounts.ErrServiceAccountNotFound:
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
 			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
 		default:
 			return response.Error(http.StatusInternalServerError, "Failed to retrieve service account", err)
