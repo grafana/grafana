@@ -21,7 +21,7 @@ const (
 const (
 	ThumbnailStateDefault ThumbnailState = "default"
 	ThumbnailStateStale   ThumbnailState = "stale"
-	ThumbnailStateFrozen  ThumbnailState = "frozen"
+	ThumbnailStateLocked  ThumbnailState = "locked"
 )
 
 func ParseThumbnailState(str string) (ThumbnailState, error) {
@@ -30,8 +30,8 @@ func ParseThumbnailState(str string) (ThumbnailState, error) {
 		return ThumbnailStateDefault, nil
 	case string(ThumbnailStateStale):
 		return ThumbnailStateStale, nil
-	case string(ThumbnailStateFrozen):
-		return ThumbnailStateFrozen, nil
+	case string(ThumbnailStateLocked):
+		return ThumbnailStateLocked, nil
 	}
 	return ThumbnailStateDefault, errors.New("unknown thumbnail state " + str)
 }

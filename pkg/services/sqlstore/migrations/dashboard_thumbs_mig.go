@@ -9,7 +9,7 @@ func addDashboardThumbsMigrations(mg *migrator.Migrator) {
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "dashboard_id", Type: migrator.DB_BigInt, Nullable: false},             // can join with dashboard table
 			{Name: "dashboard_version", Type: migrator.DB_Int, Nullable: false},           // screenshoted version of the dashboard
-			{Name: "state", Type: migrator.DB_NVarchar, Length: 10, Nullable: false},      // stale | frozen
+			{Name: "state", Type: migrator.DB_NVarchar, Length: 10, Nullable: false},      // stale | locked
 			{Name: "panel_id", Type: migrator.DB_SmallInt, Nullable: false, Default: "0"}, // for panel thumbnails
 			{Name: "image", Type: migrator.DB_MediumBlob, Nullable: false},                // image stored as blob. MediumBlob has a max limit of 16mb in MySQL
 			{Name: "mime_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: false}, // e.g. image/png, image/webp
