@@ -73,7 +73,7 @@ export class TimeSrv {
   checkTimeAtLoad() {
     let maxTimeRangeInMillis = 0,
       oldestFromInMillis = 0;
-    if (this.dashboard.timepicker.maxTimeRange) {
+    if (this.dashboard?.timepicker.maxTimeRange) {
       maxTimeRangeInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.maxTimeRange);
     }
     if (this.dashboard.timepicker.oldestFrom) {
