@@ -21,6 +21,7 @@ describe('DBClusterActions::', () => {
         setDeleteModalVisible={jest.fn()}
         setEditModalVisible={jest.fn()}
         setLogsModalVisible={jest.fn()}
+        setUpdateModalVisible={jest.fn()}
         getDBClusters={jest.fn()}
       />
     );
@@ -36,6 +37,7 @@ describe('DBClusterActions::', () => {
         setDeleteModalVisible={jest.fn()}
         setEditModalVisible={jest.fn()}
         setLogsModalVisible={jest.fn()}
+        setUpdateModalVisible={jest.fn()}
         getDBClusters={jest.fn()}
       />
     );
@@ -53,6 +55,7 @@ describe('DBClusterActions::', () => {
         setDeleteModalVisible={setDeleteModalVisible}
         setEditModalVisible={jest.fn()}
         setLogsModalVisible={jest.fn()}
+        setUpdateModalVisible={jest.fn()}
         getDBClusters={jest.fn()}
       />
     );
@@ -66,7 +69,7 @@ describe('DBClusterActions::', () => {
     root.update();
 
     const menu = root.find(dataTestId('dropdown-menu-menu'));
-    const action = menu.find('span').at(0);
+    const action = menu.find('span').at(1);
 
     action.simulate('click');
 
@@ -84,6 +87,7 @@ describe('DBClusterActions::', () => {
         setDeleteModalVisible={setDeleteModalVisible}
         setEditModalVisible={jest.fn()}
         setLogsModalVisible={jest.fn()}
+        setUpdateModalVisible={jest.fn()}
         getDBClusters={jest.fn()}
       />
     );
@@ -96,7 +100,7 @@ describe('DBClusterActions::', () => {
     root.update();
 
     const menu = root.find(dataTestId('dropdown-menu-menu'));
-    const action = menu.find('span').at(0);
+    const action = menu.find('span').at(1);
 
     action.simulate('click');
 
@@ -113,6 +117,7 @@ describe('DBClusterActions::', () => {
         setDeleteModalVisible={jest.fn()}
         setEditModalVisible={jest.fn()}
         setLogsModalVisible={jest.fn()}
+        setUpdateModalVisible={jest.fn()}
         getDBClusters={getDBClusters}
       />
     );
