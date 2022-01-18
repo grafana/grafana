@@ -88,7 +88,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	// but never specify any. This should return an error.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			AlertmanagersChoice: apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers),
+			AlertmanagersChoice: apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String()),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -107,7 +107,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	{
 		ac := apimodels.PostableNGalertConfig{
 			Alertmanagers:       []string{fakeAM1.URL(), fakeAM2.URL()},
-			AlertmanagersChoice: apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers),
+			AlertmanagersChoice: apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String()),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)

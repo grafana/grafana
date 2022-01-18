@@ -2,17 +2,24 @@ package models
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"net/url"
 )
 
-type AlertmanagersChoice string
+type AlertmanagersChoice int
 
 const (
-	AllAlertmanagers      AlertmanagersChoice = "all"
-	InternalAlertmanager  AlertmanagersChoice = "internal"
-	ExternalAlertmanagers AlertmanagersChoice = "external"
+	AllAlertmanagers AlertmanagersChoice = iota
+	InternalAlertmanager
+	ExternalAlertmanagers
 )
+
+var alertmanagersChoiceMap = map[AlertmanagersChoice]string{
+	AllAlertmanagers:      "all",
+	InternalAlertmanager:  "internal",
+	ExternalAlertmanagers: "external",
+}
 
 // AdminConfiguration represents the ngalert administration configuration settings.
 type AdminConfiguration struct {
@@ -46,6 +53,16 @@ func (ac *AdminConfiguration) Validate() error {
 	return nil
 }
 
-func (amc AlertmanagersChoice) IsValid() bool {
-	return amc == AllAlertmanagers || amc == InternalAlertmanager || amc == ExternalAlertmanagers
+// Implements the Stringer interface
+func (amc AlertmanagersChoice) String() string {
+	return alertmanagersChoiceMap[amc]
+}
+
+func StringToAlertmanagersChoice(str string) (AlertmanagersChoice, error) {
+	for k, v := range alertmanagersChoiceMap {
+		if str == v {
+			return k, nil
+		}
+	}
+	return 0, errors.New("invalid alertmanager choice")
 }

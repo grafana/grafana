@@ -56,7 +56,7 @@ func (srv AdminSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respons
 
 	resp := apimodels.GettableNGalertConfig{
 		Alertmanagers:       cfg.Alertmanagers,
-		AlertmanagersChoice: apimodels.AlertmanagersChoice(cfg.SendAlertsTo),
+		AlertmanagersChoice: apimodels.AlertmanagersChoice(cfg.SendAlertsTo.String()),
 	}
 	return response.JSON(http.StatusOK, resp)
 }
@@ -66,8 +66,8 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 		return accessForbiddenResp()
 	}
 
-	sendAlertsTo := ngmodels.AlertmanagersChoice(body.AlertmanagersChoice)
-	if !sendAlertsTo.IsValid() {
+	sendAlertsTo, err := ngmodels.StringToAlertmanagersChoice(string(body.AlertmanagersChoice))
+	if err != nil {
 		return response.Error(400, "Invalid alertmanager choice specified", nil)
 	}
 
