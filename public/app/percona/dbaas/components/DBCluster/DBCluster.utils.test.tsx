@@ -6,19 +6,12 @@ import {
   getResourcesDifference,
   getExpectedResourcesDifference,
   getResourcesSum,
+  formatDBClusterVersion,
+  formatDBClusterVersionWithBuild,
 } from './DBCluster.utils';
 import { dbClustersStub, resourcesA, resourcesB, resourcesC } from './__mocks__/dbClustersStubs';
 import { DBClusterExpectedResources, DBClusterStatus, ResourcesUnits, ResourcesWithUnits } from './DBCluster.types';
-
-const DBCLUSTER_STATUS_MAP = {
-  [DBClusterStatus.invalid]: 'XTRA_DB_CLUSTER_STATE_INVALID',
-  [DBClusterStatus.changing]: 'XTRA_DB_CLUSTER_STATE_CHANGING',
-  [DBClusterStatus.ready]: 'XTRA_DB_CLUSTER_STATE_READY',
-  [DBClusterStatus.failed]: 'XTRA_DB_CLUSTER_STATE_FAILED',
-  [DBClusterStatus.deleting]: 'XTRA_DB_CLUSTER_STATE_DELETING',
-  [DBClusterStatus.suspended]: 'XTRA_DB_CLUSTER_STATE_PAUSED',
-  [DBClusterStatus.unknown]: 'XTRA_DB_CLUSTER_STATE_UNKNOWN',
-};
+import { DBCLUSTER_STATUS_MAP } from './XtraDB.service';
 
 describe('DBCluster.utils::', () => {
   it('returns true if cluster is changing', () => {
@@ -179,5 +172,15 @@ describe('DBCluster.utils::', () => {
     expect(getResourcesSum(resourcesA, resourcesB)).toEqual<ResourcesWithUnits>(resultB);
     expect(getResourcesSum(resourcesB, resourcesA)).toEqual<ResourcesWithUnits>(resultB);
     expect(getResourcesSum(resourcesB, resourcesC)).toBeNull();
+  });
+  it('formats version correctly', () => {
+    expect(formatDBClusterVersion('percona/percona-xtradb-cluster:8.0.22-13.1')).toBe('8.0.22');
+    expect(formatDBClusterVersion('percona/percona-xtradb-cluster:5.6.2')).toBe('5.6.2');
+    expect(formatDBClusterVersion(undefined)).toBe('');
+  });
+  it('formats version correctly with build number', () => {
+    expect(formatDBClusterVersionWithBuild('percona/percona-xtradb-cluster:8.0.22-13.1')).toBe('8.0.22-13.1');
+    expect(formatDBClusterVersionWithBuild('percona/percona-xtradb-cluster:5.6.2')).toBe('5.6.2');
+    expect(formatDBClusterVersionWithBuild(undefined)).toBe('');
   });
 });

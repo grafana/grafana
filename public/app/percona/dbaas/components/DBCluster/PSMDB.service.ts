@@ -27,13 +27,14 @@ import {
 import { getComponentChange } from './DBCluster.service.utils';
 import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
-const DBCLUSTER_STATUS_MAP = {
+export const DBCLUSTER_STATUS_MAP = {
   [DBClusterStatus.invalid]: 'PSMDB_CLUSTER_STATE_INVALID',
   [DBClusterStatus.changing]: 'PSMDB_CLUSTER_STATE_CHANGING',
   [DBClusterStatus.ready]: 'PSMDB_CLUSTER_STATE_READY',
   [DBClusterStatus.failed]: 'PSMDB_CLUSTER_STATE_FAILED',
   [DBClusterStatus.deleting]: 'PSMDB_CLUSTER_STATE_DELETING',
   [DBClusterStatus.suspended]: 'PSMDB_CLUSTER_STATE_PAUSED',
+  [DBClusterStatus.upgrading]: 'PSMDB_CLUSTER_STATE_UPGRADING',
   [DBClusterStatus.unknown]: 'PSMDB_CLUSTER_STATE_UNKNOWN',
 };
 
@@ -135,6 +136,8 @@ export class PSMDBService extends DBClusterService {
       finishedSteps: dbCluster.operation?.finished_steps || 0,
       totalSteps: dbCluster.operation?.total_steps || 0,
       expose: dbCluster.exposed,
+      installedImage: dbCluster.installed_image,
+      availableImage: dbCluster.available_image,
     };
   }
 }

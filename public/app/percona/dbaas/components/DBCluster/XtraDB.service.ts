@@ -27,13 +27,14 @@ import {
 import { getComponentChange } from './DBCluster.service.utils';
 import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
-const DBCLUSTER_STATUS_MAP = {
+export const DBCLUSTER_STATUS_MAP = {
   [DBClusterStatus.invalid]: 'XTRA_DB_CLUSTER_STATE_INVALID',
   [DBClusterStatus.changing]: 'XTRA_DB_CLUSTER_STATE_CHANGING',
   [DBClusterStatus.ready]: 'XTRA_DB_CLUSTER_STATE_READY',
   [DBClusterStatus.failed]: 'XTRA_DB_CLUSTER_STATE_FAILED',
   [DBClusterStatus.deleting]: 'XTRA_DB_CLUSTER_STATE_DELETING',
   [DBClusterStatus.suspended]: 'XTRA_DB_CLUSTER_STATE_PAUSED',
+  [DBClusterStatus.upgrading]: 'XTRA_DB_CLUSTER_STATE_UPGRADING',
   [DBClusterStatus.unknown]: 'XTRA_DB_CLUSTER_STATE_UNKNOWN',
 };
 
@@ -136,6 +137,8 @@ export class XtraDBService extends DBClusterService {
       finishedSteps: dbCluster.operation?.finished_steps || 0,
       totalSteps: dbCluster.operation?.total_steps || 0,
       expose: dbCluster.exposed,
+      installedImage: dbCluster.installed_image,
+      availableImage: dbCluster.available_image,
     };
   }
 }

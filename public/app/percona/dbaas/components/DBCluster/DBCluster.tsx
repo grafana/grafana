@@ -21,6 +21,7 @@ import {
 } from './ColumnRenderers/ColumnRenderers';
 import { DeleteDBClusterModal } from './DeleteDBClusterModal/DeleteDBClusterModal';
 import { logger } from '@percona/platform-core';
+import { UpdateDBClusterModal } from './UpdateDBClusterModal/UpdateDBClusterModal';
 
 export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
   const styles = useStyles(getStyles);
@@ -28,6 +29,7 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [logsModalVisible, setLogsModalVisible] = useState(false);
+  const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<Cluster>();
   const [dbClusters, getDBClusters, setLoading, loading] = useDBClusters(kubernetes);
   const [settings, setSettings] = useState<Settings>();
@@ -65,6 +67,7 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
           setDeleteModalVisible,
           setEditModalVisible,
           setLogsModalVisible,
+          setUpdateModalVisible,
           getDBClusters,
         }),
       },
@@ -102,10 +105,10 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
   }, []);
 
   useEffect(() => {
-    if (!deleteModalVisible && !editModalVisible && !logsModalVisible) {
+    if (!deleteModalVisible && !editModalVisible && !logsModalVisible && !updateModalVisible) {
       setSelectedCluster(undefined);
     }
-  }, [deleteModalVisible, editModalVisible, logsModalVisible]);
+  }, [deleteModalVisible, editModalVisible, logsModalVisible, updateModalVisible]);
 
   return (
     <div>
@@ -136,6 +139,15 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
       )}
       {logsModalVisible && (
         <DBClusterLogsModal isVisible={logsModalVisible} setVisible={setLogsModalVisible} dbCluster={selectedCluster} />
+      )}
+      {selectedCluster && updateModalVisible && (
+        <UpdateDBClusterModal
+          dbCluster={selectedCluster}
+          isVisible={updateModalVisible}
+          setVisible={setUpdateModalVisible}
+          setLoading={setLoading}
+          onUpdateFinished={getDBClusters}
+        />
       )}
       <Table
         columns={columns}

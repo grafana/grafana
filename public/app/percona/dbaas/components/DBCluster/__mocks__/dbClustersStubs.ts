@@ -24,6 +24,8 @@ export const dbClustersStub: DBCluster[] = [
     finishedSteps: 5,
     totalSteps: 10,
     expose: true,
+    installedImage: 'percona/percona-xtra-dbcluster:5.6',
+    availableImage: 'percona/percona-xtra-dbcluster:8.0',
   },
   {
     kubernetesClusterName: 'Kubernetes Cluster 2',
@@ -36,6 +38,7 @@ export const dbClustersStub: DBCluster[] = [
     finishedSteps: 7,
     totalSteps: 7,
     expose: false,
+    installedImage: 'percona/percona-xtra-dbcluster:8.0',
   },
   {
     kubernetesClusterName: 'Kubernetes Cluster 1',

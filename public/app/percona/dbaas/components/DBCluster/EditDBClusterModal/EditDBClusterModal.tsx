@@ -31,6 +31,7 @@ export const EditDBClusterModal: FC<EditDBClusterModalProps> = ({
       const dbClusterService = newDBClusterService(selectedCluster.databaseType);
 
       await dbClusterService.updateDBCluster({
+        databaseImage: selectedCluster.installedImage,
         databaseType: selectedCluster.databaseType,
         clusterName: selectedCluster.clusterName,
         kubernetesClusterName: selectedCluster.kubernetesClusterName,

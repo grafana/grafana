@@ -5,6 +5,7 @@ import { DATABASE_LABELS } from 'app/percona/shared/core';
 import { DBCluster } from './DBCluster';
 import { kubernetesStub } from '../Kubernetes/__mocks__/kubernetesStubs';
 import { dbClustersStub } from './__mocks__/dbClustersStubs';
+import { formatDBClusterVersion } from './DBCluster.utils';
 
 jest.mock('app/core/app_events');
 jest.mock('./DBCluster.hooks');
@@ -31,8 +32,14 @@ describe('DBCluster::', () => {
   it('renders database types correctly', () => {
     const root = mount(<DBCluster kubernetes={kubernetesStub} />);
 
-    expect(root.find('td').at(1).text()).toEqual(DATABASE_LABELS[dbClustersStub[0].databaseType]);
-    expect(root.find('td').at(7).text()).toEqual(DATABASE_LABELS[dbClustersStub[1].databaseType]);
-    expect(root.find('td').at(13).text()).toEqual(DATABASE_LABELS[dbClustersStub[2].databaseType]);
+    expect(root.find('td').at(1).text()).toEqual(
+      `${DATABASE_LABELS[dbClustersStub[0].databaseType]} ${formatDBClusterVersion(dbClustersStub[0].installedImage)}`
+    );
+    expect(root.find('td').at(7).text()).toEqual(
+      `${DATABASE_LABELS[dbClustersStub[1].databaseType]} ${formatDBClusterVersion(dbClustersStub[1].installedImage)}`
+    );
+    expect(root.find('td').at(13).text()).toEqual(
+      `${DATABASE_LABELS[dbClustersStub[2].databaseType]} ${formatDBClusterVersion(dbClustersStub[2].installedImage)}`
+    );
   });
 });

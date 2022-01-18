@@ -18,4 +18,8 @@ export class PSMDBService {
   getComponents() {
     return Promise.resolve(psmdbComponentsVersionsStubs);
   }
+
+  updateDBCluster() {
+    return Promise.resolve();
+  }
 }
