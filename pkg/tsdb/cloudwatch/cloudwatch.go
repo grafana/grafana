@@ -61,7 +61,7 @@ const pluginID = "cloudwatch"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func ProvideService(cfg *setting.Cfg, logsService *LogsService, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*CloudWatchService, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*CloudWatchService, error) {
 	plog.Debug("initing")
 
 	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache())

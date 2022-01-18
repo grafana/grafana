@@ -116,7 +116,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.Loader), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
 	cloudwatch.ProvideService,
-	cloudwatch.ProvideLogsService,
 	cloudmonitoring.ProvideService,
 	azuremonitor.ProvideService,
 	postgres.ProvideService,
