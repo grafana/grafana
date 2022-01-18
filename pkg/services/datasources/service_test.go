@@ -81,7 +81,7 @@ func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *mode
 	return models.ErrDataSourceNotFound
 }
 
-func TestService_DatasourceNameScopeResolver(t *testing.T) {
+func TestService_NameScopeResolver(t *testing.T) {
 	type testCaseResolver struct {
 		desc    string
 		given   string
@@ -94,6 +94,12 @@ func TestService_DatasourceNameScopeResolver(t *testing.T) {
 			desc:    "correct",
 			given:   "datasources:name:test-datasource",
 			want:    "datasources:id:1",
+			wantErr: nil,
+		},
+		{
+			desc:    "correct",
+			given:   "datasources:name:*",
+			want:    "datasources:id:*",
 			wantErr: nil,
 		},
 		{
@@ -111,7 +117,7 @@ func TestService_DatasourceNameScopeResolver(t *testing.T) {
 	}
 
 	testDataSource := &models.DataSource{Id: 1, Name: "test-datasource"}
-	prefix, resolver := NewDatasourceNameScopeResolver(&dataSourceMockRetriever{testDataSource})
+	prefix, resolver := NewNameScopeResolver(&dataSourceMockRetriever{testDataSource})
 	require.Equal(t, "datasources:name:", prefix)
 
 	for _, tc := range testCases {
