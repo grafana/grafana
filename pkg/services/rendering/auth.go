@@ -53,7 +53,7 @@ func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context
 		return "", err
 	}
 
-	return key, err
+	return key, nil
 }
 
 type longLivedRenderKeyProvider struct {
