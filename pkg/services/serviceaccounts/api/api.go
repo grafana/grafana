@@ -89,6 +89,16 @@ func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) re
 	}
 }
 
+func (api *ServiceAccountsAPI) ConvertServiceAccounts(ctx *models.ReqContext) response.Response {
+	// TODO: how to get the keyIds from post request?
+	keyIds := []int64{1, 2, 3}
+	if err := api.store.ConvertServiceAccounts(ctx.Req.Context(), keyIds); err == nil {
+		return response.Success("service accounts converted")
+	} else {
+		return response.Error(500, "Internal server error", err)
+	}
+}
+
 func (api *ServiceAccountsAPI) ListServiceAccounts(ctx *models.ReqContext) response.Response {
 	serviceAccounts, err := api.store.ListServiceAccounts(ctx.Req.Context(), ctx.OrgId)
 	if err != nil {

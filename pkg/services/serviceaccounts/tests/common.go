@@ -60,6 +60,7 @@ type Calls struct {
 	ListServiceAccounts    []interface{}
 	DeleteServiceAccount   []interface{}
 	UpgradeServiceAccounts []interface{}
+	ConvertServiceAccounts []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
@@ -80,6 +81,11 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 
 func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
 	s.Calls.DeleteServiceAccount = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
+	return nil
+}
+
+func (s *ServiceAccountsStoreMock) ConvertServiceAccounts(ctx context.Context, keys []int64) error {
+	s.Calls.ConvertServiceAccounts = append(s.Calls.ConvertServiceAccounts, []interface{}{ctx})
 	return nil
 }
 
