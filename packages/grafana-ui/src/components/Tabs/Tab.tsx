@@ -8,6 +8,7 @@ import { IconName } from '../../types';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { Counter } from './Counter';
 import { getFocusStyles } from '../../themes/mixins';
+import { ProBadge } from '../Badge/ProBadge';
 
 export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   label: string;
@@ -18,7 +19,7 @@ export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
-  suffix?: () => JSX.Element;
+  suffix?: string;
 }
 
 export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
@@ -30,7 +31,7 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
         {icon && <Icon name={icon} />}
         {label}
         {typeof counter === 'number' && <Counter value={counter} />}
-        {suffix && suffix()}
+        {suffix && <ProBadge text={suffix} className={tabsStyles.suffix} />}
       </>
     );
 
@@ -115,6 +116,9 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
         bottom: 0px;
         background-image: ${theme.colors.gradients.brandHorizontal} !important;
       }
+    `,
+    suffix: css`
+      margin-left: ${theme.spacing(1)};
     `,
   };
 });

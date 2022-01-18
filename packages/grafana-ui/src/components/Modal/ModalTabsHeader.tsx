@@ -8,7 +8,7 @@ interface ModalTab {
   value: string;
   label: string;
   icon?: IconName;
-  labelSuffix?: () => JSX.Element;
+  labelSuffix?: string;
 }
 
 interface Props {

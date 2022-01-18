@@ -48,36 +48,57 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     });
   }
 
+  const dsPermissions = {
+    active: false,
+    icon: 'lock',
+    id: `datasource-permissions-${dataSource.id}`,
+    text: 'Permissions',
+    url: `datasources/edit/${dataSource.id}/permissions`,
+  };
+
   if (featureEnabled('dspermissions')) {
     if (contextSrv.hasPermission(AccessControlAction.DataSourcesPermissionsRead)) {
-      navModel.children!.push({
-        active: false,
-        icon: 'lock',
-        id: `datasource-permissions-${dataSource.id}`,
-        text: 'Permissions',
-        url: `datasources/edit/${dataSource.id}/permissions`,
-      });
+      navModel.children!.push(dsPermissions);
     }
-  }
-
-  if (featureEnabled('analytics')) {
+  } else if (config.featureHighlights.enabled) {
     navModel.children!.push({
-      active: false,
-      icon: 'info-circle',
-      id: `datasource-insights-${dataSource.id}`,
-      text: 'Insights',
-      url: `datasources/edit/${dataSource.id}/insights`,
+      ...dsPermissions,
+      suffix: 'PRO',
     });
   }
 
-  if (featureEnabled('caching')) {
+  const analytics = {
+    active: false,
+    icon: 'info-circle',
+    id: `datasource-insights-${dataSource.id}`,
+    text: 'Insights',
+    url: `datasources/edit/${dataSource.id}/insights`,
+  };
+
+  if (featureEnabled('analytics')) {
+    navModel.children!.push(analytics);
+  } else if (config.featureHighlights.enabled) {
     navModel.children!.push({
-      active: false,
-      icon: 'database',
-      id: `datasource-cache-${dataSource.uid}`,
-      text: 'Cache',
-      url: `datasources/edit/${dataSource.uid}/cache`,
-      hideFromTabs: !pluginMeta.isBackend || !config.caching.enabled,
+      ...analytics,
+      suffix: 'PRO',
+    });
+  }
+
+  const caching = {
+    active: false,
+    icon: 'database',
+    id: `datasource-cache-${dataSource.uid}`,
+    text: 'Cache',
+    url: `datasources/edit/${dataSource.uid}/cache`,
+    hideFromTabs: !pluginMeta.isBackend || !config.caching.enabled,
+  };
+
+  if (featureEnabled('caching')) {
+    navModel.children!.push(caching);
+  } else if (config.featureHighlights.enabled) {
+    navModel.children!.push({
+      ...caching,
+      suffix: 'PRO',
     });
   }
 
