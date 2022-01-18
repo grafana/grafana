@@ -173,7 +173,7 @@ func (r *simpleCrawler) Status() (crawlStatus, error) {
 
 func (r *simpleCrawler) walk() {
 	for {
-		if r.status.State == "stopping" {
+		if r.status.State != "running" {
 			break
 		}
 
