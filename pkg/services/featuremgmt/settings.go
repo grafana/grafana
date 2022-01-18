@@ -8,10 +8,10 @@ import (
 
 type configBody struct {
 	// define variables that can be used in expressions
-	Vars map[string]interface{} `toml:"vars"`
+	Vars map[string]interface{} `yaml:"vars"`
 
 	// Define and override feature flag properties
-	Flags []FeatureFlag `toml:"flags"`
+	Flags []FeatureFlag `yaml:"flags"`
 
 	// keep track of where the fie was loaded from
 	filename string
