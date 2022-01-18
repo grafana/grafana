@@ -67,7 +67,6 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 
 			require.Equal(t, tc.expStatus, sc.resp.Code)
 			require.Equal(t, tc.expLocation, sc.resp.Header().Get("Location"))
-
 		})
 	}
 
