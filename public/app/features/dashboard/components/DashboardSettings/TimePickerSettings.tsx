@@ -127,7 +127,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
         </Field>
         <Field
            label="Oldest 'From' now -"
-           description="Limit how far back the start of the time range can go from now. The supported units are y(years), M(months), w(weeks), d(days), h(hours), m(minutes), s(seconds)."
+           description="Prevents the user from selecting a time range starting further back in the past than the specified interval."
         >
           <Input
             invalid={!this.state.isOldestFromValid}
