@@ -49,7 +49,7 @@ const getIconStyles = (theme: GrafanaTheme2) => {
         position: absolute;
         top: 50%;
         right: 100%;
-        margin-top: -12px;
+        transform: translateY(-50%);
         width: 7px;
         height: 24px;
         overflow: hidden;
