@@ -201,7 +201,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -210,7 +210,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -219,7 +219,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -228,7 +228,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-various-suite
 - commands:
   - yarn storybook:build
@@ -608,7 +608,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -617,7 +617,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -626,7 +626,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -635,7 +635,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-various-suite
 - commands:
   - yarn storybook:build
@@ -1164,7 +1164,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -1173,7 +1173,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -1182,7 +1182,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -1191,7 +1191,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-various-suite
 - commands:
   - yarn storybook:build
@@ -1735,7 +1735,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -1744,7 +1744,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -1753,7 +1753,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -1762,7 +1762,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-various-suite
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
@@ -2382,7 +2382,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -2391,7 +2391,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -2400,7 +2400,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -2409,7 +2409,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-various-suite
 - commands:
   - yarn storybook:build
@@ -2909,7 +2909,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -2918,7 +2918,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -2927,7 +2927,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -2936,7 +2936,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-various-suite
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
@@ -3645,7 +3645,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -3654,7 +3654,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -3663,7 +3663,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -3672,7 +3672,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-various-suite
 - commands:
   - yarn storybook:build
@@ -4144,7 +4144,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -4153,7 +4153,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -4162,7 +4162,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -4171,7 +4171,7 @@ steps:
   - package
   environment:
     HOST: end-to-end-tests-server
-  image: cypress/included:8.4.1
+  image: cypress/included:7.5.0
   name: end-to-end-tests-various-suite
 - commands:
   - yarn storybook:build
@@ -4674,6 +4674,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: e7717bb67d7a1823b7ca6aafb7701048785495c411ae6b3b10450ad439fbcec5
+hmac: 730946ad675778d5bd3d10a9088e94877b76830a393c28606f2e93a318077963
 
 ...
