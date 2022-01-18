@@ -1,15 +1,20 @@
-import React from 'react';
-import { css } from '@emotion/css';
+import React, { HTMLAttributes } from 'react';
+import { css, cx } from '@emotion/css';
 import { useStyles2 } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
 
-export interface Props {
+export interface Props extends HTMLAttributes<HTMLSpanElement> {
   text?: string;
 }
-export const ProBadge = ({ text = 'PRO' }: Props) => {
+
+export const ProBadge = ({ text = 'PRO', className, ...htmlProps }: Props) => {
   const styles = useStyles2(getStyles);
 
-  return <span className={styles.badge}>{text}</span>;
+  return (
+    <span className={cx(styles.badge, className)} {...htmlProps}>
+      {text}
+    </span>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
