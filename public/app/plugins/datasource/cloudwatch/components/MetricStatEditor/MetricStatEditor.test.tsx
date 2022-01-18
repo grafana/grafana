@@ -163,8 +163,6 @@ describe('MetricStatEditor', () => {
       expect(onChange.mock.calls).toEqual([[{ ...props.query, metricName: '', namespace: 'n1' }]]);
     });
 
-    // Todo test re-render or at least prop metricName='' -> select value = null
-
     it('should not remove metricName from query if it does exist in new namespace', async () => {
       const onChange = jest.fn();
 
