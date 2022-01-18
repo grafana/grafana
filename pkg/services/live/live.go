@@ -165,14 +165,14 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		if _, err := cmd.Result(); err != nil {
 			return nil, fmt.Errorf("error pinging Redis: %v", err)
 		}
-		if g.Cfg.FeatureToggles["live-ha-leader"] {
+		if g.Cfg.FeatureToggles["live-channel-leader"] {
 			// Channel leadership mechanism allows using Grafana Live and make
 			// sure that only one stream open for a certain channel throughout
-			// all Grafana nodes. This is achieved by keeping channel leadership
-			// information in Redis and passing subscription control to the channel
-			// leader node.
+			// all Grafana nodes in HA setup. This is achieved by keeping channel
+			// leadership information in Redis and passing subscription control to
+			// the current channel leader Grafana node.
 			logger.Debug("Live HA channel leader mode ON")
-			leaderManager = leader.NewRedisManager(redisClient)
+			leaderManager = leader.NewRedisManager("gf_leader.live.", redisClient)
 			g.leaderManager = leaderManager
 		}
 		managedStreamRunner = managedstream.NewRunner(

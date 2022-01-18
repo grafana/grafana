@@ -16,6 +16,7 @@ type Manager interface {
 }
 
 type RedisManager struct {
+	prefix            string
 	redisClient       *redis.Client
 	getOrCreateScript *redis.Script
 	refreshScript     *redis.Script
@@ -56,16 +57,21 @@ end
 return 0
 `
 
-func NewRedisManager(redisClient *redis.Client) *RedisManager {
+func NewRedisManager(prefix string, redisClient *redis.Client) *RedisManager {
 	return &RedisManager{
+		prefix:            prefix,
 		redisClient:       redisClient,
 		getOrCreateScript: redis.NewScript(getOrCreateScriptSource),
 		refreshScript:     redis.NewScript(refreshLeaderScriptSource),
 	}
 }
 
+func (m *RedisManager) getPrefixedChannel(ch string) string {
+	return m.prefix + ch
+}
+
 func (m *RedisManager) GetOrCreateLeader(ctx context.Context, ch string, currentNodeID string, newLeadershipID string) (string, string, error) {
-	result, err := m.getOrCreateScript.Eval(ctx, m.redisClient, []string{ch}, LeadershipEntryTTLSeconds, currentNodeID, newLeadershipID).StringSlice()
+	result, err := m.getOrCreateScript.Eval(ctx, m.redisClient, []string{m.getPrefixedChannel(ch)}, LeadershipEntryTTLSeconds, currentNodeID, newLeadershipID).StringSlice()
 	if err != nil {
 		return "", "", err
 	}
@@ -76,7 +82,7 @@ func (m *RedisManager) GetOrCreateLeader(ctx context.Context, ch string, current
 }
 
 func (m *RedisManager) GetLeader(ctx context.Context, ch string) (bool, string, string, error) {
-	result, err := m.redisClient.HMGet(ctx, ch, "n", "l").Result()
+	result, err := m.redisClient.HMGet(ctx, m.getPrefixedChannel(ch), "n", "l").Result()
 	if err != nil {
 		return false, "", "", err
 	}
@@ -90,10 +96,10 @@ func (m *RedisManager) GetLeader(ctx context.Context, ch string) (bool, string, 
 }
 
 func (m *RedisManager) RefreshLeader(ctx context.Context, ch string, currentLeadershipID string) (bool, error) {
-	return m.refreshScript.Eval(ctx, m.redisClient, []string{ch}, LeadershipEntryTTLSeconds, currentLeadershipID).Bool()
+	return m.refreshScript.Eval(ctx, m.redisClient, []string{m.getPrefixedChannel(ch)}, LeadershipEntryTTLSeconds, currentLeadershipID).Bool()
 }
 
 func (m *RedisManager) CleanLeader(ctx context.Context, ch string) error {
-	_, err := m.redisClient.Del(ctx, ch).Result()
+	_, err := m.redisClient.Del(ctx, m.getPrefixedChannel(ch)).Result()
 	return err
 }

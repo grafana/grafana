@@ -15,7 +15,7 @@ func TestRedisCacheStorage(t *testing.T) {
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: "localhost:6379",
 	})
-	m := NewRedisManager(redisClient)
+	m := NewRedisManager("", redisClient)
 	require.NotNil(t, m)
 
 	ctx := context.Background()

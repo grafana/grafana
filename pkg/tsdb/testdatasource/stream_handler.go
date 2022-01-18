@@ -81,7 +81,7 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 		}
 	case random20HzStreamRegex.MatchString(request.Path):
 		conf = testStreamConfig{
-			Interval: 500 * time.Millisecond,
+			Interval: 50 * time.Millisecond,
 		}
 	default:
 		return fmt.Errorf("testdata plugin does not support path: %s", request.Path)
