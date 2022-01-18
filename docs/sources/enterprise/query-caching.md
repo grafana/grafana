@@ -75,7 +75,7 @@ To disable query caching for an entire Grafana instance, set the `enabled` flag 
 
 If you experience performance issues or repeated queries become slower to execute, consider clearing your cache.
 
-> This action impacts all cache-enabled data sources. If you are using Memcached, the system clears all data from the Memcached instance.
+> **Note:** This action impacts all cache-enabled data sources. If you are using Memcached, the system clears all data from the Memcached instance.
 
 **To clear the cache**:
 
