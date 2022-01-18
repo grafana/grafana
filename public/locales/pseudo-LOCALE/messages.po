@@ -1,11 +1,11 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2021-11-16 17:00+0000\n"
+"POT-Creation-Date: 2022-01-10 10:42+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
-"Language: en\n"
+"Language: pseudo-LOCALE\n"
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: \n"
@@ -16,115 +16,115 @@ msgstr ""
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "common.save"
-msgstr "Save"
+msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"
-msgstr "Timezone"
+msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.fields.home-dashboard-label"
-msgstr "Home Dashboard"
+msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.fields.home-dashboard-placeholder"
-msgstr "Choose default dashboard"
+msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.fields.home-dashboard-tooltip"
-msgstr "Not finding the dashboard you want? Star it first, then it should appear in this select box."
+msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.fields.theme-label"
-msgstr "UI Theme"
+msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.fields.week-start-label"
-msgstr "Week start"
+msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.theme.dark-label"
-msgstr "Dark"
+msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.theme.default-label"
-msgstr "Default"
+msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.theme.light-label"
-msgstr "Light"
+msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.title"
-msgstr "Preferences"
+msgstr ""
 
 #: public/app/features/profile/UserOrganizations.tsx
 msgid "user-orgs.current-org-button"
-msgstr "Current"
+msgstr ""
 
 #: public/app/features/profile/UserOrganizations.tsx
 msgid "user-orgs.name-column"
-msgstr "Name"
+msgstr ""
 
 #: public/app/features/profile/UserOrganizations.tsx
 msgid "user-orgs.role-column"
-msgstr "Role"
+msgstr ""
 
 #: public/app/features/profile/UserOrganizations.tsx
 msgid "user-orgs.select-org-button"
-msgstr "Select"
+msgstr ""
 
 #: public/app/features/profile/UserOrganizations.tsx
 msgid "user-orgs.title"
-msgstr "Organizations"
+msgstr ""
 
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "user-profile.fields.email-error"
-msgstr "Email is required"
+msgstr ""
 
 #: public/app/features/profile/UserProfileEditForm.tsx
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "user-profile.fields.email-label"
-msgstr "Email"
+msgstr ""
 
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "user-profile.fields.name-error"
-msgstr "Name is required"
+msgstr ""
 
 #: public/app/features/profile/UserProfileEditForm.tsx
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "user-profile.fields.name-label"
-msgstr "Name"
+msgstr ""
 
 #: public/app/features/profile/UserProfileEditForm.tsx
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "user-profile.fields.username-label"
-msgstr "Username"
+msgstr ""
 
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "user-profile.title"
-msgstr "Edit profile"
+msgstr ""
 
 #: public/app/features/profile/UserSessions.tsx
 msgid "user-session.browser-column"
-msgstr "Browser & OS"
+msgstr ""
 
 #: public/app/features/profile/UserSessions.tsx
 msgid "user-session.created-at-column"
-msgstr "Logged on"
+msgstr ""
 
 #: public/app/features/profile/UserSessions.tsx
 msgid "user-session.ip-column"
-msgstr "IP address"
+msgstr ""
 
 #: public/app/features/profile/UserSessions.tsx
 msgid "user-session.revoke"
-msgstr "Revoke user session"
+msgstr ""
 
 #: public/app/features/profile/UserSessions.tsx
 msgid "user-session.seen-at-column"
-msgstr "Last seen"
+msgstr ""
 
 #: public/app/features/profile/UserSessions.tsx
 msgid "user-sessions.loading"
-msgstr "Loading sessions..."
+msgstr ""

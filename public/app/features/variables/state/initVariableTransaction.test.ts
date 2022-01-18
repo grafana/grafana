@@ -15,7 +15,6 @@ import { toVariablePayload } from './types';
 import { adHocBuilder, constantBuilder, datasourceBuilder, queryBuilder } from '../shared/testing/builders';
 import { cleanEditorState, initialVariableEditorState } from '../editor/reducer';
 import {
-  TransactionStatus,
   variablesClearTransaction,
   variablesCompleteTransaction,
   variablesInitTransaction,
@@ -26,7 +25,7 @@ import { createAdHocVariableAdapter } from '../adhoc/adapter';
 import { createDataSourceVariableAdapter } from '../datasource/adapter';
 import { DataSourceRef, LoadingState } from '@grafana/data/src';
 import { setDataSourceSrv } from '@grafana/runtime/src';
-import { VariableModel } from '../types';
+import { TransactionStatus, VariableModel } from '../types';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
 import { setVariableQueryRunner } from '../query/VariableQueryRunner';
 import { createDataSourceOptions } from '../datasource/reducer';
