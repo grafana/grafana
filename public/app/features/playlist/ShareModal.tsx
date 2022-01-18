@@ -3,7 +3,7 @@ import { AppEvents, SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data'
 import { Checkbox, ClipboardButton, Field, FieldSet, Icon, Input, Modal, RadioButtonGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { buildBaseUrl } from '../dashboard/components/ShareModal/utils';
-import { PlaylistModes } from './types';
+import { PlaylistMode } from './types';
 
 interface ShareModalProps {
   playlistId: number;
@@ -11,10 +11,10 @@ interface ShareModalProps {
 }
 
 export const ShareModal = ({ playlistId, onDismiss }: ShareModalProps) => {
-  const [mode, setMode] = useState<PlaylistModes>(false);
+  const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
 
-  const modes: Array<SelectableValue<PlaylistModes>> = [
+  const modes: Array<SelectableValue<PlaylistMode>> = [
     { label: 'Normal', value: false },
     { label: 'TV', value: 'tv' },
     { label: 'Kiosk', value: true },

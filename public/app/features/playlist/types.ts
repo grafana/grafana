@@ -4,7 +4,7 @@ export interface PlaylistDTO {
   startUrl?: string;
 }
 
-export type PlaylistModes = boolean | 'tv';
+export type PlaylistMode = boolean | 'tv';
 
 export interface PlayListItemDTO {
   id: number;

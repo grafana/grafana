@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { SelectableValue, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { PlaylistDTO, PlaylistModes } from './types';
+import { PlaylistDTO, PlaylistMode } from './types';
 import { Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup } from '@grafana/ui';
 
 export interface StartModalProps {
@@ -10,10 +10,10 @@ export interface StartModalProps {
 }
 
 export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
-  const [mode, setMode] = useState<PlaylistModes>(false);
+  const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
 
-  const modes: Array<SelectableValue<PlaylistModes>> = [
+  const modes: Array<SelectableValue<PlaylistMode>> = [
     { label: 'Normal', value: false },
     { label: 'TV', value: 'tv' },
     { label: 'Kiosk', value: true },
