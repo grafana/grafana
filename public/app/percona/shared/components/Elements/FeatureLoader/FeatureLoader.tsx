@@ -16,6 +16,7 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
   messagedataTestId = 'settings-link',
   children,
   onError = () => null,
+  onSettingsLoaded,
 }) => {
   const styles = useStyles(getStyles);
   const [loadingSettings, setLoadingSettings] = useState(true);
@@ -30,6 +31,7 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
       try {
         const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN, true));
         setFeatureEnabled(!!settings[featureFlag]);
+        onSettingsLoaded?.(settings);
       } catch (e) {
         if (isApiCancelError(e)) {
           return;
@@ -44,7 +46,7 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
     };
 
     getSettings();
-  }, [featureFlag, onError, generateToken]);
+  }, [featureFlag, onError, generateToken, onSettingsLoaded]);
 
   if (featureEnabled) {
     return <>{children}</>;

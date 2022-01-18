@@ -64,4 +64,17 @@ describe('FeatureLoader', () => {
 
     expect(wrapper.find(dataTestId('unauthorized')).text()).toBe(Messages.unauthorized);
   });
+
+  it('should call onSettingsLoaded', async () => {
+    const Dummy = () => <></>;
+    const onSettingsLoaded = jest.fn();
+
+    await getMount(
+      <FeatureLoader featureName="IA" featureFlag="alertingEnabled" onSettingsLoaded={onSettingsLoaded}>
+        <Dummy />
+      </FeatureLoader>
+    );
+
+    expect(onSettingsLoaded).toHaveBeenCalled();
+  });
 });

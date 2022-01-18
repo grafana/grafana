@@ -6,4 +6,5 @@ export interface FeatureLoaderProps {
   featureFlag: keyof Settings;
   messagedataTestId?: string;
   onError?: (error: AxiosError) => void;
+  onSettingsLoaded?: (settings: Settings) => void;
 }
