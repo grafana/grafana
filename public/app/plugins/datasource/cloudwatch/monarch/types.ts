@@ -78,9 +78,19 @@ export interface Editor {
 
 export interface Range {
   containsPosition: (range: monacoTypes.IRange, position: monacoTypes.IPosition) => boolean;
+  fromPositions: (start: monacoTypes.IPosition, end?: monacoTypes.IPosition) => monacoTypes.Range;
 }
 
+export interface Languages {
+  CompletionItemInsertTextRule: {
+    InsertAsSnippet: 4;
+  };
+  CompletionItemKind: {
+    Function: 1;
+  };
+}
 export interface Monaco {
   editor: Editor;
   Range: Range;
+  languages: Languages;
 }

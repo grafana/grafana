@@ -32,6 +32,17 @@ const MonacoMock: Monaco = {
         position.column <= range.endColumn
       );
     },
+    fromPositions: (start: monacoTypes.IPosition, end?: monacoTypes.IPosition) => {
+      return ({} as any) as monacoTypes.Range;
+    },
+  },
+  languages: {
+    CompletionItemInsertTextRule: {
+      InsertAsSnippet: 4,
+    },
+    CompletionItemKind: {
+      Function: 1,
+    },
   },
 };
 
