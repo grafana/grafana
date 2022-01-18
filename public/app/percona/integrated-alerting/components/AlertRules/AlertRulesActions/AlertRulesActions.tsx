@@ -9,11 +9,12 @@ import { AlertRulesProvider } from '../AlertRules.provider';
 import { AlertRulesService } from '../AlertRules.service';
 import { Messages } from './AlertRulesActions.messages';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
+import { createAlertRuleCopyPayload } from './AlertRulesActions.utils';
 
 export const AlertRulesActions: FC<AlertRulesActionsProps> = ({ alertRule }) => {
   const styles = useStyles(getStyles);
   const [pendingRequest, setPendingRequest] = useState(false);
-  const { rawValues, ruleId, summary, disabled } = alertRule;
+  const { ruleId, name, disabled } = alertRule;
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const { setAddModalVisible, setSelectedAlertRule, getAlertRules } = useContext(AlertRulesProvider);
 
@@ -26,7 +27,7 @@ export const AlertRulesActions: FC<AlertRulesActionsProps> = ({ alertRule }) => 
     setPendingRequest(true);
     try {
       await AlertRulesService.delete({ rule_id: ruleId });
-      appEvents.emit(AppEvents.alertSuccess, [Messages.getDeletedMessage(summary)]);
+      appEvents.emit(AppEvents.alertSuccess, [Messages.getDeletedMessage(name)]);
       getAlertRules();
     } catch (e) {
       logger.error(e);
@@ -42,20 +43,11 @@ export const AlertRulesActions: FC<AlertRulesActionsProps> = ({ alertRule }) => 
   const handleCopyClick = async () => {
     setPendingRequest(true);
 
-    const newSummary = `${Messages.copyOf} ${alertRule.summary}`;
-
-    const createAlertRulePayload = {
-      template_name: rawValues.template.name,
-      channel_ids: rawValues.channels?.map((channel) => channel.channel_id),
-      custom_labels: rawValues.custom_labels,
-      ...rawValues,
-      disabled: true,
-      summary: newSummary,
-    };
+    const newName = `${Messages.copyOf} ${alertRule.name}`;
 
     try {
-      await AlertRulesService.create(createAlertRulePayload);
-      appEvents.emit(AppEvents.alertSuccess, [Messages.getCreatedMessage(newSummary)]);
+      await AlertRulesService.create(createAlertRuleCopyPayload(alertRule));
+      appEvents.emit(AppEvents.alertSuccess, [Messages.getCreatedMessage(newName)]);
       getAlertRules();
     } catch (e) {
       logger.error(e);
@@ -72,7 +64,7 @@ export const AlertRulesActions: FC<AlertRulesActionsProps> = ({ alertRule }) => 
         disabled: disabled ? 'FALSE' : 'TRUE',
       });
       appEvents.emit(AppEvents.alertSuccess, [
-        disabled ? Messages.getEnabledMessage(summary) : Messages.getDisabledMessage(summary),
+        disabled ? Messages.getEnabledMessage(name) : Messages.getDisabledMessage(name),
       ]);
       getAlertRules();
     } catch (e) {
@@ -103,7 +95,7 @@ export const AlertRulesActions: FC<AlertRulesActionsProps> = ({ alertRule }) => 
       <DeleteModal
         data-testid="alert-rule-delete-modal"
         title={Messages.deleteModalTitle}
-        message={Messages.getDeleteModalMessage(summary)}
+        message={Messages.getDeleteModalMessage(name)}
         loading={pendingRequest}
         isVisible={deleteModalVisible}
         setVisible={setDeleteModalVisible}

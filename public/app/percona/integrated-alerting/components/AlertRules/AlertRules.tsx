@@ -14,7 +14,7 @@ import { AlertRulesProvider } from './AlertRules.provider';
 import { AlertRulesService } from './AlertRules.service';
 import { Messages } from '../../IntegratedAlerting.messages';
 import { formatRules } from './AlertRules.utils';
-import { AlertRule } from './AlertRules.types';
+import { AlertRule, AlertRuleSeverity } from './AlertRules.types';
 import { AlertRulesActions } from './AlertRulesActions';
 import { ALERT_RULES_TABLE_ID, GET_ALERT_RULES_CANCEL_TOKEN } from './AlertRules.constants';
 import { useStoredTablePageSize } from '../Table/Pagination';
@@ -69,13 +69,13 @@ export const AlertRules: FC = () => {
   }, [generateToken, pageIndex, pageSize]);
 
   const columns = React.useMemo(
-    () => [
+    (): Array<Column<AlertRule>> => [
       {
         Header: summaryColumn,
-        accessor: 'summary',
+        accessor: 'name',
         Cell: ({ row, value }) => <ExpandableCell row={row} value={value} />,
         width: '25%',
-      } as Column,
+      },
       {
         Header: paramsColumn,
         accessor: 'params',
@@ -84,18 +84,18 @@ export const AlertRules: FC = () => {
           return <AlertRulesParamsDetails params={values.params} />;
         },
         width: '15%',
-      } as Column,
+      },
       {
         Header: durationColumn,
         accessor: 'duration',
         width: '10%',
-      } as Column,
+      },
       {
         Header: severityColumn,
         accessor: 'severity',
-        Cell: ({ value }) => <Severity severity={value} />,
+        Cell: ({ value }) => <Severity severity={value as AlertRuleSeverity} />,
         width: '5%',
-      } as Column,
+      },
       {
         Header: filtersColumn,
         accessor: ({ filters }: AlertRule) => (
@@ -108,19 +108,19 @@ export const AlertRules: FC = () => {
           </div>
         ),
         width: '30%',
-      } as Column,
+      },
       {
         Header: createdAtColumn,
         accessor: 'createdAt',
         width: '10%',
-      } as Column,
+      },
       {
         Header: actionsColumn,
         width: '5%',
         accessor: (alertRule: AlertRule) => <AlertRulesActions alertRule={alertRule} />,
-      } as Column,
+      },
     ],
-    [styles.filter, styles.filtersWrapper, styles.nameWrapper]
+    [styles.filter, styles.filtersWrapper]
   );
 
   const onPaginationChanged = useCallback(

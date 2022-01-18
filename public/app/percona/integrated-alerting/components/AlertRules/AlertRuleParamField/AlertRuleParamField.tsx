@@ -24,8 +24,8 @@ export const AlertRuleParamField: FC<AlertRuleParamFieldProps> = ({ param }) => 
       <NumberInputField
         name={name}
         label={Messages.getFloatDescription(name, summary, unit, float)}
-        defaultValue={float?.default}
         validators={floatValidators}
+        placeholder={`${float?.default}`}
       />
     ),
     [TemplateParamType.BOOL]: null,

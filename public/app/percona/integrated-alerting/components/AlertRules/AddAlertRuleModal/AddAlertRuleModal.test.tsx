@@ -3,7 +3,7 @@ import { ReactWrapper } from 'enzyme';
 import { dataTestId } from '@percona/platform-core';
 import { Select } from '@grafana/ui';
 import { AddAlertRuleModal } from './AddAlertRuleModal';
-import { AlertRule } from '../AlertRules.types';
+import { AlertRule, AlertRuleSeverity } from '../AlertRules.types';
 import { templateStubs } from '../../AlertRuleTemplate/__mocks__/alertRuleTemplateStubs';
 import { SEVERITY_OPTIONS } from './AddAlertRulesModal.constants';
 import { getMount } from 'app/percona/shared/helpers/testUtils';
@@ -26,19 +26,14 @@ const selectTemplateOption = (wrapper: ReactWrapper, templateIndex = 0) => {
 };
 
 xdescribe('AddAlertRuleModal', () => {
-  const {
-    name: templateName,
-    summary: templateSummary,
-    params: templateParams = [],
-    yaml: templateYaml,
-  } = templateStubs[0];
+  const { name: templateName, summary: templateSummary, params: templateParams = [] } = templateStubs[0];
   const initialValues: AlertRule = {
     ruleId: '/rule_id/ded33d30-1b65-4b43-ba45-75ca52b48fa5',
     createdAt: '2021-01-19 12:53:16.082',
     duration: '3600s',
     filters: [],
     severity: 'Critical',
-    summary: 'Just a summary',
+    name: 'Alert1',
     lastNotified: '',
     disabled: false,
     expr: '',
@@ -48,16 +43,16 @@ xdescribe('AddAlertRuleModal', () => {
       filters: [],
       disabled: false,
       expr: '',
-      template: {
-        name: templateName,
-        summary: templateSummary,
-        params: templateParams,
-        yaml: templateYaml,
-      },
       rule_id: '/rule_id/ded33d30-1b65-4b43-ba45-75ca52b48fa5',
-      summary: 'Just a summary',
-      params: [],
+      summary: templateSummary,
+      params_definitions: [],
+      params_values: [],
+      default_for: '3600s',
       for: '3600s',
+      default_severity: AlertRuleSeverity.SEVERITY_CRITICAL,
+      name: templateName,
+      expr_template: '',
+      template_name: templateName,
       severity: 'SEVERITY_CRITICAL',
       created_at: '2021-01-19T12:53:16.082610Z',
     },

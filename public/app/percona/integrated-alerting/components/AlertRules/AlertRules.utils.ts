@@ -36,16 +36,15 @@ export const formatRule = (rule: AlertRulesListResponseRule): AlertRule => {
     for: duration,
     last_notified,
     severity,
-    summary,
+    name,
     expr,
-    template,
-    params = [],
+    params_definitions,
+    params_values = [],
   } = rule;
-  const { params: templateParams } = template;
   const resultParams: AlertRulesParsedParam[] = [];
 
-  params.forEach(({ name, type, ...rest }) => {
-    const matchingTemplateParam = templateParams.find((param) => param.name === name);
+  params_values.forEach(({ name, type, ...rest }) => {
+    const matchingTemplateParam = params_definitions.find((param) => param.name === name);
 
     if (matchingTemplateParam) {
       resultParams.push({
@@ -62,7 +61,7 @@ export const formatRule = (rule: AlertRulesListResponseRule): AlertRule => {
     duration: formatDuration(duration),
     filters: filters ? filters.map(formatFilter) : [],
     severity: AlertRuleSeverity[severity],
-    summary,
+    name,
     lastNotified: last_notified ? moment(last_notified).format('YYYY-MM-DD HH:mm:ss.SSS') : '',
     rawValues: rule,
     params: resultParams,

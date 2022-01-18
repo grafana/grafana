@@ -4,6 +4,7 @@ import {
   TemplateParamType,
   TemplateParamUnit,
 } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
+import { AlertRuleCreatePayload, AlertRuleUpdatePayload } from '../AlertRules.types';
 import { AddAlertRuleFormValues } from './AddAlertRuleModal.types';
 import {
   formatCreateAPIPayload,
@@ -183,7 +184,7 @@ describe('AddAlertRuleModal utils', () => {
           },
         },
       ])
-    ).toEqual({
+    ).toEqual<AlertRuleCreatePayload>({
       custom_labels: {},
       disabled: true,
       channel_ids: ['pagerDuty', 'email', 'slack'],
@@ -209,7 +210,7 @@ describe('AddAlertRuleModal utils', () => {
       ],
       severity: Severity.SEVERITY_CRITICAL,
       template_name: 'Test Template',
-      summary: 'test name',
+      name: 'test name',
     });
   });
 
@@ -243,7 +244,7 @@ describe('AddAlertRuleModal utils', () => {
           },
         },
       ])
-    ).toEqual({
+    ).toEqual<AlertRuleUpdatePayload>({
       rule_id: 'testId',
       custom_labels: {},
       disabled: true,
@@ -270,7 +271,7 @@ describe('AddAlertRuleModal utils', () => {
       ],
       severity: Severity.SEVERITY_CRITICAL,
       template_name: 'Test Template',
-      summary: 'test name',
+      name: 'test name',
     });
   });
 
@@ -316,7 +317,7 @@ describe('AddAlertRuleModal utils', () => {
   });
 
   test('formatEditTemplate', () => {
-    expect(formatEditTemplate({ name: 'test1', summary: 'Test 1', params: [] })).toEqual({
+    expect(formatEditTemplate('test1', 'Test 1')).toEqual({
       value: 'test1',
       label: 'Test 1',
     });
