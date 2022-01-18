@@ -9,7 +9,6 @@ import {
   AlertRuleUpdatePayload,
   AlertRulesListPayloadFilter,
   AlertRuleFilterType,
-  AlertRulesListPayloadTemplate,
   AlertRulesListResponseChannel,
 } from '../AlertRules.types';
 
@@ -77,7 +76,7 @@ export const formatCreateAPIPayload = (
     for: `${duration}s`,
     severity: severity.value as Severity,
     template_name: template.value as string,
-    summary: name,
+    name,
     params: [],
   };
 
@@ -119,9 +118,9 @@ export const formatEditFilters = (filters: AlertRulesListPayloadFilter[] | undef
   return filters ? filters.map(formatEditFilter).join(', ') : '';
 };
 
-export const formatEditTemplate = (template: AlertRulesListPayloadTemplate): SelectableValue<string> => ({
-  value: template.name,
-  label: template.summary,
+export const formatEditTemplate = (templateName: string, templateSummary: string): SelectableValue<string> => ({
+  value: templateName,
+  label: templateSummary,
 });
 
 export const formatEditSeverity = (severity: keyof typeof Severity): SelectableValue<Severity> => ({
@@ -143,18 +142,28 @@ export const getInitialValues = (alertRule?: AlertRule | null): AddAlertRuleForm
     return undefined;
   }
 
-  const { channels, disabled, filters, for: duration, template, severity, summary, params } = alertRule.rawValues;
+  const {
+    channels,
+    disabled,
+    filters,
+    for: duration,
+    severity,
+    name,
+    params_values,
+    template_name,
+    summary,
+  } = alertRule.rawValues;
   const result: AddAlertRuleFormValues = {
     enabled: !disabled,
     duration: parseInt(duration, 10),
     filters: formatEditFilters(filters),
-    name: summary,
+    name,
     notificationChannels: formatEditNotificationChannels(channels),
     severity: formatEditSeverity(severity),
-    template: formatEditTemplate(template),
+    template: formatEditTemplate(template_name, summary),
   };
 
-  params?.forEach((param) => {
+  params_values?.forEach((param) => {
     const { float, type } = param;
     const typeMap: Record<keyof typeof AlertRuleParamType, any> = {
       FLOAT: float,

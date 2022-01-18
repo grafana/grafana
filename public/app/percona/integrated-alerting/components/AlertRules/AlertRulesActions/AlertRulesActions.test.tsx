@@ -5,12 +5,10 @@ import React from 'react';
 import { asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 import { AlertRulesProvider } from '../AlertRules.provider';
-import { AlertRulesService } from '../AlertRules.service';
 import { AlertRulesContext } from '../AlertRules.types';
-import { rulesStubs, formattedRulesStubs } from '../__mocks__/alertRulesStubs';
+import { formattedRulesStubs } from '../__mocks__/alertRulesStubs';
 
 import { AlertRulesActions } from './AlertRulesActions';
-import { Messages } from './AlertRulesActions.messages';
 
 const mockContext = () => ({
   setAddModalVisible: jest.fn(),
@@ -23,34 +21,11 @@ jest.mock('app/core/core', () => ({
     emit: jest.fn(),
   },
 }));
-const alertRulesServiceCreate = jest.spyOn(AlertRulesService, 'create');
 const withContext = (values: AlertRulesContext, wrapper: JSX.Element) => (
   <AlertRulesProvider.Provider value={values}>{wrapper}</AlertRulesProvider.Provider>
 );
 
 describe('AlertRulesActions', () => {
-  it('calls the API to crate an alert rule on copy', async () => {
-    const testRule = rulesStubs[1];
-
-    const wrapper = mount(withContext(mockContext(), <AlertRulesActions alertRule={formattedRulesStubs[1]} />));
-
-    const expectedResult = {
-      ...testRule,
-      disabled: true,
-      summary: `${Messages.copyOf} ${testRule.summary}`,
-      custom_labels: undefined as any,
-      channel_ids: ['test_ch'],
-      template_name: 'test 2',
-    };
-
-    await asyncAct(() => {
-      wrapper.find(dataTestId('copy-alert-rule-button')).at(0).simulate('click');
-    });
-
-    expect(alertRulesServiceCreate).toBeCalledTimes(1);
-    expect(alertRulesServiceCreate).toBeCalledWith(expectedResult);
-  });
-
   it('calls the API to update an alert rule on edit', async () => {
     const context = mockContext();
     const wrapper = mount(withContext(context, <AlertRulesActions alertRule={formattedRulesStubs[0]} />));

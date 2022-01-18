@@ -1,4 +1,4 @@
-import { TemplateParam } from '../AlertRuleTemplate/AlertRuleTemplate.types';
+import { TemplateAnnotation, TemplateParam } from '../AlertRuleTemplate/AlertRuleTemplate.types';
 
 export interface AlertRulesContext {
   getAlertRules: () => void;
@@ -8,18 +8,6 @@ export interface AlertRulesContext {
 
 export enum AlertRuleFilterType {
   EQUAL = '=',
-}
-
-export enum AlertRulesListPayloadTemplateParamUnits {
-  PARAM_UNIT_INVALID = 'Invalid unit',
-  PERCENTAGE = '%',
-}
-
-export interface AlertRulesListPayloadTemplate {
-  name: string;
-  summary: string;
-  params: TemplateParam[];
-  yaml?: string;
 }
 
 export enum AlertRuleSeverity {
@@ -37,7 +25,7 @@ export interface AlertRule {
   filters: string[];
   lastNotified: string;
   severity: AlertRuleSeverity[keyof AlertRuleSeverity];
-  summary: string;
+  name: string;
   rawValues: AlertRulesListResponseRule;
   params: AlertRulesParsedParam[];
   expr: string;
@@ -75,14 +63,20 @@ export interface AlertRulesListResponseRule {
   created_at: string;
   disabled: boolean;
   filters: AlertRulesListPayloadFilter[];
+  default_for: string;
   for: string; // duration, e.g.: '999s'
   last_notified?: string;
-  params?: AlertRulesListResponseParam[];
+  params_values?: AlertRulesListResponseParam[];
+  params_definitions: TemplateParam[];
   severity: keyof typeof AlertRuleSeverity;
-  summary: string;
-  template: AlertRulesListPayloadTemplate;
+  default_severity: AlertRuleSeverity;
+  name: string;
   expr: string;
+  expr_template: string;
   rule_id: string;
+  annotations?: TemplateAnnotation;
+  template_name: string;
+  summary: string;
   custom_labels?: AlertRulePayloadCustomLabels;
 }
 
@@ -114,7 +108,7 @@ export interface AlertRuleCreatePayload {
   for: string;
   params?: AlertRulesListPayloadParam[];
   severity: keyof typeof AlertRuleSeverity;
-  summary: string;
+  name: string;
   template_name: string;
 }
 
