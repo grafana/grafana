@@ -29,6 +29,7 @@ import { newDBClusterService } from '../../DBCluster.utils';
 import { SwitchField } from '../../../Switch/Switch';
 
 export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) => {
+  let allocatedTimer: NodeJS.Timeout;
   const styles = useStyles(getStyles);
   const [prevResources, setPrevResources] = useState(DBClusterResources.small);
   const [customMemory, setCustomMemory] = useState(DEFAULT_SIZES.small.memory);
@@ -38,6 +39,8 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
   const [loadingAllocatedResources, setLoadingAllocatedResources] = useState(false);
   const [expectedResources, setExpectedResources] = useState<DBClusterExpectedResources>();
   const [loadingExpectedResources, setLoadingExpectedResources] = useState(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const mounted = { current: true };
   const { required, min } = validators;
   const { change } = form;
   const diskValidators = [required, min(MIN_DISK_SIZE)];
@@ -64,7 +67,6 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
 
   const getAllocatedResources = useCallback(
     async (triggerLoading = true) => {
-      let allocatedTimer: NodeJS.Timeout;
       try {
         if (allocatedTimer) {
           clearTimeout(allocatedTimer);
@@ -81,7 +83,11 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
           setLoadingAllocatedResources(false);
         }
 
-        allocatedTimer = setTimeout(() => getAllocatedResources(false), RECHECK_INTERVAL);
+        // don't schedule another request if the component was unmounted while the previous request was occuring
+        if (mounted.current) {
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          allocatedTimer = setTimeout(() => getAllocatedResources(false), RECHECK_INTERVAL);
+        }
       }
     },
     [kubernetesCluster.value]
@@ -135,8 +141,11 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
       getAllocatedResources();
     }
 
-    return () => clearTimeout(allocatedTimer);
-  }, [kubernetesCluster, getAllocatedResources]);
+    return () => {
+      mounted.current = false;
+      clearTimeout(allocatedTimer);
+    };
+  }, [kubernetesCluster, getAllocatedResources, allocatedTimer, mounted]);
 
   useEffect(() => {
     let expectedTimer: NodeJS.Timeout;
