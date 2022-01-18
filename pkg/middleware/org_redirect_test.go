@@ -37,11 +37,11 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 
 	middlewareScenario(t, "when visiting a org that is not current org with '&kiosk' in url", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
 			return nil
 		})
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
 			return nil
 		})
@@ -61,11 +61,11 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 
 	middlewareScenario(t, "when visiting a org that is not current org with 'kiosk=' in url", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
 			return nil
 		})
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
 			return nil
 		})
@@ -85,11 +85,11 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 
 	middlewareScenario(t, "when visiting a org that is not current org with 'kiosk=tv' in url", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
 			return nil
 		})
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
 			return nil
 		})
