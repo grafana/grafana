@@ -230,12 +230,11 @@ export class PanelQueryRunner {
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
-      const defaultDatasource = await getDataSource(null, request.scopedVars);
 
       // Attach the data source name to each query
       request.targets = request.targets.map((query) => {
         if (!query.datasource) {
-          query.datasource = ds.meta?.mixed ? defaultDatasource.getRef() : ds.getRef();
+          query.datasource = ds.getRef();
         }
         return query;
       });
