@@ -235,7 +235,7 @@ export class PanelQueryRunner {
       // Attach the data source name to each query
       request.targets = request.targets.map((query) => {
         if (!query.datasource) {
-          query.datasource = ds.meta?.mixed ? defaultDatasource.getRef() : ds.getRef();
+          query.datasource = defaultDatasource.getRef();
         }
         return query;
       });
