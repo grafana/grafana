@@ -35,7 +35,10 @@ load(
     'store_packages_step',
     'upload_cdn_step',
     'validate_scuemata_step',
-    'ensure_cuetsified_step'
+    'ensure_cuetsified_step',
+# <Feature toggles>
+    'can_ensure_cuetsified'
+# </Feature toggles>
 )
 
 load(
@@ -198,8 +201,10 @@ def get_steps(edition, ver_mode):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
-        ensure_cuetsified_step(),
     ]
+
+    if can_ensure_cuetsified:
+      build_steps.append(ensure_cuetsified_step())
 
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),

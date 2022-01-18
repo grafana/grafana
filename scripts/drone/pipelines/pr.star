@@ -29,6 +29,9 @@ load(
     'validate_scuemata_step',
     'ensure_cuetsified_step',
     'test_a11y_frontend_step',
+# <Feature toggles>
+    'can_ensure_cuetsified'
+# </Feature toggles>
 )
 
 load(
@@ -66,8 +69,10 @@ def pr_pipelines(edition):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
-        ensure_cuetsified_step(),
     ]
+    if can_ensure_cuetsified:
+      build_steps.append(ensure_cuetsified_step())
+
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),

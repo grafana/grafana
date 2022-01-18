@@ -1122,8 +1122,6 @@ def validate_scuemata_step():
 
 
 def ensure_cuetsified_step():
-    if can_ensure_cuetsified:
-      return {}
     return {
         'name': 'ensure-cuetsified',
         'image': build_image,
