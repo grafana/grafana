@@ -1,4 +1,4 @@
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React, { FC } from 'react';
 import { useTable, usePagination, useExpanded } from 'react-table';
 

@@ -1,4 +1,4 @@
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 export const TooltipWrapper = css`
   padding: 0.5em;

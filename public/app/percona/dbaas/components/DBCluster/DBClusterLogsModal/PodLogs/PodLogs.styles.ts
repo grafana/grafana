@@ -1,5 +1,6 @@
+import { css } from '@emotion/css';
+
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
 
 export const getStyles = ({ spacing, typography }: GrafanaTheme) => ({
   label: css`

@@ -1,6 +1,7 @@
-import { stylesFactory } from '@grafana/ui';
+import { css } from '@emotion/css';
+
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { stylesFactory } from '@grafana/ui';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const { spacing, colors } = theme;

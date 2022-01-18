@@ -227,7 +227,7 @@ To start using Emotion, you first must add it to your plugin dependencies:
 Then, import `css` function from Emotion:
 
 ```ts
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 ```
 
 Now you are ready to implement your styles:

@@ -1,7 +1,6 @@
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
 
 export const getStyles = ({ spacing }: GrafanaTheme) => ({
   instanceForm: css`

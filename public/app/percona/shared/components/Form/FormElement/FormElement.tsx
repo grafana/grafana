@@ -1,4 +1,4 @@
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React, { ReactElement } from 'react';
 
 const style = {
