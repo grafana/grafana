@@ -92,9 +92,7 @@ function describeQueryRunnerScenario(
       ],
     };
 
-    setDataSourceSrv({
-      get: jest.fn(),
-    } as any);
+    setDataSourceSrv({} as any);
     setDashboardQueryRunnerFactory(() => ({
       getResult: emptyResult,
       run: () => undefined,

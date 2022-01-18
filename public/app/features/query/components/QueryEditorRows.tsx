@@ -149,7 +149,7 @@ const getDataSourceSettings = (
   query: DataQuery,
   groupSettings: DataSourceInstanceSettings
 ): DataSourceInstanceSettings => {
-  if (!query.datasource && !groupSettings.meta.mixed) {
+  if (!query.datasource) {
     return groupSettings;
   }
   const querySettings = getDataSourceSrv().getInstanceSettings(query.datasource);
