@@ -54,6 +54,7 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 	// Load config settings
 	configfile := filepath.Join(cfg.HomePath, "conf", "features.yaml")
 	if _, err := os.Stat(configfile); err == nil {
+		mgmt.log.Info("[experimental] loading features from config file", "path", configfile)
 		mgmt.config = configfile
 		err = mgmt.readFile()
 		if err != nil {

@@ -9,6 +9,8 @@
  * conf/custom.ini to enable features under development or not yet available in
  * stable version.
  *
+ * Only enabled values will be returned in this interface
+ *
  * @public
  */
 export interface FeatureToggles {
