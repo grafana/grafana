@@ -11,7 +11,7 @@ import { ConfirmModal } from '@grafana/ui';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
 import { deletePlaylist, getAllPlaylist } from './api';
-import { PlaylistSettingsModal } from './PlaylistSettingsModal';
+import { StartModal } from './StartModal';
 import { PlaylistPageList } from './PlaylistPageList';
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
 
@@ -101,13 +101,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
             onDismiss={onDismissDelete}
           />
         )}
-        {startPlaylist && (
-          <PlaylistSettingsModal
-            showStartButton
-            playlist={startPlaylist}
-            onDismiss={() => setStartPlaylist(undefined)}
-          />
-        )}
+        {startPlaylist && <StartModal playlist={startPlaylist} onDismiss={() => setStartPlaylist(undefined)} />}
       </Page.Contents>
     </Page>
   );
