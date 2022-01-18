@@ -329,7 +329,7 @@ export class TimeSrv {
 
     if (oldestFromInMillis !== 0 && Date.now() - from.valueOf() > oldestFromInMillis) {
       appEvents.emit(AppEvents.alertWarning, [
-        'The start of the timerange can not be more than ' + this.dashboard.timepicker.oldestFrom + ' old from now',
+        'The start of the time range can not be more than ' + this.dashboard?.timepicker.oldestFrom + ' ago. Please select a later from time.',
       ]);
       isSetTime = false;
     }
