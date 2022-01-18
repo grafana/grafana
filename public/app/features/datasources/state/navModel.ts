@@ -63,6 +63,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   } else if (config.featureHighlights.enabled) {
     navModel.children!.push({
       ...dsPermissions,
+      url: dsPermissions.url + '/upgrade',
       suffix: 'PRO',
     });
   }
@@ -80,6 +81,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   } else if (config.featureHighlights.enabled) {
     navModel.children!.push({
       ...analytics,
+      url: analytics.url + '/upgrade',
       suffix: 'PRO',
     });
   }
@@ -98,6 +100,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   } else if (config.featureHighlights.enabled) {
     navModel.children!.push({
       ...caching,
+      url: caching.url + '/upgrade',
       suffix: 'PRO',
     });
   }
