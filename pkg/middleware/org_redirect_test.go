@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOrgRedirectMiddleware(t *testing.T) {
@@ -32,7 +32,9 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		sc.m.Get("/", sc.defaultHandler)
 		sc.fakeReq("GET", "/?orgId=3").exec()
 
-		assert.Equal(t, 302, sc.resp.Code)
+		require.Equal(t, 302, sc.resp.Code)
+		require.Equal(t, "/?orgId=3", sc.resp.Header().Get("Location"))
+
 	})
 
 	middlewareScenario(t, "when visiting a org that is not current org with '&kiosk' in url", func(t *testing.T, sc *scenarioContext) {
@@ -56,7 +58,8 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		sc.m.Get("/", sc.defaultHandler)
 		sc.fakeReq("GET", "/?orgId=3&kiosk").exec()
 
-		assert.Equal(t, 302, sc.resp.Code)
+		require.Equal(t, 302, sc.resp.Code)
+		require.Equal(t, "/?orgId=3&kiosk", sc.resp.Header().Get("Location"))
 	})
 
 	middlewareScenario(t, "when visiting a org that is not current org with 'kiosk=' in url", func(t *testing.T, sc *scenarioContext) {
@@ -80,7 +83,8 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		sc.m.Get("/", sc.defaultHandler)
 		sc.fakeReq("GET", "/?kiosk=&orgId=3").exec()
 
-		assert.Equal(t, 302, sc.resp.Code)
+		require.Equal(t, 302, sc.resp.Code)
+		require.Equal(t, "/?orgId=3&kiosk", sc.resp.Header().Get("Location"))
 	})
 
 	middlewareScenario(t, "when visiting a org that is not current org with 'kiosk=tv' in url", func(t *testing.T, sc *scenarioContext) {
@@ -104,7 +108,8 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		sc.m.Get("/", sc.defaultHandler)
 		sc.fakeReq("GET", "/?kiosk=tv&orgId=3").exec()
 
-		assert.Equal(t, 302, sc.resp.Code)
+		require.Equal(t, 302, sc.resp.Code)
+		require.Equal(t, "/?kiosk=tv&orgId=3", sc.resp.Header().Get("Location"))
 	})
 
 	middlewareScenario(t, "when setting an invalid org for user", func(t *testing.T, sc *scenarioContext) {
@@ -128,6 +133,6 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		sc.m.Get("/", sc.defaultHandler)
 		sc.fakeReq("GET", "/?orgId=3").exec()
 
-		assert.Equal(t, 404, sc.resp.Code)
+		require.Equal(t, 404, sc.resp.Code)
 	})
 }
