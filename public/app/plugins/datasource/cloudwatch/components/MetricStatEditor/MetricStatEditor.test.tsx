@@ -141,7 +141,6 @@ describe('MetricStatEditor', () => {
       const onChange = jest.fn();
 
       props.datasource.getNamespaces = jest.fn().mockResolvedValue(namespaces);
-      // props.datasource.getMetrics = jest.fn().mockImplementation(() => Promise.resolve(metrics));
       props.datasource.getMetrics = jest.fn().mockImplementation((namespace: string, region: string) => {
         let mockMetrics =
           namespace === 'n1' && region === props.query.region
@@ -162,10 +161,9 @@ describe('MetricStatEditor', () => {
       await selectEvent.select(namespaceSelect, 'n1');
 
       expect(onChange.mock.calls).toEqual([[{ ...props.query, metricName: '', namespace: 'n1' }]]);
-
-      // todo: we should test component re-renders when sent different metricname (i.e. shallow comparison = false negative :( )
-      // and check   expect(screen.getByText('oldNamespaceMetric')).not.toBeInTheDocument();
     });
+
+    // Todo test re-render or at least prop metricName='' -> select value = null
 
     it('should not remove metricName from query if it does exist in new namespace', async () => {
       const onChange = jest.fn();
