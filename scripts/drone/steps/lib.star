@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.8.1'
+grabpl_version = 'v2.8.4'
 build_image = 'grafana/build-container:1.4.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -288,7 +288,7 @@ def store_storybook_step(edition, ver_mode):
 
 def e2e_tests_artifacts(edition):
     return {
-        'name': 'e2e_tests_artifacts_upload' + enterprise2_suffix(edition),
+        'name': 'e2e-tests-artifacts-upload' + enterprise2_suffix(edition),
         'image': 'google/cloud-sdk:367.0.0',
         'depends_on': [
             'end-to-end-tests-dashboards-suite',
@@ -296,6 +296,12 @@ def e2e_tests_artifacts(edition):
             'end-to-end-tests-smoke-tests-suite',
             'end-to-end-tests-various-suite',
         ],
+        'when': {
+            'status': [
+                'success',
+                'failure',
+            ]
+        },
         'environment': {
             'GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY': from_secret('gcp_upload_artifacts_key'),
             'E2E_TEST_ARTIFACTS_BUCKET': 'releng-pipeline-artifacts-dev',
@@ -546,7 +552,7 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
 
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
-        'image': 'hugohaggmark/docker-puppeteer',
+        'image': 'grafana/docker-puppeteer:1.0.0',
         'depends_on': [
             'end-to-end-tests-server' + enterprise2_suffix(edition),
         ],
@@ -934,7 +940,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
               '--packages-bucket grafana-downloads-test'
     elif ver_mode == 'release':
-        packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}/${{DRONE_TAG}}'.format(enterprise2_suffix(edition))
+        packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}'.format(enterprise2_suffix(edition))
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
     elif edition == 'enterprise2':
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads-enterprise2'.format(edition)
@@ -1061,6 +1067,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'release', 'test-release',
         ):
             installer_commands.extend([
+                '.\\grabpl.exe gen-version {}'.format(ver_part),
                 '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
                 '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
                 'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),

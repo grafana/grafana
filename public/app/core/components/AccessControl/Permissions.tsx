@@ -139,7 +139,7 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
-          canRemove={canSetPermissions}
+          canSet={canSetPermissions}
         />
         <PermissionList
           title="Users"
@@ -147,7 +147,7 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
-          canRemove={canSetPermissions}
+          canSet={canSetPermissions}
         />
         <PermissionList
           title="Teams"
@@ -155,7 +155,7 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
-          canRemove={canSetPermissions}
+          canSet={canSetPermissions}
         />
       </div>
     </div>

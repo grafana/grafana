@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -22,7 +23,11 @@ func GetCurrentOrg(c *models.ReqContext) response.Response {
 
 // GET /api/orgs/:orgId
 func GetOrgByID(c *models.ReqContext) response.Response {
-	return getOrgHelper(c.Req.Context(), c.ParamsInt64(":orgId"))
+	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
+	return getOrgHelper(c.Req.Context(), orgId)
 }
 
 // GET /api/orgs/name/:name
@@ -120,7 +125,11 @@ func (hs *HTTPServer) UpdateOrg(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.updateOrgHelper(c.Req.Context(), form, c.ParamsInt64(":orgId"))
+	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
+	return hs.updateOrgHelper(c.Req.Context(), form, orgId)
 }
 
 func (hs *HTTPServer) updateOrgHelper(ctx context.Context, form dtos.UpdateOrgForm, orgID int64) response.Response {
@@ -150,7 +159,11 @@ func (hs *HTTPServer) UpdateOrgAddress(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.updateOrgAddressHelper(c.Req.Context(), form, c.ParamsInt64(":orgId"))
+	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
+	return hs.updateOrgAddressHelper(c.Req.Context(), form, orgId)
 }
 
 func (hs *HTTPServer) updateOrgAddressHelper(ctx context.Context, form dtos.UpdateOrgAddressForm, orgID int64) response.Response {
@@ -175,7 +188,10 @@ func (hs *HTTPServer) updateOrgAddressHelper(ctx context.Context, form dtos.Upda
 
 // DELETE /api/orgs/:orgId
 func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
-	orgID := c.ParamsInt64(":orgId")
+	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
 	// before deleting an org, check if user does not belong to the current org
 	if c.OrgId == orgID {
 		return response.Error(400, "Can not delete org for current user", nil)

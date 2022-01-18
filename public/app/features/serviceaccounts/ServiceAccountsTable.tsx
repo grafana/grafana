@@ -4,7 +4,8 @@ import { OrgRolePicker } from '../admin/OrgRolePicker';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
-import { fetchBuiltinRoles, fetchRoleOptions, UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
 
 export interface Props {
   serviceAccounts: OrgServiceAccount[];
@@ -80,7 +81,6 @@ const ServiceAccountsTable: FC<Props> = (props) => {
                     {serviceAccount.name}
                   </span>
                 </td>
-                <td className="width-1">{serviceAccount.lastSeenAtAge}</td>
 
                 <td className="width-8">
                   {contextSrv.accessControlEnabled() ? (

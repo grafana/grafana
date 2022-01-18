@@ -257,9 +257,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
 
   // Update the query state in response to the meta data changing
   useEffect(() => {
-    const aggregationIsValid = aggregation && metricMetadata.supportedAggTypes.includes(aggregation);
-
-    const newAggregation = aggregationIsValid ? aggregation : metricMetadata.primaryAggType;
+    const newAggregation = aggregation || metricMetadata.primaryAggType;
     const newTimeGrain = timeGrain || 'auto';
 
     if (newAggregation !== aggregation || newTimeGrain !== timeGrain) {

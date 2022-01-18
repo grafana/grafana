@@ -66,6 +66,7 @@ export const FilterItem: FunctionComponent<Props> = ({
     <div data-testid="cloudwatch-dimensions-filter-item">
       <InputGroup>
         <Select
+          aria-label="Dimensions filter key"
           inputId="cloudwatch-dimensions-filter-item-key"
           width="auto"
           value={filter.key ? toOption(filter.key) : null}
@@ -81,6 +82,7 @@ export const FilterItem: FunctionComponent<Props> = ({
         <span className={cx(styles.root)}>=</span>
 
         <Select
+          aria-label="Dimensions filter value"
           inputId="cloudwatch-dimensions-filter-item-value"
           onOpenMenu={loadOptions}
           width="auto"
