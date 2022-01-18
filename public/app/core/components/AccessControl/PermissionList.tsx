@@ -6,12 +6,12 @@ interface Props {
   title: string;
   items: ResourcePermission[];
   permissionLevels: string[];
-  canRemove: boolean;
+  canSet: boolean;
   onRemove: (item: ResourcePermission) => void;
   onChange: (resourcePermission: ResourcePermission, permission: string) => void;
 }
 
-export const PermissionList = ({ title, items, permissionLevels, canRemove, onRemove, onChange }: Props) => {
+export const PermissionList = ({ title, items, permissionLevels, canSet, onRemove, onChange }: Props) => {
   if (items.length === 0) {
     return null;
   }
@@ -26,7 +26,7 @@ export const PermissionList = ({ title, items, permissionLevels, canRemove, onRe
               item={item}
               onRemove={onRemove}
               onChange={onChange}
-              canRemove={canRemove}
+              canSet={canSet}
               key={`${index}-${item.userId}`}
               permissionLevels={permissionLevels}
             />
