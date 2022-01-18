@@ -5,11 +5,12 @@ import "github.com/grafana/grafana/pkg/services/secrets"
 var (
 	FLAG_database_metrics = "database_metrics"
 	FLAG_live_config      = "live-config"
+	FLAG_recordedQueries  = "recordedQueries"
 
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:            "recordedQueries",
+			Name:            FLAG_recordedQueries,
 			Description:     "Supports saving queries that can be scraped by prometheus",
 			State:           FeatureStateBeta,
 			RequiresLicense: true,

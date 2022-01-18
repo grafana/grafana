@@ -627,7 +627,6 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 
 			// Setup
 			ac := setupTestEnv(t)
-			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 			ac.RegisterAttributeScopeResolver("users:login:", userLoginScopeSolver)
 
 			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
