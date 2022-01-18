@@ -10,6 +10,7 @@ import {
   removeDashboardPermission,
   updateDashboardPermission,
 } from '../../state/actions';
+import { getFolderPermissions } from '../../../folders/state/actions';
 import { DashboardModel } from '../../state/DashboardModel';
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
@@ -24,6 +25,7 @@ const mapDispatchToProps = {
   addDashboardPermission,
   removeDashboardPermission,
   updateDashboardPermission,
+  getFolderPermissions,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -49,6 +51,9 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
 
   componentDidMount() {
     this.props.getDashboardPermissions(this.props.dashboard.id);
+    if (this.props.dashboard.meta.folderUid) {
+      this.props.getFolderPermissions(this.props.dashboard.meta.folderUid);
+    }
   }
 
   onOpenAddPermissions = () => {
