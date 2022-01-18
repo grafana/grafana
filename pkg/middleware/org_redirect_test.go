@@ -11,106 +11,65 @@ import (
 )
 
 func TestOrgRedirectMiddleware(t *testing.T) {
-	middlewareScenario(t, "when setting a correct org for the user", func(t *testing.T, sc *scenarioContext) {
-		sc.withTokenSessionCookie("token")
-		bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
-			return nil
+	testCases := []struct {
+		desc        string
+		input       string
+		expStatus   int
+		expLocation string
+	}{
+		{
+			desc:        "when setting a correct org for the user",
+			input:       "/?orgId=3",
+			expStatus:   302,
+			expLocation: "/?orgId=3",
+		},
+		{
+			desc:        "when setting a correct org for the user with '&kiosk'",
+			input:       "/?orgId=3&kiosk",
+			expStatus:   302,
+			expLocation: "/?orgId=3&kiosk",
+		},
+		{
+			desc:        "when setting a correct org for the user with '&kiosk=",
+			input:       "/?kiosk=&orgId=3",
+			expStatus:   302,
+			expLocation: "/?orgId=3&kiosk",
+		},
+		{
+			desc:        "when setting a correct org for the user with '&kiosk=tv'",
+			input:       "/?kiosk=tv&orgId=3",
+			expStatus:   302,
+			expLocation: "/?kiosk=tv&orgId=3",
+		},
+	}
+
+	for _, tc := range testCases {
+		middlewareScenario(t, tc.desc, func(t *testing.T, sc *scenarioContext) {
+			sc.withTokenSessionCookie("token")
+			bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
+				return nil
+			})
+
+			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+				query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
+				return nil
+			})
+
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+				return &models.UserToken{
+					UserId:        0,
+					UnhashedToken: "",
+				}, nil
+			}
+
+			sc.m.Get("/", sc.defaultHandler)
+			sc.fakeReq("GET", tc.input).exec()
+
+			require.Equal(t, tc.expStatus, sc.resp.Code)
+			require.Equal(t, tc.expLocation, sc.resp.Header().Get("Location"))
+
 		})
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
-			return nil
-		})
-
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
-				UserId:        0,
-				UnhashedToken: "",
-			}, nil
-		}
-
-		sc.m.Get("/", sc.defaultHandler)
-		sc.fakeReq("GET", "/?orgId=3").exec()
-
-		require.Equal(t, 302, sc.resp.Code)
-		require.Equal(t, "/?orgId=3", sc.resp.Header().Get("Location"))
-
-	})
-
-	middlewareScenario(t, "when visiting a org that is not current org with '&kiosk' in url", func(t *testing.T, sc *scenarioContext) {
-		sc.withTokenSessionCookie("token")
-		bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
-			return nil
-		})
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
-			return nil
-		})
-
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
-				UserId:        0,
-				UnhashedToken: "",
-			}, nil
-		}
-
-		sc.m.Get("/", sc.defaultHandler)
-		sc.fakeReq("GET", "/?orgId=3&kiosk").exec()
-
-		require.Equal(t, 302, sc.resp.Code)
-		require.Equal(t, "/?orgId=3&kiosk", sc.resp.Header().Get("Location"))
-	})
-
-	middlewareScenario(t, "when visiting a org that is not current org with 'kiosk=' in url", func(t *testing.T, sc *scenarioContext) {
-		sc.withTokenSessionCookie("token")
-		bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
-			return nil
-		})
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
-			return nil
-		})
-
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
-				UserId:        0,
-				UnhashedToken: "",
-			}, nil
-		}
-
-		sc.m.Get("/", sc.defaultHandler)
-		sc.fakeReq("GET", "/?kiosk=&orgId=3").exec()
-
-		require.Equal(t, 302, sc.resp.Code)
-		require.Equal(t, "/?orgId=3&kiosk", sc.resp.Header().Get("Location"))
-	})
-
-	middlewareScenario(t, "when visiting a org that is not current org with 'kiosk=tv' in url", func(t *testing.T, sc *scenarioContext) {
-		sc.withTokenSessionCookie("token")
-		bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
-			return nil
-		})
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
-			return nil
-		})
-
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
-				UserId:        0,
-				UnhashedToken: "",
-			}, nil
-		}
-
-		sc.m.Get("/", sc.defaultHandler)
-		sc.fakeReq("GET", "/?kiosk=tv&orgId=3").exec()
-
-		require.Equal(t, 302, sc.resp.Code)
-		require.Equal(t, "/?kiosk=tv&orgId=3", sc.resp.Header().Get("Location"))
-	})
+	}
 
 	middlewareScenario(t, "when setting an invalid org for user", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
