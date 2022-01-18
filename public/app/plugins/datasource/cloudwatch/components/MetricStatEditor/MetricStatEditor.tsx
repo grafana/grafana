@@ -41,6 +41,10 @@ export function MetricStatEditor({
   const validateMetricName = async (query: CloudWatchMetricsQuery) => {
     let { metricName, namespace, region } = query;
 
+    if (!metricName) {
+      return query;
+    }
+
     await datasource.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
       if (!result.find((metric) => metric.value === metricName)) {
         metricName = '';
