@@ -24,8 +24,8 @@ import {
   standardTransformersRegistry,
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
-import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { registerEchoBackend, setEchoSrv, setPanelRenderer, setQueryRunnerFactory } from '@grafana/runtime';
+import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -108,12 +108,7 @@ export class GrafanaApp {
       this.angularApp.init();
 
       // Preload selected app plugins
-      const promises: Array<Promise<any>> = [];
-      for (const plugin of config.pluginsToPreload) {
-        promises.push(importPluginModule(plugin.path, plugin.version));
-      }
-
-      await Promise.all(promises);
+      await preloadPlugins(config.pluginsToPreload);
 
       ReactDOM.render(
         React.createElement(AppWrapper, {
