@@ -44,11 +44,6 @@ load(
     'pipeline',
 )
 
-load(
-    'scripts/drone/opts.star',
-    'can_ensure_cuetsified',
-)
-
 ver_mode = 'pr'
 
 def pr_pipelines(edition):
@@ -71,10 +66,8 @@ def pr_pipelines(edition):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
+        ensure_cuetsified_step(),
     ]
-    if can_ensure_cuetsified:
-      build_steps.append(ensure_cuetsified_step())
-
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
@@ -116,12 +109,6 @@ def pr_pipelines(edition):
         ])
         build_steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
-            e2e_tests_server_step(edition=edition2, port=3002),
-            e2e_tests_step(edition=edition2, port=3002),
-            e2e_tests_step('dashboards-suite', edition=edition2, port=3002),
-            e2e_tests_step('smoke-tests-suite', edition=edition2, port=3002),
-            e2e_tests_step('panels-suite', edition=edition2, port=3002),
-            e2e_tests_step('various-suite', edition=edition2, port=3002),
         ])
 
     trigger = {

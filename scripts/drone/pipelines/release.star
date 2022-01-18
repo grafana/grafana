@@ -50,13 +50,7 @@ load(
     'pipeline',
     'notify_pipeline',
 )
-
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
-
-load(
-    'scripts/drone/opts.star',
-    'can_ensure_cuetsified',
-)
 
 
 def build_npm_packages_step(edition, ver_mode):
@@ -204,10 +198,8 @@ def get_steps(edition, ver_mode):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
+        ensure_cuetsified_step(),
     ]
-
-    if can_ensure_cuetsified:
-        build_steps.append(ensure_cuetsified_step())
 
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
@@ -228,11 +220,6 @@ def get_steps(edition, ver_mode):
     # Insert remaining steps
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2),
-        e2e_tests_server_step(edition=edition),
-        e2e_tests_step('dashboards-suite', edition=edition, tries=3),
-        e2e_tests_step('smoke-tests-suite', edition=edition, tries=3),
-        e2e_tests_step('panels-suite', edition=edition, tries=3),
-        e2e_tests_step('various-suite', edition=edition, tries=3),
         copy_packages_for_docker_step(),
         package_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
         package_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
@@ -271,11 +258,6 @@ def get_steps(edition, ver_mode):
     if include_enterprise2:
         publish_steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
-            e2e_tests_server_step(edition=edition2, port=3002),
-            e2e_tests_step('dashboards-suite', edition=edition2, port=3002, tries=3),
-            e2e_tests_step('smoke-tests-suite', edition=edition2, port=3002, tries=3),
-            e2e_tests_step('panels-suite', edition=edition2, port=3002, tries=3),
-            e2e_tests_step('various-suite', edition=edition2, port=3002, tries=3),
             upload_cdn_step(edition=edition2, ver_mode=ver_mode),
         ])
         if should_upload:
