@@ -26,7 +26,7 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 		UsageStats:    &usagestats.UsageStatsMock{T: t},
 		Log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
-		scopeResolver: accesscontrol.NewScopeResolver(),
+		ScopeResolver: accesscontrol.NewScopeResolver(),
 	}
 	return ac
 }

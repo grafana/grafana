@@ -18,7 +18,7 @@ func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessC
 		Cfg:           cfg,
 		UsageStats:    usageStats,
 		Log:           log.New("accesscontrol"),
-		scopeResolver: accesscontrol.NewScopeResolver(),
+		ScopeResolver: accesscontrol.NewScopeResolver(),
 	}
 	s.registerUsageMetrics()
 	return s
@@ -30,7 +30,7 @@ type OSSAccessControlService struct {
 	UsageStats    usagestats.Service
 	Log           log.Logger
 	registrations accesscontrol.RegistrationList
-	scopeResolver accesscontrol.ScopeResolver
+	ScopeResolver accesscontrol.ScopeResolver
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -74,7 +74,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 		user.Permissions[user.OrgId] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
-	attributeMutator := ac.scopeResolver.GetResolveAttributeScopeMutator(user.OrgId)
+	attributeMutator := ac.ScopeResolver.GetResolveAttributeScopeMutator(user.OrgId)
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
 	if err != nil {
 		return false, err
@@ -93,7 +93,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	defer timer.ObserveDuration()
 
 	var err error
-	keywordMutator := ac.scopeResolver.GetResolveKeywordScopeMutator(user)
+	keywordMutator := ac.ScopeResolver.GetResolveKeywordScopeMutator(user)
 
 	builtinRoles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
@@ -214,5 +214,5 @@ func (ac *OSSAccessControlService) DeclareFixedRoles(registrations ...accesscont
 // RegisterAttributeScopeResolver allows the caller to register scope resolvers for a
 // specific scope prefix (ex: datasources:name:)
 func (ac *OSSAccessControlService) RegisterAttributeScopeResolver(scopePrefix string, resolver accesscontrol.AttributeScopeResolveFunc) {
-	ac.scopeResolver.AddAttributeResolver(scopePrefix, resolver)
+	ac.ScopeResolver.AddAttributeResolver(scopePrefix, resolver)
 }
