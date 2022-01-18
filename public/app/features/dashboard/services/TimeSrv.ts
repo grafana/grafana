@@ -322,7 +322,7 @@ export class TimeSrv {
 
     if (maxTimeRangeInMillis !== 0 && to.valueOf() - from.valueOf() > maxTimeRangeInMillis) {
       appEvents.emit(AppEvents.alertWarning, [
-        'Timerange can not be more than ' + this.dashboard.timepicker.maxTimeRange,
+        'Timerange can not be longer than ' + this.dashboard?.timepicker.maxTimeRange + '. Please select a shorter duration.',
       ]);
       isSetTime = false;
     }
