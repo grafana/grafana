@@ -145,12 +145,12 @@ func (hs *HTTPServer) UpdateCurrentOrgAddress(c *models.ReqContext) response.Res
 }
 
 // PUT /api/orgs/:orgId/address
-func UpdateOrgAddress(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateOrgAddress(c *models.ReqContext) response.Response {
 	form := dtos.UpdateOrgAddressForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return updateOrgAddressHelper(c.Req.Context(), form, c.ParamsInt64(":orgId"))
+	return hs.updateOrgAddressHelper(c.Req.Context(), form, c.ParamsInt64(":orgId"))
 }
 
 func (hs *HTTPServer) updateOrgAddressHelper(ctx context.Context, form dtos.UpdateOrgAddressForm, orgID int64) response.Response {
@@ -174,14 +174,14 @@ func (hs *HTTPServer) updateOrgAddressHelper(ctx context.Context, form dtos.Upda
 }
 
 // DELETE /api/orgs/:orgId
-func DeleteOrgByID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
 	orgID := c.ParamsInt64(":orgId")
 	// before deleting an org, check if user does not belong to the current org
 	if c.OrgId == orgID {
 		return response.Error(400, "Can not delete org for current user", nil)
 	}
 
-	if err := sqlstore.DeleteOrg(c.Req.Context(), &models.DeleteOrgCommand{Id: orgID}); err != nil {
+	if err := hs.SQLStore.DeleteOrg(c.Req.Context(), &models.DeleteOrgCommand{Id: orgID}); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(404, "Failed to delete organization. ID not found", nil)
 		}

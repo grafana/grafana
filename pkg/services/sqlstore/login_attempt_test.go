@@ -20,10 +20,11 @@ func mockTime(mock time.Time) time.Time {
 
 func TestLoginAttempts(t *testing.T) {
 	var beginningOfTime, timePlusOneMinute, timePlusTwoMinutes time.Time
+	var sqlStore *SQLStore
 	user := "user"
 
 	setup := func(t *testing.T) {
-		sqlStore := InitTestDB(t)
+		sqlStore = InitTestDB(t)
 		beginningOfTime = mockTime(time.Date(2017, 10, 22, 8, 0, 0, 0, time.Local))
 		err := sqlStore.CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
 			Username:  user,
