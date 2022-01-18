@@ -92,7 +92,6 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 			default:
 				return fmt.Errorf("invalid team permission type %s", permission)
 			}
-			return nil
 		},
 	}
 
