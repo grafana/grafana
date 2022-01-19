@@ -1,14 +1,13 @@
 load(
     'scripts/drone/steps/lib.star',
-    'initialize_step',
+    'download_grabpl_step',
     'slack_step',
 )
 
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 def pipeline(
-    name, edition, trigger, steps, ver_mode, services=[], platform='linux', depends_on=[],
-    is_downstream=False, install_deps=True,
+    name, edition, trigger, steps, services=[], platform='linux', depends_on=[], environment=None, volumes=[],
     ):
     if platform != 'windows':
         platform_conf = {
@@ -37,11 +36,21 @@ def pipeline(
         'name': name,
         'trigger': trigger,
         'services': services,
-        'steps': initialize_step(
-            edition, platform, is_downstream=is_downstream, install_deps=install_deps, ver_mode=ver_mode,
-        ) + steps,
+        'steps': steps,
+        'volumes': [{
+            'name': 'docker',
+            'host': {
+                'path': '/var/run/docker.sock',
+            },
+        }],
         'depends_on': depends_on,
     }
+    if environment:
+        pipeline.update({
+            'environment': environment,
+        })
+
+    pipeline['volumes'].extend(volumes)
     pipeline.update(platform_conf)
 
     if edition in ('enterprise', 'enterprise2'):
