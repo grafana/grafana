@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant, stylesFactory } from '@grafana/ui';
 
-export const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backgroundColor = selectThemeVariant({ light: 'rgb(247, 247, 249)', dark: '#161719' }, theme.type);
-  const borderColor = selectThemeVariant({ light: theme.palette.gray85, dark: 'rgb(41, 41, 41)' }, theme.type);
-  const headerBackground = selectThemeVariant({ light: 'rgb(247, 247, 249)', dark: '#3D3D3D' }, theme.type);
+export const getStyles = ({ isLight, palette }: GrafanaTheme) => {
+  const backgroundColor = isLight ? 'rgb(247, 247, 249)' : '#161719';
+  const borderColor = isLight ? palette.gray85 : 'rgb(41, 41, 41)';
+  const headerBackground = isLight ? 'rgb(247, 247, 249)' : '#3D3D3D';
 
   return {
     /* This will make the table scrollable when it gets too small */
@@ -73,4 +72,4 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
   };
-});
+};

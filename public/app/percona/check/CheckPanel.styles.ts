@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant, stylesFactory } from '@grafana/ui';
 
-export const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = selectThemeVariant({ light: theme.palette.gray85, dark: theme.palette.dark7 }, theme.type);
+export const getStyles = ({ palette, colors, isLight }: GrafanaTheme) => {
+  const borderColor = isLight ? palette.gray85 : palette.dark7;
 
   return {
     panel: css`
@@ -27,10 +26,10 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       white-space: pre-wrap;
     `,
     link: css`
-      color: ${theme.colors.linkExternal};
+      color: ${colors.linkExternal};
       &:hover {
-        color: ${theme.colors.textBlue};
+        color: ${colors.textBlue};
       }
     `,
   };
-});
+};

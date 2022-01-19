@@ -1,14 +1,9 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant } from '@grafana/ui';
 
-export const getStyles = (theme: GrafanaTheme) => {
-  const { border, colors, palette, spacing } = theme;
-  const stepHeaderHoverBg = selectThemeVariant(
-    { light: palette.gray95, dark: colors.dropdownOptionHoverBg },
-    theme.type
-  );
-  const verticalLineColor = selectThemeVariant({ light: palette.gray4, dark: palette.gray33 }, theme.type);
+export const getStyles = ({ border, colors, palette, spacing, isLight }: GrafanaTheme) => {
+  const stepHeaderHoverBg = isLight ? palette.gray95 : colors.dropdownOptionHoverBg;
+  const verticalLineColor = isLight ? palette.gray4 : palette.gray33;
 
   return {
     step: css`

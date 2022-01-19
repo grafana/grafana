@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant, stylesFactory } from '@grafana/ui';
 
 /**
  * NOTE: These styles may be used to create a theme for PMM
  */
-export const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backgroundColor = selectThemeVariant({ light: 'rgb(247, 247, 249)', dark: 'rgb(22, 23, 25)' }, theme.type);
-  const borderColor = selectThemeVariant({ light: theme.palette.gray85, dark: theme.palette.dark7 }, theme.type);
+export const getStyles = ({ palette, colors, isLight }: GrafanaTheme) => {
+  const backgroundColor = isLight ? 'rgb(247, 247, 249)' : 'rgb(22, 23, 25)';
+  const borderColor = isLight ? palette.gray85 : palette.dark7;
   const cellPadding = '12px 8px';
 
   return {
@@ -23,7 +22,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       border: 1px solid ${borderColor};
       border-spacing: 0;
       background-color: ${backgroundColor};
-      color: ${theme.colors.text};
+      color: ${colors.text};
       width: 100%;
 
       thead {
@@ -61,10 +60,10 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       text-align: center;
     `,
     link: css`
-      color: ${theme.colors.linkExternal};
+      color: ${colors.linkExternal};
       &:hover {
-        color: ${theme.colors.textBlue};
+        color: ${colors.textBlue};
       }
     `,
   };
-});
+};
