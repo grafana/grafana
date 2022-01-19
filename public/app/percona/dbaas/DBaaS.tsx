@@ -1,6 +1,7 @@
 import React, { FC, useMemo, useState } from 'react';
 
 import { useStyles } from '@grafana/ui';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { Settings } from '../settings/Settings.types';
 import { FeatureLoader } from '../shared/components/Elements/FeatureLoader';
@@ -17,10 +18,11 @@ import { useKubernetes } from './components/Kubernetes/Kubernetes.hooks';
 import { isKubernetesListUnavailable } from './components/Kubernetes/Kubernetes.utils';
 import { KubernetesInventory } from './components/Kubernetes/KubernetesInventory';
 
-export const DBaaS: FC = () => {
+export const DBaaS: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }) => {
   const styles = useStyles(getStyles);
   const [settings, setSettings] = useState<Settings | null>(null);
   const { path: basePath } = PAGE_MODEL;
+  const tab = match.params.tab;
 
   const [kubernetes, deleteKubernetes, addKubernetes, getKubernetes, setLoading, kubernetesLoading] = useKubernetes({
     settings,
@@ -57,6 +59,7 @@ export const DBaaS: FC = () => {
       <TechnicalPreview />
       <div className={styles.panelContentWrapper}>
         <TabbedContent
+          activeTabName={tab}
           tabs={tabs}
           basePath={basePath}
           renderTab={({ Content }) => (

@@ -33,5 +33,6 @@ export interface TabbedContentProps {
   className?: string;
   tabsdataTestId?: string;
   contentdataTestId?: string;
+  activeTabName?: string;
   renderTab?: (props: TabRenderProps) => void;
 }

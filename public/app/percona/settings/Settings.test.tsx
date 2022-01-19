@@ -2,6 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { Tab } from '@grafana/ui';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 import { getMount } from '../shared/helpers/testUtils';
 
@@ -40,7 +41,9 @@ describe('SettingsPanel::', () => {
     jest
       .spyOn(SettingsService, 'getSettings')
       .mockImplementationOnce(() => Promise.resolve({ ...settingsStub, alertingEnabled: false }));
-    const root = await getMount(<SettingsPanel />);
+    const root = await getMount(
+      <SettingsPanel {...getRouteComponentProps({ match: { params: { tab: '' } } as any })} />
+    );
     root.update();
 
     const tabs = root.find(Tab);

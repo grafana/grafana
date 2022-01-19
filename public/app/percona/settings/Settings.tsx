@@ -3,6 +3,7 @@ import React, { FC, useEffect, useMemo, useState, useRef, useCallback } from 're
 import { createPortal } from 'react-dom';
 
 import { Spinner, useTheme } from '@grafana/ui';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { EmptyBlock } from '../shared/components/Elements/EmptyBlock';
 import { ContentTab, TabbedContent, TabOrientation } from '../shared/components/Elements/TabbedContent';
@@ -19,8 +20,9 @@ import { Advanced, AlertManager, Diagnostics, MetricsResolution, SSHKey } from '
 import { Communication } from './components/Communication/Communication';
 import { Platform } from './components/Platform/Platform';
 
-export const SettingsPanel: FC = () => {
+export const SettingsPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }) => {
   const { path: basePath } = PAGE_MODEL;
+  const tab = match.params.tab;
   const [generateToken] = useCancelToken();
 
   const theme = useTheme();
@@ -177,6 +179,7 @@ export const SettingsPanel: FC = () => {
         {!loading && !hasNoAccess && (
           <>
             <TabbedContent
+              activeTabName={tab}
               className={styles.tabsWrapper}
               tabs={tabs}
               basePath={basePath}
