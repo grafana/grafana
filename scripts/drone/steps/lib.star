@@ -46,9 +46,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
     if ver_mode == 'release':
         args = '${DRONE_TAG}'
         common_cmds.append('./bin/grabpl verify-version ${DRONE_TAG}')
-    elif ver_mode == 'test-release':
-        args = test_release_ver
-        common_cmds.append('./bin/grabpl verify-version {}'.format(test_release_ver))
     else:
         if not is_downstream:
             build_no = '${DRONE_BUILD_NUMBER}'
@@ -68,8 +65,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         if ver_mode == 'release':
             committish = '${DRONE_TAG}'
             source_commit = ' ${DRONE_TAG}'
-        elif ver_mode == 'test-release':
-            committish = 'main'
         elif ver_mode == 'release-branch':
             committish = '${DRONE_BRANCH}'
         else:
@@ -232,7 +227,7 @@ def benchmark_ldap_step():
 
 
 def build_storybook_step(edition, ver_mode):
-    if edition in ('enterprise', 'enterprise2') and ver_mode in ('release', 'test-release'):
+    if edition in ('enterprise', 'enterprise2') and ver_mode == 'release':
         return None
 
     return {
@@ -256,24 +251,20 @@ def store_storybook_step(edition, ver_mode):
     if edition in ('enterprise', 'enterprise2'):
         return None
 
-    if ver_mode == 'test-release':
-        commands = [
-            'echo Testing release',
-        ]
+
+    commands = []
+    if ver_mode == 'release':
+        channels = ['latest', '${DRONE_TAG}', ]
     else:
-        commands = []
-        if ver_mode == 'release':
-            channels = ['latest', '${DRONE_TAG}', ]
-        else:
-            channels = ['canary', ]
-        commands.extend([
-                            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
-                            'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
-                        ] + [
-                            'gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{}'.format(
-                                c)
-                            for c in channels
-                        ])
+        channels = ['canary', ]
+    commands.extend([
+                        'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
+                        'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
+                    ] + [
+                        'gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{}'.format(
+                            c)
+                        for c in channels
+                    ])
 
     return {
         'name': 'store-storybook',
@@ -331,15 +322,6 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
                 edition,
             ),
         ]
-    elif ver_mode == 'test-release':
-        env = {
-            'GITHUB_TOKEN': from_secret(github_token),
-        }
-        cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise {}'.format(
-                edition, test_release_ver,
-            ),
-        ]
     else:
         if not is_downstream:
             build_no = '${DRONE_BUILD_NUMBER}'
@@ -374,11 +356,6 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         cmds = [
             './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
             '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
-        ]
-    elif ver_mode == 'test-release':
-        cmds = [
-            './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
-            '--edition {} --no-pull-enterprise {}'.format(edition, test_release_ver),
         ]
     else:
         cmds = [
@@ -591,7 +568,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
 
-    if ver_mode in ('main', 'release', 'test-release', 'release-branch'):
+    if ver_mode in ('main', 'release', 'release-branch'):
         sign_args = ' --sign'
         env = {
             'GRAFANA_API_KEY': from_secret('grafana_api_key'),
@@ -612,13 +589,6 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
             '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} ${{DRONE_TAG}}'.format(
                 sign_args
-            ),
-        ]
-    elif ver_mode == 'test-release':
-        cmds = [
-            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-            '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} {}'.format(
-                sign_args, test_release_ver,
             ),
         ]
     else:
@@ -718,9 +688,6 @@ def copy_packages_for_docker_step():
 
 
 def package_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
-    if ver_mode == 'test-release':
-        publish = False
-
     cmd = './bin/grabpl build-docker --edition {} --shouldSave'.format(edition)
     ubuntu_sfx = ''
     if ubuntu:
@@ -749,9 +716,6 @@ def package_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publ
     }
 
 def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
-    if ver_mode == 'test-release':
-        publish = False
-
     ubuntu_sfx = ''
     if ubuntu:
         ubuntu_sfx = '-ubuntu'
@@ -898,10 +862,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
 
     packages_bucket = ' --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads' + enterprise2_suffix(edition)
 
-    if ver_mode == 'test-release':
-        cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
-              '--packages-bucket grafana-downloads-test'
-    elif ver_mode == 'release':
+    if ver_mode == 'release':
         packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}'.format(enterprise2_suffix(edition))
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
     elif edition == 'enterprise2':
@@ -930,13 +891,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
 
 
 def store_packages_step(edition, ver_mode, is_downstream=False):
-    if ver_mode == 'test-release':
-        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json '.format(edition) + \
-              '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
-              'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release {}'.format(
-                  test_release_ver,
-              )
-    elif ver_mode == 'release':
+    if ver_mode == 'release':
         cmd = './bin/grabpl store-packages --edition {} --packages-bucket grafana-downloads --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,
         )
@@ -995,20 +950,17 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         },
     ]
     if (ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (
-        'release', 'test-release', 'release-branch',
+        'release', 'release-branch',
     ):
         bucket_part = ''
         bucket = '%PRERELEASE_BUCKET%/artifacts/downloads'
         if ver_mode == 'release':
             ver_part = '${DRONE_TAG}'
             dir = 'release'
-        elif ver_mode == 'test-release':
-            ver_part = test_release_ver
-            dir = 'release'
-            bucket = 'grafana-downloads-test'
-            bucket_part = ' --packages-bucket {}'.format(bucket)
         else:
             dir = 'main'
+            bucket = 'grafana-downloads'
+            bucket_part = ' --packages-bucket {}'.format(bucket)
             if not is_downstream:
                 build_no = 'DRONE_BUILD_NUMBER'
             else:
@@ -1024,7 +976,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'cp C:\\App\\nssm-2.24.zip .',
         ]
         if (ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (
-            'release', 'test-release',
+            'release',
         ):
             installer_commands.extend([
                 '.\\grabpl.exe gen-version {}'.format(ver_part),
@@ -1058,8 +1010,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     if edition in ('enterprise', 'enterprise2'):
         if ver_mode == 'release':
             committish = '${DRONE_TAG}'
-        elif ver_mode == 'test-release':
-            committish = 'main'
         elif ver_mode == 'release-branch':
             committish = '$$env:DRONE_BRANCH'
         else:
