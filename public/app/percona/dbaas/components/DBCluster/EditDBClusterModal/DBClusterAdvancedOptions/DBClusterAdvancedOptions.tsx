@@ -60,6 +60,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
   );
   const resourcesInputProps = { step: '0.1' };
   let allocatedTimer: NodeJS.Timeout;
+  let expectedTimer: NodeJS.Timeout;
 
   const topologies = useMemo(
     () =>
@@ -157,15 +158,16 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
       clearTimeout(allocatedTimer);
       unmounted.current = true;
     };
-  }, [allocatedTimer, getAllocatedResources]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getAllocatedResources]);
 
   useEffect(() => {
-    let expectedTimer: NodeJS.Timeout;
     if (canGetExpectedResources(selectedCluster, values)) {
       if (expectedTimer) {
         clearTimeout(expectedTimer);
       }
 
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       expectedTimer = setTimeout(() => getExpectedResources(), EXPECTED_DELAY);
     }
 

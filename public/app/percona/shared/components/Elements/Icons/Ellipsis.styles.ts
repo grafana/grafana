@@ -1,4 +1,4 @@
-import { css, keyframes } from 'emotion';
+import { css, keyframes } from '@emotion/css';
 
 const bounce = keyframes`
   from {

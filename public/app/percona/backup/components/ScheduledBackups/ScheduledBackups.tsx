@@ -66,21 +66,6 @@ export const ScheduledBackups: FC = () => {
     setPending(false);
   }, [generateToken]);
 
-  const handleToggle = useCallback(
-    async ({ id, enabled }: ScheduledBackup) => {
-      setActionPending(true);
-      try {
-        await ScheduledBackupsService.toggle(id, !enabled);
-        getData();
-      } catch (e) {
-        logger.error(e);
-      } finally {
-        setActionPending(false);
-      }
-    },
-    [getData]
-  );
-
   const handleCopy = useCallback(
     async (backup: ScheduledBackup) => {
       const { serviceId, locationId, cronExpression, name, description, retention, retryInterval, retryTimes, mode } =
@@ -100,6 +85,21 @@ export const ScheduledBackups: FC = () => {
           false,
           mode
         );
+        getData();
+      } catch (e) {
+        logger.error(e);
+      } finally {
+        setActionPending(false);
+      }
+    },
+    [getData]
+  );
+
+  const handleToggle = useCallback(
+    async ({ id, enabled }: ScheduledBackup) => {
+      setActionPending(true);
+      try {
+        await ScheduledBackupsService.toggle(id, !enabled);
         getData();
       } catch (e) {
         logger.error(e);

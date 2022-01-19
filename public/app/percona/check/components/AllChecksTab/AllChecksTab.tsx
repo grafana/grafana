@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { logger } from '@percona/platform-core';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useState, useCallback } from 'react';
 
 import { Spinner, useTheme, useStyles } from '@grafana/ui';
 import { CheckService } from 'app/percona/check/Check.service';
@@ -40,25 +40,25 @@ export const AllChecksTab: FC = () => {
     );
   };
 
-  useEffect(() => {
-    const fetchChecks: FetchChecks = async () => {
-      setFetchChecksPending(true);
+  const fetchChecks: FetchChecks = useCallback(async () => {
+    setFetchChecksPending(true);
 
-      try {
-        const checks = await CheckService.getAllChecks(generateToken(GET_ALL_CHECKS_CANCEL_TOKEN));
+    try {
+      const checks = await CheckService.getAllChecks(generateToken(GET_ALL_CHECKS_CANCEL_TOKEN));
 
-        setChecks(checks);
-      } catch (e) {
-        if (isApiCancelError(e)) {
-          return;
-        }
-        logger.error(e);
+      setChecks(checks);
+    } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
       }
-      setFetchChecksPending(false);
-    };
-
-    fetchChecks();
+      logger.error(e);
+    }
+    setFetchChecksPending(false);
   }, [generateToken]);
+
+  useEffect(() => {
+    fetchChecks();
+  }, [fetchChecks, generateToken]);
 
   return (
     <div className={cx(tableStyles.wrapper, styles.wrapper)} data-testid="db-checks-all-checks-wrapper">

@@ -10,7 +10,7 @@ export interface TableProps {
   className?: string;
   rowSelection?: boolean;
   onRowSelection?: (selected: any) => void;
-  columns: Column[];
+  columns: Array<Column<any>>;
   data: object[];
   noData?: ReactNode;
   loading?: boolean;

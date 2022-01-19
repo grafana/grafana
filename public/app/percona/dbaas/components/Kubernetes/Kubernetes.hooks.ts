@@ -114,10 +114,10 @@ const toModelOperators = (
   const modelOperators = {} as OperatorsList;
   const componentToUpdate = cluster_to_components[kubernetesClusterName].component_to_update_information;
 
-  Object.entries(operators).forEach(([operatorKey, operator]: [keyof OperatorsList, Operator]) => {
-    const component = OPERATOR_COMPONENT_TO_UPDATE_MAP[operatorKey];
+  Object.entries(operators).forEach(([operatorKey, operator]: [string, Operator]) => {
+    const component = OPERATOR_COMPONENT_TO_UPDATE_MAP[operatorKey as keyof OperatorsList];
 
-    modelOperators[operatorKey] = {
+    modelOperators[operatorKey as keyof OperatorsList] = {
       availableVersion:
         componentToUpdate && componentToUpdate[component] ? componentToUpdate[component].available_version : undefined,
       ...operator,

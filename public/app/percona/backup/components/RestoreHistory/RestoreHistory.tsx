@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import { logger } from '@percona/platform-core';
 import React, { FC, useState, useMemo, useEffect } from 'react';
 import { Column, Row } from 'react-table';
@@ -24,7 +25,7 @@ export const RestoreHistory: FC = () => {
   const [generateToken] = useCancelToken();
   const [triggerTimeout] = useRecurringCall();
   const columns = useMemo(
-    (): Column[] => [
+    (): Array<Column<Restore>> => [
       {
         Header: Messages.backupInventory.table.columns.name,
         accessor: 'name',
@@ -84,7 +85,7 @@ export const RestoreHistory: FC = () => {
 
     getData(true).then(() => triggerTimeout(getData, DATA_INTERVAL));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [triggerTimeout]);
+  }, []);
 
   return (
     <Table
