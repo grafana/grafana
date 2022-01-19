@@ -328,7 +328,7 @@ export class DatasourceSrv implements DataSourceService {
 
   async reload() {
     const settings = await getBackendSrv().get('/api/frontend/settings');
-    getDatasourceSrv().init(settings.datasources, settings.defaultDatasource);
+    this.init(settings.datasources, settings.defaultDatasource);
   }
 }
 

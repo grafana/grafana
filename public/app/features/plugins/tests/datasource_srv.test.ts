@@ -47,15 +47,11 @@ jest.mock('../plugin_loader', () => ({
 }));
 
 const getBackendSrvGetMock = jest.fn();
-const getDataSourceSrvInitMock = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: getBackendSrvGetMock,
-  }),
-  getDataSourceSrv: () => ({
-    init: getDataSourceSrvInitMock,
   }),
 }));
 
@@ -319,10 +315,11 @@ describe('datasource_srv', () => {
         },
         defaultDatasource: 'aaa',
       });
+      const initMock = jest.spyOn(dataSourceSrv, 'init').mockImplementation(() => {});
 
       await dataSourceSrv.reload();
       expect(getBackendSrvGetMock).toHaveBeenCalledWith('/api/frontend/settings');
-      expect(getDataSourceSrvInitMock).toHaveBeenCalledWith(dataSourceInit, 'aaa');
+      expect(initMock).toHaveBeenCalledWith(dataSourceInit, 'aaa');
     });
   });
 });
