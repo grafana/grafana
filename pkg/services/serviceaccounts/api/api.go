@@ -93,7 +93,10 @@ func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) re
 }
 
 func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Response {
-	saID := ctx.ParamsInt64(":serviceAccountId")
+	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+	}
 	if saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID); err == nil {
 		result := make([]*models.ApiKeyDTO, len(saTokens))
 		for i, t := range saTokens {
