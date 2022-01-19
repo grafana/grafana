@@ -3,7 +3,7 @@ import { ResourcePermission } from './types';
 import { PermissionListItem } from './PermissionListItem';
 
 interface Props {
-  type: string;
+  title: string;
   items: ResourcePermission[];
   permissionLevels: string[];
   canSet: boolean;
@@ -11,7 +11,7 @@ interface Props {
   onChange: (resourcePermission: ResourcePermission, permission: string) => void;
 }
 
-export const PermissionList = ({ type, items, permissionLevels, canSet, onRemove, onChange }: Props) => {
+export const PermissionList = ({ title, items, permissionLevels, canSet, onRemove, onChange }: Props) => {
   if (items.length === 0) {
     return null;
   }
@@ -22,7 +22,7 @@ export const PermissionList = ({ type, items, permissionLevels, canSet, onRemove
         <thead>
           <tr>
             <th style={{ width: '1%' }} />
-            <th>{type}</th>
+            <th>{title}</th>
             <th>Permission</th>
             <th style={{ width: '1%' }} />
             <th style={{ width: '1%' }} />

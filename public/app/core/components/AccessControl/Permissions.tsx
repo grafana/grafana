@@ -146,7 +146,7 @@ export const Permissions = ({
           />
         </SlideDown>
         <PermissionList
-          type="Role"
+          title="Role"
           items={builtInRoles}
           permissionLevels={desc.permissions}
           onChange={onChange}
@@ -154,7 +154,7 @@ export const Permissions = ({
           canSet={canSetPermissions}
         />
         <PermissionList
-          type="User"
+          title="User"
           items={users}
           permissionLevels={desc.permissions}
           onChange={onChange}
@@ -162,7 +162,7 @@ export const Permissions = ({
           canSet={canSetPermissions}
         />
         <PermissionList
-          type="Team"
+          title="Team"
           items={teams}
           permissionLevels={desc.permissions}
           onChange={onChange}
