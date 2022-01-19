@@ -1514,8 +1514,8 @@ steps:
   - .\grabpl.exe gen-version ${DRONE_TAG}
   - .\grabpl.exe windows-installer --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/release/
-  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/release/
+  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/oss/release/
+  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/oss/release/
   depends_on:
   - initialize
   environment:
@@ -2201,8 +2201,8 @@ steps:
   - .\grabpl.exe gen-version ${DRONE_TAG}
   - .\grabpl.exe windows-installer --edition enterprise ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/enterprise/release/
-  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/enterprise/release/
+  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/enterprise/release/
+  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/enterprise/release/
   depends_on:
   - initialize
   environment:
@@ -3170,8 +3170,8 @@ steps:
   - .\grabpl.exe windows-installer --edition oss --packages-bucket grafana-downloads-test
     v7.3.0-test
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-downloads-test/oss/release/
-  - gsutil cp "$$fname.sha256" gs://grafana-downloads-test/oss/release/
+  - gsutil cp $$fname gs://grafana-downloads-test/v7.3.0-test/oss/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads-test/v7.3.0-test/oss/release/
   depends_on:
   - initialize
   environment:
@@ -3831,8 +3831,8 @@ steps:
   - .\grabpl.exe windows-installer --edition enterprise --packages-bucket grafana-downloads-test
     v7.3.0-test
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-downloads-test/enterprise/release/
-  - gsutil cp "$$fname.sha256" gs://grafana-downloads-test/enterprise/release/
+  - gsutil cp $$fname gs://grafana-downloads-test/v7.3.0-test/enterprise/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads-test/v7.3.0-test/enterprise/release/
   depends_on:
   - initialize
   environment:
@@ -5149,6 +5149,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: e1bc6f40f569d2e7adfff147328f6d494486988e8fd063374394bfd0c692d62b
+hmac: d1445d0c5b25b96a69776e6df2e9711ab25b7bc8080358a11f25ee386e30ad3d
 
 ...
