@@ -309,6 +309,7 @@ describe('datasource_srv', () => {
     });
 
     it('Should reload the datasource', async () => {
+      // arrange
       getBackendSrvGetMock.mockReturnValueOnce({
         datasources: {
           ...dataSourceInit,
@@ -316,8 +317,9 @@ describe('datasource_srv', () => {
         defaultDatasource: 'aaa',
       });
       const initMock = jest.spyOn(dataSourceSrv, 'init').mockImplementation(() => {});
-
+      // act
       await dataSourceSrv.reload();
+      // assert
       expect(getBackendSrvGetMock).toHaveBeenCalledWith('/api/frontend/settings');
       expect(initMock).toHaveBeenCalledWith(dataSourceInit, 'aaa');
     });
