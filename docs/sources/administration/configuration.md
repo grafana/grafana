@@ -869,8 +869,6 @@ Email server settings.
 
 Enable this to allow Grafana to send email. Default is `false`.
 
-If the password contains `#` or `;`, then you have to wrap it with triple quotes. Example: """#password;"""
-
 ### host
 
 Default is `localhost:25`.
@@ -881,7 +879,7 @@ In case of SMTP auth, default is `empty`.
 
 ### password
 
-In case of SMTP auth, default is `empty`.
+In case of SMTP auth, default is `empty`. If the password contains `#` or `;`, then you have to wrap it with triple quotes. Example: """#password;"""
 
 ### cert_file
 
