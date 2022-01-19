@@ -129,7 +129,7 @@ func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStrea
 	}
 	logger.Debug("Handle plugin subscribe stream survey", "req", req)
 	if req.LeaderNodeID != c.node.ID() {
-		// TODO: should only send survey to the leader node.
+		// Requests sent to one node only, this branch should never be executed.
 		logger.Debug("Non-leader node")
 		return &PluginSubscribeStreamResponse{}, nil
 	}
@@ -138,23 +138,24 @@ func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStrea
 	defer cancel()
 	ok, _, currentLeadershipID, err := c.leaderManager.GetLeader(ctx, orgchannel.PrependOrgID(req.OrgID, req.Channel))
 	if err != nil {
-		// TODO: better handling of non-leader error.
+		logger.Error("Error checking leader", "error", err, "channel", req.Channel)
 		return nil, errors.New("error checking leader")
 	}
 	if !ok || currentLeadershipID != req.LeadershipID {
-		// TODO: better handling of non-leader error.
-		return nil, errors.New("error leader changed")
+		logger.Error("Leader changed", "channel", req.Channel)
+		return nil, errors.New("leader changed")
 	}
 
 	query := models.GetSignedInUserQuery{UserId: req.UserID, OrgId: req.OrgID}
 	if err := c.bus.Dispatch(context.Background(), &query); err != nil {
-		// TODO: better handling of auth error.
-		return nil, errors.New("unauthorized")
+		logger.Error("Error getting signed in user", "error", err, "channel", req.Channel)
+		return nil, errors.New("error getting signed in user")
 	}
 	user := query.Result
 
 	handler, parsedChannel, err := c.channelHandlerGetter.GetChannelHandler(context.Background(), user, req.Channel)
 	if err != nil {
+		logger.Error("Error getting ChannelHandler", "error", err, "channel", req.Channel)
 		return nil, err
 	}
 
@@ -164,6 +165,7 @@ func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStrea
 		LeadershipID: req.LeadershipID,
 	})
 	if err != nil {
+		logger.Error("Error calling OnSubscribe handler", "error", err, "channel", req.Channel)
 		return nil, err
 	}
 
@@ -188,7 +190,7 @@ func (c *Caller) CallPluginSubscribeStream(ctx context.Context, user *models.Sig
 
 	resp, err := c.node.Survey(ctx, pluginSubscribeStream, jsonData, leaderNodeID)
 	if err != nil {
-		return models.SubscribeReply{}, 0, err
+		return models.SubscribeReply{}, 0, fmt.Errorf("survey error: %w", err)
 	}
 
 	for nodeID, result := range resp {
@@ -205,8 +207,7 @@ func (c *Caller) CallPluginSubscribeStream(ctx context.Context, user *models.Sig
 		}
 		return res.Reply, res.Status, nil
 	}
-	// TODO: maybe handle in a special way.
-	return models.SubscribeReply{}, 0, errors.New("leader not responded")
+	return models.SubscribeReply{}, 0, errors.New("leader node not responded")
 }
 
 func (c *Caller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChannel, error) {
