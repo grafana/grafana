@@ -1,4 +1,5 @@
-import React, { FC, useEffect, useMemo, useState, useCallback } from 'react';
+import React, { FC, useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Spinner, useTheme } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
 import { Advanced, AlertManager, Diagnostics, MetricsResolution, Platform, SSHKey } from './components';
@@ -30,9 +31,16 @@ export const SettingsPanel: FC = () => {
     async (body: SettingsAPIChangePayload, callback: LoadingCallback, refresh?: boolean, onError = () => {}) => {
       // we save the test email here so that we can sent it all the way down to the form again after re-render
       // the field is deleted from the payload so as not to be sent to the API
-      const { email_alerting_settings: { password = '', test_email: testEmail = '' } = {} } = body;
-      if (testEmail) {
-        body.email_alerting_settings.test_email = undefined;
+      let password = '';
+      let testEmail = '';
+
+      if ('email_alerting_settings' in body) {
+        password = body.email_alerting_settings.password || '';
+        testEmail = body.email_alerting_settings.test_email || '';
+
+        if (testEmail) {
+          body.email_alerting_settings.test_email = undefined;
+        }
       }
       const response = await SettingsService.setSettings(body, callback, generateToken(SET_SETTINGS_CANCEL_TOKEN));
 

@@ -113,12 +113,13 @@ export interface SettingsPayload
   connected_to_platform: boolean;
 }
 
-export type SettingsAPIChangePayload = AlertManagerChangePayload &
-  AdvancedChangePayload &
-  MetricsResolutionsPayload &
-  EmailPayload &
-  SlackPayload &
-  SSHPayload;
+export type SettingsAPIChangePayload =
+  | AlertManagerChangePayload
+  | AdvancedChangePayload
+  | MetricsResolutionsPayload
+  | EmailPayload
+  | SlackPayload
+  | SSHPayload;
 
 export interface Settings {
   updatesDisabled: boolean;
