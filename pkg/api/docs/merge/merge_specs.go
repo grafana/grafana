@@ -11,7 +11,6 @@ import (
 	"github.com/go-openapi/spec"
 )
 
-//go:generate cp ../spec.json ./spec.json
 //go:embed spec.json
 var specData []byte
 

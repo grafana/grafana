@@ -102,7 +102,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -140,7 +139,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "UserID",
 						"name": "user_name",
 						"in": "path",
 						"required": true
@@ -176,7 +174,6 @@
 				"operationId": "pauseAllAlerts",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -411,7 +408,6 @@
 				"operationId": "createUser",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -459,7 +455,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -501,7 +496,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -540,7 +534,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -582,7 +575,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -624,7 +616,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -667,7 +658,6 @@
 				"operationId": "setPassword",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -678,7 +668,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -713,7 +702,6 @@
 				"operationId": "setPermissions",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -724,7 +712,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -766,7 +753,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -807,13 +793,11 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "QuotaTarget",
 						"name": "quota_target",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -824,7 +808,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -864,7 +847,6 @@
 				"operationId": "revokeAuthToken",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -875,7 +857,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -935,7 +916,6 @@
 				"operationId": "createAlertNotificationChannel",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -997,7 +977,6 @@
 				"operationId": "notificationChannelTest",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -1039,7 +1018,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "NotificationUID",
 						"name": "notification_channel_uid",
 						"in": "path",
 						"required": true
@@ -1073,13 +1051,11 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "NotificationUID",
 						"name": "notification_channel_uid",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -1116,7 +1092,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "NotificationUID",
 						"name": "notification_channel_uid",
 						"in": "path",
 						"required": true
@@ -1153,7 +1128,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "NotificationID",
 						"name": "notification_channel_id",
 						"in": "path",
 						"required": true
@@ -1188,13 +1162,11 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "NotificationID",
 						"name": "notification_channel_id",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -1232,7 +1204,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "NotificationID",
 						"name": "notification_channel_id",
 						"in": "path",
 						"required": true
@@ -1270,7 +1241,6 @@
 						"items": {
 							"type": "string"
 						},
-						"x-go-name": "DashboardID",
 						"description": "Limit response to alerts in specified dashboard(s). You can specify multiple dashboards.",
 						"name": "dashboardId",
 						"in": "query"
@@ -1278,14 +1248,12 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "PanelID",
 						"description": "Limit response to alert for a specified panel on a dashboard.",
 						"name": "panelId",
 						"in": "query"
 					},
 					{
 						"type": "string",
-						"x-go-name": "Query",
 						"description": "Limit response to alerts having a name like this value.",
 						"name": "query",
 						"in": "query"
@@ -1301,7 +1269,6 @@
 							"unknown"
 						],
 						"type": "string",
-						"x-go-name": "State",
 						"description": "Return alerts with one or more of the following alert states",
 						"name": "state",
 						"in": "query"
@@ -1309,7 +1276,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "Limit",
 						"description": "Limit response to X number of alerts.",
 						"name": "limit",
 						"in": "query"
@@ -1320,14 +1286,12 @@
 							"type": "string"
 						},
 						"collectionFormat": "multi",
-						"x-go-name": "FolderID",
 						"description": "Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders",
 						"name": "folderId",
 						"in": "query"
 					},
 					{
 						"type": "string",
-						"x-go-name": "DashboardQuery",
 						"description": "Limit response to alerts having a dashboard name like this value./ Limit response to alerts having a dashboard name like this value.",
 						"name": "dashboardQuery",
 						"in": "query"
@@ -1338,7 +1302,6 @@
 							"type": "string"
 						},
 						"collectionFormat": "multi",
-						"x-go-name": "DashboardTag",
 						"description": "Limit response to alerts of dashboards with specified tags. To do an “AND” filtering with multiple tags, specify the tags parameter multiple times",
 						"name": "dashboardTag",
 						"in": "query"
@@ -1368,7 +1331,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "DashboardID",
 						"name": "dashboardId",
 						"in": "query",
 						"required": true
@@ -1396,7 +1358,6 @@
 				"operationId": "testAlert",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"schema": {
@@ -1434,7 +1395,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "AlertID",
 						"name": "alert_id",
 						"in": "path",
 						"required": true
@@ -1463,13 +1423,11 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "AlertID",
 						"name": "alert_id",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -1509,7 +1467,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "From",
 						"description": "Find annotations created after specific epoch datetime in milliseconds.",
 						"name": "from",
 						"in": "query"
@@ -1517,7 +1474,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "To",
 						"description": "Find annotations created before specific epoch datetime in milliseconds.",
 						"name": "to",
 						"in": "query"
@@ -1525,7 +1481,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"description": "Limit response to annotations created by specific user.",
 						"name": "userId",
 						"in": "query"
@@ -1533,7 +1488,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "AlertID",
 						"description": "Find annotations for a specified alert.",
 						"name": "alertId",
 						"in": "query"
@@ -1541,7 +1495,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "DashboardID",
 						"description": "Find annotations that are scoped to a specific dashboard",
 						"name": "dashboardId",
 						"in": "query"
@@ -1549,7 +1502,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "PanelID",
 						"description": "Find annotations that are scoped to a specific panel",
 						"name": "panelId",
 						"in": "query"
@@ -1557,7 +1509,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "Limit",
 						"description": "Max limit for results returned.",
 						"name": "limit",
 						"in": "query"
@@ -1568,7 +1519,6 @@
 							"type": "string"
 						},
 						"collectionFormat": "multi",
-						"x-go-name": "Tags",
 						"description": "Use this to filter global annotations. Global annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.",
 						"name": "tags",
 						"in": "query"
@@ -1579,14 +1529,12 @@
 							"annotation"
 						],
 						"type": "string",
-						"x-go-name": "Type",
 						"description": "Return alerts or user created annotations",
 						"name": "type",
 						"in": "query"
 					},
 					{
 						"type": "boolean",
-						"x-go-name": "MatchAny",
 						"description": "Match any or all tags",
 						"name": "matchAny",
 						"in": "query"
@@ -1613,7 +1561,6 @@
 				"operationId": "createAnnotation",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -1651,7 +1598,6 @@
 				"operationId": "createGraphiteAnnotation",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -1688,7 +1634,6 @@
 				"operationId": "massDeleteAnnotations",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -1721,7 +1666,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "Tag",
 						"description": "Tag is a string that you can use to filter tags.",
 						"name": "tag",
 						"in": "query"
@@ -1729,7 +1673,6 @@
 					{
 						"type": "string",
 						"default": "100",
-						"x-go-name": "Limit",
 						"description": "Max limit for results returned.",
 						"name": "limit",
 						"in": "query"
@@ -1759,13 +1702,11 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "AnnotationID",
 						"name": "annotation_id",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -1802,7 +1743,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "AnnotationID",
 						"name": "annotation_id",
 						"in": "path",
 						"required": true
@@ -1833,13 +1773,11 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "AnnotationID",
 						"name": "annotation_id",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -2883,7 +2821,6 @@
 					{
 						"type": "boolean",
 						"default": false,
-						"x-go-name": "IncludeExpired",
 						"description": "Show expired keys",
 						"name": "includeExpired",
 						"in": "query"
@@ -2957,7 +2894,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "ID",
 						"name": "id",
 						"in": "path",
 						"required": true
@@ -2992,7 +2928,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "Query",
 						"description": "Search Query",
 						"name": "query",
 						"in": "query"
@@ -3001,7 +2936,6 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 1000,
-						"x-go-name": "Limit",
 						"description": "Limit the number of returned results",
 						"name": "limit",
 						"in": "query"
@@ -3045,8 +2979,7 @@
 									"enum": [
 										"basic",
 										"json"
-									],
-									"x-go-name": "DiffType"
+									]
 								},
 								"new": {
 									"$ref": "#/definitions/CalculateDiffTarget"
@@ -3271,7 +3204,6 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 0,
-						"x-go-name": "Limit",
 						"description": "Maximum number of results to return",
 						"name": "limit",
 						"in": "query"
@@ -3280,7 +3212,6 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 0,
-						"x-go-name": "Start",
 						"description": "Version to start from when returning queries",
 						"name": "start",
 						"in": "query"
@@ -3447,7 +3378,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "UID",
 						"name": "uid",
 						"in": "path",
 						"required": true
@@ -3481,7 +3411,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "UID",
 						"name": "uid",
 						"in": "path",
 						"required": true
@@ -3576,7 +3505,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DatasourceName",
 						"name": "datasource_name",
 						"in": "path",
 						"required": true
@@ -3612,7 +3540,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DatasourceName",
 						"name": "datasource_name",
 						"in": "path",
 						"required": true
@@ -3643,7 +3570,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DatasourceName",
 						"name": "datasource_name",
 						"in": "path",
 						"required": true
@@ -3679,14 +3605,12 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DatasourceID",
 						"name": "datasource_id",
 						"in": "path",
 						"required": true
 					},
 					{
 						"type": "string",
-						"x-go-name": "DatasourceProxyRoute",
 						"name": "datasource_proxy_route",
 						"in": "path",
 						"required": true
@@ -3723,14 +3647,12 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DatasourceID",
 						"name": "datasource_id",
 						"in": "path",
 						"required": true
 					},
 					{
 						"type": "string",
-						"x-go-name": "DatasourceProxyRoute",
 						"name": "datasource_proxy_route",
 						"in": "path",
 						"required": true
@@ -3778,14 +3700,12 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DatasourceID",
 						"name": "datasource_id",
 						"in": "path",
 						"required": true
 					},
 					{
 						"type": "string",
-						"x-go-name": "DatasourceProxyRoute",
 						"name": "datasource_proxy_route",
 						"in": "path",
 						"required": true
@@ -3824,7 +3744,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DatasourceUID",
 						"name": "datasource_uid",
 						"in": "path",
 						"required": true
@@ -3861,7 +3780,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DatasourceUID",
 						"name": "datasource_uid",
 						"in": "path",
 						"required": true
@@ -3897,7 +3815,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DatasourceID",
 						"name": "datasource_id",
 						"in": "path",
 						"required": true
@@ -3934,7 +3851,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DatasourceID",
 						"name": "datasource_id",
 						"in": "path",
 						"required": true
@@ -3973,7 +3889,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DatasourceID",
 						"name": "datasource_id",
 						"in": "path",
 						"required": true
@@ -4011,7 +3926,6 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 1000,
-						"x-go-name": "Limit",
 						"description": "Limit the maximum number of folders to return",
 						"name": "limit",
 						"in": "query"
@@ -4020,7 +3934,6 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 1,
-						"x-go-name": "Page",
 						"description": "Page index for starting fetching folders",
 						"name": "page",
 						"in": "query"
@@ -4049,7 +3962,6 @@
 				"operationId": "createFolder",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -4092,7 +4004,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "FolderID",
 						"name": "folder_id",
 						"in": "path",
 						"required": true
@@ -4127,7 +4038,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "FolderUID",
 						"name": "folder_uid",
 						"in": "path",
 						"required": true
@@ -4160,13 +4070,11 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "FolderUID",
 						"name": "folder_uid",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"description": "To change the unique identifier (uid), provide another one.\nTo overwrite an existing folder with newer version, set `overwrite` to `true`.\nProvide the current version to safelly update the folder: if the provided version differs from the stored one the request will fail, unless `overwrite` is `true`.",
 						"name": "body",
 						"in": "body",
@@ -4210,7 +4118,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "FolderUID",
 						"name": "folder_uid",
 						"in": "path",
 						"required": true
@@ -4218,7 +4125,6 @@
 					{
 						"type": "boolean",
 						"default": false,
-						"x-go-name": "ForceDeleteRules",
 						"description": "If `true` any Grafana 8 Alerts under this folder will be deleted.\nSet to `false` so that the request will fail if the folder contains any Grafana 8 Alerts.",
 						"name": "forceDeleteRules",
 						"in": "query"
@@ -4256,7 +4162,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "FolderUID",
 						"name": "folder_uid",
 						"in": "path",
 						"required": true
@@ -4297,7 +4202,6 @@
 					},
 					{
 						"type": "string",
-						"x-go-name": "FolderUID",
 						"name": "folder_uid",
 						"in": "path",
 						"required": true
@@ -4333,7 +4237,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "SearchString",
 						"description": "Part of the name or description searched for.",
 						"name": "searchString",
 						"in": "query"
@@ -4345,7 +4248,6 @@
 						],
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "Kind",
 						"description": "Kind of element to search for.",
 						"name": "kind",
 						"in": "query"
@@ -4356,28 +4258,24 @@
 							"alpha-desc"
 						],
 						"type": "string",
-						"x-go-name": "SortDirection",
 						"description": "Sort order of elements.",
 						"name": "sortDirection",
 						"in": "query"
 					},
 					{
 						"type": "string",
-						"x-go-name": "TypeFilter",
 						"description": "A comma separated list of types to filter the elements by",
 						"name": "typeFilter",
 						"in": "query"
 					},
 					{
 						"type": "string",
-						"x-go-name": "ExcludeUID",
 						"description": "Element UID to exclude from search results.",
 						"name": "excludeUid",
 						"in": "query"
 					},
 					{
 						"type": "string",
-						"x-go-name": "FolderFilter",
 						"description": "A comma separated list of folder ID(s) to filter the elements by.",
 						"name": "folderFilter",
 						"in": "query"
@@ -4386,7 +4284,6 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 100,
-						"x-go-name": "PerPage",
 						"description": "The number of results per page.",
 						"name": "perPage",
 						"in": "query"
@@ -4395,7 +4292,6 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 1,
-						"x-go-name": "Page",
 						"description": "The page for a set of records, given that only perPage records are returned at a time. Numbering starts at 1.",
 						"name": "page",
 						"in": "query"
@@ -4422,7 +4318,6 @@
 				"operationId": "createLibraryElement",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -4464,7 +4359,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "Name",
 						"name": "library_element_name",
 						"in": "path",
 						"required": true
@@ -4497,7 +4391,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "UID",
 						"name": "library_element_uid",
 						"in": "path",
 						"required": true
@@ -4528,7 +4421,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "UID",
 						"name": "library_element_uid",
 						"in": "path",
 						"required": true
@@ -4565,13 +4457,11 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "UID",
 						"name": "library_element_uid",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -4616,7 +4506,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "UID",
 						"name": "library_element_uid",
 						"in": "path",
 						"required": true
@@ -4668,7 +4557,6 @@
 				"operationId": "updateOrg",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -4705,7 +4593,6 @@
 				"operationId": "updateOrgAddress",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -4763,7 +4650,6 @@
 				"operationId": "addInvite",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -4824,7 +4710,6 @@
 				"operationId": "updateOrgPreferences",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -4884,7 +4769,6 @@
 				"operationId": "addOrgUser",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -4920,14 +4804,12 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "Query",
 						"name": "query",
 						"in": "query"
 					},
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "Limit",
 						"name": "limit",
 						"in": "query"
 					}
@@ -4960,7 +4842,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -4993,7 +4874,6 @@
 				"operationId": "updateOrgUser",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -5004,7 +4884,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -5039,7 +4918,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "Code",
 						"name": "invitation_code",
 						"in": "path",
 						"required": true
@@ -5081,7 +4959,6 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 1,
-						"x-go-name": "Page",
 						"name": "page",
 						"in": "query"
 					},
@@ -5089,20 +4966,17 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 1000,
-						"x-go-name": "PerPage",
 						"description": "Number of items per page\nThe totalCount field in the response can be used for pagination list E.g. if totalCount is equal to 100 teams and the perpage parameter is set to 10 then there are 10 pages of teams.",
 						"name": "perpage",
 						"in": "query"
 					},
 					{
 						"type": "string",
-						"x-go-name": "Name",
 						"name": "name",
 						"in": "query"
 					},
 					{
 						"type": "string",
-						"x-go-name": "Query",
 						"description": "If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.",
 						"name": "query",
 						"in": "query"
@@ -5135,7 +5009,6 @@
 				"operationId": "createOrg",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -5178,7 +5051,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "OrgName",
 						"name": "org_name",
 						"in": "path",
 						"required": true
@@ -5216,7 +5088,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "OrgID",
 						"name": "org_id",
 						"in": "path",
 						"required": true
@@ -5250,7 +5121,6 @@
 				"operationId": "adminUpdateOrg",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -5261,7 +5131,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "OrgID",
 						"name": "org_id",
 						"in": "path",
 						"required": true
@@ -5300,7 +5169,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "OrgID",
 						"name": "org_id",
 						"in": "path",
 						"required": true
@@ -5337,7 +5205,6 @@
 				"operationId": "adminUpdateOrgAddress",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -5348,7 +5215,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "OrgID",
 						"name": "org_id",
 						"in": "path",
 						"required": true
@@ -5385,7 +5251,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "OrgID",
 						"name": "org_id",
 						"in": "path",
 						"required": true
@@ -5426,7 +5291,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "QuotaTarget",
 						"name": "quota_target",
 						"in": "path",
 						"required": true
@@ -5434,13 +5298,11 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "OrgID",
 						"name": "org_id",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -5485,7 +5347,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "OrgID",
 						"name": "org_id",
 						"in": "path",
 						"required": true
@@ -5515,7 +5376,6 @@
 				"operationId": "adminAddOrgUser",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -5526,7 +5386,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "OrgID",
 						"name": "org_id",
 						"in": "path",
 						"required": true
@@ -5560,7 +5419,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "OrgID",
 						"name": "org_id",
 						"in": "path",
 						"required": true
@@ -5568,7 +5426,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -5601,7 +5458,6 @@
 				"operationId": "adminUpdateOrgUser",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -5612,7 +5468,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "OrgID",
 						"name": "org_id",
 						"in": "path",
 						"required": true
@@ -5620,7 +5475,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -5654,7 +5508,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "Query",
 						"description": "Search Query",
 						"name": "query",
 						"in": "query"
@@ -5665,7 +5518,6 @@
 							"type": "string"
 						},
 						"collectionFormat": "multi",
-						"x-go-name": "Tag",
 						"description": "List of tags to search for",
 						"name": "tag",
 						"in": "query"
@@ -5676,7 +5528,6 @@
 							"dash-db"
 						],
 						"type": "string",
-						"x-go-name": "Type",
 						"description": "Type to search for, dash-folder or dash-db",
 						"name": "type",
 						"in": "query"
@@ -5687,7 +5538,6 @@
 							"type": "integer",
 							"format": "int64"
 						},
-						"x-go-name": "DashboardIds",
 						"description": "List of dashboard id’s to search for",
 						"name": "dashboardIds",
 						"in": "query"
@@ -5698,14 +5548,12 @@
 							"type": "integer",
 							"format": "int64"
 						},
-						"x-go-name": "FolderIds",
 						"description": "List of folder id’s to search in for dashboards",
 						"name": "folderIds",
 						"in": "query"
 					},
 					{
 						"type": "boolean",
-						"x-go-name": "Starred",
 						"description": "Flag indicating if only starred Dashboards should be returned",
 						"name": "starred",
 						"in": "query"
@@ -5713,7 +5561,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "Limit",
 						"description": "Limit the number of returned results (max 5000)",
 						"name": "limit",
 						"in": "query"
@@ -5721,7 +5568,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "Page",
 						"description": "Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size. Only available in Grafana v6.2+.",
 						"name": "page",
 						"in": "query"
@@ -5733,7 +5579,6 @@
 						],
 						"type": "string",
 						"default": "View",
-						"x-go-name": "Permission",
 						"description": "Set to `Edit` to return dashboards/folders that the user can edit",
 						"name": "permission",
 						"in": "query"
@@ -5745,7 +5590,6 @@
 						],
 						"type": "string",
 						"default": "alpha-asc",
-						"x-go-name": "Sort",
 						"description": "Sort method; for listing all the possible sort methods use the search sorting endpoint.",
 						"name": "sort",
 						"in": "query"
@@ -5811,7 +5655,6 @@
 				"operationId": "createSnapshot",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -5847,7 +5690,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DeleteKey",
 						"name": "deleteKey",
 						"in": "path",
 						"required": true
@@ -5882,7 +5724,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "Key",
 						"name": "key",
 						"in": "path",
 						"required": true
@@ -5909,7 +5750,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "Key",
 						"name": "key",
 						"in": "path",
 						"required": true
@@ -5940,7 +5780,6 @@
 				"operationId": "createTeam",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -5980,7 +5819,6 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 1,
-						"x-go-name": "Page",
 						"name": "page",
 						"in": "query"
 					},
@@ -5988,20 +5826,17 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 1000,
-						"x-go-name": "PerPage",
 						"description": "Number of items per page\nThe totalCount field in the response can be used for pagination list E.g. if totalCount is equal to 100 teams and the perpage parameter is set to 10 then there are 10 pages of teams.",
 						"name": "perpage",
 						"in": "query"
 					},
 					{
 						"type": "string",
-						"x-go-name": "Name",
 						"name": "name",
 						"in": "query"
 					},
 					{
 						"type": "string",
-						"x-go-name": "Query",
 						"description": "If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.",
 						"name": "query",
 						"in": "query"
@@ -6033,7 +5868,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "TeamID",
 						"name": "team_id",
 						"in": "path",
 						"required": true
@@ -6066,13 +5900,11 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "TeamID",
 						"name": "team_id",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -6111,7 +5943,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "TeamID",
 						"name": "team_id",
 						"in": "path",
 						"required": true
@@ -6146,7 +5977,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "TeamID",
 						"name": "team_id",
 						"in": "path",
 						"required": true
@@ -6179,7 +6009,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "TeamID",
 						"name": "team_id",
 						"in": "path",
 						"required": true
@@ -6214,13 +6043,11 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "TeamID",
 						"name": "team_id",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -6231,7 +6058,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -6264,7 +6090,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "TeamID",
 						"name": "team_id",
 						"in": "path",
 						"required": true
@@ -6272,7 +6097,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -6307,7 +6131,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "TeamID",
 						"name": "team_id",
 						"in": "path",
 						"required": true
@@ -6334,13 +6157,11 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "TeamID",
 						"name": "team_id",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -6438,7 +6259,6 @@
 				"operationId": "updateSignedInUser",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"description": "To change the email, name, login, theme, provide another one.",
 						"name": "body",
 						"in": "body",
@@ -6521,7 +6341,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "FlagID",
 						"name": "flag_id",
 						"in": "path",
 						"required": true
@@ -6587,7 +6406,6 @@
 				"operationId": "changeUserPassword",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"description": "To change the email, name, login, theme, provide another one.",
 						"name": "body",
 						"in": "body",
@@ -6644,7 +6462,6 @@
 				"operationId": "updateUserPreferences",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -6705,7 +6522,6 @@
 				"operationId": "revokeSignedINAuthTokenCmd",
 				"parameters": [
 					{
-						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
@@ -6744,7 +6560,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DashboardID",
 						"name": "dashboard_id",
 						"in": "path",
 						"required": true
@@ -6778,7 +6593,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "DashboardID",
 						"name": "dashboard_id",
 						"in": "path",
 						"required": true
@@ -6839,7 +6653,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "OrgID",
 						"name": "org_id",
 						"in": "path",
 						"required": true
@@ -6877,7 +6690,6 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 1000,
-						"x-go-name": "Limit",
 						"description": "Limit the maximum number of users to return per page",
 						"name": "perpage",
 						"in": "query"
@@ -6886,7 +6698,6 @@
 						"type": "integer",
 						"format": "int64",
 						"default": 1,
-						"x-go-name": "Page",
 						"description": "Page index for starting fetching users",
 						"name": "page",
 						"in": "query"
@@ -6918,7 +6729,6 @@
 				"parameters": [
 					{
 						"type": "string",
-						"x-go-name": "LoginOrEmail",
 						"description": "loginOrEmail of the user",
 						"name": "loginOrEmail",
 						"in": "query",
@@ -6981,7 +6791,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -7016,13 +6825,11 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
 					},
 					{
-						"x-go-name": "Body",
 						"description": "To change the email, name, login, theme, provide another one.",
 						"name": "body",
 						"in": "body",
@@ -7063,7 +6870,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -7100,7 +6906,6 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UserID",
 						"name": "user_id",
 						"in": "path",
 						"required": true
@@ -7136,19 +6941,16 @@
 			"type": "object",
 			"properties": {
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"role": {
 					"$ref": "#/definitions/RoleType"
 				},
 				"secondsToLive": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "SecondsToLive"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"AddDataSourceCommand": {
 			"description": "Also acts as api DTO",
@@ -7161,308 +6963,245 @@
 					"$ref": "#/definitions/DsAccess"
 				},
 				"basicAuth": {
-					"type": "boolean",
-					"x-go-name": "BasicAuth"
+					"type": "boolean"
 				},
 				"basicAuthPassword": {
-					"type": "string",
-					"x-go-name": "BasicAuthPassword"
+					"type": "string"
 				},
 				"basicAuthUser": {
-					"type": "string",
-					"x-go-name": "BasicAuthUser"
+					"type": "string"
 				},
 				"database": {
-					"type": "string",
-					"x-go-name": "Database"
+					"type": "string"
 				},
 				"isDefault": {
-					"type": "boolean",
-					"x-go-name": "IsDefault"
+					"type": "boolean"
 				},
 				"jsonData": {
 					"$ref": "#/definitions/Json"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"password": {
-					"type": "string",
-					"x-go-name": "Password"
+					"type": "string"
 				},
 				"secureJsonData": {
 					"type": "object",
 					"additionalProperties": {
 						"type": "string"
-					},
-					"x-go-name": "SecureJsonData"
+					}
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "Uid"
+					"type": "string"
 				},
 				"url": {
-					"type": "string",
-					"x-go-name": "Url"
+					"type": "string"
 				},
 				"user": {
-					"type": "string",
-					"x-go-name": "User"
+					"type": "string"
 				},
 				"withCredentials": {
-					"type": "boolean",
-					"x-go-name": "WithCredentials"
+					"type": "boolean"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"AddInviteForm": {
 			"type": "object",
 			"properties": {
 				"loginOrEmail": {
-					"type": "string",
-					"x-go-name": "LoginOrEmail"
+					"type": "string"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"role": {
 					"$ref": "#/definitions/RoleType"
 				},
 				"sendEmail": {
-					"type": "boolean",
-					"x-go-name": "SendEmail"
+					"type": "boolean"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"AddOrgUserCommand": {
 			"type": "object",
 			"properties": {
 				"loginOrEmail": {
-					"type": "string",
-					"x-go-name": "LoginOrEmail"
+					"type": "string"
 				},
 				"role": {
 					"$ref": "#/definitions/RoleType"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"AddTeamMemberCommand": {
 			"type": "object",
 			"properties": {
 				"userId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "UserId"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"Address": {
 			"type": "object",
 			"properties": {
 				"address1": {
-					"type": "string",
-					"x-go-name": "Address1"
+					"type": "string"
 				},
 				"address2": {
-					"type": "string",
-					"x-go-name": "Address2"
+					"type": "string"
 				},
 				"city": {
-					"type": "string",
-					"x-go-name": "City"
+					"type": "string"
 				},
 				"country": {
-					"type": "string",
-					"x-go-name": "Country"
+					"type": "string"
 				},
 				"state": {
-					"type": "string",
-					"x-go-name": "State"
+					"type": "string"
 				},
 				"zipCode": {
-					"type": "string",
-					"x-go-name": "ZipCode"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"AdminCreateUserForm": {
 			"type": "object",
 			"properties": {
 				"email": {
-					"type": "string",
-					"x-go-name": "Email"
+					"type": "string"
 				},
 				"login": {
-					"type": "string",
-					"x-go-name": "Login"
+					"type": "string"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"orgId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "OrgId"
+					"format": "int64"
 				},
 				"password": {
-					"type": "string",
-					"x-go-name": "Password"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"AdminStats": {
 			"type": "object",
 			"properties": {
 				"activeAdmins": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ActiveAdmins"
+					"format": "int64"
 				},
 				"activeEditors": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ActiveEditors"
+					"format": "int64"
 				},
 				"activeSessions": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ActiveSessions"
+					"format": "int64"
 				},
 				"activeUsers": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ActiveUsers"
+					"format": "int64"
 				},
 				"activeViewers": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ActiveViewers"
+					"format": "int64"
 				},
 				"admins": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Admins"
+					"format": "int64"
 				},
 				"alerts": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Alerts"
+					"format": "int64"
 				},
 				"dailyActiveAdmins": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DailyActiveAdmins"
+					"format": "int64"
 				},
 				"dailyActiveEditors": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DailyActiveEditors"
+					"format": "int64"
 				},
 				"dailyActiveSessions": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DailyActiveSessions"
+					"format": "int64"
 				},
 				"dailyActiveUsers": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DailyActiveUsers"
+					"format": "int64"
 				},
 				"dailyActiveViewers": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DailyActiveViewers"
+					"format": "int64"
 				},
 				"dashboards": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Dashboards"
+					"format": "int64"
 				},
 				"datasources": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Datasources"
+					"format": "int64"
 				},
 				"editors": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Editors"
+					"format": "int64"
 				},
 				"monthlyActiveUsers": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "MonthlyActiveUsers"
+					"format": "int64"
 				},
 				"orgs": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Orgs"
+					"format": "int64"
 				},
 				"playlists": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Playlists"
+					"format": "int64"
 				},
 				"snapshots": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Snapshots"
+					"format": "int64"
 				},
 				"stars": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Stars"
+					"format": "int64"
 				},
 				"tags": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Tags"
+					"format": "int64"
 				},
 				"users": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Users"
+					"format": "int64"
 				},
 				"viewers": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Viewers"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"AdminUpdateUserPasswordForm": {
 			"type": "object",
 			"properties": {
 				"password": {
-					"type": "string",
-					"x-go-name": "Password"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"AdminUpdateUserPermissionsForm": {
 			"type": "object",
 			"properties": {
 				"isGrafanaAdmin": {
-					"type": "boolean",
-					"x-go-name": "IsGrafanaAdmin"
+					"type": "boolean"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"Alert": {
 			"type": "object",
@@ -7536,57 +7275,46 @@
 			"properties": {
 				"dashboardId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DashboardId"
+					"format": "int64"
 				},
 				"dashboardSlug": {
-					"type": "string",
-					"x-go-name": "DashboardSlug"
+					"type": "string"
 				},
 				"dashboardUid": {
-					"type": "string",
-					"x-go-name": "DashboardUid"
+					"type": "string"
 				},
 				"evalData": {
 					"$ref": "#/definitions/Json"
 				},
 				"evalDate": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "EvalDate"
+					"format": "date-time"
 				},
 				"executionError": {
-					"type": "string",
-					"x-go-name": "ExecutionError"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"newStateDate": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "NewStateDate"
+					"format": "date-time"
 				},
 				"panelId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "PanelId"
+					"format": "int64"
 				},
 				"state": {
 					"$ref": "#/definitions/AlertStateType"
 				},
 				"url": {
-					"type": "string",
-					"x-go-name": "Url"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"AlertManager": {
 			"type": "object",
@@ -7633,86 +7361,68 @@
 			"properties": {
 				"created": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Created"
+					"format": "date-time"
 				},
 				"disableResolveMessage": {
-					"type": "boolean",
-					"x-go-name": "DisableResolveMessage"
+					"type": "boolean"
 				},
 				"frequency": {
-					"type": "string",
-					"x-go-name": "Frequency"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"isDefault": {
-					"type": "boolean",
-					"x-go-name": "IsDefault"
+					"type": "boolean"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"secureFields": {
 					"type": "object",
 					"additionalProperties": {
 						"type": "boolean"
-					},
-					"x-go-name": "SecureFields"
+					}
 				},
 				"sendReminder": {
-					"type": "boolean",
-					"x-go-name": "SendReminder"
+					"type": "boolean"
 				},
 				"settings": {
 					"$ref": "#/definitions/Json"
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "Uid"
+					"type": "string"
 				},
 				"updated": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Updated"
+					"format": "date-time"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"AlertNotificationLookup": {
 			"type": "object",
 			"properties": {
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"isDefault": {
-					"type": "boolean",
-					"x-go-name": "IsDefault"
+					"type": "boolean"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "Uid"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"AlertQuery": {
 			"type": "object",
@@ -7772,33 +7482,27 @@
 			"properties": {
 				"dashboardId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DashboardId"
+					"format": "int64"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"newStateDate": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "NewStateDate"
+					"format": "date-time"
 				},
 				"panelId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "PanelId"
+					"format": "int64"
 				},
 				"state": {
 					"$ref": "#/definitions/AlertStateType"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"AlertStateType": {
-			"type": "string",
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			"type": "string"
 		},
 		"AlertTestCommand": {
 			"type": "object",
@@ -7808,64 +7512,52 @@
 				},
 				"panelId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "PanelId"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"AlertTestResult": {
 			"type": "object",
 			"properties": {
 				"conditionEvals": {
-					"type": "string",
-					"x-go-name": "ConditionEvals"
+					"type": "string"
 				},
 				"error": {
-					"type": "string",
-					"x-go-name": "Error"
+					"type": "string"
 				},
 				"firing": {
-					"type": "boolean",
-					"x-go-name": "Firing"
+					"type": "boolean"
 				},
 				"logs": {
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/AlertTestResultLog"
-					},
-					"x-go-name": "Logs"
+					}
 				},
 				"matches": {
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/EvalMatch"
-					},
-					"x-go-name": "EvalMatches"
+					}
 				},
 				"state": {
 					"$ref": "#/definitions/AlertStateType"
 				},
 				"timeMs": {
-					"type": "string",
-					"x-go-name": "TimeMs"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"AlertTestResultLog": {
 			"type": "object",
 			"properties": {
 				"data": {
-					"type": "object",
-					"x-go-name": "Data"
+					"type": "object"
 				},
 				"message": {
-					"type": "string",
-					"x-go-name": "Message"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"AlertingRule": {
 			"description": "adapted from cortex",
@@ -7940,23 +7632,19 @@
 			"properties": {
 				"expiration": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Expiration"
+					"format": "date-time"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"role": {
 					"$ref": "#/definitions/RoleType"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"ApiRuleNode": {
 			"type": "object",
@@ -8034,33 +7722,27 @@
 			"properties": {
 				"dashboardId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DashboardId"
+					"format": "int64"
 				},
 				"unsavedDashboard": {
 					"$ref": "#/definitions/Json"
 				},
 				"version": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Version"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"ChangeUserPasswordCommand": {
 			"type": "object",
 			"properties": {
 				"newPassword": {
-					"type": "string",
-					"x-go-name": "NewPassword"
+					"type": "string"
 				},
 				"oldPassword": {
-					"type": "string",
-					"x-go-name": "OldPassword"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"Config": {
 			"type": "object",
@@ -8103,45 +7785,36 @@
 					"$ref": "#/definitions/AlertNotification"
 				},
 				"disableResolveMessage": {
-					"type": "boolean",
-					"x-go-name": "DisableResolveMessage"
+					"type": "boolean"
 				},
 				"frequency": {
-					"type": "string",
-					"x-go-name": "Frequency"
+					"type": "string"
 				},
 				"isDefault": {
-					"type": "boolean",
-					"x-go-name": "IsDefault"
+					"type": "boolean"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"secureSettings": {
 					"type": "object",
 					"additionalProperties": {
 						"type": "string"
-					},
-					"x-go-name": "SecureSettings"
+					}
 				},
 				"sendReminder": {
-					"type": "boolean",
-					"x-go-name": "SendReminder"
+					"type": "boolean"
 				},
 				"settings": {
 					"$ref": "#/definitions/Json"
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "Uid"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"CreateDashboardSnapshotCommand": {
 			"description": "CreateDashboardSnapshotCommand is same as models.CreateDashboardSnapshotCommand but with swagger annotations",
@@ -8155,34 +7828,28 @@
 				},
 				"deleteKey": {
 					"description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
-					"type": "string",
-					"x-go-name": "DeleteKey"
+					"type": "string"
 				},
 				"expires": {
 					"description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
 					"type": "integer",
 					"format": "int64",
-					"default": 0,
-					"x-go-name": "Expires"
+					"default": 0
 				},
 				"external": {
 					"description": "Save the snapshot on an external server rather than locally.",
 					"type": "boolean",
-					"default": false,
-					"x-go-name": "External"
+					"default": false
 				},
 				"key": {
 					"description": "Define the unique key. Required if `external` is `true`.",
-					"type": "string",
-					"x-go-name": "Key"
+					"type": "string"
 				},
 				"name": {
 					"description": "Snapshot name",
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+			}
 		},
 		"CreateFolderCommand": {
 			"type": "object",
@@ -8191,15 +7858,12 @@
 					"$ref": "#/definitions/Folder"
 				},
 				"title": {
-					"type": "string",
-					"x-go-name": "Title"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "Uid"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"CreateLibraryElementCommand": {
 			"description": "CreateLibraryElementCommand is same as libraryelements.LibraryElementSearchResponse with swagger annotations",
@@ -8208,8 +7872,7 @@
 				"folderId": {
 					"description": "ID of the folder where the library element is stored.",
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "FolderID"
+					"format": "int64"
 				},
 				"kind": {
 					"description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
@@ -8218,49 +7881,39 @@
 					"enum": [
 						1,
 						2
-					],
-					"x-go-name": "Kind"
+					]
 				},
 				"model": {
 					"description": "The JSON model for the library element.",
-					"type": "object",
-					"x-go-name": "Model"
+					"type": "object"
 				},
 				"name": {
 					"description": "Name of the library element.",
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "UID"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+			}
 		},
 		"CreateOrgCommand": {
 			"type": "object",
 			"properties": {
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"CreateTeamCommand": {
 			"type": "object",
 			"properties": {
 				"email": {
-					"type": "string",
-					"x-go-name": "Email"
+					"type": "string"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"Dashboard": {
 			"description": "Dashboard model",
@@ -8323,102 +7976,81 @@
 					"type": "integer",
 					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"DashboardAclInfoDTO": {
 			"type": "object",
 			"properties": {
 				"created": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Created"
+					"format": "date-time"
 				},
 				"dashboardId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DashboardId"
+					"format": "int64"
 				},
 				"folderId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "FolderId"
+					"format": "int64"
 				},
 				"inherited": {
-					"type": "boolean",
-					"x-go-name": "Inherited"
+					"type": "boolean"
 				},
 				"isFolder": {
-					"type": "boolean",
-					"x-go-name": "IsFolder"
+					"type": "boolean"
 				},
 				"permission": {
 					"$ref": "#/definitions/PermissionType"
 				},
 				"permissionName": {
-					"type": "string",
-					"x-go-name": "PermissionName"
+					"type": "string"
 				},
 				"role": {
 					"$ref": "#/definitions/RoleType"
 				},
 				"slug": {
-					"type": "string",
-					"x-go-name": "Slug"
+					"type": "string"
 				},
 				"team": {
-					"type": "string",
-					"x-go-name": "Team"
+					"type": "string"
 				},
 				"teamAvatarUrl": {
-					"type": "string",
-					"x-go-name": "TeamAvatarUrl"
+					"type": "string"
 				},
 				"teamEmail": {
-					"type": "string",
-					"x-go-name": "TeamEmail"
+					"type": "string"
 				},
 				"teamId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "TeamId"
+					"format": "int64"
 				},
 				"title": {
-					"type": "string",
-					"x-go-name": "Title"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "Uid"
+					"type": "string"
 				},
 				"updated": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Updated"
+					"format": "date-time"
 				},
 				"url": {
-					"type": "string",
-					"x-go-name": "Url"
+					"type": "string"
 				},
 				"userAvatarUrl": {
-					"type": "string",
-					"x-go-name": "UserAvatarUrl"
+					"type": "string"
 				},
 				"userEmail": {
-					"type": "string",
-					"x-go-name": "UserEmail"
+					"type": "string"
 				},
 				"userId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "UserId"
+					"format": "int64"
 				},
 				"userLogin": {
-					"type": "string",
-					"x-go-name": "UserLogin"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"DashboardAclUpdateItem": {
 			"description": "DashboardAclUpdateItem is same as dtos.DashboardAclUpdateItem but with swagger annotations",
@@ -8432,24 +8064,20 @@
 						1,
 						2,
 						4
-					],
-					"x-go-name": "Permission"
+					]
 				},
 				"role": {
 					"$ref": "#/definitions/RoleType"
 				},
 				"teamId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "TeamID"
+					"format": "int64"
 				},
 				"userId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "UserID"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+			}
 		},
 		"DashboardFullWithMeta": {
 			"type": "object",
@@ -8460,125 +8088,97 @@
 				"meta": {
 					"$ref": "#/definitions/DashboardMeta"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"DashboardMeta": {
 			"type": "object",
 			"properties": {
 				"canAdmin": {
-					"type": "boolean",
-					"x-go-name": "CanAdmin"
+					"type": "boolean"
 				},
 				"canEdit": {
-					"type": "boolean",
-					"x-go-name": "CanEdit"
+					"type": "boolean"
 				},
 				"canSave": {
-					"type": "boolean",
-					"x-go-name": "CanSave"
+					"type": "boolean"
 				},
 				"canStar": {
-					"type": "boolean",
-					"x-go-name": "CanStar"
+					"type": "boolean"
 				},
 				"created": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Created"
+					"format": "date-time"
 				},
 				"createdBy": {
-					"type": "string",
-					"x-go-name": "CreatedBy"
+					"type": "string"
 				},
 				"expires": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Expires"
+					"format": "date-time"
 				},
 				"folderId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "FolderId"
+					"format": "int64"
 				},
 				"folderTitle": {
-					"type": "string",
-					"x-go-name": "FolderTitle"
+					"type": "string"
 				},
 				"folderUid": {
-					"type": "string",
-					"x-go-name": "FolderUid"
+					"type": "string"
 				},
 				"folderUrl": {
-					"type": "string",
-					"x-go-name": "FolderUrl"
+					"type": "string"
 				},
 				"hasAcl": {
-					"type": "boolean",
-					"x-go-name": "HasAcl"
+					"type": "boolean"
 				},
 				"isFolder": {
-					"type": "boolean",
-					"x-go-name": "IsFolder"
+					"type": "boolean"
 				},
 				"isHome": {
-					"type": "boolean",
-					"x-go-name": "IsHome"
+					"type": "boolean"
 				},
 				"isSnapshot": {
-					"type": "boolean",
-					"x-go-name": "IsSnapshot"
+					"type": "boolean"
 				},
 				"isStarred": {
-					"type": "boolean",
-					"x-go-name": "IsStarred"
+					"type": "boolean"
 				},
 				"provisioned": {
-					"type": "boolean",
-					"x-go-name": "Provisioned"
+					"type": "boolean"
 				},
 				"provisionedExternalId": {
-					"type": "string",
-					"x-go-name": "ProvisionedExternalId"
+					"type": "string"
 				},
 				"slug": {
-					"type": "string",
-					"x-go-name": "Slug"
+					"type": "string"
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				},
 				"updated": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Updated"
+					"format": "date-time"
 				},
 				"updatedBy": {
-					"type": "string",
-					"x-go-name": "UpdatedBy"
+					"type": "string"
 				},
 				"url": {
-					"type": "string",
-					"x-go-name": "Url"
+					"type": "string"
 				},
 				"version": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Version"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"DashboardRedirect": {
 			"type": "object",
 			"properties": {
 				"redirectUri": {
-					"type": "string",
-					"x-go-name": "RedirectUri"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"DashboardSnapshotDTO": {
 			"description": "DashboardSnapshotDTO without dashboard map",
@@ -8586,67 +8186,53 @@
 			"properties": {
 				"created": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Created"
+					"format": "date-time"
 				},
 				"expires": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Expires"
+					"format": "date-time"
 				},
 				"external": {
-					"type": "boolean",
-					"x-go-name": "External"
+					"type": "boolean"
 				},
 				"externalUrl": {
-					"type": "string",
-					"x-go-name": "ExternalUrl"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"key": {
-					"type": "string",
-					"x-go-name": "Key"
+					"type": "string"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"orgId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "OrgId"
+					"format": "int64"
 				},
 				"updated": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Updated"
+					"format": "date-time"
 				},
 				"userId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "UserId"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"DashboardTagCloudItem": {
 			"type": "object",
 			"properties": {
 				"count": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Count"
+					"format": "int64"
 				},
 				"term": {
-					"type": "string",
-					"x-go-name": "Term"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"DashboardVersionDTO": {
 			"description": "DashboardVersionDTO represents a dashboard version, without the dashboard\nmap.",
@@ -8654,44 +8240,35 @@
 			"properties": {
 				"created": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Created"
+					"format": "date-time"
 				},
 				"createdBy": {
-					"type": "string",
-					"x-go-name": "CreatedBy"
+					"type": "string"
 				},
 				"dashboardId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DashboardId"
+					"format": "int64"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"message": {
-					"type": "string",
-					"x-go-name": "Message"
+					"type": "string"
 				},
 				"parentVersion": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ParentVersion"
+					"format": "int64"
 				},
 				"restoredFrom": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "RestoredFrom"
+					"format": "int64"
 				},
 				"version": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Version"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"DashboardVersionMeta": {
 			"description": "DashboardVersionMeta extends the dashboard version model with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersion model.",
@@ -8699,53 +8276,43 @@
 			"properties": {
 				"created": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Created"
+					"format": "date-time"
 				},
 				"createdBy": {
-					"type": "string",
-					"x-go-name": "CreatedBy"
+					"type": "string"
 				},
 				"dashboardId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DashboardId"
+					"format": "int64"
 				},
 				"data": {
 					"$ref": "#/definitions/Json"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"message": {
-					"type": "string",
-					"x-go-name": "Message"
+					"type": "string"
 				},
 				"parentVersion": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ParentVersion"
+					"format": "int64"
 				},
 				"restoredFrom": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "RestoredFrom"
+					"format": "int64"
 				},
 				"version": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Version"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"DataFrames": {
 			"description": "See NewDecodedDataFrames and NewEncodedDataFrames for more information.",
 			"type": "object",
-			"title": "DataFrames is an interface for retrieving encoded and decoded data frames.",
-			"x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+			"title": "DataFrames is an interface for retrieving encoded and decoded data frames."
 		},
 		"DataQueryResult": {
 			"description": "Deprecated: DataQueryResult should use backend.QueryDataResponse",
@@ -8755,15 +8322,13 @@
 					"$ref": "#/definitions/DataFrames"
 				},
 				"error": {
-					"type": "string",
-					"x-go-name": "ErrorString"
+					"type": "string"
 				},
 				"meta": {
 					"$ref": "#/definitions/Json"
 				},
 				"refId": {
-					"type": "string",
-					"x-go-name": "RefID"
+					"type": "string"
 				},
 				"series": {
 					"$ref": "#/definitions/DataTimeSeriesSlice"
@@ -8772,36 +8337,30 @@
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/DataTable"
-					},
-					"x-go-name": "Tables"
+					}
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+			}
 		},
 		"DataResponse": {
 			"description": "Deprecated: DataResponse -- this structure is deprecated, all new work should use backend.QueryDataResponse",
 			"type": "object",
 			"properties": {
 				"message": {
-					"type": "string",
-					"x-go-name": "Message"
+					"type": "string"
 				},
 				"results": {
 					"type": "object",
 					"additionalProperties": {
 						"$ref": "#/definitions/DataQueryResult"
-					},
-					"x-go-name": "Results"
+					}
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+			}
 		},
 		"DataRowValues": {
 			"type": "array",
 			"items": {
 				"type": "object"
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+			}
 		},
 		"DataSource": {
 			"type": "object",
@@ -8813,95 +8372,75 @@
 					"$ref": "#/definitions/Metadata"
 				},
 				"basicAuth": {
-					"type": "boolean",
-					"x-go-name": "BasicAuth"
+					"type": "boolean"
 				},
 				"basicAuthPassword": {
-					"type": "string",
-					"x-go-name": "BasicAuthPassword"
+					"type": "string"
 				},
 				"basicAuthUser": {
-					"type": "string",
-					"x-go-name": "BasicAuthUser"
+					"type": "string"
 				},
 				"database": {
-					"type": "string",
-					"x-go-name": "Database"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"isDefault": {
-					"type": "boolean",
-					"x-go-name": "IsDefault"
+					"type": "boolean"
 				},
 				"jsonData": {
 					"$ref": "#/definitions/Json"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"orgId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "OrgId"
+					"format": "int64"
 				},
 				"password": {
-					"type": "string",
-					"x-go-name": "Password"
+					"type": "string"
 				},
 				"readOnly": {
-					"type": "boolean",
-					"x-go-name": "ReadOnly"
+					"type": "boolean"
 				},
 				"secureJsonFields": {
 					"type": "object",
 					"additionalProperties": {
 						"type": "boolean"
-					},
-					"x-go-name": "SecureJsonFields"
+					}
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				},
 				"typeLogoUrl": {
-					"type": "string",
-					"x-go-name": "TypeLogoUrl"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "UID"
+					"type": "string"
 				},
 				"url": {
-					"type": "string",
-					"x-go-name": "Url"
+					"type": "string"
 				},
 				"user": {
-					"type": "string",
-					"x-go-name": "User"
+					"type": "string"
 				},
 				"version": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Version"
+					"format": "int64"
 				},
 				"withCredentials": {
-					"type": "boolean",
-					"x-go-name": "WithCredentials"
+					"type": "boolean"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"DataSourceList": {
 			"type": "array",
 			"items": {
 				"$ref": "#/definitions/DataSourceListItemDTO"
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"DataSourceListItemDTO": {
 			"type": "object",
@@ -8910,68 +8449,53 @@
 					"$ref": "#/definitions/DsAccess"
 				},
 				"basicAuth": {
-					"type": "boolean",
-					"x-go-name": "BasicAuth"
+					"type": "boolean"
 				},
 				"database": {
-					"type": "string",
-					"x-go-name": "Database"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"isDefault": {
-					"type": "boolean",
-					"x-go-name": "IsDefault"
+					"type": "boolean"
 				},
 				"jsonData": {
 					"$ref": "#/definitions/Json"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"orgId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "OrgId"
+					"format": "int64"
 				},
 				"password": {
-					"type": "string",
-					"x-go-name": "Password"
+					"type": "string"
 				},
 				"readOnly": {
-					"type": "boolean",
-					"x-go-name": "ReadOnly"
+					"type": "boolean"
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				},
 				"typeLogoUrl": {
-					"type": "string",
-					"x-go-name": "TypeLogoUrl"
+					"type": "string"
 				},
 				"typeName": {
-					"type": "string",
-					"x-go-name": "TypeName"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "UID"
+					"type": "string"
 				},
 				"url": {
-					"type": "string",
-					"x-go-name": "Url"
+					"type": "string"
 				},
 				"user": {
-					"type": "string",
-					"x-go-name": "User"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"DataTable": {
 			"type": "object",
@@ -8980,43 +8504,36 @@
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/DataTableColumn"
-					},
-					"x-go-name": "Columns"
+					}
 				},
 				"rows": {
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/DataRowValues"
-					},
-					"x-go-name": "Rows"
+					}
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+			}
 		},
 		"DataTableColumn": {
 			"type": "object",
 			"properties": {
 				"text": {
-					"type": "string",
-					"x-go-name": "Text"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+			}
 		},
 		"DataTimePoint": {
 			"type": "array",
 			"items": {
 				"$ref": "#/definitions/Float"
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+			}
 		},
 		"DataTimeSeries": {
 			"description": "DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK",
 			"type": "object",
 			"properties": {
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"points": {
 					"$ref": "#/definitions/DataTimeSeriesPoints"
@@ -9025,25 +8542,21 @@
 					"type": "object",
 					"additionalProperties": {
 						"type": "string"
-					},
-					"x-go-name": "Tags"
+					}
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+			}
 		},
 		"DataTimeSeriesPoints": {
 			"type": "array",
 			"items": {
 				"$ref": "#/definitions/DataTimePoint"
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+			}
 		},
 		"DataTimeSeriesSlice": {
 			"type": "array",
 			"items": {
 				"$ref": "#/definitions/DataTimeSeries"
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+			}
 		},
 		"DateTime": {
 			"description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
@@ -9071,26 +8584,21 @@
 			"properties": {
 				"alertId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "AlertId"
+					"format": "int64"
 				},
 				"annotationId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "AnnotationId"
+					"format": "int64"
 				},
 				"dashboardId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DashboardId"
+					"format": "int64"
 				},
 				"panelId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "PanelId"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"DiscoveryBase": {
 			"type": "object",
@@ -9113,8 +8621,7 @@
 			"x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 		},
 		"DsAccess": {
-			"type": "string",
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			"type": "string"
 		},
 		"Duration": {
 			"type": "integer",
@@ -9192,21 +8699,17 @@
 			"properties": {
 				"error": {
 					"description": "Error An optional detailed description of the actual error. Only included if running in developer mode.",
-					"type": "string",
-					"x-go-name": "Error"
+					"type": "string"
 				},
 				"message": {
 					"description": "a human readable version of the error",
-					"type": "string",
-					"x-go-name": "Message"
+					"type": "string"
 				},
 				"status": {
 					"description": "Status An optional status to denote the cause of the error.\n\nFor example, a 412 Precondition Failed error may include additional information of why that error happened.",
-					"type": "string",
-					"x-go-name": "Status"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+			}
 		},
 		"ErrorType": {
 			"type": "string",
@@ -9240,21 +8743,18 @@
 			"type": "object",
 			"properties": {
 				"metric": {
-					"type": "string",
-					"x-go-name": "Metric"
+					"type": "string"
 				},
 				"tags": {
 					"type": "object",
 					"additionalProperties": {
 						"type": "string"
-					},
-					"x-go-name": "Tags"
+					}
 				},
 				"value": {
 					"$ref": "#/definitions/Float"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"EvalQueriesPayload": {
 			"type": "object",
@@ -9319,11 +8819,9 @@
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/TagsDTO"
-					},
-					"x-go-name": "Tags"
+					}
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/annotations"
+			}
 		},
 		"Float": {
 			"description": "It does not consider zero values to be null.\nIt will decode to null, not zero, if null.",
@@ -9337,89 +8835,70 @@
 				"Valid": {
 					"type": "boolean"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/components/null"
+			}
 		},
 		"Folder": {
 			"type": "object",
 			"properties": {
 				"canAdmin": {
-					"type": "boolean",
-					"x-go-name": "CanAdmin"
+					"type": "boolean"
 				},
 				"canEdit": {
-					"type": "boolean",
-					"x-go-name": "CanEdit"
+					"type": "boolean"
 				},
 				"canSave": {
-					"type": "boolean",
-					"x-go-name": "CanSave"
+					"type": "boolean"
 				},
 				"created": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Created"
+					"format": "date-time"
 				},
 				"createdBy": {
-					"type": "string",
-					"x-go-name": "CreatedBy"
+					"type": "string"
 				},
 				"hasAcl": {
-					"type": "boolean",
-					"x-go-name": "HasAcl"
+					"type": "boolean"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"title": {
-					"type": "string",
-					"x-go-name": "Title"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "Uid"
+					"type": "string"
 				},
 				"updated": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Updated"
+					"format": "date-time"
 				},
 				"updatedBy": {
-					"type": "string",
-					"x-go-name": "UpdatedBy"
+					"type": "string"
 				},
 				"url": {
-					"type": "string",
-					"x-go-name": "Url"
+					"type": "string"
 				},
 				"version": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Version"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"FolderSearchHit": {
 			"type": "object",
 			"properties": {
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"title": {
-					"type": "string",
-					"x-go-name": "Title"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "Uid"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"GetAnnotationTagsResponse": {
 			"type": "object",
@@ -9428,8 +8907,7 @@
 				"result": {
 					"$ref": "#/definitions/FindTagsResult"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/annotations"
+			}
 		},
 		"GetHomeDashboardResponse": {
 			"title": "Get home dashboard response.",
@@ -9449,14 +8927,11 @@
 					"type": "object",
 					"properties": {
 						"redirectUri": {
-							"type": "string",
-							"x-go-name": "RedirectUri"
+							"type": "string"
 						}
 					}
 				}
-			],
-			"x-go-name": "GetHomeDashboardResponseBody",
-			"x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+			]
 		},
 		"GettableAlertmanagers": {
 			"type": "object",
@@ -9949,82 +9424,65 @@
 			"properties": {
 				"folderId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "FolderID"
+					"format": "int64"
 				},
 				"folderTitle": {
-					"type": "string",
-					"x-go-name": "FolderTitle"
+					"type": "string"
 				},
 				"folderUid": {
-					"type": "string",
-					"x-go-name": "FolderUID"
+					"type": "string"
 				},
 				"folderUrl": {
-					"type": "string",
-					"x-go-name": "FolderURL"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ID"
+					"format": "int64"
 				},
 				"isStarred": {
-					"type": "boolean",
-					"x-go-name": "IsStarred"
+					"type": "boolean"
 				},
 				"slug": {
-					"type": "string",
-					"x-go-name": "Slug"
+					"type": "string"
 				},
 				"sortMeta": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "SortMeta"
+					"format": "int64"
 				},
 				"sortMetaName": {
-					"type": "string",
-					"x-go-name": "SortMetaName"
+					"type": "string"
 				},
 				"tags": {
 					"type": "array",
 					"items": {
 						"type": "string"
-					},
-					"x-go-name": "Tags"
+					}
 				},
 				"title": {
-					"type": "string",
-					"x-go-name": "Title"
+					"type": "string"
 				},
 				"type": {
 					"$ref": "#/definitions/HitType"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "UID"
+					"type": "string"
 				},
 				"uri": {
-					"type": "string",
-					"x-go-name": "URI"
+					"type": "string"
 				},
 				"url": {
-					"type": "string",
-					"x-go-name": "URL"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/search"
+			}
 		},
 		"HitList": {
 			"type": "array",
 			"items": {
 				"$ref": "#/definitions/Hit"
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/search"
+			}
 		},
 		"HitType": {
-			"type": "string",
-			"x-go-package": "github.com/grafana/grafana/pkg/services/search"
+			"type": "string"
 		},
 		"HostPort": {
 			"type": "object",
@@ -10047,56 +9505,44 @@
 				},
 				"folderId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "FolderId"
+					"format": "int64"
 				},
 				"folderUid": {
-					"type": "string",
-					"x-go-name": "FolderUid"
+					"type": "string"
 				},
 				"inputs": {
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/ImportDashboardInput"
-					},
-					"x-go-name": "Inputs"
+					}
 				},
 				"overwrite": {
-					"type": "boolean",
-					"x-go-name": "Overwrite"
+					"type": "boolean"
 				},
 				"path": {
-					"type": "string",
-					"x-go-name": "Path"
+					"type": "string"
 				},
 				"pluginId": {
-					"type": "string",
-					"x-go-name": "PluginId"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"ImportDashboardInput": {
 			"type": "object",
 			"properties": {
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"pluginId": {
-					"type": "string",
-					"x-go-name": "PluginId"
+					"type": "string"
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				},
 				"value": {
-					"type": "string",
-					"x-go-name": "Value"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/plugins"
+			}
 		},
 		"InclusiveRange": {
 			"type": "object",
@@ -10156,89 +9602,71 @@
 			"properties": {
 				"alertId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "AlertId"
+					"format": "int64"
 				},
 				"alertName": {
-					"type": "string",
-					"x-go-name": "AlertName"
+					"type": "string"
 				},
 				"avatarUrl": {
-					"type": "string",
-					"x-go-name": "AvatarUrl"
+					"type": "string"
 				},
 				"created": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Created"
+					"format": "int64"
 				},
 				"dashboardId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DashboardId"
+					"format": "int64"
 				},
 				"data": {
 					"$ref": "#/definitions/Json"
 				},
 				"email": {
-					"type": "string",
-					"x-go-name": "Email"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"login": {
-					"type": "string",
-					"x-go-name": "Login"
+					"type": "string"
 				},
 				"newState": {
-					"type": "string",
-					"x-go-name": "NewState"
+					"type": "string"
 				},
 				"panelId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "PanelId"
+					"format": "int64"
 				},
 				"prevState": {
-					"type": "string",
-					"x-go-name": "PrevState"
+					"type": "string"
 				},
 				"tags": {
 					"type": "array",
 					"items": {
 						"type": "string"
-					},
-					"x-go-name": "Tags"
+					}
 				},
 				"text": {
-					"type": "string",
-					"x-go-name": "Text"
+					"type": "string"
 				},
 				"time": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Time"
+					"format": "int64"
 				},
 				"timeEnd": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "TimeEnd"
+					"format": "int64"
 				},
 				"updated": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Updated"
+					"format": "int64"
 				},
 				"userId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "UserId"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/annotations"
+			}
 		},
 		"Json": {
 			"type": "object",
@@ -10295,34 +9723,28 @@
 			"properties": {
 				"connectionId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ConnectionID"
+					"format": "int64"
 				},
 				"created": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Created"
+					"format": "date-time"
 				},
 				"createdBy": {
 					"$ref": "#/definitions/LibraryElementDTOMetaUser"
 				},
 				"elementId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ElementID"
+					"format": "int64"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ID"
+					"format": "int64"
 				},
 				"kind": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Kind"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
+			}
 		},
 		"LibraryElementConnectionsResponse": {
 			"type": "object",
@@ -10332,66 +9754,53 @@
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/LibraryElementConnectionDTO"
-					},
-					"x-go-name": "Result"
+					}
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
+			}
 		},
 		"LibraryElementDTO": {
 			"type": "object",
 			"title": "LibraryElementDTO is the frontend DTO for entities.",
 			"properties": {
 				"description": {
-					"type": "string",
-					"x-go-name": "Description"
+					"type": "string"
 				},
 				"folderId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "FolderID"
+					"format": "int64"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ID"
+					"format": "int64"
 				},
 				"kind": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Kind"
+					"format": "int64"
 				},
 				"meta": {
 					"$ref": "#/definitions/LibraryElementDTOMeta"
 				},
 				"model": {
-					"type": "object",
-					"x-go-name": "Model"
+					"type": "object"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"orgId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "OrgID"
+					"format": "int64"
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "UID"
+					"type": "string"
 				},
 				"version": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Version"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
+			}
 		},
 		"LibraryElementDTOMeta": {
 			"type": "object",
@@ -10399,55 +9808,45 @@
 			"properties": {
 				"connectedDashboards": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ConnectedDashboards"
+					"format": "int64"
 				},
 				"created": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Created"
+					"format": "date-time"
 				},
 				"createdBy": {
 					"$ref": "#/definitions/LibraryElementDTOMetaUser"
 				},
 				"folderName": {
-					"type": "string",
-					"x-go-name": "FolderName"
+					"type": "string"
 				},
 				"folderUid": {
-					"type": "string",
-					"x-go-name": "FolderUID"
+					"type": "string"
 				},
 				"updated": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Updated"
+					"format": "date-time"
 				},
 				"updatedBy": {
 					"$ref": "#/definitions/LibraryElementDTOMetaUser"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
+			}
 		},
 		"LibraryElementDTOMetaUser": {
 			"type": "object",
 			"title": "LibraryElementDTOMetaUser is the meta information for user that creates/changes the library element.",
 			"properties": {
 				"avatarUrl": {
-					"type": "string",
-					"x-go-name": "AvatarURL"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ID"
+					"format": "int64"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
+			}
 		},
 		"LibraryElementResponse": {
 			"type": "object",
@@ -10456,8 +9855,7 @@
 				"result": {
 					"$ref": "#/definitions/LibraryElementDTO"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
+			}
 		},
 		"LibraryElementSearchResponse": {
 			"type": "object",
@@ -10466,8 +9864,7 @@
 				"result": {
 					"$ref": "#/definitions/LibraryElementSearchResult"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
+			}
 		},
 		"LibraryElementSearchResult": {
 			"type": "object",
@@ -10477,26 +9874,21 @@
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/LibraryElementDTO"
-					},
-					"x-go-name": "Elements"
+					}
 				},
 				"page": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Page"
+					"format": "int64"
 				},
 				"perPage": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "PerPage"
+					"format": "int64"
 				},
 				"totalCount": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "TotalCount"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
+			}
 		},
 		"MatchRegexps": {
 			"type": "object",
@@ -10540,8 +9932,7 @@
 			"type": "object",
 			"additionalProperties": {
 				"type": "boolean"
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/accesscontrol"
+			}
 		},
 		"MetricRequest": {
 			"description": "MetricRequest same as dtos.MetricRequest but with swagger annotations",
@@ -10553,13 +9944,11 @@
 			],
 			"properties": {
 				"debug": {
-					"type": "boolean",
-					"x-go-name": "Debug"
+					"type": "boolean"
 				},
 				"from": {
 					"description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
 					"type": "string",
-					"x-go-name": "From",
 					"example": "now-1h"
 				},
 				"queries": {
@@ -10568,7 +9957,6 @@
 					"items": {
 						"$ref": "#/definitions/Json"
 					},
-					"x-go-name": "Queries",
 					"example": [
 						{
 							"datasourceId": 86,
@@ -10583,11 +9971,9 @@
 				"to": {
 					"description": "To End time in epoch timestamps in milliseconds or relative using Grafana time units.",
 					"type": "string",
-					"x-go-name": "To",
 					"example": "now"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+			}
 		},
 		"MonthRange": {
 			"type": "object",
@@ -10641,60 +10027,48 @@
 			"properties": {
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ID"
+					"format": "int64"
 				},
 				"key": {
-					"type": "string",
-					"x-go-name": "Key"
+					"type": "string"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"NotificationTestCommand": {
 			"type": "object",
 			"properties": {
 				"disableResolveMessage": {
-					"type": "boolean",
-					"x-go-name": "DisableResolveMessage"
+					"type": "boolean"
 				},
 				"frequency": {
-					"type": "string",
-					"x-go-name": "Frequency"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "ID"
+					"format": "int64"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"secureSettings": {
 					"type": "object",
 					"additionalProperties": {
 						"type": "string"
-					},
-					"x-go-name": "SecureSettings"
+					}
 				},
 				"sendReminder": {
-					"type": "boolean",
-					"x-go-name": "SendReminder"
+					"type": "boolean"
 				},
 				"settings": {
 					"$ref": "#/definitions/Json"
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"NotifierConfig": {
 			"type": "object",
@@ -10853,15 +10227,12 @@
 			"properties": {
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"OrgDetailsDTO": {
 			"type": "object",
@@ -10871,15 +10242,12 @@
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"OrgUserDTO": {
 			"type": "object",
@@ -10888,50 +10256,39 @@
 					"type": "object",
 					"additionalProperties": {
 						"type": "boolean"
-					},
-					"x-go-name": "AccessControl"
+					}
 				},
 				"avatarUrl": {
-					"type": "string",
-					"x-go-name": "AvatarUrl"
+					"type": "string"
 				},
 				"email": {
-					"type": "string",
-					"x-go-name": "Email"
+					"type": "string"
 				},
 				"lastSeenAt": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "LastSeenAt"
+					"format": "date-time"
 				},
 				"lastSeenAtAge": {
-					"type": "string",
-					"x-go-name": "LastSeenAtAge"
+					"type": "string"
 				},
 				"login": {
-					"type": "string",
-					"x-go-name": "Login"
+					"type": "string"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"orgId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "OrgId"
+					"format": "int64"
 				},
 				"role": {
-					"type": "string",
-					"x-go-name": "Role"
+					"type": "string"
 				},
 				"userId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "UserId"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"PagerdutyConfig": {
 			"type": "object",
@@ -11044,32 +10401,26 @@
 			"properties": {
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"tags": {
 					"type": "array",
 					"items": {
 						"type": "string"
-					},
-					"x-go-name": "Tags"
+					}
 				},
 				"text": {
-					"type": "string",
-					"x-go-name": "Text"
+					"type": "string"
 				},
 				"time": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Time"
+					"format": "int64"
 				},
 				"timeEnd": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "TimeEnd"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"PatchLibraryElementCommand": {
 			"description": "patchLibraryElementCommand is same as libraryelements.patchLibraryElementCommand with swagger annotations",
@@ -11078,8 +10429,7 @@
 				"folderId": {
 					"description": "ID of the folder where the library element is stored.",
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "FolderID"
+					"format": "int64"
 				},
 				"kind": {
 					"description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
@@ -11088,56 +10438,45 @@
 					"enum": [
 						1,
 						2
-					],
-					"x-go-name": "Kind"
+					]
 				},
 				"model": {
 					"description": "The JSON model for the library element.",
-					"type": "object",
-					"x-go-name": "Model"
+					"type": "object"
 				},
 				"name": {
 					"description": "Name of the library element.",
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "UID"
+					"type": "string"
 				},
 				"version": {
 					"description": "Version of the library element you are updating.",
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Version"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+			}
 		},
 		"PauseAlertCommand": {
 			"type": "object",
 			"properties": {
 				"alertId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "AlertId"
+					"format": "int64"
 				},
 				"paused": {
-					"type": "boolean",
-					"x-go-name": "Paused"
+					"type": "boolean"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"PauseAllAlertsCommand": {
 			"type": "object",
 			"properties": {
 				"paused": {
-					"type": "boolean",
-					"x-go-name": "Paused"
+					"type": "boolean"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"PermissionDenied": {
 			"type": "object",
@@ -11145,8 +10484,7 @@
 		},
 		"PermissionType": {
 			"type": "integer",
-			"format": "int64",
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			"format": "int64"
 		},
 		"Point": {
 			"type": "object",
@@ -11168,63 +10506,51 @@
 			"properties": {
 				"dashboardId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "DashboardId"
+					"format": "int64"
 				},
 				"data": {
 					"$ref": "#/definitions/Json"
 				},
 				"panelId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "PanelId"
+					"format": "int64"
 				},
 				"tags": {
 					"type": "array",
 					"items": {
 						"type": "string"
-					},
-					"x-go-name": "Tags"
+					}
 				},
 				"text": {
-					"type": "string",
-					"x-go-name": "Text"
+					"type": "string"
 				},
 				"time": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Time"
+					"format": "int64"
 				},
 				"timeEnd": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "TimeEnd"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"PostGraphiteAnnotationsCmd": {
 			"type": "object",
 			"properties": {
 				"data": {
-					"type": "string",
-					"x-go-name": "Data"
+					"type": "string"
 				},
 				"tags": {
-					"type": "object",
-					"x-go-name": "Tags"
+					"type": "object"
 				},
 				"what": {
-					"type": "string",
-					"x-go-name": "What"
+					"type": "string"
 				},
 				"when": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "When"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"PostableApiAlertingConfig": {
 			"type": "object",
@@ -11526,23 +10852,18 @@
 			"properties": {
 				"homeDashboardId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "HomeDashboardID"
+					"format": "int64"
 				},
 				"theme": {
-					"type": "string",
-					"x-go-name": "Theme"
+					"type": "string"
 				},
 				"timezone": {
-					"type": "string",
-					"x-go-name": "Timezone"
+					"type": "string"
 				},
 				"weekStart": {
-					"type": "string",
-					"x-go-name": "WeekStart"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"PushoverConfig": {
 			"type": "object",
@@ -11706,15 +11027,12 @@
 			"properties": {
 				"authTokenId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "AuthTokenId"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"RoleType": {
-			"type": "string",
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			"type": "string"
 		},
 		"Route": {
 			"description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
@@ -12010,88 +11328,71 @@
 				},
 				"folderId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "FolderId"
+					"format": "int64"
 				},
 				"folderUid": {
-					"type": "string",
-					"x-go-name": "FolderUid"
+					"type": "string"
 				},
 				"isFolder": {
-					"type": "boolean",
-					"x-go-name": "IsFolder"
+					"type": "boolean"
 				},
 				"message": {
-					"type": "string",
-					"x-go-name": "Message"
+					"type": "string"
 				},
 				"overwrite": {
-					"type": "boolean",
-					"x-go-name": "Overwrite"
+					"type": "boolean"
 				},
 				"userId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "UserId"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"SearchTeamQueryResult": {
 			"type": "object",
 			"properties": {
 				"page": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Page"
+					"format": "int64"
 				},
 				"perPage": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "PerPage"
+					"format": "int64"
 				},
 				"teams": {
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/TeamDTO"
-					},
-					"x-go-name": "Teams"
+					}
 				},
 				"totalCount": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "TotalCount"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"SearchUserQueryResult": {
 			"type": "object",
 			"properties": {
 				"page": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Page"
+					"format": "int64"
 				},
 				"perPage": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "PerPage"
+					"format": "int64"
 				},
 				"totalCount": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "TotalCount"
+					"format": "int64"
 				},
 				"users": {
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/UserSearchHitDTO"
-					},
-					"x-go-name": "Users"
+					}
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"Secret": {
 			"type": "string",
@@ -12109,8 +11410,7 @@
 				"additionalProperties": {
 					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/setting"
+			}
 		},
 		"SigV4Config": {
 			"description": "SigV4Config is the configuration for signing remote write requests with\nAWS's SigV4 verification process. Empty values will be retrieved using the\nAWS default credentials chain.",
@@ -12329,11 +11629,9 @@
 			"type": "object",
 			"properties": {
 				"message": {
-					"type": "string",
-					"x-go-name": "Message"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+			}
 		},
 		"TLSConfig": {
 			"type": "object",
@@ -12373,153 +11671,122 @@
 			"properties": {
 				"count": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Count"
+					"format": "int64"
 				},
 				"tag": {
-					"type": "string",
-					"x-go-name": "Tag"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/services/annotations"
+			}
 		},
 		"TeamDTO": {
 			"type": "object",
 			"properties": {
 				"avatarUrl": {
-					"type": "string",
-					"x-go-name": "AvatarUrl"
+					"type": "string"
 				},
 				"email": {
-					"type": "string",
-					"x-go-name": "Email"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"memberCount": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "MemberCount"
+					"format": "int64"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"orgId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "OrgId"
+					"format": "int64"
 				},
 				"permission": {
 					"$ref": "#/definitions/PermissionType"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"TeamMemberDTO": {
 			"type": "object",
 			"properties": {
 				"auth_module": {
-					"type": "string",
-					"x-go-name": "AuthModule"
+					"type": "string"
 				},
 				"avatarUrl": {
-					"type": "string",
-					"x-go-name": "AvatarUrl"
+					"type": "string"
 				},
 				"email": {
-					"type": "string",
-					"x-go-name": "Email"
+					"type": "string"
 				},
 				"labels": {
 					"type": "array",
 					"items": {
 						"type": "string"
-					},
-					"x-go-name": "Labels"
+					}
 				},
 				"login": {
-					"type": "string",
-					"x-go-name": "Login"
+					"type": "string"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"orgId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "OrgId"
+					"format": "int64"
 				},
 				"permission": {
 					"$ref": "#/definitions/PermissionType"
 				},
 				"teamId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "TeamId"
+					"format": "int64"
 				},
 				"userId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "UserId"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"TempUserDTO": {
 			"type": "object",
 			"properties": {
 				"code": {
-					"type": "string",
-					"x-go-name": "Code"
+					"type": "string"
 				},
 				"createdOn": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "Created"
+					"format": "date-time"
 				},
 				"email": {
-					"type": "string",
-					"x-go-name": "Email"
+					"type": "string"
 				},
 				"emailSent": {
-					"type": "boolean",
-					"x-go-name": "EmailSent"
+					"type": "boolean"
 				},
 				"emailSentOn": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "EmailSentOn"
+					"format": "date-time"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"invitedByEmail": {
-					"type": "string",
-					"x-go-name": "InvitedByEmail"
+					"type": "string"
 				},
 				"invitedByLogin": {
-					"type": "string",
-					"x-go-name": "InvitedByLogin"
+					"type": "string"
 				},
 				"invitedByName": {
-					"type": "string",
-					"x-go-name": "InvitedByName"
+					"type": "string"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"orgId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "OrgId"
+					"format": "int64"
 				},
 				"role": {
 					"$ref": "#/definitions/RoleType"
@@ -12528,15 +11795,12 @@
 					"$ref": "#/definitions/TempUserStatus"
 				},
 				"url": {
-					"type": "string",
-					"x-go-name": "Url"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"TempUserStatus": {
-			"type": "string",
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			"type": "string"
 		},
 		"TestReceiverConfigResult": {
 			"type": "object",
@@ -12722,8 +11986,7 @@
 				"meta": {
 					"$ref": "#/definitions/Json"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"TrimDashboardFullWithMeta": {
 			"type": "object",
@@ -12734,8 +11997,7 @@
 				"meta": {
 					"$ref": "#/definitions/Json"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"URL": {
 			"type": "object",
@@ -12781,50 +12043,40 @@
 					"$ref": "#/definitions/AlertNotification"
 				},
 				"disableResolveMessage": {
-					"type": "boolean",
-					"x-go-name": "DisableResolveMessage"
+					"type": "boolean"
 				},
 				"frequency": {
-					"type": "string",
-					"x-go-name": "Frequency"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"isDefault": {
-					"type": "boolean",
-					"x-go-name": "IsDefault"
+					"type": "boolean"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"secureSettings": {
 					"type": "object",
 					"additionalProperties": {
 						"type": "string"
-					},
-					"x-go-name": "SecureSettings"
+					}
 				},
 				"sendReminder": {
-					"type": "boolean",
-					"x-go-name": "SendReminder"
+					"type": "boolean"
 				},
 				"settings": {
 					"$ref": "#/definitions/Json"
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "Uid"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UpdateAlertNotificationWithUidCommand": {
 			"type": "object",
@@ -12837,77 +12089,62 @@
 					"$ref": "#/definitions/AlertNotification"
 				},
 				"disableResolveMessage": {
-					"type": "boolean",
-					"x-go-name": "DisableResolveMessage"
+					"type": "boolean"
 				},
 				"frequency": {
-					"type": "string",
-					"x-go-name": "Frequency"
+					"type": "string"
 				},
 				"isDefault": {
-					"type": "boolean",
-					"x-go-name": "IsDefault"
+					"type": "boolean"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"secureSettings": {
 					"type": "object",
 					"additionalProperties": {
 						"type": "string"
-					},
-					"x-go-name": "SecureSettings"
+					}
 				},
 				"sendReminder": {
-					"type": "boolean",
-					"x-go-name": "SendReminder"
+					"type": "boolean"
 				},
 				"settings": {
 					"$ref": "#/definitions/Json"
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "NewUid"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UpdateAnnotationsCmd": {
 			"type": "object",
 			"properties": {
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"tags": {
 					"type": "array",
 					"items": {
 						"type": "string"
-					},
-					"x-go-name": "Tags"
+					}
 				},
 				"text": {
-					"type": "string",
-					"x-go-name": "Text"
+					"type": "string"
 				},
 				"time": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Time"
+					"format": "int64"
 				},
 				"timeEnd": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "TimeEnd"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"UpdateDashboardAclCommand": {
 			"description": "UpdateDashboardAclCommand is same as dtos.UpdateDashboardAclCommand but with swagger annotations",
@@ -12918,11 +12155,9 @@
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/DashboardAclUpdateItem"
-					},
-					"x-go-name": "Items"
+					}
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+			}
 		},
 		"UpdateDataSourceCommand": {
 			"description": "Also acts as api DTO",
@@ -12935,70 +12170,55 @@
 					"$ref": "#/definitions/DsAccess"
 				},
 				"basicAuth": {
-					"type": "boolean",
-					"x-go-name": "BasicAuth"
+					"type": "boolean"
 				},
 				"basicAuthPassword": {
-					"type": "string",
-					"x-go-name": "BasicAuthPassword"
+					"type": "string"
 				},
 				"basicAuthUser": {
-					"type": "string",
-					"x-go-name": "BasicAuthUser"
+					"type": "string"
 				},
 				"database": {
-					"type": "string",
-					"x-go-name": "Database"
+					"type": "string"
 				},
 				"isDefault": {
-					"type": "boolean",
-					"x-go-name": "IsDefault"
+					"type": "boolean"
 				},
 				"jsonData": {
 					"$ref": "#/definitions/Json"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"password": {
-					"type": "string",
-					"x-go-name": "Password"
+					"type": "string"
 				},
 				"secureJsonData": {
 					"type": "object",
 					"additionalProperties": {
 						"type": "string"
-					},
-					"x-go-name": "SecureJsonData"
+					}
 				},
 				"type": {
-					"type": "string",
-					"x-go-name": "Type"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "Uid"
+					"type": "string"
 				},
 				"url": {
-					"type": "string",
-					"x-go-name": "Url"
+					"type": "string"
 				},
 				"user": {
-					"type": "string",
-					"x-go-name": "User"
+					"type": "string"
 				},
 				"version": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Version"
+					"format": "int64"
 				},
 				"withCredentials": {
-					"type": "boolean",
-					"x-go-name": "WithCredentials"
+					"type": "boolean"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UpdateFolderCommand": {
 			"type": "object",
@@ -13007,79 +12227,62 @@
 					"$ref": "#/definitions/Folder"
 				},
 				"overwrite": {
-					"type": "boolean",
-					"x-go-name": "Overwrite"
+					"type": "boolean"
 				},
 				"title": {
-					"type": "string",
-					"x-go-name": "Title"
+					"type": "string"
 				},
 				"uid": {
-					"type": "string",
-					"x-go-name": "Uid"
+					"type": "string"
 				},
 				"version": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Version"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UpdateOrgAddressForm": {
 			"type": "object",
 			"properties": {
 				"address1": {
-					"type": "string",
-					"x-go-name": "Address1"
+					"type": "string"
 				},
 				"address2": {
-					"type": "string",
-					"x-go-name": "Address2"
+					"type": "string"
 				},
 				"city": {
-					"type": "string",
-					"x-go-name": "City"
+					"type": "string"
 				},
 				"country": {
-					"type": "string",
-					"x-go-name": "Country"
+					"type": "string"
 				},
 				"state": {
-					"type": "string",
-					"x-go-name": "State"
+					"type": "string"
 				},
 				"zipcode": {
-					"type": "string",
-					"x-go-name": "ZipCode"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"UpdateOrgForm": {
 			"type": "object",
 			"properties": {
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"UpdateOrgQuotaCmd": {
 			"type": "object",
 			"properties": {
 				"limit": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Limit"
+					"format": "int64"
 				},
 				"target": {
-					"type": "string",
-					"x-go-name": "Target"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UpdateOrgUserCommand": {
 			"type": "object",
@@ -13087,8 +12290,7 @@
 				"role": {
 					"$ref": "#/definitions/RoleType"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UpdatePrefsCmd": {
 			"description": "UpdatePrefsCmd is same as dtos.UpdatePrefsCmd but with swagger annotations",
@@ -13098,8 +12300,7 @@
 					"description": "The numerical :id of a favorited dashboard",
 					"type": "integer",
 					"format": "int64",
-					"default": 0,
-					"x-go-name": "HomeDashboardID"
+					"default": 0
 				},
 				"theme": {
 					"type": "string",
@@ -13107,8 +12308,7 @@
 						"light",
 						"dark",
 						""
-					],
-					"x-go-name": "Theme"
+					]
 				},
 				"timezone": {
 					"type": "string",
@@ -13116,11 +12316,9 @@
 						"utc",
 						"browser",
 						""
-					],
-					"x-go-name": "Timezone"
+					]
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+			}
 		},
 		"UpdateTeamCommand": {
 			"type": "object",
@@ -13135,8 +12333,7 @@
 				"Name": {
 					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UpdateTeamMemberCommand": {
 			"type": "object",
@@ -13144,97 +12341,78 @@
 				"permission": {
 					"$ref": "#/definitions/PermissionType"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UpdateUserCommand": {
 			"type": "object",
 			"properties": {
 				"email": {
-					"type": "string",
-					"x-go-name": "Email"
+					"type": "string"
 				},
 				"login": {
-					"type": "string",
-					"x-go-name": "Login"
+					"type": "string"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"theme": {
-					"type": "string",
-					"x-go-name": "Theme"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UpdateUserQuotaCmd": {
 			"type": "object",
 			"properties": {
 				"limit": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Limit"
+					"format": "int64"
 				},
 				"target": {
-					"type": "string",
-					"x-go-name": "Target"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UserIdDTO": {
 			"type": "object",
 			"properties": {
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"message": {
-					"type": "string",
-					"x-go-name": "Message"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UserLookupDTO": {
 			"type": "object",
 			"properties": {
 				"avatarUrl": {
-					"type": "string",
-					"x-go-name": "AvatarURL"
+					"type": "string"
 				},
 				"login": {
-					"type": "string",
-					"x-go-name": "Login"
+					"type": "string"
 				},
 				"userId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "UserID"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+			}
 		},
 		"UserOrgDTO": {
 			"type": "object",
 			"properties": {
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"orgId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "OrgId"
+					"format": "int64"
 				},
 				"role": {
 					"$ref": "#/definitions/RoleType"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UserProfileDTO": {
 			"type": "object",
@@ -13243,95 +12421,75 @@
 					"type": "object",
 					"additionalProperties": {
 						"type": "boolean"
-					},
-					"x-go-name": "AccessControl"
+					}
 				},
 				"authLabels": {
 					"type": "array",
 					"items": {
 						"type": "string"
-					},
-					"x-go-name": "AuthLabels"
+					}
 				},
 				"avatarUrl": {
-					"type": "string",
-					"x-go-name": "AvatarUrl"
+					"type": "string"
 				},
 				"createdAt": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "CreatedAt"
+					"format": "date-time"
 				},
 				"email": {
-					"type": "string",
-					"x-go-name": "Email"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"isDisabled": {
-					"type": "boolean",
-					"x-go-name": "IsDisabled"
+					"type": "boolean"
 				},
 				"isExternal": {
-					"type": "boolean",
-					"x-go-name": "IsExternal"
+					"type": "boolean"
 				},
 				"isGrafanaAdmin": {
-					"type": "boolean",
-					"x-go-name": "IsGrafanaAdmin"
+					"type": "boolean"
 				},
 				"login": {
-					"type": "string",
-					"x-go-name": "Login"
+					"type": "string"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				},
 				"orgId": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "OrgId"
+					"format": "int64"
 				},
 				"theme": {
-					"type": "string",
-					"x-go-name": "Theme"
+					"type": "string"
 				},
 				"updatedAt": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "UpdatedAt"
+					"format": "date-time"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UserQuotaDTO": {
 			"type": "object",
 			"properties": {
 				"limit": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Limit"
+					"format": "int64"
 				},
 				"target": {
-					"type": "string",
-					"x-go-name": "Target"
+					"type": "string"
 				},
 				"used": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Used"
+					"format": "int64"
 				},
 				"user_id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "UserId"
+					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UserSearchHitDTO": {
 			"type": "object",
@@ -13340,49 +12498,38 @@
 					"type": "array",
 					"items": {
 						"type": "string"
-					},
-					"x-go-name": "AuthLabels"
+					}
 				},
 				"avatarUrl": {
-					"type": "string",
-					"x-go-name": "AvatarUrl"
+					"type": "string"
 				},
 				"email": {
-					"type": "string",
-					"x-go-name": "Email"
+					"type": "string"
 				},
 				"id": {
 					"type": "integer",
-					"format": "int64",
-					"x-go-name": "Id"
+					"format": "int64"
 				},
 				"isAdmin": {
-					"type": "boolean",
-					"x-go-name": "IsAdmin"
+					"type": "boolean"
 				},
 				"isDisabled": {
-					"type": "boolean",
-					"x-go-name": "IsDisabled"
+					"type": "boolean"
 				},
 				"lastSeenAt": {
 					"type": "string",
-					"format": "date-time",
-					"x-go-name": "LastSeenAt"
+					"format": "date-time"
 				},
 				"lastSeenAtAge": {
-					"type": "string",
-					"x-go-name": "LastSeenAtAge"
+					"type": "string"
 				},
 				"login": {
-					"type": "string",
-					"x-go-name": "Login"
+					"type": "string"
 				},
 				"name": {
-					"type": "string",
-					"x-go-name": "Name"
+					"type": "string"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"UserToken": {
 			"description": "UserToken represents a user token",
@@ -13434,8 +12581,7 @@
 					"type": "integer",
 					"format": "int64"
 				}
-			},
-			"x-go-package": "github.com/grafana/grafana/pkg/models"
+			}
 		},
 		"Userinfo": {
 			"description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -14220,13 +13366,11 @@
 						"description": "ID Identifier of the added user.",
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "UsedID",
 						"example": 65
 					},
 					"message": {
 						"description": "Message Message of the added user.",
 						"type": "string",
-						"x-go-name": "Message",
 						"example": "Data source added"
 					}
 				}
@@ -14257,13 +13401,11 @@
 						"description": "ID Identifier of the created annotation.",
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "ID",
 						"example": 65
 					},
 					"message": {
 						"description": "Message Message of the created annotation.",
-						"type": "string",
-						"x-go-name": "Message"
+						"type": "string"
 					}
 				}
 			}
@@ -14286,19 +13428,16 @@
 						"description": "ID Identifier of the new data source.",
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "ID",
 						"example": 65
 					},
 					"message": {
 						"description": "Message Message of the deleted dashboard.",
 						"type": "string",
-						"x-go-name": "Message",
 						"example": "Data source added"
 					},
 					"name": {
 						"description": "Name of the new data source.",
 						"type": "string",
-						"x-go-name": "Name",
 						"example": "My Data source"
 					}
 				}
@@ -14316,14 +13455,12 @@
 					"message": {
 						"description": "Message Message of the created org.",
 						"type": "string",
-						"x-go-name": "Message",
 						"example": "Data source added"
 					},
 					"orgId": {
 						"description": "ID Identifier of the created org.",
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "OrgID",
 						"example": 65
 					}
 				}
@@ -14336,27 +13473,22 @@
 				"properties": {
 					"deleteKey": {
 						"description": "Unique key used to delete the snapshot. It is different from the key so that only the creator can delete the snapshot.",
-						"type": "string",
-						"x-go-name": "DeleteKey"
+						"type": "string"
 					},
 					"deleteUrl": {
-						"type": "string",
-						"x-go-name": "DeleteUrl"
+						"type": "string"
 					},
 					"id": {
 						"description": "Snapshot id",
 						"type": "integer",
-						"format": "int64",
-						"x-go-name": "ID"
+						"format": "int64"
 					},
 					"key": {
 						"description": "Unique key",
-						"type": "string",
-						"x-go-name": "Key"
+						"type": "string"
 					},
 					"url": {
-						"type": "string",
-						"x-go-name": "URL"
+						"type": "string"
 					}
 				}
 			}
@@ -14367,13 +13499,11 @@
 				"type": "object",
 				"properties": {
 					"message": {
-						"type": "string",
-						"x-go-name": "Message"
+						"type": "string"
 					},
 					"teamId": {
 						"type": "integer",
-						"format": "int64",
-						"x-go-name": "TeamId"
+						"format": "int64"
 					}
 				}
 			}
@@ -14437,13 +13567,11 @@
 						"description": "ID Identifier of the deleted notification channel.",
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "ID",
 						"example": 65
 					},
 					"message": {
 						"description": "Message Message of the deleted notificatiton channel.",
-						"type": "string",
-						"x-go-name": "Message"
+						"type": "string"
 					}
 				}
 			}
@@ -14462,19 +13590,16 @@
 						"description": "ID Identifier of the deleted dashboard.",
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "ID",
 						"example": 65
 					},
 					"message": {
 						"description": "Message Message of the deleted dashboard.",
 						"type": "string",
-						"x-go-name": "Message",
 						"example": "Dashboard My Dashboard deleted"
 					},
 					"title": {
 						"description": "Title Title of the deleted dashboard.",
 						"type": "string",
-						"x-go-name": "Title",
 						"example": "My Dashboard"
 					}
 				}
@@ -14493,13 +13618,11 @@
 						"description": "ID Identifier of the deleted data source.",
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "ID",
 						"example": 65
 					},
 					"message": {
 						"description": "Message Message of the deleted dashboard.",
 						"type": "string",
-						"x-go-name": "Message",
 						"example": "Dashboard My Dashboard deleted"
 					}
 				}
@@ -14519,19 +13642,16 @@
 						"description": "ID Identifier of the deleted folder.",
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "ID",
 						"example": 65
 					},
 					"message": {
 						"description": "Message Message of the deleted folder.",
 						"type": "string",
-						"x-go-name": "Message",
 						"example": "Folder My Folder deleted"
 					},
 					"title": {
 						"description": "Title of the deleted folder.",
 						"type": "string",
-						"x-go-name": "Title",
 						"example": "My Folder"
 					}
 				}
@@ -14657,7 +13777,6 @@
 						"description": "ID Identifier of the data source.",
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "ID",
 						"example": 65
 					}
 				}
@@ -14759,16 +13878,13 @@
 				"type": "object",
 				"properties": {
 					"externalEnabled": {
-						"type": "boolean",
-						"x-go-name": "ExternalEnabled"
+						"type": "boolean"
 					},
 					"externalSnapshotName": {
-						"type": "string",
-						"x-go-name": "ExternalSnapshotName"
+						"type": "string"
 					},
 					"externalSnapshotURL": {
-						"type": "string",
-						"x-go-name": "ExternalSnapshotURL"
+						"type": "string"
 					}
 				}
 			}
@@ -14828,12 +13944,10 @@
 				"properties": {
 					"helpFlags1": {
 						"type": "integer",
-						"format": "int64",
-						"x-go-name": "HelpFlags1"
+						"format": "int64"
 					},
 					"message": {
-						"type": "string",
-						"x-go-name": "Message"
+						"type": "string"
 					}
 				}
 			}
@@ -14891,17 +14005,14 @@
 				"properties": {
 					"alertId": {
 						"type": "integer",
-						"format": "int64",
-						"x-go-name": "AlertID"
+						"format": "int64"
 					},
 					"message": {
-						"type": "string",
-						"x-go-name": "Message"
+						"type": "string"
 					},
 					"state": {
 						"description": "Alert result state\nrequired true",
-						"type": "string",
-						"x-go-name": "State"
+						"type": "string"
 					}
 				}
 			}
@@ -14918,17 +14029,14 @@
 					"alertsAffected": {
 						"description": "AlertsAffected is the number of the affected alerts.",
 						"type": "integer",
-						"format": "int64",
-						"x-go-name": "AlertsAffected"
+						"format": "int64"
 					},
 					"message": {
-						"type": "string",
-						"x-go-name": "Message"
+						"type": "string"
 					},
 					"state": {
 						"description": "Alert result state\nrequired true",
-						"type": "string",
-						"x-go-name": "State"
+						"type": "string"
 					}
 				}
 			}
@@ -14955,38 +14063,32 @@
 					"id": {
 						"description": "ID The unique identifier (id) of the created/updated dashboard.",
 						"type": "string",
-						"x-go-name": "ID",
 						"example": "1"
 					},
 					"status": {
 						"description": "Status status of the response.",
 						"type": "string",
-						"x-go-name": "Status",
 						"example": "success"
 					},
 					"title": {
 						"description": "Slug The slug of the dashboard.",
 						"type": "string",
-						"x-go-name": "Slug",
 						"example": "my-dashboard"
 					},
 					"uid": {
 						"description": "UID The unique identifier (uid) of the created/updated dashboard.",
 						"type": "string",
-						"x-go-name": "UID",
 						"example": "nHz3SXiiz"
 					},
 					"url": {
 						"description": "URL The relative URL for accessing the created/updated dashboard.",
 						"type": "string",
-						"x-go-name": "URL",
 						"example": "/d/nHz3SXiiz/my-dashboard"
 					},
 					"version": {
 						"description": "Version The version of the dashboard.",
 						"type": "integer",
 						"format": "int64",
-						"x-go-name": "Verion",
 						"example": 2
 					}
 				}
@@ -15031,20 +14133,16 @@
 				"type": "object",
 				"properties": {
 					"description": {
-						"type": "string",
-						"x-go-name": "Description"
+						"type": "string"
 					},
 					"displayName": {
-						"type": "string",
-						"x-go-name": "DisplayName"
+						"type": "string"
 					},
 					"meta": {
-						"type": "string",
-						"x-go-name": "Meta"
+						"type": "string"
 					},
 					"name": {
-						"type": "string",
-						"x-go-name": "Name"
+						"type": "string"
 					}
 				}
 			}
