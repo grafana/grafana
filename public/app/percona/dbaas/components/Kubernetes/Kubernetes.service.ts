@@ -61,9 +61,24 @@ const toAPI = (kubernetes: Kubernetes, force?: boolean) => ({
   force,
 });
 
-const newClusterToApi = (newCluster: NewKubernetesCluster): NewKubernetesClusterAPI => ({
-  kubernetes_cluster_name: newCluster.name,
-  kube_auth: {
-    kubeconfig: newCluster.kubeConfig,
-  },
-});
+const newClusterToApi = ({
+  name,
+  kubeConfig,
+  isEKS,
+  awsAccessKeyID,
+  awsSecretAccessKey,
+}: NewKubernetesCluster): NewKubernetesClusterAPI => {
+  const cluster: NewKubernetesClusterAPI = {
+    kubernetes_cluster_name: name,
+    kube_auth: {
+      kubeconfig: kubeConfig,
+    },
+  };
+
+  if (isEKS) {
+    cluster.aws_access_key_id = awsAccessKeyID;
+    cluster.aws_secret_access_key = awsSecretAccessKey;
+  }
+
+  return cluster;
+};

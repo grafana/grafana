@@ -5,10 +5,10 @@ import { Column } from 'react-table';
 import { TextInputField, TextareaInputField, validators, Modal, CheckboxField } from '@percona/platform-core';
 import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
-import { Form, FormRenderProps } from 'react-final-form';
+import { Form } from 'react-final-form';
 import { Databases } from 'app/percona/shared/core';
 import { getStyles } from './Kubernetes.styles';
-import { NewKubernetesCluster, KubernetesProps, Kubernetes, OperatorToUpdate } from './Kubernetes.types';
+import { KubernetesProps, Kubernetes, OperatorToUpdate } from './Kubernetes.types';
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
 import { OperatorStatusItem } from './OperatorStatusItem/OperatorStatusItem';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus';
@@ -16,6 +16,7 @@ import { clusterActionsRender } from './ColumnRenderers/ColumnRenderers';
 import { ViewClusterConfigModal } from './ViewClusterConfigModal/ViewClusterConfigModal';
 import { ManageComponentsVersionsModal } from './ManageComponentsVersionsModal/ManageComponentsVersionsModal';
 import { UpdateOperatorModal } from './OperatorStatusItem/KubernetesOperatorStatus/UpdateOperatorModal/UpdateOperatorModal';
+import { AddKubernetesModal } from './AddKubernetesModal/AddKubernetesModal';
 
 export const KubernetesInventory: FC<KubernetesProps> = ({
   kubernetes,
@@ -33,7 +34,6 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
   const [manageComponentsModalVisible, setManageComponentsModalVisible] = useState(false);
   const [operatorToUpdate, setOperatorToUpdate] = useState<OperatorToUpdate | null>(null);
   const [updateOperatorModalVisible, setUpdateOperatorModalVisible] = useState(false);
-  const { required } = validators;
 
   const deleteKubernetesCluster = useCallback(
     (force?: boolean) => {
@@ -115,45 +115,11 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
           selectedCluster={selectedCluster}
         />
       )}
-      <Modal
-        title={Messages.kubernetes.addModal.title}
+      <AddKubernetesModal
         isVisible={addModalVisible}
-        onClose={() => setAddModalVisible(false)}
-      >
-        <Form
-          onSubmit={(values: NewKubernetesCluster) => {
-            addKubernetes(values);
-            setAddModalVisible(false);
-          }}
-          render={({ handleSubmit, valid, pristine }: FormRenderProps<NewKubernetesCluster>) => (
-            <form onSubmit={handleSubmit}>
-              <>
-                <TextInputField
-                  name="name"
-                  label={Messages.kubernetes.addModal.fields.clusterName}
-                  validators={[required]}
-                />
-                <TextareaInputField
-                  name="kubeConfig"
-                  label={Messages.kubernetes.addModal.fields.kubeConfig}
-                  validators={[required]}
-                />
-
-                <HorizontalGroup justify="center" spacing="md">
-                  <Button
-                    data-testid="kubernetes-add-cluster-button"
-                    size="md"
-                    variant="primary"
-                    disabled={!valid || pristine}
-                  >
-                    {Messages.kubernetes.addModal.confirm}
-                  </Button>
-                </HorizontalGroup>
-              </>
-            </form>
-          )}
-        />
-      </Modal>
+        addKubernetes={addKubernetes}
+        setAddModalVisible={setAddModalVisible}
+      />
       <Modal
         title={Messages.kubernetes.deleteModal.title}
         isVisible={deleteModalVisible}
