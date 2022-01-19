@@ -10,11 +10,19 @@ export interface Props {
   permissions: string[];
   assignments: Assignments;
   canListUsers: boolean;
+  title?: string;
   onCancel: () => void;
   onAdd: (state: SetPermission) => void;
 }
 
-export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, onCancel }: Props) => {
+export const AddPermission = ({
+  permissions,
+  assignments,
+  canListUsers,
+  title = 'Add Permission For',
+  onAdd,
+  onCancel,
+}: Props) => {
   const [target, setPermissionTarget] = useState<PermissionTarget>(PermissionTarget.User);
   const [teamId, setTeamId] = useState(0);
   const [userId, setUserId] = useState(0);
@@ -49,7 +57,7 @@ export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, o
   return (
     <div className="cta-form" aria-label="Permissions slider">
       <CloseButton onClick={onCancel} />
-      <h5>Add Permission For</h5>
+      <h5>{title}</h5>
       <Form
         name="addPermission"
         maxWidth="none"

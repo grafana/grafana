@@ -4,6 +4,7 @@ import { PermissionListItem } from './PermissionListItem';
 
 interface Props {
   title: string;
+  permissionVerb?: string;
   items: ResourcePermission[];
   permissionLevels: string[];
   canSet: boolean;
@@ -11,7 +12,15 @@ interface Props {
   onChange: (resourcePermission: ResourcePermission, permission: string) => void;
 }
 
-export const PermissionList = ({ title, items, permissionLevels, canSet, onRemove, onChange }: Props) => {
+export const PermissionList = ({
+  title,
+  permissionVerb,
+  items,
+  permissionLevels,
+  canSet,
+  onRemove,
+  onChange,
+}: Props) => {
   if (items.length === 0) {
     return null;
   }
@@ -24,6 +33,7 @@ export const PermissionList = ({ title, items, permissionLevels, canSet, onRemov
           {items.map((item, index) => (
             <PermissionListItem
               item={item}
+              verb={permissionVerb}
               onRemove={onRemove}
               onChange={onChange}
               canSet={canSet}

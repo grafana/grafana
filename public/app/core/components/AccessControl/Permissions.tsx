@@ -21,6 +21,8 @@ const INITIAL_DESCRIPTION: Description = {
 
 export type Props = {
   title?: string;
+  buttonLabel?: string;
+  addPermissionTitle?: string;
   resource: string;
   resourceId: number;
 
@@ -34,6 +36,8 @@ export const Permissions = ({
   canListUsers,
   canSetPermissions,
   title = 'Permissions',
+  buttonLabel = 'Add a permission',
+  addPermissionTitle,
 }: Props) => {
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
@@ -125,7 +129,7 @@ export const Permissions = ({
         <div className="page-action-bar__spacer" />
         {canSetPermissions && (
           <Button variant={'primary'} key="add-permission" onClick={() => setIsAdding(true)}>
-            Add a permission
+            {buttonLabel}
           </Button>
         )}
       </div>
@@ -133,6 +137,7 @@ export const Permissions = ({
       <div>
         <SlideDown in={isAdding}>
           <AddPermission
+            title={addPermissionTitle}
             onAdd={onAdd}
             permissions={desc.permissions}
             assignments={desc.assignments}
