@@ -98,7 +98,7 @@ export const apiErrorParser = (e: AxiosError): ApiVerboseError[] => {
     result = details.reduce((acc, current) => {
       const translatedError = translateApiError(current.code);
       return translatedError ? [...acc, translatedError] : acc;
-    }, []);
+    }, [] as ApiVerboseError[]);
   }
 
   return result;
