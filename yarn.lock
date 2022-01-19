@@ -29942,7 +29942,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-simple-compat@npm:^1.2.1":
+"react-simple-compat@npm:^1.2.1, react-simple-compat@npm:^1.2.2":
   version: 1.2.2
   resolution: "react-simple-compat@npm:1.2.2"
   dependencies:
