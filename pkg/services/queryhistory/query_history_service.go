@@ -22,8 +22,8 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *QueryHistoryService {
 }
 
 type Service interface {
-	AddToQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, dataSourceUid string) (*models.QueryHistory, error)
-	ListQueryHistory(ctx context.Context, user *models.SignedInUser, dataSourceUids []string, searchString string, sorting string) ([]QueryHistoryWithStarred, error)
+	AddToQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, datasourceUid string) (*models.QueryHistory, error)
+	ListQueryHistory(ctx context.Context, user *models.SignedInUser, datasourceUids []string, searchString string, sorting string) ([]QueryHistoryWithStarred, error)
 	DeleteQuery(ctx context.Context, user *models.SignedInUser, queryUid string) error
 	GetQueryByUid(ctx context.Context, user *models.SignedInUser, queryUid string) (*models.QueryHistory, error)
 	UpdateComment(ctx context.Context, user *models.SignedInUser, query *models.QueryHistory, comment string) error
@@ -35,12 +35,12 @@ type QueryHistoryService struct {
 	SQLStore *sqlstore.SQLStore
 }
 
-func (s QueryHistoryService) AddToQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, dataSourceUid string) (*models.QueryHistory, error) {
+func (s QueryHistoryService) AddToQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, datasourceUid string) (*models.QueryHistory, error) {
 	queryHistory := models.QueryHistory{
 		OrgId:         user.OrgId,
 		Uid:           util.GenerateShortUID(),
 		Queries:       queries,
-		DatasourceUid: dataSourceUid,
+		DatasourceUid: datasourceUid,
 		CreatedBy:     user.UserId,
 		CreatedAt:     time.Now().Unix(),
 		Comment:       "",
@@ -57,11 +57,11 @@ func (s QueryHistoryService) AddToQueryHistory(ctx context.Context, user *models
 	return &queryHistory, nil
 }
 
-func (s QueryHistoryService) ListQueryHistory(ctx context.Context, user *models.SignedInUser, dataSourceUids []string, searchString string, sorting string) ([]QueryHistoryWithStarred, error) {
+func (s QueryHistoryService) ListQueryHistory(ctx context.Context, user *models.SignedInUser, datasourceUids []string, searchString string, sorting string) ([]QueryHistoryWithStarred, error) {
 	var queryHistory []models.QueryHistory
 	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
 		session.Table("query_history")
-		session.In("datasource_uid", dataSourceUids)
+		session.In("datasource_uid", datasourceUids)
 		session.Where("org_id = ? AND created_by = ? AND queries LIKE ?", user.OrgId, user.UserId, "%"+searchString+"%")
 		if sorting == "time-desc" {
 			session.Desc("created_at")

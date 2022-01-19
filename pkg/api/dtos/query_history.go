@@ -1,7 +1,7 @@
 package dtos
 
 type AddToQueryHistoryCmd struct {
-	DataSourceUid string `json:"dataSourceUid"`
+	DatasourceUid string `json:"datasourceUid"`
 	Queries       string `json:"queries"`
 }
 

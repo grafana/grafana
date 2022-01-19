@@ -15,9 +15,9 @@ func (hs *HTTPServer) addToQueryHistory(c *models.ReqContext) response.Response 
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	hs.log.Debug("Received request to add query to query history", "query", cmd.Queries, "datasource", cmd.DataSourceUid)
+	hs.log.Debug("Received request to add query to query history", "query", cmd.Queries, "datasource", cmd.DatasourceUid)
 
-	_, err := hs.QueryHistoryService.AddToQueryHistory(c.Req.Context(), c.SignedInUser, cmd.Queries, cmd.DataSourceUid)
+	_, err := hs.QueryHistoryService.AddToQueryHistory(c.Req.Context(), c.SignedInUser, cmd.Queries, cmd.DatasourceUid)
 	if err != nil {
 		return response.Error(500, "Failed to create query history", err)
 	}
@@ -26,11 +26,11 @@ func (hs *HTTPServer) addToQueryHistory(c *models.ReqContext) response.Response 
 }
 
 func (hs *HTTPServer) searchInQueryHistory(c *models.ReqContext) response.Response {
-	dataSourceUIDs := c.QueryStrings("dataSourceUid")
-	query := c.Query("query")
+	datasourceUids := c.QueryStrings("datasourceUids")
+	searchString := c.Query("searchString")
 	sort := c.Query("sort")
 
-	queryHistory, err := hs.QueryHistoryService.ListQueryHistory(c.Req.Context(), c.SignedInUser, dataSourceUIDs, query, sort)
+	queryHistory, err := hs.QueryHistoryService.ListQueryHistory(c.Req.Context(), c.SignedInUser, datasourceUids, searchString, sort)
 	if err != nil {
 		return response.Error(500, "Failed to get query history", err)
 	}
