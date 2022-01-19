@@ -19907,7 +19907,7 @@ __metadata:
     logfmt: ^1.3.2
     lru-cache: 6.0.0
     memoize-one: 6.0.0
-    mini-css-extract-plugin: 2.4.6
+    mini-css-extract-plugin: 2.5.2
     moment: 2.29.1
     moment-timezone: 0.5.34
     monaco-editor: ^0.31.1
@@ -25085,14 +25085,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mini-css-extract-plugin@npm:2.4.6":
-  version: 2.4.6
-  resolution: "mini-css-extract-plugin@npm:2.4.6"
+"mini-css-extract-plugin@npm:2.5.2":
+  version: 2.5.2
+  resolution: "mini-css-extract-plugin@npm:2.5.2"
   dependencies:
     schema-utils: ^4.0.0
   peerDependencies:
     webpack: ^5.0.0
-  checksum: 7eb3dcbf1e46d5a9cdb6ed1c2b687f6ad5a739e420208511b01f59d45d69328fa7ba57aa44c9b3f7beff8e27cd9fe5188ecd636b4c33f9199ea3bdb9f4a5218e
+  checksum: 9d9ad48780cf1e14b1d778a18b2e8e98031ad948a174dd7bf283d4832fd206a54f3119def455caa7389749808cd13160481ce872d6314c54adc0db1c5280649e
   languageName: node
   linkType: hard
 
