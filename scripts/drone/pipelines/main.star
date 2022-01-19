@@ -14,8 +14,6 @@ load(
     'build_frontend_step',
     'build_plugins_step',
     'package_step',
-    'e2e_tests_server_step',
-    'e2e_tests_step',
     'build_storybook_step',
     'build_frontend_docs_step',
     'copy_packages_for_docker_step',
@@ -36,6 +34,12 @@ load(
     'validate_scuemata_step',
     'ensure_cuetsified_step',
     'test_a11y_frontend_step'
+)
+
+load (
+    'scripts/drone/steps/e2e.star',
+    'e2e_tests_server_step',
+    'e2e_test_steps'
 )
 
 load(
@@ -97,10 +101,11 @@ def get_steps(edition, is_downstream=False):
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, is_downstream=is_downstream),        
         e2e_tests_server_step(edition=edition),
-        e2e_tests_step('dashboards-suite', edition=edition),
-        e2e_tests_step('smoke-tests-suite', edition=edition),
-        e2e_tests_step('panels-suite', edition=edition),
-        e2e_tests_step('various-suite', edition=edition),
+    ])
+
+    build_steps.extend(e2e_test_steps(edition=edition))
+
+    build_steps.extend([
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         store_storybook_step(edition=edition, ver_mode=ver_mode),
         test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),

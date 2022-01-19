@@ -1,17 +1,22 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.8.4'
-build_image = 'grafana/build-container:1.4.9'
-publish_image = 'grafana/grafana-ci-deploy:1.3.1'
-grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
-deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
-alpine_image = 'alpine:3.15'
-curl_image = 'byrnedo/alpine-curl:0.1.8'
-windows_image = 'mcr.microsoft.com/windows:1809'
-wix_image = 'grafana/ci-wix:0.1.1'
-test_release_ver = 'v7.3.0-test'
+load('scripts/drone/steps/e2e.star', 'end_to_end_tests_deps')
+load('scripts/drone/steps/enterprise.star', 'enterprise2_suffix')
 
-disable_tests = False
+load(
+    'scripts/drone/steps/var.star',
+    'grabpl_version',
+    'build_image',
+    'publish_image',
+    'grafana_docker_image',
+    'deploy_docker_image',
+    'alpine_image',
+    'curl_image',
+    'windows_image',
+    'wix_image',
+    'test_release_ver',
+    'disable_tests',
+)
 
 def slack_step(channel):
     return {
@@ -640,53 +645,6 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
     }
 
 
-def e2e_tests_server_step(edition, port=3001):
-    package_file_pfx = ''
-    if edition == 'enterprise2':
-        package_file_pfx = 'grafana' + enterprise2_suffix(edition)
-    elif edition == 'enterprise':
-        package_file_pfx = 'grafana-' + edition
-
-    environment = {
-        'PORT': port,
-    }
-    if package_file_pfx:
-        environment['PACKAGE_FILE'] = 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx)
-        environment['RUNDIR'] = 'e2e/tmp-{}'.format(package_file_pfx)
-
-    return {
-        'name': 'end-to-end-tests-server' + enterprise2_suffix(edition),
-        'image': build_image,
-        'detach': True,
-        'depends_on': [
-            'package' + enterprise2_suffix(edition),
-        ],
-        'environment': environment,
-        'commands': [
-            './e2e/start-server',
-        ],
-    }
-
-def e2e_tests_step(suite, edition, port=3001, tries=None):
-    cmd = './bin/grabpl e2e-tests --port {} --suite {}'.format(port, suite)
-    if tries:
-        cmd += ' --tries {}'.format(tries)
-    return {
-        'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
-        'image': 'cypress/included:8.4.1',
-        'depends_on': [
-            'package',
-        ],
-        'environment': {
-            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
-        },
-        'commands': [
-            'apt-get install -y netcat',
-            cmd,
-        ],
-    }
-
-
 def build_docs_website_step():
     return {
         'name': 'build-docs-website',
@@ -886,10 +844,6 @@ def release_canary_npm_packages_step(edition):
     }
 
 
-def enterprise2_suffix(edition):
-    if edition == 'enterprise2':
-        return '-{}'.format(edition)
-    return ''
 
 
 def upload_packages_step(edition, ver_mode, is_downstream=False):
@@ -1141,13 +1095,3 @@ def ensure_cuetsified_step():
             'git stash pop',
         ],
     }
-
-def end_to_end_tests_deps(edition):
-    if disable_tests:
-        return []
-    return [
-        'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
-    ]

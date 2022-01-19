@@ -1,12 +1,16 @@
 load(
-    'scripts/drone/steps/lib.star',
+    'scripts/drone/steps/var.star',
+    'build_image',
     'disable_tests',
+    'publish_image',
+    'test_release_ver',
+)
+
+load(
+    'scripts/drone/steps/lib.star',
     'download_grabpl_step',
     'initialize_step',
     'lint_drone_step',
-    'test_release_ver',
-    'build_image',
-    'publish_image',
     'lint_backend_step',
     'lint_frontend_step',
     'codespell_step',
@@ -18,8 +22,6 @@ load(
     'build_frontend_step',
     'build_plugins_step',
     'package_step',
-    'e2e_tests_server_step',
-    'e2e_tests_step',
     'build_storybook_step',
     'copy_packages_for_docker_step',
     'package_docker_images_step',
@@ -36,6 +38,12 @@ load(
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step'
+)
+
+load (
+    'scripts/drone/steps/e2e.star',
+    'e2e_tests_server_step',
+    'e2e_test_steps'
 )
 
 load(
@@ -227,12 +235,7 @@ def get_steps(edition, ver_mode):
     ])
 
     if not disable_tests:
-        build_steps.extend([
-            e2e_tests_step('dashboards-suite', edition=edition, tries=3),
-            e2e_tests_step('smoke-tests-suite', edition=edition, tries=3),
-            e2e_tests_step('panels-suite', edition=edition, tries=3),
-            e2e_tests_step('various-suite', edition=edition, tries=3),
-        ])
+        build_steps.extend(e2e_test_steps(edition=edition))
 
     build_storybook = build_storybook_step(edition=edition, ver_mode=ver_mode)
     if build_storybook:
