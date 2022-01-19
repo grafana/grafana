@@ -15,6 +15,8 @@ A Component is a subtree of Grafana backend code that is:
 
 The primary purpose of this "Component" construct is to create the thinnest possible mapping between code ownership, filesystem structure and certain logical roles the code plays in Grafana's backend overall. It is intended to compose cleanly with other abstractions, like Go's `internal` directory, Wire/different build modes, and the need to afford developers flexibility in package organization as a prerequisite to keeping codebases tidy.
 
+Components may not be nested.
+
 Examples of components:
 
 * Existing
