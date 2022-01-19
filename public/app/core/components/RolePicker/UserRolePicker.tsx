@@ -46,8 +46,12 @@ export const UserRolePicker: FC<Props> = ({
         setBuiltinRoles({});
       }
 
-      const userRoles = await fetchUserRoles(userId, orgId);
-      setAppliedRoles(userRoles);
+      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)) {
+        const userRoles = await fetchUserRoles(userId, orgId);
+        setAppliedRoles(userRoles);
+      } else {
+        setAppliedRoles([]);
+      }
     } catch (e) {
       // TODO handle error
       console.error('Error loading options');
