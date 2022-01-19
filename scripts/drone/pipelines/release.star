@@ -417,7 +417,7 @@ def publish_packages_pipeline():
     ]
 
     return [pipeline(
-        name='publish-packages', trigger=trigger, steps=steps, edition="all"
+        name='publish-packages', trigger=trigger, steps=steps, edition="all", depends_on=['publish-artifacts-public']
     )]
 
 def publish_npm_pipelines(mode):
