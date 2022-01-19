@@ -7,7 +7,7 @@ load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', '
 # This feature was added in Grafana 8.3.x
 can_ensure_cuetsified = False
 
-cypress_image = "cypress/included:7.5.0"
+cypress_image = "cypress/included:8.4.1"
 ## </Feature Toggles>
 
 grabpl_version = 'v2.8.4'
