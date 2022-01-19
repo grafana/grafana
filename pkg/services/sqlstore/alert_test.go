@@ -34,7 +34,6 @@ func TestAlertingDataAccess(t *testing.T) {
 
 	var sqlStore *SQLStore
 	var testDash *models.Dashboard
-	var cmd models.SaveAlertsCommand
 	var items []*models.Alert
 
 	setup := func(t *testing.T) {
@@ -56,14 +55,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			},
 		}
 
-		cmd = models.SaveAlertsCommand{
-			Alerts:      items,
-			DashboardId: testDash.Id,
-			OrgId:       1,
-			UserId:      1,
-		}
-
-		err = sqlStore.SaveAlerts(context.Background(), cmd.DashboardId, items)
+		err = sqlStore.SaveAlerts(context.Background(), testDash.Id, items)
 		require.Nil(t, err)
 	}
 
@@ -162,14 +154,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		modifiedItems := items
 		modifiedItems[0].Name = "Name"
 
-		modifiedCmd := models.SaveAlertsCommand{
-			DashboardId: testDash.Id,
-			OrgId:       1,
-			UserId:      1,
-			Alerts:      modifiedItems,
-		}
-
-		err := sqlStore.SaveAlerts(context.Background(), modifiedCmd.DashboardId, items)
+		err := sqlStore.SaveAlerts(context.Background(), testDash.Id, items)
 
 		t.Run("Can save alerts with same dashboard and panel id", func(t *testing.T) {
 			require.Nil(t, err)
@@ -189,7 +174,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		t.Run("Updates without changes should be ignored", func(t *testing.T) {
-			err3 := sqlStore.SaveAlerts(context.Background(), modifiedCmd.DashboardId, items)
+			err3 := sqlStore.SaveAlerts(context.Background(), testDash.Id, items)
 			require.Nil(t, err3)
 		})
 	})
@@ -220,8 +205,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			},
 		}
 
-		cmd.Alerts = multipleItems
-		err := sqlStore.SaveAlerts(context.Background(), cmd.DashboardId, multipleItems)
+		err := sqlStore.SaveAlerts(context.Background(), testDash.Id, multipleItems)
 
 		t.Run("Should save 3 dashboards", func(t *testing.T) {
 			require.Nil(t, err)
@@ -236,8 +220,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		t.Run("should updated two dashboards and delete one", func(t *testing.T) {
 			missingOneAlert := multipleItems[:2]
 
-			cmd.Alerts = missingOneAlert
-			err = sqlStore.SaveAlerts(context.Background(), cmd.DashboardId, missingOneAlert)
+			err = sqlStore.SaveAlerts(context.Background(), testDash.Id, missingOneAlert)
 
 			t.Run("should delete the missing alert", func(t *testing.T) {
 				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
@@ -259,14 +242,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			},
 		}
 
-		cmd := models.SaveAlertsCommand{
-			Alerts:      items,
-			DashboardId: testDash.Id,
-			OrgId:       1,
-			UserId:      1,
-		}
-
-		err := sqlStore.SaveAlerts(context.Background(), cmd.DashboardId, items)
+		err := sqlStore.SaveAlerts(context.Background(), testDash.Id, items)
 		require.Nil(t, err)
 
 		err = DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
@@ -356,15 +332,8 @@ func insertTestAlert(title string, message string, orgId int64, dashId int64, se
 		},
 	}
 
-	cmd := models.SaveAlertsCommand{
-		Alerts:      items,
-		DashboardId: dashId,
-		OrgId:       orgId,
-		UserId:      1,
-	}
-
-	err := ss.SaveAlerts(context.Background(), cmd.DashboardId, items)
-	return cmd.Alerts[0], err
+	err := ss.SaveAlerts(context.Background(), dashId, items)
+	return items[0], err
 }
 
 func getAlertById(t *testing.T, id int64, ss *SQLStore) (*models.Alert, error) {
