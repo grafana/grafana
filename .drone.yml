@@ -899,11 +899,10 @@ steps:
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
   - .\grabpl.exe gen-version --build-id $$env:DRONE_BUILD_NUMBER
-  - .\grabpl.exe windows-installer --edition oss --packages-bucket grafana-downloads
-    --build-id $$env:DRONE_BUILD_NUMBER
+  - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-downloads/oss/main/
-  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
+  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/main/
+  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/main/
   depends_on:
   - initialize
   environment:
@@ -3884,6 +3883,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: f20d4baea6433c9b13b37d83788beaf6e28bdbaaff2ba0469e667c5ecc122536
+hmac: 576e82239dd66ba1d627a13ee089c3b4562ffb55afa7839ab22fedf846a22fa2
 
 ...
