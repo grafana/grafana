@@ -1,7 +1,7 @@
 import config from '../../core/config';
 
-// addAccessControlQueryParam appends ?accesscontrol=true to a url when accesscontrol is enabled
-export function addAccessControlQueryParam(params: Record<string, any>): Record<string, any> {
+// accessControlQueryParam adds an additional accesscontrol=true param to params when accesscontrol is enabled
+export function accessControlQueryParam(params = {}) {
   if (!config.featureToggles['accesscontrol']) {
     return params;
   }
