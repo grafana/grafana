@@ -8,13 +8,14 @@ import {
 import { GazetteerPathEditor } from 'app/features/geo/editor/GazetteerPathEditor';
 
 export function addLocationFields<TOptions>(
+  title: string,
   prefix: string,
   builder: PanelOptionsEditorBuilder<TOptions>,
   source?: FrameGeometrySource
 ) {
   builder.addRadio({
     path: `${prefix}.mode`,
-    name: 'Location',
+    name: title,
     description: '',
     defaultValue: FrameGeometrySourceMode.Auto,
     settings: {

@@ -1,5 +1,6 @@
 import { ArrayVector, Field, FieldConfig, FieldType } from '@grafana/data';
-import { Geometry, Point } from 'ol/geom';
+import { getCenter } from 'ol/extent';
+import { Geometry, LineString, Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 import { Gazetteer } from '../gazetteer/gazetteer';
 import { decodeGeohash } from './geohash';
@@ -47,6 +48,41 @@ export function getGeoFieldFromGazetteer(gaz: Gazetteer, field: Field<string>): 
     values: new ArrayVector(geo),
     config: hiddenTooltipField,
   };
+}
+
+export function createLineBetween(
+  src: Field<Geometry | undefined>,
+  dest: Field<Geometry | undefined>
+): Field<Geometry | undefined> {
+  const v0 = src.values.toArray();
+  const v1 = dest.values.toArray();
+  if (!v0 || !v1) {
+    throw 'missing src/dest';
+  }
+  if (v0.length !== v1.length) {
+    throw 'Source and destination field lengths do not match';
+  }
+
+  const count = src.values.length!;
+  const geo = new Array<Geometry | undefined>(count);
+  for (let i = 0; i < count; i++) {
+    const a = v0[i];
+    const b = v1[i];
+    if (a && b) {
+      geo[i] = new LineString([getCenterPoint(a), getCenterPoint(b)]);
+    }
+  }
+  return {
+    name: 'Geometry',
+    type: FieldType.geo,
+    values: new ArrayVector(geo),
+    config: hiddenTooltipField,
+  };
+}
+
+function getCenterPoint(geo: Geometry): number[] {
+  // TODO: poing can use direclty
+  return getCenter(geo.getExtent());
 }
 
 const hiddenTooltipField: FieldConfig = Object.freeze({
