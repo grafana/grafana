@@ -14,7 +14,7 @@ export function addLocationFields<TOptions>(
   source?: FrameGeometrySource
 ) {
   builder.addRadio({
-    path: `${prefix}.mode`,
+    path: `${prefix}mode`,
     name: title,
     description: '',
     defaultValue: FrameGeometrySourceMode.Auto,
@@ -32,7 +32,7 @@ export function addLocationFields<TOptions>(
     case FrameGeometrySourceMode.Coords:
       builder
         .addFieldNamePicker({
-          path: `${prefix}.latitude`,
+          path: `${prefix}latitude`,
           name: 'Latitude field',
           settings: {
             filter: (f: Field) => f.type === FieldType.number,
@@ -40,7 +40,7 @@ export function addLocationFields<TOptions>(
           },
         })
         .addFieldNamePicker({
-          path: `${prefix}.longitude`,
+          path: `${prefix}longitude`,
           name: 'Longitude field',
           settings: {
             filter: (f: Field) => f.type === FieldType.number,
@@ -63,7 +63,7 @@ export function addLocationFields<TOptions>(
     case FrameGeometrySourceMode.Lookup:
       builder
         .addFieldNamePicker({
-          path: `${prefix}.lookup`,
+          path: `${prefix}lookup`,
           name: 'Lookup field',
           settings: {
             filter: (f: Field) => f.type === FieldType.string,
@@ -72,7 +72,7 @@ export function addLocationFields<TOptions>(
         })
         .addCustomEditor({
           id: 'gazetteer',
-          path: `${prefix}.gazetteer`,
+          path: `${prefix}gazetteer`,
           name: 'Gazetteer',
           editor: GazetteerPathEditor,
         });

@@ -5,7 +5,7 @@ import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { set, get as lodashGet } from 'lodash';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
-import { SetGeometryOptions } from './setGeometry';
+import { SetGeometryOptions } from './models.gen';
 
 export function getTransformerOptionPane<T = any>(
   props: TransformerUIProps<SetGeometryOptions>,
@@ -18,6 +18,15 @@ export function getTransformerOptionPane<T = any>(
 
   const root = new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
   const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
+    if (categoryNames?.length) {
+      const key = categoryNames[0];
+      let sub = root.categories.find((v) => v.props.id === key);
+      if (!sub) {
+        sub = new OptionsPaneCategoryDescriptor({ id: key, title: key });
+        root.categories.push(sub);
+      }
+      return sub;
+    }
     return root;
   };
 

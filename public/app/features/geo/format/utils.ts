@@ -7,7 +7,7 @@ import { decodeGeohash } from './geohash';
 
 export function pointFieldFromGeohash(geohash: Field<string>): Field<Point> {
   return {
-    name: 'point',
+    name: geohash.name ?? 'Point',
     type: FieldType.geo,
     values: new ArrayVector<any>(
       geohash.values.toArray().map((v) => {
@@ -29,7 +29,7 @@ export function pointFieldFromLonLat(lon: Field, lat: Field): Field<Point> {
   }
 
   return {
-    name: 'point',
+    name: 'Point',
     type: FieldType.geo,
     values: new ArrayVector(buffer),
     config: hiddenTooltipField,

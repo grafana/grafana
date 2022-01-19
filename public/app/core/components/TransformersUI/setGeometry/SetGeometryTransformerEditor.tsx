@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import {
   DataTransformerID,
+  FrameGeometrySource,
+  FrameGeometrySourceMode,
   PanelOptionsEditorBuilder,
   PluginState,
   StandardEditorContext,
@@ -8,37 +10,87 @@ import {
   TransformerUIProps,
 } from '@grafana/data';
 
-import { SetGeometryOptions, setGeometryTransformer, SetGeometryAction } from './setGeometry';
+import { isLineToOption, setGeometryTransformer } from './setGeometry';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
+import { CalculateFunction, ModifyFunction, SetGeometryAction, SetGeometryOptions } from './models.gen';
 
 // Nothing defined in state
 const supplier = (
   builder: PanelOptionsEditorBuilder<SetGeometryOptions>,
   context: StandardEditorContext<SetGeometryOptions>
 ) => {
-  addLocationFields('Location in row', 'source', builder, context.options?.source);
-
   builder.addRadio({
     path: `action`,
     name: 'Action',
     description: '',
-    defaultValue: SetGeometryAction.SetField,
+    defaultValue: SetGeometryAction.Prepare,
     settings: {
       options: [
-        { value: SetGeometryAction.SetField, label: 'Set field' },
-        { value: SetGeometryAction.LineTo, label: 'Line to' },
+        { value: SetGeometryAction.Prepare, label: 'Prepare' },
+        { value: SetGeometryAction.Calculate, label: 'Calculate' },
+        { value: SetGeometryAction.Modify, label: 'Modify' },
       ],
     },
   });
 
-  if (context.options?.action === SetGeometryAction.LineTo) {
-    addLocationFields('Target location', 'lineTo.target', builder, context.options.lineTo?.target);
+  const options = context.options ?? {};
 
-    builder.addBooleanSwitch({
-      name: 'Calculate distance',
-      path: 'lineTo.calculateDistance',
+  if (options.action === SetGeometryAction.Calculate) {
+    builder.addRadio({
+      path: `calculate.what`,
+      name: 'Function',
+      description: '',
+      defaultValue: CalculateFunction.Area,
+      settings: {
+        options: [
+          { value: CalculateFunction.Area, label: 'Area' },
+          { value: CalculateFunction.Distance, label: 'Distance' },
+          { value: CalculateFunction.Heading, label: 'Heading' },
+        ],
+      },
     });
+  } else if (options.action === SetGeometryAction.Modify) {
+    builder.addRadio({
+      path: `modify.fn`,
+      name: 'Function',
+      description: '',
+      defaultValue: ModifyFunction.AsLine,
+      settings: {
+        options: [
+          { value: ModifyFunction.AsLine, label: 'As line' },
+          { value: ModifyFunction.LineTo, label: 'Connect line' },
+        ],
+      },
+    });
+  }
+
+  if (isLineToOption(options)) {
+    builder.addNestedOptions({
+      category: ['Source'],
+      path: 'source',
+      build: (b, c) => {
+        const loc = (options.source ?? {}) as FrameGeometrySource;
+        if (!loc.mode) {
+          loc.mode = FrameGeometrySourceMode.Auto;
+        }
+        addLocationFields('', '', b, loc);
+      },
+    });
+
+    builder.addNestedOptions({
+      category: ['Target'],
+      path: 'modify',
+      build: (b, c) => {
+        const loc = (options.modify?.lineTo ?? {}) as FrameGeometrySource;
+        if (!loc.mode) {
+          loc.mode = FrameGeometrySourceMode.Auto;
+        }
+        addLocationFields('', 'lineTo.', b, loc);
+      },
+    });
+  } else {
+    addLocationFields('Location', 'source.', builder, options.source);
   }
 };
 
@@ -53,7 +105,12 @@ export const SetGeometryTransformerEditor: React.FC<TransformerUIProps<SetGeomet
   });
 
   const pane = getTransformerOptionPane<SetGeometryOptions>(props, supplier);
-  return <div>{pane.items.map((v) => v.render())}</div>;
+  return (
+    <div>
+      <div>{pane.items.map((v) => v.render())}</div>
+      <div>{pane.categories.map((v) => v.render())}</div>
+    </div>
+  );
 };
 
 export const setGeometryTransformRegistryItem: TransformerRegistryItem<SetGeometryOptions> = {
