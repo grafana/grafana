@@ -8,9 +8,13 @@ import (
 
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-sql-driver/mysql"
+	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/xorm"
 )
+
+// MySQL 5.7 and later enforces a maximum length on lock names of 64 characters.
+const MAX_ALLOWED_LOCKNAME_LENGTH = 64
 
 type MySQLDialect struct {
 	BaseDialect
@@ -287,9 +291,14 @@ func (db *MySQLDialect) getLockName() (string, error) {
 		return "", err
 	}
 
-	s := strings.Join([]string{cfg.Addr, cfg.DBName}, "/")
+	s, err := database.GenerateAdvisoryLockId(cfg.DBName)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate advisory lock key: %w", err)
+	}
 
-	// MySQL 5.7 and later enforces a maximum length on lock names of 64 characters.
-	// TODO check lock name length
+	if len(s) > MAX_ALLOWED_LOCKNAME_LENGTH {
+		// what if there several databases with same prefix of 64 length or more?
+		s = s[:MAX_ALLOWED_LOCKNAME_LENGTH]
+	}
 	return s, nil
 }

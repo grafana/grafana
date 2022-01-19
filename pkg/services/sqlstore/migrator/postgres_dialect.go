@@ -3,6 +3,7 @@ package migrator
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -271,9 +272,9 @@ func (db *PostgresDialect) Lock() error {
 	query := "SELECT pg_try_advisory_lock(?)"
 	var success bool
 
-	key, err := database.GenerateAdvisoryLockId(db.engine.DataSourceName())
+	key, err := db.getLockKey()
 	if err != nil {
-		return fmt.Errorf("failed to generate advisory lock key")
+		return fmt.Errorf("failed to generate advisory lock key: %w", err)
 	}
 	_, err = sess.SQL(query, key).Get(&success)
 	if err != nil {
@@ -296,9 +297,9 @@ func (db *PostgresDialect) Unlock() error {
 	query := "SELECT pg_advisory_unlock(?)"
 	var success bool
 
-	key, err := database.GenerateAdvisoryLockId(db.engine.DataSourceName())
+	key, err := db.getLockKey()
 	if err != nil {
-		return fmt.Errorf("failed to generate advisory lock key")
+		return fmt.Errorf("failed to generate advisory lock key: %w", err)
 	}
 	_, err = sess.SQL(query, key).Get(&success)
 	if err != nil {
@@ -308,4 +309,32 @@ func (db *PostgresDialect) Unlock() error {
 		return ErrReleaseLockDB
 	}
 	return nil
+}
+
+func getDBName(dsn string) (string, error) {
+	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
+		parsedDSN, err := pq.ParseURL(dsn)
+		if err != nil {
+			return "", err
+		}
+		dsn = parsedDSN
+	}
+	re := regexp.MustCompile(`dbname=(\w+)`)
+	submatch := re.FindSubmatch([]byte(dsn))
+	if len(submatch) < 2 {
+		return "", fmt.Errorf("failed to get database name")
+	}
+	return string(submatch[1]), nil
+}
+
+func (db *PostgresDialect) getLockKey() (string, error) {
+	dbName, err := getDBName(db.engine.DataSourceName())
+	if err != nil {
+		return "", err
+	}
+	key, err := database.GenerateAdvisoryLockId(dbName)
+	if err != nil {
+		return "", err
+	}
+	return key, nil
 }
