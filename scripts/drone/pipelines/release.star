@@ -4,7 +4,6 @@ load(
     'download_grabpl_step',
     'initialize_step',
     'lint_drone_step',
-    'test_release_ver',
     'build_image',
     'publish_image',
     'lint_backend_step',
