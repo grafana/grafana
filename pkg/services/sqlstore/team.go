@@ -11,11 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func init() {
-	bus.AddHandler("sql", UpdateTeam)
-	bus.AddHandler("sql", DeleteTeam)
-	bus.AddHandler("sql", SearchTeams)
-	bus.AddHandler("sql", GetTeamById)
+func (ss *SQLStore) addTeamQueryAndCommandHandlers() {
+	bus.AddHandler("sql", ss.UpdateTeam)
+	bus.AddHandler("sql", ss.DeleteTeam)
+	bus.AddHandler("sql", ss.SearchTeams)
+	bus.AddHandler("sql", ss.GetTeamById)
 	bus.AddHandler("sql", GetTeamsByUser)
 
 	bus.AddHandler("sql", UpdateTeamMember)
@@ -95,7 +95,7 @@ func (ss *SQLStore) CreateTeam(name, email string, orgID int64) (models.Team, er
 	return team, err
 }
 
-func UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error {
+func (ss *SQLStore) UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if isNameTaken, err := isTeamNameTaken(cmd.OrgId, cmd.Name, cmd.Id, sess); err != nil {
 			return err
@@ -126,7 +126,7 @@ func UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error {
 }
 
 // DeleteTeam will delete a team, its member and any permissions connected to the team
-func DeleteTeam(ctx context.Context, cmd *models.DeleteTeamCommand) error {
+func (ss *SQLStore) DeleteTeam(ctx context.Context, cmd *models.DeleteTeamCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if _, err := teamExists(cmd.OrgId, cmd.Id, sess); err != nil {
 			return err
@@ -172,7 +172,7 @@ func isTeamNameTaken(orgId int64, name string, existingId int64, sess *DBSession
 	return false, nil
 }
 
-func SearchTeams(ctx context.Context, query *models.SearchTeamsQuery) error {
+func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQuery) error {
 	query.Result = models.SearchTeamQueryResult{
 		Teams: make([]*models.TeamDTO, 0),
 	}
@@ -235,7 +235,7 @@ func SearchTeams(ctx context.Context, query *models.SearchTeamsQuery) error {
 	return err
 }
 
-func GetTeamById(ctx context.Context, query *models.GetTeamByIdQuery) error {
+func (ss *SQLStore) GetTeamById(ctx context.Context, query *models.GetTeamByIdQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
