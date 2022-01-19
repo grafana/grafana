@@ -125,7 +125,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           />
         </Field>
         <Field
-           label="Oldest 'From' now -"
+           label="Oldest 'from' time"
            description="Prevents the user from selecting a time range starting further back in the past than the specified interval."
         >
           <Input
