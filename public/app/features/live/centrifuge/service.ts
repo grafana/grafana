@@ -148,7 +148,10 @@ export class CentrifugeService implements CentrifugeSrv {
     if (!this.centrifuge.isConnected()) {
       await this.connectionBlocker;
     }
-    channel.subscription = this.centrifuge.subscribe(channel.id, events, { data: channel.addr.data });
+    channel.subscription = this.centrifuge.subscribe(channel.id, events, {
+      data: channel.addr.data,
+      autoResubscribeErrorCodes: [100],
+    });
     return;
   }
 
