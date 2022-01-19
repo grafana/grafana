@@ -56,6 +56,8 @@ interface KubeAuth {
 export interface NewKubernetesClusterAPI {
   kubernetes_cluster_name: string;
   kube_auth: KubeAuth;
+  aws_access_key_id?: string;
+  aws_secret_access_key?: string;
 }
 
 export interface CheckOperatorUpdateAPI {
@@ -97,6 +99,9 @@ export interface InstallOperatorResponse {
 export interface NewKubernetesCluster {
   name: string;
   kubeConfig: string;
+  isEKS: boolean;
+  awsAccessKeyID?: string;
+  awsSecretAccessKey?: string;
 }
 
 export interface KubernetesProps {
