@@ -2,15 +2,6 @@
 
 Grafana's experimental Intent API is an enormous project. To help keep discussion and collaboration broadly aligned, this document contains a rough, handwavy system diagram indicating completed and planned dependencies between major parts.
 
-TODO explain the basic rules we're following the keep the diagram simple
-
-```dot
-digraph intentsys {
-    "schema collector"->a
-    "schema component"
-}
-```
-
 ## Definitions
 
 ### Component
@@ -57,13 +48,3 @@ Examples of service groups:
     * `github.com/grafana/grafana/internal/extern/client` (handwavy: contains abstractions over gh/g/g/pkg/plugins/backendplugin/{coreplugin,grpcplugin}, or some more general version that's usable outside plugins)
   * **Import denylist**:
     * `github.com/grafana/grafana/pkg/services/sqlstore` (you can't rely on sqlstore AND be runnable as an independent binary)
-
-Places that CRDs come from:
-
-* Core components (Go packages, compiled into the binary, that statically offer some struct/interface that emits the YAML representation of the CRD)
-* Plugins (runtime-installed components that may define their own schema)
-  * Some schemas are extensions of core components (e.g., a datasource offers some Thema lineage that conforms to a core-specified type) - these MUST come in through a plugin-system-defined interface
-  * Some might be totally custom resources (e.g. synth monitoring probes). These should be just handled through normal k8s-style HTTP interactions with the intent API
-* Pure k8s-style API HTTP interactions - inform about CRDs, set up watches, make calls through API
-
-Fake datasource may be a good PoC?
