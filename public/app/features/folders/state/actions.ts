@@ -36,7 +36,7 @@ export function deleteFolder(uid: string): ThunkResult<void> {
   };
 }
 
-export function getFolderPermissions(uid: string): ThunkResult<void> {
+export function getFolderPermissions(uid: string, requestOptions: { handleErrors: true }): ThunkResult<void> {
   return async (dispatch) => {
     const permissions = await backendSrv.get(`/api/folders/${uid}/permissions`);
     dispatch(loadFolderPermissions(permissions));
