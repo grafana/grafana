@@ -7,6 +7,7 @@ import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { Assignments, PermissionTarget, SetPermission } from './types';
 
 export interface Props {
+  title?: string;
   permissions: string[];
   assignments: Assignments;
   canListUsers: boolean;
@@ -14,7 +15,14 @@ export interface Props {
   onAdd: (state: SetPermission) => void;
 }
 
-export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, onCancel }: Props) => {
+export const AddPermission = ({
+  title = 'Add Permission For',
+  permissions,
+  assignments,
+  canListUsers,
+  onAdd,
+  onCancel,
+}: Props) => {
   const [target, setPermissionTarget] = useState<PermissionTarget>(PermissionTarget.User);
   const [teamId, setTeamId] = useState(0);
   const [userId, setUserId] = useState(0);
@@ -49,7 +57,7 @@ export const AddPermission = ({ permissions, assignments, canListUsers, onAdd, o
   return (
     <div className="cta-form" aria-label="Permissions slider">
       <CloseButton onClick={onCancel} />
-      <h5>Add Permission For</h5>
+      <h5>{title}</h5>
       <Form
         name="addPermission"
         maxWidth="none"
