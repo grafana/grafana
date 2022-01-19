@@ -28,7 +28,13 @@ export type Props = {
   canSetPermissions: boolean;
 };
 
-export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissions, title='Permissions' }: Props) => {
+export const Permissions = ({
+  resource,
+  resourceId,
+  canListUsers,
+  canSetPermissions,
+  title = 'Permissions',
+}: Props) => {
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
@@ -172,8 +178,8 @@ const getDescription = async (resource: string): Promise<Description> => {
   }
 };
 
-const getPermissions = (resource: string, datasourceId: number): Promise<ResourcePermission[]> =>
-  getBackendSrv().get(`/api/access-control/${resource}/${datasourceId}`);
+const getPermissions = (resource: string, resourceId: number): Promise<ResourcePermission[]> =>
+  getBackendSrv().get(`/api/access-control/${resource}/${resourceId}`);
 
 const setUserPermission = (resource: string, resourceId: number, userId: number, permission: string) =>
   setPermission(resource, resourceId, 'users', userId, permission);
