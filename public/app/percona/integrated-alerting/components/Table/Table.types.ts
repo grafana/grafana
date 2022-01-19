@@ -14,7 +14,7 @@ import {
 
 export interface TableProps {
   data: object[];
-  columns: Column[];
+  columns: Array<Column<any>>;
   pendingRequest?: boolean;
   emptyMessage?: string;
   showPagination?: boolean;
