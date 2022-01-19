@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Input } from '../Input/Input';
-import { GrafanaTheme2, MappingType, SpecialValueMatch, SelectableValue, ValueMappingResult } from '@grafana/data';
+import {
+  GrafanaTheme2,
+  MappingType,
+  SpecialValueMatch,
+  SelectableValue,
+  ValueMappingResult,
+  deprecationWarning,
+} from '@grafana/data';
 import { Draggable } from 'react-beautiful-dnd';
 import { Icon } from '../Icon/Icon';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
@@ -31,6 +38,12 @@ interface Props {
 }
 
 export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate: onDupliate }: Props) {
+  deprecationWarning(
+    'ValueMappingEditRow.tsx',
+    'grafana-ui/src/components/ValueMappingEditor',
+    'public/app/features/dimensions/editors/ValueMappingsEditor'
+  );
+
   const { key, result } = mapping;
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);

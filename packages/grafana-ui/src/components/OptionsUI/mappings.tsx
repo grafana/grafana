@@ -1,6 +1,11 @@
 import React from 'react';
 
-import { FieldConfigEditorProps, ValueMapping, ValueMappingFieldConfigSettings } from '@grafana/data';
+import {
+  deprecationWarning,
+  FieldConfigEditorProps,
+  ValueMapping,
+  ValueMappingFieldConfigSettings,
+} from '@grafana/data';
 import { ValueMappingsEditor } from '../../../../../public/app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor';
 
 export class ValueMappingsValueEditor extends React.PureComponent<
@@ -11,6 +16,12 @@ export class ValueMappingsValueEditor extends React.PureComponent<
   }
 
   render() {
+    deprecationWarning(
+      'mappings.tsx',
+      'grafana-ui/src/components/OptionsUI',
+      'public/app/features/dimensions/editors/ValueMappingsEditor'
+    );
+
     const { onChange } = this.props;
     let value = this.props.value;
     if (!value) {

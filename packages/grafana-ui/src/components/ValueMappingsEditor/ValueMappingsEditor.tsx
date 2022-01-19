@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { GrafanaTheme2, MappingType, ValueMapping } from '@grafana/data';
+import { deprecationWarning, GrafanaTheme2, MappingType, ValueMapping } from '@grafana/data';
 import { Button } from '../Button/Button';
 import { Modal } from '../Modal/Modal';
 import { useStyles2 } from '../../themes';
@@ -15,6 +15,12 @@ export interface Props {
 }
 
 export const ValueMappingsEditor = React.memo(({ value, onChange }: Props) => {
+  deprecationWarning(
+    'ValueMappingEditor.tsx',
+    'grafana-ui/src/components/ValueMappingEditor',
+    'public/app/features/dimensions/editors/ValueMappingsEditor'
+  );
+
   const styles = useStyles2(getStyles);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const onCloseEditor = useCallback(() => {

@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { GrafanaTheme2, MappingType, SelectableValue, SpecialValueMatch, ValueMapping } from '@grafana/data';
+import {
+  deprecationWarning,
+  GrafanaTheme2,
+  MappingType,
+  SelectableValue,
+  SpecialValueMatch,
+  ValueMapping,
+} from '@grafana/data';
 import { Button } from '../Button/Button';
 import { Modal } from '../Modal/Modal';
 import { useStyles2 } from '../../themes';
@@ -15,6 +22,12 @@ export interface Props {
 }
 
 export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
+  deprecationWarning(
+    'ValueMappingsEditorModal.tsx',
+    'grafana-ui/src/components/ValueMappingEditor',
+    'public/app/features/dimensions/editors/ValueMappingsEditor'
+  );
+
   const styles = useStyles2(getStyles);
   const [rows, updateRows] = useState<ValueMappingEditRowModel[]>([]);
 
