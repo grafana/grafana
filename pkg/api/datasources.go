@@ -320,7 +320,7 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 	}
 
 	if ds.ReadOnly {
-		return response.Error(400, "Cannot update datasource", models.ErrDatasourceIsReadOnly)
+		return response.Error(403, "Cannot update read-only data source", nil)```
 	}
 
 	err = hs.fillWithSecureJSONData(c.Req.Context(), &cmd)
