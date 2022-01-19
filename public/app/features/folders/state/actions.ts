@@ -3,10 +3,12 @@ import { getBackendSrv, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { FolderState, ThunkResult } from 'app/types';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel } from 'app/types/acl';
-import { updateNavIndex } from 'app/core/actions';
+import { notifyApp, updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 import appEvents from 'app/core/app_events';
 import { loadFolder, loadFolderPermissions } from './reducers';
+import { lastValueFrom } from 'rxjs';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 
 export function getFolderByUid(uid: string): ThunkResult<void> {
   return async (dispatch) => {
@@ -46,10 +48,20 @@ export function getFolderPermissions(uid: string): ThunkResult<void> {
 export function checkFolderPermissions(uid: string): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      const permissions = await backendSrv.get(`/api/folders/${uid}/permissions`);
-      // dispatch(loadFolderPermissions(permissions));
-    }catch (error) {
-      console.error({ error }); 
+      await lastValueFrom(
+        backendSrv.fetch({
+          method: 'GET',
+          showErrorAlert: false,
+          showSuccessAlert: false,
+          url: `/api/folders/${uid}/permissions`,
+        })
+      );
+    } catch (err) {
+      backendSrv.showErrorAlert({}, err);
+      console.error({ err });
+      if (err.status !== 403) {
+        dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      }
     }
   };
 }
