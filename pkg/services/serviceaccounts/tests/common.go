@@ -84,7 +84,7 @@ func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) e
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) ConvertServiceAccounts(ctx context.Context, keys []int64) error {
+func (s *ServiceAccountsStoreMock) ConvertToServiceAccounts(ctx context.Context, keys []int64) error {
 	s.Calls.ConvertServiceAccounts = append(s.Calls.ConvertServiceAccounts, []interface{}{ctx})
 	return nil
 }

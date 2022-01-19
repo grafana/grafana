@@ -77,7 +77,7 @@ func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) e
 	return nil
 }
 
-func (s *ServiceAccountsStoreImpl) ConvertServiceAccounts(ctx context.Context, keys []int64) error {
+func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context, keys []int64) error {
 	basicKeys := s.sqlStore.GetNonServiceAccountAPIKeys(ctx)
 	if len(basicKeys) == 0 {
 		return nil
