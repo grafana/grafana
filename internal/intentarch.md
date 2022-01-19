@@ -40,11 +40,13 @@ Examples of service groups:
   * **Conditions**:
     * References `github.com/grafana/grafana/internal/schema/di.Collector`
   * **Import denylist**:
-    * `github.com/grafana/grafana/internal/extern.Client`
-* **`externalizable`**
-  * This group contains all the services that Grafana can either be run locally (gRPC-based communication with local subprocess, a la Hashicorp's Go plugins) or remotely (gRPC-based communication with a separately-compiled instance of the subtree that is run as an independent microservice).
+    * imports `github.com/grafana/grafana/internal/service/client`
+* **`service`**
+  * This group contains all the service-ish subsystems that Grafana can either run locally (gRPC-based communication with local subprocess, a la Hashicorp's Go plugins) or remotely (gRPC-based communication with an independently-compiled instance of the component subtree, run independently of and connected to by Grafana instances).
   * **Conditions**: _(These should be imports/types that we expect any component that has to run remotely)_
-    * `github.com/grafana/grafana-plugin-sdk-go/backend` (plausible, though it might be nice to move into main grafana repo?)
-    * `github.com/grafana/grafana/internal/extern/client` (handwavy: contains abstractions over gh/g/g/pkg/plugins/backendplugin/{coreplugin,grpcplugin}, or some more general version that's usable outside plugins)
+    * imports `github.com/grafana/grafana-plugin-sdk-go/backend` (plausible, though it might be nice to move into main grafana repo?)
+    * imports `github.com/grafana/grafana/internal/service/client` (handwavy: contains abstractions over gh/g/g/pkg/plugins/backendplugin/{coreplugin,grpcplugin}, or some more general version that's usable outside plugins)
   * **Import denylist**:
-    * `github.com/grafana/grafana/pkg/services/sqlstore` (you can't rely on sqlstore AND be runnable as an independent binary)
+    * imports `github.com/grafana/grafana/pkg/services/sqlstore` (you can't rely on sqlstore AND be runnable as an independent binary)
+
+Note how the joint effect of the conditions and denylists on `coreschema` and `service` results in the two component groups being mutually exclusive. That's the goal! Anything that can be run remotely necessarily can't produce schema that are knowable at Grafana backend compile time. Attaching those properties to actual types, rather some metadata system, means that the rules work even if developers forget or can't figure out the metadata.
