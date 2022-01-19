@@ -60,9 +60,9 @@ Query parameters:
 
 - **searchString** – Part of the content of query searched for.
 - **datasourceUids** - List of data source uid's to search for.
-- **sort** - Sorting order. Can be `time-asc` or `time desc`.
-
-**Example request for query history search**:
+- **sort** - Sorting order. Can be `time-asc` or `time desc`. Defaults to `time-desc`.
+- **onlyStarred** - Search for queries that are starred. Defaults to `false`.
+  **Example request for query history search**:
 
 ```http
 GET /api/query-history?dataSourceUids="PE1C5CBDA0504A6A3"&searchString="ALERTS"&sort="time-asc" HTTP/1.1

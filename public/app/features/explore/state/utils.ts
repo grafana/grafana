@@ -141,10 +141,10 @@ export function addQueryToQueryHistory(dataSourceUid: string, queries: DataQuery
   });
 }
 
-export async function getQueriesFromQueryHistory(datasourceUid: string[]): Promise<any[]> {
-  const params = `${datasourceUid
-    .map((uid) => `datasourceUid=${encodeURIComponent(uid)}`)
-    .join('&')}&searchString=ALERTS&sort=time-desc`;
+export async function getQueriesFromQueryHistory(datasourceUids: string[]): Promise<any[]> {
+  const params = `${datasourceUids
+    .map((uid) => `datasourceUids=${encodeURIComponent(uid)}`)
+    .join('&')}&searchString=ALERTS&sort=time-desc&onlyStarred=true`;
   return await getBackendSrv().get(`/api/query-history?${params}`);
 }
 

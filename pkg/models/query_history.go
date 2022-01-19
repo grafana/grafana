@@ -25,3 +25,10 @@ type QueryHistoryStar struct {
 	QueryUid string
 	UserId   int64
 }
+
+type QueryHistorySearch struct {
+	DatasourceUids []string
+	SearchString   string
+	OnlyStarred    bool
+	Sort           string
+}

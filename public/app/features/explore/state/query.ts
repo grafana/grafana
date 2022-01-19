@@ -331,7 +331,7 @@ async function handleHistory(
     console.log(await getQueriesFromQueryHistory([uid, 'gdev-jaeger']));
     // deleteQueryFromQueryHistory('P8zM2I1nz');
     // updateCommentForQueryInQueryHistory('ND2zoS17k', 'test comment');
-    starQueryInQueryHistory('_vc2-QJ7k');
+    starQueryInQueryHistory('F4pRBu1nk');
     // unstarQueryInQueryHistory('GrIWcsJnz');
   }
 

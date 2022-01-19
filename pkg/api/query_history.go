@@ -26,11 +26,14 @@ func (hs *HTTPServer) addToQueryHistory(c *models.ReqContext) response.Response 
 }
 
 func (hs *HTTPServer) searchInQueryHistory(c *models.ReqContext) response.Response {
-	datasourceUids := c.QueryStrings("datasourceUids")
-	searchString := c.Query("searchString")
-	sort := c.Query("sort")
+	query := models.QueryHistorySearch{
+		DatasourceUids: c.QueryStrings("datasourceUids"),
+		SearchString:   c.Query("searchString"),
+		OnlyStarred:    c.QueryBoolWithDefault("onlyStarred", false),
+		Sort:           c.Query("sort"),
+	}
 
-	queryHistory, err := hs.QueryHistoryService.ListQueryHistory(c.Req.Context(), c.SignedInUser, datasourceUids, searchString, sort)
+	queryHistory, err := hs.QueryHistoryService.ListQueryHistory(c.Req.Context(), c.SignedInUser, &query)
 	if err != nil {
 		return response.Error(500, "Failed to get query history", err)
 	}
