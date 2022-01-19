@@ -2779,7 +2779,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
-depends_on: []
+depends_on:
+- publish-artifacts-public
 kind: pipeline
 name: publish-packages
 node:
@@ -5506,6 +5507,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 298beeb11ac1f4f050efd457efe02da407b28abc71b89c08f5c4ec279b7e2bdb
+hmac: f41aecf39aca36a15ad9c7d28e188f15922a29cac12249c683feaa81c305571e
 
 ...
