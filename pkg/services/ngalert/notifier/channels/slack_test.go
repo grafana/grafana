@@ -217,7 +217,7 @@ func TestSlackNotifier(t *testing.T) {
 					{
 						Title:      "[FIRING:1]  (val1)",
 						TitleLink:  "http://localhost/alerting/list",
-						Text:       "<empty>",
+						Text:       EmptyMessagePlaceholder,
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v" + setting.BuildVersion,
@@ -251,7 +251,7 @@ func TestSlackNotifier(t *testing.T) {
 					{
 						Title:      "[FIRING:1]  (val1)",
 						TitleLink:  "http://localhost/alerting/list",
-						Text:       "{{ .NoClosingBrackets",
+						Text:       EmptyMessagePlaceholder,
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v" + setting.BuildVersion,
@@ -285,7 +285,7 @@ func TestSlackNotifier(t *testing.T) {
 					{
 						Title:      "[FIRING:1]  (val1)",
 						TitleLink:  "http://localhost/alerting/list",
-						Text:       "<empty>",
+						Text:       EmptyMessagePlaceholder,
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v" + setting.BuildVersion,

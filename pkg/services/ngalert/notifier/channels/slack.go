@@ -43,6 +43,8 @@ type SlackNotifier struct {
 
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
+const EmptyMessagePlaceholder = "<empty>"
+
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*SlackNotifier, error) {
 	if model.Settings == nil {
@@ -270,6 +272,13 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 	}
 	if tmplErr != nil {
 		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())
+	}
+
+	for i, a := range req.Attachments {
+		if a.Text == "" {
+			a.Text = EmptyMessagePlaceholder
+			req.Attachments[i] = a
+		}
 	}
 
 	mentionsBuilder := strings.Builder{}
