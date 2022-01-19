@@ -21,6 +21,8 @@ export const UpdateDBClusterModal: FC<UpdateDBClusterModalProps> = ({
   const styles = useStyles(getStyles);
   const { clusterName, databaseType, installedImage, availableImage } = dbCluster;
 
+  const onClose = useCallback(() => setVisible(false), [setVisible]);
+
   const update = useCallback(async () => {
     try {
       setLoading(true);
@@ -34,8 +36,6 @@ export const UpdateDBClusterModal: FC<UpdateDBClusterModalProps> = ({
       logger.error(e);
     }
   }, [dbCluster, onUpdateFinished, availableImage, onClose, setLoading]);
-
-  const onClose = useCallback(() => setVisible(false), [setVisible]);
 
   return (
     <div className={styles.modalWrapper}>
