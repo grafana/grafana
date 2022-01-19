@@ -187,7 +187,7 @@ steps:
   image: cypress/included:7.5.0
   commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port {}
+  - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -580,7 +580,7 @@ steps:
   image: cypress/included:7.5.0
   commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port {}
+  - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -1130,7 +1130,7 @@ steps:
   image: cypress/included:7.5.0
   commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port {}
+  - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -1686,7 +1686,7 @@ steps:
   image: cypress/included:7.5.0
   commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port {}
+  - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -2339,7 +2339,7 @@ steps:
   image: cypress/included:7.5.0
   commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port {}
+  - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -2849,7 +2849,7 @@ steps:
   image: cypress/included:7.5.0
   commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port {}
+  - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -3597,7 +3597,7 @@ steps:
   image: cypress/included:7.5.0
   commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port {}
+  - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -4080,7 +4080,7 @@ steps:
   image: cypress/included:7.5.0
   commands:
   - apt-get install -y netcat
-  - ./bin/grabpl e2e-tests --port {}
+  - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -4651,6 +4651,6 @@ get:
 
 ---
 kind: signature
-hmac: a2f85252b914fd4288ab868576d60455eaa4e087bc6116bd3daff558d7d38314
+hmac: 5ca619a1ddd550912329d8a5567cc8e575fc1b2d0cc2312c47f18c13c4dafbde
 
 ...

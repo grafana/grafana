@@ -43,7 +43,7 @@ def e2e_tests_server_step(edition, port=3001):
     }
 
 def e2e_tests_step(edition, port=3001, suite=None, tries=None):
-    cmd = './bin/grabpl e2e-tests --port {}'
+    cmd = './bin/grabpl e2e-tests --port {}'.format(port)
     name = 'end-to-end-tests'
 
     if suite:
