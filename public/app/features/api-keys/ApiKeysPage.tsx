@@ -11,9 +11,12 @@ import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getTimeZone } from 'app/features/profile/state/selectors';
+import { WarningBlock } from 'app/percona/shared/components/Elements/WarningBlock';
 import { AccessControlAction, ApiKey, NewApiKey, StoreState } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { Messages } from './ApiKeys.messages';
+import { getStyles } from './ApiKeys.styles';
 import { ApiKeysActionBar } from './ApiKeysActionBar';
 import { ApiKeysAddedModal } from './ApiKeysAddedModal';
 import { ApiKeysController } from './ApiKeysController';
@@ -129,6 +132,8 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       canCreate,
     } = this.props;
 
+    const styles = getStyles(config.theme);
+
     if (!hasFetched) {
       return (
         <Page navModel={navModel}>
@@ -175,6 +180,11 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                       <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
                         <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
                       </InlineField>
+                      <WarningBlock
+                        className={styles.deleteWarning}
+                        message={Messages.apiKeysDeleteWarning}
+                        type="warning"
+                      />
                       <ApiKeysTable apiKeys={apiKeys} timeZone={timeZone} onDelete={this.onDeleteApiKey} />
                     </VerticalGroup>
                   ) : null}

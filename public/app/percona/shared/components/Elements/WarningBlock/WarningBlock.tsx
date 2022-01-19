@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { Icon, IconName, useStyles } from '@grafana/ui';
@@ -10,11 +11,16 @@ const WarningIconMap: Record<WarningType, IconName> = {
   warning: 'exclamation-triangle',
 };
 
-export const WarningBlock: FC<WarningBlockProps> = ({ message, type = 'info', dataTestId = 'warning-block' }) => {
+export const WarningBlock: FC<WarningBlockProps> = ({
+  message,
+  className,
+  type = 'info',
+  dataTestId = 'warning-block',
+}) => {
   const styles = useStyles(getStyles);
 
   return (
-    <div className={styles.warningWrapper} data-testid={dataTestId}>
+    <div className={cx(styles.warningWrapper, className)} data-testid={dataTestId}>
       <Icon className={styles.warningIcon} size="xl" name={WarningIconMap[type]} />
       <span>{message}</span>
     </div>
