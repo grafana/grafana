@@ -1,4 +1,3 @@
-import { getBackendSrv, setBackendSrv, BackendSrv, FetchResponse } from '@grafana/runtime';
 import { Observable, of, throwError } from 'rxjs';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { checkFolderPermissions } from './actions';
@@ -6,11 +5,14 @@ import { setCanViewFolderPermissions } from './reducers';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { notifyApp } from 'app/core/actions';
 import { createWarningNotification } from 'app/core/copy/appNotification';
+import { FetchResponse } from '@grafana/runtime';
 
 describe('folder actions', () => {
-  // let originalBackendSrv: BackendSrv;
-  let fetchSpy = jest.spyOn(backendSrv, 'fetch');
+  let fetchSpy: jest.SpyInstance<Observable<FetchResponse<unknown>>>;
 
+  beforeAll(() => {
+    fetchSpy = jest.spyOn(backendSrv, 'fetch');
+  });
   afterAll(() => {
     fetchSpy.mockRestore();
   });
@@ -32,7 +34,7 @@ describe('folder actions', () => {
       expect(dispatchedActions).toEqual([setCanViewFolderPermissions(true)]);
     });
 
-    it('should only dispatch false when the api call fails with 403', async () => {
+    it('should dispatch just "false" when the api call fails with 403', async () => {
       mockFetch(throwError(() => ({ status: 403, data: { message: 'Access denied' } })));
 
       const dispatchedActions = await thunkTester({})
@@ -42,7 +44,7 @@ describe('folder actions', () => {
       expect(dispatchedActions).toEqual([setCanViewFolderPermissions(false)]);
     });
 
-    it('should also show a notification when the api call fails with an error other than 403', async () => {
+    it('should also dispatch a notification when the api call fails with an error other than 403', async () => {
       mockFetch(throwError(() => ({ status: 500, data: { message: 'Server error' } })));
 
       const dispatchedActions = await thunkTester({})
