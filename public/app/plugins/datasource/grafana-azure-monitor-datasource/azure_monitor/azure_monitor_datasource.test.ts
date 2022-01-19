@@ -308,20 +308,16 @@ describe('AzureMonitorDatasource', () => {
       beforeEach(() => {
         const fn = jest.fn();
         ctx.ds.azureMonitorDatasource.getResource = fn;
+        const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
+        const expectedPath = `${basePath}/${resourceGroup}/resources?$filter=resourceType eq '${metricDefinition}'&api-version=2021-04-01`;
         // first page
         fn.mockImplementationOnce((path: string) => {
-          const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
-          expect(path).toBe(
-            `${basePath}/${resourceGroup}/resources?$filter=resourceType eq '${metricDefinition}'&api-version=2021-04-01`
-          );
+          expect(path).toBe(expectedPath);
           return Promise.resolve(response1);
         });
         // second page
         fn.mockImplementationOnce((path: string) => {
-          const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
-          expect(path).toBe(
-            `${basePath}/${resourceGroup}/resources?$filter=resourceType eq '${metricDefinition}'&api-version=2021-04-01&$skiptoken=${skipToken}`
-          );
+          expect(path).toBe(`${expectedPath}&$skiptoken=${skipToken}`);
           return Promise.resolve(response2);
         });
       });
