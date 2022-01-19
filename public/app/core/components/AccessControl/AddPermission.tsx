@@ -7,19 +7,19 @@ import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { Assignments, PermissionTarget, SetPermission } from './types';
 
 export interface Props {
+  title?: string;
   permissions: string[];
   assignments: Assignments;
   canListUsers: boolean;
-  title?: string;
   onCancel: () => void;
   onAdd: (state: SetPermission) => void;
 }
 
 export const AddPermission = ({
+  title = 'Add Permission For',
   permissions,
   assignments,
   canListUsers,
-  title = 'Add Permission For',
   onAdd,
   onCancel,
 }: Props) => {
