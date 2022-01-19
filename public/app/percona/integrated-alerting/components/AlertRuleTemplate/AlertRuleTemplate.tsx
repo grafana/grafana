@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import { logger } from '@percona/platform-core';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import React, { FC, useState, useEffect, useCallback } from 'react';
 import { Column } from 'react-table';
 
 import { Button, useStyles } from '@grafana/ui';
@@ -59,29 +59,29 @@ export const AlertRuleTemplate: FC = () => {
   }, [generateToken, pageIndex, pageSize]);
 
   const columns = React.useMemo(
-    () => [
+    (): Array<Column<FormattedTemplate>> => [
       {
         Header: nameColumn,
         accessor: 'summary',
         width: '70%',
-      } as Column,
+      },
       {
         Header: sourceColumn,
         accessor: 'source',
         width: '20%',
         Cell: ({ value }) => formatSource(value),
-      } as Column,
+      },
       {
         Header: createdAtColumn,
         accessor: 'created_at',
         width: '10%',
-      } as Column,
+      },
       {
         Header: actionsColumn,
         accessor: (template: FormattedTemplate) => (
           <AlertRuleTemplateActions template={template} getAlertRuleTemplates={getAlertRuleTemplates} />
         ),
-      } as Column,
+      },
     ],
     [getAlertRuleTemplates]
   );
