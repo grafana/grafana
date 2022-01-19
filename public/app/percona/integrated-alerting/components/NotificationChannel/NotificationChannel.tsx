@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import { logger } from '@percona/platform-core';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { FC, useMemo, useState, useEffect, useCallback } from 'react';
 
 import { Button, useStyles } from '@grafana/ui';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
