@@ -28,6 +28,7 @@ interface State {
 
 export class TimePickerSettings extends PureComponent<Props, State> {
   state: State = { isNowDelayValid: true, isMaxTimeRangeValid: true, isOldestFromValid: true };
+  const interval_regex = /^(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])$/;
 
   onNowDelayChange = (event: React.FormEvent<HTMLInputElement>) => {
     const value = event.currentTarget.value;
@@ -53,7 +54,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
       return this.props.onMaxTimeRangeChange(value);
     }
 
-    if (value.match(/^[1-9]\d*(ms|[yMwdhms])$/)) {
+    if (value.match(interval_regex)) {
       this.setState({ isMaxTimeRangeValid: true });
       return this.props.onMaxTimeRangeChange(value);
     }
@@ -69,7 +70,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
       return this.props.onOldestFromChange(value);
     }
 
-    if (value.match(/^[1-9]\d*(ms|[yMwdhms])$/)) {
+    if (value.match(interval_regex)) {
       this.setState({ isOldestFromValid: true });
       return this.props.onOldestFromChange(value);
     }
