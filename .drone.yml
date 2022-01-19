@@ -2638,7 +2638,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
-depends_on: []
+depends_on:
+- publish-artifacts-public
 kind: pipeline
 name: publish-packages
 node:
@@ -5148,6 +5149,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 22628a3937dc59d00cc04d5c01c3fd2e309bb6295d7564b8badce6b0dcf6fcfd
+hmac: e1bc6f40f569d2e7adfff147328f6d494486988e8fd063374394bfd0c692d62b
 
 ...
