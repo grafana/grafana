@@ -19,6 +19,11 @@ import { ApiKeysActionBar } from './ApiKeysActionBar';
 import { ApiKeysTable } from './ApiKeysTable';
 import { ApiKeysController } from './ApiKeysController';
 import { ShowModalReactEvent } from 'app/types/events';
+import { WarningBlock } from 'app/percona/shared/components/Elements/WarningBlock';
+import { Messages } from './ApiKeys.messages';
+import { getStyles } from './ApiKeys.styles';
+
+const { Switch } = LegacyForms;
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -162,6 +167,11 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                       <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
                         <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
                       </InlineField>
+                      <WarningBlock
+                        className={styles.deleteWarning}
+                        message={Messages.apiKeysDeleteWarning}
+                        type="warning"
+                      />
                       <ApiKeysTable apiKeys={apiKeys} timeZone={timeZone} onDelete={this.onDeleteApiKey} />
                     </VerticalGroup>
                   ) : null}
