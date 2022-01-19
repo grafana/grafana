@@ -2797,7 +2797,8 @@ steps:
   name: grabpl
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
-  - ./bin/grabpl store-packages --edition oss --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
+  - ./bin/grabpl store-packages --edition oss --packages-bucket grafana-downloads
+    --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
   - grabpl
   environment:
@@ -2815,7 +2816,8 @@ steps:
   name: store-packages-oss
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
-  - ./bin/grabpl store-packages --edition enterprise --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
+  - ./bin/grabpl store-packages --edition enterprise --packages-bucket grafana-downloads
+    --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
   - grabpl
   environment:
@@ -5504,6 +5506,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 9df8ada188b84934ba449a62dbea9eb81f2ba8feff2d5a04a7ec94a718d8cd74
+hmac: 298beeb11ac1f4f050efd457efe02da407b28abc71b89c08f5c4ec279b7e2bdb
 
 ...
