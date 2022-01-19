@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { useTheme } from '@grafana/ui';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { SeverityProps } from './Severity.types';
 import { getStyles } from './Severity.styles';
 

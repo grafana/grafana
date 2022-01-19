@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { Field, Form } from 'react-final-form';
 import { Button, Input, Spinner, TextArea, useTheme } from '@grafana/ui';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';

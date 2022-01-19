@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { Icon, useStyles } from '@grafana/ui';
 import { getStyles } from './ResourcesBar.styles';
 import { ResourcesBarProps } from './ResourcesBar.types';

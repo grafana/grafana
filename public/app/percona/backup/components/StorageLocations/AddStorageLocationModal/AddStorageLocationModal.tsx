@@ -22,7 +22,7 @@ import { LocalFields } from './LocalFields';
 import { toFormStorageLocation, toStorageLocation } from './AddStorageLocation.utils';
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { LocationType } from '../StorageLocations.types';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 
 const TypeField: FC<TypeFieldProps> = ({ values }) => {
   const { type, client, server, endpoint, accessKey, secretKey, bucketName } = values;

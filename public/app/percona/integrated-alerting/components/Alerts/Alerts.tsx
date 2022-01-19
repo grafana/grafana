@@ -6,7 +6,7 @@ import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { Cell, Column, Row } from 'react-table';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { Table } from '../Table/Table';
 import { Severity } from '../Severity';
 import { useStoredTablePageSize } from '../Table/Pagination';

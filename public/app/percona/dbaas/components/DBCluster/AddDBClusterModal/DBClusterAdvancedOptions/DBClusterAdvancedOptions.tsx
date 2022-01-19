@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useState, useMemo, useEffect } from 'react';
 import { FormRenderProps } from 'react-final-form';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { Icon, useStyles } from '@grafana/ui';
 import { NumberInputField, RadioButtonGroupField, logger } from '@percona/platform-core';
 import validators from 'app/percona/shared/helpers/validators';

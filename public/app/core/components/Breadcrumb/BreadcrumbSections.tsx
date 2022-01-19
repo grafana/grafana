@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { useStyles } from '@grafana/ui';
 import { getStyles } from './Breadcrumb.styles';
 import { BreadcrumbProps } from './Breadcrumb.types';

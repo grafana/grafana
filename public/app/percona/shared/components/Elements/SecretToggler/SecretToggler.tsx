@@ -3,7 +3,7 @@ import React, { FC, useState, useMemo } from 'react';
 import { SecretTogglerProps } from './SecretToggler.types';
 import { getStyles } from './SecretToggler.styles';
 import { TextInputField } from '@percona/platform-core';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 
 export const SecretToggler: FC<SecretTogglerProps> = ({ secret, readOnly, fieldProps, small, maxLength }) => {
   const [visible, setVisible] = useState(false);

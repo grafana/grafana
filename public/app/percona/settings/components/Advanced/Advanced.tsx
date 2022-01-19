@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
 import { FormApi } from 'final-form';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { Button, Spinner, useTheme, Icon } from '@grafana/ui';
 import { TextInputField, NumberInputField } from '@percona/platform-core';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';

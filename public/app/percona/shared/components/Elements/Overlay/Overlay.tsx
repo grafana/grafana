@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Spinner } from '@grafana/ui';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { OverlayProps } from './Overlay.types';
 import { styles } from './Overlay.styles';
 

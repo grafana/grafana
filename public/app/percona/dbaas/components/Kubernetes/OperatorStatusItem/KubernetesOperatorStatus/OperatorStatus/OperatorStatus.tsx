@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { useStyles, Icon } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { getStyles } from './OperatorStatus.styles';

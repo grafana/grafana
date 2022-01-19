@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useState, useMemo, useEffect, useRef } from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { HorizontalGroup, Icon, useStyles } from '@grafana/ui';
 import { LoaderButton, NumberInputField, RadioButtonGroupField, logger } from '@percona/platform-core';
 import validators from 'app/percona/shared/helpers/validators';

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { Select, Spinner, useTheme } from '@grafana/ui';
 import { getStyles } from './FieldAdapters.styles';
 import { Field } from './Field';

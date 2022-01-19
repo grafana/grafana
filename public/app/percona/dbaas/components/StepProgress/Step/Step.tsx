@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useRef, useState } from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { useStyles, Icon } from '@grafana/ui';
 import { getStyles } from './Step.styles';
 

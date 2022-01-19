@@ -1,6 +1,6 @@
 import React, { FC, useMemo } from 'react';
 import { Field } from 'react-final-form';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { Icon, Tooltip, Switch, useStyles } from '@grafana/ui';
 import { compose } from '@percona/platform-core/dist/shared/validators';
 import { SwitchFieldRenderProps, SwitchFieldProps } from './Switch.types';

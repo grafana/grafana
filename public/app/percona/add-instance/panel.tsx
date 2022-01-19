@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import React, { useMemo, useState } from 'react';
 import { Button, useStyles } from '@grafana/ui';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import AddRemoteInstance from './components/AddRemoteInstance/AddRemoteInstance';
 import Discovery from './components/Discovery/Discovery';
 import AzureDiscovery from './components/AzureDiscovery/Discovery';

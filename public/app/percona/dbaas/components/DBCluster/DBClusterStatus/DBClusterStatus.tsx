@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import React, { FC, useMemo, useEffect, useRef, useState } from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { Icon, useStyles, Tooltip } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { ProgressBar } from 'app/percona/dbaas/components/ProgressBar/ProgressBar';

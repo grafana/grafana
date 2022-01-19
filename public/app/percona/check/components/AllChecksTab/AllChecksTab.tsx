@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { logger } from '@percona/platform-core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';

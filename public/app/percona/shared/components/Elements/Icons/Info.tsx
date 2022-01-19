@@ -1,7 +1,7 @@
 /* eslint max-len: 0 */
 import React, { FC } from 'react';
 import { useTheme } from '@grafana/ui';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { getStyles } from './Icons.styles';
 import { SvgProps } from './Icons.types';
 

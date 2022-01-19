@@ -2,7 +2,7 @@
 import React, { FC, useEffect } from 'react';
 import { useRowSelect, useTable } from 'react-table';
 import { Checkbox, Spinner, useTheme } from '@grafana/ui';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { getStyles } from './Table.styles';
 import { TableCheckboxProps, TableProps } from './Table.types';
 

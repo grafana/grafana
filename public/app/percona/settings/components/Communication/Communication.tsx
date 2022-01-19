@@ -1,7 +1,7 @@
 import React, { FC, useMemo, useState } from 'react';
 import { Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { CommunicationProps } from './Communication.types';
 import { EmailPayload } from '../../Settings.types';
 import { Email } from './Email/Email';

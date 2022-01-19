@@ -1,6 +1,6 @@
 import React, { FC, ChangeEvent, FocusEvent, useState, useMemo, useCallback, useEffect } from 'react';
 import { Field, FieldInputProps } from 'react-final-form';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { useStyles } from '@grafana/ui';
 import { CheckboxField, validators } from '@percona/platform-core';
 import { Label } from '../Label';

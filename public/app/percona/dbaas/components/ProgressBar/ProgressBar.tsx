@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import React, { FC, useMemo } from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { useStyles } from '@grafana/ui';
 import { getStyles } from './ProgressBar.styles';
 import { ProgressBarProps, ProgressBarStatus } from './ProgressBar.types';

@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { Field, Form } from 'react-final-form';
 import { Button, Spinner, TextArea, useTheme } from '@grafana/ui';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';

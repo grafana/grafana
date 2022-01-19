@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Tooltip, useStyles } from '@grafana/ui';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { DBIconProps, DBIconMap } from './DBIcon.types';
 import { Edit, Delete, See, Backup, Cancel, Restore } from './assets';
 import { getStyles } from './DBIcon.styles';
@@ -15,10 +15,10 @@ const Icons: DBIconMap = {
 };
 
 export const DBIcon: FC<DBIconProps> = ({ type, size, tooltipText, disabled, ...rest }) => {
+  const styles = useStyles(getStyles);
   if (!Icons[type]) {
     return null;
   }
-  const styles = useStyles(getStyles);
   const Icon = Icons[type];
   const IconEl = (
     <span className={cx({ [styles.disabled]: disabled })}>
