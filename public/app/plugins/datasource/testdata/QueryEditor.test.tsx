@@ -82,4 +82,21 @@ describe('Test Datasource Query Editor', () => {
     expect(screen.getByLabelText('Spread')).toHaveValue(3.5);
     expect(screen.getByLabelText('Bands')).toHaveValue(1);
   });
+
+  it('persists the datasource from the query when switching scenario', async () => {
+    const mockDatasource = {
+      type: 'test',
+      uid: 'foo',
+    };
+    setup({
+      query: {
+        ...defaultQuery,
+        datasource: mockDatasource,
+      },
+    });
+    let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
+    await fireEvent.keyDown(select, { keyCode: 40 });
+    await userEvent.click(screen.getByText('Grafana API'));
+    expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ datasource: mockDatasource }));
+  });
 });
