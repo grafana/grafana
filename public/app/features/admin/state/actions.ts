@@ -54,7 +54,7 @@ export function loadAdminUserPage(userId: number): ThunkResult<void> {
 
 export function loadUserProfile(userId: number): ThunkResult<void> {
   return async (dispatch) => {
-    const user = await getBackendSrv().get(addAccessControlQueryParam(`/api/users/${userId}`));
+    const user = await getBackendSrv().get(`/api/users/${userId}`, addAccessControlQueryParam({}));
     dispatch(userProfileLoadedAction(user));
   };
 }

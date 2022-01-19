@@ -7,7 +7,7 @@ import { addAccessControlQueryParam } from 'app/core/utils/accessControl';
 
 export function loadUsers(): ThunkResult<void> {
   return async (dispatch) => {
-    const users = await getBackendSrv().get(addAccessControlQueryParam('/api/org/users'));
+    const users = await getBackendSrv().get('/api/org/users', addAccessControlQueryParam({}));
     dispatch(usersLoaded(users));
   };
 }
