@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useState, useEffect, useCallback } from 'react';
 import { Button, useStyles } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -31,34 +31,6 @@ export const AlertRuleTemplate: FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [generateToken] = useCancelToken();
 
-  const columns = React.useMemo(
-    () => [
-      {
-        Header: nameColumn,
-        accessor: 'summary',
-        width: '70%',
-      } as Column,
-      {
-        Header: sourceColumn,
-        accessor: 'source',
-        width: '20%',
-        Cell: ({ value }) => formatSource(value),
-      } as Column,
-      {
-        Header: createdAtColumn,
-        accessor: 'created_at',
-        width: '10%',
-      } as Column,
-      {
-        Header: actionsColumn,
-        accessor: (template: FormattedTemplate) => (
-          <AlertRuleTemplateActions template={template} getAlertRuleTemplates={getAlertRuleTemplates} />
-        ),
-      } as Column,
-    ],
-    [getAlertRuleTemplates]
-  );
-
   const getAlertRuleTemplates = useCallback(async () => {
     setPendingRequest(true);
     try {
@@ -82,6 +54,34 @@ export const AlertRuleTemplate: FC = () => {
     }
     setPendingRequest(false);
   }, [generateToken, pageIndex, pageSize]);
+
+  const columns = React.useMemo(
+    (): Array<Column<FormattedTemplate>> => [
+      {
+        Header: nameColumn,
+        accessor: 'summary',
+        width: '70%',
+      },
+      {
+        Header: sourceColumn,
+        accessor: 'source',
+        width: '20%',
+        Cell: ({ value }) => formatSource(value),
+      },
+      {
+        Header: createdAtColumn,
+        accessor: 'created_at',
+        width: '10%',
+      },
+      {
+        Header: actionsColumn,
+        accessor: (template: FormattedTemplate) => (
+          <AlertRuleTemplateActions template={template} getAlertRuleTemplates={getAlertRuleTemplates} />
+        ),
+      },
+    ],
+    [getAlertRuleTemplates]
+  );
 
   const handlePaginationChanged = useCallback(
     (pageSize: number, pageIndex: number) => {
