@@ -27,7 +27,7 @@ export const StorageLocations: FC = () => {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const styles = useStyles(getStyles);
   const columns = React.useMemo(
-    (): Column[] => [
+    (): Array<Column<StorageLocation>> => [
       {
         Header: Messages.storageLocations.table.columns.name,
         accessor: 'name',
@@ -117,18 +117,20 @@ export const StorageLocations: FC = () => {
     setDeleteModalVisible(true);
   };
 
-  const handleDelete = async (location: StorageLocation, force: boolean) => {
-    setDeletePending(true);
-    try {
-      await StorageLocationsService.delete(location.locationID, force);
-      setDeleteModalVisible(false);
-      setSelectedLocation(null);
-      appEvents.emit(AppEvents.alertSuccess, [Messages.storageLocations.getDeleteSuccess(location.name)]);
-      getData();
-    } catch (e) {
-      logger.error(e);
-    } finally {
-      setDeletePending(false);
+  const handleDelete = async (location: StorageLocation | null, force: boolean) => {
+    if (location) {
+      setDeletePending(true);
+      try {
+        await StorageLocationsService.delete(location.locationID, force);
+        setDeleteModalVisible(false);
+        setSelectedLocation(null);
+        appEvents.emit(AppEvents.alertSuccess, [Messages.storageLocations.getDeleteSuccess(location.name)]);
+        getData();
+      } catch (e) {
+        logger.error(e);
+      } finally {
+        setDeletePending(false);
+      }
     }
   };
 

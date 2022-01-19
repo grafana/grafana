@@ -25,7 +25,7 @@ const getParams = (params: any, type: string): Model => {
 };
 
 const getModel = (item: ServicesList) => {
-  const addType = Object.keys(item).map((type: InventoryType) => ({ type, params: item[type] }));
+  const addType = Object.keys(item).map((type) => ({ type, params: item[type as InventoryType] }));
 
   return addType.map((agent) =>
     agent.params.map(

@@ -155,8 +155,8 @@ const buildInitialValues = (
     newInitialValues[ManageComponentVersionsFields.component] = componentOptions[0];
   }
 
-  Object.keys(SupportedComponents).forEach((key: SupportedComponents) => {
-    const versions = operatorVersion.matrix[key];
+  Object.keys(SupportedComponents).forEach((key) => {
+    const versions = operatorVersion.matrix[key as SupportedComponents];
 
     if (versions) {
       const versionsOptions = versionsToOptions(versions);

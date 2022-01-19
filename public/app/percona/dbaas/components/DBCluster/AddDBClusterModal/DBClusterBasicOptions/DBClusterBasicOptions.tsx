@@ -45,9 +45,9 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
       const { operators } = selectedKubernetes;
       const availableDatabaseOptions: DatabaseOption[] = [];
 
-      Object.entries(operators).forEach(([operator, { status }]: [Operators, Operator]) => {
+      Object.entries(operators as Operator).forEach(([operator, { status }]: [string, Operator]) => {
         if (status === KubernetesOperatorStatus.ok) {
-          availableDatabaseOptions.push(getDatabaseOptionFromOperator(operator) as DatabaseOption);
+          availableDatabaseOptions.push(getDatabaseOptionFromOperator(operator as Operators) as DatabaseOption);
         }
       });
 

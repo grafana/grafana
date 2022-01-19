@@ -33,11 +33,11 @@ export const InventoryService = {
     const response = await api.post<ServiceListPayload, any>(`${BASE_URL}/Services/List`, {}, false, token);
     const result: DBServiceList = {};
 
-    Object.keys(response).forEach((db: Databases) => {
-      const dbServices = response[db];
+    Object.keys(response).forEach((db) => {
+      const dbServices = response[db as Databases];
 
       if (dbServices?.length) {
-        result[db] = dbServices.map(({ service_id, service_name }) => ({
+        result[db as Databases] = dbServices.map(({ service_id, service_name }) => ({
           id: service_id,
           name: service_name,
         }));

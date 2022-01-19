@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import React, { FC, useState, useMemo, useEffect } from 'react';
 import { Column, Row } from 'react-table';
 import { logger } from '@percona/platform-core';
@@ -21,7 +22,7 @@ export const RestoreHistory: FC = () => {
   const [generateToken] = useCancelToken();
   const [triggerTimeout] = useRecurringCall();
   const columns = useMemo(
-    (): Column[] => [
+    (): Array<Column<Restore>> => [
       {
         Header: Messages.backupInventory.table.columns.name,
         accessor: 'name',
@@ -63,24 +64,24 @@ export const RestoreHistory: FC = () => {
     []
   );
 
-  const getData = async (showLoading = false) => {
-    showLoading && setPending(true);
-
-    try {
-      const restores = await RestoreHistoryService.list(generateToken(LIST_RESTORES_CANCEL_TOKEN));
-      setData(restores);
-    } catch (e) {
-      if (isApiCancelError(e)) {
-        return;
-      }
-      logger.error(e);
-    }
-    setPending(false);
-  };
-
   useEffect(() => {
+    const getData = async (showLoading = false) => {
+      showLoading && setPending(true);
+
+      try {
+        const restores = await RestoreHistoryService.list(generateToken(LIST_RESTORES_CANCEL_TOKEN));
+        setData(restores);
+      } catch (e) {
+        if (isApiCancelError(e)) {
+          return;
+        }
+        logger.error(e);
+      }
+      setPending(false);
+    };
+
     getData(true).then(() => triggerTimeout(getData, DATA_INTERVAL));
-  }, []);
+  }, [generateToken, triggerTimeout]);
 
   return (
     <Table

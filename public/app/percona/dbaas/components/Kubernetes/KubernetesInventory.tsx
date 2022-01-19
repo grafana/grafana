@@ -1,6 +1,7 @@
 /* eslint-disable react/display-name */
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback, useState, useMemo } from 'react';
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
+import { Column } from 'react-table';
 import { TextInputField, TextareaInputField, validators, Modal, CheckboxField } from '@percona/platform-core';
 import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
@@ -44,49 +45,52 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
     [selectedCluster, deleteKubernetes]
   );
 
-  const columns = [
-    {
-      Header: Messages.kubernetes.table.nameColumn,
-      accessor: 'kubernetesClusterName',
-    },
-    {
-      Header: Messages.kubernetes.table.clusterStatusColumn,
-      accessor: (element: Kubernetes) => <KubernetesClusterStatus status={element.status} />,
-    },
-    {
-      Header: Messages.kubernetes.table.operatorsColumn,
-      accessor: (element: Kubernetes) => (
-        <div>
-          <OperatorStatusItem
-            databaseType={Databases.mysql}
-            operator={element.operators.pxc}
-            kubernetes={element}
-            setSelectedCluster={setSelectedCluster}
-            setOperatorToUpdate={setOperatorToUpdate}
-            setUpdateOperatorModalVisible={setUpdateOperatorModalVisible}
-          />
-          <OperatorStatusItem
-            databaseType={Databases.mongodb}
-            operator={element.operators.psmdb}
-            kubernetes={element}
-            setSelectedCluster={setSelectedCluster}
-            setOperatorToUpdate={setOperatorToUpdate}
-            setUpdateOperatorModalVisible={setUpdateOperatorModalVisible}
-          />
-        </div>
-      ),
-    },
-    {
-      Header: Messages.kubernetes.table.actionsColumn,
-      accessor: (kubernetesCluster: Kubernetes) =>
-        clusterActionsRender({
-          setSelectedCluster,
-          setDeleteModalVisible,
-          setViewConfigModalVisible,
-          setManageComponentsModalVisible,
-        })(kubernetesCluster),
-    },
-  ];
+  const columns = useMemo(
+    (): Array<Column<Kubernetes>> => [
+      {
+        Header: Messages.kubernetes.table.nameColumn,
+        accessor: 'kubernetesClusterName',
+      },
+      {
+        Header: Messages.kubernetes.table.clusterStatusColumn,
+        accessor: (element: Kubernetes) => <KubernetesClusterStatus status={element.status} />,
+      },
+      {
+        Header: Messages.kubernetes.table.operatorsColumn,
+        accessor: (element: Kubernetes) => (
+          <div>
+            <OperatorStatusItem
+              databaseType={Databases.mysql}
+              operator={element.operators.pxc}
+              kubernetes={element}
+              setSelectedCluster={setSelectedCluster}
+              setOperatorToUpdate={setOperatorToUpdate}
+              setUpdateOperatorModalVisible={setUpdateOperatorModalVisible}
+            />
+            <OperatorStatusItem
+              databaseType={Databases.mongodb}
+              operator={element.operators.psmdb}
+              kubernetes={element}
+              setSelectedCluster={setSelectedCluster}
+              setOperatorToUpdate={setOperatorToUpdate}
+              setUpdateOperatorModalVisible={setUpdateOperatorModalVisible}
+            />
+          </div>
+        ),
+      },
+      {
+        Header: Messages.kubernetes.table.actionsColumn,
+        accessor: (kubernetesCluster: Kubernetes) =>
+          clusterActionsRender({
+            setSelectedCluster,
+            setDeleteModalVisible,
+            setViewConfigModalVisible,
+            setManageComponentsModalVisible,
+          })(kubernetesCluster),
+      },
+    ],
+    []
+  );
 
   const AddNewClusterButton = useCallback(
     () => (

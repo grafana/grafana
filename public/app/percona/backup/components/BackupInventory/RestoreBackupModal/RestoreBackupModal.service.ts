@@ -7,8 +7,8 @@ export const RestoreBackupModalService = {
     const services = await BackupInventoryService.listCompatibleServices(artifactId);
     const result: Array<SelectableValue<string>> = [];
 
-    Object.keys(services).forEach((db: Databases) => {
-      const serviceArr = services[db] || [];
+    Object.keys(services).forEach((db) => {
+      const serviceArr = services[db as Databases] || [];
       result.push(...serviceArr.map((service) => ({ label: service.name, value: service.id })));
     });
 

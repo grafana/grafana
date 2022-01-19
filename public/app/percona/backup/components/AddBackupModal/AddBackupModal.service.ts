@@ -8,24 +8,24 @@ export const AddBackupModalService = {
   async loadServiceOptions(): Promise<Array<SelectableValue<SelectableService>>> {
     const supportedServices: Databases[] = [Databases.mysql, Databases.mongodb];
     const services = await InventoryService.getDbServices();
+    const result: Array<SelectableValue<SelectableService>> = [];
 
-    return Object.keys(services).reduce((acc, serviceName: Databases) => {
-      const newServices = services[serviceName] ?? [];
+    Object.keys(services).forEach((serviceName) => {
+      const newServices = services[serviceName as Databases] ?? [];
 
-      if (supportedServices.includes(serviceName)) {
-        return [
-          ...acc,
+      if (supportedServices.includes(serviceName as Databases)) {
+        result.push(
           ...newServices.map(
             ({ id, name }): SelectableValue<SelectableService> => ({
               label: name,
-              value: { id, vendor: serviceName },
+              value: { id, vendor: serviceName as Databases },
             })
-          ),
-        ];
+          )
+        );
       }
+    });
 
-      return acc;
-    }, [] as Array<SelectableValue<SelectableService>>);
+    return result;
   },
   async loadLocationOptions(): Promise<Array<SelectableValue<string>>> {
     const { locations = [] } = await StorageLocationsService.list();

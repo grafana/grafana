@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ colors, palette, spacing, typography }: GrafanaTheme) => ({
+export const getStyles = ({ v1, typography, colors }: GrafanaTheme2) => ({
   clusterStatusWrapper: css`
     align-items: flex-end;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    margin: ${spacing.sm};
+    margin: ${v1.spacing.sm};
     min-width: 125px;
-    padding: ${spacing.xs} 0;
+    padding: ${v1.spacing.xs} 0;
     position: relative;
   `,
   clusterPillWrapper: css`
@@ -17,38 +17,38 @@ export const getStyles = ({ colors, palette, spacing, typography }: GrafanaTheme
     min-width: 0;
   `,
   status: css`
-    background-color: ${palette.gray1};
+    background-color: ${v1.palette.gray1};
     border-radius: 20px;
-    color: ${palette.gray85};
+    color: ${v1.palette.gray85};
     cursor: default;
     font-size: ${typography.size.sm};
     padding: 3px 15px;
     text-transform: uppercase;
   `,
   statusIcon: css`
-    color: ${palette.gray1};
+    color: ${v1.palette.gray1};
     cursor: help;
-    margin-left: ${spacing.xs};
+    margin-left: ${v1.spacing.xs};
     margin-bottom: 0px;
   `,
   statusActive: css`
-    background-color: ${colors.formSwitchBgActive};
+    background-color: ${colors.primary.main};
     label: active;
   `,
   statusFailed: css`
-    background-color: ${palette.brandDanger};
+    background-color: ${v1.palette.brandDanger};
     label: failed;
   `,
   logsWrapper: css`
-    bottom: ${spacing.md};
+    bottom: ${v1.spacing.md};
     display: flex;
     position: absolute;
   `,
   logsLabel: css`
     font-size: ${typography.size.sm};
-    color: ${colors.linkExternal};
+    color: ${v1.colors.linkExternal};
     &:hover {
-      color: ${colors.textBlue};
+      color: ${v1.colors.textBlue};
     }
   `,
 });

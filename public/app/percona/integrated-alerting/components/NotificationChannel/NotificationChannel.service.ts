@@ -16,7 +16,7 @@ export const NotificationChannelService = {
   // Also, totalPages and totalItems should be returned
   async list(payload: NotificationChannelGetPayload, token?: CancelToken): Promise<NotificationChannelList> {
     return api
-      .post(`${BASE_URL}/List`, payload, false, token)
+      .post<NotificationChannelListResponse, NotificationChannelGetPayload>(`${BASE_URL}/List`, payload, false, token)
       .then(({ channels, totals }: NotificationChannelListResponse) => ({
         channels: channels ? channels.map((channel) => TO_MODEL[getType(channel)](channel)) : [],
         totals,

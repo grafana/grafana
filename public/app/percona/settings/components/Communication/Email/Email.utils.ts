@@ -71,9 +71,9 @@ export const cleanupFormValues = (values: FormEmailSettings): EmailSettings => {
     baseSettings.secret = baseSettings.password;
   }
 
-  Object.keys(baseSettings).forEach((field: keyof EmailSettings) => {
-    if (field !== 'require_tls' && !isEmailFieldNeeded(field, values.authType)) {
-      delete baseSettings[field];
+  Object.keys(baseSettings).forEach((field) => {
+    if (field !== 'require_tls' && !isEmailFieldNeeded(field as keyof EmailSettings, values.authType)) {
+      delete baseSettings[field as keyof EmailSettings];
     }
   });
 

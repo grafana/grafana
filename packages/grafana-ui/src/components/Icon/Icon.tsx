@@ -14,7 +14,6 @@ const alwaysMonoIcons: IconName[] = [
   'heart',
   'panel-add',
   'library-panel',
-  'reusable-panel',
   'percona-database',
   'percona-analytics',
   'percona-cluster',

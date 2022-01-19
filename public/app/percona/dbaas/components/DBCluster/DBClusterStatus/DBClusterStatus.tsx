@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import React, { FC, useMemo, useEffect, useRef, useState } from 'react';
 import { cx } from '@emotion/css';
-import { Icon, useStyles, Tooltip } from '@grafana/ui';
+import { Icon, useStyles2, Tooltip } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { ProgressBar } from 'app/percona/dbaas/components/ProgressBar/ProgressBar';
 import { ProgressBarStatus } from 'app/percona/dbaas/components/ProgressBar/ProgressBar.types';
@@ -14,7 +14,7 @@ import { getProgressMessage, getShowProgressBarValue } from './DBClusterStatus.u
 export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setSelectedCluster, setLogsModalVisible }) => {
   const { message, finishedSteps, totalSteps } = dbCluster;
   const status = dbCluster.status as Status;
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const prevStatus = useRef<Status>();
   const statusError = status === Status.failed || status === Status.invalid;
   const showMessage =

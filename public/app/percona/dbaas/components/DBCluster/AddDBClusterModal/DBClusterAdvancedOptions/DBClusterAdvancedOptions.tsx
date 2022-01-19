@@ -30,6 +30,7 @@ import { SwitchField } from '../../../Switch/Switch';
 
 export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) => {
   let allocatedTimer: NodeJS.Timeout;
+  let expectedTimer: NodeJS.Timeout;
   const styles = useStyles(getStyles);
   const [prevResources, setPrevResources] = useState(DBClusterResources.small);
   const [customMemory, setCustomMemory] = useState(DEFAULT_SIZES.small.memory);
@@ -145,15 +146,16 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
       mounted.current = false;
       clearTimeout(allocatedTimer);
     };
-  }, [kubernetesCluster, getAllocatedResources, allocatedTimer, mounted]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kubernetesCluster, getAllocatedResources, mounted]);
 
   useEffect(() => {
-    let expectedTimer: NodeJS.Timeout;
     if (canGetExpectedResources(kubernetesCluster, values)) {
       if (expectedTimer) {
         clearTimeout(expectedTimer);
       }
 
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       expectedTimer = setTimeout(() => getExpectedResources(), EXPECTED_DELAY);
     }
 

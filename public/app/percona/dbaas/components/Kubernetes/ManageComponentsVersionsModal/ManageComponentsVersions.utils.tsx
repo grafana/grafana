@@ -23,10 +23,10 @@ export const requiredVersions = (versions: SelectableValue[]) => {
 export const componentsToOptions = (value: DBClusterMatrix): SelectableValue[] =>
   Object.keys(value)
     .filter((key) => key in SupportedComponents)
-    .map((key: SupportedComponents) => ({
+    .map((key) => ({
       name: key,
       value: key,
-      label: Messages.componentLabel[key],
+      label: Messages.componentLabel[key as SupportedComponents],
     }));
 
 export const versionsToOptions = (component: DBClusterComponent): SelectableValue[] =>

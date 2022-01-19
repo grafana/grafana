@@ -1,13 +1,13 @@
 import React, { FC, useMemo } from 'react';
 import { cx } from '@emotion/css';
-import { useStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { getStyles } from './KubernetesClusterStatus.styles';
 import { KubernetesClusterStatus as Status, KubernetesClusterStatusProps } from './KubernetesClusterStatus.types';
 import { STATUS_DATA_QA } from './KubernetesClusterStatus.constants';
 
 export const KubernetesClusterStatus: FC<KubernetesClusterStatusProps> = ({ status }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const statusStyles = useMemo(
     () => ({
       [styles.statusActive]: status === Status.ok,

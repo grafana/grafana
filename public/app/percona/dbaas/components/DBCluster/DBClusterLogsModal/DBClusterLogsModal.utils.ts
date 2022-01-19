@@ -1,4 +1,4 @@
-import { DBClusterLogs, DBClusterLogsAPI, DBClusterPodLogs } from '../DBCluster.types';
+import { DBClusterLogs, DBClusterLogsAPI, DBClusterPodLogs, DBClusterContainerLogs } from '../DBCluster.types';
 import { DBClusterLogsMap } from './DBClusterLogsModal.types';
 
 export const transformLogs = ({ logs }: DBClusterLogsAPI, currentLogs?: DBClusterLogs): DBClusterLogs => {
@@ -34,9 +34,9 @@ export const toggleLogs = (pods: DBClusterPodLogs[], expand: boolean) => {
   return pods.reduce((accPods, pod) => {
     const containers = pod.containers.reduce(
       (accContainers, container) => [...accContainers, { ...container, isOpen: expand }],
-      []
+      [] as DBClusterContainerLogs[]
     );
 
     return [...accPods, { ...pod, isOpen: expand, containers }];
-  }, []);
+  }, [] as DBClusterPodLogs[]);
 };

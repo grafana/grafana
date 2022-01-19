@@ -18,33 +18,37 @@ export const ChunkedLogsViewer: FC<ChunkedLogsViewerProps> = ({ getLogChunks }) 
   const [generateToken] = useCancelToken();
   const styles = useStyles(getStyles);
 
-  const refreshCurrentLogs = async () => {
-    try {
-      const { logs: newLogs = [], end } = await getLogChunks(logs[0]?.id || 0, LIMIT, generateToken(LOGS_CANCEL_TOKEN));
-      setLogs(newLogs);
-      setLastLog(!!end);
-    } catch (e) {
-      if (isApiCancelError(e)) {
-        return;
-      }
-      logger.error(e);
-    }
-  };
-
   const formatLogs = useCallback(
     () => logs.map((log) => log.data).reduce((acc, message) => `${acc}${acc.length ? '\n' : ''}${message}`, ''),
     [logs]
   );
 
   useEffect(() => {
+    const refreshCurrentLogs = async () => {
+      try {
+        const { logs: newLogs = [], end } = await getLogChunks(
+          logs[0]?.id || 0,
+          LIMIT,
+          generateToken(LOGS_CANCEL_TOKEN)
+        );
+        setLogs(newLogs);
+        setLastLog(!!end);
+      } catch (e) {
+        if (isApiCancelError(e)) {
+          return;
+        }
+        logger.error(e);
+      }
+    };
+
     triggerTimeout(refreshCurrentLogs, STREAM_INTERVAL, true);
-  }, []);
+  }, [triggerTimeout, generateToken, getLogChunks, logs]);
 
   useEffect(() => {
     if (lastLog) {
       stopTimeout();
     }
-  }, [lastLog]);
+  }, [lastLog, stopTimeout]);
 
   return (
     <>

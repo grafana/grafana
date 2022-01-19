@@ -1,41 +1,41 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ colors, palette, spacing, typography }: GrafanaTheme) => ({
+export const getStyles = ({ colors, spacing, typography, v1 }: GrafanaTheme2) => ({
   status: css`
-    background-color: ${palette.gray1};
+    background-color: ${v1.palette.gray1};
     border-radius: 20px;
-    color: ${palette.gray85};
+    color: ${v1.palette.gray85};
     cursor: default;
     font-size: ${typography.size.sm};
     padding: 3px 15px;
     display: flex;
   `,
   statusActive: css`
-    background-color: ${palette.brandSuccess};
+    background-color: ${v1.palette.brandSuccess};
     label: active;
   `,
   statusVersionAvailable: css`
-    background-color: ${palette.brandWarning};
+    background-color: ${v1.palette.brandWarning};
     label: versionAvailable;
   `,
   statusFailed: css`
-    background-color: ${palette.brandDanger};
+    background-color: ${v1.palette.brandDanger};
     label: failed;
   `,
   statusUnsupported: css`
-    background-color: ${palette.gray1};
+    background-color: ${v1.palette.gray1};
     label: unsupported;
   `,
   statusUnavailable: css`
-    background-color: ${colors.formSwitchBgActive};
+    background-color: ${colors.primary.main};
     label: unavailable;
   `,
   installLinkIcon: css`
-    margin-left: ${spacing.xs};
+    margin-left: ${v1.spacing.xs};
   `,
   versionAvailable: css`
     font-size: ${typography.size.sm};
-    margin-left: ${spacing.xs};
+    margin-left: ${v1.spacing.xs};
   `,
 });

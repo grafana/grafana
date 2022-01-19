@@ -29,7 +29,7 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
       setLoadingSettings(true);
 
       try {
-        const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN, true));
+        const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN));
         setFeatureEnabled(!!settings[featureFlag]);
         onSettingsLoaded?.(settings);
       } catch (e) {

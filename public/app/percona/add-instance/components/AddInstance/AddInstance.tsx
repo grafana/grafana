@@ -47,7 +47,7 @@ export const AddInstance: FC<AddInstanceProps> = ({ onSelectInstanceType }) => {
     [showAzure]
   );
 
-  const selectInstanceType = (type: InstanceAvailableType) => () => onSelectInstanceType({ type });
+  const selectInstanceType = (type: string) => () => onSelectInstanceType({ type: type as InstanceAvailableType });
 
   return (
     <CheckPermissions onSettingsLoadSuccess={onSettingsLoadSuccess}>

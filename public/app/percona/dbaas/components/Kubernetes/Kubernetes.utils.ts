@@ -11,13 +11,13 @@ export const isKubernetesListUnavailable = (kubernetes: Kubernetes[]) =>
 export const getActiveOperators = (kubernetes: Kubernetes[]): Operators[] => {
   const activeOperatorsMap: ActiveOperatorsMap = {};
 
-  const activeOperators = kubernetes.reduce((acc, k) => {
+  const activeOperators = kubernetes.reduce((acc: Operators[], k) => {
     const activeOperators: Operators[] = [];
 
-    Object.entries(k.operators).forEach(([operator, { status }]: [Operators, Operator]) => {
-      if (!activeOperatorsMap[operator] && status === KubernetesOperatorStatus.ok) {
-        activeOperators.push(operator);
-        activeOperatorsMap[operator] = true;
+    Object.entries(k.operators).forEach(([operator, { status }]: [string, Operator]) => {
+      if (!activeOperatorsMap[operator as Operators] && status === KubernetesOperatorStatus.ok) {
+        activeOperators.push(operator as Operators);
+        activeOperatorsMap[operator as Operators] = true;
       }
     });
 
