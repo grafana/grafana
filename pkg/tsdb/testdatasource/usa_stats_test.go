@@ -63,7 +63,7 @@ func TestUSAScenario(t *testing.T) {
 		for k, v := range rsp.Responses {
 			dr := v
 			filePath := filepath.Join("testdata", fmt.Sprintf("usa-%s.txt", k))
-			err = experimental.CheckGoldenDataResponse(filePath, &dr, true)
+			err = experimental.CheckGoldenDataResponse(filePath, &dr, false)
 			assert.NoError(t, err) // require will fail after a single value
 		}
 	})
