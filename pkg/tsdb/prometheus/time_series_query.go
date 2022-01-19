@@ -315,7 +315,6 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		datapointsCount = int((endTimestamp-baseTimestamp)/query.Step.Milliseconds()) + 1
 		timestamps      = make([]time.Time, datapointsCount)
 		timeMap         = make(map[int64]int, datapointsCount)
-		nans            = make([]float64, datapointsCount)
 	)
 
 	// Fill the time field so we can avoid creating time fields for each matrix result, and
@@ -325,7 +324,6 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		nanos := t * int64(time.Millisecond)
 		timestamps[idx] = time.Unix(0, nanos).UTC()
 		timeMap[nanos] = idx
-		nans[idx] = data.NilFloat64()
 		idx++
 	}
 	timeField := data.NewField(data.TimeSeriesTimeFieldName, data.Labels{}, timestamps)
@@ -341,9 +339,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 
 	// Loop through each matrix response and build a frame
 	for _, s := range matrix {
-		values := make([]float64, 0, datapointsCount)
-		values = append(values, nans...)
-
+		values := make([]*float64, datapointsCount)
 		labels := make(map[string]string, len(s.Metric))
 		for k, v := range s.Metric {
 			labels[string(k)] = string(v)
@@ -352,15 +348,16 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		frame := data.NewFrame(name, timeField)
 		frame.Meta = &meta
 
-		for _, r := range s.Values {
-			if math.IsNaN(float64(r.Value)) {
-				continue
+		// Using indexes in this for loop instead of range in order to avoid copying the sample pair.
+		for rowIdx := 0; rowIdx < len(s.Values); rowIdx++ {
+			r := &s.Values[rowIdx]
+			if !math.IsNaN(float64(r.Value)) {
+				t, ok := timeMap[r.Timestamp.UnixNano()]
+				if !ok {
+					return nil, fmt.Errorf("unable to match result to expected time range: %s", name)
+				}
+				values[t] = (*float64)(&r.Value)
 			}
-			t, ok := timeMap[r.Timestamp.UnixNano()]
-			if !ok {
-				return nil, fmt.Errorf("unable to match result to expected time range: %s", name)
-			}
-			values[t] = float64(r.Value)
 		}
 
 		valueField := data.NewField(data.TimeSeriesValueFieldName, labels, values)
