@@ -109,6 +109,9 @@ export class TimeSrv {
       this.time.from = 'now-' + str;
       this.time.to = 'now';
       this.setTime(this.time);
+      appEvents.emit(AppEvents.alertWarning, [
+        'Timerange of this dashboard has changed.',
+      ]);
     }
   }
 
