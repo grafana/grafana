@@ -6,7 +6,7 @@ import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLev
 import { notifyApp, updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 import appEvents from 'app/core/app_events';
-import { loadFolder, loadFolderPermissions } from './reducers';
+import { loadFolder, loadFolderPermissions, setCanViewFolderPermissions } from './reducers';
 import { lastValueFrom } from 'rxjs';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 
@@ -56,10 +56,12 @@ export function checkFolderPermissions(uid: string): ThunkResult<void> {
           url: `/api/folders/${uid}/permissions`,
         })
       );
+      dispatch(setCanViewFolderPermissions(true));
     } catch (err) {
       if (err.status !== 403) {
         dispatch(notifyApp(createWarningNotification('Error checking folder permissions', err.data?.message)));
       }
+      dispatch(setCanViewFolderPermissions(false));
     }
   };
 }

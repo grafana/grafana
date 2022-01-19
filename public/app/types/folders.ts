@@ -27,5 +27,5 @@ export interface FolderInfo {
   id?: number;
   title?: string;
   url?: string;
-  hasFolderPermissions?: boolean;
+  canViewFolderPermissions?: boolean;
 }

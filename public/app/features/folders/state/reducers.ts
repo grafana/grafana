@@ -46,7 +46,7 @@ const folderSlice = createSlice({
   },
 });
 
-export const { loadFolderPermissions, loadFolder, setFolderTitle } = folderSlice.actions;
+export const { loadFolderPermissions, loadFolder, setFolderTitle, setCanViewFolderPermissions } = folderSlice.actions;
 
 export const folderReducer = folderSlice.reducer;
 
