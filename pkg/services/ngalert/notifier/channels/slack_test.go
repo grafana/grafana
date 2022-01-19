@@ -159,6 +159,142 @@ func TestSlackNotifier(t *testing.T) {
 				"token": "1234"
 			}`,
 			expInitError: `failed to validate receiver "slack_testing" of type "slack": recipient must be specified when using the Slack chat API`,
+		}, {
+			name: "Partially invalid template",
+			settings: `{
+				"token": "1234",
+				"recipient": "#testchannel",
+				"icon_emoji": ":emoji:",
+				"text": "{{ .Alerts.Firing | len }} firing, bad field:{{ .NotAField }} after failure"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &slackMessage{
+				Channel:   "#testchannel",
+				Username:  "Grafana",
+				IconEmoji: ":emoji:",
+				Attachments: []attachment{
+					{
+						Title:      "[FIRING:1]  (val1)",
+						TitleLink:  "http://localhost/alerting/list",
+						Text:       "1 firing, bad field:",
+						Fallback:   "[FIRING:1]  (val1)",
+						Fields:     nil,
+						Footer:     "Grafana v" + setting.BuildVersion,
+						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						Color:      "#D63232",
+						Ts:         0,
+					},
+				},
+			},
+		}, {
+			name: "Fully invalid template",
+			settings: `{
+				"token": "1234",
+				"recipient": "#testchannel",
+				"icon_emoji": ":emoji:",
+				"text": "{{ .NotAField }} the failure is at the beginning"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &slackMessage{
+				Channel:   "#testchannel",
+				Username:  "Grafana",
+				IconEmoji: ":emoji:",
+				Attachments: []attachment{
+					{
+						Title:      "[FIRING:1]  (val1)",
+						TitleLink:  "http://localhost/alerting/list",
+						Text:       "<empty>",
+						Fallback:   "[FIRING:1]  (val1)",
+						Fields:     nil,
+						Footer:     "Grafana v" + setting.BuildVersion,
+						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						Color:      "#D63232",
+						Ts:         0,
+					},
+				},
+			},
+		}, {
+			name: "Syntactically invalid template",
+			settings: `{
+				"token": "1234",
+				"recipient": "#testchannel",
+				"icon_emoji": ":emoji:",
+				"text": "{{ .NoClosingBrackets"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &slackMessage{
+				Channel:   "#testchannel",
+				Username:  "Grafana",
+				IconEmoji: ":emoji:",
+				Attachments: []attachment{
+					{
+						Title:      "[FIRING:1]  (val1)",
+						TitleLink:  "http://localhost/alerting/list",
+						Text:       "{{ .NoClosingBrackets",
+						Fallback:   "[FIRING:1]  (val1)",
+						Fields:     nil,
+						Footer:     "Grafana v" + setting.BuildVersion,
+						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						Color:      "#D63232",
+						Ts:         0,
+					},
+				},
+			},
+		}, {
+			name: "Empty custom text",
+			settings: `{
+				"token": "1234",
+				"recipient": "#testchannel",
+				"icon_emoji": ":emoji:",
+				"text": ""
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &slackMessage{
+				Channel:   "#testchannel",
+				Username:  "Grafana",
+				IconEmoji: ":emoji:",
+				Attachments: []attachment{
+					{
+						Title:      "[FIRING:1]  (val1)",
+						TitleLink:  "http://localhost/alerting/list",
+						Text:       "<empty>",
+						Fallback:   "[FIRING:1]  (val1)",
+						Fields:     nil,
+						Footer:     "Grafana v" + setting.BuildVersion,
+						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						Color:      "#D63232",
+						Ts:         0,
+					},
+				},
+			},
 		},
 	}
 
