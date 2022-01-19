@@ -1,9 +1,7 @@
 /* eslint-disable react/display-name */
 import React, { FC, useEffect, useRef, useCallback } from 'react';
-import { useSelector } from 'react-redux';
 import { getLocationSrv } from '@grafana/runtime';
 import { TabContent } from '@grafana/ui';
-import { StoreState } from 'app/types';
 import { OrientedTabs } from './OrientedTabs/OrientedTabs';
 import { ContentTab, TabbedContentProps, TabOrientation } from './TabbedContent.types';
 
@@ -14,12 +12,13 @@ export const TabbedContent: FC<TabbedContentProps> = ({
   className,
   tabsdataTestId = 'tabs',
   contentdataTestId = 'tab-content',
+  activeTabName = '',
   renderTab,
 }) => {
   const routeUpdated = useRef(false);
   const defaultTab = tabs[0].key;
   const tabKeys = tabs.map((tab) => tab.key);
-  const activeTab = useSelector((state: StoreState) => tabs.find((tab) => tab.key === state.location.routeParams.tab));
+  const activeTab = tabs.find((tab) => tab.key === activeTabName);
 
   const selectTab = useCallback(
     (tabKey: string) => {

@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, FC } from 'react';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useStyles } from '@grafana/ui';
 import { Agents, NodesTab, Services } from './Tabs';
 import { getStyles } from './Inventory.styles';
@@ -11,8 +12,9 @@ import { Messages } from './Inventory.messages';
 
 export const DEFAULT_TAB = 'services';
 
-export const InventoryPanel = () => {
+export const InventoryPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }) => {
   const { path: basePath } = PAGE_MODEL;
+  const tab = match.params.tab;
   const styles = useStyles(getStyles);
 
   const tabs: ContentTab[] = useMemo(
@@ -40,6 +42,7 @@ export const InventoryPanel = () => {
     <PageWrapper pageModel={PAGE_MODEL}>
       <div className={styles.inventoryWrapper}>
         <TabbedContent
+          activeTabName={tab}
           tabs={tabs}
           basePath={basePath}
           renderTab={({ Content }) => (

@@ -1,4 +1,5 @@
 import React, { FC, useMemo } from 'react';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { TabKeys } from './types';
 import { Messages } from './CheckPanel.messages';
 import { AllChecksTab, FailedChecksTab } from './components';
@@ -7,8 +8,9 @@ import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 import { TabbedContent, ContentTab } from '../shared/components/Elements/TabbedContent';
 import { FeatureLoader } from '../shared/components/Elements/FeatureLoader';
 
-export const CheckPanel: FC = () => {
+export const CheckPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }) => {
   const { path: basePath } = PAGE_MODEL;
+  const tab = match.params.tab;
   const tabs = useMemo<ContentTab[]>(
     (): ContentTab[] => [
       {
@@ -28,6 +30,7 @@ export const CheckPanel: FC = () => {
   return (
     <PageWrapper pageModel={PAGE_MODEL} dataTestId="db-check-panel">
       <TabbedContent
+        activeTabName={tab}
         tabs={tabs}
         basePath={basePath}
         tabsdataTestId="db-check-tabs-bar"

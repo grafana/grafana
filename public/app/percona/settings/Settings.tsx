@@ -1,4 +1,5 @@
 import React, { FC, useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { createPortal } from 'react-dom';
 import { Spinner, useTheme } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
@@ -15,8 +16,9 @@ import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 import { EmptyBlock } from '../shared/components/Elements/EmptyBlock';
 import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
 
-export const SettingsPanel: FC = () => {
+export const SettingsPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }) => {
   const { path: basePath } = PAGE_MODEL;
+  const tab = match.params.tab;
   const [generateToken] = useCancelToken();
 
   const theme = useTheme();
@@ -173,6 +175,7 @@ export const SettingsPanel: FC = () => {
         {!loading && !hasNoAccess && (
           <>
             <TabbedContent
+              activeTabName={tab}
               className={styles.tabsWrapper}
               tabs={tabs}
               basePath={basePath}

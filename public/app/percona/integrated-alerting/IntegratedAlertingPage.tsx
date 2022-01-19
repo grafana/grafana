@@ -1,4 +1,5 @@
 import React, { FC, useMemo } from 'react';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PAGE_MODEL } from './IntegratedAlerting.constants';
 import { TabKeys } from './IntegratedAlerting.types';
 import { AlertRules, AlertRuleTemplate, Alerts, NotificationChannel } from './components';
@@ -8,8 +9,9 @@ import { Messages } from './IntegratedAlerting.messages';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 import { FeatureLoader } from '../shared/components/Elements/FeatureLoader';
 
-const IntegratedAlertingPage: FC = () => {
+const IntegratedAlertingPage: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }) => {
   const { path: basePath } = PAGE_MODEL;
+  const tab = match.params.tab;
 
   const tabs: ContentTab[] = useMemo(
     (): ContentTab[] => [
@@ -41,6 +43,7 @@ const IntegratedAlertingPage: FC = () => {
     <PageWrapper pageModel={PAGE_MODEL}>
       <TechnicalPreview />
       <TabbedContent
+        activeTabName={tab}
         tabs={tabs}
         basePath={basePath}
         renderTab={({ Content }) => (

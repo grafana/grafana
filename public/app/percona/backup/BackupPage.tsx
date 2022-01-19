@@ -1,4 +1,5 @@
 import React, { FC, useMemo } from 'react';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { TabbedContent, ContentTab } from '../shared/components/Elements/TabbedContent';
 import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
@@ -11,7 +12,7 @@ import { ScheduledBackups } from './components/ScheduledBackups';
 import { PAGE_MODEL } from './BackupPage.constants';
 import { Messages } from './Backup.messages';
 
-const BackupPage: FC = () => {
+const BackupPage: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }) => {
   const tabs: ContentTab[] = useMemo(
     (): ContentTab[] => [
       {
@@ -39,11 +40,13 @@ const BackupPage: FC = () => {
   );
 
   const { path: basePath } = PAGE_MODEL;
+  const tab = match.params.tab;
 
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
       <TechnicalPreview />
       <TabbedContent
+        activeTabName={tab}
         tabs={tabs}
         basePath={basePath}
         renderTab={({ Content }) => (
