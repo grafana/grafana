@@ -53,7 +53,7 @@ type RouteRegister interface {
 type RegisterNamedMiddleware func(name string) web.Handler
 
 func ProvideRegister(cfg *setting.Cfg) *RouteRegisterImpl {
-	return NewRouteRegister(middleware.ProvideRouteOperationName, middleware.RequestMetrics(cfg))
+	return NewRouteRegister(middleware.ProvideRouteOperationName)
 }
 
 // NewRouteRegister creates a new RouteRegister with all middlewares sent as params
