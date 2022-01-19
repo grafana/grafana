@@ -5,18 +5,15 @@ import { Button, Icon, Select, Tooltip } from '@grafana/ui';
 interface Props {
   item: ResourcePermission;
   permissionLevels: string[];
-  verb?: string;
   canSet: boolean;
   onRemove: (item: ResourcePermission) => void;
   onChange: (item: ResourcePermission, permission: string) => void;
 }
 
-export const PermissionListItem = ({ item, permissionLevels, verb = 'Can', canSet, onRemove, onChange }: Props) => (
+export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, onChange }: Props) => (
   <tr>
     <td style={{ width: '1%' }}>{getAvatar(item)}</td>
     <td style={{ width: '90%' }}>{getDescription(item)}</td>
-    <td />
-    <td className="query-keyword">{verb}</td>
     <td>
       <div className="gf-form">
         <Select

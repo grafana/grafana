@@ -31,12 +31,12 @@ export type Props = {
 };
 
 export const Permissions = ({
+  title = 'Permissions',
+  buttonLabel = 'Add a permission',
   resource,
   resourceId,
   canListUsers,
   canSetPermissions,
-  title = 'Permissions',
-  buttonLabel = 'Add a permission',
   addPermissionTitle,
 }: Props) => {
   const [isAdding, setIsAdding] = useState(false);
@@ -146,7 +146,7 @@ export const Permissions = ({
           />
         </SlideDown>
         <PermissionList
-          title="Roles"
+          type="Role"
           items={builtInRoles}
           permissionLevels={desc.permissions}
           onChange={onChange}
@@ -154,7 +154,7 @@ export const Permissions = ({
           canSet={canSetPermissions}
         />
         <PermissionList
-          title="Users"
+          type="User"
           items={users}
           permissionLevels={desc.permissions}
           onChange={onChange}
@@ -162,7 +162,7 @@ export const Permissions = ({
           canSet={canSetPermissions}
         />
         <PermissionList
-          title="Teams"
+          type="Team"
           items={teams}
           permissionLevels={desc.permissions}
           onChange={onChange}
