@@ -41,6 +41,148 @@ variableAdapters.register(createQueryVariableAdapter());
 variableAdapters.register(createConstantVariableAdapter());
 variableAdapters.register(createDataSourceVariableAdapter());
 
+it('handles a default datasource in a template variable', async () => {
+  const dashboard: any = {
+    annotations: {
+      list: [
+        {
+          builtIn: 1,
+          datasource: '-- Grafana --',
+          enable: true,
+          hide: true,
+          iconColor: 'rgba(0, 211, 255, 1)',
+          name: 'Annotations & Alerts',
+          target: {
+            limit: 100,
+            matchAny: false,
+            tags: [],
+            type: 'dashboard',
+          },
+          type: 'dashboard',
+        },
+      ],
+    },
+    editable: true,
+    fiscalYearStartMonth: 0,
+    graphTooltip: 0,
+    id: 331,
+    iteration: 1642157860116,
+    links: [],
+    liveNow: false,
+    panels: [
+      {
+        fieldConfig: {
+          defaults: {
+            color: {
+              mode: 'palette-classic',
+            },
+            custom: {
+              axisLabel: '',
+              axisPlacement: 'auto',
+              barAlignment: 0,
+              drawStyle: 'line',
+              fillOpacity: 0,
+              gradientMode: 'none',
+              hideFrom: {
+                legend: false,
+                tooltip: false,
+                viz: false,
+              },
+              lineInterpolation: 'linear',
+              lineWidth: 1,
+              pointSize: 5,
+              scaleDistribution: {
+                type: 'linear',
+              },
+              showPoints: 'auto',
+              spanNulls: false,
+              stacking: {
+                group: 'A',
+                mode: 'none',
+              },
+              thresholdsStyle: {
+                mode: 'off',
+              },
+            },
+            mappings: [],
+            thresholds: {
+              mode: 'absolute',
+              steps: [
+                {
+                  color: 'green',
+                  value: null,
+                },
+                {
+                  color: 'red',
+                  value: 80,
+                },
+              ],
+            },
+          },
+          overrides: [],
+        },
+        gridPos: {
+          h: 9,
+          w: 12,
+          x: 0,
+          y: 0,
+        },
+        id: 2,
+        options: {
+          legend: {
+            calcs: [],
+            displayMode: 'list',
+            placement: 'bottom',
+          },
+          tooltip: {
+            mode: 'single',
+            sort: 'none',
+          },
+        },
+        targets: [
+          {
+            datasource: {
+              type: 'testdata',
+              uid: 'PD8C576611E62080A',
+            },
+            expr: '{filename="/var/log/system.log"}',
+            refId: 'A',
+          },
+        ],
+        title: 'Panel Title',
+        type: 'timeseries',
+      },
+    ],
+    templating: {
+      list: [
+        {
+          current: {},
+          definition: 'test',
+          error: {},
+          hide: 0,
+          includeAll: false,
+          multi: false,
+          name: 'query0',
+          options: [],
+          query: {
+            query: 'test',
+            refId: 'StandardVariableQuery',
+          },
+          refresh: 1,
+          regex: '',
+          skipUrlSync: false,
+          sort: 0,
+          type: 'query',
+        },
+      ],
+    },
+  };
+  const dashboardModel = new DashboardModel(dashboard, {}, () => dashboard.templating.list);
+  const exporter = new DashboardExporter();
+  const exported: any = await exporter.makeExportable(dashboardModel);
+  expect(exported.templating.list[0].datasource).toBe('${DS_GFDB}');
+});
+
 describe('given dashboard with repeated panels', () => {
   let dash: any, exported: any;
 

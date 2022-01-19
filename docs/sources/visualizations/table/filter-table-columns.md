@@ -12,7 +12,7 @@ If you turn on the **Column filter**, then you can filter table options.
 ## Turn on column filtering
 
 1. In Grafana, navigate to the dashboard with the table with the columns that you want to filter.
-1. On the table panel you want to filter, [open the panel editor]({{< relref "../../panels/panel-editor.md#open-the-panel-editor" >}}).
+1. On the table panel you want to filter, open the panel editor.
 1. Click the **Field** tab.
 1. In Table options, turn on the **Column filter** option.
 

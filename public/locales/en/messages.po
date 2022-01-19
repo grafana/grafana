@@ -13,6 +13,118 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 #: public/app/features/profile/UserProfileEditForm.tsx
-msgid "edit-user-profile.title"
+msgid "common.save"
+msgstr "Save"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-dashboard.fields.timezone-label"
+msgstr "Timezone"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.home-dashboard-label"
+msgstr "Home Dashboard"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.home-dashboard-placeholder"
+msgstr "Choose default dashboard"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.home-dashboard-tooltip"
+msgstr "Not finding the dashboard you want? Star it first, then it should appear in this select box."
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.theme-label"
+msgstr "UI Theme"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.week-start-label"
+msgstr "Week start"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.theme.dark-label"
+msgstr "Dark"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.theme.default-label"
+msgstr "Default"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.theme.light-label"
+msgstr "Light"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.title"
+msgstr "Preferences"
+
+#: public/app/features/profile/UserOrganizations.tsx
+msgid "user-orgs.current-org-button"
+msgstr "Current"
+
+#: public/app/features/profile/UserOrganizations.tsx
+msgid "user-orgs.name-column"
+msgstr "Name"
+
+#: public/app/features/profile/UserOrganizations.tsx
+msgid "user-orgs.role-column"
+msgstr "Role"
+
+#: public/app/features/profile/UserOrganizations.tsx
+msgid "user-orgs.select-org-button"
+msgstr "Select"
+
+#: public/app/features/profile/UserOrganizations.tsx
+msgid "user-orgs.title"
+msgstr "Organizations"
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "user-profile.fields.email-error"
+msgstr "Email is required"
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "user-profile.fields.email-label"
+msgstr "Email"
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "user-profile.fields.name-error"
+msgstr "Name is required"
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "user-profile.fields.name-label"
+msgstr "Name"
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "user-profile.fields.username-label"
+msgstr "Username"
+
+#: public/app/features/profile/UserProfileEditForm.tsx
+msgid "user-profile.title"
 msgstr "Edit profile"
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-session.browser-column"
+msgstr "Browser & OS"
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-session.created-at-column"
+msgstr "Logged on"
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-session.ip-column"
+msgstr "IP address"
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-session.revoke"
+msgstr "Revoke user session"
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-session.seen-at-column"
+msgstr "Last seen"
+
+#: public/app/features/profile/UserSessions.tsx
+msgid "user-sessions.loading"
+msgstr "Loading sessions..."

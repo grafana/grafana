@@ -26,7 +26,7 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 		UsageStats:    &usagestats.UsageStatsMock{T: t},
 		Log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
-		scopeResolver: accesscontrol.NewScopeResolver(),
+		ScopeResolver: accesscontrol.NewScopeResolver(),
 	}
 	return ac
 }
@@ -573,6 +573,90 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 			assert.Contains(t, rawUserPerms, &tt.wantPerm, "Expected resolution of raw permission")
 			assert.NotContains(t, rawUserPerms, &tt.rawPerm, "Expected raw permission to have been resolved")
+		})
+	}
+}
+
+func TestOSSAccessControlService_Evaluate(t *testing.T) {
+	testUser := models.SignedInUser{
+		UserId:  2,
+		OrgId:   3,
+		OrgName: "TestOrg",
+		OrgRole: models.ROLE_VIEWER,
+		Login:   "testUser",
+		Name:    "Test User",
+		Email:   "testuser@example.org",
+	}
+	registration := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     1,
+			UID:         "fixed:test:test",
+			Name:        "fixed:test:test",
+			Description: "Test role",
+			Permissions: []accesscontrol.Permission{},
+		},
+		Grants: []string{"Viewer"},
+	}
+	userLoginScopeSolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+		if initialScope == "users:login:testUser" {
+			return "users:id:2", nil
+		}
+		return initialScope, nil
+	}
+
+	tests := []struct {
+		name       string
+		user       models.SignedInUser
+		rawPerm    accesscontrol.Permission
+		evaluator  accesscontrol.Evaluator
+		wantAccess bool
+		wantErr    bool
+	}{
+		{
+			name:       "Should translate users:self",
+			user:       testUser,
+			rawPerm:    accesscontrol.Permission{Action: "users:read", Scope: "users:self"},
+			evaluator:  accesscontrol.EvalPermission("users:read", "users:id:2"),
+			wantAccess: true,
+			wantErr:    false,
+		},
+		{
+			name:       "Should translate users:login:testUser",
+			user:       testUser,
+			rawPerm:    accesscontrol.Permission{Action: "users:read", Scope: "users:id:2"},
+			evaluator:  accesscontrol.EvalPermission("users:read", "users:login:testUser"),
+			wantAccess: true,
+			wantErr:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Remove any inserted role after the test case has been run
+			t.Cleanup(func() {
+				removeRoleHelper(registration.Role.Name)
+			})
+
+			// Setup
+			ac := setupTestEnv(t)
+			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			ac.RegisterAttributeScopeResolver("users:login:", userLoginScopeSolver)
+
+			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
+			err := ac.DeclareFixedRoles(registration)
+			require.NoError(t, err)
+
+			err = ac.RegisterFixedRoles()
+			require.NoError(t, err)
+
+			// Test
+			hasAccess, err := ac.Evaluate(context.TODO(), &tt.user, tt.evaluator)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+
+			assert.Equal(t, tt.wantAccess, hasAccess)
 		})
 	}
 }

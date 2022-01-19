@@ -122,6 +122,65 @@ roles:
       - name: 'Admin'
 ```
 
+### Assign your custom role to specific teams
+
+To assign roles to teams, add said teams to the `teams` section of your roles. To remove a specific assignment, remove it from the list.
+
+> **Note:** Assignments are updated if the version of the role is greater or equal to the one stored internally.<br/>
+> You don’t need to increment the version number of the role to update its assignments.<br/>
+> Assignments to built-in roles will be ignored. Use `addDefaultAssignments` and `removeDefaultAssignments` instead.
+
+In order for provisioning to succeed, specified teams must already exist. Additionally, since teams are local to an organization, the organization has to be specified in the assignment.
+
+For example, the following role is assigned to the `user editors` team and `user admins` team:
+
+```yaml
+# config file version
+apiVersion: 1
+
+# Roles to insert/update in the database
+roles:
+  - name: custom:users:writer
+    description: 'List/update other users in the organization'
+    version: 1
+    global: true
+    permissions:
+      - action: 'org.users:read'
+        scope: 'users:*'
+      - action: 'org.users:write'
+        scope: 'users:*'
+    teams:
+      - name: 'user editors'
+        orgId: 1
+      - name: 'user admins'
+        orgId: 1
+```
+
+### Assign fixed roles to specific teams
+
+To assign a fixed role to teams, add said teams to the `teams` section of the associated entry. To remove a specific assignment, remove it from the list.
+
+> **Note:** Since fixed roles are global, the Global attribute has to be specified. A fixed role will never be updated through provisioning.
+
+In order for provisioning to succeed, specified teams must already exist. Additionally, since teams are local to an organization, the organization has to be specified in the assignment.
+
+For example, the following fixed role is assigned to the `user editors` team and `user admins` team:
+
+```yaml
+# config file version
+apiVersion: 1
+
+# Roles to insert/update in the database
+roles:
+  - name: fixed:users:writer
+    global: true
+    teams:
+      - name: 'user editors'
+        orgId: 1
+      - name: 'user admins'
+        orgId: 1
+```
+
 ## Manage default built-in role assignments
 
 During startup, Grafana creates [default built-in role assignments]({{< relref "./roles#default-built-in-role-assignments" >}}) with [fixed roles]({{< relref "./roles#fixed-roles" >}}). You can remove and later restore those assignments with provisioning.
@@ -237,6 +296,12 @@ roles:
       - name: 'Editor'
         # <bool> overwrite org id and assign role globally
         global: true
+  - name: fixed:users:writer
+    global: true
+    # <list> list of teams the role should be assigned to
+    teams:
+      - name: 'user editors'
+        orgId: 1
 ```
 
 ## Supported settings

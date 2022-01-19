@@ -41,7 +41,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	sqlStore.Cfg = settings
 	hs.SQLStore = sqlStore
 
-	loggedInUserScenario(t, "When calling GET on", "api/org/users", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
 		sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
@@ -55,7 +55,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Len(t, resp, 3)
 	})
 
-	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
 		sc.handlerFunc = hs.SearchOrgUsersWithPaging
@@ -73,7 +73,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Equal(t, 1, resp.Page)
 	})
 
-	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
 		sc.handlerFunc = hs.SearchOrgUsersWithPaging
@@ -98,7 +98,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		t.Cleanup(func() { settings.HiddenUsers = make(map[string]struct{}) })
 
-		loggedInUserScenario(t, "When calling GET on", "api/org/users", func(sc *scenarioContext) {
+		loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
 			setUpGetOrgUsersDB(t, sqlStore)
 
 			sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
