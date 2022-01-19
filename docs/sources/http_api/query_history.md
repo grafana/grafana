@@ -80,10 +80,8 @@ Content-Type: application/json
 [
     {
         "starred": false,
-        "id": 23,
         "uid": "F4pRBu1nk",
         "datasourceUid": "PE1C5CBDA0504A6A3",
-        "orgId": 1,
         "createdBy": 1,
         "createdAt": 1642585657,
         "comment": "",

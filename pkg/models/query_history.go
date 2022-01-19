@@ -7,6 +7,7 @@ import (
 var (
 	ErrQueryNotFound        = errors.New("query not found")
 	ErrStarredQueryNotFound = errors.New("starred query not found")
+	ErrQueryAlreadyStarred  = errors.New("query already starred")
 )
 
 type QueryHistory struct {
