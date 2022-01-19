@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/extensions/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -20,32 +22,94 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createUser(db *sqlstore.SQLStore, t *testing.T) *models.User {
+func setUpGetTeamMembersHandler() {
+	bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamMembersQuery) error {
+		query.Result = []*models.TeamMemberDTO{
+			{Email: "testUser@grafana.com", Login: testUserLogin},
+			{Email: "user1@grafana.com", Login: "user1"},
+			{Email: "user2@grafana.com", Login: "user2"},
+		}
+		return nil
+	})
+}
+
+func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
+	settings := setting.NewCfg()
+	hs := &HTTPServer{
+		Cfg:     settings,
+		License: &licensing.OSSLicensingService{},
+	}
+
+	loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "api/teams/1/members",
+		"api/teams/:teamId/members", models.ROLE_ADMIN, func(sc *scenarioContext) {
+			setUpGetTeamMembersHandler()
+
+			sc.handlerFunc = hs.GetTeamMembers
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			require.Equal(t, http.StatusOK, sc.resp.Code)
+
+			var resp []models.TeamMemberDTO
+			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+			require.NoError(t, err)
+			assert.Len(t, resp, 3)
+		})
+
+	t.Run("Given there is two hidden users", func(t *testing.T) {
+		settings.HiddenUsers = map[string]struct{}{
+			"user1":       {},
+			testUserLogin: {},
+		}
+		t.Cleanup(func() { settings.HiddenUsers = make(map[string]struct{}) })
+
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "api/teams/1/members",
+			"api/teams/:teamId/members", models.ROLE_ADMIN, func(sc *scenarioContext) {
+				setUpGetTeamMembersHandler()
+
+				sc.handlerFunc = hs.GetTeamMembers
+				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+				require.Equal(t, http.StatusOK, sc.resp.Code)
+
+				var resp []models.TeamMemberDTO
+				err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+				require.NoError(t, err)
+				assert.Len(t, resp, 2)
+				assert.Equal(t, testUserLogin, resp[0].Login)
+				assert.Equal(t, "user2", resp[1].Login)
+			})
+	})
+}
+
+func createUser(db *sqlstore.SQLStore, orgId int64, t *testing.T) int64 {
 	user, err := db.CreateUser(context.Background(), models.CreateUserCommand{
 		Login:    fmt.Sprintf("TestUser%d", rand.Int()),
-		OrgId:    1,
+		OrgId:    orgId,
 		Password: "password",
 	})
 	require.NoError(t, err)
 
-	return user
+	return user.Id
 }
 
-func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, t *testing.T) ([]*models.User, models.Team) {
-	team, err := db.CreateTeam("test", "test@test.com", 1)
+func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, t *testing.T) int64 {
+	user, err := db.CreateUser(context.Background(), models.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
+	require.NoError(t, err)
+	testOrg, err := db.CreateOrgWithMember("TestOrg", user.Id)
 	require.NoError(t, err)
 
-	var users []*models.User
-	for i := 0; i < userCount; i++ {
-		user := createUser(db, t)
-		require.NoError(t, err)
-		users = append(users, user)
+	team, err := db.CreateTeam("test", "test@test.com", testOrg.Id)
+	require.NoError(t, err)
 
-		err = db.AddTeamMember(user.Id, 1, team.Id, false, 0)
+	for i := 0; i < userCount; i++ {
+		userId := createUser(db, testOrg.Id, t)
+		require.NoError(t, err)
+
+		err = db.AddTeamMember(userId, testOrg.Id, team.Id, false, 0)
 		require.NoError(t, err)
 	}
 
-	return users, team
+	return testOrg.Id
 }
 
 var (
@@ -57,83 +121,6 @@ var (
 	teamMemberDeleteRoute = "/api/teams/%s/members/%s"
 )
 
-func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
-	sc.hs.License = &licensing.OSSLicensingService{}
-
-	teamMemberCount := 3
-	users, _ := setupTeamTestScenario(teamMemberCount, sc.db, t)
-	setInitCtxSignedInOrgAdmin(sc.initCtx)
-	sc.initCtx.SignedInUser.Login = users[0].Login
-
-	t.Run("Organisation admins can list team members", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(teamMemberGetRoute, "1"), nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-		var resp []models.TeamMemberDTO
-		err := json.Unmarshal(response.Body.Bytes(), &resp)
-		require.NoError(t, err)
-		require.Len(t, resp, teamMemberCount, "the correct number of team members is returned")
-	})
-
-	sc.cfg.HiddenUsers = map[string]struct{}{
-		users[1].Login:                {},
-		sc.initCtx.SignedInUser.Login: {},
-	}
-
-	t.Run("Organisation admins can not see hidden team members apart from themselves", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(teamMemberGetRoute, "1"), nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-		var resp []models.TeamMemberDTO
-		err := json.Unmarshal(response.Body.Bytes(), &resp)
-		require.NoError(t, err)
-		assert.Len(t, resp, teamMemberCount-1, "organisation admins should only see non-hidden users and themselves")
-		assert.Equal(t, users[0].Login, resp[0].Login)
-		assert.Equal(t, users[2].Login, resp[1].Login)
-	})
-
-	sc.initCtx.IsGrafanaAdmin = true
-	t.Run("Server admins can list all hidden team members", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(teamMemberGetRoute, "1"), nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-		var resp []models.TeamMemberDTO
-		err := json.Unmarshal(response.Body.Bytes(), &resp)
-		require.NoError(t, err)
-		require.Len(t, resp, teamMemberCount, "the correct number of team members is returned")
-	})
-}
-
-func TestListTeamMembersAPIEndpoint_FGAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
-	sc.hs.License = &licensing.OSSLicensingService{}
-
-	teamMemberCount := 3
-	setupTeamTestScenario(teamMemberCount, sc.db, t)
-
-	setInitCtxSignedInViewer(sc.initCtx)
-	t.Run("Access control allows listing team members with the right permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(teamMemberGetRoute, "1"), nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-		var resp []models.TeamMemberDTO
-		err := json.Unmarshal(response.Body.Bytes(), &resp)
-		require.NoError(t, err)
-		require.Len(t, resp, teamMemberCount, "the correct number of team members is returned")
-	})
-
-	setInitCtxSignedInOrgAdmin(sc.initCtx)
-	t.Run("Access control prevents listing team members with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionTeamsRead, Scope: "teams:id:1"}}, 1)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(teamMemberGetRoute, "1"), nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
-
-	t.Run("Access control prevents listing team members with incorrect scope", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionTeamsPermissionsRead, Scope: "teams:id:2"}}, 1)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(teamMemberGetRoute, "1"), nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
-}
-
 func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.EditorsCanAdmin = true
@@ -142,11 +129,11 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	sc.hs.teamGuardian = guardian
 
 	teamMemberCount := 3
-	setupTeamTestScenario(teamMemberCount, sc.db, t)
+	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, t)
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
-	newUser := createUser(sc.db, t)
-	input := strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUser.Id))
+	newUserId := createUser(sc.db, testOrgId, t)
+	input := strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUserId))
 	t.Run("Organisation admins can add a team member", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
@@ -154,8 +141,8 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 	setInitCtxSignedInEditor(sc.initCtx)
 	sc.initCtx.IsGrafanaAdmin = true
-	newUser = createUser(sc.db, t)
-	input = strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUser.Id))
+	newUserId = createUser(sc.db, testOrgId, t)
+	input = strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUserId))
 	t.Run("Editors cannot add team members", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
@@ -163,7 +150,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 	err := sc.db.SaveTeamMember(sc.initCtx.UserId, 1, 1, false, 0)
 	require.NoError(t, err)
-	input = strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUser.Id))
+	input = strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUserId))
 	t.Run("Team members cannot add team members", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
@@ -171,7 +158,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 	err = sc.db.SaveTeamMember(sc.initCtx.UserId, 1, 1, false, models.PERMISSION_ADMIN)
 	require.NoError(t, err)
-	input = strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUser.Id))
+	input = strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUserId))
 	t.Run("Team admins can add a team member", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
@@ -180,13 +167,14 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 func TestAddTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
+	sc.hs.License = &licensingtest.ValidLicense{}
 
 	teamMemberCount := 3
-	setupTeamTestScenario(teamMemberCount, sc.db, t)
+	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, t)
 
 	setInitCtxSignedInViewer(sc.initCtx)
-	newUser := createUser(sc.db, t)
-	input := strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUser.Id))
+	newUserId := createUser(sc.db, testOrgId, t)
+	input := strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUserId))
 	t.Run("Access control allows adding a team member with the right permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
@@ -194,8 +182,8 @@ func TestAddTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	})
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
-	newUser = createUser(sc.db, t)
-	input = strings.NewReader(fmt.Sprintf(createTeamCmd, newUser.Id))
+	newUserId = createUser(sc.db, testOrgId, t)
+	input = strings.NewReader(fmt.Sprintf(createTeamCmd, newUserId))
 	t.Run("Access control prevents from adding a team member with the wrong permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
@@ -254,6 +242,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 func TestUpdateTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
+	sc.hs.License = &licensingtest.ValidLicense{}
 
 	teamMemberCount := 3
 	setupTeamTestScenario(teamMemberCount, sc.db, t)
@@ -322,6 +311,7 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 func TestDeleteTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
+	sc.hs.License = &licensingtest.ValidLicense{}
 
 	teamMemberCount := 3
 	setupTeamTestScenario(teamMemberCount, sc.db, t)
