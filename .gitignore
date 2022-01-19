@@ -138,6 +138,7 @@ compilation-stats.json
 /e2e/**/videos/*
 /e2e/benchmarks/**/results/*
 /e2e/benchmarks/**/results
+/e2e/build_results.zip
 
 # a11y tests
 /pa11y-ci-results.json

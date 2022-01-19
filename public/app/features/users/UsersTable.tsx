@@ -23,10 +23,19 @@ const UsersTable: FC<Props> = (props) => {
   useEffect(() => {
     async function fetchOptions() {
       try {
-        let options = await fetchRoleOptions(orgId);
-        setRoleOptions(options);
-        const builtInRoles = await fetchBuiltinRoles(orgId);
-        setBuiltinRoles(builtInRoles);
+        if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+          let options = await fetchRoleOptions(orgId);
+          setRoleOptions(options);
+        } else {
+          setRoleOptions([]);
+        }
+
+        if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
+          const builtInRoles = await fetchBuiltinRoles(orgId);
+          setBuiltinRoles(builtInRoles);
+        } else {
+          setBuiltinRoles({});
+        }
       } catch (e) {
         console.error('Error loading options');
       }
