@@ -937,7 +937,7 @@ def store_packages_step(edition, ver_mode, is_downstream=False):
                   test_release_ver,
               )
     elif ver_mode == 'release':
-        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
+        cmd = './bin/grabpl store-packages --edition {} --packages-bucket grafana-downloads --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,
         )
     elif ver_mode == 'main':
