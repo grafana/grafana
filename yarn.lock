@@ -3730,7 +3730,7 @@ __metadata:
     date-fns: 2.28.0
     eventemitter3: 4.0.7
     lodash: 4.17.21
-    marked: 4.0.9
+    marked: 4.0.10
     moment: 2.29.1
     moment-timezone: 0.5.34
     ol: 6.11.0
@@ -4131,7 +4131,7 @@ __metadata:
     rc-time-picker: ^3.7.3
     react: 17.0.2
     react-beautiful-dnd: 13.1.0
-    react-calendar: 3.5.0
+    react-calendar: 3.6.0
     react-colorful: 5.5.1
     react-custom-scrollbars-2: 4.4.0
     react-docgen-typescript-loader: 3.7.2
@@ -24693,12 +24693,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:4.0.9":
-  version: 4.0.9
-  resolution: "marked@npm:4.0.9"
+"marked@npm:4.0.10":
+  version: 4.0.10
+  resolution: "marked@npm:4.0.10"
   bin:
     marked: bin/marked.js
-  checksum: 1381cfa7f650f9f0b83b449d0561669c9751261035135da7ee7d1612828f7ee338fabb52c435ace471566bb64c12b9509edec36626e838306f4636e71d08aef6
+  checksum: 46cd8ef1a7cfcf5e461727c7f3e16dd4244369ef58f60485e75d3f5df9d53a8249b9609e96a336521eaa5c88d9531cbd296509a148718056e9375e69609f4442
   languageName: node
   linkType: hard
 
@@ -29470,9 +29470,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-calendar@npm:3.5.0":
-  version: 3.5.0
-  resolution: "react-calendar@npm:3.5.0"
+"react-calendar@npm:3.6.0":
+  version: 3.6.0
+  resolution: "react-calendar@npm:3.6.0"
   dependencies:
     "@wojtekmaj/date-utils": ^1.0.2
     get-user-locale: ^1.2.0
@@ -29481,7 +29481,7 @@ __metadata:
   peerDependencies:
     react: ^16.3.0 || ^17.0.0-0
     react-dom: ^16.3.0 || ^17.0.0-0
-  checksum: 22cdfd472cfabb9dc6253a79c2a11c8bb13ef130356d0166fe78a5cb70ba52a7ad70962bdc604ee326ed404cb99d9a8fbbb6ef0a8b061337aee7d11aae0ad8cd
+  checksum: 4499e26a5d000e6a6d9decb6ccc0ec4895197943aa3ba8024f9dbf5c597a442471df3ab686a1d46a2543c34ac31bd83c26bcbc5a7c952a02b98a03846339decb
   languageName: node
   linkType: hard
 
