@@ -12,6 +12,7 @@ export const initialState: FolderState = {
   hasChanged: false,
   version: 1,
   permissions: [],
+  canViewFolderPermissions: false,
 };
 
 const folderSlice = createSlice({
@@ -37,6 +38,10 @@ const folderSlice = createSlice({
         ...state,
         permissions: processAclItems(action.payload),
       };
+    },
+    setCanViewFolderPermissions: (state, action: PayloadAction<boolean>): FolderState => {
+      state.canViewFolderPermissions = action.payload;
+      return state;
     },
   },
 });

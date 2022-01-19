@@ -20,6 +20,7 @@ export interface FolderState {
   hasChanged: boolean;
   version: number;
   permissions: DashboardAcl[];
+  canViewFolderPermissions: boolean;
 }
 
 export interface FolderInfo {

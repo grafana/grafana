@@ -8,7 +8,7 @@ import { buildNavModel } from './navModel';
 import appEvents from 'app/core/app_events';
 import { loadFolder, loadFolderPermissions } from './reducers';
 import { lastValueFrom } from 'rxjs';
-import { createErrorNotification } from 'app/core/copy/appNotification';
+import { createWarningNotification } from 'app/core/copy/appNotification';
 
 export function getFolderByUid(uid: string): ThunkResult<void> {
   return async (dispatch) => {
@@ -57,10 +57,8 @@ export function checkFolderPermissions(uid: string): ThunkResult<void> {
         })
       );
     } catch (err) {
-      backendSrv.showErrorAlert({}, err);
-      console.error({ err });
       if (err.status !== 403) {
-        dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+        dispatch(notifyApp(createWarningNotification('Error checking folder permissions', err.data?.message)));
       }
     }
   };
