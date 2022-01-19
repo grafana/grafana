@@ -1,6 +1,6 @@
 import { getEchoSrv, EchoEventType } from '../services/EchoSrv';
 import {
-  ExperimentviewEchoEvent,
+  ExperimentViewEchoEvent,
   InteractionEchoEvent,
   MetaAnalyticsEvent,
   MetaAnalyticsEventPayload,
@@ -57,9 +57,9 @@ export const reportInteraction = (interactionName: string, properties?: Record<s
  *
  * @public
  */
-export const reportExperimentview = (id: string, group: string, variant: string) => {
-  getEchoSrv().addEvent<ExperimentviewEchoEvent>({
-    type: EchoEventType.Experimentview,
+export const reportExperimentView = (id: string, group: string, variant: string) => {
+  getEchoSrv().addEvent<ExperimentViewEchoEvent>({
+    type: EchoEventType.ExperimentView,
     payload: {
       experimentId: id,
       experimentGroup: group,

@@ -2,7 +2,7 @@ import $ from 'jquery';
 import {
   EchoBackend,
   EchoEventType,
-  isExperimentviewEvent,
+  isExperimentViewEvent,
   isInteractionEvent,
   isPageviewEvent,
   PageviewEchoEvent,
@@ -18,7 +18,7 @@ export interface RudderstackBackendOptions {
 }
 
 export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, RudderstackBackendOptions> {
-  supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction, EchoEventType.Experimentview];
+  supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction, EchoEventType.ExperimentView];
 
   constructor(public options: RudderstackBackendOptions) {
     const url = options.sdkUrl || `https://cdn.rudderlabs.com/v1/rudder-analytics.min.js`;
@@ -77,7 +77,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
       (window as any).rudderanalytics.track(e.payload.interactionName, e.payload.properties);
     }
 
-    if (isExperimentviewEvent(e)) {
+    if (isExperimentViewEvent(e)) {
       (window as any).rudderanalytics.track('experiment_viewed', {
         experiment_id: e.payload.experimentId,
         experiment_group: e.payload.experimentGroup,

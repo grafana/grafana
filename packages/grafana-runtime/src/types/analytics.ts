@@ -109,7 +109,7 @@ export type InteractionEchoEvent = EchoEvent<EchoEventType.Interaction, Interact
  *
  * @public
  */
-export interface ExperimentviewEchoEventPayload {
+export interface ExperimentViewEchoEventPayload {
   experimentId: string;
   experimentGroup: string;
   experimentVariant: string;
@@ -120,7 +120,7 @@ export interface ExperimentviewEchoEventPayload {
  *
  * @public
  */
-export type ExperimentviewEchoEvent = EchoEvent<EchoEventType.Experimentview, ExperimentviewEchoEventPayload>;
+export type ExperimentViewEchoEvent = EchoEvent<EchoEventType.ExperimentView, ExperimentViewEchoEventPayload>;
 
 /**
  * Pageview event typeguard.
@@ -145,6 +145,6 @@ export const isInteractionEvent = (event: EchoEvent): event is InteractionEchoEv
  *
  * @public
  */
-export const isExperimentviewEvent = (event: EchoEvent): event is ExperimentviewEchoEvent => {
+export const isExperimentViewEvent = (event: EchoEvent): event is ExperimentViewEchoEvent => {
   return Boolean(event.payload.experimentId);
 };
