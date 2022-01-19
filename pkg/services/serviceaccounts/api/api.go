@@ -45,6 +45,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 	if !cfg.FeatureToggles["service-accounts"] {
 		return
 	}
+
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/org/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeAll)), routing.Wrap(api.ListServiceAccounts))

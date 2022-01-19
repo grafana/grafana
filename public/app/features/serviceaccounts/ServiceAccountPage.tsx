@@ -10,26 +10,26 @@ import { loadServiceAccount } from './state/actions';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   navModel: NavModel;
-  serviceaccount?: ServiceAccountDTO;
+  serviceAccount?: ServiceAccountDTO;
   isLoading: boolean;
 }
 
 export class ServiceAccountPage extends PureComponent<Props> {
   async componentDidMount() {
-    const { match, loadServiceAccount } = this.props;
-    loadServiceAccount(parseInt(match.params.id, 10));
+    const { match } = this.props;
+    this.props.loadServiceAccount(parseInt(match.params.id, 10));
   }
 
   render() {
-    const { navModel, serviceaccount, isLoading } = this.props;
+    const { navModel, serviceAccount, isLoading } = this.props;
 
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
-          {serviceaccount && (
+          {serviceAccount && (
             <>
               <ServiceAccountProfile
-                serviceaccount={serviceaccount}
+                serviceaccount={serviceAccount}
                 onServiceAccountDelete={() => {
                   console.log(`not implemented`);
                 }}
@@ -51,19 +51,9 @@ export class ServiceAccountPage extends PureComponent<Props> {
   }
 }
 
-// const mapStateToProps = (state: StoreState) => ({
-//   navModel: getNavModel(state.navIndex, 'global-users'),
-//   user: state.userAdmin.user,
-//   sessions: state.userAdmin.sessions,
-//   orgs: state.userAdmin.orgs,
-//   ldapSyncInfo: state.ldap.syncInfo,
-//   isLoading: state.userAdmin.isLoading,
-//   error: state.userAdmin.error,
-// });
-
 function mapStateToProps(state: StoreState) {
   return {
-    navModel: getNavModel(state.navIndex, 'serviceaccount'),
+    navModel: getNavModel(state.navIndex, 'serviceaccounts'),
     serviceAccount: state.serviceAccountProfile.serviceAccount,
     isLoading: state.serviceAccountProfile.isLoading,
   };
