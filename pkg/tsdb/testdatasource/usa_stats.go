@@ -134,9 +134,8 @@ func getStateValueAsTimeseries(query usaQuery, wide bool) backend.DataResponse {
 			timeWalkerMs += stepMillis
 		}
 
+		values := make([]float64, len(timeVals))
 		for idx, state := range query.States {
-			values := make([]float64, len(timeVals))
-
 			for i := 0; i < len(timeVals); i++ {
 				values[i] = stateVals[i][idx]
 			}
