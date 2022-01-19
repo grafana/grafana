@@ -19901,6 +19901,7 @@ __metadata:
     react-router-dom: ^5.2.0
     react-select: 4.3.0
     react-select-event: ^5.1.0
+    react-simple-compat: ^1.2.2
     react-sizeme: 2.6.12
     react-split-pane: 0.1.89
     react-table: ^7.6.2
@@ -30854,7 +30855,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-simple-compat@npm:^1.2.1":
+"react-simple-compat@npm:^1.2.1, react-simple-compat@npm:^1.2.2":
   version: 1.2.2
   resolution: "react-simple-compat@npm:1.2.2"
   dependencies:

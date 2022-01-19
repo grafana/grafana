@@ -352,6 +352,7 @@
     "react-reverse-portal": "^2.0.1",
     "react-router-dom": "^5.2.0",
     "react-select": "5.2.1",
+    "react-simple-compat": "^1.2.2",
     "react-sizeme": "2.6.12",
     "react-split-pane": "0.1.89",
     "react-table": "^7.6.2",
