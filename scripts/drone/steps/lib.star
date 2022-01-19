@@ -975,7 +975,7 @@ def store_packages_step(edition, ver_mode, is_downstream=False):
                   test_release_ver,
               )
     elif ver_mode == 'release':
-        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
+        cmd = './bin/grabpl store-packages --edition {} --packages-bucket grafana-downloads --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,
         )
     elif ver_mode == 'main':
@@ -1070,9 +1070,17 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
                 '.\\grabpl.exe gen-version {}'.format(ver_part),
                 '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
                 '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
-                'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),
-                'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(bucket, edition, dir),
             ])
+            if ver_mode == 'main':
+                installer_commands.extend([
+                    'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),
+                    'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(bucket, edition, dir),
+                ])
+            else:
+                installer_commands.extend([
+                    'gsutil cp $$fname gs://{}/{}/{}/{}/'.format(bucket, ver_part, edition, dir),
+                    'gsutil cp "$$fname.sha256" gs://{}/{}/{}/{}/'.format(bucket, ver_part, edition, dir),
+                ])
         steps.append({
             'name': 'build-windows-installer',
             'image': wix_image,

@@ -1622,8 +1622,8 @@ steps:
   - .\grabpl.exe gen-version ${DRONE_TAG}
   - .\grabpl.exe windows-installer --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/release/
-  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/oss/release/
+  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/oss/release/
+  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/oss/release/
   depends_on:
   - initialize
   environment:
@@ -2342,8 +2342,8 @@ steps:
   - .\grabpl.exe gen-version ${DRONE_TAG}
   - .\grabpl.exe windows-installer --edition enterprise ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/enterprise/release/
-  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/enterprise/release/
+  - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/enterprise/release/
+  - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/enterprise/release/
   depends_on:
   - initialize
   environment:
@@ -2779,7 +2779,8 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
-depends_on: []
+depends_on:
+- publish-artifacts-public
 kind: pipeline
 name: publish-packages
 node:
@@ -2797,7 +2798,8 @@ steps:
   name: grabpl
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
-  - ./bin/grabpl store-packages --edition oss --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
+  - ./bin/grabpl store-packages --edition oss --packages-bucket grafana-downloads
+    --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
   - grabpl
   environment:
@@ -2815,7 +2817,8 @@ steps:
   name: store-packages-oss
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
-  - ./bin/grabpl store-packages --edition enterprise --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
+  - ./bin/grabpl store-packages --edition enterprise --packages-bucket grafana-downloads
+    --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
   - grabpl
   environment:
@@ -3341,8 +3344,8 @@ steps:
   - .\grabpl.exe windows-installer --edition oss --packages-bucket grafana-downloads-test
     v7.3.0-test
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-downloads-test/oss/release/
-  - gsutil cp "$$fname.sha256" gs://grafana-downloads-test/oss/release/
+  - gsutil cp $$fname gs://grafana-downloads-test/v7.3.0-test/oss/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads-test/v7.3.0-test/oss/release/
   depends_on:
   - initialize
   environment:
@@ -4035,8 +4038,8 @@ steps:
   - .\grabpl.exe windows-installer --edition enterprise --packages-bucket grafana-downloads-test
     v7.3.0-test
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-downloads-test/enterprise/release/
-  - gsutil cp "$$fname.sha256" gs://grafana-downloads-test/enterprise/release/
+  - gsutil cp $$fname gs://grafana-downloads-test/v7.3.0-test/enterprise/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads-test/v7.3.0-test/enterprise/release/
   depends_on:
   - initialize
   environment:
@@ -5504,6 +5507,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 9df8ada188b84934ba449a62dbea9eb81f2ba8feff2d5a04a7ec94a718d8cd74
+hmac: 01bbd575b573f01011e7e7b291f1b23c57542b942a8214f3292f9093a829e4c3
 
 ...
