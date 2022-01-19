@@ -192,7 +192,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/org/serviceacounts/:id',
+      path: '/org/serviceaccounts/:id',
       component: ServiceAccountPage,
     },
     {

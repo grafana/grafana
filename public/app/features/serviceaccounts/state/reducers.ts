@@ -18,10 +18,9 @@ export const serviceAccountProfileSlice = createSlice({
   name: 'serviceaccount',
   initialState: initialStateProfile,
   reducers: {
-    serviceAccountLoaded: (state, action: PayloadAction<ServiceAccountDTO>): ServiceAccountProfileState => ({
-      ...state,
-      serviceAccount: action.payload,
-    }),
+    serviceAccountLoaded: (state, action: PayloadAction<ServiceAccountDTO>): ServiceAccountProfileState => {
+      return { ...state, serviceAccount: action.payload, isLoading: false };
+    },
   },
 });
 

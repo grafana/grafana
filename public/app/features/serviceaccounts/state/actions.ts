@@ -8,8 +8,8 @@ const BASE_URL = `/api/org/serviceaccounts`;
 export function loadServiceAccount(id: number): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      const serviceAccount = await getBackendSrv().get(`BASE_URL/${id}`);
-      dispatch(serviceAccountLoaded(serviceAccount));
+      const response = await getBackendSrv().get(`${BASE_URL}/${id}`);
+      dispatch(serviceAccountLoaded(response));
     } catch (error) {
       console.error(error);
     }
@@ -19,8 +19,8 @@ export function loadServiceAccount(id: number): ThunkResult<void> {
 export function loadServiceAccounts(): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      const serviceAccounts = await getBackendSrv().get(BASE_URL);
-      dispatch(serviceAccountsLoaded(serviceAccounts));
+      const response = await getBackendSrv().get(BASE_URL);
+      dispatch(serviceAccountsLoaded(response));
     } catch (error) {
       console.error(error);
     }
