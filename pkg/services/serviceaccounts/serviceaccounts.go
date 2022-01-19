@@ -17,4 +17,5 @@ type Store interface {
 	ListServiceAccounts(ctx context.Context, orgID int64) ([]*models.OrgUserDTO, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
 	UpgradeServiceAccounts(ctx context.Context) error
+	ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error)
 }
