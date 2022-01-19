@@ -22,12 +22,12 @@ if [[ -f ${pkg} ]]; then
 else
   echo "Couldn't find package ${PACKAGE_FILE} - copying local dev files"
 
-  if [[ ! -f bin/linux-amd64/grafana-server ]]; then
-    echo bin/linux-amd64/grafana-server missing
+  if [[ ! -f bin/grafana-server ]]; then
+    echo bin/grafana-server missing
     exit 1
   fi
 
-  cp -r ./bin/linux-amd64 $RUNDIR/bin
+  cp -r ./bin $RUNDIR
   cp -r ./public $RUNDIR
   cp -r ./tools $RUNDIR
 
