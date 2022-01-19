@@ -58,8 +58,10 @@ var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 type Calls struct {
 	CreateServiceAccount   []interface{}
 	ListServiceAccounts    []interface{}
+	RetrieveServiceAccount []interface{}
 	DeleteServiceAccount   []interface{}
 	UpgradeServiceAccounts []interface{}
+	ListTokens             []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
@@ -79,11 +81,20 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 }
 
 func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
-	s.Calls.DeleteServiceAccount = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
+	s.Calls.UpgradeServiceAccounts = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
 	return nil
 }
 
+func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error) {
+	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, orgID, serviceAccount})
+	return nil, nil
+}
 func (s *ServiceAccountsStoreMock) ListServiceAccounts(ctx context.Context, orgID int64) ([]*models.OrgUserDTO, error) {
 	s.Calls.ListServiceAccounts = append(s.Calls.ListServiceAccounts, []interface{}{ctx, orgID})
+	return nil, nil
+}
+
+func (s *ServiceAccountsStoreMock) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*models.OrgUserDTO, error) {
+	s.Calls.RetrieveServiceAccount = append(s.Calls.RetrieveServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
 	return nil, nil
 }

@@ -107,6 +107,7 @@ type UpdateOrgUserCommand struct {
 // QUERIES
 
 type GetOrgUsersQuery struct {
+	UserID           int64
 	OrgId            int64
 	Query            string
 	Limit            int
