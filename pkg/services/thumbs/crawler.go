@@ -75,7 +75,7 @@ func (r *simpleCrawler) broadcastStatus() {
 	}
 }
 
-func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rendering.Theme, thumbnailKind models.ThumbnailKind) (crawlStatus, error) {
+func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) (crawlStatus, error) {
 	if r.status.State == "running" {
 		tlog.Info("already running")
 		return r.Status()
@@ -217,7 +217,7 @@ func (r *simpleCrawler) walk() {
 
 				thumbnailId, err := r.thumbnailRepo.saveFromFile(res.FilePath, models.DashboardThumbnailMeta{
 					DashboardUID: item.Uid,
-					Theme:        string(r.opts.Theme),
+					Theme:        r.opts.Theme,
 					Kind:         r.thumbnailKind,
 				}, item.Version)
 

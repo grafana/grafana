@@ -2,6 +2,9 @@ package thumbs
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/segmentio/encoding/json"
-	"io"
-	"io/ioutil"
 )
 
 var (
@@ -66,7 +67,7 @@ func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *pre
 		return nil
 	}
 
-	theme, err := rendering.ParseTheme(params[":theme"])
+	theme, err := models.ParseTheme(params[":theme"])
 	if err != nil {
 		c.JSON(400, map[string]string{"error": "invalid theme"})
 		return nil
@@ -121,7 +122,7 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 
 	err = hs.thumbnailRepo.updateThumbnailState(newState, models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
-		Theme:        string(req.Theme),
+		Theme:        req.Theme,
 		Kind:         models.ThumbnailKindDefault,
 	})
 
@@ -143,7 +144,7 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 
 	res, err := hs.thumbnailRepo.getThumbnail(models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
-		Theme:        string(req.Theme),
+		Theme:        req.Theme,
 		Kind:         models.ThumbnailKindDefault,
 	})
 
@@ -207,7 +208,7 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 
 	_, err = hs.thumbnailRepo.saveFromBytes(fileBytes, getMimeType(handler.Filename), models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
-		Theme:        string(req.Theme),
+		Theme:        req.Theme,
 		Kind:         req.Kind,
 	}, models.DashboardVersionForManualThumbnailUpload)
 

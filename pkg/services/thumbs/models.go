@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
 type CrawlerMode string
@@ -25,12 +24,12 @@ type previewRequest struct {
 	OrgID int64                `json:"orgId"`
 	UID   string               `json:"uid"`
 	Kind  models.ThumbnailKind `json:"kind"`
-	Theme rendering.Theme      `json:"theme"`
+	Theme models.Theme         `json:"theme"`
 }
 
 type crawlCmd struct {
-	Mode  CrawlerMode     `json:"mode"`  // thumbs | analytics | migrate
-	Theme rendering.Theme `json:"theme"` // light | dark
+	Mode  CrawlerMode  `json:"mode"`  // thumbs | analytics | migrate
+	Theme models.Theme `json:"theme"` // light | dark
 }
 
 type crawlStatus struct {
@@ -46,7 +45,7 @@ type crawlStatus struct {
 type dashRenderer interface {
 
 	// Assumes you have already authenticated as admin
-	Start(c *models.ReqContext, mode CrawlerMode, theme rendering.Theme, kind models.ThumbnailKind) (crawlStatus, error)
+	Start(c *models.ReqContext, mode CrawlerMode, theme models.Theme, kind models.ThumbnailKind) (crawlStatus, error)
 
 	// Assumes you have already authenticated as admin
 	Stop() (crawlStatus, error)

@@ -62,7 +62,7 @@ type DashboardThumbnail struct {
 	State            ThumbnailState `json:"state"`
 	PanelId          int64          `json:"panelId,omitempty"`
 	Kind             ThumbnailKind  `json:"kind"`
-	Theme            string         `json:"theme"` // TODO: changing it from `string` to `rendering.Theme` causes gen-go to fail with undescriptive error
+	Theme            Theme          `json:"theme"`
 	Image            []byte         `json:"image"`
 	MimeType         string         `json:"mimeType"`
 	Updated          time.Time      `json:"updated"`
@@ -77,7 +77,7 @@ type DashboardThumbnailMeta struct {
 	DashboardUID string
 	PanelID      int64
 	Kind         ThumbnailKind
-	Theme        string // TODO: same as above
+	Theme        Theme
 }
 
 type GetDashboardThumbnailCommand struct {
