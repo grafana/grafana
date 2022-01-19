@@ -111,3 +111,18 @@ func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgI
 	}
 	return query.Result, err
 }
+
+// RetrieveServiceAccountByID returns a service account by its ID
+func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*models.OrgUserDTO, error) {
+	query := models.GetOrgUsersQuery{UserID: serviceAccountID, OrgId: orgID, IsServiceAccount: true}
+	err := s.sqlStore.GetOrgUsers(ctx, &query)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(query.Result) != 1 {
+		return nil, serviceaccounts.ErrServiceAccountNotFound
+	}
+
+	return query.Result[0], err
+}
