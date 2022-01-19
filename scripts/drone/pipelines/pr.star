@@ -30,6 +30,11 @@ load(
 )
 
 load (
+    'scripts/drone/opts.star',
+    'can_ensure_cuetsified'
+)
+
+load (
     'scripts/drone/steps/e2e.star',
     'e2e_tests_server_step',
     'e2e_test_steps'
@@ -70,8 +75,11 @@ def pr_pipelines(edition):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
-        ensure_cuetsified_step(),
     ]
+
+    if can_ensure_cuetsified:
+        build_steps.append(ensure_cuetsified_step())
+
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
