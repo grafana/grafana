@@ -309,6 +309,15 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 		return resp
 	}
 
+	ds, err := getRawDataSourceById(c.Req.Context(), cmd.Id, cmd.OrgId)
+	if err != nil {
+		return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
+	}
+
+	if ds.ReadOnly {
+		return response.Error(400, "Cannot update datasource", models.ErrDatasourceIsReadOnly)
+	}
+
 	err = hs.fillWithSecureJSONData(c.Req.Context(), &cmd)
 	if err != nil {
 		return response.Error(500, "Failed to update datasource", err)
