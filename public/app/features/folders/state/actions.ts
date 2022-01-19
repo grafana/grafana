@@ -61,6 +61,7 @@ export function checkFolderPermissions(uid: string): ThunkResult<void> {
       if (err.status !== 403) {
         dispatch(notifyApp(createWarningNotification('Error checking folder permissions', err.data?.message)));
       }
+
       dispatch(setCanViewFolderPermissions(false));
     }
   };
