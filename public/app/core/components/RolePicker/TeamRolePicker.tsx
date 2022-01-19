@@ -1,6 +1,7 @@
 import React, { FC, useState } from 'react';
 import { useAsync } from 'react-use';
-import { Role } from 'app/types';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction, Role } from 'app/types';
 import { RolePicker } from './RolePicker';
 import { fetchRoleOptions, fetchTeamRoles, updateTeamRoles } from './api';
 
@@ -18,8 +19,12 @@ export const TeamRolePicker: FC<Props> = ({ teamId, orgId, getRoleOptions, disab
 
   const { loading } = useAsync(async () => {
     try {
-      let options = await (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId));
-      setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
+      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+        let options = await (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId));
+        setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
+      } else {
+        setRoleOptions([]);
+      }
 
       const teamRoles = await fetchTeamRoles(teamId, orgId);
       setAppliedRoles(teamRoles);
