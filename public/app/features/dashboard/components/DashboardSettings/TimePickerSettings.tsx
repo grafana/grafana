@@ -53,7 +53,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
       return this.props.onMaxTimeRangeChange(value);
     }
 
-    if (value.match(/^[1-9]\d*[yMwdhms]$/)) {
+    if (value.match(/^[1-9]\d*(ms|[yMwdhms])$/)) {
       this.setState({ isMaxTimeRangeValid: true });
       return this.props.onMaxTimeRangeChange(value);
     }
@@ -69,7 +69,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
       return this.props.onOldestFromChange(value);
     }
 
-    if (value.match(/^[1-9]\d*[yMwdhms]$/)) {
+    if (value.match(/^[1-9]\d*(ms|[yMwdhms])$/)) {
       this.setState({ isOldestFromValid: true });
       return this.props.onOldestFromChange(value);
     }
@@ -116,8 +116,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
         </Field>
         <Field
            label="Max time range"
-           description="Limits users to the specified time interval. The supported units are y(years), M(months), w(weeks), d(days), h(hours), m(minutes), s(seconds).
-"
+           description="Limits users to the specified time interval."
         >
           <Input
             invalid={!this.state.isMaxTimeRangeValid}
