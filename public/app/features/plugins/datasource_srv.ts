@@ -7,6 +7,7 @@ import {
   TemplateSrv,
   getTemplateSrv,
   getLegacyAngularInjector,
+  getBackendSrv,
 } from '@grafana/runtime';
 // Types
 import {
@@ -323,6 +324,11 @@ export class DatasourceSrv implements DataSourceService {
         meta: x.meta,
       };
     });
+  }
+
+  async reload() {
+    const settings = await getBackendSrv().get('/api/frontend/settings');
+    getDatasourceSrv().init(settings.datasources, settings.defaultDatasource);
   }
 }
 
