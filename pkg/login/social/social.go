@@ -52,6 +52,16 @@ type OAuthInfo struct {
 	UsePKCE                bool
 }
 
+// PutScope adds scope to Scopes if it is not present already.
+func (o *OAuthInfo) PutScope(scope string) {
+	for _, s := range o.Scopes {
+		if s == scope {
+			return
+		}
+	}
+	o.Scopes = append(o.Scopes, scope)
+}
+
 func ProvideService(cfg *setting.Cfg) *SocialService {
 	ss := SocialService{
 		cfg:           cfg,
@@ -88,9 +98,12 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			UsePKCE:              sec.Key("use_pkce").MustBool(),
 		}
 
-		// when empty_scopes parameter exists and is true, overwrite scope with empty value
+		// scope overrules
 		if sec.Key("empty_scopes").MustBool() {
-			info.Scopes = []string{}
+			// empty_scopes parameter overwrites scope with empty value
+			info.Scopes = nil
+		} else {
+			info.PutScope("offline_access")
 		}
 
 		if !info.Enabled {
