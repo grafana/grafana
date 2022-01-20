@@ -14,17 +14,18 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/opentracing/opentracing-go"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -32,6 +33,7 @@ import (
 type Service struct {
 	logger log.Logger
 	im     instancemgmt.InstanceManager
+	tracer tracing.Tracer
 }
 
 const (
@@ -39,10 +41,11 @@ const (
 	TargetModelField     = "target"
 )
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
 	return &Service{
 		logger: log.New("tsdb.graphite"),
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		tracer: tracer,
 	}
 }
 
@@ -150,21 +153,15 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &result, err
 	}
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "graphite query")
-	span.SetTag("target", target)
-	span.SetTag("from", from)
-	span.SetTag("until", until)
-	span.SetTag("datasource_id", dsInfo.Id)
-	span.SetTag("org_id", req.PluginContext.OrgID)
+	ctx, span := s.tracer.Start(ctx, "graphite query")
+	span.SetAttributes("target", target, attribute.Key("target").String(target))
+	span.SetAttributes("from", from, attribute.Key("from").String(from))
+	span.SetAttributes("until", until, attribute.Key("until").String(until))
+	span.SetAttributes("datasource_id", dsInfo.Id, attribute.Key("datasource_id").Int64(dsInfo.Id))
+	span.SetAttributes("org_id", req.PluginContext.OrgID, attribute.Key("org_id").Int64(req.PluginContext.OrgID))
 
-	defer span.Finish()
-
-	if err := opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(graphiteReq.Header)); err != nil {
-		return &result, err
-	}
+	defer span.End()
+	s.tracer.Inject(ctx, graphiteReq.Header, span)
 
 	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, graphiteReq)
 	if err != nil {

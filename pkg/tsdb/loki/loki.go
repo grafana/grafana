@@ -16,24 +16,27 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
 	"github.com/grafana/loki/pkg/logproto"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 )
 
 type Service struct {
-	im   instancemgmt.InstanceManager
-	plog log.Logger
+	im     instancemgmt.InstanceManager
+	plog   log.Logger
+	tracer tracing.Tracer
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
 	return &Service{
-		im:   datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		plog: log.New("tsdb.loki"),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		plog:   log.New("tsdb.loki"),
+		tracer: tracer,
 	}
 }
 
@@ -122,11 +125,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	for _, query := range queries {
 		s.plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
-		span, _ := opentracing.StartSpanFromContext(ctx, "alerting.loki")
-		span.SetTag("expr", query.Expr)
-		span.SetTag("start_unixnano", query.Start.UnixNano())
-		span.SetTag("stop_unixnano", query.End.UnixNano())
-		defer span.Finish()
+		_, span := s.tracer.Start(ctx, "alerting.loki")
+		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
+		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
+		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
+		defer span.End()
 
 		// `limit` only applies to log-producing queries, and we
 		// currently only support metric queries, so this can be set to any value.

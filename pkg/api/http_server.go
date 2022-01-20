@@ -111,7 +111,7 @@ type HTTPServer struct {
 	SecretsService            secrets.Service
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
-	tracingService            tracing.Tracer
+	tracer                    tracing.Tracer
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
 	teamGuardian              teamguardian.TeamGuardian
@@ -138,7 +138,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	contextHandler *contexthandler.ContextHandler,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	quotaService *quota.QuotaService, socialService social.Service, tracingService tracing.Tracer,
+	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
 	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service) (*HTTPServer, error) {
@@ -183,7 +183,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		LibraryPanelService:       libraryPanelService,
 		LibraryElementService:     libraryElementService,
 		QuotaService:              quotaService,
-		tracingService:            tracingService,
+		tracer:                    tracer,
 		log:                       log.New("http.server"),
 		web:                       m,
 		Listener:                  opts.Listener,
@@ -407,7 +407,7 @@ func (hs *HTTPServer) applyRoutes() {
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
-	m.Use(middleware.RequestTracing())
+	m.Use(middleware.RequestTracing(hs.tracer))
 
 	m.Use(middleware.Logger(hs.Cfg))
 

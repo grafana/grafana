@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
@@ -27,13 +28,15 @@ var (
 type Service struct {
 	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
+	tracer             tracing.Tracer
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
 	plog.Debug("initializing")
 	return &Service{
 		intervalCalculator: intervalv2.NewCalculator(),
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		tracer:             tracer,
 	}
 }
 

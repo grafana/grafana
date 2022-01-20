@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
@@ -28,7 +29,7 @@ var (
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, tracer tracing.Tracer) *Service {
 	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &AzureMonitorDatasource{proxy: proxy},
@@ -42,6 +43,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider) *
 	s := &Service{
 		im:        im,
 		executors: executors,
+		tracer:    tracer,
 	}
 
 	s.queryMux = s.newQueryMux()
@@ -68,6 +70,7 @@ type Service struct {
 
 	queryMux        *datasource.QueryTypeMux
 	resourceHandler backend.CallResourceHandler
+	tracer          tracing.Tracer
 }
 
 type azureMonitorSettings struct {
@@ -159,7 +162,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, e
 }
 
 type azDatasourceExecutor interface {
-	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error)
+	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error)
 	resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client)
 }
 
@@ -191,7 +194,7 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 			if !ok {
 				return nil, fmt.Errorf("missing service for %s", dst)
 			}
-			return executor.executeTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL)
+			return executor.executeTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL, s.tracer)
 		})
 	}
 	return mux

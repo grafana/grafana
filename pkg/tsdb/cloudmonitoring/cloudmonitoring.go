@@ -25,6 +25,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -66,8 +67,9 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
 	s := &Service{
+		tracer:             tracer,
 		httpClientProvider: httpClientProvider,
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
@@ -123,6 +125,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 type Service struct {
 	httpClientProvider httpclient.Provider
 	im                 instancemgmt.InstanceManager
+	tracer             tracing.Tracer
 
 	resourceHandler backend.CallResourceHandler
 }
@@ -249,7 +252,7 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	}
 
 	for _, queryExecutor := range queryExecutors {
-		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo)
+		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, s.tracer)
 		if err != nil {
 			return resp, err
 		}
