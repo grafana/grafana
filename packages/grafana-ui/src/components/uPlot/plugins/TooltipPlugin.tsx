@@ -24,7 +24,7 @@ interface TooltipPluginProps {
   data: DataFrame;
   config: UPlotConfigBuilder;
   mode?: TooltipDisplayMode;
-  sync?: DashboardCursorSync;
+  sync?: () => DashboardCursorSync;
   // Allows custom tooltip content rendering. Exposes aligned data frame with relevant indexes for data inspection
   // Use field.state.origin indexes from alignedData frame field to get access to original data frame and field index.
   renderTooltip?: (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => React.ReactNode;
@@ -91,7 +91,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       u.over.addEventListener('mouseleave', plotMouseLeave);
       u.over.addEventListener('mouseenter', plotMouseEnter);
 
-      if (sync === DashboardCursorSync.Crosshair) {
+      if (sync && sync() === DashboardCursorSync.Crosshair) {
         u.root.classList.add('shared-crosshair');
       }
     });
@@ -162,7 +162,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     };
   }, [config, setCoords, setIsActive, setFocusedPointIdx, setFocusedPointIdxs]);
 
-  if (focusedPointIdx === null || (!isActive && sync === DashboardCursorSync.Crosshair)) {
+  if (focusedPointIdx === null || (!isActive && sync && sync() === DashboardCursorSync.Crosshair)) {
     return null;
   }
 
