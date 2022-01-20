@@ -8,9 +8,8 @@ import {
   ensureQueries,
   generateNewKeyAndAddRefIdIfMissing,
   getTimeRangeFromUrl,
-  ExploreGraphStyle,
 } from 'app/core/utils/explore';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
 import { queryReducer, runQueries, setQueriesAction } from './query';
 import { datasourceReducer } from './datasource';
 import { timeReducer, updateTime } from './time';
