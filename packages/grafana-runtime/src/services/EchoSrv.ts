@@ -81,6 +81,7 @@ export enum EchoEventType {
   Sentry = 'sentry',
   Pageview = 'pageview',
   Interaction = 'interaction',
+  ExperimentView = 'experimentview',
 }
 
 /**
