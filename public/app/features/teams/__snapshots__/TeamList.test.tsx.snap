@@ -57,303 +57,317 @@ exports[`Render should render teams table 1`] = `
     <div
       className="admin-list-table"
     >
-      <table
-        className="filter-table filter-table--hover form-inline"
+      <VerticalGroup
+        spacing="md"
       >
-        <thead>
-          <tr>
-            <th />
-            <th>
-              Name
-            </th>
-            <th>
-              Email
-            </th>
-            <th>
-              Members
-            </th>
-            <th
-              style={
-                Object {
-                  "width": "1%",
+        <table
+          className="filter-table filter-table--hover form-inline"
+        >
+          <thead>
+            <tr>
+              <th />
+              <th>
+                Name
+              </th>
+              <th>
+                Email
+              </th>
+              <th>
+                Members
+              </th>
+              <th
+                style={
+                  Object {
+                    "width": "1%",
+                  }
                 }
-              }
-            />
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            key="1"
-          >
-            <td
-              className="width-4 text-center link-td"
-            >
-              <a
-                href="org/teams/edit/1"
-              >
-                <img
-                  alt="Team avatar"
-                  className="filter-table__avatar"
-                  src="some/url/"
-                />
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/1"
-              >
-                test-1
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/1"
-              >
-                test-1@test.com
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/1"
-              >
-                1
-              </a>
-            </td>
-            <td
-              className="text-right"
-            >
-              <DeleteButton
-                aria-label="Delete team"
-                disabled={false}
-                onConfirm={[Function]}
-                size="sm"
               />
-            </td>
-          </tr>
-          <tr
-            key="2"
-          >
-            <td
-              className="width-4 text-center link-td"
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              key="1"
             >
-              <a
-                href="org/teams/edit/2"
+              <td
+                className="width-4 text-center link-td"
               >
-                <img
-                  alt="Team avatar"
-                  className="filter-table__avatar"
-                  src="some/url/"
+                <a
+                  href="org/teams/edit/1"
+                >
+                  <img
+                    alt="Team avatar"
+                    className="filter-table__avatar"
+                    src="some/url/"
+                  />
+                </a>
+              </td>
+              <td
+                className="link-td"
+              >
+                <a
+                  href="org/teams/edit/1"
+                >
+                  test-1
+                </a>
+              </td>
+              <td
+                className="link-td"
+              >
+                <a
+                  href="org/teams/edit/1"
+                >
+                  test-1@test.com
+                </a>
+              </td>
+              <td
+                className="link-td"
+              >
+                <a
+                  href="org/teams/edit/1"
+                >
+                  1
+                </a>
+              </td>
+              <td
+                className="text-right"
+              >
+                <DeleteButton
+                  aria-label="Delete team"
+                  disabled={false}
+                  onConfirm={[Function]}
+                  size="sm"
                 />
-              </a>
-            </td>
-            <td
-              className="link-td"
+              </td>
+            </tr>
+            <tr
+              key="2"
             >
-              <a
-                href="org/teams/edit/2"
+              <td
+                className="width-4 text-center link-td"
               >
-                test-2
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/2"
+                <a
+                  href="org/teams/edit/2"
+                >
+                  <img
+                    alt="Team avatar"
+                    className="filter-table__avatar"
+                    src="some/url/"
+                  />
+                </a>
+              </td>
+              <td
+                className="link-td"
               >
-                test-2@test.com
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/2"
+                <a
+                  href="org/teams/edit/2"
+                >
+                  test-2
+                </a>
+              </td>
+              <td
+                className="link-td"
               >
-                2
-              </a>
-            </td>
-            <td
-              className="text-right"
-            >
-              <DeleteButton
-                aria-label="Delete team"
-                disabled={false}
-                onConfirm={[Function]}
-                size="sm"
-              />
-            </td>
-          </tr>
-          <tr
-            key="3"
-          >
-            <td
-              className="width-4 text-center link-td"
-            >
-              <a
-                href="org/teams/edit/3"
+                <a
+                  href="org/teams/edit/2"
+                >
+                  test-2@test.com
+                </a>
+              </td>
+              <td
+                className="link-td"
               >
-                <img
-                  alt="Team avatar"
-                  className="filter-table__avatar"
-                  src="some/url/"
+                <a
+                  href="org/teams/edit/2"
+                >
+                  2
+                </a>
+              </td>
+              <td
+                className="text-right"
+              >
+                <DeleteButton
+                  aria-label="Delete team"
+                  disabled={false}
+                  onConfirm={[Function]}
+                  size="sm"
                 />
-              </a>
-            </td>
-            <td
-              className="link-td"
+              </td>
+            </tr>
+            <tr
+              key="3"
             >
-              <a
-                href="org/teams/edit/3"
+              <td
+                className="width-4 text-center link-td"
               >
-                test-3
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/3"
+                <a
+                  href="org/teams/edit/3"
+                >
+                  <img
+                    alt="Team avatar"
+                    className="filter-table__avatar"
+                    src="some/url/"
+                  />
+                </a>
+              </td>
+              <td
+                className="link-td"
               >
-                test-3@test.com
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/3"
+                <a
+                  href="org/teams/edit/3"
+                >
+                  test-3
+                </a>
+              </td>
+              <td
+                className="link-td"
               >
-                3
-              </a>
-            </td>
-            <td
-              className="text-right"
-            >
-              <DeleteButton
-                aria-label="Delete team"
-                disabled={false}
-                onConfirm={[Function]}
-                size="sm"
-              />
-            </td>
-          </tr>
-          <tr
-            key="4"
-          >
-            <td
-              className="width-4 text-center link-td"
-            >
-              <a
-                href="org/teams/edit/4"
+                <a
+                  href="org/teams/edit/3"
+                >
+                  test-3@test.com
+                </a>
+              </td>
+              <td
+                className="link-td"
               >
-                <img
-                  alt="Team avatar"
-                  className="filter-table__avatar"
-                  src="some/url/"
+                <a
+                  href="org/teams/edit/3"
+                >
+                  3
+                </a>
+              </td>
+              <td
+                className="text-right"
+              >
+                <DeleteButton
+                  aria-label="Delete team"
+                  disabled={false}
+                  onConfirm={[Function]}
+                  size="sm"
                 />
-              </a>
-            </td>
-            <td
-              className="link-td"
+              </td>
+            </tr>
+            <tr
+              key="4"
             >
-              <a
-                href="org/teams/edit/4"
+              <td
+                className="width-4 text-center link-td"
               >
-                test-4
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/4"
+                <a
+                  href="org/teams/edit/4"
+                >
+                  <img
+                    alt="Team avatar"
+                    className="filter-table__avatar"
+                    src="some/url/"
+                  />
+                </a>
+              </td>
+              <td
+                className="link-td"
               >
-                test-4@test.com
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/4"
+                <a
+                  href="org/teams/edit/4"
+                >
+                  test-4
+                </a>
+              </td>
+              <td
+                className="link-td"
               >
-                4
-              </a>
-            </td>
-            <td
-              className="text-right"
-            >
-              <DeleteButton
-                aria-label="Delete team"
-                disabled={false}
-                onConfirm={[Function]}
-                size="sm"
-              />
-            </td>
-          </tr>
-          <tr
-            key="5"
-          >
-            <td
-              className="width-4 text-center link-td"
-            >
-              <a
-                href="org/teams/edit/5"
+                <a
+                  href="org/teams/edit/4"
+                >
+                  test-4@test.com
+                </a>
+              </td>
+              <td
+                className="link-td"
               >
-                <img
-                  alt="Team avatar"
-                  className="filter-table__avatar"
-                  src="some/url/"
+                <a
+                  href="org/teams/edit/4"
+                >
+                  4
+                </a>
+              </td>
+              <td
+                className="text-right"
+              >
+                <DeleteButton
+                  aria-label="Delete team"
+                  disabled={false}
+                  onConfirm={[Function]}
+                  size="sm"
                 />
-              </a>
-            </td>
-            <td
-              className="link-td"
+              </td>
+            </tr>
+            <tr
+              key="5"
             >
-              <a
-                href="org/teams/edit/5"
+              <td
+                className="width-4 text-center link-td"
               >
-                test-5
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/5"
+                <a
+                  href="org/teams/edit/5"
+                >
+                  <img
+                    alt="Team avatar"
+                    className="filter-table__avatar"
+                    src="some/url/"
+                  />
+                </a>
+              </td>
+              <td
+                className="link-td"
               >
-                test-5@test.com
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/5"
+                <a
+                  href="org/teams/edit/5"
+                >
+                  test-5
+                </a>
+              </td>
+              <td
+                className="link-td"
               >
-                5
-              </a>
-            </td>
-            <td
-              className="text-right"
-            >
-              <DeleteButton
-                aria-label="Delete team"
-                disabled={false}
-                onConfirm={[Function]}
-                size="sm"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                <a
+                  href="org/teams/edit/5"
+                >
+                  test-5@test.com
+                </a>
+              </td>
+              <td
+                className="link-td"
+              >
+                <a
+                  href="org/teams/edit/5"
+                >
+                  5
+                </a>
+              </td>
+              <td
+                className="text-right"
+              >
+                <DeleteButton
+                  aria-label="Delete team"
+                  disabled={false}
+                  onConfirm={[Function]}
+                  size="sm"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <HorizontalGroup
+          justify="flex-end"
+        >
+          <Pagination
+            currentPage={1}
+            hideWhenSinglePage={true}
+            numberOfPages={1}
+            onNavigate={[MockFunction]}
+          />
+        </HorizontalGroup>
+      </VerticalGroup>
     </div>
   </PageContents>
 </Page>
@@ -397,87 +411,101 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
     <div
       className="admin-list-table"
     >
-      <table
-        className="filter-table filter-table--hover form-inline"
+      <VerticalGroup
+        spacing="md"
       >
-        <thead>
-          <tr>
-            <th />
-            <th>
-              Name
-            </th>
-            <th>
-              Email
-            </th>
-            <th>
-              Members
-            </th>
-            <th
-              style={
-                Object {
-                  "width": "1%",
+        <table
+          className="filter-table filter-table--hover form-inline"
+        >
+          <thead>
+            <tr>
+              <th />
+              <th>
+                Name
+              </th>
+              <th>
+                Email
+              </th>
+              <th>
+                Members
+              </th>
+              <th
+                style={
+                  Object {
+                    "width": "1%",
+                  }
                 }
-              }
-            />
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            key="1"
-          >
-            <td
-              className="width-4 text-center link-td"
-            >
-              <a
-                href="org/teams/edit/1"
-              >
-                <img
-                  alt="Team avatar"
-                  className="filter-table__avatar"
-                  src="some/url/"
-                />
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/1"
-              >
-                test-1
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/1"
-              >
-                test-1@test.com
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/1"
-              >
-                1
-              </a>
-            </td>
-            <td
-              className="text-right"
-            >
-              <DeleteButton
-                aria-label="Delete team"
-                disabled={true}
-                onConfirm={[Function]}
-                size="sm"
               />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              key="1"
+            >
+              <td
+                className="width-4 text-center link-td"
+              >
+                <a
+                  href="org/teams/edit/1"
+                >
+                  <img
+                    alt="Team avatar"
+                    className="filter-table__avatar"
+                    src="some/url/"
+                  />
+                </a>
+              </td>
+              <td
+                className="link-td"
+              >
+                <a
+                  href="org/teams/edit/1"
+                >
+                  test-1
+                </a>
+              </td>
+              <td
+                className="link-td"
+              >
+                <a
+                  href="org/teams/edit/1"
+                >
+                  test-1@test.com
+                </a>
+              </td>
+              <td
+                className="link-td"
+              >
+                <a
+                  href="org/teams/edit/1"
+                >
+                  1
+                </a>
+              </td>
+              <td
+                className="text-right"
+              >
+                <DeleteButton
+                  aria-label="Delete team"
+                  disabled={true}
+                  onConfirm={[Function]}
+                  size="sm"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <HorizontalGroup
+          justify="flex-end"
+        >
+          <Pagination
+            currentPage={1}
+            hideWhenSinglePage={true}
+            numberOfPages={1}
+            onNavigate={[MockFunction]}
+          />
+        </HorizontalGroup>
+      </VerticalGroup>
     </div>
   </PageContents>
 </Page>
@@ -521,87 +549,101 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
     <div
       className="admin-list-table"
     >
-      <table
-        className="filter-table filter-table--hover form-inline"
+      <VerticalGroup
+        spacing="md"
       >
-        <thead>
-          <tr>
-            <th />
-            <th>
-              Name
-            </th>
-            <th>
-              Email
-            </th>
-            <th>
-              Members
-            </th>
-            <th
-              style={
-                Object {
-                  "width": "1%",
+        <table
+          className="filter-table filter-table--hover form-inline"
+        >
+          <thead>
+            <tr>
+              <th />
+              <th>
+                Name
+              </th>
+              <th>
+                Email
+              </th>
+              <th>
+                Members
+              </th>
+              <th
+                style={
+                  Object {
+                    "width": "1%",
+                  }
                 }
-              }
-            />
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            key="1"
-          >
-            <td
-              className="width-4 text-center link-td"
-            >
-              <a
-                href="org/teams/edit/1"
-              >
-                <img
-                  alt="Team avatar"
-                  className="filter-table__avatar"
-                  src="some/url/"
-                />
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/1"
-              >
-                test-1
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/1"
-              >
-                test-1@test.com
-              </a>
-            </td>
-            <td
-              className="link-td"
-            >
-              <a
-                href="org/teams/edit/1"
-              >
-                1
-              </a>
-            </td>
-            <td
-              className="text-right"
-            >
-              <DeleteButton
-                aria-label="Delete team"
-                disabled={true}
-                onConfirm={[Function]}
-                size="sm"
               />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              key="1"
+            >
+              <td
+                className="width-4 text-center link-td"
+              >
+                <a
+                  href="org/teams/edit/1"
+                >
+                  <img
+                    alt="Team avatar"
+                    className="filter-table__avatar"
+                    src="some/url/"
+                  />
+                </a>
+              </td>
+              <td
+                className="link-td"
+              >
+                <a
+                  href="org/teams/edit/1"
+                >
+                  test-1
+                </a>
+              </td>
+              <td
+                className="link-td"
+              >
+                <a
+                  href="org/teams/edit/1"
+                >
+                  test-1@test.com
+                </a>
+              </td>
+              <td
+                className="link-td"
+              >
+                <a
+                  href="org/teams/edit/1"
+                >
+                  1
+                </a>
+              </td>
+              <td
+                className="text-right"
+              >
+                <DeleteButton
+                  aria-label="Delete team"
+                  disabled={true}
+                  onConfirm={[Function]}
+                  size="sm"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <HorizontalGroup
+          justify="flex-end"
+        >
+          <Pagination
+            currentPage={1}
+            hideWhenSinglePage={true}
+            numberOfPages={1}
+            onNavigate={[MockFunction]}
+          />
+        </HorizontalGroup>
+      </VerticalGroup>
     </div>
   </PageContents>
 </Page>

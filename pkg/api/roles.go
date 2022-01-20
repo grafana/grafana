@@ -134,6 +134,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Infrequently used",
 			Permissions: []accesscontrol.Permission{
 				{Action: ActionDatasourcesQuery},
+				{Action: ActionDatasourcesRead},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},

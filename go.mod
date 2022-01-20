@@ -53,7 +53,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/cuetsy v0.0.0-20211119211437-8c25464cc9bf
-	github.com/grafana/grafana-aws-sdk v0.7.0
+	github.com/grafana/grafana-aws-sdk v0.9.1
 	github.com/grafana/grafana-plugin-sdk-go v0.121.0
 	github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0

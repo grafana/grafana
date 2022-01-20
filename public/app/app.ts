@@ -39,7 +39,7 @@ import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import 'app/features/all';
 import { getScrollbarWidth, getStandardFieldConfigs } from '@grafana/ui';
-import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
+import { variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
@@ -65,6 +65,14 @@ import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { AngularApp } from './angular';
 import { ModalManager } from './core/services/ModalManager';
 import { initWindowRuntime } from './features/runtime/init';
+import { createQueryVariableAdapter } from './features/variables/query/adapter';
+import { createCustomVariableAdapter } from './features/variables/custom/adapter';
+import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
+import { createConstantVariableAdapter } from './features/variables/constant/adapter';
+import { createDataSourceVariableAdapter } from './features/variables/datasource/adapter';
+import { createIntervalVariableAdapter } from './features/variables/interval/adapter';
+import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
+import { createSystemVariableAdapter } from './features/variables/system/adapter';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -106,7 +114,16 @@ export class GrafanaApp {
       standardEditorsRegistry.setInit(getAllOptionEditors);
       standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
       standardTransformersRegistry.setInit(getStandardTransformers);
-      variableAdapters.setInit(getDefaultVariableAdapters);
+      variableAdapters.setInit(() => [
+        createQueryVariableAdapter(),
+        createCustomVariableAdapter(),
+        createTextBoxVariableAdapter(),
+        createConstantVariableAdapter(),
+        createDataSourceVariableAdapter(),
+        createIntervalVariableAdapter(),
+        createAdHocVariableAdapter(),
+        createSystemVariableAdapter(),
+      ]);
       monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
 
       setQueryRunnerFactory(() => new QueryRunner());
