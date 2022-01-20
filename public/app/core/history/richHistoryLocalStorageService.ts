@@ -46,14 +46,9 @@ export default class RichHistoryLocalStorageService implements RichHistoryServic
     }
   }
 
-  async addToRichHistory(
-    newRichHistory: RichHistoryQuery,
-    currentRichHistory: RichHistoryQuery[]
-  ): Promise<RichHistoryQuery[]> {
-    let updatedHistory: RichHistoryQuery[] = [newRichHistory, ...currentRichHistory];
-
+  async addToRichHistory(newRichHistory: RichHistoryQuery, currentRichHistory: RichHistoryQuery[]): Promise<void> {
     try {
-      store.setObject(RICH_HISTORY_KEY, updatedHistory);
+      store.setObject(RICH_HISTORY_KEY, currentRichHistory);
     } catch (error) {
       if (error.name === 'QuotaExceededError') {
         const storageError = new Error(`Saving rich history failed: ${error.message}`);
@@ -63,8 +58,14 @@ export default class RichHistoryLocalStorageService implements RichHistoryServic
         throw error;
       }
     }
+  }
 
-    return updatedHistory;
+  async deleteAll(): Promise<void> {
+    store.delete(RICH_HISTORY_KEY);
+  }
+
+  async deleteRichHistory(ts: number, updatedHistory: RichHistoryQuery[]): Promise<void> {
+    store.setObject(RICH_HISTORY_KEY, updatedHistory);
   }
 }
 

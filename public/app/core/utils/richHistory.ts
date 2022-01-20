@@ -76,7 +76,6 @@ export async function addToRichHistory(
     }
 
     let localStorageFull = false;
-    let updatedHistory: RichHistoryQuery[] = queriesToKeep;
 
     let newRichHistory: RichHistoryQuery = {
       queries: newQueriesToSave,
@@ -88,8 +87,10 @@ export async function addToRichHistory(
       sessionName,
     };
 
+    let updatedHistory: RichHistoryQuery[] = [newRichHistory, ...queriesToKeep];
+
     try {
-      updatedHistory = await getRichHistoryService().addToRichHistory(newRichHistory, queriesToKeep);
+      await getRichHistoryService().addToRichHistory(newRichHistory, queriesToKeep);
     } catch (error) {
       if (error.name === 'StorageFull') {
         localStorageFull = true;
@@ -108,8 +109,8 @@ export async function getRichHistory(): Promise<RichHistoryQuery[]> {
   return await getRichHistoryService().getRichHistory();
 }
 
-export function deleteAllFromRichHistory() {
-  return store.delete(RICH_HISTORY_KEY);
+export async function deleteAllFromRichHistory(): Promise<void> {
+  return getRichHistoryService().deleteAll();
 }
 
 export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
@@ -154,10 +155,13 @@ export function updateCommentInRichHistory(
   }
 }
 
-export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
+export async function deleteQueryInRichHistory(
+  richHistory: RichHistoryQuery[],
+  ts: number
+): Promise<RichHistoryQuery[]> {
   const updatedHistory = richHistory.filter((query) => query.ts !== ts);
   try {
-    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+    await getRichHistoryService().deleteRichHistory(ts, updatedHistory);
     return updatedHistory;
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));

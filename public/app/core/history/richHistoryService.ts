@@ -10,8 +10,10 @@ export default interface RichHistoryService {
   /**
    * Service can either saved newly added item or re-save everything.
    */
-  addToRichHistory(
-    newRichHistoryQuery: RichHistoryQuery,
-    allRichHistoryQueries: RichHistoryQuery[]
-  ): Promise<RichHistoryQuery[]>;
+  addToRichHistory(newRichHistoryQuery: RichHistoryQuery, allRichHistoryQueries: RichHistoryQuery[]): Promise<void>;
+
+  deleteAll(): Promise<void>;
+
+  // TODO: change "ts" to list of entries to remove
+  deleteRichHistory(ts: number, updatedHistory: RichHistoryQuery[]): Promise<void>;
 }
