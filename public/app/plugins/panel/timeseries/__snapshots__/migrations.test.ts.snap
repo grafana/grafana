@@ -566,3 +566,28 @@ Object {
   },
 }
 `;
+
+exports[`Graph Migrations x axis should hide x axis 1`] = `
+Object {
+  "defaults": Object {
+    "custom": Object {
+      "drawStyle": "points",
+      "spanNulls": false,
+    },
+  },
+  "overrides": Array [
+    Object {
+      "matcher": Object {
+        "id": "byType",
+        "options": "time",
+      },
+      "properties": Array [
+        Object {
+          "id": "custom.axisPlacement",
+          "value": "hidden",
+        },
+      ],
+    },
+  ],
+}
+`;

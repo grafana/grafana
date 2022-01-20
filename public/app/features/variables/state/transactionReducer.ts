@@ -7,12 +7,7 @@ import {
   duplicateVariable,
   removeVariable,
 } from './sharedReducer';
-
-export enum TransactionStatus {
-  NotStarted = 'Not started',
-  Fetching = 'Fetching',
-  Completed = 'Completed',
-}
+import { TransactionStatus } from '../types';
 
 export interface TransactionState {
   uid: string | undefined | null;

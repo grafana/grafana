@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -14,7 +15,7 @@ import (
 )
 
 func authorize(c *models.ReqContext, ac accesscontrol.AccessControl, user *models.SignedInUser, evaluator accesscontrol.Evaluator) {
-	injected, err := evaluator.Inject(buildScopeParams(c))
+	injected, err := evaluator.MutateScopes(c.Req.Context(), accesscontrol.ScopeInjector(buildScopeParams(c)))
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
 		return
@@ -125,9 +126,10 @@ func AuthorizeInOrgMiddleware(ac accesscontrol.AccessControl, db *sqlstore.SQLSt
 }
 
 func UseOrgFromContextParams(c *models.ReqContext) (int64, error) {
-	orgID := c.ParamsInt64(":orgId")
+	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+
 	// Special case of macaron handling invalid params
-	if orgID == 0 {
+	if orgID == 0 || err != nil {
 		return 0, models.ErrOrgNotFound
 	}
 
