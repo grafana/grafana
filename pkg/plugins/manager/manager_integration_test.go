@@ -2,9 +2,13 @@ package manager
 
 import (
 	"context"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
@@ -58,20 +62,22 @@ func TestPluginManager_int_init(t *testing.T) {
 		},
 	}
 
+	tracer := &fakeTracer{}
+
 	license := &licensing.OSSLicensingService{
 		Cfg: cfg,
 	}
 
 	hcp := httpclient.NewProvider()
-	am := azuremonitor.ProvideService(cfg, hcp)
-	cw := cloudwatch.ProvideService(cfg, cloudwatch.ProvideLogsService())
-	cm := cloudmonitoring.ProvideService(hcp)
+	am := azuremonitor.ProvideService(cfg, hcp, tracer)
+	cw := cloudwatch.ProvideService(cfg, cloudwatch.ProvideLogsService(), hcp)
+	cm := cloudmonitoring.ProvideService(hcp, tracer)
 	es := elasticsearch.ProvideService(hcp)
-	grap := graphite.ProvideService(hcp)
+	grap := graphite.ProvideService(hcp, tracer)
 	idb := influxdb.ProvideService(hcp)
-	lk := loki.ProvideService(hcp)
+	lk := loki.ProvideService(hcp, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
-	pr := prometheus.ProvideService(hcp)
+	pr := prometheus.ProvideService(hcp, tracer)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService(cfg)
 	pg := postgres.ProvideService(cfg)
@@ -228,4 +234,20 @@ func verifyPluginStaticRoutes(t *testing.T, pm *PluginManager) {
 	testAppPlugin, _ := pm.Plugin(context.Background(), "test-app")
 	assert.Contains(t, routes, "test-app")
 	assert.Equal(t, routes["test-app"].Directory, testAppPlugin.PluginDir)
+}
+
+type fakeTracer struct {
+	tracing.Tracer
+}
+
+func (ft *fakeTracer) Run(context.Context) error {
+	return nil
+}
+
+func (ft *fakeTracer) Start(ctx context.Context, _ string, _ ...trace.SpanStartOption) (context.Context, tracing.Span) {
+	return ctx, nil
+}
+
+func (ft *fakeTracer) Inject(context.Context, http.Header, tracing.Span) {
+
 }
