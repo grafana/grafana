@@ -316,7 +316,10 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 
 	ds, err := getRawDataSourceById(c.Req.Context(), cmd.Id, cmd.OrgId)
 	if err != nil {
-		return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(404, "Data source not found", nil)
+		}
+		return response.Error(500, "Failed to update datasource", err)
 	}
 
 	if ds.ReadOnly {
