@@ -91,17 +91,18 @@ func (p *teamPermissionMigrator) saveRole(sess *xorm.Session, orgID int64, name 
 
 // mapPermissionToFGAC translates the legacy membership (Member or Admin) into FGAC permissions
 func (p *teamPermissionMigrator) mapPermissionToFGAC(permission models.PermissionType, teamID int64) []accesscontrol.Permission {
+	teamIDScope := accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))
 	switch permission {
 	case 0:
-		return []accesscontrol.Permission{{Action: "teams:read", Scope: accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))}}
+		return []accesscontrol.Permission{{Action: "teams:read", Scope: teamIDScope}}
 	case models.PERMISSION_ADMIN:
 		return []accesscontrol.Permission{
-			{Action: "teams:create", Scope: accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))},
-			{Action: "teams:delete", Scope: accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))},
-			{Action: "teams:read", Scope: accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))},
-			{Action: "teams:write", Scope: accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))},
-			{Action: "teams.permissions:read", Scope: accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))},
-			{Action: "teams.permissions:write", Scope: accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))},
+			{Action: "teams:create", Scope: teamIDScope},
+			{Action: "teams:delete", Scope: teamIDScope},
+			{Action: "teams:read", Scope: teamIDScope},
+			{Action: "teams:write", Scope: teamIDScope},
+			{Action: "teams.permissions:read", Scope: teamIDScope},
+			{Action: "teams.permissions:write", Scope: teamIDScope},
 		}
 	default:
 		return []accesscontrol.Permission{}
