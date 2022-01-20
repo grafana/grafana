@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.8.4'
+grabpl_version = 'v2.8.5'
 build_image = 'grafana/build-container:1.4.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -329,7 +329,7 @@ def upload_cdn_step(edition, ver_mode):
         ])
     else:
         deps.extend([
-            'end-to-end-tests-server',
+            'grafana-server',
         ])
 
     return {
@@ -531,11 +531,11 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
         'image': 'grafana/docker-puppeteer:1.0.0',
         'depends_on': [
-            'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'grafana-server' + enterprise2_suffix(edition),
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
-            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'HOST': 'grafana-server' + enterprise2_suffix(edition),
             'PORT': port,
         },
         'failure': failure,
@@ -662,10 +662,10 @@ def e2e_tests_server_step(edition, port=3001):
     }
     if package_file_pfx:
         environment['PACKAGE_FILE'] = 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx)
-        environment['RUNDIR'] = 'e2e/tmp-{}'.format(package_file_pfx)
+        environment['RUNDIR'] = 'scripts/grafana-server/tmp-{}'.format(package_file_pfx)
 
     return {
-        'name': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+        'name': 'grafana-server' + enterprise2_suffix(edition),
         'image': build_image,
         'detach': True,
         'depends_on': [
@@ -673,7 +673,7 @@ def e2e_tests_server_step(edition, port=3001):
         ],
         'environment': environment,
         'commands': [
-            './e2e/start-server',
+            './scripts/grafana-server/start-server',
         ],
     }
 
@@ -688,7 +688,7 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
             'package',
         ],
         'environment': {
-            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'HOST': 'grafana-server' + enterprise2_suffix(edition),
         },
         'commands': [
             'apt-get install -y netcat',
