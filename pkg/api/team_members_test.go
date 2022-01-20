@@ -310,7 +310,7 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 func TestDeleteTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.hs.License = &licensingtest.ValidLicense{}
+	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
 	setupTeamTestScenario(teamMemberCount, sc.db, t)
