@@ -511,7 +511,7 @@ async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
 }
 ```
 
-For more information, refer to [Data frames]({{<relref "data-frames.md">}}).
+For more information, refer to [Data frames](data-frames.md).
 
 ### Troubleshoot plugin migration
 
