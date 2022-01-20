@@ -329,7 +329,7 @@ def upload_cdn_step(edition, ver_mode):
         ])
     else:
         deps.extend([
-            'end-to-end-tests-server',
+            'grafana-server',
         ])
 
     return {
@@ -531,11 +531,11 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
         'image': 'grafana/docker-puppeteer:1.0.0',
         'depends_on': [
-            'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'grafana-server' + enterprise2_suffix(edition),
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
-            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'HOST': 'grafana-server' + enterprise2_suffix(edition),
             'PORT': port,
         },
         'failure': failure,
@@ -665,7 +665,7 @@ def e2e_tests_server_step(edition, port=3001):
         environment['RUNDIR'] = 'e2e/tmp-{}'.format(package_file_pfx)
 
     return {
-        'name': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+        'name': 'grafana-server' + enterprise2_suffix(edition),
         'image': build_image,
         'detach': True,
         'depends_on': [
@@ -688,7 +688,7 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
             'package',
         ],
         'environment': {
-            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'HOST': 'grafana-server' + enterprise2_suffix(edition),
         },
         'commands': [
             'apt-get install -y netcat',
