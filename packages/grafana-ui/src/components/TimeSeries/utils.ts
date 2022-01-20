@@ -39,7 +39,7 @@ const defaultConfig: GraphFieldConfig = {
 };
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
-  sync: () => DashboardCursorSync;
+  sync?: () => DashboardCursorSync;
   legend?: VizLegendOptions;
 }> = ({
   frame,
@@ -408,7 +408,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     },
   };
 
-  if (sync() !== DashboardCursorSync.Off) {
+  if (sync && sync() !== DashboardCursorSync.Off) {
     const payload: DataHoverPayload = {
       point: {
         [xScaleKey]: null,
@@ -421,7 +421,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       key: '__global_',
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-          if (sync() === DashboardCursorSync.Off) {
+          if (sync && sync() === DashboardCursorSync.Off) {
             return false;
           }
 
