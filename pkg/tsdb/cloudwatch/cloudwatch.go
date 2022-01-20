@@ -61,10 +61,10 @@ const pluginID = "cloudwatch"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func ProvideService(cfg *setting.Cfg, logsService *LogsService, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*CloudWatchService, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*CloudWatchService, error) {
 	plog.Debug("initing")
 
-	executor := newExecutor(logsService, datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache())
+	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache())
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: executor,
 	})
@@ -76,28 +76,25 @@ func ProvideService(cfg *setting.Cfg, logsService *LogsService, httpClientProvid
 	}
 
 	return &CloudWatchService{
-		LogsService: logsService,
-		Cfg:         cfg,
-		Executor:    executor,
+		Cfg:      cfg,
+		Executor: executor,
 	}, nil
 }
 
 type CloudWatchService struct {
-	LogsService *LogsService
-	Cfg         *setting.Cfg
-	Executor    *cloudWatchExecutor
+	Cfg      *setting.Cfg
+	Executor *cloudWatchExecutor
 }
 
 type SessionCache interface {
 	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
-func newExecutor(logsService *LogsService, im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
+func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
 	return &cloudWatchExecutor{
-		logsService: logsService,
-		im:          im,
-		cfg:         cfg,
-		sessions:    sessions,
+		im:       im,
+		cfg:      cfg,
+		sessions: sessions,
 	}
 }
 
@@ -166,10 +163,9 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	logsService *LogsService
-	im          instancemgmt.InstanceManager
-	cfg         *setting.Cfg
-	sessions    SessionCache
+	im       instancemgmt.InstanceManager
+	cfg      *setting.Cfg
+	sessions SessionCache
 }
 
 func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginContext) (*session.Session, error) {
@@ -304,8 +300,6 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 		result, err = e.executeAnnotationQuery(ctx, model, q, req.PluginContext)
 	case "logAction":
 		result, err = e.executeLogActions(ctx, req)
-	case "liveLogAction":
-		result, err = e.executeLiveLogQuery(ctx, req)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
