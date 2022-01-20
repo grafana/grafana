@@ -116,7 +116,8 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
     if (isPmmAdmin(config.bootData.user)) {
       updateMenu();
     }
-  }, [topItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (kiosk !== KioskMode.Off) {
     return null;
