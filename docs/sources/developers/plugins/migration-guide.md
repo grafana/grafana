@@ -186,7 +186,7 @@ We strongly recommend that you not allow unsigned plugins in your Grafana instal
 
 To sign your plugin, see [Sign a plugin](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin).
 
-You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins configuration setting.](../../administration/#allow_loading_unsigned_plugins)
+You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins configuration setting.](../../administration/configuration.md#allow_loading_unsigned_plugins)
 
 ### Update react-hook-form from v6 to v7
 
@@ -423,7 +423,7 @@ While backend plugins were available as an experimental feature in previous vers
 
 Since Grafana 7.0 introduced [signing of backend plugins](../../plugins/plugin-signatures.md), community plugins won’t load by default if they’re unsigned.
 
-To learn more, refer to [Backend plugins](backend).
+To learn more, refer to [Backend plugins](backend/_index.md).
 
 ### Migrate a plugin from Angular to React
 
