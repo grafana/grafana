@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
@@ -72,16 +73,20 @@ type ReduceCommand struct {
 	Reducer     string
 	VarToReduce string
 	refID       string
+	Mode        string
 }
 
 // NewReduceCommand creates a new ReduceCMD.
-func NewReduceCommand(refID, reducer, varToReduce string) *ReduceCommand {
-	// TODO: validate reducer here, before execution
+func NewReduceCommand(refID, reducer, varToReduce string, mode string) (*ReduceCommand, error) {
+	if len(mode) > 0 && strings.EqualFold(mode, mathexp.ReduceModeDropNN) {
+		return nil, fmt.Errorf("reduce command does not support mode %s. Only mode %s is supported", mode, mathexp.ReduceModeDropNN)
+	}
 	return &ReduceCommand{
 		Reducer:     reducer,
 		VarToReduce: varToReduce,
 		refID:       refID,
-	}
+		Mode:        mode,
+	}, nil
 }
 
 // UnmarshalReduceCommand creates a MathCMD from Grafana's frontend query.
@@ -105,7 +110,12 @@ func UnmarshalReduceCommand(rn *rawNode) (*ReduceCommand, error) {
 		return nil, fmt.Errorf("expected reducer to be a string, got %T for refId %v", rawReducer, rn.RefID)
 	}
 
-	return NewReduceCommand(rn.RefID, redFunc, varToReduce), nil
+	modeValue, ok := rn.Query["mode"]
+	mode := ""
+	if ok {
+		mode = modeValue.(string)
+	}
+	return NewReduceCommand(rn.RefID, redFunc, varToReduce, mode)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -123,7 +133,7 @@ func (gr *ReduceCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathex
 		if !ok {
 			return newRes, fmt.Errorf("can only reduce type series, got type %v", val.Type())
 		}
-		num, err := series.Reduce(gr.refID, gr.Reducer, "")
+		num, err := series.Reduce(gr.refID, gr.Reducer, gr.Mode)
 		if err != nil {
 			return newRes, err
 		}
