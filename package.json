@@ -7,7 +7,7 @@
   "repository": "github:grafana/grafana",
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
-    "build": "NODE_ENV=production && webpack --config scripts/webpack/webpack.prod.js",
+    "build": "NODE_ENV=production GENERATE_SOURCEMAP=false webpack --config scripts/webpack/webpack.prod.js",
     "build-max-memory": "NODE_OPTIONS='--max-old-space-size=4096' && yarn build",
     "build:nominify": "webpack --config scripts/webpack/webpack.prod.js --env noMinify=1",
     "dev": "webpack --progress --color --config scripts/webpack/webpack.dev.js",
