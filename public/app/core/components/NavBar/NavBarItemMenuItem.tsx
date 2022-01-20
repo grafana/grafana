@@ -62,7 +62,7 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
         {rendered}
       </li>
       {item.value.highlightText && (
-        <li style={{ padding: '8px' }}>
+        <li className={styles.upgradeBox}>
           <UpgradeBox text={item.value.highlightText} />
         </li>
       )}
@@ -90,6 +90,9 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean)
         outline-offset: -2px;
         transition: none;
       }
+    `,
+    upgradeBox: css`
+      padding: ${theme.spacing(1)};
     `,
   };
 }

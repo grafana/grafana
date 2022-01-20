@@ -27,14 +27,8 @@ interface AppWrapperState {
 }
 
 /** Used by enterprise */
-export type NavBarExtraEvents = {
-  id: string;
-  events: Record<string, () => void>;
-};
-
 let bodyRenderHooks: ComponentType[] = [];
 let pageBanners: ComponentType[] = [];
-let navBarExtraEvents: NavBarExtraEvents[] = [];
 
 export function addBodyRenderHook(fn: ComponentType) {
   bodyRenderHooks.push(fn);
@@ -42,10 +36,6 @@ export function addBodyRenderHook(fn: ComponentType) {
 
 export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
-}
-
-export function addNavBarExtraEvents(fn: NavBarExtraEvents) {
-  navBarExtraEvents.push(fn);
 }
 
 export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
@@ -115,11 +105,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                   <GlobalStyles />
                   <div className="grafana-app">
                     <Router history={locationService.getHistory()}>
-                      {newNavigationEnabled ? (
-                        <NavBarNext extraEvents={navBarExtraEvents} />
-                      ) : (
-                        <NavBar extraEvents={navBarExtraEvents} />
-                      )}
+                      {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
                       <main className="main-view">
                         {pageBanners.map((Banner, index) => (
                           <Banner key={index.toString()} />

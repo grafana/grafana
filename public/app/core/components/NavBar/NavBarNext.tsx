@@ -7,7 +7,6 @@ import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
 import config from 'app/core/config';
 import { KioskMode } from 'app/types';
-import { NavBarExtraEvents } from 'app/AppWrapper';
 import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { NavBarSection } from './NavBarSection';
@@ -27,11 +26,7 @@ const searchItem: NavModelItem = {
   icon: 'search',
 };
 
-export interface Props {
-  extraEvents?: NavBarExtraEvents[];
-}
-
-export const NavBarNext = React.memo(({ extraEvents }: Props): JSX.Element | null => {
+export const NavBarNext = React.memo(() => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
@@ -76,11 +71,7 @@ export const NavBarNext = React.memo(({ extraEvents }: Props): JSX.Element | nul
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
-            link={{
-              ...link,
-              subTitle: undefined,
-              onClick: undefined,
-            }}
+            link={{ ...link, subTitle: undefined, onClick: undefined }}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}

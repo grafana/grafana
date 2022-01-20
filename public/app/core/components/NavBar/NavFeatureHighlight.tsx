@@ -8,52 +8,17 @@ export interface Props {
 }
 
 export const NavFeatureHighlight = ({ children }: Props): JSX.Element => {
-  const styles = useStyles2(getIconStyles);
+  const styles = useStyles2(getStyles);
   return (
-    <div className={styles.icon}>
+    <div>
       {children}
       <span className={styles.highlight} />
     </div>
   );
 };
 
-const getIconStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    icon: css`
-      position: relative;
-
-      :hover > span {
-        visibility: visible;
-        opacity: 1;
-      }
-    `,
-    badge: css`
-      top: 50%;
-      left: 100%;
-      transform: translate(0, -50%);
-      padding: 4px 8px;
-      color: ${theme.colors.text.maxContrast};
-      background-color: ${theme.colors.success.main};
-      border-radius: 2px;
-      position: absolute;
-      visibility: hidden;
-      opacity: 0;
-      transition: opacity ${theme.transitions.duration.shorter};
-      line-height: 1;
-
-      &::before {
-        content: '';
-        position: absolute;
-        width: 12px;
-        height: 12px;
-        left: -${theme.spacing(1)};
-        top: 50%;
-        opacity: 1;
-        transform: translate(50%, -50%) rotate(-45deg);
-        background-color: ${theme.colors.success.main};
-        z-index: -1;
-      }
-    `,
     highlight: css`
       background-color: ${theme.colors.success.main};
       border-radius: 50%;
