@@ -13,8 +13,8 @@ This guide helps you identify the steps you need to take based on the Grafana ve
 ## Table of contents
 
 - [From version 8.3.x to 8.4.0](#from-version-83x-to-84x)
-  - [Value Mapping Editor has been removed from @grafana-ui package](#value-mapping-editor-has-been-removed-from-grafana-ui-package)
-- [From version 7.x.x to 8.0.0](#from-version-7xx-to-800)
+  - [Value Mapping Editor has been removed from @grafana-ui package](#value-mapping-editor-has-been-removed-from-grafana-ui-library)
+- [From version 7.x.x to 8.0.0](#from-version-7xx-to-8xx)
   - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
     - [1. Add dependency on grafana-plugin-sdk-go](#1-add-dependency-on-grafana-plugin-sdk-go)
     - [2. Update the way you bootstrap your plugin](#2-update-the-way-you-bootstrap-your-plugin)
@@ -43,7 +43,7 @@ This section explains how to migrate Grafana v8.3.x plugins to the updated plugi
 
 Removed due to being an internal component.
 
-## From version 7.x.x to 8.0.0
+## From version 7.x.x to 8.x.x
 
 This section explains how to migrate Grafana v7.x.x plugins to the updated plugin system available in Grafana v8.x.x. Depending on your plugin, you need to perform one or more of the following steps. We have documented the breaking changes in Grafana v8.x.x and the steps you need to take to upgrade your plugin.
 
