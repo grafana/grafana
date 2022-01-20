@@ -1,13 +1,14 @@
-import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
 import { QueryEditorProps, toOption } from '@grafana/data';
 import { Button, Select } from '@grafana/ui';
-import { MetricQueryEditor, SLOQueryEditor, QueryEditorRow } from './';
-import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery, EditorMode } from '../types';
-import { SELECT_WIDTH, QUERY_TYPES } from '../constants';
+import React, { PureComponent } from 'react';
+
+import { QUERY_TYPES, SELECT_WIDTH } from '../constants';
+import CloudMonitoringDatasource from '../datasource';
+import { CloudMonitoringQuery, EditorMode, MetricQuery, QueryType, SLOQuery } from '../types';
+import { MetricQueryEditor, QueryEditorRow, SLOQueryEditor } from './';
 import { defaultQuery } from './MetricQueryEditor';
 import { defaultQuery as defaultSLOQuery } from './SLO/SLOQueryEditor';
-import CloudMonitoringDatasource from '../datasource';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery>;
 
@@ -76,6 +77,7 @@ export class QueryEditor extends PureComponent<Props> {
         >
           <Select
             menuShouldPortal
+            aria-label="query-type"
             width={SELECT_WIDTH}
             value={queryType}
             options={QUERY_TYPES}

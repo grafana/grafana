@@ -1,6 +1,7 @@
-import React, { PureComponent } from 'react';
-import { Select, InlineField, Alert } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps, onUpdateDatasourceJsonDataOptionSelect } from '@grafana/data';
+import { Alert, InlineField, Select } from '@grafana/ui';
+import React, { PureComponent } from 'react';
+
 import { AuthType, authTypes, CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types';
 import { JWTConfig } from './JWTConfig';
 
@@ -22,6 +23,7 @@ export class ConfigEditor extends PureComponent<Props> {
           <InlineField label="Type" labelWidth={20}>
             <Select
               menuShouldPortal
+              aria-label="Type"
               width={40}
               value={authTypes.find((x) => x.value === jsonData.authenticationType) || authTypes[0]}
               options={authTypes}

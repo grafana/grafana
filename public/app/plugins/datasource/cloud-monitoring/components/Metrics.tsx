@@ -1,14 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { startCase, uniqBy } from 'lodash';
-
-import { Select, useTheme2, getSelectStyles, useStyles2 } from '@grafana/ui';
-import { TemplateSrv } from '@grafana/runtime';
-import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { QueryEditorRow, QueryEditorField } from '.';
-import CloudMonitoringDatasource from '../datasource';
-import { INNER_LABEL_WIDTH, LABEL_WIDTH, SELECT_WIDTH } from '../constants';
-import { MetricDescriptor } from '../types';
 import { css } from '@emotion/css';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
+import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
+import { startCase, uniqBy } from 'lodash';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { QueryEditorField, QueryEditorRow } from '.';
+import { INNER_LABEL_WIDTH, LABEL_WIDTH, SELECT_WIDTH } from '../constants';
+import CloudMonitoringDatasource from '../datasource';
+import { MetricDescriptor } from '../types';
 
 export interface Props {
   onChange: (metricDescriptor: MetricDescriptor) => void;
@@ -149,6 +149,7 @@ export function Metrics(props: Props) {
               ...services,
             ]}
             placeholder="Select Services"
+            aria-label="service"
           ></Select>
         </QueryEditorField>
         <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH}>
@@ -165,6 +166,7 @@ export function Metrics(props: Props) {
               ...metrics,
             ]}
             placeholder="Select Metric"
+            aria-label="select-metric"
           ></Select>
         </QueryEditorField>
       </QueryEditorRow>

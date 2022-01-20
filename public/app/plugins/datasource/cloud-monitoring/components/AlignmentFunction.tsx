@@ -1,9 +1,10 @@
-import React, { FC, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import { MetricQuery } from '../types';
-import { getAlignmentPickerData } from '../functions';
+import React, { FC, useMemo } from 'react';
+
 import { SELECT_WIDTH } from '../constants';
+import { getAlignmentPickerData } from '../functions';
+import { MetricQuery } from '../types';
 
 export interface Props {
   onChange: (query: MetricQuery) => void;
@@ -36,6 +37,7 @@ export const AlignmentFunction: FC<Props> = ({ query, templateVariableOptions, o
         },
       ]}
       placeholder="Select Alignment"
+      aria-label="alignment-function"
     ></Select>
   );
 };

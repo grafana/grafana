@@ -1,10 +1,10 @@
-import React, { FC, useMemo } from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
+import React, { FC, useMemo } from 'react';
+
 import { QueryEditorField } from '.';
 import { getAggregationOptionsByMetric } from '../functions';
-import { MetricDescriptor, ValueTypes, MetricKind } from '../types';
+import { MetricDescriptor, MetricKind, ValueTypes } from '../types';
 
 export interface Props {
   onChange: (metricDescriptor: string) => void;
@@ -37,6 +37,7 @@ export const Aggregation: FC<Props> = (props) => {
           },
         ]}
         placeholder="Select Reducer"
+        aria-label="group-by-function"
       />
     </QueryEditorField>
   );

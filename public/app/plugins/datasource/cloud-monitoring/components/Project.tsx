@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import CloudMonitoringDatasource from '../datasource';
-import { SELECT_WIDTH } from '../constants';
+import React, { useEffect, useMemo, useState } from 'react';
+
 import { QueryEditorRow } from '.';
+import { SELECT_WIDTH } from '../constants';
+import CloudMonitoringDatasource from '../datasource';
 
 export interface Props {
   datasource: CloudMonitoringDatasource;
@@ -41,6 +42,7 @@ export function Project({ projectName, datasource, onChange, templateVariableOpt
         options={projectsWithTemplateVariables}
         value={{ value: projectName, label: projectName }}
         placeholder="Select Project"
+        aria-label="project"
       />
     </QueryEditorRow>
   );

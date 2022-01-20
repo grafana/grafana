@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+import React, { useEffect, useState } from 'react';
+
 import { QueryEditorRow } from '..';
+import { SELECT_WIDTH } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
 import { SLOQuery } from '../../types';
-import { SELECT_WIDTH } from '../../constants';
 
 export interface Props {
   onChange: (query: SLOQuery) => void;
@@ -37,6 +38,7 @@ export const SLO: React.FC<Props> = ({ query, templateVariableOptions, onChange,
     <QueryEditorRow label="SLO">
       <Select
         menuShouldPortal
+        aria-label="slo"
         width={SELECT_WIDTH}
         allowCustomValue
         value={query?.sloId && { value: query?.sloId, label: query?.sloName || query?.sloId }}

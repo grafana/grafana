@@ -1,6 +1,7 @@
-import React, { FunctionComponent, useState } from 'react';
-import { debounce } from 'lodash';
 import { Input } from '@grafana/ui';
+import { debounce } from 'lodash';
+import React, { FunctionComponent, useState } from 'react';
+
 import { QueryEditorRow } from '.';
 import { INPUT_WIDTH } from '../constants';
 
@@ -21,7 +22,7 @@ export const AliasBy: FunctionComponent<Props> = ({ value = '', onChange }) => {
 
   return (
     <QueryEditorRow label="Alias by">
-      <Input width={INPUT_WIDTH} value={alias} onChange={onChange} />
+      <Input aria-label="alias-by" width={INPUT_WIDTH} value={alias} onChange={onChange} />
     </QueryEditorRow>
   );
 };
