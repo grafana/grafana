@@ -12,6 +12,9 @@ import (
 // Bind deserializes JSON payload from the request
 func Bind(req *http.Request, v interface{}) error {
 	if req.Body != nil {
+		if req.Header.Get("Content-type") != "application/json" {
+			return errors.New("bad content type")
+		}
 		defer func() { _ = req.Body.Close() }()
 		err := json.NewDecoder(req.Body).Decode(v)
 		if err != nil && !errors.Is(err, io.EOF) {
