@@ -135,7 +135,6 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			PluginDir: pluginDir,
 			Class:     class,
 		}
-		l.setDefaults(plugin)
 		plugin.SetLogger(l.log.New("pluginID", plugin.ID))
 
 		sig, err := signature.Calculate(l.log, plugin)
@@ -203,6 +202,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	}
 
 	for _, p := range verifiedPlugins {
+		l.setDefaults(p)
 		err := l.pluginInitializer.Initialize(ctx, p)
 		if err != nil {
 			return nil, err
@@ -273,7 +273,7 @@ func (l *Loader) setDefaults(p *plugins.Plugin) {
 
 	if p.IsApp() {
 		for _, child := range p.Children {
-			setChildModule(p, child)
+			setPathsBasedOnApp(p, child)
 		}
 
 		// slugify pages
@@ -310,7 +310,7 @@ func setModule(p *plugins.Plugin) {
 	p.BaseURL = path.Join("public/plugins", p.ID)
 }
 
-func setChildModule(parent *plugins.Plugin, child *plugins.Plugin) {
+func setPathsBasedOnApp(parent *plugins.Plugin, child *plugins.Plugin) {
 	appSubPath := strings.ReplaceAll(strings.Replace(child.PluginDir, parent.PluginDir, "", 1), "\\", "/")
 	child.IncludedInAppID = parent.ID
 	child.BaseURL = parent.BaseURL
