@@ -1,11 +1,11 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen, act } from '@testing-library/react';
+import selectEvent from 'react-select-event';
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import '@testing-library/jest-dom';
 import { CloudWatchMetricsQuery } from '../../types';
 import userEvent from '@testing-library/user-event';
 import { MetricStatEditor } from '..';
-import selectEvent from 'react-select-event';
 
 const ds = setupMockedDataSource({
   variables: [],
