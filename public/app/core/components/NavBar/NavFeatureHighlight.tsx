@@ -5,15 +5,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 export interface Props {
   children: JSX.Element;
-  text: string;
 }
 
-export const NavFeatureHighlight = ({ children, text }: Props): JSX.Element => {
+export const NavFeatureHighlight = ({ children }: Props): JSX.Element => {
   const styles = useStyles2(getIconStyles);
   return (
     <div className={styles.icon}>
       {children}
-      <span className={styles.badge}>{text}</span>
       <span className={styles.highlight} />
     </div>
   );

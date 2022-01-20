@@ -29,7 +29,7 @@ export function NavBarItemWithoutMenu({
   const styles = getNavBarItemWithoutMenuStyles(theme, isActive);
 
   const content = highlightText ? (
-    <NavFeatureHighlight text={highlightText}>
+    <NavFeatureHighlight>
       <span className={styles.icon}>{children}</span>
     </NavFeatureHighlight>
   ) : (
