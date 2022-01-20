@@ -35,8 +35,9 @@ export const RolePicker = ({
   const [query, setQuery] = useState('');
 
   useEffect(() => {
+    setSelectedBuiltInRole(builtInRole);
     setSelectedRoles(appliedRoles);
-  }, [appliedRoles]);
+  }, [appliedRoles, builtInRole]);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {

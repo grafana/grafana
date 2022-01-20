@@ -85,7 +85,13 @@ export class UserOrgs extends PureComponent<Props, State> {
               </Button>
             )}
           </div>
-          <AddToOrgModal isOpen={showAddOrgModal} onOrgAdd={onOrgAdd} onDismiss={this.dismissOrgAddModal} />
+          <AddToOrgModal
+            user={user}
+            userOrgs={orgs}
+            isOpen={showAddOrgModal}
+            onOrgAdd={onOrgAdd}
+            onDismiss={this.dismissOrgAddModal}
+          />
         </div>
       </>
     );
@@ -250,9 +256,9 @@ const getAddToOrgModalStyles = stylesFactory(() => ({
 
 interface AddToOrgModalProps {
   isOpen: boolean;
-
+  user?: UserDTO;
+  userOrgs: UserOrg[];
   onOrgAdd(orgId: number, role: string): void;
-
   onDismiss?(): void;
 }
 
@@ -264,11 +270,12 @@ interface AddToOrgModalState {
 export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgModalState> {
   state: AddToOrgModalState = {
     selectedOrg: null,
-    role: OrgRole.Admin,
+    role: OrgRole.Viewer,
   };
 
   onOrgSelect = (org: OrgSelectItem) => {
-    this.setState({ selectedOrg: org.value! });
+    const userOrg = this.props.userOrgs.find((userOrg) => userOrg.orgId === org.value?.id);
+    this.setState({ selectedOrg: org.value!, role: userOrg?.role || OrgRole.Viewer });
   };
 
   onOrgRoleChange = (newRole: OrgRole) => {
@@ -289,8 +296,8 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
   };
 
   render() {
-    const { isOpen } = this.props;
-    const { role } = this.state;
+    const { isOpen, user } = this.props;
+    const { role, selectedOrg } = this.state;
     const styles = getAddToOrgModalStyles();
     return (
       <Modal
@@ -304,7 +311,17 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
           <OrgPicker inputId="new-org-input" onSelected={this.onOrgSelect} autoFocus />
         </Field>
         <Field label="Role">
-          <OrgRolePicker inputId="new-org-role-input" value={role} onChange={this.onOrgRoleChange} />
+          {contextSrv.accessControlEnabled() ? (
+            <UserRolePicker
+              userId={user?.id || 0}
+              orgId={selectedOrg?.id}
+              builtInRole={role}
+              onBuiltinRoleChange={this.onOrgRoleChange}
+              builtinRolesDisabled={false}
+            />
+          ) : (
+            <OrgRolePicker inputId="new-org-role-input" value={role} onChange={this.onOrgRoleChange} />
+          )}
         </Field>
         <Modal.ButtonRow>
           <HorizontalGroup spacing="md" justify="center">
