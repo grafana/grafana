@@ -4,6 +4,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 import {
+  HideableFieldConfig,
   LegendDisplayMode,
   OptionsWithLegend,
   OptionsWithTooltip,
@@ -52,4 +53,12 @@ export const defaultPanelOptions: PanelOptions = {
     mode: TooltipDisplayMode.Multi,
     sort: SortOrder.None,
   },
+};
+
+export interface PanelFieldConfig extends HideableFieldConfig {
+  // TODO points vs lines
+}
+
+export const defaultPanelFieldConfig: PanelFieldConfig = {
+  // default to points?
 };
