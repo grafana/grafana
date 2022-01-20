@@ -13,7 +13,7 @@ This guide helps you identify the steps you need to take based on the Grafana ve
 ## Table of contents
 
 - [From version 8.3.x to 8.4.0](#from-version-83x-to-84x)
-  - [Value Mapping Editor has been removed from @grafana-ui package](#value-mapping-editor-has-been-removed-from-@grafana-ui-package)
+  - [Value Mapping Editor has been removed from @grafana-ui package](#value-mapping-editor-has-been-removed-from-grafana-ui-package)
 - [From version 7.x.x to 8.0.0](#from-version-7xx-to-800)
   - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
     - [1. Add dependency on grafana-plugin-sdk-go](#1-add-dependency-on-grafana-plugin-sdk-go)
@@ -43,7 +43,7 @@ This section explains how to migrate Grafana v8.3.x plugins to the updated plugi
 
 Removed due to being an internal component.
 
-## From version 7.x.x to 8.x.x
+## From version 7.x.x to 8.0.0
 
 This section explains how to migrate Grafana v7.x.x plugins to the updated plugin system available in Grafana v8.x.x. Depending on your plugin, you need to perform one or more of the following steps. We have documented the breaking changes in Grafana v8.x.x and the steps you need to take to upgrade your plugin.
 
@@ -387,7 +387,7 @@ const themeColor = getColorForTheme(color, theme);
 
 ```
 
-## From version 6.x.x to 7.x.x
+## From version 6.x.x to 7.0.0
 
 ### What's new in Grafana 7.0?
 
@@ -511,8 +511,8 @@ async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
 }
 ```
 
-For more information, refer to [Data frames]({{< relref "data-frames.md">}}).
+For more information, refer to [Data frames]({{<relref "data-frames.md">}}).
 
 ### Troubleshoot plugin migration
 
-As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signatures.md#allow-unsigned-plugins" >}}).
+As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{<relref "../../plugins/plugin-signatures.md#allow-unsigned-plugins">}}).
