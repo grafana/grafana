@@ -1,20 +1,21 @@
-import React, { ChangeEvent } from 'react';
-import { InlineField, TextArea } from '@grafana/ui';
+import React from 'react';
+import { CodeEditor, InlineField } from '@grafana/ui';
 import { EditorProps } from '../QueryEditor';
 
 export const CSVContentEditor = ({ onChange, query }: EditorProps) => {
-  const onContent = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    onChange({ ...query, csvContent: e.currentTarget.value });
+  const onContent = (v: string) => {
+    onChange({ ...query, csvContent: v });
   };
 
   return (
-    <InlineField label="CSV" labelWidth={14}>
-      <TextArea
-        width="100%"
-        rows={10}
+    <InlineField label="CSV" labelWidth={14} grow>
+      <CodeEditor
+        language="csv"
+        value={query.csvContent ?? ''}
         onBlur={onContent}
-        placeholder="CSV content"
-        defaultValue={query.csvContent ?? ''}
+        width="100%"
+        height="200px"
+        showMiniMap={false}
       />
     </InlineField>
   );
