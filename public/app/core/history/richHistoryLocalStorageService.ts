@@ -46,7 +46,7 @@ export default class RichHistoryLocalStorageService implements RichHistoryServic
     }
   }
 
-  async addToRichHistory(newRichHistory: RichHistoryQuery, currentRichHistory: RichHistoryQuery[]): Promise<void> {
+  async addToRichHistory(currentRichHistory: RichHistoryQuery[]): Promise<void> {
     try {
       store.setObject(RICH_HISTORY_KEY, currentRichHistory);
     } catch (error) {
@@ -64,7 +64,15 @@ export default class RichHistoryLocalStorageService implements RichHistoryServic
     store.delete(RICH_HISTORY_KEY);
   }
 
-  async deleteRichHistory(ts: number, updatedHistory: RichHistoryQuery[]): Promise<void> {
+  async deleteRichHistory(updatedHistory: RichHistoryQuery[]): Promise<void> {
+    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+  }
+
+  async updateStarred(updatedHistory: RichHistoryQuery[]): Promise<void> {
+    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+  }
+
+  async updateComment(updatedHistory: RichHistoryQuery[]): Promise<void> {
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
   }
 }

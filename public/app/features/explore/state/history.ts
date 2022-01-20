@@ -28,10 +28,10 @@ export const updateRichHistory = (ts: number, property: string, updatedProperty?
     // Side-effect: Saving rich history in localstorage
     let nextRichHistory;
     if (property === 'starred') {
-      nextRichHistory = updateStarredInRichHistory(getState().explore.richHistory, ts);
+      nextRichHistory = await updateStarredInRichHistory(getState().explore.richHistory, ts);
     }
     if (property === 'comment') {
-      nextRichHistory = updateCommentInRichHistory(getState().explore.richHistory, ts, updatedProperty);
+      nextRichHistory = await updateCommentInRichHistory(getState().explore.richHistory, ts, updatedProperty);
     }
     if (property === 'delete') {
       nextRichHistory = await deleteQueryInRichHistory(getState().explore.richHistory, ts);

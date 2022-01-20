@@ -7,13 +7,13 @@ export default interface RichHistoryService {
 
   checkLimits(queriesToKeep: RichHistoryQuery[]): Promise<void>;
 
-  /**
-   * Service can either saved newly added item or re-save everything.
-   */
-  addToRichHistory(newRichHistoryQuery: RichHistoryQuery, allRichHistoryQueries: RichHistoryQuery[]): Promise<void>;
+  addToRichHistory(updatedHistory: RichHistoryQuery[]): Promise<void>;
 
   deleteAll(): Promise<void>;
 
-  // TODO: change "ts" to list of entries to remove
-  deleteRichHistory(ts: number, updatedHistory: RichHistoryQuery[]): Promise<void>;
+  deleteRichHistory(updatedHistory: RichHistoryQuery[]): Promise<void>;
+
+  updateStarred(updatedHistory: RichHistoryQuery[]): Promise<void>;
+
+  updateComment(updatedHistory: RichHistoryQuery[]): Promise<void>;
 }

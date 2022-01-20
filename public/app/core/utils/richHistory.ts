@@ -3,7 +3,6 @@ import { isEqual, omit } from 'lodash';
 
 // Services & Utils
 import { DataQuery, DataSourceApi, dateTimeFormat, urlUtil, ExploreUrlState } from '@grafana/data';
-import store from 'app/core/store';
 import { dispatch } from 'app/store/store';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
@@ -13,7 +12,6 @@ import { RichHistoryQuery } from 'app/types/explore';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getRichHistoryService } from '../history/richHistoryServiceProvider';
-import { RICH_HISTORY_KEY } from '../history/richHistoryLocalStorageService';
 
 export const RICH_HISTORY_SETTING_KEYS = {
   retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
@@ -90,7 +88,7 @@ export async function addToRichHistory(
     let updatedHistory: RichHistoryQuery[] = [newRichHistory, ...queriesToKeep];
 
     try {
-      await getRichHistoryService().addToRichHistory(newRichHistory, queriesToKeep);
+      await getRichHistoryService().addToRichHistory(updatedHistory);
     } catch (error) {
       if (error.name === 'StorageFull') {
         localStorageFull = true;
@@ -113,19 +111,20 @@ export async function deleteAllFromRichHistory(): Promise<void> {
   return getRichHistoryService().deleteAll();
 }
 
-export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
+export async function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
+  let updatedQuery;
   const updatedHistory = richHistory.map((query) => {
     /* Timestamps are currently unique - we can use them to identify specific queries */
     if (query.ts === ts) {
       const isStarred = query.starred;
-      const updatedQuery = Object.assign({}, query, { starred: !isStarred });
+      updatedQuery = Object.assign({}, query, { starred: !isStarred });
       return updatedQuery;
     }
     return query;
   });
 
   try {
-    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+    await getRichHistoryService().updateStarred(updatedHistory);
     return updatedHistory;
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
@@ -133,21 +132,22 @@ export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: 
   }
 }
 
-export function updateCommentInRichHistory(
+export async function updateCommentInRichHistory(
   richHistory: RichHistoryQuery[],
   ts: number,
   newComment: string | undefined
 ) {
+  let updatedQuery;
   const updatedHistory = richHistory.map((query) => {
     if (query.ts === ts) {
-      const updatedQuery = Object.assign({}, query, { comment: newComment });
+      updatedQuery = Object.assign({}, query, { comment: newComment });
       return updatedQuery;
     }
     return query;
   });
 
   try {
-    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+    await getRichHistoryService().updateComment(updatedHistory);
     return updatedHistory;
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
@@ -161,7 +161,7 @@ export async function deleteQueryInRichHistory(
 ): Promise<RichHistoryQuery[]> {
   const updatedHistory = richHistory.filter((query) => query.ts !== ts);
   try {
-    await getRichHistoryService().deleteRichHistory(ts, updatedHistory);
+    await getRichHistoryService().deleteRichHistory(updatedHistory);
     return updatedHistory;
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));

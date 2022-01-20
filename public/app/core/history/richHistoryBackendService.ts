@@ -6,9 +6,7 @@ export default class RichHistoryBackendService implements RichHistoryService {
     return [];
   }
 
-  addToRichHistory(newRichHistory: RichHistoryQuery, currentRichHistory: RichHistoryQuery[]): Promise<void> {
-    return Promise.resolve(undefined);
-  }
+  async addToRichHistory(updatedHistory: RichHistoryQuery[]): Promise<void> {}
 
   checkLimits(queriesToKeep: RichHistoryQuery[]): Promise<void> {
     return Promise.resolve(undefined);
@@ -18,11 +16,11 @@ export default class RichHistoryBackendService implements RichHistoryService {
     return Promise.resolve(richHistory);
   }
 
-  async deleteAll(): Promise<void> {
-    return;
-  }
+  async deleteAll(): Promise<void> {}
 
-  async deleteRichHistory(ts: number, updatedHistory: RichHistoryQuery[]): Promise<void> {
-    return;
-  }
+  async deleteRichHistory(updatedHistory: RichHistoryQuery[]): Promise<void> {}
+
+  async updateComment(updatedHistory: RichHistoryQuery[]): Promise<void> {}
+
+  async updateStarred(updatedHistory: RichHistoryQuery[]): Promise<void> {}
 }
