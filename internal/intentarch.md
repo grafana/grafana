@@ -2,6 +2,8 @@
 
 Grafana's experimental Intent API is an enormous project. To help keep discussion and collaboration broadly aligned, this document contains a rough, handwavy system diagram indicating completed and planned dependencies between major parts.
 
+TODO diagram
+
 ## Definitions
 
 ### Component
@@ -40,7 +42,7 @@ Examples of service groups:
 - **`coreschema`**
   - This group contains all the components that are sources of core schemas - those that are known at compile time.
   - **Conditions**:
-    - References `github.com/grafana/grafana/internal/schema/di.Collector`
+    - References `github.com/grafana/grafana/pkg/schema.CoreRegistry`
   - **Import denylist**:
     - imports `github.com/grafana/grafana/internal/service/client`
 - **`service`**
