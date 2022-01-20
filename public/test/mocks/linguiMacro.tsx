@@ -15,3 +15,7 @@ export const Select: React.FC = () => {
 export const SelectOrdinal: React.FC = () => {
   throw new Error('SelectOrdinal mock not implemented yet');
 };
+
+export const t = (msg: string | { message: string }) => {
+  return typeof msg === 'string' ? msg : msg.message;
+};

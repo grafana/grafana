@@ -6,8 +6,6 @@ import createMockDatasource from '../../__mocks__/datasource';
 import { AzureMonitorQuery, AzureQueryType } from '../../types';
 import { select } from 'react-select-event';
 import * as ui from '@grafana/ui';
-// eslint-disable-next-line lodash/import-scope
-import _ from 'lodash';
 
 // Have to mock CodeEditor because it doesnt seem to work in tests???
 jest.mock('@grafana/ui', () => ({
@@ -15,11 +13,6 @@ jest.mock('@grafana/ui', () => ({
   CodeEditor: function CodeEditor({ value, onSave }: { value: string; onSave: (newQuery: string) => void }) {
     return <input data-testid="mockeditor" value={value} onChange={(event) => onSave(event.target.value)} />;
   },
-}));
-
-jest.mock('lodash', () => ({
-  ...jest.requireActual<typeof _>('lodash'),
-  debounce: jest.fn((fn: unknown) => fn),
 }));
 
 describe('VariableEditor:', () => {
@@ -141,7 +134,6 @@ describe('VariableEditor:', () => {
         } as AzureMonitorQuery,
         onChange: jest.fn(),
         datasource: createMockDatasource(),
-        debounceTime: 1,
       };
       render(<VariableEditor {...props} />);
       await waitFor(() => screen.queryByText('Grafana template variable function'));

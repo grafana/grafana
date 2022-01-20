@@ -108,6 +108,11 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 	whereConditions = append(whereConditions, "org_user.org_id = ?")
 	whereParams = append(whereParams, query.OrgId)
 
+	if query.UserID != 0 {
+		whereConditions = append(whereConditions, "org_user.user_id = ?")
+		whereParams = append(whereParams, query.UserID)
+	}
+
 	// TODO: add to chore, for cleaning up after we have created
 	// service accounts table in the modelling
 	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))

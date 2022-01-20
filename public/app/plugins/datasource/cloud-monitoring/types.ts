@@ -53,6 +53,11 @@ export interface VariableQueryData {
   loading: boolean;
 }
 
+export interface Aggregation {
+  crossSeriesReducer?: string;
+  groupBys?: string[];
+}
+
 export enum QueryType {
   METRICS = 'metrics',
   SLO = 'slo',

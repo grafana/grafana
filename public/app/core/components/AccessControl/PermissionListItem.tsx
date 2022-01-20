@@ -5,22 +5,21 @@ import { Button, Icon, Select, Tooltip } from '@grafana/ui';
 interface Props {
   item: ResourcePermission;
   permissionLevels: string[];
-  canRemove: boolean;
+  canSet: boolean;
   onRemove: (item: ResourcePermission) => void;
   onChange: (item: ResourcePermission, permission: string) => void;
 }
 
-export const PermissionListItem = ({ item, permissionLevels, canRemove, onRemove, onChange }: Props) => (
+export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, onChange }: Props) => (
   <tr>
     <td style={{ width: '1%' }}>{getAvatar(item)}</td>
     <td style={{ width: '90%' }}>{getDescription(item)}</td>
-    <td />
-    <td className="query-keyword">Can</td>
     <td>
       <div className="gf-form">
         <Select
           className="width-20"
           menuShouldPortal
+          disabled={!canSet || !item.isManaged}
           onChange={(p) => onChange(item, p.value!)}
           value={permissionLevels.find((p) => p === item.permission)}
           options={permissionLevels.map((p) => ({ value: p, label: p }))}
@@ -38,7 +37,7 @@ export const PermissionListItem = ({ item, permissionLevels, canRemove, onRemove
           size="sm"
           icon="times"
           variant="destructive"
-          disabled={!canRemove}
+          disabled={!canSet}
           onClick={() => onRemove(item)}
           aria-label={`Remove permission for ${getName(item)}`}
         />
