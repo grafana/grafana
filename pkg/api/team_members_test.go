@@ -112,7 +112,6 @@ func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, t *testing.T) i
 }
 
 var (
-	teamMemberGetRoute    = "/api/teams/%s/members"
 	teamMemberAddRoute    = "/api/teams/%s/members"
 	createTeamMemberCmd   = `{"userId": %d}`
 	teamMemberUpdateRoute = "/api/teams/%s/members/%s"
