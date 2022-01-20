@@ -673,7 +673,7 @@ def e2e_tests_server_step(edition, port=3001):
         ],
         'environment': environment,
         'commands': [
-            './e2e/start-server',
+            './scripts/grafana-server/start-server',
         ],
     }
 

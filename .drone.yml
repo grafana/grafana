@@ -187,7 +187,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: package
 - commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   depends_on:
   - package
   detach: true
@@ -617,7 +617,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: package
 - commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   depends_on:
   - package
   detach: true
@@ -1224,7 +1224,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   depends_on:
   - package
   detach: true
@@ -1826,7 +1826,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   depends_on:
   - package
   detach: true
@@ -2980,7 +2980,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   depends_on:
   - package
   detach: true
@@ -3510,7 +3510,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   depends_on:
   - package
   detach: true
@@ -4175,6 +4175,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 6c7f587ebfdbeadeb6bf63b19df5654737fae9fdd21e9e97e25758e9fb2246cb
+hmac: 5374339b49f19444445f6b619adcc27864d53eaf009713e3feaa41bdaf289569
 
 ...
