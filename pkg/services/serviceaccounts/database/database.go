@@ -1,14 +1,17 @@
 package database
 
+//nolint:goimports
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"xorm.io/xorm"
 )
 
 type ServiceAccountsStoreImpl struct {
@@ -85,6 +88,21 @@ func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) e
 	return nil
 }
 
+//nolint:gosimple
+func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error) {
+	result := make([]*models.ApiKey, 0)
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		var sess *xorm.Session
+
+		sess = dbSession.Limit(100, 0).
+			Join("inner", "user", "user.id = api_key.service_account_id").
+			Where("user.org_id=? AND user.id=? AND ( expires IS NULL or expires >= ?)", orgID, serviceAccount, time.Now().Unix()).
+			Asc("name")
+
+		return sess.Find(&result)
+	})
+	return result, err
+}
 func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgID int64) ([]*models.OrgUserDTO, error) {
 	query := models.GetOrgUsersQuery{OrgId: orgID, IsServiceAccount: true}
 	err := s.sqlStore.GetOrgUsers(ctx, &query)
@@ -92,4 +110,19 @@ func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgI
 		return nil, err
 	}
 	return query.Result, err
+}
+
+// RetrieveServiceAccountByID returns a service account by its ID
+func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*models.OrgUserDTO, error) {
+	query := models.GetOrgUsersQuery{UserID: serviceAccountID, OrgId: orgID, IsServiceAccount: true}
+	err := s.sqlStore.GetOrgUsers(ctx, &query)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(query.Result) != 1 {
+		return nil, serviceaccounts.ErrServiceAccountNotFound
+	}
+
+	return query.Result[0], err
 }
