@@ -1,9 +1,8 @@
 import React, { FC, MouseEvent } from 'react';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
-import { styleMixins, Tooltip, useStyles2 } from '@grafana/ui';
+import { Card, TagList, Tooltip, useStyles2 } from '@grafana/ui';
 import { AnnoOptions } from './types';
-import { AnnotationListItemTags } from './AnnotationListItemTags';
 
 interface Props extends Pick<PanelProps<AnnoOptions>, 'options'> {
   annotation: AnnotationEvent;
@@ -24,8 +23,7 @@ export const AnnotationListItem: FC<Props> = ({
   const styles = useStyles2(getStyles);
   const { showUser, showTags, showTime } = options;
   const { text, login, email, avatarUrl, tags, time, timeEnd } = annotation;
-  const onItemClick = (e: MouseEvent) => {
-    e.stopPropagation();
+  const onItemClick = () => {
     onClick(annotation);
   };
   const onLoginClick = () => {
@@ -36,20 +34,32 @@ export const AnnotationListItem: FC<Props> = ({
   const showTimeStampEnd = timeEnd && timeEnd !== time && showTime;
 
   return (
-    <div>
-      <span className={cx(styles.item, styles.link, styles.pointer)} onClick={onItemClick}>
-        <div className={styles.title}>
-          <span>{text}</span>
-          {showTimeStamp ? <TimeStamp formatDate={formatDate} time={time!} /> : null}
-          {showTimeStampEnd ? <span className={styles.time}>-</span> : null}
-          {showTimeStampEnd ? <TimeStamp formatDate={formatDate} time={timeEnd!} /> : null}
-        </div>
-        <div className={styles.login}>
-          {showAvatar ? <Avatar email={email} login={login!} avatarUrl={avatarUrl} onClick={onLoginClick} /> : null}
-          {showTags ? <AnnotationListItemTags tags={tags} remove={false} onClick={onTagClick} /> : null}
-        </div>
-      </span>
-    </div>
+    <Card className={styles.card} onClick={onItemClick}>
+      <Card.Heading>
+        <span>{text}</span>
+      </Card.Heading>
+      {showTimeStamp && (
+        <Card.Description className={styles.timestamp}>
+          <TimeStamp formatDate={formatDate} time={time!} />
+          {showTimeStampEnd && (
+            <>
+              <span className={styles.time}>-</span>
+              <TimeStamp formatDate={formatDate} time={timeEnd!} />{' '}
+            </>
+          )}
+        </Card.Description>
+      )}
+      {showAvatar && (
+        <Card.Meta className={styles.meta}>
+          <Avatar email={email} login={login!} avatarUrl={avatarUrl} onClick={onLoginClick} />
+        </Card.Meta>
+      )}
+      {showTags && tags && (
+        <Card.Tags>
+          <TagList tags={tags} onClick={(tag) => onTagClick(tag, false)} />
+        </Card.Tags>
+      )}
+    </Card>
   );
 };
 
@@ -74,13 +84,11 @@ const Avatar: FC<AvatarProps> = ({ onClick, avatarUrl, login, email }) => {
   );
 
   return (
-    <div>
-      <Tooltip content={tooltipContent} theme="info" placement="top">
-        <span onClick={onAvatarClick} className={styles.avatar}>
-          <img src={avatarUrl} alt="avatar icon" />
-        </span>
-      </Tooltip>
-    </div>
+    <Tooltip content={tooltipContent} theme="info" placement="top">
+      <button onClick={onAvatarClick} className={styles.avatar} aria-label={`Created by ${email}`}>
+        <img src={avatarUrl} alt="avatar icon" />
+      </button>
+    </Tooltip>
   );
 };
 
@@ -101,48 +109,38 @@ const TimeStamp: FC<TimeStampProps> = ({ time, formatDate }) => {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    pointer: css`
-      cursor: pointer;
-    `,
-    item: css`
-      margin: ${theme.spacing(0.5)};
-      padding: ${theme.spacing(1)};
-      ${styleMixins.listItem(theme)}// display: flex;
-    `,
-    title: css`
-      flex-basis: 80%;
-    `,
-    link: css`
-      display: flex;
-
-      .fa {
-        padding-top: ${theme.spacing(0.5)};
-      }
-
-      .fa-star {
-        color: ${theme.v1.palette.orange};
-      }
-    `,
-    login: css`
-      align-self: center;
-      flex: auto;
-      display: flex;
-      justify-content: flex-end;
-      font-size: ${theme.typography.bodySmall.fontSize};
-    `,
-    time: css`
-      margin-left: ${theme.spacing(1)};
-      margin-right: ${theme.spacing(1)}
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-    `,
-    avatar: css`
-      padding: ${theme.spacing(0.5)};
-      img {
-        border-radius: 50%;
-        width: ${theme.spacing(2)};
-        height: ${theme.spacing(2)};
-      }
-    `,
+    card: css({
+      gridTemplateAreas: `"Heading Description Meta Tags"`,
+      gridTemplateColumns: 'auto 1fr auto auto',
+      padding: theme.spacing(1),
+      margin: theme.spacing(0.5),
+      width: 'inherit',
+    }),
+    meta: css({
+      margin: 0,
+      position: 'relative',
+      justifyContent: 'end',
+    }),
+    timestamp: css({
+      margin: 0,
+      alignSelf: 'center',
+    }),
+    time: css({
+      marginLeft: theme.spacing(1),
+      marginRight: theme.spacing(1),
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    avatar: css({
+      border: 'none',
+      background: 'inherit',
+      margin: 0,
+      padding: theme.spacing(0.5),
+      img: {
+        borderRadius: '50%',
+        width: theme.spacing(2),
+        height: theme.spacing(2),
+      },
+    }),
   };
 }
