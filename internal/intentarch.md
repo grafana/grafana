@@ -9,7 +9,7 @@ Grafana's experimental Intent API is an enormous project. To help keep discussio
 A Component is a subtree of Grafana backend code that is:
 
 - Rooted by a blank file named `componentroot` (similar to how `.git` and `go.mod` indicate the root of a tree)
-- Owned by at least one team (as indicated by CODEOWNERS, which must exist)
+- Owned by at least one team (as indicated by OWNERS, which must exist)
 - Has at least one group, as determined by component group conditions
 - Is restricted in what packages it may import and what Go types it may reference, via the rules corresponding to its group(s)
 
