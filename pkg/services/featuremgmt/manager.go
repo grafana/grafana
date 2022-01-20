@@ -169,7 +169,6 @@ func (fm *FeatureManager) HandleGetSettings(c *models.ReqContext) {
 func WithFeatures(spec ...interface{}) *FeatureManager {
 	count := len(spec)
 	enabled := make(map[string]bool, count)
-	flags := make(map[string]FeatureFlag, count)
 
 	idx := 0
 	for idx < count {
@@ -179,9 +178,6 @@ func WithFeatures(spec ...interface{}) *FeatureManager {
 		if idx < count && reflect.TypeOf(spec[idx]).Kind() == reflect.Bool {
 			val = spec[idx].(bool)
 			idx++
-		}
-		flags[key] = FeatureFlag{
-			Name: key,
 		}
 
 		if val {
