@@ -315,13 +315,28 @@ func interpolateVariables(model *QueryModel, interval time.Duration, timeRange t
 func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) (data.Frames, error) {
 	var (
 		idx           = 0
-		baseTimestamp = alignTimeRange(query.Start, query.Step, query.UtcOffsetSec).UnixMilli()
-		endTimestamp  = alignTimeRange(query.End, query.Step, query.UtcOffsetSec).UnixMilli()
-		// For each step we create 1 data point. This results in range / step + 1 data points.
-		datapointsCount = int((endTimestamp-baseTimestamp)/query.Step.Milliseconds()) + 1
-		timestamps      = make([]time.Time, datapointsCount)
-		timeMap         = make(map[int64]int, datapointsCount)
+		baseTimestamp = time.Now().UnixMilli()
+		endTimestamp  = int64(0)
 	)
+
+	// Find the earliest and latest timestamps in all matrix responses.
+	for _, s := range matrix {
+		start := s.Values[0].Timestamp.Time().UnixMilli()
+		if start < baseTimestamp {
+			baseTimestamp = start
+		}
+		end := s.Values[len(s.Values)-1].Timestamp.Time().UnixMilli()
+		if end > endTimestamp {
+			endTimestamp = end
+		}
+	}
+
+	// For each step we create 1 data point. This results in range / step + 1 data points.
+	datapointsCount := int((endTimestamp-baseTimestamp)/query.Step.Milliseconds()) + 1
+	timestamps := make([]time.Time, datapointsCount)
+	timeMap := make(map[int64]int, datapointsCount)
+	nils := make([]*float64, datapointsCount)
+	values := make([]*float64, datapointsCount)
 
 	// Fill the time field so we can avoid creating time fields for each matrix result, and
 	// create a map of timestamp -> time field index so that we can look up the index of the matching
@@ -332,6 +347,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		timeMap[nanos] = idx
 		idx++
 	}
+
 	timeField := data.NewField(data.TimeSeriesTimeFieldName, data.Labels{}, timestamps)
 	timeField.Name = data.TimeSeriesTimeFieldName
 
@@ -342,8 +358,6 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 			"resultType": "matrix",
 		},
 	}
-	nils := make([]*float64, datapointsCount)
-	values := make([]*float64, datapointsCount)
 
 	// Loop through each matrix response and build a frame
 	for _, s := range matrix {

@@ -115,7 +115,6 @@ func testScenario(t *testing.T, name string) {
 	s := Service{tracer: tracer}
 	result, err := s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
 	require.NoError(t, err)
-	require.Len(t, result.Responses, 1)
 
 	dr, found := result.Responses["A"]
 	require.True(t, found)
