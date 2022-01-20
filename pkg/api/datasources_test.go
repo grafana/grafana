@@ -220,11 +220,16 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		cmd.Result = &testDatasource
 		return nil
 	}
-
 	updateDatasourceReadOnlyStub := func(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 		cmd.Result = &testDatasourceReadOnly
 		return nil
 	}
+
+	getDatasourceNotFoundStub := func(ctx context.Context, cmd *models.GetDataSourceQuery) error {
+		cmd.Result = nil
+		return models.ErrDataSourceNotFound
+	}
+
 	getDatasourceReadOnlyStub := func(ctx context.Context, query *models.GetDataSourceQuery) error {
 		query.Result = &testDatasourceReadOnly
 		return nil
@@ -252,13 +257,28 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		})
 		return bytes.NewReader(s)
 	}
-
 	type acTestCaseWithHandler struct {
 		busStubs []bus.HandlerFunc
 		body     func() io.Reader
 		accessControlTestCase
 	}
 	tests := []acTestCaseWithHandler{
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceNotFoundStub, updateDatasourceStub},
+			body:     updateDatasourceBody,
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusNotFound,
+				desc:         "DatasourcesPut should return 404 if datasource not found",
+				url:          fmt.Sprintf("/api/datasources/%v", "12345678"),
+				method:       http.MethodPut,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesWrite,
+						Scope:  ScopeDatasourcesAll,
+					},
+				},
+			},
+		},
 		{
 			busStubs: []bus.HandlerFunc{getDatasourcesStub},
 			accessControlTestCase: accessControlTestCase{
@@ -327,8 +347,8 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			busStubs: []bus.HandlerFunc{getDatasourceReadOnlyStub, updateDatasourceReadOnlyStub},
 			body:     updateDatasourceBody,
 			accessControlTestCase: accessControlTestCase{
-				expectedCode: http.StatusBadRequest,
-				desc:         "DatasourcesPut should return 400 for read only datasource",
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesPut should return 403 for read only datasource",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasourceReadOnly.Id),
 				method:       http.MethodPut,
 				permissions: []*accesscontrol.Permission{
@@ -540,6 +560,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			} else {
 				sc.req, err = http.NewRequest(test.method, test.url, nil)
 			}
+
 			assert.NoError(t, err)
 
 			sc.exec()
