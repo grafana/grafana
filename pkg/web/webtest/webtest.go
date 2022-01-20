@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -19,10 +18,8 @@ var requests = map[string]*models.ReqContext{}
 
 type Server struct {
 	t             *testing.T
-	Cfg           *setting.Cfg
 	Mux           *web.Mux
 	RouteRegister routing.RouteRegister
-	context       *models.ReqContext
 	TestServer    *httptest.Server
 }
 
@@ -46,7 +43,6 @@ func NewServer(t *testing.T, routeRegister routing.RouteRegister) *Server {
 
 	return &Server{
 		t:             t,
-		Cfg:           setting.NewCfg(),
 		RouteRegister: routeRegister,
 		Mux:           m,
 		TestServer:    testServer,

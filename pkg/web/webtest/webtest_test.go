@@ -31,11 +31,13 @@ func TestServerClient(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		defer resp.Body.Close()
 		bytes, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+
 		var user *models.SignedInUser
-		json.Unmarshal(bytes, &user)
+		err = json.Unmarshal(bytes, &user)
+		require.NoError(t, err)
 		require.NotNil(t, user)
 		require.Equal(t, int64(1), user.UserId)
 	})
@@ -51,11 +53,13 @@ func TestServerClient(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		defer resp.Body.Close()
 		bytes, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+
 		var user *models.SignedInUser
-		json.Unmarshal(bytes, &user)
+		err = json.Unmarshal(bytes, &user)
+		require.NoError(t, err)
 		require.NotNil(t, user)
 		require.Equal(t, int64(2), user.UserId)
 	})
