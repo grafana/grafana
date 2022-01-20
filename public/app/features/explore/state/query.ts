@@ -305,7 +305,7 @@ export function modifyQueries(
   };
 }
 
-function handleHistory(
+async function handleHistory(
   dispatch: ThunkDispatch,
   state: ExploreState,
   history: Array<HistoryItem<DataQuery>>,
@@ -315,7 +315,7 @@ function handleHistory(
 ) {
   const datasourceId = datasource.meta.id;
   const nextHistory = updateHistory(history, datasourceId, queries);
-  const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(
+  const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = await addToRichHistory(
     state.richHistory || [],
     datasourceId,
     datasource.name,

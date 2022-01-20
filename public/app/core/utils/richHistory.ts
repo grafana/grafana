@@ -12,8 +12,8 @@ import { createErrorNotification, createWarningNotification } from 'app/core/cop
 import { RichHistoryQuery } from 'app/types/explore';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
-
-const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
+import { getRichHistoryService } from '../history/richHistoryServiceProvider';
+import { RICH_HISTORY_KEY } from '../history/richHistoryLocalStorageService';
 
 export const RICH_HISTORY_SETTING_KEYS = {
   retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
@@ -36,7 +36,7 @@ export enum SortOrder {
 
 export const MAX_HISTORY_ITEMS = 10000;
 
-export function addToRichHistory(
+export async function addToRichHistory(
   richHistory: RichHistoryQuery[],
   datasourceId: string,
   datasourceName: string | null,
@@ -46,18 +46,12 @@ export function addToRichHistory(
   sessionName: string,
   showQuotaExceededError: boolean,
   showLimitExceededWarning: boolean
-): { richHistory: RichHistoryQuery[]; localStorageFull?: boolean; limitExceeded?: boolean } {
+): Promise<{ richHistory: RichHistoryQuery[]; localStorageFull?: boolean; limitExceeded?: boolean }> {
   const ts = Date.now();
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
-  const retentionPeriod: number = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
-  const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
 
-  /* Keep only queries, that are within the selected retention period or that are starred.
-   * If no queries, initialize with empty array
-   */
-  const queriesToKeep = richHistory.filter((q) => q.ts > retentionPeriodLastTs || q.starred === true) || [];
-
+  const queriesToKeep = await getRichHistoryService().purgeQueries(richHistory);
   if (newQueriesToSave.length > 0) {
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
      * which can be different) don't save it in rich history.
@@ -73,56 +67,45 @@ export function addToRichHistory(
       return { richHistory };
     }
 
-    // remove oldest non-starred items to give space for the recent query
     let limitExceeded = false;
-    let current = queriesToKeep.length - 1;
-    while (current >= 0 && queriesToKeep.length >= MAX_HISTORY_ITEMS) {
-      if (!queriesToKeep[current].starred) {
-        queriesToKeep.splice(current, 1);
-        limitExceeded = true;
-      }
-      current--;
+    try {
+      await getRichHistoryService().checkLimits(queriesToKeep);
+    } catch (error) {
+      limitExceeded = true;
+      showLimitExceededWarning && dispatch(notifyApp(createWarningNotification(error.message)));
     }
 
-    let updatedHistory: RichHistoryQuery[] = [
-      {
-        queries: newQueriesToSave,
-        ts,
-        datasourceId,
-        datasourceName: datasourceName ?? '',
-        starred,
-        comment: comment ?? '',
-        sessionName,
-      },
-      ...queriesToKeep,
-    ];
+    let localStorageFull = false;
+    let updatedHistory: RichHistoryQuery[] = queriesToKeep;
+
+    let newRichHistory: RichHistoryQuery = {
+      queries: newQueriesToSave,
+      ts,
+      datasourceId,
+      datasourceName: datasourceName ?? '',
+      starred,
+      comment: comment ?? '',
+      sessionName,
+    };
 
     try {
-      showLimitExceededWarning &&
-        limitExceeded &&
-        dispatch(
-          notifyApp(
-            createWarningNotification(
-              `Query history reached the limit of ${MAX_HISTORY_ITEMS}. Old, not-starred items will be removed.`
-            )
-          )
-        );
-      store.setObject(RICH_HISTORY_KEY, updatedHistory);
-      return { richHistory: updatedHistory, limitExceeded, localStorageFull: false };
+      updatedHistory = await getRichHistoryService().addToRichHistory(newRichHistory, queriesToKeep);
     } catch (error) {
-      showQuotaExceededError &&
-        dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
-      return { richHistory: updatedHistory, limitExceeded, localStorageFull: error.name === 'QuotaExceededError' };
+      if (error.name === 'StorageFull') {
+        localStorageFull = true;
+        showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
+      } else {
+        dispatch(notifyApp(createErrorNotification(error.message)));
+      }
     }
+    return { richHistory: updatedHistory, localStorageFull, limitExceeded };
   }
 
   return { richHistory };
 }
 
-export function getRichHistory(): RichHistoryQuery[] {
-  const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
-  const transformedRichHistory = migrateRichHistory(richHistory);
-  return transformedRichHistory;
+export async function getRichHistory(): Promise<RichHistoryQuery[]> {
+  return await getRichHistoryService().getRichHistory();
 }
 
 export function deleteAllFromRichHistory() {
@@ -392,35 +375,4 @@ export function filterAndSortQueries(
     : filteredQueriesByDsAndSearchFilter;
 
   return sortQueries(filteredQueriesToBeSorted, sortOrder);
-}
-
-function migrateRichHistory(richHistory: RichHistoryQuery[]) {
-  const transformedRichHistory = richHistory.map((query) => {
-    const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
-    return { ...query, queries: transformedQueries };
-  });
-
-  return transformedRichHistory;
-}
-
-function createDataQuery(query: RichHistoryQuery, individualQuery: DataQuery | string, index: number) {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZ';
-  if (typeof individualQuery === 'object') {
-    // the current format
-    return individualQuery;
-  } else if (isParsable(individualQuery)) {
-    // ElasticSearch (maybe other datasoures too) before grafana7
-    return JSON.parse(individualQuery);
-  }
-  // prometehus (maybe other datasources too) before grafana7
-  return { expr: individualQuery, refId: letters[index] };
-}
-
-function isParsable(string: string) {
-  try {
-    JSON.parse(string);
-  } catch (e) {
-    return false;
-  }
-  return true;
 }

@@ -38,8 +38,9 @@ class WrapperUnconnected extends PureComponent<Props> {
     lastSavedUrl.left = undefined;
     lastSavedUrl.right = undefined;
 
-    const richHistory = getRichHistory();
-    this.props.richHistoryUpdatedAction({ richHistory });
+    getRichHistory().then((richHistory) => {
+      this.props.richHistoryUpdatedAction({ richHistory });
+    });
   }
 
   componentDidUpdate(prevProps: Props) {
