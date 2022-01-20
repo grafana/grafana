@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func SendResetPasswordEmail(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SendResetPasswordEmail(c *models.ReqContext) response.Response {
 	form := dtos.SendResetPasswordEmailForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -27,7 +27,7 @@ func SendResetPasswordEmail(c *models.ReqContext) response.Response {
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
-	if err := bus.Dispatch(c.Req.Context(), &userQuery); err != nil {
+	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &userQuery); err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
 		return response.Error(200, "Email sent", err)
 	}

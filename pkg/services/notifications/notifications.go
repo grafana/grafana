@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -22,7 +23,7 @@ var tmplResetPassword = "reset_password"
 var tmplSignUpStarted = "signup_started"
 var tmplWelcomeOnSignUp = "welcome_on_signup"
 
-func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*NotificationService, error) {
+func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, sqlStore *sqlstore.SQLStore) (*NotificationService, error) {
 	ns := &NotificationService{
 		Bus:          bus,
 		Cfg:          cfg,
@@ -30,6 +31,7 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*Notification
 		mailQueue:    make(chan *Message, 10),
 		webhookQueue: make(chan *Webhook, 10),
 		mailer:       mailer,
+		sqlStore:     sqlStore,
 	}
 
 	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
@@ -73,6 +75,7 @@ type NotificationService struct {
 	webhookQueue chan *Webhook
 	mailer       Mailer
 	log          log.Logger
+	sqlStore     *sqlstore.SQLStore
 }
 
 func (ns *NotificationService) Run(ctx context.Context) error {
@@ -173,7 +176,7 @@ func (ns *NotificationService) validateResetPasswordCode(ctx context.Context, qu
 	}
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: login}
-	if err := bus.Dispatch(ctx, &userQuery); err != nil {
+	if err := ns.sqlStore.GetUserByLogin(ctx, &userQuery); err != nil {
 		return err
 	}
 
