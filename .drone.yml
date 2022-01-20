@@ -1833,7 +1833,7 @@ steps:
   environment:
     PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
     PORT: 3001
-    RUNDIR: e2e/tmp-grafana-enterprise
+    RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   image: grafana/build-container:1.4.9
   name: grafana-server
 - commands:
@@ -3517,7 +3517,7 @@ steps:
   environment:
     PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
     PORT: 3001
-    RUNDIR: e2e/tmp-grafana-enterprise
+    RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   image: grafana/build-container:1.4.9
   name: grafana-server
 - commands:
@@ -4175,6 +4175,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: f8d78332b449cd3d6dd2e20baaa28a7caac80e8046ba9cd8f411fe4823e5250c
+hmac: 51a23c5a1e735874f6b1c68db7127657d66ffa70f784debf9160050e1171b119
 
 ...

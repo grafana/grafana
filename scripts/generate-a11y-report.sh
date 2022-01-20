@@ -22,7 +22,7 @@ if [ "$BASE_URL" != "" ]; then
     echo -e "BASE_URL set, skipping starting server"
 else
   # Start it in the background
-  ./scripts/grafana-server/start-server > e2e/server.log &
+  ./scripts/grafana-server/start-server > scripts/grafana-server/server.log &
   ./scripts/grafana-server/wait-for-grafana
 fi
 
