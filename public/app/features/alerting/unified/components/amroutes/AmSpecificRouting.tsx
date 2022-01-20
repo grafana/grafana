@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Input, Label, useStyles2 } from '@grafana/ui';
 import { intersectionWith, isEqual } from 'lodash';
-import React, { FC, useMemo, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
@@ -21,27 +21,25 @@ export interface AmSpecificRoutingProps {
   readOnly?: boolean;
 }
 
-const useFilteredRoutes = (routes: FormAmRoute[], labelMatcherQuery?: string, contactPointQuery?: string) => {
+const getFilteredRoutes = (routes: FormAmRoute[], labelMatcherQuery?: string, contactPointQuery?: string) => {
   const matchers = parseMatchers(labelMatcherQuery ?? '');
 
-  const filteredRoutes = useMemo(() => {
-    let filtered = routes;
+  let filteredRoutes = routes;
 
-    if (matchers.length) {
-      filtered = routes.filter((route) => {
-        const routeMatchers = route.object_matchers.map(matcherFieldToMatcher);
-        return intersectionWith(routeMatchers, matchers, isEqual).length > 0;
-      });
-    }
+  if (matchers.length) {
+    filteredRoutes = routes.filter((route) => {
+      const routeMatchers = route.object_matchers.map(matcherFieldToMatcher);
+      return intersectionWith(routeMatchers, matchers, isEqual).length > 0;
+    });
+  }
 
-    if (contactPointQuery && contactPointQuery.length > 0) {
-      filtered = filtered.filter((route) => route.receiver.toLowerCase().includes(contactPointQuery.toLowerCase()));
-    }
+  if (contactPointQuery && contactPointQuery.length > 0) {
+    filteredRoutes = filteredRoutes.filter((route) =>
+      route.receiver.toLowerCase().includes(contactPointQuery.toLowerCase())
+    );
+  }
 
-    return filtered;
-  }, [matchers, routes, contactPointQuery]);
-
-  return [filteredRoutes];
+  return filteredRoutes;
 };
 
 export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
@@ -51,19 +49,29 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
   routes,
   readOnly = false,
 }) => {
-  const [actualRoutes, setActualRoutes] = useState(routes.routes);
+  const [actualRoutes, setActualRoutes] = useState([...routes.routes]);
   const [isAddMode, setIsAddMode] = useState(false);
   const [searchParams, setSearchParams] = useURLSearchParams();
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
 
-  const [filteredRoutes] = useFilteredRoutes(actualRoutes, queryString, contactPoint);
-
   const styles = useStyles2(getStyles);
 
+  useEffect(() => {
+    if (!isAddMode) {
+      const filtered = getFilteredRoutes(routes.routes, queryString, contactPoint);
+      setActualRoutes(filtered);
+    }
+  }, [routes.routes, isAddMode, queryString, contactPoint]);
+
+  const clearFilters = () => {
+    setSearchParams({ queryString: undefined, contactPoint: undefined });
+  };
+
   const addNewRoute = () => {
+    clearFilters();
     setIsAddMode(true);
     setActualRoutes((actualRoutes) => [
-      ...actualRoutes,
+      ...routes.routes,
       {
         ...emptyRoute,
         matchers: [emptyArrayFieldMatcher],
@@ -71,10 +79,21 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
     ]);
   };
 
-  const clearFilters = () => {
-    setSearchParams({ queryString: undefined, contactPoint: undefined });
+  const onCancelAdd = () => {
+    setIsAddMode(false);
+    setActualRoutes([...routes.routes]);
   };
 
+  const onTableRouteChange = (newRoutes: FormAmRoute[]): void => {
+    onChange({
+      ...routes,
+      routes: newRoutes,
+    });
+
+    if (isAddMode) {
+      setIsAddMode(false);
+    }
+  };
   return (
     <div className={styles.container}>
       <h5>Specific routing</h5>
@@ -92,20 +111,20 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
             text="You haven't set a default contact point for the root route yet."
           />
         )
-      ) : actualRoutes.length > 0 ? (
+      ) : routes.routes.length > 0 ? (
         <>
           <div>
             {!isAddMode && (
               <div className={styles.searchContainer}>
                 <MatcherFilter
-                  onFilterChange={(filter) => setSearchParams({ queryString: filter })}
+                  onFilterChange={(filter) => setSearchParams({ queryString: filter }, true)}
                   queryString={queryString ?? ''}
                   className={styles.filterInput}
                 />{' '}
                 <div className={styles.filterInput}>
                   <Label>Search by contact point</Label>
                   <Input
-                    onChange={(e) => setSearchParams({ contactPoint: e.currentTarget.value })}
+                    onChange={(e) => setSearchParams({ contactPoint: e.currentTarget.value }, true)}
                     value={contactPoint ?? ''}
                     placeholder="Search by contact point"
                     data-testid="search-query-input"
@@ -128,31 +147,20 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
               </div>
             )}
           </div>
-          <AmRoutesTable
-            isAddMode={isAddMode}
-            readOnly={readOnly}
-            onCancelAdd={() => {
-              setIsAddMode(false);
-              setActualRoutes((actualRoutes) => {
-                const newRoutes = [...actualRoutes];
-                newRoutes.pop();
-
-                return newRoutes;
-              });
-            }}
-            onChange={(newRoutes) => {
-              onChange({
-                ...routes,
-                routes: newRoutes,
-              });
-
-              if (isAddMode) {
-                setIsAddMode(false);
-              }
-            }}
-            receivers={receivers}
-            routes={filteredRoutes}
-          />
+          {actualRoutes.length > 0 ? (
+            <AmRoutesTable
+              isAddMode={isAddMode}
+              readOnly={readOnly}
+              onCancelAdd={onCancelAdd}
+              onChange={onTableRouteChange}
+              receivers={receivers}
+              routes={actualRoutes}
+            />
+          ) : (
+            <EmptyArea>
+              <p>No policies found</p>
+            </EmptyArea>
+          )}
         </>
       ) : readOnly ? (
         <EmptyArea>
