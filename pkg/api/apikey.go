@@ -14,8 +14,8 @@ import (
 func GetAPIKeyCurrent(c *models.ReqContext) response.Response {
 	query := models.GetApiKeyByIdQuery{ApiKeyId: c.ApiKeyId}
 
-	if err := bus.Dispatch(&query); err != nil {
-		return response.Error(500, "Failed to get api key", err)
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+		return response.Error(500, "Failed to list api keys", err)
 	}
 
 	var expiration *time.Time = nil
