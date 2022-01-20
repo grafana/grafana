@@ -260,7 +260,7 @@
     "@sentry/browser": "6.16.1",
     "@sentry/types": "6.16.1",
     "@sentry/utils": "6.16.1",
-    "@visx/event": "2.1.2",
+    "@visx/event": "2.6.0",
     "@visx/gradient": "2.1.0",
     "@visx/group": "2.1.0",
     "@visx/scale": "2.2.2",
