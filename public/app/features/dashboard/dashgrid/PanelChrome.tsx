@@ -221,18 +221,15 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { isInView, isEditing, width } = this.props;
+    const { isInView, width } = this.props;
     const { context } = this.state;
 
     const app = this.getPanelContextApp();
-    const sync = isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip;
 
-    if ((context.sync && context.sync() !== sync) || context.app !== app) {
-      // console.log('sync updaye');
+    if (context.app !== app) {
       this.setState({
         context: {
           ...context,
-          sync: () => sync,
           app,
         },
       });
