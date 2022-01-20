@@ -75,13 +75,21 @@ func (p *teamPermissionMigrator) saveRole(sess *xorm.Session, orgID int64, name 
 		}
 	}
 
-	for p := range permissions {
-		permissions[p].RoleID = role.ID
-		permissions[p].Created = now
-		permissions[p].Updated = now
+	var newPermissions []accesscontrol.Permission
+	for _, permission := range permissions {
+		has, err := sess.Where("role_id = ? AND action = ? AND scope = ?", role.ID, permission.Action, permission.Scope).Get(&accesscontrol.Permission{})
+		if err != nil {
+			return 0, false, err
+		}
+		if !has {
+			permission.RoleID = role.ID
+			permission.Created = now
+			permission.Updated = now
+			newPermissions = append(newPermissions, permission)
+		}
 	}
 
-	_, err = sess.InsertMulti(&permissions)
+	_, err = sess.InsertMulti(&newPermissions)
 	if err != nil {
 		return 0, false, err
 	}
@@ -124,7 +132,7 @@ func (p *teamPermissionMigrator) migrateMemberships(sess *xorm.Session) error {
 		if !initialized {
 			userPermissions = map[int64][]accesscontrol.Permission{}
 		}
-		userPermissions[m.Id] = append(userPermissions[m.Id], p.mapPermissionToFGAC(m.Permission, m.TeamId)...)
+		userPermissions[m.UserId] = append(userPermissions[m.UserId], p.mapPermissionToFGAC(m.Permission, m.TeamId)...)
 		userPermissionsByOrg[m.OrgId] = userPermissions
 	}
 
