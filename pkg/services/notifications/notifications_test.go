@@ -6,18 +6,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestProvideService(t *testing.T) {
-	bus := bus.New()
+	// bus := bus.New()
 
 	t.Run("When invalid from_address in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.FromAddress = "@notanemail@"
-		_, _, err := createSutWithConfig(bus, cfg)
+		_, _, err := createSutWithConfig(t, cfg)
 
 		require.Error(t, err)
 	})
@@ -25,7 +26,7 @@ func TestProvideService(t *testing.T) {
 	t.Run("When template_patterns fails to parse", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.TemplatesPatterns = append(cfg.Smtp.TemplatesPatterns, "/usr/not-a-dir/**")
-		_, _, err := createSutWithConfig(bus, cfg)
+		_, _, err := createSutWithConfig(t, bus, cfg)
 
 		require.Error(t, err)
 	})
@@ -119,7 +120,7 @@ func TestSendEmailSync(t *testing.T) {
 	t.Run("When SMTP disabled in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.Enabled = false
-		_, mailer, err := createSutWithConfig(bus, cfg)
+		_, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &models.SendEmailCommandSync{
 			SendEmailCommand: models.SendEmailCommand{
@@ -139,7 +140,7 @@ func TestSendEmailSync(t *testing.T) {
 	t.Run("When invalid content type in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.ContentTypes = append(cfg.Smtp.ContentTypes, "multipart/form-data")
-		_, mailer, err := createSutWithConfig(bus, cfg)
+		_, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &models.SendEmailCommandSync{
 			SendEmailCommand: models.SendEmailCommand{
@@ -192,7 +193,7 @@ func TestSendEmailAsync(t *testing.T) {
 	t.Run("When SMTP disabled in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.Enabled = false
-		_, mailer, err := createSutWithConfig(bus, cfg)
+		_, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &models.SendEmailCommand{
 			Subject:     "subject",
@@ -210,7 +211,7 @@ func TestSendEmailAsync(t *testing.T) {
 	t.Run("When invalid content type in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.ContentTypes = append(cfg.Smtp.ContentTypes, "multipart/form-data")
-		_, mailer, err := createSutWithConfig(bus, cfg)
+		_, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &models.SendEmailCommand{
 			Subject:     "subject",
@@ -245,14 +246,15 @@ func createSut(t *testing.T, bus bus.Bus) (*NotificationService, *FakeMailer) {
 	t.Helper()
 
 	cfg := createSmtpConfig()
-	ns, fm, err := createSutWithConfig(bus, cfg)
+	ns, fm, err := createSutWithConfig(t, bus, cfg)
 	require.NoError(t, err)
 	return ns, fm
 }
 
-func createSutWithConfig(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, *FakeMailer, error) {
+func createSutWithConfig(t *testing.T, cfg *setting.Cfg) (*NotificationService, *FakeMailer, error) {
 	smtp := NewFakeMailer()
-	ns, err := ProvideService(bus, cfg, smtp)
+	sqlStore := sqlstore.InitTestDB(t)
+	ns, err := ProvideService(bus, cfg, smtp, sqlStore)
 	return ns, smtp, err
 }
 
@@ -261,7 +263,8 @@ func createDisconnectedSut(t *testing.T, bus bus.Bus) *NotificationService {
 
 	cfg := createSmtpConfig()
 	smtp := NewFakeDisconnectedMailer()
-	ns, err := ProvideService(bus, cfg, smtp)
+	sqlStore := sqlstore.InitTestDB(t)
+	ns, err := ProvideService(bus, cfg, smtp, sqlStore)
 	require.NoError(t, err)
 	return ns
 }

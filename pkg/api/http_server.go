@@ -13,6 +13,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/thumbs"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -129,6 +134,7 @@ type HTTPServer struct {
 	serviceAccountsService    serviceaccounts.Service
 	authInfoService           authinfoservice.Service
 	TeamPermissionsService    *resourcepermissions.Service
+	NotificationService       notifications.NotificationService
 }
 
 type ServerOptions struct {
@@ -155,7 +161,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService authinfoservice.Service, resourcePermissionServices *resourceservices.ResourceServices) (*HTTPServer, error) {
+	authInfoService authinfoservice.Service, resourcePermissionServices *resourceservices.ResourceServices,
+	notifications notifications.NotificationService) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -215,6 +222,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		serviceAccountsService:    serviceaccountsService,
 		authInfoService:           authInfoService,
 		TeamPermissionsService:    resourcePermissionServices.GetTeamService(),
+		NotificationService:       notifications,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
