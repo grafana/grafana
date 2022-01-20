@@ -13,6 +13,7 @@ public/dist/tsconfig.tsbuildinfo
 /emails/dist
 /reports
 /e2e/tmp
+/scripts/grafana-server/tmp
 vendor/
 /docs/menu.yaml
 /requests
@@ -136,6 +137,9 @@ compilation-stats.json
 /e2e/**/screenshots
 !/e2e/**/screenshots/expected/*
 /e2e/**/videos/*
+
+# grafana server
+/scripts/grafana-server/server.log
 
 # a11y tests
 /pa11y-ci-results.json
