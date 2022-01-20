@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/extensions/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -167,7 +166,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 func TestAddTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.hs.License = &licensingtest.ValidLicense{}
+	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
 	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, t)
@@ -242,7 +241,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 func TestUpdateTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.hs.License = &licensingtest.ValidLicense{}
+	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
 	setupTeamTestScenario(teamMemberCount, sc.db, t)
