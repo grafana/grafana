@@ -54,7 +54,7 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/cuetsy v0.0.0-20211119211437-8c25464cc9bf
 	github.com/grafana/grafana-aws-sdk v0.9.1
-	github.com/grafana/grafana-plugin-sdk-go v0.122.1-0.20220119204710-3d2035c26cdd
+	github.com/grafana/grafana-plugin-sdk-go v0.122.1-0.20220120020442-af7659dc1fff
 	github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.1

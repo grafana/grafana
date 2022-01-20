@@ -342,10 +342,12 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 			"resultType": "matrix",
 		},
 	}
+	nils := make([]*float64, datapointsCount)
+	values := make([]*float64, datapointsCount)
 
 	// Loop through each matrix response and build a frame
 	for _, s := range matrix {
-		values := make([]*float64, datapointsCount)
+		copy(values, nils)
 		labels := make(map[string]string, len(s.Metric))
 		for k, v := range s.Metric {
 			labels[string(k)] = string(v)
