@@ -93,11 +93,11 @@ func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*c
 func (cr *configReader) validateDefaultUniqueness(ctx context.Context, datasources []*configs) error {
 	defaultCount := map[int64]int{}
 	for i := range datasources {
-		if datasources[i].Datasources == nil {
-			continue
-		}
-
 		for _, ds := range datasources[i].Datasources {
+			if ds == nil {
+				continue
+			}
+
 			if ds.OrgID == 0 {
 				ds.OrgID = 1
 			}
@@ -115,6 +115,10 @@ func (cr *configReader) validateDefaultUniqueness(ctx context.Context, datasourc
 		}
 
 		for _, ds := range datasources[i].DeleteDatasources {
+			if ds == nil {
+				continue
+			}
+
 			if ds.OrgID == 0 {
 				ds.OrgID = 1
 			}
