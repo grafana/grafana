@@ -60,7 +60,7 @@
     "moment": "2.29.1",
     "monaco-editor": "^0.31.1",
     "prismjs": "1.26.0",
-    "rc-cascader": "1.5.0",
+    "rc-cascader": "3.2.1",
     "rc-drawer": "4.4.3",
     "rc-slider": "9.7.5",
     "rc-time-picker": "^3.7.3",
