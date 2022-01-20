@@ -18,10 +18,20 @@ func (ss *SQLStore) addTeamQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetTeamById)
 	bus.AddHandler("sql", GetTeamsByUser)
 
-	bus.AddHandler("sql", UpdateTeamMember)
-	bus.AddHandler("sql", RemoveTeamMember)
-	bus.AddHandler("sql", GetTeamMembers)
+	bus.AddHandler("sql", ss.UpdateTeamMember)
+	bus.AddHandler("sql", ss.RemoveTeamMember)
+	bus.AddHandler("sql", ss.GetTeamMembers)
 	bus.AddHandler("sql", IsAdminOfTeams)
+}
+
+type TeamStore interface {
+	UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error
+	DeleteTeam(ctx context.Context, cmd *models.DeleteTeamCommand) error
+	SearchTeams(ctx context.Context, query *models.SearchTeamsQuery) error
+	GetTeamById(ctx context.Context, query *models.GetTeamByIdQuery) error
+	UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error
+	RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error
+	GetTeamMembers(ctx context.Context, cmd *models.GetTeamMembersQuery) error
 }
 
 func getFilteredUsers(signedInUser *models.SignedInUser, hiddenUsers map[string]struct{}) []string {
@@ -322,7 +332,7 @@ func getTeamMember(sess *DBSession, orgId int64, teamId int64, userId int64) (mo
 }
 
 // UpdateTeamMember updates a team member
-func UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error {
+func (ss *SQLStore) UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		member, err := getTeamMember(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
 		if err != nil {
@@ -348,7 +358,7 @@ func UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) 
 }
 
 // RemoveTeamMember removes a member from a team
-func RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error {
+func (ss *SQLStore) RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
 			return err
@@ -399,7 +409,7 @@ func isLastAdmin(sess *DBSession, orgId int64, teamId int64, userId int64) (bool
 }
 
 // GetTeamMembers return a list of members for the specified team
-func GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
+func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
 	query.Result = make([]*models.TeamMemberDTO, 0)
 	sess := x.Table("team_member")
 	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("team_member.user_id=%s.id", x.Dialect().Quote("user")))
