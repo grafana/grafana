@@ -5,28 +5,35 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
 )
 
-//go:embed spec.json
-var specData []byte
-
 // mergeSpecs merges OSS API spec with one or more other OpenAPI specs
 func mergeSpecs(sources ...string) error {
-	if len(sources) == 0 {
+	if len(sources) < 2 {
 		return fmt.Errorf("no APIs to merge")
 	}
 
-	var specOSS spec.Swagger
-	err := json.Unmarshal(specData, &specOSS)
+	f, err := os.Open(sources[0])
 	if err != nil {
+		return err
+	}
+
+	specData, err := ioutil.ReadAll(f)
+	if err != nil {
+		return err
+	}
+
+	var specOSS spec.Swagger
+	if err := json.Unmarshal(specData, &specOSS); err != nil {
 		return fmt.Errorf("failed to unmarshal original spec: %w", err)
 	}
 
-	for _, s := range sources {
+	for _, s := range sources[1:] {
 		additionalSpec, err := loads.JSONSpec(s)
 		if err != nil {
 			return fmt.Errorf("failed to load spec from: %s: %w", s, err)
@@ -74,7 +81,7 @@ func mergeSpecs(sources ...string) error {
 		return fmt.Errorf("failed to intend new spec: %w", err)
 	}
 
-	f, err := os.Create("merged.json")
+	f, err = os.Create("merged.json")
 	if err != nil {
 		return fmt.Errorf("failed to create file for new spec: %w", err)
 	}

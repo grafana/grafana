@@ -15,10 +15,10 @@ spec.json: $(GO_PKG_FILES)
 	-v $$(pwd)/../../..:${HOME}/grafana \
 	-v $$(pwd)/definitions:/src \
 	-w $$(pwd) quay.io/goswagger/swagger:$(SWAGGER_TAG) \
-	generate spec -m -o merge/spec.json -i ${HOME}/grafana/pkg/api/docs/tags.json
+	generate spec -m -o spec.json -i ${HOME}/grafana/pkg/api/docs/tags.json
 
 merge: spec.json
-	go run merge/merge_specs.go ../../services/ngalert/api/tooling/post.json
+	go run merge/merge_specs.go spec.json ../../services/ngalert/api/tooling/post.json
 
 validate: merge
 	docker run --rm -it \
@@ -26,7 +26,6 @@ validate: merge
 	-e SWAGGER_GENERATE_EXTENSION=false \
 	-v ${HOME}/go:${HOME}/go \
 	-v $$(pwd)/../../..:${HOME}/grafana \
-	-v $$(pwd)/definitions:/src \
 	-w $$(pwd) quay.io/goswagger/swagger:$(SWAGGER_TAG) \
 	validate merged.json
 
@@ -34,14 +33,15 @@ ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
 
 spec-mac: ensure_go-swagger_mac $(GO_PKG_FILES)
-	swagger generate spec -m -w $(API_DIR) -o merge/spec.json -i tags.json
+	swagger generate spec -m -w $(API_DIR) -o spec.json -i tags.json
+
 
 .PHONY: openapi
 openapi: merge
 	docker-compose up
 
-clean-spec:
-	rm merge/spec.json merged.json
+clean:
+	rm spec.json merged.json
 
 clean-containers:
 	docker-compose down
