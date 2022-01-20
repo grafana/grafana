@@ -81,9 +81,8 @@ export const NavBar = React.memo(({ extraEvents }: Props): JSX.Element | null =>
             link={{
               ...link,
               subTitle: undefined,
-              onClick: extraEvents?.find((ev) => ev.id === link.id)?.events.onClick,
+              onClick: undefined,
             }}
-            showMenu={!link.highlightText}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
