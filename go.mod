@@ -54,7 +54,7 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/cuetsy v0.0.0-20211119211437-8c25464cc9bf
 	github.com/grafana/grafana-aws-sdk v0.9.1
-	github.com/grafana/grafana-plugin-sdk-go v0.122.1-0.20220120020442-af7659dc1fff
+	github.com/grafana/grafana-plugin-sdk-go v0.123.0
 	github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.1
@@ -256,7 +256,7 @@ require cloud.google.com/go/kms v1.1.0
 
 require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.15 // indirect
-	github.com/containerd/containerd v1.5.8 // indirect
+	github.com/containerd/containerd v1.5.9 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect

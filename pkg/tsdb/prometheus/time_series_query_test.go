@@ -752,6 +752,7 @@ func BenchmarkPrometheus_matrixToDataFrames(b *testing.B) {
 func runMatrixBenchmark(series, rows int) func(*testing.B) {
 	return func(b *testing.B) {
 		query, results := generateMatrixData(series, rows)
+		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			frames := make([]*data.Frame, 0)
 			frames, err := matrixToDataFrames(results, query, frames)
