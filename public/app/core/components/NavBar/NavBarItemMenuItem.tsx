@@ -62,8 +62,8 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
         {rendered}
       </li>
       {item.value.highlightText && (
-        <li className={styles.upgradeBox}>
-          <UpgradeBox text={item.value.highlightText} />
+        <li className={styles.upgradeBoxContainer}>
+          <UpgradeBox text={item.value.highlightText} className={styles.upgradeBox} />
         </li>
       )}
     </>
@@ -91,8 +91,11 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean)
         transition: none;
       }
     `,
-    upgradeBox: css`
+    upgradeBoxContainer: css`
       padding: ${theme.spacing(1)};
+    `,
+    upgradeBox: css`
+      width: 256px;
     `,
   };
 }

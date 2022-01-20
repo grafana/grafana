@@ -39,7 +39,6 @@ const getUpgradeBoxStyles = (theme: GrafanaTheme2) => {
       border: 1px solid ${theme.colors.primary.shade};
       padding: ${theme.spacing(2)};
       color: ${theme.colors.primary.text};
-      width: 256px;
       font-size: ${theme.typography.bodySmall.fontSize};
       text-align: left;
       line-height: 16px;
