@@ -62,6 +62,7 @@ func TestValidateLoginAttempts(t *testing.T) {
 			withLoginAttempts(t, tc.loginAttempts)
 
 			query := &models.LoginUserQuery{Username: "user", Cfg: tc.cfg}
+
 			err := validateLoginAttempts(context.Background(), query)
 			require.Equal(t, tc.expected, err)
 		})

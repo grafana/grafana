@@ -131,6 +131,10 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       &:hover {
         background-color: ${rowHoverBg};
       }
+
+      &:last-child {
+        border-bottom: 0;
+      }
     `,
     imageCell: css`
       height: 100%;
