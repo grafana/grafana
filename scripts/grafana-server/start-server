@@ -1,12 +1,12 @@
 #!/bin/bash
 set -eo pipefail
 
-. e2e/variables
+. scripts/grafana-server/variables
 
 PORT=${PORT:-$DEFAULT_PORT}
 PACKAGE_FILE=${PACKAGE_FILE:-$DEFAULT_PACKAGE_FILE}
 
-./e2e/kill-server
+./scripts/grafana-server/kill-server
 
 mkdir $RUNDIR
 
@@ -36,7 +36,7 @@ else
   mkdir $PROV_DIR/datasources
   mkdir $PROV_DIR/dashboards
 
-  cp ./e2e/custom.ini $RUNDIR/conf/custom.ini
+  cp ./scripts/grafana-server/custom.ini $RUNDIR/conf/custom.ini
   cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
 fi
 

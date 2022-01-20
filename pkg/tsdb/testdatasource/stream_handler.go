@@ -37,7 +37,7 @@ func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStrea
 		}
 	}
 
-	if s.cfg.FeatureToggles["live-pipeline"] {
+	if s.features.IsLivePipelineEnabled() {
 		// While developing Live pipeline avoid sending initial data.
 		initialData = nil
 	}
@@ -126,7 +126,7 @@ func (s *Service) runTestStream(ctx context.Context, path string, conf testStrea
 			}
 
 			mode := data.IncludeDataOnly
-			if s.cfg.FeatureToggles["live-pipeline"] {
+			if s.features.IsLivePipelineEnabled() {
 				mode = data.IncludeAll
 			}
 

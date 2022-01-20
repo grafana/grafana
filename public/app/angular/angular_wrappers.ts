@@ -134,6 +134,7 @@ export function registerAngularDirectives() {
     'isConfigured',
     'inputWidth',
     'labelWidth',
+    'aria-label',
     ['onReset', { watchDepth: 'reference', wrapApply: true }],
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
