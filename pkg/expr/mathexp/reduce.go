@@ -3,9 +3,12 @@ package mathexp
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
+
+type ReducerFunc = func(fv *Float64Field) *float64
 
 func Sum(fv *Float64Field) *float64 {
 	var sum float64
@@ -82,6 +85,25 @@ func Last(fv *Float64Field) *float64 {
 
 const ReduceModeDropNN = "dropNN"
 
+func GetReduceFunc(rFunc string) (ReducerFunc, error) {
+	switch strings.ToLower(rFunc) {
+	case "sum":
+		return Sum, nil
+	case "mean":
+		return Avg, nil
+	case "min":
+		return Min, nil
+	case "max":
+		return Max, nil
+	case "count":
+		return Count, nil
+	case "last":
+		return Last, nil
+	default:
+		return nil, fmt.Errorf("reduction %v not implemented", rFunc)
+	}
+}
+
 // Reduce turns the Series into a Number based on the given reduction function
 // When mode is not set, generally reductions on empty series (or series with NaN/null values) (with the exception of count)
 // return NaN.
@@ -99,22 +121,11 @@ func (s Series) Reduce(refID, rFunc string, mode string) (Number, error) {
 		fVec = s.filterNonNumber().Frame.Fields[seriesTypeValIdx]
 	}
 	floatField := Float64Field(*fVec)
-	switch rFunc {
-	case "sum":
-		f = Sum(&floatField)
-	case "mean":
-		f = Avg(&floatField)
-	case "min":
-		f = Min(&floatField)
-	case "max":
-		f = Max(&floatField)
-	case "count":
-		f = Count(&floatField)
-	case "last":
-		f = Last(&floatField)
-	default:
-		return number, fmt.Errorf("reduction %v not implemented", rFunc)
+	reduceFunc, err := GetReduceFunc(rFunc)
+	if err != nil {
+		return number, err
 	}
+	f = reduceFunc(&floatField)
 	if mode == ReduceModeDropNN && f != nil && math.IsNaN(*f) {
 		f = nil
 	}

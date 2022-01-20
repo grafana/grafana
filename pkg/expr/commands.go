@@ -81,6 +81,11 @@ func NewReduceCommand(refID, reducer, varToReduce string, mode string) (*ReduceC
 	if len(mode) > 0 && strings.EqualFold(mode, mathexp.ReduceModeDropNN) {
 		return nil, fmt.Errorf("reduce command does not support mode %s. Only mode %s is supported", mode, mathexp.ReduceModeDropNN)
 	}
+	_, err := mathexp.GetReduceFunc(reducer)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ReduceCommand{
 		Reducer:     reducer,
 		VarToReduce: varToReduce,
