@@ -100,7 +100,8 @@ export const NavBar: FC = React.memo(() => {
     if (isPmmAdmin(config.bootData.user)) {
       updateMenu();
     }
-  }, [topItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (kiosk !== null) {
     return null;
