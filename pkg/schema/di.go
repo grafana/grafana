@@ -47,6 +47,9 @@ type ObjectSchema interface {
 
 // CoreRegistry is a registry for Grafana core (compile-time-known)
 // k8s-compatible schemas.
+//
+// TODO we need(?) these to have distinct type identities for wire, component
+// conditions, and type aliases don't give us that
 type CoreRegistry = schemaRegistry
 
 // underlying type for all schema registries. Create type aliases as needed,
