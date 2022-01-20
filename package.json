@@ -7,7 +7,8 @@
   "repository": "github:grafana/grafana",
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
-    "build": "NODE_ENV=production NODE_OPTIONS=--max_old_space_size=1536 webpack --config scripts/webpack/webpack.prod.js",
+    "build": "NODE_ENV=production && webpack --config scripts/webpack/webpack.prod.js",
+    "build-max-memory": "NODE_OPTIONS='--max-old-space-size=2048' && yarn build",
     "build:nominify": "webpack --config scripts/webpack/webpack.prod.js --env noMinify=1",
     "dev": "webpack --progress --color --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
@@ -390,7 +391,8 @@
     "@rushstack/node-core-library": "3.42.3",
     "@rushstack/rig-package": "0.3.3",
     "@rushstack/ts-command-line": "4.10.2",
-    "@storybook/react/webpack": "5.63.0"
+    "@storybook/react/webpack": "5.63.0",
+    "@percona/platform-core": "portal:/Users/fabio/git/core-ui"
   },
   "workspaces": {
     "packages": [

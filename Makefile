@@ -48,7 +48,7 @@ build-cli: ## Build Grafana CLI application.
 
 build-js: ## Build frontend assets.
 	@echo "build frontend"
-	yarn run build
+	yarn run build-max-memory
 	yarn run plugins:build-bundled
 
 build: build-go build-js ## Build backend and frontend.
