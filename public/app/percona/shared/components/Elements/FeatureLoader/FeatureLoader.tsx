@@ -46,7 +46,8 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
     };
 
     getSettings();
-  }, [featureFlag, onError, generateToken, onSettingsLoaded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (featureEnabled) {
     return <>{children}</>;

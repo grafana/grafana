@@ -81,7 +81,8 @@ export const RestoreHistory: FC = () => {
     };
 
     getData(true).then(() => triggerTimeout(getData, DATA_INTERVAL));
-  }, [generateToken, triggerTimeout]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Table
