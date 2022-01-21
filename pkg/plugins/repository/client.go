@@ -49,7 +49,7 @@ func newClient(skipTLSVerify bool, grafanaVersion string, logger Logger) *Client
 	}
 }
 
-func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL, checksum, destPath string,
+func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL, checksum, pluginsPath string,
 	allowSymlinks bool, repo plugins.Repository) (*plugins.PluginArchiveInfo, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
@@ -62,7 +62,7 @@ func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL,
 		}
 	}()
 
-	c.log.Debugf("Installing plugin\nfrom: %s\ninto: %s", pluginZipURL, destPath)
+	c.log.Debugf("Installing plugin\nfrom: %s\ninto: %s", pluginZipURL, pluginsPath)
 
 	err = c.downloadFile(tmpFile, pluginZipURL, checksum)
 	if err != nil {
@@ -76,12 +76,12 @@ func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL,
 		return nil, errutil.Wrap("failed to close tmp file", err)
 	}
 
-	err = c.extractFiles(tmpFile.Name(), pluginID, destPath, allowSymlinks)
+	pluginDir, err := c.extractFiles(tmpFile.Name(), pluginID, pluginsPath, allowSymlinks)
 	if err != nil {
 		return nil, errutil.Wrap("failed to extract plugin archive", err)
 	}
 
-	res, err := toPluginDTO(destPath, pluginID)
+	res, err := toPluginDTO(pluginID, pluginDir)
 	if err != nil {
 		return nil, errutil.Wrap("failed to convert to plugin DTO", err)
 	}
@@ -92,7 +92,7 @@ func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL,
 		ID:           res.ID,
 		Version:      res.Info.Version,
 		Dependencies: make(map[string]*plugins.PluginArchiveInfo),
-		Path:         destPath,
+		Path:         pluginDir,
 	}
 
 	// download dependency plugins
@@ -306,26 +306,26 @@ func normalizeVersion(version string) string {
 	return normalized
 }
 
-func (c *Client) extractFiles(archivePath string, pluginID string, destPath string, allowSymlinks bool) error {
+func (c *Client) extractFiles(archivePath string, pluginID string, destPath string, allowSymlinks bool) (string, error) {
 	var err error
 	destPath, err = filepath.Abs(destPath)
 	if err != nil {
-		return err
+		return "", err
 	}
 	c.log.Debug(fmt.Sprintf("Extracting archive %q to %q...", archivePath, destPath))
 
-	existingInstallDir := filepath.Join(destPath, pluginID)
-	if _, err := os.Stat(existingInstallDir); !os.IsNotExist(err) {
-		c.log.Debugf("Removing existing installation of plugin %s", existingInstallDir)
-		err = os.RemoveAll(existingInstallDir)
+	installDir := filepath.Join(destPath, pluginID)
+	if _, err := os.Stat(installDir); !os.IsNotExist(err) {
+		c.log.Debugf("Removing existing installation of plugin %s", installDir)
+		err = os.RemoveAll(installDir)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
 	r, err := zip.OpenReader(archivePath)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	defer func() {
@@ -343,7 +343,7 @@ func (c *Client) extractFiles(archivePath string, pluginID string, destPath stri
 		if filepath.IsAbs(zf.Name) ||
 			!strings.HasPrefix(fullPath, filepath.Clean(destPath)+string(os.PathSeparator)) ||
 			strings.HasPrefix(zf.Name, ".."+string(os.PathSeparator)) {
-			return fmt.Errorf(
+			return "", fmt.Errorf(
 				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
 				zf.Name, destPath)
 		}
@@ -355,10 +355,10 @@ func (c *Client) extractFiles(archivePath string, pluginID string, destPath stri
 			// nolint:gosec
 			if err := os.MkdirAll(dstPath, 0755); err != nil {
 				if os.IsPermission(err) {
-					return ErrPermissionDenied{Path: dstPath}
+					return "", ErrPermissionDenied{Path: dstPath}
 				}
 
-				return err
+				return "", err
 			}
 
 			continue
@@ -368,7 +368,7 @@ func (c *Client) extractFiles(archivePath string, pluginID string, destPath stri
 		// We can ignore gosec G304 here since it makes sense to give all users read access
 		// nolint:gosec
 		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
-			return errutil.Wrap("failed to create directory to extract plugin files", err)
+			return "", errutil.Wrap("failed to create directory to extract plugin files", err)
 		}
 
 		if isSymlink(zf) {
@@ -381,11 +381,11 @@ func (c *Client) extractFiles(archivePath string, pluginID string, destPath stri
 				continue
 			}
 		} else if err := extractFile(zf, dstPath); err != nil {
-			return errutil.Wrap("failed to extract file", err)
+			return "", errutil.Wrap("failed to extract file", err)
 		}
 	}
 
-	return nil
+	return installDir, nil
 }
 
 func (c *Client) fullSystemInfoString() string {
@@ -462,19 +462,19 @@ func removeGitBuildFromName(filename, pluginID string) string {
 	return reGitBuild.ReplaceAllString(filename, pluginID+"/")
 }
 
-func toPluginDTO(pluginDir, pluginID string) (*InstalledPlugin, error) {
-	distPluginDataPath := filepath.Join(pluginDir, pluginID, "dist", "plugin.json")
+func toPluginDTO(pluginID, pluginDir string) (*InstalledPlugin, error) {
+	distPluginDataPath := filepath.Join(pluginDir, "dist", "plugin.json")
 
 	// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
 	// nolint:gosec
 	data, err := ioutil.ReadFile(distPluginDataPath)
 	if err != nil {
-		pluginDataPath := filepath.Join(pluginDir, pluginID, "plugin.json")
+		pluginDataPath := filepath.Join(pluginDir, "plugin.json")
 		// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
 		// nolint:gosec
 		data, err = ioutil.ReadFile(pluginDataPath)
 		if err != nil {
-			return nil, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginID + " in " + pluginDir)
+			return nil, fmt.Errorf("could not find dist/plugin.json or plugin.json for %s in %s", pluginID, pluginDir)
 		}
 	}
 
@@ -483,12 +483,12 @@ func toPluginDTO(pluginDir, pluginID string) (*InstalledPlugin, error) {
 		return res, err
 	}
 
-	if res.Info.Version == "" {
-		res.Info.Version = "0.0.0"
+	if res.ID == "" {
+		return nil, fmt.Errorf("could not find valid plugin %s in %s", pluginID, pluginDir)
 	}
 
-	if res.ID == "" {
-		return nil, errors.New("could not find plugin " + pluginID + " in " + pluginDir)
+	if res.Info.Version == "" {
+		res.Info.Version = "0.0.0"
 	}
 
 	return res, nil
