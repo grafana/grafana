@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -68,18 +67,6 @@ func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string, 
 	}
 
 	return l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
-}
-
-func (l *Loader) LoadWithFactory(ctx context.Context, class plugins.Class, path string, factory backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
-	p, err := l.load(ctx, class, path, map[string]struct{}{})
-	if err != nil {
-		l.log.Error("failed to load core plugin", "err", err)
-		return nil, err
-	}
-
-	err = l.pluginInitializer.InitializeWithFactory(p, factory)
-
-	return p, err
 }
 
 func (l *Loader) load(ctx context.Context, class plugins.Class, path string, ignore map[string]struct{}) (*plugins.Plugin, error) {
