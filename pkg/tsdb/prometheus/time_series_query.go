@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/opentracing/opentracing-go"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 //Internal interval and range variables
@@ -47,7 +47,7 @@ const (
 	ExemplarQueryType TimeSeriesQueryType = "exemplar"
 )
 
-func runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
+func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -55,11 +55,11 @@ func runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuer
 	for _, query := range queries {
 		plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
-		span, ctx := opentracing.StartSpanFromContext(ctx, "datasource.prometheus")
-		span.SetTag("expr", query.Expr)
-		span.SetTag("start_unixnano", query.Start.UnixNano())
-		span.SetTag("stop_unixnano", query.End.UnixNano())
-		defer span.Finish()
+		ctx, span := s.tracer.Start(ctx, "datasource.prometheus")
+		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
+		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
+		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
+		defer span.End()
 
 		response := make(map[TimeSeriesQueryType]interface{})
 
@@ -128,7 +128,7 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 		return &result, err
 	}
 
-	return runQueries(ctx, client, queries)
+	return s.runQueries(ctx, client, queries)
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {

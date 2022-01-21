@@ -25,13 +25,14 @@ const resourceManagerPath = "/v1/projects"
 
 type processResponse func(body []byte) ([]json.RawMessage, string, error)
 
-func (s *Service) registerRoutes(mux *http.ServeMux) {
+func (s *Service) newResourceMux() *http.ServeMux {
+	mux := http.NewServeMux()
 	mux.HandleFunc("/gceDefaultProject", getGCEDefaultProject)
-
-	mux.HandleFunc("/metricDescriptors/", s.resourceHandler(cloudMonitor, processMetricDescriptors))
-	mux.HandleFunc("/services/", s.resourceHandler(cloudMonitor, processServices))
-	mux.HandleFunc("/slo-services/", s.resourceHandler(cloudMonitor, processSLOs))
-	mux.HandleFunc("/projects", s.resourceHandler(resourceManager, processProjects))
+	mux.HandleFunc("/metricDescriptors/", s.handleResourceReq(cloudMonitor, processMetricDescriptors))
+	mux.HandleFunc("/services/", s.handleResourceReq(cloudMonitor, processServices))
+	mux.HandleFunc("/slo-services/", s.handleResourceReq(cloudMonitor, processSLOs))
+	mux.HandleFunc("/projects", s.handleResourceReq(resourceManager, processProjects))
+	return mux
 }
 
 func getGCEDefaultProject(rw http.ResponseWriter, req *http.Request) {
@@ -43,7 +44,7 @@ func getGCEDefaultProject(rw http.ResponseWriter, req *http.Request) {
 	writeResponse(rw, http.StatusOK, project)
 }
 
-func (s *Service) resourceHandler(subDataSource string, responseFn processResponse) func(rw http.ResponseWriter, req *http.Request) {
+func (s *Service) handleResourceReq(subDataSource string, responseFn processResponse) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		client, code, err := s.setRequestVariables(req, subDataSource)
 		if err != nil {
