@@ -6,16 +6,19 @@ weight = 70
 
 # Add a team member
 
-Add an existing user account to a team.
+Add a team member to an existing team whenever you want to provide access to team dashboards and folders to another user.
 
-{{< docs/list >}}
-{{< docs/shared "manage-users/view-team-list.md" >}}
+## Before you begin
 
-1. Click the name of the team that you want to add users to.
-1. Click **Add member**.
-1. In the **Add team member** list, click the user account that you want to add to the team. You can also type in the field to filter the list.
+- Ensure that you have organization administrator permissions
+- [Create a team]({{< relref "./create-team.md">}}).
+
+**To add a team member**:
+
+1. Sign in to Grafana as an organization administrator.
+1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Teams**.
+1. Click the name of the team to which you want to add members, and click **Add member**.
+1. In the **Add team member** field, locate and select a user.
 1. Click **Add to team**.
-1. Repeat the process to add more team members.
-   {{< /docs/list >}}
 
 ![Add team member](/static/img/docs/manage-users/add-team-member-7-3.png)

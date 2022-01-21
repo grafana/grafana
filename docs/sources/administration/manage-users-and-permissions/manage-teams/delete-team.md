@@ -6,10 +6,15 @@ weight = 70
 
 # Delete a team
 
-Permanently delete the team and all special permissions assigned to it.
+Delete a team when you no longer need it. This action permanently deletes the team and removes all team permissions from dashboards and folders.
 
-{{< docs/list >}}
-{{< docs/shared "manage-users/view-team-list.md" >}}
+## Before you begin
 
-1. Click the red **X** next to the team that you want to delete and then click **Delete**.
-   {{< /docs/list >}}
+- Ensure that you have organization administrator permissions
+
+**To delete a team**:
+
+1. Sign in to Grafana as an organization administrator.
+1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Teams**.
+1. Click the **X** next to the name of the team.
+1. Click **Delete**.
