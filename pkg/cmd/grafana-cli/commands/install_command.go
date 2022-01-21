@@ -60,7 +60,7 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 	version := c.Args().Get(1)
 	skipTLSVerify := c.Bool("insecure")
 
-	repo := repository.New(skipTLSVerify, services.GrafanaVersion, services.Logger)
+	repo := repository.New(skipTLSVerify, services.GrafanaVersion, c.PluginDirectory(), c.PluginRepoURL(), services.Logger)
 
 	pluginZipURL := c.PluginURL()
 	if pluginZipURL != "" {

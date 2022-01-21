@@ -17,13 +17,16 @@ type Service struct {
 	client *Client
 
 	pluginsPath string
+	repoURL     string
 	log         Logger
 }
 
-func New(skipTLSVerify bool, grafanaVersion string, logger Logger) *Service {
+func New(skipTLSVerify bool, grafanaVersion, pluginsPath, repoURL string, logger Logger) *Service {
 	return &Service{
-		client: newClient(skipTLSVerify, grafanaVersion, logger),
-		log:    logger,
+		client:      newClient(skipTLSVerify, grafanaVersion, logger),
+		pluginsPath: pluginsPath,
+		repoURL:     repoURL,
+		log:         logger,
 	}
 }
 
@@ -97,7 +100,11 @@ func (s *Service) DownloadWithURL(ctx context.Context, pluginID, archiveURL stri
 
 func (s *Service) pluginMetadata(pluginID string) (Plugin, error) {
 	s.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, grafanaComAPIRoot)
-	body, err := s.client.sendRequestGetBytes(grafanaComAPIRoot, "repo", pluginID)
+	repoURL := s.repoURL
+	if repoURL == "" {
+		repoURL = grafanaComAPIRoot
+	}
+	body, err := s.client.sendRequestGetBytes(repoURL, "repo", pluginID)
 	if err != nil {
 		return Plugin{}, err
 	}
