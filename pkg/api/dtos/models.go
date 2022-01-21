@@ -13,6 +13,7 @@ import (
 )
 
 var regNonAlphaNumeric = regexp.MustCompile("[^a-zA-Z0-9]+")
+var mlog = log.New("models")
 
 type AnyId struct {
 	Id int64 `json:"id"`
@@ -38,6 +39,7 @@ type CurrentUser struct {
 	IsGrafanaAdmin             bool               `json:"isGrafanaAdmin"`
 	GravatarUrl                string             `json:"gravatarUrl"`
 	Timezone                   string             `json:"timezone"`
+	WeekStart                  string             `json:"weekStart"`
 	Locale                     string             `json:"locale"`
 	HelpFlags1                 models.HelpFlags1  `json:"helpFlags1"`
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
@@ -64,7 +66,7 @@ func GetGravatarUrl(text string) string {
 
 	hasher := md5.New()
 	if _, err := hasher.Write([]byte(strings.ToLower(text))); err != nil {
-		log.Warnf("Failed to hash text: %s", err)
+		mlog.Warn("Failed to hash text", "err", err)
 	}
 	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
 }

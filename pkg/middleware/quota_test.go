@@ -9,14 +9,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
-	macaron "gopkg.in/macaron.v1"
 )
 
 func TestMiddlewareQuota(t *testing.T) {
 	t.Run("With user not logged in", func(t *testing.T) {
 		middlewareScenario(t, "and global quota not reached", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandlerCtx("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandler("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -33,7 +33,7 @@ func TestMiddlewareQuota(t *testing.T) {
 		}, configure)
 
 		middlewareScenario(t, "and global quota reached", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandlerCtx("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandler("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -53,7 +53,7 @@ func TestMiddlewareQuota(t *testing.T) {
 		})
 
 		middlewareScenario(t, "and global session quota not reached", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandlerCtx("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandler("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -89,7 +89,7 @@ func TestMiddlewareQuota(t *testing.T) {
 
 		setUp := func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
 				return nil
 			})
@@ -101,7 +101,7 @@ func TestMiddlewareQuota(t *testing.T) {
 				}, nil
 			}
 
-			bus.AddHandlerCtx("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandler("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -110,7 +110,7 @@ func TestMiddlewareQuota(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("userQuota", func(query *models.GetUserQuotaByTargetQuery) error {
+			bus.AddHandler("userQuota", func(_ context.Context, query *models.GetUserQuotaByTargetQuery) error {
 				query.Result = &models.UserQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -119,7 +119,7 @@ func TestMiddlewareQuota(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("orgQuota", func(query *models.GetOrgQuotaByTargetQuery) error {
+			bus.AddHandler("orgQuota", func(_ context.Context, query *models.GetOrgQuotaByTargetQuery) error {
 				query.Result = &models.OrgQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -219,7 +219,8 @@ func TestMiddlewareQuota(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 
-			cfg.UnifiedAlerting.Enabled = true
+			cfg.UnifiedAlerting.Enabled = new(bool)
+			*cfg.UnifiedAlerting.Enabled = true
 			cfg.Quota.Org.AlertRule = quotaUsed
 		})
 
@@ -233,7 +234,8 @@ func TestMiddlewareQuota(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 
-			cfg.UnifiedAlerting.Enabled = true
+			cfg.UnifiedAlerting.Enabled = new(bool)
+			*cfg.UnifiedAlerting.Enabled = true
 			cfg.Quota.Org.AlertRule = quotaUsed + 1
 		})
 
@@ -266,7 +268,7 @@ func TestMiddlewareQuota(t *testing.T) {
 	})
 }
 
-func getQuotaHandler(sc *scenarioContext, target string) macaron.Handler {
+func getQuotaHandler(sc *scenarioContext, target string) web.Handler {
 	fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 	qs := &quota.QuotaService{
 		AuthTokenService: fakeAuthTokenService,

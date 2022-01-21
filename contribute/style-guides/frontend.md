@@ -255,6 +255,7 @@ Organize your code in a directory that encloses feature code:
 - Put React components in `components` directory (i.e. `features/my-feature/components/ButtonPeopleDreamOf.tsx`).
 - Put test files next to the test subject.
 - Put containers (pages) in feature root (i.e. `features/my-feature/DashboardPage.tsx`).
+- Put API function calls that isn't a redux thunk in an `api.ts` file within the same directory.
 - Subcomponents can live in the component folders. Small component do not need their own folder.
 - Component SASS styles should live in the same folder as component code.
 
@@ -268,6 +269,7 @@ For code that needs to be used by external plugin:
 
 - Use named exports for all code you want to export from a file.
 - Use declaration exports (i.e. `export const foo = ...`).
+- Avoid using default exports (for example, `export default foo`).
 - Export only the code that is meant to be used outside the module.
 
 ### Comments
@@ -342,6 +344,14 @@ static defaultProps = { ... }
 
 // good
 static defaultProps: Partial<Props> = { ... }
+```
+
+### How to declare functional components
+
+We recommend using named regular functions when creating a new react functional component.
+
+```typescript
+export function Component(props: Props): ReactElement { ... }
 ```
 
 ## State management

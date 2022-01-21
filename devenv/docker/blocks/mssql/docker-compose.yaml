@@ -13,7 +13,6 @@
 
   fake-mssql-data:
     image: grafana/fake-data-gen
-    network_mode: bridge
     environment:
       FD_DATASOURCE: mssql
       FD_PORT: 1433

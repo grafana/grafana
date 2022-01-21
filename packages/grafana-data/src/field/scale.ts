@@ -27,6 +27,10 @@ export function getScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCal
 
     if (value !== -Infinity) {
       percent = (value - info.min!) / info.delta;
+
+      if (Number.isNaN(percent)) {
+        percent = 0;
+      }
     }
 
     const threshold = getActiveThresholdForValue(field, value, percent);

@@ -1,8 +1,14 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType } from '../../types/dataFrame';
+import { Field, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ArrayVector } from '../../vector';
-import { ensureTimeField, convertFieldType, convertFieldTypes, convertFieldTypeTransformer } from './convertFieldType';
+import {
+  ensureTimeField,
+  convertFieldType,
+  convertFieldTypes,
+  convertFieldTypeTransformer,
+  fieldToTimeField,
+} from './convertFieldType';
 
 describe('field convert type', () => {
   it('will parse properly formatted strings to time', () => {
@@ -177,6 +183,87 @@ describe('field convert types transformer', () => {
     ]);
   });
 
+  it('will convert field to complex objects', () => {
+    const options = {
+      conversions: [
+        { targetField: 'numbers', destinationType: FieldType.other },
+        { targetField: 'objects', destinationType: FieldType.other },
+        { targetField: 'arrays', destinationType: FieldType.other },
+        { targetField: 'invalids', destinationType: FieldType.other },
+        { targetField: 'mixed', destinationType: FieldType.other },
+      ],
+    };
+
+    const comboTypes = toDataFrame({
+      fields: [
+        {
+          name: 'numbers',
+          type: FieldType.number,
+          values: [-1, 1, null],
+        },
+        {
+          name: 'objects',
+          type: FieldType.string,
+          values: [
+            '{ "neg": -100, "zero": 0, "pos": 1, "null": null, "array": [0, 1, 2], "nested": { "number": 1 } }',
+            '{ "string": "abcd" }',
+            '{}',
+          ],
+        },
+        {
+          name: 'arrays',
+          type: FieldType.string,
+          values: ['[true]', '[99]', '["2021-08-02 00:00:00.000"]'],
+        },
+        {
+          name: 'invalids',
+          type: FieldType.string,
+          values: ['abcd', '{ invalidJson }', '[unclosed array'],
+        },
+        {
+          name: 'mixed',
+          type: FieldType.string,
+          values: [
+            '{ "neg": -100, "zero": 0, "pos": 1, "null": null, "array": [0, 1, 2], "nested": { "number": 1 } }',
+            '["a string", 1234, {"a complex": "object"}]',
+            '["this is invalid JSON]',
+          ],
+        },
+      ],
+    });
+
+    const complex = convertFieldTypes(options, [comboTypes]);
+    expect(
+      complex[0].fields.map((f) => ({
+        type: f.type,
+        values: f.values.toArray(),
+      }))
+    ).toEqual([
+      {
+        type: FieldType.other,
+        values: [-1, 1, null],
+      },
+      {
+        type: FieldType.other,
+        values: [
+          { neg: -100, zero: 0, pos: 1, null: null, array: [0, 1, 2], nested: { number: 1 } },
+          { string: 'abcd' },
+          {},
+        ],
+      },
+      { type: FieldType.other, values: [[true], [99], ['2021-08-02 00:00:00.000']] },
+      { type: FieldType.other, values: [null, null, null] },
+      {
+        type: FieldType.other,
+        values: [
+          { neg: -100, zero: 0, pos: 1, null: null, array: [0, 1, 2], nested: { number: 1 } },
+          ['a string', 1234, { 'a complex': 'object' }],
+          null,
+        ],
+      },
+    ]);
+  });
+
   it('will convert field to strings', () => {
     const options = {
       conversions: [{ targetField: 'numbers', destinationType: FieldType.string }],
@@ -230,6 +317,27 @@ describe('ensureTimeField', () => {
       name: 'proper dates',
       type: FieldType.time,
       values: new ArrayVector([1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000]),
+    });
+  });
+});
+
+describe('fieldToTimeField', () => {
+  // this needs to run in a non-UTC timezone env to ensure the parsing is not dependent on env tz settings
+  //process.env.TZ = 'Pacific/Easter';
+
+  it('should always parse ISO 8601 date strings in UTC timezone (e.g. 2011-10-05T14:48:00.000Z)', () => {
+    const stringTimeField: Field = {
+      config: {},
+      name: 'ISO 8601 date strings',
+      type: FieldType.time,
+      values: new ArrayVector(['2021-11-11T19:45:00.000Z']),
+    };
+
+    expect(fieldToTimeField(stringTimeField)).toEqual({
+      config: {},
+      name: 'ISO 8601 date strings',
+      type: FieldType.time,
+      values: new ArrayVector([1636659900000]),
     });
   });
 });

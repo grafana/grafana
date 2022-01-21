@@ -33,6 +33,7 @@ const defaultInitialState = {
       eventBridge: {} as EventBusExtended,
       queries: [] as DataQuery[],
       range: testRange,
+      history: [],
       refreshInterval: {
         label: 'Off',
         value: 0,
@@ -62,6 +63,7 @@ function setup(state?: any) {
       query: jest.fn(),
       name: 'newDs',
       meta: { id: 'newDs' },
+      getRef: () => ({ uid: 'newDs' }),
     },
     someDs: {
       testDatasource: jest.fn(),
@@ -69,6 +71,7 @@ function setup(state?: any) {
       query: jest.fn(),
       name: 'someDs',
       meta: { id: 'someDs' },
+      getRef: () => ({ uid: 'someDs' }),
     },
   };
 
@@ -77,7 +80,7 @@ function setup(state?: any) {
       return Object.values(datasources).map((d) => ({ name: d.name }));
     },
     getInstanceSettings(name: string) {
-      return { name: 'hello' };
+      return { name, getRef: () => ({ uid: name }) };
     },
     get(name?: string) {
       return Promise.resolve(

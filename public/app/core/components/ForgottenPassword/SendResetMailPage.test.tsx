@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { SendResetMailPage } from './SendResetMailPage';
@@ -9,24 +9,20 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     post: postMock,
   }),
-}));
-
-jest.mock('app/core/config', () => {
-  return {
+  config: {
     buildInfo: {
       version: 'v1.0',
       commit: '1',
       env: 'production',
       edition: 'Open Source',
-      isEnterprise: false,
     },
     licenseInfo: {
       stateInfo: '',
       licenseUrl: '',
     },
     appSubUrl: '',
-  };
-});
+  },
+}));
 
 describe('VerifyEmail Page', () => {
   it('renders correctly', () => {
@@ -45,16 +41,14 @@ describe('VerifyEmail Page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send reset email' }));
     expect(await screen.findByText('Email or username is required')).toBeInTheDocument();
 
-    await act(async () => {
-      await userEvent.type(screen.getByRole('textbox', { name: /User Enter your information/i }), 'test@gmail.com');
-      expect(screen.queryByText('Email is invalid')).not.toBeInTheDocument();
-    });
+    userEvent.type(screen.getByRole('textbox', { name: /User Enter your information/i }), 'test@gmail.com');
+    await waitFor(() => expect(screen.queryByText('Email is invalid')).not.toBeInTheDocument());
   });
   it('should show success meessage if reset-password is successful', async () => {
     postMock.mockResolvedValueOnce({ message: 'Email sent' });
     render(<SendResetMailPage />);
 
-    await userEvent.type(screen.getByRole('textbox', { name: /User Enter your information/i }), 'test@gmail.com');
+    userEvent.type(screen.getByRole('textbox', { name: /User Enter your information/i }), 'test@gmail.com');
     fireEvent.click(screen.getByRole('button', { name: 'Send reset email' }));
     await waitFor(() =>
       expect(postMock).toHaveBeenCalledWith('/api/user/password/send-reset-email', {

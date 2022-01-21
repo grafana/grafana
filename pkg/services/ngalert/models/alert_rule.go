@@ -41,11 +41,16 @@ func (executionErrorState ExecutionErrorState) String() string {
 
 const (
 	AlertingErrState ExecutionErrorState = "Alerting"
+	ErrorErrState    ExecutionErrorState = "Error"
 )
 
 const (
 	RuleUIDLabel      = "__alert_rule_uid__"
 	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
+
+	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
+	DashboardUIDAnnotation = "__dashboardUid__"
+	PanelIDAnnotation      = "__panelId__"
 )
 
 // AlertRule is the model for alert rules in unified alerting.

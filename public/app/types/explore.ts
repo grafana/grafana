@@ -4,15 +4,15 @@ import {
   DataFrame,
   DataQuery,
   DataQueryRequest,
+  DataQueryResponse,
   DataSourceApi,
+  EventBusExtended,
   HistoryItem,
   LogsModel,
   PanelData,
   QueryHint,
   RawTimeRange,
   TimeRange,
-  EventBusExtended,
-  DataQueryResponse,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -47,10 +47,19 @@ export interface ExploreState {
   richHistory: RichHistoryQuery[];
 
   /**
-   * Auto-loading logs volume after running the query
+   * True if local storage quota was exceeded when a new item was added. This is to prevent showing
+   * multiple errors when local storage is full.
    */
-  autoLoadLogsVolume: boolean;
+  localStorageFull: boolean;
+
+  /**
+   * True if a warning message of hitting the exceeded number of items has been shown already.
+   */
+  richHistoryLimitExceededWarningShown: boolean;
 }
+
+export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
 
 export interface ExploreItemState {
   /**
@@ -161,6 +170,9 @@ export interface ExploreItemState {
   logsVolumeDataProvider?: Observable<DataQueryResponse>;
   logsVolumeDataSubscription?: SubscriptionLike;
   logsVolumeData?: DataQueryResponse;
+
+  /* explore graph style */
+  graphStyle: ExploreGraphStyle;
 }
 
 export interface ExploreUpdateState {

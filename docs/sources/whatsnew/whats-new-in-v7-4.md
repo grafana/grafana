@@ -54,7 +54,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Sort by]({{< relref "../panels/transformations/types-options.md#sort-by" >}}) in [Transformation types and options]({{< relref "../panels/transformations/types-options.md" >}}).
+For more information, refer to [Sort by]({{< relref "../panels/reference-transformation-functions.md#sort-by" >}}).
 
 #### Filter data by value transform
 
@@ -62,13 +62,13 @@ The new _Filter data by value_ transformation allows you to filter your data dir
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-For more information, refer to [Filter data by value]({{< relref "../panels/transformations/types-options.md#filter-data-by-value" >}}) in [Transformation types and options]({{< relref "../panels/transformations/types-options.md" >}}).
+For more information, refer to [Filter data by value]({{< relref "../panels/reference-transformation-functions.md#filter-data-by-value" >}}).
 
 ### New override option
 
 On the Overrides tab, you can now set properties for fields returned by a specific query.
 
-For more information, refer to [Field overrides]({{< relref "../panels/field-overrides.md" >}}).
+For more information, refer to [About field overrides]({{< relref "../panels/override-field-values/about-field-overrides.md" >}}).
 
 ### Exemplar support
 
@@ -99,7 +99,7 @@ The main use case is for [multi-dimensional]({{< relref "../basics/timeseries-di
 
 > **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana alerting.
 
-For more information, refer to [Expressions]({{< relref "../panels/expressions.md" >}}). [Queries]({{< relref "../panels/queries.md" >}}) was also updated as a result of this feature.
+For more information, refer to [About expressions]({{< relref "../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions.md" >}}). [About queries]({{< relref "../panels/query-a-data-source/about-queries.md" >}}) was also updated as a result of this feature.
 
 ### Alert notification query label interpolation
 
@@ -170,7 +170,7 @@ For more information, refer to the [Google Cloud Monitoring docs]({{< relref "..
 
 The feature previously referred to as DataSource Start Pages or Cheat Sheets has been renamed to Query Editor Help, and is now supported in panel query editors (depending on the data source), as well as in Explore.
 
-[Queries]({{< relref "../panels/queries.md" >}}) was updated as a result of this feature.
+[Queries]({{< relref "../panels/query-a-data-source/manage-queries.md" >}}) was updated as a result of this feature.
 
 For more information on adding a query editor help component to your plugin, refer to [Add a query editor help component]({{< relref "../developers/plugins/add-query-editor-help.md" >}}).
 

@@ -16,7 +16,7 @@ import (
 type ResponseParser struct{}
 
 var (
-	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|(\$*([\@\w-]+?))*`)
+	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$(\s*([\@\w-]+?))*`)
 )
 
 func (rp *ResponseParser) Parse(buf io.ReadCloser, query *Query) *backend.QueryDataResponse {
@@ -113,7 +113,7 @@ func formatFrameName(row Row, column string, query *Query) string {
 		}
 
 		pos, err := strconv.Atoi(aliasFormat)
-		if err == nil && len(nameSegment) >= pos {
+		if err == nil && len(nameSegment) > pos {
 			return []byte(nameSegment[pos])
 		}
 

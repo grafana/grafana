@@ -82,7 +82,7 @@ export function convertFieldTypes(options: ConvertFieldTypeTransformerOptions, f
 }
 
 /**
- * Convert a single field type to specifed field type.
+ * Convert a single field type to specified field type.
  * @param field - field to convert
  * @param opts - field conversion options
  * @returns converted field
@@ -99,10 +99,15 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
       return fieldToStringField(field);
     case FieldType.boolean:
       return fieldToBooleanField(field);
+    case FieldType.other:
+      return fieldToComplexField(field);
     default:
       return field;
   }
 }
+
+// matches ISO 8601, e.g. 2021-11-11T19:45:00.000Z (float portion optional)
+const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 
 /**
  * @internal
@@ -112,9 +117,13 @@ export function fieldToTimeField(field: Field, dateFormat?: string): Field {
 
   const timeValues = field.values.toArray().slice();
 
+  let firstDefined = timeValues.find((v) => v != null);
+
+  let isISO8601 = typeof firstDefined === 'string' && iso8601Regex.test(firstDefined);
+
   for (let t = 0; t < timeValues.length; t++) {
     if (timeValues[t]) {
-      let parsed = dateTimeParse(timeValues[t], opts).valueOf();
+      let parsed = isISO8601 ? Date.parse(timeValues[t]) : dateTimeParse(timeValues[t], opts).valueOf();
       timeValues[t] = Number.isFinite(parsed) ? parsed : null;
     } else {
       timeValues[t] = null;
@@ -168,6 +177,24 @@ function fieldToStringField(field: Field): Field {
     ...field,
     type: FieldType.string,
     values: new ArrayVector(stringValues),
+  };
+}
+
+function fieldToComplexField(field: Field): Field {
+  const complexValues = field.values.toArray().slice();
+
+  for (let s = 0; s < complexValues.length; s++) {
+    try {
+      complexValues[s] = JSON.parse(complexValues[s]);
+    } catch {
+      complexValues[s] = null;
+    }
+  }
+
+  return {
+    ...field,
+    type: FieldType.other,
+    values: new ArrayVector(complexValues),
   };
 }
 

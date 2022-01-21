@@ -34,7 +34,9 @@
   ],
   "panels": [
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -100,7 +102,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.4.0-pre",
@@ -138,7 +141,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "description": "Series A have no nulls and is not aligned with series B",
       "fieldConfig": {
         "defaults": {
@@ -206,7 +211,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.4.0-pre",
@@ -252,7 +258,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -320,7 +328,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.4.0-pre",
@@ -386,7 +395,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -452,7 +463,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.4.0-pre",
@@ -490,7 +502,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "description": "Series A have no nulls and is not aligned with series B",
       "fieldConfig": {
         "defaults": {
@@ -558,7 +572,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.4.0-pre",
@@ -604,7 +619,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "description": "Should look the same as above\n",
       "fieldConfig": {
         "defaults": {
@@ -672,7 +689,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.4.0-pre",
@@ -738,7 +756,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -836,7 +856,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.2.0-pre",
@@ -878,7 +899,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -976,7 +999,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.2.0-pre",
@@ -1082,7 +1106,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.5.0-pre",
@@ -1184,7 +1209,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -1198,7 +1224,7 @@
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 30,
+  "schemaVersion": 33,
   "style": "dark",
   "tags": [
     "gdev",

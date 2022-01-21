@@ -83,9 +83,9 @@ describe('ChangePasswordPage', () => {
   it('should call changePassword if change password is valid', async () => {
     const { props } = await getTestContext();
 
-    await userEvent.type(screen.getByLabelText('Old password'), 'test');
-    await userEvent.type(screen.getByLabelText('New password'), 'admin');
-    await userEvent.type(screen.getByLabelText('Confirm password'), 'admin');
+    userEvent.type(screen.getByLabelText('Old password'), 'test');
+    userEvent.type(screen.getByLabelText('New password'), 'admin');
+    userEvent.type(screen.getByLabelText('Confirm password'), 'admin');
     fireEvent.click(screen.getByRole('button', { name: 'Change Password' }));
     await waitFor(() => {
       expect(props.changePassword).toHaveBeenCalledTimes(1);

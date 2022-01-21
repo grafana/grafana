@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -18,9 +19,9 @@ var (
 
 // Provision scans a directory for provisioning config files
 // and provisions the datasource in those files.
-func Provision(configDirectory string) error {
+func Provision(ctx context.Context, configDirectory string) error {
 	dc := newDatasourceProvisioner(log.New("provisioning.datasources"))
-	return dc.applyChanges(configDirectory)
+	return dc.applyChanges(ctx, configDirectory)
 }
 
 // DatasourceProvisioner is responsible for provisioning datasources based on
@@ -37,28 +38,28 @@ func newDatasourceProvisioner(log log.Logger) DatasourceProvisioner {
 	}
 }
 
-func (dc *DatasourceProvisioner) apply(cfg *configs) error {
-	if err := dc.deleteDatasources(cfg.DeleteDatasources); err != nil {
+func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error {
+	if err := dc.deleteDatasources(ctx, cfg.DeleteDatasources); err != nil {
 		return err
 	}
 
 	for _, ds := range cfg.Datasources {
 		cmd := &models.GetDataSourceQuery{OrgId: ds.OrgID, Name: ds.Name}
-		err := bus.Dispatch(cmd)
+		err := bus.Dispatch(ctx, cmd)
 		if err != nil && !errors.Is(err, models.ErrDataSourceNotFound) {
 			return err
 		}
 
 		if errors.Is(err, models.ErrDataSourceNotFound) {
-			dc.log.Info("inserting datasource from configuration ", "name", ds.Name, "uid", ds.UID)
 			insertCmd := createInsertCommand(ds)
-			if err := bus.Dispatch(insertCmd); err != nil {
+			dc.log.Info("inserting datasource from configuration ", "name", insertCmd.Name, "uid", insertCmd.Uid)
+			if err := bus.Dispatch(ctx, insertCmd); err != nil {
 				return err
 			}
 		} else {
-			dc.log.Debug("updating datasource from configuration", "name", ds.Name, "uid", ds.UID)
 			updateCmd := createUpdateCommand(ds, cmd.Result.Id)
-			if err := bus.Dispatch(updateCmd); err != nil {
+			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.Uid)
+			if err := bus.Dispatch(ctx, updateCmd); err != nil {
 				return err
 			}
 		}
@@ -67,14 +68,14 @@ func (dc *DatasourceProvisioner) apply(cfg *configs) error {
 	return nil
 }
 
-func (dc *DatasourceProvisioner) applyChanges(configPath string) error {
-	configs, err := dc.cfgProvider.readConfig(configPath)
+func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath string) error {
+	configs, err := dc.cfgProvider.readConfig(ctx, configPath)
 	if err != nil {
 		return err
 	}
 
 	for _, cfg := range configs {
-		if err := dc.apply(cfg); err != nil {
+		if err := dc.apply(ctx, cfg); err != nil {
 			return err
 		}
 	}
@@ -82,10 +83,10 @@ func (dc *DatasourceProvisioner) applyChanges(configPath string) error {
 	return nil
 }
 
-func (dc *DatasourceProvisioner) deleteDatasources(dsToDelete []*deleteDatasourceConfig) error {
+func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig) error {
 	for _, ds := range dsToDelete {
 		cmd := &models.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name}
-		if err := bus.Dispatch(cmd); err != nil {
+		if err := bus.Dispatch(ctx, cmd); err != nil {
 			return err
 		}
 

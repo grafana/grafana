@@ -14,18 +14,10 @@ import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
-import { changeSize } from './state/explorePane';
-import { updateTimeRange } from './state/time';
-import {
-  addQueryRow,
-  changeAutoLogsVolume,
-  loadLogsVolumeData,
-  modifyQueries,
-  scanStart,
-  scanStopAction,
-  setQueries,
-} from './state/query';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { changeSize, changeGraphStyle } from './state/explorePane';
+import { makeAbsoluteTime, updateTimeRange } from './state/time';
+import { addQueryRow, loadLogsVolumeData, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
+import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
@@ -37,6 +29,10 @@ import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { ExploreGraph } from './ExploreGraph';
 import { LogsVolumePanel } from './LogsVolumePanel';
+import { ExploreGraphLabel } from './ExploreGraphLabel';
+import appEvents from 'app/core/app_events';
+import { AbsoluteTimeEvent } from 'app/types/events';
+import { Unsubscribable } from 'rxjs';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -102,11 +98,22 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
 export class Explore extends React.PureComponent<Props, ExploreState> {
+  scrollElement: HTMLDivElement | undefined;
+  absoluteTimeUnsubsciber: Unsubscribable | undefined;
+
   constructor(props: Props) {
     super(props);
     this.state = {
       openDrawer: undefined,
     };
+  }
+
+  componentDidMount() {
+    this.absoluteTimeUnsubsciber = appEvents.subscribe(AbsoluteTimeEvent, this.onMakeAbsoluteTime);
+  }
+
+  componentWillUnmount() {
+    this.absoluteTimeUnsubsciber?.unsubscribe();
   }
 
   onChangeTime = (rawRange: RawTimeRange) => {
@@ -143,6 +150,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.props.addQueryRow(exploreId, queryKeys.length);
   };
 
+  onMakeAbsoluteTime = () => {
+    const { makeAbsoluteTime } = this.props;
+    makeAbsoluteTime();
+  };
+
   onModifyQueries = (action: any, index?: number) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance?.modifyQuery) {
@@ -170,6 +182,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
+  onChangeGraphStyle = (graphStyle: ExploreGraphStyle) => {
+    const { exploreId, changeGraphStyle } = this.props;
+    changeGraphStyle(exploreId, graphStyle);
+  };
+
   toggleShowRichHistory = () => {
     this.setState((state) => {
       return {
@@ -195,11 +212,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme } = this.props;
+    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme, graphStyle } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
+    const label = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={this.onChangeGraphStyle} />;
     return (
-      <Collapse label="Graph" loading={loading} isOpen>
+      <Collapse label={label} loading={loading} isOpen>
         <ExploreGraph
+          graphStyle={graphStyle}
           data={graphResult!}
           height={400}
           width={width - spacing}
@@ -215,43 +234,30 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsVolume(width: number) {
-    const {
-      logsVolumeData,
-      exploreId,
-      loadLogsVolumeData,
-      autoLoadLogsVolume,
-      changeAutoLogsVolume,
-      absoluteRange,
-      timeZone,
-      splitOpen,
-    } = this.props;
+    const { logsVolumeData, exploreId, loadLogsVolumeData, absoluteRange, timeZone, splitOpen } = this.props;
 
     return (
       <LogsVolumePanel
-        exploreId={exploreId}
-        loadLogsVolumeData={loadLogsVolumeData}
         absoluteRange={absoluteRange}
         width={width}
         logsVolumeData={logsVolumeData}
         onUpdateTimeRange={this.onUpdateTimeRange}
         timeZone={timeZone}
         splitOpen={splitOpen}
-        autoLoadLogsVolume={autoLoadLogsVolume}
-        onChangeAutoLogsVolume={(autoLoadLogsVolume) => {
-          changeAutoLogsVolume(exploreId, autoLoadLogsVolume);
-        }}
+        onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
       />
     );
   }
 
   renderTablePanel(width: number) {
-    const { exploreId, datasourceInstance } = this.props;
+    const { exploreId, datasourceInstance, timeZone } = this.props;
     return (
       <TableContainer
         ariaLabel={selectors.pages.Explore.General.table}
         width={width}
         exploreId={exploreId}
         onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
+        timeZone={timeZone}
       />
     );
   }
@@ -298,7 +304,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       // If there is no data (like 404) we show a separate error so no need to show anything here
-      dataFrames.length && <TraceViewContainer exploreId={exploreId} dataFrames={dataFrames} splitOpenFn={splitOpen} />
+      dataFrames.length && (
+        <TraceViewContainer
+          exploreId={exploreId}
+          dataFrames={dataFrames}
+          splitOpenFn={splitOpen}
+          scrollElement={this.scrollElement}
+        />
+      )
     );
   }
 
@@ -316,17 +329,19 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogs,
       showTrace,
       showNodeGraph,
-      logsVolumeDataProvider,
+      timeZone,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
-    const showLogsVolume = !!logsVolumeDataProvider;
 
     return (
-      <CustomScrollbar autoHeightMin={'100%'}>
+      <CustomScrollbar
+        autoHeightMin={'100%'}
+        scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
+      >
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
@@ -360,7 +375,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showMetrics && graphResult && (
                             <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
                           )}
-                          {showLogsVolume && <ErrorBoundaryAlert>{this.renderLogsVolume(width)}</ErrorBoundaryAlert>}
+                          {<ErrorBoundaryAlert>{this.renderLogsVolume(width)}</ErrorBoundaryAlert>}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
@@ -379,6 +394,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           exploreId={exploreId}
                           width={width}
                           onClose={this.toggleShowQueryInspector}
+                          timeZone={timeZone}
                         />
                       )}
                     </ErrorBoundaryAlert>
@@ -395,7 +411,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const explore = state.explore;
-  const { syncedTimes, autoLoadLogsVolume } = explore;
+  const { syncedTimes } = explore;
   const item: ExploreItemState = explore[exploreId]!;
   const timeZone = getTimeZone(state.user);
   const {
@@ -404,7 +420,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolumeDataProvider,
     logsVolumeData,
     logsResult,
     showLogs,
@@ -415,6 +430,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryResponse,
     showNodeGraph,
     loading,
+    graphStyle,
   } = item;
 
   return {
@@ -423,8 +439,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    autoLoadLogsVolume,
-    logsVolumeDataProvider,
     logsVolumeData,
     logsResult: logsResult ?? undefined,
     absoluteRange,
@@ -437,18 +451,20 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showTrace,
     showNodeGraph,
     loading,
+    graphStyle,
   };
 }
 
 const mapDispatchToProps = {
   changeSize,
+  changeGraphStyle,
   modifyQueries,
   scanStart,
   scanStopAction,
   setQueries,
   updateTimeRange,
+  makeAbsoluteTime,
   loadLogsVolumeData,
-  changeAutoLogsVolume,
   addQueryRow,
   splitOpen,
 };

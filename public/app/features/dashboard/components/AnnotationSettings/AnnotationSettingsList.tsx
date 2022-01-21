@@ -40,14 +40,13 @@ export const AnnotationSettingsList: React.FC<Props> = ({ dashboard, onNew, onEd
           <tbody>
             {dashboard.annotations.list.map((annotation, idx) => (
               <tr key={`${annotation.name}-${idx}`}>
-                {!annotation.builtIn && (
-                  <td className="pointer" onClick={() => onEdit(idx)}>
-                    <Icon name="comment-alt" /> &nbsp; {annotation.name}
-                  </td>
-                )}
-                {annotation.builtIn && (
+                {annotation.builtIn ? (
                   <td style={{ width: '90%' }} className="pointer" onClick={() => onEdit(idx)}>
                     <Icon name="comment-alt" /> &nbsp; <em className="muted">{annotation.name} (Built-in)</em>
+                  </td>
+                ) : (
+                  <td className="pointer" onClick={() => onEdit(idx)}>
+                    <Icon name="comment-alt" /> &nbsp; {annotation.name}
                   </td>
                 )}
                 <td className="pointer" onClick={() => onEdit(idx)}>
@@ -74,7 +73,11 @@ export const AnnotationSettingsList: React.FC<Props> = ({ dashboard, onNew, onEd
                   ) : null}
                 </td>
                 <td style={{ width: '1%' }}>
-                  <DeleteButton size="sm" onConfirm={() => onDelete(idx)} />
+                  <DeleteButton
+                    size="sm"
+                    onConfirm={() => onDelete(idx)}
+                    aria-label={`Delete query with title "${annotation.name}"`}
+                  />
                 </td>
               </tr>
             ))}

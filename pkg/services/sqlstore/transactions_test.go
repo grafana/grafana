@@ -8,9 +8,8 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/require"
 )
 
 var ErrProvokedError = errors.New("testing error")
@@ -18,40 +17,40 @@ var ErrProvokedError = errors.New("testing error")
 func TestTransaction(t *testing.T) {
 	ss := InitTestDB(t)
 
-	Convey("InTransaction", t, func() {
-		cmd := &models.AddApiKeyCommand{Key: "secret-key", Name: "key", OrgId: 1}
+	cmd := &models.AddApiKeyCommand{Key: "secret-key", Name: "key", OrgId: 1}
+	t.Run("can update key", func(t *testing.T) {
+		err := ss.AddAPIKey(context.Background(), cmd)
+		require.Nil(t, err)
 
-		err := AddApiKey(cmd)
-		So(err, ShouldBeNil)
-
-		Convey("can update key", func() {
-			err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-				return deleteAPIKey(sess, cmd.Result.Id, 1)
-			})
-
-			So(err, ShouldBeNil)
-
-			query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
-			err = GetApiKeyById(query)
-			So(err, ShouldEqual, models.ErrInvalidApiKey)
+		err = ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+			return deleteAPIKey(sess, cmd.Result.Id, 1)
 		})
 
-		Convey("won't update if one handler fails", func() {
-			err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-				err := deleteAPIKey(sess, cmd.Result.Id, 1)
-				if err != nil {
-					return err
-				}
+		require.Nil(t, err)
 
-				return ErrProvokedError
-			})
+		query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
+		err = ss.GetApiKeyById(context.Background(), query)
+		require.Equal(t, models.ErrInvalidApiKey, err)
+	})
 
-			So(err, ShouldEqual, ErrProvokedError)
+	t.Run("won't update if one handler fails", func(t *testing.T) {
+		err := ss.AddAPIKey(context.Background(), cmd)
+		require.Nil(t, err)
 
-			query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
-			err = GetApiKeyById(query)
-			So(err, ShouldBeNil)
-			So(query.Result.Id, ShouldEqual, cmd.Result.Id)
+		err = ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+			err := deleteAPIKey(sess, cmd.Result.Id, 1)
+			if err != nil {
+				return err
+			}
+
+			return ErrProvokedError
 		})
+
+		require.Equal(t, ErrProvokedError, err)
+
+		query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
+		err = ss.GetApiKeyById(context.Background(), query)
+		require.Nil(t, err)
+		require.Equal(t, cmd.Result.Id, query.Result.Id)
 	})
 }

@@ -19,6 +19,8 @@ import IoNetwork from 'react-icons/lib/io/network';
 import MdFileUpload from 'react-icons/lib/md/file-upload';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import ReferencesButton from './ReferencesButton';
 import TimelineRow from './TimelineRow';
@@ -27,9 +29,9 @@ import SpanTreeOffset from './SpanTreeOffset';
 import SpanBar from './SpanBar';
 import Ticks from './Ticks';
 
-import { TNil } from '../types';
+import { SpanLinkFunc, TNil } from '../types';
 import { TraceSpan } from '../types/trace';
-import { autoColor, createStyle, Theme, withTheme } from '../Theme';
+import { autoColor } from '../Theme';
 
 const spanBarClassName = 'spanBar';
 const spanBarLabelClassName = 'spanBarLabel';
@@ -38,7 +40,7 @@ const nameWrapperMatchingFilterClassName = 'nameWrapperMatchingFilter';
 const viewClassName = 'jaegerView';
 const nameColumnClassName = 'nameColumn';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     nameWrapper: css`
       label: nameWrapper;
@@ -260,7 +262,7 @@ const getStyles = createStyle((theme: Theme) => {
 
 type SpanBarRowProps = {
   className?: string;
-  theme: Theme;
+  theme: GrafanaTheme2;
   color: string;
   columnDivision: number;
   isChildrenExpanded: boolean;
@@ -294,9 +296,7 @@ type SpanBarRowProps = {
   removeHoverIndentGuideId: (spanID: string) => void;
   clippingLeft?: boolean;
   clippingRight?: boolean;
-  createSpanLink?: (
-    span: TraceSpan
-  ) => { href: string; onClick?: (e: React.MouseEvent) => void; content: React.ReactNode };
+  createSpanLink?: SpanLinkFunc;
 };
 
 /**
@@ -443,27 +443,31 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             {createSpanLink &&
               (() => {
                 const link = createSpanLink(span);
-                return (
-                  <a
-                    href={link.href}
-                    // Needs to have target otherwise preventDefault would not work due to angularRouter.
-                    target={'_blank'}
-                    style={{ marginRight: '5px' }}
-                    rel="noopener noreferrer"
-                    onClick={
-                      link.onClick
-                        ? (event) => {
-                            if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
-                              event.preventDefault();
-                              link.onClick(event);
+                if (link) {
+                  return (
+                    <a
+                      href={link.href}
+                      // Needs to have target otherwise preventDefault would not work due to angularRouter.
+                      target={'_blank'}
+                      style={{ marginRight: '5px' }}
+                      rel="noopener noreferrer"
+                      onClick={
+                        link.onClick
+                          ? (event) => {
+                              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                                event.preventDefault();
+                                link.onClick(event);
+                              }
                             }
-                          }
-                        : undefined
-                    }
-                  >
-                    {link.content}
-                  </a>
-                );
+                          : undefined
+                      }
+                    >
+                      {link.content}
+                    </a>
+                  );
+                } else {
+                  return null;
+                }
               })()}
 
             {span.references && span.references.length > 1 && (
@@ -503,7 +507,6 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             rpc={rpc}
             viewStart={viewStart}
             viewEnd={viewEnd}
-            theme={theme}
             getViewedBounds={getViewedBounds}
             color={color}
             shortLabel={label}
@@ -519,4 +522,4 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
   }
 }
 
-export default withTheme(UnthemedSpanBarRow);
+export default withTheme2(UnthemedSpanBarRow);

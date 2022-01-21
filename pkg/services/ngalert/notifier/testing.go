@@ -2,15 +2,25 @@ package notifier
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 type FakeConfigStore struct {
 	configs map[int64]*models.AlertConfiguration
+}
+
+func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) FakeConfigStore {
+	t.Helper()
+
+	return FakeConfigStore{
+		configs: configs,
+	}
 }
 
 func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
@@ -61,6 +71,14 @@ type FakeOrgStore struct {
 	orgs []int64
 }
 
+func NewFakeOrgStore(t *testing.T, orgs []int64) FakeOrgStore {
+	t.Helper()
+
+	return FakeOrgStore{
+		orgs: orgs,
+	}
+}
+
 func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
 }
@@ -70,7 +88,7 @@ type FakeKVStore struct {
 	store map[int64]map[string]map[string]string
 }
 
-func newFakeKVStore(t *testing.T) *FakeKVStore {
+func NewFakeKVStore(t *testing.T) *FakeKVStore {
 	t.Helper()
 
 	return &FakeKVStore{
@@ -128,6 +146,29 @@ func (fkv *FakeKVStore) Del(_ context.Context, orgId int64, namespace string, ke
 	delete(fkv.store[orgId][namespace], key)
 
 	return nil
+}
+
+func (fkv *FakeKVStore) Keys(ctx context.Context, orgID int64, namespace string, keyPrefix string) ([]kvstore.Key, error) {
+	fkv.mtx.Lock()
+	defer fkv.mtx.Unlock()
+	var keys []kvstore.Key
+	for orgIDFromStore, namespaceMap := range fkv.store {
+		if orgID != kvstore.AllOrganizations && orgID != orgIDFromStore {
+			continue
+		}
+		if keyMap, exists := namespaceMap[namespace]; exists {
+			for k := range keyMap {
+				if strings.HasPrefix(k, keyPrefix) {
+					keys = append(keys, kvstore.Key{
+						OrgId:     orgIDFromStore,
+						Namespace: namespace,
+						Key:       keyPrefix,
+					})
+				}
+			}
+		}
+	}
+	return keys, nil
 }
 
 type fakeState struct {

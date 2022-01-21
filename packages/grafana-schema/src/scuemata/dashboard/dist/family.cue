@@ -8,6 +8,7 @@ import (
     pdashlist "github.com/grafana/grafana/public/app/plugins/panel/dashlist:grafanaschema"
     pgauge "github.com/grafana/grafana/public/app/plugins/panel/gauge:grafanaschema"
     phistogram "github.com/grafana/grafana/public/app/plugins/panel/histogram:grafanaschema"
+    pcandlestick "github.com/grafana/grafana/public/app/plugins/panel/candlestick:grafanaschema"
     pnews "github.com/grafana/grafana/public/app/plugins/panel/news:grafanaschema"
     pstat "github.com/grafana/grafana/public/app/plugins/panel/stat:grafanaschema"
     st "github.com/grafana/grafana/public/app/plugins/panel/state-timeline:grafanaschema"
@@ -31,6 +32,7 @@ Family: dashboard.Family & {
         dashlist: pdashlist.Panel
         gauge: pgauge.Panel
         histogram: phistogram.Panel
+        candlestick: pcandlestick.Panel
         news: pnews.Panel
         stat: pstat.Panel
         "state-timeline": st.Panel

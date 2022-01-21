@@ -11,6 +11,13 @@ export function setSubscriptionID(query: AzureMonitorQuery, subscriptionID: stri
     azureMonitor: {
       ...query.azureMonitor,
       resourceGroup: undefined,
+      metricDefinition: undefined,
+      metricNamespace: undefined,
+      resourceName: undefined,
+      metricName: undefined,
+      aggregation: undefined,
+      timeGrain: '',
+      dimensionFilters: [],
     },
   };
 }
@@ -25,7 +32,13 @@ export function setResourceGroup(query: AzureMonitorQuery, resourceGroup: string
     azureMonitor: {
       ...query.azureMonitor,
       resourceGroup: resourceGroup,
+      metricDefinition: undefined,
+      metricNamespace: undefined,
       resourceName: undefined,
+      metricName: undefined,
+      aggregation: undefined,
+      timeGrain: '',
+      dimensionFilters: [],
     },
   };
 }
@@ -44,6 +57,9 @@ export function setResourceType(query: AzureMonitorQuery, resourceType: string |
       resourceName: undefined,
       metricNamespace: undefined,
       metricName: undefined,
+      aggregation: undefined,
+      timeGrain: '',
+      dimensionFilters: [],
     },
   };
 
@@ -60,6 +76,11 @@ export function setResourceName(query: AzureMonitorQuery, resourceName: string |
     azureMonitor: {
       ...query.azureMonitor,
       resourceName: resourceName,
+      metricNamespace: undefined,
+      metricName: undefined,
+      aggregation: undefined,
+      timeGrain: '',
+      dimensionFilters: [],
     },
   };
 }
@@ -75,6 +96,9 @@ export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: st
       ...query.azureMonitor,
       metricNamespace: metricNamespace,
       metricName: undefined,
+      aggregation: undefined,
+      timeGrain: '',
+      dimensionFilters: [],
     },
   };
 }
@@ -89,6 +113,9 @@ export function setMetricName(query: AzureMonitorQuery, metricName: string | und
     azureMonitor: {
       ...query.azureMonitor,
       metricName: metricName,
+      aggregation: undefined,
+      timeGrain: '',
+      dimensionFilters: [],
     },
   };
 }

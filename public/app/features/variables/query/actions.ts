@@ -1,4 +1,7 @@
+import { Subscription } from 'rxjs';
 import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/data';
+
 import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
@@ -12,18 +15,23 @@ import {
 import { changeVariableProp } from '../state/sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
-import { Subscription } from 'rxjs';
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 import { QueryVariableEditorState } from './reducer';
+import { hasOngoingTransaction } from '../utils';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
   searchFilter?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
     try {
+      if (!hasOngoingTransaction(getState())) {
+        // we might have cancelled a batch so then variable state is removed
+        return;
+      }
+
+      const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
       if (getState().templating.editor.id === variableInState.id) {
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
@@ -41,7 +49,7 @@ export const updateQueryVariableOptions = (
       });
     } catch (err) {
       const error = toDataQueryError(err);
-      if (getState().templating.editor.id === variableInState.id) {
+      if (getState().templating.editor.id === identifier.id) {
         dispatch(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
       }
 
@@ -60,7 +68,7 @@ export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkRe
 
 export const changeQueryVariableDataSource = (
   identifier: VariableIdentifier,
-  name: string | null
+  name: DataSourceRef | null
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {

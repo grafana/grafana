@@ -114,7 +114,7 @@ export interface FetchErrorDataProps {
  *
  * @public
  */
-export interface FetchError<T extends FetchErrorDataProps = any> {
+export interface FetchError<T = any> {
   status: number;
   statusText?: string;
   data: T;

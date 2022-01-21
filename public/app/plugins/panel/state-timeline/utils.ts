@@ -3,6 +3,10 @@ import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
   ArrayVector,
   DataFrame,
+  DashboardCursorSync,
+  DataHoverPayload,
+  DataHoverEvent,
+  DataHoverClearEvent,
   FALLBACK_COLOR,
   Field,
   FieldColorModeId,
@@ -30,6 +34,7 @@ import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } fro
 import { TimelineFieldConfig, TimelineOptions } from './types';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import uPlot from 'uplot';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -58,12 +63,17 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   timeZone,
   getTimeRange,
   mode,
+  eventBus,
+  sync,
   rowHeight,
   colWidth,
   showValue,
   alignValue,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
+
+  const xScaleUnit = 'time';
+  const xScaleKey = 'x';
 
   const isDiscrete = (field: Field) => {
     const mode = field.config?.color?.mode;
@@ -116,6 +126,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   let hoveredDataIdx: number | null = null;
 
   const coreConfig = getConfig(opts);
+  const payload: DataHoverPayload = {
+    point: {
+      [xScaleUnit]: null,
+      [FIXED_UNIT]: null,
+    },
+    data: frame,
+  };
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
@@ -148,7 +165,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   builder.setCursor(coreConfig.cursor);
 
   builder.addScale({
-    scaleKey: 'x',
+    scaleKey: xScaleKey,
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
@@ -164,7 +181,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   });
 
   builder.addAxis({
-    scaleKey: 'x',
+    scaleKey: xScaleKey,
     isTime: true,
     splits: coreConfig.xSplits!,
     placement: AxisPlacement.Bottom,
@@ -180,7 +197,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     splits: coreConfig.ySplits,
     values: coreConfig.yValues,
     grid: { show: false },
-    ticks: false,
+    ticks: { show: false },
     gap: 16,
     theme,
   });
@@ -217,6 +234,37 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
     });
+  }
+
+  if (sync && sync() !== DashboardCursorSync.Off) {
+    let cursor: Partial<uPlot.Cursor> = {};
+
+    cursor.sync = {
+      key: '__global_',
+      filters: {
+        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          if (sync && sync() === DashboardCursorSync.Off) {
+            return false;
+          }
+          payload.rowIndex = dataIdx;
+          if (x < 0 && y < 0) {
+            payload.point[xScaleUnit] = null;
+            payload.point[FIXED_UNIT] = null;
+            eventBus.publish(new DataHoverClearEvent());
+          } else {
+            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
+            payload.point.panelRelY = y > 0 ? y / h : 1; // used for old graph panel to position tooltip
+            payload.down = undefined;
+            eventBus.publish(new DataHoverEvent(payload));
+          }
+          return true;
+        },
+      },
+      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
+      scales: [xScaleKey, null as any],
+    };
+    builder.setSync();
+    builder.setCursor(cursor);
   }
 
   return builder;
@@ -422,7 +470,7 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
   for (let i = 1; i <= steps.length; i++) {
     const step = steps[i - 1];
     items.push({
-      label: i === 1 ? `< ${fmt(steps[i].value)}` : `${fmt(step.value)}+`,
+      label: i === 1 ? `< ${fmt(step.value)}` : `${fmt(step.value)}+`,
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });
@@ -440,7 +488,10 @@ export function prepareTimelineLegendItems(
     return undefined;
   }
 
-  const fields = allNonTimeFields(frames);
+  return getFieldLegendItem(allNonTimeFields(frames), theme);
+}
+
+export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
   if (!fields.length) {
     return undefined;
   }
@@ -465,7 +516,9 @@ export function prepareTimelineLegendItems(
   fields.forEach((field) => {
     field.values.toArray().forEach((v) => {
       let state = field.display!(v);
-      stateColors.set(state.text, state.color!);
+      if (state.color) {
+        stateColors.set(state.text, state.color!);
+      }
     });
   });
 

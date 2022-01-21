@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +22,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewWebHookNotifier(model)
+		_, err = NewWebHookNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		require.Error(t, err)
 	})
 
@@ -36,7 +37,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewWebHookNotifier(model)
+		not, err := NewWebHookNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 		require.NoError(t, err)
 		webhookNotifier := not.(*WebhookNotifier)
 

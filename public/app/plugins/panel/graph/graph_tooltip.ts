@@ -1,7 +1,13 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
-import { textUtil, systemDateFormats, LegacyGraphHoverClearEvent, LegacyGraphHoverEvent } from '@grafana/data';
+import {
+  textUtil,
+  systemDateFormats,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
+  DataHoverClearEvent,
+} from '@grafana/data';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -153,17 +159,20 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
       }
     }
     dashboard.events.publish(new LegacyGraphHoverClearEvent());
+    dashboard.events.publish(new DataHoverClearEvent());
   });
 
   elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number }, item: any) => {
     self.show(pos, item);
 
     // broadcast to other graph panels that we are hovering!
-    pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
-    hoverEvent.payload.pos = pos;
-    hoverEvent.payload.panel = panel;
-    hoverEvent.payload.point['time'] = (pos as any).x;
-    dashboard.events.publish(hoverEvent);
+    if (!dashboard.panelInEdit) {
+      pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
+      hoverEvent.payload.pos = pos;
+      hoverEvent.payload.panel = panel;
+      hoverEvent.payload.point['time'] = (pos as any).x;
+      dashboard.events.publish(hoverEvent);
+    }
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {

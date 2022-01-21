@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"path"
 	"strings"
 
@@ -11,11 +12,15 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // createShortURL handles requests to create short URLs.
-func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortURLCmd) response.Response {
+func (hs *HTTPServer) createShortURL(c *models.ReqContext) response.Response {
+	cmd := dtos.CreateShortURLCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
 
 	cmd.Path = strings.TrimSpace(cmd.Path)
@@ -46,7 +51,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
-	shortURLUID := macaron.Params(c.Req)[":uid"]
+	shortURLUID := web.Params(c.Req)[":uid"]
 
 	if !util.IsValidShortUID(shortURLUID) {
 		return

@@ -62,7 +62,7 @@ links.
 
 ```bash
 wget <debian package url>
-sudo apt-get install -y adduser libfontconfig1
+sudo apt-get install -y adduser
 sudo dpkg -i grafana_<version>_amd64.deb
 ```
 
@@ -291,7 +291,7 @@ The new authentication method, _AWS SDK Default_, uses the default AWS Go SDK cr
 1. If your application uses an ECS task definition or RunTask API operation, IAM role for tasks.
 1. If your application is running on an Amazon EC2 instance, IAM role for Amazon EC2.
 
-The other authentication methods, _Access & secret key_ and _Credentials file_, have changed in regards to fallbacks. If these methods fail, they no longer fallback to other methods. e.g. environment variables. If you want fallbacks, you should use _AWS SDK Default_ instead.
+The other authentication methods, _Access and secret key_ and _Credentials file_, have changed in regards to fallbacks. If these methods fail, they no longer fallback to other methods. e.g. environment variables. If you want fallbacks, you should use _AWS SDK Default_ instead.
 
 For more information and details, please refer to [Using AWS CloudWatch in Grafana]({{< relref "../datasources/aws-cloudwatch/aws-authentication.md" >}}).
 
@@ -365,7 +365,7 @@ ORDER BY time
 There are two possible workarounds to resolve this problem:
 
 1. In Grafana v8.0.3, use an alias of the string column selected as `metric`. for example, `hostname as metric`.
-2. Use the [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
+2. Use the [Standard field options/Display name]({{< relref "../panels/reference-standard-field-definitions.md#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
 
 For more information, refer to the our relational databases documentation of [Postgres]({{< relref "../datasources/postgres.md#time-series-queries" >}}), [MySQL]({{< relref "../datasources/mysql.md#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../datasources/mssql.md#time-series-queries" >}}).
 

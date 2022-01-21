@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -49,7 +50,7 @@ func init() {
 }
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier
-func NewAlertmanagerNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func NewAlertmanagerNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
 	urlString := model.Settings.Get("url").MustString()
 	if urlString == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -63,7 +64,7 @@ func NewAlertmanagerNotifier(model *models.AlertNotification) (alerting.Notifier
 		}
 	}
 	basicAuthUser := model.Settings.Get("basicAuthUser").MustString()
-	basicAuthPassword := model.DecryptedValue("basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString())
+	basicAuthPassword := fn(context.Background(), model.SecureSettings, "basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString(), setting.SecretKey)
 
 	return &AlertmanagerNotifier{
 		NotifierBase:      NewNotifierBase(model),
@@ -182,7 +183,7 @@ func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error 
 			Body:       string(body),
 		}
 
-		if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+		if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 			am.log.Error("Failed to send alertmanager", "error", err, "alertmanager", am.Name, "url", url)
 			errCnt++
 		}

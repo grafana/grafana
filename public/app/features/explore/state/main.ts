@@ -9,7 +9,6 @@ import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
 import { ThunkResult } from '../../../types';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
-import store from '../../../core/store';
 
 //
 // Actions and Payloads
@@ -21,12 +20,8 @@ export interface SyncTimesPayload {
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
 export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
-
-/**
- * Stores new value of auto-load logs volume switch. Used only internally. changeAutoLogsVolume() is used to
- * update auto-load and load logs volume if it hasn't been loaded.
- */
-export const storeAutoLoadLogsVolumeAction = createAction<boolean>('explore/storeAutoLoadLogsVolumeAction');
+export const localStorageFullAction = createAction('explore/localStorageFullAction');
+export const richHistoryLimitExceededAction = createAction('explore/richHistoryLimitExceededAction');
 
 /**
  * Resets state for explore.
@@ -143,11 +138,8 @@ export const navigateToExplore = (
   return async (dispatch) => {
     const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
     const datasourceSrv = getDataSourceSrv();
-    const datasource = await datasourceSrv.get(panel.datasource);
     const path = await getExploreUrl({
       panel,
-      panelTargets: panel.targets,
-      panelDatasource: datasource,
       datasourceSrv,
       timeSrv: getTimeSrv(),
     });
@@ -161,8 +153,6 @@ export const navigateToExplore = (
   };
 };
 
-export const AUTO_LOAD_LOGS_VOLUME_SETTING_KEY = 'grafana.explore.logs.autoLoadLogsVolume';
-
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
@@ -172,7 +162,8 @@ export const initialExploreState: ExploreState = {
   left: initialExploreItemState,
   right: undefined,
   richHistory: [],
-  autoLoadLogsVolume: store.getBool(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, false),
+  localStorageFull: false,
+  richHistoryLimitExceededWarningShown: false,
 };
 
 /**
@@ -227,11 +218,17 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (storeAutoLoadLogsVolumeAction.match(action)) {
-    const autoLoadLogsVolume = action.payload;
+  if (localStorageFullAction.match(action)) {
     return {
       ...state,
-      autoLoadLogsVolume,
+      localStorageFull: true,
+    };
+  }
+
+  if (richHistoryLimitExceededAction.match(action)) {
+    return {
+      ...state,
+      richHistoryLimitExceededWarningShown: true,
     };
   }
 

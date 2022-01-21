@@ -10,9 +10,9 @@ import {
   TraceLog,
   TraceSpanRow,
 } from '@grafana/data';
-import { SpanKind, SpanStatus, SpanStatusCode } from '@opentelemetry/api';
+import { SpanStatus, SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
-import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { createGraphFrames } from './graphTransform';
 
 export function createTableFrame(
@@ -114,15 +114,25 @@ export function transformTraceList(
 
 // Don't forget to change the backend code when the id representation changed
 function transformBase64IDToHexString(base64: string) {
-  const buffer = Buffer.from(base64, 'base64');
-  const id = buffer.toString('hex');
-  return id.length > 16 ? id.slice(16) : id;
+  const raw = atob(base64);
+  let result = '';
+  for (let i = 0; i < raw.length; i++) {
+    const hex = raw.charCodeAt(i).toString(16);
+    result += hex.length === 2 ? hex : '0' + hex;
+  }
+
+  return result.length > 16 ? result.slice(16) : result;
 }
 
 function transformHexStringToBase64ID(hex: string) {
-  const buffer = Buffer.from(hex, 'hex');
-  const id = buffer.toString('base64');
-  return id;
+  const hexArray = hex.match(/\w{2}/g) || [];
+  return btoa(
+    hexArray
+      .map(function (a) {
+        return String.fromCharCode(parseInt(a, 16));
+      })
+      .join('')
+  );
 }
 
 function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.AnyValue): any {
@@ -161,7 +171,7 @@ function resourceToProcess(resource: collectorTypes.opentelemetryProto.resource.
   }
 
   for (const attribute of resource.attributes) {
-    if (attribute.key === ResourceAttributes.SERVICE_NAME) {
+    if (attribute.key === SemanticResourceAttributes.SERVICE_NAME) {
       serviceName = attribute.value.stringValue || serviceName;
     }
     serviceTags.push({ key: attribute.key, value: getAttributeValue(attribute.value) });
@@ -206,13 +216,11 @@ function getSpanTags(
     }
   }
 
-  if (
-    span.kind !== undefined &&
-    span.kind !== collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind.SPAN_KIND_INTERNAL
-  ) {
+  if (span.kind !== undefined) {
+    const split = span.kind.toString().toLowerCase().split('_');
     spanTags.push({
       key: 'span.kind',
-      value: SpanKind[collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind[span.kind] as any].toLowerCase(),
+      value: split.length ? split[split.length - 1] : span.kind.toString(),
     });
   }
 
@@ -237,7 +245,8 @@ function getLogs(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
 }
 
 export function transformFromOTLP(
-  traceData: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[]
+  traceData: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
+  nodeGraph = false
 ): DataQueryResponse {
   const frame = new MutableDataFrame({
     fields: [
@@ -280,10 +289,16 @@ export function transformFromOTLP(
       }
     }
   } catch (error) {
-    return { error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] };
+    console.error(error);
+    return { error: { message: 'JSON is not valid OpenTelemetry format: ' + error }, data: [] };
   }
 
-  return { data: [frame, ...createGraphFrames(frame)] };
+  let data = [frame];
+  if (nodeGraph) {
+    data.push(...(createGraphFrames(frame) as MutableDataFrame[]));
+  }
+
+  return { data };
 }
 
 /**
@@ -463,7 +478,7 @@ function getOTLPEvents(logs: TraceLog[]): collectorTypes.opentelemetryProto.trac
   return events;
 }
 
-export function transformTrace(response: DataQueryResponse): DataQueryResponse {
+export function transformTrace(response: DataQueryResponse, nodeGraph = false): DataQueryResponse {
   // We need to parse some of the fields which contain stringified json.
   // Seems like we can't just map the values as the frame we got from backend has some default processing
   // and will stringify the json back when we try to set it. So we create a new field and swap it instead.
@@ -475,9 +490,14 @@ export function transformTrace(response: DataQueryResponse): DataQueryResponse {
 
   parseJsonFields(frame);
 
+  let data = [...response.data];
+  if (nodeGraph) {
+    data.push(...createGraphFrames(frame));
+  }
+
   return {
     ...response,
-    data: [...response.data, ...createGraphFrames(frame)],
+    data,
   };
 }
 

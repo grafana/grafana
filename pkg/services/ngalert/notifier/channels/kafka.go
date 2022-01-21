@@ -13,13 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
 // KafkaNotifier is responsible for sending
 // alert notifications to Kafka.
 type KafkaNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	Endpoint string
 	Topic    string
 	log      log.Logger
@@ -28,6 +27,10 @@ type KafkaNotifier struct {
 
 // NewKafkaNotifier is the constructor function for the Kafka notifier.
 func NewKafkaNotifier(model *NotificationChannelConfig, t *template.Template) (*KafkaNotifier, error) {
+	if model.Settings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
+	}
+
 	endpoint := model.Settings.Get("kafkaRestProxy").MustString()
 	if endpoint == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find kafka rest proxy endpoint property in settings"}
@@ -38,7 +41,7 @@ func NewKafkaNotifier(model *NotificationChannelConfig, t *template.Template) (*
 	}
 
 	return &KafkaNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
@@ -69,7 +72,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("alert_state", state)
-	bodyJSON.Set("description", tmpl(`{{ template "default.title" . }}`))
+	bodyJSON.Set("description", tmpl(DefaultMessageTitleEmbed))
 	bodyJSON.Set("client", "Grafana")
 	bodyJSON.Set("details", tmpl(`{{ template "default.message" . }}`))
 
@@ -96,7 +99,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	topicURL := strings.TrimRight(kn.Endpoint, "/") + "/topics/" + tmpl(kn.Topic)
 
 	if tmplErr != nil {
-		kn.log.Debug("failed to template Kafka message", "err", tmplErr.Error())
+		kn.log.Warn("failed to template Kafka message", "err", tmplErr.Error())
 	}
 
 	cmd := &models.SendWebhookSync{
@@ -109,7 +112,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		},
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		kn.log.Error("Failed to send notification to Kafka", "error", err, "body", string(body))
 		return false, err
 	}

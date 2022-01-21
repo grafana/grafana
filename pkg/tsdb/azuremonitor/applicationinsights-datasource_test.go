@@ -8,15 +8,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestApplicationInsightsDatasource(t *testing.T) {
-	Convey("ApplicationInsightsDatasource", t, func() {
+	t.Run("ApplicationInsightsDatasource", func(t *testing.T) {
 		datasource := &ApplicationInsightsDatasource{}
 
-		Convey("Parse queries from frontend and build AzureMonitor API queries", func() {
+		t.Run("Parse queries from frontend and build AzureMonitor API queries", func(t *testing.T) {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 			tsdbQuery := []backend.DataQuery{
 				{
@@ -38,22 +36,22 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 					Interval: 1234,
 				},
 			}
-			Convey("and is a normal query", func() {
+			t.Run("and is a normal query", func(t *testing.T) {
 				queries, err := datasource.buildQueries(tsdbQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(queries), ShouldEqual, 1)
-				So(queries[0].RefID, ShouldEqual, "A")
-				So(queries[0].ApiURL, ShouldEqual, "metrics/server/exceptions")
-				So(queries[0].Target, ShouldEqual, "aggregation=Average&interval=PT1M&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
-				So(len(queries[0].Params), ShouldEqual, 3)
-				So(queries[0].Params["timespan"][0], ShouldEqual, "2018-03-15T13:00:00Z/2018-03-15T13:34:00Z")
-				So(queries[0].Params["aggregation"][0], ShouldEqual, "Average")
-				So(queries[0].Params["interval"][0], ShouldEqual, "PT1M")
-				So(queries[0].Alias, ShouldEqual, "testalias")
+				require.Equal(t, len(queries), 1)
+				require.Equal(t, queries[0].RefID, "A")
+				require.Equal(t, queries[0].ApiURL, "metrics/server/exceptions")
+				require.Equal(t, queries[0].Target, "aggregation=Average&interval=PT1M&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+				require.Equal(t, len(queries[0].Params), 3)
+				require.Equal(t, queries[0].Params["timespan"][0], "2018-03-15T13:00:00Z/2018-03-15T13:34:00Z")
+				require.Equal(t, queries[0].Params["aggregation"][0], "Average")
+				require.Equal(t, queries[0].Params["interval"][0], "PT1M")
+				require.Equal(t, queries[0].Alias, "testalias")
 			})
 
-			Convey("and has a time grain set to auto", func() {
+			t.Run("and has a time grain set to auto", func(t *testing.T) {
 				tsdbQuery[0].JSON = []byte(`{
 					"appInsights": {
 						"rawQuery":    false,
@@ -69,12 +67,12 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 				require.NoError(t, err)
 
 				queries, err := datasource.buildQueries(tsdbQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(queries[0].Params["interval"][0], ShouldEqual, "PT15M")
+				require.Equal(t, queries[0].Params["interval"][0], "PT15M")
 			})
 
-			Convey("and has an empty time grain", func() {
+			t.Run("and has an empty time grain", func(t *testing.T) {
 				tsdbQuery[0].JSON = []byte(`{
 					"appInsights": {
 						"rawQuery":    false,
@@ -88,12 +86,12 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 				tsdbQuery[0].Interval, _ = time.ParseDuration("400s")
 
 				queries, err := datasource.buildQueries(tsdbQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(queries[0].Params["interval"][0], ShouldEqual, "PT15M")
+				require.Equal(t, queries[0].Params["interval"][0], "PT15M")
 			})
 
-			Convey("and has a time grain set to auto and the metric has a limited list of allowed time grains", func() {
+			t.Run("and has a time grain set to auto and the metric has a limited list of allowed time grains", func(t *testing.T) {
 				tsdbQuery[0].JSON = []byte(`{
 					"appInsights": {
 						"rawQuery":            false,
@@ -108,12 +106,12 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 				tsdbQuery[0].Interval, _ = time.ParseDuration("400s")
 
 				queries, err := datasource.buildQueries(tsdbQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(queries[0].Params["interval"][0], ShouldEqual, "PT5M")
+				require.Equal(t, queries[0].Params["interval"][0], "PT5M")
 			})
 
-			Convey("and has a dimension filter", func() {
+			t.Run("and has a dimension filter", func(t *testing.T) {
 				tsdbQuery[0].JSON = []byte(`{
 					"appInsights": {
 						"rawQuery":        false,
@@ -128,13 +126,13 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 				}`)
 
 				queries, err := datasource.buildQueries(tsdbQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(queries[0].Target, ShouldEqual, "aggregation=Average&filter=blob+eq+%27%2A%27&interval=PT1M&segment=blob&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
-				So(queries[0].Params["filter"][0], ShouldEqual, "blob eq '*'")
+				require.Equal(t, queries[0].Target, "aggregation=Average&filter=blob+eq+%27%2A%27&interval=PT1M&segment=blob&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+				require.Equal(t, queries[0].Params["filter"][0], "blob eq '*'")
 			})
 
-			Convey("and has a dimension filter set to None", func() {
+			t.Run("and has a dimension filter set to None", func(t *testing.T) {
 				tsdbQuery[0].JSON = []byte(`{
 					"appInsights": {
 						"rawQuery":    false,
@@ -148,9 +146,9 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 				}`)
 
 				queries, err := datasource.buildQueries(tsdbQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(queries[0].Target, ShouldEqual, "aggregation=Average&interval=PT1M&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+				require.Equal(t, queries[0].Target, "aggregation=Average&interval=PT1M&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
 			})
 		})
 	})

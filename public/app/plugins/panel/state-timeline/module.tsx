@@ -4,6 +4,7 @@ import { TimelineOptions, TimelineFieldConfig, defaultPanelOptions, defaultTimel
 import { VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { timelinePanelChangedHandler } from './migrations';
+import { StatTimelineSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(StateTimelinePanel)
   .setPanelChangeHandler(timelinePanelChangedHandler)
@@ -86,4 +87,5 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
 
     commonOptionsBuilder.addLegendOptions(builder, false);
     commonOptionsBuilder.addTooltipOptions(builder, true);
-  });
+  })
+  .setSuggestionsSupplier(new StatTimelineSuggestionsSupplier());

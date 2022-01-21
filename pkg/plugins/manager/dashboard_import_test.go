@@ -1,12 +1,16 @@
 package manager
 
 import (
+	"context"
 	"io/ioutil"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,10 +26,10 @@ func TestDashboardImport(t *testing.T) {
 		mock := &dashboards.FakeDashboardService{}
 		dashboards.MockDashboardService(mock)
 
-		info, dash, err := pm.ImportDashboard("test-app", "dashboards/connections.json", 1, 0, nil, false,
+		info, dash, err := pm.ImportDashboard(context.Background(), "test-app", "dashboards/connections.json", 1, 0, nil, false,
 			[]plugins.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "graphite"},
-			}, &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN}, nil)
+			}, &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN})
 		require.NoError(t, err)
 		require.NotNil(t, info)
 		require.NotNil(t, dash)
@@ -81,15 +85,16 @@ func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManage
 
 	t.Run("Given a plugin", func(t *testing.T) {
 		cfg := &setting.Cfg{
-			FeatureToggles: map[string]bool{},
 			PluginSettings: setting.PluginSettings{
 				"test-app": map[string]string{
 					"path": "testdata/test-app",
 				},
 			},
 		}
-		pm := newManager(cfg, &sqlstore.SQLStore{}, &fakeBackendPluginManager{})
-		err := pm.init()
+
+		pmCfg := plugins.FromGrafanaCfg(cfg)
+		pm, err := ProvideService(cfg, nil, loader.New(pmCfg, nil,
+			&signature.UnsignedPluginAuthorizer{Cfg: pmCfg}, &provider.Service{}), &sqlstore.SQLStore{})
 		require.NoError(t, err)
 
 		t.Run(desc, func(t *testing.T) {

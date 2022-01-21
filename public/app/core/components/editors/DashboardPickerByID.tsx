@@ -1,22 +1,20 @@
 import React, { FC } from 'react';
 import debounce from 'debounce-promise';
-import { SelectableValue } from '@grafana/data';
 import { AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { SelectableValue } from '@grafana/data';
 
 /**
  * @deprecated prefer using dashboard uid rather than id
  */
-export interface DashboardPickerItem extends SelectableValue<number> {
+export interface DashboardPickerItem {
   id: number;
   uid: string;
-  value: number;
   label: string;
 }
 
 interface Props {
-  onChange: (dashboard: DashboardPickerItem) => void;
+  onChange: (dashboard?: DashboardPickerItem) => void;
   value?: DashboardPickerItem;
   width?: number;
   isClearable?: boolean;
@@ -25,22 +23,11 @@ interface Props {
   id?: string;
 }
 
-const getDashboards = (query = '') => {
-  return backendSrv.search({ type: 'dash-db', query, limit: 100 }).then((result: DashboardSearchHit[]) => {
-    return result.map((item: DashboardSearchHit) => ({
-      id: item.id,
-      uid: item.uid,
-      value: item.id,
-      label: `${item?.folderTitle ?? 'General'}/${item.title}`,
-    }));
-  });
-};
-
 /**
  * @deprecated prefer using dashboard uid rather than id
  */
 export const DashboardPickerByID: FC<Props> = ({
-  onChange,
+  onChange: propsOnChange,
   value,
   width,
   isClearable = false,
@@ -49,6 +36,10 @@ export const DashboardPickerByID: FC<Props> = ({
   id,
 }) => {
   const debouncedSearch = debounce(getDashboards, 300);
+  const option = value ? { value, label: value.label } : undefined;
+  const onChange = (item: SelectableValue<DashboardPickerItem>) => {
+    propsOnChange(item?.value);
+  };
 
   return (
     <AsyncSelect
@@ -61,9 +52,22 @@ export const DashboardPickerByID: FC<Props> = ({
       onChange={onChange}
       placeholder="Select dashboard"
       noOptionsMessage="No dashboards found"
-      value={value}
+      value={option}
       invalid={invalid}
       disabled={disabled}
     />
   );
 };
+
+async function getDashboards(query = ''): Promise<Array<SelectableValue<DashboardPickerItem>>> {
+  const result = await backendSrv.search({ type: 'dash-db', query, limit: 100 });
+  return result.map(({ id, uid = '', title, folderTitle }) => {
+    const value: DashboardPickerItem = {
+      id,
+      uid,
+      label: `${folderTitle ?? 'General'}/${title}`,
+    };
+
+    return { value, label: value.label };
+  });
+}

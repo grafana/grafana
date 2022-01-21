@@ -8,6 +8,8 @@ import { ConfirmModal } from '@grafana/ui';
 jest.mock('app/core/core', () => ({
   contextSrv: {
     hasPermission: () => true,
+    hasPermissionInMetadata: () => true,
+    accessControlEnabled: () => false,
   },
 }));
 
@@ -44,6 +46,6 @@ describe('Remove modal', () => {
     const wrapper = setup({
       users: getMockUsers(3),
     });
-    expect(wrapper.find(ConfirmModal).length).toEqual(4);
+    expect(wrapper.find(ConfirmModal).length).toEqual(0);
   });
 });

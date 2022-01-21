@@ -62,8 +62,8 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				}
 				continue
 			}
-			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.Enabled}
-			if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled()}
+			if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 				return true, err
 			}
 			if query.Result.Used >= scope.DefaultLimit {
@@ -77,9 +77,9 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				OrgId:                  c.OrgId,
 				Target:                 scope.Target,
 				Default:                scope.DefaultLimit,
-				UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.Enabled,
+				UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled(),
 			}
-			if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+			if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 				return true, err
 			}
 			if query.Result.Limit < 0 {
@@ -96,8 +96,8 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 			if !c.IsSignedIn || c.UserId == 0 {
 				continue
 			}
-			query := models.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.Enabled}
-			if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+			query := models.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled()}
+			if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 				return true, err
 			}
 			if query.Result.Limit < 0 {

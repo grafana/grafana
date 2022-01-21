@@ -8,8 +8,8 @@ export enum InfluxVersion {
 export interface InfluxOptions extends DataSourceJsonData {
   version?: InfluxVersion;
 
-  timeInterval: string;
-  httpMode: string;
+  timeInterval?: string;
+  httpMode?: string;
 
   // With Flux
   organization?: string;

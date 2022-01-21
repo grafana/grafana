@@ -1,6 +1,8 @@
-import { AdHocVariableFilter, AdHocVariableModel, initialVariableModelState } from 'app/features/variables/types';
-import { getInstanceState, VariablePayload, initialVariablesState, VariablesState } from '../state/types';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { DataSourceRef } from '@grafana/data';
+
+import { AdHocVariableFilter, AdHocVariableModel, initialVariableModelState } from 'app/features/variables/types';
+import { getInstanceState, initialVariablesState, VariablePayload, VariablesState } from '../state/types';
 
 export interface AdHocVariabelFilterUpdate {
   index: number;
@@ -8,7 +10,7 @@ export interface AdHocVariabelFilterUpdate {
 }
 export interface AdHocVariableEditorState {
   infoText: string;
-  dataSources: Array<{ text: string; value: string }>;
+  dataSources: Array<{ text: string; value: DataSourceRef | null }>;
 }
 
 export const initialAdHocVariableModelState: AdHocVariableModel = {

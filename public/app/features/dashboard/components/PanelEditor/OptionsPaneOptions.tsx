@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
-import { getVizualizationOptions } from './getVizualizationOptions';
+import { getVisualizationOptions } from './getVisualizationOptions';
 import { css } from '@emotion/css';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
@@ -20,21 +20,23 @@ export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
   const [listMode, setListMode] = useState(OptionFilter.All);
   const styles = useStyles2(getStyles);
 
-  const [panelFrameOptions, vizOptions, justOverrides, libraryPanelOptions] = useMemo(
-    () => [
-      getPanelFrameCategory(props),
-      getVizualizationOptions(props),
-      getFieldOverrideCategories(props),
-      getLibraryPanelOptionsCategory(props),
-    ],
+  const [panelFrameOptions, vizOptions, libraryPanelOptions] = useMemo(
+    () => [getPanelFrameCategory(props), getVisualizationOptions(props), getLibraryPanelOptionsCategory(props)],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev, props.data, props.instanceState]
+    [panel.configRev, props.data, props.instanceState, searchQuery]
+  );
+
+  const justOverrides = useMemo(
+    () => getFieldOverrideCategories(props, searchQuery),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [panel.configRev, props.data, props.instanceState, searchQuery]
   );
 
   const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
   const optionRadioFilters = useMemo(getOptionRadioFilters, []);
+
   const allOptions = isPanelModelLibraryPanel(panel)
     ? [libraryPanelOptions, panelFrameOptions, ...vizOptions]
     : [panelFrameOptions, ...vizOptions];
@@ -173,6 +175,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(1)};
     background: ${theme.colors.background.primary};
     border: 1px solid ${theme.components.panel.borderColor};
+    border-top-left-radius: ${theme.shape.borderRadius(1.5)};
     border-bottom: none;
   `,
   closeButton: css`

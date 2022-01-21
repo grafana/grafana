@@ -1,5 +1,5 @@
 #!/bin/bash
 
-. e2e/variables
+. scripts/grafana-server/variables
 
-SUITE=verify ./e2e/run-suite
+./e2e/run-suite verify/specs

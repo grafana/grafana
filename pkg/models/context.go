@@ -5,12 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
-	"gopkg.in/macaron.v1"
 )
 
 type ReqContext struct {
-	*macaron.Context
+	*web.Context
 	*SignedInUser
 	UserToken *UserToken
 
@@ -30,10 +30,11 @@ type ReqContext struct {
 func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err error) {
 	data := struct {
 		Title     string
+		AppTitle  string
 		AppSubUrl string
 		Theme     string
 		ErrorMsg  error
-	}{title, cfg.AppSubURL, "dark", nil}
+	}{title, "Grafana", cfg.AppSubURL, "dark", nil}
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)
 		if setting.Env != setting.Prod {

@@ -16,7 +16,7 @@ import (
 
 func TestFlightPathScenario(t *testing.T) {
 	cfg := setting.NewCfg()
-	p := &TestDataPlugin{
+	s := &Service{
 		cfg: cfg,
 	}
 
@@ -37,7 +37,7 @@ func TestFlightPathScenario(t *testing.T) {
 			},
 		}
 
-		rsp, err := p.handleFlightPathScenario(context.Background(), qr)
+		rsp, err := s.handleFlightPathScenario(context.Background(), qr)
 		require.NoError(t, err)
 		require.NotNil(t, rsp)
 		for k, v := range rsp.Responses {

@@ -1,7 +1,7 @@
 import config from '../../core/config';
 import { extend } from 'lodash';
-import coreModule from 'app/core/core_module';
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil, WithAccessControlMetadata } from '@grafana/data';
+import { featureEnabled } from '@grafana/runtime';
 import { AccessControlAction, UserPermission } from 'app/types';
 
 export class User {
@@ -75,13 +75,31 @@ export class ContextSrv {
   }
 
   hasRole(role: string) {
-    return this.user.orgRole === role;
+    if (role === 'ServerAdmin') {
+      return this.isGrafanaAdmin;
+    } else {
+      return this.user.orgRole === role;
+    }
+  }
+
+  accessControlEnabled(): boolean {
+    return featureEnabled(config.featureToggles.accesscontrol);
+  }
+
+  // Checks whether user has required permission
+  hasPermissionInMetadata(action: AccessControlAction | string, object: WithAccessControlMetadata): boolean {
+    // Fallback if access control disabled
+    if (!config.featureToggles.accesscontrol) {
+      return true;
+    }
+
+    return !!object.accessControl?.[action];
   }
 
   // Checks whether user has required permission
   hasPermission(action: AccessControlAction | string): boolean {
     // Fallback if access control disabled
-    if (!config.featureToggles['accesscontrol']) {
+    if (!config.featureToggles.accesscontrol) {
       return true;
     }
 
@@ -108,14 +126,14 @@ export class ContextSrv {
   }
 
   hasAccessToExplore() {
-    if (config.featureToggles['accesscontrol']) {
+    if (config.featureToggles.accesscontrol) {
       return this.hasPermission(AccessControlAction.DataSourcesExplore);
     }
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
 
   hasAccess(action: string, fallBack: boolean) {
-    if (!config.featureToggles['accesscontrol']) {
+    if (!config.featureToggles.accesscontrol) {
       return fallBack;
     }
     return this.hasPermission(action);
@@ -123,7 +141,7 @@ export class ContextSrv {
 
   // evaluates access control permissions, granting access if the user has any of them; uses fallback if access control is disabled
   evaluatePermission(fallback: () => string[], actions: string[]) {
-    if (!config.featureToggles['accesscontrol']) {
+    if (!config.featureToggles.accesscontrol) {
       return fallback();
     }
     if (actions.some((action) => this.hasPermission(action))) {
@@ -143,7 +161,3 @@ export const setContextSrv = (override: ContextSrv) => {
   }
   contextSrv = override;
 };
-
-coreModule.factory('contextSrv', () => {
-  return contextSrv;
-});

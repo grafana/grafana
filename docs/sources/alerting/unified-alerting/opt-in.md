@@ -1,58 +1,60 @@
 +++
-title = "Opt-in to Grafana 8 Alerts"
-description = "Enable Grafana 8 Alerts"
-weight = 128
+title = "Opt-in to Grafana alerting"
+description = "Enable Grafana alerts"
+weight = 115
 +++
 
-# Opt-in to Grafana 8 alerts
+# Opt-in to Grafana alerting
 
-This topic describes how to enable Grafana 8 alerts as well as the rules and restrictions that govern the migration of existing dashboard alerts to this new alerting system. You can also [disable Grafana 8 alerts]({{< relref "./opt-in.md#disable-grafana-8-alerts" >}}) if needed.
+Grafana alerting is enabled by default for new Cloud and OSS installations.
 
-Before you begin, we recommend that you backup Grafana's database. If you are using PostgreSQL as the backend data source, then the minimum required version is 9.5.
+**Note:** If you are an existing Grafana Cloud user and want to explore unified alerting, contact Grafana Support. They will enable unified alerting for your Cloud stack.
 
-## Enable Grafana 8 alerts
+For older OSS installations that use legacy dashboard alerts, unified alerting is still an opt-in feature. This topic describes how to opt-in to Grafana alerting if you have an existing Grafana installation and the rules and restrictions that govern the migration of existing dashboard alerts to the new alerting system. You can [disable Grafana alerts]({{< relref "./opt-in.md#disable-grafana-alerts" >}}) and use the legacy dashboard alerting if needed.
 
-To enable Grafana 8 alerts:
+Before you begin, we recommend that you backup Grafana's database. If you are using PostgreSQL as the backend database, then the minimum required version is 9.5.
 
-1. Go to your custom configuration file located in $WORKING_DIR/conf/custom.ini.
-1. In the [unified alerts]({{< relref "../../administration/configuration.md#unified_alerting" >}}) section, set the `enabled` property to `true`.
-1. Next, in the [alerting]({{< relref "../../administration/configuration.md#alerting" >}}) section of the configuration file, update the configuration for the legacy dashboard alerts by setting the `enabled` property to `false`.
+## Enable Grafana alerting
+
+To enable Grafana alerts:
+
+1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the [unified alerts]({{< relref "../../administration/configuration.md#unified_alerting" >}}) section.
+1. Set the `enabled` property to `true`.
+1. Next, for [legacy dashboard alerting]({{< relref "../../administration/configuration.md#alerting" >}}), set the `enabled` flag to `false`.
 1. Restart Grafana for the configuration changes to take effect.
 
-> **Note:** Before Grafana v8.2, to enable or disable Grafana 8 alerts, users configured the `ngalert` feature toggle. This toggle option is no longer available.
+> **Note:** The `ngalert` toggle previously used to enable or disable Grafana alerting is no longer available.
 
-> **Note:** There is no `Keep Last State` option for [`No Data` and `Error handling`]({{< relref "./alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) in Grafana 8 alerts. This option becomes `Alerting` during the legacy rule migration.
+Before v8.2, notification logs and silences were stored on a disk. If you did not use persistent disks, you would have lost any configured silences and logs on a restart, resulting in unwanted or duplicate notifications. We no longer require the use of a persistent disk. Instead, the notification logs and silences are stored regularly (every 15 minutes). If you used the file-based approach, Grafana reads the existing file and persists it eventually.
 
-Moreover, before v8.2, notification logs and silences were stored on a disk. If you did not use persistent disks, any configured silences and logs would get lost on a restart, resulting in unwanted or duplicate notifications.
+## Migrating legacy alerts to Grafana alerting system
 
-As of Grafana 8.2, we no longer require the use of a persistent disk. Instead, the notification logs and silences are stored regularly (every 15 minutes), and a clean shutdown to the database. If you used the file-based approach, Grafana will read the existing file and persisting it eventually.
+When Grafana alerting is enabled or Grafana is upgraded to version 8.3, existing legacy dashboard alerts migrate in a format compatible with the Grafana alerting. In the Alerting page of your Grafana instance, you can view the migrated alerts alongside new alerts.
 
-## Migrating legacy alerts to Grafana 8 alerting system
-
-When Grafana 8 alerting is enabled, existing legacy dashboard alerts migrate in a format compatible with the Grafana 8 alerting system. In the Alerting page of your Grafana instance, you can view the migrated alerts alongside new alerts.
-
-Read and write access to legacy dashboard alerts was governed by the dashboard and folder permissions storing them. In Grafana 8, alerts inherit the permissions of the folders they are stored in. During migration, legacy dashboard alert permissions are matched to the new rules permissions as follows:
+Read and write access to legacy dashboard alerts and Grafana alerts are governed by the permissions of the folders storing them. During migration, legacy dashboard alert permissions are matched to the new rules permissions as follows:
 
 - If alert's dashboard has permissions, it will create a folder named like `Migrated {"dashboardUid": "UID", "panelId": 1, "alertId": 1}` to match permissions of the dashboard (including the inherited permissions from the folder).
 - If there are no dashboard permissions and the dashboard is under a folder, then the rule is linked to this folder and inherits its permissions.
 - If there are no dashboard permissions and the dashboard is under the General folder, then the rule is linked to the `General Alerting` folder, and the rule inherits the default permissions.
 
+> **Note:** Since there is no `Keep Last State` option for [`No Data`]({{< relref "./alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) in Grafana alerting, this option becomes `NoData` during the legacy rules migration. Option "Keep Last State" for [`Error handling`]({{< relref "./alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) is migrated to a new option `Error`. To match the behavior of the `Keep Last State`, in both cases, during the migration Grafana automatically creates a [silence]({{< relref "./silences.md" >}}) for each alert rule with a duration of 1 year.
+
 Notification channels are migrated to an Alertmanager configuration with the appropriate routes and receivers. Default notification channels are added as contact points to the default route. Notification channels not associated with any Dashboard alert go to the `autogen-unlinked-channel-recv` route.
 
-Since `Hipchat` and `Sensu` notification channels are no longer supported, legacy alerts associated with these channels are not automatically migrated to Grafana 8 alerting. Assign the legacy alerts to a supported notification channel so that you continue to receive notifications for those alerts.
+Since `Hipchat` and `Sensu` notification channels are no longer supported, legacy alerts associated with these channels are not automatically migrated to Grafana alerting. Assign the legacy alerts to a supported notification channel so that you continue to receive notifications for those alerts.
 Silences (expiring after one year) are created for all paused dashboard alerts.
 
 ### Limitation
 
-Grafana 8 alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It might not be able to fetch rules from all other supported data sources at this time.
+Grafana alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It might not be able to fetch alerting rules from all other supported data sources at this time.
 
-## Disable Grafana 8 alerts
+## Disable Grafana alerts
 
-To disable Grafana 8 alerts and enable legacy dashboard alerts:
+To disable Grafana alerts and enable legacy dashboard alerts:
 
-1. Go to your custom configuration file located in $WORKING_DIR/conf/custom.ini.
-1. In the [unified alerts]({{< relref "../../administration/configuration.md#unified_alerting" >}}) section, set the `enabled` property to `false`.
-1. Next, in the [alerting]({{< relref "../../administration/configuration.md#alerting" >}}) section of the configuration file, update the configuration for the legacy dashboard alerts by setting the `enabled` property to `true`.
+1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the [Grafana alerting]({{< relref "../../administration/configuration.md#unified_alerting" >}}) section.
+1. Set the `enabled` property to `false`.
+1. For [legacy dashboard alerting]({{< relref "../../administration/configuration.md#alerting" >}}), set the `enabled` flag to `true`.
 1. Restart Grafana for the configuration changes to take effect.
 
-> **Note:** If you choose to migrate from Grafana 8 alerts to legacy dashboard alerts, you will lose any new alerts that you created in the Grafana 8 alerting system.
+> **Note:** Switching from one flavor of alerting to another can result in data loss. This is applicable to the fresh installation as well as upgraded setups.

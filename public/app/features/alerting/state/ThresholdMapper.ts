@@ -4,7 +4,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 export const hiddenReducerTypes = ['percent_diff', 'percent_diff_abs'];
 export class ThresholdMapper {
   static alertToGraphThresholds(panel: PanelModel) {
-    if (!panel.alert || config.featureToggles.ngalert) {
+    if (!panel.alert || config.unifiedAlertingEnabled) {
       return false; // no update when no alerts
     }
 

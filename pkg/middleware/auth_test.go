@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -16,7 +17,6 @@ func TestMiddlewareAuth(t *testing.T) {
 
 	middlewareScenario(t, "ReqSignIn true and unauthenticated request", func(t *testing.T, sc *scenarioContext) {
 		sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
-
 		sc.fakeReq("GET", "/secure").exec()
 
 		assert.Equal(t, 302, sc.resp.Code)
@@ -40,7 +40,7 @@ func TestMiddlewareAuth(t *testing.T) {
 
 		middlewareScenario(t, "ReqSignIn true and NoAnonynmous true", func(
 			t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.GetOrgByNameQuery) error {
 				query.Result = &models.Org{Id: orgID, Name: "test"}
 				return nil
 			})
@@ -53,7 +53,7 @@ func TestMiddlewareAuth(t *testing.T) {
 
 		middlewareScenario(t, "ReqSignIn true and request with forceLogin in query string", func(
 			t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.GetOrgByNameQuery) error {
 				query.Result = &models.Org{Id: orgID, Name: "test"}
 				return nil
 			})
@@ -82,7 +82,7 @@ func TestMiddlewareAuth(t *testing.T) {
 
 		middlewareScenario(t, "ReqSignIn true and request with different org provided in query string", func(
 			t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.GetOrgByNameQuery) error {
 				query.Result = &models.Org{Id: orgID, Name: "test"}
 				return nil
 			})

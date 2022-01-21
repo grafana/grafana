@@ -23,10 +23,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
 
   dashlistStar: css`
-    display: flex;
-    align-items: center;
+    align-self: center;
+    margin-right: 0px;
     color: ${theme.colors.secondary.text};
-    cursor: pointer;
     z-index: 1;
   `,
 
@@ -54,5 +53,13 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   dashlistItem: css`
     position: relative;
     list-style: none;
+  `,
+
+  gridContainer: css`
+    display: grid;
+    gap: ${theme.spacing(1)};
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    list-style: none;
+    margin-bottom: ${theme.spacing(1)};
   `,
 });

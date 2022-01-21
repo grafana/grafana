@@ -6,7 +6,10 @@ import { BaseTransport } from '../types';
 export interface CustomEndpointTransportOptions {
   endpoint: string;
   fetchParameters?: Partial<RequestInit>;
+  maxConcurrentRequests?: number;
 }
+
+const DEFAULT_MAX_CONCURRENT_REQUESTS = 3;
 
 /**
  * This is a copy of sentry's FetchTransport, edited to be able to push to any custom url
@@ -19,16 +22,20 @@ export class CustomEndpointTransport implements BaseTransport {
   /** Locks transport after receiving 429 response */
   private _disabledUntil: Date = new Date(Date.now());
 
-  private readonly _buffer: PromiseBuffer<Response> = new PromiseBuffer(30);
+  private readonly _buffer: PromiseBuffer<Response>;
 
-  constructor(public options: CustomEndpointTransportOptions) {}
+  constructor(public options: CustomEndpointTransportOptions) {
+    this._buffer = new PromiseBuffer(options.maxConcurrentRequests ?? DEFAULT_MAX_CONCURRENT_REQUESTS);
+  }
 
   sendEvent(event: Event): PromiseLike<Response> {
     if (new Date(Date.now()) < this._disabledUntil) {
-      return Promise.reject({
+      const reason = `Dropping frontend event due to too many requests.`;
+      console.warn(reason);
+      return Promise.resolve({
         event,
-        reason: `Transport locked till ${this._disabledUntil} due to too many requests.`,
-        status: 429,
+        reason,
+        status: Status.Skipped,
       });
     }
 
@@ -72,6 +79,16 @@ export class CustomEndpointTransport implements BaseTransport {
 
     if (this.options.fetchParameters !== undefined) {
       Object.assign(options, this.options.fetchParameters);
+    }
+
+    if (!this._buffer.isReady()) {
+      const reason = `Dropping frontend log event due to too many requests in flight.`;
+      console.warn(reason);
+      return Promise.resolve({
+        event,
+        reason,
+        status: Status.Skipped,
+      });
     }
 
     return this._buffer.add(

@@ -22,7 +22,14 @@ export enum LokiResultType {
   Matrix = 'matrix',
 }
 
+export enum LokiQueryType {
+  Range = 'range',
+  Instant = 'instant',
+  // Stream = 'stream',
+}
+
 export interface LokiQuery extends DataQuery {
+  queryType?: LokiQueryType;
   expr: string;
   query?: string;
   format?: string;
@@ -31,13 +38,19 @@ export interface LokiQuery extends DataQuery {
   valueWithRefId?: boolean;
   maxLines?: number;
   resolution?: number;
+  volumeQuery?: boolean; // Used in range queries
+
+  /* @deprecated now use queryType */
   range?: boolean;
+
+  /* @deprecated now use queryType */
   instant?: boolean;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
   derivedFields?: DerivedFieldConfig[];
+  alertmanager?: string;
 }
 
 export interface LokiStats {

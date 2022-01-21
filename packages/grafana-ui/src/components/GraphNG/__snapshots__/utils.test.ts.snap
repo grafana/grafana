@@ -4,6 +4,7 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -12,6 +13,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "x",
       "show": true,
       "side": 2,
@@ -29,6 +31,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -37,7 +40,8 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
-      "scale": "__fixed",
+      "rotate": undefined,
+      "scale": "__fixed/na-na/na-na/auto/linear/na",
       "show": true,
       "side": 3,
       "size": [Function],
@@ -93,7 +97,7 @@ Object {
       ],
       "scales": Array [
         "x",
-        "__fixed",
+        null,
       ],
     },
   },
@@ -101,7 +105,7 @@ Object {
   "mode": 1,
   "padding": undefined,
   "scales": Object {
-    "__fixed": Object {
+    "__fixed/na-na/na-na/auto/linear/na": Object {
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -139,7 +143,7 @@ Object {
         "stroke": "#ff0000",
       },
       "pxAlign": undefined,
-      "scale": "__fixed",
+      "scale": "__fixed/na-na/na-na/auto/linear/na",
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
@@ -162,7 +166,7 @@ Object {
         "stroke": "#ff0000",
       },
       "pxAlign": undefined,
-      "scale": "__fixed",
+      "scale": "__fixed/na-na/na-na/auto/linear/na",
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
@@ -185,7 +189,7 @@ Object {
         "stroke": "#ff0000",
       },
       "pxAlign": undefined,
-      "scale": "__fixed",
+      "scale": "__fixed/na-na/na-na/auto/linear/na",
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
@@ -208,7 +212,7 @@ Object {
         "stroke": "#ff0000",
       },
       "pxAlign": undefined,
-      "scale": "__fixed",
+      "scale": "__fixed/na-na/na-na/auto/linear/na",
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
@@ -231,7 +235,7 @@ Object {
         "stroke": "#ff0000",
       },
       "pxAlign": undefined,
-      "scale": "__fixed",
+      "scale": "__fixed/na-na/na-na/auto/linear/na",
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",

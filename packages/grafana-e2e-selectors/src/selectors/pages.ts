@@ -29,7 +29,9 @@ export const Pages = {
   },
   AddDataSource: {
     url: '/datasources/new',
+    /** @deprecated Use dataSourcePluginsV2 */
     dataSourcePlugins: (pluginName: string) => `Data source plugin item ${pluginName}`,
+    dataSourcePluginsV2: (pluginName: string) => `Add data source ${pluginName}`,
   },
   ConfirmModal: {
     delete: 'Confirm Modal Danger Button',
@@ -43,7 +45,11 @@ export const Pages = {
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
     DashNav: {
+      /**
+       * @deprecated use navV2 from Grafana 8.3 instead
+       */
       nav: 'Dashboard navigation',
+      navV2: 'data-testid Dashboard navigation',
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
@@ -61,12 +67,19 @@ export const Pages = {
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
         saveDashBoard: 'Dashboard settings aside actions Save button',
         saveAsDashBoard: 'Dashboard settings aside actions Save As button',
+        /**
+         * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
+         */
         timezone: 'Time zone picker select container',
         title: 'Dashboard settings page title',
       },
       Annotations: {
         List: {
+          /**
+           * @deprecated use addAnnotationCTAV2 from Grafana 8.3 instead
+           */
           addAnnotationCTA: Components.CallToActionCard.button('Add annotation query'),
+          addAnnotationCTAV2: Components.CallToActionCard.buttonV2('Add annotation query'),
         },
         Settings: {
           name: 'Annotations settings name input',
@@ -74,7 +87,11 @@ export const Pages = {
       },
       Variables: {
         List: {
+          /**
+           * @deprecated use addVariableCTAV2 from Grafana 8.3 instead
+           */
           addVariableCTA: Components.CallToActionCard.button('Add variable'),
+          addVariableCTAV2: Components.CallToActionCard.buttonV2('Add variable'),
           newButton: 'Variable editor New variable button',
           table: 'Variable editor Table',
           tableRowNameFields: (variableName: string) => `Variable editor Table Name field ${variableName}`,
@@ -88,6 +105,9 @@ export const Pages = {
           General: {
             headerLink: 'Variable editor Header link',
             modeLabelNew: 'Variable editor Header mode New',
+            /**
+             * @deprecated
+             */
             modeLabelEdit: 'Variable editor Header mode Edit',
             generalNameInput: 'Variable editor Form Name field',
             generalTypeSelect: 'Variable editor Form Type select',
@@ -121,6 +141,9 @@ export const Pages = {
   },
   Dashboards: {
     url: '/dashboards',
+    /**
+     * @deprecated use components.Search.dashboardItem from Grafana 8.3 instead
+     */
     dashboards: (title: string) => `Dashboard search item ${title}`,
   },
   SaveDashboardAsModal: {
@@ -142,9 +165,6 @@ export const Pages = {
       graph: 'Explore Graph',
       table: 'Explore Table',
       scrollBar: () => '.scrollbar-view',
-    },
-    Toolbar: {
-      navBar: () => '.explore-toolbar',
     },
   },
   SoloPanel: {

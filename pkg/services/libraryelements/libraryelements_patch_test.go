@@ -6,18 +6,18 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{Kind: int64(models.PanelElement)}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": "unknown"})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			cmd := patchLibraryElementCommand{Kind: int64(models.PanelElement), Version: 1}
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": "unknown"})
+			sc.reqContext.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 		})
 
@@ -39,8 +39,9 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:    int64(models.PanelElement),
 				Version: 1,
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.reqContext.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 			var result = validateAndUnMarshalResponse(t, resp)
 			var expected = libraryElementResult{
@@ -91,13 +92,15 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.reqContext.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.FolderID = newFolder.Id
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -112,12 +115,14 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Name = "New Name"
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Model["title"] = "Text - Library Panel"
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
@@ -133,12 +138,14 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.UID = cmd.UID
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Model["title"] = "Text - Library Panel"
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
@@ -154,8 +161,9 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
 		})
 
@@ -167,8 +175,9 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
 		})
 
@@ -176,7 +185,8 @@ func TestPatchLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreatePanelCommand(sc.folder.Id, "Existing UID")
 			command.UID = util.GenerateShortUID()
-			resp := sc.service.createHandler(sc.reqContext, command)
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 			cmd := patchLibraryElementCommand{
 				FolderID: -1,
@@ -184,8 +194,9 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp = sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp = sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
 		})
 
@@ -197,8 +208,9 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Type = "graph"
 			sc.initialResult.Result.Description = "New description"
@@ -210,6 +222,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -224,8 +237,9 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Type = "text"
 			sc.initialResult.Result.Description = "New description"
@@ -235,6 +249,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -249,8 +264,9 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Type = "graph"
 			sc.initialResult.Result.Description = "A description"
@@ -260,6 +276,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -270,12 +287,14 @@ func TestPatchLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			cmd := patchLibraryElementCommand{FolderID: -1, Version: 1, Kind: int64(models.PanelElement)}
 			sc.reqContext.UserId = 2
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Meta.UpdatedBy.ID = int64(2)
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -285,15 +304,17 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a name that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreatePanelCommand(sc.folder.Id, "Another Panel")
-			resp := sc.service.createHandler(sc.reqContext, command)
+			sc.ctx.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			cmd := patchLibraryElementCommand{
 				Name:    "Text - Library Panel",
 				Version: 1,
 				Kind:    int64(models.PanelElement),
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
-			resp = sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp = sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
 		})
 
@@ -301,15 +322,17 @@ func TestPatchLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
 			command := getCreatePanelCommand(newFolder.Id, "Text - Library Panel")
-			resp := sc.service.createHandler(sc.reqContext, command)
+			sc.ctx.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			cmd := patchLibraryElementCommand{
 				FolderID: 1,
 				Version:  1,
 				Kind:     int64(models.PanelElement),
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
-			resp = sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp = sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
 		})
 
@@ -321,8 +344,9 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 			}
 			sc.reqContext.OrgId = 2
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 		})
 
@@ -333,10 +357,12 @@ func TestPatchLibraryElement(t *testing.T) {
 				Version:  1,
 				Kind:     int64(models.PanelElement),
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
-			resp = sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp = sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 412, resp.Status())
 		})
 
@@ -347,8 +373,9 @@ func TestPatchLibraryElement(t *testing.T) {
 				Version:  1,
 				Kind:     int64(models.VariableElement),
 			}
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req.Body = mockRequestBody(cmd)
+			resp := sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Type = "text"
@@ -363,6 +390,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)

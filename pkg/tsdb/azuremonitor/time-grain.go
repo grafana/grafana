@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 // TimeGrain handles conversions between
@@ -19,7 +19,7 @@ var (
 )
 
 func (tg *TimeGrain) createISO8601DurationFromIntervalMS(it int64) (string, error) {
-	formatted := interval.FormatDuration(time.Duration(it) * time.Millisecond)
+	formatted := intervalv2.FormatDuration(time.Duration(it) * time.Millisecond)
 
 	if strings.Contains(formatted, "ms") {
 		return "PT1M", nil

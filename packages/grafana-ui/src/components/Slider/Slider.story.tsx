@@ -1,6 +1,7 @@
 import React from 'react';
 import { Slider } from '@grafana/ui';
 import { SliderProps } from './types';
+import { Orientation } from '../../types/orientation';
 import { Story, Meta } from '@storybook/react';
 
 export default {
@@ -20,6 +21,16 @@ export default {
   },
 } as Meta;
 
+const commonArgs = {
+  min: 0,
+  max: 100,
+  value: 10,
+  isStep: false,
+  orientation: 'horizontal' as Orientation,
+  reverse: false,
+  included: true,
+};
+
 interface StoryProps extends Partial<SliderProps> {
   isStep: boolean;
 }
@@ -38,10 +49,23 @@ export const Basic: Story<StoryProps> = (args) => {
   );
 };
 Basic.args = {
-  min: 0,
-  max: 100,
-  value: 10,
-  isStep: false,
-  orientation: 'horizontal',
-  reverse: false,
+  ...commonArgs,
+};
+
+export const WithMarks: Story<StoryProps> = (args) => {
+  return (
+    <div style={{ width: '300px', height: '300px' }}>
+      <Slider
+        step={args.isStep ? 10 : undefined}
+        value={args.value}
+        min={args.min as number}
+        max={args.max as number}
+        {...args}
+      />
+    </div>
+  );
+};
+WithMarks.args = {
+  ...commonArgs,
+  marks: { 0: '0', 25: '25', 50: '50', 75: '75', 100: '100' },
 };

@@ -9,7 +9,7 @@ import { DashboardLink } from '../../state/DashboardModel';
 import { linkIconMap } from '../LinksSettings/LinkSettingsEdit';
 import { useEffectOnce } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
-import { TimeRangeUpdatedEvent } from 'app/types/events';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 
 export interface Props {
   dashboard: DashboardModel;

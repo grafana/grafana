@@ -20,3 +20,15 @@ export function invalidNamespaceError() {
     },
   };
 }
+
+export function invalidSubscriptionError() {
+  return {
+    status: 400,
+    data: {
+      error: {
+        code: 'InvalidSubscriptionId',
+        message: "The provided subscription identifier 'abc' is malformed or invalid.",
+      },
+    },
+  };
+}

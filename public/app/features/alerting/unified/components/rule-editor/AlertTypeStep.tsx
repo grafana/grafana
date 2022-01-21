@@ -89,6 +89,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             render={({ field: { onChange, ref, ...field } }) => (
               <Select
                 menuShouldPortal
+                aria-label="Rule type"
                 {...field}
                 options={alertTypeOptions}
                 onChange={(v: SelectableValue) => onChange(v?.value)}
@@ -130,7 +131,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         )}
       </div>
       {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) &&
-        dataSourceName && <GroupAndNamespaceFields dataSourceName={dataSourceName} />}
+        dataSourceName && <GroupAndNamespaceFields rulesSourceName={dataSourceName} />}
 
       {ruleFormType === RuleFormType.grafana && (
         <Field

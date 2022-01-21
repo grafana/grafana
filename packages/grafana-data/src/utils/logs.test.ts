@@ -165,6 +165,7 @@ describe('LogsParsers', () => {
 
     test('should detect format', () => {
       expect(parser.test('foo')).toBeFalsy();
+      expect(parser.test('"foo"')).toBeFalsy();
       expect(parser.test('{"foo":"bar"}')).toBeTruthy();
     });
 

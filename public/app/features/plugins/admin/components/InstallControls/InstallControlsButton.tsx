@@ -3,15 +3,16 @@ import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 
-import { CatalogPlugin, PluginStatus } from '../../types';
+import { CatalogPlugin, PluginStatus, Version } from '../../types';
 import { useInstallStatus, useUninstallStatus, useInstall, useUninstall } from '../../state/hooks';
 
 type InstallControlsButtonProps = {
   plugin: CatalogPlugin;
   pluginStatus: PluginStatus;
+  latestCompatibleVersion?: Version;
 };
 
-export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsButtonProps) {
+export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVersion }: InstallControlsButtonProps) {
   const { isInstalling, error: errorInstalling } = useInstallStatus();
   const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
   const install = useInstall();
@@ -22,7 +23,7 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
   const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
 
   const onInstall = async () => {
-    await install(plugin.id, plugin.version);
+    await install(plugin.id, latestCompatibleVersion?.version);
     if (!errorInstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
     }
@@ -37,7 +38,7 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
   };
 
   const onUpdate = async () => {
-    await install(plugin.id, plugin.version, true);
+    await install(plugin.id, latestCompatibleVersion?.version, true);
     if (!errorInstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Updated ${plugin.name}`]);
     }

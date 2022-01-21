@@ -14,40 +14,43 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
-func init() {
-	bus.AddHandler("sql", SaveAlerts)
-	bus.AddHandler("sql", HandleAlertsQuery)
-	bus.AddHandler("sql", GetAlertById)
-	bus.AddHandler("sql", GetAllAlertQueryHandler)
-	bus.AddHandler("sql", SetAlertState)
-	bus.AddHandler("sql", GetAlertStatesForDashboard)
-	bus.AddHandler("sql", PauseAlert)
-	bus.AddHandler("sql", PauseAllAlerts)
+func (ss *SQLStore) addAlertQueryAndCommandHandlers() {
+	bus.AddHandler("sql", ss.HandleAlertsQuery)
+	bus.AddHandler("sql", ss.GetAlertById)
+	bus.AddHandler("sql", ss.GetAllAlertQueryHandler)
+	bus.AddHandler("sql", ss.SetAlertState)
+	bus.AddHandler("sql", ss.GetAlertStatesForDashboard)
+	bus.AddHandler("sql", ss.PauseAlert)
+	bus.AddHandler("sql", ss.PauseAllAlerts)
 }
 
-func GetAlertById(query *models.GetAlertByIdQuery) error {
-	alert := models.Alert{}
-	has, err := x.ID(query.Id).Get(&alert)
-	if !has {
-		return fmt.Errorf("could not find alert")
-	}
-	if err != nil {
-		return err
-	}
+func (ss *SQLStore) GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		alert := models.Alert{}
+		has, err := sess.ID(query.Id).Get(&alert)
+		if !has {
+			return fmt.Errorf("could not find alert")
+		}
+		if err != nil {
+			return err
+		}
 
-	query.Result = &alert
-	return nil
+		query.Result = &alert
+		return nil
+	})
 }
 
-func GetAllAlertQueryHandler(query *models.GetAllAlertsQuery) error {
-	var alerts []*models.Alert
-	err := x.SQL("select * from alert").Find(&alerts)
-	if err != nil {
-		return err
-	}
+func (ss *SQLStore) GetAllAlertQueryHandler(ctx context.Context, query *models.GetAllAlertsQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		var alerts []*models.Alert
+		err := sess.SQL("select * from alert").Find(&alerts)
+		if err != nil {
+			return err
+		}
 
-	query.Result = alerts
-	return nil
+		query.Result = alerts
+		return nil
+	})
 }
 
 func deleteAlertByIdInternal(alertId int64, reason string, sess *DBSession) error {
@@ -72,10 +75,11 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *DBSession) erro
 	return nil
 }
 
-func HandleAlertsQuery(query *models.GetAlertsQuery) error {
-	builder := SQLBuilder{}
+func (ss *SQLStore) HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		builder := SQLBuilder{}
 
-	builder.Write(`SELECT
+		builder.Write(`SELECT
 		alert.id,
 		alert.dashboard_id,
 		alert.panel_id,
@@ -90,64 +94,65 @@ func HandleAlertsQuery(query *models.GetAlertsQuery) error {
 		FROM alert
 		INNER JOIN dashboard on dashboard.id = alert.dashboard_id `)
 
-	builder.Write(`WHERE alert.org_id = ?`, query.OrgId)
+		builder.Write(`WHERE alert.org_id = ?`, query.OrgId)
 
-	if len(strings.TrimSpace(query.Query)) > 0 {
-		builder.Write(" AND alert.name "+dialect.LikeStr()+" ?", "%"+query.Query+"%")
-	}
-
-	if len(query.DashboardIDs) > 0 {
-		builder.sql.WriteString(` AND alert.dashboard_id IN (?` + strings.Repeat(",?", len(query.DashboardIDs)-1) + `) `)
-
-		for _, dbID := range query.DashboardIDs {
-			builder.AddParams(dbID)
+		if len(strings.TrimSpace(query.Query)) > 0 {
+			builder.Write(" AND alert.name "+dialect.LikeStr()+" ?", "%"+query.Query+"%")
 		}
-	}
 
-	if query.PanelId != 0 {
-		builder.Write(` AND alert.panel_id = ?`, query.PanelId)
-	}
+		if len(query.DashboardIDs) > 0 {
+			builder.sql.WriteString(` AND alert.dashboard_id IN (?` + strings.Repeat(",?", len(query.DashboardIDs)-1) + `) `)
 
-	if len(query.State) > 0 && query.State[0] != "all" {
-		builder.Write(` AND (`)
-		for i, v := range query.State {
-			if i > 0 {
-				builder.Write(" OR ")
+			for _, dbID := range query.DashboardIDs {
+				builder.AddParams(dbID)
 			}
-			if strings.HasPrefix(v, "not_") {
-				builder.Write("state <> ? ")
-				v = strings.TrimPrefix(v, "not_")
-			} else {
-				builder.Write("state = ? ")
+		}
+
+		if query.PanelId != 0 {
+			builder.Write(` AND alert.panel_id = ?`, query.PanelId)
+		}
+
+		if len(query.State) > 0 && query.State[0] != "all" {
+			builder.Write(` AND (`)
+			for i, v := range query.State {
+				if i > 0 {
+					builder.Write(" OR ")
+				}
+				if strings.HasPrefix(v, "not_") {
+					builder.Write("state <> ? ")
+					v = strings.TrimPrefix(v, "not_")
+				} else {
+					builder.Write("state = ? ")
+				}
+				builder.AddParams(v)
 			}
-			builder.AddParams(v)
+			builder.Write(")")
 		}
-		builder.Write(")")
-	}
 
-	if query.User.OrgRole != models.ROLE_ADMIN {
-		builder.WriteDashboardPermissionFilter(query.User, models.PERMISSION_VIEW)
-	}
-
-	builder.Write(" ORDER BY name ASC")
-
-	if query.Limit != 0 {
-		builder.Write(dialect.Limit(query.Limit))
-	}
-
-	alerts := make([]*models.AlertListItemDTO, 0)
-	if err := x.SQL(builder.GetSQLString(), builder.params...).Find(&alerts); err != nil {
-		return err
-	}
-
-	for i := range alerts {
-		if alerts[i].ExecutionError == " " {
-			alerts[i].ExecutionError = ""
+		if query.User.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(query.User, models.PERMISSION_VIEW)
 		}
-	}
 
-	query.Result = alerts
-	return nil
+		builder.Write(" ORDER BY name ASC")
+
+		if query.Limit != 0 {
+			builder.Write(dialect.Limit(query.Limit))
+		}
+
+		alerts := make([]*models.AlertListItemDTO, 0)
+		if err := sess.SQL(builder.GetSQLString(), builder.params...).Find(&alerts); err != nil {
+			return err
+		}
+
+		for i := range alerts {
+			if alerts[i].ExecutionError == " " {
+				alerts[i].ExecutionError = ""
+			}
+		}
+
+		query.Result = alerts
+		return nil
+	})
 }
 
 func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
@@ -167,8 +172,8 @@ func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
 	return nil
 }
 
-func (ss *SQLStore) SaveAlerts(dashID int64, alerts []*models.Alert) error {
-	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+func (ss *SQLStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
 		if err != nil {
 			return err
@@ -179,25 +184,6 @@ func (ss *SQLStore) SaveAlerts(dashID int64, alerts []*models.Alert) error {
 		}
 
 		if err := deleteMissingAlerts(existingAlerts, alerts, sess); err != nil {
-			return err
-		}
-
-		return nil
-	})
-}
-
-func SaveAlerts(cmd *models.SaveAlertsCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		existingAlerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
-		if err != nil {
-			return err
-		}
-
-		if err := updateAlerts(existingAlerts, cmd.Alerts, sess); err != nil {
-			return err
-		}
-
-		if err := deleteMissingAlerts(existingAlerts, cmd.Alerts, sess); err != nil {
 			return err
 		}
 
@@ -299,8 +285,8 @@ func GetAlertsByDashboardId2(dashboardId int64, sess *DBSession) ([]*models.Aler
 	return alerts, nil
 }
 
-func SetAlertState(cmd *models.SetAlertStateCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) SetAlertState(ctx context.Context, cmd *models.SetAlertStateCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		alert := models.Alert{}
 
 		if has, err := sess.ID(cmd.AlertId).Get(&alert); err != nil {
@@ -338,8 +324,8 @@ func SetAlertState(cmd *models.SetAlertStateCommand) error {
 	})
 }
 
-func PauseAlert(cmd *models.PauseAlertCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) PauseAlert(ctx context.Context, cmd *models.PauseAlertCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if len(cmd.AlertIds) == 0 {
 			return fmt.Errorf("command contains no alertids")
 		}
@@ -372,8 +358,8 @@ func PauseAlert(cmd *models.PauseAlertCommand) error {
 	})
 }
 
-func PauseAllAlerts(cmd *models.PauseAllAlertCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) PauseAllAlerts(ctx context.Context, cmd *models.PauseAllAlertCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var newState string
 		if cmd.Paused {
 			newState = string(models.AlertStatePaused)
@@ -390,8 +376,9 @@ func PauseAllAlerts(cmd *models.PauseAllAlertCommand) error {
 	})
 }
 
-func GetAlertStatesForDashboard(query *models.GetAlertStatesForDashboardQuery) error {
-	var rawSQL = `SELECT
+func (ss *SQLStore) GetAlertStatesForDashboard(ctx context.Context, query *models.GetAlertStatesForDashboardQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		var rawSQL = `SELECT
 	                id,
 	                dashboard_id,
 	                panel_id,
@@ -400,8 +387,9 @@ func GetAlertStatesForDashboard(query *models.GetAlertStatesForDashboardQuery) e
 	                FROM alert
 	                WHERE org_id = ? AND dashboard_id = ?`
 
-	query.Result = make([]*models.AlertStateInfoDTO, 0)
-	err := x.SQL(rawSQL, query.OrgId, query.DashboardId).Find(&query.Result)
+		query.Result = make([]*models.AlertStateInfoDTO, 0)
+		err := sess.SQL(rawSQL, query.OrgId, query.DashboardId).Find(&query.Result)
 
-	return err
+		return err
+	})
 }

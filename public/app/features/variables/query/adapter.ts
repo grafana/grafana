@@ -7,9 +7,10 @@ import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { QueryVariableEditor } from './QueryVariableEditor';
 import { updateQueryVariableOptions } from './actions';
-import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
+import { toVariableIdentifier } from '../state/types';
 import { containsVariable, isAllVariable } from '../utils';
 import { optionPickerFactory } from '../pickers';
+import { ALL_VARIABLE_TEXT } from '../constants';
 
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
@@ -21,7 +22,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     picker: optionPickerFactory<QueryVariableModel>(),
     editor: QueryVariableEditor,
     dependsOn: (variable, variableToTest) => {
-      return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);
+      return containsVariable(variable.query, variable.datasource?.uid, variable.regex, variableToTest.name);
     },
     setValue: async (variable, option, emitChanges = false) => {
       await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));

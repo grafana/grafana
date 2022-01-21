@@ -1,6 +1,6 @@
 import { OrgRole } from '.';
-
-export interface OrgUser {
+import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;
   email: string;
   lastSeenAt: string;
@@ -24,7 +24,7 @@ export interface User {
 
 export type Unit = { name: string; url: string };
 
-export interface UserDTO {
+export interface UserDTO extends WithAccessControlMetadata {
   id: number;
   login: string;
   email: string;
@@ -106,6 +106,7 @@ export interface UserAdminError {
   body: string;
 }
 
+export type UserFilter = Record<string, string | boolean | SelectableValue[]>;
 export interface UserListAdminState {
   users: UserDTO[];
   query: string;
@@ -113,6 +114,6 @@ export interface UserListAdminState {
   page: number;
   totalPages: number;
   showPaging: boolean;
-  filter: string;
+  filters: UserFilter[];
   isLoading: boolean;
 }

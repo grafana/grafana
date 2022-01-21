@@ -26,6 +26,7 @@ export interface DataSourceSettingsState {
   plugin?: GenericDataSourcePlugin | null;
   testingStatus?: TestingStatus;
   loadError?: string | null;
+  loading: boolean;
 }
 
 export interface DataSourcePluginCategory {

@@ -1,8 +1,9 @@
 import { DataFrame, ensureTimeField, Field, FieldType } from '@grafana/data';
-import { StackingMode } from '@grafana/schema';
-import { createLogger } from '../../utils/logger';
+import { StackingMode, VizLegendOptions } from '@grafana/schema';
+import { orderBy } from 'lodash';
+import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
 import { attachDebugger } from '../../utils';
-import { AlignedData, Options, PaddingSide } from 'uplot';
+import { createLogger } from '../../utils/logger';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
@@ -39,7 +40,11 @@ interface StackMeta {
 }
 
 /** @internal */
-export function preparePlotData(frames: DataFrame[], onStackMeta?: (meta: StackMeta) => void): AlignedData {
+export function preparePlotData(
+  frames: DataFrame[],
+  onStackMeta?: (meta: StackMeta) => void,
+  legend?: VizLegendOptions
+): AlignedData {
   const frame = frames[0];
   const result: any[] = [];
   const stackingGroups: Map<string, number[]> = new Map();
@@ -67,7 +72,9 @@ export function preparePlotData(frames: DataFrame[], onStackMeta?: (meta: StackM
     alignedTotals[0] = null;
 
     // array or stacking groups
-    for (const [_, seriesIdxs] of stackingGroups.entries()) {
+    for (const [_, seriesIds] of stackingGroups.entries()) {
+      const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
+
       const groupTotals = byPct ? Array(dataLength).fill(0) : null;
 
       if (byPct) {
@@ -127,7 +134,7 @@ export function collectStackingGroups(f: Field, groups: Map<string, number[]>, s
 }
 
 /**
- * Finds y axis midpoind for point at given idx (css pixels relative to uPlot canvas)
+ * Finds y axis midpoint for point at given idx (css pixels relative to uPlot canvas)
  * @internal
  **/
 
@@ -170,8 +177,13 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
     // find median position
     y = (u.valToPos(min, u.series[sMinIdx].scale!) + u.valToPos(max, u.series[sMaxIdx].scale!)) / 2;
   } else {
-    // snap tooltip to min OR max point, one of thos is not null :)
+    // snap tooltip to min OR max point, one of those is not null :)
     y = u.valToPos((min || max)!, u.series[(sMaxIdx || sMinIdx)!].scale!);
+  }
+
+  // if y is out of canvas bounds, snap it to the bottom
+  if (y !== undefined && y < 0) {
+    y = u.bbox.height / devicePixelRatio;
   }
 
   return y;
@@ -184,3 +196,23 @@ export const pluginLogger = createLogger('uPlot');
 export const pluginLog = pluginLogger.logger;
 // pluginLogger.enable();
 attachDebugger('graphng', undefined, pluginLogger);
+
+type OrderIdsByCalcsOptions = {
+  legend?: VizLegendOptions;
+  ids: number[];
+  frame: DataFrame;
+};
+export function orderIdsByCalcs({ legend, ids, frame }: OrderIdsByCalcsOptions) {
+  if (!legend?.sortBy || legend.sortDesc == null) {
+    return ids;
+  }
+  const orderedIds = orderBy<number>(
+    ids,
+    (id) => {
+      return frame.fields[id].state?.calcs?.[legend.sortBy!.toLowerCase()];
+    },
+    legend.sortDesc ? 'desc' : 'asc'
+  );
+
+  return orderedIds;
+}

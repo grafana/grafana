@@ -30,7 +30,7 @@ func init() {
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func NewTeamsNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -135,7 +135,7 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	data, _ := json.Marshal(&body)
 	cmd := &models.SendWebhookSync{Url: tn.URL, Body: string(data)}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		tn.log.Error("Failed to send teams notification", "error", err, "webhook", tn.Name)
 		return err
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 	"github.com/stretchr/testify/require"
@@ -85,7 +86,8 @@ type fakeExecutor struct {
 func (f *fakeExecutor) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
 }
 
-func (f *fakeExecutor) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+func (f *fakeExecutor) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	if client == nil {
 		f.t.Errorf("The HTTP client for %s is missing", f.queryType)
 	} else {
@@ -97,10 +99,6 @@ func (f *fakeExecutor) executeTimeSeriesQuery(ctx context.Context, originalQueri
 }
 
 func Test_newMux(t *testing.T) {
-	cfg := &setting.Cfg{
-		Azure: setting.AzureSettings{},
-	}
-
 	tests := []struct {
 		name        string
 		queryType   string
@@ -124,7 +122,6 @@ func Test_newMux(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
-				Cfg: cfg,
 				im: &fakeInstance{
 					routes: routes[azureMonitorPublic],
 					services: map[string]datasourceService{
@@ -142,8 +139,8 @@ func Test_newMux(t *testing.T) {
 					},
 				},
 			}
-			mux := s.newMux()
-			res, err := mux.QueryData(context.TODO(), &backend.QueryDataRequest{
+			mux := s.newQueryMux()
+			res, err := mux.QueryData(context.Background(), &backend.QueryDataRequest{
 				PluginContext: backend.PluginContext{},
 				Queries: []backend.DataQuery{
 					{QueryType: tt.queryType},

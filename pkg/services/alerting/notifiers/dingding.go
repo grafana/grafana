@@ -47,7 +47,7 @@ func init() {
 	})
 }
 
-func newDingDingNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func newDingDingNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -91,7 +91,7 @@ func (dd *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		Body: string(body),
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		dd.log.Error("Failed to send DingDing", "error", err, "dingding", dd.Name)
 		return err
 	}

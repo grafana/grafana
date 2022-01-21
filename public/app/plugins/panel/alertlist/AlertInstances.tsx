@@ -2,35 +2,30 @@ import React, { useEffect, useMemo, useState } from 'react';
 import pluralize from 'pluralize';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { Alert, PromRuleWithLocation } from 'app/types/unified-alerting';
-import { AlertLabels } from 'app/features/alerting/unified/components/AlertLabels';
-import { AlertStateTag } from 'app/features/alerting/unified/components/rules/AlertStateTag';
-import { dateTime, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { css } from '@emotion/css';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-import { omit } from 'lodash';
-import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
+import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { UnifiedAlertListOptions } from './types';
+import { AlertInstancesTable } from 'app/features/alerting/unified/components/rules/AlertInstancesTable';
+import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
 
 interface Props {
   ruleWithLocation: PromRuleWithLocation;
-  showInstances: boolean;
+  options: PanelProps<UnifiedAlertListOptions>['options'];
 }
 
-export const AlertInstances = ({ ruleWithLocation, showInstances }: Props) => {
+export const AlertInstances = ({ ruleWithLocation, options }: Props) => {
   const { rule } = ruleWithLocation;
-  const [displayInstances, setDisplayInstances] = useState<boolean>(showInstances);
+  const [displayInstances, setDisplayInstances] = useState<boolean>(options.showInstances);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    setDisplayInstances(showInstances);
-  }, [showInstances]);
+    setDisplayInstances(options.showInstances);
+  }, [options.showInstances]);
 
-  // sort instances, because API returns them in random order every time
-  const sortedAlerts = useMemo(
-    (): Alert[] =>
-      displayInstances
-        ? rule.alerts.slice().sort((a, b) => alertInstanceKey(a).localeCompare(alertInstanceKey(b)))
-        : [],
-    [rule, displayInstances]
+  const alerts = useMemo(
+    (): Alert[] => (displayInstances ? filterAlerts(options, sortAlerts(options.sortOrder, rule.alerts)) : []),
+    [rule, options, displayInstances]
   );
 
   return (
@@ -42,37 +37,33 @@ export const AlertInstances = ({ ruleWithLocation, showInstances }: Props) => {
         </div>
       )}
 
-      {!!sortedAlerts.length && (
-        <ol className={styles.list}>
-          {sortedAlerts.map((alert, index) => {
-            return (
-              <li className={styles.listItem} key={`${alert.activeAt}-${index}`}>
-                <div>
-                  <AlertStateTag state={alert.state} />
-                  <span className={styles.date}>{dateTime(alert.activeAt).format('YYYY-MM-DD HH:mm:ss')}</span>
-                </div>
-                <AlertLabels labels={omit(alert.labels, 'alertname')} />
-              </li>
-            );
-          })}
-        </ol>
-      )}
+      {!!alerts.length && <AlertInstancesTable instances={alerts} />}
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+function filterAlerts(options: PanelProps<UnifiedAlertListOptions>['options'], alerts: Alert[]): Alert[] {
+  const hasAlertState = Object.values(options.stateFilter).some((value) => value);
+  let filteredAlerts = [...alerts];
+  if (hasAlertState) {
+    filteredAlerts = filteredAlerts.filter((alert) => {
+      return (
+        (options.stateFilter.firing &&
+          (alert.state === GrafanaAlertState.Alerting || alert.state === PromAlertingRuleState.Firing)) ||
+        (options.stateFilter.pending &&
+          (alert.state === GrafanaAlertState.Pending || alert.state === PromAlertingRuleState.Pending)) ||
+        (options.stateFilter.noData && alert.state === GrafanaAlertState.NoData) ||
+        (options.stateFilter.normal && alert.state === GrafanaAlertState.Normal) ||
+        (options.stateFilter.error && alert.state === GrafanaAlertState.Error) ||
+        (options.stateFilter.inactive && alert.state === PromAlertingRuleState.Inactive)
+      );
+    });
+  }
+  return filteredAlerts;
+}
+
+const getStyles = (_: GrafanaTheme2) => ({
   instance: css`
     cursor: pointer;
-  `,
-  list: css`
-    list-style-type: none;
-  `,
-  listItem: css`
-    margin-top: ${theme.spacing(1)};
-  `,
-  date: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-    padding-left: ${theme.spacing(0.5)};
   `,
 });

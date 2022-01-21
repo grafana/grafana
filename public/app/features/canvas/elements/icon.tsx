@@ -13,11 +13,13 @@ import { css } from '@emotion/css';
 import { isString } from 'lodash';
 import { LineConfig } from '../types';
 import { DimensionContext } from 'app/features/dimensions/context';
+import { APIEditor, APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/APIEditor';
 
-interface IconConfig {
+export interface IconConfig {
   path?: ResourceDimensionConfig;
   fill?: ColorDimensionConfig;
   stroke?: LineConfig;
+  api?: APIEditorConfig;
 }
 
 interface IconData {
@@ -25,6 +27,7 @@ interface IconData {
   fill: string;
   strokeColor?: string;
   stroke?: number;
+  api?: APIEditorConfig;
 }
 
 // When a stoke is defined, we want the path to be in page units
@@ -40,6 +43,12 @@ export function IconDisplay(props: CanvasElementProps) {
     return null;
   }
 
+  const onClick = () => {
+    if (data?.api) {
+      callApi(data.api);
+    }
+  };
+
   const svgStyle: CSSProperties = {
     fill: data?.fill,
     stroke: data?.strokeColor,
@@ -48,6 +57,7 @@ export function IconDisplay(props: CanvasElementProps) {
 
   return (
     <SVG
+      onClick={onClick}
       src={data.path}
       width={width}
       height={height}
@@ -64,18 +74,20 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
   display: IconDisplay,
 
-  defaultConfig: {
-    path: {
-      mode: ResourceDimensionMode.Fixed,
-      fixed: 'img/icons/unicons/question-circle.svg',
+  getNewOptions: (options) => ({
+    placement: {
+      width: 50,
+      height: 50,
     },
-    fill: { fixed: '#FFF899' },
-  },
-
-  defaultSize: {
-    width: 50,
-    height: 50,
-  },
+    ...options,
+    config: {
+      path: {
+        mode: ResourceDimensionMode.Fixed,
+        fixed: 'img/icons/unicons/question-circle.svg',
+      },
+      fill: { fixed: '#FFF899' },
+    },
+  }),
 
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: IconConfig) => {
@@ -90,6 +102,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
     const data: IconData = {
       path,
       fill: cfg.fill ? ctx.getColor(cfg.fill).value() : '#CCC',
+      api: cfg?.api ?? undefined,
     };
 
     if (cfg.stroke?.width && cfg.stroke.color) {
@@ -103,8 +116,10 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
+    const category = ['Icon'];
     builder
       .addCustomEditor({
+        category,
         id: 'iconSelector',
         path: 'config.path',
         name: 'SVG Path',
@@ -114,9 +129,10 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         },
       })
       .addCustomEditor({
+        category,
         id: 'config.fill',
         path: 'config.fill',
-        name: 'Icon fill color',
+        name: 'Fill color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
@@ -125,6 +141,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         },
       })
       .addSliderInput({
+        category,
         path: 'config.stroke.width',
         name: 'Stroke',
         defaultValue: 0,
@@ -134,16 +151,24 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         },
       })
       .addCustomEditor({
+        category,
         id: 'config.stroke.color',
         path: 'config.stroke.color',
-        name: 'Icon Stroke color',
+        name: 'Stroke color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
           // Configured values
           fixed: 'grey',
         },
-        showIf: (cfg) => Boolean(cfg.config?.stroke?.width),
+        showIf: (cfg) => Boolean(cfg?.config?.stroke?.width),
+      })
+      .addCustomEditor({
+        category,
+        id: 'apiSelector',
+        path: 'config.api',
+        name: 'API',
+        editor: APIEditor,
       });
   },
 };

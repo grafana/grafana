@@ -53,6 +53,11 @@ export interface VariableQueryData {
   loading: boolean;
 }
 
+export interface Aggregation {
+  crossSeriesReducer?: string;
+  groupBys?: string[];
+}
+
 export enum QueryType {
   METRICS = 'metrics',
   SLO = 'slo',
@@ -203,4 +208,8 @@ export interface Filter {
 export interface CustomMetaData {
   perSeriesAligner?: string;
   alignmentPeriod?: string;
+}
+
+export interface PostResponse {
+  results: Record<string, any>;
 }

@@ -9,7 +9,7 @@ import {
   generateNewKeyAndAddRefIdIfMissing,
   getTimeRangeFromUrl,
 } from 'app/core/utils/explore';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
 import { queryReducer, runQueries, setQueriesAction } from './query';
 import { datasourceReducer } from './datasource';
 import { timeReducer, updateTime } from './time';
@@ -19,6 +19,7 @@ import {
   loadAndInitDatasource,
   createEmptyQueryResponse,
   getUrlStateFromPaneState,
+  storeGraphStyle,
 } from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
 import { EventBusExtended, DataQuery, ExploreUrlState, TimeRange, HistoryItem, DataSourceApi } from '@grafana/data';
@@ -74,6 +75,20 @@ export function changeSize(
   { height, width }: { height: number; width: number }
 ): PayloadAction<ChangeSizePayload> {
   return changeSizeAction({ exploreId, height, width });
+}
+
+interface ChangeGraphStylePayload {
+  exploreId: ExploreId;
+  graphStyle: ExploreGraphStyle;
+}
+
+const changeGraphStyleAction = createAction<ChangeGraphStylePayload>('explore/changeGraphStyle');
+
+export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphStyle): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    storeGraphStyle(graphStyle);
+    dispatch(changeGraphStyleAction({ exploreId, graphStyle }));
+  };
 }
 
 /**
@@ -198,6 +213,11 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;
     return { ...state, containerWidth };
+  }
+
+  if (changeGraphStyleAction.match(action)) {
+    const { graphStyle } = action.payload;
+    return { ...state, graphStyle };
   }
 
   if (initializeExploreAction.match(action)) {

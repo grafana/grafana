@@ -1,128 +1,89 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/events"
-	"github.com/grafana/grafana/pkg/util/errutil"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-
-	"xorm.io/xorm"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"xorm.io/xorm"
 )
-
-func init() {
-	bus.AddHandler("sql", GetDataSources)
-	bus.AddHandler("sql", GetDataSourcesByType)
-	bus.AddHandler("sql", GetDataSource)
-	bus.AddHandler("sql", AddDataSource)
-	bus.AddHandler("sql", DeleteDataSource)
-	bus.AddHandler("sql", UpdateDataSource)
-	bus.AddHandler("sql", GetDefaultDataSource)
-}
-
-// GetDataSource returns a datasource by org_id and either uid (preferred), id, or name.
-// Zero values (0, or "") should be used for the parameters that will not be queried.
-func (ss *SQLStore) GetDataSource(uid string, id int64, name string, orgID int64) (*models.DataSource, error) {
-	query := &models.GetDataSourceQuery{
-		Id:    id,
-		Uid:   uid,
-		Name:  name,
-		OrgId: orgID,
-	}
-
-	if err := GetDataSource(query); err != nil {
-		return nil, err
-	}
-
-	return query.Result, nil
-}
 
 // GetDataSource adds a datasource to the query model by querying by org_id as well as
 // either uid (preferred), id, or name and is added to the bus.
-func GetDataSource(query *models.GetDataSourceQuery) error {
+func (ss *SQLStore) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
 	metrics.MDBDataSourceQueryByID.Inc()
-	if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
-		return models.ErrDataSourceIdentifierNotSet
-	}
 
-	datasource := models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
-	has, err := x.Get(&datasource)
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
+			return models.ErrDataSourceIdentifierNotSet
+		}
 
-	if err != nil {
-		sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
-		return err
-	} else if !has {
-		return models.ErrDataSourceNotFound
-	}
+		datasource := &models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
+		has, err := sess.Get(datasource)
 
-	query.Result = &datasource
-	return nil
+		if err != nil {
+			sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
+			return err
+		} else if !has {
+			return models.ErrDataSourceNotFound
+		}
+
+		query.Result = datasource
+
+		return nil
+	})
 }
 
-func GetDataSources(query *models.GetDataSourcesQuery) error {
+func (ss *SQLStore) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
 	var sess *xorm.Session
-	if query.DataSourceLimit <= 0 {
-		sess = x.Where("org_id=?", query.OrgId).Asc("name")
-	} else {
-		sess = x.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgId).Asc("name")
-	}
+	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+		if query.DataSourceLimit <= 0 {
+			sess = dbSess.Where("org_id=?", query.OrgId).Asc("name")
+		} else {
+			sess = dbSess.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgId).Asc("name")
+		}
 
-	query.Result = make([]*models.DataSource, 0)
-	return sess.Find(&query.Result)
+		query.Result = make([]*models.DataSource, 0)
+		return sess.Find(&query.Result)
+	})
 }
 
 // GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string
-func GetDataSourcesByType(query *models.GetDataSourcesByTypeQuery) error {
+func (ss *SQLStore) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
 	if query.Type == "" {
 		return fmt.Errorf("datasource type cannot be empty")
 	}
 
 	query.Result = make([]*models.DataSource, 0)
-	return x.Where("type=?", query.Type).Asc("id").Find(&query.Result)
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		return sess.Where("type=?", query.Type).Asc("id").Find(&query.Result)
+	})
 }
 
 // GetDefaultDataSource is used to get the default datasource of organization
-func GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) error {
+func (ss *SQLStore) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
 	datasource := models.DataSource{}
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		exists, err := sess.Where("org_id=? AND is_default=?", query.OrgId, true).Get(&datasource)
 
-	exists, err := x.Where("org_id=? AND is_default=?", query.OrgId, true).Get(&datasource)
+		if !exists {
+			return models.ErrDataSourceNotFound
+		}
 
-	if !exists {
-		return models.ErrDataSourceNotFound
-	}
-
-	query.Result = &datasource
-	return err
-}
-
-// DeleteDataSource deletes a datasource by org_id and either uid (preferred), id, or name.
-// Zero values (0, or "") should be used for the parameters that will not be queried.
-func (ss *SQLStore) DeleteDataSource(uid string, id int64, name string, orgID int64) (int64, error) {
-	cmd := &models.DeleteDataSourceCommand{
-		ID:    id,
-		UID:   uid,
-		Name:  name,
-		OrgID: orgID,
-	}
-
-	if err := DeleteDataSource(cmd); err != nil {
-		return 0, err
-	}
-
-	return cmd.DeletedDatasourcesCount, nil
+		query.Result = &datasource
+		return err
+	})
 }
 
 // DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
 // and is added to the bus.
-func DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
+func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
 	params := make([]interface{}, 0)
 
 	makeQuery := func(sql string, p ...interface{}) {
@@ -143,7 +104,7 @@ func DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
 		return models.ErrDataSourceIdentifierNotSet
 	}
 
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		result, err := sess.Exec(params...)
 		cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
 
@@ -159,8 +120,8 @@ func DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
 	})
 }
 
-func AddDataSource(cmd *models.AddDataSourceCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existing := models.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
 		has, _ := sess.Get(&existing)
 
@@ -195,7 +156,7 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
-			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
+			SecureJsonData:    cmd.EncryptedSecureJsonData,
 			Created:           time.Now(),
 			Updated:           time.Now(),
 			Version:           1,
@@ -237,8 +198,8 @@ func updateIsDefaultFlag(ds *models.DataSource, sess *DBSession) error {
 	return nil
 }
 
-func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}
@@ -259,7 +220,7 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
-			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
+			SecureJsonData:    cmd.EncryptedSecureJsonData,
 			Updated:           time.Now(),
 			ReadOnly:          cmd.ReadOnly,
 			Version:           cmd.Version + 1,

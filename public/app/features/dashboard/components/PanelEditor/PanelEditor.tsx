@@ -34,7 +34,6 @@ import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { toggleTableView } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
-import { getPanelStateById } from '../../state/selectors';
 import { getVariables } from 'app/features/variables/state/selectors';
 
 import { StoreState } from 'app/types';
@@ -55,6 +54,7 @@ import {
 import { notifyApp } from '../../../../core/actions';
 import { PanelEditorTableView } from './PanelEditorTableView';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
+import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -64,12 +64,12 @@ interface OwnProps {
 
 const mapStateToProps = (state: StoreState) => {
   const panel = state.panelEditor.getPanel();
-  const { plugin, instanceState } = getPanelStateById(state.dashboard, panel.id);
+  const panelState = getPanelStateForModel(state, panel);
 
   return {
-    plugin: plugin,
     panel,
-    instanceState,
+    plugin: panelState?.plugin,
+    instanceState: panelState?.instanceState,
     initDone: state.panelEditor.initDone,
     uiState: state.panelEditor.ui,
     tableViewEnabled: state.panelEditor.tableViewEnabled,
@@ -127,6 +127,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     locationService.partial({
       editPanel: null,
       tab: null,
+      showCategory: null,
     });
   };
 
@@ -218,7 +219,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
-  renderPanel(styles: EditorStyles, noTabsBelow: boolean) {
+  renderPanel(styles: EditorStyles, isOnlyPanel: boolean) {
     const { dashboard, panel, uiState, tableViewEnabled } = this.props;
 
     return (
@@ -232,7 +233,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               }
 
               // If no tabs limit height so panel does not extend to edge
-              if (noTabsBelow) {
+              if (isOnlyPanel) {
                 height -= config.theme2.spacing.gridSize * 2;
               }
 
@@ -244,15 +245,18 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
               return (
                 <div className={styles.centeringContainer} style={{ width, height }}>
-                  <div style={panelSize} data-panelid={panel.editSourceId}>
+                  <div style={panelSize} data-panelid={panel.id}>
                     <DashboardPanel
+                      key={panel.key}
+                      stateKey={panel.key}
                       dashboard={dashboard}
                       panel={panel}
                       isEditing={true}
                       isViewing={false}
-                      isInView={true}
+                      lazy={false}
                       width={panelSize.width}
                       height={panelSize.height}
+                      skipStateCleanUp={true}
                     />
                   </div>
                 </div>
@@ -267,21 +271,23 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   renderPanelAndEditor(styles: EditorStyles) {
     const { panel, dashboard, plugin, tab } = this.props;
     const tabs = getPanelEditorTabs(tab, plugin);
+    const isOnlyPanel = tabs.length === 0;
+    const panelPane = this.renderPanel(styles, isOnlyPanel);
 
-    if (tabs.length > 0) {
-      return [
-        this.renderPanel(styles, false),
-        <div
-          className={styles.tabsWrapper}
-          aria-label={selectors.components.PanelEditor.DataPane.content}
-          key="panel-editor-tabs"
-        >
-          <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
-        </div>,
-      ];
+    if (tabs.length === 0) {
+      return panelPane;
     }
 
-    return this.renderPanel(styles, true);
+    return [
+      panelPane,
+      <div
+        className={styles.tabsWrapper}
+        aria-label={selectors.components.PanelEditor.DataPane.content}
+        key="panel-editor-tabs"
+      >
+        <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
+      </div>,
+    ];
   }
 
   renderTemplateVariables(styles: EditorStyles) {
@@ -416,7 +422,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   onGoBackToDashboard = () => {
-    locationService.partial({ editPanel: null, tab: null });
+    locationService.partial({ editPanel: null, tab: null, showCategory: null });
   };
 
   onConfirmAndDismissLibarayPanelModel = () => {
@@ -507,7 +513,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       min-height: 0;
       width: 100%;
       padding-left: ${paneSpacing};
-      padding-right: 2px;
     `,
     tabsWrapper: css`
       height: 100%;
@@ -527,6 +532,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       justify-content: center;
       align-items: center;
       position: relative;
+      flex-direction: column;
     `,
   };
 });

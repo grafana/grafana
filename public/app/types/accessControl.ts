@@ -25,6 +25,12 @@ export enum AccessControlAction {
   UsersQuotasList = 'users.quotas:list',
   UsersQuotasUpdate = 'users.quotas:update',
 
+  OrgsRead = 'orgs:read',
+  OrgsPreferencesRead = 'orgs.preferences:read',
+  OrgsWrite = 'orgs:write',
+  OrgsPreferencesWrite = 'orgs.preferences:write',
+  OrgsCreate = 'orgs:create',
+  OrgsDelete = 'orgs:delete',
   OrgUsersRead = 'org.users:read',
   OrgUsersAdd = 'org.users:add',
   OrgUsersRemove = 'org.users:remove',
@@ -42,4 +48,23 @@ export enum AccessControlAction {
   DataSourcesPermissionsRead = 'datasources.permissions:read',
 
   ActionServerStatsRead = 'server.stats:read',
+
+  ActionTeamsCreate = 'teams:create',
+
+  ActionRolesList = 'roles:list',
+  ActionBuiltinRolesList = 'roles.builtin:list',
+  ActionUserRolesList = 'users.roles:list',
+}
+
+export interface Role {
+  uid: string;
+  name: string;
+  displayName: string;
+  description: string;
+  group: string;
+  global: boolean;
+  delegatable?: boolean;
+  version: number;
+  created: string;
+  updated: string;
 }

@@ -6,15 +6,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
 const (
@@ -29,7 +27,7 @@ var (
 // PagerdutyNotifier is responsible for sending
 // alert notifications to pagerduty
 type PagerdutyNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	Key           string
 	Severity      string
 	CustomDetails map[string]string
@@ -42,18 +40,21 @@ type PagerdutyNotifier struct {
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template) (*PagerdutyNotifier, error) {
+func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*PagerdutyNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 
-	key := model.DecryptedValue("integrationKey", model.Settings.Get("integrationKey").MustString())
+	key := fn(context.Background(), model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString())
 	if key == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find integration key property in settings"}
 	}
 
 	return &PagerdutyNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
@@ -71,7 +72,7 @@ func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template
 		Class:     model.Settings.Get("class").MustString("default"),
 		Component: model.Settings.Get("component").MustString("Grafana"),
 		Group:     model.Settings.Get("group").MustString("default"),
-		Summary:   model.Settings.Get("summary").MustString(`{{ template "default.title" . }}`),
+		Summary:   model.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
 		tmpl:      t,
 		log:       log.New("alerting.notifier." + model.Name),
 	}, nil
@@ -104,7 +105,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 			"Content-Type": "application/json",
 		},
 	}
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.Dispatch(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Pagerduty: %w", err)
 	}
 
@@ -144,7 +145,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			HRef: pn.tmpl.ExternalURL.String(),
 			Text: "External URL",
 		}},
-		Description: tmpl(`{{ template "default.title" . }}`), // TODO: this can be configurable template.
+		Description: tmpl(DefaultMessageTitleEmbed), // TODO: this can be configurable template.
 		Payload: pagerDutyPayload{
 			Component:     tmpl(pn.Component),
 			Summary:       tmpl(pn.Summary),
@@ -166,7 +167,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	if tmplErr != nil {
-		pn.log.Debug("failed to template PagerDuty message", "err", tmplErr.Error())
+		pn.log.Warn("failed to template PagerDuty message", "err", tmplErr.Error())
 	}
 
 	return msg, eventType, nil

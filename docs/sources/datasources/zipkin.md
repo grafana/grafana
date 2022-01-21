@@ -39,6 +39,12 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 
 ![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-8-2.png 'Screenshot of the trace to logs settings')
 
+### Node Graph
+
+This is a configuration for the beta Node Graph visualization. The Node Graph is shown after the trace view is loaded and is disabled by default.
+
+-- **Enable Node Graph -** Enables the Node Graph visualization.
+
 ## Query traces
 
 Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../explore" >}}).

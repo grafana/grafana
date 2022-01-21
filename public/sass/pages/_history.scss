@@ -57,7 +57,7 @@
 .diff-json-added {
   color: $diff-json-changed-fg;
 
-  & .diff-line-number {
+  .diff-line-number {
     color: $diff-json-changed-num;
   }
 }
@@ -108,7 +108,7 @@
   padding: 10px 15px;
   margin: $space-md 0;
 
-  & .diff-group {
+  .diff-group {
     padding: 0 5px;
   }
 }
@@ -128,7 +128,7 @@
 .diff-list {
   padding-left: 40px;
 
-  & .diff-list {
+  .diff-list {
     padding-left: 0;
   }
 }
@@ -137,7 +137,7 @@
   color: $gray-2;
   line-height: 2.5;
 
-  & > div {
+  > div {
     display: inline;
   }
 }

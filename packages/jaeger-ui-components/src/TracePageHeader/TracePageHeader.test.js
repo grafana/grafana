@@ -60,6 +60,11 @@ describe('<TracePageHeader>', () => {
     });
   });
 
+  it('renders start time in header with millisecond precision', () => {
+    const startTimeMs = wrapper.find(LabeledList).props().items[0].value.props.children[1].props.children;
+    expect(startTimeMs).toMatch(/:\d\d\.\d\d\d/g);
+  });
+
   it('renders a <SpanGraph>', () => {
     expect(wrapper.find(SpanGraph).length).toBe(1);
   });

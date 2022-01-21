@@ -1,64 +1,17 @@
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import AzureResourceGraphDatasource from './azure_resource_graph_datasource';
-import { CustomVariableModel, initialVariableModelState, VariableHide } from 'app/features/variables/types';
-
-const single: CustomVariableModel = {
-  ...initialVariableModelState,
-  id: 'var1',
-  name: 'var1',
-  index: 0,
-  current: { value: 'var1-foo', text: 'var1-foo', selected: true },
-  options: [{ value: 'var1-foo', text: 'var1-foo', selected: true }],
-  multi: false,
-  includeAll: false,
-  query: '',
-  hide: VariableHide.dontHide,
-  type: 'custom',
-};
-
-const multi: CustomVariableModel = {
-  ...initialVariableModelState,
-  id: 'var3',
-  name: 'var3',
-  index: 2,
-  current: { value: ['var3-foo', 'var3-baz'], text: 'var3-foo + var3-baz', selected: true },
-  options: [
-    { selected: true, value: 'var3-foo', text: 'var3-foo' },
-    { selected: false, value: 'var3-bar', text: 'var3-bar' },
-    { selected: true, value: 'var3-baz', text: 'var3-baz' },
-  ],
-  multi: true,
-  includeAll: false,
-  query: '',
-  hide: VariableHide.dontHide,
-  type: 'custom',
-};
-
-const subs: CustomVariableModel = {
-  ...initialVariableModelState,
-  id: 'subs',
-  name: 'subs',
-  index: 3,
-  current: { value: ['sub-foo', 'sub-baz'], text: 'sub-foo + sub-baz', selected: true },
-  options: [
-    { selected: true, value: 'sub-foo', text: 'sub-foo' },
-    { selected: false, value: 'sub-bar', text: 'sub-bar' },
-    { selected: true, value: 'sub-baz', text: 'sub-baz' },
-  ],
-  multi: true,
-  includeAll: false,
-  query: '',
-  hide: VariableHide.dontHide,
-  type: 'custom',
-};
+import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
+import { AzureQueryType } from '../types';
+import AzureMonitorDatasource from '../datasource';
+import createMockQuery from '../__mocks__/query';
 
 const templateSrv = new TemplateSrv({
-  getVariables: () => [subs, single, multi],
+  getVariables: () => [subscriptionsVariable, singleVariable, multiVariable],
   getVariableWithName: jest.fn(),
   getFilteredVariables: jest.fn(),
 });
-templateSrv.init([subs, single, multi]);
+templateSrv.init([subscriptionsVariable, singleVariable, multiVariable]);
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
@@ -80,6 +33,7 @@ describe('AzureResourceGraphDatasource', () => {
   beforeEach(() => {
     ctx.instanceSettings = {
       url: 'http://azureresourcegraphapi',
+      jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f', cloudName: 'azuremonitor' },
     };
 
     ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings);
@@ -136,6 +90,49 @@ describe('AzureResourceGraphDatasource', () => {
       queryType: 'Azure Resource Graph',
       refId: undefined,
       subscriptions: ['sub-foo', 'sub-baz'],
+    });
+  });
+
+  describe('When performing targetContainsTemplate', () => {
+    it('should return false when no variable is being used', () => {
+      const query = createMockQuery();
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+      query.queryType = AzureQueryType.AzureResourceGraph;
+      expect(ds.targetContainsTemplate(query)).toEqual(false);
+    });
+
+    it('should return true when resource field is using a variable', () => {
+      const query = createMockQuery();
+      const templateSrv = new TemplateSrv();
+      templateSrv.init([singleVariable]);
+
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+      query.queryType = AzureQueryType.AzureResourceGraph;
+      query.azureResourceGraph = { query: `$${singleVariable.name}` };
+      expect(ds.targetContainsTemplate(query)).toEqual(true);
+    });
+
+    it('should return true when resource field is using a variable in the subscriptions field', () => {
+      const query = createMockQuery();
+      const templateSrv = new TemplateSrv();
+      templateSrv.init([multiVariable]);
+
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+      query.queryType = AzureQueryType.AzureResourceGraph;
+      query.subscriptions = [multiVariable.name];
+      query.azureResourceGraph = { query: `$${multiVariable.name}` };
+      expect(ds.targetContainsTemplate(query)).toEqual(true);
+    });
+
+    it('should return false when a variable is used in a different part of the query', () => {
+      const query = createMockQuery();
+      const templateSrv = new TemplateSrv();
+      templateSrv.init([singleVariable]);
+
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+      query.queryType = AzureQueryType.AzureResourceGraph;
+      query.azureMonitor = { metricName: `$${singleVariable.name}` };
+      expect(ds.targetContainsTemplate(query)).toEqual(false);
     });
   });
 });

@@ -235,7 +235,7 @@ func (b *FilterQueryBuilder) Build() ([]Filter, error) {
 }
 
 // AddDateRangeFilter adds a new time range filter
-func (b *FilterQueryBuilder) AddDateRangeFilter(timeField, lte, gte, format string) *FilterQueryBuilder {
+func (b *FilterQueryBuilder) AddDateRangeFilter(timeField string, lte, gte int64, format string) *FilterQueryBuilder {
 	b.filters = append(b.filters, &RangeFilter{
 		Key:    timeField,
 		Lte:    lte,
@@ -340,6 +340,11 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 		builder := newAggBuilder(b.version)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
+	}
+
+	if b.version.Major() >= 8 {
+		innerAgg.FixedInterval = innerAgg.Interval
+		innerAgg.Interval = ""
 	}
 
 	b.aggDefs = append(b.aggDefs, aggDef)

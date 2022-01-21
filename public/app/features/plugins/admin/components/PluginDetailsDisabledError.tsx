@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import { PluginErrorCode } from '@grafana/data';
 import { Alert } from '@grafana/ui';
 import { CatalogPlugin } from '../types';
@@ -9,7 +9,7 @@ type Props = {
   plugin: CatalogPlugin;
 };
 
-export function PluginDetailsDisabledError({ className, plugin }: Props): React.ReactElement | null {
+export function PluginDetailsDisabledError({ className, plugin }: Props): ReactElement | null {
   if (!plugin.isDisabled) {
     return null;
   }
@@ -35,7 +35,7 @@ export function PluginDetailsDisabledError({ className, plugin }: Props): React.
   );
 }
 
-function renderDescriptionFromError(error?: PluginErrorCode): React.ReactElement {
+function renderDescriptionFromError(error?: PluginErrorCode): ReactElement {
   switch (error) {
     case PluginErrorCode.modifiedSignature:
       return (

@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -26,23 +27,23 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 )
 
 func init() {
-	bus.AddHandlerCtx("sql", GetDashboard)
-	bus.AddHandlerCtx("sql", GetDashboards)
-	bus.AddHandlerCtx("sql", DeleteDashboard)
-	bus.AddHandlerCtx("sql", SearchDashboards)
-	bus.AddHandlerCtx("sql", GetDashboardTags)
-	bus.AddHandlerCtx("sql", GetDashboardSlugById)
-	bus.AddHandlerCtx("sql", GetDashboardsByPluginId)
-	bus.AddHandlerCtx("sql", GetDashboardPermissionsForUser)
-	bus.AddHandlerCtx("sql", GetDashboardsBySlug)
-	bus.AddHandlerCtx("sql", HasEditPermissionInFolders)
-	bus.AddHandlerCtx("sql", HasAdminPermissionInFolders)
+	bus.AddHandler("sql", GetDashboard)
+	bus.AddHandler("sql", GetDashboards)
+	bus.AddHandler("sql", DeleteDashboard)
+	bus.AddHandler("sql", GetDashboardTags)
+	bus.AddHandler("sql", GetDashboardSlugById)
+	bus.AddHandler("sql", GetDashboardsByPluginId)
+	bus.AddHandler("sql", GetDashboardPermissionsForUser)
+	bus.AddHandler("sql", GetDashboardsBySlug)
+	bus.AddHandler("sql", HasEditPermissionInFolders)
+	bus.AddHandler("sql", HasAdminPermissionInFolders)
 
 	prometheus.MustRegister(shadowSearchCounter)
 }
 
 func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.GetDashboardUIDById)
+	bus.AddHandler("sql", ss.GetDashboardUIDById)
+	bus.AddHandler("sql", ss.SearchDashboards)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
@@ -214,18 +215,13 @@ func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboa
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
-	has, err := ss.engine.Get(&dashboard)
+	has, err := ss.engine.Table(&models.Dashboard{}).Where("is_folder = " + dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
 	if err != nil {
 		return nil, err
-	} else if !has {
+	}
+	if !has {
 		return nil, models.ErrDashboardNotFound
 	}
-
-	// if there is a dashboard instead of a folder with that title
-	if !dashboard.IsFolder {
-		return nil, models.ErrDashboardNotFound
-	}
-
 	dashboard.SetId(dashboard.Id)
 	dashboard.SetUid(dashboard.Uid)
 	return &dashboard, nil
@@ -267,7 +263,7 @@ type DashboardSearchProjection struct {
 	SortMeta    int64
 }
 
-func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
+func (ss *SQLStore) findDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
 	filters := []interface{}{
 		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
@@ -326,7 +322,11 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	}
 
 	sql, params := sb.ToSQL(limit, page)
-	err := x.SQL(sql, params...).Find(&res)
+
+	err := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		return dbSession.SQL(sql, params...).Find(&res)
+	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -334,8 +334,8 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	return res, nil
 }
 
-func SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error {
-	res, err := findDashboards(query)
+func (ss *SQLStore) SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error {
+	res, err := ss.findDashboards(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -799,29 +799,32 @@ func (ss *SQLStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, ove
 	return isParentFolderChanged, nil
 }
 
+// HasEditPermissionInFolders validates that an user have access to a certain folder
 func HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
-	if query.SignedInUser.HasRole(models.ROLE_EDITOR) {
-		query.Result = true
+	return withDbSession(ctx, x, func(dbSession *DBSession) error {
+		if query.SignedInUser.HasRole(models.ROLE_EDITOR) {
+			query.Result = true
+			return nil
+		}
+
+		builder := &SQLBuilder{}
+		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
+			query.SignedInUser.OrgId, dialect.BooleanStr(true))
+		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_EDIT)
+
+		type folderCount struct {
+			Count int64
+		}
+
+		resp := make([]*folderCount, 0)
+		if err := dbSession.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
+			return err
+		}
+
+		query.Result = len(resp) > 0 && resp[0].Count > 0
+
 		return nil
-	}
-
-	builder := &SQLBuilder{}
-	builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
-		query.SignedInUser.OrgId, dialect.BooleanStr(true))
-	builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_EDIT)
-
-	type folderCount struct {
-		Count int64
-	}
-
-	resp := make([]*folderCount, 0)
-	if err := x.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
-		return err
-	}
-
-	query.Result = len(resp) > 0 && resp[0].Count > 0
-
-	return nil
+	})
 }
 
 func HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
