@@ -4,11 +4,16 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -36,7 +41,7 @@ func RouteOperationNameFromContext(ctx context.Context) (string, bool) {
 	return "", false
 }
 
-func RequestTracing() web.Handler {
+func RequestTracing(tracer tracing.Tracer) web.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		if strings.HasPrefix(c.Req.URL.Path, "/public/") ||
 			c.Req.URL.Path == "robots.txt" {
@@ -46,11 +51,9 @@ func RequestTracing() web.Handler {
 
 		rw := res.(web.ResponseWriter)
 
-		tracer := opentracing.GlobalTracer()
-		wireContext, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-		span := tracer.StartSpan(fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), ext.RPCServerOption(wireContext))
+		wireContext := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
+		ctx, span := tracer.Start(req.Context(), fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
 
-		ctx := opentracing.ContextWithSpan(req.Context(), span)
 		c.Req = req.WithContext(ctx)
 		c.Map(c.Req)
 
@@ -59,17 +62,17 @@ func RequestTracing() web.Handler {
 		// Only call span.Finish when a route operation name have been set,
 		// meaning that not set the span would not be reported.
 		if routeOperation, exists := RouteOperationNameFromContext(c.Req.Context()); exists {
-			defer span.Finish()
-			span.SetOperationName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
+			defer span.End()
+			span.SetName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
 		}
 
 		status := rw.Status()
 
-		ext.HTTPStatusCode.Set(span, uint16(status))
-		ext.HTTPUrl.Set(span, req.RequestURI)
-		ext.HTTPMethod.Set(span, req.Method)
+		span.SetAttributes("http.status_code", status, attribute.Int("http.status_code", status))
+		span.SetAttributes("http.url", req.RequestURI, attribute.String("http.url", req.RequestURI))
+		span.SetAttributes("http.method", req.Method, attribute.String("http.method", req.Method))
 		if status >= 400 {
-			ext.Error.Set(span, true)
+			span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(status)))
 		}
 	}
 }

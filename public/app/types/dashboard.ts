@@ -17,6 +17,7 @@ export interface DashboardMeta {
   canAdmin?: boolean;
   url?: string;
   folderId?: number;
+  folderUid?: string;
   fromExplore?: boolean;
   canMakeEditable?: boolean;
   submenuEnabled?: boolean;
