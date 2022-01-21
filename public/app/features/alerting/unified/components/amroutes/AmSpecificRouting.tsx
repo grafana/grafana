@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Input, Label, useStyles2 } from '@grafana/ui';
-import { intersectionWith, isEqual } from 'lodash';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
+import { useDebounce } from 'react-use';
+import { v4 } from 'uuid';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
-import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
 import { emptyArrayFieldMatcher, emptyRoute } from '../../utils/amroutes';
 import { getNotificationPoliciesFilters } from '../../utils/misc';
 import { MatcherFilter } from '../alert-groups/MatcherFilter';
@@ -21,26 +21,10 @@ export interface AmSpecificRoutingProps {
   readOnly?: boolean;
 }
 
-const getFilteredRoutes = (routes: FormAmRoute[], labelMatcherQuery?: string, contactPointQuery?: string) => {
-  const matchers = parseMatchers(labelMatcherQuery ?? '');
-
-  let filteredRoutes = routes;
-
-  if (matchers.length) {
-    filteredRoutes = routes.filter((route) => {
-      const routeMatchers = route.object_matchers.map(matcherFieldToMatcher);
-      return intersectionWith(routeMatchers, matchers, isEqual).length > 0;
-    });
-  }
-
-  if (contactPointQuery && contactPointQuery.length > 0) {
-    filteredRoutes = filteredRoutes.filter((route) =>
-      route.receiver.toLowerCase().includes(contactPointQuery.toLowerCase())
-    );
-  }
-
-  return filteredRoutes;
-};
+interface Filters {
+  queryString?: string;
+  contactPoint?: string;
+}
 
 export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
   onChange,
@@ -51,26 +35,33 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
 }) => {
   const [actualRoutes, setActualRoutes] = useState([...routes.routes]);
   const [isAddMode, setIsAddMode] = useState(false);
+
   const [searchParams, setSearchParams] = useURLSearchParams();
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
 
+  const [filterKey, setFilterKey] = useState(v4());
+  const [filters, setFilters] = useState<Filters>({ queryString, contactPoint });
+
+  useDebounce(
+    () => {
+      setSearchParams({ queryString: filters.queryString, contactPoint: filters.contactPoint });
+    },
+    400,
+    [filters]
+  );
+
   const styles = useStyles2(getStyles);
 
-  useEffect(() => {
-    if (!isAddMode) {
-      const filtered = getFilteredRoutes(routes.routes, queryString, contactPoint);
-      setActualRoutes(filtered);
-    }
-  }, [routes.routes, isAddMode, queryString, contactPoint]);
-
   const clearFilters = () => {
+    setFilters({ queryString: undefined, contactPoint: undefined });
     setSearchParams({ queryString: undefined, contactPoint: undefined });
+    setFilterKey(v4());
   };
 
   const addNewRoute = () => {
     clearFilters();
     setIsAddMode(true);
-    setActualRoutes((actualRoutes) => [
+    setActualRoutes(() => [
       ...routes.routes,
       {
         ...emptyRoute,
@@ -111,21 +102,27 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
             text="You haven't set a default contact point for the root route yet."
           />
         )
-      ) : routes.routes.length > 0 ? (
+      ) : actualRoutes.length > 0 ? (
         <>
           <div>
             {!isAddMode && (
               <div className={styles.searchContainer}>
                 <MatcherFilter
-                  onFilterChange={(filter) => setSearchParams({ queryString: filter }, true)}
-                  queryString={queryString ?? ''}
+                  key={filterKey}
+                  onFilterChange={(filter) =>
+                    setFilters((currentFilters) => ({ ...currentFilters, queryString: filter }))
+                  }
+                  defaultQueryString={queryString}
                   className={styles.filterInput}
                 />{' '}
                 <div className={styles.filterInput}>
                   <Label>Search by contact point</Label>
                   <Input
-                    onChange={(e) => setSearchParams({ contactPoint: e.currentTarget.value }, true)}
-                    value={contactPoint ?? ''}
+                    key={filterKey}
+                    onChange={({ currentTarget }) =>
+                      setFilters((currentFilters) => ({ ...currentFilters, contactPoint: currentTarget.value }))
+                    }
+                    defaultValue={contactPoint}
                     placeholder="Search by contact point"
                     data-testid="search-query-input"
                     prefix={<Icon name={'search'} />}
@@ -147,20 +144,15 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
               </div>
             )}
           </div>
-          {actualRoutes.length > 0 ? (
-            <AmRoutesTable
-              isAddMode={isAddMode}
-              readOnly={readOnly}
-              onCancelAdd={onCancelAdd}
-              onChange={onTableRouteChange}
-              receivers={receivers}
-              routes={actualRoutes}
-            />
-          ) : (
-            <EmptyArea>
-              <p>No policies found</p>
-            </EmptyArea>
-          )}
+          <AmRoutesTable
+            isAddMode={isAddMode}
+            readOnly={readOnly}
+            onCancelAdd={onCancelAdd}
+            onChange={onTableRouteChange}
+            receivers={receivers}
+            routes={actualRoutes}
+            filters={{ queryString, contactPoint }}
+          />
         </>
       ) : readOnly ? (
         <EmptyArea>

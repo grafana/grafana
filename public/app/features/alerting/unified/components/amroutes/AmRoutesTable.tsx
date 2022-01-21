@@ -6,7 +6,9 @@ import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '..
 import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';
 import { AmRoutesExpandedRead } from './AmRoutesExpandedRead';
 import { Matchers } from '../silences/Matchers';
-import { matcherFieldToMatcher } from '../../utils/alertmanager';
+import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
+import { intersectionWith, isEqual } from 'lodash';
+import { EmptyArea } from '../EmptyArea';
 
 export interface AmRoutesTableProps {
   isAddMode: boolean;
@@ -14,11 +16,33 @@ export interface AmRoutesTableProps {
   onCancelAdd: () => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute[];
+  filters?: { queryString?: string; contactPoint?: string };
   readOnly?: boolean;
 }
 
 type RouteTableColumnProps = DynamicTableColumnProps<FormAmRoute>;
 type RouteTableItemProps = DynamicTableItemProps<FormAmRoute>;
+
+const getFilteredRoutes = (routes: FormAmRoute[], labelMatcherQuery?: string, contactPointQuery?: string) => {
+  const matchers = parseMatchers(labelMatcherQuery ?? '');
+
+  let filteredRoutes = routes;
+
+  if (matchers.length) {
+    filteredRoutes = routes.filter((route) => {
+      const routeMatchers = route.object_matchers.map(matcherFieldToMatcher);
+      return intersectionWith(routeMatchers, matchers, isEqual).length > 0;
+    });
+  }
+
+  if (contactPointQuery && contactPointQuery.length > 0) {
+    filteredRoutes = filteredRoutes.filter((route) =>
+      route.receiver.toLowerCase().includes(contactPointQuery.toLowerCase())
+    );
+  }
+
+  return filteredRoutes;
+};
 
 export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   isAddMode,
@@ -26,14 +50,13 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   onChange,
   receivers,
   routes,
+  filters,
   readOnly = false,
 }) => {
   const [editMode, setEditMode] = useState(false);
-
   const [expandedId, setExpandedId] = useState<string | number>();
 
   const expandItem = useCallback((item: RouteTableItemProps) => setExpandedId(item.id), []);
-
   const collapseItem = useCallback(() => setExpandedId(undefined), []);
 
   const cols: RouteTableColumnProps[] = [
@@ -105,20 +128,37 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
         ]),
   ];
 
-  const items = useMemo(() => prepareItems(routes), [routes]);
+  const filteredRoutes = useMemo(() => getFilteredRoutes(routes, filters?.queryString, filters?.contactPoint), [
+    routes,
+    filters,
+  ]);
+
+  const dynamicTableRoutes = useMemo(() => prepareItems(isAddMode ? routes : filteredRoutes), [
+    isAddMode,
+    routes,
+    filteredRoutes,
+  ]);
 
   // expand the last item when adding
   useEffect(() => {
-    if (isAddMode && items.length) {
-      setExpandedId(items[items.length - 1].id);
+    if (isAddMode && dynamicTableRoutes.length) {
+      setExpandedId(dynamicTableRoutes[dynamicTableRoutes.length - 1].id);
     }
-  }, [isAddMode, items]);
+  }, [isAddMode, dynamicTableRoutes]);
+
+  if (routes.length > 0 && filteredRoutes.length === 0) {
+    return (
+      <EmptyArea>
+        <p>No policies found</p>
+      </EmptyArea>
+    );
+  }
 
   return (
     <DynamicTable
       cols={cols}
       isExpandable={true}
-      items={items}
+      items={dynamicTableRoutes}
       testIdGenerator={() => 'am-routes-row'}
       onCollapse={collapseItem}
       onExpand={expandItem}
