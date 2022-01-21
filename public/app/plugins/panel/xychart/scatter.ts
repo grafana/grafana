@@ -548,7 +548,9 @@ const prepConfig = (
 
   builder.addAxis({
     scaleKey: 'x',
-    placement: AxisPlacement.Bottom,
+    placement:
+      xField.config.custom?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden,
+    show: xField.config.custom?.axisPlacement !== AxisPlacement.Hidden,
     theme,
     label: xField.config.custom.axisLabel,
   });
@@ -571,12 +573,15 @@ const prepConfig = (
       range: (u, min, max) => [min, max],
     });
 
-    builder.addAxis({
-      scaleKey,
-      theme,
-      label: field.config.custom.axisLabel,
-      values: (u, splits) => splits.map((s) => field.display!(s).text),
-    });
+    if (field.config.custom?.axisPlacement !== AxisPlacement.Hidden) {
+      builder.addAxis({
+        scaleKey,
+        theme,
+        placement: field.config.custom?.axisPlacement,
+        label: field.config.custom.axisLabel,
+        values: (u, splits) => splits.map((s) => field.display!(s).text),
+      });
+    }
 
     builder.addSeries({
       facets: [

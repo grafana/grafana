@@ -17,14 +17,7 @@ import {
   variableStateNotStarted,
 } from './sharedReducer';
 import { ConstantVariableModel, QueryVariableModel, VariableHide, VariableOption } from '../types';
-import {
-  ALL_VARIABLE_TEXT,
-  ALL_VARIABLE_VALUE,
-  initialVariablesState,
-  toVariablePayload,
-  VariableIdentifier,
-  VariablesState,
-} from './types';
+import { initialVariablesState, toVariablePayload, VariableIdentifier, VariablesState } from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState } from '../query/reducer';
@@ -32,6 +25,7 @@ import { getVariableState, getVariableTestContext } from './helpers';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { initialConstantVariableModelState } from '../constant/reducer';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 
 variableAdapters.setInit(() => [createQueryVariableAdapter(), createConstantVariableAdapter()]);
 
