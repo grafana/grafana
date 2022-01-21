@@ -1,6 +1,13 @@
 import React, { Component } from 'react';
 import { Select, Table } from '@grafana/ui';
-import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
+import {
+  DataFrame,
+  FieldMatcherID,
+  getDataSourceRef,
+  getFrameDisplayName,
+  PanelProps,
+  SelectableValue,
+} from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
@@ -9,6 +16,7 @@ import { dispatch } from '../../../store/store';
 import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 import { getFooterCells } from './footer';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -65,16 +73,20 @@ export class TablePanel extends Component<Props> {
     this.forceUpdate();
   };
 
-  onCellFilterAdded = (filter: FilterItem) => {
+  onCellFilterAdded = async (filter: FilterItem) => {
     const { key, value, operator } = filter;
     const panelModel = getDashboardSrv().getCurrent()?.getPanelById(this.props.id);
-    const datasource = panelModel?.datasource;
 
-    if (!datasource) {
+    // The datasource ref from the panel model can be null/undefined if a panel uses a default datasource
+    // so we need to resolve it to the real final datasource.
+    const datasourceInstance = getDatasourceSrv().getInstanceSettings(panelModel?.datasource);
+    const datasourceRef = datasourceInstance && getDataSourceRef(datasourceInstance);
+
+    if (!datasourceRef) {
       return;
     }
 
-    dispatch(applyFilterFromTable({ datasource, key, operator, value }));
+    dispatch(applyFilterFromTable({ datasource: datasourceRef, key, operator, value }));
   };
 
   renderTable(frame: DataFrame, width: number, height: number) {
