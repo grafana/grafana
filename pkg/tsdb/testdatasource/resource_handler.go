@@ -15,13 +15,15 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
-func (s *Service) RegisterRoutes(mux *http.ServeMux) {
+func (s *Service) registerRoutes() *http.ServeMux {
+	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.testGetHandler)
 	mux.HandleFunc("/scenarios", s.getScenariosHandler)
 	mux.HandleFunc("/stream", s.testStreamHandler)
 	mux.Handle("/test", createJSONHandler(s.logger))
 	mux.Handle("/test/json", createJSONHandler(s.logger))
 	mux.HandleFunc("/boom", s.testPanicHandler)
+	return mux
 }
 
 func (s *Service) testGetHandler(rw http.ResponseWriter, req *http.Request) {

@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
@@ -30,18 +28,10 @@ type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar) (*Service, error) {
-	s := &Service{
+func ProvideService(cfg *setting.Cfg) *Service {
+	return &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(cfg)),
 	}
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	if err := registrar.LoadAndRegister("mssql", factory); err != nil {
-		logger.Error("Failed to register plugin", "error", err)
-	}
-	return s, nil
 }
 
 func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {

@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, Fragment, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
@@ -10,11 +10,13 @@ import { appEvents } from 'app/core/core';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
-import { createExploreLink, createViewLink, makeSilenceLink } from '../../utils/misc';
+import { createExploreLink, createViewLink, makeRuleBasedSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { deleteRuleAction } from '../../state/actions';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import { getAlertmanagerByUid } from '../../utils/alertmanager';
+import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
+import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 interface Props {
   rule: CombinedRule;
@@ -27,6 +29,8 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const style = useStyles2(getStyles);
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
+  const alertId = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.id ?? '' : '';
+  const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal(alertId);
 
   const alertmanagerSourceName = isGrafanaRulesSource(rulesSource)
     ? rulesSource
@@ -136,10 +140,21 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
         key="silence"
         icon="bell-slash"
         target="__blank"
-        href={makeSilenceLink(alertmanagerSourceName, rule)}
+        href={makeRuleBasedSilenceLink(alertmanagerSourceName, rule)}
       >
         Silence
       </LinkButton>
+    );
+  }
+
+  if (alertId) {
+    leftButtons.push(
+      <Fragment key="history">
+        <Button className={style.button} size="xs" icon="history" onClick={() => showStateHistoryModal()}>
+          Show state history
+        </Button>
+        {StateHistoryModal}
+      </Fragment>
     );
   }
 
@@ -249,3 +264,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.size.sm};
   `,
 });
+
+function isGrafanaRulerRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
+  if (!rule) {
+    return false;
+  }
+  return (rule as RulerGrafanaRuleDTO).grafana_alert != null;
+}

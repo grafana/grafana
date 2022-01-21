@@ -25,6 +25,7 @@ import {
   testDataSourceSucceeded,
 } from './reducers';
 import { getDataSource, getDataSourceMeta } from './selectors';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];
@@ -155,6 +156,7 @@ export async function getDataSourceUsingUidOrId(uid: string | number): Promise<D
       getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
         url: `/api/datasources/uid/${uid}`,
+        params: accessControlQueryParam(),
         showErrorAlert: false,
       })
     );
@@ -173,6 +175,7 @@ export async function getDataSourceUsingUidOrId(uid: string | number): Promise<D
       getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
         url: `/api/datasources/${id}`,
+        params: accessControlQueryParam(),
         showErrorAlert: false,
       })
     );

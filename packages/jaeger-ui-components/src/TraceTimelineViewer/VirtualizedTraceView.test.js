@@ -91,7 +91,6 @@ describe('<VirtualizedTraceViewImpl>', () => {
     });
     wrapper = shallow(<VirtualizedTraceView {...props} />)
       .dive()
-      .dive()
       .dive();
     instance = wrapper.instance();
   });

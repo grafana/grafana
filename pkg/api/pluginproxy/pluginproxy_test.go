@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
 )
 
 func TestPluginProxy(t *testing.T) {
@@ -29,7 +29,7 @@ func TestPluginProxy(t *testing.T) {
 			},
 		}
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
 			key, err := secretsService.Encrypt(ctx, []byte("123"), secrets.WithoutScope())
 			if err != nil {
 				return err
@@ -53,7 +53,7 @@ func TestPluginProxy(t *testing.T) {
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},
@@ -75,7 +75,7 @@ func TestPluginProxy(t *testing.T) {
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},
@@ -98,7 +98,7 @@ func TestPluginProxy(t *testing.T) {
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},
@@ -118,7 +118,7 @@ func TestPluginProxy(t *testing.T) {
 			secretsService,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{IsAnonymous: true},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},
@@ -136,7 +136,7 @@ func TestPluginProxy(t *testing.T) {
 			Method: "GET",
 		}
 
-		bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetPluginSettingByIdQuery) error {
+		bus.AddHandler("test", func(_ context.Context, query *models.GetPluginSettingByIdQuery) error {
 			query.Result = &models.PluginSetting{
 				JsonData: map[string]interface{}{
 					"dynamicUrl": "https://dynamic.grafana.com",
@@ -155,7 +155,7 @@ func TestPluginProxy(t *testing.T) {
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},
@@ -172,7 +172,7 @@ func TestPluginProxy(t *testing.T) {
 			Method: "GET",
 		}
 
-		bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetPluginSettingByIdQuery) error {
+		bus.AddHandler("test", func(_ context.Context, query *models.GetPluginSettingByIdQuery) error {
 			query.Result = &models.PluginSetting{}
 			return nil
 		})
@@ -187,7 +187,7 @@ func TestPluginProxy(t *testing.T) {
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},
@@ -204,7 +204,7 @@ func TestPluginProxy(t *testing.T) {
 			Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
 		}
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
 			encryptedJsonData, err := secretsService.EncryptJsonData(
 				ctx,
 				map[string]string{"key": "123"},
@@ -234,7 +234,7 @@ func TestPluginProxy(t *testing.T) {
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
-				Context: &macaron.Context{
+				Context: &web.Context{
 					Req: httpReq,
 				},
 			},

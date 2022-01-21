@@ -40,7 +40,7 @@ export const LayerName = ({ name, onChange, verifyLayerNameUniqueness }: LayerNa
       return;
     }
 
-    if (verifyLayerNameUniqueness && !verifyLayerNameUniqueness(newName)) {
+    if (verifyLayerNameUniqueness && !verifyLayerNameUniqueness(newName) && newName !== name) {
       setValidationError('Layer name already exists');
       return;
     }

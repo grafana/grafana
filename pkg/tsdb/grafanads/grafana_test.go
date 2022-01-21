@@ -5,8 +5,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
@@ -19,7 +18,7 @@ func asJSON(v interface{}) json.RawMessage {
 }
 
 func TestReadFolderListing(t *testing.T) {
-	ds := newService("../../../public", &fakeBackendPM{})
+	ds := newService(&setting.Cfg{StaticRootPath: "../../../public"})
 	dr := ds.doListQuery(backend.DataQuery{
 		QueryType: "x",
 		JSON: asJSON(listQueryModel{
@@ -31,7 +30,7 @@ func TestReadFolderListing(t *testing.T) {
 }
 
 func TestReadCSVFile(t *testing.T) {
-	ds := newService("../../../public", &fakeBackendPM{})
+	ds := newService(&setting.Cfg{StaticRootPath: "../../../public"})
 	dr := ds.doReadQuery(backend.DataQuery{
 		QueryType: "x",
 		JSON: asJSON(readQueryModel{
@@ -40,12 +39,4 @@ func TestReadCSVFile(t *testing.T) {
 	})
 	err := experimental.CheckGoldenDataResponse(path.Join("testdata", "jslib.golden.txt"), &dr, true)
 	require.NoError(t, err)
-}
-
-type fakeBackendPM struct {
-	plugins.CoreBackendRegistrar
-}
-
-func (pm *fakeBackendPM) LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	return nil
 }

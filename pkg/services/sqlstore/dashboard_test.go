@@ -8,14 +8,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -381,6 +382,24 @@ func TestDashboardDataAccess(t *testing.T) {
 		require.Equal(t, hit.FolderUID, savedFolder.Uid)
 		require.Equal(t, hit.FolderTitle, savedFolder.Title)
 		require.Equal(t, hit.FolderURL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
+	})
+
+	t.Run("Should be able to search for general folder's children", func(t *testing.T) {
+		setup()
+		query := search.FindPersistedDashboardsQuery{
+			OrgId:        1,
+			FolderIds:    []int64{0},
+			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
+		}
+
+		err := sqlStore.SearchDashboards(context.Background(), &query)
+		require.NoError(t, err)
+
+		require.Equal(t, len(query.Result), 1)
+		hit := query.Result[0]
+		require.Equal(t, savedDash2.Id, hit.ID)
+		require.Equal(t, fmt.Sprintf("/d/%s/%s", savedDash2.Uid, savedDash2.Slug), hit.URL)
+		require.Equal(t, int64(0), hit.FolderID)
 	})
 
 	t.Run("Should be able to search for dashboard by dashboard ids", func(t *testing.T) {

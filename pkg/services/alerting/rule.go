@@ -226,7 +226,7 @@ func getAlertNotificationUIDByIDAndOrgID(ctx context.Context, notificationID int
 		Id:    notificationID,
 	}
 
-	if err := bus.DispatchCtx(ctx, query); err != nil {
+	if err := bus.Dispatch(ctx, query); err != nil {
 		return "", err
 	}
 

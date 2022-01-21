@@ -15,10 +15,10 @@
 import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { createStyle } from '../Theme';
+import { useStyles2 } from '@grafana/ui';
 import { ubRelative } from '../uberUtilityStyles';
 
-const getStyles = createStyle(() => {
+const getStyles = () => {
   return {
     flexRow: css`
       display: flex;
@@ -26,7 +26,7 @@ const getStyles = createStyle(() => {
       flex-direction: row;
     `,
   };
-});
+};
 
 type TTimelineRowProps = {
   children: React.ReactNode;
@@ -42,7 +42,7 @@ interface TimelineRowCellProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export default function TimelineRow(props: TTimelineRowProps) {
   const { children, className = '', ...rest } = props;
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.flexRow, className)} {...rest}>
       {children}

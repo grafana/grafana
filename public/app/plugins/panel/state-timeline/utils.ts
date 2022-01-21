@@ -236,13 +236,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     });
   }
 
-  if (sync !== DashboardCursorSync.Off) {
+  if (sync && sync() !== DashboardCursorSync.Off) {
     let cursor: Partial<uPlot.Cursor> = {};
 
     cursor.sync = {
       key: '__global_',
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          if (sync && sync() === DashboardCursorSync.Off) {
+            return false;
+          }
           payload.rowIndex = dataIdx;
           if (x < 0 && y < 0) {
             payload.point[xScaleUnit] = null;
@@ -485,7 +488,10 @@ export function prepareTimelineLegendItems(
     return undefined;
   }
 
-  const fields = allNonTimeFields(frames);
+  return getFieldLegendItem(allNonTimeFields(frames), theme);
+}
+
+export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
   if (!fields.length) {
     return undefined;
   }
