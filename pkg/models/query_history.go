@@ -32,4 +32,6 @@ type QueryHistorySearch struct {
 	SearchString   string
 	OnlyStarred    bool
 	Sort           string
+	Page           int
+	Limit          int
 }

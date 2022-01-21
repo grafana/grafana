@@ -19,7 +19,6 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *QueryHistoryService {
 type Service interface {
 	AddToQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, datasourceUid string) (*models.QueryHistory, error)
 	ListQueryHistory(ctx context.Context, user *models.SignedInUser, query *models.QueryHistorySearch) ([]QueryHistoryResponse, error)
-	ListQueriesBySearchParams(ctx context.Context, user *models.SignedInUser, query *models.QueryHistorySearch) ([]models.QueryHistory, error)
 	DeleteQuery(ctx context.Context, user *models.SignedInUser, queryUid string) error
 	GetQueryByUid(ctx context.Context, user *models.SignedInUser, queryUid string) (*models.QueryHistory, error)
 	UpdateComment(ctx context.Context, user *models.SignedInUser, query *models.QueryHistory, comment string) error
@@ -89,56 +88,55 @@ type QueryHistoryResponse struct {
 
 func (s QueryHistoryService) ListQueryHistory(ctx context.Context, user *models.SignedInUser, query *models.QueryHistorySearch) ([]QueryHistoryResponse, error) {
 	var queries []QueryHistoryResponse
-	if !query.OnlyStarred {
-		err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-			sql := `SELECT
-				query_history.uid,
-				query_history.datasource_uid,
-				query_history.created_by,
-				query_history.created_at,
-				query_history.comment,
-				query_history.queries,
-				IIF(query_history_star.query_uid IS NULL, false, true) AS starred
-				FROM query_history
-				LEFT JOIN query_history_star ON query_history_star.query_uid = query_history.uid
-				WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.queries LIKE ? AND query_history.datasource_uid IN (?` + strings.Repeat(",?", len(query.DatasourceUids)-1) + `)`
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		sql := `SELECT
+			query_history.uid,
+			query_history.datasource_uid,
+			query_history.created_by,
+			query_history.created_at as "created_at",
+			query_history.comment,
+			query_history.queries,
+		`
 
-			params := []interface{}{user.OrgId, user.UserId, "%" + query.SearchString + "%"}
-			for _, uid := range query.DatasourceUids {
-				params = append(params, uid)
-			}
-			err := session.SQL(sql, params...).Find(&queries)
-			return err
-		})
-
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-			sql := `SELECT
-				query_history.uid,
-				query_history.datasource_uid,
-				query_history.created_by,
-				query_history.created_at,
-				query_history.comment,
-				query_history.queries,
-				1 as "starred"
+		if query.OnlyStarred {
+			sql = sql + `1 as "starred"
 				FROM query_history
 				INNER JOIN query_history_star ON query_history_star.query_uid = query_history.uid
-				WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.queries LIKE ? AND query_history.datasource_uid IN (?` + strings.Repeat(",?", len(query.DatasourceUids)-1) + `)`
-
-			params := []interface{}{user.OrgId, user.UserId, "%" + query.SearchString + "%"}
-			for _, uid := range query.DatasourceUids {
-				params = append(params, uid)
-			}
-			err := session.SQL(sql, params...).Find(&queries)
-			return err
-		})
-
-		if err != nil {
-			return nil, err
+			`
+		} else {
+			sql = sql + `IIF(query_history_star.query_uid IS NULL, false, true) AS starred
+				FROM query_history
+				LEFT JOIN query_history_star ON query_history_star.query_uid = query_history.uid
+			`
 		}
+
+		sql = sql + `WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.queries LIKE ? AND query_history.datasource_uid IN (?` + strings.Repeat(",?", len(query.DatasourceUids)-1) + `)
+		`
+
+		if query.Sort == "time-desc" {
+			sql = sql + `ORDER BY created_at DESC
+			`
+		} else {
+			sql = sql + `ORDER BY created_at ASC
+			`
+		}
+
+		sql = sql + `LIMIT ? OFFSET ?
+		`
+
+		params := []interface{}{user.OrgId, user.UserId, "%" + query.SearchString + "%"}
+		for _, uid := range query.DatasourceUids {
+			params = append(params, uid)
+		}
+		offset := query.Limit * (query.Page - 1)
+		params = append(params, query.Limit, offset)
+
+		err := session.SQL(sql, params...).Find(&queries)
+		return err
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return queries, nil

@@ -26,11 +26,23 @@ func (hs *HTTPServer) addToQueryHistory(c *models.ReqContext) response.Response 
 }
 
 func (hs *HTTPServer) searchInQueryHistory(c *models.ReqContext) response.Response {
+	page := c.QueryInt("page")
+	if page <= 0 {
+		page = 1
+	}
+
+	sort := c.Query("sort")
+	if sort == "" {
+		sort = "time-desc"
+	}
+
 	query := models.QueryHistorySearch{
 		DatasourceUids: c.QueryStrings("datasourceUids"),
 		SearchString:   c.Query("searchString"),
 		OnlyStarred:    c.QueryBoolWithDefault("onlyStarred", false),
-		Sort:           c.Query("sort"),
+		Sort:           sort,
+		Page:           page,
+		Limit:          5,
 	}
 
 	queryHistory, err := hs.QueryHistoryService.ListQueryHistory(c.Req.Context(), c.SignedInUser, &query)

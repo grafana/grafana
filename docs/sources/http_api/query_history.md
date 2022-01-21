@@ -54,7 +54,7 @@ Status codes:
 
 `GET /api/query-history`
 
-Search in query history.
+Search in query history. Search supports pagination and it is limits results to 100 queries per page.
 
 Query parameters:
 
@@ -62,6 +62,7 @@ Query parameters:
 - **datasourceUids** - List of data source uid's to search for.
 - **sort** - Sorting order. Can be `time-asc` or `time desc`. Defaults to `time-desc`.
 - **onlyStarred** - Search for queries that are starred. Defaults to `false`.
+- **page** - Number of page you would like to to get. Search supports pagination and it is limits results to 100 queries per page.
   **Example request for query history search**:
 
 ```http
