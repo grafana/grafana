@@ -12,7 +12,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -119,7 +119,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -173,11 +173,11 @@ steps:
   - build-backend
   - build-frontend
 
-- name: end-to-end-tests-server
+- name: grafana-server
   image: grafana/build-container:1.4.9
   detach: true
   commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   environment:
     PORT: 3001
   depends_on:
@@ -211,11 +211,11 @@ steps:
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
-    HOST: end-to-end-tests-server
+    HOST: grafana-server
     PORT: 3001
   failure: always
   depends_on:
-  - end-to-end-tests-server
+  - grafana-server
 
 - name: build-frontend-docs
   image: grafana/build-container:1.4.9
@@ -276,7 +276,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -377,7 +377,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -486,7 +486,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -566,11 +566,11 @@ steps:
   - build-backend
   - build-frontend
 
-- name: end-to-end-tests-server
+- name: grafana-server
   image: grafana/build-container:1.4.9
   detach: true
   commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   environment:
     PORT: 3001
   depends_on:
@@ -619,11 +619,11 @@ steps:
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
-    HOST: end-to-end-tests-server
+    HOST: grafana-server
     PORT: 3001
   failure: ignore
   depends_on:
-  - end-to-end-tests-server
+  - grafana-server
 
 - name: publish-frontend-metrics
   image: grafana/build-container:1.4.9
@@ -706,7 +706,7 @@ steps:
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   depends_on:
-  - end-to-end-tests-server
+  - grafana-server
 
 volumes:
 - name: docker
@@ -742,7 +742,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -851,7 +851,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -907,7 +907,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -1006,7 +1006,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -1116,11 +1116,11 @@ steps:
   depends_on:
   - copy-packages-for-docker
 
-- name: end-to-end-tests-server
+- name: grafana-server
   image: grafana/build-container:1.4.9
   detach: true
   commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   environment:
     PORT: 3001
   depends_on:
@@ -1156,7 +1156,7 @@ steps:
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   depends_on:
-  - end-to-end-tests-server
+  - grafana-server
 
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
@@ -1243,7 +1243,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -1350,7 +1350,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -1464,7 +1464,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1527,7 +1527,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -1670,15 +1670,15 @@ steps:
   depends_on:
   - copy-packages-for-docker
 
-- name: end-to-end-tests-server
+- name: grafana-server
   image: grafana/build-container:1.4.9
   detach: true
   commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   environment:
     PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
     PORT: 3001
-    RUNDIR: e2e/tmp-grafana-enterprise
+    RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   depends_on:
   - package
 
@@ -1805,7 +1805,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -1963,7 +1963,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -2131,7 +2131,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
@@ -2215,7 +2215,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -2325,11 +2325,11 @@ steps:
   depends_on:
   - copy-packages-for-docker
 
-- name: end-to-end-tests-server
+- name: grafana-server
   image: grafana/build-container:1.4.9
   detach: true
   commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   environment:
     PORT: 3001
   depends_on:
@@ -2365,7 +2365,7 @@ steps:
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   depends_on:
-  - end-to-end-tests-server
+  - grafana-server
 
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
@@ -2424,7 +2424,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -2525,7 +2525,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -2633,7 +2633,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2690,7 +2690,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -2833,15 +2833,15 @@ steps:
   depends_on:
   - copy-packages-for-docker
 
-- name: end-to-end-tests-server
+- name: grafana-server
   image: grafana/build-container:1.4.9
   detach: true
   commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   environment:
     PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
     PORT: 3001
-    RUNDIR: e2e/tmp-grafana-enterprise
+    RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   depends_on:
   - package
 
@@ -2962,7 +2962,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -3114,7 +3114,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -3276,7 +3276,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout main
@@ -3354,7 +3354,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -3477,7 +3477,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -3583,11 +3583,11 @@ steps:
   depends_on:
   - copy-packages-for-docker
 
-- name: end-to-end-tests-server
+- name: grafana-server
   image: grafana/build-container:1.4.9
   detach: true
   commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   environment:
     PORT: 3001
   depends_on:
@@ -3623,7 +3623,7 @@ steps:
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   depends_on:
-  - end-to-end-tests-server
+  - grafana-server
 
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
@@ -3669,7 +3669,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -3769,7 +3769,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -3876,7 +3876,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -3928,7 +3928,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -4064,15 +4064,15 @@ steps:
   depends_on:
   - copy-packages-for-docker
 
-- name: end-to-end-tests-server
+- name: grafana-server
   image: grafana/build-container:1.4.9
   detach: true
   commands:
-  - ./e2e/start-server
+  - ./scripts/grafana-server/start-server
   environment:
     PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
     PORT: 3001
-    RUNDIR: e2e/tmp-grafana-enterprise
+    RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   depends_on:
   - package
 
@@ -4203,7 +4203,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -4354,7 +4354,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
 
 - name: identify-runner
@@ -4515,7 +4515,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.4/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout $$env:DRONE_BRANCH
@@ -4651,6 +4651,6 @@ get:
 
 ---
 kind: signature
-hmac: 5ca619a1ddd550912329d8a5567cc8e575fc1b2d0cc2312c47f18c13c4dafbde
+hmac: 5f7bb4404f981d2c92593dea78c1c3c0687a6acc6352cd922c0d6ce5f7a629a1
 
 ...

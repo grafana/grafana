@@ -27,10 +27,10 @@ def e2e_tests_server_step(edition, port=3001):
     }
     if package_file_pfx:
         environment['PACKAGE_FILE'] = 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx)
-        environment['RUNDIR'] = 'e2e/tmp-{}'.format(package_file_pfx)
+        environment['RUNDIR'] = 'scripts/grafana-server/tmp-{}'.format(package_file_pfx)
 
     return {
-        'name': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+        'name': 'grafana-server' + enterprise2_suffix(edition),
         'image': build_image,
         'detach': True,
         'depends_on': [
@@ -38,7 +38,7 @@ def e2e_tests_server_step(edition, port=3001):
         ],
         'environment': environment,
         'commands': [
-            './e2e/start-server',
+            './scripts/grafana-server/start-server',
         ],
     }
 
@@ -92,3 +92,6 @@ def end_to_end_tests_deps(edition):
     return [
         'end-to-end-tests' + enterprise2_suffix(edition)
     ]
+
+
+### NEEDS MERGE

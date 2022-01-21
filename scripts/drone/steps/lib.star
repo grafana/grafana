@@ -1,5 +1,4 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
-
 load('scripts/drone/steps/e2e.star', 'end_to_end_tests_deps')
 load('scripts/drone/steps/enterprise.star', 'enterprise2_suffix')
 
@@ -305,7 +304,7 @@ def upload_cdn_step(edition, ver_mode):
         ])
     else:
         deps.extend([
-            'end-to-end-tests-server',
+            'grafana-server',
         ])
 
     return {
@@ -519,11 +518,11 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
         'image': 'grafana/docker-puppeteer:1.0.0',
         'depends_on': [
-            'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'grafana-server' + enterprise2_suffix(edition),
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
-            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'HOST': 'grafana-server' + enterprise2_suffix(edition),
             'PORT': port,
         },
         'failure': failure,
