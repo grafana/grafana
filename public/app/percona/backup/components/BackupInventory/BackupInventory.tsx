@@ -235,7 +235,8 @@ export const BackupInventory: FC = () => {
 
   useEffect(() => {
     getData(true).then(() => triggerTimeout(getData, DATA_INTERVAL));
-  }, [getData, triggerTimeout]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>

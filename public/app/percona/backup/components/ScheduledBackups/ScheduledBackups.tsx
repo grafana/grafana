@@ -289,7 +289,8 @@ export const ScheduledBackups: FC = () => {
 
   useEffect(() => {
     getData();
-  }, [getData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>

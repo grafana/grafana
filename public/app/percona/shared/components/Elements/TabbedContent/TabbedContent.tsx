@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import React, { FC, useEffect, useRef, useCallback } from 'react';
+import React, { FC, useEffect, useCallback } from 'react';
 
 import { getLocationSrv } from '@grafana/runtime';
 import { TabContent } from '@grafana/ui';
@@ -17,7 +17,6 @@ export const TabbedContent: FC<TabbedContentProps> = ({
   activeTabName = '',
   renderTab,
 }) => {
-  const routeUpdated = useRef(false);
   const defaultTab = tabs[0].key;
   const tabKeys = tabs.map((tab) => tab.key);
   const activeTab = tabs.find((tab) => tab.key === activeTabName);
@@ -25,7 +24,6 @@ export const TabbedContent: FC<TabbedContentProps> = ({
   const selectTab = useCallback(
     (tabKey: string) => {
       if (tabKey !== activeTab?.key) {
-        routeUpdated.current = true;
         getLocationSrv().update({
           path: `/${basePath}/${tabKey}`,
         });
@@ -49,7 +47,7 @@ export const TabbedContent: FC<TabbedContentProps> = ({
         dataTestId={tabsdataTestId}
         tabClick={selectTab}
       ></OrientedTabs>
-      {routeUpdated.current ? null : renderTab ? (
+      {renderTab ? (
         renderTab({
           Content: ({ className }) => (
             <TabContent data-testid={contentdataTestId} className={className}>
