@@ -87,7 +87,8 @@ export const NotificationChannel: FC = () => {
 
   useEffect(() => {
     getNotificationChannels();
-  }, [pageSize, pageIndex, getNotificationChannels]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageSize, pageIndex]);
 
   return (
     <NotificationChannelProvider.Provider

@@ -56,7 +56,8 @@ export const AllChecksTab: FC = () => {
 
   useEffect(() => {
     fetchChecks();
-  }, [fetchChecks, generateToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={cx(tableStyles.wrapper, styles.wrapper)} data-testid="db-checks-all-checks-wrapper">

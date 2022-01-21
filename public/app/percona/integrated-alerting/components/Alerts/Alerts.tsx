@@ -130,7 +130,8 @@ export const Alerts: FC = () => {
 
   useEffect(() => {
     getAlerts();
-  }, [getAlerts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Table

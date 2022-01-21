@@ -87,7 +87,8 @@ export const useKubernetes = ({ settings }: UseKubernetesProps): ManageKubernete
     if (settings && settings.dbaasEnabled) {
       getKubernetes();
     }
-  }, [getKubernetes, settings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings]);
 
   return [kubernetes, deleteKubernetes, addKubernetes, getKubernetes, setLoading, loading];
 };

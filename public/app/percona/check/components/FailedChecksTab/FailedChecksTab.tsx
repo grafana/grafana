@@ -63,7 +63,8 @@ export const FailedChecksTab: FC = () => {
   useEffect(() => {
     fetchAlerts();
     saveShowSilencedValue(showSilenced);
-  }, [showSilenced, fetchAlerts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSilenced]);
 
   return (
     <>

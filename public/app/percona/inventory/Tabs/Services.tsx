@@ -49,7 +49,8 @@ export const Services = () => {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const removeServices = useCallback(
     async (services: Array<SelectedTableRows<Service>>, forceMode) => {

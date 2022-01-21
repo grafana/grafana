@@ -155,7 +155,8 @@ export const AlertRules: FC = () => {
 
   useEffect(() => {
     getAlertRules();
-  }, [pageSize, pageIndex, getAlertRules]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageSize, pageIndex]);
 
   return (
     <AlertRulesProvider.Provider value={{ getAlertRules, setAddModalVisible, setSelectedAlertRule }}>

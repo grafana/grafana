@@ -159,7 +159,8 @@ export const SettingsPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({
 
   useEffect(() => {
     getSettings();
-  }, [getSettings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
