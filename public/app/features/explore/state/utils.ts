@@ -163,3 +163,15 @@ export function starQueryInQueryHistory(queryId: string): void {
 export function unstarQueryInQueryHistory(queryId: string): void {
   getBackendSrv().delete(`/api/query-history/star/${queryId}`);
 }
+
+export function updateQueryInQueryHistory(queryId: string): void {
+  getBackendSrv().delete(`/api/query-history/star/${queryId}`);
+}
+
+export function updateQueryHistorySettings(preferences: any): void {
+  getBackendSrv().put(`/api/user/preferences`, { queryHistoryJSON: preferences });
+}
+
+export async function getQueryHistorySettings(): Promise<any> {
+  return await getBackendSrv().get(`/api/user/preferences`);
+}

@@ -46,10 +46,11 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 	}
 
 	dto := dtos.Prefs{
-		Theme:           prefsQuery.Result.Theme,
-		HomeDashboardID: prefsQuery.Result.HomeDashboardId,
-		Timezone:        prefsQuery.Result.Timezone,
-		WeekStart:       prefsQuery.Result.WeekStart,
+		Theme:            prefsQuery.Result.Theme,
+		HomeDashboardID:  prefsQuery.Result.HomeDashboardId,
+		Timezone:         prefsQuery.Result.Timezone,
+		WeekStart:        prefsQuery.Result.WeekStart,
+		QueryHistoryJSON: prefsQuery.Result.QueryHistoryJson,
 	}
 
 	return response.JSON(200, &dto)
@@ -69,13 +70,14 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		return response.Error(400, "Invalid theme", nil)
 	}
 	saveCmd := models.SavePreferencesCommand{
-		UserId:          userID,
-		OrgId:           orgID,
-		TeamId:          teamId,
-		Theme:           dtoCmd.Theme,
-		Timezone:        dtoCmd.Timezone,
-		WeekStart:       dtoCmd.WeekStart,
-		HomeDashboardId: dtoCmd.HomeDashboardID,
+		UserId:           userID,
+		OrgId:            orgID,
+		TeamId:           teamId,
+		Theme:            dtoCmd.Theme,
+		Timezone:         dtoCmd.Timezone,
+		WeekStart:        dtoCmd.WeekStart,
+		HomeDashboardId:  dtoCmd.HomeDashboardID,
+		QueryHistoryJson: dtoCmd.QueryHistoryJSON,
 	}
 
 	if err := hs.SQLStore.SavePreferences(ctx, &saveCmd); err != nil {

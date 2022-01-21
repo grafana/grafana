@@ -97,15 +97,16 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 
 		if !exists {
 			prefs = models.Preferences{
-				UserId:          cmd.UserId,
-				OrgId:           cmd.OrgId,
-				TeamId:          cmd.TeamId,
-				HomeDashboardId: cmd.HomeDashboardId,
-				Timezone:        cmd.Timezone,
-				WeekStart:       cmd.WeekStart,
-				Theme:           cmd.Theme,
-				Created:         time.Now(),
-				Updated:         time.Now(),
+				UserId:           cmd.UserId,
+				OrgId:            cmd.OrgId,
+				TeamId:           cmd.TeamId,
+				HomeDashboardId:  cmd.HomeDashboardId,
+				Timezone:         cmd.Timezone,
+				WeekStart:        cmd.WeekStart,
+				Theme:            cmd.Theme,
+				QueryHistoryJson: cmd.QueryHistoryJson,
+				Created:          time.Now(),
+				Updated:          time.Now(),
 			}
 			_, err = sess.Insert(&prefs)
 			return err
@@ -114,6 +115,7 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 		prefs.Timezone = cmd.Timezone
 		prefs.WeekStart = cmd.WeekStart
 		prefs.Theme = cmd.Theme
+		prefs.QueryHistoryJson = cmd.QueryHistoryJson
 		prefs.Updated = time.Now()
 		prefs.Version += 1
 		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)

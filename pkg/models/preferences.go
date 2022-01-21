@@ -1,21 +1,23 @@
 package models
 
 import (
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"time"
 )
 
 type Preferences struct {
-	Id              int64
-	OrgId           int64
-	UserId          int64
-	TeamId          int64
-	Version         int
-	HomeDashboardId int64
-	Timezone        string
-	WeekStart       string
-	Theme           string
-	Created         time.Time
-	Updated         time.Time
+	Id               int64
+	OrgId            int64
+	UserId           int64
+	TeamId           int64
+	Version          int
+	HomeDashboardId  int64
+	Timezone         string
+	WeekStart        string
+	Theme            string
+	QueryHistoryJson *simplejson.Json
+	Created          time.Time
+	Updated          time.Time
 }
 
 // ---------------------
@@ -43,8 +45,9 @@ type SavePreferencesCommand struct {
 	OrgId  int64
 	TeamId int64
 
-	HomeDashboardId int64  `json:"homeDashboardId"`
-	Timezone        string `json:"timezone"`
-	WeekStart       string `json:"weekStart"`
-	Theme           string `json:"theme"`
+	HomeDashboardId  int64            `json:"homeDashboardId"`
+	Timezone         string           `json:"timezone"`
+	WeekStart        string           `json:"weekStart"`
+	Theme            string           `json:"theme"`
+	QueryHistoryJson *simplejson.Json `json:"queryHistoryJson"`
 }

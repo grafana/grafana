@@ -49,6 +49,8 @@ import {
   updateCommentForQueryInQueryHistory,
   starQueryInQueryHistory,
   unstarQueryInQueryHistory,
+  updateQueryHistorySettings,
+  getQueryHistorySettings,
 } from './utils';
 import deepEqual from 'fast-deep-equal';
 
@@ -333,6 +335,8 @@ async function handleHistory(
     // updateCommentForQueryInQueryHistory('ND2zoS17k', 'test comment');
     // starQueryInQueryHistory('HzEcGr1nk');
     // unstarQueryInQueryHistory('GrIWcsJnz');
+    updateQueryHistorySettings({ starredTabFirst: true, showOnlyCurrentDs: true });
+    console.log(await getQueryHistorySettings());
   }
 
   const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(
