@@ -32,12 +32,32 @@ const NavBarItem = ({
   url,
 }: Props) => {
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive);
-  let element = (
-    <button className={styles.element} onClick={onClick} aria-label={label}>
-      <span className={styles.icon}>{children}</span>
-    </button>
-  );
+  const menuItems = link.children ?? [];
+  const menuItemsSorted = reverseMenuDirection ? menuItems.reverse() : menuItems;
+  const filteredItems = menuItemsSorted
+    .filter((item) => !item.hideFromMenu)
+    .map((i) => ({ ...i, menuItemType: NavMenuItemType.Item }));
+  const adjustHeightForBorder = filteredItems.length === 0;
+  const styles = getStyles(theme, adjustHeightForBorder, isActive);
+  const section: NavModelItem = {
+    ...link,
+    children: filteredItems,
+    menuItemType: NavMenuItemType.Section,
+  };
+  const items: NavModelItem[] = [section].concat(filteredItems);
+  const onNavigate = (item: NavModelItem) => {
+    const { url, target, onClick } = item;
+    if (!url) {
+      onClick?.();
+      return;
+    }
+
+    if (!target && url.startsWith('/')) {
+      locationService.push(locationUtil.stripBaseFromUrl(url));
+    } else {
+      window.open(url, target);
+    }
+  };
 
   if (url) {
     element =
@@ -79,21 +99,16 @@ const NavBarItem = ({
 
 export default NavBarItem;
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
-  container: css`
-    position: relative;
-    color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
-
-    &:hover {
-      background-color: ${theme.colors.action.hover};
-      color: ${theme.colors.text.primary};
-
-      // TODO don't use a hardcoded class here, use isVisible in NavBarDropdown
-      .navbar-dropdown {
-        opacity: 1;
-        visibility: visible;
-      }
-    }
+const getStyles = (theme: GrafanaTheme2, adjustHeightForBorder: boolean, isActive?: boolean) => ({
+  ...getNavBarItemWithoutMenuStyles(theme, isActive),
+  header: css`
+    color: ${theme.colors.text.primary};
+    height: ${theme.components.sidemenu.width - (adjustHeightForBorder ? 2 : 1)}px;
+    font-size: ${theme.typography.h4.fontSize};
+    font-weight: ${theme.typography.h4.fontWeight};
+    padding: ${theme.spacing(1)} ${theme.spacing(2)};
+    white-space: nowrap;
+    width: 100%;
   `,
   element: css`
     background-color: transparent;
