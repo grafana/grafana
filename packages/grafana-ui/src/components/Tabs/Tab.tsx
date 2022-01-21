@@ -19,11 +19,11 @@ export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
-  suffix?: string;
+  suffixText?: string;
 }
 
 export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
-  ({ label, active, icon, onChangeTab, counter, suffix, className, href, ...otherProps }, ref) => {
+  ({ label, active, icon, onChangeTab, counter, suffixText, className, href, ...otherProps }, ref) => {
     const theme = useTheme2();
     const tabsStyles = getTabStyles(theme);
     const content = () => (
@@ -31,7 +31,7 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
         {icon && <Icon name={icon} />}
         {label}
         {typeof counter === 'number' && <Counter value={counter} />}
-        {suffix && <ProBadge text={suffix} className={tabsStyles.suffix} />}
+        {suffixText && <ProBadge text={suffixText} className={tabsStyles.suffix} />}
       </>
     );
 
