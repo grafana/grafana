@@ -85,9 +85,10 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     ctx.fillRect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
   }
 
+  const { scaleKey, thresholds, theme, config, hardMin, hardMax, softMin, softMax } = options;
+
   return (u: uPlot) => {
     const ctx = u.ctx;
-    const { scaleKey, thresholds, theme, config, hardMin, hardMax, softMin, softMax } = options;
     const { min: xMin, max: xMax } = u.scales.x;
     const { min: yMin, max: yMax } = u.scales[scaleKey];
 
