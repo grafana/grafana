@@ -58,7 +58,7 @@ def e2e_tests_step(edition, port=3001, suite=None, tries=None):
             'package',
         ],
         'environment': {
-            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'HOST': 'grafana-server' + enterprise2_suffix(edition),
         },
         'commands': [
             'apt-get install -y netcat',

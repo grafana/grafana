@@ -189,7 +189,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001
   environment:
-    HOST: end-to-end-tests-server
+    HOST: grafana-server
   depends_on:
   - package
 
@@ -582,7 +582,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001
   environment:
-    HOST: end-to-end-tests-server
+    HOST: grafana-server
   depends_on:
   - package
 
@@ -1132,7 +1132,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001
   environment:
-    HOST: end-to-end-tests-server
+    HOST: grafana-server
   depends_on:
   - package
 
@@ -1688,7 +1688,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001
   environment:
-    HOST: end-to-end-tests-server
+    HOST: grafana-server
   depends_on:
   - package
 
@@ -2341,7 +2341,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001
   environment:
-    HOST: end-to-end-tests-server
+    HOST: grafana-server
   depends_on:
   - package
 
@@ -2851,7 +2851,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001
   environment:
-    HOST: end-to-end-tests-server
+    HOST: grafana-server
   depends_on:
   - package
 
@@ -3599,7 +3599,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001
   environment:
-    HOST: end-to-end-tests-server
+    HOST: grafana-server
   depends_on:
   - package
 
@@ -4082,7 +4082,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001
   environment:
-    HOST: end-to-end-tests-server
+    HOST: grafana-server
   depends_on:
   - package
 
@@ -4651,6 +4651,6 @@ get:
 
 ---
 kind: signature
-hmac: 5f7bb4404f981d2c92593dea78c1c3c0687a6acc6352cd922c0d6ce5f7a629a1
+hmac: 8c7afd3e747b46e9b326afd67ca5add7d5e32d80726318d29d56f7414c39aba9
 
 ...
