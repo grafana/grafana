@@ -6,18 +6,16 @@ import {
   FrameGeometrySourceMode,
 } from '@grafana/data';
 import Map from 'ol/Map';
-import Feature, { FeatureLike } from 'ol/Feature';
-import { Geometry } from 'ol/geom';
-import * as source from 'ol/source';
-import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
+import { FeatureLike } from 'ol/Feature';
+import { getLocationMatchers } from 'app/features/geo/utils/location';
 import { getColorDimension } from 'app/features/dimensions';
-import { getFeaturesLineString } from '../../utils/getFeatures';
 import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
 import { StyleEditor } from './StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
 import VectorLayer from 'ol/layer/Vector';
 import { isNumber } from 'lodash';
 import { routeStyle } from '../../style/markers';
+import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 
 // Configuration options for Circle overlays
 export interface RouteConfig {
@@ -60,7 +58,6 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
    * @param options
    */
   create: async (map: Map, options: MapLayerOptions<RouteConfig>, theme: GrafanaTheme2) => {
-    const matchers = await getLocationMatchers(options.location);
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -68,9 +65,11 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     };
 
     const style = await getStyleConfigState(config.style);
-
-    // eventually can also use resolution for dynamic style
-    const vectorLayer = new VectorLayer();
+    const location = await getLocationMatchers(options.location);
+    const source = new FrameVectorSource(location);
+    const vectorLayer = new VectorLayer({
+      source,
+    });
 
     if (!style.fields) {
       // Set a global style
@@ -99,15 +98,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
           return; // ignore empty
         }
 
-        const features: Feature<Geometry>[] = [];
-
         for (const frame of data.series) {
-          const info = dataFrameToPoints(frame, matchers);
-          if (info.warning) {
-            console.log('Could not find locations', info.warning);
-            continue; // ???
-          }
-
           if (style.fields) {
             const dims: StyleDimensions = {};
             if (style.fields.color) {
@@ -116,18 +107,9 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
             style.dims = dims;
           }
 
-          const frameFeatures = getFeaturesLineString(frame, info);
-
-          if (frameFeatures) {
-            features.push(...frameFeatures);
-          }
-
+          source.updateLineString(frame);
           break; // Only the first frame for now!
         }
-
-        // Source reads the data and provides a set of features to visualize
-        const vectorSource = new source.Vector({ features });
-        vectorLayer.setSource(vectorSource);
       },
 
       // Marker overlay options
