@@ -17,7 +17,7 @@ import (
 var requests = map[string]*models.ReqContext{}
 
 type Server struct {
-	t             *testing.T
+	t             testing.TB
 	Mux           *web.Mux
 	RouteRegister routing.RouteRegister
 	TestServer    *httptest.Server
