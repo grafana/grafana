@@ -165,6 +165,26 @@ import u1152 from '!!raw-loader!../../../../../public/img/icons/mono/heart-break
 import u1153 from '!!raw-loader!../../../../../public/img/icons/mono/panel-add.svg';
 import u1154 from '!!raw-loader!../../../../../public/img/icons/mono/library-panel.svg';
 import u1155 from '!!raw-loader!../../../../../public/img/icons/unicons/record-audio.svg';
+import u1156 from '!!raw-loader!../../../../../public/img/icons/mono/percona-add.svg';
+import u1157 from '!!raw-loader!../../../../../public/img/icons/mono/percona-alert.svg';
+import u1158 from '!!raw-loader!../../../../../public/img/icons/mono/percona-analytics.svg';
+import u1159 from '!!raw-loader!../../../../../public/img/icons/mono/percona-cluster-computing.svg';
+import u1160 from '!!raw-loader!../../../../../public/img/icons/mono/percona-cluster-network.svg';
+import u1161 from '!!raw-loader!../../../../../public/img/icons/mono/percona-cluster.svg';
+import u1162 from '!!raw-loader!../../../../../public/img/icons/mono/percona-cpu.svg';
+import u1163 from '!!raw-loader!../../../../../public/img/icons/mono/percona-dashboard.svg';
+import u1164 from '!!raw-loader!../../../../../public/img/icons/mono/percona-database-checks.svg';
+import u1165 from '!!raw-loader!../../../../../public/img/icons/mono/percona-database.svg';
+import u1166 from '!!raw-loader!../../../../../public/img/icons/mono/percona-disk.svg';
+import u1167 from '!!raw-loader!../../../../../public/img/icons/mono/percona-inventory.svg';
+import u1168 from '!!raw-loader!../../../../../public/img/icons/mono/percona-kubernetes.svg';
+import u1169 from '!!raw-loader!../../../../../public/img/icons/mono/percona-memory.svg';
+import u1170 from '!!raw-loader!../../../../../public/img/icons/mono/percona-network.svg';
+import u1171 from '!!raw-loader!../../../../../public/img/icons/mono/percona-process.svg';
+import u1172 from '!!raw-loader!../../../../../public/img/icons/mono/percona-setting.svg';
+import u1173 from '!!raw-loader!../../../../../public/img/icons/mono/percona-summary.svg';
+import u1174 from '!!raw-loader!../../../../../public/img/icons/mono/percona-surface.svg';
+import u1175 from '!!raw-loader!../../../../../public/img/icons/mono/percona-temperature.svg';
 
 export function initIconCache() {
   cacheInitialized = true;
@@ -330,4 +350,24 @@ export function initIconCache() {
   cacheItem(u1153, 'mono/panel-add.svg');
   cacheItem(u1154, 'mono/library-panel.svg');
   cacheItem(u1155, 'unicons/record-audio.svg');
+  cacheItem(u1156, 'mono/percona-add.svg');
+  cacheItem(u1157, 'mono/percona-alert.svg');
+  cacheItem(u1158, 'mono/percona-analytics.svg');
+  cacheItem(u1159, 'mono/percona-cluster-computing.svg');
+  cacheItem(u1160, 'mono/percona-cluster-network.svg');
+  cacheItem(u1161, 'mono/percona-cluster.svg');
+  cacheItem(u1162, 'mono/percona-cpu.svg');
+  cacheItem(u1163, 'mono/percona-dashboard.svg');
+  cacheItem(u1164, 'mono/percona-database-checks.svg');
+  cacheItem(u1165, 'mono/percona-database.svg');
+  cacheItem(u1166, 'mono/percona-disk.svg');
+  cacheItem(u1167, 'mono/percona-inventory.svg');
+  cacheItem(u1168, 'mono/percona-kubernetes.svg');
+  cacheItem(u1169, 'mono/percona-memory.svg');
+  cacheItem(u1170, 'mono/percona-network.svg');
+  cacheItem(u1171, 'mono/percona-process.svg');
+  cacheItem(u1172, 'mono/percona-setting.svg');
+  cacheItem(u1173, 'mono/percona-summary.svg');
+  cacheItem(u1174, 'mono/percona-surface.svg');
+  cacheItem(u1175, 'mono/percona-temperature.svg');
 }
