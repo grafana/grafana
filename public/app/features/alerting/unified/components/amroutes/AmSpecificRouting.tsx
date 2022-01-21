@@ -3,7 +3,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Input, Label, useStyles2 } from '@grafana/ui';
 import React, { FC, useState } from 'react';
 import { useDebounce } from 'react-use';
-import { v4 } from 'uuid';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { emptyArrayFieldMatcher, emptyRoute } from '../../utils/amroutes';
@@ -39,7 +38,6 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
   const [searchParams, setSearchParams] = useURLSearchParams();
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
 
-  const [filterKey, setFilterKey] = useState(v4());
   const [filters, setFilters] = useState<Filters>({ queryString, contactPoint });
 
   useDebounce(
@@ -55,7 +53,6 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
   const clearFilters = () => {
     setFilters({ queryString: undefined, contactPoint: undefined });
     setSearchParams({ queryString: undefined, contactPoint: undefined });
-    setFilterKey(v4());
   };
 
   const addNewRoute = () => {
@@ -108,21 +105,19 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
             {!isAddMode && (
               <div className={styles.searchContainer}>
                 <MatcherFilter
-                  key={filterKey}
                   onFilterChange={(filter) =>
                     setFilters((currentFilters) => ({ ...currentFilters, queryString: filter }))
                   }
-                  defaultQueryString={queryString}
+                  queryString={filters.queryString ?? ''}
                   className={styles.filterInput}
                 />{' '}
                 <div className={styles.filterInput}>
                   <Label>Search by contact point</Label>
                   <Input
-                    key={filterKey}
                     onChange={({ currentTarget }) =>
                       setFilters((currentFilters) => ({ ...currentFilters, contactPoint: currentTarget.value }))
                     }
-                    defaultValue={contactPoint}
+                    value={filters.contactPoint ?? ''}
                     placeholder="Search by contact point"
                     data-testid="search-query-input"
                     prefix={<Icon name={'search'} />}
