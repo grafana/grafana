@@ -5,10 +5,9 @@ import { DataFrame, DataTransformerConfig } from '../types';
 import { standardTransformersRegistry, TransformerRegistryItem } from './standardTransformersRegistry';
 
 const getOperator = (config: DataTransformerConfig): MonoTypeOperatorFunction<DataFrame[]> => (source) => {
-  const info = standardTransformersRegistry.getIfExists(config.id);
+  const info = standardTransformersRegistry.get(config.id);
 
   if (!info) {
-    console.warn('[warning] unknown transformer: ', config.id);
     return source;
   }
 

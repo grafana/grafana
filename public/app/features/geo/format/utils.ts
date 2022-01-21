@@ -80,11 +80,6 @@ export function createLineBetween(
   };
 }
 
-function getCenterPoint(geo: Geometry): number[] {
-  // TODO: poing can use direclty
-  return getCenter(geo.getExtent());
-}
-
 const hiddenTooltipField: FieldConfig = Object.freeze({
   custom: {
     hideFrom: { tooltip: true },
