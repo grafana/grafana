@@ -64,11 +64,7 @@ export const CollapsableSection: FC<Props> = ({
         </div>
       </div>
       {open && (
-        <div
-          id={`collapse-content-${id}`}
-          className={cx(styles.content, contentClassName)}
-          aria-labelledby={buttonLabelId}
-        >
+        <div id={`collapse-content-${id}`} className={cx(styles.content, contentClassName)}>
           {children}
         </div>
       )}
