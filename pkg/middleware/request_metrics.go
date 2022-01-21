@@ -59,7 +59,7 @@ func RequestMetrics(features *featuremgmt.FeatureToggles) web.Handler {
 		c.Map(c.Req)
 		c.Next()
 
-		handler := req.URL.Path
+		handler := "unknown"
 
 		if routeOperation, exists := RouteOperationNameFromContext(c.Req.Context()); exists {
 			handler = routeOperation
