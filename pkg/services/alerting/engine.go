@@ -42,6 +42,7 @@ type AlertEngine struct {
 	resultHandler     resultHandler
 	usageStatsService usagestats.Service
 	tracer            tracing.Tracer
+	sqlStore          *sqlstore.SQLStore
 }
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
@@ -61,6 +62,7 @@ func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidato
 		DataService:       dataService,
 		usageStatsService: usageStatsService,
 		tracer:            tracer,
+		sqlStore:          sqlStore,
 	}
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New(), 1)
 	e.execQueue = make(chan *Job, 1000)

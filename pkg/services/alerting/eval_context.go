@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -36,10 +36,12 @@ type EvalContext struct {
 	RequestValidator models.PluginRequestValidator
 
 	Ctx context.Context
+
+	sqlStore *sqlstore.SQLStore
 }
 
 // NewEvalContext is the EvalContext constructor.
-func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator) *EvalContext {
+func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator, sqlStore *sqlstore.SQLStore) *EvalContext {
 	return &EvalContext{
 		Ctx:              alertCtx,
 		StartTime:        time.Now(),
@@ -49,6 +51,7 @@ func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator model
 		Log:              log.New("alerting.evalContext"),
 		PrevAlertState:   rule.State,
 		RequestValidator: requestValidator,
+		sqlStore:         sqlStore,
 	}
 }
 
@@ -108,7 +111,7 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 	}
 
 	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
-	if err := bus.Dispatch(c.Ctx, uidQuery); err != nil {
+	if err := c.sqlStore.GetDashboardUIDById(c.Ctx, uidQuery); err != nil {
 		return nil, err
 	}
 
