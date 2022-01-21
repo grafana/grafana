@@ -42,7 +42,7 @@ func (hs *HTTPServer) searchInQueryHistory(c *models.ReqContext) response.Respon
 		OnlyStarred:    c.QueryBoolWithDefault("onlyStarred", false),
 		Sort:           sort,
 		Page:           page,
-		Limit:          5,
+		Limit:          100,
 	}
 
 	queryHistory, err := hs.QueryHistoryService.ListQueryHistory(c.Req.Context(), c.SignedInUser, &query)
