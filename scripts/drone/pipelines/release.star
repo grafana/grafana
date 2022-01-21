@@ -4,7 +4,6 @@ load(
     'download_grabpl_step',
     'initialize_step',
     'lint_drone_step',
-    'test_release_ver',
     'build_image',
     'publish_image',
     'lint_backend_step',
@@ -466,38 +465,6 @@ def release_pipelines(ver_mode='release', trigger=None, environment=None):
 
     return pipelines
 
-def test_release_pipelines():
-    ver_mode = 'test-release'
-
-    services = integration_test_services(edition='enterprise')
-    trigger = {
-        'event': ['custom',],
-    }
-
-    oss_pipelines = get_oss_pipelines(ver_mode=ver_mode, trigger=trigger)
-    enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger)
-
-    publish_cmd = './bin/grabpl store-packages --edition {{}} --dry-run {}'.format(test_release_ver)
-
-    steps = [
-        store_packages_step(edition='oss', ver_mode=ver_mode),
-        store_packages_step(edition='enterprise', ver_mode=ver_mode),
-    ]
-
-    publish_pipeline = pipeline(
-        name='publish-{}'.format(ver_mode), trigger=trigger, edition='oss',
-        steps=[download_grabpl_step()] + initialize_step(edition='oss', platform='linux', ver_mode=ver_mode, install_deps=False) + steps,
-        depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines],
-    )
-
-    pipelines = oss_pipelines + enterprise_pipelines + [publish_pipeline,]
-
-    pipelines.append(notify_pipeline(
-        name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=trigger,
-        depends_on=[p['name'] for p in pipelines],
-    ))
-
-    return pipelines
 
 def get_e2e_suffix():
     if not disable_tests:
