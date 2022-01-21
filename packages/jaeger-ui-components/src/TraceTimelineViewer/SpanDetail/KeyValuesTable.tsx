@@ -16,13 +16,13 @@ import * as React from 'react';
 import jsonMarkup from 'json-markup';
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import CopyIcon from '../../common/CopyIcon';
 import { TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { UIDropdown, UIIcon, UIMenu, UIMenuItem } from '../../uiElementsContext';
+import { UIDropdown, UIMenu, UIMenuItem } from '../../uiElementsContext';
 import { autoColor } from '../../Theme';
 import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
 
@@ -89,10 +89,9 @@ function parseIfComplexJson(value: any) {
 }
 
 export const LinkValue = (props: { href: string; title?: string; children: React.ReactNode }) => {
-  const styles = useStyles2(getStyles);
   return (
     <a href={props.href} title={props.title} target="_blank" rel="noopener noreferrer">
-      {props.children} <UIIcon className={styles.linkIcon} type="export" />
+      {props.children} <Icon name="external-link-alt" />
     </a>
   );
 };
@@ -144,7 +143,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
                 <div>
                   <UIDropdown overlay={linkValueList(links)} placement="bottomRight" trigger={['click']}>
                     <a>
-                      {jsonTable} <UIIcon className={styles.linkIcon} type="profile" />
+                      {jsonTable} <Icon name="list-ul" />
                     </a>
                   </UIDropdown>
                 </div>

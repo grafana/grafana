@@ -14,12 +14,11 @@
 
 import React from 'react';
 import { shallow } from 'enzyme';
-import { createTheme } from '@grafana/data';
 
 import CopyIcon from '../../common/CopyIcon';
 
-import KeyValuesTable, { LinkValue, getStyles } from './KeyValuesTable';
-import { UIDropdown, UIIcon } from '../../uiElementsContext';
+import KeyValuesTable, { LinkValue } from './KeyValuesTable';
+import { UIDropdown } from '../../uiElementsContext';
 import { ubInlineBlock } from '../../uberUtilityStyles';
 
 describe('LinkValue', () => {
@@ -36,12 +35,6 @@ describe('LinkValue', () => {
     expect(wrapper.find('a').prop('href')).toBe(href);
     expect(wrapper.find('a').prop('title')).toBe(title);
     expect(wrapper.find('a').text()).toMatch(/childrenText/);
-  });
-
-  it('renders correct Icon', () => {
-    const styles = getStyles(createTheme());
-    expect(wrapper.find(UIIcon).hasClass(styles.linkIcon)).toBe(true);
-    expect(wrapper.find(UIIcon).prop('type')).toBe('export');
   });
 });
 

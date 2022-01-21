@@ -41,7 +41,6 @@ export const UIElements: Elements = {
   Tooltip({ children, title }: TooltipProps) {
     return <GrafanaTooltip content={title}>{children}</GrafanaTooltip>;
   },
-  Icon: (() => null as any) as any,
   Dropdown: (() => null as any) as any,
   Menu: (() => null as any) as any,
   MenuItem: (() => null as any) as any,

@@ -66,22 +66,6 @@ export const UITooltip: React.ComponentType<TooltipProps> = function UITooltip(p
   );
 };
 
-export type IconProps = {
-  type: string;
-  className?: string;
-  onClick?: React.MouseEventHandler<any>;
-};
-
-export const UIIcon: React.ComponentType<IconProps> = function UIIcon(props: IconProps) {
-  return (
-    <GetElementsContext>
-      {(elements: Elements) => {
-        return <elements.Icon {...props} />;
-      }}
-    </GetElementsContext>
-  );
-};
-
 export type DropdownProps = {
   overlay: React.ReactNode;
   placement?: 'topLeft' | 'topCenter' | 'topRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
@@ -136,7 +120,6 @@ export type InputGroupProps = {
 export type Elements = {
   Popover: React.ComponentType<PopoverProps>;
   Tooltip: React.ComponentType<TooltipProps>;
-  Icon: React.ComponentType<IconProps>;
   Dropdown: React.ComponentType<DropdownProps>;
   Menu: React.ComponentType<MenuProps>;
   MenuItem: React.ComponentType<MenuItemProps>;
