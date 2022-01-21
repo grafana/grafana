@@ -174,7 +174,7 @@ func (fm *FeatureManager) GetEnabled(ctx context.Context) map[string]bool {
 	return enabled
 }
 
-// IsEnabled checks if a feature is enabled
+// Toggles returns FeatureToggles.
 func (fm *FeatureManager) Toggles() *FeatureToggles {
 	if fm.toggles == nil {
 		fm.toggles = &FeatureToggles{manager: fm}
