@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
-import { ExpressionQuery, reducerTypes } from '../types';
+import { Checkbox, InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { ExpressionQuery, ReduceModeDropNN, reducerTypes } from '../types';
 
 interface Props {
   labelWidth: number;
@@ -21,6 +21,12 @@ export const Reduce: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
     onChange({ ...query, reducer: value.value });
   };
 
+  const dropNan = (query.mode ?? '') === ReduceModeDropNN;
+
+  const onModeChanged = (event: React.FormEvent<HTMLInputElement>) => {
+    onChange({ ...query, mode: event.currentTarget.checked ? ReduceModeDropNN : '' });
+  };
+
   return (
     <InlineFieldRow>
       <InlineField label="Function" labelWidth={labelWidth}>
@@ -28,6 +34,12 @@ export const Reduce: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
       </InlineField>
       <InlineField label="Input" labelWidth={labelWidth}>
         <Select menuShouldPortal onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
+      </InlineField>
+      <InlineField
+        label="Drop Empty Values"
+        tooltip={'If checked, the reduce operation will ignore NaN, null, Infinity values'}
+      >
+        <Checkbox value={dropNan} onChange={onModeChanged} />
       </InlineField>
     </InlineFieldRow>
   );

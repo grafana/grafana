@@ -49,6 +49,7 @@ export interface ExpressionQuery extends DataQuery {
   downsampler?: string;
   upsampler?: string;
   conditions?: ClassicCondition[];
+  mode?: string;
 }
 export interface ClassicCondition {
   evaluator: {
@@ -67,6 +68,8 @@ export interface ClassicCondition {
   };
   type: 'query';
 }
+
+export const ReduceModeDropNN = 'dropNN';
 
 export type ReducerType =
   | 'avg'
