@@ -1,5 +1,5 @@
 import { ArrayVector, Field, FieldConfig, FieldType } from '@grafana/data';
-import { getCenter } from 'ol/extent';
+import { getCenterPoint } from 'app/core/components/TransformersUI/spatial/utils';
 import { Geometry, LineString, Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 import { Gazetteer } from '../gazetteer/gazetteer';
