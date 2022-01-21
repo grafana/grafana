@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type ruleReader interface {
@@ -16,12 +16,14 @@ type ruleReader interface {
 
 type defaultRuleReader struct {
 	sync.RWMutex
-	log log.Logger
+	sqlStore *sqlstore.SQLStore
+	log      log.Logger
 }
 
-func newRuleReader() *defaultRuleReader {
+func newRuleReader(sqlStore *sqlstore.SQLStore) *defaultRuleReader {
 	ruleReader := &defaultRuleReader{
-		log: log.New("alerting.ruleReader"),
+		sqlStore: sqlStore,
+		log:      log.New("alerting.ruleReader"),
 	}
 
 	return ruleReader
@@ -30,7 +32,7 @@ func newRuleReader() *defaultRuleReader {
 func (arr *defaultRuleReader) fetch(ctx context.Context) []*Rule {
 	cmd := &models.GetAllAlertsQuery{}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := arr.sqlStore.GetAllAlertQueryHandler(ctx, cmd); err != nil {
 		arr.log.Error("Could not load alerts", "error", err)
 		return []*Rule{}
 	}
