@@ -1,4 +1,4 @@
-import { escapeString } from './helpers';
+import { formatString } from './helpers';
 
 describe('JSONFormatter helpers', () => {
   describe('escapeString', () => {
@@ -6,7 +6,7 @@ describe('JSONFormatter helpers', () => {
       const input = 'hello world';
       const expected = 'hello world';
 
-      const result = escapeString(input);
+      const result = formatString(input);
       expect(result).toEqual(expected);
     });
 
@@ -14,7 +14,7 @@ describe('JSONFormatter helpers', () => {
       const input = `'hello world'`;
       const expected = `'hello world'`;
 
-      const result = escapeString(input);
+      const result = formatString(input);
       expect(result).toEqual(expected);
     });
 
@@ -22,7 +22,7 @@ describe('JSONFormatter helpers', () => {
       const input = `"hello world`;
       const expected = `\\"hello world`;
 
-      const result = escapeString(input);
+      const result = formatString(input);
       expect(result).toEqual(expected);
     });
 
@@ -30,7 +30,7 @@ describe('JSONFormatter helpers', () => {
       const input = `"hello world"`;
       const expected = `\\"hello world\\"`;
 
-      const result = escapeString(input);
+      const result = formatString(input);
       expect(result).toEqual(expected);
     });
 
@@ -38,7 +38,7 @@ describe('JSONFormatter helpers', () => {
       const input = `{"hello": "world"}`;
       const expected = `{\\"hello\\": \\"world\\"}`;
 
-      const result = escapeString(input);
+      const result = formatString(input);
       expect(result).toEqual(expected);
     });
   });

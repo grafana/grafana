@@ -2,10 +2,10 @@
 // License MIT, Copyright (c) 2015 Mohsen Azimi
 
 /*
- * Escapes `"` characters from string for formatting
+ * Escapes `"` characters from string
  */
-export function escapeString(str: string): string {
-  return str.replace(/"/g, '\\"');
+export function formatString(str: string): string {
+  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 /*
@@ -62,7 +62,7 @@ export function getValuePreview(object: object, value: string): string {
   }
 
   if (type === 'string') {
-    value = '"' + escapeString(value) + '"';
+    value = '"' + formatString(value) + '"';
   }
   if (type === 'function') {
     // Remove content of the function
