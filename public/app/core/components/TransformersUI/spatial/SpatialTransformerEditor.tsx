@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
+import { css } from '@emotion/css';
 import {
   DataTransformerID,
   FrameGeometrySource,
   FrameGeometrySourceMode,
+  GrafanaTheme2,
   PanelOptionsEditorBuilder,
   PluginState,
   StandardEditorContext,
@@ -14,6 +16,7 @@ import { isLineBuilderOption, spatialTransformer } from './spatialTransformer';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
 import { SpatialCalculation, SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
+import { useTheme2 } from '@grafana/ui';
 
 // Nothing defined in state
 const supplier = (
@@ -83,26 +86,26 @@ const supplier = (
 
   if (isLineBuilderOption(options)) {
     builder.addNestedOptions({
-      category: ['From point'],
+      category: ['Source'],
       path: 'source',
       build: (b, c) => {
         const loc = (options.source ?? {}) as FrameGeometrySource;
         if (!loc.mode) {
           loc.mode = FrameGeometrySourceMode.Auto;
         }
-        addLocationFields('', '', b, loc);
+        addLocationFields('Point', '', b, loc);
       },
     });
 
     builder.addNestedOptions({
-      category: ['To point'],
+      category: ['Target'],
       path: 'modify',
       build: (b, c) => {
         const loc = (options.modify?.target ?? {}) as FrameGeometrySource;
         if (!loc.mode) {
           loc.mode = FrameGeometrySourceMode.Auto;
         }
-        addLocationFields('', 'target.', b, loc);
+        addLocationFields('Point', 'target.', b, loc);
       },
     });
   } else {
@@ -120,13 +123,36 @@ export const SetGeometryTransformerEditor: React.FC<TransformerUIProps<SpatialTr
     }
   });
 
+  const styles = getStyles(useTheme2());
+
   const pane = getTransformerOptionPane<SpatialTransformOptions>(props, supplier);
   return (
     <div>
       <div>{pane.items.map((v) => v.render())}</div>
-      <div>{pane.categories.map((v) => v.render())}</div>
+      <div>
+        {pane.categories.map((c) => {
+          return (
+            <div key={c.props.id} className={styles.wrap}>
+              <h5>{c.props.title}</h5>
+              <div className={styles.item}>{c.items.map((s) => s.render())}</div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrap: css`
+      margin-bottom: 20px;
+    `,
+    item: css`
+      border-left: 4px solid ${theme.colors.border.strong};
+      padding-left: 10px;
+    `,
+  };
 };
 
 export const spatialTransformRegistryItem: TransformerRegistryItem<SpatialTransformOptions> = {
