@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -67,25 +66,6 @@ func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string, 
 	}
 
 	return l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
-}
-
-func (l *Loader) load(ctx context.Context, class plugins.Class, path string, ignore map[string]struct{}) (*plugins.Plugin, error) {
-	pluginJSONPaths, err := l.pluginFinder.Find([]string{path})
-	if err != nil {
-		l.log.Error("failed to find plugin", "err", err)
-		return nil, err
-	}
-
-	loadedPlugins, err := l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(loadedPlugins) == 0 {
-		return nil, fmt.Errorf("could not load plugin at path %s", path)
-	}
-
-	return loadedPlugins[0], nil
 }
 
 func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.Plugin, error) {
