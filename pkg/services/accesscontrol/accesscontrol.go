@@ -20,9 +20,13 @@ type AccessControl interface {
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 
-	// DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their
+	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(...RoleRegistration) error
+
+	// RegisterAttributeScopeResolver allows the caller to register a scope resolver for a
+	// specific scope prefix (ex: datasources:name:)
+	RegisterAttributeScopeResolver(scopePrefix string, resolver AttributeScopeResolveFunc)
 }
 
 type PermissionsProvider interface {
@@ -146,7 +150,7 @@ func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map
 }
 
 // GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs map[string]bool) (map[string]Metadata, error) {
+func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs map[string]bool) map[string]Metadata {
 	allScope := GetResourceAllScope(resource)
 	allIDScope := GetResourceAllIDScope(resource)
 
@@ -171,5 +175,5 @@ func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resour
 		}
 	}
 
-	return result, nil
+	return result
 }

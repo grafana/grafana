@@ -2,18 +2,19 @@ package api
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-
-	"net/http"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,14 +40,12 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			TotalCount: 2,
 		}
 
-		hs := &HTTPServer{
-			Cfg: setting.NewCfg(),
-		}
+		hs := setupSimpleHTTPServer(nil)
 
-		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
+		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
 			var sentLimit int
 			var sendPage int
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
 				query.Result = mockResult
 
 				sentLimit = query.Limit
@@ -68,10 +67,10 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			assert.Equal(t, 2, len(respJSON.Get("teams").MustArray()))
 		})
 
-		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
+		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
 			var sentLimit int
 			var sendPage int
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
 				query.Result = mockResult
 
 				sentLimit = query.Limit
@@ -91,10 +90,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("When creating team with API key", func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
-		hs := &HTTPServer{
-			Cfg: setting.NewCfg(),
-			Bus: bus.GetBus(),
-		}
+		hs := setupSimpleHTTPServer(nil)
 		hs.Cfg.EditorsCanAdmin = true
 
 		teamName := "team foo"
@@ -154,5 +150,61 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			assert.Equal(t, addTeamMemberCalled, 1)
 			assert.False(t, stub.warnCalled)
 		})
+	})
+}
+
+var (
+	createTeamURL = "/api/teams/"
+	createTeamCmd = `{"name": "MyTestTeam%d"}`
+)
+
+func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl(t *testing.T) {
+	sc := setupHTTPServer(t, true, false)
+	setInitCtxSignedInOrgAdmin(sc.initCtx)
+
+	input := strings.NewReader(fmt.Sprintf(createTeamCmd, 1))
+	t.Run("Organisation admin can create a team", func(t *testing.T) {
+		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+
+	setInitCtxSignedInEditor(sc.initCtx)
+	sc.initCtx.IsGrafanaAdmin = true
+	input = strings.NewReader(fmt.Sprintf(createTeamCmd, 2))
+	t.Run("Org editor and server admin cannot create a team", func(t *testing.T) {
+		response := callAPI(sc.server, http.MethodPost, createTeamURL, strings.NewReader(createTeamCmd), t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl_EditorsCanAdmin(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.EditorsCanAdmin = true
+	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+
+	setInitCtxSignedInEditor(sc.initCtx)
+	input := strings.NewReader(fmt.Sprintf(createTeamCmd, 1))
+	t.Run("Editors can create a team if editorsCanAdmin is set to true", func(t *testing.T) {
+		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+}
+
+func TestTeamAPIEndpoint_CreateTeam_FGAC(t *testing.T) {
+	sc := setupHTTPServer(t, true, true)
+
+	setInitCtxSignedInViewer(sc.initCtx)
+	input := strings.NewReader(fmt.Sprintf(createTeamCmd, 1))
+	t.Run("Access control allows creating teams with the correct permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionTeamsCreate}}, 1)
+		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+
+	input = strings.NewReader(fmt.Sprintf(createTeamCmd, 2))
+	t.Run("Access control prevents creating teams with the incorrect permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "teams:invalid"}}, accesscontrol.GlobalOrgID)
+		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 }

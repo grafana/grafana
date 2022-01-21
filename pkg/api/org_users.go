@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -30,7 +31,12 @@ func (hs *HTTPServer) AddOrgUser(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.ParamsInt64(":orgId")
+
+	var err error
+	cmd.OrgId, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
 	return hs.addOrgUserHelper(c.Req.Context(), cmd)
 }
 
@@ -71,6 +77,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
+		User:  c.SignedInUser,
 	}, c.SignedInUser)
 
 	if err != nil {
@@ -86,6 +93,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
+		User:  c.SignedInUser,
 	}, c.SignedInUser)
 
 	if err != nil {
@@ -105,7 +113,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 	return response.JSON(200, result)
 }
 
-func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, userID int64) (accesscontrol.Metadata, error) {
+func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, resourceIDs map[string]bool) (map[string]accesscontrol.Metadata, error) {
 	if hs.AccessControl == nil || hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
 		return nil, nil
 	}
@@ -115,23 +123,21 @@ func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, userID 
 		return nil, err
 	}
 
-	key := fmt.Sprintf("%d", userID)
-	userIDs := map[string]bool{key: true}
-
-	metadata, err := accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "users", userIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	return metadata[key], err
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "users", resourceIDs), nil
 }
 
 // GET /api/orgs/:orgId/users
 func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
+	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
+
 	result, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
-		OrgId: c.ParamsInt64(":orgId"),
+		OrgId: orgId,
 		Query: "",
 		Limit: 0,
+		User:  c.SignedInUser,
 	}, c.SignedInUser)
 
 	if err != nil {
@@ -147,20 +153,28 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetO
 	}
 
 	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result))
+	userIDs := map[string]bool{}
 	for _, user := range query.Result {
 		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
 			continue
 		}
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
 
-		accessControlMetadata, errAC := hs.getUserAccessControlMetadata(c, user.UserId)
-		if errAC != nil {
-			hs.log.Error("Failed to get access control metadata", "error", errAC)
-		}
-
-		user.AccessControl = accessControlMetadata
-
+		userIDs[fmt.Sprint(user.UserId)] = true
 		filteredUsers = append(filteredUsers, user)
+	}
+
+	accessControlMetadata, errAC := hs.getUserAccessControlMetadata(c, userIDs)
+	if errAC != nil {
+		hs.log.Error("Failed to get access control metadata", "error", errAC)
+
+		return filteredUsers, nil
+	} else if accessControlMetadata == nil {
+		return filteredUsers, nil
+	}
+
+	for i := range filteredUsers {
+		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserId)]
 	}
 
 	return filteredUsers, nil
@@ -183,8 +197,9 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 	query := &models.SearchOrgUsersQuery{
 		OrgID: c.OrgId,
 		Query: c.Query("query"),
-		Limit: perPage,
 		Page:  page,
+		Limit: perPage,
+		User:  c.SignedInUser,
 	}
 
 	if err := hs.SQLStore.SearchOrgUsers(ctx, query); err != nil {
@@ -215,18 +230,29 @@ func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgId
-	cmd.UserId = c.ParamsInt64(":userId")
+	var err error
+	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "userId is invalid", err)
+	}
 	return hs.updateOrgUserHelper(c.Req.Context(), cmd)
 }
 
 // PATCH /api/orgs/:orgId/users/:userId
 func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext) response.Response {
 	cmd := models.UpdateOrgUserCommand{}
+	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.ParamsInt64(":orgId")
-	cmd.UserId = c.ParamsInt64(":userId")
+	cmd.OrgId, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
+	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "userId is invalid", err)
+	}
 	return hs.updateOrgUserHelper(c.Req.Context(), cmd)
 }
 
@@ -246,8 +272,13 @@ func (hs *HTTPServer) updateOrgUserHelper(ctx context.Context, cmd models.Update
 
 // DELETE /api/org/users/:userId
 func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
+	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "userId is invalid", err)
+	}
+
 	return hs.removeOrgUserHelper(c.Req.Context(), &models.RemoveOrgUserCommand{
-		UserId:                   c.ParamsInt64(":userId"),
+		UserId:                   userId,
 		OrgId:                    c.OrgId,
 		ShouldDeleteOrphanedUser: true,
 	})
@@ -255,9 +286,17 @@ func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.
 
 // DELETE /api/orgs/:orgId/users/:userId
 func (hs *HTTPServer) RemoveOrgUser(c *models.ReqContext) response.Response {
+	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "userId is invalid", err)
+	}
+	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
 	return hs.removeOrgUserHelper(c.Req.Context(), &models.RemoveOrgUserCommand{
-		UserId: c.ParamsInt64(":userId"),
-		OrgId:  c.ParamsInt64(":orgId"),
+		UserId: userId,
+		OrgId:  orgId,
 	})
 }
 

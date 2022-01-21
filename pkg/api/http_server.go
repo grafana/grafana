@@ -13,7 +13,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -53,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -73,6 +76,7 @@ type HTTPServer struct {
 	Bus                       bus.Bus
 	RenderService             rendering.Service
 	Cfg                       *setting.Cfg
+	Features                  *featuremgmt.FeatureManager
 	SettingsProvider          setting.Provider
 	HooksService              *hooks.HooksService
 	CacheService              *localcache.CacheService
@@ -109,10 +113,12 @@ type HTTPServer struct {
 	SecretsService            secrets.Service
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
-	tracingService            tracing.Tracer
+	tracer                    tracing.Tracer
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
+	teamGuardian              teamguardian.TeamGuardian
 	queryDataService          *query.Service
+	serviceAccountsService    serviceaccounts.Service
 }
 
 type ServerOptions struct {
@@ -131,13 +137,13 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginService login.Service, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
-	contextHandler *contexthandler.ContextHandler,
+	contextHandler *contexthandler.ContextHandler, features *featuremgmt.FeatureManager,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	quotaService *quota.QuotaService, socialService social.Service, tracingService tracing.Tracer,
+	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
-	dataSourcesService *datasources.Service, secretsService secrets.Service,
-	queryDataService *query.Service) (*HTTPServer, error) {
+	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
+	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -163,6 +169,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AuthTokenService:          userTokenService,
 		cleanUpService:            cleanUpService,
 		ShortURLService:           shortURLService,
+		Features:                  features,
 		ThumbService:              thumbService,
 		RemoteCacheService:        remoteCache,
 		ProvisioningService:       provisioningService,
@@ -179,7 +186,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		LibraryPanelService:       libraryPanelService,
 		LibraryElementService:     libraryElementService,
 		QuotaService:              quotaService,
-		tracingService:            tracingService,
+		tracer:                    tracer,
 		log:                       log.New("http.server"),
 		web:                       m,
 		Listener:                  opts.Listener,
@@ -188,7 +195,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SecretsService:            secretsService,
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
+		teamGuardian:              teamGuardian,
 		queryDataService:          queryDataService,
+		serviceAccountsService:    serviceaccountsService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -401,7 +410,7 @@ func (hs *HTTPServer) applyRoutes() {
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
-	m.Use(middleware.RequestTracing())
+	m.Use(middleware.RequestTracing(hs.tracer))
 
 	m.Use(middleware.Logger(hs.Cfg))
 

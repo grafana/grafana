@@ -1,41 +1,6 @@
-import { DataFrame, SelectableValue } from '@grafana/data';
-import { Feature } from 'ol';
+import { SelectableValue } from '@grafana/data';
 import { FeatureLike } from 'ol/Feature';
-import { Geometry, LineString, Point } from 'ol/geom';
 import { GeometryTypeId } from '../style/types';
-import { LocationInfo } from './location';
-
-export const getFeatures = (frame: DataFrame, info: LocationInfo): Array<Feature<Point>> | undefined => {
-  const features: Array<Feature<Point>> = [];
-
-  // Map each data value into new points
-  for (let i = 0; i < frame.length; i++) {
-    features.push(
-      new Feature({
-        frame,
-        rowIndex: i,
-        geometry: info.points[i],
-      })
-    );
-  }
-
-  return features;
-};
-
-export const getFeaturesLineString = (frame: DataFrame, info: LocationInfo): Array<Feature<Geometry>> | undefined => {
-  const features: Array<Feature<Geometry>> = [];
-
-  const geometry = new LineString(info.points.map((p) => p.getCoordinates()));
-  features.push(
-    new Feature({
-      frame,
-      geometry: geometry,
-      rowIndex: 0,
-    })
-  );
-
-  return features;
-};
 
 export interface LayerContentInfo {
   geometryType: GeometryTypeId;

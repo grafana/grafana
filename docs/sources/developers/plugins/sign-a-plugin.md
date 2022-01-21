@@ -41,6 +41,8 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
    npx @grafana/toolkit plugin:sign
    ```
 
+> **Note:** If running NPM 7+ the `npx` commands mentioned in this article may hang. The workaround is to use `npx --legacy-peer-deps <command to run>`.
+
 ## Sign a private plugin
 
 1. In your plugin directory, sign the plugin with the API key you just created. Grafana Toolkit creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
