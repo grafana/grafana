@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -12,61 +11,31 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMatrixResponses(t *testing.T) {
 	t.Run("parse a simple matrix response", func(t *testing.T) {
-		err := testScenario("range_simple")
-		require.NoError(t, err)
+		testScenario(t, "range_simple")
 	})
 
 	t.Run("parse a simple matrix response with value missing steps", func(t *testing.T) {
-		err := testScenario("range_missing")
-		require.NoError(t, err)
+		testScenario(t, "range_missing")
 	})
 
 	t.Run("parse a response with Infinity", func(t *testing.T) {
-		err := testScenario("range_infinity")
-		require.NoError(t, err)
+		testScenario(t, "range_infinity")
 	})
 
 	t.Run("parse a response with NaN", func(t *testing.T) {
-		err := testScenario("range_nan")
-		require.NoError(t, err)
+		testScenario(t, "range_nan")
 	})
-}
-
-// when memory-profiling this benchmark, these commands are recommended:
-// - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkJson$ github.com/grafana/grafana/pkg/tsdb/prometheus
-// - go tool pprof -http=localhost:6061 memprofile.out
-func BenchmarkJson(b *testing.B) {
-	bytes, query := createJsonTestData(1642000000, 1, 300, 400)
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
-		result, err := runQuery(bytes, query)
-		if err != nil {
-			b.Error(err)
-		}
-		if len(result.Responses) != 1 {
-			b.Error(fmt.Errorf("result.Responses length must be 1"))
-		}
-
-		dr, found := result.Responses["A"]
-		if !found {
-			b.Error(fmt.Errorf("result.Responses[A] not found"))
-		}
-
-		if dr.Error != nil {
-			b.Error(dr.Error)
-		}
-	}
 }
 
 type mockedRoundTripper struct {
@@ -151,37 +120,23 @@ func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataRespons
 
 // we run the mocked query, and extract the DataResponse.
 // we assume and verify that there is exactly one DataResponse returned.
-func testScenario(name string) error {
+func testScenario(t *testing.T, name string) {
 	queryFileName := filepath.Join("testdata", name+".query.json")
 	responseFileName := filepath.Join("testdata", name+".result.json")
 	goldenFileName := filepath.Join("testdata", name+".result.golden.txt")
 
 	query, err := loadStoredPrometheusQuery(queryFileName)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
 
 	responseBytes, err := os.ReadFile(responseFileName)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
 
 	result, err := runQuery(responseBytes, query)
-	if err != nil {
-		return err
-	}
-	if len(result.Responses) != 1 {
-		return fmt.Errorf("result.Responses length must be 1")
-	}
+	require.NoError(t, err)
+	require.Len(t, result.Responses, 1)
 
 	dr, found := result.Responses["A"]
-	if !found {
-		return fmt.Errorf("result.Responses[A] not found")
-	}
+	require.True(t, found)
 
-	if dr.Error != nil {
-		return dr.Error
-	}
-
-	return experimental.CheckGoldenDataResponse(goldenFileName, &dr, true)
+	require.NoError(t, experimental.CheckGoldenDataResponse(goldenFileName, &dr, true))
 }

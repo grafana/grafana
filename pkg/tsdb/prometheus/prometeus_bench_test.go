@@ -1,24 +1,48 @@
 package prometheus
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"strings"
+	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/stretchr/testify/require"
 )
+
+// when memory-profiling this benchmark, these commands are recommended:
+// - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkJson$ github.com/grafana/grafana/pkg/tsdb/prometheus
+// - go tool pprof -http=localhost:6061 memprofile.out
+func BenchmarkJson(b *testing.B) {
+	resp, query := createJsonTestData(1642000000, 1, 300, 400)
+
+	api, err := makeMockedApi(resp)
+	require.NoError(b, err)
+
+	tracer, err := tracing.InitializeTracerForTest()
+	require.NoError(b, err)
+
+	s := Service{tracer: tracer}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_, _ = s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
+	}
+}
+
+const nanRate = 0.002
 
 // we build the JSON file from strings,
 // it was easier to write it this way.
-
 func makeJsonTestMetric(index int) string {
 	return fmt.Sprintf(`{"server":"main","category":"maintenance","case":"%v"}`, index)
 }
 
-const NAN_RATE = 0.002
-
 // return a value between -100 and +100, sometimes NaN, in string
 func makeJsonTestValue(r *rand.Rand) string {
-	if r.Float64() < NAN_RATE {
+	if r.Float64() < nanRate {
 		return "NaN"
 	} else {
 		return fmt.Sprintf("%f", (r.Float64()*200)-100)
