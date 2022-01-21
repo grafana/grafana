@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -34,21 +33,19 @@ type Client struct {
 	httpClient          http.Client
 	httpClientNoTimeout http.Client
 	retryCount          int
-	grafanaVersion      string
 
 	log Logger
 }
 
-func newClient(skipTLSVerify bool, grafanaVersion string, logger Logger) *Client {
+func newClient(skipTLSVerify bool, logger Logger) *Client {
 	return &Client{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
 		log:                 logger,
-		grafanaVersion:      grafanaVersion,
 	}
 }
 
-func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL, checksum, pluginsPath string,
+func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL, checksum, pluginsPath, grafanaVersion string,
 	allowSymlinks bool, repo Repository) (*PluginArchiveInfo, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
@@ -63,7 +60,7 @@ func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL,
 
 	c.log.Debugf("Installing plugin\nfrom: %s\ninto: %s", pluginZipURL, pluginsPath)
 
-	err = c.downloadFile(tmpFile, pluginZipURL, checksum)
+	err = c.downloadFile(tmpFile, pluginZipURL, checksum, grafanaVersion)
 	if err != nil {
 		if err := tmpFile.Close(); err != nil {
 			c.log.Warn("Failed to close file", "err", err)
@@ -97,7 +94,8 @@ func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL,
 	// download dependency plugins
 	for _, dep := range res.Dependencies.Plugins {
 		c.log.Infof("Fetching %s dependencies...", res.ID)
-		if dep, err := repo.Download(ctx, dep.ID, normalizeVersion(dep.Version)); err != nil {
+		if dep, err := repo.Download(ctx, dep.ID, normalizeVersion(dep.Version),
+			CompatabilityOpts{GrafanaVersion: grafanaVersion}); err != nil {
 			return nil, errutil.Wrapf(err, "failed to install plugin %s", dep.ID)
 		} else {
 			installedPlugin.Dependencies[dep.ID] = dep
@@ -107,7 +105,7 @@ func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL,
 	return installedPlugin, err
 }
 
-func (c *Client) downloadFile(tmpFile *os.File, url string, checksum string) (err error) {
+func (c *Client) downloadFile(tmpFile *os.File, url, checksum, grafanaVersion string) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(url); err == nil {
 		// We can ignore this gosec G304 warning since `repoURL` stems from command line flag "pluginUrl". If the
@@ -144,7 +142,7 @@ func (c *Client) downloadFile(tmpFile *os.File, url string, checksum string) (er
 				if err != nil {
 					return
 				}
-				err = c.downloadFile(tmpFile, url, checksum)
+				err = c.downloadFile(tmpFile, url, checksum, grafanaVersion)
 			} else {
 				c.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
@@ -159,7 +157,7 @@ func (c *Client) downloadFile(tmpFile *os.File, url string, checksum string) (er
 
 	// Using no timeout here as some plugins can be bigger and smaller timeout would prevent to download a plugin on
 	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
-	bodyReader, err := c.sendRequestWithoutTimeout(url)
+	bodyReader, err := c.sendRequestWithoutTimeout(url, grafanaVersion)
 	if err != nil {
 		return err
 	}
@@ -183,8 +181,8 @@ func (c *Client) downloadFile(tmpFile *os.File, url string, checksum string) (er
 	return nil
 }
 
-func (c *Client) sendRequestGetBytes(url string, subPaths ...string) ([]byte, error) {
-	bodyReader, err := c.sendRequest(url, subPaths...)
+func (c *Client) sendRequestGetBytes(url, grafanaVersion string) ([]byte, error) {
+	bodyReader, err := c.sendRequest(url, grafanaVersion)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -196,8 +194,8 @@ func (c *Client) sendRequestGetBytes(url string, subPaths ...string) ([]byte, er
 	return ioutil.ReadAll(bodyReader)
 }
 
-func (c *Client) sendRequest(URL string, subPaths ...string) (io.ReadCloser, error) {
-	req, err := c.createRequest(URL, subPaths...)
+func (c *Client) sendRequest(url, grafanaVersion string) (io.ReadCloser, error) {
+	req, err := c.createRequest(url, grafanaVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -206,11 +204,11 @@ func (c *Client) sendRequest(URL string, subPaths ...string) (io.ReadCloser, err
 	if err != nil {
 		return nil, err
 	}
-	return c.handleResponse(res)
+	return c.handleResponse(res, grafanaVersion)
 }
 
-func (c *Client) sendRequestWithoutTimeout(URL string, subPaths ...string) (io.ReadCloser, error) {
-	req, err := c.createRequest(URL, subPaths...)
+func (c *Client) sendRequestWithoutTimeout(url, grafanaVersion string) (io.ReadCloser, error) {
+	req, err := c.createRequest(url, grafanaVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -219,17 +217,13 @@ func (c *Client) sendRequestWithoutTimeout(URL string, subPaths ...string) (io.R
 	if err != nil {
 		return nil, err
 	}
-	return c.handleResponse(res)
+	return c.handleResponse(res, grafanaVersion)
 }
 
-func (c *Client) createRequest(URL string, subPaths ...string) (*http.Request, error) {
+func (c *Client) createRequest(URL, grafanaVersion string) (*http.Request, error) {
 	u, err := url.Parse(URL)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, v := range subPaths {
-		u.Path = path.Join(u.Path, v)
 	}
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
@@ -237,15 +231,15 @@ func (c *Client) createRequest(URL string, subPaths ...string) (*http.Request, e
 		return nil, err
 	}
 
-	req.Header.Set("grafana-version", c.grafanaVersion)
+	req.Header.Set("grafana-version", grafanaVersion)
 	req.Header.Set("grafana-os", runtime.GOOS)
 	req.Header.Set("grafana-arch", runtime.GOARCH)
-	req.Header.Set("User-Agent", "grafana "+c.grafanaVersion)
+	req.Header.Set("User-Agent", "grafana "+grafanaVersion)
 
 	return req, err
 }
 
-func (c *Client) handleResponse(res *http.Response) (io.ReadCloser, error) {
+func (c *Client) handleResponse(res *http.Response, grafanaVersion string) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
 		body, err := ioutil.ReadAll(res.Body)
 		defer func() {
@@ -264,7 +258,7 @@ func (c *Client) handleResponse(res *http.Response) (io.ReadCloser, error) {
 		} else {
 			message = jsonBody["message"]
 		}
-		return nil, Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: c.fullSystemInfoString()}
+		return nil, Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: c.fullSystemInfoString(grafanaVersion)}
 	}
 
 	if res.StatusCode/100 != 2 {
@@ -387,8 +381,8 @@ func (c *Client) extractFiles(archivePath string, pluginID string, destPath stri
 	return installDir, nil
 }
 
-func (c *Client) fullSystemInfoString() string {
-	return fmt.Sprintf("Grafana v%s %s", c.grafanaVersion, osAndArchString())
+func (c *Client) fullSystemInfoString(grafanaVersion string) string {
+	return fmt.Sprintf("Grafana v%s %s", grafanaVersion, osAndArchString())
 }
 
 func osAndArchString() string {

@@ -18,9 +18,13 @@ type Store interface {
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 	// Add adds a plugin from the repository to the store.
-	Add(ctx context.Context, pluginID, version string, repo repository.Repository) error
+	Add(ctx context.Context, pluginID, version string, repo repository.Repository, opts CompatabilityOpts) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
+}
+
+type CompatabilityOpts struct {
+	GrafanaVersion string
 }
 
 // Loader is responsible for loading plugins from the file system.

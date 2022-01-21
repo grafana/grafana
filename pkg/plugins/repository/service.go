@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,9 +22,9 @@ type Service struct {
 	log         Logger
 }
 
-func New(skipTLSVerify bool, grafanaVersion, pluginsPath, repoURL string, logger Logger) *Service {
+func New(skipTLSVerify bool, pluginsPath, repoURL string, logger Logger) *Service {
 	return &Service{
-		client:      newClient(skipTLSVerify, grafanaVersion, logger),
+		client:      newClient(skipTLSVerify, logger),
 		pluginsPath: pluginsPath,
 		repoURL:     repoURL,
 		log:         logger,
@@ -34,26 +35,26 @@ func ProvideService(cfg *setting.Cfg) *Service {
 	logger := newLogger("plugin.repository", true)
 
 	return &Service{
-		client:      newClient(false, cfg.BuildVersion, logger),
+		client:      newClient(false, logger),
 		pluginsPath: cfg.PluginsPath,
 		log:         logger,
 	}
 }
 
 // Download downloads the requested plugin archive
-func (s *Service) Download(ctx context.Context, pluginID, version string) (*PluginArchiveInfo, error) {
+func (s *Service) Download(ctx context.Context, pluginID, version string, opts CompatabilityOpts) (*PluginArchiveInfo, error) {
 	isGrafanaPlugin := false
 
 	if strings.HasPrefix(pluginID, "grafana-") {
 		isGrafanaPlugin = true
 	}
 
-	pluginMeta, err := s.pluginMetadata(pluginID)
+	pluginMeta, err := s.pluginMetadata(pluginID, opts.GrafanaVersion)
 	if err != nil {
 		return nil, err
 	}
 
-	v, err := s.selectVersion(&pluginMeta, version)
+	v, err := s.selectVersion(&pluginMeta, version, opts.GrafanaVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -74,16 +75,20 @@ func (s *Service) Download(ctx context.Context, pluginID, version string) (*Plug
 
 	pluginZipURL := fmt.Sprintf("%s/%s/versions/%s/download", grafanaComAPIRoot, pluginID, version)
 
-	return s.client.downloadAndExtract(ctx, pluginID, pluginZipURL, checksum, s.pluginsPath, isGrafanaPlugin, s)
+	return s.client.downloadAndExtract(ctx, pluginID, pluginZipURL, checksum, s.pluginsPath, opts.GrafanaVersion, isGrafanaPlugin, s)
 }
 
-func (s *Service) GetDownloadOptions(_ context.Context, pluginID, version string) (*PluginDownloadOptions, error) {
-	plugin, err := s.pluginMetadata(pluginID)
+func (s *Service) DownloadWithURL(ctx context.Context, pluginID, archiveURL string, opts CompatabilityOpts) (*PluginArchiveInfo, error) {
+	return s.client.downloadAndExtract(ctx, pluginID, archiveURL, "", s.pluginsPath, opts.GrafanaVersion, false, s)
+}
+
+func (s *Service) GetDownloadOptions(_ context.Context, pluginID, version string, opts CompatabilityOpts) (*PluginDownloadOptions, error) {
+	plugin, err := s.pluginMetadata(pluginID, opts.GrafanaVersion)
 	if err != nil {
 		return nil, err
 	}
 
-	v, err := s.selectVersion(&plugin, version)
+	v, err := s.selectVersion(&plugin, version, opts.GrafanaVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -94,17 +99,13 @@ func (s *Service) GetDownloadOptions(_ context.Context, pluginID, version string
 	}, nil
 }
 
-func (s *Service) DownloadWithURL(ctx context.Context, pluginID, archiveURL string) (*PluginArchiveInfo, error) {
-	return s.client.downloadAndExtract(ctx, pluginID, archiveURL, "", s.pluginsPath, false, s)
-}
-
-func (s *Service) pluginMetadata(pluginID string) (Plugin, error) {
+func (s *Service) pluginMetadata(pluginID, grafanaVersion string) (Plugin, error) {
 	s.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, grafanaComAPIRoot)
 	repoURL := s.repoURL
 	if repoURL == "" {
 		repoURL = grafanaComAPIRoot
 	}
-	body, err := s.client.sendRequestGetBytes(repoURL, "repo", pluginID)
+	body, err := s.client.sendRequestGetBytes(path.Join(repoURL, "repo", pluginID), grafanaVersion)
 	if err != nil {
 		return Plugin{}, err
 	}
@@ -125,7 +126,7 @@ func (s *Service) pluginMetadata(pluginID string) (Plugin, error) {
 // returns error if the supplied version does not exist.
 // returns error if supplied version exists but is not supported.
 // NOTE: It expects plugin.Versions to be sorted so the newest version is first.
-func (s *Service) selectVersion(plugin *Plugin, version string) (*Version, error) {
+func (s *Service) selectVersion(plugin *Plugin, version, grafanaVersion string) (*Version, error) {
 	var ver Version
 
 	latestForArch := latestSupportedVersion(plugin)
@@ -133,7 +134,7 @@ func (s *Service) selectVersion(plugin *Plugin, version string) (*Version, error
 		return nil, ErrVersionUnsupported{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
-			SystemInfo:       s.client.fullSystemInfoString(),
+			SystemInfo:       s.client.fullSystemInfoString(grafanaVersion),
 		}
 	}
 
@@ -153,7 +154,7 @@ func (s *Service) selectVersion(plugin *Plugin, version string) (*Version, error
 		return nil, ErrVersionNotFound{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
-			SystemInfo:       s.client.fullSystemInfoString(),
+			SystemInfo:       s.client.fullSystemInfoString(grafanaVersion),
 		}
 	}
 
@@ -163,7 +164,7 @@ func (s *Service) selectVersion(plugin *Plugin, version string) (*Version, error
 		return nil, ErrVersionUnsupported{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
-			SystemInfo:       s.client.fullSystemInfoString(),
+			SystemInfo:       s.client.fullSystemInfoString(grafanaVersion),
 		}
 	}
 

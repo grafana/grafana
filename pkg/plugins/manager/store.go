@@ -43,7 +43,8 @@ func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) 
 	return pluginsList
 }
 
-func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo repository.Repository) error {
+func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo repository.Repository,
+	opts plugins.CompatabilityOpts) error {
 	if version != "" && !isSemVerExpr(version) {
 		return plugins.ErrInvalidPluginVersionFormat
 	}
@@ -62,7 +63,9 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo 
 		}
 
 		// get plugin update information to confirm if target update is possible
-		dlOpts, err := repo.GetDownloadOptions(ctx, pluginID, version)
+		dlOpts, err := repo.GetDownloadOptions(ctx, pluginID, version, repository.CompatabilityOpts{
+			GrafanaVersion: opts.GrafanaVersion,
+		})
 		if err != nil {
 			return err
 		}
@@ -86,19 +89,25 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo 
 		}
 
 		if dlOpts.PluginZipURL != "" {
-			newPluginArchive, err = repo.DownloadWithURL(ctx, pluginID, dlOpts.PluginZipURL)
+			newPluginArchive, err = repo.DownloadWithURL(ctx, pluginID, dlOpts.PluginZipURL, repository.CompatabilityOpts{
+				GrafanaVersion: opts.GrafanaVersion,
+			})
 			if err != nil {
 				return err
 			}
 		} else {
-			newPluginArchive, err = repo.Download(ctx, pluginID, dlOpts.Version)
+			newPluginArchive, err = repo.Download(ctx, pluginID, dlOpts.Version, repository.CompatabilityOpts{
+				GrafanaVersion: opts.GrafanaVersion,
+			})
 			if err != nil {
 				return err
 			}
 		}
 	} else {
 		var err error
-		newPluginArchive, err = repo.Download(ctx, pluginID, version)
+		newPluginArchive, err = repo.Download(ctx, pluginID, version, repository.CompatabilityOpts{
+			GrafanaVersion: opts.GrafanaVersion,
+		})
 		if err != nil {
 			return err
 		}
