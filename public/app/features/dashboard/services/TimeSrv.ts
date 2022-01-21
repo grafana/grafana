@@ -110,7 +110,7 @@ export class TimeSrv {
       this.time.to = 'now';
       this.setTime(this.time);
       appEvents.emit(AppEvents.alertWarning, [
-        'Timerange of this dashboard has changed.',
+        'Previous time span of this dashboard has changed.',
       ]);
     }
   }
