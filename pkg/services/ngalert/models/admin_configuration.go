@@ -53,12 +53,16 @@ func (ac *AdminConfiguration) Validate() error {
 	return nil
 }
 
-// Implements the Stringer interface
+// String implements the Stringer interface
 func (amc AlertmanagersChoice) String() string {
 	return alertmanagersChoiceMap[amc]
 }
 
 func StringToAlertmanagersChoice(str string) (AlertmanagersChoice, error) {
+	if str == "" {
+		return AllAlertmanagers, nil
+	}
+
 	for k, v := range alertmanagersChoiceMap {
 		if str == v {
 			return k, nil
