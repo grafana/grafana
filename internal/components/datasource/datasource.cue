@@ -15,7 +15,7 @@ seqs: [
                 type: string
                 typeLogoUrl: string
                 // access: *"proxy" | "direct" // TODO are we sure this default is right?
-                access: string // 
+                access: string // FIXME doing this until sam figures out how to deal with CUE<->Go type mappings
                 url: string
                 password: string
                 user: string
