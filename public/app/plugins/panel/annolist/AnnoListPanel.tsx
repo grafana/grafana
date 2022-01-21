@@ -17,10 +17,10 @@ import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import appEvents from 'app/core/app_events';
 import { AnnotationListItem } from './AnnotationListItem';
-import { AnnotationListItemTags } from './AnnotationListItemTags';
-import { CustomScrollbar, stylesFactory } from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, TagList } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { Subscription } from 'rxjs';
+import { FocusScope } from '@react-aria/focus';
 
 interface UserInfo {
   id?: number;
@@ -181,9 +181,22 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   }
 
   onTagClick = (tag: string, remove?: boolean) => {
+    if (!remove && this.state.queryTags.includes(tag)) {
+      return;
+    }
+
     const queryTags = remove ? this.state.queryTags.filter((item) => item !== tag) : [...this.state.queryTags, tag];
 
-    this.setState({ queryTags });
+    // Logic to ensure keyboard focus isn't lost when the currently
+    // focused tag is removed
+    let nextTag: HTMLElement | undefined = undefined;
+    if (remove) {
+      const focusedTag = document.activeElement;
+      nextTag = (focusedTag!.parentElement?.nextElementSibling?.firstElementChild ??
+        focusedTag!.parentElement?.previousElementSibling?.firstElementChild) as HTMLElement;
+    }
+
+    this.setState({ queryTags }, () => nextTag?.focus());
   };
 
   onUserClick = (anno: AnnotationEvent) => {
@@ -200,10 +213,6 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     this.setState({
       queryUser: undefined,
     });
-  };
-
-  renderTags = (tags?: string[], remove?: boolean): JSX.Element | null => {
-    return <AnnotationListItemTags tags={tags} remove={remove} onClick={this.onTagClick} />;
   };
 
   renderItem = (anno: AnnotationEvent, index: number): JSX.Element => {
@@ -242,14 +251,24 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     return (
       <CustomScrollbar autoHeightMin="100%">
         {hasFilter && (
-          <div>
-            <b>Filter: &nbsp; </b>
+          <div className={this.style.filter}>
+            <b>Filter:</b>
             {queryUser && (
               <span onClick={this.onClearUser} className="pointer">
                 {queryUser.email}
               </span>
             )}
-            {queryTags.length > 0 && this.renderTags(queryTags, true)}
+            {queryTags.length > 0 && (
+              <FocusScope restoreFocus>
+                <TagList
+                  icon="times"
+                  tags={queryTags}
+                  onClick={(tag) => this.onTagClick(tag, true)}
+                  getAriaLabel={(name) => `Remove ${name} tag`}
+                  className={this.style.tagList}
+                />
+              </FocusScope>
+            )}
           </div>
         )}
 
@@ -269,4 +288,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     width: 100%;
     height: calc(100% - 30px);
   `,
+  filter: css({
+    display: 'flex',
+    padding: `0px ${theme.spacing.xs}`,
+    b: {
+      paddingRight: theme.spacing.sm,
+    },
+  }),
+  tagList: css({
+    justifyContent: 'flex-start',
+    'li > button': {
+      paddingLeft: '3px',
+    },
+  }),
 }));
