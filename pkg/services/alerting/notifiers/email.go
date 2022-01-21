@@ -3,12 +3,12 @@ package notifiers
 import (
 	"os"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -48,7 +48,7 @@ type EmailNotifier struct {
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+func NewEmailNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
 	addressesString := model.Settings.Get("addresses").MustString()
 	singleEmail := model.Settings.Get("singleEmail").MustBool(false)
 
@@ -60,7 +60,7 @@ func NewEmailNotifier(model *models.AlertNotification, _ alerting.GetDecryptedVa
 	addresses := util.SplitEmails(addressesString)
 
 	return &EmailNotifier{
-		NotifierBase: NewNotifierBase(model),
+		NotifierBase: NewNotifierBase(model, ns),
 		Addresses:    addresses,
 		SingleEmail:  singleEmail,
 		log:          log.New("alerting.notifier.email"),
@@ -117,7 +117,7 @@ func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	}
 
-	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+	if err := en.NotificationService.SendEmailCommandHandlerSync(evalContext.Ctx, cmd); err != nil {
 		en.log.Error("Failed to send alert notification email", "error", err)
 		return err
 	}

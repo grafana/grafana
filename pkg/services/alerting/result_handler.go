@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
@@ -24,10 +25,10 @@ type defaultResultHandler struct {
 	log      log.Logger
 }
 
-func newResultHandler(renderService rendering.Service, decryptFn GetDecryptedValueFn) *defaultResultHandler {
+func newResultHandler(renderService rendering.Service, notificationService *notifications.NotificationService, decryptFn GetDecryptedValueFn) *defaultResultHandler {
 	return &defaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
-		notifier: newNotificationService(renderService, decryptFn),
+		notifier: newNotificationService(renderService, notificationService, decryptFn),
 	}
 }
 

@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -76,7 +76,7 @@ var (
 )
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+func NewPagerdutyNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
 	severity := model.Settings.Get("severity").MustString("critical")
 	autoResolve := model.Settings.Get("autoResolve").MustBool(false)
 	key := fn(context.Background(), model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString(), setting.SecretKey)
@@ -86,7 +86,7 @@ func NewPagerdutyNotifier(model *models.AlertNotification, fn alerting.GetDecryp
 	}
 
 	return &PagerdutyNotifier{
-		NotifierBase:     NewNotifierBase(model),
+		NotifierBase:     NewNotifierBase(model, ns),
 		Key:              key,
 		Severity:         severity,
 		AutoResolve:      autoResolve,
@@ -240,7 +240,7 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 		},
 	}
 
-	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+	if err := pn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		pn.log.Error("Failed to send notification to Pagerduty", "error", err, "body", string(body))
 		return err
 	}

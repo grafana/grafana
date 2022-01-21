@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -84,7 +84,7 @@ const (
 )
 
 // NewOpsGenieNotifier is the constructor for OpsGenie.
-func NewOpsGenieNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+func NewOpsGenieNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
 	apiKey := fn(context.Background(), model.SecureSettings, "apiKey", model.Settings.Get("apiKey").MustString(), setting.SecretKey)
@@ -104,7 +104,7 @@ func NewOpsGenieNotifier(model *models.AlertNotification, fn alerting.GetDecrypt
 	}
 
 	return &OpsGenieNotifier{
-		NotifierBase:     NewNotifierBase(model),
+		NotifierBase:     NewNotifierBase(model, ns),
 		APIKey:           apiKey,
 		APIUrl:           apiURL,
 		AutoClose:        autoClose,
@@ -205,7 +205,7 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 		},
 	}
 
-	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+	if err := on.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		on.log.Error("Failed to send notification to OpsGenie", "error", err, "body", string(body))
 	}
 
@@ -229,7 +229,7 @@ func (on *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) error 
 		},
 	}
 
-	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+	if err := on.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		on.log.Error("Failed to send notification to OpsGenie", "error", err, "body", string(body))
 		return err
 	}

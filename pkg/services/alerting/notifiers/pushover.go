@@ -11,10 +11,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/setting"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const pushoverEndpoint = "https://api.pushover.net/1/messages.json"
@@ -194,7 +194,7 @@ func init() {
 }
 
 // NewPushoverNotifier is the constructor for the Pushover Notifier
-func NewPushoverNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+func NewPushoverNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
 	userKey := fn(context.Background(), model.SecureSettings, "userKey", model.Settings.Get("userKey").MustString(), setting.SecretKey)
 	APIToken := fn(context.Background(), model.SecureSettings, "apiToken", model.Settings.Get("apiToken").MustString(), setting.SecretKey)
 	device := model.Settings.Get("device").MustString()
@@ -219,7 +219,7 @@ func NewPushoverNotifier(model *models.AlertNotification, fn alerting.GetDecrypt
 		return nil, alerting.ValidationError{Reason: "API token not given"}
 	}
 	return &PushoverNotifier{
-		NotifierBase:     NewNotifierBase(model),
+		NotifierBase:     NewNotifierBase(model, ns),
 		UserKey:          userKey,
 		APIToken:         APIToken,
 		AlertingPriority: alertingPriority,
@@ -287,7 +287,7 @@ func (pn *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 		Body:       uploadBody.String(),
 	}
 
-	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+	if err := pn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		pn.log.Error("Failed to send pushover notification", "error", err, "webhook", pn.Name)
 		return err
 	}

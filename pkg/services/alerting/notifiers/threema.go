@@ -6,10 +6,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -71,7 +71,7 @@ type ThreemaNotifier struct {
 }
 
 // NewThreemaNotifier is the constructor for the Threema notifier
-func NewThreemaNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+func NewThreemaNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -101,7 +101,7 @@ func NewThreemaNotifier(model *models.AlertNotification, fn alerting.GetDecrypte
 	}
 
 	return &ThreemaNotifier{
-		NotifierBase: NewNotifierBase(model),
+		NotifierBase: NewNotifierBase(model, ns),
 		GatewayID:    gatewayID,
 		RecipientID:  recipientID,
 		APISecret:    apiSecret,
@@ -158,7 +158,7 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 		HttpMethod: "POST",
 		HttpHeader: headers,
 	}
-	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+	if err := notifier.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		notifier.log.Error("Failed to send webhook", "error", err, "webhook", notifier.Name)
 		return err
 	}

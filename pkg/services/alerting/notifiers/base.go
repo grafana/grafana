@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -24,11 +25,13 @@ type NotifierBase struct {
 	DisableResolveMessage bool
 	Frequency             time.Duration
 
+	NotificationService *notifications.NotificationService
+
 	log log.Logger
 }
 
 // NewNotifierBase returns a new `NotifierBase`.
-func NewNotifierBase(model *models.AlertNotification) NotifierBase {
+func NewNotifierBase(model *models.AlertNotification, notificationService *notifications.NotificationService) NotifierBase {
 	uploadImage := true
 	if value, exists := model.Settings.CheckGet("uploadImage"); exists {
 		uploadImage = value.MustBool()
@@ -43,6 +46,7 @@ func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 		SendReminder:          model.SendReminder,
 		DisableResolveMessage: model.DisableResolveMessage,
 		Frequency:             model.Frequency,
+		NotificationService:   notificationService,
 		log:                   log.New("alerting.notifier." + model.Name),
 	}
 }

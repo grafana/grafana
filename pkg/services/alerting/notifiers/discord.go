@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -57,7 +57,7 @@ func init() {
 	})
 }
 
-func newDiscordNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+func newDiscordNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
 	avatar := model.Settings.Get("avatar_url").MustString()
 	content := model.Settings.Get("content").MustString()
 	url := model.Settings.Get("url").MustString()
@@ -67,7 +67,7 @@ func newDiscordNotifier(model *models.AlertNotification, _ alerting.GetDecrypted
 	useDiscordUsername := model.Settings.Get("use_discord_username").MustBool(false)
 
 	return &DiscordNotifier{
-		NotifierBase:       NewNotifierBase(model),
+		NotifierBase:       NewNotifierBase(model, ns),
 		Content:            content,
 		AvatarURL:          avatar,
 		WebhookURL:         url,
@@ -177,7 +177,7 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	}
 
-	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+	if err := dn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		dn.log.Error("Failed to send notification to Discord", "error", err)
 		return err
 	}

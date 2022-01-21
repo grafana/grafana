@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const defaultDingdingMsgType = "link"
@@ -47,7 +47,7 @@ func init() {
 	})
 }
 
-func newDingDingNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+func newDingDingNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -56,7 +56,7 @@ func newDingDingNotifier(model *models.AlertNotification, _ alerting.GetDecrypte
 	msgType := model.Settings.Get("msgType").MustString(defaultDingdingMsgType)
 
 	return &DingDingNotifier{
-		NotifierBase: NewNotifierBase(model),
+		NotifierBase: NewNotifierBase(model, ns),
 		MsgType:      msgType,
 		URL:          url,
 		log:          log.New("alerting.notifier.dingding"),
@@ -91,7 +91,7 @@ func (dd *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		Body: string(body),
 	}
 
-	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+	if err := dd.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		dd.log.Error("Failed to send DingDing", "error", err, "dingding", dd.Name)
 		return err
 	}

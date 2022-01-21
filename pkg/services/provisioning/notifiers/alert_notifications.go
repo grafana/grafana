@@ -5,12 +5,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"golang.org/x/net/context"
 )
 
 // Provision alert notifiers
-func Provision(ctx context.Context, configDirectory string, encryptionService encryption.Internal) error {
-	dc := newNotificationProvisioner(encryptionService, log.New("provisioning.notifiers"))
+func Provision(ctx context.Context, configDirectory string, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
+	dc := newNotificationProvisioner(encryptionService, notificationService, log.New("provisioning.notifiers"))
 	return dc.applyChanges(ctx, configDirectory)
 }
 
@@ -20,12 +21,13 @@ type NotificationProvisioner struct {
 	cfgProvider *configReader
 }
 
-func newNotificationProvisioner(encryptionService encryption.Internal, log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
 		log: log,
 		cfgProvider: &configReader{
-			encryptionService: encryptionService,
-			log:               log,
+			encryptionService:   encryptionService,
+			notificationService: notifiationService,
+			log:                 log,
 		},
 	}
 }

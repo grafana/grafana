@@ -4,11 +4,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -47,7 +47,7 @@ func init() {
 
 // NewVictoropsNotifier creates an instance of VictoropsNotifier that
 // handles posting notifications to Victorops REST API
-func NewVictoropsNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+func NewVictoropsNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
 	autoResolve := model.Settings.Get("autoResolve").MustBool(true)
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
@@ -56,7 +56,7 @@ func NewVictoropsNotifier(model *models.AlertNotification, _ alerting.GetDecrypt
 	noDataAlertType := model.Settings.Get("noDataAlertType").MustString(AlertStateWarning)
 
 	return &VictoropsNotifier{
-		NotifierBase:    NewNotifierBase(model),
+		NotifierBase:    NewNotifierBase(model, ns),
 		URL:             url,
 		NoDataAlertType: noDataAlertType,
 		AutoResolve:     autoResolve,
@@ -156,7 +156,7 @@ func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	data, _ := bodyJSON.MarshalJSON()
 	cmd := &models.SendWebhookSync{Url: vn.URL, Body: string(data)}
 
-	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+	if err := vn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		vn.log.Error("Failed to send Victorops notification", "error", err, "webhook", vn.Name)
 		return err
 	}

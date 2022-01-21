@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -83,18 +84,20 @@ type ShowWhen struct {
 	Is    string `json:"is"`
 }
 
-func newNotificationService(renderService rendering.Service, decryptFn GetDecryptedValueFn) *notificationService {
+func newNotificationService(renderService rendering.Service, notificationSvc *notifications.NotificationService, decryptFn GetDecryptedValueFn) *notificationService {
 	return &notificationService{
-		log:           log.New("alerting.notifier"),
-		renderService: renderService,
-		decryptFn:     decryptFn,
+		log:                 log.New("alerting.notifier"),
+		renderService:       renderService,
+		notificationService: notificationSvc,
+		decryptFn:           decryptFn,
 	}
 }
 
 type notificationService struct {
-	log           log.Logger
-	renderService rendering.Service
-	decryptFn     GetDecryptedValueFn
+	log                 log.Logger
+	renderService       rendering.Service
+	notificationService *notifications.NotificationService
+	decryptFn           GetDecryptedValueFn
 }
 
 func (n *notificationService) SendIfNeeded(evalCtx *EvalContext) error {
@@ -257,7 +260,7 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 
 	var result notifierStateSlice
 	for _, notification := range query.Result {
-		not, err := InitNotifier(notification, n.decryptFn)
+		not, err := InitNotifier(notification, n.decryptFn, n.notificationService)
 		if err != nil {
 			n.log.Error("Could not create notifier", "notifier", notification.Uid, "error", err)
 			continue
@@ -287,13 +290,13 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 }
 
 // InitNotifier instantiate a new notifier based on the model.
-func InitNotifier(model *models.AlertNotification, fn GetDecryptedValueFn) (Notifier, error) {
+func InitNotifier(model *models.AlertNotification, fn GetDecryptedValueFn, notificationService *notifications.NotificationService) (Notifier, error) {
 	notifierPlugin, found := notifierFactories[model.Type]
 	if !found {
 		return nil, fmt.Errorf("unsupported notification type %q", model.Type)
 	}
 
-	return notifierPlugin.Factory(model, fn)
+	return notifierPlugin.Factory(model, fn, notificationService)
 }
 
 // GetDecryptedValueFn is a function that returns the decrypted value of
@@ -301,7 +304,7 @@ func InitNotifier(model *models.AlertNotification, fn GetDecryptedValueFn) (Noti
 type GetDecryptedValueFn func(ctx context.Context, sjd map[string][]byte, key string, fallback string, secret string) string
 
 // NotifierFactory is a signature for creating notifiers.
-type NotifierFactory func(*models.AlertNotification, GetDecryptedValueFn) (Notifier, error)
+type NotifierFactory func(*models.AlertNotification, GetDecryptedValueFn, *notifications.NotificationService) (Notifier, error)
 
 var notifierFactories = make(map[string]*NotifierPlugin)
 

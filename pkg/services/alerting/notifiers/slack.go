@@ -16,10 +16,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -121,7 +121,7 @@ func init() {
 const slackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier.
-func NewSlackNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+func NewSlackNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
 	urlStr := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString(), setting.SecretKey)
 	if urlStr == "" {
 		urlStr = slackAPIEndpoint
@@ -174,7 +174,7 @@ func NewSlackNotifier(model *models.AlertNotification, fn alerting.GetDecryptedV
 
 	return &SlackNotifier{
 		url:            apiURL,
-		NotifierBase:   NewNotifierBase(model),
+		NotifierBase:   NewNotifierBase(model, ns),
 		recipient:      recipient,
 		username:       username,
 		iconEmoji:      iconEmoji,
@@ -418,7 +418,7 @@ func (sn *SlackNotifier) slackFileUpload(evalContext *alerting.EvalContext, log 
 	cmd := &models.SendWebhookSync{
 		Url: "https://slack.com/api/files.upload", Body: uploadBody.String(), HttpHeader: headers, HttpMethod: "POST",
 	}
-	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+	if err := sn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		log.Error("Failed to upload slack image", "error", err, "webhook", "file.upload")
 		return err
 	}

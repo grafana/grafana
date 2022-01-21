@@ -7,10 +7,10 @@ import (
 
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 func init() {
@@ -53,7 +53,7 @@ const (
 
 // NewHipChatNotifier is the constructor functions
 // for the HipChatNotifier
-func NewHipChatNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+func NewHipChatNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if strings.HasSuffix(url, "/") {
 		url = url[:len(url)-1]
@@ -66,7 +66,7 @@ func NewHipChatNotifier(model *models.AlertNotification, _ alerting.GetDecrypted
 	roomID := model.Settings.Get("roomid").MustString()
 
 	return &HipChatNotifier{
-		NotifierBase: NewNotifierBase(model),
+		NotifierBase: NewNotifierBase(model, ns),
 		URL:          url,
 		APIKey:       apikey,
 		RoomID:       roomID,
@@ -177,7 +177,7 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	hc.log.Info("Request payload", "json", string(data))
 	cmd := &models.SendWebhookSync{Url: hipURL, Body: string(data)}
 
-	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+	if err := hc.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		hc.log.Error("Failed to send hipchat notification", "error", err, "webhook", hc.Name)
 		return err
 	}
