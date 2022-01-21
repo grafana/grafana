@@ -85,12 +85,14 @@ export const NavBar: FC = React.memo(() => {
           });
         }
 
-        newItems.push({
-          id: 'backup',
-          icon: 'history',
-          text: 'Backup',
-          url: `${config.appSubUrl}/backup`,
-        });
+        if (settings.backupEnabled) {
+          newItems.push({
+            id: 'backup',
+            icon: 'history',
+            text: 'Backup',
+            url: `${config.appSubUrl}/backup`,
+          });
+        }
 
         setTopItems(newItems);
       } catch (e) {
