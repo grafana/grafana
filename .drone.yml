@@ -202,7 +202,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -211,7 +211,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -220,7 +220,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -229,7 +229,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -632,7 +632,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -641,7 +641,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -650,7 +650,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -659,7 +659,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -1239,7 +1239,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -1248,7 +1248,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -1257,7 +1257,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -1266,7 +1266,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -1843,7 +1843,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -1852,7 +1852,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -1861,7 +1861,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -1870,7 +1870,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -2995,7 +2995,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -3004,7 +3004,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -3013,7 +3013,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -3022,7 +3022,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -3527,7 +3527,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -3536,7 +3536,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -3545,7 +3545,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -3554,7 +3554,7 @@ steps:
   - package
   environment:
     HOST: grafana-server
-  image: cypress/included:9.2.0
+  image: cypress/included:9.3.1
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -4175,6 +4175,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 1ee4baacef44b7189c4a2367166c8f2566baf142e027bf39d62b0886f3846855
+hmac: 48619d7057914a4d19e95d347964408e2a43c80b5144328a2336592ffaa1919d
 
 ...
