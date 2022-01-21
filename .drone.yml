@@ -810,7 +810,7 @@ steps:
   depends_on:
   - grafana-server
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -1314,7 +1314,7 @@ steps:
   depends_on:
   - grafana-server
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -1909,7 +1909,7 @@ steps:
   depends_on:
   - package
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -1952,7 +1952,7 @@ steps:
   depends_on:
   - package-enterprise2
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -3070,7 +3070,7 @@ steps:
   depends_on:
   - grafana-server
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -3602,7 +3602,7 @@ steps:
   depends_on:
   - package
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -3645,7 +3645,7 @@ steps:
   depends_on:
   - package-enterprise2
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -4175,6 +4175,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 1ee4baacef44b7189c4a2367166c8f2566baf142e027bf39d62b0886f3846855
+hmac: 8827ec8db592fe027ca9948ef53f5e0e67e38eeb4ebd8cd689b0d9d43ebe23b1
 
 ...
