@@ -4,6 +4,7 @@ import {
   PanelData,
   GrafanaTheme2,
   FrameGeometrySourceMode,
+  PluginState,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
@@ -52,6 +53,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
   description: 'use route to render data point as a route',
   isBaseMap: false,
   showLocation: true,
+  state: PluginState.alpha,
 
   /**
    * Function that configures transformation and returns a transformer
