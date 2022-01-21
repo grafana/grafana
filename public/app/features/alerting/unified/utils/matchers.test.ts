@@ -1,4 +1,6 @@
-import { getMatcherQueryParams, parseQueryParamMatchers } from './matchers';
+import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
+import { getMatcherQueryParams, findAlertRulesWithMatchers, parseQueryParamMatchers } from './matchers';
+import { mockCombinedRule } from '../mocks';
 
 describe('Unified Alerting matchers', () => {
   describe('getMatcherQueryParams tests', () => {
@@ -31,6 +33,20 @@ describe('Unified Alerting matchers', () => {
       expect(matchers).toHaveLength(1);
       expect(matchers[0].name).toBe('alertname');
       expect(matchers[0].value).toBe('TestData 1');
+    });
+  });
+
+  describe('matchLabelsToMatchers', () => {
+    it('should match for equal', () => {
+      const matchers = [
+        { name: 'foo', value: 'bar', operator: MatcherOperator.equal },
+        { name: 'bar', value: 'foo', operator: MatcherOperator.notEqual },
+      ];
+      const rules = [mockCombinedRule({ labels: { foo: 'bar' } }), mockCombinedRule({ labels: { foo: 'baz' } })];
+
+      const matchedRules = findAlertRulesWithMatchers(rules, matchers);
+
+      expect(matchedRules).toHaveLength(1);
     });
   });
 });

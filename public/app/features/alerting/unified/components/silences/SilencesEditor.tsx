@@ -165,7 +165,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet label={`${silence ? 'Recreate silence' : 'Create silence'}`}>
-          <div className={styles.flexRow}>
+          <div className={cx(styles.flexRow, styles.silencePeriod)}>
             <SilencePeriod />
             <Field
               label="Duration"
@@ -198,17 +198,9 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
           >
             <TextArea
               {...register('comment', { required: { value: true, message: 'Required.' } })}
+              rows={5}
               placeholder="Details about the silence"
             />
-          </Field>
-          <Field
-            className={cx(styles.field, styles.createdBy)}
-            label="Created by"
-            required
-            error={formState.errors.createdBy?.message}
-            invalid={!!formState.errors.createdBy}
-          >
-            <Input {...register('createdBy', { required: { value: true, message: 'Required.' } })} placeholder="User" />
           </Field>
           <MatchedSilencedRules />
         </FieldSet>
@@ -237,7 +229,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: ${theme.spacing(1, 0)};
   `,
   textArea: css`
-    width: 600px;
+    max-width: ${theme.breakpoints.values.sm}px;
   `,
   createdBy: css`
     width: 200px;
@@ -250,6 +242,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     & > * {
       margin-right: ${theme.spacing(1)};
     }
+  `,
+  silencePeriod: css`
+    max-width: ${theme.breakpoints.values.sm}px;
   `,
 });
 
