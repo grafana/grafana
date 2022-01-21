@@ -7,7 +7,6 @@ import {
   LegacyForms,
   MultiSelect,
   QueryField,
-  Select,
   SlatePrism,
   TypeaheadInput,
   TypeaheadOutput,
@@ -311,7 +310,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     const {
       selectedLogGroups,
       availableLogGroups,
-      regions,
       selectedRegion,
       loadingLogGroups,
       hint,
@@ -326,23 +324,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     return (
       <>
         <div className={`gf-form gf-form--grow flex-grow-1 ${rowGap}`}>
-          <LegacyForms.FormField
-            label="Region"
-            labelWidth={4}
-            inputEl={
-              <Select
-                aria-label="Region"
-                menuShouldPortal
-                options={regions}
-                value={selectedRegion}
-                onChange={(v) => this.setSelectedRegion(v)}
-                width={18}
-                placeholder="Choose Region"
-                maxMenuHeight={500}
-              />
-            }
-          />
-
           <LegacyForms.FormField
             label="Log Groups"
             labelWidth={6}

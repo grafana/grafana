@@ -1,16 +1,15 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
-import { CloudWatchMetricsQuery, CloudWatchQuery, MetricEditorMode, MetricQueryType } from '../types';
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
-import QueryHeader from './QueryHeader';
+import MetricsQueryHeader from './MetricsQueryHeader';
 
 const ds = setupMockedDataSource({
   variables: [],
 });
 ds.datasource.getRegions = jest.fn().mockResolvedValue([]);
-const metricQuery: CloudWatchMetricsQuery = {
-  queryType: 'Metrics',
+const query: CloudWatchMetricsQuery = {
   id: '',
   region: 'us-east-2',
   namespace: '',
@@ -23,10 +22,9 @@ const metricQuery: CloudWatchMetricsQuery = {
   expression: '',
   refId: '',
 };
-const query: CloudWatchQuery = metricQuery;
 
-describe('QueryHeader', () => {
-  describe('confirm MetricQueryHeader', () => {
+describe('MetricsQueryHeader', () => {
+  describe('confirm modal', () => {
     it('should be shown when moving from code editor to builder when in sql mode', async () => {
       const onChange = jest.fn();
       const onRunQuery = jest.fn();
@@ -34,7 +32,7 @@ describe('QueryHeader', () => {
       query.metricQueryType = MetricQueryType.Query;
 
       render(
-        <QueryHeader
+        <MetricsQueryHeader
           sqlCodeEditorIsDirty={true}
           datasource={ds.datasource}
           query={query}
@@ -61,7 +59,7 @@ describe('QueryHeader', () => {
       query.metricQueryType = MetricQueryType.Query;
 
       render(
-        <QueryHeader
+        <MetricsQueryHeader
           sqlCodeEditorIsDirty={true}
           datasource={ds.datasource}
           query={query}
@@ -88,7 +86,7 @@ describe('QueryHeader', () => {
       query.metricQueryType = MetricQueryType.Search;
 
       render(
-        <QueryHeader
+        <MetricsQueryHeader
           sqlCodeEditorIsDirty={true}
           datasource={ds.datasource}
           query={query}
@@ -116,7 +114,7 @@ describe('QueryHeader', () => {
     query.metricQueryType = MetricQueryType.Query;
 
     render(
-      <QueryHeader
+      <MetricsQueryHeader
         sqlCodeEditorIsDirty={true}
         datasource={ds.datasource}
         query={query}

@@ -9,6 +9,7 @@ import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../typ
 import { CloudWatchLogsQueryField } from './LogsQueryField';
 import CloudWatchLink from './CloudWatchLink';
 import { css } from '@emotion/css';
+import QueryHeader from './QueryHeader';
 
 type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
   allowCustomValue?: boolean;
@@ -37,25 +38,34 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
   }
 
   return (
-    <CloudWatchLogsQueryField
-      exploreId={exploreId}
-      datasource={datasource}
-      query={query}
-      onBlur={() => {}}
-      onChange={(val: CloudWatchQuery) => {
-        onChange({ ...val, queryMode: 'Logs' });
-      }}
-      onRunQuery={onRunQuery}
-      history={[]}
-      data={data}
-      absoluteRange={absolute}
-      allowCustomValue={allowCustomValue}
-      ExtraFieldElement={
-        <InlineFormLabel className={`gf-form-label--btn ${labelClass}`} width="auto" tooltip="Link to Graph in AWS">
-          <CloudWatchLink query={query as CloudWatchLogsQuery} panelData={data} datasource={datasource} />
-        </InlineFormLabel>
-      }
-    />
+    <>
+      <QueryHeader
+        query={query}
+        onRunQuery={onRunQuery}
+        datasource={datasource}
+        onChange={onChange}
+        sqlCodeEditorIsDirty={false}
+      />
+      <CloudWatchLogsQueryField
+        exploreId={exploreId}
+        datasource={datasource}
+        query={query}
+        onBlur={() => {}}
+        onChange={(val: CloudWatchQuery) => {
+          onChange({ ...val, queryMode: 'Logs' });
+        }}
+        onRunQuery={onRunQuery}
+        history={[]}
+        data={data}
+        absoluteRange={absolute}
+        allowCustomValue={allowCustomValue}
+        ExtraFieldElement={
+          <InlineFormLabel className={`gf-form-label--btn ${labelClass}`} width="auto" tooltip="Link to Graph in AWS">
+            <CloudWatchLink query={query as CloudWatchLogsQuery} panelData={data} datasource={datasource} />
+          </InlineFormLabel>
+        }
+      />
+    </>
   );
 });
 
