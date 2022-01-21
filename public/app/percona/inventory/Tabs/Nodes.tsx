@@ -50,7 +50,8 @@ export const NodesTab = () => {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const removeNodes = useCallback(
     async (nodes: Array<SelectedTableRows<Node>>, forceMode) => {

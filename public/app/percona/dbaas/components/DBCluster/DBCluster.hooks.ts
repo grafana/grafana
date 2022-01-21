@@ -59,7 +59,8 @@ export const useDBClusters = (kubernetes: Kubernetes[]): ManageDBClusters => {
     }
 
     return () => clearTimeout(timer);
-  }, [kubernetes, getDBClusters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kubernetes]);
 
   return [dbClusters, getDBClusters, setLoading, loading];
 };

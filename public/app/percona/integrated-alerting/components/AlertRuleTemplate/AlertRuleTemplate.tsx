@@ -96,7 +96,8 @@ export const AlertRuleTemplate: FC = () => {
 
   useEffect(() => {
     getAlertRuleTemplates();
-  }, [pageSize, pageIndex, getAlertRuleTemplates]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageSize, pageIndex]);
 
   return (
     <>

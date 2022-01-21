@@ -48,7 +48,8 @@ export const Agents = () => {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const removeAgents = useCallback(
     async (agents: Array<SelectedTableRows<Agent>>, forceMode) => {
