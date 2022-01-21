@@ -40,9 +40,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			TotalCount: 2,
 		}
 
-		hs := &HTTPServer{
-			Cfg: setting.NewCfg(),
-		}
+		hs := setupSimpleHTTPServer(nil)
 
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
 			var sentLimit int
@@ -92,10 +90,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("When creating team with API key", func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
-		hs := &HTTPServer{
-			Cfg: setting.NewCfg(),
-			Bus: bus.GetBus(),
-		}
+		hs := setupSimpleHTTPServer(nil)
 		hs.Cfg.EditorsCanAdmin = true
 
 		teamName := "team foo"

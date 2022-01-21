@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { GrafanaTheme2, MappingType, SelectableValue, SpecialValueMatch, ValueMapping } from '@grafana/data';
-import { Button } from '../Button/Button';
-import { Modal } from '../Modal/Modal';
-import { useStyles2 } from '../../themes';
 import { ValueMappingEditRow, ValueMappingEditRowModel } from './ValueMappingEditRow';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { css } from '@emotion/css';
-import { ValuePicker } from '../ValuePicker/ValuePicker';
+import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
 
 export interface Props {
   value: ValueMapping[];
