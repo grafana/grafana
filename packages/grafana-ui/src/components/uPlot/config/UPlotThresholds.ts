@@ -118,8 +118,8 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
         addAreas(u, steps, theme);
         break;
       case GraphTresholdsStyleMode.LineAndArea:
-        addLines(u, steps, theme, xMin, xMax, scaleKey);
         addAreas(u, steps, theme);
+        addLines(u, steps, theme, xMin, xMax, scaleKey);
     }
 
     ctx.restore();
