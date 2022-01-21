@@ -12,18 +12,16 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 const (
 	timeSeries = "time_series"
-	pluginID   = "grafana-azure-monitor-datasource"
 )
 
 var (
@@ -31,7 +29,7 @@ var (
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, pluginStore plugins.Store, tracer tracing.Tracer) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, tracer tracing.Tracer) *Service {
 	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &AzureMonitorDatasource{proxy: proxy},
@@ -43,26 +41,23 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, p
 	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, *httpClientProvider, executors))
 
 	s := &Service{
-		Cfg:       cfg,
 		im:        im,
 		executors: executors,
 		tracer:    tracer,
 	}
 
-	mux := s.newMux()
-	resourceMux := http.NewServeMux()
-	s.registerRoutes(resourceMux)
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler:    mux,
-		CallResourceHandler: httpadapter.New(resourceMux),
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		azlog.Error("Failed to register plugin", "error", err)
-	}
+	s.queryMux = s.newQueryMux()
+	s.resourceHandler = httpadapter.New(s.newResourceMux())
 
 	return s
+}
+
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return s.queryMux.QueryData(ctx, req)
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return s.resourceHandler.CallResource(ctx, req, sender)
 }
 
 type serviceProxy interface {
@@ -70,10 +65,12 @@ type serviceProxy interface {
 }
 
 type Service struct {
-	Cfg       *setting.Cfg
 	im        instancemgmt.InstanceManager
 	executors map[string]azDatasourceExecutor
-	tracer    tracing.Tracer
+
+	queryMux        *datasource.QueryTypeMux
+	resourceHandler backend.CallResourceHandler
+	tracer          tracing.Tracer
 }
 
 type azureMonitorSettings struct {
@@ -182,7 +179,7 @@ func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (dat
 	return dsInfo, nil
 }
 
-func (s *Service) newMux() *datasource.QueryTypeMux {
+func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 	mux := datasource.NewQueryTypeMux()
 	for dsType := range s.executors {
 		// Make a copy of the string to keep the reference after the iterator
