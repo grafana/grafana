@@ -32,7 +32,6 @@ func init() {
 	bus.AddHandler("sql", GetDashboardSlugById)
 	bus.AddHandler("sql", GetDashboardsByPluginId)
 	bus.AddHandler("sql", GetDashboardPermissionsForUser)
-	bus.AddHandler("sql", GetDashboardsBySlug)
 	bus.AddHandler("sql", HasEditPermissionInFolders)
 	bus.AddHandler("sql", HasAdminPermissionInFolders)
 
@@ -44,6 +43,7 @@ func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.SearchDashboards)
 	bus.AddHandler("sql", ss.DeleteDashboard)
 	bus.AddHandler("sql", ss.GetDashboards)
+	bus.AddHandler("sql", ss.GetDashboardsBySlug)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
@@ -620,7 +620,7 @@ func GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByI
 	return nil
 }
 
-func GetDashboardsBySlug(ctx context.Context, query *models.GetDashboardsBySlugQuery) error {
+func (ss *SQLStore) GetDashboardsBySlug(ctx context.Context, query *models.GetDashboardsBySlugQuery) error {
 	var dashboards []*models.Dashboard
 
 	if err := x.Where("org_id=? AND slug=?", query.OrgId, query.Slug).Find(&dashboards); err != nil {

@@ -68,7 +68,7 @@ func (ss *SQLStore) DeleteDashboardSnapshot(ctx context.Context, cmd *models.Del
 	})
 }
 
-func (ss *SQLStore) GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error {
+func (ss *SQLStore) GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
 	snapshot := models.DashboardSnapshot{Key: query.Key, DeleteKey: query.DeleteKey}
 	has, err := x.Get(&snapshot)
 
