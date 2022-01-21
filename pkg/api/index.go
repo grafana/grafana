@@ -85,7 +85,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			SortWeight: dtos.WeightPlugin,
 		}
 
-		if hs.Cfg.IsNewNavigationEnabled() {
+		if hs.Features.Toggles().IsNewNavigationEnabled() {
 			appLink.Section = dtos.NavSectionPlugin
 		} else {
 			appLink.Section = dtos.NavSectionCore
@@ -143,7 +143,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 }
 
 func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
-	return c.OrgRole == models.ROLE_ADMIN && hs.Cfg.IsServiceAccountEnabled() && hs.serviceAccountsService.Migrated(c.Req.Context(), c.OrgId)
+	return c.OrgRole == models.ROLE_ADMIN && hs.Features.Toggles().IsServiceAccountsEnabled() && hs.serviceAccountsService.Migrated(c.Req.Context(), c.OrgId)
 }
 
 func enableTeams(hs *HTTPServer, c *models.ReqContext) bool {
@@ -154,7 +154,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
-	if hs.Cfg.IsNewNavigationEnabled() {
+	if hs.Features.Toggles().IsNewNavigationEnabled() {
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Home",
 			Id:         "home",
@@ -165,7 +165,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if hasEditPerm && !hs.Cfg.IsNewNavigationEnabled() {
+	if hasEditPerm && !hs.Features.Toggles().IsNewNavigationEnabled() {
 		children := hs.buildCreateNavLinks(c)
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Create",
@@ -181,7 +181,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)
 
 	dashboardsUrl := "/"
-	if hs.Cfg.IsNewNavigationEnabled() {
+	if hs.Features.Toggles().IsNewNavigationEnabled() {
 		dashboardsUrl = "/dashboards"
 	}
 
@@ -312,7 +312,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if hs.Cfg.FeatureToggles["live-pipeline"] {
+	if hs.Features.Toggles().IsLivePipelineEnabled() {
 		liveNavLinks := []*dtos.NavLink{}
 
 		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
@@ -346,7 +346,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			SortWeight: dtos.WeightConfig,
 			Children:   configNodes,
 		}
-		if hs.Cfg.IsNewNavigationEnabled() {
+		if hs.Features.Toggles().IsNewNavigationEnabled() {
 			configNode.Section = dtos.NavSectionConfig
 		} else {
 			configNode.Section = dtos.NavSectionCore
@@ -358,7 +358,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if len(adminNavLinks) > 0 {
 		navSection := dtos.NavSectionCore
-		if hs.Cfg.IsNewNavigationEnabled() {
+		if hs.Features.Toggles().IsNewNavigationEnabled() {
 			navSection = dtos.NavSectionConfig
 		}
 		serverAdminNode := navlinks.GetServerAdminNode(adminNavLinks, navSection)
@@ -386,7 +386,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm bool) []*dtos.NavLink {
 	dashboardChildNavs := []*dtos.NavLink{}
-	if !hs.Cfg.IsNewNavigationEnabled() {
+	if !hs.Features.Toggles().IsNewNavigationEnabled() {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Home", Id: "home", Url: hs.Cfg.AppSubURL + "/", Icon: "home-alt", HideFromTabs: true,
 		})
@@ -417,7 +417,7 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 		})
 	}
 
-	if hasEditPerm && hs.Cfg.IsNewNavigationEnabled() {
+	if hasEditPerm && hs.Features.Toggles().IsNewNavigationEnabled() {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
 		})
@@ -622,7 +622,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		LoadingLogo:             "public/img/grafana_icon.svg",
 	}
 
-	if hs.Cfg.FeatureToggles["accesscontrol"] {
+	if hs.Features.Toggles().IsAccesscontrolEnabled() {
 		userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
 		if err != nil {
 			return nil, err

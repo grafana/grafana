@@ -1,5 +1,12 @@
 import $ from 'jquery';
-import { EchoBackend, EchoEventType, isInteractionEvent, isPageviewEvent, PageviewEchoEvent } from '@grafana/runtime';
+import {
+  EchoBackend,
+  EchoEventType,
+  isExperimentViewEvent,
+  isInteractionEvent,
+  isPageviewEvent,
+  PageviewEchoEvent,
+} from '@grafana/runtime';
 import { User } from '../sentry/types';
 
 export interface RudderstackBackendOptions {
@@ -11,7 +18,7 @@ export interface RudderstackBackendOptions {
 }
 
 export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, RudderstackBackendOptions> {
-  supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction];
+  supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction, EchoEventType.ExperimentView];
 
   constructor(public options: RudderstackBackendOptions) {
     const url = options.sdkUrl || `https://cdn.rudderlabs.com/v1/rudder-analytics.min.js`;
@@ -68,6 +75,14 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
 
     if (isInteractionEvent(e)) {
       (window as any).rudderanalytics.track(e.payload.interactionName, e.payload.properties);
+    }
+
+    if (isExperimentViewEvent(e)) {
+      (window as any).rudderanalytics.track('experiment_viewed', {
+        experiment_id: e.payload.experimentId,
+        experiment_group: e.payload.experimentGroup,
+        experiment_variant: e.payload.experimentVariant,
+      });
     }
   };
 

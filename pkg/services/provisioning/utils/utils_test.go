@@ -15,6 +15,7 @@ func TestCheckOrgExists(t *testing.T) {
 		sqlstore.InitTestDB(t)
 
 		defaultOrg := models.CreateOrgCommand{Name: "Main Org."}
+
 		err := sqlstore.CreateOrg(context.Background(), &defaultOrg)
 		require.NoError(t, err)
 

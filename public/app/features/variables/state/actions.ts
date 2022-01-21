@@ -15,6 +15,7 @@ import {
   initialVariableModelState,
   OrgVariableModel,
   QueryVariableModel,
+  TransactionStatus,
   UserVariableModel,
   VariableHide,
   VariableModel,
@@ -41,13 +42,7 @@ import {
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import {
-  ALL_VARIABLE_TEXT,
-  ALL_VARIABLE_VALUE,
-  toVariableIdentifier,
-  toVariablePayload,
-  VariableIdentifier,
-} from './types';
+import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
@@ -64,7 +59,6 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import {
-  TransactionStatus,
   variablesClearTransaction,
   variablesCompleteTransaction,
   variablesInitTransaction,
@@ -85,6 +79,7 @@ import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { locationService } from '@grafana/runtime';
 import { appEvents } from '../../../core/core';
 import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 
 // process flow queryVariable
 // thunk => processVariables

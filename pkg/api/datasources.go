@@ -31,8 +31,13 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
+	filtered, err := filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
+	if err != nil {
+		return response.Error(500, "Failed to query datasources", err)
+	}
+
 	result := make(dtos.DataSourceList, 0)
-	for _, ds := range query.Result {
+	for _, ds := range filtered {
 		dsItem := dtos.DataSourceListItemDTO{
 			OrgId:     ds.OrgId,
 			Id:        ds.Id,
@@ -102,17 +107,20 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	ds := query.Result
-	dtos := convertModelToDtos(ds)
+	filtered, err := filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{query.Result})
+	if err != nil || len(filtered) != 1 {
+		return response.Error(404, "Data source not found", err)
+	}
 
+	dto := convertModelToDtos(filtered[0])
 	// Add accesscontrol metadata
-	metadata, err := hs.getDataSourceAccessControlMetadata(c, ds.Id)
+	metadata, err := hs.getDataSourceAccessControlMetadata(c, dto.Id)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to query metadata", err)
 	}
-	dtos.AccessControl = metadata
+	dto.AccessControl = metadata
 
-	return response.JSON(200, &dtos)
+	return response.JSON(200, &dto)
 }
 
 func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Response {
@@ -160,16 +168,21 @@ func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response
 		return response.Error(http.StatusInternalServerError, "Failed to query datasource", err)
 	}
 
-	dtos := convertModelToDtos(ds)
+	filtered, err := filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{ds})
+	if err != nil || len(filtered) != 1 {
+		return response.Error(404, "Data source not found", err)
+	}
+
+	dto := convertModelToDtos(filtered[0])
 
 	// Add accesscontrol metadata
-	metadata, err := hs.getDataSourceAccessControlMetadata(c, ds.Id)
+	metadata, err := hs.getDataSourceAccessControlMetadata(c, dto.Id)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to query metadata", err)
 	}
-	dtos.AccessControl = metadata
+	dto.AccessControl = metadata
 
-	return response.JSON(200, &dtos)
+	return response.JSON(200, &dto)
 }
 
 // DELETE /api/datasources/uid/:uid
@@ -397,8 +410,13 @@ func GetDataSourceByName(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	dtos := convertModelToDtos(query.Result)
-	return response.JSON(200, &dtos)
+	filtered, err := filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{query.Result})
+	if err != nil || len(filtered) != 1 {
+		return response.Error(404, "Data source not found", err)
+	}
+
+	dto := convertModelToDtos(filtered[0])
+	return response.JSON(200, &dto)
 }
 
 // Get /api/datasources/id/:name
@@ -548,4 +566,20 @@ func (hs *HTTPServer) decryptSecureJsonDataFn() func(map[string][]byte) map[stri
 		}
 		return decryptedJsonData
 	}
+}
+
+func filterDatasourcesByQueryPermission(ctx context.Context, user *models.SignedInUser, datasources []*models.DataSource) ([]*models.DataSource, error) {
+	query := models.DatasourcesPermissionFilterQuery{
+		User:        user,
+		Datasources: datasources,
+	}
+
+	if err := bus.Dispatch(ctx, &query); err != nil {
+		if !errors.Is(err, bus.ErrHandlerNotFound) {
+			return nil, err
+		}
+		return datasources, nil
+	}
+
+	return query.Datasources, nil
 }
