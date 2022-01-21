@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
@@ -244,6 +246,41 @@ func TestPluginProxy(t *testing.T) {
 		content, err := ioutil.ReadAll(req.Body)
 		require.NoError(t, err)
 		require.Equal(t, `{ "url": "https://dynamic.grafana.com", "secret": "123"	}`, string(content))
+	})
+
+	t.Run("When proxying a request should set expected response headers", func(t *testing.T) {
+		requestHandled := false
+		backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(200)
+			_, _ = w.Write([]byte("I am the backend"))
+			requestHandled = true
+		}))
+		t.Cleanup(backendServer.Close)
+
+		responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
+
+		route := &plugins.Route{
+			Path: "/",
+			URL:  backendServer.URL,
+		}
+
+		ctx := &models.ReqContext{
+			SignedInUser: &models.SignedInUser{},
+			Context: &web.Context{
+				Req:  httptest.NewRequest("GET", "/", nil),
+				Resp: responseWriter,
+			},
+		}
+		proxy := NewApiPluginProxy(ctx, "", route, "", &setting.Cfg{}, secretsService)
+		proxy.ServeHTTP(ctx.Resp, ctx.Req)
+
+		for {
+			if requestHandled {
+				break
+			}
+		}
+
+		require.Equal(t, "sandbox", ctx.Resp.Header().Get("Content-Security-Policy"))
 	})
 }
 
