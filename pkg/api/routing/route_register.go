@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -52,7 +51,7 @@ type RouteRegister interface {
 
 type RegisterNamedMiddleware func(name string) web.Handler
 
-func ProvideRegister(cfg *setting.Cfg) *RouteRegisterImpl {
+func ProvideRegister() *RouteRegisterImpl {
 	return NewRouteRegister(middleware.ProvideRouteOperationName)
 }
 

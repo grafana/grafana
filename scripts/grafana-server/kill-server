@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. e2e/variables
+. scripts/grafana-server/variables
 
 if [ -f "$PIDFILE" ]; then
   echo -e "Found pidfile, killing running grafana-server"
@@ -8,4 +8,4 @@ if [ -f "$PIDFILE" ]; then
   rm $PIDFILE
 fi
 
-rm -rf e2e/tmp
+rm -rf scripts/grafana-server/tmp

@@ -13,9 +13,6 @@ import {
   ThresholdsConfig,
   ThresholdsFieldConfigSettings,
   thresholdsOverrideProcessor,
-  ValueMapping,
-  ValueMappingFieldConfigSettings,
-  valueMappingsOverrideProcessor,
   ThresholdsMode,
   identityOverrideProcessor,
   TimeZone,
@@ -37,7 +34,6 @@ import {
   MultiSelectValueEditor,
   TimeZonePicker,
 } from '../components';
-import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
 import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
 import { DataLinksValueEditor } from '../components/OptionsUI/links';
@@ -160,22 +156,6 @@ export const getStandardFieldConfigs = () => {
     getItemsCount: (value) => (value ? value.steps.length : 0),
   };
 
-  const mappings: FieldConfigPropertyItem<any, ValueMapping[], ValueMappingFieldConfigSettings> = {
-    id: 'mappings',
-    path: 'mappings',
-    name: 'Value mappings',
-    description: 'Modify the display text based on input value',
-
-    editor: standardEditorsRegistry.get('mappings').editor as any,
-    override: standardEditorsRegistry.get('mappings').editor as any,
-    process: valueMappingsOverrideProcessor,
-    settings: {},
-    defaultValue: [],
-    shouldApply: (x) => x.type !== FieldType.time,
-    category: ['Value mappings'],
-    getItemsCount: (value?) => (value ? value.length : 0),
-  };
-
   const noValue: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'noValue',
     path: 'noValue',
@@ -224,7 +204,7 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  return [unit, min, max, decimals, displayName, color, noValue, thresholds, mappings, links];
+  return [unit, min, max, decimals, displayName, color, noValue, thresholds, links];
 };
 
 /**
@@ -307,13 +287,6 @@ export const getStandardOptionEditors = () => {
     editor: ThresholdsValueEditor as any,
   };
 
-  const mappings: StandardEditorsRegistryItem<ValueMapping[]> = {
-    id: 'mappings',
-    name: 'Mappings',
-    description: 'Allows defining value mappings',
-    editor: ValueMappingsValueEditor as any,
-  };
-
   const color: StandardEditorsRegistryItem<string> = {
     id: 'color',
     name: 'Color',
@@ -366,7 +339,6 @@ export const getStandardOptionEditors = () => {
     radio,
     select,
     unit,
-    mappings,
     thresholds,
     links,
     statsPicker,
