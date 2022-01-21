@@ -21,7 +21,6 @@ import { Button, useStyles2 } from '@grafana/ui';
 import * as markers from './TracePageSearchBar.markers';
 import UiFindInput from '../common/UiFindInput';
 
-import { UIInputGroup } from '../uiElementsContext';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 // eslint-disable-next-line no-duplicate-imports
 import { memo } from 'react';
@@ -95,8 +94,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
 
   return (
     <div className={styles.TracePageSearchBar}>
-      {/* style inline because compact overwrites the display */}
-      <UIInputGroup className={ubJustifyEnd} compact style={{ display: 'flex' }}>
+      <span className={ubJustifyEnd} style={{ display: 'flex' }}>
         <UiFindInput onChange={onSearchValueChange} value={searchValue} inputProps={uiFindInputInputProps} />
         <>
           {navigable && (
@@ -130,7 +128,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
             title={'Clear search'}
           />
         </>
-      </UIInputGroup>
+      </span>
     </div>
   );
 });

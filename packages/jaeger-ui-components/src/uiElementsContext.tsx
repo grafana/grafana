@@ -133,16 +133,6 @@ export type InputGroupProps = {
   children?: React.ReactNode;
 };
 
-export const UIInputGroup = function UIInputGroup(props: InputGroupProps) {
-  return (
-    <GetElementsContext>
-      {(elements: Elements) => {
-        return <elements.InputGroup {...props} />;
-      }}
-    </GetElementsContext>
-  );
-};
-
 export type Elements = {
   Popover: React.ComponentType<PopoverProps>;
   Tooltip: React.ComponentType<TooltipProps>;
@@ -150,7 +140,6 @@ export type Elements = {
   Dropdown: React.ComponentType<DropdownProps>;
   Menu: React.ComponentType<MenuProps>;
   MenuItem: React.ComponentType<MenuItemProps>;
-  InputGroup: React.ComponentType<InputGroupProps>;
 };
 
 /**

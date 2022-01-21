@@ -45,11 +45,4 @@ export const UIElements: Elements = {
   Dropdown: (() => null as any) as any,
   Menu: (() => null as any) as any,
   MenuItem: (() => null as any) as any,
-  InputGroup({ children, className, style }) {
-    return (
-      <span className={className} style={style}>
-        {children}
-      </span>
-    );
-  },
 };
