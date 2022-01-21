@@ -1,15 +1,8 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Input } from '../Input/Input';
 import { GrafanaTheme2, MappingType, SpecialValueMatch, SelectableValue, ValueMappingResult } from '@grafana/data';
 import { Draggable } from 'react-beautiful-dnd';
-import { Icon } from '../Icon/Icon';
-import { ColorPicker } from '../ColorPicker/ColorPicker';
-import { LinkButton } from '../Button';
-import { HorizontalGroup } from '../Layout/Layout';
-import { IconButton } from '../IconButton/IconButton';
-import { useStyles2 } from '../../themes/ThemeContext';
 import { css } from '@emotion/css';
-import { Select } from '../Select/Select';
+import { useStyles2, Icon, Select, HorizontalGroup, ColorPicker, IconButton, LinkButton, Input } from '@grafana/ui';
 
 export interface ValueMappingEditRowModel {
   type: MappingType;
@@ -30,7 +23,7 @@ interface Props {
   onDuplicate: (index: number) => void;
 }
 
-export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate: onDupliate }: Props) {
+export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate: onDuplicate }: Props) {
   const { key, result } = mapping;
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -192,7 +185,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
           </td>
           <td className={styles.textAlignCenter}>
             <HorizontalGroup spacing="sm">
-              <IconButton name="copy" onClick={() => onDupliate(index)} data-testid="duplicate-value-mapping" />
+              <IconButton name="copy" onClick={() => onDuplicate(index)} data-testid="duplicate-value-mapping" />
               <IconButton name="trash-alt" onClick={() => onRemove(index)} data-testid="remove-value-mapping" />
             </HorizontalGroup>
           </td>

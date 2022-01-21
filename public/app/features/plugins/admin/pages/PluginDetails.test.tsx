@@ -90,7 +90,7 @@ describe('Plugin details page', () => {
   afterEach(() => {
     jest.clearAllMocks();
     config.pluginAdminExternalManageEnabled = false;
-    config.licenseInfo.enabledFeatures = {};
+    config.featureToggles = {};
   });
 
   afterAll(() => {
@@ -325,7 +325,7 @@ describe('Plugin details page', () => {
     });
 
     it('should display an install button for enterprise plugins if license is valid', async () => {
-      config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
+      config.featureToggles = { 'enterprise.plugins': true };
 
       const { queryByRole } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
 
@@ -333,7 +333,7 @@ describe('Plugin details page', () => {
     });
 
     it('should not display install button for enterprise plugins if license is invalid', async () => {
-      config.licenseInfo.enabledFeatures = {};
+      config.featureToggles = {};
 
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, isEnterprise: true });
 
@@ -772,7 +772,7 @@ describe('Plugin details page', () => {
     });
 
     it('should not display an install button for enterprise plugins if license is valid', async () => {
-      config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
+      config.featureToggles = { 'enterprise.plugins': true };
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
 
       await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
