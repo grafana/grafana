@@ -1,7 +1,7 @@
 include:
  - included.yaml
 
-vars:
+vars: 
   stack: something
   level: free
   valA: value from features.yaml

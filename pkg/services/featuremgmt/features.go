@@ -76,7 +76,7 @@ func (s *FeatureToggleState) UnmarshalJSON(b []byte) error {
 }
 
 type FeatureFlag struct {
-	Name        string             `json:"name"` // Unique name
+	Name        string             `json:"name" yaml:"name"` // Unique name
 	Description string             `json:"description"`
 	State       FeatureToggleState `json:"state,omitempty"`
 	DocsURL     string             `json:"docsURL,omitempty"`

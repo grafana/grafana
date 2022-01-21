@@ -36,18 +36,18 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 		}
 
 		// Selectively update properties
-		if add.Description != flag.Description {
+		if add.Description != "" {
 			flag.Description = add.Description
 		}
-		if add.DocsURL != flag.DocsURL {
+		if add.DocsURL != "" {
 			flag.DocsURL = add.DocsURL
 		}
-		if add.Expression != flag.Expression {
+		if add.Expression != "" {
 			flag.Expression = add.Expression
 		}
 
-		// The least stable state
-		if add.State > flag.State {
+		// The most recently defined state
+		if add.State != FeatureStateUnknown {
 			flag.State = add.State
 		}
 
@@ -64,6 +64,9 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 			flag.RequiresRestart = true
 		}
 	}
+
+	// This will evaluate all flags
+	fm.update()
 }
 
 func (fm *FeatureManager) evaluate(ff *FeatureFlag) bool {
@@ -71,7 +74,7 @@ func (fm *FeatureManager) evaluate(ff *FeatureFlag) bool {
 		return false
 	}
 
-	if ff.RequiresLicense && !fm.licensing.FeatureEnabled(ff.Name) {
+	if ff.RequiresLicense && (fm.licensing == nil || !fm.licensing.FeatureEnabled(ff.Name)) {
 		return false
 	}
 
@@ -207,7 +210,6 @@ func (fm *FeatureManager) HandleGetSettings(c *models.ReqContext) {
 func WithFeatures(spec ...interface{}) *FeatureManager {
 	count := len(spec)
 	enabled := make(map[string]bool, count)
-	flags := make(map[string]FeatureFlag, count)
 
 	idx := 0
 	for idx < count {
@@ -217,9 +219,6 @@ func WithFeatures(spec ...interface{}) *FeatureManager {
 		if idx < count && reflect.TypeOf(spec[idx]).Kind() == reflect.Bool {
 			val = spec[idx].(bool)
 			idx++
-		}
-		flags[key] = FeatureFlag{
-			Name: key,
 		}
 
 		if val {

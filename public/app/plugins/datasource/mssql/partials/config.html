@@ -13,9 +13,9 @@
 	</div>
 
 	<div class="gf-form">
-		<label class="gf-form-label width-7">Authentication</label>
+		<label class="gf-form-label width-7" for="auth-select">Authentication</label>
 		<div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
-			<select class="gf-form-input" ng-model="ctrl.current.jsonData.authenticationType" ng-options="mode for mode in ['Windows Authentication', 'SQL Server Authentication']" ng-init="ctrl.current.jsonData.authenticationType" ng-change="ctrl.onAuthenticationTypeChange()"></select>
+			<select id="auth-select" class="gf-form-input" ng-model="ctrl.current.jsonData.authenticationType" ng-options="mode for mode in ['Windows Authentication', 'SQL Server Authentication']" ng-init="ctrl.current.jsonData.authenticationType" ng-change="ctrl.onAuthenticationTypeChange()"></select>
 			<info-popover mode="right-absolute">
 				<ul>
 					<li><i>SQL Server Authentication</i> This is the default mechanism to connect to MS SQL Server. Enter the SQL Server Authentication login or the Windows Authentication login in the DOMAIN\User format.</li>
@@ -37,14 +37,15 @@
 				on-change="ctrl.onPasswordChange"
 				labelWidth="7"
 				inputWidth="7"
+				aria-label="'Password'"
 			/>
 		</div>
 	</div>
 
 	<div class="gf-form">
-		<label class="gf-form-label width-7">Encrypt</label>
+		<label class="gf-form-label width-7" for="encrypt-select">Encrypt</label>
 		<div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
-			<select class="gf-form-input" ng-model="ctrl.current.jsonData.encrypt" ng-options="mode for mode in ['disable', 'false', 'true']" ng-init="ctrl.current.jsonData.encrypt"></select>
+			<select id="encrypt-select" class="gf-form-input" ng-model="ctrl.current.jsonData.encrypt" ng-options="mode for mode in ['disable', 'false', 'true']" ng-init="ctrl.current.jsonData.encrypt" aria-labelledby="encrypt-label"></select>
 			<info-popover mode="right-absolute">
 				Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server.
 				<ul>

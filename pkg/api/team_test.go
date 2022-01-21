@@ -42,7 +42,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 		hs := setupSimpleHTTPServer(nil)
 
-		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
+		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
 			var sentLimit int
 			var sendPage int
 			bus.AddHandler("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
@@ -67,7 +67,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			assert.Equal(t, 2, len(respJSON.Get("teams").MustArray()))
 		})
 
-		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
+		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
 			var sentLimit int
 			var sendPage int
 			bus.AddHandler("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {

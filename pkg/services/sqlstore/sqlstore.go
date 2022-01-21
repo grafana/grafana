@@ -12,10 +12,14 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -26,8 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	_ "github.com/lib/pq"
-	"xorm.io/xorm"
 )
 
 var (
@@ -51,14 +53,16 @@ type SQLStore struct {
 	Dialect                     migrator.Dialect
 	skipEnsureDefaultOrgAndUser bool
 	migrations                  registry.DatabaseMigrator
+	tracer                      tracing.Tracer
 }
 
-func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, migrations registry.DatabaseMigrator, tracer tracing.Tracer,
+) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, cacheService, bus, nil, migrations)
+	s, err := newSQLStore(cfg, cacheService, bus, nil, migrations, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +74,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus
 	if err := s.Reset(); err != nil {
 		return nil, err
 	}
-
+	s.tracer = tracer
 	return s, nil
 }
 
@@ -79,7 +83,7 @@ func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, er
 }
 
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, engine *xorm.Engine,
-	migrations registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
+	migrations registry.DatabaseMigrator, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
 		Cfg:                         cfg,
 		Bus:                         bus,
@@ -87,6 +91,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 		log:                         log.New("sqlstore"),
 		skipEnsureDefaultOrgAndUser: false,
 		migrations:                  migrations,
+		tracer:                      tracer,
 	}
 	for _, opt := range opts {
 		if !opt.EnsureDefaultOrgAndUser {
@@ -323,7 +328,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	}
 
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FLAG_database_metrics) {
-		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type)
+		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
 	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
@@ -373,7 +378,8 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	if !debugSQL {
 		engine.SetLogger(&xorm.DiscardLogger{})
 	} else {
-		engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
+		// add stack to database calls to be able to see what repository initiated queries. Top 7 items from the stack as they are likely in the xorm library.
+		engine.SetLogger(NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
 		engine.ShowSQL(true)
 		engine.ShowExecTime(true)
 	}
@@ -528,7 +534,11 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		engine.DatabaseTZ = time.UTC
 		engine.TZLocation = time.UTC
 
-		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), bus.GetBus(), engine, migration, opts...)
+		tracer, err := tracing.InitializeTracerForTest()
+		if err != nil {
+			return nil, err
+		}
+		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), bus.GetBus(), engine, migration, tracer, opts...)
 		if err != nil {
 			return nil, err
 		}

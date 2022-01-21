@@ -631,7 +631,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users from the [Grafana Admin Pages](/reference/admin).
+users from the [Grafana Admin Pages]({{< relref "../manage-users/server-admin/server-admin-manage-users.md" >}}).
 
 ### allow_org_create
 
@@ -890,8 +890,6 @@ Email server settings.
 
 Enable this to allow Grafana to send email. Default is `false`.
 
-If the password contains `#` or `;`, then you have to wrap it with triple quotes. Example: """#password;"""
-
 ### host
 
 Default is `localhost:25`.
@@ -902,7 +900,7 @@ In case of SMTP auth, default is `empty`.
 
 ### password
 
-In case of SMTP auth, default is `empty`.
+In case of SMTP auth, default is `empty`. If the password contains `#` or `;`, then you have to wrap it with triple quotes. Example: """#password;"""
 
 ### cert_file
 

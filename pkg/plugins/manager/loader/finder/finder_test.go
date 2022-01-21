@@ -51,7 +51,7 @@ func TestFinder_Find(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := New(tc.cfg)
+			f := New()
 			pluginPaths, err := f.Find(tc.pluginDirs)
 			if (err != nil) && !errors.Is(err, tc.err) {
 				t.Errorf("Find() error = %v, expected error %v", err, tc.err)

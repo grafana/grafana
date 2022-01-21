@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -619,5 +620,6 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStats {
 		kvStore:         kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
 		log:             log.New("infra.usagestats"),
 		startTime:       time.Now().Add(-1 * time.Minute),
+		RouteRegister:   routing.NewRouteRegister(),
 	}
 }

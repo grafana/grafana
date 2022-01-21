@@ -12,21 +12,40 @@ import (
 	"unicode"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/require"
 )
 
-func TestFeatureToggleTypeScript(t *testing.T) {
-	tsgen := generateTypeScript()
+func TestFeatureToggleFiles(t *testing.T) {
+	// Typescript files
+	verifyAndGenerateFile(t,
+		"../../../packages/grafana-data/src/types/featureToggles.gen.ts",
+		generateTypeScript(),
+	)
 
-	fpath := "../../../packages/grafana-data/src/types/featureToggles.gen.ts"
+	// Golang files
+	verifyAndGenerateFile(t,
+		"toggles_gen.go",
+		generateRegistry(t),
+	)
+}
+
+func verifyAndGenerateFile(t *testing.T, fpath string, gen string) {
+	// nolint:gosec
+	// We can ignore the gosec G304 warning since this is a test and the function is only called explicitly above
 	body, err := ioutil.ReadFile(fpath)
-	if err == nil && tsgen != string(body) {
-		err = fmt.Errorf("feature toggle typescript does not match")
+	if err == nil {
+		if diff := cmp.Diff(gen, string(body)); diff != "" {
+			str := fmt.Sprintf("body mismatch (-want +got):\n%s\n", diff)
+			err = fmt.Errorf(str)
+		}
 	}
 
 	if err != nil {
-		_ = os.WriteFile(fpath, []byte(tsgen), 0644)
-		t.Errorf("Feature toggle typescript does not match: %s", err.Error())
+		e2 := os.WriteFile(fpath, []byte(gen), 0644)
+		if e2 != nil {
+			t.Errorf("error writing file: %s", e2.Error())
+		}
+		abs, _ := filepath.Abs(fpath)
+		t.Errorf("feature toggle do not match: %s (%s)", err.Error(), abs)
 		t.Fail()
 	}
 }
@@ -34,17 +53,21 @@ func TestFeatureToggleTypeScript(t *testing.T) {
 func generateTypeScript() string {
 	buf := `// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
 // To change feature flags, edit:
-//  pkg/setting/setting_feature_toggles_registry.go
+//  pkg/services/featuremgmt/registry.go
+// Then run tests in:
+//  pkg/services/featuremgmt/toggles_gen_test.go
 
 /**
  * Describes available feature toggles in Grafana. These can be configured via
  * conf/custom.ini to enable features under development or not yet available in
  * stable version.
  *
+ * Only enabled values will be returned in this interface
+ *
  * @public
  */
 export interface FeatureToggles {
-  // [name: string]?: boolean; // support any string value
+  [name: string]: boolean | undefined; // support any string value
 
 `
 	for _, flag := range standardFeatureFlags {
@@ -74,39 +97,16 @@ func asCamelCase(key string) string {
 	return strings.Join(parts, "")
 }
 
-func TestGenerateToggleHelpers(t *testing.T) {
-	tsgen, err := generateRegistry()
-	require.NoError(t, err)
-
-	fpath := "toggles_gen.go"
-	body, err := ioutil.ReadFile(fpath)
-	if err == nil {
-		if diff := cmp.Diff(tsgen, string(body)); diff != "" {
-			str := fmt.Sprintf("body mismatch (-want +got):\n%s\n", diff)
-			err = fmt.Errorf(str)
-		}
-	}
-
-	if err != nil {
-		e2 := os.WriteFile(fpath, []byte(tsgen), 0644)
-		if e2 != nil {
-			t.Errorf("error writing file: %s", e2.Error())
-		}
-		abs, _ := filepath.Abs(fpath)
-		t.Errorf("feature toggle helpers do not match: %s (%s)", err.Error(), abs)
-		t.Fail()
-	}
-}
-
-func generateRegistry() (string, error) {
+func generateRegistry(t *testing.T) string {
 	tmpl, err := template.New("fn").Parse(`
-// {{.CamleCase}} checks for the flag: {{.Flag.Name}}{{.Ext}}
+// Is{{.CamleCase}}Enabled checks for the flag: {{.Flag.Name}}{{.Ext}}
 func (ft *FeatureToggles) Is{{.CamleCase}}Enabled() bool {
 	return ft.manager.IsEnabled("{{.Flag.Name}}")
 }
 `)
 	if err != nil {
-		return "", err
+		t.Fatal("error reading template", "error", err.Error())
+		return ""
 	}
 
 	data := struct {
@@ -133,10 +133,8 @@ package featuremgmt
 			data.Ext += "\n// " + flag.Description
 		}
 
-		if err := tmpl.Execute(&buff, data); err != nil {
-			return buff.String(), err
-		}
+		_ = tmpl.Execute(&buff, data)
 	}
 
-	return buff.String(), nil
+	return buff.String()
 }

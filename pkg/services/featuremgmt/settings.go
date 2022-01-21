@@ -10,12 +10,19 @@ import (
 )
 
 type configBody struct {
-	Include []string               `toml:"include"`
-	Vars    map[string]interface{} `toml:"vars"`
-	Flags   []FeatureFlag          `toml:"flags"`
+	// paths that we can load recursivly
+	Include []string `yaml:"include"`
+
+	// define variables that can be used in expressions
+	Vars map[string]interface{} `yaml:"vars"`
+
+	// Define and override feature flag properties
+	Flags []FeatureFlag `yaml:"flags"`
+
+	// keep track of where the fie was loaded from
+	filename string
 
 	// Runtime loaded properties
-	filename string
 	included map[string]*configBody
 }
 

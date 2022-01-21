@@ -191,7 +191,7 @@ Object {
         "reducers": Array [
           "mean",
           "max",
-          "last",
+          "lastNotNull",
         ],
       },
     },

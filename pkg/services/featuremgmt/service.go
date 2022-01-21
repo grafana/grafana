@@ -52,8 +52,9 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 	}
 
 	// Load config settings
-	configfile := filepath.Join(cfg.HomePath, "config", "features.yaml")
+	configfile := filepath.Join(cfg.HomePath, "conf", "features.yaml")
 	if _, err := os.Stat(configfile); err == nil {
+		mgmt.log.Info("[experimental] loading features from config file", "path", configfile)
 		mgmt.config = configfile
 		err = mgmt.readFile()
 		if err != nil {
@@ -69,7 +70,7 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 	return mgmt, nil
 }
 
-// interface without control
+// ProvideToggles allows read-only access to the feature state
 func ProvideToggles(mgmt *FeatureManager) *FeatureToggles {
 	return &FeatureToggles{
 		manager: mgmt,
