@@ -121,8 +121,8 @@ func (rr *RouteRegisterImpl) Group(pattern string, fn func(rr RouteRegister), ha
 func (rr *RouteRegisterImpl) Register(router Router, namedMiddlewares ...RegisterNamedMiddleware) {
 	for _, r := range rr.routes {
 		// Add global named middlewares
-		for _, m := range namedMiddlewares {
-			r.handlers = insertHandler(r.handlers, len(rr.namedMiddlewares), m(r.pattern))
+		for i, m := range namedMiddlewares {
+			r.handlers = insertHandler(r.handlers, len(rr.namedMiddlewares)+i, m(r.pattern))
 		}
 
 		// GET requests have to be added to macaron routing using Get()
