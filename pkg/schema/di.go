@@ -25,6 +25,11 @@ func (gs *GoSchema) Name() string {
 	return gs.Kind
 }
 
+// Name returns the canonical string that identifies the object being schematized.
+func (ts *ThemaSchema) Name() string {
+	return ts.Name()
+}
+
 // ThemaSchema contains a Grafana schema where the canonical schema expression
 // is made with Thema and CUE.
 type ThemaSchema struct {

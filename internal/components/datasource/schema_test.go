@@ -12,5 +12,16 @@ func TestDatasourceLineageIsValid(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_ = l
+
+	mockDSRaw := `{ "name": "sloth" }`
+	_, _ = l, mockDSRaw
+	k := newDataSourceJSONKernel(l)
+	dsInterface, _, err := k.Converge([]byte(mockDSRaw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = dsInterface
+	// Create Datasource object from Rawjson
+	// validation (prove invalid)
+
 }

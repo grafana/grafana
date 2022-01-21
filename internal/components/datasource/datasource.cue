@@ -2,9 +2,9 @@ package datasource
 
 import "github.com/grafana/thema"
 
-lin: thema.#Lineage
-lin: name: "Datasource"
-lin: seqs: [
+thema.#Lineage
+name: "datasource"
+seqs: [
     {
         schemas: [
             { // 0.0
@@ -14,7 +14,8 @@ lin: seqs: [
                 name: string
                 type: string
                 typeLogoUrl: string
-                access: *"proxy" | "direct" // TODO are we sure this default is right?
+                // access: *"proxy" | "direct" // TODO are we sure this default is right?
+                access: string // 
                 url: string
                 password: string
                 user: string
