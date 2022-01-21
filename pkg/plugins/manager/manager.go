@@ -392,6 +392,8 @@ func flushStream(plugin backendplugin.Plugin, stream callResourceClientResponseS
 					w.Header().Add(k, v)
 				}
 			}
+
+			proxyutil.SetProxyResponseHeaders(w.Header())
 			w.WriteHeader(resp.Status)
 		}
 
