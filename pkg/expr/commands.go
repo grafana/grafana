@@ -78,7 +78,7 @@ type ReduceCommand struct {
 
 // NewReduceCommand creates a new ReduceCMD.
 func NewReduceCommand(refID, reducer, varToReduce string, mode string) (*ReduceCommand, error) {
-	if len(mode) > 0 && strings.EqualFold(mode, mathexp.ReduceModeDropNN) {
+	if len(mode) > 0 && !strings.EqualFold(mode, mathexp.ReduceModeDropNN) {
 		return nil, fmt.Errorf("reduce command does not support mode %s. Only mode %s is supported", mode, mathexp.ReduceModeDropNN)
 	}
 	_, err := mathexp.GetReduceFunc(reducer)
