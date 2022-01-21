@@ -23,7 +23,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -50,7 +49,7 @@ func newClient(skipTLSVerify bool, grafanaVersion string, logger Logger) *Client
 }
 
 func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL, checksum, pluginsPath string,
-	allowSymlinks bool, repo plugins.Repository) (*plugins.PluginArchiveInfo, error) {
+	allowSymlinks bool, repo Repository) (*PluginArchiveInfo, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
@@ -88,10 +87,10 @@ func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL,
 
 	c.log.Successf("Downloaded %s v%s zip successfully", res.ID, res.Info.Version)
 
-	installedPlugin := &plugins.PluginArchiveInfo{
+	installedPlugin := &PluginArchiveInfo{
 		ID:           res.ID,
 		Version:      res.Info.Version,
-		Dependencies: make(map[string]*plugins.PluginArchiveInfo),
+		Dependencies: make(map[string]*PluginArchiveInfo),
 		Path:         pluginDir,
 	}
 

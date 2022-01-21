@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -16,9 +15,9 @@ const (
 
 type Service struct {
 	client *Client
-	cfg    *setting.Cfg
 
-	log Logger
+	pluginsPath string
+	log         Logger
 }
 
 func New(skipTLSVerify bool, grafanaVersion string, logger Logger) *Service {
@@ -32,14 +31,14 @@ func ProvideService(cfg *setting.Cfg) *Service {
 	logger := newLogger("plugin.repository", true)
 
 	return &Service{
-		client: newClient(false, cfg.BuildVersion, logger),
-		cfg:    cfg,
-		log:    logger,
+		client:      newClient(false, cfg.BuildVersion, logger),
+		pluginsPath: cfg.PluginsPath,
+		log:         logger,
 	}
 }
 
 // Download downloads the requested plugin archive
-func (s *Service) Download(ctx context.Context, pluginID, version string) (*plugins.PluginArchiveInfo, error) {
+func (s *Service) Download(ctx context.Context, pluginID, version string) (*PluginArchiveInfo, error) {
 	isGrafanaPlugin := false
 
 	if strings.HasPrefix(pluginID, "grafana-") {
@@ -72,10 +71,10 @@ func (s *Service) Download(ctx context.Context, pluginID, version string) (*plug
 
 	pluginZipURL := fmt.Sprintf("%s/%s/versions/%s/download", grafanaComAPIRoot, pluginID, version)
 
-	return s.client.downloadAndExtract(ctx, pluginID, pluginZipURL, checksum, s.cfg.PluginsPath, isGrafanaPlugin, s)
+	return s.client.downloadAndExtract(ctx, pluginID, pluginZipURL, checksum, s.pluginsPath, isGrafanaPlugin, s)
 }
 
-func (s *Service) GetDownloadOptions(_ context.Context, pluginID, version string) (*plugins.PluginDownloadOptions, error) {
+func (s *Service) GetDownloadOptions(_ context.Context, pluginID, version string) (*PluginDownloadOptions, error) {
 	plugin, err := s.pluginMetadata(pluginID)
 	if err != nil {
 		return nil, err
@@ -86,14 +85,14 @@ func (s *Service) GetDownloadOptions(_ context.Context, pluginID, version string
 		return nil, err
 	}
 
-	return &plugins.PluginDownloadOptions{
+	return &PluginDownloadOptions{
 		Version:      v.Version,
 		PluginZipURL: fmt.Sprintf("%s/%s/versions/%s/download", grafanaComAPIRoot, pluginID, v.Version),
 	}, nil
 }
 
-func (s *Service) DownloadWithURL(ctx context.Context, pluginID, archiveURL string) (*plugins.PluginArchiveInfo, error) {
-	return s.client.downloadAndExtract(ctx, pluginID, archiveURL, "", s.cfg.PluginsPath, false, s)
+func (s *Service) DownloadWithURL(ctx context.Context, pluginID, archiveURL string) (*PluginArchiveInfo, error) {
+	return s.client.downloadAndExtract(ctx, pluginID, archiveURL, "", s.pluginsPath, false, s)
 }
 
 func (s *Service) pluginMetadata(pluginID string) (Plugin, error) {

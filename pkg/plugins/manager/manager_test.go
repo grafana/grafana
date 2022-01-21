@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins/repository"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -208,8 +210,8 @@ func TestPluginManager_Installer(t *testing.T) {
 			}
 			pm.pluginLoader = l
 
-			repo.downloadOptionsHandler = func(_ context.Context, _, _ string) (*plugins.PluginDownloadOptions, error) {
-				return &plugins.PluginDownloadOptions{
+			repo.downloadOptionsHandler = func(_ context.Context, _, _ string) (*repository.PluginDownloadOptions, error) {
+				return &repository.PluginDownloadOptions{
 					Version: "1.2.0",
 				}, nil
 			}
@@ -593,32 +595,32 @@ func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
 }
 
 type fakePluginRepo struct {
-	plugins.Repository
+	repository.Repository
 
-	downloadOptionsHandler func(_ context.Context, _, _ string) (*plugins.PluginDownloadOptions, error)
+	downloadOptionsHandler func(_ context.Context, _, _ string) (*repository.PluginDownloadOptions, error)
 
 	downloadOptionsCount int
 	downloadCount        int
 }
 
-func (pr *fakePluginRepo) Download(_ context.Context, _, _ string) (*plugins.PluginArchiveInfo, error) {
+func (pr *fakePluginRepo) Download(_ context.Context, _, _ string) (*repository.PluginArchiveInfo, error) {
 	pr.downloadCount++
-	return &plugins.PluginArchiveInfo{}, nil
+	return &repository.PluginArchiveInfo{}, nil
 }
 
 // GetDownloadOptions provides information for downloading the requested plugin.
-func (pr *fakePluginRepo) GetDownloadOptions(ctx context.Context, pluginID, version string) (*plugins.PluginDownloadOptions, error) {
+func (pr *fakePluginRepo) GetDownloadOptions(ctx context.Context, pluginID, version string) (*repository.PluginDownloadOptions, error) {
 	pr.downloadOptionsCount++
 	if pr.downloadOptionsHandler != nil {
 		return pr.downloadOptionsHandler(ctx, pluginID, version)
 	}
-	return &plugins.PluginDownloadOptions{}, nil
+	return &repository.PluginDownloadOptions{}, nil
 }
 
 // DownloadWithURL downloads the requested plugin from the specified URL.
-func (pr *fakePluginRepo) DownloadWithURL(_ context.Context, _, _ string) (*plugins.PluginArchiveInfo, error) {
+func (pr *fakePluginRepo) DownloadWithURL(_ context.Context, _, _ string) (*repository.PluginArchiveInfo, error) {
 	pr.downloadCount++
-	return &plugins.PluginArchiveInfo{}, nil
+	return &repository.PluginArchiveInfo{}, nil
 }
 
 type fakeLoader struct {

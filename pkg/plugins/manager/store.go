@@ -10,6 +10,7 @@ import (
 	"github.com/Masterminds/semver"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/repository"
 )
 
 func (m *PluginManager) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
@@ -42,12 +43,12 @@ func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) 
 	return pluginsList
 }
 
-func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo plugins.Repository) error {
+func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo repository.Repository) error {
 	if version != "" && !isSemVerExpr(version) {
 		return plugins.ErrInvalidPluginVersionFormat
 	}
 
-	var newPluginArchive *plugins.PluginArchiveInfo
+	var newPluginArchive *repository.PluginArchiveInfo
 	if plugin, exists := m.plugin(pluginID); exists {
 		if !plugin.IsExternalPlugin() {
 			return plugins.ErrInstallCorePlugin

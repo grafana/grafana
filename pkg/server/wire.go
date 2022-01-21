@@ -110,7 +110,7 @@ var wireBasicSet = wire.NewSet(
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	repository.ProvideService,
-	wire.Bind(new(plugins.Repository), new(*repository.Service)),
+	wire.Bind(new(repository.Repository), new(*repository.Service)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Store), new(*manager.PluginManager)),

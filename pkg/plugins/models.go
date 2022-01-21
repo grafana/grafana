@@ -253,18 +253,6 @@ type Error struct {
 	PluginID  string `json:"pluginId,omitempty"`
 }
 
-type PluginArchiveInfo struct {
-	ID           string
-	Version      string
-	Dependencies map[string]*PluginArchiveInfo
-	Path         string
-}
-
-type PluginDownloadOptions struct {
-	Version      string
-	PluginZipURL string
-}
-
 type PreloadPlugin struct {
 	Path    string `json:"path"`
 	Version string `json:"version"`
