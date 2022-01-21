@@ -675,7 +675,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		var routes []*plugins.Route
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		dsService := datasources.ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
-		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService)
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
 
 		proxy.HandleRequest()
