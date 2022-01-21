@@ -20,7 +20,7 @@ import { prepareTimeseriesTransformerRegistryItem } from '../components/Transfor
 import { convertFieldTypeTransformRegistryItem } from '../components/TransformersUI/ConvertFieldTypeTransformerEditor';
 import { fieldLookupTransformRegistryItem } from '../components/TransformersUI/lookupGazetteer/FieldLookupTransformerEditor';
 import { extractFieldsTransformRegistryItem } from '../components/TransformersUI/extractFields/ExtractFieldsTransformerEditor';
-import { setGeometryTransformRegistryItem } from '../components/TransformersUI/spatial/SetGeometryTransformerEditor';
+import { spatialTransformRegistryItem } from '../components/TransformersUI/spatial/SpatialTransformerEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
@@ -43,7 +43,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     configFromQueryTransformRegistryItem,
     prepareTimeseriesTransformerRegistryItem,
     convertFieldTypeTransformRegistryItem,
-    setGeometryTransformRegistryItem,
+    spatialTransformRegistryItem,
     fieldLookupTransformRegistryItem,
     extractFieldsTransformRegistryItem,
   ];

@@ -3,7 +3,7 @@ import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
 import { DataTransformerID } from '@grafana/data/src/transformations/transformers/ids';
 import { frameAsGazetter } from 'app/features/geo/gazetteer/gazetteer';
 
-describe('Set geometry', () => {
+describe('spatial transformer', () => {
   it('adds lat/lon based on string field', async () => {
     const cfg = {
       id: DataTransformerID.spatial,

@@ -3,27 +3,17 @@ import { getCenter } from 'ol/extent';
 import { Geometry, LineString, Point } from 'ol/geom';
 import { toLonLat } from 'ol/proj';
 import { getArea, getLength } from 'ol/sphere';
-import { CalculateFunction, CalculateOptions } from './models.gen';
+import { SpatialCalculation, SpatialCalculationOption } from './models.gen';
 
 /** Will return a field with a single row */
-export function toLineStringField(field: Field<Geometry | undefined>): Field<Geometry> {
+export function toLineString(field: Field<Geometry | undefined>): LineString {
   const coords: number[][] = [];
   for (const geo of field.values.toArray()) {
     if (geo) {
       coords.push(getCenterPoint(geo));
     }
   }
-  let name = field.name;
-  if (!name || name === 'Point') {
-    name = 'Line';
-  }
-
-  return {
-    ...field,
-    parse: undefined,
-    type: FieldType.geo,
-    values: new ArrayVector([new LineString(coords)]),
-  };
+  return new LineString(coords);
 }
 
 /** Will return a field with a single row */
@@ -62,22 +52,30 @@ export function getCenterPointWGS84(geo?: Geometry): number[] | undefined {
 }
 
 /** Will return a new field with calculated values */
-export function doGeomeryCalculation(field: Field<Geometry | undefined>, options: CalculateOptions): Field {
+export function doGeomeryCalculation(field: Field<Geometry | undefined>, options: SpatialCalculationOption): Field {
   const values = field.values.toArray();
   const buffer = new Array(field.values.length);
+  const op = options.calc ?? SpatialCalculation.Heading;
+  const name = options.field ?? op;
 
-  switch (options?.what) {
-    case CalculateFunction.Heading: {
+  switch (op) {
+    case SpatialCalculation.Area: {
+      for (let i = 0; i < values.length; i++) {
+        const geo = values[i];
+        if (geo) {
+          buffer[i] = getArea(geo);
+        }
+      }
       return {
-        name: 'Heading',
+        name,
         type: FieldType.number,
         config: {
-          unit: 'degree',
+          unit: 'areaM2',
         },
-        values: new ArrayVector(calculateBearings(values)),
+        values: new ArrayVector(buffer),
       };
     }
-    case CalculateFunction.Distance: {
+    case SpatialCalculation.Distance: {
       for (let i = 0; i < values.length; i++) {
         const geo = values[i];
         if (geo) {
@@ -85,7 +83,7 @@ export function doGeomeryCalculation(field: Field<Geometry | undefined>, options
         }
       }
       return {
-        name: 'Distance',
+        name,
         type: FieldType.number,
         config: {
           unit: 'lengthm',
@@ -93,21 +91,18 @@ export function doGeomeryCalculation(field: Field<Geometry | undefined>, options
         values: new ArrayVector(buffer),
       };
     }
-  }
 
-  // Default to area
-  for (let i = 0; i < values.length; i++) {
-    const geo = values[i];
-    if (geo) {
-      buffer[i] = getArea(geo);
+    // Use heading as default
+    case SpatialCalculation.Heading:
+    default: {
+      return {
+        name,
+        type: FieldType.number,
+        config: {
+          unit: 'degree',
+        },
+        values: new ArrayVector(calculateBearings(values)),
+      };
     }
   }
-  return {
-    name: 'Area',
-    type: FieldType.number,
-    config: {
-      unit: 'areaM2',
-    },
-    values: new ArrayVector(buffer),
-  };
 }

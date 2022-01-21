@@ -1,11 +1,11 @@
-import { DataFrame, DataTransformerID, DataTransformerInfo } from '@grafana/data';
+import { ArrayVector, DataFrame, DataTransformerID, DataTransformerInfo, FieldType } from '@grafana/data';
 import { createLineBetween } from 'app/features/geo/format/utils';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 import { mergeMap, from } from 'rxjs';
-import { ModifyFunction, SetGeometryAction, SetGeometryOptions } from './models.gen';
-import { doGeomeryCalculation, toLineStringField } from './utils';
+import { SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
+import { doGeomeryCalculation, toLineString } from './utils';
 
-export const spatialTransformer: DataTransformerInfo<SetGeometryOptions> = {
+export const spatialTransformer: DataTransformerInfo<SpatialTransformOptions> = {
   id: DataTransformerID.spatial,
   name: 'Spatial operations',
   description: 'Apply spatial operations to query results',
@@ -14,14 +14,14 @@ export const spatialTransformer: DataTransformerInfo<SetGeometryOptions> = {
   operator: (options) => (source) => source.pipe(mergeMap((data) => from(doSetGeometry(data, options)))),
 };
 
-export function isLineToOption(options: SetGeometryOptions): boolean {
-  return options.action === SetGeometryAction.Modify && options.modify?.fn === ModifyFunction.LineTo;
+export function isLineBuilderOption(options: SpatialTransformOptions): boolean {
+  return options.action === SpatialAction.Modify && options.modify?.op === SpatialOperation.LineBuilder;
 }
 
-async function doSetGeometry(frames: DataFrame[], options: SetGeometryOptions): Promise<DataFrame[]> {
+async function doSetGeometry(frames: DataFrame[], options: SpatialTransformOptions): Promise<DataFrame[]> {
   const location = await getLocationMatchers(options.source);
-  if (isLineToOption(options)) {
-    const targetLocation = await getLocationMatchers(options.modify?.lineTo);
+  if (isLineBuilderOption(options)) {
+    const targetLocation = await getLocationMatchers(options.modify?.target);
     return frames.map((frame) => {
       const src = getGeometryField(frame, location);
       const target = getGeometryField(frame, targetLocation);
@@ -39,20 +39,32 @@ async function doSetGeometry(frames: DataFrame[], options: SetGeometryOptions): 
   return frames.map((frame) => {
     let info = getGeometryField(frame, location);
     if (info.field) {
-      if (options.action === SetGeometryAction.Modify) {
-        switch (options.modify?.fn) {
+      if (options.action === SpatialAction.Modify) {
+        switch (options.modify?.op) {
           // SOON: extent, convex hull, etc
-          case ModifyFunction.AsLine:
+          case SpatialOperation.AsLine:
+            let name = info.field.name;
+            if (!name || name === 'Point') {
+              name = 'Line';
+            }
             return {
               ...frame,
-              fields: [toLineStringField(info.field)],
+              fields: [
+                {
+                  ...info.field,
+                  name,
+                  parse: undefined,
+                  type: FieldType.geo,
+                  values: new ArrayVector([toLineString(info.field)]),
+                },
+              ],
             };
         }
         return frame;
       }
 
       const fields = info.derived ? [info.field, ...frame.fields] : frame.fields.slice(0);
-      if (options.action === SetGeometryAction.Calculate) {
+      if (options.action === SpatialAction.Calculate) {
         fields.push(doGeomeryCalculation(info.field, options.calculate ?? {}));
         info.derived = true;
       }

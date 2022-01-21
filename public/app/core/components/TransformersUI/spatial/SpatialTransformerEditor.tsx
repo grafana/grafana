@@ -10,15 +10,15 @@ import {
   TransformerUIProps,
 } from '@grafana/data';
 
-import { isLineToOption, spatialTransformer } from './spatialTransformer';
+import { isLineBuilderOption, spatialTransformer } from './spatialTransformer';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
-import { CalculateFunction, ModifyFunction, SetGeometryAction, SetGeometryOptions } from './models.gen';
+import { SpatialCalculation, SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
 
 // Nothing defined in state
 const supplier = (
-  builder: PanelOptionsEditorBuilder<SetGeometryOptions>,
-  context: StandardEditorContext<SetGeometryOptions>
+  builder: PanelOptionsEditorBuilder<SpatialTransformOptions>,
+  context: StandardEditorContext<SpatialTransformOptions>
 ) => {
   const options = context.options ?? {};
 
@@ -26,56 +26,64 @@ const supplier = (
     path: `action`,
     name: 'Action',
     description: '',
-    defaultValue: SetGeometryAction.Prepare,
+    defaultValue: SpatialAction.Prepare,
     settings: {
       options: [
         {
-          value: SetGeometryAction.Prepare,
+          value: SpatialAction.Prepare,
           label: 'Prepare spatial field',
           description: 'Set a geometry field based on the results of other fields',
         },
         {
-          value: SetGeometryAction.Calculate,
+          value: SpatialAction.Calculate,
           label: 'Calculate value',
           description: 'Use the geometry to define a new field (heading/distance/area)',
         },
-        { value: SetGeometryAction.Modify, label: 'Modify spatial field' },
+        { value: SpatialAction.Modify, label: 'Transform', description: 'Apply spatial operations to the geometry' },
       ],
     },
   });
 
-  if (options.action === SetGeometryAction.Calculate) {
+  if (options.action === SpatialAction.Calculate) {
     builder.addSelect({
-      path: `calculate.what`,
+      path: `calculate.calc`,
       name: 'Function',
       description: '',
-      defaultValue: CalculateFunction.Area,
+      defaultValue: SpatialCalculation.Heading,
       settings: {
         options: [
-          { value: CalculateFunction.Area, label: 'Area' },
-          { value: CalculateFunction.Distance, label: 'Distance' },
-          { value: CalculateFunction.Heading, label: 'Heading' },
+          { value: SpatialCalculation.Heading, label: 'Heading' },
+          { value: SpatialCalculation.Area, label: 'Area' },
+          { value: SpatialCalculation.Distance, label: 'Distance' },
         ],
       },
     });
-  } else if (options.action === SetGeometryAction.Modify) {
+  } else if (options.action === SpatialAction.Modify) {
     builder.addSelect({
-      path: `modify.fn`,
-      name: 'Function',
+      path: `modify.op`,
+      name: 'Operation',
       description: '',
-      defaultValue: ModifyFunction.AsLine,
+      defaultValue: SpatialOperation.AsLine,
       settings: {
         options: [
-          { value: ModifyFunction.AsLine, label: 'As line' },
-          { value: ModifyFunction.LineTo, label: 'Connect line' },
+          {
+            value: SpatialOperation.AsLine,
+            label: 'As line',
+            description: 'Create a single line feature with a vertex at each row',
+          },
+          {
+            value: SpatialOperation.LineBuilder,
+            label: 'Line builder',
+            description: 'Create a line between two points',
+          },
         ],
       },
     });
   }
 
-  if (isLineToOption(options)) {
+  if (isLineBuilderOption(options)) {
     builder.addNestedOptions({
-      category: ['Source'],
+      category: ['From point'],
       path: 'source',
       build: (b, c) => {
         const loc = (options.source ?? {}) as FrameGeometrySource;
@@ -87,14 +95,14 @@ const supplier = (
     });
 
     builder.addNestedOptions({
-      category: ['Target'],
+      category: ['To point'],
       path: 'modify',
       build: (b, c) => {
-        const loc = (options.modify?.lineTo ?? {}) as FrameGeometrySource;
+        const loc = (options.modify?.target ?? {}) as FrameGeometrySource;
         if (!loc.mode) {
           loc.mode = FrameGeometrySourceMode.Auto;
         }
-        addLocationFields('', 'lineTo.', b, loc);
+        addLocationFields('', 'target.', b, loc);
       },
     });
   } else {
@@ -102,7 +110,7 @@ const supplier = (
   }
 };
 
-export const SetGeometryTransformerEditor: React.FC<TransformerUIProps<SetGeometryOptions>> = (props) => {
+export const SetGeometryTransformerEditor: React.FC<TransformerUIProps<SpatialTransformOptions>> = (props) => {
   // a new component is created with every change :(
   useEffect(() => {
     if (!props.options.source?.mode) {
@@ -112,7 +120,7 @@ export const SetGeometryTransformerEditor: React.FC<TransformerUIProps<SetGeomet
     }
   });
 
-  const pane = getTransformerOptionPane<SetGeometryOptions>(props, supplier);
+  const pane = getTransformerOptionPane<SpatialTransformOptions>(props, supplier);
   return (
     <div>
       <div>{pane.items.map((v) => v.render())}</div>
@@ -121,7 +129,7 @@ export const SetGeometryTransformerEditor: React.FC<TransformerUIProps<SetGeomet
   );
 };
 
-export const spatialTransformRegistryItem: TransformerRegistryItem<SetGeometryOptions> = {
+export const spatialTransformRegistryItem: TransformerRegistryItem<SpatialTransformOptions> = {
   id: DataTransformerID.spatial,
   editor: SetGeometryTransformerEditor,
   transformation: spatialTransformer,

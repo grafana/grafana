@@ -5,10 +5,10 @@ import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { set, get as lodashGet } from 'lodash';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
-import { SetGeometryOptions } from './models.gen';
+import { SpatialTransformOptions } from './models.gen';
 
 export function getTransformerOptionPane<T = any>(
-  props: TransformerUIProps<SetGeometryOptions>,
+  props: TransformerUIProps<SpatialTransformOptions>,
   supplier: PanelOptionsSupplier<T>
 ): OptionsPaneCategoryDescriptor {
   const context: StandardEditorContext<unknown, unknown> = {
