@@ -13,12 +13,12 @@ import (
 )
 
 func TestProvideService(t *testing.T) {
-	// bus := bus.New()
+	bus := bus.New()
 
 	t.Run("When invalid from_address in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.FromAddress = "@notanemail@"
-		_, _, err := createSutWithConfig(t, cfg)
+		_, _, err := createSutWithConfig(t, bus, cfg)
 
 		require.Error(t, err)
 	})
@@ -251,7 +251,7 @@ func createSut(t *testing.T, bus bus.Bus) (*NotificationService, *FakeMailer) {
 	return ns, fm
 }
 
-func createSutWithConfig(t *testing.T, cfg *setting.Cfg) (*NotificationService, *FakeMailer, error) {
+func createSutWithConfig(t *testing.T, bus bus.Bus, cfg *setting.Cfg) (*NotificationService, *FakeMailer, error) {
 	smtp := NewFakeMailer()
 	sqlStore := sqlstore.InitTestDB(t)
 	ns, err := ProvideService(bus, cfg, smtp, sqlStore)
