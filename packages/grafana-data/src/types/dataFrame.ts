@@ -125,7 +125,7 @@ export interface Field<T = any, V = Vector<T>> {
   /**
    * Convert text to the field value
    */
-  parse?: (value: any) => T;
+  // parse?: (value: any) => T;
 
   /**
    * Convert a value for display
