@@ -683,7 +683,7 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
-        'image': 'cypress/included:9.2.0',
+        'image': 'cypress/included:9.3.1',
         'depends_on': [
             'package',
         ],
