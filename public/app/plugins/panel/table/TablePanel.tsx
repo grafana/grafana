@@ -73,7 +73,7 @@ export class TablePanel extends Component<Props> {
     this.forceUpdate();
   };
 
-  onCellFilterAdded = async (filter: FilterItem) => {
+  onCellFilterAdded = (filter: FilterItem) => {
     const { key, value, operator } = filter;
     const panelModel = getDashboardSrv().getCurrent()?.getPanelById(this.props.id);
 
