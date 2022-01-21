@@ -63,7 +63,7 @@ func (e *AlertEngine) mapRulesToUsageStats(ctx context.Context, rules []*models.
 	result := map[string]int{}
 	for k, v := range typeCount {
 		query := &models.GetDataSourceQuery{Id: k}
-		err := e.Bus.Dispatch(ctx, query)
+		err := e.sqlStore.GetDataSource(ctx, query)
 		if err != nil {
 			return map[string]int{}, nil
 		}
