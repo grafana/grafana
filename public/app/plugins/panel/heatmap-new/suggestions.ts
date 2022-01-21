@@ -24,7 +24,7 @@ export class HeatmapSuggestionsSupplier {
 
     builder.getListAppender<PanelOptions, {}>({
       name: '',
-      pluginId: 'heatmap-NG',
+      pluginId: 'heatmap-new',
       options: {},
       fieldConfig: {
         defaults: {

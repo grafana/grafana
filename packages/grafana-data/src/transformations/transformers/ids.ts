@@ -29,6 +29,6 @@ export enum DataTransformerID {
   convertFieldType = 'convertFieldType',
   fieldLookup = 'fieldLookup',
   heatmap = 'heatmap',
-  setGeometry = 'setGeometry',
+  spatial = 'spatial',
   extractFields = 'extractFields',
 }

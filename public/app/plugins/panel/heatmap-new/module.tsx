@@ -5,9 +5,12 @@ import { HeatmapPanel } from './HeatmapPanel';
 import { PanelOptions, defaultPanelOptions, HeatmapSourceMode } from './models.gen';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 import { HeatmapSuggestionsSupplier } from './suggestions';
+import { heatmapChangedHandler } from './migrations';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
+  .setPanelChangeHandler(heatmapChangedHandler)
+  // .setMigrationHandler(heatmapMigrationHandler)
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
 

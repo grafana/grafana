@@ -1,5 +1,5 @@
 import React from 'react';
-import { DataTransformerID, PluginState, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
+import { PluginState, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
 
 import { HeatmapTransformerOptions, heatmapTransformer } from './heatmap';
 
@@ -12,10 +12,10 @@ export const HeatmapTransformerEditor: React.FC<TransformerUIProps<HeatmapTransf
 };
 
 export const heatmapTransformRegistryItem: TransformerRegistryItem<HeatmapTransformerOptions> = {
-  id: DataTransformerID.heatmap,
+  id: heatmapTransformer.id,
   editor: HeatmapTransformerEditor,
   transformation: heatmapTransformer,
-  name: 'Calculate heatmap',
-  description: 'create a heatmap from source data',
+  name: heatmapTransformer.name,
+  description: heatmapTransformer.description,
   state: PluginState.alpha,
 };

@@ -1,13 +1,10 @@
 import { DataFrame, DataTransformerID, SynchronousDataTransformerInfo } from '@grafana/data';
 import { map } from 'rxjs';
-import { HeatmapCalculationOptions } from './types';
+import { HeatmapCalculationOptions } from './models.gen';
 
 export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
   /** the raw values will still exist in results after transformation */
   keepOriginalData?: boolean;
-
-  /** create a new histogram for each input frame */
-  independantCalcs?: boolean;
 }
 
 export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransformerOptions> = {
@@ -20,15 +17,11 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
 
   transformer: (options: HeatmapTransformerOptions) => {
     return (data: DataFrame[]) => {
-      const results: DataFrame[] = options.keepOriginalData ? data.slice() : [];
-      if (options.independantCalcs) {
-        for (const input of data) {
-          results.push(calculateHeatmapFromData([input], options));
-        }
-      } else {
-        results.push(calculateHeatmapFromData(data, options));
+      const v = calculateHeatmapFromData(data, options);
+      if (options.keepOriginalData) {
+        return [v, ...data];
       }
-      return results;
+      return [v];
     };
   },
 };

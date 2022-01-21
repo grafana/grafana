@@ -11,14 +11,14 @@ import {
   SortOrder,
   TooltipDisplayMode,
 } from '@grafana/schema';
-import { HeatmapCalculationOptions } from 'app/core/components/TransformersUI/calculateHeatmap/types';
+import { HeatmapCalculationOptions } from 'app/core/components/TransformersUI/calculateHeatmap/models.gen';
 
 export const modelVersion = Object.freeze([1, 0]);
 
 export enum HeatmapSourceMode {
   Auto = 'auto',
   Calculate = 'calculate',
-  Data = 'data',
+  Data = 'data', // Use the data as is
 }
 
 export interface PanelOptions extends OptionsWithLegend, OptionsWithTooltip {
@@ -26,10 +26,9 @@ export interface PanelOptions extends OptionsWithLegend, OptionsWithTooltip {
 
   heatmap?: HeatmapCalculationOptions;
 
-  // cards: {
-  //   cardPadding: null,
-  //   cardRound: null,
-  // },
+  cellPadding?: number; // was cardPadding
+  cellRadius?: number; // was cardRadius
+
   // color: {
   //   mode: 'spectrum',
   //   cardColor: '#b4ff00',
@@ -56,7 +55,7 @@ export const defaultPanelOptions: PanelOptions = {
 };
 
 export interface PanelFieldConfig extends HideableFieldConfig {
-  // TODO points vs lines
+  // TODO points vs lines etc
 }
 
 export const defaultPanelFieldConfig: PanelFieldConfig = {

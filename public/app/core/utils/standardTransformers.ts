@@ -21,6 +21,7 @@ import { convertFieldTypeTransformRegistryItem } from '../components/Transformer
 import { fieldLookupTransformRegistryItem } from '../components/TransformersUI/lookupGazetteer/FieldLookupTransformerEditor';
 import { extractFieldsTransformRegistryItem } from '../components/TransformersUI/extractFields/ExtractFieldsTransformerEditor';
 import { heatmapTransformRegistryItem } from '../components/TransformersUI/calculateHeatmap/HeatmapTransformerEditor';
+import { spatialTransformRegistryItem } from '../components/TransformersUI/spatial/SpatialTransformerEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
@@ -43,6 +44,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     configFromQueryTransformRegistryItem,
     prepareTimeseriesTransformerRegistryItem,
     convertFieldTypeTransformRegistryItem,
+    spatialTransformRegistryItem,
     fieldLookupTransformRegistryItem,
     extractFieldsTransformRegistryItem,
     heatmapTransformRegistryItem,
