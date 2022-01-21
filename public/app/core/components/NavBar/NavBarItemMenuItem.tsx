@@ -95,7 +95,7 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean)
       padding: ${theme.spacing(1)};
     `,
     upgradeBox: css`
-      width: 256px;
+      width: 300px;
     `,
   };
 }
