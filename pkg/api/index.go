@@ -403,7 +403,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 
 		configNodes = append(configNodes, &dtos.NavLink{
-			Divider: true,
+			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
 		})
 	}
 
