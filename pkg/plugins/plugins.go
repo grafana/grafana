@@ -83,10 +83,6 @@ func (p PluginDTO) IsApp() bool {
 	return p.Type == App
 }
 
-func (p PluginDTO) IsRenderer() bool {
-	return p.Type == Renderer
-}
-
 func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
 }
@@ -106,18 +102,6 @@ func (p PluginDTO) IncludedInSignature(file string) bool {
 		return false
 	}
 	return true
-}
-
-func (p PluginDTO) IsDecommissioned() bool {
-	return false // TODO
-}
-
-func (p PluginDTO) StaticRoute() *StaticRoute {
-	if p.IsCorePlugin() {
-		return nil
-	}
-
-	return &StaticRoute{Directory: p.PluginDir, PluginID: p.ID}
 }
 
 // JSONData represents the plugin's plugin.json
