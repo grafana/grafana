@@ -1,4 +1,4 @@
-package apidocs
+package definitions
 
 // swagger:route POST /admin/provisioning/dashboards/reload admin_provisioning reloadProvisionedDashboards
 //

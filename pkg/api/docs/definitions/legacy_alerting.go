@@ -1,4 +1,4 @@
-package apidocs
+package definitions
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"

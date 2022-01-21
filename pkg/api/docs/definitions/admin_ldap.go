@@ -1,4 +1,4 @@
-package apidocs
+package definitions
 
 // swagger:route POST /admin/ldap/reload admin_ldap reloadLDAP
 //

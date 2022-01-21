@@ -29,4 +29,4 @@
 //  in: header
 //
 // swagger:meta
-package apidocs
+package definitions

@@ -1,4 +1,4 @@
-package apidocs
+package definitions
 
 // swagger:route GET /org/preferences org_preferences getOrgPreferences
 //

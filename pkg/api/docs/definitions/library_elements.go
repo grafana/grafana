@@ -1,4 +1,4 @@
-package apidocs
+package definitions
 
 import (
 	"encoding/json"

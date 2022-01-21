@@ -1,4 +1,4 @@
-package apidocs
+package definitions
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -215,6 +215,7 @@ import (
 // 500: internalServerError
 
 // swagger:parameters updateDatasource deleteDatasourceByID getDatasourceByID datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
+// swagger:parameters enablePermissions disablePermissions getPermissions
 type DatasourceID struct {
 	// in:path
 	// required:true

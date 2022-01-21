@@ -1,4 +1,4 @@
-package apidocs
+package definitions
 
 // swagger:route GET /folders/{folder_uid}/permissions folder_permissions getFolderPermissions
 //
