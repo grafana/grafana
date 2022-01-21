@@ -30,7 +30,7 @@ func newResultHandler(renderService rendering.Service, sqlStore *sqlstore.SQLSto
 	return &defaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
 		sqlStore: sqlStore,
-		notifier: newNotificationService(renderService, notificationService, decryptFn),
+		notifier: newNotificationService(renderService, sqlStore, notificationService, decryptFn),
 	}
 }
 

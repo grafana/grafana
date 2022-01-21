@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -84,10 +84,11 @@ type ShowWhen struct {
 	Is    string `json:"is"`
 }
 
-func newNotificationService(renderService rendering.Service, notificationSvc *notifications.NotificationService, decryptFn GetDecryptedValueFn) *notificationService {
+func newNotificationService(renderService rendering.Service, sqlStore *sqlstore.SQLStore, notificationSvc *notifications.NotificationService, decryptFn GetDecryptedValueFn) *notificationService {
 	return &notificationService{
 		log:                 log.New("alerting.notifier"),
 		renderService:       renderService,
+		sqlStore:            sqlStore,
 		notificationService: notificationSvc,
 		decryptFn:           decryptFn,
 	}
@@ -96,6 +97,7 @@ func newNotificationService(renderService rendering.Service, notificationSvc *no
 type notificationService struct {
 	log                 log.Logger
 	renderService       rendering.Service
+	sqlStore            *sqlstore.SQLStore
 	notificationService *notifications.NotificationService
 	decryptFn           GetDecryptedValueFn
 }
@@ -155,7 +157,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 		Version: notifierState.state.Version,
 	}
 
-	return bus.Dispatch(evalContext.Ctx, cmd)
+	return n.sqlStore.SetAlertNotificationStateToCompleteCommand(evalContext.Ctx, cmd)
 }
 
 func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *notifierState) error {
@@ -166,7 +168,7 @@ func (n *notificationService) sendNotification(evalContext *EvalContext, notifie
 			AlertRuleStateUpdatedVersion: evalContext.Rule.StateChanges,
 		}
 
-		err := bus.Dispatch(evalContext.Ctx, setPendingCmd)
+		err := n.sqlStore.SetAlertNotificationStateToPendingCommand(evalContext.Ctx, setPendingCmd)
 		if err != nil {
 			if errors.Is(err, models.ErrAlertNotificationStateVersionConflict) {
 				return nil
@@ -254,7 +256,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
 	query := &models.GetAlertNotificationsWithUidToSendQuery{OrgId: orgID, Uids: notificationUids}
 
-	if err := bus.Dispatch(evalContext.Ctx, query); err != nil {
+	if err := n.sqlStore.GetAlertNotificationsWithUidToSend(evalContext.Ctx, query); err != nil {
 		return nil, err
 	}
 
@@ -272,7 +274,7 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 			OrgId:      evalContext.Rule.OrgID,
 		}
 
-		err = bus.Dispatch(evalContext.Ctx, query)
+		err = n.sqlStore.GetOrCreateAlertNotificationState(evalContext.Ctx, query)
 		if err != nil {
 			n.log.Error("Could not get notification state.", "notifier", notification.Id, "error", err)
 			continue
