@@ -6,6 +6,7 @@ import { PanelOptions, defaultPanelOptions, HeatmapSourceMode } from './models.g
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 import { heatmapChangedHandler } from './migrations';
+import { addHeatmapCalculationOptions } from 'app/core/components/TransformersUI/calculateHeatmap/editor/helper';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
@@ -28,19 +29,34 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     });
 
     if (opts.source === HeatmapSourceMode.Calculate) {
-      builder.addSliderInput({
-        name: 'TODO... calculate fields',
-        path: 'xxx',
-      });
+      addHeatmapCalculationOptions('heatmap.', builder, opts.heatmap);
     } else if (opts.source === HeatmapSourceMode.Data) {
-      builder.addSliderInput({
-        name: 'heatmap from the data...',
-        path: 'xxx',
-      });
+      // builder.addSliderInput({
+      //   name: 'heatmap from the data...',
+      //   path: 'xxx',
+      // });
     }
+
+    builder.addNumberInput({
+      name: 'Cell padding',
+      path: 'cellPadding',
+      defaultValue: 0,
+      settings: {
+        min: -10,
+        max: 20,
+      },
+    });
+    builder.addNumberInput({
+      name: 'Cell radius',
+      path: 'cellRadius',
+      defaultValue: 0,
+      settings: {
+        min: 0,
+        max: 100,
+      },
+    });
 
     commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
   })
-  .setDataSupport({ annotations: true, alertStates: true })
   .setSuggestionsSupplier(new HeatmapSuggestionsSupplier());

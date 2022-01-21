@@ -2,7 +2,7 @@ import { DataFrameType } from '@grafana/data';
 
 export enum HeatmapCalculationMode {
   Size = 'size',
-  Buckets = 'buckets',
+  Count = 'count',
 }
 
 export interface HeatmapCalculationAxisConfig {
