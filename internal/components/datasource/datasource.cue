@@ -2,9 +2,9 @@ package datasource
 
 import "github.com/grafana/thema"
 
-thema.#Lineage
-
-seqs: [
+lin: thema.#Lineage
+lin: name: "Datasource"
+lin: seqs: [
     {
         schemas: [
             { // 0.0
@@ -20,6 +20,8 @@ seqs: [
                 user: string
                 database: string
                 basicAuth: bool
+                basicAuthUser: string
+                basicAuthPassword: string
                 secureJsonFields: [string]: bool
                 // TODO do the rest
             }
