@@ -406,6 +406,7 @@ func flushStream(plugin Plugin, stream CallResourceClientResponseStream, w http.
 				}
 			}
 
+			proxyutil.SetProxyResponseHeaders(w.Header())
 			w.WriteHeader(resp.Status)
 		}
 

@@ -2,6 +2,7 @@ package pluginproxy
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func TestPluginProxy(t *testing.T) {
@@ -147,6 +149,48 @@ func TestPluginProxy(t *testing.T) {
 			route,
 		)
 		assert.Equal(t, "https://example.com", req.URL.String())
+	})
+
+	t.Run("When proxying a request should set expected response headers", func(t *testing.T) {
+		requestHandled := false
+		backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(200)
+			_, _ = w.Write([]byte("I am the backend"))
+			requestHandled = true
+		}))
+
+		responseRecorder := &closeNotifierResponseRecorder{
+			ResponseRecorder: httptest.NewRecorder(),
+		}
+		responseWriter := macaron.NewResponseWriter("GET", responseRecorder)
+
+		t.Cleanup(responseRecorder.Close)
+		t.Cleanup(backendServer.Close)
+
+		route := &plugins.AppPluginRoute{
+			Path: "/",
+			URL:  backendServer.URL,
+		}
+
+		ctx := &models.ReqContext{
+			SignedInUser: &models.SignedInUser{},
+			Context: &macaron.Context{
+				Req: macaron.Request{
+					Request: httptest.NewRequest("GET", "/", nil),
+				},
+				Resp: responseWriter,
+			},
+		}
+		proxy := NewApiPluginProxy(ctx, "", route, "", &setting.Cfg{})
+		proxy.ServeHTTP(ctx.Resp, ctx.Req.Request)
+
+		for {
+			if requestHandled {
+				break
+			}
+		}
+
+		require.Equal(t, "sandbox", ctx.Resp.Header().Get("Content-Security-Policy"))
 	})
 }
 

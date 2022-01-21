@@ -177,7 +177,8 @@ func TestManager(t *testing.T) {
 					t.Run("Call resource should return expected response", func(t *testing.T) {
 						ctx.plugin.CallResourceHandlerFunc = backend.CallResourceHandlerFunc(func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 							return sender.Send(&backend.CallResourceResponse{
-								Status: http.StatusOK,
+								Status:  http.StatusOK,
+								Headers: map[string][]string{},
 							})
 						})
 
@@ -186,7 +187,13 @@ func TestManager(t *testing.T) {
 						w := httptest.NewRecorder()
 						err = ctx.manager.callResourceInternal(w, req, backend.PluginContext{PluginID: testPluginID})
 						require.NoError(t, err)
+						for {
+							if w.Flushed {
+								break
+							}
+						}
 						require.Equal(t, http.StatusOK, w.Code)
+						require.Equal(t, "sandbox", w.Header().Get("Content-Security-Policy"))
 					})
 				})
 			})
