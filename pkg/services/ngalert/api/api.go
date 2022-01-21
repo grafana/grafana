@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/services"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -81,7 +82,11 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	}
 
 	api.RegisterTemplateEndpoints(&TemplateServer{
-		store: store.NewEmbeddedTemplateStore(api.AlertingStore),
+		service: services.NewEmbeddedTemplateService(api.AlertingStore),
+	}, m)
+
+	api.RegisterRuleEndpoints(&RuleServer{
+		service: services.NewGrafanaRuleService(api.RuleStore),
 	}, m)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.

@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/common"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -122,7 +122,7 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 
 	for _, result := range results {
 		result := result
-		postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
+		postableUserConfig, err := common.LoadAMConfig([]byte(result.AlertmanagerConfiguration))
 		if err != nil {
 			return err
 		}

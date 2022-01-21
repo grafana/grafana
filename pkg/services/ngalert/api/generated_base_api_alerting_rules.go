@@ -16,48 +16,48 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
 
-type V1TemplateService interface {
-	RouteGetTemplates(*models.ReqContext) response.Response
-	RouteCreateTemplate(*models.ReqContext) response.Response
-	RouteUpdateTemplate(*models.ReqContext) response.Response
-	RouteDeleteTemplate(*models.ReqContext) response.Response
+type RuleRouter interface {
+	RouteGetRule(*models.ReqContext) response.Response
+	RouteCreateRule(*models.ReqContext) response.Response
+	RouteUpdateRule(*models.ReqContext) response.Response
+	RouteDeleteRule(*models.ReqContext) response.Response
 }
 
-func (api *API) RegisterTemplateEndpoints(srv V1TemplateService, m *metrics.API) {
+func (api *API) RegisterRuleEndpoints(router RuleRouter, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(
-			toMacaronPath("/api/alerting/templates"),
+			toMacaronPath("/api/alerting/rules/{uid}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/alerting/templates",
-				srv.RouteGetTemplates,
+				"/api/alerting/rules/{uid}",
+				router.RouteGetRule,
 				m,
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/alerting/templates"),
+			toMacaronPath("/api/alerting/rules"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/alerting/templates",
-				srv.RouteCreateTemplate,
+				"/api/alerting/rules",
+				router.RouteCreateRule,
 				m,
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/alerting/templates"),
+			toMacaronPath("/api/alerting/rules"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/alerting/templates",
-				srv.RouteUpdateTemplate,
+				"/api/alerting/rules",
+				router.RouteUpdateRule,
 				m,
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/alerting/templates"),
+			toMacaronPath("/api/alerting/rules/{uid}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/alerting/templates",
-				srv.RouteDeleteTemplate,
+				"/api/alerting/rules/{uid}",
+				router.RouteDeleteRule,
 				m,
 			),
 		)

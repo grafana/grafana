@@ -6,64 +6,61 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	api "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/services"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type TemplateServer struct {
-	service services.TemplateService
+type RuleServer struct {
+	service services.RuleService
 }
 
-func (s *TemplateServer) RouteGetTemplates(c *api.ReqContext) response.Response {
+func (s *RuleServer) RouteGetRule(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_VIEWER) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
-	templates, err := s.service.GetTemplates(c.OrgId)
+	alertRule, err := s.service.GetRule(c.OrgId, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, templates)
+	return response.JSON(http.StatusOK, alertRule)
 }
 
-func (s *TemplateServer) RouteCreateTemplate(c *api.ReqContext) response.Response {
+func (s *RuleServer) RouteCreateRule(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
-	template := services.Template{}
-	if err := web.Bind(c.Req, &template); err != nil {
+	alertRule := models.AlertRule{}
+	if err := web.Bind(c.Req, &alertRule); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	template, err := s.service.CreateTemplate(c.OrgId, template)
+	err := s.service.CreateRule(alertRule)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, template)
+	return response.JSON(http.StatusOK, alertRule)
 }
 
-func (s *TemplateServer) RouteUpdateTemplate(c *api.ReqContext) response.Response {
+func (s *RuleServer) RouteUpdateRule(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
-	template := services.Template{}
-	if err := web.Bind(c.Req, &template); err != nil {
+	alertRule := models.AlertRule{}
+	if err := web.Bind(c.Req, &alertRule); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	template, err := s.service.UpdateTemplate(c.OrgId, template)
+	err := s.service.UpdateRule(alertRule)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, template)
+	return response.JSON(http.StatusOK, alertRule)
 }
 
-func (s *TemplateServer) RouteDeleteTemplate(c *api.ReqContext) response.Response {
+func (s *RuleServer) RouteDeleteRule(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
-	template := services.Template{}
-	if err := web.Bind(c.Req, &template); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	err := s.service.DeleteTemplate(c.OrgId, template.Name)
+	err := s.service.DeleteRule(c.OrgId, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}

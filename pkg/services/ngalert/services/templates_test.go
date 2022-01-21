@@ -1,4 +1,4 @@
-package store
+package services
 
 import (
 	"strings"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestensureDefine(t *testing.T) {
+func TestEnsureDefine(t *testing.T) {
 	t.Run("Should add a define tag if it's missing", func(t *testing.T) {
 		content, name := "content without tags", "test"
 		content = ensureDefine(name, content)

@@ -1,4 +1,4 @@
-package store
+package services
 
 import (
 	"crypto/md5"
@@ -18,7 +18,14 @@ type Template struct {
 	Content string `json:"content"`
 }
 
-type EmbeddedTemplateStore struct {
+type TemplateService interface {
+	GetTemplates(orgID int64) ([]Template, error)
+	CreateTemplate(orgID int64, template Template) (Template, error)
+	UpdateTemplate(orgID int64, template Template) (Template, error)
+	DeleteTemplate(orgID int64, name string) error
+}
+
+type EmbeddedTemplateService struct {
 	amStore AMStore
 }
 
@@ -34,13 +41,13 @@ type AMStore interface {
 	UpdateAlertManagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error
 }
 
-func NewEmbeddedTemplateStore(store AMStore) EmbeddedTemplateStore {
-	return EmbeddedTemplateStore{
+func NewEmbeddedTemplateService(store AMStore) *EmbeddedTemplateService {
+	return &EmbeddedTemplateService{
 		amStore: store,
 	}
 }
 
-func (templateStore *EmbeddedTemplateStore) GetTemplates(orgID int64) ([]Template, error) {
+func (templateStore *EmbeddedTemplateService) GetTemplates(orgID int64) ([]Template, error) {
 	cfg, _, err := templateStore.getCurrentConfig(orgID)
 	if err != nil {
 		return nil, err
@@ -52,16 +59,16 @@ func (templateStore *EmbeddedTemplateStore) GetTemplates(orgID int64) ([]Templat
 	return templates, nil
 }
 
-func (templateStore *EmbeddedTemplateStore) CreateTemplate(orgID int64, template Template) error {
+func (templateStore *EmbeddedTemplateService) CreateTemplate(orgID int64, template Template) (Template, error) {
 	if template.Name == "" || template.Content == "" {
-		return ErrTemplateNameOrContentEmpty
+		return Template{}, ErrTemplateNameOrContentEmpty
 	}
 	cfg, fetchedHash, err := templateStore.getCurrentConfig(orgID)
 	if err != nil {
-		return err
+		return Template{}, err
 	}
 	if _, exists := cfg.TemplateFiles[template.Name]; exists {
-		return ErrTemplateDuplicateName
+		return Template{}, ErrTemplateDuplicateName
 	}
 	// notification template content must be wrapped in {{ define "name" }} tag,
 	// but this is not obvious because user also has to provide name separately in the form.
@@ -75,9 +82,9 @@ func (templateStore *EmbeddedTemplateStore) CreateTemplate(orgID int64, template
 	cfg.AlertmanagerConfig.Config.Templates = append(cfg.AlertmanagerConfig.Config.Templates, template.Name)
 	data, err := json.Marshal(cfg)
 	if err != nil {
-		return err
+		return Template{}, err
 	}
-	return templateStore.amStore.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
+	return template, templateStore.amStore.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration:     string(data),
 		AlertmanagerConfigurationHash: fmt.Sprintf("%x", md5.Sum(data)),
 		ConfigurationVersion:          "v1",
@@ -87,16 +94,16 @@ func (templateStore *EmbeddedTemplateStore) CreateTemplate(orgID int64, template
 	})
 }
 
-func (templateStore *EmbeddedTemplateStore) UpdateTemplate(orgID int64, template Template) error {
+func (templateStore *EmbeddedTemplateService) UpdateTemplate(orgID int64, template Template) (Template, error) {
 	if template.Name == "" || template.Content == "" {
-		return ErrTemplateNameOrContentEmpty
+		return Template{}, ErrTemplateNameOrContentEmpty
 	}
 	cfg, fetchedHash, err := templateStore.getCurrentConfig(orgID)
 	if err != nil {
-		return err
+		return Template{}, err
 	}
 	if _, exists := cfg.TemplateFiles[template.Name]; !exists {
-		return ErrTemplateNotFound
+		return Template{}, ErrTemplateNotFound
 	}
 	// notification template content must be wrapped in {{ define "name" }} tag,
 	// but this is not obvious because user also has to provide name separately in the form.
@@ -105,9 +112,9 @@ func (templateStore *EmbeddedTemplateStore) UpdateTemplate(orgID int64, template
 	cfg.TemplateFiles[template.Name] = template.Content
 	data, err := json.Marshal(cfg)
 	if err != nil {
-		return err
+		return Template{}, err
 	}
-	return templateStore.amStore.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
+	return template, templateStore.amStore.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration:     string(data),
 		AlertmanagerConfigurationHash: fmt.Sprintf("%x", md5.Sum(data)),
 		ConfigurationVersion:          "v1",
@@ -117,7 +124,7 @@ func (templateStore *EmbeddedTemplateStore) UpdateTemplate(orgID int64, template
 	})
 }
 
-func (templateStore *EmbeddedTemplateStore) DeleteTemplate(orgID int64, name string) error {
+func (templateStore *EmbeddedTemplateService) DeleteTemplate(orgID int64, name string) error {
 	if name == "" {
 		return ErrTemplateNameEmpty
 	}
@@ -149,7 +156,7 @@ func (templateStore *EmbeddedTemplateStore) DeleteTemplate(orgID int64, name str
 	})
 }
 
-func (templateStore *EmbeddedTemplateStore) getCurrentConfig(orgID int64) (*apimodels.PostableUserConfig, string, error) {
+func (templateStore *EmbeddedTemplateService) getCurrentConfig(orgID int64) (*apimodels.PostableUserConfig, string, error) {
 	query := &models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
