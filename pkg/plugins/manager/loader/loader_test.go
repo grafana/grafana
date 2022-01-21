@@ -753,6 +753,146 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
 		}
 	})
+
+	t.Run("Plugin child field `IncludedInAppID` is set to parent app's plugin ID", func(t *testing.T) {
+		parent := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "myorgid-simple-app",
+				Type: "app",
+				Name: "Simple App",
+				Info: plugins.Info{
+					Author: plugins.InfoLink{
+						Name: "Your Name",
+					},
+					Links: []plugins.InfoLink{
+						{Name: "Website", URL: "https://github.com/grafana/grafana-starter-app"},
+						{Name: "License", URL: "https://github.com/grafana/grafana-starter-app/blob/master/LICENSE"},
+					},
+					Logos: plugins.Logos{
+						Small: "public/plugins/myorgid-simple-app/img/logo.svg",
+						Large: "public/plugins/myorgid-simple-app/img/logo.svg",
+					},
+					Screenshots: []plugins.Screenshots{},
+					Description: "Grafana App Plugin Template",
+					Version:     "%VERSION%",
+					Updated:     "%TODAY%",
+				},
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion:    "7.0.0",
+					GrafanaDependency: ">=7.0.0",
+					Plugins:           []plugins.Dependency{},
+				},
+				Includes: []*plugins.Includes{
+					{
+						Name:       "Root Page (react)",
+						Path:       "/a/myorgid-simple-app",
+						Type:       "page",
+						Role:       "Viewer",
+						AddToNav:   true,
+						DefaultNav: true,
+						Slug:       "root-page-react",
+					},
+					{
+						Name:     "Root Page (Tab B)",
+						Path:     "/a/myorgid-simple-app/?tab=b",
+						Type:     "page",
+						Role:     "Viewer",
+						AddToNav: true,
+						Slug:     "root-page-tab-b",
+					},
+					{
+						Name:     "React Config",
+						Path:     "/plugins/myorgid-simple-app/?page=page2",
+						Type:     "page",
+						Role:     "Admin",
+						AddToNav: true,
+						Slug:     "react-config",
+					},
+					{
+						Name: "Streaming Example",
+						Path: "dashboards/streaming.json",
+						Type: "dashboard",
+						Role: "Viewer",
+						Slug: "streaming-example",
+					},
+					{
+						Name: "Lots of Stats",
+						Path: "dashboards/stats.json",
+						Type: "dashboard",
+						Role: "Viewer",
+						Slug: "lots-of-stats",
+					},
+				},
+				Backend: false,
+			},
+			Module:        "plugins/myorgid-simple-app/module",
+			BaseURL:       "public/plugins/myorgid-simple-app",
+			PluginDir:     filepath.Join(parentDir, "testdata/app-with-child/dist"),
+			DefaultNavURL: "/plugins/myorgid-simple-app/page/root-page-react",
+			Signature:     plugins.SignatureValid,
+			SignatureType: plugins.GrafanaSignature,
+			SignatureOrg:  "Grafana Labs",
+			Class:         plugins.External,
+		}
+
+		child := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "myorgid-simple-panel",
+				Type: "panel",
+				Name: "Grafana Panel Plugin Template",
+				Info: plugins.Info{
+					Author: plugins.InfoLink{
+						Name: "Your Name",
+					},
+					Links: []plugins.InfoLink{
+						{Name: "Website", URL: "https://github.com/grafana/grafana-starter-panel"},
+						{Name: "License", URL: "https://github.com/grafana/grafana-starter-panel/blob/master/LICENSE"},
+					},
+					Logos: plugins.Logos{
+						Small: "public/plugins/myorgid-simple-panel/img/logo.svg",
+						Large: "public/plugins/myorgid-simple-panel/img/logo.svg",
+					},
+					Screenshots: []plugins.Screenshots{},
+					Description: "Grafana Panel Plugin Template",
+					Version:     "%VERSION%",
+					Updated:     "%TODAY%",
+				},
+				Dependencies: plugins.Dependencies{
+					GrafanaDependency: ">=7.0.0",
+					GrafanaVersion:    "*",
+					Plugins:           []plugins.Dependency{},
+				},
+			},
+			Module:          "plugins/myorgid-simple-app/child/module",
+			BaseURL:         "public/plugins/myorgid-simple-app",
+			PluginDir:       filepath.Join(parentDir, "testdata/app-with-child/dist/child"),
+			IncludedInAppID: parent.ID,
+			Signature:       plugins.SignatureValid,
+			SignatureType:   plugins.GrafanaSignature,
+			SignatureOrg:    "Grafana Labs",
+			Class:           plugins.External,
+		}
+
+		parent.Children = []*plugins.Plugin{child}
+		child.Parent = parent
+
+		expected := []*plugins.Plugin{parent, child}
+		l := newLoader(&plugins.Cfg{
+			PluginsPath: parentDir,
+		})
+
+		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/app-with-child"}, map[string]struct{}{})
+		assert.NoError(t, err)
+
+		// to ensure we can compare with expected
+		sort.SliceStable(got, func(i, j int) bool {
+			return got[i].ID < got[j].ID
+		})
+
+		if !cmp.Equal(got, expected, compareOpts) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		}
+	})
 }
 
 func TestLoader_readPluginJSON(t *testing.T) {
@@ -894,7 +1034,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 			BaseURL:   "public/app/plugins/app/testdata",
 		}
 
-		setChildModule(parent, child)
+		setPathsBasedOnApp(parent, child)
 
 		assert.Equal(t, "app/plugins/app/testdata/datasources/datasource/module", child.Module)
 		assert.Equal(t, "testdata", child.IncludedInAppID)
