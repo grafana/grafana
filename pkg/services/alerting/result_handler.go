@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -14,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type resultHandler interface {
@@ -22,12 +22,14 @@ type resultHandler interface {
 
 type defaultResultHandler struct {
 	notifier *notificationService
+	sqlStore *sqlstore.SQLStore
 	log      log.Logger
 }
 
-func newResultHandler(renderService rendering.Service, notificationService *notifications.NotificationService, decryptFn GetDecryptedValueFn) *defaultResultHandler {
+func newResultHandler(renderService rendering.Service, sqlStore *sqlstore.SQLStore, notificationService *notifications.NotificationService, decryptFn GetDecryptedValueFn) *defaultResultHandler {
 	return &defaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
+		sqlStore: sqlStore,
 		notifier: newNotificationService(renderService, notificationService, decryptFn),
 	}
 }
@@ -59,7 +61,7 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 			EvalData: annotationData,
 		}
 
-		if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+		if err := handler.sqlStore.SetAlertState(evalContext.Ctx, cmd); err != nil {
 			if errors.Is(err, models.ErrCannotChangeStateOnPausedAlert) {
 				handler.log.Error("Cannot change state on alert that's paused", "error", err)
 				return err
