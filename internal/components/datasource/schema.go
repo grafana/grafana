@@ -94,8 +94,8 @@ type DataSource struct {
 	//WithCredentials   bool   `json:"withCredentials"`
 	//IsDefault         bool   `json:"isDefault"`
 	// JsonData          *simplejson.Json       `json:"jsonData,omitempty"`
-	JsonData         map[string]interface{} `json:"jsonData,omitempty"`
-	SecureJsonFields map[string]bool        `json:"secureJsonFields"`
+	JsonData map[string]interface{} `json:"jsonData,omitempty"`
+	//SecureJsonFields map[string]bool        `json:"secureJsonFields"`
 	//Version          int                    `json:"version"`
 	//ReadOnly         bool                   `json:"readOnly"`
 	// AccessControl     accesscontrol.Metadata `json:"accessControl,omitempty"`

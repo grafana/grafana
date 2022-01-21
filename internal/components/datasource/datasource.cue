@@ -23,7 +23,7 @@ seqs: [
                 basicAuth: bool
                 basicAuthUser: string
                 basicAuthPassword: string
-                secureJsonFields: [string]: bool
+                //secureJsonFields: [string]: bool
                 // TODO do the rest
             }
         ]

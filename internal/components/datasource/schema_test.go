@@ -13,15 +13,35 @@ func TestDatasourceLineageIsValid(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	mockDSRaw := `{ "name": "sloth" }`
-	_, _ = l, mockDSRaw
+	invalidRawDSJSON := `{ "name": "sloth" }`
 	k := newDataSourceJSONKernel(l)
-	dsInterface, _, err := k.Converge([]byte(mockDSRaw))
+	_, _, err = k.Converge([]byte(invalidRawDSJSON))
+	if err == nil {
+		t.Fatal(err)
+	}
+
+	validRawDSJSON := `{
+		"name": "sloth",
+		"type": "slothStats",
+		"typeLogoUrl": "",
+		"access": "",
+		"url": "",
+		"password": "",
+		"user": "",
+		"database": "",
+		"basicAuth": true,
+		"basicAuthUser": "",
+		"basicAuthPassword": "",
+		"jsonData": null
+	}`
+
+	dsInterface, _, err := k.Converge([]byte(validRawDSJSON))
 	if err != nil {
 		t.Fatal(err)
 	}
-	_ = dsInterface
-	// Create Datasource object from Rawjson
-	// validation (prove invalid)
+
+	if _, ok := dsInterface.(*DataSource); !ok {
+		t.Fatalf("could not assert dsInterface of type %t to type Datasource", dsInterface)
+	}
 
 }
