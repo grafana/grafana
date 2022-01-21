@@ -7,9 +7,7 @@ import (
 	"strings"
 )
 
-func CSRF(allowedOrigin, loginCookieName string) func(http.Handler) http.Handler {
-	// origin may contain a trailing suffix at the end of the URL
-	allowedOrigin = strings.TrimSuffix(allowedOrigin, "/")
+func CSRF(loginCookieName string) func(http.Handler) http.Handler {
 	// As per RFC 7231/4.2.2 these methods are idempotent:
 	safeMethods := []string{"GET", "HEAD", "OPTIONS", "TRACE"}
 
@@ -32,6 +30,7 @@ func CSRF(allowedOrigin, loginCookieName string) func(http.Handler) http.Handler
 				next.ServeHTTP(w, r)
 				return
 			}
+			host := strings.Split(r.Host, ":")[0]
 			// Otherwise - verify that Origin/Referer matches the server origin
 			origin := r.Header.Get("Origin")
 			if origin == "" {
@@ -40,7 +39,8 @@ func CSRF(allowedOrigin, loginCookieName string) func(http.Handler) http.Handler
 					origin = fmt.Sprintf("%s://%s", u.Scheme, u.Host)
 				}
 			}
-			if origin != allowedOrigin {
+			u, err := url.Parse(origin)
+			if err != nil || u.Hostname() != host {
 				http.Error(w, "origin not allowed", http.StatusForbidden)
 				return
 			}
