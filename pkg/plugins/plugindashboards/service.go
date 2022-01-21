@@ -143,8 +143,8 @@ func (s *Service) autoUpdateAppDashboard(ctx context.Context, pluginDashInfo *pl
 	}
 	s.logger.Info("Auto updating App dashboard", "dashboard", dash.Title, "newRev",
 		pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
-	user := &models.SignedInUser{UserId: 0, OrgRole: models.ROLE_ADMIN}
-	_, _, err = s.pluginDashboardManager.ImportDashboard(ctx, pluginDashInfo.PluginId, pluginDashInfo.Path, orgID, 0, dash.Data, true,
-		nil, user)
+	// user := &models.SignedInUser{UserId: 0, OrgRole: models.ROLE_ADMIN}
+	// _, _, err = s.pluginDashboardManager.ImportDashboard(ctx, pluginDashInfo.PluginId, pluginDashInfo.Path, orgID, 0, dash.Data, true,
+	// 	nil, user)
 	return err
 }
