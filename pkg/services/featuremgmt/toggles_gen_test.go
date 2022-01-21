@@ -71,7 +71,7 @@ export interface FeatureToggles {
 
 `
 	for _, flag := range standardFeatureFlags {
-		buf += "  " + getTypeScriptKey(flag.Name) + "?: boolean;\n"
+		buf += "  " + getTypeScriptKey(flag.Id) + "?: boolean;\n"
 	}
 
 	buf += "}\n"
@@ -99,9 +99,9 @@ func asCamelCase(key string) string {
 
 func generateRegistry(t *testing.T) string {
 	tmpl, err := template.New("fn").Parse(`
-// Is{{.CamleCase}}Enabled checks for the flag: {{.Flag.Name}}{{.Ext}}
+// Is{{.CamleCase}}Enabled checks for the flag: {{.Flag.Id}}{{.Ext}}
 func (ft *FeatureToggles) Is{{.CamleCase}}Enabled() bool {
-	return ft.manager.IsEnabled("{{.Flag.Name}}")
+	return ft.manager.IsEnabled("{{.Flag.Id}}")
 }
 `)
 	if err != nil {
@@ -125,7 +125,7 @@ package featuremgmt
 `)
 
 	for _, flag := range standardFeatureFlags {
-		data.CamleCase = asCamelCase(flag.Name)
+		data.CamleCase = asCamelCase(flag.Id)
 		data.Flag = flag
 		data.Ext = ""
 

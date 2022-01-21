@@ -7,24 +7,24 @@ vars:
   valA: value from features.yaml
 
 flags: 
-  - name: feature1
+  - id: feature1
     description: feature1
     expression: "false"
 
-  - name: feature3
+  - id: feature3
     description: feature3
     expression: "true"
 
-  - name: feature3
+  - id: feature3
     description: feature3
     expression: env.level == 'free'
 
-  - name: displaySwedishTheme
+  - id: displaySwedishTheme
     description: enable swedish background theme
     expression: |
       // restrict to users allowing swedish language
       req.locale.contains("sv")
-  - name: displayFrenchFlag
+  - id: displayFrenchFlag
     description: sho background theme
     expression: |
       // only admins

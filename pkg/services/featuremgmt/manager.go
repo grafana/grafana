@@ -22,15 +22,30 @@ type FeatureManager struct {
 	log       log.Logger
 }
 
+func (fm *FeatureManager) registerAlias(flag *FeatureFlag) {
+	if flag.AliasIds != nil {
+		for _, id := range flag.AliasIds {
+			found, ok := fm.flags[id]
+			if !ok {
+				fm.flags[id] = flag
+			} else if found != flag {
+				fm.log.Error("multiple flag instances found for", "id", id)
+			}
+		}
+	}
+}
+
 // This will merge the flags with the current configuration
 func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 	for idx, add := range flags {
-		if add.Name == "" {
+		if add.Id == "" {
+			fm.log.Error("registering a flag without an id", "flag", add)
 			continue // skip it with warning?
 		}
-		flag, ok := fm.flags[add.Name]
+		flag, ok := fm.flags[add.Id]
+		fm.registerAlias(&flags[idx])
 		if !ok {
-			fm.flags[add.Name] = &flags[idx]
+			fm.flags[add.Id] = &flags[idx]
 			continue
 		}
 
@@ -91,11 +106,11 @@ func (fm *FeatureManager) update() {
 		track := 0.0
 		if val {
 			track = 1
-			enabled[flag.Name] = true
+			enabled[flag.Id] = true
 		}
 
 		// Register value with prometheus metric
-		featureToggleInfo.WithLabelValues(flag.Name).Set(track)
+		featureToggleInfo.WithLabelValues(flag.Id).Set(track)
 	}
 	fm.enabled = enabled
 }
@@ -169,6 +184,7 @@ func (fm *FeatureManager) HandleGetSettings(c *models.ReqContext) {
 func WithFeatures(spec ...interface{}) *FeatureManager {
 	count := len(spec)
 	enabled := make(map[string]bool, count)
+	flags := make(map[string]*FeatureFlag, count)
 
 	idx := 0
 	for idx < count {
@@ -180,12 +196,20 @@ func WithFeatures(spec ...interface{}) *FeatureManager {
 			idx++
 		}
 
+		flags[key] = &FeatureFlag{
+			Id:         key,
+			Expression: fmt.Sprintf("%t", val),
+		}
+
 		if val {
 			enabled[key] = true
 		}
 	}
 
-	return &FeatureManager{enabled: enabled}
+	return &FeatureManager{
+		enabled: enabled,
+		flags:   flags, // used in tests
+		log:     log.New("test.featuremgmt")}
 }
 
 func WithToggles(spec ...interface{}) *FeatureToggles {

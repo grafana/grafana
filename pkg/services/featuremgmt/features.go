@@ -76,10 +76,12 @@ func (s *FeatureToggleState) UnmarshalJSON(b []byte) error {
 }
 
 type FeatureFlag struct {
-	Name        string             `json:"name" yaml:"name"` // Unique name
+	Id          string             `json:"id" yaml:"key"`    // special key
+	Name        string             `json:"name" yaml:"name"` // display name (may have spaces)
 	Description string             `json:"description"`
 	State       FeatureToggleState `json:"state,omitempty"`
 	DocsURL     string             `json:"docsURL,omitempty"`
+	AliasIds    []string           `json:"aliasIds" yaml:"name"` // possible alternative ids
 
 	// CEL-GO expression.  Using the value "true" will mean this is on by default
 	Expression string `json:"expression,omitempty"`

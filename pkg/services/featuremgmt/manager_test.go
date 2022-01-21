@@ -25,16 +25,14 @@ func TestFeatureManager(t *testing.T) {
 	})
 
 	t.Run("check license validation", func(t *testing.T) {
-		ft := FeatureManager{
-			flags: map[string]*FeatureFlag{},
-		}
+		ft := WithFeatures()
 		ft.registerFlags(FeatureFlag{
-			Name:            "a",
+			Id:              "a",
 			RequiresLicense: true,
 			RequiresDevMode: true,
 			Expression:      "true",
 		}, FeatureFlag{
-			Name:       "b",
+			Id:         "b",
 			Expression: "true",
 		})
 		require.False(t, ft.IsEnabled("a"))
@@ -43,10 +41,10 @@ func TestFeatureManager(t *testing.T) {
 
 		// Try changing "requires license"
 		ft.registerFlags(FeatureFlag{
-			Name:            "a",
+			Id:              "a",
 			RequiresLicense: false, // shuld still require license!
 		}, FeatureFlag{
-			Name:            "b",
+			Id:              "b",
 			RequiresLicense: true, // expression is still "true"
 		})
 		require.False(t, ft.IsEnabled("a"))
@@ -55,23 +53,32 @@ func TestFeatureManager(t *testing.T) {
 	})
 
 	t.Run("check description and docs configs", func(t *testing.T) {
-		ft := FeatureManager{
-			flags: map[string]*FeatureFlag{},
-		}
+		ft := WithFeatures()
 		ft.registerFlags(FeatureFlag{
-			Name:        "a",
+			Id:          "a",
 			Description: "first",
 		}, FeatureFlag{
-			Name:        "a",
+			Id:          "a",
 			Description: "second",
 		}, FeatureFlag{
-			Name:    "a",
+			Id:      "a",
 			DocsURL: "http://something",
 		}, FeatureFlag{
-			Name: "a",
+			Id: "a",
 		})
 		flag := ft.flags["a"]
 		require.Equal(t, "second", flag.Description)
 		require.Equal(t, "http://something", flag.DocsURL)
+	})
+
+	t.Run("check standard flags with alias", func(t *testing.T) {
+		ft := WithFeatures()
+		ft.registerFlags(standardFeatureFlags...)
+
+		r0 := ft.flags["recordedQueries"]
+		r1 := ft.flags["recordedqueries"] // lowercase
+
+		require.NotNil(t, r0)
+		require.Equal(t, r0, r1)
 	})
 }
