@@ -10,9 +10,7 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 jest.mock('@grafana/runtime/src/config', () => ({
   ...((jest.requireActual('@grafana/runtime/src/config') as unknown) as object),
   config: {
-    licenseInfo: {
-      enabledFeatures: { teamsync: true },
-    },
+    featureToggles: { teamsync: true },
   },
 }));
 

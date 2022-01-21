@@ -16,6 +16,7 @@ import {
   getMonthsString,
   getYearsString,
 } from '../../utils/alertmanager';
+import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 
 interface Props {
   alertManagerSourceName: string;
@@ -46,7 +47,7 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
   const columns = useColumns(alertManagerSourceName, hideActions, setMuteTimingName);
 
   return (
-    <div>
+    <div className={styles.container}>
       {!hideActions && <h5>Mute timings</h5>}
       {!hideActions && (
         <p>
@@ -54,7 +55,29 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
           particular notification policies for specific times of the day.
         </p>
       )}
-      {items.length > 0 ? <DynamicTable items={items} cols={columns} /> : <p>No mute timings configured</p>}
+      {!hideActions && items.length > 0 && (
+        <LinkButton
+          className={styles.addMuteButton}
+          icon="plus"
+          variant="primary"
+          href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
+        >
+          New mute timing
+        </LinkButton>
+      )}
+      {items.length > 0 ? (
+        <DynamicTable items={items} cols={columns} />
+      ) : !hideActions ? (
+        <EmptyAreaWithCTA
+          text="You haven't created any mute timings yet"
+          buttonLabel="Add mute timing"
+          buttonIcon="plus"
+          buttonSize="lg"
+          href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
+        />
+      ) : (
+        <p>No mute timings configured</p>
+      )}
       {!hideActions && (
         <ConfirmModal
           isOpen={!!muteTimingName}
@@ -64,15 +87,6 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
           onConfirm={() => dispatch(deleteMuteTimingAction(alertManagerSourceName, muteTimingName))}
           onDismiss={() => setMuteTimingName('')}
         />
-      )}
-      {!hideActions && (
-        <LinkButton
-          className={styles.addMuteButton}
-          variant="secondary"
-          href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
-        >
-          Add mute timing
-        </LinkButton>
       )}
     </div>
   );
@@ -139,7 +153,12 @@ function renderTimeIntervals(timeIntervals: TimeInterval[]) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    display: flex;
+    flex-flow: column nowrap;
+  `,
   addMuteButton: css`
-    margin-top: ${theme.spacing(1)};
+    margin-bottom: ${theme.spacing(2)};
+    align-self: flex-end;
   `,
 });

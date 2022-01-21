@@ -9,16 +9,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessControlService {
+func ProvideService(features *featuremgmt.FeatureToggles, usageStats usagestats.Service) *OSSAccessControlService {
 	s := &OSSAccessControlService{
-		Cfg:           cfg,
+		features:      features,
 		UsageStats:    usageStats,
 		Log:           log.New("accesscontrol"),
-		scopeResolver: accesscontrol.NewScopeResolver(),
+		ScopeResolver: accesscontrol.NewScopeResolver(),
 	}
 	s.registerUsageMetrics()
 	return s
@@ -26,18 +26,18 @@ func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessC
 
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
-	Cfg           *setting.Cfg
+	features      *featuremgmt.FeatureToggles
 	UsageStats    usagestats.Service
 	Log           log.Logger
 	registrations accesscontrol.RegistrationList
-	scopeResolver accesscontrol.ScopeResolver
+	ScopeResolver accesscontrol.ScopeResolver
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
-	if ac.Cfg == nil {
+	if ac.features == nil {
 		return true
 	}
-	return !ac.Cfg.FeatureToggles["accesscontrol"]
+	return !ac.features.IsAccesscontrolEnabled()
 }
 
 func (ac *OSSAccessControlService) registerUsageMetrics() {
@@ -74,7 +74,12 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 		user.Permissions[user.OrgId] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
-	return evaluator.Evaluate(user.Permissions[user.OrgId])
+	attributeMutator := ac.ScopeResolver.GetResolveAttributeScopeMutator(user.OrgId)
+	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
+	if err != nil {
+		return false, err
+	}
+	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId])
 }
 
 // GetUserRoles returns user permissions based on built-in roles
@@ -87,6 +92,9 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
+	var err error
+	keywordMutator := ac.ScopeResolver.GetResolveKeywordScopeMutator(user)
+
 	builtinRoles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, builtin := range builtinRoles {
@@ -96,13 +104,14 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 				if !exists {
 					continue
 				}
-				for _, p := range role.Permissions {
+				for i := range role.Permissions {
 					// if the permission has a keyword in its scope it will be resolved
-					permission, err := ac.scopeResolver.ResolveKeyword(user, p)
+					p := (role.Permissions[i])
+					p.Scope, err = keywordMutator(ctx, p.Scope)
 					if err != nil {
 						return nil, err
 					}
-					permissions = append(permissions, permission)
+					permissions = append(permissions, &p)
 				}
 			}
 		}
@@ -200,4 +209,10 @@ func (ac *OSSAccessControlService) DeclareFixedRoles(registrations ...accesscont
 	}
 
 	return nil
+}
+
+// RegisterAttributeScopeResolver allows the caller to register scope resolvers for a
+// specific scope prefix (ex: datasources:name:)
+func (ac *OSSAccessControlService) RegisterAttributeScopeResolver(scopePrefix string, resolver accesscontrol.AttributeScopeResolveFunc) {
+	ac.ScopeResolver.AddAttributeResolver(scopePrefix, resolver)
 }

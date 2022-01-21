@@ -12,11 +12,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/opentracing/opentracing-go"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
 	projectName := timeSeriesFilter.ProjectName
 	if projectName == "" {
@@ -55,22 +56,15 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 		}
 	}
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "cloudMonitoring query")
-	span.SetTag("target", timeSeriesFilter.Target)
-	span.SetTag("from", req.Queries[0].TimeRange.From)
-	span.SetTag("until", req.Queries[0].TimeRange.To)
-	span.SetTag("datasource_id", dsInfo.id)
-	span.SetTag("org_id", req.PluginContext.OrgID)
+	ctx, span := tracer.Start(ctx, "cloudMonitoring query")
+	span.SetAttributes("target", timeSeriesFilter.Target, attribute.Key("target").String(timeSeriesFilter.Target))
+	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
+	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
+	span.SetAttributes("datasource_id", dsInfo.id, attribute.Key("datasource_id").Int64(dsInfo.id))
+	span.SetAttributes("org_id", req.PluginContext.OrgID, attribute.Key("org_id").Int64(req.PluginContext.OrgID))
 
-	defer span.Finish()
-
-	if err := opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(r.Header)); err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
+	defer span.End()
+	tracer.Inject(ctx, r.Header, span)
 
 	r = r.WithContext(ctx)
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)

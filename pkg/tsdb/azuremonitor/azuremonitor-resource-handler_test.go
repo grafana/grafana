@@ -91,7 +91,7 @@ func (s *fakeProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Clie
 	return nil
 }
 
-func Test_resourceHandler(t *testing.T) {
+func Test_handleResourceReq(t *testing.T) {
 	proxy := &fakeProxy{}
 	s := Service{
 		im: &fakeInstance{
@@ -102,7 +102,6 @@ func Test_resourceHandler(t *testing.T) {
 				},
 			},
 		},
-		Cfg: &setting.Cfg{},
 		executors: map[string]azDatasourceExecutor{
 			azureMonitor: &AzureMonitorDatasource{
 				proxy: proxy,
@@ -114,7 +113,7 @@ func Test_resourceHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
-	s.resourceHandler(azureMonitor)(rw, req)
+	s.handleResourceReq(azureMonitor)(rw, req)
 	expectedURL := "https://management.azure.com/subscriptions/44693801"
 	if proxy.requestedURL != expectedURL {
 		t.Errorf("Unexpected result URL. Got %s, expecting %s", proxy.requestedURL, expectedURL)
