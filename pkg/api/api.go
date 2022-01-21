@@ -128,7 +128,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/user/password/reset", hs.Index)
 
 	r.Post("/api/user/password/send-reset-email", routing.Wrap(hs.SendResetPasswordEmail))
-	r.Post("/api/user/password/reset", routing.Wrap(ResetPassword))
+	r.Post("/api/user/password/reset", routing.Wrap(hs.ResetPassword))
 
 	// dashboard snapshots
 	r.Get("/dashboard/snapshot/*", reqNoAuth, hs.Index)

@@ -134,7 +134,7 @@ type HTTPServer struct {
 	serviceAccountsService    serviceaccounts.Service
 	authInfoService           authinfoservice.Service
 	TeamPermissionsService    *resourcepermissions.Service
-	NotificationService       notifications.NotificationService
+	NotificationService       *notifications.NotificationService
 }
 
 type ServerOptions struct {

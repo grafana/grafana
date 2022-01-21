@@ -46,8 +46,8 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, sqlStore *sqls
 		sqlStore:     sqlStore,
 	}
 
-	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
-	ns.Bus.AddHandler(ns.validateResetPasswordCode)
+	ns.Bus.AddHandler(ns.SendResetPasswordEmail)
+	ns.Bus.AddHandler(ns.ValidateResetPasswordCode)
 	ns.Bus.AddHandler(ns.SendEmailCommandHandler)
 
 	ns.Bus.AddHandler(ns.SendEmailCommandHandlerSync)
@@ -166,7 +166,7 @@ func (ns *NotificationService) SendEmailCommandHandler(ctx context.Context, cmd 
 	return nil
 }
 
-func (ns *NotificationService) sendResetPasswordEmail(ctx context.Context, cmd *models.SendResetPasswordEmailCommand) error {
+func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *models.SendResetPasswordEmailCommand) error {
 	code, err := createUserEmailCode(ns.Cfg, cmd.User, nil)
 	if err != nil {
 		return err
@@ -181,7 +181,7 @@ func (ns *NotificationService) sendResetPasswordEmail(ctx context.Context, cmd *
 	})
 }
 
-func (ns *NotificationService) validateResetPasswordCode(ctx context.Context, query *models.ValidateResetPasswordCodeQuery) error {
+func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *models.ValidateResetPasswordCodeQuery) error {
 	login := getLoginForEmailCode(query.Code)
 	if login == "" {
 		return models.ErrInvalidEmailCode

@@ -13,12 +13,12 @@ import (
 )
 
 func TestProvideService(t *testing.T) {
-	// bus := bus.New()
+	bus := bus.New()
 
 	t.Run("When invalid from_address in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.FromAddress = "@notanemail@"
-		_, _, err := createSutWithConfig(t, cfg)
+		_, _, err := createSutWithConfig(t, bus, cfg)
 
 		require.Error(t, err)
 	})
@@ -179,7 +179,7 @@ func TestSendEmailAsync(t *testing.T) {
 
 	t.Run("When sending reset email password", func(t *testing.T) {
 		sut, _ := createSut(t, bus)
-		err := sut.sendResetPasswordEmail(context.Background(), &models.SendResetPasswordEmailCommand{User: &models.User{Email: "asd@asd.com"}})
+		err := sut.SendResetPasswordEmail(context.Background(), &models.SendResetPasswordEmailCommand{User: &models.User{Email: "asd@asd.com"}})
 		require.NoError(t, err)
 
 		sentMsg := <-sut.mailQueue
@@ -193,7 +193,7 @@ func TestSendEmailAsync(t *testing.T) {
 	t.Run("When SMTP disabled in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.Enabled = false
-		_, mailer, err := createSutWithConfig(t, bus, cfg)
+		ns, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &models.SendEmailCommand{
 			Subject:     "subject",
@@ -202,7 +202,7 @@ func TestSendEmailAsync(t *testing.T) {
 			Template:    "welcome_on_signup",
 		}
 
-		err = bus.Dispatch(context.Background(), cmd)
+		err = ns.sendEmailCommandHandler(context.Background(), cmd)
 
 		require.ErrorIs(t, err, models.ErrSmtpNotEnabled)
 		require.Empty(t, mailer.Sent)
@@ -251,7 +251,7 @@ func createSut(t *testing.T, bus bus.Bus) (*NotificationService, *FakeMailer) {
 	return ns, fm
 }
 
-func createSutWithConfig(t *testing.T, cfg *setting.Cfg) (*NotificationService, *FakeMailer, error) {
+func createSutWithConfig(t *testing.T, bus bus.Bus, cfg *setting.Cfg) (*NotificationService, *FakeMailer, error) {
 	smtp := NewFakeMailer()
 	sqlStore := sqlstore.InitTestDB(t)
 	ns, err := ProvideService(bus, cfg, smtp, sqlStore)
