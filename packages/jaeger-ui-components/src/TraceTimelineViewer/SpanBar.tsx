@@ -22,9 +22,9 @@ import { useStyles2 } from '@grafana/ui';
 import { autoColor } from '../Theme';
 import { TraceSpan } from '../types/trace';
 import { TNil } from '../types';
-import { UIPopover } from '../uiElementsContext';
 import AccordianLogs from './SpanDetail/AccordianLogs';
 import { ViewedBoundsFunctionType } from './utils';
+import { Popover } from '../common/Popover';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -172,15 +172,14 @@ function SpanBar(props: TInnerProps) {
       </div>
       <div>
         {Object.keys(logGroups).map((positionKey) => (
-          <UIPopover
+          <Popover
             key={positionKey}
-            placement="topLeft"
             content={
               <AccordianLogs interactive={false} isOpen logs={logGroups[positionKey]} timestamp={traceStartTime} />
             }
           >
             <div className={styles.logMarker} style={{ left: positionKey }} />
-          </UIPopover>
+          </Popover>
         ))}
       </div>
       {rpc && (

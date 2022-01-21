@@ -1,12 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CopyIcon /> renders as expected 1`] = `
-<UITooltip
-  arrowPointAtCenter={true}
-  mouseLeaveDelay={0.5}
-  onVisibleChange={[Function]}
-  placement="left"
-  title="tooltipTitleValue"
+<Tooltip
+  content="tooltipTitleValue"
 >
   <Button
     className="css-oqwzau classNameValue"
@@ -14,5 +10,5 @@ exports[`<CopyIcon /> renders as expected 1`] = `
     onClick={[Function]}
     type="button"
   />
-</UITooltip>
+</Tooltip>
 `;

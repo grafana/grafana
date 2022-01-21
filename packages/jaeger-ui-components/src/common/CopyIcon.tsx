@@ -16,9 +16,7 @@ import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import copy from 'copy-to-clipboard';
-import { Button, IconName, stylesFactory } from '@grafana/ui';
-
-import { UITooltip, TooltipPlacement } from '../uiElementsContext';
+import { Button, IconName, stylesFactory, Tooltip } from '@grafana/ui';
 
 const getStyles = stylesFactory(() => {
   return {
@@ -41,7 +39,6 @@ type PropsType = {
   className?: string;
   copyText: string;
   icon?: IconName;
-  placement?: TooltipPlacement;
   tooltipTitle: string;
 };
 
@@ -53,7 +50,6 @@ export default class CopyIcon extends React.PureComponent<PropsType, StateType> 
   static defaultProps: Partial<PropsType> = {
     className: undefined,
     icon: 'copy',
-    placement: 'left',
   };
 
   state = {
@@ -78,20 +74,14 @@ export default class CopyIcon extends React.PureComponent<PropsType, StateType> 
   render() {
     const styles = getStyles();
     return (
-      <UITooltip
-        arrowPointAtCenter
-        mouseLeaveDelay={0.5}
-        onVisibleChange={this.handleTooltipVisibilityChange}
-        placement={this.props.placement}
-        title={this.state.hasCopied ? 'Copied' : this.props.tooltipTitle}
-      >
+      <Tooltip content={this.state.hasCopied ? 'Copied' : this.props.tooltipTitle}>
         <Button
           className={cx(styles.CopyIcon, this.props.className)}
           type="button"
           icon={this.props.icon}
           onClick={this.handleClick}
         />
-      </UITooltip>
+      </Tooltip>
     );
   }
 }

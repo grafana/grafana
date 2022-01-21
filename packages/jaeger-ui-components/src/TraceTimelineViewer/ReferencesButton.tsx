@@ -14,11 +14,11 @@
 
 import React from 'react';
 import { css } from '@emotion/css';
-import { stylesFactory } from '@grafana/ui';
+import { stylesFactory, Tooltip } from '@grafana/ui';
 
 import NewWindowIcon from '../common/NewWindowIcon';
 import { TraceSpanReference } from '../types/trace';
-import { UITooltip, UIDropdown, UIMenuItem, UIMenu, TooltipPlacement } from '../uiElementsContext';
+import { UIDropdown, UIMenuItem, UIMenu } from '../uiElementsContext';
 import ReferenceLink from '../url/ReferenceLink';
 
 export const getStyles = stylesFactory(() => {
@@ -76,30 +76,22 @@ export default class ReferencesButton extends React.PureComponent<TReferencesBut
     const { references, children, tooltipText, focusSpan } = this.props;
     const styles = getStyles();
 
-    const tooltipProps = {
-      arrowPointAtCenter: true,
-      mouseLeaveDelay: 0.5,
-      placement: 'bottom' as TooltipPlacement,
-      title: tooltipText,
-      overlayClassName: styles.tooltip,
-    };
-
     if (references.length > 1) {
       return (
-        <UITooltip {...tooltipProps}>
+        <Tooltip content={tooltipText}>
           <UIDropdown overlay={this.referencesList(references)} placement="bottomRight" trigger={['click']}>
             <a className={styles.MultiParent}>{children}</a>
           </UIDropdown>
-        </UITooltip>
+        </Tooltip>
       );
     }
     const ref = references[0];
     return (
-      <UITooltip {...tooltipProps}>
+      <Tooltip content={tooltipText}>
         <ReferenceLink reference={ref} focusSpan={focusSpan} className={styles.MultiParent}>
           {children}
         </ReferenceLink>
-      </UITooltip>
+      </Tooltip>
     );
   }
 }

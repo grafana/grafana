@@ -14,7 +14,8 @@
 
 import React from 'react';
 import { mount } from 'enzyme';
-import UIElementsContext, { UIPopover } from '../uiElementsContext';
+import UIElementsContext from '../uiElementsContext';
+import { Popover } from '../common/Popover';
 
 import SpanBar from './SpanBar';
 
@@ -96,6 +97,6 @@ describe('<SpanBar>', () => {
         <SpanBar {...props} />
       </UIElementsContext.Provider>
     );
-    expect(wrapper.find(UIPopover).length).toEqual(2);
+    expect(wrapper.find(Popover).length).toEqual(2);
   });
 });

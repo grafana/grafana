@@ -14,12 +14,13 @@
 
 import React from 'react';
 import { shallow } from 'enzyme';
+import { Tooltip } from '@grafana/ui';
 
 import ReferencesButton, { getStyles } from './ReferencesButton';
 import transformTraceData from '../model/transform-trace-data';
 import traceGenerator from '../demo/trace-generators';
 import ReferenceLink from '../url/ReferenceLink';
-import { UIDropdown, UIMenuItem, UITooltip } from '../uiElementsContext';
+import { UIDropdown, UIMenuItem } from '../uiElementsContext';
 
 describe(ReferencesButton, () => {
   const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 10 }));
@@ -51,7 +52,7 @@ describe(ReferencesButton, () => {
     const wrapper = shallow(<ReferencesButton {...props} />);
     const dropdown = wrapper.find(UIDropdown);
     const refLink = wrapper.find(ReferenceLink);
-    const tooltip = wrapper.find(UITooltip);
+    const tooltip = wrapper.find(Tooltip);
     const styles = getStyles();
 
     expect(dropdown.length).toBe(0);
@@ -59,7 +60,7 @@ describe(ReferencesButton, () => {
     expect(refLink.prop('reference')).toBe(oneReference[0]);
     expect(refLink.first().props().className).toBe(styles.MultiParent);
     expect(tooltip.length).toBe(1);
-    expect(tooltip.prop('title')).toBe(props.tooltipText);
+    expect(tooltip.prop('content')).toBe(props.tooltipText);
   });
 
   it('renders multiple references', () => {

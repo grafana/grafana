@@ -249,12 +249,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         )}
         <small className={styles.debugInfo}>
           <span className={styles.debugLabel} data-label="SpanID:" /> {spanID}
-          <CopyIcon
-            copyText={deepLinkCopyText}
-            icon="link"
-            placement="topRight"
-            tooltipTitle="Copy deep link to this span"
-          />
+          <CopyIcon copyText={deepLinkCopyText} icon="link" tooltipTitle="Copy deep link to this span" />
         </small>
       </div>
     </div>
