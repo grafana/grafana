@@ -1,10 +1,9 @@
 import React, { FC } from 'react';
 import { getLocationSrv } from '@grafana/runtime';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { useSelector } from 'react-redux';
 import { TabbedContent } from './TabbedContent';
 import { ContentTab } from './TabbedContent.types';
-import { Tab, TabContent } from '@grafana/ui';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
 
 const fakeLocationUpdate = jest.fn();
 
@@ -24,18 +23,18 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-const Dummy = () => <></>;
+const Dummy = ({ ...props }) => <span {...props}></span>;
 
 const contentTabs: ContentTab[] = [
   {
     label: 'Tab 1',
     key: 'tab_1',
-    component: <Dummy />,
+    component: <Dummy role="item" />,
   },
   {
     label: 'Tab 2',
     key: 'tab_2',
-    component: <Dummy />,
+    component: <Dummy role="option" />,
   },
 ];
 
@@ -52,17 +51,18 @@ describe('TabbedContent', () => {
   });
 
   it('should show all tabs', async () => {
-    const wrapper = await getMount(<TabbedContent tabs={contentTabs} basePath="" />);
+    render(<TabbedContent tabs={contentTabs} basePath="" />);
 
-    expect(wrapper.find(Tab)).toHaveLength(2);
-    expect(wrapper.find(TabContent).exists()).toBeTruthy();
+    expect(screen.getByText('Tab 1')).toBeInTheDocument();
+    expect(screen.getByText('Tab 2')).toBeInTheDocument();
   });
 
-  fit('changes location when clicking on a tab', async () => {
-    const wrapper = await getMount(<TabbedContent tabs={contentTabs} basePath="integrated-alerting" />);
-    wrapper.update();
-    const tabs = wrapper.find('li');
-    tabs.at(1).simulate('click');
+  it('changes location when clicking on a tab', async () => {
+    render(<TabbedContent tabs={contentTabs} basePath="integrated-alerting" />);
+
+    const tab = screen.getByText('Tab 2');
+
+    fireEvent.click(tab);
 
     // The first time we render, getLocationSrv is called with the default tab
     expect(getLocationSrv).toBeCalledTimes(2);
@@ -74,8 +74,7 @@ describe('TabbedContent', () => {
       return callback({ location: { routeParams: { tab: 'test' }, path: '/integrated-alerting/test' } });
     });
 
-    const wrapper = await getMount(<TabbedContent tabs={contentTabs} basePath="integrated-alerting" />);
-    wrapper.update();
+    render(<TabbedContent tabs={contentTabs} basePath="integrated-alerting" />);
 
     expect(getLocationSrv).toBeCalledTimes(1);
     expect(fakeLocationUpdate).toBeCalledTimes(1);
@@ -83,10 +82,11 @@ describe('TabbedContent', () => {
   });
 
   it('should return Content when renderTab prop is passed', async () => {
-    const DummyWrapper: FC<any> = ({ children }) => <>{children}</>;
-    const wrapper = await getMount(
+    const DummyWrapper: FC<any> = ({ children }) => <div role="main">{children}</div>;
+    render(
       <TabbedContent
         tabs={contentTabs}
+        activeTabName="tab_1"
         basePath=""
         renderTab={({ Content }) => (
           <DummyWrapper>
@@ -95,9 +95,10 @@ describe('TabbedContent', () => {
         )}
       />
     );
-    wrapper.update();
 
-    expect(wrapper.find(DummyWrapper).exists()).toBeTruthy();
-    expect(wrapper.find(TabContent).exists()).toBeTruthy();
+    await screen.findByRole('main');
+
+    expect(screen.getByRole('main')).toBeInTheDocument();
+    expect(screen.getByRole('item')).toBeInTheDocument();
   });
 });

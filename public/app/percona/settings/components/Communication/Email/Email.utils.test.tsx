@@ -99,7 +99,7 @@ describe('Communication::Email::utils', () => {
 
   describe('cleanupFormValues', () => {
     it('should take form values and return only necessary fields', () => {
-      spyOn(window, 'btoa').and.returnValue('fakeBtoa');
+      jest.spyOn(window, 'btoa').mockReturnValue('fakeBtoa');
       expect(
         cleanupFormValues({
           from: 'from@mail.com',

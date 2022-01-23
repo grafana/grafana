@@ -27,7 +27,9 @@ export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isV
     } finally {
       setLoading(false);
     }
-  }, [dbCluster, logs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbCluster]);
+
   const toggleCollapse = () => {
     setLogs({ pods: toggleLogs(logs.pods, !expanded) });
     setExpanded((currentValue) => !currentValue);
@@ -39,7 +41,8 @@ export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isV
 
   useEffect(() => {
     getClusterLogs();
-  }, [dbCluster, getClusterLogs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbCluster]);
 
   useEffect(() => {
     setExpanded(false);

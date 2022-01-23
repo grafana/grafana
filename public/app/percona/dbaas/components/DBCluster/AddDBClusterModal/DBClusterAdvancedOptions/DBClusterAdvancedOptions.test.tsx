@@ -1,10 +1,10 @@
 import React from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { Databases } from 'app/percona/shared/core';
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions';
 import { AddDBClusterFields } from '../AddDBClusterModal.types';
 import { DBClusterResources, DBClusterTopology } from './DBClusterAdvancedOptions.types';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
 
 jest.mock('../../DBCluster.service');
 jest.mock('../../PSMDB.service');
@@ -22,120 +22,142 @@ jest.mock('@percona/platform-core', () => {
 
 describe('DBClusterAdvancedOptions::', () => {
   it('renders correctly', async () => {
-    const root = await getMount(
-      <Form onSubmit={jest.fn()} render={(renderProps) => <DBClusterAdvancedOptions {...renderProps} />} />
-    );
+    act(() => {
+      render(<Form onSubmit={jest.fn()} render={(renderProps) => <DBClusterAdvancedOptions {...renderProps} />} />);
+    });
 
-    expect(root.find('[data-testid="topology-radio-state"]')).toBeTruthy();
-    expect(root.find('[data-testid="nodes-number-input"]')).toBeTruthy();
-    expect(root.find('[data-testid="resources-radio-button"]')).toBeTruthy();
-    expect(root.find('[data-testid="memory-number-input"]')).toBeTruthy();
-    expect(root.find('[data-testid="cpu-number-input"]')).toBeTruthy();
-    expect(root.find('[data-testid="disk-number-input"]')).toBeTruthy();
-    expect(root.find('[data-testid="dbcluster-resources-bar-memory"]')).toBeTruthy();
-    expect(root.find('[data-testid="dbcluster-resources-bar-cpu"]')).toBeTruthy();
-    expect(root.find('[data-testid="disk-number-input"]')).toBeTruthy();
-    expect(root.find('[data-testid="step-progress-submit-button"]')).toBeTruthy();
+    const radioState = await screen.findByTestId('topology-radio-state');
+
+    expect(radioState).toBeInTheDocument();
+
+    expect(screen.getByTestId('nodes-number-input')).toBeInTheDocument();
+    expect(screen.getAllByTestId('resources-radio-button').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('memory-number-input')).toBeInTheDocument();
+    expect(screen.getByTestId('cpu-number-input')).toBeInTheDocument();
+    expect(screen.getByTestId('disk-number-input')).toBeInTheDocument();
+    expect(screen.getByTestId('dbcluster-resources-bar-memory')).toBeInTheDocument();
+    expect(screen.getByTestId('dbcluster-resources-bar-cpu')).toBeInTheDocument();
+    expect(screen.getByTestId('disk-number-input')).toBeInTheDocument();
+    // expect(screen.getByTestId('step-progress-submit-button')).toBeInTheDocument();
   });
+
   it('renders correctly with initial values', async () => {
-    const root = await getMount(
-      <Form
-        initialValues={{
-          [AddDBClusterFields.topology]: DBClusterTopology.cluster,
-          [AddDBClusterFields.nodes]: 3,
-        }}
-        onSubmit={jest.fn()}
-        render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
-      />
-    );
-    const nodes = root.find('[data-testid="nodes-number-input"]');
-    const topology = root.find('[data-testid="topology-radio-state"]');
+    act(() => {
+      render(
+        <Form
+          initialValues={{
+            [AddDBClusterFields.topology]: DBClusterTopology.cluster,
+            [AddDBClusterFields.nodes]: 3,
+          }}
+          onSubmit={jest.fn()}
+          render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
+        />
+      );
+    });
 
-    expect(nodes.prop('value')).toBe(3);
-    expect(topology.prop('value')).toEqual(DBClusterTopology.cluster);
+    const nodes = await screen.findByTestId('nodes-number-input');
+    const topology = screen.getByTestId('topology-radio-state');
+
+    expect(nodes.getAttribute('value')).toBe('3');
+    expect(topology.getAttribute('value')).toEqual(DBClusterTopology.cluster);
   });
+
   it('should set nodes to 1 when topology is single', async () => {
-    const root = await getMount(
-      <Form onSubmit={jest.fn()} render={(renderProps) => <DBClusterAdvancedOptions {...renderProps} />} />
-    );
-    root
-      .find('[data-testid="topology-radio-state"]')
-      .simulate('change', { target: { value: DBClusterTopology.single } });
+    act(() => {
+      render(<Form onSubmit={jest.fn()} render={(renderProps) => <DBClusterAdvancedOptions {...renderProps} />} />);
+    });
 
-    expect(root.find('[data-testid="single-number-input"]')).toBeTruthy();
+    const topology = screen.getByTestId('topology-radio-state');
+
+    fireEvent.change(topology, { target: { value: DBClusterTopology.single } });
+
+    expect(screen.getByTestId('single-number-input')).toBeInTheDocument();
   });
+
   it('should disable memory, cpu and disk when resources are not custom', async () => {
-    const root = await getMount(
-      <Form
-        initialValues={{
-          [AddDBClusterFields.resources]: DBClusterResources.small,
-        }}
-        onSubmit={jest.fn()}
-        render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
-      />
-    );
-    const memory = root.find('[data-testid="memory-number-input"]');
-    const cpu = root.find('[data-testid="cpu-number-input"]');
-    const disk = root.find('[data-testid="disk-number-input"]');
+    act(() => {
+      render(
+        <Form
+          initialValues={{
+            [AddDBClusterFields.resources]: DBClusterResources.small,
+          }}
+          onSubmit={jest.fn()}
+          render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
+        />
+      );
+    });
+    const memory = await screen.findByTestId('memory-number-input');
+    const cpu = screen.getByTestId('cpu-number-input');
+    const disk = screen.getByTestId('disk-number-input');
 
     expect(memory).toBeDisabled();
     expect(cpu).toBeDisabled();
     expect(disk).toBeDisabled();
   });
-  it('should enable memory and cpu when resources is custom', async () => {
-    const root = await getMount(
-      <Form
-        initialValues={{
-          [AddDBClusterFields.resources]: DBClusterResources.small,
-        }}
-        onSubmit={jest.fn()}
-        render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
-      />
-    );
-    root
-      .find('[data-testid="resources-radio-state"]')
-      .simulate('change', { target: { value: DBClusterResources.custom } });
 
-    const memory = root.find('[data-testid="memory-number-input"]');
-    const cpu = root.find('[data-testid="cpu-number-input"]');
-    const disk = root.find('[data-testid="disk-number-input"]');
+  it('should enable memory and cpu when resources is custom', async () => {
+    act(() => {
+      render(
+        <Form
+          initialValues={{
+            [AddDBClusterFields.resources]: DBClusterResources.small,
+          }}
+          onSubmit={jest.fn()}
+          render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
+        />
+      );
+    });
+
+    const resources = await screen.findByTestId('resources-radio-state');
+    fireEvent.change(resources, { target: { value: DBClusterResources.custom } });
+
+    const memory = screen.getByTestId('memory-number-input');
+    const cpu = screen.getByTestId('cpu-number-input');
+    const disk = screen.getByTestId('disk-number-input');
 
     expect(memory).not.toBeDisabled();
     expect(cpu).not.toBeDisabled();
     expect(disk).not.toBeDisabled();
   });
+
   it('should disabled single node topology when database is MongoDB', async () => {
-    const root = await getMount(
-      <Form
-        initialValues={{
-          [AddDBClusterFields.databaseType]: {
-            value: Databases.mongodb,
-            key: Databases.mongodb,
-          },
-        }}
-        onSubmit={jest.fn()}
-        render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
-      />
-    );
-    const topology = root.find('[data-testid="topology-radio-button"]').at(1);
+    act(() => {
+      render(
+        <Form
+          initialValues={{
+            [AddDBClusterFields.databaseType]: {
+              value: Databases.mongodb,
+              key: Databases.mongodb,
+            },
+          }}
+          onSubmit={jest.fn()}
+          render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
+        />
+      );
+    });
 
-    expect(topology).not.toBeDisabled();
+    const topology = await screen.findAllByTestId('topology-radio-button');
+
+    expect(topology[1]).toBeDisabled();
   });
-  it('should enable single node topology when database is MySQL', async () => {
-    const root = await getMount(
-      <Form
-        initialValues={{
-          [AddDBClusterFields.databaseType]: {
-            value: Databases.mysql,
-            key: Databases.mysql,
-          },
-        }}
-        onSubmit={jest.fn()}
-        render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
-      />
-    );
-    const topology = root.find('[data-testid="topology-radio-button"]').at(1);
 
-    expect(topology).not.toBeDisabled();
+  it('should enable single node topology when database is MySQL', async () => {
+    act(() => {
+      render(
+        <Form
+          initialValues={{
+            [AddDBClusterFields.databaseType]: {
+              value: Databases.mysql,
+              key: Databases.mysql,
+            },
+          }}
+          onSubmit={jest.fn()}
+          render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
+        />
+      );
+    });
+    const topology = await screen.findAllByTestId('topology-radio-button');
+
+    expect(topology[1]).not.toBeDisabled();
   });
 });

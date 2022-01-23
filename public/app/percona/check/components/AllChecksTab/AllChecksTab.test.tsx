@@ -7,8 +7,6 @@ import { AllChecksTab } from './AllChecksTab';
 import { Messages } from './AllChecksTab.messages';
 import { Spinner } from '@grafana/ui';
 
-const runAllPromises = () => new Promise(setImmediate);
-
 jest.mock('@percona/platform-core', () => {
   const originalModule = jest.requireActual('@percona/platform-core');
   return {
@@ -35,7 +33,7 @@ describe('AllChecksTab::', () => {
     const wrapper = await getMount(<AllChecksTab />);
     wrapper.update();
 
-    await runAllPromises();
+    await Promise.resolve();
 
     wrapper.update();
 
@@ -82,7 +80,7 @@ describe('AllChecksTab::', () => {
     const wrapper = await getMount(<AllChecksTab />);
     wrapper.update();
 
-    await runAllPromises();
+    await Promise.resolve();
 
     wrapper.update();
 

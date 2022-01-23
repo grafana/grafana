@@ -1,46 +1,59 @@
 import React from 'react';
-import { dataTestId } from '@percona/platform-core';
+import { render, screen, act, fireEvent, within } from '@testing-library/react';
 import { DBClusterLogsModal } from './DBClusterLogsModal';
 import { dbClustersStub } from '../__mocks__/dbClustersStubs';
 import { DBClusterService } from '../__mocks__/DBCluster.service';
-import { getMount, asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 jest.mock('../DBCluster.service');
 
 describe('DBClusterLogsModal::', () => {
   it('should render logs', async () => {
-    const root = await getMount(<DBClusterLogsModal isVisible setVisible={jest.fn()} dbCluster={dbClustersStub[0]} />);
-
-    root.update();
-    expect(root.find(dataTestId('dbcluster-pod-logs')).length).toBeGreaterThan(0);
+    act(() => {
+      render(<DBClusterLogsModal isVisible setVisible={jest.fn()} dbCluster={dbClustersStub[0]} />);
+    });
+    const logs = await screen.findAllByTestId('dbcluster-pod-logs');
+    expect(logs.length).toBeGreaterThan(0);
   });
+
   it('should expand logs', async () => {
-    const root = await getMount(<DBClusterLogsModal isVisible setVisible={jest.fn()} dbCluster={dbClustersStub[0]} />);
+    act(() => {
+      render(<DBClusterLogsModal isVisible setVisible={jest.fn()} dbCluster={dbClustersStub[0]} />);
+    });
 
-    root.update();
+    let preTags = screen.queryAllByTestId('dbcluster-pod-events');
+    let logs = screen.queryAllByTestId('dbcluster-logs');
 
-    expect(root).not.toContain('pre');
-    expect(root.find(dataTestId('dbcluster-logs')).length).toBe(0);
+    expect(preTags).toHaveLength(0);
+    expect(logs).toHaveLength(0);
 
-    const expandButton = root.find(dataTestId('dbcluster-logs-actions')).find('button').at(0);
+    const actions = await screen.findAllByTestId('dbcluster-logs-actions');
+    const expandButton = within(actions[0]).getAllByRole('button')[0];
 
-    await asyncAct(() => expandButton.simulate('click'));
+    act(() => {
+      fireEvent.click(expandButton);
+    });
 
-    root.update();
-
-    expect(root.find(dataTestId('dbcluster-logs')).length).toBeGreaterThan(0);
+    logs = await screen.findAllByTestId('dbcluster-logs');
+    expect(logs.length).toBeGreaterThan(0);
   });
+
   it('should refresh logs', async () => {
     const getLogs = jest.fn();
-    const root = await getMount(<DBClusterLogsModal isVisible setVisible={jest.fn()} dbCluster={dbClustersStub[0]} />);
 
-    root.update();
+    act(() => {
+      render(<DBClusterLogsModal isVisible setVisible={jest.fn()} dbCluster={dbClustersStub[0]} />);
+    });
 
     DBClusterService.getLogs = getLogs();
 
-    const refreshButton = root.find(dataTestId('dbcluster-logs-actions')).find('button').at(1);
+    const actions = await screen.findAllByTestId('dbcluster-logs-actions');
+    const refreshButton = within(actions[0]).getAllByRole('button')[1];
 
-    await asyncAct(() => refreshButton.simulate('click'));
+    act(() => {
+      fireEvent.click(refreshButton);
+    });
+
+    await screen.findAllByTestId('dbcluster-logs-actions');
 
     expect(getLogs).toHaveBeenCalled();
   });

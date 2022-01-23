@@ -37,7 +37,8 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
     }
   };
 
-  useEffect(getUrlParts, [urlValue, form]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(getUrlParts, [urlValue]);
 
   return (
     <div className={styles.groupWrapper}>
