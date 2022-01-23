@@ -10,6 +10,16 @@ jest.mock('../../DBCluster.service');
 jest.mock('../../PSMDB.service');
 jest.mock('../../XtraDB.service');
 
+jest.mock('@percona/platform-core', () => {
+  const originalModule = jest.requireActual('@percona/platform-core');
+  return {
+    ...originalModule,
+    logger: {
+      error: jest.fn(),
+    },
+  };
+});
+
 describe('DBClusterAdvancedOptions::', () => {
   it('renders correctly', async () => {
     const root = await getMount(
@@ -68,9 +78,9 @@ describe('DBClusterAdvancedOptions::', () => {
     const cpu = root.find('[data-testid="cpu-number-input"]');
     const disk = root.find('[data-testid="disk-number-input"]');
 
-    expect(memory.prop('disabled')).toBeTruthy();
-    expect(cpu.prop('disabled')).toBeTruthy();
-    expect(disk.prop('disabled')).toBeTruthy();
+    expect(memory).toBeDisabled();
+    expect(cpu).toBeDisabled();
+    expect(disk).toBeDisabled();
   });
   it('should enable memory and cpu when resources is custom', async () => {
     const root = await getMount(
@@ -90,9 +100,9 @@ describe('DBClusterAdvancedOptions::', () => {
     const cpu = root.find('[data-testid="cpu-number-input"]');
     const disk = root.find('[data-testid="disk-number-input"]');
 
-    expect(memory.prop('disabled')).toBeFalsy();
-    expect(cpu.prop('disabled')).toBeFalsy();
-    expect(disk.prop('disabled')).toBeFalsy();
+    expect(memory).not.toBeDisabled();
+    expect(cpu).not.toBeDisabled();
+    expect(disk).not.toBeDisabled();
   });
   it('should disabled single node topology when database is MongoDB', async () => {
     const root = await getMount(
@@ -109,7 +119,7 @@ describe('DBClusterAdvancedOptions::', () => {
     );
     const topology = root.find('[data-testid="topology-radio-button"]').at(1);
 
-    expect(topology.prop('disable')).toBeUndefined();
+    expect(topology).not.toBeDisabled();
   });
   it('should enable single node topology when database is MySQL', async () => {
     const root = await getMount(
@@ -126,6 +136,6 @@ describe('DBClusterAdvancedOptions::', () => {
     );
     const topology = root.find('[data-testid="topology-radio-button"]').at(1);
 
-    expect(topology.prop('disabled')).toBeFalsy();
+    expect(topology).not.toBeDisabled();
   });
 });

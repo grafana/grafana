@@ -7,6 +7,16 @@ jest.mock('app/core/app_events');
 jest.mock('../XtraDB.service');
 jest.mock('../PSMDB.service');
 
+jest.mock('@percona/platform-core', () => {
+  const originalModule = jest.requireActual('@percona/platform-core');
+  return {
+    ...originalModule,
+    logger: {
+      error: jest.fn(),
+    },
+  };
+});
+
 describe('DBClusterConnection::', () => {
   it('renders correctly connection items', async () => {
     const root = await getMount(<DBClusterConnection dbCluster={dbClustersStub[0]} />);

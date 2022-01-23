@@ -8,7 +8,7 @@ export const AddClusterButton: FC<AddClusterButtonProps> = ({ label, disabled, a
 
   return (
     <div className={styles.addClusterButtonWrapper}>
-      <Button size="md" onClick={action} icon="plus-square" variant="link" disabled={disabled} {...props}>
+      <Button role="button" size="md" onClick={action} icon="plus-square" variant="link" disabled={disabled} {...props}>
         {label}
       </Button>
     </div>

@@ -91,7 +91,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
         }
       }
     },
-    [kubernetesCluster.value]
+    [kubernetesCluster?.value]
   );
 
   const getExpectedResources = useCallback(async () => {
@@ -115,7 +115,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
     } finally {
       setLoadingExpectedResources(false);
     }
-  }, [cpu, databaseType.value, disk, kubernetesCluster, memory, name, nodes, single, topology]);
+  }, [cpu, databaseType?.value, disk, kubernetesCluster, memory, name, nodes, single, topology]);
 
   useEffect(() => {
     if (prevResources === DBClusterResources.custom) {
