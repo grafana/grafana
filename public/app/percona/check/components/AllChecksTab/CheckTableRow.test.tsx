@@ -10,8 +10,6 @@ import { CheckTableRow } from './CheckTableRow';
 
 const originalConsoleError = jest.fn();
 
-const runAllPromises = () => new Promise(setImmediate);
-
 const TEST_CHECK: CheckDetails = {
   summary: 'Test',
   name: 'test',
@@ -93,7 +91,7 @@ describe('CheckTableRow::', () => {
 
     wrapper.find(LoaderButton).simulate('click');
 
-    await runAllPromises();
+    await Promise.resolve();
     wrapper.update();
 
     expect(fakeOnSuccess).toBeCalledTimes(1);

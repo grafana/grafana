@@ -41,8 +41,8 @@ describe('ManageComponentsVersions.hooks::', () => {
     expect(versionsFieldName).toEqual(versionsFieldNameStub);
   });
   it('returns operator components options, versions and initial values with one operator', async () => {
-    const wrapper = renderHook(() => useOperatorsComponentsVersions(omit(kubernetesStub[0], 'operators.pxc')));
-
+    const newOps = _.omit(kubernetesStub[0], 'operators.pxc');
+    const wrapper = renderHook(() => useOperatorsComponentsVersions(newOps));
     await wrapper.waitForNextUpdate();
 
     const [
