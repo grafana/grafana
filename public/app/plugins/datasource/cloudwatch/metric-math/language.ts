@@ -41,6 +41,8 @@ export const METRIC_MATH_FNS = [
   'TIME_SERIES',
 ];
 
+export const METRIC_MATH_STATISTIC_KEYWORD_STRINGS = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount']; // second arguments to SEARCH function
+
 export const METRIC_MATH_KEYWORDS = ['REPEAT', 'LINEAR', 'ASC', 'DSC']; // standalone magic arguments to functions
 
 export const METRIC_MATH_OPERATORS = [
@@ -86,7 +88,6 @@ export const language: monacoType.languages.IMonarchLanguage = {
     operators: [[METRIC_MATH_OPERATORS.map(escapeRegExp).join('|'), 'operator']],
     builtInFunctions: [[METRIC_MATH_FNS.map(escapeRegExp).join('|'), 'predefined']],
     variables: [
-      // [/\b[a-z]+[0-9]*\b/, 'variable'], // all metric math variables are lowercase, and potentially followed by a num
       [/\$[a-zA-Z0-9-_]+/, 'variable'], // $ followed by any letter/number we assume could be grafana template variable
     ],
     whitespace: [[/\s+/, 'white']],
@@ -107,21 +108,21 @@ export const language: monacoType.languages.IMonarchLanguage = {
       [/"/, { token: 'type', next: '@string_double' }], // jump into double string
       [/'/, { token: 'string', next: '@pop' }], // stop being a string
       { include: '@nonNestableStates' },
-      [/[^']/, 'string'], // anything that is not a quote mark as string
+      [/[^']/, 'string'], // anything that is not a quote, is marked as string
     ],
     string_double: [
-      [/[^"]/, 'type'], // mark anything not a quote as a "type" (different string)
+      [/[^"]/, 'type'], // mark anything not a quote as a "type" (different type of string for visual difference)
       [/"/, { token: 'type', next: '@pop' }], // mark also as a type and stop being in the double string state
     ],
     nestedCurly: [
-      [/}/, { token: 'delimiter.curly', next: '@pop' }], // escape out of string and into braces land
-      [/'/, { token: 'string', next: '@string' }], // go to string land if see start of string
-      [/"/, { token: 'type', next: '@string_double' }], // go to string land if see start of string
+      [/}/, { token: 'delimiter.curly', next: '@pop' }], // escape out of string and into braces
+      [/'/, { token: 'string', next: '@string' }], // go to string if see start of string
+      [/"/, { token: 'type', next: '@string_double' }], // go to string_double if see start of double string
     ],
     nestedParens: [
-      [/\)/, { token: 'delimiter.parenthesis', next: '@pop' }], // escape out of string and into braces land
-      [/'/, { token: 'string', next: '@string' }], // go to string land if see start of string
-      [/"/, { token: 'type', next: '@string_double' }], // go to string land if see start of string
+      [/\)/, { token: 'delimiter.parenthesis', next: '@pop' }], // escape out of string and into braces
+      [/'/, { token: 'string', next: '@string' }], // go to string if see start of string
+      [/"/, { token: 'type', next: '@string_double' }], // go to string_double if see start of double string
     ],
   },
 };

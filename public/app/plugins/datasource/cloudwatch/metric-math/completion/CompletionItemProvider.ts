@@ -2,12 +2,29 @@ import type { Monaco, monacoTypes } from '@grafana/ui';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
 import { SuggestionKind, CompletionItemPriority, StatementPosition } from '../../monarch/types';
 import { LinkedToken } from '../../monarch/LinkedToken';
-import { METRIC_MATH_FNS, METRIC_MATH_KEYWORDS, METRIC_MATH_OPERATORS } from '../language';
+import {
+  METRIC_MATH_FNS,
+  METRIC_MATH_KEYWORDS,
+  METRIC_MATH_OPERATORS,
+  METRIC_MATH_STATISTIC_KEYWORD_STRINGS,
+} from '../language';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
+import { MetricMathTokenTypes } from './types';
+import { CloudWatchDatasource } from '../../datasource';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getStatementPosition } from './statementPosition';
+import { getSuggestionKinds } from './suggestionKind';
 
 type CompletionItem = monacoTypes.languages.CompletionItem;
 
 export class MetricMathCompletionItemProvider extends CompletionItemProvider {
+  constructor(datasource: CloudWatchDatasource, templateSrv: TemplateSrv = getTemplateSrv()) {
+    super(datasource, templateSrv);
+    this.getStatementPosition = getStatementPosition;
+    this.getSuggestionKinds = getSuggestionKinds;
+    this.tokenTypes = MetricMathTokenTypes;
+  }
+
   async getSuggestions(
     monaco: Monaco,
     currentToken: LinkedToken | null,
@@ -52,7 +69,18 @@ export class MetricMathCompletionItemProvider extends CompletionItemProvider {
         case SuggestionKind.KeywordArguments:
           METRIC_MATH_KEYWORDS.map((s) =>
             addSuggestion(s, {
-              insertText: `${s} `,
+              insertText: s,
+              command: TRIGGER_SUGGEST,
+              kind: monaco.languages.CompletionItemKind.Keyword,
+              sortText: CompletionItemPriority.MediumHigh,
+            })
+          );
+          break;
+
+        case SuggestionKind.Statistic:
+          METRIC_MATH_STATISTIC_KEYWORD_STRINGS.map((s) =>
+            addSuggestion(s, {
+              insertText: `'${s}', `,
               command: TRIGGER_SUGGEST,
             })
           );
@@ -75,7 +103,7 @@ export class MetricMathCompletionItemProvider extends CompletionItemProvider {
         label: v,
         insertText: v,
         kind: monaco.languages.CompletionItemKind.Variable,
-        sortText: CompletionItemPriority.MediumHigh,
+        sortText: CompletionItemPriority.Low,
       });
     });
 

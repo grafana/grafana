@@ -1,17 +1,17 @@
 import { monacoTypes } from '@grafana/ui';
-import MonacoMock from '../../__mocks__/cloudwatch-sql/Monaco';
-import TextModel from '../../__mocks__/cloudwatch-sql/TextModel';
+import MonacoMock from '../../__mocks__/monarch/Monaco';
+import TextModel from '../../__mocks__/monarch/TextModel';
 import {
   multiLineFullQuery,
   singleLineFullQuery,
   singleLineEmptyQuery,
   singleLineTwoQueries,
-} from '../../__mocks__/cloudwatch-sql/test-data';
+} from '../../__mocks__/cloudwatch-sql-test-data';
 import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';
 import { StatementPosition } from '../../monarch/types';
 import { getStatementPosition } from './statementPosition';
 import cloudWatchSqlLanguageDefinition from '../definition';
-import { SQLTokenType } from './types';
+import { SQLTokenTypes } from './types';
 
 describe('statementPosition', () => {
   function assertPosition(query: string, position: monacoTypes.IPosition, expected: StatementPosition) {
@@ -21,7 +21,7 @@ describe('statementPosition', () => {
       cloudWatchSqlLanguageDefinition,
       testModel as monacoTypes.editor.ITextModel,
       position,
-      SQLTokenType
+      SQLTokenTypes
     );
     const statementPosition = getStatementPosition(current);
     expect(statementPosition).toBe(expected);

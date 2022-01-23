@@ -1,6 +1,6 @@
-import { TokenType } from '../../monarch/types';
+import { TokenTypes } from '../../monarch/types';
 
-export const MetricMathTokenType: TokenType = {
+export const MetricMathTokenTypes: TokenTypes = {
   Parenthesis: 'delimiter.parenthesis.cloudwatch-MetricMath',
   Whitespace: 'white.cloudwatch-MetricMath',
   Keyword: 'keyword.cloudwatch-MetricMath',

@@ -5,60 +5,75 @@ import { linkedTokenBuilder } from './linkedTokenBuilder';
 
 import { LinkedToken } from './LinkedToken';
 import { LanguageDefinition } from './register';
-import { StatementPosition, SuggestionKind, TokenType } from './types';
+import { StatementPosition, SuggestionKind, TokenTypes } from './types';
 
 type CompletionItem = monacoTypes.languages.CompletionItem;
 
 /*
-CompletionItemProvider is an extendable class which takes in:
-- a datasource
-- a templateSrv for fetching template variables
-- a language definition
-- the tokentype classes for that language
-- a function for determining the syntactical position of a current token
-- a function for determining the potential suggestions available for a given syntactical position
-
-In return the provider will create a "completionProvider" that when called will return the correct suggestions
-When extending this class please implement your own version of getSuggestions
+CompletionItemProvider is an extendable class which needs to implement :
+- tokenTypes
+- getStatementPosition
+- getSuggestionKinds
+- getSuggestions
 */
 export class CompletionItemProvider {
-  region: string;
   templateVariables: string[];
   datasource: CloudWatchDatasource;
   templateSrv: TemplateSrv;
+  tokenTypes: TokenTypes;
 
-  constructor(
-    datasource: CloudWatchDatasource,
-    templateSrv: TemplateSrv = getTemplateSrv(),
-    private languageDefinition: LanguageDefinition,
-    private tokenTypes: TokenType,
-    private getStatementPosition: (currentToken: LinkedToken | null) => StatementPosition,
-    private getSuggestionKinds: (position: StatementPosition) => SuggestionKind[]
-  ) {
+  constructor(datasource: CloudWatchDatasource, templateSrv: TemplateSrv = getTemplateSrv()) {
     this.datasource = datasource;
     this.templateSrv = templateSrv;
     this.templateVariables = this.datasource.getVariables();
-    this.region = datasource.getActualRegion();
     this.templateSrv = templateSrv;
-    this.getSuggestionKinds = getSuggestionKinds;
-    this.getStatementPosition = getStatementPosition;
+
+    // implement with more specific tokens when extending this class
+    this.tokenTypes = {
+      Parenthesis: 'delimiter.parenthesis',
+      Whitespace: 'white',
+      Keyword: 'keyword',
+      Delimiter: 'delimiter',
+      Operator: 'operator',
+      Identifier: 'identifier',
+      Type: 'type',
+      Function: 'predefined',
+      Number: 'number',
+      String: 'string',
+      Variable: 'variable',
+    };
   }
 
-  // Only used by SQL for now, in the future this could be removed or made more generic
-  setRegion(region: string) {
-    this.region = region;
+  // implemented by subclasses, given a token, returns a lexical position in a query
+  getStatementPosition(currentToken: LinkedToken | null): StatementPosition {
+    return StatementPosition.Unknown;
+  }
+
+  // implemented by subclasses, given a lexical statement position, returns potential kinds of suggestions
+  getSuggestionKinds(position: StatementPosition): SuggestionKind[] {
+    return [];
+  }
+
+  // implemented by subclasses, given potential suggestions kinds, returns suggestion objects for monaco aka "CompletionItem"
+  getSuggestions(
+    monaco: Monaco,
+    currentToken: LinkedToken | null,
+    suggestionKinds: SuggestionKind[],
+    statementPosition: StatementPosition,
+    position: monacoTypes.IPosition
+  ): Promise<CompletionItem[]> {
+    return Promise.reject([]);
   }
 
   // called by registerLanguage and passed to monaco with registerCompletionItemProvider
   // returns an object that implements https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItemProvider.html
-  getCompletionProvider(monaco: Monaco) {
+  getCompletionProvider(monaco: Monaco, languageDefinition: LanguageDefinition) {
     return {
       triggerCharacters: [' ', '$', ',', '(', "'"], // one of these characters indicates that it is time to look for a suggestion
       provideCompletionItems: async (model: monacoTypes.editor.ITextModel, position: monacoTypes.IPosition) => {
-        const currentToken = linkedTokenBuilder(monaco, this.languageDefinition, model, position, this.tokenTypes); // describes the current thing and what's next
+        const currentToken = linkedTokenBuilder(monaco, languageDefinition, model, position, this.tokenTypes);
         const statementPosition = this.getStatementPosition(currentToken);
         const suggestionKinds = this.getSuggestionKinds(statementPosition);
-
         const suggestions = await this.getSuggestions(
           monaco,
           currentToken,
@@ -72,16 +87,5 @@ export class CompletionItemProvider {
         };
       },
     };
-  }
-
-  // implemented by those that extend it
-  getSuggestions(
-    monaco: Monaco,
-    currentToken: LinkedToken | null,
-    suggestionKinds: SuggestionKind[],
-    statementPosition: StatementPosition,
-    position: monacoTypes.IPosition
-  ): Promise<CompletionItem[]> {
-    return Promise.reject([]);
   }
 }

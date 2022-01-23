@@ -8,6 +8,8 @@ export function getSuggestionKinds(statementPosition: StatementPosition): Sugges
       return [SuggestionKind.FunctionsWithArguments, SuggestionKind.KeywordArguments];
     case StatementPosition.AfterFunction:
       return [SuggestionKind.Operators];
+    case StatementPosition.SecondArgAfterSearchFunc:
+      return [SuggestionKind.Statistic];
   }
 
   return [];

@@ -16,7 +16,7 @@ export type LanguageDefinition = {
 export const registerLanguage = (
   monaco: Monaco,
   language: LanguageDefinition,
-  completionItemProvider?: CompletionItemProvider
+  completionItemProvider: CompletionItemProvider
 ) => {
   const { id, loader } = language;
 
@@ -29,8 +29,6 @@ export const registerLanguage = (
   loader().then((monarch) => {
     monaco.languages.setMonarchTokensProvider(id, monarch.language);
     monaco.languages.setLanguageConfiguration(id, monarch.conf);
-    if (completionItemProvider) {
-      monaco.languages.registerCompletionItemProvider(id, completionItemProvider.getCompletionProvider(monaco));
-    }
+    monaco.languages.registerCompletionItemProvider(id, completionItemProvider.getCompletionProvider(monaco, language));
   });
 };

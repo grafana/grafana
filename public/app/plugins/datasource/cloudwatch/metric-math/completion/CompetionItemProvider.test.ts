@@ -1,112 +1,65 @@
-import MonacoMock from '../../__mocks__/cloudwatch-sql/Monaco';
+import MonacoMock from '../../__mocks__/monarch/Monaco';
+import TextModel from '../../__mocks__/monarch/TextModel';
 import { MetricMathCompletionItemProvider } from './CompletionItemProvider';
 import { getTemplateSrv } from '@grafana/runtime';
-import { MetricMathTokenType } from './types';
-import { getStatementPosition } from './statementPosition';
-import { getSuggestionKinds } from './suggestionKind';
 import { CloudWatchDatasource } from '../../datasource';
 import cloudWatchMetricMathLanguageDefinition from '../definition';
 import { Monaco, monacoTypes } from '@grafana/ui';
 import { IPosition } from 'monaco-editor';
-import { METRIC_MATH_FNS, METRIC_MATH_KEYWORDS, METRIC_MATH_OPERATORS } from '../language';
-import { LinkedToken } from '../../monarch/LinkedToken';
+import {
+  METRIC_MATH_FNS,
+  METRIC_MATH_KEYWORDS,
+  METRIC_MATH_OPERATORS,
+  METRIC_MATH_STATISTIC_KEYWORD_STRINGS,
+} from '../language';
+import * as MetricMathTestData from '../../__mocks__/metric-math-test-data';
 
-const getSuggestions = async (mockToken: LinkedToken | null) => {
+const getSuggestions = async (value: string, position: IPosition) => {
   const setup = new MetricMathCompletionItemProvider(
     ({
       getVariables: () => [],
       getActualRegion: () => 'us-east-2',
     } as any) as CloudWatchDatasource,
-    getTemplateSrv(),
-    cloudWatchMetricMathLanguageDefinition,
-    MetricMathTokenType,
-    () => getStatementPosition(mockToken),
-    getSuggestionKinds
+    getTemplateSrv()
   );
   const monaco = MonacoMock as Monaco;
-  const provider = setup.getCompletionProvider(monaco);
+  const provider = setup.getCompletionProvider(monaco, cloudWatchMetricMathLanguageDefinition);
   const { suggestions } = await provider.provideCompletionItems(
-    ({ getValue: () => null } as any) as monacoTypes.editor.ITextModel,
-    {} as IPosition
+    TextModel(value) as monacoTypes.editor.ITextModel,
+    position
   );
   return suggestions;
 };
 describe('MetricMath: CompletionItemProvider', () => {
   describe('getSuggestions', () => {
-    it('returns a suggestion for every metric math function when passed a null token', async () => {
-      const mockToken = null;
-      const suggestions = await getSuggestions(mockToken);
+    it('returns a suggestion for every metric math function when the input field is empty', async () => {
+      const { query, position } = MetricMathTestData.singleLineEmptyQuery;
+      const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toEqual(METRIC_MATH_FNS.length);
     });
 
     it('returns a suggestion for every metric math operator when at the end of a function', async () => {
-      const previousLinkedToken = new LinkedToken(
-        MetricMathTokenType.String,
-        ')',
-        makeMockRange(),
-        null,
-        null,
-        MetricMathTokenType
-      );
-      const mockLinkedToken = new LinkedToken(
-        MetricMathTokenType.Whitespace,
-        ' ',
-        makeMockRange(),
-        previousLinkedToken,
-        null,
-        MetricMathTokenType
-      );
-      const suggestions = await getSuggestions(mockLinkedToken);
+      const { query, position } = MetricMathTestData.afterFunctionQuery;
+      const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toEqual(METRIC_MATH_OPERATORS.length);
     });
 
     it('returns a suggestion for every metric math function and keyword if at the start of the second argument of a function', async () => {
-      const previousLinkedToken = new LinkedToken(
-        MetricMathTokenType.Delimiter,
-        ',',
-        makeMockRange(),
-        null,
-        null,
-        MetricMathTokenType
-      );
-      const mockLinkedToken = new LinkedToken(
-        MetricMathTokenType.Whitespace,
-        ' ',
-        makeMockRange(),
-        previousLinkedToken,
-        null,
-        MetricMathTokenType
-      );
-      const suggestions = await getSuggestions(mockLinkedToken);
+      const { query, position } = MetricMathTestData.secondArgQuery;
+      const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toEqual(METRIC_MATH_FNS.length + METRIC_MATH_KEYWORDS.length);
     });
 
     it('does not have any particular suggestions if within a string', async () => {
-      const previousLinkedToken = new LinkedToken(
-        MetricMathTokenType.Delimiter,
-        '(',
-        makeMockRange(),
-        null,
-        null,
-        MetricMathTokenType
-      );
-      const mockLinkedToken = new LinkedToken(
-        MetricMathTokenType.String,
-        '"somestring"',
-        makeMockRange(),
-        previousLinkedToken,
-        null,
-        MetricMathTokenType
-      );
-      const suggestions = await getSuggestions(mockLinkedToken);
+      const { query, position } = MetricMathTestData.withinStringQuery;
+      const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toEqual(0);
     });
-  });
-});
 
-const makeMockRange = () => ({
-  startLineNumber: 0,
-  startColumn: 0,
-  endLineNumber: 0,
-  endColumn: 0,
+    it('returns a suggestion for every statistic if the second arg of a search function', async () => {
+      const { query, position } = MetricMathTestData.secondArgAfterSearchQuery;
+      const suggestions = await getSuggestions(query, position);
+      expect(suggestions.length).toEqual(METRIC_MATH_STATISTIC_KEYWORD_STRINGS.length);
+    });
+  });
 });

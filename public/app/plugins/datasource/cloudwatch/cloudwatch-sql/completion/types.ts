@@ -1,6 +1,6 @@
-import { TokenType } from '../../monarch/types';
+import { TokenTypes } from '../../monarch/types';
 
-export const SQLTokenType: TokenType = {
+export const SQLTokenTypes: TokenTypes = {
   Parenthesis: 'delimiter.parenthesis.sql',
   Whitespace: 'white.sql',
   Keyword: 'keyword.sql',

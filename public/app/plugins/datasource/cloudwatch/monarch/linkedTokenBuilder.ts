@@ -1,7 +1,7 @@
 import type { monacoTypes } from '@grafana/ui';
 
 import { LinkedToken } from './LinkedToken';
-import { Monaco, TokenType } from './types';
+import { Monaco, TokenTypes } from './types';
 import { LanguageDefinition } from './register';
 
 export function linkedTokenBuilder(
@@ -9,7 +9,7 @@ export function linkedTokenBuilder(
   language: LanguageDefinition,
   model: monacoTypes.editor.ITextModel,
   position: monacoTypes.IPosition,
-  tokenTypes: TokenType
+  tokenTypes: TokenTypes
 ) {
   let current: LinkedToken | null = null;
   let previous: LinkedToken | null = null;

@@ -1,5 +1,5 @@
 import { monacoTypes } from '@grafana/ui';
-import { TokenType } from './types';
+import { TokenTypes } from './types';
 
 export class LinkedToken {
   constructor(
@@ -8,7 +8,7 @@ export class LinkedToken {
     public range: monacoTypes.IRange,
     public previous: LinkedToken | null,
     public next: LinkedToken | null,
-    public tokenTypes: TokenType
+    public tokenTypes: TokenTypes
   ) {}
 
   isKeyword(): boolean {

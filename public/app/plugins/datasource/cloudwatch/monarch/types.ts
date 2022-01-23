@@ -1,6 +1,6 @@
 import { monacoTypes } from '@grafana/ui';
 
-export interface TokenType {
+export interface TokenTypes {
   Parenthesis: string;
   Whitespace: string;
   Keyword: string;
@@ -36,8 +36,9 @@ export enum StatementPosition {
   AfterOrderByDirection,
   // metric math
   PredefinedFunction,
+  SecondArgAfterSearchFunc,
+  ThirdArgAfterSearchFunc,
   SecondaryArgAfterPredefinedFunction,
-  SearchFunction,
   AfterFunction,
 }
 
@@ -62,6 +63,7 @@ export enum SuggestionKind {
   // metricmath,
   KeywordArguments,
   Operators,
+  Statistic,
 }
 
 export enum CompletionItemPriority {

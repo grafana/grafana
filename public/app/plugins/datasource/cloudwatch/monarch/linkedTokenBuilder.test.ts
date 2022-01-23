@@ -1,11 +1,11 @@
 import { monacoTypes } from '@grafana/ui';
-import MonacoMock from '../__mocks__/cloudwatch-sql/Monaco';
-import TextModel from '../__mocks__/cloudwatch-sql/TextModel';
-import { multiLineFullQuery, singleLineFullQuery } from '../__mocks__/cloudwatch-sql/test-data';
+import MonacoMock from '../__mocks__/monarch/Monaco';
+import TextModel from '../__mocks__/monarch/TextModel';
+import { multiLineFullQuery, singleLineFullQuery } from '../__mocks__/cloudwatch-sql-test-data';
 import { linkedTokenBuilder } from './linkedTokenBuilder';
 import { DESC, SELECT } from '../cloudwatch-sql/language';
 import cloudWatchSqlLanguageDefinition from '../cloudwatch-sql/definition';
-import { SQLTokenType } from '../cloudwatch-sql/completion/types';
+import { SQLTokenTypes } from '../cloudwatch-sql/completion/types';
 
 describe('linkedTokenBuilder', () => {
   describe('singleLineFullQuery', () => {
@@ -18,10 +18,11 @@ describe('linkedTokenBuilder', () => {
         cloudWatchSqlLanguageDefinition,
         testModel as monacoTypes.editor.ITextModel,
         position,
-        SQLTokenType
+        SQLTokenTypes
       );
-      expect(current?.is(SQLTokenType.Keyword, SELECT)).toBeTruthy();
-      expect(current?.getNextNonWhiteSpaceToken()?.is(SQLTokenType.Function, 'AVG')).toBeTruthy();
+
+      expect(current?.is(SQLTokenTypes.Keyword, SELECT)).toBeTruthy();
+      expect(current?.getNextNonWhiteSpaceToken()?.is(SQLTokenTypes.Function, 'AVG')).toBeTruthy();
     });
 
     it('should add correct references to previous LinkedToken', () => {
@@ -31,12 +32,12 @@ describe('linkedTokenBuilder', () => {
         cloudWatchSqlLanguageDefinition,
         testModel as monacoTypes.editor.ITextModel,
         position,
-        SQLTokenType
+        SQLTokenTypes
       );
-      expect(current?.is(SQLTokenType.Number, '10')).toBeTruthy();
-      expect(current?.getPreviousNonWhiteSpaceToken()?.is(SQLTokenType.Keyword, 'LIMIT')).toBeTruthy();
+      expect(current?.is(SQLTokenTypes.Number, '10')).toBeTruthy();
+      expect(current?.getPreviousNonWhiteSpaceToken()?.is(SQLTokenTypes.Keyword, 'LIMIT')).toBeTruthy();
       expect(
-        current?.getPreviousNonWhiteSpaceToken()?.getPreviousNonWhiteSpaceToken()?.is(SQLTokenType.Keyword, DESC)
+        current?.getPreviousNonWhiteSpaceToken()?.getPreviousNonWhiteSpaceToken()?.is(SQLTokenTypes.Keyword, DESC)
       ).toBeTruthy();
     });
   });
@@ -51,7 +52,7 @@ describe('linkedTokenBuilder', () => {
         cloudWatchSqlLanguageDefinition,
         testModel as monacoTypes.editor.ITextModel,
         position,
-        SQLTokenType
+        SQLTokenTypes
       );
       expect(current).not.toBeNull();
       expect(current?.isWhiteSpace()).toBeTruthy();
@@ -64,10 +65,10 @@ describe('linkedTokenBuilder', () => {
         cloudWatchSqlLanguageDefinition,
         testModel as monacoTypes.editor.ITextModel,
         position,
-        SQLTokenType
+        SQLTokenTypes
       );
-      expect(current?.is(SQLTokenType.Keyword, SELECT)).toBeTruthy();
-      expect(current?.getNextNonWhiteSpaceToken()?.is(SQLTokenType.Function, 'AVG')).toBeTruthy();
+      expect(current?.is(SQLTokenTypes.Keyword, SELECT)).toBeTruthy();
+      expect(current?.getNextNonWhiteSpaceToken()?.is(SQLTokenTypes.Function, 'AVG')).toBeTruthy();
     });
 
     it('should add correct references to previous LinkedToken even when references spans over multiple lines', () => {
@@ -77,12 +78,12 @@ describe('linkedTokenBuilder', () => {
         cloudWatchSqlLanguageDefinition,
         testModel as monacoTypes.editor.ITextModel,
         position,
-        SQLTokenType
+        SQLTokenTypes
       );
-      expect(current?.is(SQLTokenType.Number, '10')).toBeTruthy();
-      expect(current?.getPreviousNonWhiteSpaceToken()?.is(SQLTokenType.Keyword, 'LIMIT')).toBeTruthy();
+      expect(current?.is(SQLTokenTypes.Number, '10')).toBeTruthy();
+      expect(current?.getPreviousNonWhiteSpaceToken()?.is(SQLTokenTypes.Keyword, 'LIMIT')).toBeTruthy();
       expect(
-        current?.getPreviousNonWhiteSpaceToken()?.getPreviousNonWhiteSpaceToken()?.is(SQLTokenType.Keyword, DESC)
+        current?.getPreviousNonWhiteSpaceToken()?.getPreviousNonWhiteSpaceToken()?.is(SQLTokenTypes.Keyword, DESC)
       ).toBeTruthy();
     });
   });

@@ -58,18 +58,8 @@ import { increasingInterval } from './utils/rxjs/increasingInterval';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import { addDataLinksToLogsResponse } from './utils/datalinks';
 import { runWithRetry } from './utils/logsRetry';
-
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
-import { getSuggestionKinds as getSQLSuggestionKinds } from './cloudwatch-sql/completion/suggestionKind';
-import { getStatementPosition as getSQLStatementPosition } from './cloudwatch-sql/completion/statementPosition';
-import cloudWatchSqlLanguageDefinition from './cloudwatch-sql/definition';
-import { SQLTokenType } from './cloudwatch-sql/completion/types';
-
 import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
-import { getSuggestionKinds as getMetricMathSuggestionKinds } from './metric-math/completion/suggestionKind';
-import { getStatementPosition as getMetricMathStatementPosition } from './metric-math/completion/statementPosition';
-import cloudWatchMetricMathLanguageDefinition from './metric-math/definition';
-import { MetricMathTokenType } from './metric-math/completion/types';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -132,22 +122,8 @@ export class CloudWatchDatasource
     this.languageProvider = new CloudWatchLanguageProvider(this);
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
     this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
-    this.sqlCompletionItemProvider = new SQLCompletionItemProvider(
-      this,
-      this.templateSrv,
-      cloudWatchSqlLanguageDefinition,
-      SQLTokenType,
-      getSQLStatementPosition,
-      getSQLSuggestionKinds
-    );
-    this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(
-      this,
-      this.templateSrv,
-      cloudWatchMetricMathLanguageDefinition,
-      MetricMathTokenType,
-      getMetricMathStatementPosition,
-      getMetricMathSuggestionKinds
-    );
+    this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this, this.templateSrv);
+    this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this, this.templateSrv);
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {

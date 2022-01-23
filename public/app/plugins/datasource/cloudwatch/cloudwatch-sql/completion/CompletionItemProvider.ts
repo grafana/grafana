@@ -3,7 +3,7 @@ import { uniq } from 'lodash';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
 import { LinkedToken } from '../../monarch/LinkedToken';
 import { SuggestionKind, CompletionItemPriority, StatementPosition } from '../../monarch/types';
-import { SQLTokenType } from './types';
+import { SQLTokenTypes } from './types';
 import {
   BY,
   FROM,
@@ -21,10 +21,28 @@ import {
 } from '../language';
 import { getMetricNameToken, getNamespaceToken } from './tokenUtils';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
+import { CloudWatchDatasource } from '../../datasource';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getStatementPosition } from './statementPosition';
+import { getSuggestionKinds } from './suggestionKind';
 
 type CompletionItem = monacoTypes.languages.CompletionItem;
 
 export class SQLCompletionItemProvider extends CompletionItemProvider {
+  region: string;
+
+  constructor(datasource: CloudWatchDatasource, templateSrv: TemplateSrv = getTemplateSrv()) {
+    super(datasource, templateSrv);
+    this.region = datasource.getActualRegion();
+    this.getStatementPosition = getStatementPosition;
+    this.getSuggestionKinds = getSuggestionKinds;
+    this.tokenTypes = SQLTokenTypes;
+  }
+
+  setRegion(region: string) {
+    this.region = region;
+  }
+
   async getSuggestions(
     monaco: Monaco,
     currentToken: LinkedToken | null,
@@ -145,14 +163,14 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
               let dimensionFilter = {};
               let labelKeyTokens;
               if (statementPosition === StatementPosition.SchemaFuncExtraArgument) {
-                labelKeyTokens = namespaceToken?.getNextUntil(SQLTokenType.Parenthesis, [
-                  SQLTokenType.Delimiter,
-                  SQLTokenType.Whitespace,
+                labelKeyTokens = namespaceToken?.getNextUntil(this.tokenTypes.Parenthesis, [
+                  this.tokenTypes.Delimiter,
+                  this.tokenTypes.Whitespace,
                 ]);
               } else if (statementPosition === StatementPosition.AfterGroupByKeywords) {
-                labelKeyTokens = currentToken?.getPreviousUntil(SQLTokenType.Keyword, [
-                  SQLTokenType.Delimiter,
-                  SQLTokenType.Whitespace,
+                labelKeyTokens = currentToken?.getPreviousUntil(this.tokenTypes.Keyword, [
+                  this.tokenTypes.Delimiter,
+                  this.tokenTypes.Whitespace,
                 ]);
               }
               dimensionFilter = (labelKeyTokens || []).reduce((acc, curr) => {
