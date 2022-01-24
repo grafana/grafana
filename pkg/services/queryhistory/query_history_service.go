@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -17,7 +18,7 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *QueryHistoryService {
 }
 
 type Service interface {
-	AddToQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, datasourceUid string) (*models.QueryHistory, error)
+	AddToQueryHistory(ctx context.Context, user *models.SignedInUser, queries *simplejson.Json, datasourceUid string) (*models.QueryHistory, error)
 	ListQueryHistory(ctx context.Context, user *models.SignedInUser, query *models.QueryHistorySearch) ([]QueryHistoryResponse, error)
 	DeleteQuery(ctx context.Context, user *models.SignedInUser, queryUid string) error
 	GetQueryByUid(ctx context.Context, user *models.SignedInUser, queryUid string) (*models.QueryHistory, error)
@@ -31,7 +32,7 @@ type QueryHistoryService struct {
 	SQLStore *sqlstore.SQLStore
 }
 
-func (s QueryHistoryService) AddToQueryHistory(ctx context.Context, user *models.SignedInUser, queries string, datasourceUid string) (*models.QueryHistory, error) {
+func (s QueryHistoryService) AddToQueryHistory(ctx context.Context, user *models.SignedInUser, queries *simplejson.Json, datasourceUid string) (*models.QueryHistory, error) {
 	queryHistory := models.QueryHistory{
 		OrgId:         user.OrgId,
 		Uid:           util.GenerateShortUID(),
@@ -77,13 +78,13 @@ func (s QueryHistoryService) ListQueriesBySearchParams(ctx context.Context, user
 }
 
 type QueryHistoryResponse struct {
-	Uid           string `json:"uid"`
-	DatasourceUid string `json:"datasourceUid"`
-	CreatedBy     int64  `json:"createdBy"`
-	CreatedAt     int64  `json:"createdAt"`
-	Comment       string `json:"comment"`
-	Queries       string `json:"queries"`
-	Starred       bool   `json:"starred"`
+	Uid           string           `json:"uid"`
+	DatasourceUid string           `json:"datasourceUid"`
+	CreatedBy     int64            `json:"createdBy"`
+	CreatedAt     int64            `json:"createdAt"`
+	Comment       string           `json:"comment"`
+	Queries       *simplejson.Json `json:"queries"`
+	Starred       bool             `json:"starred"`
 }
 
 func (s QueryHistoryService) ListQueryHistory(ctx context.Context, user *models.SignedInUser, query *models.QueryHistorySearch) ([]QueryHistoryResponse, error) {

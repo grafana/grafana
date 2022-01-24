@@ -137,14 +137,14 @@ export function getResultsFromCache(
 export function addQueryToQueryHistory(dataSourceUid: string, queries: DataQuery[]): void {
   getBackendSrv().post(`/api/query-history`, {
     dataSourceUid: dataSourceUid,
-    queries: JSON.stringify(queries),
+    queries,
   });
 }
 
 export async function getQueriesFromQueryHistory(datasourceUids: string[]): Promise<any[]> {
   const params = `${datasourceUids
     .map((uid) => `datasourceUids=${encodeURIComponent(uid)}`)
-    .join('&')}&searchString=ALERTS&sort=time-desc&page=2`;
+    .join('&')}&searchString=ALERTS&sort=time-desc&page=1`;
   return await getBackendSrv().get(`/api/query-history?${params}`);
 }
 
