@@ -28,7 +28,7 @@ import (
 
 // swagger:route POST /api/v1/ngalert/admin_config configuration RoutePostNGalertConfig
 //
-// Creates or updates the NGalert configuration of the user's organization.
+// Creates or updates the NGalert configuration of the user's organization. If no value is sent for alertmanagersChoice, it defaults to "all".
 //
 //     Consumes:
 //     - application/json
