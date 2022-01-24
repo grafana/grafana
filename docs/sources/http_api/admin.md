@@ -290,14 +290,6 @@ Preview usage report to be sent to vendor.
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
-#### Required permissions
-
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
-
-| Action            | Scope |
-| ----------------- | ----- |
-| server.stats:read | n/a   |
-
 **Example Request**:
 
 ```http
