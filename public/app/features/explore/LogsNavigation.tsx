@@ -11,6 +11,7 @@ type Props = {
   queries: DataQuery[];
   loading: boolean;
   visibleRange: AbsoluteTimeRange;
+  defaultLogsSortOrder?: LogsSortOrder;
   logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   scrollToTopLogs: () => void;
@@ -25,6 +26,7 @@ export type LogsPage = {
 
 function LogsNavigation({
   absoluteRange,
+  defaultLogsSortOrder,
   logsSortOrder,
   timeZone,
   loading,
@@ -45,6 +47,7 @@ function LogsNavigation({
   // e.g. if last 5 min selected, always run 5 min range
   const rangeSpanRef = useRef(0);
 
+  const oldestLogsFirstByDefault = defaultLogsSortOrder === LogsSortOrder.Ascending;
   const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
   const onFirstPage = oldestLogsFirst ? currentPageIndex === pages.length - 1 : currentPageIndex === 0;
   const onLastPage = oldestLogsFirst ? currentPageIndex === 0 : currentPageIndex === pages.length - 1;
@@ -74,11 +77,13 @@ function LogsNavigation({
       });
 
       // Set current page index
-      const index = newPages.findIndex((page) => page.queryRange.to === absoluteRange.to);
+      const index = newPages.findIndex((page) =>
+        oldestLogsFirstByDefault ? page.queryRange.from === absoluteRange.from : page.queryRange.to === absoluteRange.to
+      );
       setCurrentPageIndex(index);
     }
     addResultsToCache();
-  }, [visibleRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
+  }, [visibleRange, absoluteRange, oldestLogsFirstByDefault, logsSortOrder, queries, clearCache, addResultsToCache]);
 
   useEffect(() => {
     return () => clearCache();
@@ -98,6 +103,8 @@ function LogsNavigation({
     return a.queryRange.to > b.queryRange.to ? -1 : 1;
   };
 
+  const disableOlderLogs = oldestLogsFirstByDefault && onLastPage;
+
   const olderLogsButton = (
     <Button
       data-testid="olderLogsButton"
@@ -116,14 +123,20 @@ function LogsNavigation({
           changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
         }
       }}
-      disabled={loading}
+      disabled={loading || disableOlderLogs}
     >
       <div className={styles.navButtonContent}>
-        {loading ? <Spinner /> : <Icon name={oldestLogsFirst ? 'angle-up' : 'angle-down'} size="lg" />}
-        Older logs
+        {loading ? (
+          <Spinner />
+        ) : (
+          !disableOlderLogs && <Icon name={oldestLogsFirst ? 'angle-up' : 'angle-down'} size="lg" />
+        )}
+        {disableOlderLogs ? 'End of range' : 'Older logs'}
       </div>
     </Button>
   );
+
+  const disableNewerLogs = !oldestLogsFirstByDefault && onFirstPage;
 
   const newerLogsButton = (
     <Button
@@ -138,15 +151,20 @@ function LogsNavigation({
             from: pages[currentPageIndex + indexChange].queryRange.from,
             to: pages[currentPageIndex + indexChange].queryRange.to,
           });
+        } else {
+          //If we are on the first page, create new range
+          changeTime({ from: visibleRange.to, to: visibleRange.to + rangeSpanRef.current });
         }
-        //If we are on the first page, button is disabled and we do nothing
       }}
-      disabled={loading || onFirstPage}
+      disabled={loading || disableNewerLogs}
     >
       <div className={styles.navButtonContent}>
-        {loading && <Spinner />}
-        {onFirstPage || loading ? null : <Icon name={oldestLogsFirst ? 'angle-down' : 'angle-up'} size="lg" />}
-        {onFirstPage ? 'Start of range' : 'Newer logs'}
+        {loading ? (
+          <Spinner />
+        ) : (
+          !disableNewerLogs && <Icon name={oldestLogsFirst ? 'angle-down' : 'angle-up'} size="lg" />
+        )}
+        {disableNewerLogs ? 'Start of range' : 'Newer logs'}
       </div>
     </Button>
   );

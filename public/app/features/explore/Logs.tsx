@@ -120,12 +120,16 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   }
 
+  getDefaultLogsSortOrder() {
+    const { logsQueries } = this.props;
+    const query = logsQueries?.[0];
+
+    return query?.defaultLogsSortOrder ?? LogsSortOrder.Descending;
+  }
+
   resetLogsSortingOrder = () => {
     this.setState(() => {
-      const { logsQueries } = this.props;
-
-      const query = logsQueries?.[0];
-      return { logsSortOrder: query?.defaultLogsSortOrder ?? LogsSortOrder.Descending };
+      return { logsSortOrder: this.getDefaultLogsSortOrder() };
     });
   };
 
@@ -413,6 +417,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           </div>
           <LogsNavigation
             logsSortOrder={logsSortOrder}
+            defaultLogsSortOrder={this.getDefaultLogsSortOrder()}
             visibleRange={visibleRange ?? absoluteRange}
             absoluteRange={absoluteRange}
             timeZone={timeZone}
