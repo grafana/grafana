@@ -8,7 +8,7 @@ import (
 
 func CSRF(loginCookieName string) func(http.Handler) http.Handler {
 	// As per RFC 7231/4.2.2 these methods are idempotent:
-	safeMethods := []string{"GET", "HEAD", "OPTIONS", "TRACE"}
+	safeMethods := []string{"HEAD", "OPTIONS", "TRACE"}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -24,17 +24,14 @@ func CSRF(loginCookieName string) func(http.Handler) http.Handler {
 					return
 				}
 			}
-			// Otherwise - verify that Origin/Referer matches the server origin
+			// Otherwise - verify that Origin matches the server origin
 			host := strings.Split(r.Host, ":")[0]
 			origin, err := url.Parse(r.Header.Get("Origin"))
-			if err != nil || origin.String() == "" {
-				// If "Origin" header is empty - try parsing the "Referer" header
-				origin, err = url.Parse(r.Referer())
-			}
-			if err != nil || origin.Hostname() != host {
+			if err != nil || (origin.String() != "" && origin.Hostname() != host) {
 				http.Error(w, "origin not allowed", http.StatusForbidden)
 				return
 			}
+			next.ServeHTTP(w, r)
 		})
 	}
 }
