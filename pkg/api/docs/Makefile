@@ -13,9 +13,12 @@ spec.json: $(GO_PKG_FILES)
 	-e SWAGGER_GENERATE_EXTENSION=false \
 	-v ${HOME}/go:${HOME}/go \
 	-v $$(pwd)/../../..:${HOME}/grafana \
-	-v $$(pwd)/definitions:/src \
 	-w $$(pwd) quay.io/goswagger/swagger:$(SWAGGER_TAG) \
-	generate spec -m -o spec.json -i ${HOME}/grafana/pkg/api/docs/tags.json
+	generate spec -m -o spec.json \
+	-w ${HOME}/grafana/pkg/server \
+	-x "grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/prometheus/alertmanager" \
+	-i ${HOME}/grafana/pkg/api/docs/tags.json
 
 merge: spec.json
 	go run merge/merge_specs.go spec.json ../../services/ngalert/api/tooling/post.json
@@ -32,9 +35,11 @@ validate: merge
 ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
 
-spec-mac: ensure_go-swagger_mac $(GO_PKG_FILES)
-	swagger generate spec -m -w $(API_DIR) -o spec.json -i tags.json
-
+spec-mac: ensure_go-swagger_mac $(GO_PKG_FILES) $(ENTERPRISE_GO_PKG_FILES)
+	swagger generate spec -m -w ../../server -o spec.json \
+	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/prometheus/alertmanager" \
+	-i tags.json
 
 .PHONY: openapi
 openapi: merge

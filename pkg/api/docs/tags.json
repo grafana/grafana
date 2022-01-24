@@ -43,6 +43,18 @@
 		{
 			"name": "teams",
 			"description": "This API can be used to create/update/delete Teams and to add/remove users to Teams. All actions require that the user has the Admin role for the organization."
+		},
+		{
+			"name": "dspermissions",
+			"description": "This API can be used to enable, disable, list, add and remove permissions for a data source.\nPermissions can be set for a user or a team. Permissions cannot be set for Admins - they always have access to everything.\nThis is only available in Grafana Enterprise\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required."
+		},
+		{
+			"name": "enterprise",
+			"description": "This is only available in Grafana Enterprise"
+		},
+		{
+			"name": "accesscontrol",
+			"description": "The API can be used to create, update, get and list roles, and create or remove built-in role assignments. To use the API, you would need to enable fine-grained access control.\nThis only available in Grafana Enterprise.\nThe API does not currently work with an API Token. So in order to use these API endpoints you will have to use Basic auth."
 		}
 	]
 }

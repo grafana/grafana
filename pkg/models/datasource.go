@@ -163,6 +163,12 @@ type GetDataSourceQuery struct {
 //  Permissions
 // ---------------------
 
+// Datasource permission
+// Description:
+// * `0` - No Access
+// * `1` - Query
+// Enum: 0,1
+// swagger:model
 type DsPermissionType int
 
 const (
