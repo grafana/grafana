@@ -1,7 +1,7 @@
 import React from 'react';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
-import { LokiOptions } from '../types';
+import { LokiDirectionType, LokiOptions } from '../types';
 import { MaxLinesField } from './MaxLinesField';
 import { DirectionField } from './DirectionField';
 import { DerivedFields } from './DerivedFields';
@@ -53,7 +53,7 @@ export const ConfigEditor = (props: Props) => {
               onChange={(value) => onOptionsChange(setMaxLines(options, value))}
             />
             <DirectionField
-              value={options.jsonData.direction || 'BACKWARD'}
+              value={options.jsonData.direction || LokiDirectionType.Backward}
               onChange={(value) => onOptionsChange(setDirection(options, value))}
             />
           </div>

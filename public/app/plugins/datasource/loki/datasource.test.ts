@@ -16,7 +16,7 @@ import {
 import { BackendSrvRequest, FetchResponse, config } from '@grafana/runtime';
 
 import LokiDatasource, { RangeQueryOptions } from './datasource';
-import { LokiQuery, LokiResponse, LokiResultType } from './types';
+import { LokiDirectionType, LokiQuery, LokiResponse, LokiResultType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -957,7 +957,7 @@ describe('LokiDatasource', () => {
 
       //Mock stored labels to only include "bar" label
       jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => ['bar']);
-      const contextQuery = ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
+      const contextQuery = ds.prepareLogRowContextQueryTarget(row, 10, LokiDirectionType.Backward);
 
       expect(contextQuery.expr).toContain('baz');
       expect(contextQuery.expr).not.toContain('uniqueParsedLabel');

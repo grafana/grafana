@@ -28,7 +28,10 @@ export enum LokiQueryType {
   // Stream = 'stream',
 }
 
-export type LokiDirectionType = 'FORWARD' | 'BACKWARD';
+export enum LokiDirectionType {
+  Forward = 'FORWARD',
+  Backward = 'BACKWARD',
+}
 
 export interface LokiQuery extends DataQuery {
   queryType?: LokiQueryType;

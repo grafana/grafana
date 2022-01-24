@@ -81,7 +81,7 @@ const RANGE_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query_range`;
 const INSTANT_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query`;
 
 const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
-  direction: 'BACKWARD',
+  direction: LokiDirectionType.Backward,
   limit: DEFAULT_MAX_LINES,
   query: '',
 };
@@ -108,7 +108,7 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
-    this.direction = settingsData.direction ?? 'BACKWARD';
+    this.direction = settingsData.direction ?? LokiDirectionType.Backward;
   }
 
   _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
@@ -519,7 +519,9 @@ export class LokiDatasource
     const target = this.prepareLogRowContextQueryTarget(
       row,
       (options && options.limit) || 10,
-      (options && options.direction) || 'BACKWARD'
+      ((options && options.direction) || 'BACKWARD') === 'FORWARD'
+        ? LokiDirectionType.Forward
+        : LokiDirectionType.Backward
     );
 
     const reverse = options && options.direction === 'FORWARD';

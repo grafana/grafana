@@ -10,8 +10,8 @@ type Props = {
 };
 
 const queryDirectionOptions: Array<SelectableValue<LokiDirectionType>> = [
-  { value: 'FORWARD', label: 'Forward', description: 'By default, run queries forward in time.' },
-  { value: 'BACKWARD', label: 'Backward', description: 'By dfault, run queries backward in time.' },
+  { value: LokiDirectionType.Forward, label: 'Forward', description: 'By default, run queries forward in time.' },
+  { value: LokiDirectionType.Backward, label: 'Backward', description: 'By dfault, run queries backward in time.' },
 ];
 
 export const DirectionField = (props: Props) => {

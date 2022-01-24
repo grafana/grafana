@@ -19,8 +19,8 @@ export interface LokiOptionFieldsProps {
 }
 
 const queryDirectionOptions: Array<SelectableValue<LokiDirectionType>> = [
-  { value: 'FORWARD', label: 'Forward', description: 'Run query forward in time.' },
-  { value: 'BACKWARD', label: 'Backward', description: 'Run query backward in time.' },
+  { value: LokiDirectionType.Forward, label: 'Forward', description: 'Run query forward in time.' },
+  { value: LokiDirectionType.Backward, label: 'Backward', description: 'Run query backward in time.' },
 ];
 
 const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
@@ -68,7 +68,7 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
     const nextQuery: LokiQuery = {
       ...query,
       direction: value,
-      defaultLogsSortOrder: value === 'FORWARD' ? LogsSortOrder.Ascending : LogsSortOrder.Descending,
+      defaultLogsSortOrder: value === LokiDirectionType.Forward ? LogsSortOrder.Ascending : LogsSortOrder.Descending,
     };
     onChange(nextQuery);
   }
