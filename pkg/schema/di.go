@@ -27,7 +27,7 @@ func (gs *GoSchema) Name() string {
 
 // Name returns the canonical string that identifies the object being schematized.
 func (ts *ThemaSchema) Name() string {
-	return ts.Name()
+	return ts.Lineage.Name()
 }
 
 // ThemaSchema contains a Grafana schema where the canonical schema expression
@@ -39,7 +39,7 @@ type ThemaSchema struct {
 
 // SchemeBuilder returns a runtime.SchemeBuilder that will accurately represent
 // the authorial intent of the Thema lineage to Kubernetes.
-func (gs *ThemaSchema) SchemeBuilder() *runtime.SchemeBuilder {
+func (ts *ThemaSchema) SchemeBuilder() *runtime.SchemeBuilder {
 	panic("TODO")
 }
 
