@@ -1,77 +1,18 @@
-import React, { PureComponent } from 'react';
+import React, { memo, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { HorizontalGroup, Pagination, VerticalGroup } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
+import { css, cx } from '@emotion/css';
 
 import Page from 'app/core/components/Page/Page';
-import ServiceAccountsTable from './ServiceAccountsTable';
-import { OrgServiceAccount, OrgRole, StoreState } from 'app/types';
+import { StoreState, ServiceAccountDTO } from 'app/types';
 import { loadServiceAccounts, removeServiceAccount, updateServiceAccount } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getServiceAccounts, getServiceAccountsSearchPage, getServiceAccountsSearchQuery } from './state/selectors';
-import { setServiceAccountsSearchPage } from './state/reducers';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { GrafanaTheme2 } from '@grafana/data';
 export type Props = ConnectedProps<typeof connector>;
 
 export interface State {}
-
-const ITEMS_PER_PAGE = 30;
-
-export class ServiceAccountsListPage extends PureComponent<Props, State> {
-  componentDidMount() {
-    this.fetchServiceAccounts();
-  }
-
-  async fetchServiceAccounts() {
-    return this.props.loadServiceAccounts();
-  }
-
-  onRoleChange = (role: OrgRole, serviceAccount: OrgServiceAccount) => {
-    const updatedServiceAccount = { ...serviceAccount, role: role };
-
-    this.props.updateServiceAccount(updatedServiceAccount);
-  };
-
-  getPaginatedServiceAccounts = (serviceAccounts: OrgServiceAccount[]) => {
-    const offset = (this.props.searchPage - 1) * ITEMS_PER_PAGE;
-    return serviceAccounts.slice(offset, offset + ITEMS_PER_PAGE);
-  };
-
-  renderTable() {
-    const { serviceAccounts } = this.props;
-    const paginatedServiceAccounts = this.getPaginatedServiceAccounts(serviceAccounts);
-    const totalPages = Math.ceil(serviceAccounts.length / ITEMS_PER_PAGE);
-
-    return (
-      <VerticalGroup spacing="md">
-        <h1>Service Accounts</h1>
-        <ServiceAccountsTable
-          serviceAccounts={paginatedServiceAccounts}
-          onRoleChange={(role, serviceAccount) => this.onRoleChange(role, serviceAccount)}
-          onRemoveServiceAccount={(serviceAccount) => this.props.removeServiceAccount(serviceAccount.serviceAccountId)}
-        />
-        <HorizontalGroup justify="flex-end">
-          <Pagination
-            onNavigate={setServiceAccountsSearchPage}
-            currentPage={this.props.searchPage}
-            numberOfPages={totalPages}
-            hideWhenSinglePage={true}
-          />
-        </HorizontalGroup>
-      </VerticalGroup>
-    );
-  }
-
-  render() {
-    const { navModel, hasFetched } = this.props;
-
-    return (
-      <Page navModel={navModel}>
-        <Page.Contents isLoading={!hasFetched}>
-          <>{hasFetched && this.renderTable()}</>
-        </Page.Contents>
-      </Page>
-    );
-  }
-}
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -79,7 +20,7 @@ function mapStateToProps(state: StoreState) {
     serviceAccounts: getServiceAccounts(state.serviceAccounts),
     searchQuery: getServiceAccountsSearchQuery(state.serviceAccounts),
     searchPage: getServiceAccountsSearchPage(state.serviceAccounts),
-    hasFetched: state.serviceAccounts.isLoading,
+    isLoading: state.serviceAccounts.isLoading,
   };
 }
 
@@ -91,4 +32,156 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export default connector(ServiceAccountsListPage);
+const ServiceAccountsListPage2: React.FC<Props> = ({ loadServiceAccounts, navModel, serviceAccounts, isLoading }) => {
+  const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    loadServiceAccounts();
+  }, [loadServiceAccounts]);
+  return (
+    <Page navModel={navModel}>
+      <Page.Contents>
+        {isLoading ? (
+          <PageLoader />
+        ) : (
+          <>
+            <div className={cx(styles.table, 'admin-list-table')}>
+              <table className="filter-table form-inline filter-table--hover">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Account</th>
+                    <th>ID</th>
+                    <th>Roles</th>
+                    <th>Tokens</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {serviceAccounts.map((serviceaccount: ServiceAccountDTO) => (
+                    <ServiceAccountListItem serviceaccount={serviceaccount} key={serviceaccount.userId} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </Page.Contents>
+    </Page>
+  );
+};
+
+type ServiceAccountListItemProps = {
+  serviceaccount: ServiceAccountDTO;
+};
+
+const getServiceAccountsAriaLabel = (name: string) => {
+  return `Edit service account's ${name} details`;
+};
+
+const ServiceAccountListItem = memo(({ serviceaccount }: ServiceAccountListItemProps) => {
+  const editUrl = `org/serviceaccounts/${serviceaccount.userId}`;
+  const styles = useStyles2(getStyles);
+
+  return (
+    <tr key={serviceaccount.userId}>
+      <td className="width-4 text-center link-td">
+        <a href={editUrl} aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}>
+          <img
+            className="filter-table__avatar"
+            src={serviceaccount.avatarUrl}
+            alt={`Avatar for user ${serviceaccount.name}`}
+          />
+        </a>
+      </td>
+      <td className="link-td max-width-10">
+        <a
+          className="ellipsis"
+          href={editUrl}
+          title={serviceaccount.login}
+          aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
+        >
+          {serviceaccount.login}
+        </a>
+      </td>
+      <td className="link-td max-width-10">
+        <a
+          className="ellipsis"
+          href={editUrl}
+          title={serviceaccount.name}
+          aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
+        >
+          {serviceaccount.name}
+        </a>
+      </td>
+      <td className={cx('link-td', styles.iconRow)}>
+        <a
+          className="ellipsis"
+          href={editUrl}
+          title={serviceaccount.name}
+          aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
+        >
+          {serviceaccount.role === 'None' ? (
+            <span className={styles.disabled}>Not assigned </span>
+          ) : (
+            serviceaccount.role
+          )}
+        </a>
+      </td>
+      <td className="link-td max-width-10">
+        <a
+          className="ellipsis"
+          href={editUrl}
+          title="tokens"
+          aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
+        >
+          0
+        </a>
+      </td>
+    </tr>
+  );
+});
+ServiceAccountListItem.displayName = 'ServiceAccountListItem';
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    table: css`
+      margin-top: ${theme.spacing(3)};
+    `,
+    filter: css`
+      margin: 0 ${theme.spacing(1)};
+    `,
+    iconRow: css`
+      svg {
+        margin-left: ${theme.spacing(0.5)};
+      }
+    `,
+    row: css`
+      display: flex;
+      align-items: center;
+      height: 100% !important;
+
+      a {
+        padding: ${theme.spacing(0.5)} 0 !important;
+      }
+    `,
+    unitTooltip: css`
+      display: flex;
+      flex-direction: column;
+    `,
+    unitItem: css`
+      cursor: pointer;
+      padding: ${theme.spacing(0.5)} 0;
+      margin-right: ${theme.spacing(1)};
+    `,
+    disabled: css`
+      color: ${theme.colors.text.disabled};
+    `,
+    link: css`
+      color: inherit;
+      cursor: pointer;
+      text-decoration: underline;
+    `,
+  };
+};
+
+export default connector(ServiceAccountsListPage2);

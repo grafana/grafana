@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { ValueMappingsEditorModal, Props } from './ValueMappingsEditorModal';
 import { MappingType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { selectOptionInTest } from '../Select/test-utils';
+import { selectOptionInTest } from '@grafana/ui';
 
 const setup = (spy?: any, propOverrides?: object) => {
   const props: Props = {

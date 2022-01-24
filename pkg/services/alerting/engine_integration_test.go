@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,7 +22,9 @@ import (
 
 func TestEngineTimeouts(t *testing.T) {
 	usMock := &usagestats.UsageStatsMock{T: t}
-	engine := ProvideAlertEngine(nil, nil, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg())
+	tracer, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+	engine := ProvideAlertEngine(nil, nil, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg(), tracer)
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
 	engine.resultHandler = &FakeResultHandler{}
