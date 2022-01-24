@@ -31,8 +31,14 @@
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],
+      "excludePackagePatterns": ["@storybook"],
       "extends": ["schedule:monthly"],
       "groupName": "Monthly patch updates"
+    },
+    {
+      "matchPackagePatterns": ["@storybook"],
+      "extends": ["schedule:monthly"],
+      "groupName": "Storybook updates"
     }
   ],
   "pin": {

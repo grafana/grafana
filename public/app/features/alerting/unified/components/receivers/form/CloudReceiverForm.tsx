@@ -64,7 +64,7 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
     <>
       {!isVanillaAM && (
         <Alert title="Info" severity="info">
-          Note that empty string values will be replaced with global defaults were appropriate.
+          Note that empty string values will be replaced with global defaults where appropriate.
         </Alert>
       )}
       <ReceiverForm<CloudChannelValues>
