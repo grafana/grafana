@@ -14,8 +14,8 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "refId": "A",
         }
       }
-      resolution={1}
       queryDirection="BACKWARD"
+      resolution={1}
     />
   }
   data={
