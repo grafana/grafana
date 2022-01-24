@@ -48,7 +48,9 @@ export const MatchedSilencedRules = () => {
 
   return (
     <div>
-      <h4>Affected alerts</h4>
+      <h4>
+        Affected alerts {matchedAlertRules && matchedAlertRules.length > 0 ? `(${matchedAlertRules.length})` : ''}
+      </h4>
       <div className={styles.table}>
         {matchers.every((matcher) => !matcher.value && !matcher.name) ? (
           <span>Add a valid matcher to see affected alerts</span>
@@ -56,7 +58,9 @@ export const MatchedSilencedRules = () => {
           matchedAlertRules && (
             <>
               <DynamicTable items={matchedAlertRules?.slice(0, 5) ?? []} isExpandable={false} cols={columns} />
-              {matchedAlertRules?.length > 5 && <div>and {matchedAlertRules.length} more</div>}
+              {matchedAlertRules?.length > 5 && (
+                <div className={styles.moreMatches}>and {matchedAlertRules.length - 5} more</div>
+              )}
             </>
           )
         )}
@@ -97,5 +101,8 @@ function useColumns(): MatchedRulesTableColumnProps[] {
 const getStyles = (theme: GrafanaTheme2) => ({
   table: css`
     max-width: ${theme.breakpoints.values.lg}px;
+  `,
+  moreMatches: css`
+    margin-top: ${theme.spacing(1)};
   `,
 });
