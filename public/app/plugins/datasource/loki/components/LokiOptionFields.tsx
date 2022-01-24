@@ -65,8 +65,7 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
   }
 
   function onQueryDirectionChange(value: LokiDirectionType) {
-    let nextQuery;
-    nextQuery = { ...query, direction: value };
+    const nextQuery = { ...query, direction: value };
     onChange(nextQuery);
   }
 
