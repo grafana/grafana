@@ -24,7 +24,6 @@ export class ConfigEditor extends PureComponent<Props> {
             <Select
               inputId="cloud-monitoring-type"
               menuShouldPortal
-              aria-label="Type"
               width={40}
               value={authTypes.find((x) => x.value === jsonData.authenticationType) || authTypes[0]}
               options={authTypes}
