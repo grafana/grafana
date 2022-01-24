@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -41,11 +42,14 @@ func GetAPIKeys(c *models.ReqContext) response.Response {
 
 // DeleteAPIKey deletes an API key
 func DeleteAPIKey(c *models.ReqContext) response.Response {
-	id := c.ParamsInt64(":id")
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	cmd := &models.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
 
-	err := bus.Dispatch(c.Req.Context(), cmd)
+	err = bus.Dispatch(c.Req.Context(), cmd)
 	if err != nil {
 		var status int
 		if errors.Is(err, models.ErrApiKeyNotFound) {
@@ -79,7 +83,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 	}
 	cmd.OrgId = c.OrgId
 	var err error
-	if hs.Cfg.FeatureToggles["service-accounts"] {
+	if hs.Features.Toggles().IsServiceAccountsEnabled() {
 		// Api keys should now be created with addadditionalapikey endpoint
 		return response.Error(400, "API keys should now be added via the AdditionalAPIKey endpoint.", err)
 	}
@@ -116,7 +120,7 @@ func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if !hs.Cfg.FeatureToggles["service-accounts"] {
+	if !hs.Features.Toggles().IsServiceAccountsEnabled() {
 		return response.Error(500, "Requires services-accounts feature", errors.New("feature missing"))
 	}
 

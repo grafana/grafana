@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -36,8 +38,8 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func loggedInUserScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
-	loggedInUserScenarioWithRole(t, desc, "GET", url, url, models.ROLE_EDITOR, fn)
+func loggedInUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
+	loggedInUserScenarioWithRole(t, desc, "GET", url, routePattern, models.ROLE_EDITOR, fn)
 }
 
 func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
@@ -64,7 +66,6 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 		case "DELETE":
 			sc.m.Delete(routePattern, sc.defaultHandler)
 		}
-
 		fn(sc)
 	})
 }
@@ -177,7 +178,9 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore)
+	tracer, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer)
 
 	return ctxHdlr
 }
@@ -211,8 +214,8 @@ func (s *fakeRenderService) Init() error {
 }
 
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
-	cfg.FeatureToggles = make(map[string]bool)
-	cfg.FeatureToggles["accesscontrol"] = true
+	features := featuremgmt.WithFeatures("accesscontrol")
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	cfg.Quota.Enabled = false
 
 	bus := bus.GetBus()
@@ -220,6 +223,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		Cfg:                cfg,
 		Bus:                bus,
 		Live:               newTestLive(t),
+		Features:           features,
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
@@ -294,19 +298,34 @@ func setInitCtxSignedInOrgAdmin(initCtx *models.ReqContext) {
 	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_ADMIN, Login: testUserLogin}
 }
 
+func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
+	if features == nil {
+		features = featuremgmt.WithFeatures()
+	}
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
+
+	return &HTTPServer{
+		Cfg:      cfg,
+		Features: features,
+		Bus:      bus.GetBus(),
+	}
+}
+
 func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
 	// Use a new conf
+	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
 	cfg := setting.NewCfg()
-	cfg.FeatureToggles = make(map[string]bool)
-	if enableAccessControl {
-		cfg.FeatureToggles["accesscontrol"] = enableAccessControl
-	}
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	return setupHTTPServerWithCfg(t, useFakeAccessControl, enableAccessControl, cfg)
 }
 
 func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
 	t.Helper()
+
+	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	var acmock *accesscontrolmock.Mock
 	var ac *ossaccesscontrol.OSSAccessControlService
@@ -320,6 +339,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 	// Create minimal HTTP Server
 	hs := &HTTPServer{
 		Cfg:                cfg,
+		Features:           features,
 		Bus:                bus,
 		Live:               newTestLive(t),
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
@@ -336,7 +356,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		}
 		hs.AccessControl = acmock
 	} else {
-		ac = ossaccesscontrol.ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
+		ac = ossaccesscontrol.ProvideService(hs.Features.Toggles(), &usagestats.UsageStatsMock{T: t})
 		hs.AccessControl = ac
 		// Perform role registration
 		err := hs.declareFixedRoles()
