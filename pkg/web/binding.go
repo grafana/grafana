@@ -31,10 +31,12 @@ func validate(obj interface{}) error {
 		return nil
 	}
 
-	// Second, check if obj is a pointer to a nil interface.
+	// Second, check if obj has a nil interface value.
 	// This is to prevent panics when obj is an instance of uninitialised struct pointer / interface.
+	t := reflect.TypeOf(obj)
 	v := reflect.ValueOf(obj)
-	if v.IsNil() {
+
+	if v.Kind() == reflect.Ptr && v.IsNil() {
 		return nil
 	}
 
@@ -45,7 +47,6 @@ func validate(obj interface{}) error {
 
 	// Otherwise, use reflection to match `binding:"Required"` struct field tags.
 	// Resolve all pointers and interfaces, until we get a concrete type.
-	t := reflect.TypeOf(obj)
 	for v.Kind() == reflect.Interface || v.Kind() == reflect.Ptr {
 		t = t.Elem()
 		v = v.Elem()
