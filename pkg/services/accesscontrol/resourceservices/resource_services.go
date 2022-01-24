@@ -55,7 +55,7 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 				return err
 			}
 
-			err = sqlstore.GetTeamById(context.Background(), &models.GetTeamByIdQuery{
+			err = sql.GetTeamById(context.Background(), &models.GetTeamByIdQuery{
 				OrgId: orgID,
 				Id:    id,
 			})
@@ -88,12 +88,16 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 			case "Admin":
 				return sql.SaveTeamMember(userID, orgID, teamId, false, models.PERMISSION_ADMIN)
 			case "":
-				return sql.RemoveTeamMember(orgID, teamId, userID)
+				return sql.RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{
+					OrgId:  orgID,
+					UserId: userID,
+					TeamId: teamId,
+				})
 			default:
 				return fmt.Errorf("invalid team permission type %s", permission)
 			}
 		},
 	}
 
-	return resourcepermissions.New(options, router, ac, store)
+	return resourcepermissions.New(options, router, ac, store, sql)
 }

@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/util"
@@ -24,7 +23,7 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 
 	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: teamId}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetTeamMembers(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get Team Members", err)
 	}
 
