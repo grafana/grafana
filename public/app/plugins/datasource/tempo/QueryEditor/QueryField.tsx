@@ -123,12 +123,20 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             <RadioButtonGroup<TempoQueryType>
               options={queryTypeOptions}
               value={query.queryType}
-              onChange={(v) =>
+              onChange={(v) => {
+                // Run clear query to clear results
+                onChange({
+                  ...query,
+                  queryType: 'clear',
+                });
+                this.props.onRunQuery();
+
+                // Update to actual query type
                 onChange({
                   ...query,
                   queryType: v,
-                })
-              }
+                });
+              }}
               size="md"
             />
           </InlineField>
