@@ -53,7 +53,6 @@ async function doSetGeometry(frames: DataFrame[], options: SpatialTransformOptio
                 {
                   ...info.field,
                   name,
-                  parse: undefined,
                   type: FieldType.geo,
                   values: new ArrayVector([toLineString(info.field)]),
                 },
