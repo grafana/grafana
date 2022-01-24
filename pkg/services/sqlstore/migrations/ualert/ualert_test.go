@@ -184,3 +184,33 @@ func configFromReceivers(t *testing.T, receivers []*PostableGrafanaReceiver) *Po
 }
 
 const invalidUri = "�6�M��)uk譹1(�h`$�o�N>mĕ����cS2�dh![ę�	���`csB�!��OSxP�{�"
+
+func Test_getAlertFolderNameFromDashboard(t *testing.T) {
+	t.Run("should include full title", func(t *testing.T) {
+		dash := &dashboard{
+			Uid:   util.GenerateShortUID(),
+			Title: "TEST",
+		}
+		folder := getAlertFolderNameFromDashboard(dash)
+		require.Contains(t, folder, dash.Title)
+		require.Contains(t, folder, dash.Uid)
+	})
+	t.Run("should cut title to the length", func(t *testing.T) {
+		title := ""
+		for {
+			title += util.GenerateShortUID()
+			if len(title) > MaxFolderName {
+				title = title[:MaxFolderName]
+				break
+			}
+		}
+
+		dash := &dashboard{
+			Uid:   util.GenerateShortUID(),
+			Title: title,
+		}
+		folder := getAlertFolderNameFromDashboard(dash)
+		require.Len(t, folder, MaxFolderName)
+		require.Contains(t, folder, dash.Uid)
+	})
+}

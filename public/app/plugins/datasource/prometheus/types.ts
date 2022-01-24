@@ -40,6 +40,7 @@ export enum PromQueryType {
 export type ExemplarTraceIdDestination = {
   name: string;
   url?: string;
+  urlDisplayLabel?: string;
   datasourceUid?: string;
 };
 

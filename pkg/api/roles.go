@@ -24,6 +24,8 @@ const (
 	ActionOrgsQuotasWrite      = "orgs.quotas:write"
 	ActionOrgsDelete           = "orgs:delete"
 	ActionOrgsCreate           = "orgs:create"
+
+	ActionTeamsCreate = "teams:create"
 )
 
 // API related scopes
@@ -132,6 +134,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Infrequently used",
 			Permissions: []accesscontrol.Permission{
 				{Action: ActionDatasourcesQuery},
+				{Action: ActionDatasourcesRead},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -185,9 +188,29 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
 	}
 
+	teamWriterGrants := []string{string(models.ROLE_ADMIN)}
+	if hs.Cfg.EditorsCanAdmin {
+		teamWriterGrants = append(teamWriterGrants, string(models.ROLE_EDITOR))
+	}
+	teamsWriterRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:teams:writer",
+			DisplayName: "Team writer",
+			Description: "Create teams.",
+			Group:       "Teams",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionTeamsCreate,
+				},
+			},
+		},
+		Grants: teamWriterGrants,
+	}
+
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole,
+		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole, teamsWriterRole,
 	)
 }
 

@@ -87,10 +87,16 @@ func (f TitleFilter) Where() (string, []interface{}) {
 }
 
 type FolderFilter struct {
-	IDs []int64
+	Dialect migrator.Dialect
+	IDs     []int64
 }
 
 func (f FolderFilter) Where() (string, []interface{}) {
+	if len(f.IDs) == 1 && f.IDs[0] == 0 {
+		sql := fmt.Sprintf("dashboard.folder_id = 0 AND dashboard.is_folder = %s", f.Dialect.BooleanStr(false))
+		return sql, []interface{}{}
+	}
+
 	return sqlIDin("dashboard.folder_id", f.IDs)
 }
 

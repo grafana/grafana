@@ -2,7 +2,6 @@ import React from 'react';
 import { IconName } from '../../types/icon';
 import { css } from '@emotion/css';
 
-// @ts-ignore
 import RCCascader from 'rc-cascader';
 import { CascaderOption } from '../Cascader/Cascader';
 import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
