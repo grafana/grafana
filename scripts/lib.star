@@ -1,4 +1,4 @@
-grabpl_version = '0.5.59'
+grabpl_version = '0.5.60'
 build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
