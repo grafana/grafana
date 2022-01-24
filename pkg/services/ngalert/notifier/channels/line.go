@@ -42,6 +42,7 @@ func NewLineNotifier(model *NotificationChannelConfig, ns *notifications.Notific
 		}),
 		Token: token,
 		log:   log.New("alerting.notifier.line"),
+		ns:    ns,
 		tmpl:  t,
 	}, nil
 }
@@ -52,6 +53,7 @@ type LineNotifier struct {
 	*Base
 	Token string
 	log   log.Logger
+	ns    *notifications.NotificationService
 	tmpl  *template.Template
 }
 

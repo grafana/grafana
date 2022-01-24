@@ -24,6 +24,7 @@ type WebhookNotifier struct {
 	HTTPMethod string
 	MaxAlerts  int
 	log        log.Logger
+	ns         *notifications.NotificationService
 	tmpl       *template.Template
 	orgID      int64
 }
@@ -56,6 +57,7 @@ func NewWebHookNotifier(model *NotificationChannelConfig, ns *notifications.Noti
 		HTTPMethod: model.Settings.Get("httpMethod").MustString("POST"),
 		MaxAlerts:  model.Settings.Get("maxAlerts").MustInt(0),
 		log:        log.New("alerting.notifier.webhook"),
+		ns:         ns,
 		tmpl:       t,
 	}, nil
 }

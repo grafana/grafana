@@ -32,6 +32,7 @@ func NewWeComNotifier(model *NotificationChannelConfig, ns *notifications.Notifi
 		}),
 		URL:     url,
 		log:     log.New("alerting.notifier.wecom"),
+		ns:      ns,
 		Message: model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		tmpl:    t,
 	}, nil
@@ -44,6 +45,7 @@ type WeComNotifier struct {
 	Message string
 	tmpl    *template.Template
 	log     log.Logger
+	ns      *notifications.NotificationService
 }
 
 // Notify send an alert notification to WeCom.

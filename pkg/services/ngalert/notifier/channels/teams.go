@@ -22,6 +22,7 @@ type TeamsNotifier struct {
 	Message string
 	tmpl    *template.Template
 	log     log.Logger
+	ns      *notifications.NotificationService
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
@@ -46,6 +47,7 @@ func NewTeamsNotifier(model *NotificationChannelConfig, ns *notifications.Notifi
 		URL:     u,
 		Message: model.Settings.Get("message").MustString(`{{ template "teams.default.message" .}}`),
 		log:     log.New("alerting.notifier.teams"),
+		ns:      ns,
 		tmpl:    t,
 	}, nil
 }

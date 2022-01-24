@@ -37,6 +37,7 @@ type PushoverNotifier struct {
 	Message          string
 	tmpl             *template.Template
 	log              log.Logger
+	ns               *notifications.NotificationService
 }
 
 // NewSlackNotifier is the constructor for the Slack notifier
@@ -93,6 +94,7 @@ func NewPushoverNotifier(model *NotificationChannelConfig, ns *notifications.Not
 		Message:          model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		tmpl:             t,
 		log:              log.New("alerting.notifier.pushover"),
+		ns:               ns,
 	}, nil
 }
 

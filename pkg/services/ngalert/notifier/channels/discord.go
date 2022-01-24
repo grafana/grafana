@@ -20,6 +20,7 @@ import (
 type DiscordNotifier struct {
 	*Base
 	log                log.Logger
+	ns                 *notifications.NotificationService
 	tmpl               *template.Template
 	Content            string
 	AvatarURL          string
@@ -56,6 +57,7 @@ func NewDiscordNotifier(model *NotificationChannelConfig, ns *notifications.Noti
 		AvatarURL:          avatarURL,
 		WebhookURL:         discordURL,
 		log:                log.New("alerting.notifier.discord"),
+		ns:                 ns,
 		tmpl:               t,
 		UseDiscordUsername: useDiscordUsername,
 	}, nil

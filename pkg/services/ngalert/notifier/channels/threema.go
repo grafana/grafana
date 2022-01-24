@@ -28,6 +28,7 @@ type ThreemaNotifier struct {
 	RecipientID string
 	APISecret   string
 	log         log.Logger
+	ns          *notifications.NotificationService
 	tmpl        *template.Template
 }
 
@@ -75,6 +76,7 @@ func NewThreemaNotifier(model *NotificationChannelConfig, ns *notifications.Noti
 		RecipientID: recipientID,
 		APISecret:   apiSecret,
 		log:         log.New("alerting.notifier.threema"),
+		ns:          ns,
 		tmpl:        t,
 	}, nil
 }

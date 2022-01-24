@@ -22,6 +22,7 @@ type GoogleChatNotifier struct {
 	*Base
 	URL     string
 	log     log.Logger
+	ns      *notifications.NotificationService
 	tmpl    *template.Template
 	content string
 }
@@ -48,6 +49,7 @@ func NewGoogleChatNotifier(model *NotificationChannelConfig, ns *notifications.N
 		}),
 		URL:     url,
 		log:     log.New("alerting.notifier.googlechat"),
+		ns:      ns,
 		tmpl:    t,
 		content: content,
 	}, nil

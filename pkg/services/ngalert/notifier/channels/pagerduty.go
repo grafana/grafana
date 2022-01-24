@@ -38,6 +38,7 @@ type PagerdutyNotifier struct {
 	Summary       string
 	tmpl          *template.Template
 	log           log.Logger
+	ns            *notifications.NotificationService
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
@@ -76,6 +77,7 @@ func NewPagerdutyNotifier(model *NotificationChannelConfig, ns *notifications.No
 		Summary:   model.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
 		tmpl:      t,
 		log:       log.New("alerting.notifier." + model.Name),
+		ns:        ns,
 	}, nil
 }
 

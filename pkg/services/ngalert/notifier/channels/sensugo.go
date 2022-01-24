@@ -18,6 +18,7 @@ import (
 type SensuGoNotifier struct {
 	*Base
 	log  log.Logger
+	ns   *notifications.NotificationService
 	tmpl *template.Template
 
 	URL       string
@@ -64,6 +65,7 @@ func NewSensuGoNotifier(model *NotificationChannelConfig, ns *notifications.Noti
 		APIKey:    apikey,
 		Message:   model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		log:       log.New("alerting.notifier.sensugo"),
+		ns:        ns,
 		tmpl:      t,
 	}, nil
 }

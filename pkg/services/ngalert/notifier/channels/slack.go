@@ -27,6 +27,7 @@ import (
 type SlackNotifier struct {
 	*Base
 	log  log.Logger
+	ns   *notifications.NotificationService
 	tmpl *template.Template
 
 	URL            *url.URL
@@ -121,6 +122,7 @@ func NewSlackNotifier(model *NotificationChannelConfig, ns *notifications.Notifi
 		Text:           model.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
 		Title:          model.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
 		log:            log.New("alerting.notifier.slack"),
+		ns:             ns,
 		tmpl:           t,
 	}, nil
 }

@@ -23,6 +23,7 @@ type KafkaNotifier struct {
 	Endpoint string
 	Topic    string
 	log      log.Logger
+	ns       *notifications.NotificationService
 	tmpl     *template.Template
 }
 
@@ -52,6 +53,7 @@ func NewKafkaNotifier(model *NotificationChannelConfig, ns *notifications.Notifi
 		Endpoint: endpoint,
 		Topic:    topic,
 		log:      log.New("alerting.notifier.kafka"),
+		ns:       ns,
 		tmpl:     t,
 	}, nil
 }

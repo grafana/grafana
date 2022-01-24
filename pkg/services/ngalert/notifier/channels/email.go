@@ -23,6 +23,7 @@ type EmailNotifier struct {
 	SingleEmail bool
 	Message     string
 	log         log.Logger
+	ns          *notifications.NotificationService
 	tmpl        *template.Template
 }
 
@@ -55,6 +56,7 @@ func NewEmailNotifier(model *NotificationChannelConfig, ns *notifications.Notifi
 		SingleEmail: singleEmail,
 		Message:     model.Settings.Get("message").MustString(),
 		log:         log.New("alerting.notifier.email"),
+		ns:          ns,
 		tmpl:        t,
 	}, nil
 }

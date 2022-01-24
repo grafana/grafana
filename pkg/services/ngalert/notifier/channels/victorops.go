@@ -49,6 +49,7 @@ func NewVictoropsNotifier(model *NotificationChannelConfig, ns *notifications.No
 		URL:         url,
 		MessageType: model.Settings.Get("messageType").MustString(),
 		log:         log.New("alerting.notifier.victorops"),
+		ns:          ns,
 		tmpl:        t,
 	}, nil
 }
@@ -61,6 +62,7 @@ type VictoropsNotifier struct {
 	URL         string
 	MessageType string
 	log         log.Logger
+	ns          *notifications.NotificationService
 	tmpl        *template.Template
 }
 

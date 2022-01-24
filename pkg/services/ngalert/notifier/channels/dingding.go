@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -43,6 +42,7 @@ func NewDingDingNotifier(model *NotificationChannelConfig, ns *notifications.Not
 		Message: model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		log:     log.New("alerting.notifier.dingding"),
 		tmpl:    t,
+		ns:      ns,
 	}, nil
 }
 
@@ -53,6 +53,7 @@ type DingDingNotifier struct {
 	URL     string
 	Message string
 	tmpl    *template.Template
+	ns      *notifications.NotificationService
 	log     log.Logger
 }
 
@@ -116,7 +117,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		Body: string(body),
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := dd.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to dingding: %w", err)
 	}
 

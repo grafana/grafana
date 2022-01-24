@@ -39,6 +39,7 @@ type OpsgenieNotifier struct {
 	SendTagsAs       string
 	tmpl             *template.Template
 	log              log.Logger
+	ns               *notifications.NotificationService
 }
 
 // NewOpsgenieNotifier is the constructor for the Opsgenie notifier
@@ -82,6 +83,7 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, ns *notifications.Not
 		SendTagsAs:       sendTagsAs,
 		tmpl:             t,
 		log:              log.New("alerting.notifier." + model.Name),
+		ns:               ns,
 	}, nil
 }
 

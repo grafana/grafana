@@ -26,6 +26,7 @@ type TelegramNotifier struct {
 	ChatID   string
 	Message  string
 	log      log.Logger
+	ns       *notifications.NotificationService
 	tmpl     *template.Template
 }
 
@@ -63,6 +64,7 @@ func NewTelegramNotifier(model *NotificationChannelConfig, ns *notifications.Not
 		Message:  message,
 		tmpl:     t,
 		log:      log.New("alerting.notifier.telegram"),
+		ns:       ns,
 	}, nil
 }
 
