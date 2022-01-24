@@ -944,7 +944,8 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	return NewScheduler(schedCfg, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), appUrl, st), mockedClock
+	ticker := NewDefaultTicker(schedCfg.BaseInterval)
+	return NewScheduler(schedCfg, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), appUrl, st, ticker), mockedClock
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.

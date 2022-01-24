@@ -136,6 +136,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	mockedClock := clock.NewMock()
 	baseInterval := time.Second
+	ticker := schedule.NewTestTicker(baseInterval)
 
 	schedCfg := schedule.SchedulerCfg{
 		C:            mockedClock,
@@ -160,7 +161,7 @@ func TestAlertingTicker(t *testing.T) {
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	sched := schedule.NewScheduler(schedCfg, nil, appUrl, st)
+	sched := schedule.NewScheduler(schedCfg, nil, appUrl, st, ticker)
 
 	ctx := context.Background()
 
@@ -172,8 +173,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	expectedAlertRulesEvaluated := []models.AlertRuleKey{alerts[0].GetKey()}
 	t.Run(fmt.Sprintf("on 1st tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+		assertEvalRun(t, evalAppliedCh, ticker.Tick(), expectedAlertRulesEvaluated...)
 	})
 
 	// add alert rule under main org with three seconds interval
@@ -183,20 +183,17 @@ func TestAlertingTicker(t *testing.T) {
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[0].GetKey()}
 	t.Run(fmt.Sprintf("on 2nd tick alert rule: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+		assertEvalRun(t, evalAppliedCh, ticker.Tick(), expectedAlertRulesEvaluated...)
 	})
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[1].GetKey(), alerts[0].GetKey()}
 	t.Run(fmt.Sprintf("on 3rd tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+		assertEvalRun(t, evalAppliedCh, ticker.Tick(), expectedAlertRulesEvaluated...)
 	})
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[0].GetKey()}
 	t.Run(fmt.Sprintf("on 4th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+		assertEvalRun(t, evalAppliedCh, ticker.Tick(), expectedAlertRulesEvaluated...)
 	})
 
 	key := alerts[0].GetKey()
@@ -206,8 +203,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{}
 	t.Run(fmt.Sprintf("on 5th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+		assertEvalRun(t, evalAppliedCh, ticker.Tick(), expectedAlertRulesEvaluated...)
 	})
 	expectedAlertRulesStopped := []models.AlertRuleKey{alerts[0].GetKey()}
 	t.Run(fmt.Sprintf("on 5th tick alert rules: %s should be stopped", concatenate(expectedAlertRulesStopped)), func(t *testing.T) {
@@ -216,8 +212,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[1].GetKey()}
 	t.Run(fmt.Sprintf("on 6th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+		assertEvalRun(t, evalAppliedCh, ticker.Tick(), expectedAlertRulesEvaluated...)
 	})
 
 	// create alert rule with one second interval
@@ -225,8 +220,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[2].GetKey()}
 	t.Run(fmt.Sprintf("on 7th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+		assertEvalRun(t, evalAppliedCh, ticker.Tick(), expectedAlertRulesEvaluated...)
 	})
 
 	// create alert rule with one second interval under disabled org
@@ -234,8 +228,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[2].GetKey()}
 	t.Run(fmt.Sprintf("on 8th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+		assertEvalRun(t, evalAppliedCh, ticker.Tick(), expectedAlertRulesEvaluated...)
 	})
 }
 
@@ -291,12 +284,6 @@ func assertStopRun(t *testing.T, ch <-chan models.AlertRuleKey, keys ...models.A
 			t.Fatal("cycle has expired")
 		}
 	}
-}
-
-func advanceClock(t *testing.T, mockedClock *clock.Mock) time.Time {
-	mockedClock.Add(time.Second)
-	return mockedClock.Now()
-	// t.Logf("Tick: %v", mockedClock.Now())
 }
 
 func concatenate(keys []models.AlertRuleKey) string {

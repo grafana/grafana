@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -61,7 +60,7 @@ type schedule struct {
 
 	clock clock.Clock
 
-	heartbeat *alerting.Ticker
+	ticker Ticker
 
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
@@ -120,16 +119,17 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
-	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
-
+func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager, ticker Ticker) *schedule {
+	if ticker == nil {
+		ticker = NewDefaultTicker(cfg.BaseInterval)
+	}
 	sch := schedule{
 		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
 		maxAttempts:             cfg.MaxAttempts,
 		clock:                   cfg.C,
 		baseInterval:            cfg.BaseInterval,
 		log:                     cfg.Logger,
-		heartbeat:               ticker,
+		ticker:                  ticker,
 		evalAppliedFunc:         cfg.EvalAppliedFunc,
 		stopAppliedFunc:         cfg.StopAppliedFunc,
 		evaluator:               cfg.Evaluator,
@@ -155,7 +155,7 @@ func (sch *schedule) Pause() error {
 	if sch == nil {
 		return fmt.Errorf("scheduler is not initialised")
 	}
-	sch.heartbeat.Pause()
+	sch.ticker.Stop()
 	sch.log.Info("alert rule scheduler paused", "now", sch.clock.Now())
 	return nil
 }
@@ -164,7 +164,7 @@ func (sch *schedule) Unpause() error {
 	if sch == nil {
 		return fmt.Errorf("scheduler is not initialised")
 	}
-	sch.heartbeat.Unpause()
+	sch.ticker.Reset(sch.baseInterval)
 	sch.log.Info("alert rule scheduler unpaused", "now", sch.clock.Now())
 	return nil
 }
@@ -356,7 +356,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 	for {
 		select {
-		case tick := <-sch.heartbeat.C:
+		case tick := <-sch.ticker.C():
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
 			disabledOrgs := make([]int64, 0, len(sch.disabledOrgs))
 			for disabledOrg := range sch.disabledOrgs {
@@ -760,7 +760,7 @@ type evalContext struct {
 func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.clock = cfg.C
 	sch.baseInterval = cfg.BaseInterval
-	sch.heartbeat = alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
+	sch.ticker = NewDefaultTicker(cfg.BaseInterval)
 	sch.evalAppliedFunc = cfg.EvalAppliedFunc
 	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }
