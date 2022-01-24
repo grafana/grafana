@@ -114,6 +114,7 @@ describe('state functions', () => {
       );
     });
 
+    // TODO: remove in 9.0
     it('returns url parameter value for a state object', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
@@ -164,6 +165,7 @@ describe('state functions', () => {
       expect(state).toMatchObject(parsed);
     });
 
+    // TODO: remove in 9.0
     it('can parse the compact serialized state into the original state', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,

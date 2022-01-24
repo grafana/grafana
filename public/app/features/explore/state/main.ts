@@ -64,10 +64,10 @@ export const stateSave = (options?: { replace?: boolean }): ThunkResult<void> =>
     const orgId = getState().user.orgId.toString();
     const urlStates: { [index: string]: string | null } = { orgId };
 
-    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left), true);
+    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left));
 
     if (right) {
-      urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right), true);
+      urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right));
     } else {
       urlStates.right = null;
     }
@@ -107,7 +107,7 @@ export function splitOpen<T extends DataQuery = any>(options?: {
       };
     }
 
-    const urlState = serializeStateToUrlParam(rightUrlState, true);
+    const urlState = serializeStateToUrlParam(rightUrlState);
     locationService.partial({ right: urlState }, true);
   };
 }

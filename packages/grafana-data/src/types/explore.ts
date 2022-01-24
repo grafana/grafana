@@ -10,6 +10,8 @@ export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   range: RawTimeRange;
   originPanelId?: number;
   context?: string;
+  // TODO: this is WIP
+  settings?: Record<string, Record<string, string>>;
 }
 
 /**

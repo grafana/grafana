@@ -195,9 +195,15 @@ export const urlUtil = {
   parseKeyValue,
 };
 
+/**
+ *
+ * @param urlState
+ * @param compact deprecated
+ * @returns
+ */
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
-  if (compact) {
-    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries]);
+  if (compact !== undefined) {
+    console.warn('`compact` parameter is deprecated and will be removed in a future release');
   }
   return JSON.stringify(urlState);
 }
