@@ -4,17 +4,18 @@ import (
 	"context"
 	"time"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"xorm.io/xorm"
 )
 
 func (ss *SQLStore) addAPIKeysQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.GetAPIKeys)
-	bus.AddHandlerCtx("sql", ss.GetApiKeyById)
-	bus.AddHandlerCtx("sql", ss.GetApiKeyByName)
-	bus.AddHandlerCtx("sql", ss.DeleteApiKey)
-	bus.AddHandlerCtx("sql", ss.AddAPIKey)
+	bus.AddHandler("sql", ss.GetAPIKeys)
+	bus.AddHandler("sql", ss.GetApiKeyById)
+	bus.AddHandler("sql", ss.GetApiKeyByName)
+	bus.AddHandler("sql", ss.DeleteApiKey)
+	bus.AddHandler("sql", ss.AddAPIKey)
 }
 
 // GetAPIKeys queries the database based
@@ -36,6 +37,21 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 		query.Result = make([]*models.ApiKey, 0)
 		return sess.Find(&query.Result)
 	})
+}
+
+// GetAPIKeys queries the database based
+// on input on GetApiKeysQuery
+func (ss *SQLStore) GetNonServiceAccountAPIKeys(ctx context.Context) []*models.ApiKey {
+	result := make([]*models.ApiKey, 0)
+	err := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		sess := dbSession. //CHECK how many API keys do our clients have?  Can we load them all?
+					Where("(expires IS NULL OR expires >= ?) AND service_account_id < 1 ", timeNow().Unix()).Asc("name")
+		return sess.Find(&result)
+	})
+	if err != nil {
+		ss.log.Warn("API key not loaded", "err", err)
+	}
+	return result
 }
 
 func (ss *SQLStore) DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error {
@@ -92,6 +108,30 @@ func (ss *SQLStore) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand)
 			return err
 		}
 		cmd.Result = &t
+		return nil
+	})
+}
+
+// UpdateApikeyServiceAccount sets a service account for an existing API key
+func (ss *SQLStore) UpdateApikeyServiceAccount(ctx context.Context, apikeyId int64, saccountId int64) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		key := models.ApiKey{Id: apikeyId}
+		exists, err := sess.Get(&key)
+		if err != nil {
+			ss.log.Warn("API key not loaded", "err", err)
+			return err
+		}
+		if !exists {
+			ss.log.Warn("API key not found", "err", err)
+			return models.ErrApiKeyNotFound
+		}
+		key.ServiceAccountId = saccountId
+
+		if _, err := sess.ID(key.Id).Update(&key); err != nil {
+			ss.log.Warn("Could not update api key", "err", err)
+			return err
+		}
+
 		return nil
 	})
 }

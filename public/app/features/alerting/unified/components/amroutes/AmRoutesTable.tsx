@@ -56,6 +56,12 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
       renderCell: (item) => item.data.receiver || '-',
       size: 5,
     },
+    {
+      id: 'muteTimings',
+      label: 'Mute timings',
+      renderCell: (item) => item.data.muteTimeIntervals.join(', ') || '-',
+      size: 5,
+    },
     ...(readOnly
       ? []
       : [

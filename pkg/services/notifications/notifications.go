@@ -22,24 +22,25 @@ var tmplResetPassword = "reset_password"
 var tmplSignUpStarted = "signup_started"
 var tmplWelcomeOnSignUp = "welcome_on_signup"
 
-func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error) {
+func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*NotificationService, error) {
 	ns := &NotificationService{
 		Bus:          bus,
 		Cfg:          cfg,
 		log:          log.New("notifications"),
 		mailQueue:    make(chan *Message, 10),
 		webhookQueue: make(chan *Webhook, 10),
+		mailer:       mailer,
 	}
 
-	ns.Bus.AddHandlerCtx(ns.sendResetPasswordEmail)
-	ns.Bus.AddHandlerCtx(ns.validateResetPasswordCode)
-	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandler)
+	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
+	ns.Bus.AddHandler(ns.validateResetPasswordCode)
+	ns.Bus.AddHandler(ns.sendEmailCommandHandler)
 
-	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandlerSync)
-	ns.Bus.AddHandlerCtx(ns.SendWebhookSync)
+	ns.Bus.AddHandler(ns.sendEmailCommandHandlerSync)
+	ns.Bus.AddHandler(ns.SendWebhookSync)
 
-	ns.Bus.AddEventListenerCtx(ns.signUpStartedHandler)
-	ns.Bus.AddEventListenerCtx(ns.signUpCompletedHandler)
+	ns.Bus.AddEventListener(ns.signUpStartedHandler)
+	ns.Bus.AddEventListener(ns.signUpCompletedHandler)
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
@@ -70,6 +71,7 @@ type NotificationService struct {
 
 	mailQueue    chan *Message
 	webhookQueue chan *Webhook
+	mailer       Mailer
 	log          log.Logger
 }
 
@@ -125,6 +127,7 @@ func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, 
 		To:            cmd.To,
 		SingleEmail:   cmd.SingleEmail,
 		EmbeddedFiles: cmd.EmbeddedFiles,
+		AttachedFiles: cmd.AttachedFiles,
 		Subject:       cmd.Subject,
 		ReplyTo:       cmd.ReplyTo,
 	})
@@ -170,7 +173,7 @@ func (ns *NotificationService) validateResetPasswordCode(ctx context.Context, qu
 	}
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: login}
-	if err := bus.DispatchCtx(ctx, &userQuery); err != nil {
+	if err := bus.Dispatch(ctx, &userQuery); err != nil {
 		return err
 	}
 
@@ -212,7 +215,7 @@ func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *ev
 	}
 
 	emailSentCmd := models.UpdateTempUserWithEmailSentCommand{Code: evt.Code}
-	return bus.DispatchCtx(ctx, &emailSentCmd)
+	return bus.Dispatch(ctx, &emailSentCmd)
 }
 
 func (ns *NotificationService) signUpCompletedHandler(ctx context.Context, evt *events.SignUpCompleted) error {

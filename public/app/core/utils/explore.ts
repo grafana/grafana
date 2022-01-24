@@ -8,28 +8,28 @@ import {
   DataQueryRequest,
   DataSourceApi,
   dateMath,
+  DateTime,
   DefaultTimeZone,
+  ExploreUrlState,
   HistoryItem,
   IntervalValues,
+  isDateTime,
   LogsDedupStrategy,
   LogsSortOrder,
+  rangeUtil,
   RawTimeRange,
   TimeFragment,
   TimeRange,
   TimeZone,
   toUtc,
   urlUtil,
-  ExploreUrlState,
-  rangeUtil,
-  DateTime,
-  isDateTime,
 } from '@grafana/data';
 import store from 'app/core/store';
 import { v4 as uuidv4 } from 'uuid';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
-import { ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
+import { EXPLORE_GRAPH_STYLES, ExploreGraphStyle, ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
@@ -201,10 +201,6 @@ export const safeStringifyValue = (value: any, space?: number) => {
   return '';
 };
 
-export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
-
-export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
-
 const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
 // we use this function to take any kind of data we loaded
 // from an external source (URL, localStorage, whatever),
@@ -249,10 +245,13 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode'));
+  const queries = parsedSegments.filter(
+    (segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode', '__panelsState')
+  );
 
-  const originPanelId = parsedSegments.filter((segment) => isSegment(segment, 'originPanelId'))[0];
-  return { datasource, queries, range, originPanelId };
+  const originPanelId = parsedSegments.find((segment) => isSegment(segment, 'originPanelId'));
+  const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'))?.__panelsState;
+  return { datasource, queries, range, originPanelId, panelsState };
 }
 
 export function generateKey(index = 0): string {

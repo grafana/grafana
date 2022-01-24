@@ -16,10 +16,10 @@ import { shallow } from 'enzyme';
 import React from 'react';
 import IoChevronRight from 'react-icons/lib/io/chevron-right';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
+import { createTheme } from '@grafana/data';
 
 import SpanTreeOffset, { getStyles } from './SpanTreeOffset';
 import spanAncestorIdsSpy from '../utils/span-ancestor-ids';
-import { defaultTheme } from '../Theme';
 
 jest.mock('../utils/span-ancestor-ids');
 
@@ -45,7 +45,6 @@ describe('SpanTreeOffset', () => {
     };
     wrapper = shallow(<SpanTreeOffset {...props} />)
       .dive()
-      .dive()
       .dive();
   });
 
@@ -53,7 +52,6 @@ describe('SpanTreeOffset', () => {
     it('renders only one .SpanTreeOffset--indentGuide for entire trace if span has no ancestors', () => {
       spanAncestorIdsSpy.mockReturnValue([]);
       wrapper = shallow(<SpanTreeOffset {...props} />)
-        .dive()
         .dive()
         .dive();
       const indentGuides = wrapper.find('[data-test-id="SpanTreeOffset--indentGuide"]');
@@ -73,9 +71,8 @@ describe('SpanTreeOffset', () => {
       props.hoverIndentGuideIds = new Set([parentSpanID]);
       wrapper = shallow(<SpanTreeOffset {...props} />)
         .dive()
-        .dive()
         .dive();
-      const styles = getStyles(defaultTheme);
+      const styles = getStyles(createTheme());
       const activeIndentGuide = wrapper.find(`.${styles.indentGuideActive}`);
       expect(activeIndentGuide.length).toBe(1);
       expect(activeIndentGuide.prop('data-ancestor-id')).toBe(parentSpanID);

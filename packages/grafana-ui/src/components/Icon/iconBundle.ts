@@ -164,6 +164,7 @@ import u1151 from '!!raw-loader!../../../../../public/img/icons/mono/heart.svg';
 import u1152 from '!!raw-loader!../../../../../public/img/icons/mono/heart-break.svg';
 import u1153 from '!!raw-loader!../../../../../public/img/icons/mono/panel-add.svg';
 import u1154 from '!!raw-loader!../../../../../public/img/icons/mono/library-panel.svg';
+import u1155 from '!!raw-loader!../../../../../public/img/icons/unicons/record-audio.svg';
 
 export function initIconCache() {
   cacheInitialized = true;
@@ -328,4 +329,5 @@ export function initIconCache() {
   cacheItem(u1152, 'mono/heart-break.svg');
   cacheItem(u1153, 'mono/panel-add.svg');
   cacheItem(u1154, 'mono/library-panel.svg');
+  cacheItem(u1155, 'unicons/record-audio.svg');
 }

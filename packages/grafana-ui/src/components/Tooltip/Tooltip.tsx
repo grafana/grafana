@@ -2,6 +2,7 @@ import React, { createRef, FC } from 'react';
 import { VirtualElement } from '@popperjs/core';
 import { Popover } from './Popover';
 import { PopoverController, UsingPopperProps } from './PopoverController';
+import { closePopover } from '../../utils/closePopover';
 
 export interface TooltipProps extends UsingPopperProps {
   theme?: 'info' | 'error' | 'info-alt';
@@ -46,6 +47,9 @@ export const Tooltip: FC<TooltipProps> = React.memo(({ children, theme, ...contr
               ref: tooltipTriggerRef,
               onMouseEnter: showPopper,
               onMouseLeave: hidePopper,
+              onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => closePopover(event, hidePopper),
+              onFocus: showPopper,
+              onBlur: hidePopper,
             })}
           </>
         );

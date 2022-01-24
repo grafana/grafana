@@ -23,11 +23,11 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 		SecretsService: secretsService,
 	}
 
-	s.Bus.AddHandlerCtx(s.CreateDashboardSnapshot)
-	s.Bus.AddHandlerCtx(s.GetDashboardSnapshot)
-	s.Bus.AddHandlerCtx(s.DeleteDashboardSnapshot)
-	s.Bus.AddHandlerCtx(s.SearchDashboardSnapshots)
-	s.Bus.AddHandlerCtx(s.DeleteExpiredSnapshots)
+	s.Bus.AddHandler(s.CreateDashboardSnapshot)
+	s.Bus.AddHandler(s.GetDashboardSnapshot)
+	s.Bus.AddHandler(s.DeleteDashboardSnapshot)
+	s.Bus.AddHandler(s.SearchDashboardSnapshots)
+	s.Bus.AddHandler(s.DeleteExpiredSnapshots)
 
 	return s
 }
@@ -45,7 +45,7 @@ func (s *Service) CreateDashboardSnapshot(ctx context.Context, cmd *models.Creat
 
 	cmd.DashboardEncrypted = encryptedDashboard
 
-	return s.SQLStore.CreateDashboardSnapshot(cmd)
+	return s.SQLStore.CreateDashboardSnapshot(ctx, cmd)
 }
 
 func (s *Service) GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
@@ -71,14 +71,14 @@ func (s *Service) GetDashboardSnapshot(ctx context.Context, query *models.GetDas
 	return err
 }
 
-func (s *Service) DeleteDashboardSnapshot(_ context.Context, cmd *models.DeleteDashboardSnapshotCommand) error {
-	return s.SQLStore.DeleteDashboardSnapshot(cmd)
+func (s *Service) DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error {
+	return s.SQLStore.DeleteDashboardSnapshot(ctx, cmd)
 }
 
 func (s *Service) SearchDashboardSnapshots(_ context.Context, query *models.GetDashboardSnapshotsQuery) error {
 	return s.SQLStore.SearchDashboardSnapshots(query)
 }
 
-func (s *Service) DeleteExpiredSnapshots(_ context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {
-	return s.SQLStore.DeleteExpiredSnapshots(cmd)
+func (s *Service) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {
+	return s.SQLStore.DeleteExpiredSnapshots(ctx, cmd)
 }

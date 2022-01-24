@@ -258,7 +258,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	defer session.Close()
 	db := session.DB()
 
-	rows, err := db.Query(interpolatedQuery)
+	rows, err := db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("db query error", e.transformQueryError(err), interpolatedQuery)
 		return

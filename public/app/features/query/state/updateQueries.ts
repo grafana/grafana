@@ -21,7 +21,7 @@ export function updateQueries(
 
   // Set data source on all queries except expression queries
   return queries.map((query) => {
-    if (!isExpressionReference(query.datasource)) {
+    if (!isExpressionReference(query.datasource) && !newSettings.meta.mixed) {
       query.datasource = datasource;
     }
     return query;

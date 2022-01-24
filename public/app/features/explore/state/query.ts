@@ -7,6 +7,8 @@ import {
   DataQueryResponse,
   DataSourceApi,
   hasLogsVolumeSupport,
+  hasQueryExportSupport,
+  hasQueryImportSupport,
   HistoryItem,
   LoadingState,
   PanelData,
@@ -265,6 +267,9 @@ export const importQueries = (
     if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
       // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
       importedQueries = queries.map(({ datasource, ...query }) => query);
+    } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
+      const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
+      importedQueries = await targetDataSource.importFromAbstractQueries(abstractQueries);
     } else if (targetDataSource.importQueries) {
       // Datasource-specific importers
       importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);
@@ -444,8 +449,8 @@ export const runQueries = (
             )
           )
         )
-        .subscribe(
-          (data) => {
+        .subscribe({
+          next(data) {
             dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
             // Keep scanning for results if this was the last scanning transaction
@@ -460,12 +465,20 @@ export const runQueries = (
               }
             }
           },
-          (error) => {
+          error(error) {
             dispatch(notifyApp(createErrorNotification('Query processing error', error)));
             dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
             console.error(error);
-          }
-        );
+          },
+          complete() {
+            // In case we don't get any response at all but the observable completed, make sure we stop loading state.
+            // This is for cases when some queries are noop like running first query after load but we don't have any
+            // actual query input.
+            if (getState().explore[exploreId]!.queryResponse.state === LoadingState.Loading) {
+              dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
+            }
+          },
+        });
 
       if (live) {
         dispatch(

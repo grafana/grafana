@@ -7,24 +7,27 @@ import kbn from 'app/core/utils/kbn';
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
 import {
+  AnnotationQuery,
   DataLink,
   DataLinkBuiltInVars,
+  DataQuery,
   DataSourceRef,
+  DataTransformerConfig,
+  FieldConfigSource,
+  FieldMatcherID,
+  FieldType,
+  getActiveThreshold,
+  getDataSourceRef,
+  isDataSourceRef,
   MappingType,
-  SpecialValueMatch,
   PanelPlugin,
+  SpecialValueMatch,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   ThresholdsConfig,
   urlUtil,
   ValueMap,
   ValueMapping,
-  getActiveThreshold,
-  DataTransformerConfig,
-  AnnotationQuery,
-  DataQuery,
-  getDataSourceRef,
-  isDataSourceRef,
 } from '@grafana/data';
 // Constants
 import {
@@ -41,19 +44,20 @@ import { VariableHide } from '../../variables/types';
 import { config } from 'app/core/config';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
-import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
 import {
-  migrateMultipleStatsMetricsQuery,
-  migrateMultipleStatsAnnotationQuery,
   migrateCloudWatchQuery,
+  migrateMultipleStatsAnnotationQuery,
+  migrateMultipleStatsMetricsQuery,
 } from 'app/plugins/datasource/cloudwatch/migrations';
-import { CloudWatchMetricsQuery, CloudWatchAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
+import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/types';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
 
-standardEditorsRegistry.setInit(getStandardOptionEditors);
-standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
 export class DashboardMigrator {
@@ -67,7 +71,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 34;
+    this.dashboard.schemaVersion = 35;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -697,13 +701,6 @@ export class DashboardMigrator {
 
     // Replace datasource name with reference, uid and type
     if (oldVersion < 33) {
-      for (const variable of this.dashboard.templating.list) {
-        if (variable.type !== 'query') {
-          continue;
-        }
-        variable.datasource = migrateDatasourceNameToRef(variable.datasource);
-      }
-
       panelUpgrades.push((panel) => {
         panel.datasource = migrateDatasourceNameToRef(panel.datasource);
 
@@ -729,6 +726,10 @@ export class DashboardMigrator {
       });
 
       this.migrateCloudWatchAnnotationQuery();
+    }
+
+    if (oldVersion < 35) {
+      panelUpgrades.push(ensureXAxisVisibility);
     }
 
     if (panelUpgrades.length === 0) {
@@ -1113,7 +1114,6 @@ function isCloudWatchQuery(target: DataQuery): target is CloudWatchMetricsQuery 
     target.hasOwnProperty('dimensions') &&
     target.hasOwnProperty('namespace') &&
     target.hasOwnProperty('region') &&
-    target.hasOwnProperty('period') &&
     target.hasOwnProperty('metricName')
   );
 }
@@ -1208,6 +1208,38 @@ function migrateTooltipOptions(panel: PanelModel) {
         tooltip: panel.options.tooltipOptions,
       };
       delete panel.options.tooltipOptions;
+    }
+  }
+
+  return panel;
+}
+
+// This migration is performed when there is a time series panel with all axes configured to be hidden
+// To avoid breaking dashboards we add override that persists x-axis visibility
+function ensureXAxisVisibility(panel: PanelModel) {
+  if (panel.type === 'timeseries') {
+    if (
+      (panel.fieldConfig as FieldConfigSource<GraphFieldConfig>)?.defaults.custom?.axisPlacement ===
+      AxisPlacement.Hidden
+    ) {
+      panel.fieldConfig = {
+        ...panel.fieldConfig,
+        overrides: [
+          ...panel.fieldConfig.overrides,
+          {
+            matcher: {
+              id: FieldMatcherID.byType,
+              options: FieldType.time,
+            },
+            properties: [
+              {
+                id: 'custom.axisPlacement',
+                value: AxisPlacement.Auto,
+              },
+            ],
+          },
+        ],
+      };
     }
   }
 

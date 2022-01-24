@@ -18,6 +18,7 @@ export const QueryEditorModeSwitcher = ({ isRaw, onChange }: Props): JSX.Element
     return (
       <>
         <Button
+          aria-label="Switch to visual editor"
           icon="pen"
           variant="secondary"
           type="button"
@@ -44,6 +45,7 @@ export const QueryEditorModeSwitcher = ({ isRaw, onChange }: Props): JSX.Element
   } else {
     return (
       <Button
+        aria-label="Switch to text editor"
         icon="pen"
         variant="secondary"
         type="button"

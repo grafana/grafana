@@ -82,7 +82,7 @@ export function convertFieldTypes(options: ConvertFieldTypeTransformerOptions, f
 }
 
 /**
- * Convert a single field type to specifed field type.
+ * Convert a single field type to specified field type.
  * @param field - field to convert
  * @param opts - field conversion options
  * @returns converted field
@@ -99,6 +99,8 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
       return fieldToStringField(field);
     case FieldType.boolean:
       return fieldToBooleanField(field);
+    case FieldType.other:
+      return fieldToComplexField(field);
     default:
       return field;
   }
@@ -175,6 +177,24 @@ function fieldToStringField(field: Field): Field {
     ...field,
     type: FieldType.string,
     values: new ArrayVector(stringValues),
+  };
+}
+
+function fieldToComplexField(field: Field): Field {
+  const complexValues = field.values.toArray().slice();
+
+  for (let s = 0; s < complexValues.length; s++) {
+    try {
+      complexValues[s] = JSON.parse(complexValues[s]);
+    } catch {
+      complexValues[s] = null;
+    }
+  }
+
+  return {
+    ...field,
+    type: FieldType.other,
+    values: new ArrayVector(complexValues),
   };
 }
 

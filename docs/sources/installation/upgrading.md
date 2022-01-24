@@ -365,7 +365,7 @@ ORDER BY time
 There are two possible workarounds to resolve this problem:
 
 1. In Grafana v8.0.3, use an alias of the string column selected as `metric`. for example, `hostname as metric`.
-2. Use the [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
+2. Use the [Standard field options/Display name]({{< relref "../panels/reference-standard-field-definitions.md#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
 
 For more information, refer to the our relational databases documentation of [Postgres]({{< relref "../datasources/postgres.md#time-series-queries" >}}), [MySQL]({{< relref "../datasources/mysql.md#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../datasources/mssql.md#time-series-queries" >}}).
 

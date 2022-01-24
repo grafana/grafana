@@ -49,7 +49,12 @@ import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { Subscription } from 'rxjs';
 import { appEvents } from '../../../core/core';
-import { VariablesChanged, VariablesChangedEvent, VariablesChangedInUrl } from '../../variables/types';
+import {
+  VariablesChanged,
+  VariablesChangedEvent,
+  VariablesChangedInUrl,
+  VariablesTimeRangeProcessDone,
+} from '../../variables/types';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -178,6 +183,9 @@ export class DashboardModel {
     this.appEventsSubscription = new Subscription();
     this.lastRefresh = Date.now();
     this.appEventsSubscription.add(appEvents.subscribe(VariablesChanged, this.variablesChangedHandler.bind(this)));
+    this.appEventsSubscription.add(
+      appEvents.subscribe(VariablesTimeRangeProcessDone, this.variablesTimeRangeProcessDoneHandler.bind(this))
+    );
     this.appEventsSubscription.add(
       appEvents.subscribe(VariablesChangedInUrl, this.variablesChangedInUrlHandler.bind(this))
     );
@@ -556,7 +564,6 @@ export class DashboardModel {
     pull(this.panels, ...panelsToRemove);
     panelsToRemove.map((p) => p.destroy());
     this.sortPanelsByGridPos();
-    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   processRepeats() {
@@ -942,8 +949,10 @@ export class DashboardModel {
 
       if (row.panels.length > 0) {
         // Use first panel to figure out if it was moved or pushed
-        const firstPanel = row.panels[0];
-        const yDiff = firstPanel.gridPos.y - (row.gridPos.y + row.gridPos.h);
+        // If the panel doesn't have gridPos.y, use the row gridPos.y instead.
+        // This can happen for some generated dashboards.
+        const firstPanelYPos = row.panels[0].gridPos.y ?? row.gridPos.y;
+        const yDiff = firstPanelYPos - (row.gridPos.y + row.gridPos.h);
 
         // start inserting after row
         let insertPos = rowIndex + 1;
@@ -952,8 +961,9 @@ export class DashboardModel {
         let yMax = row.gridPos.y;
 
         for (const panel of row.panels) {
+          // set the y gridPos if it wasn't already set
+          panel.gridPos.y ??= row.gridPos.y;
           // make sure y is adjusted (in case row moved while collapsed)
-          // console.log('yDiff', yDiff);
           panel.gridPos.y -= yDiff;
           // insert after row
           this.panels.splice(insertPos, 0, new PanelModel(panel));
@@ -1207,8 +1217,15 @@ export class DashboardModel {
     });
   }
 
-  private variablesChangedHandler(event: VariablesChanged) {
-    this.processRepeats();
+  private variablesTimeRangeProcessDoneHandler(event: VariablesTimeRangeProcessDone) {
+    const processRepeats = event.payload.variableIds.length > 0;
+    this.variablesChangedHandler(new VariablesChanged({ panelIds: [], refreshAll: true }), processRepeats);
+  }
+
+  private variablesChangedHandler(event: VariablesChanged, processRepeats = true) {
+    if (processRepeats) {
+      this.processRepeats();
+    }
 
     if (event.payload.refreshAll || getTimeSrv().isRefreshOutsideThreshold(this.lastRefresh)) {
       this.startRefresh({ refreshAll: true, panelIds: [] });
