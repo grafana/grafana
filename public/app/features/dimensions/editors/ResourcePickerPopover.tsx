@@ -9,6 +9,7 @@ import { getPublicOrAbsoluteUrl } from '../resource';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { ResourceFolderName } from '..';
+import { FocusScope } from '@react-aria/focus';
 
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
@@ -24,11 +25,7 @@ export interface ResourceItem {
   imgUrl: string;
 }
 
-const sourceOptions = [
-  { label: `Folder`, value: 'folder' },
-  { label: 'URL', value: 'url' },
-  // { label: 'Upload', value: 'upload' }, TODO
-];
+type PickerType = 'folder' | 'url';
 
 const getFolders = (mediaType: 'icon' | 'image') => {
   if (mediaType === 'icon') {
@@ -42,7 +39,7 @@ const getFolderIfExists = (folders: Array<SelectableValue<string>>, path: string
   return folders.find((folder) => path.startsWith(folder.value!)) ?? folders[0];
 };
 
-export const ResourcePicker = (props: Props) => {
+export const ResourcePickerPopover = (props: Props) => {
   const { value, onChange, mediaType, folderName } = props;
   const folders = getFolders(mediaType).map((v) => ({
     label: v,
@@ -54,13 +51,13 @@ export const ResourcePicker = (props: Props) => {
   );
   const [directoryIndex, setDirectoryIndex] = useState<ResourceItem[]>([]);
   const [filteredIndex, setFilteredIndex] = useState<ResourceItem[]>([]);
-  // select between existing icon folder, url, or upload
-  const [source, setSource] = useState<SelectableValue<string>>(sourceOptions[0]);
   // pass on new value to confirm button and to show in preview
   const [newValue, setNewValue] = useState<string>(value ?? '');
   const [searchQuery, setSearchQuery] = useState<string>();
   const theme = useTheme2();
   const styles = getStyles(theme);
+
+  const [activePicker, setActivePicker] = useState<PickerType>('folder');
 
   useEffect(() => {
     // we don't want to load everything before picking a folder
@@ -112,64 +109,84 @@ export const ResourcePicker = (props: Props) => {
     shortName = shortName.substring(0, 20) + '...';
   }
 
-  return (
-    <div>
-      <div className={styles.upper}>
-        <div className={styles.child}>
-          <Field label="Source">
-            <Select menuShouldPortal={true} options={sourceOptions} onChange={setSource} value={source} />
-          </Field>
-          {source?.value === 'folder' && (
-            <>
-              <Field label="Folder">
-                <Select menuShouldPortal={true} options={folders} onChange={setCurrentFolder} value={currentFolder} />
-              </Field>
-              <Field>
-                <FilterInput
-                  value={searchQuery ?? ''}
-                  placeholder="Search"
-                  onChange={(v) => {
-                    onChangeSearch(v);
-                    setSearchQuery(v);
-                  }}
-                />
-              </Field>
-            </>
-          )}
-          {source?.value === 'url' && (
-            <Field label="URL">
-              <Input onChange={(e) => setNewValue(e.currentTarget.value)} value={newValue} />
-            </Field>
-          )}
-        </div>
-        <div className={styles.iconContainer}>
-          <Field label="Preview">
-            <div className={styles.iconPreview}>
-              {mediaType === 'icon' && <SVG src={imgSrc} className={styles.img} />}
-              {mediaType === 'image' && newValue && <img src={imgSrc} className={styles.img} />}
-            </div>
-          </Field>
-          <Label>{shortName}</Label>
-        </div>
-      </div>
-      {source?.value === 'folder' && filteredIndex && (
+  const getTabClassName = (tabName: PickerType) => {
+    return `ResourcePickerPopover__tab ${activePicker === tabName && 'ResourcePickerPopover__tab--active'}`;
+  };
+
+  const renderFolderPicker = () => (
+    <>
+      <Field>
+        <Select menuShouldPortal={true} options={folders} onChange={setCurrentFolder} value={currentFolder} />
+      </Field>
+      <Field>
+        <FilterInput
+          value={searchQuery ?? ''}
+          placeholder="Search"
+          onChange={(v) => {
+            onChangeSearch(v);
+            setSearchQuery(v);
+          }}
+        />
+      </Field>
+      {filteredIndex && (
         <div className={styles.cardsWrapper}>
           <ResourceCards cards={filteredIndex} onChange={(v) => setNewValue(v)} value={newValue} />
         </div>
       )}
-      <Modal.ButtonRow>
-        <Button variant={newValue && newValue !== value ? 'primary' : 'secondary'} onClick={() => onChange(newValue)}>
-          Select
-        </Button>
-      </Modal.ButtonRow>
-      {/* TODO: add file upload
-          {tabs[1].active && (
-          <FileUpload
-            onFileUpload={({ currentTarget }) => console.log('file', currentTarget?.files && currentTarget.files[0])}
-            className={styles.tabContent}
-          />
-        )} */}
-    </div>
+    </>
+  );
+
+  const renderURLPicker = () => (
+    <>
+      <Field>
+        <Input onChange={(e) => setNewValue(e.currentTarget.value)} value={newValue} />
+      </Field>
+      <div className={styles.iconContainer}>
+        <Field label="Preview">
+          <div className={styles.iconPreview}>
+            {mediaType === 'icon' && <SVG src={imgSrc} className={styles.img} />}
+            {mediaType === 'image' && newValue && <img src={imgSrc} className={styles.img} />}
+          </div>
+        </Field>
+        <Label>{shortName}</Label>
+      </div>
+    </>
+  );
+
+  const renderPicker = () => {
+    switch (activePicker) {
+      case 'folder':
+        return renderFolderPicker();
+      case 'url':
+        return renderURLPicker();
+      default:
+        return renderFolderPicker();
+    }
+  };
+
+  return (
+    <FocusScope>
+      <div className={styles.resourcePickerPopover}>
+        <div className={styles.resourcePickerPopoverTabs}>
+          <button className={getTabClassName('folder')} onClick={() => setActivePicker('folder')}>
+            Folder
+          </button>
+          <button className={getTabClassName('url')} onClick={() => setActivePicker('url')}>
+            URL
+          </button>
+        </div>
+        <div className={styles.resourcePickerPopoverContent}>
+          {renderPicker()}
+          <Button
+            className={styles.selectButton}
+            variant={newValue && newValue !== value ? 'primary' : 'secondary'}
+            onClick={() => onChange(newValue)}
+          >
+            Select
+          </Button>
+        </div>
+      </div>
+    </FocusScope>
   );
 };
 
@@ -181,15 +198,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       margin-top: 5px;
       max-width: 680px;
     `,
-    tabContent: css`
-      margin-top: 20px;
-      & > :nth-child(2) {
-        margin-top: 10px;
-      },
-    `,
     iconPreview: css`
-      width: 95px;
-      height: 79px;
+      width: 238px;
+      height: 198px;
       border: 1px solid ${theme.colors.border.medium};
       display: flex;
       align-items: center;
@@ -198,23 +209,65 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     iconContainer: css`
       display: flex;
       flex-direction: column;
-      width: 40%;
+      width: 80%;
       align-items: center;
+      align-self: center;
     `,
     img: css`
-      width: 49px;
-      height: 49px;
+      width: 147px;
+      height: 147px;
       fill: ${theme.colors.text.primary};
     `,
-    child: css`
-      width: 60%;
-    `,
-    upper: css`
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
+    resourcePickerPopover: css`
+      border-radius: ${theme.shape.borderRadius()};
+      box-shadow: ${theme.shadows.z3};
       background: ${theme.colors.background.primary};
+      border: 1px solid ${theme.colors.border.medium};
+
+      .ResourcePickerPopover__tab {
+        width: 50%;
+        text-align: center;
+        padding: ${theme.spacing(1, 0)};
+        background: ${theme.colors.background.secondary};
+        color: ${theme.colors.text.secondary};
+        font-size: ${theme.typography.bodySmall.fontSize};
+        cursor: pointer;
+        border: none;
+
+        &:focus:not(:focus-visible) {
+          outline: none;
+          box-shadow: none;
+        }
+
+        :focus-visible {
+          position: relative;
+        }
+      }
+
+      .ResourcePickerPopover__tab--active {
+        color: ${theme.colors.text.primary};
+        font-weight: ${theme.typography.fontWeightMedium};
+        background: ${theme.colors.background.primary};
+      }
+    `,
+    resourcePickerPopoverContent: css`
+      width: 300px;
+      font-size: ${theme.typography.bodySmall.fontSize};
+      min-height: 184px;
+      padding: ${theme.spacing(1)};
+      display: flex;
+      flex-direction: column;
+    `,
+    resourcePickerPopoverTabs: css`
+      display: flex;
+      width: 100%;
+      border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
+    `,
+    selectButton: css`
+      align-self: center;
+      align-text: center;
+      margin-top: 20px;
+      margin-bottom: 10px;
     `,
   };
 });
