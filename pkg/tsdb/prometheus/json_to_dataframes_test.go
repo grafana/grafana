@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/require"
@@ -109,7 +110,10 @@ func testScenario(t *testing.T, name string) {
 	api, err := makeMockedApi(responseBytes)
 	require.NoError(t, err)
 
-	result, err := runQueries(context.Background(), api, []*PrometheusQuery{&query})
+	tracer, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+	s := Service{tracer: tracer}
+	result, err := s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
 	require.NoError(t, err)
 	require.Len(t, result.Responses, 1)
 

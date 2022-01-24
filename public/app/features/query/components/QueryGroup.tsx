@@ -5,12 +5,10 @@ import {
   Button,
   CustomScrollbar,
   HorizontalGroup,
-  Icon,
   InlineFormLabel,
   Modal,
   ScrollbarPosition,
   stylesFactory,
-  Tooltip,
 } from '@grafana/ui';
 import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
@@ -334,17 +332,14 @@ export class QueryGroup extends PureComponent<Props, State> {
           </Button>
         )}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
-          <Tooltip content="Beta feature: queries could stop working in next version" placement="right">
-            <Button
-              icon="plus"
-              onClick={this.onAddExpressionClick}
-              variant="secondary"
-              className={styles.expressionButton}
-            >
-              <span>Expression&nbsp;</span>
-              <Icon name="exclamation-triangle" className="muted" size="sm" />
-            </Button>
-          </Tooltip>
+          <Button
+            icon="plus"
+            onClick={this.onAddExpressionClick}
+            variant="secondary"
+            className={styles.expressionButton}
+          >
+            <span>Expression&nbsp;</span>
+          </Button>
         )}
         {this.renderExtraActions()}
       </HorizontalGroup>

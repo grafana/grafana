@@ -27,8 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -56,48 +54,34 @@ const defaultRegion = "default"
 const logIdentifierInternal = "__log__grafana_internal__"
 const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 
-const pluginID = "cloudwatch"
-
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func ProvideService(cfg *setting.Cfg, logsService *LogsService, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*CloudWatchService, error) {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *CloudWatchService {
 	plog.Debug("initing")
 
-	executor := newExecutor(logsService, datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache())
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: executor,
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		plog.Error("Failed to register plugin", "error", err)
-		return nil, err
-	}
+	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache())
 
 	return &CloudWatchService{
-		LogsService: logsService,
-		Cfg:         cfg,
-		Executor:    executor,
-	}, nil
+		Cfg:      cfg,
+		Executor: executor,
+	}
 }
 
 type CloudWatchService struct {
-	LogsService *LogsService
-	Cfg         *setting.Cfg
-	Executor    *cloudWatchExecutor
+	Cfg      *setting.Cfg
+	Executor *cloudWatchExecutor
 }
 
 type SessionCache interface {
 	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
-func newExecutor(logsService *LogsService, im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
+func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
 	return &cloudWatchExecutor{
-		logsService: logsService,
-		im:          im,
-		cfg:         cfg,
-		sessions:    sessions,
+		im:       im,
+		cfg:      cfg,
+		sessions: sessions,
 	}
 }
 
@@ -166,10 +150,9 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	logsService *LogsService
-	im          instancemgmt.InstanceManager
-	cfg         *setting.Cfg
-	sessions    SessionCache
+	im       instancemgmt.InstanceManager
+	cfg      *setting.Cfg
+	sessions SessionCache
 }
 
 func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginContext) (*session.Session, error) {
@@ -304,8 +287,6 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 		result, err = e.executeAnnotationQuery(ctx, model, q, req.PluginContext)
 	case "logAction":
 		result, err = e.executeLogActions(ctx, req)
-	case "liveLogAction":
-		result, err = e.executeLiveLogQuery(ctx, req)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
