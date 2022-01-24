@@ -223,8 +223,6 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 		countSess.Where(`name `+dialect.LikeStr()+` ?`, queryWithWildcards)
 	}
 
-	countSess.Where("org_id=?", query.OrgId)
-
 	if query.Name != "" {
 		countSess.Where("name=?", query.Name)
 	}
