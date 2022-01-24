@@ -128,6 +128,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	ss.addDashboardVersionQueryAndCommandHandlers()
 	ss.addAPIKeysQueryAndCommandHandlers()
 	ss.addPlaylistQueryAndCommandHandlers()
+	ss.addTeamQueryAndCommandHandlers()
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
