@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type getOrgUsersTestCase struct {
@@ -62,7 +61,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 	}
 
 	store := InitTestDB(t)
-	store.Cfg.IsFeatureToggleEnabled = featuremgmt.WithToggles("accesscontrol").IsEnabled
+	store.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 	seedOrgUsers(t, store, 10)
 
 	for _, tt := range tests {
@@ -128,7 +127,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 	}
 
 	store := InitTestDB(t)
-	store.Cfg.IsFeatureToggleEnabled = featuremgmt.WithToggles("accesscontrol").IsEnabled
+	store.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 	seedOrgUsers(t, store, 10)
 
 	for _, tt := range tests {

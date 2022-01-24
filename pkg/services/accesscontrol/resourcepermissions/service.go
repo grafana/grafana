@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*Service, error) {
+func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore, sqlStore *sqlstore.SQLStore) (*Service, error) {
 	var permissions []string
 	validActions := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
@@ -39,6 +39,7 @@ func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessC
 		permissions:  permissions,
 		actions:      actions,
 		validActions: validActions,
+		sqlStore:     sqlStore,
 	}
 
 	s.api = newApi(ac, router, s)
@@ -62,6 +63,7 @@ type Service struct {
 	permissions  []string
 	actions      []string
 	validActions map[string]struct{}
+	sqlStore     *sqlstore.SQLStore
 }
 
 func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
@@ -216,7 +218,7 @@ func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
 }
 
 func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
-	if err := sqlstore.GetTeamById(ctx, &models.GetTeamByIdQuery{OrgId: orgID, Id: teamID}); err != nil {
+	if err := s.sqlStore.GetTeamById(ctx, &models.GetTeamByIdQuery{OrgId: orgID, Id: teamID}); err != nil {
 		return err
 	}
 	return nil

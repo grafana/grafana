@@ -5,7 +5,6 @@ import (
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +22,7 @@ func TestHTTPClientProvider(t *testing.T) {
 		})
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
-		_ = New(&setting.Cfg{SigV4AuthEnabled: false}, tracer, featuremgmt.WithToggles())
+		_ = New(&setting.Cfg{SigV4AuthEnabled: false}, tracer)
 		require.Len(t, providerOpts, 1)
 		o := providerOpts[0]
 		require.Len(t, o.Middlewares, 6)
@@ -47,7 +46,7 @@ func TestHTTPClientProvider(t *testing.T) {
 		})
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
-		_ = New(&setting.Cfg{SigV4AuthEnabled: true}, tracer, featuremgmt.WithToggles())
+		_ = New(&setting.Cfg{SigV4AuthEnabled: true}, tracer)
 		require.Len(t, providerOpts, 1)
 		o := providerOpts[0]
 		require.Len(t, o.Middlewares, 7)
