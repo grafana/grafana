@@ -1,4 +1,4 @@
-import { chunk, flatten, isString, isArray } from 'lodash';
+import { chunk, flatten, isString, isArray, map as _map } from 'lodash';
 import { from, lastValueFrom, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 import {
@@ -179,7 +179,18 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           const dataQueryResponse = toDataQueryResponse({
             data: data,
           });
-          return dataQueryResponse?.data[0]?.meta?.custom?.labels ?? {};
+          return _map(dataQueryResponse?.data, 'meta.custom.labels')
+            .filter((p) => !!p)
+            .reduce((acc, labels) => {
+              for (let key in labels) {
+                if (acc[key]) {
+                  acc[key].push(...labels[key]);
+                } else {
+                  acc[key] = labels[key];
+                }
+              }
+              return acc;
+            }, {});
         })
       )
     );

@@ -82,10 +82,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
-	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
 
-	customFrameMeta := map[string]interface{}{}
 	for _, series := range response.TimeSeriesData {
 		seriesLabels := make(map[string]string)
 		frame := data.NewFrameOfFieldTypes("", len(series.PointData), data.FieldTypeTime, data.FieldTypeFloat64)
@@ -93,6 +91,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 		frame.Meta = &data.FrameMeta{
 			ExecutedQueryString: executedQueryString,
 		}
+		labels := make(map[string]map[string]bool)
 
 		for n, d := range response.TimeSeriesDescriptor.LabelDescriptors {
 			key := toSnakeCase(d.Key)
@@ -239,26 +238,24 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 				frames = append(frames, buckets[i])
 			}
 		}
-	}
-	if len(response.TimeSeriesData) > 0 {
-		dl := timeSeriesQuery.buildDeepLink()
-		frames = addConfigData(frames, dl, response.Unit)
-	}
 
-	labelsByKey := make(map[string][]string)
-	for key, values := range labels {
-		for value := range values {
-			labelsByKey[key] = append(labelsByKey[key], value)
+		labelsByKey := make(map[string][]string)
+		for key, values := range labels {
+			for value := range values {
+				labelsByKey[key] = append(labelsByKey[key], value)
+			}
 		}
-	}
-	customFrameMeta["labels"] = labelsByKey
-
-	for _, frame := range frames {
+		customFrameMeta := map[string]interface{}{}
+		customFrameMeta["labels"] = labelsByKey
 		if frame.Meta != nil {
 			frame.Meta.Custom = customFrameMeta
 		} else {
 			frame.SetMeta(&data.FrameMeta{Custom: customFrameMeta})
 		}
+	}
+	if len(response.TimeSeriesData) > 0 {
+		dl := timeSeriesQuery.buildDeepLink()
+		frames = addConfigData(frames, dl, response.Unit)
 	}
 
 	queryRes.Frames = frames
