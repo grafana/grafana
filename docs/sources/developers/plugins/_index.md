@@ -17,6 +17,8 @@ Open the terminal, and run the following command in your [plugin directory]({{< 
 npx @grafana/toolkit plugin:create my-grafana-plugin
 ```
 
+> **Note:** If running NPM 7+ the `npx` commands mentioned in this article may hang. The workaround is to use `npx --legacy-peer-deps <command to run>`.
+
 If you want a more guided introduction to plugin development, check out our tutorials:
 
 - [Build a panel plugin]({{< relref "/tutorials/build-a-panel-plugin.md" >}})

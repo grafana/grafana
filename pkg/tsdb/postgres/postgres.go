@@ -14,8 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -23,22 +21,12 @@ import (
 
 var logger = log.New("tsdb.postgres")
 
-const pluginID = "postgres"
-
-func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) (*Service, error) {
+func ProvideService(cfg *setting.Cfg) *Service {
 	s := &Service{
 		tlsManager: newTLSManager(logger, cfg.DataPath),
 	}
 	s.im = datasource.NewInstanceManager(s.newInstanceSettings(cfg))
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		logger.Error("Failed to register plugin", "error", err)
-	}
-	return s, nil
+	return s
 }
 
 type Service struct {

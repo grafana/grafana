@@ -20,9 +20,13 @@ type AccessControl interface {
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 
-	// DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their
+	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(...RoleRegistration) error
+
+	// RegisterAttributeScopeResolver allows the caller to register a scope resolver for a
+	// specific scope prefix (ex: datasources:name:)
+	RegisterAttributeScopeResolver(scopePrefix string, resolver AttributeScopeResolveFunc)
 }
 
 type PermissionsProvider interface {

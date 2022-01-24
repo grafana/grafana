@@ -634,7 +634,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			url:          "/api/admin/ldap/sync/test",
+			url:          "/api/admin/ldap/sync/1",
 			method:       http.MethodPost,
 			desc:         "PostSyncUserWithLDAP should return 200 for user without required permissions",
 			expectedCode: http.StatusOK,
@@ -643,7 +643,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			url:          "/api/admin/ldap/sync/test",
+			url:          "/api/admin/ldap/sync/1",
 			method:       http.MethodPost,
 			desc:         "PostSyncUserWithLDAP should return 200 for user without required permissions",
 			expectedCode: http.StatusForbidden,
