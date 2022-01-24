@@ -130,12 +130,17 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, 
 	})
 	return result, err
 }
-func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgID int64) ([]*models.OrgUserDTO, error) {
+func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgID, serviceAccountID int64) ([]*models.OrgUserDTO, error) {
 	query := models.GetOrgUsersQuery{OrgId: orgID, IsServiceAccount: true}
+	if serviceAccountID > 0 {
+		query.UserID = serviceAccountID
+	}
+
 	err := s.sqlStore.GetOrgUsers(ctx, &query)
 	if err != nil {
 		return nil, err
 	}
+
 	return query.Result, err
 }
 

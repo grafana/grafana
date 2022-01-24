@@ -3,13 +3,12 @@ package sqlstore
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
+	"strings"
+	"time"
 )
 
 func (ss *SQLStore) addOrgUsersQueryAndCommandHandlers() {
@@ -97,6 +96,7 @@ func (ss *SQLStore) UpdateOrgUser(ctx context.Context, cmd *models.UpdateOrgUser
 }
 
 func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error {
+
 	query.Result = make([]*models.OrgUserDTO, 0)
 
 	sess := x.Table("org_user")
@@ -117,7 +117,7 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 	// service accounts table in the modelling
 	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
 
-	if ss.Cfg.FeatureToggles["accesscontrol"] {
+	if ss.Cfg.FeatureToggles["accesscontrol"] && query.User != nil {
 		q, args, err := accesscontrol.Filter(ctx, ss.Dialect, "org_user.user_id", "users", "org.users:read", query.User)
 		if err != nil {
 			return err
