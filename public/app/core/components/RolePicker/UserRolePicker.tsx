@@ -1,6 +1,7 @@
 import React, { FC, useState } from 'react';
 import { useAsync } from 'react-use';
-import { Role, OrgRole } from 'app/types';
+import { contextSrv } from 'app/core/core';
+import { Role, OrgRole, AccessControlAction } from 'app/types';
 import { RolePicker } from './RolePicker';
 import { fetchBuiltinRoles, fetchRoleOptions, fetchUserRoles, updateUserRoles } from './api';
 
@@ -31,14 +32,26 @@ export const UserRolePicker: FC<Props> = ({
 
   const { loading } = useAsync(async () => {
     try {
-      let options = await (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId));
-      setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
+      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+        let options = await (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId));
+        setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
+      } else {
+        setRoleOptions([]);
+      }
 
-      const builtInRoles = await (getBuiltinRoles ? getBuiltinRoles() : fetchBuiltinRoles(orgId));
-      setBuiltinRoles(builtInRoles);
+      if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
+        const builtInRoles = await (getBuiltinRoles ? getBuiltinRoles() : fetchBuiltinRoles(orgId));
+        setBuiltinRoles(builtInRoles);
+      } else {
+        setBuiltinRoles({});
+      }
 
-      const userRoles = await fetchUserRoles(userId, orgId);
-      setAppliedRoles(userRoles);
+      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)) {
+        const userRoles = await fetchUserRoles(userId, orgId);
+        setAppliedRoles(userRoles);
+      } else {
+        setAppliedRoles([]);
+      }
     } catch (e) {
       // TODO handle error
       console.error('Error loading options');
