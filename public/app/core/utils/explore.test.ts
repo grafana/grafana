@@ -135,7 +135,7 @@ describe('state functions', () => {
         },
       };
       expect(serializeStateToUrlParam(state, true)).toBe(
-        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}","refId":"A"},{"expr":"super{foo=\\"x/z\\"}","refId":"B"}]'
+        '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}","refId":"A"},{"expr":"super{foo=\\"x/z\\"}","refId":"B"}],"range":{"from":"now-5h","to":"now"}}'
       );
     });
   });
