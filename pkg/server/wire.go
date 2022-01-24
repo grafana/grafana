@@ -36,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -185,8 +184,6 @@ var wireBasicSet = wire.NewSet(
 	teamguardianManager.ProvideService,
 	wire.Bind(new(teamguardian.TeamGuardian), new(*teamguardianManager.Service)),
 	resourceservices.ProvideResourceServices,
-	featuremgmt.ProvideManagerService,
-	featuremgmt.ProvideToggles,
 )
 
 var wireSet = wire.NewSet(
