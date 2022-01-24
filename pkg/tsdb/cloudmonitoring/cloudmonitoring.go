@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-google-sdk-go/pkg/utils"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -25,10 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/services/datasources"
-
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -61,8 +58,6 @@ var (
 )
 
 const (
-	pluginID string = "stackdriver"
-
 	gceAuthentication         string = "gce"
 	jwtAuthentication         string = "jwt"
 	metricQueryType           string = "metrics"
@@ -72,29 +67,20 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store,
-	dsService *datasources.Service, tracer tracing.Tracer) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
 	s := &Service{
-		httpClientProvider: httpClientProvider,
-		cfg:                cfg,
-		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		dsService:          dsService,
 		tracer:             tracer,
+		httpClientProvider: httpClientProvider,
+		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
 
-	mux := http.NewServeMux()
-	s.registerRoutes(mux)
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler:    s,
-		CallResourceHandler: httpadapter.New(mux),
-		CheckHealthHandler:  s,
-	})
+	s.resourceHandler = httpadapter.New(s.newResourceMux())
 
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		slog.Error("Failed to register plugin", "error", err)
-	}
 	return s
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return s.resourceHandler.CallResource(ctx, req, sender)
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -138,10 +124,10 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 type Service struct {
 	httpClientProvider httpclient.Provider
-	cfg                *setting.Cfg
 	im                 instancemgmt.InstanceManager
-	dsService          *datasources.Service
 	tracer             tracing.Tracer
+
+	resourceHandler backend.CallResourceHandler
 }
 
 type QueryModel struct {

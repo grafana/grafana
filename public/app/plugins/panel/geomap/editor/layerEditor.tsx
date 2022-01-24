@@ -76,7 +76,7 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
       }
 
       if (layer.showLocation) {
-        addLocationFields('location', builder, options.location);
+        addLocationFields('Location', 'location', builder, options.location);
       }
       if (handler.registerOptionsUI) {
         handler.registerOptionsUI(builder);
