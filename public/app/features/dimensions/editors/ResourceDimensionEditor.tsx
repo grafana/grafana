@@ -5,7 +5,7 @@ import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldName
 
 import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
 import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
-import { ResourcePickerPop } from './ResourcePickerPop';
+import { ResourcePicker } from './ResourcePicker';
 
 const resourceOptions = [
   { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
@@ -93,7 +93,7 @@ export const ResourceDimensionEditor: FC<
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Fixed && (
-        <ResourcePickerPop
+        <ResourcePicker
           onChange={onFixedChange}
           onClear={onClear}
           value={value?.fixed}
