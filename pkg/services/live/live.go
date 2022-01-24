@@ -368,7 +368,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.websocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
-
 		// Centrifuge expects Credentials in context with a current user ID.
 		cred := &centrifuge.Credentials{
 			UserID: fmt.Sprintf("%d", user.UserId),

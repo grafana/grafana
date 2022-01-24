@@ -127,7 +127,7 @@ func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStrea
 	if err != nil {
 		return nil, err
 	}
-	logger.Debug("Handle plugin subscribe stream survey", "req", req)
+	logger.Debug("Handle plugin subscribe stream survey", "req", fmt.Sprintf("%#v", req))
 	if req.LeaderNodeID != c.node.ID() {
 		// Requests sent to one node only, this branch should never be executed.
 		logger.Debug("Non-leader node")
@@ -146,12 +146,20 @@ func (c *Caller) handlePluginSubscribeStream(data []byte) (*PluginSubscribeStrea
 		return nil, errors.New("leader changed")
 	}
 
-	query := models.GetSignedInUserQuery{UserId: req.UserID, OrgId: req.OrgID}
-	if err := c.bus.Dispatch(context.Background(), &query); err != nil {
-		logger.Error("Error getting signed in user", "error", err, "channel", req.Channel)
-		return nil, errors.New("error getting signed in user")
+	var user *models.SignedInUser
+
+	if req.UserID > 0 {
+		query := models.GetSignedInUserQuery{UserId: req.UserID, OrgId: req.OrgID}
+		if err := c.bus.Dispatch(context.Background(), &query); err != nil {
+			logger.Error("Error getting signed in user", "error", err, "channel", req.Channel, "user", req.UserID)
+			return nil, errors.New("error getting signed in user")
+		}
+		user = query.Result
+	} else {
+		user = &models.SignedInUser{
+			OrgId: req.OrgID,
+		}
 	}
-	user := query.Result
 
 	handler, parsedChannel, err := c.channelHandlerGetter.GetChannelHandler(context.Background(), user, req.Channel)
 	if err != nil {
