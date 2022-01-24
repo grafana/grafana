@@ -42,7 +42,6 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(await screen.queryByTestId('memory-number-input')).toBeInTheDocument();
     expect(await screen.queryByTestId('cpu-number-input')).toBeInTheDocument();
     expect(await screen.queryByTestId('disk-number-input')).toBeInTheDocument();
-    // expect(await screen.queryByTestId('step-progress-submit-button')).toBeInTheDocument();
   });
 
   it('should disable memory, cpu and disk when resources are not custom', async () => {

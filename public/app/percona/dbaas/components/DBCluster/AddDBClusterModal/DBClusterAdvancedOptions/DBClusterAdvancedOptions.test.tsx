@@ -38,7 +38,6 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(screen.getByTestId('dbcluster-resources-bar-memory')).toBeInTheDocument();
     expect(screen.getByTestId('dbcluster-resources-bar-cpu')).toBeInTheDocument();
     expect(screen.getByTestId('disk-number-input')).toBeInTheDocument();
-    // expect(screen.getByTestId('step-progress-submit-button')).toBeInTheDocument();
   });
 
   it('renders correctly with initial values', async () => {
