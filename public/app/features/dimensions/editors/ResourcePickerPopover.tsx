@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import SVG from 'react-inlinesvg';
-import { Button, Select, FilterInput, useTheme2, stylesFactory, Field, Modal, Label, Input } from '@grafana/ui';
+import { Button, Select, FilterInput, useTheme2, stylesFactory, Field, Label, Input } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { FocusScope } from '@react-aria/focus';
 
 import { ResourceCards } from './ResourceCards';
 import { getPublicOrAbsoluteUrl } from '../resource';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { ResourceFolderName } from '..';
-import { FocusScope } from '@react-aria/focus';
 
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
@@ -41,6 +41,7 @@ const getFolderIfExists = (folders: Array<SelectableValue<string>>, path: string
 
 export const ResourcePickerPopover = (props: Props) => {
   const { value, onChange, mediaType, folderName } = props;
+
   const folders = getFolders(mediaType).map((v) => ({
     label: v,
     value: v,
@@ -51,14 +52,6 @@ export const ResourcePickerPopover = (props: Props) => {
   );
   const [directoryIndex, setDirectoryIndex] = useState<ResourceItem[]>([]);
   const [filteredIndex, setFilteredIndex] = useState<ResourceItem[]>([]);
-  // pass on new value to confirm button and to show in preview
-  const [newValue, setNewValue] = useState<string>(value ?? '');
-  const [searchQuery, setSearchQuery] = useState<string>();
-  const theme = useTheme2();
-  const styles = getStyles(theme);
-
-  const [activePicker, setActivePicker] = useState<PickerType>('folder');
-
   useEffect(() => {
     // we don't want to load everything before picking a folder
     const folder = currentFolder?.value;
@@ -93,6 +86,7 @@ export const ResourcePickerPopover = (props: Props) => {
     }
   }, [mediaType, currentFolder]);
 
+  const [searchQuery, setSearchQuery] = useState<string>();
   const onChangeSearch = (query: string) => {
     if (query) {
       query = query.toLowerCase();
@@ -102,6 +96,8 @@ export const ResourcePickerPopover = (props: Props) => {
     }
   };
 
+  const [newValue, setNewValue] = useState<string>(value ?? '');
+
   const imgSrc = getPublicOrAbsoluteUrl(newValue!);
 
   let shortName = newValue?.substring(newValue.lastIndexOf('/') + 1, newValue.lastIndexOf('.'));
@@ -109,9 +105,13 @@ export const ResourcePickerPopover = (props: Props) => {
     shortName = shortName.substring(0, 20) + '...';
   }
 
+  const [activePicker, setActivePicker] = useState<PickerType>('folder');
   const getTabClassName = (tabName: PickerType) => {
     return `ResourcePickerPopover__tab ${activePicker === tabName && 'ResourcePickerPopover__tab--active'}`;
   };
+
+  const theme = useTheme2();
+  const styles = getStyles(theme);
 
   const renderFolderPicker = () => (
     <>
