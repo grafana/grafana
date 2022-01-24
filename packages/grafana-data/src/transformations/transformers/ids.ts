@@ -28,6 +28,6 @@ export enum DataTransformerID {
   prepareTimeSeries = 'prepareTimeSeries',
   convertFieldType = 'convertFieldType',
   fieldLookup = 'fieldLookup',
-  setGeometry = 'setGeometry',
+  spatial = 'spatial',
   extractFields = 'extractFields',
 }

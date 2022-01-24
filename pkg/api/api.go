@@ -149,8 +149,8 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/orgs", routing.Wrap(GetSignedInUserOrgList))
 			userRoute.Get("/teams", routing.Wrap(GetSignedInUserTeamList))
 
-			userRoute.Post("/stars/dashboard/:id", routing.Wrap(StarDashboard))
-			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(UnstarDashboard))
+			userRoute.Post("/stars/dashboard/:id", routing.Wrap(hs.StarDashboard))
+			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(hs.UnstarDashboard))
 
 			userRoute.Put("/password", routing.Wrap(ChangeUserPassword))
 			userRoute.Get("/quotas", routing.Wrap(GetUserQuotas))

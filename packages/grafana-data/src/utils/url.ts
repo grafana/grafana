@@ -195,9 +195,23 @@ export const urlUtil = {
   parseKeyValue,
 };
 
+/**
+ * Create an string that is used in URL to represent the Explore state. This is basically just a stringified json
+ * that is that used as a state of a single Explore pane so it does not represent full Explore URL.
+ *
+ * There are 2 versions of this, normal and compact. Normal is just the same object stringified while compact turns
+ * properties of the object into array where the order is significant.
+ * @param urlState
+ * @param compact
+ */
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
   if (compact) {
-    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries]);
+    const compactState: unknown[] = [urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries];
+    // only serialize panel state if we have at least one non-default panel configuration
+    if (urlState.panelsState !== undefined) {
+      compactState.push({ __panelsState: urlState.panelsState });
+    }
+    return JSON.stringify(compactState);
   }
   return JSON.stringify(urlState);
 }
