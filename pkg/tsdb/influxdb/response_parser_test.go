@@ -22,6 +22,7 @@ func prepare(text string) io.ReadCloser {
 func addQueryToQueries(query Query) []Query {
 	var queries []Query
 	query.RefID = "A"
+	query.RawQuery = "Test raw query"
 	queries = append(queries, query)
 	return queries
 }
@@ -80,6 +81,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
+		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
 		result := parser.Parse(prepare(response), addQueryToQueries(*query))
 
@@ -182,6 +184,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
+		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
 		result := parser.Parse(prepare(response), addQueryToQueries(*query))
 
@@ -229,6 +232,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
+		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
 		result := parser.Parse(prepare(response), addQueryToQueries(*query))
 
@@ -280,6 +284,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
+		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 		result := parser.Parse(prepare(response), addQueryToQueries(*query))
 		t.Run("should parse aliases", func(t *testing.T) {
 			frame := result.Responses["A"]
@@ -532,6 +537,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
+		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 		result := parser.Parse(prepare(response), addQueryToQueries(*query))
 
 		frame := result.Responses["A"]
