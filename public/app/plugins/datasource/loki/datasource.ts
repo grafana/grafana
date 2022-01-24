@@ -203,7 +203,7 @@ export class LokiDatasource
     const queryLimit = isMetricsQuery(target.expr) ? options.maxDataPoints : target.maxLines;
     const query = {
       query: target.expr,
-      direction: target.direction,
+      direction: target.direction ?? DEFAULT_QUERY_PARAMS.direction,
       time: `${timeNs + (1e9 - (timeNs % 1e9))}`,
       limit: Math.min(queryLimit || Infinity, this.maxLines),
     };

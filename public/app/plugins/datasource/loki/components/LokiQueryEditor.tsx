@@ -51,7 +51,7 @@ export function LokiQueryEditor(props: LokiQueryEditorProps) {
       ExtraFieldElement={
         <>
           <LokiOptionFields
-            queryDirection={query.direction ?? datasource.direction ?? 'BACKWARD'}
+            queryDirection={query.direction ?? datasource.direction}
             lineLimitValue={query?.maxLines?.toString() || ''}
             resolution={query?.resolution || 1}
             query={query}

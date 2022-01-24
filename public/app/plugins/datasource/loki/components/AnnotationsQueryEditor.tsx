@@ -36,7 +36,7 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
         history={[]}
         ExtraFieldElement={
           <LokiOptionFields
-            queryDirection={queryWithRefId.direction ?? datasource.direction ?? 'BACKWARD'}
+            queryDirection={queryWithRefId.direction ?? datasource.direction}
             lineLimitValue={queryWithRefId?.maxLines?.toString() || ''}
             resolution={queryWithRefId.resolution || 1}
             query={queryWithRefId}
