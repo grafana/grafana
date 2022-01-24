@@ -15,7 +15,7 @@ import (
 )
 
 func authorize(c *models.ReqContext, ac accesscontrol.AccessControl, user *models.SignedInUser, evaluator accesscontrol.Evaluator) {
-	injected, err := evaluator.Inject(buildScopeParams(c))
+	injected, err := evaluator.MutateScopes(c.Req.Context(), accesscontrol.ScopeInjector(buildScopeParams(c)))
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
 		return

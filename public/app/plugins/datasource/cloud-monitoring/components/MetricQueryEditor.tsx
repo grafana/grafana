@@ -61,15 +61,15 @@ function Editor({
   variableOptionGroup,
 }: React.PropsWithChildren<Props>) {
   const [state, setState] = useState<State>(defaultState);
-  const { projectName, metricType, groupBys, editorMode } = query;
+  const { projectName, metricType, groupBys, editorMode, crossSeriesReducer } = query;
 
   useEffect(() => {
     if (projectName && metricType) {
       datasource
-        .getLabels(metricType, refId, projectName, groupBys)
+        .getLabels(metricType, refId, projectName, { groupBys, crossSeriesReducer })
         .then((labels) => setState((prevState) => ({ ...prevState, labels })));
     }
-  }, [datasource, groupBys, metricType, projectName, refId]);
+  }, [datasource, groupBys, metricType, projectName, refId, crossSeriesReducer]);
 
   const onChange = useCallback(
     (metricQuery: MetricQuery | SLOQuery) => {

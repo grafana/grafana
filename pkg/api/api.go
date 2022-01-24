@@ -59,6 +59,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/users/invite", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), hs.Index)
 	r.Get("/org/teams", reqCanAccessTeams, hs.Index)
 	r.Get("/org/teams/*", reqCanAccessTeams, hs.Index)
+	r.Get("/org/serviceaccounts", middleware.ReqOrgAdmin, hs.Index)
+	r.Get("/org/serviceaccounts/:serviceAccountId", middleware.ReqOrgAdmin, hs.Index)
 	r.Get("/org/apikeys/", reqOrgAdmin, hs.Index)
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
@@ -147,8 +149,8 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/orgs", routing.Wrap(GetSignedInUserOrgList))
 			userRoute.Get("/teams", routing.Wrap(GetSignedInUserTeamList))
 
-			userRoute.Post("/stars/dashboard/:id", routing.Wrap(StarDashboard))
-			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(UnstarDashboard))
+			userRoute.Post("/stars/dashboard/:id", routing.Wrap(hs.StarDashboard))
+			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(hs.UnstarDashboard))
 
 			userRoute.Put("/password", routing.Wrap(ChangeUserPassword))
 			userRoute.Get("/quotas", routing.Wrap(GetUserQuotas))
@@ -266,15 +268,15 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
-			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll)), routing.Wrap(hs.GetDataSources))
+			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSources))
 			datasourceRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesCreate)), quota("data_source"), routing.Wrap(AddDataSource))
 			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesWrite, ScopeDatasourceID)), routing.Wrap(hs.UpdateDataSource))
 			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceID)), routing.Wrap(hs.DeleteDataSourceById))
 			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceUID)), routing.Wrap(hs.DeleteDataSourceByUID))
 			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceName)), routing.Wrap(hs.DeleteDataSourceByName))
-			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceID)), routing.Wrap(hs.GetDataSourceById))
-			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceUID)), routing.Wrap(hs.GetDataSourceByUID))
-			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourceName)), routing.Wrap(GetDataSourceByName))
+			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceById))
+			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceByUID))
+			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(GetDataSourceByName))
 		})
 
 		apiRoute.Get("/datasources/id/:name", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesIDRead, ScopeDatasourceName)), routing.Wrap(GetDataSourceIdByName))
@@ -435,7 +437,7 @@ func (hs *HTTPServer) registerRoutes() {
 			// Some channels may have info
 			liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
 
-			if hs.Cfg.FeatureToggles["live-pipeline"] {
+			if hs.Features.Toggles().IsLivePipelineEnabled() {
 				// POST Live data to be processed according to channel rules.
 				liveRoute.Post("/pipeline/push/*", hs.LivePushGateway.HandlePipelinePush)
 				liveRoute.Post("/pipeline-convert-test", routing.Wrap(hs.Live.HandlePipelineConvertTestHTTP), reqOrgAdmin)
@@ -458,6 +460,9 @@ func (hs *HTTPServer) registerRoutes() {
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
 		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetSettings))
+		if hs.Features.Toggles().IsShowFeatureFlagsInUIEnabled() {
+			adminRoute.Get("/settings/features", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), hs.Features.HandleGetSettings)
+		}
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(PauseAllAlerts))
 
