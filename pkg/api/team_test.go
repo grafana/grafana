@@ -30,7 +30,9 @@ func (stub *testLogger) Warn(testMessage string, ctx ...interface{}) {
 
 func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("Given two teams", func(t *testing.T) {
-		hs := setupSimpleHTTPServer(nil)
+		hs := &HTTPServer{
+			Cfg: setting.NewCfg(),
+		}
 		hs.SQLStore = sqlstore.InitTestDB(t)
 
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
@@ -69,7 +71,9 @@ func TestTeamAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When creating team with API key", func(t *testing.T) {
-		hs := setupSimpleHTTPServer(nil)
+		hs := &HTTPServer{
+			Cfg: setting.NewCfg(),
+		}
 		hs.Cfg.EditorsCanAdmin = true
 
 		teamName := "team foo"
