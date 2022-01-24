@@ -47,7 +47,7 @@ const (
 	ExemplarQueryType TimeSeriesQueryType = "exemplar"
 )
 
-func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
+func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuery, fromAlerting bool) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -101,7 +101,7 @@ func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*P
 			}
 		}
 
-		frames, err := parseTimeSeriesResponse(response, query)
+		frames, err := parseTimeSeriesResponse(response, query, fromAlerting)
 		if err != nil {
 			return &result, err
 		}
@@ -128,7 +128,7 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 		return &result, err
 	}
 
-	return s.runQueries(ctx, client, queries)
+	return s.runQueries(ctx, client, queries, req.Headers["FromAlert"] == "true")
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
@@ -202,7 +202,7 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 	return qs, nil
 }
 
-func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *PrometheusQuery) (data.Frames, error) {
+func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *PrometheusQuery, fromAlerting bool) (data.Frames, error) {
 	var (
 		frames     = data.Frames{}
 		nextFrames = data.Frames{}
@@ -214,7 +214,11 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 
 		switch v := value.(type) {
 		case model.Matrix:
-			nextFrames = matrixToDataFrames(v, query, nextFrames)
+			if fromAlerting {
+				nextFrames = matrixToDataFramesWithoutNullFilling(v, query, nextFrames)
+			} else {
+				nextFrames = matrixToDataFrames(v, query, nextFrames)
+			}
 		case model.Vector:
 			nextFrames = vectorToDataFrames(v, query, nextFrames)
 		case *model.Scalar:
@@ -352,6 +356,35 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
 		valueField.Labels = tags
 
+		frames = append(frames, newDataFrame(name, "matrix", timeField, valueField))
+	}
+
+	return frames
+}
+
+func matrixToDataFramesWithoutNullFilling(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
+	for _, v := range matrix {
+		tags := make(map[string]string, len(v.Metric))
+		for k, v := range v.Metric {
+			tags[string(k)] = string(v)
+		}
+		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(v.Values))
+		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(v.Values))
+
+		for i, k := range v.Values {
+			timeField.Set(i, time.Unix(k.Timestamp.Unix(), 0).UTC())
+			value := float64(k.Value)
+
+			if !math.IsNaN(value) {
+				valueField.Set(i, &value)
+			}
+		}
+
+		name := formatLegend(v.Metric, query)
+		timeField.Name = data.TimeSeriesTimeFieldName
+		valueField.Name = data.TimeSeriesValueFieldName
+		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
+		valueField.Labels = tags
 		frames = append(frames, newDataFrame(name, "matrix", timeField, valueField))
 	}
 
