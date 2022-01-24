@@ -40,12 +40,10 @@ func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.Que
 		if result.Error != "" {
 			queryRes.Error = fmt.Errorf(result.Error)
 			resp.Responses["A"] = queryRes
-			return resp
+		} else {
+			queryRes.Frames = transformRows(result.Series, queries[i])
+			resp.Responses[queries[i].RefID] = queryRes
 		}
-		frames := data.Frames{}
-		frames = append(frames, transformRows(result.Series, queries[i])...)
-		queryRes.Frames = frames
-		resp.Responses[queries[i].RefID] = queryRes
 	}
 
 	return resp
@@ -88,19 +86,17 @@ func transformRows(rows []Row, query Query) data.Frames {
 			// set a nice name on the value-field
 			valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 
-			frames = append(frames, newDataFrame(name, query.RawQuery, *timeField, *valueField))
+			frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
 		}
 	}
 
 	return frames
 }
 
-func newDataFrame(name string, queryString string, timeField data.Field, valueField data.Field) *data.Frame {
-	frame := data.NewFrame(name, &timeField, &valueField)
-	if queryString != "" {
-		frame.Meta = &data.FrameMeta{
-			ExecutedQueryString: queryString,
-		}
+func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field) *data.Frame {
+	frame := data.NewFrame(name, timeField, valueField)
+	frame.Meta = &data.FrameMeta{
+		ExecutedQueryString: queryString,
 	}
 
 	return frame

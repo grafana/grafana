@@ -1,4 +1,4 @@
-import { cloneDeep, extend, get, has, isString, map as _map, omit, pick, reduce } from 'lodash';
+import { cloneDeep, extend, get, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
 import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
@@ -177,9 +177,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
           const seriesList: any[] = [];
 
-          if (res.data && res.data.length > 0) {
+          const groupedFrames = groupBy(res.data, (x) => x.refId);
+          if (Object.keys(groupedFrames).length > 0) {
             filteredRequest.targets.forEach((target) => {
-              const filteredFrames = res.data.filter((t) => t.refId === target.refId);
+              const filteredFrames = groupedFrames[target.refId] ?? [];
               switch (target.resultFormat) {
                 case 'logs':
                 case 'table':
