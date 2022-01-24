@@ -65,11 +65,12 @@ import (
 )
 
 type HTTPServer struct {
-	log         log.Logger
-	web         *web.Mux
-	context     context.Context
-	httpSrv     *http.Server
-	middlewares []web.Handler
+	log              log.Logger
+	web              *web.Mux
+	context          context.Context
+	httpSrv          *http.Server
+	middlewares      []web.Handler
+	namedMiddlewares []routing.RegisterNamedMiddleware
 
 	PluginContextProvider     *plugincontext.Provider
 	RouteRegister             routing.RouteRegister
@@ -212,6 +213,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 
 func (hs *HTTPServer) AddMiddleware(middleware web.Handler) {
 	hs.middlewares = append(hs.middlewares, middleware)
+}
+
+func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddleware) {
+	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
 func (hs *HTTPServer) Run(ctx context.Context) error {
@@ -400,7 +405,7 @@ func (hs *HTTPServer) applyRoutes() {
 	// start with middlewares & static routes
 	hs.addMiddlewaresAndStaticRoutes()
 	// then add view routes & api routes
-	hs.RouteRegister.Register(hs.web)
+	hs.RouteRegister.Register(hs.web, hs.namedMiddlewares...)
 	// then custom app proxy routes
 	hs.initAppPluginRoutes(hs.web)
 	// lastly not found route
