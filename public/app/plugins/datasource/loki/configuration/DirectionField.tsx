@@ -22,9 +22,9 @@ export const DirectionField = (props: Props) => {
       inputEl={<RadioButtonGroup options={queryDirectionOptions} value={value} onChange={onChange} />}
       tooltip={
         <>
-          Loki queries can be made in either 'FORWARD' or 'BACKWARD' directions. This configuration is the default for
-          the data source but can be changed on a per-query basis. 'FORWARD' queries are processed in chronological
-          order. 'BACKWARD' queries are processed in reverse chronological order.
+          Loki queries can be made in either FORWARD or BACKWARD directions. This configuration is the default for the
+          data source but can be changed on a per-query basis. FORWARD queries are processed in chronological order.
+          BACKWARD queries are processed in reverse chronological order.
         </>
       }
     />
