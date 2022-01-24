@@ -38,15 +38,43 @@ describe('Unified Alerting matchers', () => {
 
   describe('matchLabelsToMatchers', () => {
     it('should match for equal', () => {
-      const matchers = [
-        { name: 'foo', value: 'bar', operator: MatcherOperator.equal },
-        { name: 'bar', value: 'foo', operator: MatcherOperator.notEqual },
-      ];
+      const matchers = [{ name: 'foo', value: 'bar', operator: MatcherOperator.equal }];
       const rules = [mockCombinedRule({ labels: { foo: 'bar' } }), mockCombinedRule({ labels: { foo: 'baz' } })];
-
       const matchedRules = findAlertRulesWithMatchers(rules, matchers);
 
       expect(matchedRules).toHaveLength(1);
+    });
+
+    it('should match for not equal', () => {
+      const matchers = [{ name: 'foo', value: 'bar', operator: MatcherOperator.notEqual }];
+      const rules = [mockCombinedRule({ labels: { foo: 'bar' } }), mockCombinedRule({ labels: { foo: 'baz' } })];
+
+      const matchedRules = findAlertRulesWithMatchers(rules, matchers);
+      expect(matchedRules).toHaveLength(1);
+    });
+
+    it('should match for regex', () => {
+      const matchers = [{ name: 'foo', value: 'bar', operator: MatcherOperator.regex }];
+      const rules = [
+        mockCombinedRule({ labels: { foo: 'bar' } }),
+        mockCombinedRule({ labels: { foo: 'baz' } }),
+        mockCombinedRule({ labels: { foo: 'bas' } }),
+      ];
+
+      const matchedRules = findAlertRulesWithMatchers(rules, matchers);
+      expect(matchedRules).toHaveLength(1);
+    });
+
+    it('should not match regex', () => {
+      const matchers = [{ name: 'foo', value: 'bar', operator: MatcherOperator.notRegex }];
+      const rules = [
+        mockCombinedRule({ labels: { foo: 'bar' } }),
+        mockCombinedRule({ labels: { foo: 'baz' } }),
+        mockCombinedRule({ labels: { foo: 'bas' } }),
+      ];
+
+      const matchedRules = findAlertRulesWithMatchers(rules, matchers);
+      expect(matchedRules).toHaveLength(2);
     });
   });
 });

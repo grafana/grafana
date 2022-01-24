@@ -49,12 +49,13 @@ export const findAlertRulesWithMatchers = (rules: CombinedRule[], matchers: Matc
     });
   };
 
-  return rules
-    .filter((rule) => {
-      return matchers.every((matcher) => hasMatcher(rule, matcher));
-    })
-    .map((rule) => ({
-      id: `${rule.namespace}-${rule.name}`,
-      data: { rule, matchedRule: rule },
-    }));
+  const filteredRules = rules.filter((rule) => {
+    return matchers.every((matcher) => hasMatcher(rule, matcher));
+  });
+  const mappedRules = filteredRules.map((rule) => ({
+    id: `${rule.namespace}-${rule.name}`,
+    data: { rule, matchedRule: rule },
+  }));
+
+  return mappedRules;
 };
