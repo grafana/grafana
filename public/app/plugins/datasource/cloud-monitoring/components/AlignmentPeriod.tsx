@@ -6,6 +6,7 @@ import { ALIGNMENT_PERIODS } from '../constants';
 import { MetricQuery, SLOQuery } from '../types';
 
 export interface Props<TQuery> {
+  inputId: string;
   onChange(query: TQuery): void;
   query: TQuery;
   templateVariableOptions: Array<SelectableValue<string>>;
@@ -13,6 +14,7 @@ export interface Props<TQuery> {
 }
 
 export function AlignmentPeriod<TQuery extends MetricQuery | SLOQuery>({
+  inputId,
   templateVariableOptions,
   onChange,
   query,
@@ -46,7 +48,7 @@ export function AlignmentPeriod<TQuery extends MetricQuery | SLOQuery>({
         },
       ]}
       placeholder="Select Alignment"
-      aria-label="alignment-period"
+      inputId={inputId}
     ></Select>
   );
 }

@@ -11,6 +11,7 @@ import CloudMonitoringDatasource from '../datasource';
 import { MetricDescriptor } from '../types';
 
 export interface Props {
+  refId: string;
   onChange: (metricDescriptor: MetricDescriptor) => void;
   templateSrv: TemplateSrv;
   templateVariableOptions: Array<SelectableValue<string>>;
@@ -135,7 +136,7 @@ export function Metrics(props: Props) {
   return (
     <>
       <QueryEditorRow>
-        <QueryEditorField labelWidth={LABEL_WIDTH} label="Service">
+        <QueryEditorField labelWidth={LABEL_WIDTH} label="Service" htmlFor={`${props.refId}-service`}>
           <Select
             menuShouldPortal
             width={SELECT_WIDTH}
@@ -149,10 +150,10 @@ export function Metrics(props: Props) {
               ...services,
             ]}
             placeholder="Select Services"
-            aria-label="service"
+            inputId={`${props.refId}-service`}
           ></Select>
         </QueryEditorField>
-        <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH}>
+        <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH} htmlFor={`${props.refId}-select-metric`}>
           <Select
             menuShouldPortal
             width={SELECT_WIDTH}
@@ -166,7 +167,7 @@ export function Metrics(props: Props) {
               ...metrics,
             ]}
             placeholder="Select Metric"
-            aria-label="select-metric"
+            inputId={`${props.refId}-select-metric`}
           ></Select>
         </QueryEditorField>
       </QueryEditorRow>

@@ -20,8 +20,9 @@ export class ConfigEditor extends PureComponent<Props> {
       <>
         <h3 className="page-heading">Authentication</h3>
         <div>
-          <InlineField label="Type" labelWidth={20}>
+          <InlineField label="Type" labelWidth={20} htmlFor="cloud-monitoring-type">
             <Select
+              inputId="cloud-monitoring-type"
               menuShouldPortal
               aria-label="Type"
               width={40}

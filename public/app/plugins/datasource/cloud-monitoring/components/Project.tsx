@@ -7,13 +7,14 @@ import { SELECT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 
 export interface Props {
+  refId: string;
   datasource: CloudMonitoringDatasource;
   onChange: (projectName: string) => void;
   templateVariableOptions: Array<SelectableValue<string>>;
   projectName: string;
 }
 
-export function Project({ projectName, datasource, onChange, templateVariableOptions }: Props) {
+export function Project({ refId, projectName, datasource, onChange, templateVariableOptions }: Props) {
   const [projects, setProjects] = useState<Array<SelectableValue<string>>>([]);
   useEffect(() => {
     datasource.getProjects().then((projects) => setProjects(projects));
@@ -32,7 +33,7 @@ export function Project({ projectName, datasource, onChange, templateVariableOpt
   );
 
   return (
-    <QueryEditorRow label="Project">
+    <QueryEditorRow label="Project" htmlFor={`${refId}-project`}>
       <Select
         menuShouldPortal
         width={SELECT_WIDTH}
@@ -42,7 +43,7 @@ export function Project({ projectName, datasource, onChange, templateVariableOpt
         options={projectsWithTemplateVariables}
         value={{ value: projectName, label: projectName }}
         placeholder="Select Project"
-        aria-label="project"
+        inputId={`${refId}-project`}
       />
     </QueryEditorRow>
   );

@@ -8,13 +8,14 @@ import CloudMonitoringDatasource from '../../datasource';
 import { SLOQuery } from '../../types';
 
 export interface Props {
+  refId: string;
   onChange: (query: SLOQuery) => void;
   query: SLOQuery;
   templateVariableOptions: Array<SelectableValue<string>>;
   datasource: CloudMonitoringDatasource;
 }
 
-export const Service: React.FC<Props> = ({ query, templateVariableOptions, onChange, datasource }) => {
+export const Service: React.FC<Props> = ({ refId, query, templateVariableOptions, onChange, datasource }) => {
   const [services, setServices] = useState<Array<SelectableValue<string>>>([]);
   const { projectName } = query;
 
@@ -35,10 +36,10 @@ export const Service: React.FC<Props> = ({ query, templateVariableOptions, onCha
   }, [datasource, projectName, templateVariableOptions]);
 
   return (
-    <QueryEditorRow label="Service">
+    <QueryEditorRow label="Service" htmlFor={`${refId}-slo-service`}>
       <Select
         menuShouldPortal
-        aria-label="service"
+        inputId={`${refId}-slo-service`}
         width={SELECT_WIDTH}
         allowCustomValue
         value={query?.serviceId && { value: query?.serviceId, label: query?.serviceName || query?.serviceId }}

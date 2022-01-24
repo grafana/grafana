@@ -74,10 +74,10 @@ export class QueryEditor extends PureComponent<Props> {
               </Button>
             )
           }
+          htmlFor={`${query.refId}-query-type`}
         >
           <Select
             menuShouldPortal
-            aria-label="query-type"
             width={SELECT_WIDTH}
             value={queryType}
             options={QUERY_TYPES}
@@ -85,6 +85,7 @@ export class QueryEditor extends PureComponent<Props> {
               onChange({ ...query, sloQuery, queryType: value! });
               onRunQuery();
             }}
+            inputId={`${query.refId}-query-type`}
           />
         </QueryEditorRow>
 
@@ -104,6 +105,7 @@ export class QueryEditor extends PureComponent<Props> {
 
         {queryType === QueryType.SLO && (
           <SLOQueryEditor
+            refId={query.refId}
             variableOptionGroup={variableOptionGroup}
             customMetaData={customMetaData}
             onChange={(query: SLOQuery) => this.onQueryChange('sloQuery', query)}

@@ -7,12 +7,13 @@ import { getAlignmentPickerData } from '../functions';
 import { MetricQuery } from '../types';
 
 export interface Props {
+  inputId: string;
   onChange: (query: MetricQuery) => void;
   query: MetricQuery;
   templateVariableOptions: Array<SelectableValue<string>>;
 }
 
-export const AlignmentFunction: FC<Props> = ({ query, templateVariableOptions, onChange }) => {
+export const AlignmentFunction: FC<Props> = ({ inputId, query, templateVariableOptions, onChange }) => {
   const { valueType, metricKind, perSeriesAligner: psa, preprocessor } = query;
   const { perSeriesAligner, alignOptions } = useMemo(
     () => getAlignmentPickerData(valueType, metricKind, psa, preprocessor),
@@ -37,7 +38,7 @@ export const AlignmentFunction: FC<Props> = ({ query, templateVariableOptions, o
         },
       ]}
       placeholder="Select Alignment"
-      aria-label="alignment-function"
+      inputId={inputId}
     ></Select>
   );
 };

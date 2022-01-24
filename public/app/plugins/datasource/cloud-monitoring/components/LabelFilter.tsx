@@ -20,7 +20,7 @@ const operators = ['=', '!=', '=~', '!=~'];
 
 const FilterButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(
   ({ value, isOpen, invalid, ...rest }, ref) => {
-    return <Button {...rest} ref={ref} variant="secondary" icon="plus" aria-label="add-filter"></Button>;
+    return <Button {...rest} ref={ref} variant="secondary" icon="plus" aria-label="Add filter"></Button>;
   }
 );
 FilterButton.displayName = 'FilterButton';
@@ -101,7 +101,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
             <HorizontalGroup key={index} spacing="xs" width="auto">
               <Select
                 menuShouldPortal
-                aria-label="filter-label-key"
+                aria-label="Filter label key"
                 width={SELECT_WIDTH}
                 allowCustomValue
                 formatCreateLabel={(v) => `Use label key: ${v}`}
@@ -127,7 +127,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
               />
               <Select
                 menuShouldPortal
-                aria-label="filter-label-value"
+                aria-label="Filter label value"
                 width={SELECT_WIDTH}
                 formatCreateLabel={(v) => `Use label value: ${v}`}
                 allowCustomValue
