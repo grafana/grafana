@@ -7,7 +7,6 @@ import (
 	"mime/multipart"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -113,7 +112,7 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		Body:       uploadBody.String(),
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		pn.log.Error("Failed to send pushover notification", "error", err, "webhook", pn.Name)
 		return false, err
 	}

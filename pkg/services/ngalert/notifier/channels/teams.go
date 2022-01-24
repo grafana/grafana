@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -100,7 +99,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 	cmd := &models.SendWebhookSync{Url: u, Body: string(b)}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, errors.Wrap(err, "send notification to Teams")
 	}
 

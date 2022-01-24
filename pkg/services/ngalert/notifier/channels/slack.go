@@ -27,7 +27,6 @@ import (
 type SlackNotifier struct {
 	*Base
 	log  log.Logger
-	ns   *notifications.NotificationService
 	tmpl *template.Template
 
 	URL            *url.URL
@@ -46,7 +45,7 @@ type SlackNotifier struct {
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewSlackNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*SlackNotifier, error) {
+func NewSlackNotifier(model *NotificationChannelConfig, _ *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*SlackNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -122,7 +121,6 @@ func NewSlackNotifier(model *NotificationChannelConfig, ns *notifications.Notifi
 		Text:           model.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
 		Title:          model.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
 		log:            log.New("alerting.notifier.slack"),
-		ns:             ns,
 		tmpl:           t,
 	}, nil
 }

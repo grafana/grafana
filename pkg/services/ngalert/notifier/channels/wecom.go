@@ -7,7 +7,6 @@ import (
 
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -77,7 +76,7 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		Body: string(body),
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := w.ns.SendWebhookSync(ctx, cmd); err != nil {
 		w.log.Error("failed to send WeCom webhook", "error", err, "notification", w.Name)
 		return false, err
 	}

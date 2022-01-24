@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -117,7 +116,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		Body:        string(body),
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := d.ns.SendWebhookSync(ctx, cmd); err != nil {
 		d.log.Error("Failed to send notification to Discord", "error", err)
 		return false, err
 	}

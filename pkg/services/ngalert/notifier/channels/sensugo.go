@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -148,7 +147,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			"Authorization": fmt.Sprintf("Key %s", sn.APIKey),
 		},
 	}
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := sn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		sn.log.Error("Failed to send Sensu Go event", "error", err, "sensugo", sn.Name)
 		return false, err
 	}

@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -89,7 +88,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		Body: form.Encode(),
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := ln.ns.SendWebhookSync(ctx, cmd); err != nil {
 		ln.log.Error("Failed to send notification to LINE", "error", err, "body", body)
 		return false, err
 	}

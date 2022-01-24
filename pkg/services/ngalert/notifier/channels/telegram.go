@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"mime/multipart"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -112,7 +111,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		},
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		tn.log.Error("Failed to send webhook", "error", err, "webhook", tn.Name)
 		return false, err
 	}

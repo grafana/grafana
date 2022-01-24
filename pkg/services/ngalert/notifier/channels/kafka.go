@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -115,7 +114,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		},
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := kn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		kn.log.Error("Failed to send notification to Kafka", "error", err, "body", string(body))
 		return false, err
 	}

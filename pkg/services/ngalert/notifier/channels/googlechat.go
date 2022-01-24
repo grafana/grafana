@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -140,7 +139,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		Body: string(body),
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := gcn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		gcn.log.Error("Failed to send Google Hangouts Chat alert", "error", err, "webhook", gcn.Name)
 		return false, err
 	}

@@ -7,7 +7,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -122,7 +121,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			"Content-Type": "application/x-www-form-urlencoded",
 		},
 	}
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		tn.log.Error("Failed to send threema notification", "error", err, "webhook", tn.Name)
 		return false, err
 	}

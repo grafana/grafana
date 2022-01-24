@@ -10,7 +10,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -112,7 +111,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		Body: string(b),
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := vn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		vn.log.Error("Failed to send Victorops notification", "error", err, "webhook", vn.Name)
 		return false, err
 	}

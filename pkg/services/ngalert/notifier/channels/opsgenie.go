@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -123,7 +122,7 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		},
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := on.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Opsgenie: %w", err)
 	}
 

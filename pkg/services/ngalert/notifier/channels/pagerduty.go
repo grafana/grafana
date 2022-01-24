@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -108,7 +107,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 			"Content-Type": "application/json",
 		},
 	}
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Pagerduty: %w", err)
 	}
 

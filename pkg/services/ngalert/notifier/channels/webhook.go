@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -121,7 +120,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		HttpMethod: wn.HTTPMethod,
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := wn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, err
 	}
 

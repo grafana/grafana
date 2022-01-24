@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -106,7 +105,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		en.log.Warn("failed to template email message", "err", tmplErr.Error())
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := en.ns.SendEmailCommandHandlerSync(ctx, cmd); err != nil {
 		return false, err
 	}
 
