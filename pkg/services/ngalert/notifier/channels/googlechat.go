@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -25,7 +26,7 @@ type GoogleChatNotifier struct {
 	content string
 }
 
-func NewGoogleChatNotifier(model *NotificationChannelConfig, t *template.Template) (*GoogleChatNotifier, error) {
+func NewGoogleChatNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template) (*GoogleChatNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

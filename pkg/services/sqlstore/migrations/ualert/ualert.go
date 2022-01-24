@@ -14,6 +14,7 @@ import (
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -213,6 +214,7 @@ type migration struct {
 	// session and mg are attached for convenience.
 	sess *xorm.Session
 	mg   *migrator.Migrator
+	ns   *notifications.NotificationService
 
 	seenChannelUIDs           map[string]struct{}
 	migratedChannelsPerOrg    map[int64]map[*notificationChannel]struct{}
@@ -493,39 +495,39 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 
 			switch gr.Type {
 			case "email":
-				_, err = channels.NewEmailNotifier(cfg, nil) // Email notifier already has a default template.
+				_, err = channels.NewEmailNotifier(cfg, nil, nil) // Email notifier already has a default template.
 			case "pagerduty":
-				_, err = channels.NewPagerdutyNotifier(cfg, nil, decryptFunc)
+				_, err = channels.NewPagerdutyNotifier(cfg, nil, nil, decryptFunc)
 			case "pushover":
-				_, err = channels.NewPushoverNotifier(cfg, nil, decryptFunc)
+				_, err = channels.NewPushoverNotifier(cfg, nil, nil, decryptFunc)
 			case "slack":
-				_, err = channels.NewSlackNotifier(cfg, nil, decryptFunc)
+				_, err = channels.NewSlackNotifier(cfg, nil, nil, decryptFunc)
 			case "telegram":
-				_, err = channels.NewTelegramNotifier(cfg, nil, decryptFunc)
+				_, err = channels.NewTelegramNotifier(cfg, nil, nil, decryptFunc)
 			case "victorops":
-				_, err = channels.NewVictoropsNotifier(cfg, nil)
+				_, err = channels.NewVictoropsNotifier(cfg, nil, nil)
 			case "teams":
-				_, err = channels.NewTeamsNotifier(cfg, nil)
+				_, err = channels.NewTeamsNotifier(cfg, nil, nil)
 			case "dingding":
-				_, err = channels.NewDingDingNotifier(cfg, nil)
+				_, err = channels.NewDingDingNotifier(cfg, nil, nil)
 			case "kafka":
-				_, err = channels.NewKafkaNotifier(cfg, nil)
+				_, err = channels.NewKafkaNotifier(cfg, nil, nil)
 			case "webhook":
-				_, err = channels.NewWebHookNotifier(cfg, nil, decryptFunc)
+				_, err = channels.NewWebHookNotifier(cfg, nil, nil, decryptFunc)
 			case "sensugo":
-				_, err = channels.NewSensuGoNotifier(cfg, nil, decryptFunc)
+				_, err = channels.NewSensuGoNotifier(cfg, nil, nil, decryptFunc)
 			case "discord":
-				_, err = channels.NewDiscordNotifier(cfg, nil)
+				_, err = channels.NewDiscordNotifier(cfg, nil, nil)
 			case "googlechat":
-				_, err = channels.NewGoogleChatNotifier(cfg, nil)
+				_, err = channels.NewGoogleChatNotifier(cfg, nil, nil)
 			case "LINE":
-				_, err = channels.NewLineNotifier(cfg, nil, decryptFunc)
+				_, err = channels.NewLineNotifier(cfg, nil, nil, decryptFunc)
 			case "threema":
-				_, err = channels.NewThreemaNotifier(cfg, nil, decryptFunc)
+				_, err = channels.NewThreemaNotifier(cfg, nil, nil, decryptFunc)
 			case "opsgenie":
-				_, err = channels.NewOpsgenieNotifier(cfg, nil, decryptFunc)
+				_, err = channels.NewOpsgenieNotifier(cfg, nil, nil, decryptFunc)
 			case "prometheus-alertmanager":
-				_, err = channels.NewAlertmanagerNotifier(cfg, nil, decryptFunc)
+				_, err = channels.NewAlertmanagerNotifier(cfg, nil, nil, decryptFunc)
 			default:
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,7 +28,7 @@ const (
 
 // NewVictoropsNotifier creates an instance of VictoropsNotifier that
 // handles posting notifications to Victorops REST API
-func NewVictoropsNotifier(model *NotificationChannelConfig, t *template.Template) (*VictoropsNotifier, error) {
+func NewVictoropsNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template) (*VictoropsNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

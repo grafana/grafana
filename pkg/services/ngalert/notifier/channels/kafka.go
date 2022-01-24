@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 // KafkaNotifier is responsible for sending
@@ -26,7 +27,7 @@ type KafkaNotifier struct {
 }
 
 // NewKafkaNotifier is the constructor function for the Kafka notifier.
-func NewKafkaNotifier(model *NotificationChannelConfig, t *template.Template) (*KafkaNotifier, error) {
+func NewKafkaNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template) (*KafkaNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

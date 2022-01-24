@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,7 +27,7 @@ type DiscordNotifier struct {
 	UseDiscordUsername bool
 }
 
-func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) (*DiscordNotifier, error) {
+func NewDiscordNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template) (*DiscordNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

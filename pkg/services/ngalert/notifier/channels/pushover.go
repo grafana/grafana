@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -39,7 +40,7 @@ type PushoverNotifier struct {
 }
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewPushoverNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*PushoverNotifier, error) {
+func NewPushoverNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*PushoverNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

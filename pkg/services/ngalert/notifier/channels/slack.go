@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/template"
@@ -44,7 +45,7 @@ type SlackNotifier struct {
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*SlackNotifier, error) {
+func NewSlackNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*SlackNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -31,7 +32,7 @@ type ThreemaNotifier struct {
 }
 
 // NewThreemaNotifier is the constructor for the Threema notifier
-func NewThreemaNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*ThreemaNotifier, error) {
+func NewThreemaNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*ThreemaNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

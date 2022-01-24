@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
@@ -29,7 +30,7 @@ type TelegramNotifier struct {
 }
 
 // NewTelegramNotifier is the constructor for the Telegram notifier
-func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*TelegramNotifier, error) {
+func NewTelegramNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*TelegramNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

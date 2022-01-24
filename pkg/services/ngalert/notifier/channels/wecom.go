@@ -10,11 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 )
 
 // NewWeComNotifier is the constructor for WeCom notifier.
-func NewWeComNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*WeComNotifier, error) {
+func NewWeComNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*WeComNotifier, error) {
 	url := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
 
 	if url == "" {
