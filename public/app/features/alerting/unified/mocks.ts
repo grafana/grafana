@@ -287,6 +287,8 @@ export class MockDataSourceSrv implements DataSourceSrv {
   async loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
     return DatasourceSrv.prototype.loadDatasource.call(this, name);
   }
+
+  reload() {}
 }
 
 export const mockGrafanaReceiver = (

@@ -83,7 +83,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 	}
 	cmd.OrgId = c.OrgId
 	var err error
-	if hs.Features.Toggles().IsServiceAccountsEnabled() {
+	if hs.Cfg.FeatureToggles["service-accounts"] {
 		// Api keys should now be created with addadditionalapikey endpoint
 		return response.Error(400, "API keys should now be added via the AdditionalAPIKey endpoint.", err)
 	}
@@ -120,7 +120,7 @@ func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if !hs.Features.Toggles().IsServiceAccountsEnabled() {
+	if !hs.Cfg.FeatureToggles["service-accounts"] {
 		return response.Error(500, "Requires services-accounts feature", errors.New("feature missing"))
 	}
 

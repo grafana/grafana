@@ -1,6 +1,12 @@
 import { ArrayVector, createTheme, FieldType, ThresholdsMode, toDataFrame } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
-import { findNextStateIndex, getThresholdItems, prepareTimelineFields, prepareTimelineLegendItems } from './utils';
+import {
+  findNextStateIndex,
+  fmtDuration,
+  getThresholdItems,
+  prepareTimelineFields,
+  prepareTimelineLegendItems,
+} from './utils';
 
 const theme = createTheme();
 
@@ -219,5 +225,37 @@ describe('prepareTimelineLegendItems', () => {
     const result = prepareTimelineLegendItems(frame, { displayMode: LegendDisplayMode.List } as any, theme);
 
     expect(result).toHaveLength(1);
+  });
+});
+
+describe('duration', () => {
+  it.each`
+    value               | expected
+    ${-1}               | ${''}
+    ${20}               | ${'20ms'}
+    ${1000}             | ${'1s'}
+    ${1020}             | ${'1s 20ms'}
+    ${60000}            | ${'1m'}
+    ${61020}            | ${'1m 1s'}
+    ${3600000}          | ${'1h'}
+    ${6600000}          | ${'1h 50m'}
+    ${86400000}         | ${'1d'}
+    ${96640000}         | ${'1d 2h'}
+    ${604800000}        | ${'1w'}
+    ${691200000}        | ${'1w 1d'}
+    ${2419200000}       | ${'4w'}
+    ${2678400000}       | ${'1mo 1d'}
+    ${3196800000}       | ${'1mo 1w'}
+    ${3456000000}       | ${'1mo 1w 3d'}
+    ${6739200000}       | ${'2mo 2w 4d'}
+    ${31536000000}      | ${'1y'}
+    ${31968000000}      | ${'1y 5d'}
+    ${32140800000}      | ${'1y 1w'}
+    ${67910400000}      | ${'2y 1mo 3w 5d'}
+    ${40420800000}      | ${'1y 3mo 1w 5d'}
+    ${9007199254740991} | ${'285616y 5mo 1d'}
+  `(' function should format $value ms to $expected', ({ value, expected }) => {
+    const result = fmtDuration(value);
+    expect(result).toEqual(expected);
   });
 });

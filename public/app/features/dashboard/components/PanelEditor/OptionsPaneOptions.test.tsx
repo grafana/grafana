@@ -16,11 +16,11 @@ import { DashboardModel, PanelModel } from '../../state';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
-import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
 import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './state/getOptionOverrides';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
 
-standardEditorsRegistry.setInit(getStandardOptionEditors);
-standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 const mockStore = configureMockStore<any, any>();
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
@@ -126,6 +126,7 @@ describe('OptionsPaneOptions', () => {
 
     expect(screen.getByRole('heading', { name: /Panel options/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Standard options/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Value mappings/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Thresholds/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /TestPanel/ })).toBeInTheDocument();
   });
