@@ -19,11 +19,87 @@ msgid "common.save"
 msgstr ""
 
 #: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.alerting"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.alerting-admin"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.alerting-am-routes"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.alerting-channels"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.alerting-groups"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.alerting-list"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.alerting-receivers"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.alerting-silences"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.api-keys"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.change-password"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.config"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.create"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.create-alert"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.create-dashboard"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.create-folder"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.create-import"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
 msgid "nav.dashboards"
 msgstr ""
 
 #: public/app/core/components/NavBar/NavBarItem.tsx
-msgid "nav.folder"
+msgid "nav.datasources"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.explore"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+#~ msgid "nav.folder"
+#~ msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.help"
 msgstr ""
 
 #: public/app/core/components/NavBar/NavBarItem.tsx
@@ -31,11 +107,27 @@ msgid "nav.home"
 msgstr ""
 
 #: public/app/core/components/NavBar/NavBarItem.tsx
-msgid "nav.import"
-msgstr ""
+#~ msgid "nav.import"
+#~ msgstr ""
 
 #: public/app/core/components/NavBar/NavBarItem.tsx
 msgid "nav.library-panels"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.live"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.live-cloud"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.live-pipeline"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.live-status"
 msgstr ""
 
 #: public/app/core/components/NavBar/NavBarItem.tsx
@@ -47,11 +139,43 @@ msgid "nav.new-dashboard"
 msgstr ""
 
 #: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.new-folder"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.org-settings"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
 msgid "nav.playlists"
 msgstr ""
 
 #: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.plugins"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.profile-settings"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.service-accounts"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.sign-out"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
 msgid "nav.snapshots"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.teams"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.users"
 msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
