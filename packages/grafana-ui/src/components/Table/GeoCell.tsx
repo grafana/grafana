@@ -1,15 +1,10 @@
 import React from 'react';
-import { css, cx } from '@emotion/css';
 import { TableCellProps } from './types';
 import { Geometry } from 'ol/geom';
 import WKT from 'ol/format/WKT';
 
 export function GeoCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps } = props;
-
-  const txt = css`
-    font-family: monospace;
-  `;
 
   let disp = '';
 
@@ -24,7 +19,9 @@ export function GeoCell(props: TableCellProps): JSX.Element {
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      <div className={tableStyles.cellText} style={{fontFamily: "monospace"}}>{disp}</div>
+      <div className={tableStyles.cellText} style={{ fontFamily: 'monospace' }}>
+        {disp}
+      </div>
     </div>
   );
 }
