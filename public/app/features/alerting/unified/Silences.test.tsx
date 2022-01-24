@@ -60,7 +60,6 @@ const ui = {
     matcherName: byPlaceholderText('label'),
     matcherValue: byPlaceholderText('value'),
     comment: byPlaceholderText('Details about the silence'),
-    createdBy: byPlaceholderText('User'),
     matcherOperatorSelect: byLabelText('operator'),
     matcherOperator: (operator: MatcherOperator) => byText(operator, { exact: true }),
     addMatcherButton: byRole('button', { name: 'Add matcher' }),
@@ -248,7 +247,6 @@ describe('Silence edit', () => {
       userEvent.type(ui.editor.matcherValue.getAll()[3], 'dev|staging');
 
       userEvent.type(ui.editor.comment.get(), 'Test');
-      userEvent.type(ui.editor.createdBy.get(), 'Homer Simpson');
 
       userEvent.click(ui.editor.submit.get());
 
@@ -257,7 +255,6 @@ describe('Silence edit', () => {
           'grafana',
           expect.objectContaining({
             comment: 'Test',
-            createdBy: 'Homer Simpson',
             matchers: [
               { isEqual: true, isRegex: false, name: 'foo', value: 'bar' },
               { isEqual: false, isRegex: false, name: 'bar', value: 'buzz' },
