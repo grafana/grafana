@@ -26,12 +26,15 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 	mgmt := &FeatureManager{
 		isDevMod:  setting.Env != setting.Prod,
 		licensing: licensing,
-		flags:     make(map[string]*FeatureFlag, 30),
+		flags:     make(map[string]*models.FeatureFlag, 30),
 		enabled:   make(map[string]bool),
 		log:       log.New("featuremgmt"),
 	}
 
 	// Register the standard flags
+	if licensing != nil {
+		mgmt.registerFlags(licensing.ListFeatures()...)
+	}
 	mgmt.registerFlags(standardFeatureFlags...)
 
 	// Load the flags from `custom.ini` files
@@ -42,30 +45,13 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 	for key, val := range flags {
 		flag, ok := mgmt.flags[key]
 		if !ok {
-			flag = &FeatureFlag{
+			flag = &models.FeatureFlag{
 				Name:  key,
-				State: FeatureStateUnknown,
+				State: models.FeatureStateUnknown,
 			}
 			mgmt.flags[key] = flag
 		}
 		flag.Expression = fmt.Sprintf("%t", val) // true | false
-	}
-
-	// Make sure enterprise features are registered
-	for key, val := range licensing.EnabledFeatures() {
-		f, ok := mgmt.flags[key]
-		if ok {
-			f.RequiresLicense = true
-			if f.Expression == "" {
-				f.Expression = "true"
-			}
-		} else if val {
-			mgmt.registerFlags(FeatureFlag{
-				Name:            key,
-				RequiresLicense: true,
-				Expression:      "true",
-			})
-		}
 	}
 
 	// Load config settings

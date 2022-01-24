@@ -14,7 +14,7 @@ import (
 type FeatureManager struct {
 	isDevMod  bool
 	licensing models.Licensing
-	flags     map[string]*FeatureFlag
+	flags     map[string]*models.FeatureFlag
 	enabled   map[string]bool // only the "on" values
 	toggles   *FeatureToggles
 	config    string // path to config file
@@ -23,14 +23,15 @@ type FeatureManager struct {
 }
 
 // This will merge the flags with the current configuration
-func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
-	for idx, add := range flags {
+func (fm *FeatureManager) registerFlags(flags ...models.FeatureFlag) {
+	for _, add := range flags {
 		if add.Name == "" {
 			continue // skip it with warning?
 		}
 		flag, ok := fm.flags[add.Name]
 		if !ok {
-			fm.flags[add.Name] = &flags[idx]
+			f := add // make a copy
+			fm.flags[add.Name] = &f
 			continue
 		}
 
@@ -46,7 +47,7 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 		}
 
 		// The most recently defined state
-		if add.State != FeatureStateUnknown {
+		if add.State != models.FeatureStateUnknown {
 			flag.State = add.State
 		}
 
@@ -68,7 +69,7 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 	fm.update()
 }
 
-func (fm *FeatureManager) evaluate(ff *FeatureFlag) bool {
+func (fm *FeatureManager) evaluate(ff *models.FeatureFlag) bool {
 	if ff.RequiresDevMode && !fm.isDevMod {
 		return false
 	}
@@ -142,8 +143,8 @@ func (fm *FeatureManager) Toggles() *FeatureToggles {
 }
 
 // GetFlags returns all flag definitions
-func (fm *FeatureManager) GetFlags() []FeatureFlag {
-	v := make([]FeatureFlag, 0, len(fm.flags))
+func (fm *FeatureManager) GetFlags() []models.FeatureFlag {
+	v := make([]models.FeatureFlag, 0, len(fm.flags))
 	for _, value := range fm.flags {
 		v = append(v, *value)
 	}
@@ -154,7 +155,7 @@ func (fm *FeatureManager) HandleGetSettings(c *models.ReqContext) {
 	res := make(map[string]interface{}, 3)
 	res["enabled"] = fm.GetEnabled(c.Req.Context())
 
-	vv := make([]*FeatureFlag, 0, len(fm.flags))
+	vv := make([]*models.FeatureFlag, 0, len(fm.flags))
 	for _, v := range fm.flags {
 		vv = append(vv, v)
 	}

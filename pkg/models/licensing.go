@@ -14,8 +14,7 @@ type Licensing interface {
 
 	StateInfo() string
 
-	// List the enabled features
-	EnabledFeatures() map[string]bool
+	ListFeatures() []FeatureFlag
 
 	FeatureEnabled(feature string) bool
 }

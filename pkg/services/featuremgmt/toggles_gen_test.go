@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestFeatureToggleFiles(t *testing.T) {
@@ -111,7 +112,7 @@ func (ft *FeatureToggles) Is{{.CamleCase}}Enabled() bool {
 
 	data := struct {
 		CamleCase string
-		Flag      FeatureFlag
+		Flag      models.FeatureFlag
 		Ext       string
 	}{
 		CamleCase: "?",

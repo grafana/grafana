@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,14 +27,14 @@ func TestFeatureManager(t *testing.T) {
 
 	t.Run("check license validation", func(t *testing.T) {
 		ft := FeatureManager{
-			flags: map[string]*FeatureFlag{},
+			flags: map[string]*models.FeatureFlag{},
 		}
-		ft.registerFlags(FeatureFlag{
+		ft.registerFlags(models.FeatureFlag{
 			Name:            "a",
 			RequiresLicense: true,
 			RequiresDevMode: true,
 			Expression:      "true",
-		}, FeatureFlag{
+		}, models.FeatureFlag{
 			Name:       "b",
 			Expression: "true",
 		})
@@ -42,10 +43,10 @@ func TestFeatureManager(t *testing.T) {
 		require.False(t, ft.IsEnabled("c")) // uknown flag
 
 		// Try changing "requires license"
-		ft.registerFlags(FeatureFlag{
+		ft.registerFlags(models.FeatureFlag{
 			Name:            "a",
 			RequiresLicense: false, // shuld still require license!
-		}, FeatureFlag{
+		}, models.FeatureFlag{
 			Name:            "b",
 			RequiresLicense: true, // expression is still "true"
 		})
@@ -56,18 +57,18 @@ func TestFeatureManager(t *testing.T) {
 
 	t.Run("check description and docs configs", func(t *testing.T) {
 		ft := FeatureManager{
-			flags: map[string]*FeatureFlag{},
+			flags: map[string]*models.FeatureFlag{},
 		}
-		ft.registerFlags(FeatureFlag{
+		ft.registerFlags(models.FeatureFlag{
 			Name:        "a",
 			Description: "first",
-		}, FeatureFlag{
+		}, models.FeatureFlag{
 			Name:        "a",
 			Description: "second",
-		}, FeatureFlag{
+		}, models.FeatureFlag{
 			Name:    "a",
 			DocsURL: "http://something",
-		}, FeatureFlag{
+		}, models.FeatureFlag{
 			Name: "a",
 		})
 		flag := ft.flags["a"]
