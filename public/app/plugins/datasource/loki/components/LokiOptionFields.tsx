@@ -5,7 +5,7 @@ import { map } from 'lodash';
 
 // Types
 import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { LogsSortOrder, SelectableValue } from '@grafana/data';
 import { LokiDirectionType, LokiQuery, LokiQueryType } from '../types';
 
 export interface LokiOptionFieldsProps {
@@ -65,7 +65,11 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
   }
 
   function onQueryDirectionChange(value: LokiDirectionType) {
-    const nextQuery = { ...query, direction: value };
+    const nextQuery: LokiQuery = {
+      ...query,
+      direction: value,
+      defaultLogsSortOrder: value === 'FORWARD' ? LogsSortOrder.Ascending : LogsSortOrder.Descending,
+    };
     onChange(nextQuery);
   }
 

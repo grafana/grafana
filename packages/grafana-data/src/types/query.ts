@@ -1,3 +1,5 @@
+import { LogsSortOrder } from '.';
+
 /**
  * Attached to query results (not persisted)
  *
@@ -51,6 +53,11 @@ export interface DataQuery {
    * For non mixed scenarios this is undefined.
    */
   datasource?: DataSourceRef | null;
+
+  /**
+   * Specify the order in which the returned logs should be displayed initially
+   */
+  defaultLogsSortOrder?: LogsSortOrder;
 }
 
 /**

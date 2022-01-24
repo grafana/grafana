@@ -112,6 +112,23 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   }
 
+  componentDidUpdate(prevProps: Props) {
+    const prevDirection = prevProps.logsQueries?.[0]?.defaultLogsSortOrder;
+    const currentDirection = this.props.logsQueries?.[0]?.defaultLogsSortOrder;
+    if (this.state.logsSortOrder === null || prevDirection !== currentDirection) {
+      this.resetLogsSortingOrder();
+    }
+  }
+
+  resetLogsSortingOrder = () => {
+    this.setState(() => {
+      const { logsQueries } = this.props;
+
+      const query = logsQueries?.[0];
+      return { logsSortOrder: query?.defaultLogsSortOrder ?? LogsSortOrder.Descending };
+    });
+  };
+
   onChangeLogsSortOrder = () => {
     this.setState({ isFlipping: true });
     // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
