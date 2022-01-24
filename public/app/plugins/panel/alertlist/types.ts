@@ -11,6 +11,11 @@ export enum ShowOption {
   RecentChanges = 'changes',
 }
 
+export enum DisplayMode {
+  Grouped = 'grouped',
+  List = 'list',
+}
+
 export interface AlertListOptions {
   showOptions: ShowOption;
   maxItems: number;

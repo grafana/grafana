@@ -3,7 +3,7 @@ import { PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 import { AlertList } from './AlertList';
 import { UnifiedAlertList } from './UnifiedAlertList';
-import { AlertListOptions, ShowOption, SortOrder, UnifiedAlertListOptions } from './types';
+import { AlertListOptions, DisplayMode, ShowOption, SortOrder, UnifiedAlertListOptions } from './types';
 import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { config, DataSourcePicker } from '@grafana/runtime';
 import { RuleFolderPicker } from 'app/features/alerting/unified/components/rule-editor/RuleFolderPicker';
@@ -151,6 +151,19 @@ const alertList = new PanelPlugin<AlertListOptions>(AlertList)
 
 const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertList).setPanelOptions((builder) => {
   builder
+    .addRadio({
+      path: 'displayMode',
+      name: 'Display mode',
+      description: 'How the alert panel should be rendered',
+      defaultValue: DisplayMode.Grouped,
+      settings: {
+        options: [
+          { value: DisplayMode.Grouped, label: 'Grouped by alert' },
+          { value: DisplayMode.List, label: 'List of alert instances' },
+        ],
+      },
+      category: ['Options'],
+    })
     .addNumberInput({
       name: 'Max items',
       path: 'maxItems',
@@ -178,13 +191,6 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       path: 'dashboardAlerts',
       name: 'Alerts from this dashboard',
       description: 'Show alerts from this dashboard',
-      defaultValue: false,
-      category: ['Options'],
-    })
-    .addBooleanSwitch({
-      path: 'showInstances',
-      name: 'Show alert instances',
-      description: 'Show individual alert instances for multi-dimensional rules',
       defaultValue: false,
       category: ['Options'],
     })
