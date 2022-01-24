@@ -16,43 +16,28 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
 	"github.com/grafana/loki/pkg/logproto"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 )
 
-const pluginID = "loki"
-
 type Service struct {
-	im   instancemgmt.InstanceManager
-	plog log.Logger
+	im     instancemgmt.InstanceManager
+	plog   log.Logger
+	tracer tracing.Tracer
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
-	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
-	s := &Service{
-		im:   im,
-		plog: log.New("tsdb.loki"),
+func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
+	return &Service{
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		plog:   log.New("tsdb.loki"),
+		tracer: tracer,
 	}
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		s.plog.Error("Failed to register plugin", "error", err)
-		return nil, err
-	}
-
-	return s, nil
 }
 
 var (
@@ -140,11 +125,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	for _, query := range queries {
 		s.plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
-		span, _ := opentracing.StartSpanFromContext(ctx, "alerting.loki")
-		span.SetTag("expr", query.Expr)
-		span.SetTag("start_unixnano", query.Start.UnixNano())
-		span.SetTag("stop_unixnano", query.End.UnixNano())
-		defer span.Finish()
+		_, span := s.tracer.Start(ctx, "alerting.loki")
+		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
+		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
+		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
+		defer span.End()
 
 		// `limit` only applies to log-producing queries, and we
 		// currently only support metric queries, so this can be set to any value.

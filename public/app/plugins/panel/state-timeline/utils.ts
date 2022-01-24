@@ -236,13 +236,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     });
   }
 
-  if (sync !== DashboardCursorSync.Off) {
+  if (sync && sync() !== DashboardCursorSync.Off) {
     let cursor: Partial<uPlot.Cursor> = {};
 
     cursor.sync = {
       key: '__global_',
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          if (sync && sync() === DashboardCursorSync.Off) {
+            return false;
+          }
           payload.rowIndex = dataIdx;
           if (x < 0 && y < 0) {
             payload.point[xScaleUnit] = null;
