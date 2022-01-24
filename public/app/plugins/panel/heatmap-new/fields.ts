@@ -31,9 +31,13 @@ export function prepareHeatmapData(
     console.log('TODO find heatmap in the data');
   } else {
     // AUTO
-    console.log('1. try to find it');
-    console.log('1. calculate');
+    //console.log('1. try to find it');
+    //console.log('1. calculate');
   }
+
+  const heatmap = calculateHeatmapFromData(series, options.heatmap ?? {});
+  // TODO, check for error etc
+  return { heatmap };
 
   return {
     warning: 'TODO... actualy create heatmap',
