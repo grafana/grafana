@@ -556,7 +556,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
-		res, err := parseTimeSeriesResponse(value, query, false)
+		res, err := parseTimeSeriesResponse(value, query, true)
 		require.NoError(t, err)
 
 		// Test fields
@@ -594,7 +594,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(5, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query, false)
+		res, err := parseTimeSeriesResponse(value, query, true)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -631,7 +631,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(4, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query, false)
+		res, err := parseTimeSeriesResponse(value, query, true)
 
 		require.NoError(t, err)
 		require.Len(t, res, 1)
@@ -662,18 +662,18 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(4, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query, false)
 
 		require.NoError(t, err)
 		require.Len(t, res, 1)
-		require.Equal(t, res[0].Name, "legend Application")
+		require.Equal(t, res[0].Name, "{app=\"Application\", tag2=\"tag2\"}")
 		require.Len(t, res[0].Fields, 2)
 		require.Len(t, res[0].Fields[0].Labels, 0)
 		require.Equal(t, res[0].Fields[0].Name, "Time")
 		require.Len(t, res[0].Fields[1].Labels, 2)
 		require.Equal(t, res[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
 		require.Equal(t, res[0].Fields[1].Name, "Value")
-		require.Equal(t, res[0].Fields[1].Config.DisplayNameFromDS, "legend Application")
+		require.Equal(t, res[0].Fields[1].Config.DisplayNameFromDS, "{app=\"Application\", tag2=\"tag2\"}")
 	})
 
 	t.Run("matrix response with NaN value should be changed to null", func(t *testing.T) {
@@ -693,7 +693,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(4, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query, false)
+		res, err := parseTimeSeriesResponse(value, query, true)
 		require.NoError(t, err)
 
 		var nilPointer *float64
@@ -713,7 +713,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
-		res, err := parseTimeSeriesResponse(value, query, false)
+		res, err := parseTimeSeriesResponse(value, query, true)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -740,7 +740,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 
 		query := &PrometheusQuery{}
-		res, err := parseTimeSeriesResponse(value, query, false)
+		res, err := parseTimeSeriesResponse(value, query, true)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)

@@ -47,7 +47,7 @@ const (
 	ExemplarQueryType TimeSeriesQueryType = "exemplar"
 )
 
-func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuery, fromAlerting bool) (*backend.QueryDataResponse, error) {
+func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuery, fillNulls bool) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -101,7 +101,7 @@ func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*P
 			}
 		}
 
-		frames, err := parseTimeSeriesResponse(response, query, fromAlerting)
+		frames, err := parseTimeSeriesResponse(response, query, fillNulls)
 		if err != nil {
 			return &result, err
 		}
@@ -128,7 +128,12 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 		return &result, err
 	}
 
-	return s.runQueries(ctx, client, queries, req.Headers["FromAlert"] == "true")
+	fillNulls := true
+	if req.Headers["FromAlert"] == "true" {
+		fillNulls = false
+	}
+
+	return s.runQueries(ctx, client, queries, fillNulls)
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
@@ -202,7 +207,7 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 	return qs, nil
 }
 
-func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *PrometheusQuery, fromAlerting bool) (data.Frames, error) {
+func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *PrometheusQuery, fillNulls bool) (data.Frames, error) {
 	var (
 		frames     = data.Frames{}
 		nextFrames = data.Frames{}
@@ -214,8 +219,8 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 
 		switch v := value.(type) {
 		case model.Matrix:
-			if fromAlerting {
-				nextFrames = matrixToDataFramesWithoutNullFilling(v, query, nextFrames)
+			if fillNulls {
+				nextFrames = matrixToDataFramesWithNullFill(v, query, nextFrames)
 			} else {
 				nextFrames = matrixToDataFrames(v, query, nextFrames)
 			}
@@ -312,7 +317,7 @@ func interpolateVariables(model *QueryModel, interval time.Duration, timeRange t
 	return expr
 }
 
-func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
+func matrixToDataFramesWithNullFill(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
 	for _, v := range matrix {
 		tags := make(map[string]string, len(v.Metric))
 		for k, v := range v.Metric {
@@ -362,7 +367,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 	return frames
 }
 
-func matrixToDataFramesWithoutNullFilling(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
+func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
 	for _, v := range matrix {
 		tags := make(map[string]string, len(v.Metric))
 		for k, v := range v.Metric {
