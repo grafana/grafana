@@ -47,6 +47,7 @@ import {
 import { addParsedLabelToQuery, queryHasPipeParser } from './query_utils';
 
 import {
+  LokiDirectionType,
   LokiOptions,
   LokiQuery,
   LokiQueryType,
@@ -95,7 +96,7 @@ export class LokiDatasource
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
-  direction: 'BACKWARD' | 'FORWARD';
+  direction: LokiDirectionType;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -543,7 +544,7 @@ export class LokiDatasource
     );
   };
 
-  prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: 'BACKWARD' | 'FORWARD') => {
+  prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: LokiDirectionType) => {
     const labels = this.languageProvider.getLabelKeys();
     const query = Object.keys(row.labels)
       .map((label: string) => {

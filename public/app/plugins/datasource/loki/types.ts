@@ -4,7 +4,7 @@ export interface LokiInstantQueryRequest {
   query: string;
   limit?: number;
   time?: string;
-  direction?: 'BACKWARD' | 'FORWARD';
+  direction?: LokiDirectionType;
 }
 
 export interface LokiRangeQueryRequest {
@@ -13,7 +13,7 @@ export interface LokiRangeQueryRequest {
   start?: number;
   end?: number;
   step?: number;
-  direction?: 'BACKWARD' | 'FORWARD';
+  direction?: LokiDirectionType;
 }
 
 export enum LokiResultType {
@@ -28,6 +28,8 @@ export enum LokiQueryType {
   // Stream = 'stream',
 }
 
+export type LokiDirectionType = 'FORWARD' | 'BACKWARD';
+
 export interface LokiQuery extends DataQuery {
   queryType?: LokiQueryType;
   expr: string;
@@ -39,7 +41,7 @@ export interface LokiQuery extends DataQuery {
   maxLines?: number;
   resolution?: number;
   volumeQuery?: boolean; // Used in range queries
-  direction?: 'BACKWARD' | 'FORWARD';
+  direction?: LokiDirectionType;
 
   /* @deprecated now use queryType */
   range?: boolean;
@@ -50,7 +52,7 @@ export interface LokiQuery extends DataQuery {
 
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
-  direction?: 'BACKWARD' | 'FORWARD';
+  direction?: LokiDirectionType;
   derivedFields?: DerivedFieldConfig[];
   alertmanager?: string;
 }

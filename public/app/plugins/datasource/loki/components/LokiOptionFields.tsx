@@ -6,7 +6,7 @@ import { map } from 'lodash';
 // Types
 import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
-import { LokiQuery, LokiQueryType } from '../types';
+import { LokiDirectionType, LokiQuery, LokiQueryType } from '../types';
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
@@ -18,9 +18,7 @@ export interface LokiOptionFieldsProps {
   runOnBlur?: boolean;
 }
 
-type LokiDirectionType = 'FORWARD' | 'BACKWARD';
-
-const queryDirectionOptions = [
+const queryDirectionOptions: Array<SelectableValue<LokiDirectionType>> = [
   { value: 'FORWARD', label: 'Forward', description: 'Run query forward in time.' },
   { value: 'BACKWARD', label: 'Backward', description: 'Run query backward in time.' },
 ];

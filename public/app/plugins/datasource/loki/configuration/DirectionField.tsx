@@ -1,5 +1,7 @@
 import React from 'react';
 import { LegacyForms, RadioButtonGroup } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { LokiDirectionType } from '../types';
 const { FormField } = LegacyForms;
 
 type Props = {
@@ -7,7 +9,7 @@ type Props = {
   onChange: (value: string) => void;
 };
 
-const queryDirectionOptions = [
+const queryDirectionOptions: Array<SelectableValue<LokiDirectionType>> = [
   { value: 'FORWARD', label: 'Forward', description: 'By default, run queries forward in time.' },
   { value: 'BACKWARD', label: 'Backward', description: 'By dfault, run queries backward in time.' },
 ];

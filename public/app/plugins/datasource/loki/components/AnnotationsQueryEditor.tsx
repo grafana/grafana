@@ -1,13 +1,13 @@
 // Libraries
 import React, { memo } from 'react';
 // Types
-import { LokiQuery } from '../types';
+import { LokiDirectionType, LokiQuery } from '../types';
 import { LokiQueryField } from './LokiQueryField';
 import { LokiOptionFields } from './LokiOptionFields';
 import LokiDatasource from '../datasource';
 
 interface Props {
-  direction?: 'BACKWARD' | 'FORWARD';
+  direction?: LokiDirectionType;
   expr: string;
   maxLines?: number;
   instant?: boolean;
