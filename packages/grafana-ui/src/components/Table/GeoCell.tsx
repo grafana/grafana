@@ -24,7 +24,7 @@ export function GeoCell(props: TableCellProps): JSX.Element {
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      <div className={cx(tableStyles.cellText, txt)}>{disp}</div>
+      <div className={tableStyles.cellText} style={{fontFamily: "monospace"}}>{disp}</div>
     </div>
   );
 }
