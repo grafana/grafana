@@ -257,9 +257,10 @@ export function getSeriesProperties(
   // Clamp time range to visible logs otherwise big parts of the graph might look empty
   if (absoluteRange) {
     const earliestTsLogs = sortedRows[0].timeEpochMs;
+    const latestTsLogs = sortedRows[sortedRows.length - 1].timeEpochMs;
 
     requestedRangeMs = absoluteRange.to - absoluteRange.from;
-    visibleRangeMs = absoluteRange.to - earliestTsLogs;
+    visibleRangeMs = latestTsLogs - earliestTsLogs;
 
     if (visibleRangeMs > 0) {
       // Adjust interval bucket size for potentially shorter visible range
@@ -269,7 +270,8 @@ export function getSeriesProperties(
       bucketSize = Math.max(Math.ceil(resolutionIntervalMs * pxPerBar), minimumBucketSize);
       // makeSeriesForLogs() aligns dataspoints with time buckets, so we do the same here to not cut off data
       const adjustedEarliest = Math.floor(earliestTsLogs / bucketSize) * bucketSize;
-      visibleRange = { from: adjustedEarliest, to: absoluteRange.to };
+      const adjustedLatest = Math.ceil(latestTsLogs / bucketSize) * bucketSize;
+      visibleRange = { from: adjustedEarliest, to: adjustedLatest };
     } else {
       // We use visibleRangeMs to calculate range coverage of received logs. However, some data sources are rounding up range in requests. This means that received logs
       // can (in edge cases) be outside of the requested range and visibleRangeMs < 0. In that case, we want to change visibleRangeMs to be 1 so we can calculate coverage.

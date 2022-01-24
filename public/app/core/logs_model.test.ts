@@ -941,10 +941,10 @@ describe('getSeriesProperties()', () => {
     ] as any;
     const range = { from: 0, to: 30 };
     const result = getSeriesProperties(rows, 3, range, 2, 1);
-    // Bucketsize 6 gets shortened to 4 because of new visible range is 20ms vs original range being 30ms
-    expect(result.bucketSize).toBe(4);
-    // From time is also aligned to bucketSize (divisible by 4)
-    expect(result.visibleRange).toMatchObject({ from: 8, to: 30 });
+    // Bucketsize 6 gets shortened to 2 because of new visible range is 10ms vs original range being 30ms
+    expect(result.bucketSize).toBe(2);
+    // From time is also aligned to bucketSize (divisible by 2)
+    expect(result.visibleRange).toMatchObject({ from: 10, to: 20 });
   });
 });
 
