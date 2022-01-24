@@ -7,6 +7,7 @@ import { LokiOptionFields } from './LokiOptionFields';
 import LokiDatasource from '../datasource';
 
 interface Props {
+  direction?: 'BACKWARD' | 'FORWARD';
   expr: string;
   maxLines?: number;
   instant?: boolean;
@@ -15,10 +16,11 @@ interface Props {
 }
 
 export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEditor(props: Props) {
-  const { expr, maxLines, instant, datasource, onChange } = props;
+  const { direction, expr, maxLines, instant, datasource, onChange } = props;
 
   const queryWithRefId: LokiQuery = {
     refId: '',
+    direction,
     expr,
     maxLines,
     instant,
@@ -34,6 +36,7 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
         history={[]}
         ExtraFieldElement={
           <LokiOptionFields
+            queryDirection={queryWithRefId.direction ?? datasource.direction ?? 'BACKWARD'}
             lineLimitValue={queryWithRefId?.maxLines?.toString() || ''}
             resolution={queryWithRefId.resolution || 1}
             query={queryWithRefId}
