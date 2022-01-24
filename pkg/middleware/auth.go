@@ -128,20 +128,22 @@ func Auth(options *AuthOptions) web.Handler {
 	}
 }
 
-// AdminOrFeatureEnabled creates a middleware that allows access
-// if the signed in user is either an Org Admin or if the
-// feature flag is enabled.
+// AdminOrEditorAndFeatureEnabled creates a middleware that allows
+// access if the signed in user is either an Org Admin or if they
+// are an Org Editor and the feature flag is enabled.
 // Intended for when feature flags open up access to APIs that
 // are otherwise only available to admins.
-func AdminOrFeatureEnabled(enabled bool) web.Handler {
+func AdminOrEditorAndFeatureEnabled(enabled bool) web.Handler {
 	return func(c *models.ReqContext) {
 		if c.OrgRole == models.ROLE_ADMIN {
 			return
 		}
 
-		if !enabled {
-			accessForbidden(c)
+		if c.OrgRole == models.ROLE_EDITOR && enabled {
+			return
 		}
+
+		accessForbidden(c)
 	}
 }
 
