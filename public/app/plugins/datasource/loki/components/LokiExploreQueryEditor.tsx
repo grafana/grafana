@@ -25,6 +25,7 @@ export function LokiExploreQueryEditor(props: Props) {
       range={range}
       ExtraFieldElement={
         <LokiOptionFields
+          queryDirection={ query.direction ?? datasource.direction ?? 'BACKWARD' }
           lineLimitValue={query?.maxLines?.toString() || ''}
           resolution={query.resolution || 1}
           query={query}

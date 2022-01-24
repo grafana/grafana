@@ -11,11 +11,19 @@ import { LokiQuery, LokiQueryType } from '../types';
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
   resolution: number;
+  queryDirection: LokiDirectionType;
   query: LokiQuery;
   onChange: (value: LokiQuery) => void;
   onRunQuery: () => void;
   runOnBlur?: boolean;
 }
+
+type LokiDirectionType = 'FORWARD' | 'BACKWARD';
+
+const queryDirectionOptions = [
+  { value: 'FORWARD', label: 'Forward', description: 'Run query forward in time.' },
+  { value: 'BACKWARD', label: 'Backward', description: 'Run query backward in time.' },
+];
 
 const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
   { value: LokiQueryType.Range, label: 'Range', description: 'Run query over a range of time.' },
@@ -44,7 +52,7 @@ const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = [DEFAULT_RESOLUTION].
 );
 
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
-  const { lineLimitValue, resolution, onRunQuery, runOnBlur, onChange } = props;
+  const { lineLimitValue, resolution, queryDirection, onRunQuery, runOnBlur, onChange } = props;
   const query = props.query ?? {};
   let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
 
@@ -56,6 +64,12 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
   function onQueryTypeChange(queryType: LokiQueryType) {
     const { instant, range, ...rest } = query;
     onChange({ ...rest, queryType });
+  }
+
+  function onQueryDirectionChange(value: LokiDirectionType) {
+    let nextQuery;
+    nextQuery = { ...query, direction: value };
+    onChange(nextQuery);
   }
 
   function preprocessMaxLines(value: string): number {
@@ -157,6 +171,30 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             menuShouldPortal
           />
         </InlineField>
+      </div>
+      {/*Query direction field*/}
+      <div
+        data-testid="queryDirectionField"
+        className={cx(
+          'gf-form explore-input-margin',
+          css`
+            flex-wrap: nowrap;
+          `
+        )}
+        aria-label="Query direction field"
+      >
+        <InlineFormLabel width="auto">Query direction</InlineFormLabel>
+
+        <RadioButtonGroup
+          options={queryDirectionOptions}
+          value={queryDirection}
+          onChange={(direction: LokiDirectionType) => {
+            onQueryDirectionChange(direction);
+            if (runOnBlur) {
+              onRunQuery();
+            }
+          }}
+        />
       </div>
     </div>
   );

@@ -39,6 +39,7 @@ export interface LokiQuery extends DataQuery {
   maxLines?: number;
   resolution?: number;
   volumeQuery?: boolean; // Used in range queries
+  direction?: 'BACKWARD' | 'FORWARD';
 
   /* @deprecated now use queryType */
   range?: boolean;
@@ -49,6 +50,7 @@ export interface LokiQuery extends DataQuery {
 
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
+  direction?: 'BACKWARD' | 'FORWARD';
   derivedFields?: DerivedFieldConfig[];
   alertmanager?: string;
 }

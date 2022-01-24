@@ -15,6 +15,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
         }
       }
       resolution={1}
+      queryDirection="BACKWARD"
     />
   }
   data={

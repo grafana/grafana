@@ -3,6 +3,7 @@ import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana
 import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
 import { LokiOptions } from '../types';
 import { MaxLinesField } from './MaxLinesField';
+import { DirectionField } from './DirectionField';
 import { DerivedFields } from './DerivedFields';
 import { getAllAlertmanagerDataSources } from 'app/features/alerting/unified/utils/alertmanager';
 
@@ -22,6 +23,7 @@ const makeJsonUpdater = <T extends any>(field: keyof LokiOptions) => (
 };
 
 const setMaxLines = makeJsonUpdater('maxLines');
+const setDirection = makeJsonUpdater('direction');
 const setDerivedFields = makeJsonUpdater('derivedFields');
 
 export const ConfigEditor = (props: Props) => {
@@ -49,6 +51,10 @@ export const ConfigEditor = (props: Props) => {
             <MaxLinesField
               value={options.jsonData.maxLines || ''}
               onChange={(value) => onOptionsChange(setMaxLines(options, value))}
+            />
+            <DirectionField
+              value={options.jsonData.direction || 'BACKWARD'}
+              onChange={(value) => onOptionsChange(setDirection(options, value))}
             />
           </div>
         </div>
