@@ -353,11 +353,12 @@ func (sch *schedule) adminConfigSync(ctx context.Context) error {
 }
 
 func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
+	var tickNum int64
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 	for {
 		select {
 		case tick := <-sch.ticker.C():
-			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
+			tickNum += 1
 			disabledOrgs := make([]int64, 0, len(sch.disabledOrgs))
 			for disabledOrg := range sch.disabledOrgs {
 				disabledOrgs = append(disabledOrgs, disabledOrg)
