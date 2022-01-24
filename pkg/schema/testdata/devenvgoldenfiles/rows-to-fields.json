@@ -24,7 +24,10 @@
 	"links": [],
 	"panels": [
 		{
-			"datasource": "-- Dashboard --",
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -80,7 +83,10 @@
 			"transformations": []
 		},
 		{
-			"datasource": "-- Dashboard --",
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -297,7 +303,10 @@
 			"repeatDirection": "h"
 		},
 		{
-			"datasource": "-- Dashboard --",
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -353,7 +362,10 @@
 			"transformations": []
 		},
 		{
-			"datasource": "-- Dashboard --",
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -651,7 +663,7 @@
 		}
 	],
 	"refresh": "",
-	"schemaVersion": 30,
+	"schemaVersion": 33,
 	"style": "dark",
 	"tags": [
 		"gdev",

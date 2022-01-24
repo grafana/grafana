@@ -8,7 +8,6 @@ import {
   addDurationToDate,
   dateTime,
   isValidDate,
-  UrlQueryMap,
   GrafanaTheme2,
 } from '@grafana/data';
 import { useDebounce } from 'react-use';
@@ -24,35 +23,34 @@ import { css, cx } from '@emotion/css';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { makeAMLink } from '../../utils/misc';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { parseQueryParamMatchers } from '../../utils/matchers';
 import { matcherToMatcherField, matcherFieldToMatcher } from '../../utils/alertmanager';
+import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 
 interface Props {
   silence?: Silence;
   alertManagerSourceName: string;
 }
 
-const defaultsFromQuery = (queryParams: UrlQueryMap): Partial<SilenceFormFields> => {
+const defaultsFromQuery = (searchParams: URLSearchParams): Partial<SilenceFormFields> => {
   const defaults: Partial<SilenceFormFields> = {};
 
-  const { matchers, comment } = queryParams;
+  const comment = searchParams.get('comment');
+  const matchers = searchParams.getAll('matcher');
 
-  if (typeof matchers === 'string') {
-    const formMatchers = parseQueryParamMatchers(matchers);
-    if (formMatchers.length) {
-      defaults.matchers = formMatchers.map(matcherToMatcherField);
-    }
+  const formMatchers = parseQueryParamMatchers(matchers);
+  if (formMatchers.length) {
+    defaults.matchers = formMatchers.map(matcherToMatcherField);
   }
 
-  if (typeof comment === 'string') {
+  if (comment) {
     defaults.comment = comment;
   }
 
   return defaults;
 };
 
-const getDefaultFormValues = (queryParams: UrlQueryMap, silence?: Silence): SilenceFormFields => {
+const getDefaultFormValues = (searchParams: URLSearchParams, silence?: Silence): SilenceFormFields => {
   const now = new Date();
   if (silence) {
     const isExpired = Date.parse(silence.endsAt) < Date.now();
@@ -89,14 +87,15 @@ const getDefaultFormValues = (queryParams: UrlQueryMap, silence?: Silence): Sile
       matcherName: '',
       matcherValue: '',
       timeZone: DefaultTimeZone,
-      ...defaultsFromQuery(queryParams),
+      ...defaultsFromQuery(searchParams),
     };
   }
 };
 
 export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) => {
-  const [queryParams] = useQueryParams();
-  const defaultValues = useMemo(() => getDefaultFormValues(queryParams, silence), [silence, queryParams]);
+  const [urlSearchParams] = useURLSearchParams();
+
+  const defaultValues = useMemo(() => getDefaultFormValues(urlSearchParams, silence), [silence, urlSearchParams]);
   const formAPI = useForm({ defaultValues });
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);

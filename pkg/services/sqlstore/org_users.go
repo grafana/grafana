@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -107,9 +108,23 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 	whereConditions = append(whereConditions, "org_user.org_id = ?")
 	whereParams = append(whereParams, query.OrgId)
 
+	if query.UserID != 0 {
+		whereConditions = append(whereConditions, "org_user.user_id = ?")
+		whereParams = append(whereParams, query.UserID)
+	}
+
 	// TODO: add to chore, for cleaning up after we have created
 	// service accounts table in the modelling
-	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = false", x.Dialect().Quote("user")))
+	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
+
+	if ss.Cfg.IsFeatureToggleEnabled("accesscontrol") {
+		q, args, err := accesscontrol.Filter(ctx, ss.Dialect, "org_user.user_id", "users", "org.users:read", query.User)
+		if err != nil {
+			return err
+		}
+		whereConditions = append(whereConditions, q)
+		whereParams = append(whereParams, args...)
+	}
 
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"
@@ -163,7 +178,16 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 
 	// TODO: add to chore, for cleaning up after we have created
 	// service accounts table in the modelling
-	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = false", x.Dialect().Quote("user")))
+	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
+
+	if ss.Cfg.IsFeatureToggleEnabled("accesscontrol") {
+		q, args, err := accesscontrol.Filter(ctx, ss.Dialect, "org_user.user_id", "users", "org.users:read", query.User)
+		if err != nil {
+			return err
+		}
+		whereConditions = append(whereConditions, q)
+		whereParams = append(whereParams, args...)
+	}
 
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"

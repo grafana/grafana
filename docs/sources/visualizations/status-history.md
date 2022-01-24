@@ -51,6 +51,6 @@ use gradient color schemes to color values.
 
 ## Legend options
 
-When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` option under [Standard options]({{< relref "../panels/standard-options.md" >}}) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
+When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` as referenced in [Apply color to a series and fields]({{< relref "../panels/working-with-panels/apply-color-to-series.md" >}}) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
 
 {{< docs/shared "visualizations/legend-mode.md" >}}

@@ -3,10 +3,10 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -15,9 +15,14 @@ import (
 
 // GET /api/teams/:teamId/members
 func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
-	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId")}
+	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: teamId}
+
+	if err := hs.SQLStore.GetTeamMembers(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get Team Members", err)
 	}
 
@@ -44,17 +49,21 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 // POST /api/teams/:teamId/members
 func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 	cmd := models.AddTeamMemberCommand{}
+	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgId
-	cmd.TeamId = c.ParamsInt64(":teamId")
+	cmd.TeamId, err = strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
 
 	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.TeamId, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to add team member", err)
 	}
 
-	err := addTeamMember(hs.SQLStore, cmd.UserId, cmd.OrgId, cmd.TeamId, cmd.External, cmd.Permission)
+	err = addTeamMember(hs.SQLStore, cmd.UserId, cmd.OrgId, cmd.TeamId, cmd.External, cmd.Permission)
 	if err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
@@ -78,7 +87,10 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	teamId := c.ParamsInt64(":teamId")
+	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
 	orgId := c.OrgId
 
 	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
@@ -90,10 +102,13 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 	}
 
 	cmd.TeamId = teamId
-	cmd.UserId = c.ParamsInt64(":userId")
+	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "userId is invalid", err)
+	}
 	cmd.OrgId = orgId
 
-	if err := hs.Bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.UpdateTeamMember(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrTeamMemberNotFound) {
 			return response.Error(404, "Team member not found.", nil)
 		}
@@ -105,8 +120,14 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 // DELETE /api/teams/:teamId/members/:userId
 func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	orgId := c.OrgId
-	teamId := c.ParamsInt64(":teamId")
-	userId := c.ParamsInt64(":userId")
+	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
+	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "userId is invalid", err)
+	}
 
 	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
 		return response.Error(403, "Not allowed to remove team member", err)
@@ -117,7 +138,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 		protectLastAdmin = true
 	}
 
-	if err := hs.Bus.Dispatch(c.Req.Context(), &models.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
+	if err := hs.SQLStore.RemoveTeamMember(c.Req.Context(), &models.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
 		}

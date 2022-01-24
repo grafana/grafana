@@ -1,14 +1,12 @@
 package api
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -32,70 +30,46 @@ func (stub *testLogger) Warn(testMessage string, ctx ...interface{}) {
 
 func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("Given two teams", func(t *testing.T) {
-		mockResult := models.SearchTeamQueryResult{
-			Teams: []*models.TeamDTO{
-				{Name: "team1"},
-				{Name: "team2"},
-			},
-			TotalCount: 2,
-		}
+		hs := setupSimpleHTTPServer(nil)
+		hs.SQLStore = sqlstore.InitTestDB(t)
 
-		hs := &HTTPServer{
-			Cfg: setting.NewCfg(),
-		}
-
-		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
-			var sentLimit int
-			var sendPage int
-			bus.AddHandler("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
-				query.Result = mockResult
-
-				sentLimit = query.Limit
-				sendPage = query.Page
-
-				return nil
-			})
+		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
+			_, err := hs.SQLStore.CreateTeam("team1", "", 1)
+			require.NoError(t, err)
+			_, err = hs.SQLStore.CreateTeam("team2", "", 1)
+			require.NoError(t, err)
 
 			sc.handlerFunc = hs.SearchTeams
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-
-			assert.Equal(t, 1000, sentLimit)
-			assert.Equal(t, 1, sendPage)
-
-			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+			require.Equal(t, http.StatusOK, sc.resp.Code)
+			var resp models.SearchTeamQueryResult
+			err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 			require.NoError(t, err)
 
-			assert.Equal(t, 2, respJSON.Get("totalCount").MustInt())
-			assert.Equal(t, 2, len(respJSON.Get("teams").MustArray()))
+			assert.EqualValues(t, 2, resp.TotalCount)
+			assert.Equal(t, 2, len(resp.Teams))
 		})
 
-		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
-			var sentLimit int
-			var sendPage int
-			bus.AddHandler("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
-				query.Result = mockResult
-
-				sentLimit = query.Limit
-				sendPage = query.Page
-
-				return nil
-			})
+		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
+			_, err := hs.SQLStore.CreateTeam("team1", "", 1)
+			require.NoError(t, err)
+			_, err = hs.SQLStore.CreateTeam("team2", "", 1)
+			require.NoError(t, err)
 
 			sc.handlerFunc = hs.SearchTeams
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
+			require.Equal(t, http.StatusOK, sc.resp.Code)
+			var resp models.SearchTeamQueryResult
+			err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+			require.NoError(t, err)
 
-			assert.Equal(t, 10, sentLimit)
-			assert.Equal(t, 2, sendPage)
+			assert.EqualValues(t, 2, resp.TotalCount)
+			assert.Equal(t, 0, len(resp.Teams))
 		})
 	})
 
 	t.Run("When creating team with API key", func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
-		hs := &HTTPServer{
-			Cfg: setting.NewCfg(),
-			Bus: bus.GetBus(),
-		}
+		hs := setupSimpleHTTPServer(nil)
 		hs.Cfg.EditorsCanAdmin = true
 
 		teamName := "team foo"
@@ -201,7 +175,7 @@ func TestTeamAPIEndpoint_CreateTeam_FGAC(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(createTeamCmd, 1))
 	t.Run("Access control allows creating teams with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsCreate}}, 1)
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionTeamsCreate}}, 1)
 		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})

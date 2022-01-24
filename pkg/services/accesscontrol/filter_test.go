@@ -1,4 +1,4 @@
-package accesscontrol
+package accesscontrol_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -18,7 +19,7 @@ type filterTest struct {
 	sqlID         string
 	action        string
 	prefix        string
-	permissions   []*Permission
+	permissions   []*accesscontrol.Permission
 	expectedQuery string
 	expectedArgs  []interface{}
 }
@@ -31,7 +32,7 @@ func TestFilter(t *testing.T) {
 			sqlID:      "data_source.id",
 			prefix:     "datasources",
 			action:     "datasources:query",
-			permissions: []*Permission{
+			permissions: []*accesscontrol.Permission{
 				{Action: "datasources:query", Scope: "datasources:id:1"},
 				{Action: "datasources:query", Scope: "datasources:id:2"},
 				{Action: "datasources:query", Scope: "datasources:id:3"},
@@ -65,7 +66,7 @@ func TestFilter(t *testing.T) {
 			sqlID:      "dashboard.id",
 			prefix:     "dashboards",
 			action:     "dashboards:read",
-			permissions: []*Permission{
+			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards:read", Scope: "dashboards:id:2"},
 				{Action: "dashboards:read", Scope: "dashboards:id:5"},
@@ -95,7 +96,7 @@ func TestFilter(t *testing.T) {
 			sqlID:      "user.id",
 			prefix:     "users",
 			action:     "users:read",
-			permissions: []*Permission{
+			permissions: []*accesscontrol.Permission{
 				{Action: "users:read", Scope: "users:id:1"},
 				{Action: "users:read", Scope: "users:id:100"},
 				// Other permissions
@@ -123,21 +124,22 @@ func TestFilter(t *testing.T) {
 	}
 
 	// set sqlIDAcceptList before running tests
-	sqlIDAcceptList = map[string]struct{}{
+	restore := accesscontrol.SetAcceptListForTest(map[string]struct{}{
 		"user.id":        {},
 		"dashboard.id":   {},
 		"data_source.id": {},
-	}
+	})
+	defer restore()
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			query, args, err := Filter(
+			query, args, err := accesscontrol.Filter(
 				context.Background(),
 				FakeDriver{name: tt.driverName},
 				tt.sqlID,
 				tt.prefix,
 				tt.action,
-				&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: GroupScopesByAction(tt.permissions)}},
+				&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}},
 			)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedQuery, query)
@@ -153,7 +155,7 @@ func TestFilter(t *testing.T) {
 type filterDatasourcesTestCase struct {
 	desc                string
 	sqlID               string
-	permissions         []*Permission
+	permissions         []*accesscontrol.Permission
 	expectedDataSources []string
 	expectErr           bool
 }
@@ -163,7 +165,7 @@ func TestFilter_Datasources(t *testing.T) {
 		{
 			desc:  "expect all data sources to be returned",
 			sqlID: "data_source.id",
-			permissions: []*Permission{
+			permissions: []*accesscontrol.Permission{
 				{Action: "datasources:read", Scope: "datasources:*"},
 			},
 			expectedDataSources: []string{"ds:1", "ds:2", "ds:3", "ds:4", "ds:5", "ds:6", "ds:7", "ds:8", "ds:9", "ds:10"},
@@ -171,13 +173,13 @@ func TestFilter_Datasources(t *testing.T) {
 		{
 			desc:                "expect no data sources to be returned",
 			sqlID:               "data_source.id",
-			permissions:         []*Permission{},
+			permissions:         []*accesscontrol.Permission{},
 			expectedDataSources: []string{},
 		},
 		{
 			desc:  "expect data sources with id 3, 7 and 8 to be returned",
 			sqlID: "data_source.id",
-			permissions: []*Permission{
+			permissions: []*accesscontrol.Permission{
 				{Action: "datasources:read", Scope: "datasources:id:3"},
 				{Action: "datasources:read", Scope: "datasources:id:7"},
 				{Action: "datasources:read", Scope: "datasources:id:8"},
@@ -187,7 +189,7 @@ func TestFilter_Datasources(t *testing.T) {
 		{
 			desc:  "expect error if sqlID is not in the accept list",
 			sqlID: "other.id",
-			permissions: []*Permission{
+			permissions: []*accesscontrol.Permission{
 				{Action: "datasources:read", Scope: "datasources:id:3"},
 				{Action: "datasources:read", Scope: "datasources:id:7"},
 				{Action: "datasources:read", Scope: "datasources:id:8"},
@@ -198,9 +200,10 @@ func TestFilter_Datasources(t *testing.T) {
 	}
 
 	// set sqlIDAcceptList before running tests
-	sqlIDAcceptList = map[string]struct{}{
+	restore := accesscontrol.SetAcceptListForTest(map[string]struct{}{
 		"data_source.id": {},
-	}
+	})
+	defer restore()
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -216,13 +219,13 @@ func TestFilter_Datasources(t *testing.T) {
 			}
 
 			baseSql := `SELECT data_source.* FROM data_source WHERE`
-			query, args, err := Filter(
+			query, args, err := accesscontrol.Filter(
 				context.Background(),
 				&FakeDriver{name: "sqlite3"},
 				tt.sqlID,
 				"datasources",
 				"datasources:read",
-				&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: GroupScopesByAction(tt.permissions)}},
+				&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}},
 			)
 
 			if !tt.expectErr {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -47,7 +48,11 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
-	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, c.OrgId, c.ParamsInt64(":id"))
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, c.OrgId, id)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
