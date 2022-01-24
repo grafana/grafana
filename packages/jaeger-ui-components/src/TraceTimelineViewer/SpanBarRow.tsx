@@ -432,6 +432,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}
             />
+            {span.childSpanCount}
             <a
               className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
               aria-checked={isDetailExpanded}

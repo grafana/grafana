@@ -171,6 +171,11 @@ export default function SpanDetail(props: SpanDetailProps) {
       label: 'Start Time:',
       value: formatDuration(relativeStartTime),
     },
+    {
+      key: 'child span count',
+      label: 'Child Span Count',
+      value: span.childSpanCount,
+    },
   ];
   const styles = useStyles2(getStyles);
   const link = createSpanLink?.(span);
