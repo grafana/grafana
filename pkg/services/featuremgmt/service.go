@@ -26,7 +26,7 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 	mgmt := &FeatureManager{
 		isDevMod:  setting.Env != setting.Prod,
 		licensing: licensing,
-		flags:     make(map[string]*models.FeatureFlag, 30),
+		flags:     make(map[string]*FeatureFlag, 30),
 		enabled:   make(map[string]bool),
 		log:       log.New("featuremgmt"),
 	}
@@ -42,9 +42,9 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 	for key, val := range flags {
 		flag, ok := mgmt.flags[key]
 		if !ok {
-			flag = &models.FeatureFlag{
+			flag = &FeatureFlag{
 				Name:  key,
-				State: models.FeatureStateUnknown,
+				State: FeatureStateUnknown,
 			}
 			mgmt.flags[key] = flag
 		}
@@ -71,8 +71,6 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 }
 
 // ProvideToggles allows read-only access to the feature state
-func ProvideToggles(mgmt *FeatureManager) *FeatureToggles {
-	return &FeatureToggles{
-		manager: mgmt,
-	}
+func ProvideToggles(mgmt *FeatureManager) FeatureToggles {
+	return mgmt
 }

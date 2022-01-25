@@ -10,7 +10,7 @@ import (
 
 func TestFeatureService(t *testing.T) {
 	license := stubLicenseServier{
-		flags: []models.FeatureFlag{
+		flags: []FeatureFlag{
 			{
 				Name:            "a.yes.default",
 				RequiresLicense: true,
@@ -51,7 +51,7 @@ var (
 )
 
 type stubLicenseServier struct {
-	flags   []models.FeatureFlag
+	flags   []FeatureFlag
 	enabled map[string]bool
 }
 

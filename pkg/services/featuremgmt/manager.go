@@ -11,19 +11,22 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+var (
+	_ FeatureToggles = (*FeatureManager)(nil)
+)
+
 type FeatureManager struct {
 	isDevMod  bool
 	licensing models.Licensing
-	flags     map[string]*models.FeatureFlag
+	flags     map[string]*FeatureFlag
 	enabled   map[string]bool // only the "on" values
-	toggles   *FeatureToggles
-	config    string // path to config file
+	config    string          // path to config file
 	vars      map[string]interface{}
 	log       log.Logger
 }
 
 // This will merge the flags with the current configuration
-func (fm *FeatureManager) registerFlags(flags ...models.FeatureFlag) {
+func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 	for _, add := range flags {
 		if add.Name == "" {
 			continue // skip it with warning?
@@ -47,7 +50,7 @@ func (fm *FeatureManager) registerFlags(flags ...models.FeatureFlag) {
 		}
 
 		// The most recently defined state
-		if add.State != models.FeatureStateUnknown {
+		if add.State != FeatureStateUnknown {
 			flag.State = add.State
 		}
 
@@ -69,7 +72,7 @@ func (fm *FeatureManager) registerFlags(flags ...models.FeatureFlag) {
 	fm.update()
 }
 
-func (fm *FeatureManager) evaluate(ff *models.FeatureFlag) bool {
+func (fm *FeatureManager) evaluate(ff *FeatureFlag) bool {
 	if ff.RequiresDevMode && !fm.isDevMod {
 		return false
 	}
@@ -134,17 +137,9 @@ func (fm *FeatureManager) GetEnabled(ctx context.Context) map[string]bool {
 	return enabled
 }
 
-// Toggles returns FeatureToggles.
-func (fm *FeatureManager) Toggles() *FeatureToggles {
-	if fm.toggles == nil {
-		fm.toggles = &FeatureToggles{manager: fm}
-	}
-	return fm.toggles
-}
-
 // GetFlags returns all flag definitions
-func (fm *FeatureManager) GetFlags() []models.FeatureFlag {
-	v := make([]models.FeatureFlag, 0, len(fm.flags))
+func (fm *FeatureManager) GetFlags() []FeatureFlag {
+	v := make([]FeatureFlag, 0, len(fm.flags))
 	for _, value := range fm.flags {
 		v = append(v, *value)
 	}
@@ -155,7 +150,7 @@ func (fm *FeatureManager) HandleGetSettings(c *models.ReqContext) {
 	res := make(map[string]interface{}, 3)
 	res["enabled"] = fm.GetEnabled(c.Req.Context())
 
-	vv := make([]*models.FeatureFlag, 0, len(fm.flags))
+	vv := make([]*FeatureFlag, 0, len(fm.flags))
 	for _, v := range fm.flags {
 		vv = append(vv, v)
 	}
@@ -187,10 +182,4 @@ func WithFeatures(spec ...interface{}) *FeatureManager {
 	}
 
 	return &FeatureManager{enabled: enabled}
-}
-
-func WithToggles(spec ...interface{}) *FeatureToggles {
-	return &FeatureToggles{
-		manager: WithFeatures(spec...),
-	}
 }

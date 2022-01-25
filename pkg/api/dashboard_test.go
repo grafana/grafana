@@ -89,7 +89,7 @@ type testState struct {
 }
 
 func newTestLive(t *testing.T) *live.GrafanaLive {
-	features := featuremgmt.WithToggles()
+	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	gLive, err := live.ProvideService(nil, cfg,

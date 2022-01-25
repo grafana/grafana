@@ -182,7 +182,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		settings := &setting.OSSImpl{
 			Cfg: &setting.Cfg{
 				Raw:                    raw,
-				IsFeatureToggleEnabled: featuremgmt.WithToggles(secrets.EnvelopeEncryptionFeatureToggle).IsEnabled,
+				IsFeatureToggleEnabled: featuremgmt.WithFeatures(secrets.EnvelopeEncryptionFeatureToggle).IsEnabled,
 			},
 		}
 		encr := ossencryption.ProvideService()

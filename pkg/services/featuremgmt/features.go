@@ -1,9 +1,13 @@
-package models
+package featuremgmt
 
 import (
 	"bytes"
 	"encoding/json"
 )
+
+type FeatureToggles interface {
+	IsEnabled(flag string) bool
+}
 
 // FeatureFlagState indicates the quality level
 type FeatureFlagState int
