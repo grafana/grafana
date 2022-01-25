@@ -2,7 +2,9 @@ package azuremonitor
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -152,12 +154,19 @@ func TestGetAzurePortalUrl(t *testing.T) {
 }
 
 func TestUnmarshalResponse(t *testing.T) {
+	body := "{\"error\":{\"code\":\"BadRequest\",\"message\":\"Please provide below info when asking for support: timestamp = 2021-06-04T05:09:13.1870573Z, correlationId = f1c5d97f-26db-4bdc-b023-1f0a862004db.\",\"details\":[{\"code\":\"InvalidQuery\",\"message\":\"Queryisinvalid.PleaserefertothedocumentationfortheAzureResourceGraphserviceandfixtheerrorbeforeretrying.\"},{\"code\":\"ParserFailure\",\"message\":\"ParserFailure\",\"line\":2,\"token\":\"<\"},{\"code\":\"ParserFailure\",\"message\":\"ParserFailure\",\"line\":4,\"characterPositionInLine\":23,\"token\":\"<\"}]}}"
 	datasource := &AzureResourceGraphDatasource{}
-	res, err := datasource.unmarshalResponse(nil)
+	res, err := datasource.unmarshalResponse(&http.Response{
+		StatusCode: 400,
+		Status:     "400 Bad Request",
+		Body:       io.NopCloser(strings.NewReader((body))),
+	})
 	expectedRes := AzureResourceGraphResponse{
 		Data: AzureResponseTable{},
 	}
+	expectedErrMsg := "request failed, status: 400 Bad Request, body: " + body
 
-	assert.NoError(t, err)
-	assert.Equal(t, res, expectedRes)
+	assert.Error(t, err)
+	assert.EqualErrorf(t, err, expectedErrMsg, "Unexpected Error message")
+	assert.Equal(t, expectedRes, res)
 }
