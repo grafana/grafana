@@ -12,7 +12,7 @@ type Manager interface {
 	GetOrCreateLeader(ctx context.Context, channel string, currentNodeID string, newLeadershipID string) (string, string, error)
 	GetLeader(ctx context.Context, channel string) (bool, string, string, error)
 	RefreshLeader(ctx context.Context, channel string, currentLeadershipID string) (bool, error)
-	CleanLeader(ctx context.Context, channel string) error
+	CleanLeader(ctx context.Context, channel string, leadershipID string) (bool, error)
 }
 
 type RedisManager struct {
@@ -20,6 +20,7 @@ type RedisManager struct {
 	redisClient       *redis.Client
 	getOrCreateScript *redis.Script
 	refreshScript     *redis.Script
+	cleanScript       *redis.Script
 }
 
 const (
@@ -57,12 +58,24 @@ end
 return 0
 `
 
+// KEYS[1] - channel hash key
+// ARGV[1] - leadership ID
+// Cleans leadership.
+const cleanLeaderScriptSource = `
+if redis.call("hget", KEYS[1], "l") == ARGV[1] then
+    return redis.call("del", KEYS[1])
+else
+    return 0
+end
+`
+
 func NewRedisManager(prefix string, redisClient *redis.Client) *RedisManager {
 	return &RedisManager{
 		prefix:            prefix,
 		redisClient:       redisClient,
 		getOrCreateScript: redis.NewScript(getOrCreateScriptSource),
 		refreshScript:     redis.NewScript(refreshLeaderScriptSource),
+		cleanScript:       redis.NewScript(cleanLeaderScriptSource),
 	}
 }
 
@@ -99,7 +112,6 @@ func (m *RedisManager) RefreshLeader(ctx context.Context, ch string, currentLead
 	return m.refreshScript.Eval(ctx, m.redisClient, []string{m.getPrefixedChannel(ch)}, LeadershipEntryTTLSeconds, currentLeadershipID).Bool()
 }
 
-func (m *RedisManager) CleanLeader(ctx context.Context, ch string) error {
-	_, err := m.redisClient.Del(ctx, m.getPrefixedChannel(ch)).Result()
-	return err
+func (m *RedisManager) CleanLeader(ctx context.Context, ch string, leadershipID string) (bool, error) {
+	return m.cleanScript.Eval(ctx, m.redisClient, []string{m.getPrefixedChannel(ch)}, leadershipID).Bool()
 }

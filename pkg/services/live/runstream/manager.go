@@ -314,11 +314,11 @@ func getDelay(numErrors int) time.Duration {
 	return delay
 }
 
-func (s *Manager) cleanLeader(ctx context.Context, channel string) {
+func (s *Manager) cleanLeader(ctx context.Context, channel string, leadershipID string) {
 	logger.Debug("Clean leadership for stream", "channel", channel)
-	cleanLeaderCtx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	cleanLeaderCtx, cancel := context.WithTimeout(ctx, 250*time.Millisecond)
 	defer cancel()
-	err := s.leaderManager.CleanLeader(cleanLeaderCtx, channel)
+	_, err := s.leaderManager.CleanLeader(cleanLeaderCtx, channel, leadershipID)
 	if err != nil {
 		logger.Error("Error cleaning up channel leadership", "error", err)
 	}
@@ -334,7 +334,7 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 	for {
 		select {
 		case <-ctx.Done():
-			s.cleanLeader(context.Background(), sr.Channel)
+			s.cleanLeader(context.Background(), sr.Channel, sr.leadershipID)
 			return
 		default:
 		}
@@ -402,14 +402,14 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 			if errors.Is(ctx.Err(), context.Canceled) {
 				logger.Debug("Stream cleanly finished", "channel", sr.Channel)
 				if s.leaderManager != nil {
-					s.cleanLeader(context.Background(), sr.Channel)
+					s.cleanLeader(context.Background(), sr.Channel, sr.leadershipID)
 				}
 				return
 			}
 			if s.leaderManager != nil {
 				logger.Error("Error running stream, closing", "channel", sr.Channel, "error", err, "wait", delay)
 				// Return from a stream and let it be re-initialized eventually.
-				s.cleanLeader(context.Background(), sr.Channel)
+				s.cleanLeader(context.Background(), sr.Channel, sr.leadershipID)
 				return
 			}
 			logger.Error("Error running stream, re-establishing", "channel", sr.Channel, "error", err, "wait", delay)

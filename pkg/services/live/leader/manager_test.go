@@ -48,8 +48,13 @@ func TestRedisCacheStorage(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, ok)
 
-	err = m.CleanLeader(ctx, "test")
+	ok, err = m.CleanLeader(ctx, "test", "leadershipID2")
 	require.NoError(t, err)
+	require.False(t, ok)
+
+	ok, err = m.CleanLeader(ctx, "test", "leadershipID")
+	require.NoError(t, err)
+	require.True(t, ok)
 
 	ok, err = m.RefreshLeader(ctx, "test", "leadershipID")
 	require.NoError(t, err)
