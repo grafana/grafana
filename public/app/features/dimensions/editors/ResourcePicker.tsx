@@ -13,7 +13,7 @@ import {
 import { GrafanaTheme2 } from '@grafana/data';
 import SVG from 'react-inlinesvg';
 
-import { ResourceFolderName } from '..';
+import { MediaType, ResourceFolderName } from '..';
 import { closePopover } from '@grafana/ui/src/utils/closePopover';
 import { ResourcePickerPopover } from './ResourcePickerPopover';
 
@@ -24,7 +24,7 @@ interface Props {
   placeholder?: string;
   onChange: (value?: string) => void;
   onClear: (event: React.MouseEvent) => void;
-  mediaType: 'icon' | 'image';
+  mediaType: MediaType;
   folderName: ResourceFolderName;
 }
 

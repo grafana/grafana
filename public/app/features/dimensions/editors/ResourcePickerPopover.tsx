@@ -10,12 +10,12 @@ import { ResourceCards } from './ResourceCards';
 import { getPublicOrAbsoluteUrl } from '../resource';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
-import { ResourceFolderName } from '..';
+import { MediaType, ResourceFolderName } from '..';
 
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
   onChange: (value?: string) => void;
-  mediaType: 'icon' | 'image';
+  mediaType: MediaType;
   folderName: ResourceFolderName;
 }
 
@@ -28,8 +28,8 @@ export interface ResourceItem {
 
 type PickerType = 'folder' | 'url';
 
-const getFolders = (mediaType: 'icon' | 'image') => {
-  if (mediaType === 'icon') {
+const getFolders = (mediaType: MediaType) => {
+  if (mediaType === MediaType.Icon) {
     return [ResourceFolderName.Icon, ResourceFolderName.IOT, ResourceFolderName.Marker];
   } else {
     return [ResourceFolderName.BG];
@@ -70,7 +70,7 @@ export const ResourcePickerPopover = (props: Props) => {
     const folder = currentFolder?.value;
     if (folder) {
       const filter =
-        mediaType === 'icon'
+        mediaType === MediaType.Icon
           ? (item: FileElement) => item.name.endsWith('.svg')
           : (item: FileElement) => item.name.endsWith('.png') || item.name.endsWith('.gif');
 
@@ -153,8 +153,8 @@ export const ResourcePickerPopover = (props: Props) => {
       <div className={styles.iconContainer}>
         <Field label="Preview">
           <div className={styles.iconPreview}>
-            {mediaType === 'icon' && <SVG src={imgSrc} className={styles.img} />}
-            {mediaType === 'image' && newValue && <img src={imgSrc} className={styles.img} />}
+            {mediaType === MediaType.Icon && <SVG src={imgSrc} className={styles.img} />}
+            {mediaType === MediaType.Image && newValue && <img src={imgSrc} className={styles.img} />}
           </div>
         </Field>
         <Label>{shortName}</Label>
