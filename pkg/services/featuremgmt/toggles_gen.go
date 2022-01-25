@@ -80,4 +80,8 @@ const (
 
 	// FlagDisableHttpRequestHistogram
 	FlagDisableHttpRequestHistogram = "disable_http_request_histogram"
+
+	// FlagValidatedQueries
+	// only execute the query saved in a panel
+	FlagValidatedQueries = "validatedQueries"
 )

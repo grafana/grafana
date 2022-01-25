@@ -113,5 +113,11 @@ var (
 			Name:  "disable_http_request_histogram",
 			State: FeatureStateAlpha,
 		},
+		{
+			Name:            "validatedQueries",
+			Description:     "only execute the query saved in a panel",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
 	}
 )
