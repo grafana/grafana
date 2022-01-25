@@ -8,6 +8,7 @@ import (
 
 func CSRF(loginCookieName string) func(http.Handler) http.Handler {
 	// As per RFC 7231/4.2.2 these methods are idempotent:
+	// (GET is excluded because it may have side effects in some APIs)
 	safeMethods := []string{"HEAD", "OPTIONS", "TRACE"}
 
 	return func(next http.Handler) http.Handler {
