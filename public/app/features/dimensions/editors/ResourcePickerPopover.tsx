@@ -1,16 +1,13 @@
-import React, { createRef, useEffect, useState } from 'react';
+import React, { createRef, useState } from 'react';
 import { css } from '@emotion/css';
-import SVG from 'react-inlinesvg';
-import { Button, Select, FilterInput, Field, Label, Input, ButtonGroup, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 
-import { ResourceCards } from './ResourceCards';
-import { getPublicOrAbsoluteUrl } from '../resource';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
-import { MediaType, ResourceFolderName } from '..';
+import { MediaType, PickerTabType, ResourceFolderName } from '..';
+import { FolderPickerTab } from './FolderPickerTab';
+import { URLPickerTab } from './URLPickerTab';
 
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
@@ -19,35 +16,9 @@ interface Props {
   folderName: ResourceFolderName;
 }
 
-export interface ResourceItem {
-  label: string;
-  value: string; // includes folder
-  search: string;
-  imgUrl: string;
-}
-
-type PickerType = 'folder' | 'url';
-
-const getFolders = (mediaType: MediaType) => {
-  if (mediaType === MediaType.Icon) {
-    return [ResourceFolderName.Icon, ResourceFolderName.IOT, ResourceFolderName.Marker];
-  } else {
-    return [ResourceFolderName.BG];
-  }
-};
-
-const getFolderIfExists = (folders: Array<SelectableValue<string>>, path: string) => {
-  return folders.find((folder) => path.startsWith(folder.value!)) ?? folders[0];
-};
-
 export const ResourcePickerPopover = (props: Props) => {
   const { value, onChange, mediaType, folderName } = props;
   const styles = useStyles2(getStyles);
-
-  const folders = getFolders(mediaType).map((v) => ({
-    label: v,
-    value: v,
-  }));
 
   const onClose = () => {
     onChange(value);
@@ -57,114 +28,29 @@ export const ResourcePickerPopover = (props: Props) => {
   const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: true }, ref);
 
   const [newValue, setNewValue] = useState<string>(value ?? '');
-  const [searchQuery, setSearchQuery] = useState<string>();
-  const [activePicker, setActivePicker] = useState<PickerType>('folder');
+  const [activePicker, setActivePicker] = useState<PickerTabType>(PickerTabType.Folder);
 
-  const [currentFolder, setCurrentFolder] = useState<SelectableValue<string>>(
-    getFolderIfExists(folders, value?.length ? value : folderName)
-  );
-  const [directoryIndex, setDirectoryIndex] = useState<ResourceItem[]>([]);
-  const [filteredIndex, setFilteredIndex] = useState<ResourceItem[]>([]);
-
-  useEffect(() => {
-    // we don't want to load everything before picking a folder
-    const folder = currentFolder?.value;
-    if (folder) {
-      const filter =
-        mediaType === MediaType.Icon
-          ? (item: FileElement) => item.name.endsWith('.svg')
-          : (item: FileElement) => item.name.endsWith('.png') || item.name.endsWith('.gif');
-
-      getDatasourceSrv()
-        .get('-- Grafana --')
-        .then((ds) => {
-          (ds as GrafanaDatasource).listFiles(folder).subscribe({
-            next: (frame) => {
-              const cards: ResourceItem[] = [];
-              frame.forEach((item) => {
-                if (filter(item)) {
-                  const idx = item.name.lastIndexOf('.');
-                  cards.push({
-                    value: `${folder}/${item.name}`,
-                    label: item.name,
-                    search: (idx ? item.name.substr(0, idx) : item.name).toLowerCase(),
-                    imgUrl: `public/${folder}/${item.name}`,
-                  });
-                }
-              });
-              setDirectoryIndex(cards);
-              setFilteredIndex(cards);
-            },
-          });
-        });
-    }
-  }, [mediaType, currentFolder]);
-
-  const onChangeSearch = (query: string) => {
-    if (query) {
-      query = query.toLowerCase();
-      setFilteredIndex(directoryIndex.filter((card) => card.search.includes(query)));
-    } else {
-      setFilteredIndex(directoryIndex);
-    }
-  };
-
-  const imgSrc = getPublicOrAbsoluteUrl(newValue!);
-
-  let shortName = newValue?.substring(newValue.lastIndexOf('/') + 1, newValue.lastIndexOf('.'));
-  if (shortName.length > 20) {
-    shortName = shortName.substring(0, 20) + '...';
-  }
-
-  const getTabClassName = (tabName: PickerType) => {
+  const getTabClassName = (tabName: PickerTabType) => {
     return `${styles.resourcePickerPopoverTab} ${activePicker === tabName && styles.resourcePickerPopoverActiveTab}`;
   };
 
   const renderFolderPicker = () => (
-    <>
-      <Field>
-        <Select menuShouldPortal={true} options={folders} onChange={setCurrentFolder} value={currentFolder} />
-      </Field>
-      <Field>
-        <FilterInput
-          value={searchQuery ?? ''}
-          placeholder="Search"
-          onChange={(v) => {
-            onChangeSearch(v);
-            setSearchQuery(v);
-          }}
-        />
-      </Field>
-      {filteredIndex && (
-        <div className={styles.cardsWrapper}>
-          <ResourceCards cards={filteredIndex} onChange={(v) => setNewValue(v)} value={newValue} />
-        </div>
-      )}
-    </>
+    <FolderPickerTab
+      value={value}
+      mediaType={mediaType}
+      folderName={folderName}
+      newValue={newValue}
+      setNewValue={setNewValue}
+    />
   );
 
-  const renderURLPicker = () => (
-    <>
-      <Field>
-        <Input onChange={(e) => setNewValue(e.currentTarget.value)} value={newValue} />
-      </Field>
-      <div className={styles.iconContainer}>
-        <Field label="Preview">
-          <div className={styles.iconPreview}>
-            {mediaType === MediaType.Icon && <SVG src={imgSrc} className={styles.img} />}
-            {mediaType === MediaType.Image && newValue && <img src={imgSrc} className={styles.img} />}
-          </div>
-        </Field>
-        <Label>{shortName}</Label>
-      </div>
-    </>
-  );
+  const renderURLPicker = () => <URLPickerTab newValue={newValue} setNewValue={setNewValue} mediaType={mediaType} />;
 
   const renderPicker = () => {
     switch (activePicker) {
-      case 'folder':
+      case PickerTabType.Folder:
         return renderFolderPicker();
-      case 'url':
+      case PickerTabType.URL:
         return renderURLPicker();
       default:
         return renderFolderPicker();
@@ -176,10 +62,13 @@ export const ResourcePickerPopover = (props: Props) => {
       <section ref={ref} {...overlayProps}>
         <div className={styles.resourcePickerPopover}>
           <div className={styles.resourcePickerPopoverTabs}>
-            <button className={getTabClassName('folder')} onClick={() => setActivePicker('folder')}>
+            <button
+              className={getTabClassName(PickerTabType.Folder)}
+              onClick={() => setActivePicker(PickerTabType.Folder)}
+            >
               Folder
             </button>
-            <button className={getTabClassName('url')} onClick={() => setActivePicker('url')}>
+            <button className={getTabClassName(PickerTabType.URL)} onClick={() => setActivePicker(PickerTabType.URL)}>
               URL
             </button>
           </div>
@@ -205,32 +94,6 @@ export const ResourcePickerPopover = (props: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  cardsWrapper: css`
-    height: 30vh;
-    min-height: 50px;
-    margin-top: 5px;
-    max-width: 680px;
-  `,
-  iconPreview: css`
-    width: 238px;
-    height: 198px;
-    border: 1px solid ${theme.colors.border.medium};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `,
-  iconContainer: css`
-    display: flex;
-    flex-direction: column;
-    width: 80%;
-    align-items: center;
-    align-self: center;
-  `,
-  img: css`
-    width: 147px;
-    height: 147px;
-    fill: ${theme.colors.text.primary};
-  `,
   resourcePickerPopover: css`
     border-radius: ${theme.shape.borderRadius()};
     box-shadow: ${theme.shadows.z3};

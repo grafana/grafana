@@ -122,3 +122,8 @@ export enum MediaType {
   Icon = 'icon',
   Image = 'image',
 }
+
+export enum PickerTabType {
+  Folder = 'folder',
+  URL = 'url',
+}
