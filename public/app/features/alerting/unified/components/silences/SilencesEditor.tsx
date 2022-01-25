@@ -80,7 +80,7 @@ const getDefaultFormValues = (searchParams: URLSearchParams, silence?: Silence):
       id: '',
       startsAt: now.toISOString(),
       endsAt: endsAt.toISOString(),
-      comment: '',
+      comment: `created ${dateTime().format('YYYY-MM-DD HH:mm')}`,
       createdBy: config.bootData.user.name,
       duration: '2h',
       isRegex: false,
