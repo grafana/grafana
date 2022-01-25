@@ -288,6 +288,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       label: labelLeft;
       right: 100%;
     `,
+    childSpanCount: css`
+      label: childSpanCount;
+      margin-right: 0.25rem;
+    `,
   };
 });
 
@@ -432,7 +436,9 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}
             />
-            {formatNumber(span.childSpanCount)}
+            {span.childSpanCount > 0 ? (
+              <span className={styles.childSpanCount}>{formatNumber(span.childSpanCount)}</span>
+            ) : null}
             <a
               className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
               aria-checked={isDetailExpanded}

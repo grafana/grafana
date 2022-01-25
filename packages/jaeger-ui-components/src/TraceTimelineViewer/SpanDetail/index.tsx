@@ -23,7 +23,7 @@ import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
-import { formatDuration, formatNumber } from '../utils';
+import { formatDuration } from '../utils';
 import LabeledList from '../../common/LabeledList';
 import { SpanLinkFunc, TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '../../types/trace';
@@ -171,11 +171,15 @@ export default function SpanDetail(props: SpanDetailProps) {
       label: 'Start Time:',
       value: formatDuration(relativeStartTime),
     },
-    {
-      key: 'child span count',
-      label: 'Child Span Count:',
-      value: formatNumber(span.childSpanCount),
-    },
+    ...(span.childSpanCount > 0
+      ? [
+          {
+            key: 'child span count',
+            label: 'Child Span Count:',
+            value: span.childSpanCount,
+          },
+        ]
+      : []),
   ];
   const styles = useStyles2(getStyles);
   const link = createSpanLink?.(span);
