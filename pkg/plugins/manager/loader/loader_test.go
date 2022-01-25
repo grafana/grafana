@@ -638,8 +638,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 }
 
 func TestLoader_loadNestedPlugins(t *testing.T) {
-	t.Skip()
-	parentDir, err := filepath.Abs("../")
+	rootDir, err := filepath.Abs("../")
 	if err != nil {
 		t.Errorf("could not construct absolute path of root dir")
 		return
@@ -670,7 +669,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		},
 		Module:        "plugins/test-ds/module",
 		BaseURL:       "public/plugins/test-ds",
-		PluginDir:     filepath.Join(parentDir, "testdata/nested-plugins/parent"),
+		PluginDir:     filepath.Join(rootDir, "testdata/nested-plugins/parent"),
 		Signature:     plugins.SignatureValid,
 		SignatureType: plugins.GrafanaSignature,
 		SignatureOrg:  "Grafana Labs",
@@ -702,7 +701,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		},
 		Module:        "plugins/test-panel/module",
 		BaseURL:       "public/plugins/test-panel",
-		PluginDir:     filepath.Join(parentDir, "testdata/nested-plugins/parent/nested"),
+		PluginDir:     filepath.Join(rootDir, "testdata/nested-plugins/parent/nested"),
 		Signature:     plugins.SignatureValid,
 		SignatureType: plugins.GrafanaSignature,
 		SignatureOrg:  "Grafana Labs",
@@ -715,7 +714,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 	t.Run("Load nested External plugins", func(t *testing.T) {
 		expected := []*plugins.Plugin{parent, child}
 		l := newLoader(&plugins.Cfg{
-			PluginsPath: parentDir,
+			PluginsPath: rootDir,
 		})
 
 		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"}, map[string]struct{}{})
@@ -737,7 +736,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		expected := []*plugins.Plugin{parent}
 
 		l := newLoader(&plugins.Cfg{
-			PluginsPath: parentDir,
+			PluginsPath: rootDir,
 		})
 
 		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"}, map[string]struct{}{
@@ -828,7 +827,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			},
 			Module:        "plugins/myorgid-simple-app/module",
 			BaseURL:       "public/plugins/myorgid-simple-app",
-			PluginDir:     filepath.Join(parentDir, "testdata/app-with-child/dist"),
+			PluginDir:     filepath.Join(rootDir, "testdata/app-with-child/dist"),
 			DefaultNavURL: "/plugins/myorgid-simple-app/page/root-page-react",
 			Signature:     plugins.SignatureValid,
 			SignatureType: plugins.GrafanaSignature,
@@ -866,7 +865,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			},
 			Module:          "plugins/myorgid-simple-app/child/module",
 			BaseURL:         "public/plugins/myorgid-simple-app",
-			PluginDir:       filepath.Join(parentDir, "testdata/app-with-child/dist/child"),
+			PluginDir:       filepath.Join(rootDir, "testdata/app-with-child/dist/child"),
 			IncludedInAppID: parent.ID,
 			Signature:       plugins.SignatureValid,
 			SignatureType:   plugins.GrafanaSignature,
@@ -879,7 +878,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 
 		expected := []*plugins.Plugin{parent, child}
 		l := newLoader(&plugins.Cfg{
-			PluginsPath: parentDir,
+			PluginsPath: rootDir,
 		})
 
 		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/app-with-child"}, map[string]struct{}{})
@@ -893,6 +892,39 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		if !cmp.Equal(got, expected, compareOpts) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
 		}
+
+		t.Run("order of loaded parent and child plugins gives same output", func(t *testing.T) {
+			parentPluginJSON := filepath.Join(rootDir, "testdata/app-with-child/dist/plugin.json")
+			childPluginJSON := filepath.Join(rootDir, "testdata/app-with-child/dist/child/plugin.json")
+
+			got, err := l.loadPlugins(context.Background(), plugins.External, []string{
+				parentPluginJSON, childPluginJSON},
+				map[string]struct{}{})
+			assert.NoError(t, err)
+
+			// to ensure we can compare with expected
+			sort.SliceStable(got, func(i, j int) bool {
+				return got[i].ID < got[j].ID
+			})
+
+			if !cmp.Equal(got, expected, compareOpts) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+			}
+
+			got, err = l.loadPlugins(context.Background(), plugins.External, []string{
+				childPluginJSON, parentPluginJSON},
+				map[string]struct{}{})
+			assert.NoError(t, err)
+
+			// to ensure we can compare with expected
+			sort.SliceStable(got, func(i, j int) bool {
+				return got[i].ID < got[j].ID
+			})
+
+			if !cmp.Equal(got, expected, compareOpts) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+			}
+		})
 	})
 }
 
@@ -1028,14 +1060,15 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 		}
 		parent := &plugins.Plugin{
 			JSONData: plugins.JSONData{
-				ID: "testdata",
+				Type: plugins.App,
+				ID:   "testdata",
 			},
 			Class:     plugins.Core,
 			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata",
 			BaseURL:   "public/app/plugins/app/testdata",
 		}
 
-		setPathsBasedOnApp(parent, child)
+		configureAppChildOPlugin(parent, child)
 
 		assert.Equal(t, "app/plugins/app/testdata/datasources/datasource/module", child.Module)
 		assert.Equal(t, "testdata", child.IncludedInAppID)
