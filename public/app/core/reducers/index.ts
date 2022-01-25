@@ -1,9 +1,9 @@
 import { navIndexReducer as navIndex } from './navModel';
-import { navTreeReducer as navTree } from './navTree';
+import { navTreeReducer as navBarTree } from './navBarTree';
 import { appNotificationsReducer as appNotifications } from './appNotification';
 
 export default {
-  navTree,
+  navBarTree,
   navIndex,
   appNotifications,
 };

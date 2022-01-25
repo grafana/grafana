@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
+import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
@@ -26,7 +27,7 @@ const searchItem: NavModelItem = {
 };
 
 const mapStateToProps = (state: StoreState) => ({
-  navTree: state.navTree,
+  navBarTree: state.navBarTree,
 });
 
 const mapDispatchToProps = {};
@@ -35,7 +36,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export interface Props extends ConnectedProps<typeof connector> {}
 
-export const Component = React.memo(({ navTree }: Props) => {
+export const Component = React.memo(({ navBarTree }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
@@ -45,6 +46,7 @@ export const Component = React.memo(({ navTree }: Props) => {
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
   };
+  const navTree = cloneDeep(navBarTree);
   const coreItems = navTree.filter((item) => item.section === NavSection.Core);
   const pluginItems = navTree.filter((item) => item.section === NavSection.Plugin);
   const configItems = enrichConfigItems(
