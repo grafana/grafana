@@ -361,8 +361,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           expandedQuery.query = this.templateSrv.replace(query.query ?? '', scopedVars, 'regex');
         }
 
+        if (query.groupBy) {
+          expandedQuery.groupBy = query.groupBy.map((groupBy) => {
+            return {
+              ...groupBy,
+              params: groupBy.params?.map((param) => {
+                return this.templateSrv.replace(param.toString(), undefined, 'regex');
+              }),
+            };
+          });
+        }
+
         if (query.select) {
-          query.select = query.select.map((selects) => {
+          expandedQuery.select = query.select.map((selects) => {
             return selects.map((select: any) => {
               return {
                 ...select,
