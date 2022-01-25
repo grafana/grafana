@@ -100,7 +100,7 @@ func asCamelCase(key string) string {
 func generateRegistry(t *testing.T) string {
 	tmpl, err := template.New("fn").Parse(`
 {{"\t"}}// Flag{{.CamelCase}}{{.Ext}}
-    Flag{{.CamelCase}} = "{{.Flag.Name}}"
+{{"\t"}}Flag{{.CamelCase}} = "{{.Flag.Name}}"
 `)
 	if err != nil {
 		t.Fatal("error reading template", "error", err.Error())
@@ -129,12 +129,12 @@ const (`)
 		data.Ext = ""
 
 		if flag.Description != "" {
-			data.Ext += "\n    // " + flag.Description
+			data.Ext += "\n\t// " + flag.Description
 		}
 
 		_ = tmpl.Execute(&buff, data)
 	}
-	buff.WriteString("\n)")
+	buff.WriteString(")\n")
 
 	return buff.String()
 }
