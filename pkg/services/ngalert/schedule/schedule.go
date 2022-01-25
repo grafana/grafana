@@ -77,6 +77,10 @@ type schedule struct {
 
 	evaluator eval.Evaluator
 
+	alertRules    []*models.AlertRule
+	alertRulesMtx sync.Mutex
+	nextFetch     *alerting.Ticker
+
 	ruleStore         store.RuleStore
 	instanceStore     store.InstanceStore
 	adminConfigStore  store.AdminConfigurationStore
@@ -121,18 +125,17 @@ type SchedulerCfg struct {
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
-	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
-
 	sch := schedule{
 		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
 		maxAttempts:             cfg.MaxAttempts,
 		clock:                   cfg.C,
 		baseInterval:            cfg.BaseInterval,
 		log:                     cfg.Logger,
-		heartbeat:               ticker,
+		heartbeat:               alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds())),
 		evalAppliedFunc:         cfg.EvalAppliedFunc,
 		stopAppliedFunc:         cfg.StopAppliedFunc,
 		evaluator:               cfg.Evaluator,
+		nextFetch:               alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds())),
 		ruleStore:               cfg.RuleStore,
 		instanceStore:           cfg.InstanceStore,
 		orgStore:                cfg.OrgStore,
@@ -156,6 +159,7 @@ func (sch *schedule) Pause() error {
 		return fmt.Errorf("scheduler is not initialised")
 	}
 	sch.heartbeat.Pause()
+	sch.nextFetch.Pause()
 	sch.log.Info("alert rule scheduler paused", "now", sch.clock.Now())
 	return nil
 }
@@ -165,13 +169,21 @@ func (sch *schedule) Unpause() error {
 		return fmt.Errorf("scheduler is not initialised")
 	}
 	sch.heartbeat.Unpause()
+	sch.nextFetch.Unpause()
 	sch.log.Info("alert rule scheduler unpaused", "now", sch.clock.Now())
 	return nil
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		if err := sch.periodicFetchRules(ctx); err != nil {
+			sch.log.Error("failure while running periodic fetch rules", "err", err)
+		}
+	}()
 
 	go func() {
 		defer wg.Done()
@@ -352,18 +364,35 @@ func (sch *schedule) adminConfigSync(ctx context.Context) error {
 	}
 }
 
-func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
-	dispatcherGroup, ctx := errgroup.WithContext(ctx)
+func (sch *schedule) periodicFetchRules(ctx context.Context) error {
 	for {
 		select {
-		case tick := <-sch.heartbeat.C:
-			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
+		case <-sch.nextFetch.C:
 			disabledOrgs := make([]int64, 0, len(sch.disabledOrgs))
 			for disabledOrg := range sch.disabledOrgs {
 				disabledOrgs = append(disabledOrgs, disabledOrg)
 			}
 			alertRules := sch.fetchAllDetails(disabledOrgs)
 			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
+			sch.alertRulesMtx.Lock()
+			sch.alertRules = alertRules
+			sch.alertRulesMtx.Unlock()
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+}
+
+func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
+	dispatcherGroup, ctx := errgroup.WithContext(ctx)
+	for {
+		select {
+		case tick := <-sch.heartbeat.C:
+			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
+
+			sch.alertRulesMtx.Lock()
+			alertRules := sch.alertRules
+			sch.alertRulesMtx.Unlock()
 
 			// registeredDefinitions is a map used for finding deleted alert rules
 			// initially it is assigned to all known alert rules from the previous cycle
@@ -761,6 +790,7 @@ func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.clock = cfg.C
 	sch.baseInterval = cfg.BaseInterval
 	sch.heartbeat = alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
+	sch.nextFetch = alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 	sch.evalAppliedFunc = cfg.EvalAppliedFunc
 	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }
