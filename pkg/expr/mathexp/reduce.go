@@ -103,9 +103,9 @@ func GetReduceFunc(rFunc string) (ReducerFunc, error) {
 }
 
 // Reduce turns the Series into a Number based on the given reduction function
-// if ValueMapper is defined it applies it to the provided series and performs reduction of the resulting series.
+// if ReduceMapper is defined it applies it to the provided series and performs reduction of the resulting series.
 // Otherwise, the reduction operation is done against the original series.
-func (s Series) Reduce(refID, rFunc string, mapper ValueMapper) (Number, error) {
+func (s Series) Reduce(refID, rFunc string, mapper ReduceMapper) (Number, error) {
 	var l data.Labels
 	if s.GetLabels() != nil {
 		l = s.GetLabels().Copy()
@@ -114,7 +114,7 @@ func (s Series) Reduce(refID, rFunc string, mapper ValueMapper) (Number, error) 
 	var f *float64
 	series := s
 	if mapper != nil {
-		series = mapper.MapSeries(s)
+		series = mapSeries(s, mapper)
 	}
 	fVec := series.Frame.Fields[seriesTypeValIdx]
 	floatField := Float64Field(*fVec)
@@ -124,26 +124,24 @@ func (s Series) Reduce(refID, rFunc string, mapper ValueMapper) (Number, error) 
 	}
 	f = reduceFunc(&floatField)
 	if f != nil && mapper != nil {
-		f = mapper.MapResult(f)
+		f = mapper.MapOutput(f)
 	}
 	number.SetValue(f)
 	return number, nil
 }
 
-type ValueMapper interface {
-	MapSeries(s Series) Series
-	MapResult(v *float64) *float64
+type ReduceMapper interface {
+	MapInput(s *float64) *float64
+	MapOutput(v *float64) *float64
 }
 
-type DropNonNumber struct {
-}
-
-// MapSeries creates a series that contains all points of the input series except non numbers (nil, NaN or Inf)
-func (d DropNonNumber) MapSeries(s Series) Series {
+// mapSeries creates a series where all points are mapped using the provided map function ReduceMapper.MapInput
+func mapSeries(s Series, mapper ReduceMapper) Series {
 	newSeries := NewSeries(s.Frame.RefID, s.GetLabels(), 0)
 	for i := 0; i < s.Len(); i++ {
 		f := s.GetValue(i)
-		if f == nil || math.IsNaN(*f) || math.IsInf(*f, 0) {
+		f = mapper.MapInput(f)
+		if f == nil {
 			continue
 		}
 		newFloat := *f
@@ -152,37 +150,44 @@ func (d DropNonNumber) MapSeries(s Series) Series {
 	return newSeries
 }
 
-func (d DropNonNumber) MapResult(v *float64) *float64 {
-	if v != nil && math.IsNaN(*v) {
+type DropNonNumber struct {
+}
+
+// MapInput returns nil if the input parameter is nil or point to either a NaN or a Inf
+func (d DropNonNumber) MapInput(s *float64) *float64 {
+	if s == nil || math.IsNaN(*s) || math.IsInf(*s, 0) {
 		return nil
 	}
-	return v
+	return s
+}
+
+// MapOutput returns nil if the input parameter is nil or point to either a NaN or a Inf
+func (d DropNonNumber) MapOutput(s *float64) *float64 {
+	if s != nil && math.IsNaN(*s) {
+		return nil
+	}
+	return s
 }
 
 type ReplaceNonNumberWithValue struct {
 	Value float64
 }
 
-// MapSeries create a function that creates a series where all points that have non-number value replaced with constant value
-func (r ReplaceNonNumberWithValue) MapSeries(s Series) Series {
-	newSeries := NewSeries(s.Frame.RefID, s.GetLabels(), 0)
-	for i := 0; i < s.Len(); i++ {
-		f := s.GetValue(i)
-		var newFloat float64
-		if f == nil || math.IsNaN(*f) || math.IsInf(*f, 0) {
-			newFloat = r.Value
-		} else {
-			newFloat = *f
-		}
-		newSeries.AppendPoint(s.GetTime(i), &newFloat)
+// MapInput returns a pointer to ReplaceNonNumberWithValue.Value if input parameter is nil or points to either a NaN or an Inf.
+// Otherwise, returns the input pointer as is.
+func (r ReplaceNonNumberWithValue) MapInput(v *float64) *float64 {
+	if v == nil || math.IsNaN(*v) || math.IsInf(*v, 0) {
+		return &r.Value
+	} else {
+		return v
 	}
-	return newSeries
 }
 
-func (r ReplaceNonNumberWithValue) MapResult(v *float64) *float64 {
-	if v != nil && math.IsNaN(*v) {
-		result := r.Value
-		return &result
+// MapOutput returns a pointer to ReplaceNonNumberWithValue.Value if input parameter is nil or points to either a NaN or an Inf.
+// Otherwise, returns the input pointer as is.
+func (r ReplaceNonNumberWithValue) MapOutput(s *float64) *float64 {
+	if s != nil && math.IsNaN(*s) {
+		return &r.Value
 	}
-	return v
+	return s
 }
