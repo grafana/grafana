@@ -15,26 +15,21 @@ import (
 type Store interface {
 	// SetUserResourcePermission sets permission for managed user role on a resource
 	SetUserResourcePermission(
-		ctx context.Context, orgID,
-		userID int64,
+		ctx context.Context, orgID, userID int64,
 		cmd accesscontrol.SetResourcePermissionCommand,
 		hook func(session *sqlstore.DBSession, orgID, userID int64, resourceID, permission string) error,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// SetTeamResourcePermission sets permission for managed team role on a resource
 	SetTeamResourcePermission(
-		ctx context.Context,
-		orgID,
-		teamID int64,
+		ctx context.Context, orgID, teamID int64,
 		cmd accesscontrol.SetResourcePermissionCommand,
 		hook func(session *sqlstore.DBSession, orgID, teamID int64, resourceID, permission string) error,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// SetBuiltInResourcePermission sets permissions for managed builtin role on a resource
 	SetBuiltInResourcePermission(
-		ctx context.Context,
-		orgID int64,
-		builtinRole string,
+		ctx context.Context, orgID int64, builtinRole string,
 		cmd accesscontrol.SetResourcePermissionCommand,
 		hook func(session *sqlstore.DBSession, orgID int64, builtInRole, resourceID, permission string) error,
 	) (*accesscontrol.ResourcePermission, error)
@@ -111,7 +106,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, re
 		return nil, ErrInvalidAssignment
 	}
 
-	actions := s.MapPermission(permission)
+	actions := s.mapPermission(permission)
 	if !s.validateActions(actions) {
 		return nil, ErrInvalidActions
 	}
@@ -137,7 +132,7 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 		return nil, ErrInvalidAssignment
 	}
 
-	actions := s.MapPermission(permission)
+	actions := s.mapPermission(permission)
 	if !s.validateActions(actions) {
 		return nil, ErrInvalidActions
 	}
@@ -163,7 +158,7 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		return nil, ErrInvalidAssignment
 	}
 
-	actions := s.MapPermission(permission)
+	actions := s.mapPermission(permission)
 	if !s.validateActions(actions) {
 		return nil, ErrInvalidActions
 	}
@@ -184,7 +179,7 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 	}, s.options.OnSetBuiltInRole)
 }
 
-func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {
+func (s *Service) mapActions(permission accesscontrol.ResourcePermission) string {
 	for _, p := range s.permissions {
 		if permission.Contains(s.options.PermissionsToActions[p]) {
 			return p
@@ -193,7 +188,7 @@ func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string
 	return ""
 }
 
-func (s *Service) MapPermission(permission string) []string {
+func (s *Service) mapPermission(permission string) []string {
 	for k, v := range s.options.PermissionsToActions {
 		if permission == k {
 			return v

@@ -92,9 +92,7 @@ func (s *AccessControlStore) SetTeamResourcePermission(
 }
 
 func (s *AccessControlStore) SetBuiltInResourcePermission(
-	ctx context.Context,
-	orgID int64,
-	builtInRole string,
+	ctx context.Context, orgID int64, builtInRole string,
 	cmd accesscontrol.SetResourcePermissionCommand,
 	hook func(session *sqlstore.DBSession, orgID int64, builtInRole, resourceID, permission string) error,
 ) (*accesscontrol.ResourcePermission, error) {
