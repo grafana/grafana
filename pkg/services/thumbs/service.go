@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/scheduler"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/segmentio/encoding/json"
@@ -39,7 +40,27 @@ type Service interface {
 	CrawlerStatus(c *models.ReqContext) response.Response
 }
 
-func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.GrafanaLive) Service {
+// TODO remove
+type randomJob struct {
+}
+
+func (j *randomJob) Run() error {
+	tlog.Info("hello world")
+
+	return nil
+}
+
+func scheduleRandomJob(service scheduler.Service) {
+	schedule, _ := service.ParseCron("* * * * *")
+
+	service.Schedule(scheduler.ScheduleRequest{
+		Name:     scheduler.TestJob,
+		Job:      &randomJob{},
+		Schedule: schedule,
+	})
+}
+
+func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.GrafanaLive, schedulerService scheduler.Service) Service {
 	if !cfg.IsDashboardPreviesEnabled() {
 		return &dummyService{}
 	}
@@ -48,6 +69,8 @@ func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.
 	tempdir := filepath.Join(cfg.DataPath, "temp")
 	_ = os.MkdirAll(root, 0700)
 	_ = os.MkdirAll(tempdir, 0700)
+
+	scheduleRandomJob(schedulerService)
 
 	renderer := newSimpleCrawler(root, renderService, gl)
 	return &thumbService{
