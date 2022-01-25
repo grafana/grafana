@@ -91,26 +91,23 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 		frame.Meta = &data.FrameMeta{
 			ExecutedQueryString: executedQueryString,
 		}
-		labels := make(map[string]map[string]bool)
+		labels := make(map[string]string)
 
 		for n, d := range response.TimeSeriesDescriptor.LabelDescriptors {
 			key := toSnakeCase(d.Key)
 			key = strings.Replace(key, ".", ".label.", 1)
-			if _, ok := labels[key]; !ok {
-				labels[key] = map[string]bool{}
-			}
 
 			labelValue := series.LabelValues[n]
 			switch d.ValueType {
 			case "BOOL":
 				strVal := strconv.FormatBool(labelValue.BoolValue)
-				labels[key][strVal] = true
+				labels[key] = strVal
 				seriesLabels[key] = strVal
 			case "INT64":
-				labels[key][labelValue.Int64Value] = true
+				labels[key] = labelValue.Int64Value
 				seriesLabels[key] = labelValue.Int64Value
 			default:
-				labels[key][labelValue.StringValue] = true
+				labels[key] = labelValue.StringValue
 				seriesLabels[key] = labelValue.StringValue
 			}
 		}
@@ -124,10 +121,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 				continue
 			}
 
-			if _, ok := labels["metric.name"]; !ok {
-				labels["metric.name"] = map[string]bool{}
-			}
-			labels["metric.name"][d.Key] = true
+			labels["metric.name"] = d.Key
 			seriesLabels["metric.name"] = d.Key
 			defaultMetricName := d.Key
 
@@ -239,14 +233,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 			}
 		}
 
-		labelsByKey := make(map[string][]string)
-		for key, values := range labels {
-			for value := range values {
-				labelsByKey[key] = append(labelsByKey[key], value)
-			}
-		}
 		customFrameMeta := map[string]interface{}{}
-		customFrameMeta["labels"] = labelsByKey
+		customFrameMeta["labels"] = labels
 		if frame.Meta != nil {
 			frame.Meta.Custom = customFrameMeta
 		} else {
