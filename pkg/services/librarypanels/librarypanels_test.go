@@ -1431,11 +1431,14 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.Sig
 func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user *models.SignedInUser,
 	items []folderACLItem) *models.Folder {
 	t.Helper()
+
 	s := dashboards.NewFolderService(user.OrgId, user, sqlStore)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), title, title)
 	require.NoError(t, err)
+
 	updateFolderACL(t, sqlStore, folder.Id, items)
+
 	return folder
 }
 
