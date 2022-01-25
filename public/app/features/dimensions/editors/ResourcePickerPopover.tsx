@@ -108,7 +108,7 @@ export const ResourcePickerPopover = (props: Props) => {
 
   const [activePicker, setActivePicker] = useState<PickerType>('folder');
   const getTabClassName = (tabName: PickerType) => {
-    return `ResourcePickerPopover__tab ${activePicker === tabName && 'ResourcePickerPopover__tab--active'}`;
+    return `${styles.resourcePickerPopoverTab} ${activePicker === tabName && styles.resourcePickerPopoverActiveTab}`;
   };
 
   const theme = useTheme2();
@@ -238,32 +238,30 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       box-shadow: ${theme.shadows.z3};
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.colors.border.medium};
+    `,
+    resourcePickerPopoverTab: css`
+      width: 50%;
+      text-align: center;
+      padding: ${theme.spacing(1, 0)};
+      background: ${theme.colors.background.secondary};
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      cursor: pointer;
+      border: none;
 
-      .ResourcePickerPopover__tab {
-        width: 50%;
-        text-align: center;
-        padding: ${theme.spacing(1, 0)};
-        background: ${theme.colors.background.secondary};
-        color: ${theme.colors.text.secondary};
-        font-size: ${theme.typography.bodySmall.fontSize};
-        cursor: pointer;
-        border: none;
-
-        &:focus:not(:focus-visible) {
-          outline: none;
-          box-shadow: none;
-        }
-
-        :focus-visible {
-          position: relative;
-        }
+      &:focus:not(:focus-visible) {
+        outline: none;
+        box-shadow: none;
       }
 
-      .ResourcePickerPopover__tab--active {
-        color: ${theme.colors.text.primary};
-        font-weight: ${theme.typography.fontWeightMedium};
-        background: ${theme.colors.background.primary};
+      :focus-visible {
+        position: relative;
       }
+    `,
+    resourcePickerPopoverActiveTab: css`
+      color: ${theme.colors.text.primary};
+      font-weight: ${theme.typography.fontWeightMedium};
+      background: ${theme.colors.background.primary};
     `,
     resourcePickerPopoverContent: css`
       width: 315px;
