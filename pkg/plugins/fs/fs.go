@@ -14,7 +14,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/cli"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -23,17 +23,17 @@ var (
 )
 
 type Service struct {
-	log cli.Logger
+	log logger.Logger
 }
 
-func New(logger cli.Logger) *Service {
+func New(logger logger.Logger) *Service {
 	return &Service{
 		log: logger,
 	}
 }
 
 func ProvideService() *Service {
-	return New(cli.NewLogger("plugin.fs", true))
+	return New(logger.NewLogger("plugin.fs", true))
 }
 
 func (s *Service) Add(ctx context.Context, pluginArchive *zip.ReadCloser, pluginID,

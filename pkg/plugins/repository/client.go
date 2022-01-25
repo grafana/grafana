@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/cli"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -28,10 +28,10 @@ type Client struct {
 	httpClientNoTimeout http.Client
 	retryCount          int
 
-	log cli.Logger
+	log logger.Logger
 }
 
-func newClient(skipTLSVerify bool, logger cli.Logger) *Client {
+func newClient(skipTLSVerify bool, logger logger.Logger) *Client {
 	return &Client{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),

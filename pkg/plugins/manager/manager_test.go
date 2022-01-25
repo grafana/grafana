@@ -11,15 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/fs"
-
-	"github.com/grafana/grafana/pkg/plugins/repository"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/fs"
+	"github.com/grafana/grafana/pkg/plugins/repository"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

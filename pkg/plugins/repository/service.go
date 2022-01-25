@@ -8,7 +8,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/cli"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 )
 
 const (
@@ -19,10 +19,10 @@ type Service struct {
 	client *Client
 
 	repoURL string
-	log     cli.Logger
+	log     logger.Logger
 }
 
-func New(skipTLSVerify bool, repoURL string, logger cli.Logger) *Service {
+func New(skipTLSVerify bool, repoURL string, logger logger.Logger) *Service {
 	return &Service{
 		client:  newClient(skipTLSVerify, logger),
 		repoURL: repoURL,
@@ -31,7 +31,7 @@ func New(skipTLSVerify bool, repoURL string, logger cli.Logger) *Service {
 }
 
 func ProvideService() *Service {
-	return New(false, grafanaComAPIRoot, cli.NewLogger("plugin.repository", true))
+	return New(false, grafanaComAPIRoot, logger.NewLogger("plugin.repository", true))
 }
 
 // Download downloads the requested plugin archive

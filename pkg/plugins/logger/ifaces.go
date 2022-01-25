@@ -1,5 +1,7 @@
-package cli
+package logger
 
+// Logger is used primarily to facilitate logging/user feedback for both
+// the grafana-cli and the grafana backend when managing plugin installs
 type Logger interface {
 	Successf(format string, args ...interface{})
 	Failuref(format string, args ...interface{})
