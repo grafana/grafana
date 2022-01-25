@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { cloneDeep } from 'lodash';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
+import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
