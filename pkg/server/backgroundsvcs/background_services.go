@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -35,7 +34,7 @@ func ProvideBackgroundServiceRegistry(
 	tracing tracing.Tracer, remoteCache *remotecache.RemoteCache, secretsService *secretsManager.SecretsService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ *plugindashboards.Service, _ *dashboardsnapshots.Service, _ *pluginsettings.Service,
-	_ *alerting.AlertNotificationService, _ serviceaccounts.Service,  _ *resourceservices.ResourceServices,
+	_ *alerting.AlertNotificationService, _ serviceaccounts.Service,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,

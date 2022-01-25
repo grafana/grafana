@@ -346,8 +346,7 @@ func isTeamMember(sess *DBSession, orgId int64, teamId int64, userId int64) (boo
 }
 
 // AddOrUpdateTeamMember adds user to a team or updates user permissions in a team
-func (ss *SQLStore) AddOrUpdateTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
-	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+func (ss *SQLStore) AddOrUpdateTeamMember(sess *DBSession, userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
 		isMember, err := isTeamMember(sess, orgID, teamID, userID)
 		if err != nil {
 			return err
@@ -360,7 +359,6 @@ func (ss *SQLStore) AddOrUpdateTeamMember(userID, orgID, teamID int64, isExterna
 		}
 
 		return err
-	})
 }
 
 func addTeamMember(sess *DBSession, orgID, teamID, userID int64, isExternal bool, permission models.PermissionType) error {

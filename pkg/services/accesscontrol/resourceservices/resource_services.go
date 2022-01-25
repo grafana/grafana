@@ -33,15 +33,15 @@ func (s *ResourceServices) GetTeamService() *resourcepermissions.Service {
 
 var (
 	TeamMemberActions = []string{
-		"teams:read",
+		accesscontrol.ActionTeamsRead,
 	}
 
 	TeamAdminActions = []string{
-		"teams:read",
-		"teams:delete",
-		"teams:write",
-		"teams.permissions:read",
-		"teams.permissions:write",
+		accesscontrol.ActionTeamsRead,
+		accesscontrol.ActionTeamsDelete,
+		accesscontrol.ActionTeamsWrite,
+		accesscontrol.ActionTeamsPermissionsRead,
+		accesscontrol.ActionTeamsPermissionsWrite,
 	}
 )
 

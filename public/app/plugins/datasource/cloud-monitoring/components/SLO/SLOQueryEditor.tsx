@@ -1,12 +1,14 @@
-import React from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Project, AliasBy, AlignmentPeriod, AlignmentPeriodLabel, QueryEditorRow } from '..';
-import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
-import CloudMonitoringDatasource from '../../datasource';
+import React from 'react';
+
 import { Selector, Service, SLO } from '.';
+import { AliasBy, AlignmentPeriod, AlignmentPeriodLabel, Project, QueryEditorRow } from '..';
 import { SELECT_WIDTH } from '../../constants';
+import CloudMonitoringDatasource from '../../datasource';
+import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
 
 export interface Props {
+  refId: string;
   customMetaData: CustomMetaData;
   variableOptionGroup: SelectableValue<string>;
   onChange: (query: SLOQuery) => void;
@@ -28,6 +30,7 @@ export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery =
 });
 
 export function SLOQueryEditor({
+  refId,
   query,
   datasource,
   onChange,
@@ -37,32 +40,37 @@ export function SLOQueryEditor({
   return (
     <>
       <Project
+        refId={refId}
         templateVariableOptions={variableOptionGroup.options}
         projectName={query.projectName}
         datasource={datasource}
         onChange={(projectName) => onChange({ ...query, projectName })}
       />
       <Service
+        refId={refId}
         datasource={datasource}
         templateVariableOptions={variableOptionGroup.options}
         query={query}
         onChange={onChange}
       ></Service>
       <SLO
+        refId={refId}
         datasource={datasource}
         templateVariableOptions={variableOptionGroup.options}
         query={query}
         onChange={onChange}
       ></SLO>
       <Selector
+        refId={refId}
         datasource={datasource}
         templateVariableOptions={variableOptionGroup.options}
         query={query}
         onChange={onChange}
       ></Selector>
 
-      <QueryEditorRow label="Alignment period">
+      <QueryEditorRow label="Alignment period" htmlFor={`${refId}-alignment-period`}>
         <AlignmentPeriod
+          inputId={`${refId}-alignment-period`}
           templateVariableOptions={variableOptionGroup.options}
           query={{
             ...query,
@@ -74,7 +82,7 @@ export function SLOQueryEditor({
         <AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />
       </QueryEditorRow>
 
-      <AliasBy value={query.aliasBy} onChange={(aliasBy) => onChange({ ...query, aliasBy })} />
+      <AliasBy refId={refId} value={query.aliasBy} onChange={(aliasBy) => onChange({ ...query, aliasBy })} />
     </>
   );
 }
