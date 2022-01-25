@@ -1,26 +1,8 @@
 package featuremgmt
 
-import (
-	"github.com/grafana/grafana/pkg/services/secrets"
-)
-
 var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
-		{
-			Name:            "teamsync",
-			Description:     "Team sync lets you set up synchronization between your auth providers teams and teams in Grafana",
-			State:           FeatureStateStable,
-			DocsURL:         "https://grafana.com/docs/grafana/latest/enterprise/team-sync/",
-			RequiresLicense: true,
-		},
-		{
-			Name:            "ldapsync",
-			Description:     "Enhanced LDAP integration",
-			State:           FeatureStateStable,
-			DocsURL:         "https://grafana.com/docs/grafana/latest/enterprise/enhanced_ldap/",
-			RequiresLicense: true,
-		},
 		{
 			Name:            "caching",
 			Description:     "Temporarily store data source query results.",
@@ -29,19 +11,12 @@ var (
 			RequiresLicense: true,
 		},
 		{
-			Name:            "dspermissions",
-			Description:     "Data source permissions",
-			State:           FeatureStateStable,
-			DocsURL:         "https://grafana.com/docs/grafana/latest/enterprise/datasource_permissions/",
-			RequiresLicense: true,
-		},
-		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        secrets.EnvelopeEncryptionFeatureToggle,
+			Name:        "envelopeEncryption",
 			Description: "encrypt secrets",
 			State:       FeatureStateBeta,
 		},

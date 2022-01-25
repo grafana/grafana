@@ -19,7 +19,7 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 	t.Helper()
 
 	ac := &OSSAccessControlService{
-		features:      featuremgmt.WithFeatures("accesscontrol"),
+		features:      featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol),
 		UsageStats:    &usagestats.UsageStatsMock{T: t},
 		Log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
@@ -380,7 +380,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ac := &OSSAccessControlService{
-				features:      featuremgmt.WithFeatures("accesscontrol"),
+				features:      featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol),
 				UsageStats:    &usagestats.UsageStatsMock{T: t},
 				Log:           log.New("accesscontrol-test"),
 				registrations: accesscontrol.RegistrationList{},
@@ -462,7 +462,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 
 			// Setup
 			ac := &OSSAccessControlService{
-				features:      featuremgmt.WithFeatures("accesscontrol"),
+				features:      featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol),
 				UsageStats:    &usagestats.UsageStatsMock{T: t},
 				Log:           log.New("accesscontrol-test"),
 				registrations: accesscontrol.RegistrationList{},
@@ -541,7 +541,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 			// Setup
 			ac := setupTestEnv(t)
-			ac.features = featuremgmt.WithFeatures("accesscontrol")
+			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol)
 
 			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
 			err := ac.DeclareFixedRoles(registration)

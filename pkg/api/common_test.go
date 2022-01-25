@@ -214,7 +214,7 @@ func (s *fakeRenderService) Init() error {
 }
 
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
-	features := featuremgmt.WithFeatures("accesscontrol")
+	features := featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol)
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	cfg.Quota.Enabled = false
 
