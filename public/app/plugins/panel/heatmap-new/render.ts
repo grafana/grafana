@@ -114,7 +114,7 @@ export const countsToFills = (u: uPlot, seriesIdx: number, palette: string[]) =>
   let indexedFills = Array(counts.length);
 
   for (let i = 0; i < counts.length; i++) {
-    indexedFills[i] = Math.min(~~((counts[i] / maxCount) * cols), cols - 1);
+    indexedFills[i] = ~~((counts[i] / maxCount) * cols) - 1;
   }
 
   return indexedFills;
