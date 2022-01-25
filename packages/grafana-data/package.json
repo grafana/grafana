@@ -38,7 +38,7 @@
     "regenerator-runtime": "0.13.9",
     "rxjs": "7.5.1",
     "tslib": "2.3.1",
-    "uplot": "leeoniya/uplot#3af2d519623a79321e3abf09244eca1b703ecc78",
+    "uplot": "leeoniya/uplot#8125b7eacb00de5dd6759e27c661d3022e8b38b8",
     "xss": "1.0.10"
   },
   "devDependencies": {

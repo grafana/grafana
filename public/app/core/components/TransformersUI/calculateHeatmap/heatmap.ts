@@ -63,6 +63,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
   }
 
   let heat2d = heatmap(xs, ys, {
+    xSorted: true,
     xUnit: BucketSizeUnit.Value,
     xSize: +(options.xAxis?.value ?? 60e3),
     yUnit: BucketSizeUnit.Value,
@@ -125,24 +126,31 @@ interface HeatmapOpts {
   xMax?: number;
   yMin?: number;
   yMax?: number;
+
+  xSorted?: boolean;
+  ySorted?: boolean;
 }
 
+// TODO: handle NaN, Inf, -Inf, null, undefined values in xs & ys
 function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let len = xs.length;
 
+  let xSorted = opts?.xSorted ?? false;
+  let ySorted = opts?.ySorted ?? false;
+
   // find x and y limits to pre-compute buckets struct
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
+  let minX = xSorted ? xs[0] : Infinity;
+  let minY = ySorted ? ys[0] : Infinity;
+  let maxX = xSorted ? xs[len - 1] : -Infinity;
+  let maxY = ySorted ? ys[len - 1] : -Infinity;
 
   for (let i = 0; i < len; i++) {
-    if (xs[i] != null) {
+    if (!xSorted) {
       minX = Math.min(minX, xs[i]);
       maxX = Math.max(maxX, xs[i]);
     }
 
-    if (ys[i] != null) {
+    if (!ySorted) {
       minY = Math.min(minY, ys[i]);
       maxY = Math.max(maxY, ys[i]);
     }
@@ -183,13 +191,11 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let [xs2, ys2, counts] = initBins(xBinQty, yBinQty, minXBin, xBinIncr, minYBin, yBinIncr);
 
   for (let i = 0; i < len; i++) {
-    if (xs[i] != null && ys[i] != null) {
-      let xi = (binX(xs[i]) - minXBin) / xBinIncr;
-      let yi = (binY(ys[i]) - minYBin) / yBinIncr;
-      let ci = xi * yBinQty + yi;
+    let xi = (binX(xs[i]) - minXBin) / xBinIncr;
+    let yi = (binY(ys[i]) - minYBin) / yBinIncr;
+    let ci = xi * yBinQty + yi;
 
-      counts[ci]++;
-    }
+    counts[ci]++;
   }
 
   return {
@@ -203,13 +209,17 @@ function initBins(xQty: number, yQty: number, xMin: number, xIncr: number, yMin:
   let len = xQty * yQty;
   let xs = Array(len);
   let ys = Array(len);
-  let counts = Array(len).fill(0);
+  let counts = Array(len);
 
-  for (let i = 0, xi = 0; xi < len; xi += yQty, i++) {
-    xs.fill(xMin + i * xIncr, xi, xi + yQty);
-  }
-  for (let i = 0; i < len; i++) {
-    ys[i] = yMin + (i % yQty) * yIncr;
+  for (let i = 0, yi = 0, x = xMin; i < len; yi = ++i % yQty) {
+    counts[i] = 0;
+    ys[i] = yMin + yi * yIncr;
+
+    if (yi === 0 && i >= yQty) {
+      x += xIncr;
+    }
+
+    xs[i] = x;
   }
 
   return [xs, ys, counts];

@@ -1,10 +1,15 @@
 import uPlot from 'uplot';
-import { palettes9 } from './palettes';
 
-const yBinIncr = 10;
-const xBinIncr = 60e3;
+interface PathbuilderOpts {
+  disp: {
+    fill: {
+      values: (u: uPlot, seriesIndex: number) => number[];
+      index: Array<CanvasRenderingContext2D['fillStyle']>;
+    };
+  };
+}
 
-export function heatmapPaths(opts) {
+export function heatmapPaths(opts: PathbuilderOpts) {
   const { disp } = opts;
 
   return (u: uPlot, seriesIdx: number) => {
@@ -35,18 +40,19 @@ export function heatmapPaths(opts) {
         // fill colors are mapped from interpolating densities / counts along some gradient
         // (should be quantized to 64 colors/levels max. e.g. 16)
         let fills = disp.fill.values(u, seriesIdx);
-        let fillPaths = new Map(); // #rgba => Path2D
-        new Set(fills).forEach((fill) => {
-          fillPaths.set(fill, new Path2D());
-        });
+        let fillPalette = disp.fill.index ?? [...new Set(fills)];
+
+        let fillPaths = fillPalette.map((color) => new Path2D());
 
         // detect x and y bin qtys by detecting layout repetition in x & y data
         let yBinQty = dlen - ys.lastIndexOf(ys[0]);
         let xBinQty = dlen / yBinQty;
+        let yBinIncr = ys[1] - ys[0];
+        let xBinIncr = xs[yBinQty] - xs[0];
 
         // uniform tile sizes based on zoom level
-        let ySize = valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff);
         let xSize = valToPosX(xBinIncr, scaleX, xDim, xOff) - valToPosX(0, scaleX, xDim, xOff);
+        let ySize = valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff);
 
         // pre-compute x and y offsets
         let cys = ys.slice(0, yBinQty).map((y) => Math.round(valToPosY(y, scaleY, yDim, yOff) - ySize / 2));
@@ -63,10 +69,10 @@ export function heatmapPaths(opts) {
             ys[i] >= scaleY.min &&
             ys[i] <= scaleY.max
           ) {
-            let cx = cxs[Math.floor(i / yBinQty)];
+            let cx = cxs[~~(i / yBinQty)];
             let cy = cys[i % yBinQty];
 
-            let fillPath = fillPaths.get(fills[i]);
+            let fillPath = fillPaths[fills[i]];
 
             rect(fillPath, cx, cy, xSize, ySize);
 
@@ -87,27 +93,29 @@ export function heatmapPaths(opts) {
         //	u.ctx.globalAlpha = 0.8;
         u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
         u.ctx.clip();
-        fillPaths.forEach((p, rgba) => {
-          u.ctx.fillStyle = rgba;
+        fillPaths.forEach((p, i) => {
+          u.ctx.fillStyle = fillPalette[i];
           u.ctx.fill(p);
         });
         u.ctx.restore();
+
+        return null;
       }
     );
   };
-
-  return null;
 }
 
-export const countsToFills = (u: uPlot, seriesIdx: number) => {
-  let palette = palettes9.Oranges.slice().reverse();
+export const countsToFills = (u: uPlot, seriesIdx: number, palette: string[]) => {
   let counts = u.data[seriesIdx][2];
   // fast but might fail for arrays > 65k; can switch to slower Math.max(...new Set(counts))
   let maxCount = Math.max(...counts);
   let cols = palette.length;
 
-  return counts.map((v) => {
-    let cIdx = Math.min(Math.floor((v / maxCount) * cols), cols - 1);
-    return cIdx === 0 ? null : palette[cIdx];
-  });
+  let indexedFills = Array(counts.length);
+
+  for (let i = 0; i < counts.length; i++) {
+    indexedFills[i] = Math.min(~~((counts[i] / maxCount) * cols), cols - 1);
+  }
+
+  return indexedFills;
 };

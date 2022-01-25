@@ -1,22 +1,19 @@
 import React, { useMemo } from 'react';
-import { Field, PanelProps } from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 import {
   AxisPlacement,
   ScaleDirection,
   ScaleOrientation,
-  TimeSeries,
   UPlotChart,
   UPlotConfigBuilder,
   useTheme2,
   VizLayout,
 } from '@grafana/ui';
-import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
-import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { prepareHeatmapData } from './fields';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { PanelOptions } from './models.gen';
-import uPlot from 'uplot';
 import { countsToFills, heatmapPaths } from './render';
+import { palettes9 } from './palettes';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -35,6 +32,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   const theme = useTheme2();
 
   const info = useMemo(() => prepareHeatmapData(data?.series, options, theme), [data, options, theme]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const palette = useMemo(() => palettes9.Oranges.slice().reverse(), [options, theme]);
 
   const builder = useMemo(() => {
     let builder = new UPlotConfigBuilder(timeZone);
@@ -73,6 +73,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
         {
           scale: 'x',
           auto: true,
+          sorted: 1,
         },
         {
           scale: 'y',
@@ -82,7 +83,8 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       pathBuilder: heatmapPaths({
         disp: {
           fill: {
-            values: countsToFills,
+            values: (u, seriesIdx) => countsToFills(u, seriesIdx, palette),
+            index: palette,
           },
         },
       }),
