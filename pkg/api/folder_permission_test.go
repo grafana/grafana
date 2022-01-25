@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -287,16 +285,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			routePattern: "/api/folders/:uid/permissions",
 			cmd:          cmd,
 			fn: func(sc *scenarioContext) {
-				origUpdateDashboardACL := updateDashboardACL
-				t.Cleanup(func() {
-					updateDashboardACL = origUpdateDashboardACL
-				})
 				var gotItems []*models.DashboardAcl
-				updateDashboardACL = func(_ context.Context, _ dashboards.Store, _ int64, items []*models.DashboardAcl) error {
-					gotItems = items
-					return nil
-				}
-
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 200, sc.resp.Code)
 				assert.Len(t, gotItems, 4)
@@ -312,15 +301,6 @@ func callGetFolderPermissions(sc *scenarioContext, hs *HTTPServer) {
 
 func callUpdateFolderPermissions(t *testing.T, sc *scenarioContext) {
 	t.Helper()
-
-	origUpdateDashboardACL := updateDashboardACL
-	t.Cleanup(func() {
-		updateDashboardACL = origUpdateDashboardACL
-	})
-	updateDashboardACL = func(_ context.Context, _ dashboards.Store, dashID int64, items []*models.DashboardAcl) error {
-		return nil
-	}
-
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 

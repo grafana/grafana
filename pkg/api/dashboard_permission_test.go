@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -379,17 +378,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
-					// TODO: Replace this fake with a fake SQLStore instead (once we can use an interface in its stead)
-					origUpdateDashboardACL := updateDashboardACL
-					t.Cleanup(func() {
-						updateDashboardACL = origUpdateDashboardACL
-					})
 					var gotItems []*models.DashboardAcl
-					updateDashboardACL = func(_ context.Context, _ dashboards.Store, folderID int64, items []*models.DashboardAcl) error {
-						gotItems = items
-						return nil
-					}
-
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 					assert.Len(t, gotItems, 4)
@@ -406,15 +395,6 @@ func callGetDashboardPermissions(sc *scenarioContext, hs *HTTPServer) {
 
 func callUpdateDashboardPermissions(t *testing.T, sc *scenarioContext) {
 	t.Helper()
-
-	origUpdateDashboardACL := updateDashboardACL
-	t.Cleanup(func() {
-		updateDashboardACL = origUpdateDashboardACL
-	})
-	updateDashboardACL = func(_ context.Context, _ dashboards.Store, dashID int64, items []*models.DashboardAcl) error {
-		return nil
-	}
-
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 

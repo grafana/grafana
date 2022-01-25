@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -264,6 +266,8 @@ type accessControlScenarioContext struct {
 
 	// cfg is the setting provider
 	cfg *setting.Cfg
+
+	dashboardStore dashboardsstore.Store
 }
 
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission, org int64) {
@@ -328,6 +332,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		RouteRegister:      routing.NewRouteRegister(),
 		SQLStore:           db,
 		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
+		dashboardStore:     database.ProvideDashboardStore(db),
 	}
 
 	// Defining the accesscontrol service has to be done before registering routes
