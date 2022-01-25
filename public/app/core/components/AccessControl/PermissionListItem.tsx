@@ -14,8 +14,6 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
   <tr>
     <td style={{ width: '1%' }}>{getAvatar(item)}</td>
     <td style={{ width: '90%' }}>{getDescription(item)}</td>
-    <td />
-    <td className="query-keyword">Can</td>
     <td>
       <div className="gf-form">
         <Select

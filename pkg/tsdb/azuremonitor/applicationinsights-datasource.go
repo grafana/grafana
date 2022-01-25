@@ -14,8 +14,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -48,7 +49,8 @@ func (e *ApplicationInsightsDatasource) resourceRequest(rw http.ResponseWriter, 
 }
 
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+	originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries)
@@ -57,7 +59,7 @@ func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Conte
 	}
 
 	for _, query := range queries {
-		queryRes, err := e.executeQuery(ctx, query, dsInfo, client, url)
+		queryRes, err := e.executeQuery(ctx, query, dsInfo, client, url, tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +130,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []backend.DataQuery
 	return applicationInsightsQueries, nil
 }
 
-func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo datasourceInfo, client *http.Client, url string) (
+func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo datasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (
 	backend.DataResponse, error) {
 	dataResponse := backend.DataResponse{}
 
@@ -141,23 +143,16 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	req.URL.Path = path.Join(req.URL.Path, query.ApiURL)
 	req.URL.RawQuery = query.Params.Encode()
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "application insights query")
-	span.SetTag("target", query.Target)
-	span.SetTag("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond))
-	span.SetTag("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond))
-	span.SetTag("datasource_id", dsInfo.DatasourceID)
-	span.SetTag("org_id", dsInfo.OrgID)
+	ctx, span := tracer.Start(ctx, "application insights query")
+	span.SetAttributes("target", query.Target, attribute.Key("target").String(query.Target))
+	span.SetAttributes("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond), attribute.Key("from").Int64(query.TimeRange.From.UnixNano()/int64(time.Millisecond)))
+	span.SetAttributes("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond), attribute.Key("until").Int64(query.TimeRange.To.UnixNano()/int64(time.Millisecond)))
+	span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
+	span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
 
-	defer span.Finish()
+	defer span.End()
 
-	err = opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header))
-
-	if err != nil {
-		azlog.Warn("failed to inject global tracer")
-	}
+	tracer.Inject(ctx, req.Header, span)
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, client, req)

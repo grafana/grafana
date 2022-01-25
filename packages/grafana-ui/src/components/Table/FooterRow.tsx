@@ -9,30 +9,14 @@ import { EmptyCell, FooterCell } from './FooterCell';
 export interface FooterRowProps {
   totalColumnsWidth: number;
   footerGroups: HeaderGroup[];
-  footerValues?: FooterItem[];
+  footerValues: FooterItem[];
+  height: number;
 }
 
 export const FooterRow = (props: FooterRowProps) => {
-  const { totalColumnsWidth, footerGroups, footerValues } = props;
+  const { totalColumnsWidth, footerGroups, height } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
   const tableStyles = useStyles2(getTableStyles);
-  const EXTENDED_ROW_HEIGHT = 27;
-
-  if (!footerValues) {
-    return null;
-  }
-
-  let length = 0;
-  for (const fv of footerValues) {
-    if (Array.isArray(fv) && fv.length > length) {
-      length = fv.length;
-    }
-  }
-
-  let height: number | undefined;
-  if (footerValues && length > 1) {
-    height = EXTENDED_ROW_HEIGHT * length;
-  }
 
   return (
     <table
