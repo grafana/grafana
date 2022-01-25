@@ -101,16 +101,11 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		page = 1
 	}
 
-	var userIdFilter int64
-	if hs.Cfg.EditorsCanAdmin && c.OrgRole != models.ROLE_ADMIN {
-		userIdFilter = c.SignedInUser.UserId
-	}
-
 	query := models.SearchTeamsQuery{
 		OrgId:        c.OrgId,
 		Query:        c.Query("query"),
 		Name:         c.Query("name"),
-		UserIdFilter: userIdFilter,
+		UserIdFilter: userFilter(hs.Cfg.EditorsCanAdmin, c),
 		Page:         page,
 		Limit:        perPage,
 		SignedInUser: c.SignedInUser,
@@ -131,6 +126,19 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 	return response.JSON(200, query.Result)
 }
 
+// UserFilter returns the user ID used in a filter when querying a team
+// 1. If the user is a viewer or editor, this will return the user's ID.
+// 2. If EditorsCanAdmin is enabled and the user is an editor, this will return models.FilterIgnoreUser (0)
+// 3. If the user is an admin, this will return models.FilterIgnoreUser (0)
+func userFilter(editorsCanAdmin bool, c *models.ReqContext) int64 {
+	userIdFilter := c.SignedInUser.UserId
+	if (editorsCanAdmin && c.OrgRole == models.ROLE_EDITOR) || c.OrgRole == models.ROLE_ADMIN {
+		userIdFilter = models.FilterIgnoreUser
+	}
+
+	return userIdFilter
+}
+
 // GET /api/teams/:teamId
 func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 	query := models.GetTeamByIdQuery{
@@ -138,6 +146,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 		Id:           c.ParamsInt64(":teamId"),
 		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
+		UserIdFilter: userFilter(hs.Cfg.EditorsCanAdmin, c),
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
