@@ -64,6 +64,7 @@ export enum SuggestionKind {
   KeywordArguments,
   Operators,
   Statistic,
+  Period,
 }
 
 export enum CompletionItemPriority {

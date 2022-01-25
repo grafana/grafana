@@ -10,6 +10,7 @@ import {
   METRIC_MATH_FNS,
   METRIC_MATH_KEYWORDS,
   METRIC_MATH_OPERATORS,
+  METRIC_MATH_PERIODS,
   METRIC_MATH_STATISTIC_KEYWORD_STRINGS,
 } from '../language';
 import * as MetricMathTestData from '../../__mocks__/metric-math-test-data';
@@ -60,6 +61,12 @@ describe('MetricMath: CompletionItemProvider', () => {
       const { query, position } = MetricMathTestData.secondArgAfterSearchQuery;
       const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toEqual(METRIC_MATH_STATISTIC_KEYWORD_STRINGS.length);
+    });
+
+    it('returns a suggestion for every period if the third arg of a search function', async () => {
+      const { query, position } = MetricMathTestData.thirdArgAfterSearchQuery;
+      const suggestions = await getSuggestions(query, position);
+      expect(suggestions.length).toEqual(METRIC_MATH_PERIODS.length);
     });
   });
 });

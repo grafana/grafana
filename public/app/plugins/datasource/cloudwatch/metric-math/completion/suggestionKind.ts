@@ -10,6 +10,8 @@ export function getSuggestionKinds(statementPosition: StatementPosition): Sugges
       return [SuggestionKind.Operators];
     case StatementPosition.SecondArgAfterSearchFunc:
       return [SuggestionKind.Statistic];
+    case StatementPosition.ThirdArgAfterSearchFunc:
+      return [SuggestionKind.Period];
   }
 
   return [];

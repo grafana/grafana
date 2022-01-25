@@ -6,6 +6,7 @@ import {
   METRIC_MATH_FNS,
   METRIC_MATH_KEYWORDS,
   METRIC_MATH_OPERATORS,
+  METRIC_MATH_PERIODS,
   METRIC_MATH_STATISTIC_KEYWORD_STRINGS,
 } from '../language';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
@@ -93,6 +94,9 @@ export class MetricMathCompletionItemProvider extends CompletionItemProvider {
               command: TRIGGER_SUGGEST,
             })
           );
+
+        case SuggestionKind.Period:
+          METRIC_MATH_PERIODS.map((s) => addSuggestion(s.toString()));
       }
     }
 

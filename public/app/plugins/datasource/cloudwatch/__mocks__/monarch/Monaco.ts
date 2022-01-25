@@ -25,6 +25,7 @@ const MonacoMock: Monaco = {
           [MetricMathTestData.secondArgQuery.query]: MetricMathTestData.secondArgQuery.tokens,
           [MetricMathTestData.secondArgAfterSearchQuery.query]: MetricMathTestData.secondArgAfterSearchQuery.tokens,
           [MetricMathTestData.withinStringQuery.query]: MetricMathTestData.withinStringQuery.tokens,
+          [MetricMathTestData.thirdArgAfterSearchQuery.query]: MetricMathTestData.thirdArgAfterSearchQuery.tokens,
         };
         return TestData[value];
       }

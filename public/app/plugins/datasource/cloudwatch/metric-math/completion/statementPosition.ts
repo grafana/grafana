@@ -14,7 +14,6 @@ export function getStatementPosition(currentToken: LinkedToken | null): Statemen
           lastComma.range.startColumn > currentFunction.range.startColumn &&
           lastComma.range.startLineNumber >= currentFunction.range.startLineNumber;
 
-        // TODO: figure out best way to suggest a period of time... is there a way to use a macro for this for example
         if (lastCommaIsAfterSearch) {
           return StatementPosition.ThirdArgAfterSearchFunc;
         }
