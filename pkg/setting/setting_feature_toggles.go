@@ -22,6 +22,7 @@ var (
 		"accesscontrol":                 false,
 		"service-accounts":              false,
 		"httpclientprovider_azure_auth": false,
+		"validatedQueries":              false,
 	}
 )
 

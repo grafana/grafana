@@ -429,6 +429,11 @@ type Cfg struct {
 	UnifiedAlerting UnifiedAlertingSettings
 }
 
+// IsValidatedQueriesEnabled
+func (cfg Cfg) IsValidatedQueriesEnabled() bool {
+	return cfg.FeatureToggles["validatedQueries"]
+}
+
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
 func (cfg Cfg) IsLiveConfigEnabled() bool {
 	return cfg.FeatureToggles["live-config"]
