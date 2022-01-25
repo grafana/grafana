@@ -92,6 +92,7 @@ export function buildImageUrl(
   selectedTheme?: string,
   panel?: PanelModel
 ) {
+  console.log('buildImageUrl');
   let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel);
 
   let imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');

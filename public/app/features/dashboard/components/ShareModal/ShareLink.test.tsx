@@ -131,7 +131,7 @@ describe('ShareModal', () => {
     });
 
     it('should generate render url', async () => {
-      mockLocationHref('http://dashboards.grafana.com/d/abcdefghi/my-dash');
+      mockLocationHref(`http://dashboards.grafana.com/d/${mockUid}/my-dash`);
 
       ctx.mount({
         panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
@@ -139,7 +139,7 @@ describe('ShareModal', () => {
 
       await ctx.wrapper?.instance().buildUrl();
       const state = ctx.wrapper?.state();
-      const base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
+      const base = `http://dashboards.grafana.com/render/d-solo/${mockUid}/my-dash`;
       const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
       expect(state?.imageUrl).toContain(base + params);
     });
