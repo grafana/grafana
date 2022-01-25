@@ -116,3 +116,18 @@ export const isKindClient = (span: TraceSpan): Boolean =>
   span.tags.some(({ key, value }) => key === 'span.kind' && value === 'client');
 
 export { formatDuration } from '../utils/date';
+
+/**
+ * Returns the string representation of a number.
+ *
+ *  @param  {number} num
+ *  @returns {string} The resultant string representation of number.
+ */
+export function formatNumber(num: number) {
+  if (num > 999 && num < 1000000) {
+    return (num / 1000).toFixed(0) + 'K'; // convert to K for number from > 1000 < 1 million
+  } else if (num > 1000000) {
+    return (num / 1000000).toFixed(0) + 'M'; // convert to M for number from > 1 million
+  }
+  return num + '';
+}

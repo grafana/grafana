@@ -20,6 +20,7 @@ import {
   isServerSpan,
   spanContainsErredSpan,
   spanHasTag,
+  formatNumber,
 } from './utils';
 
 import traceGenerator from '../demo/trace-generators';
@@ -151,6 +152,21 @@ describe('TraceTimelineViewer/utils', () => {
       expect(findServerChildSpan(spans)).toBeFalsy();
       spans[1].depth = spans[0].depth;
       expect(findServerChildSpan(spans)).toBeFalsy();
+    });
+  });
+
+  describe('formatNumber', () => {
+    it.each`
+      value      | expected
+      ${-1}      | ${''}
+      ${20}      | ${'20'}
+      ${1000}    | ${'1K'}
+      ${4578}    | ${'4K'}
+      ${10678}   | ${'10K'}
+      ${1100000} | ${'11M'}
+    `(' function should format $value to $expected', ({ value, expected }) => {
+      const result = formatNumber(value);
+      expect(result).toEqual(expected);
     });
   });
 });

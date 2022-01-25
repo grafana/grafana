@@ -24,7 +24,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import ReferencesButton from './ReferencesButton';
 import TimelineRow from './TimelineRow';
-import { formatDuration, ViewedBoundsFunctionType } from './utils';
+import { formatDuration, ViewedBoundsFunctionType, formatNumber } from './utils';
 import SpanTreeOffset from './SpanTreeOffset';
 import SpanBar from './SpanBar';
 import Ticks from './Ticks';
@@ -432,7 +432,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}
             />
-            {span.childSpanCount}
+            {formatNumber(span.childSpanCount)}
             <a
               className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
               aria-checked={isDetailExpanded}

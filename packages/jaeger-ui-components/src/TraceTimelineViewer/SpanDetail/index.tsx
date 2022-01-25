@@ -23,7 +23,7 @@ import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
-import { formatDuration } from '../utils';
+import { formatDuration, formatNumber } from '../utils';
 import LabeledList from '../../common/LabeledList';
 import { SpanLinkFunc, TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '../../types/trace';
@@ -174,7 +174,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     {
       key: 'child span count',
       label: 'Child Span Count',
-      value: span.childSpanCount,
+      value: formatNumber(span.childSpanCount),
     },
   ];
   const styles = useStyles2(getStyles);
