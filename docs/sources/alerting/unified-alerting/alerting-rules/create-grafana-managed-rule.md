@@ -20,7 +20,7 @@ Grafana allows you to create alerting rules that query one or more data sources,
 1. In Step 2, add queries and expressions to evaluate.
    - Keep the default name or hover over and click the edit icon to change the name.
    - For queries, select a data source from the drop-down.
-   - Add one or more [queries]({{< relref "../../../panels/queries.md" >}}) or [expressions]({{< relref "../../../panels/expressions.md" >}}).
+   - Add one or more [queries]({{< relref "../../../panels/query-a-data-source/add-a-query.md" >}}) or [expressions]({{< relref "../../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions.md" >}}).
    - For each expression, select either **Classic condition** to create a single alert rule, or choose from **Math**, **Reduce**, **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
    - Click **Run queries** to verify that the query is successful.
 1. In Step 3, add conditions.
@@ -57,7 +57,7 @@ To generate a separate alert for each series, create a multi-dimensional rule. U
 
 #### Rule with classic condition
 
-For more information, see [expressions documentation]({{< relref "../../../panels/expressions.md" >}}).
+For more information, see [expressions documentation]({{< relref "../../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions.md" >}}).
 
 ### No data and error handling
 

@@ -22,7 +22,10 @@ import (
 )
 
 const GENERAL_FOLDER = "General Alerting"
-const DASHBOARD_FOLDER = "Migrated %s"
+const DASHBOARD_FOLDER = "%s Alerts - %s"
+
+// MaxFolderName is the maximum length of the folder name generated using DASHBOARD_FOLDER format
+const MaxFolderName = 255
 
 // FOLDER_CREATED_BY us used to track folders created by this migration
 // during alert migration cleanup.
@@ -231,6 +234,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	if err != nil {
 		return err
 	}
+	mg.Logger.Info("alerts found to migrate", "alerts", len(dashAlerts))
 
 	// [orgID, dataSourceId] -> UID
 	dsIDMap, err := m.slurpDSIDs()
@@ -256,6 +260,9 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
+	// cache for folders created for dashboards that have custom permissions
+	folderCache := make(map[string]*dashboard)
+
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
 		if err != nil {
@@ -280,55 +287,65 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			}
 		}
 
-		// get folder if exists
-		folder, err := m.getFolder(dash, da)
-		if err != nil {
-			return MigrationError{
-				Err:     err,
-				AlertId: da.Id,
-			}
-		}
-
+		var folder *dashboard
 		switch {
 		case dash.HasAcl:
-			// create folder and assign the permissions of the dashboard (included default and inherited)
-			ptr, err := m.createFolder(dash.OrgId, fmt.Sprintf(DASHBOARD_FOLDER, getMigrationString(da)))
-			if err != nil {
-				return MigrationError{
-					Err:     fmt.Errorf("failed to create folder: %w", err),
-					AlertId: da.Id,
+			folderName := getAlertFolderNameFromDashboard(&dash)
+			f, ok := folderCache[folderName]
+			if !ok {
+				mg.Logger.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "org", dash.OrgId, "dashboard_uid", dash.Uid, "folder", folderName)
+				// create folder and assign the permissions of the dashboard (included default and inherited)
+				f, err = m.createFolder(dash.OrgId, folderName)
+				if err != nil {
+					return MigrationError{
+						Err:     fmt.Errorf("failed to create folder: %w", err),
+						AlertId: da.Id,
+					}
 				}
-			}
-			folder = *ptr
-			permissions, err := m.getACL(dash.OrgId, dash.Id)
-			if err != nil {
-				return MigrationError{
-					Err:     fmt.Errorf("failed to get dashboard %d under organisation %d permissions: %w", dash.Id, dash.OrgId, err),
-					AlertId: da.Id,
+				permissions, err := m.getACL(dash.OrgId, dash.Id)
+				if err != nil {
+					return MigrationError{
+						Err:     fmt.Errorf("failed to get dashboard %d under organisation %d permissions: %w", dash.Id, dash.OrgId, err),
+						AlertId: da.Id,
+					}
 				}
-			}
-			err = m.setACL(folder.OrgId, folder.Id, permissions)
-			if err != nil {
-				return MigrationError{
-					Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", folder.Id, folder.OrgId, err),
-					AlertId: da.Id,
+				err = m.setACL(f.OrgId, f.Id, permissions)
+				if err != nil {
+					return MigrationError{
+						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", folder.Id, folder.OrgId, err),
+						AlertId: da.Id,
+					}
 				}
+				folderCache[folderName] = f
 			}
+			folder = f
 		case dash.FolderId > 0:
-			// link the new rule to the existing folder
-		default:
-			// get or create general folder
-			ptr, err := m.getOrCreateGeneralFolder(dash.OrgId)
+			// get folder if exists
+			f, err := m.getFolder(dash, da)
 			if err != nil {
 				return MigrationError{
-					Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
+					Err:     err,
 					AlertId: da.Id,
 				}
+			}
+			folder = &f
+		default:
+			f, ok := folderCache[GENERAL_FOLDER]
+			if !ok {
+				// get or create general folder
+				f, err = m.getOrCreateGeneralFolder(dash.OrgId)
+				if err != nil {
+					return MigrationError{
+						Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
+						AlertId: da.Id,
+					}
+				}
+				folderCache[GENERAL_FOLDER] = f
 			}
 			// No need to assign default permissions to general folder
 			// because they are included to the query result if it's a folder with no permissions
 			// https://github.com/grafana/grafana/blob/076e2ce06a6ecf15804423fcc8dca1b620a321e5/pkg/services/sqlstore/dashboard_acl.go#L109
-			folder = *ptr
+			folder = f
 		}
 
 		if folder.Uid == "" {
@@ -779,4 +796,15 @@ func CheckUnifiedAlertingEnabledByDefault(migrator *migrator.Migrator) error {
 
 	migrator.Logger.Debug(fmt.Sprintf("Found %d legacy alerts in the database. Unified alerting enabled is %v", resp.Count, ualertEnabled))
 	return nil
+}
+
+// getAlertFolderNameFromDashboard generates a folder name for alerts that belong to a dashboard. Formats the string according to DASHBOARD_FOLDER format.
+// If the resulting string exceeds the migrations.MaxTitleLength, the dashboard title is stripped to be at the maximum length
+func getAlertFolderNameFromDashboard(dash *dashboard) string {
+	maxLen := MaxFolderName - len(fmt.Sprintf(DASHBOARD_FOLDER, "", dash.Uid))
+	title := dash.Title
+	if len(title) > maxLen {
+		title = title[:maxLen]
+	}
+	return fmt.Sprintf(DASHBOARD_FOLDER, title, dash.Uid) // include UID to the name to avoid collision
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,7 +51,11 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 			return errutil.Wrap("failed to load configuration", err)
 		}
 
-		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{})
+		tracer, err := tracing.ProvideService(cfg)
+		if err != nil {
+			return errutil.Wrap("failed to initialize tracer service", err)
+		}
+		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{}, tracer)
 		if err != nil {
 			return errutil.Wrap("failed to initialize SQL store", err)
 		}

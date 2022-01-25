@@ -89,7 +89,7 @@ type testState struct {
 
 func newTestLive(t *testing.T) *live.GrafanaLive {
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
-	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t), nil, &usagestats.UsageStatsMock{T: t}, nil)
+	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, sqlstore.InitTestDB(t), nil, &usagestats.UsageStatsMock{T: t}, nil)
 	require.NoError(t, err)
 	return gLive
 }
