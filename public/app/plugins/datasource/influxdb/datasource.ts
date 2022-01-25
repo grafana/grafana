@@ -340,6 +340,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map((query) => {
+        if (this.isFlux) {
+          return {
+            ...query,
+            query: this.templateSrv.replace(query.query ?? '', scopedVars, 'regex'),
+          };
+        }
+
         const expandedQuery = {
           ...query,
           datasource: this.getRef(),
@@ -347,7 +354,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           policy: this.templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
         };
 
-        if (query.rawQuery || this.isFlux) {
+        if (query.rawQuery) {
           expandedQuery.query = this.templateSrv.replace(query.query ?? '', scopedVars, 'regex');
         }
 
