@@ -77,7 +77,7 @@ function shareLinkScenario(description: string, scenarioFn: (ctx: ScenarioContex
       mount: (propOverrides?: any) => {
         const props: any = {
           panel: undefined,
-          dashboard: { time: getDefaultTimeRange() },
+          dashboard: { time: getDefaultTimeRange(), uid: mockUid },
         };
 
         Object.assign(props, propOverrides);
@@ -96,19 +96,24 @@ function shareLinkScenario(description: string, scenarioFn: (ctx: ScenarioContex
 
 describe('ShareModal', () => {
   let templateSrv = initTemplateSrv([]);
-
-  config.bootData = {
-    settings: {
-      appUrl: 'http://dashboards.grafana.com/',
-    },
-    user: {
-      orgId: 1,
-    },
-  };
+  let originalBootData: any;
 
   beforeAll(() => {
+    originalBootData = config.bootData;
+    config.bootData = {
+      settings: {
+        appUrl: 'http://dashboards.grafana.com/',
+      },
+      user: {
+        orgId: 1,
+      },
+    };
     variableAdapters.register(createQueryVariableAdapter());
     setTemplateSrv(templateSrv);
+  });
+
+  afterAll(() => {
+    config.bootData = originalBootData;
   });
 
   shareLinkScenario('shareUrl with current time range and panel', (ctx) => {
