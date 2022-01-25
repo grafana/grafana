@@ -35,7 +35,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -65,17 +64,18 @@ import (
 )
 
 type HTTPServer struct {
-	log                          log.Logger
-	web                          *web.Mux
-	context                      context.Context
-	httpSrv                      *http.Server
-	middlewares                  []web.Handler
+	log              log.Logger
+	web              *web.Mux
+	context          context.Context
+	httpSrv          *http.Server
+	middlewares      []web.Handler
+	namedMiddlewares []routing.RegisterNamedMiddleware
+
 	PluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
 	Bus                          bus.Bus
 	RenderService                rendering.Service
 	Cfg                          *setting.Cfg
-	Features                     *featuremgmt.FeatureManager
 	SettingsProvider             setting.Provider
 	HooksService                 *hooks.HooksService
 	CacheService                 *localcache.CacheService
@@ -140,7 +140,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginService login.Service, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
-	contextHandler *contexthandler.ContextHandler, features *featuremgmt.FeatureManager,
+	contextHandler *contexthandler.ContextHandler,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
@@ -153,60 +153,57 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	m := web.New()
 
 	hs := &HTTPServer{
-		Cfg:                          cfg,
-		RouteRegister:                routeRegister,
-		Bus:                          bus,
-		RenderService:                renderService,
-		License:                      licensing,
-		HooksService:                 hooksService,
-		CacheService:                 cacheService,
-		SQLStore:                     sqlStore,
-		AlertEngine:                  alertEngine,
-		PluginRequestValidator:       pluginRequestValidator,
-		pluginClient:                 pluginClient,
-		pluginStore:                  pluginStore,
-		pluginStaticRouteResolver:    pluginStaticRouteResolver,
-		pluginDashboardManager:       pluginDashboardManager,
-		pluginErrorResolver:          pluginErrorResolver,
-		updateChecker:                updateChecker,
-		SettingsProvider:             settingsProvider,
-		DataSourceCache:              dataSourceCache,
-		AuthTokenService:             userTokenService,
-		cleanUpService:               cleanUpService,
-		ShortURLService:              shortURLService,
-		Features:                     features,
-		ThumbService:                 thumbService,
-		RemoteCacheService:           remoteCache,
-		ProvisioningService:          provisioningService,
-		Login:                        loginService,
-		AccessControl:                accessControl,
-		DataProxy:                    dataSourceProxy,
-		SearchService:                searchService,
-		Live:                         live,
-		LivePushGateway:              livePushGateway,
-		PluginContextProvider:        plugCtxProvider,
-		ContextHandler:               contextHandler,
-		LoadSchemaService:            schemaService,
-		AlertNG:                      alertNG,
-		LibraryPanelService:          libraryPanelService,
-		LibraryElementService:        libraryElementService,
-		QuotaService:                 quotaService,
-		tracer:                       tracer,
-		log:                          log.New("http.server"),
-		web:                          m,
-		Listener:                     opts.Listener,
-		SocialService:                socialService,
-		EncryptionService:            encryptionService,
-		SecretsService:               secretsService,
-		DataSourcesService:           dataSourcesService,
-		searchUsersService:           searchUsersService,
-		teamGuardian:                 teamGuardian,
-		queryDataService:             queryDataService,
-		serviceAccountsService:       serviceaccountsService,
-		dashboardService:             dashboardService,
-		dashboardProvisioningService: dashboardProvisioningService,
-		folderService:                folderService,
-		dashboardStore:               dashboardStore,
+		Cfg:                       cfg,
+		RouteRegister:             routeRegister,
+		Bus:                       bus,
+		RenderService:             renderService,
+		License:                   licensing,
+		HooksService:              hooksService,
+		CacheService:              cacheService,
+		SQLStore:                  sqlStore,
+		AlertEngine:               alertEngine,
+		PluginRequestValidator:    pluginRequestValidator,
+		pluginClient:              pluginClient,
+		pluginStore:               pluginStore,
+		pluginStaticRouteResolver: pluginStaticRouteResolver,
+		pluginDashboardManager:    pluginDashboardManager,
+		pluginErrorResolver:       pluginErrorResolver,
+		updateChecker:             updateChecker,
+		SettingsProvider:          settingsProvider,
+		DataSourceCache:           dataSourceCache,
+		AuthTokenService:          userTokenService,
+		cleanUpService:            cleanUpService,
+		ShortURLService:           shortURLService,
+		ThumbService:              thumbService,
+		RemoteCacheService:        remoteCache,
+		ProvisioningService:       provisioningService,
+		Login:                     loginService,
+		AccessControl:             accessControl,
+		DataProxy:                 dataSourceProxy,
+		SearchService:             searchService,
+		Live:                      live,
+		LivePushGateway:           livePushGateway,
+		PluginContextProvider:     plugCtxProvider,
+		ContextHandler:            contextHandler,
+		LoadSchemaService:         schemaService,
+		AlertNG:                   alertNG,
+		LibraryPanelService:       libraryPanelService,
+		LibraryElementService:     libraryElementService,
+		QuotaService:              quotaService,
+		tracer:                    tracer,
+		log:                       log.New("http.server"),
+		web:                       m,
+		Listener:                  opts.Listener,
+		SocialService:             socialService,
+		EncryptionService:         encryptionService,
+		SecretsService:            secretsService,
+		DataSourcesService:        dataSourcesService,
+		searchUsersService:        searchUsersService,
+		teamGuardian:              teamGuardian,
+		queryDataService:          queryDataService,
+		serviceAccountsService:    serviceaccountsService,
+		folderService:             folderService,
+		dashboardStore:            dashboardStore,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -221,6 +218,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 
 func (hs *HTTPServer) AddMiddleware(middleware web.Handler) {
 	hs.middlewares = append(hs.middlewares, middleware)
+}
+
+func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddleware) {
+	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
 func (hs *HTTPServer) Run(ctx context.Context) error {
@@ -409,7 +410,7 @@ func (hs *HTTPServer) applyRoutes() {
 	// start with middlewares & static routes
 	hs.addMiddlewaresAndStaticRoutes()
 	// then add view routes & api routes
-	hs.RouteRegister.Register(hs.web)
+	hs.RouteRegister.Register(hs.web, hs.namedMiddlewares...)
 	// then custom app proxy routes
 	hs.initAppPluginRoutes(hs.web)
 	// lastly not found route
