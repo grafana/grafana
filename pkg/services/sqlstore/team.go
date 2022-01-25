@@ -16,7 +16,7 @@ func (ss *SQLStore) addTeamQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.DeleteTeam)
 	bus.AddHandler("sql", ss.SearchTeams)
 	bus.AddHandler("sql", ss.GetTeamById)
-	bus.AddHandler("sql", GetTeamsByUser)
+	bus.AddHandler("sql", ss.GetTeamsByUser)
 
 	bus.AddHandler("sql", ss.UpdateTeamMember)
 	bus.AddHandler("sql", ss.RemoveTeamMember)
@@ -106,7 +106,7 @@ func (ss *SQLStore) CreateTeam(name, email string, orgID int64) (models.Team, er
 }
 
 func (ss *SQLStore) UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if isNameTaken, err := isTeamNameTaken(cmd.OrgId, cmd.Name, cmd.Id, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -137,7 +137,7 @@ func (ss *SQLStore) UpdateTeam(ctx context.Context, cmd *models.UpdateTeamComman
 
 // DeleteTeam will delete a team, its member and any permissions connected to the team
 func (ss *SQLStore) DeleteTeam(ctx context.Context, cmd *models.DeleteTeamCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if _, err := teamExists(cmd.OrgId, cmd.Id, sess); err != nil {
 			return err
 		}
@@ -274,17 +274,19 @@ func (ss *SQLStore) GetTeamById(ctx context.Context, query *models.GetTeamByIdQu
 }
 
 // GetTeamsByUser is used by the Guardian when checking a users' permissions
-func GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-	query.Result = make([]*models.TeamDTO, 0)
+func (ss *SQLStore) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		query.Result = make([]*models.TeamDTO, 0)
 
-	var sql bytes.Buffer
+		var sql bytes.Buffer
 
-	sql.WriteString(getTeamSelectSQLBase([]string{}))
-	sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
-	sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
+		sql.WriteString(getTeamSelectSQLBase([]string{}))
+		sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
+		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
 
-	err := x.SQL(sql.String(), query.OrgId, query.UserId).Find(&query.Result)
-	return err
+		err := sess.SQL(sql.String(), query.OrgId, query.UserId).Find(&query.Result)
+		return err
+	})
 }
 
 // AddTeamMember adds a user to a team
@@ -333,7 +335,7 @@ func getTeamMember(sess *DBSession, orgId int64, teamId int64, userId int64) (mo
 
 // UpdateTeamMember updates a team member
 func (ss *SQLStore) UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		member, err := getTeamMember(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
 		if err != nil {
 			return err
@@ -359,7 +361,7 @@ func (ss *SQLStore) UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeam
 
 // RemoveTeamMember removes a member from a team
 func (ss *SQLStore) RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
 			return err
 		}
