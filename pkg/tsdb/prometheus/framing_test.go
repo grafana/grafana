@@ -11,29 +11,48 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMatrixResponses(t *testing.T) {
-	t.Run("parse a simple matrix response", func(t *testing.T) {
-		testScenario(t, "range_simple")
-	})
+	tt := []struct {
+		name     string
+		filepath string
+	}{
+		{name: "parse a simple matrix response", filepath: "range_simple"},
+		{name: "parse a simple matrix response with value missing steps", filepath: "range_missing"},
+		{name: "parse a response with Infinity", filepath: "range_infinity"},
+		{name: "parse a response with NaN", filepath: "range_nan"},
+	}
 
-	t.Run("parse a simple matrix response with value missing steps", func(t *testing.T) {
-		testScenario(t, "range_missing")
-	})
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			queryFileName := filepath.Join("testdata", test.filepath+".query.json")
+			responseFileName := filepath.Join("testdata", test.filepath+".result.json")
+			goldenFileName := filepath.Join("testdata", test.filepath+".result.golden.txt")
 
-	t.Run("parse a response with Infinity", func(t *testing.T) {
-		testScenario(t, "range_infinity")
-	})
+			query, err := loadStoredPrometheusQuery(queryFileName)
+			require.NoError(t, err)
 
-	t.Run("parse a response with NaN", func(t *testing.T) {
-		testScenario(t, "range_nan")
-	})
+			responseBytes, err := os.ReadFile(responseFileName)
+			require.NoError(t, err)
+
+			result, err := runQuery(responseBytes, query)
+			require.NoError(t, err)
+			require.Len(t, result.Responses, 1)
+
+			dr, found := result.Responses["A"]
+			require.True(t, found)
+
+			require.NoError(t, experimental.CheckGoldenDataResponse(goldenFileName, &dr, true))
+		})
+	}
 }
 
 type mockedRoundTripper struct {
@@ -78,14 +97,18 @@ type storedPrometheusQuery struct {
 	Expr       string
 }
 
-func loadStoredPrometheusQuery(t *testing.T, fileName string) PrometheusQuery {
+func loadStoredPrometheusQuery(fileName string) (PrometheusQuery, error) {
 	bytes, err := os.ReadFile(fileName)
-	require.NoError(t, err)
+	if err != nil {
+		return PrometheusQuery{}, err
+	}
 
 	var query storedPrometheusQuery
 
 	err = json.Unmarshal(bytes, &query)
-	require.NoError(t, err)
+	if err != nil {
+		return PrometheusQuery{}, err
+	}
 
 	return PrometheusQuery{
 		RefId:      query.RefId,
@@ -94,33 +117,20 @@ func loadStoredPrometheusQuery(t *testing.T, fileName string) PrometheusQuery {
 		End:        time.Unix(query.End, 0),
 		Step:       time.Second * time.Duration(query.Step),
 		Expr:       query.Expr,
-	}
+	}, nil
 }
 
-// we run the mocked query, and extract the DataResponse.
-// we assume and verify that there is exactly one DataResponse returned.
-func testScenario(t *testing.T, name string) {
-	queryFileName := filepath.Join("testdata", name+".query.json")
-	responseFileName := filepath.Join("testdata", name+".result.json")
-	goldenFileName := filepath.Join("testdata", name+".result.golden.txt")
-	query := loadStoredPrometheusQuery(t, queryFileName)
-	responseBytes, err := os.ReadFile(responseFileName)
-	require.NoError(t, err)
-
-	api, err := makeMockedApi(responseBytes)
-	require.NoError(t, err)
+func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataResponse, error) {
+	api, err := makeMockedApi(response)
+	if err != nil {
+		return nil, err
+	}
 
 	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	if err != nil {
+		return nil, err
+	}
+
 	s := Service{tracer: tracer}
-	result, err := s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
-	require.NoError(t, err)
-	require.Len(t, result.Responses, 1)
-
-	dr, found := result.Responses["A"]
-	require.True(t, found)
-	require.NoError(t, dr.Error)
-
-	err = experimental.CheckGoldenDataResponse(goldenFileName, &dr, true)
-	require.NoError(t, err)
+	return s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
 }
