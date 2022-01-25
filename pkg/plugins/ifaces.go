@@ -3,8 +3,6 @@ package plugins
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/plugins/repository"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"

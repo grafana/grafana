@@ -222,7 +222,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 			assert.Equal(t, 2, repo.downloadCount)
 			assert.Equal(t, 1, fsm.removed)
-			assert.Equal(t, 1, fsm.added)
+			assert.Equal(t, 2, fsm.added)
 			assert.Equal(t, 1, pc.startCount)
 			assert.Equal(t, 0, pc.stopCount)
 			assert.False(t, pc.exited)

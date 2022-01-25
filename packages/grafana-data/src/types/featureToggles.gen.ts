@@ -1,9 +1,3 @@
-// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
-// To change feature flags, edit:
-//  pkg/services/featuremgmt/registry.go
-// Then run tests in:
-//  pkg/services/featuremgmt/toggles_gen_test.go
-
 /**
  * Describes available feature toggles in Grafana. These can be configured via
  * conf/custom.ini to enable features under development or not yet available in

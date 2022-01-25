@@ -18,6 +18,7 @@ import (
 
 func TestGetPluginDashboards(t *testing.T) {
 	cfg := &setting.Cfg{
+		FeatureToggles: map[string]bool{},
 		PluginSettings: setting.PluginSettings{
 			"test-app": map[string]string{
 				"path": "testdata/test-app",

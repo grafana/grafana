@@ -132,7 +132,7 @@ func (o *OSSImpl) Section(section string) Section {
 func (OSSImpl) RegisterReloadHandler(string, ReloadHandler) {}
 
 func (o OSSImpl) IsFeatureToggleEnabled(name string) bool {
-	return o.Cfg.IsFeatureToggleEnabled(name)
+	return o.Cfg.FeatureToggles[name]
 }
 
 type keyValImpl struct {

@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -51,13 +50,11 @@ func TestPluginManager_int_init(t *testing.T) {
 	bundledPluginsPath, err := filepath.Abs("../../../plugins-bundled/internal")
 	require.NoError(t, err)
 
-	features := featuremgmt.WithToggles()
 	cfg := &setting.Cfg{
-		Raw:                    ini.Empty(),
-		Env:                    setting.Prod,
-		StaticRootPath:         staticRootPath,
-		BundledPluginsPath:     bundledPluginsPath,
-		IsFeatureToggleEnabled: features.IsEnabled,
+		Raw:                ini.Empty(),
+		Env:                setting.Prod,
+		StaticRootPath:     staticRootPath,
+		BundledPluginsPath: bundledPluginsPath,
 		PluginSettings: map[string]map[string]string{
 			"plugin.datasource-id": {
 				"path": "testdata/test-app",
@@ -82,7 +79,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	otsdb := opentsdb.ProvideService(hcp)
 	pr := prometheus.ProvideService(hcp, tracer)
 	tmpo := tempo.ProvideService(hcp)
-	td := testdatasource.ProvideService(cfg, features)
+	td := testdatasource.ProvideService(cfg)
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
