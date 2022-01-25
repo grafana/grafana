@@ -100,10 +100,9 @@ describe('ShareModal', () => {
 
   beforeAll(() => {
     originalBootData = config.bootData;
+    config.appUrl = 'http://dashboards.grafana.com/';
+
     config.bootData = {
-      settings: {
-        appUrl: 'http://dashboards.grafana.com/',
-      },
       user: {
         orgId: 1,
       },
@@ -139,7 +138,21 @@ describe('ShareModal', () => {
 
       await ctx.wrapper?.instance().buildUrl();
       const state = ctx.wrapper?.state();
-      const base = `http://dashboards.grafana.com/render/d-solo/${mockUid}/my-dash`;
+      const base = `http://dashboards.grafana.com/render/d-solo/${mockUid}`;
+      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
+      expect(state?.imageUrl).toContain(base + params);
+    });
+
+    it('should generate render url for homepage panel', async () => {
+      mockLocationHref(`http://dashboards.grafana.com/`);
+
+      ctx.mount({
+        panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
+      });
+
+      await ctx.wrapper?.instance().buildUrl();
+      const state = ctx.wrapper?.state();
+      const base = `http://dashboards.grafana.com/render/d-solo/${mockUid}`;
       const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
       expect(state?.imageUrl).toContain(base + params);
     });
