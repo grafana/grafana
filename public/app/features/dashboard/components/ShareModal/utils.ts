@@ -68,13 +68,13 @@ export async function buildShareUrl(
   return shareUrl;
 }
 
-export function buildSoloUrl(useCurrentTimeRange: boolean, selectedTheme?: string, panel?: PanelModel) {
+export function buildSoloUrl(useCurrentTimeRange: boolean, selectedTheme?: string, panel?: PanelModel, dashboardUid: string) {
   const baseUrl = buildBaseUrl();
   const params = buildParams({ useCurrentTimeRange, selectedTheme, panel });
 
-  // let soloUrl = `${config.appUrl}d-solo/`;
-  let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
-  soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
+  let soloUrl = `${config.appUrl}d-solo/${dashboardUid}`;
+  /* let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
+  soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/'); */
 
   const panelId = params.get('editPanel') ?? params.get('viewPanel') ?? '';
   params.set('panelId', panelId);
@@ -93,8 +93,8 @@ export function buildImageUrl(useCurrentTimeRange: boolean, selectedTheme?: stri
   return imageUrl;
 }
 
-export function buildIframeHtml(useCurrentTimeRange: boolean, selectedTheme?: string, panel?: PanelModel) {
-  let soloUrl = buildSoloUrl(useCurrentTimeRange, selectedTheme, panel);
+export function buildIframeHtml(useCurrentTimeRange: boolean, selectedTheme?: string, panel?: PanelModel, dashboardUid: string) {
+  let soloUrl = buildSoloUrl(useCurrentTimeRange, selectedTheme, panel, dashboardUid);
   return '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 }
 
