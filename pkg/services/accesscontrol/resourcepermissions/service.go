@@ -40,11 +40,11 @@ type Store interface {
 
 func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store Store, sqlStore *sqlstore.SQLStore) (*Service, error) {
 	var permissions []string
-	validActions := make(map[string]struct{})
+	actionSet := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
 		permissions = append(permissions, permission)
 		for _, a := range actions {
-			validActions[a] = struct{}{}
+			actionSet[a] = struct{}{}
 		}
 	}
 
@@ -53,19 +53,18 @@ func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessC
 		return len(options.PermissionsToActions[permissions[i]]) > len(options.PermissionsToActions[permissions[j]])
 	})
 
-	actions := make([]string, 0, len(validActions))
-	for action := range validActions {
+	actions := make([]string, 0, len(actionSet))
+	for action := range actionSet {
 		actions = append(actions, action)
 	}
 
 	s := &Service{
-		ac:           ac,
-		store:        store,
-		options:      options,
-		permissions:  permissions,
-		actions:      actions,
-		validActions: validActions,
-		sqlStore:     sqlStore,
+		ac:          ac,
+		store:       store,
+		options:     options,
+		permissions: permissions,
+		actions:     actions,
+		sqlStore:    sqlStore,
 	}
 
 	s.api = newApi(ac, router, s)
@@ -85,11 +84,10 @@ type Service struct {
 	store Store
 	api   *api
 
-	options      Options
-	permissions  []string
-	actions      []string
-	validActions map[string]struct{}
-	sqlStore     *sqlstore.SQLStore
+	options     Options
+	permissions []string
+	actions     []string
+	sqlStore    *sqlstore.SQLStore
 }
 
 func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
@@ -106,9 +104,9 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, re
 		return nil, ErrInvalidAssignment
 	}
 
-	actions := s.mapPermission(permission)
-	if !s.validateActions(actions) {
-		return nil, ErrInvalidActions
+	actions, err := s.mapPermission(permission)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := s.validateResource(ctx, orgID, resourceID); err != nil {
@@ -132,9 +130,9 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 		return nil, ErrInvalidAssignment
 	}
 
-	actions := s.mapPermission(permission)
-	if !s.validateActions(actions) {
-		return nil, ErrInvalidActions
+	actions, err := s.mapPermission(permission)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := s.validateTeam(ctx, orgID, teamID); err != nil {
@@ -158,9 +156,9 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		return nil, ErrInvalidAssignment
 	}
 
-	actions := s.mapPermission(permission)
-	if !s.validateActions(actions) {
-		return nil, ErrInvalidActions
+	actions, err := s.mapPermission(permission)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := s.validateBuiltinRole(ctx, builtInRole); err != nil {
@@ -188,13 +186,17 @@ func (s *Service) mapActions(permission accesscontrol.ResourcePermission) string
 	return ""
 }
 
-func (s *Service) mapPermission(permission string) []string {
+func (s *Service) mapPermission(permission string) ([]string, error) {
+	if permission == "" {
+		return []string{}, nil
+	}
+
 	for k, v := range s.options.PermissionsToActions {
 		if permission == k {
-			return v
+			return v, nil
 		}
 	}
-	return []string{}
+	return nil, ErrInvalidPermission
 }
 
 func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID string) error {
@@ -202,15 +204,6 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 		return s.options.ResourceValidator(ctx, orgID, resourceID)
 	}
 	return nil
-}
-
-func (s *Service) validateActions(actions []string) bool {
-	for _, a := range actions {
-		if _, ok := s.validActions[a]; !ok {
-			return false
-		}
-	}
-	return true
 }
 
 func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
