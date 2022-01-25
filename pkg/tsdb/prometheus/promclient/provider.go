@@ -1,10 +1,11 @@
 package promclient
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/middleware"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -54,6 +55,31 @@ func (p *Provider) GetClient(headers map[string]string) (apiv1.API, error) {
 		opts.SigV4.Service = "aps"
 	}
 
+	if _, ok := opts.CustomOptions["_azureCredentials"]; !ok {
+		if grafanaData, err := getMap(opts.CustomOptions, "grafanaData"); err == nil {
+			if azureAuthEnabled, err := getBool(grafanaData, "azureAuth"); err == nil && azureAuthEnabled {
+				credentials, err := azcredentials.FromDatasourceData(grafanaData, p.settings.DecryptedSecureJSONData)
+				if err != nil {
+					err = fmt.Errorf("invalid Azure credentials: %s", err)
+					return nil, err
+				}
+
+				opts.CustomOptions["_azureAuth"] = true
+				if credentials != nil {
+					opts.CustomOptions["_azureCredentials"] = credentials
+				}
+			}
+		}
+	}
+
+	if _, ok := opts.CustomOptions["azureEndpointResourceId"]; !ok {
+		if grafanaData, err := getMap(opts.CustomOptions, "grafanaData"); err == nil {
+			if azureEndpointResourceId, err := getStringOptional(grafanaData, "azureEndpointResourceId"); err == nil {
+				opts.CustomOptions["azureEndpointResourceId"] = azureEndpointResourceId
+			}
+		}
+	}
+
 	roundTripper, err := p.clientProvider.GetTransport(opts)
 	if err != nil {
 		return nil, err
@@ -91,4 +117,46 @@ func reqHeaders(headers map[string]string) map[string]string {
 		h[k] = v
 	}
 	return h
+}
+
+func getMap(obj map[string]interface{}, key string) (map[string]interface{}, error) {
+	if untypedValue, ok := obj[key]; ok {
+		if value, ok := untypedValue.(map[string]interface{}); ok {
+			return value, nil
+		} else {
+			err := fmt.Errorf("the field '%s' should be an object", key)
+			return nil, err
+		}
+	} else {
+		err := fmt.Errorf("the field '%s' should be set", key)
+		return nil, err
+	}
+}
+
+func getBool(obj map[string]interface{}, key string) (bool, error) {
+	if untypedValue, ok := obj[key]; ok {
+		if value, ok := untypedValue.(bool); ok {
+			return value, nil
+		} else {
+			err := fmt.Errorf("the field '%s' should be a bool", key)
+			return false, err
+		}
+	} else {
+		err := fmt.Errorf("the field '%s' should be set", key)
+		return false, err
+	}
+}
+
+func getStringOptional(obj map[string]interface{}, key string) (string, error) {
+	if untypedValue, ok := obj[key]; ok {
+		if value, ok := untypedValue.(string); ok {
+			return value, nil
+		} else {
+			err := fmt.Errorf("the field '%s' should be a string", key)
+			return "", err
+		}
+	} else {
+		// Value optional, not error
+		return "", nil
+	}
 }
