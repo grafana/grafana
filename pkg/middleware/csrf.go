@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
@@ -14,7 +15,7 @@ func CSRF(loginCookieName string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// If request has no login cookie - skip CSRF checks
-			if _, err := r.Cookie(loginCookieName); err == http.ErrNoCookie {
+			if _, err := r.Cookie(loginCookieName); errors.Is(err, http.ErrNoCookie) {
 				next.ServeHTTP(w, r)
 				return
 			}
