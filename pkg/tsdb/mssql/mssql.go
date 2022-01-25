@@ -139,14 +139,11 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 		}
 	}
 
-	args := []interface{}{
-		"url", dsInfo.URL, "host", addr.Host,
-	}
-	if addr.Port != "0" {
-		args = append(args, "port", addr.Port)
-	}
-
-	logger.Debug("Generating connection string", args...)
+	logger.Info("Generating connection string from", "args", dsInfo)
+	encrypt := dsInfo.JsonData.Encrypt
+	tlsSkipVerify := dsInfo.JsonData.TlsSkipVerify
+	hostNameInCertificate := dsInfo.JsonData.Servername
+	certificate := dsInfo.JsonData.RootCertFile
 	connStr := fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,
 		dsInfo.Database,
@@ -157,14 +154,17 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	if addr.Port != "0" {
 		connStr += fmt.Sprintf("port=%s;", addr.Port)
 	}
+	if encrypt == "true" {
+		connStr += fmt.Sprintf("encrypt=%s;TrustServerCertificate=%t;", encrypt, tlsSkipVerify)
+		if hostNameInCertificate != "" {
+			connStr += fmt.Sprintf("hostNameInCertificate=%s;", hostNameInCertificate)
+		}
 
-	if dsInfo.JsonData.Encrypt == "" {
-		dsInfo.JsonData.Encrypt = "false"
+		if certificate != "" {
+			connStr += fmt.Sprintf("certificate=%s;", certificate)
+		}
 	}
-
-	if dsInfo.JsonData.Encrypt != "false" {
-		connStr += fmt.Sprintf("encrypt=%s;", dsInfo.JsonData.Encrypt)
-	}
+	logger.Info("connection", "value", connStr)
 	return connStr, nil
 }
 
