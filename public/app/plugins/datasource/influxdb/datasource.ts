@@ -352,6 +352,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           datasource: this.getRef(),
           measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
           policy: this.templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
+          limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
+          slimit: this.templateSrv.replace(query.slimit?.toString() ?? '', scopedVars, 'regex'),
+          tz: this.templateSrv.replace(query.tz ?? '', scopedVars, 'regex'),
         };
 
         if (query.rawQuery) {
