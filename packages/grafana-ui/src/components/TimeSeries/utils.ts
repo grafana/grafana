@@ -38,7 +38,10 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursorSync; legend?: VizLegendOptions }> = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
+  sync?: () => DashboardCursorSync;
+  legend?: VizLegendOptions;
+}> = ({
   frame,
   theme,
   timeZone,
@@ -67,6 +70,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   let xScaleUnit = '_x';
   let yScaleKey = '';
 
+  const xFieldAxisPlacement =
+    xField.config.custom?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden;
+  const xFieldAxisShow = xField.config.custom?.axisPlacement !== AxisPlacement.Hidden;
+
   if (xField.type === FieldType.time) {
     xScaleUnit = 'time';
     builder.addScale({
@@ -83,7 +90,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     builder.addAxis({
       scaleKey: xScaleKey,
       isTime: true,
-      placement: AxisPlacement.Bottom,
+      placement: xFieldAxisPlacement,
+      show: xFieldAxisShow,
       label: xField.config.custom?.axisLabel,
       timeZone,
       theme,
@@ -103,7 +111,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     builder.addAxis({
       scaleKey: xScaleKey,
-      placement: AxisPlacement.Bottom,
+      placement: xFieldAxisPlacement,
+      show: xFieldAxisShow,
       label: xField.config.custom?.axisLabel,
       theme,
       grid: { show: xField.config.custom?.axisGridShow },
@@ -399,7 +408,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     },
   };
 
-  if (sync !== DashboardCursorSync.Off) {
+  if (sync && sync() !== DashboardCursorSync.Off) {
     const payload: DataHoverPayload = {
       point: {
         [xScaleKey]: null,
@@ -412,6 +421,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       key: '__global_',
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          if (sync && sync() === DashboardCursorSync.Off) {
+            return false;
+          }
+
           payload.rowIndex = dataIdx;
           if (x < 0 && y < 0) {
             payload.point[xScaleUnit] = null;

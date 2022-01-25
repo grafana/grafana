@@ -61,6 +61,7 @@ type Calls struct {
 	RetrieveServiceAccount []interface{}
 	DeleteServiceAccount   []interface{}
 	UpgradeServiceAccounts []interface{}
+	ConvertServiceAccounts []interface{}
 	ListTokens             []interface{}
 }
 
@@ -82,6 +83,11 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 
 func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
 	s.Calls.UpgradeServiceAccounts = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
+	return nil
+}
+
+func (s *ServiceAccountsStoreMock) ConvertToServiceAccounts(ctx context.Context, keys []int64) error {
+	s.Calls.ConvertServiceAccounts = append(s.Calls.ConvertServiceAccounts, []interface{}{ctx})
 	return nil
 }
 

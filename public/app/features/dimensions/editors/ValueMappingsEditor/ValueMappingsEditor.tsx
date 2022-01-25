@@ -1,13 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { GrafanaTheme2, MappingType, ValueMapping } from '@grafana/data';
-import { Button } from '../Button/Button';
-import { Modal } from '../Modal/Modal';
-import { useStyles2 } from '../../themes';
 import { css } from '@emotion/css';
 import { buildEditRowModels, editModelToSaveModel, ValueMappingsEditorModal } from './ValueMappingsEditorModal';
-import { Icon } from '../Icon/Icon';
-import { VerticalGroup } from '../Layout/Layout';
-import { ColorPicker } from '../ColorPicker/ColorPicker';
+import { useStyles2, VerticalGroup, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
 
 export interface Props {
   value: ValueMapping[];

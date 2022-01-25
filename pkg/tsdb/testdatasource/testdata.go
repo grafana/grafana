@@ -2,22 +2,18 @@ package testdatasource
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const pluginID = "testdata"
-
-func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) (*Service, error) {
+func ProvideService(cfg *setting.Cfg) *Service {
 	s := &Service{
 		queryMux:  datasource.NewQueryTypeMux(),
 		scenarios: map[string]*Scenario{},
@@ -37,29 +33,25 @@ func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) (*Service, erro
 	}
 
 	s.registerScenarios()
+	s.resourceHandler = httpadapter.New(s.registerRoutes())
 
-	rMux := http.NewServeMux()
-	s.RegisterRoutes(rMux)
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler:    s.queryMux,
-		CallResourceHandler: httpadapter.New(rMux),
-		StreamHandler:       s,
-	})
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver)
-	if err != nil {
-		return nil, err
-	}
-
-	return s, nil
+	return s
 }
 
 type Service struct {
-	cfg        *setting.Cfg
-	logger     log.Logger
-	scenarios  map[string]*Scenario
-	frame      *data.Frame
-	labelFrame *data.Frame
-	queryMux   *datasource.QueryTypeMux
+	cfg             *setting.Cfg
+	logger          log.Logger
+	scenarios       map[string]*Scenario
+	frame           *data.Frame
+	labelFrame      *data.Frame
+	queryMux        *datasource.QueryTypeMux
+	resourceHandler backend.CallResourceHandler
+}
+
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return s.queryMux.QueryData(ctx, req)
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return s.resourceHandler.CallResource(ctx, req, sender)
 }
