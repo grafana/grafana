@@ -97,9 +97,9 @@ export const ResourceDimensionEditor: FC<
           onChange={onFixedChange}
           onClear={onClear}
           value={value?.fixed}
-          srcPath={srcPath}
+          src={srcPath}
           placeholder={item.settings?.placeholderText ?? 'Select a value'}
-          niceName={niceName(value?.fixed) ?? ''}
+          name={niceName(value?.fixed) ?? ''}
           mediaType={mediaType}
           folderName={folderName}
         />

@@ -19,8 +19,8 @@ import { ResourcePickerPopover } from './ResourcePickerPopover';
 
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
-  srcPath?: string;
-  niceName?: string;
+  src?: string;
+  name?: string;
   placeholder?: string;
   onChange: (value?: string) => void;
   onClear: (event: React.MouseEvent) => void;
@@ -29,14 +29,11 @@ interface Props {
 }
 
 export const ResourcePicker = (props: Props) => {
+  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName } = props;
+
   const pickerTriggerRef = createRef<any>();
   const popoverElement = (
-    <ResourcePickerPopover
-      onChange={props.onChange}
-      value={props.value}
-      mediaType={props.mediaType}
-      folderName={props.folderName}
-    />
+    <ResourcePickerPopover onChange={onChange} value={value} mediaType={mediaType} folderName={folderName} />
   );
   const styles = useStyles2(getStyles);
 
@@ -60,11 +57,11 @@ export const ResourcePicker = (props: Props) => {
               <InlineFieldRow className={styles.pointer}>
                 <InlineField label={null} grow>
                   <Input
-                    value={props.niceName}
-                    placeholder={props.placeholder}
+                    value={name}
+                    placeholder={placeholder}
                     readOnly={true}
-                    prefix={props.srcPath && <SVG src={props.srcPath} className={styles.icon} />}
-                    suffix={<Button icon="times" variant="secondary" fill="text" size="sm" onClick={props.onClear} />}
+                    prefix={src && <SVG src={src} className={styles.icon} />}
+                    suffix={<Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClear} />}
                   />
                 </InlineField>
               </InlineFieldRow>
