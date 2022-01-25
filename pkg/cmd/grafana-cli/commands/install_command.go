@@ -14,13 +14,13 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/fs"
-
 	"github.com/fatih/color"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/plugins/fs"
 	"github.com/grafana/grafana/pkg/plugins/repository"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -93,7 +93,7 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 			}
 		}
 
-		return err
+		return nil
 	}
 
 	_, err := repo.Download(context.Background(), pluginID, version,
