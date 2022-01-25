@@ -179,19 +179,24 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           const dataQueryResponse = toDataQueryResponse({
             data: data,
           });
-          return dataQueryResponse?.data
+          const labels = dataQueryResponse?.data
             .map((f) => f.meta?.custom?.labels)
             .filter((p) => !!p)
             .reduce((acc, labels) => {
               for (let key in labels) {
-                if (acc[key]) {
-                  acc[key].push(...labels[key]);
-                } else {
-                  acc[key] = labels[key];
+                if (!acc[key]) {
+                  acc[key] = new Set<string>();
                 }
+                acc[key].add(labels[key]);
               }
               return acc;
             }, {});
+          return Object.fromEntries(
+            Object.entries(labels).map((l: any) => {
+              l[1] = Array.from(l[1]);
+              return l;
+            })
+          );
         })
       )
     );
