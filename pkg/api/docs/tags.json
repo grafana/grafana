@@ -50,11 +50,19 @@
 		},
 		{
 			"name": "enterprise",
-			"description": "This is only available in Grafana Enterprise"
+			"description": "These are only available in Grafana Enterprise"
 		},
 		{
 			"name": "accesscontrol",
 			"description": "The API can be used to create, update, get and list roles, and create or remove built-in role assignments. To use the API, you would need to enable fine-grained access control.\nThis only available in Grafana Enterprise.\nThe API does not currently work with an API Token. So in order to use these API endpoints you will have to use Basic auth."
+		},
+		{
+			"name": "licensing",
+			"description": "Licensing is only available in Grafana Enterprise. Read more about Grafana Enterprise.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required."
+		},
+		{
+			"name": "report",
+			"description": "This API allows you to interact programmatically with the Reporting feature.\nReporting is only available in Grafana Enterprise. Read more about Grafana Enterprise.\nIf you have Fine-grained access Control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required."
 		}
 	]
 }

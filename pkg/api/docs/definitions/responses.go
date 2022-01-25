@@ -86,3 +86,8 @@ type UnauthorizedError GenericError
 //
 // swagger:response dublicateAPIkeyError
 type DublicateAPIkeyError GenericError
+
+// AcceptedResponse
+//
+// swagger:response acceptedResponse
+type AcceptedResponse GenericError

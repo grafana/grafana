@@ -126,6 +126,8 @@ type SearchUsersWithPagingParams struct {
 // swagger:parameters syncLDAPUser disableUser enableUser getUserQuota updateUserQuota
 // swagger:parameters updateOrgUser deleteOrgUser adminUpdateOrgUser adminDeleteOrgUser
 // swagger:parameters updateTeamMember removeTeamMember
+// swagger:parameters listUserRoles addUserRole
+// swagger:parameters listUserRoles addUserRole removeUserRole setUserRoles listUserRoles
 type UserIDParam struct {
 	// in:path
 	// required:true

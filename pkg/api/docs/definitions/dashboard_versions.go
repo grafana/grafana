@@ -38,6 +38,7 @@ import "github.com/grafana/grafana/pkg/models"
 
 // swagger:parameters getDashboardVersions getDashboardVersion restoreDashboardVersion
 // swagger:parameters getDashboardPermissions postDashboardPermissions
+// swagger:parameters rendeReportPDF
 type DashboardIdParam struct {
 	// in:path
 	DashboardID int64
