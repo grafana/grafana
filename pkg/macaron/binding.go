@@ -2,8 +2,10 @@ package macaron
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"reflect"
 )
@@ -11,9 +13,16 @@ import (
 // Bind deserializes JSON payload from the request
 func Bind(req *http.Request, v interface{}) error {
 	if req.Body != nil {
-		defer req.Body.Close()
-		err := json.NewDecoder(req.Body).Decode(v)
-		if err != nil && err != io.EOF {
+		m, _, err := mime.ParseMediaType(req.Header.Get("Content-type"))
+		if err != nil {
+			return err
+		}
+		if m != "application/json" {
+			return errors.New("bad content type")
+		}
+		defer func() { _ = req.Body.Close() }()
+		err = json.NewDecoder(req.Body).Decode(v)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -29,7 +38,7 @@ func validate(obj interface{}) error {
 	if validator, ok := obj.(Validator); ok {
 		return validator.Validate()
 	}
-	// Otherwise, use relfection to match `binding:"Required"` struct field tags.
+	// Otherwise, use reflection to match `binding:"Required"` struct field tags.
 	// Resolve all pointers and interfaces, until we get a concrete type.
 	t := reflect.TypeOf(obj)
 	v := reflect.ValueOf(obj)
@@ -69,6 +78,7 @@ func validate(obj interface{}) error {
 				return err
 			}
 		}
+	default: // ignore
 	}
 	return nil
 }
