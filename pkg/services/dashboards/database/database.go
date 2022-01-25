@@ -70,13 +70,13 @@ func (d *DashboardStore) GetFolderByTitle(orgID int64, title string) (*models.Da
 }
 
 func (d *DashboardStore) GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
-	var data *models.DashboardProvisioning
+	var data models.DashboardProvisioning
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Where("dashboard_id = ?", dashboardID).Get(data)
+		_, err := sess.Where("dashboard_id = ?", dashboardID).Get(&data)
 		return err
 	})
 
-	return data, err
+	return &data, err
 }
 
 func (d *DashboardStore) GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
