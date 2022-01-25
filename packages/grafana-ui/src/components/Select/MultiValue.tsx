@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useTheme2 } from '../../themes';
-import { IconButton } from '../IconButton/IconButton';
+import { Icon } from '../Icon/Icon';
 import { getSelectStyles } from './getSelectStyles';
 
 interface MultiValueContainerProps {
@@ -27,8 +27,8 @@ export const MultiValueRemove: React.FC<MultiValueRemoveProps> = ({ children, in
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   return (
-    <div {...innerProps} className={styles.multiValueRemove}>
-      <IconButton name="times" size="sm" aria-label="select multi clear value" />
+    <div {...innerProps} className={styles.multiValueRemove} role="button">
+      <Icon name="times" size="sm" />
     </div>
   );
 };
