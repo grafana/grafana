@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
@@ -203,8 +204,8 @@ func (t *testLicensingService) Environment() map[string]string {
 	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
 }
 
-func (*testLicensingService) EnabledFeatures() map[string]bool {
-	return map[string]bool{}
+func (*testLicensingService) ListFeatures() []models.FeatureFlag {
+	return []models.FeatureFlag{}
 }
 
 func (*testLicensingService) FeatureEnabled(feature string) bool {
