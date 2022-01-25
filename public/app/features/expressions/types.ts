@@ -24,6 +24,19 @@ export const reducerTypes: Array<SelectableValue<string>> = [
   { value: ReducerID.last, label: 'Last', description: 'Get the last value' },
 ];
 
+export const ReplaceNNMode = 'replaceNN';
+export const NoneMode = '';
+
+export const reducerMode: Array<SelectableValue<string>> = [
+  { value: NoneMode, label: 'None', description: 'Do nothing' },
+  { value: 'dropNN', label: 'Drop Non Numbers', description: 'Remove NaN, +/-Inf, null' },
+  {
+    value: ReplaceNNMode,
+    label: 'Replace Non Numbers ',
+    description: 'Replace NaN, +/-Inf and null with constant value',
+  },
+];
+
 export const downsamplingTypes: Array<SelectableValue<string>> = [
   { value: ReducerID.min, label: 'Min', description: 'Fill with the minimum value' },
   { value: ReducerID.max, label: 'Max', description: 'Fill with the maximum value' },
@@ -49,8 +62,14 @@ export interface ExpressionQuery extends DataQuery {
   downsampler?: string;
   upsampler?: string;
   conditions?: ClassicCondition[];
-  mode?: string;
+  settings?: ExpressionQuerySettings;
 }
+
+export interface ExpressionQuerySettings {
+  mode?: string;
+  replaceWithValue?: number;
+}
+
 export interface ClassicCondition {
   evaluator: {
     params: number[];
