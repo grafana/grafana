@@ -51,7 +51,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum, grafanaVers
 		}
 	}()
 
-	c.log.Debugf("Installing plugin\nfrom: %s", pluginZipURL)
+	c.log.Debugf("Installing plugin from %s", pluginZipURL)
 
 	err = c.downloadFile(tmpFile, pluginZipURL, checksum, grafanaVersion)
 	if err != nil {

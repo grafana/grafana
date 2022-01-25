@@ -49,7 +49,7 @@ func (s *Service) Add(ctx context.Context, pluginArchive *zip.ReadCloser, plugin
 		return nil, errutil.Wrap("failed to convert to plugin DTO", err)
 	}
 
-	s.log.Successf("Downloaded %s v%s zip successfully", res.ID, res.Info.Version)
+	s.log.Successf("Downloaded and extracted %s v%s zip successfully to %s", res.ID, res.Info.Version, pluginDir)
 
 	var deps []*Dep
 	for _, plugin := range res.Dependencies.Plugins {
@@ -87,7 +87,7 @@ func (s *Service) Remove(_ context.Context, pluginDir string) error {
 func (s *Service) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID, destPath string) (string, error) {
 	installDir := filepath.Join(destPath, pluginID)
 	if _, err := os.Stat(installDir); !os.IsNotExist(err) {
-		s.log.Debug("Removing existing installation of plugin %s", installDir)
+		s.log.Debugf("Removing existing installation of plugin %s", installDir)
 		err = os.RemoveAll(installDir)
 		if err != nil {
 			return "", err

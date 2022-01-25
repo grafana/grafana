@@ -61,44 +61,48 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 	version := c.Args().Get(1)
 	skipTLSVerify := c.Bool("insecure")
 	pluginsPath := c.PluginDirectory()
+	pluginZipURL := c.PluginURL()
+
 	repo := repository.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
 
-	pluginZipURL := c.PluginURL()
+	ctx := context.Background()
+	var archive *repository.PluginArchiveInfo
+	var err error
 	if pluginZipURL != "" {
-		ctx := context.Background()
-		archive, err := repo.DownloadWithURL(ctx, pluginZipURL,
+		archive, err = repo.DownloadWithURL(ctx, pluginZipURL,
 			repository.CompatabilityOpts{GrafanaVersion: services.GrafanaVersion},
 		)
 		if err != nil {
 			return err
 		}
-
-		pluginFs := fs.New(services.Logger)
-		extractedArchive, err := pluginFs.Add(ctx, archive.File, pluginID, pluginsPath)
+	} else {
+		archive, err = repo.Download(ctx, pluginID, version,
+			repository.CompatabilityOpts{GrafanaVersion: services.GrafanaVersion},
+		)
 		if err != nil {
 			return err
 		}
-
-		for _, dep := range extractedArchive.Dependencies {
-			services.Logger.Info("Fetching %s dependency...", dep.ID)
-			d, err := repo.Download(ctx, dep.ID, dep.Version,
-				repository.CompatabilityOpts{GrafanaVersion: services.GrafanaVersion})
-			if err != nil {
-				return errutil.Wrapf(err, "failed to download plugin %s from repository", dep.ID)
-			}
-
-			_, err = pluginFs.Add(ctx, d.File, dep.ID, pluginsPath)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
 	}
 
-	_, err := repo.Download(context.Background(), pluginID, version,
-		repository.CompatabilityOpts{GrafanaVersion: services.GrafanaVersion},
-	)
+	pluginFs := fs.New(services.Logger)
+	extractedArchive, err := pluginFs.Add(ctx, archive.File, pluginID, pluginsPath)
+	if err != nil {
+		return err
+	}
+
+	for _, dep := range extractedArchive.Dependencies {
+		services.Logger.Info("Fetching %s dependency...", dep.ID)
+		d, err := repo.Download(ctx, dep.ID, dep.Version,
+			repository.CompatabilityOpts{GrafanaVersion: services.GrafanaVersion})
+		if err != nil {
+			return errutil.Wrapf(err, "failed to download plugin %s from repository", dep.ID)
+		}
+
+		_, err = pluginFs.Add(ctx, d.File, dep.ID, pluginsPath)
+		if err != nil {
+			return err
+		}
+	}
 	return err
 }
 
