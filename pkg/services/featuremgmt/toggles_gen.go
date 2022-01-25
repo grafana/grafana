@@ -3,81 +3,81 @@
 package featuremgmt
 
 const (
-	// FlagCaching caching
+	// FlagCaching
 	// Temporarily store data source query results.
 	FlagCaching = "caching"
 
-	// FlagTrimDefaults trimDefaults
+	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
 
-	// FlagEnvelopeEncryption envelopeEncryption
+	// FlagEnvelopeEncryption
 	// encrypt secrets
 	FlagEnvelopeEncryption = "envelopeEncryption"
 
-	// FlagHttpclientproviderAzureAuth httpclientprovider_azure_auth
+	// FlagHttpclientproviderAzureAuth
 	FlagHttpclientproviderAzureAuth = "httpclientprovider_azure_auth"
 
-	// FlagServiceAccounts service-accounts
+	// FlagServiceAccounts
 	// support service accounts
 	FlagServiceAccounts = "service-accounts"
 
-	// FlagDatabaseMetrics database_metrics
+	// FlagDatabaseMetrics
 	// Add prometheus metrics for database tables
 	FlagDatabaseMetrics = "database_metrics"
 
-	// FlagDashboardPreviews dashboardPreviews
+	// FlagDashboardPreviews
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
 
-	// FlagLiveConfig live-config
+	// FlagLiveConfig
 	// Save grafana live configuration in SQL tables
 	FlagLiveConfig = "live-config"
 
-	// FlagLivePipeline live-pipeline
+	// FlagLivePipeline
 	// enable a generic live processing pipeline
 	FlagLivePipeline = "live-pipeline"
 
-	// FlagLiveServiceWebWorker live-service-web-worker
+	// FlagLiveServiceWebWorker
 	// This will use a webworker thread to processes events rather than the main thread
 	FlagLiveServiceWebWorker = "live-service-web-worker"
 
-	// FlagQueryOverLive queryOverLive
+	// FlagQueryOverLive
 	// Use grafana live websocket to execute backend queries
 	FlagQueryOverLive = "queryOverLive"
 
-	// FlagTempoSearch tempoSearch
+	// FlagTempoSearch
 	// Enable searching in tempo datasources
 	FlagTempoSearch = "tempoSearch"
 
-	// FlagTempoBackendSearch tempoBackendSearch
+	// FlagTempoBackendSearch
 	// Use backend for tempo search
 	FlagTempoBackendSearch = "tempoBackendSearch"
 
-	// FlagTempoServiceGraph tempoServiceGraph
+	// FlagTempoServiceGraph
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
 
-	// FlagFullRangeLogsVolume fullRangeLogsVolume
+	// FlagFullRangeLogsVolume
 	// Show full range logs volume in expore
 	FlagFullRangeLogsVolume = "fullRangeLogsVolume"
 
-	// FlagAccesscontrol accesscontrol
+	// FlagAccesscontrol
 	// Support robust access control
 	FlagAccesscontrol = "accesscontrol"
 
-	// FlagPrometheusAzureAuth prometheus_azure_auth
+	// FlagPrometheusAzureAuth
 	// Use azure authentication for prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
 
-	// FlagNewNavigation newNavigation
+	// FlagNewNavigation
 	// Try the next gen naviation model
 	FlagNewNavigation = "newNavigation"
 
-	// FlagShowFeatureFlagsInUI showFeatureFlagsInUI
+	// FlagShowFeatureFlagsInUI
 	// Show feature flags in the settings UI
 	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
 
-	// FlagDisableHttpRequestHistogram disable_http_request_histogram
+	// FlagDisableHttpRequestHistogram
 	FlagDisableHttpRequestHistogram = "disable_http_request_histogram"
 )

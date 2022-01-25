@@ -99,8 +99,8 @@ func asCamelCase(key string) string {
 
 func generateRegistry(t *testing.T) string {
 	tmpl, err := template.New("fn").Parse(`
-{{"\t"}}// Flag{{.CamleCase}} {{.Flag.Name}}{{.Ext}}
-{{"\t"}}Flag{{.CamleCase}} = "{{.Flag.Name}}"
+{{"\t"}}// Flag{{.CamelCase}}{{.Ext}}
+    Flag{{.CamelCase}} = "{{.Flag.Name}}"
 `)
 	if err != nil {
 		t.Fatal("error reading template", "error", err.Error())
@@ -108,11 +108,11 @@ func generateRegistry(t *testing.T) string {
 	}
 
 	data := struct {
-		CamleCase string
+		CamelCase string
 		Flag      FeatureFlag
 		Ext       string
 	}{
-		CamleCase: "?",
+		CamelCase: "?",
 	}
 
 	var buff bytes.Buffer
@@ -124,7 +124,7 @@ package featuremgmt
 const (`)
 
 	for _, flag := range standardFeatureFlags {
-		data.CamleCase = asCamelCase(flag.Name)
+		data.CamelCase = asCamelCase(flag.Name)
 		data.Flag = flag
 		data.Ext = ""
 
