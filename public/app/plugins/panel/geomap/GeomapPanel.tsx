@@ -360,14 +360,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.hoverPayload.features = features.length ? features : undefined;
     this.props.eventBus.publish(this.hoverEvent);
 
-    const currentTTip = this.state.ttip;
-    if (
-      ttip.data !== currentTTip?.data ||
-      ttip.rowIndex !== currentTTip?.rowIndex ||
-      ttip.feature !== currentTTip?.feature
-    ) {
-      this.setState({ ttip: { ...hoverPayload } });
-    }
+    this.setState({ ttip: { ...hoverPayload } });
   };
 
   private updateLayer = async (uid: string, newOptions: MapLayerOptions): Promise<boolean> => {
