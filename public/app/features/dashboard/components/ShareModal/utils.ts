@@ -72,6 +72,7 @@ export function buildSoloUrl(useCurrentTimeRange: boolean, selectedTheme?: strin
   const baseUrl = buildBaseUrl();
   const params = buildParams({ useCurrentTimeRange, selectedTheme, panel });
 
+  // let soloUrl = `${config.appUrl}d-solo/`;
   let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
   soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
 
