@@ -26,7 +26,7 @@ func TestGetPluginDashboards(t *testing.T) {
 	}
 	pmCfg := plugins.FromGrafanaCfg(cfg)
 	pm, err := ProvideService(cfg, nil, loader.New(pmCfg, nil,
-		&signature.UnsignedPluginAuthorizer{Cfg: pmCfg}, &provider.Service{}), &sqlstore.SQLStore{})
+		&signature.UnsignedPluginAuthorizer{Cfg: pmCfg}, &provider.Service{}), nil, &sqlstore.SQLStore{})
 	require.NoError(t, err)
 
 	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {

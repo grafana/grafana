@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins/fs"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -35,16 +37,17 @@ type PluginManager struct {
 	pluginLoader     plugins.Loader
 	pluginsMu        sync.RWMutex
 	pluginPaths      map[plugins.Class][]string
+	pluginFs         fs.Manager
 	log              log.Logger
 }
 
 func ProvideService(grafanaCfg *setting.Cfg, requestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
-	sqlStore *sqlstore.SQLStore) (*PluginManager, error) {
+	pluginFs fs.Manager, sqlStore *sqlstore.SQLStore) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), requestValidator, map[plugins.Class][]string{
 		plugins.Core:     corePluginPaths(grafanaCfg),
 		plugins.Bundled:  {grafanaCfg.BundledPluginsPath},
 		plugins.External: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...),
-	}, pluginLoader, sqlStore)
+	}, pluginLoader, pluginFs, sqlStore)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
@@ -52,12 +55,13 @@ func ProvideService(grafanaCfg *setting.Cfg, requestValidator models.PluginReque
 }
 
 func New(cfg *plugins.Cfg, requestValidator models.PluginRequestValidator, pluginPaths map[plugins.Class][]string,
-	pluginLoader plugins.Loader, sqlStore *sqlstore.SQLStore) *PluginManager {
+	pluginLoader plugins.Loader, pluginFs fs.Manager, sqlStore *sqlstore.SQLStore) *PluginManager {
 	return &PluginManager{
 		cfg:              cfg,
 		requestValidator: requestValidator,
 		pluginLoader:     pluginLoader,
 		pluginPaths:      pluginPaths,
+		pluginFs:         pluginFs,
 		store:            make(map[string]*plugins.Plugin),
 		log:              log.New("plugin.manager"),
 		sqlStore:         sqlStore,

@@ -7,25 +7,11 @@ type Repository interface {
 	// Download downloads the requested plugin archive.
 	Download(ctx context.Context, pluginID, version string, opts CompatabilityOpts) (*PluginArchiveInfo, error)
 	// DownloadWithURL downloads the requested plugin from the specified URL.
-	DownloadWithURL(ctx context.Context, pluginID, archiveURL string, opts CompatabilityOpts) (*PluginArchiveInfo, error)
+	DownloadWithURL(ctx context.Context, archiveURL string, opts CompatabilityOpts) (*PluginArchiveInfo, error)
 	// GetDownloadOptions provides information for downloading the requested plugin.
 	GetDownloadOptions(ctx context.Context, pluginID, version string, opts CompatabilityOpts) (*PluginDownloadOptions, error)
 }
 
 type CompatabilityOpts struct {
 	GrafanaVersion string
-}
-
-type Logger interface {
-	Successf(format string, args ...interface{})
-	Failuref(format string, args ...interface{})
-
-	Info(args ...interface{})
-	Infof(format string, args ...interface{})
-	Debug(args ...interface{})
-	Debugf(format string, args ...interface{})
-	Warn(args ...interface{})
-	Warnf(format string, args ...interface{})
-	Error(args ...interface{})
-	Errorf(format string, args ...interface{})
 }

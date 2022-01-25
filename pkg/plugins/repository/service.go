@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/plugins/cli"
 )
 
 const (
@@ -17,69 +18,34 @@ const (
 type Service struct {
 	client *Client
 
-	pluginsPath string
-	repoURL     string
-	log         Logger
+	repoURL string
+	log     cli.Logger
 }
 
-func New(skipTLSVerify bool, pluginsPath, repoURL string, logger Logger) *Service {
+func New(skipTLSVerify bool, repoURL string, logger cli.Logger) *Service {
 	return &Service{
-		client:      newClient(skipTLSVerify, logger),
-		pluginsPath: pluginsPath,
-		repoURL:     repoURL,
-		log:         logger,
+		client:  newClient(skipTLSVerify, logger),
+		repoURL: repoURL,
+		log:     logger,
 	}
 }
 
-func ProvideService(cfg *setting.Cfg) *Service {
-	logger := newLogger("plugin.repository", true)
-
-	return &Service{
-		client:      newClient(false, logger),
-		pluginsPath: cfg.PluginsPath,
-		log:         logger,
-	}
+func ProvideService() *Service {
+	return New(false, grafanaComAPIRoot, cli.NewLogger("plugin.repository", true))
 }
 
 // Download downloads the requested plugin archive
 func (s *Service) Download(ctx context.Context, pluginID, version string, opts CompatabilityOpts) (*PluginArchiveInfo, error) {
-	isGrafanaPlugin := false
-
-	if strings.HasPrefix(pluginID, "grafana-") {
-		isGrafanaPlugin = true
-	}
-
-	pluginMeta, err := s.pluginMetadata(pluginID, opts.GrafanaVersion)
+	dlOpts, err := s.GetDownloadOptions(ctx, pluginID, version, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	v, err := s.selectVersion(&pluginMeta, version, opts.GrafanaVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	if version == "" {
-		version = v.Version
-	}
-
-	// Plugins which are downloaded just as sourcecode zipball from GitHub do not have checksum
-	var checksum string
-	if v.Arch != nil {
-		archMeta, exists := v.Arch[osAndArchString()]
-		if !exists {
-			archMeta = v.Arch["any"]
-		}
-		checksum = archMeta.SHA256
-	}
-
-	pluginZipURL := fmt.Sprintf("%s/%s/versions/%s/download", grafanaComAPIRoot, pluginID, version)
-
-	return s.client.downloadAndExtract(ctx, pluginID, pluginZipURL, checksum, s.pluginsPath, opts.GrafanaVersion, isGrafanaPlugin, s)
+	return s.client.download(ctx, dlOpts.PluginZipURL, dlOpts.Checksum, opts.GrafanaVersion)
 }
 
-func (s *Service) DownloadWithURL(ctx context.Context, pluginID, archiveURL string, opts CompatabilityOpts) (*PluginArchiveInfo, error) {
-	return s.client.downloadAndExtract(ctx, pluginID, archiveURL, "", s.pluginsPath, opts.GrafanaVersion, false, s)
+func (s *Service) DownloadWithURL(ctx context.Context, pluginZipURL string, opts CompatabilityOpts) (*PluginArchiveInfo, error) {
+	return s.client.download(ctx, pluginZipURL, "", opts.GrafanaVersion)
 }
 
 func (s *Service) GetDownloadOptions(_ context.Context, pluginID, version string, opts CompatabilityOpts) (*PluginDownloadOptions, error) {
@@ -93,19 +59,33 @@ func (s *Service) GetDownloadOptions(_ context.Context, pluginID, version string
 		return nil, err
 	}
 
+	// Plugins which are downloaded just as sourcecode zipball from GitHub do not have checksum
+	var checksum string
+	if v.Arch != nil {
+		archMeta, exists := v.Arch[osAndArchString()]
+		if !exists {
+			archMeta = v.Arch["any"]
+		}
+		checksum = archMeta.SHA256
+	}
+
 	return &PluginDownloadOptions{
 		Version:      v.Version,
+		Checksum:     checksum,
 		PluginZipURL: fmt.Sprintf("%s/%s/versions/%s/download", grafanaComAPIRoot, pluginID, v.Version),
 	}, nil
 }
 
 func (s *Service) pluginMetadata(pluginID, grafanaVersion string) (Plugin, error) {
-	s.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, grafanaComAPIRoot)
-	repoURL := s.repoURL
-	if repoURL == "" {
-		repoURL = grafanaComAPIRoot
+	s.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, s.repoURL)
+
+	u, err := url.Parse(s.repoURL)
+	if err != nil {
+		return Plugin{}, err
 	}
-	body, err := s.client.sendRequestGetBytes(path.Join(repoURL, "repo", pluginID), grafanaVersion)
+	u.Path = path.Join(u.Path, "repo", pluginID)
+
+	body, err := s.client.sendReq(u, grafanaVersion)
 	if err != nil {
 		return Plugin{}, err
 	}
@@ -127,14 +107,15 @@ func (s *Service) pluginMetadata(pluginID, grafanaVersion string) (Plugin, error
 // returns error if supplied version exists but is not supported.
 // NOTE: It expects plugin.Versions to be sorted so the newest version is first.
 func (s *Service) selectVersion(plugin *Plugin, version, grafanaVersion string) (*Version, error) {
-	var ver Version
+	version = normalizeVersion(version)
 
+	var ver Version
 	latestForArch := latestSupportedVersion(plugin)
 	if latestForArch == nil {
 		return nil, ErrVersionUnsupported{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
-			SystemInfo:       s.client.fullSystemInfoString(grafanaVersion),
+			SystemInfo:       SystemInfo(grafanaVersion),
 		}
 	}
 
@@ -154,7 +135,7 @@ func (s *Service) selectVersion(plugin *Plugin, version, grafanaVersion string) 
 		return nil, ErrVersionNotFound{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
-			SystemInfo:       s.client.fullSystemInfoString(grafanaVersion),
+			SystemInfo:       SystemInfo(grafanaVersion),
 		}
 	}
 
@@ -164,7 +145,7 @@ func (s *Service) selectVersion(plugin *Plugin, version, grafanaVersion string) 
 		return nil, ErrVersionUnsupported{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
-			SystemInfo:       s.client.fullSystemInfoString(grafanaVersion),
+			SystemInfo:       SystemInfo(grafanaVersion),
 		}
 	}
 
@@ -191,4 +172,13 @@ func latestSupportedVersion(plugin *Plugin) *Version {
 		}
 	}
 	return nil
+}
+
+func normalizeVersion(version string) string {
+	normalized := strings.ReplaceAll(version, " ", "")
+	if strings.HasPrefix(normalized, "^") || strings.HasPrefix(normalized, "v") {
+		return normalized[1:]
+	}
+
+	return normalized
 }

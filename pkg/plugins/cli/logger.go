@@ -1,4 +1,4 @@
-package repository
+package cli
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ type InfraLogWrapper struct {
 	debugMode bool
 }
 
-func newLogger(name string, debugMode bool) (l *InfraLogWrapper) {
+func NewLogger(name string, debugMode bool) (l *InfraLogWrapper) {
 	return &InfraLogWrapper{
 		debugMode: debugMode,
 		l:         log.New(name),

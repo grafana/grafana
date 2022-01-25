@@ -14,7 +14,7 @@ const (
 var (
 	ErrInstallCorePlugin           = errors.New("cannot install a Core plugin")
 	ErrUninstallCorePlugin         = errors.New("cannot uninstall a Core plugin")
-	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside of plugins directory")
+	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside of the plugins directory")
 	ErrInvalidPluginVersionFormat  = errors.New("plugin version format is invalid")
 	ErrPluginNotInstalled          = errors.New("plugin is not installed")
 )

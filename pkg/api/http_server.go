@@ -13,6 +13,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/thumbs"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -65,18 +69,18 @@ import (
 )
 
 type HTTPServer struct {
-	log         log.Logger
-	web         *web.Mux
-	context     context.Context
-	httpSrv     *http.Server
-	middlewares []web.Handler
+	log              log.Logger
+	web              *web.Mux
+	context          context.Context
+	httpSrv          *http.Server
+	middlewares      []web.Handler
+	namedMiddlewares []routing.RegisterNamedMiddleware
 
 	PluginContextProvider     *plugincontext.Provider
 	RouteRegister             routing.RouteRegister
 	Bus                       bus.Bus
 	RenderService             rendering.Service
 	Cfg                       *setting.Cfg
-	Features                  *featuremgmt.FeatureManager
 	SettingsProvider          setting.Provider
 	HooksService              *hooks.HooksService
 	CacheService              *localcache.CacheService
@@ -90,9 +94,9 @@ type HTTPServer struct {
 	AccessControl             accesscontrol.AccessControl
 	DataProxy                 *datasourceproxy.DataSourceProxyService
 	PluginRequestValidator    models.PluginRequestValidator
-	pluginRepo                repository.Repository
 	pluginClient              plugins.Client
 	pluginStore               plugins.Store
+	pluginRepo                repository.Repository
 	pluginDashboardManager    plugins.PluginDashboardManager
 	pluginStaticRouteResolver plugins.StaticRouteResolver
 	pluginErrorResolver       plugins.ErrorResolver
@@ -159,9 +163,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SQLStore:                  sqlStore,
 		AlertEngine:               alertEngine,
 		PluginRequestValidator:    pluginRequestValidator,
-		pluginRepo:                pluginRepo,
 		pluginClient:              pluginClient,
 		pluginStore:               pluginStore,
+		pluginRepo:                pluginRepo,
 		pluginStaticRouteResolver: pluginStaticRouteResolver,
 		pluginDashboardManager:    pluginDashboardManager,
 		pluginErrorResolver:       pluginErrorResolver,
@@ -171,7 +175,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AuthTokenService:          userTokenService,
 		cleanUpService:            cleanUpService,
 		ShortURLService:           shortURLService,
-		Features:                  features,
 		ThumbService:              thumbService,
 		RemoteCacheService:        remoteCache,
 		ProvisioningService:       provisioningService,
@@ -214,6 +217,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 
 func (hs *HTTPServer) AddMiddleware(middleware web.Handler) {
 	hs.middlewares = append(hs.middlewares, middleware)
+}
+
+func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddleware) {
+	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
 func (hs *HTTPServer) Run(ctx context.Context) error {
@@ -402,7 +409,7 @@ func (hs *HTTPServer) applyRoutes() {
 	// start with middlewares & static routes
 	hs.addMiddlewaresAndStaticRoutes()
 	// then add view routes & api routes
-	hs.RouteRegister.Register(hs.web)
+	hs.RouteRegister.Register(hs.web, hs.namedMiddlewares...)
 	// then custom app proxy routes
 	hs.initAppPluginRoutes(hs.web)
 	// lastly not found route

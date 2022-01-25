@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repository"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func (m *PluginManager) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
@@ -49,7 +49,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo 
 		return plugins.ErrInvalidPluginVersionFormat
 	}
 
-	var newPluginArchive *repository.PluginArchiveInfo
+	var pluginArchive *repository.PluginArchiveInfo
 	if plugin, exists := m.plugin(pluginID); exists {
 		if !plugin.IsExternalPlugin() {
 			return plugins.ErrInstallCorePlugin
@@ -89,14 +89,14 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo 
 		}
 
 		if dlOpts.PluginZipURL != "" {
-			newPluginArchive, err = repo.DownloadWithURL(ctx, pluginID, dlOpts.PluginZipURL, repository.CompatabilityOpts{
+			pluginArchive, err = repo.DownloadWithURL(ctx, dlOpts.PluginZipURL, repository.CompatabilityOpts{
 				GrafanaVersion: opts.GrafanaVersion,
 			})
 			if err != nil {
 				return err
 			}
 		} else {
-			newPluginArchive, err = repo.Download(ctx, pluginID, dlOpts.Version, repository.CompatabilityOpts{
+			pluginArchive, err = repo.Download(ctx, pluginID, dlOpts.Version, repository.CompatabilityOpts{
 				GrafanaVersion: opts.GrafanaVersion,
 			})
 			if err != nil {
@@ -105,7 +105,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo 
 		}
 	} else {
 		var err error
-		newPluginArchive, err = repo.Download(ctx, pluginID, version, repository.CompatabilityOpts{
+		pluginArchive, err = repo.Download(ctx, pluginID, version, repository.CompatabilityOpts{
 			GrafanaVersion: opts.GrafanaVersion,
 		})
 		if err != nil {
@@ -113,9 +113,32 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, repo 
 		}
 	}
 
-	err := m.loadPlugins(context.Background(), plugins.External, newPluginArchive.Path)
+	extractedArchive, err := m.pluginFs.Add(ctx, pluginArchive.File, pluginID, m.cfg.PluginsPath)
 	if err != nil {
-		m.log.Error("Could not load plugin", "path", newPluginArchive.Path, "err", err)
+		return err
+	}
+
+	// download dependency plugins
+	pathsToScan := []string{extractedArchive.Path}
+	for _, dep := range extractedArchive.Dependencies {
+		m.log.Info("Fetching %s dependencies...", dep.ID)
+		d, err := repo.Download(ctx, dep.ID, dep.Version,
+			repository.CompatabilityOpts{GrafanaVersion: opts.GrafanaVersion})
+		if err != nil {
+			return errutil.Wrapf(err, "failed to download plugin %s from repository", dep.ID)
+		}
+
+		depArchive, err := m.pluginFs.Add(ctx, d.File, dep.ID, m.cfg.PluginsPath)
+		if err != nil {
+			return err
+		}
+
+		pathsToScan = append(pathsToScan, depArchive.Path)
+	}
+
+	err = m.loadPlugins(context.Background(), plugins.External, pathsToScan...)
+	if err != nil {
+		m.log.Error("Could not load plugins", "paths", pathsToScan, "err", err)
 		return err
 	}
 
@@ -145,20 +168,7 @@ func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
 		}
 	}
 
-	// verify it's a plugin directory
-	if _, err := os.Stat(filepath.Join(plugin.PluginDir, "plugin.json")); err != nil {
-		if os.IsNotExist(err) {
-			if _, err := os.Stat(filepath.Join(plugin.PluginDir, "dist", "plugin.json")); err != nil {
-				if os.IsNotExist(err) {
-					return fmt.Errorf("tried to remove %s, but it doesn't seem to be a plugin", plugin.PluginDir)
-				}
-			}
-		}
-	}
-
-	m.log.Info("Uninstalling plugin %v", plugin.PluginDir)
-
-	return os.RemoveAll(plugin.PluginDir)
+	return m.pluginFs.Remove(ctx, plugin.PluginDir)
 }
 
 func isSemVerExpr(version string) bool {

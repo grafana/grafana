@@ -1,15 +1,17 @@
 package manager
 
 import (
+	"archive/zip"
 	"context"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/plugins/fs"
 
 	"github.com/grafana/grafana/pkg/plugins/repository"
 
@@ -149,21 +151,20 @@ func TestPluginManager_Installer(t *testing.T) {
 		})
 
 		p, pc := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
-			tmpDir, err := ioutil.TempDir(testDir, strings.Join([]string{testPluginID, "*"}, "-"))
-			require.NoError(t, err)
-			require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "plugin.json"), []byte{}, 0644))
-			p.PluginDir = tmpDir
+			p.PluginDir = filepath.Join(testDir, p.ID)
 			p.Backend = true
 		})
 
 		l := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
 		}
+		fsm := &fakeFsManager{}
 
 		repo := &fakePluginRepo{}
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.cfg.PluginsPath = testDir
 			pm.pluginLoader = l
+			pm.pluginFs = fsm
 		})
 
 		err = pm.Add(context.Background(), testPluginID, "1.0.0", repo, plugins.CompatabilityOpts{})
@@ -176,6 +177,10 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.Len(t, pm.Routes(), 1)
 		assert.Equal(t, p.ID, pm.Routes()[0].PluginID)
 		assert.Equal(t, p.PluginDir, pm.Routes()[0].Directory)
+
+		assert.Equal(t, 1, repo.downloadCount)
+		assert.Equal(t, 0, fsm.removed)
+		assert.Equal(t, 1, fsm.added)
 
 		assert.Equal(t, 1, pc.startCount)
 		assert.Equal(t, 0, pc.stopCount)
@@ -198,11 +203,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		t.Run("Update existing plugin", func(t *testing.T) {
 			p, pc := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
 				p.Backend = true
-
-				tmpDir, err := ioutil.TempDir(pm.cfg.PluginsPath, strings.Join([]string{testPluginID, "*"}, "-")) //testDir
-				require.NoError(t, err)
-				require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "plugin.json"), []byte{}, 0644))
-				p.PluginDir = tmpDir
+				p.PluginDir = filepath.Join(testDir, p.ID)
 			})
 
 			l := &fakeLoader{
@@ -210,7 +211,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			}
 			pm.pluginLoader = l
 
-			repo.downloadOptionsHandler = func(_ context.Context, _, _ string) (*repository.PluginDownloadOptions, error) {
+			repo.downloadOptionsHandler = func(_ context.Context, _, _ string, _ repository.CompatabilityOpts) (*repository.PluginDownloadOptions, error) {
 				return &repository.PluginDownloadOptions{
 					Version: "1.2.0",
 				}, nil
@@ -220,7 +221,8 @@ func TestPluginManager_Installer(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.Equal(t, 2, repo.downloadCount)
-
+			assert.Equal(t, 1, fsm.removed)
+			assert.Equal(t, 1, fsm.added)
 			assert.Equal(t, 1, pc.startCount)
 			assert.Equal(t, 0, pc.stopCount)
 			assert.False(t, pc.exited)
@@ -548,7 +550,7 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 
 	requestValidator := &testPluginRequestValidator{}
 	loader := &fakeLoader{}
-	pm := New(cfg, requestValidator, nil, loader, &sqlstore.SQLStore{})
+	pm := New(cfg, requestValidator, nil, loader, &fakeFsManager{}, &sqlstore.SQLStore{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -575,7 +577,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 
 	requestValidator := &testPluginRequestValidator{}
 	loader := &fakeLoader{}
-	manager := New(cfg, requestValidator, nil, loader, nil)
+	manager := New(cfg, requestValidator, nil, loader, &fakeFsManager{}, nil)
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,
@@ -597,30 +599,30 @@ func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
 type fakePluginRepo struct {
 	repository.Repository
 
-	downloadOptionsHandler func(_ context.Context, _, _ string) (*repository.PluginDownloadOptions, error)
+	downloadOptionsHandler func(_ context.Context, _, _ string, _ repository.CompatabilityOpts) (*repository.PluginDownloadOptions, error)
 
 	downloadOptionsCount int
 	downloadCount        int
 }
 
-func (pr *fakePluginRepo) Download(_ context.Context, _, _ string) (*repository.PluginArchiveInfo, error) {
+func (pr *fakePluginRepo) Download(_ context.Context, _, _ string, _ repository.CompatabilityOpts) (*repository.PluginArchiveInfo, error) {
+	pr.downloadCount++
+	return &repository.PluginArchiveInfo{}, nil
+}
+
+// DownloadWithURL downloads the requested plugin from the specified URL.
+func (pr *fakePluginRepo) DownloadWithURL(_ context.Context, _ string, _ repository.CompatabilityOpts) (*repository.PluginArchiveInfo, error) {
 	pr.downloadCount++
 	return &repository.PluginArchiveInfo{}, nil
 }
 
 // GetDownloadOptions provides information for downloading the requested plugin.
-func (pr *fakePluginRepo) GetDownloadOptions(ctx context.Context, pluginID, version string) (*repository.PluginDownloadOptions, error) {
+func (pr *fakePluginRepo) GetDownloadOptions(ctx context.Context, pluginID, version string, opts repository.CompatabilityOpts) (*repository.PluginDownloadOptions, error) {
 	pr.downloadOptionsCount++
 	if pr.downloadOptionsHandler != nil {
-		return pr.downloadOptionsHandler(ctx, pluginID, version)
+		return pr.downloadOptionsHandler(ctx, pluginID, version, opts)
 	}
 	return &repository.PluginDownloadOptions{}, nil
-}
-
-// DownloadWithURL downloads the requested plugin from the specified URL.
-func (pr *fakePluginRepo) DownloadWithURL(_ context.Context, _, _ string) (*repository.PluginArchiveInfo, error) {
-	pr.downloadCount++
-	return &repository.PluginArchiveInfo{}, nil
 }
 
 type fakeLoader struct {
@@ -785,5 +787,22 @@ type fakeSender struct {
 func (s *fakeSender) Send(crr *backend.CallResourceResponse) error {
 	s.resp = crr
 
+	return nil
+}
+
+type fakeFsManager struct {
+	fs.Manager
+
+	added   int
+	removed int
+}
+
+func (fsm *fakeFsManager) Add(_ context.Context, _ *zip.ReadCloser, _, _ string) (*fs.ExtractedPluginArchive, error) {
+	fsm.added++
+	return &fs.ExtractedPluginArchive{}, nil
+}
+
+func (fsm *fakeFsManager) Remove(_ context.Context, _ string) error {
+	fsm.removed++
 	return nil
 }

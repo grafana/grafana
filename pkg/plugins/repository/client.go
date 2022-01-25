@@ -3,12 +3,10 @@ package repository
 import (
 	"archive/zip"
 	"bufio"
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,17 +14,13 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
-)
+	"github.com/grafana/grafana/pkg/plugins/cli"
 
-var (
-	reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type Client struct {
@@ -34,10 +28,10 @@ type Client struct {
 	httpClientNoTimeout http.Client
 	retryCount          int
 
-	log Logger
+	log cli.Logger
 }
 
-func newClient(skipTLSVerify bool, logger Logger) *Client {
+func newClient(skipTLSVerify bool, logger cli.Logger) *Client {
 	return &Client{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
@@ -45,8 +39,7 @@ func newClient(skipTLSVerify bool, logger Logger) *Client {
 	}
 }
 
-func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL, checksum, pluginsPath, grafanaVersion string,
-	allowSymlinks bool, repo Repository) (*PluginArchiveInfo, error) {
+func (c *Client) download(_ context.Context, pluginZipURL, checksum, grafanaVersion string) (*PluginArchiveInfo, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
@@ -58,7 +51,7 @@ func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL,
 		}
 	}()
 
-	c.log.Debugf("Installing plugin\nfrom: %s\ninto: %s", pluginZipURL, pluginsPath)
+	c.log.Debugf("Installing plugin\nfrom: %s", pluginZipURL)
 
 	err = c.downloadFile(tmpFile, pluginZipURL, checksum, grafanaVersion)
 	if err != nil {
@@ -67,51 +60,25 @@ func (c *Client) downloadAndExtract(ctx context.Context, pluginID, pluginZipURL,
 		}
 		return nil, errutil.Wrap("failed to download plugin archive", err)
 	}
-	err = tmpFile.Close()
+
+	rc, err := zip.OpenReader(tmpFile.Name())
 	if err != nil {
-		return nil, errutil.Wrap("failed to close tmp file", err)
+		return nil, err
 	}
 
-	pluginDir, err := c.extractFiles(tmpFile.Name(), pluginID, pluginsPath, allowSymlinks)
-	if err != nil {
-		return nil, errutil.Wrap("failed to extract plugin archive", err)
-	}
-
-	res, err := toPluginDTO(pluginID, pluginDir)
-	if err != nil {
-		return nil, errutil.Wrap("failed to convert to plugin DTO", err)
-	}
-
-	c.log.Successf("Downloaded %s v%s zip successfully", res.ID, res.Info.Version)
-
-	installedPlugin := &PluginArchiveInfo{
-		ID:           res.ID,
-		Version:      res.Info.Version,
-		Dependencies: make(map[string]*PluginArchiveInfo),
-		Path:         pluginDir,
-	}
-
-	// download dependency plugins
-	for _, dep := range res.Dependencies.Plugins {
-		c.log.Infof("Fetching %s dependencies...", res.ID)
-		if dep, err := repo.Download(ctx, dep.ID, normalizeVersion(dep.Version),
-			CompatabilityOpts{GrafanaVersion: grafanaVersion}); err != nil {
-			return nil, errutil.Wrapf(err, "failed to install plugin %s", dep.ID)
-		} else {
-			installedPlugin.Dependencies[dep.ID] = dep
-		}
-	}
-
-	return installedPlugin, err
+	return &PluginArchiveInfo{
+		File: rc,
+	}, nil
 }
 
-func (c *Client) downloadFile(tmpFile *os.File, url, checksum, grafanaVersion string) (err error) {
+func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum, grafanaVersion string) (err error) {
 	// Try handling URL as a local file path first
-	if _, err := os.Stat(url); err == nil {
+	if _, err := os.Stat(pluginURL); err == nil {
+		// TODO re-verify
 		// We can ignore this gosec G304 warning since `repoURL` stems from command line flag "pluginUrl". If the
 		// user shouldn't be able to read the file, it should be handled through filesystem permissions.
 		// nolint:gosec
-		f, err := os.Open(url)
+		f, err := os.Open(pluginURL)
 		if err != nil {
 			return errutil.Wrap("Failed to read plugin archive", err)
 		}
@@ -142,7 +109,7 @@ func (c *Client) downloadFile(tmpFile *os.File, url, checksum, grafanaVersion st
 				if err != nil {
 					return
 				}
-				err = c.downloadFile(tmpFile, url, checksum, grafanaVersion)
+				err = c.downloadFile(tmpFile, pluginURL, checksum, grafanaVersion)
 			} else {
 				c.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
@@ -155,9 +122,14 @@ func (c *Client) downloadFile(tmpFile *os.File, url, checksum, grafanaVersion st
 		}
 	}()
 
+	u, err := url.Parse(pluginURL)
+	if err != nil {
+		return err
+	}
+
 	// Using no timeout here as some plugins can be bigger and smaller timeout would prevent to download a plugin on
 	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
-	bodyReader, err := c.sendRequestWithoutTimeout(url, grafanaVersion)
+	bodyReader, err := c.sendReqNoTimeout(u, grafanaVersion)
 	if err != nil {
 		return err
 	}
@@ -181,10 +153,19 @@ func (c *Client) downloadFile(tmpFile *os.File, url, checksum, grafanaVersion st
 	return nil
 }
 
-func (c *Client) sendRequestGetBytes(url, grafanaVersion string) ([]byte, error) {
-	bodyReader, err := c.sendRequest(url, grafanaVersion)
+func (c *Client) sendReq(url *url.URL, grafanaVersion string) ([]byte, error) {
+	req, err := c.createReq(url, grafanaVersion)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
+	}
+
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader, err := c.handleResp(res, grafanaVersion)
+	if err != nil {
+		return nil, err
 	}
 	defer func() {
 		if err := bodyReader.Close(); err != nil {
@@ -194,21 +175,8 @@ func (c *Client) sendRequestGetBytes(url, grafanaVersion string) ([]byte, error)
 	return ioutil.ReadAll(bodyReader)
 }
 
-func (c *Client) sendRequest(url, grafanaVersion string) (io.ReadCloser, error) {
-	req, err := c.createRequest(url, grafanaVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	return c.handleResponse(res, grafanaVersion)
-}
-
-func (c *Client) sendRequestWithoutTimeout(url, grafanaVersion string) (io.ReadCloser, error) {
-	req, err := c.createRequest(url, grafanaVersion)
+func (c *Client) sendReqNoTimeout(url *url.URL, grafanaVersion string) (io.ReadCloser, error) {
+	req, err := c.createReq(url, grafanaVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -217,16 +185,11 @@ func (c *Client) sendRequestWithoutTimeout(url, grafanaVersion string) (io.ReadC
 	if err != nil {
 		return nil, err
 	}
-	return c.handleResponse(res, grafanaVersion)
+	return c.handleResp(res, grafanaVersion)
 }
 
-func (c *Client) createRequest(URL, grafanaVersion string) (*http.Request, error) {
-	u, err := url.Parse(URL)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+func (c *Client) createReq(url *url.URL, grafanaVersion string) (*http.Request, error) {
+	req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +202,7 @@ func (c *Client) createRequest(URL, grafanaVersion string) (*http.Request, error
 	return req, err
 }
 
-func (c *Client) handleResponse(res *http.Response, grafanaVersion string) (io.ReadCloser, error) {
+func (c *Client) handleResp(res *http.Response, grafanaVersion string) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
 		body, err := ioutil.ReadAll(res.Body)
 		defer func() {
@@ -258,7 +221,7 @@ func (c *Client) handleResponse(res *http.Response, grafanaVersion string) (io.R
 		} else {
 			message = jsonBody["message"]
 		}
-		return nil, Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: c.fullSystemInfoString(grafanaVersion)}
+		return nil, Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: SystemInfo(grafanaVersion)}
 	}
 
 	if res.StatusCode/100 != 2 {
@@ -290,98 +253,7 @@ func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
 	}
 }
 
-func normalizeVersion(version string) string {
-	normalized := strings.ReplaceAll(version, " ", "")
-	if strings.HasPrefix(normalized, "^") || strings.HasPrefix(normalized, "v") {
-		return normalized[1:]
-	}
-
-	return normalized
-}
-
-func (c *Client) extractFiles(archivePath string, pluginID string, destPath string, allowSymlinks bool) (string, error) {
-	var err error
-	destPath, err = filepath.Abs(destPath)
-	if err != nil {
-		return "", err
-	}
-	c.log.Debug(fmt.Sprintf("Extracting archive %q to %q...", archivePath, destPath))
-
-	installDir := filepath.Join(destPath, pluginID)
-	if _, err := os.Stat(installDir); !os.IsNotExist(err) {
-		c.log.Debugf("Removing existing installation of plugin %s", installDir)
-		err = os.RemoveAll(installDir)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	r, err := zip.OpenReader(archivePath)
-	if err != nil {
-		return "", err
-	}
-
-	defer func() {
-		if err := r.Close(); err != nil {
-			c.log.Warn("failed to close zip file", "err", err)
-		}
-	}()
-
-	for _, zf := range r.File {
-		// We can ignore gosec G305 here since we check for the ZipSlip vulnerability below
-		// nolint:gosec
-		fullPath := filepath.Join(destPath, zf.Name)
-
-		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
-		if filepath.IsAbs(zf.Name) ||
-			!strings.HasPrefix(fullPath, filepath.Clean(destPath)+string(os.PathSeparator)) ||
-			strings.HasPrefix(zf.Name, ".."+string(os.PathSeparator)) {
-			return "", fmt.Errorf(
-				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
-				zf.Name, destPath)
-		}
-
-		dstPath := filepath.Clean(filepath.Join(destPath, removeGitBuildFromName(zf.Name, pluginID)))
-
-		if zf.FileInfo().IsDir() {
-			// We can ignore gosec G304 here since it makes sense to give all users read access
-			// nolint:gosec
-			if err := os.MkdirAll(dstPath, 0755); err != nil {
-				if os.IsPermission(err) {
-					return "", ErrPermissionDenied{Path: dstPath}
-				}
-
-				return "", err
-			}
-
-			continue
-		}
-
-		// Create needed directories to extract file
-		// We can ignore gosec G304 here since it makes sense to give all users read access
-		// nolint:gosec
-		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
-			return "", errutil.Wrap("failed to create directory to extract plugin files", err)
-		}
-
-		if isSymlink(zf) {
-			if !allowSymlinks {
-				c.log.Warnf("%v: plugin archive contains a symlink, which is not allowed. Skipping", zf.Name)
-				continue
-			}
-			if err := extractSymlink(zf, dstPath); err != nil {
-				c.log.Warn("failed to extract symlink", "err", err)
-				continue
-			}
-		} else if err := extractFile(zf, dstPath); err != nil {
-			return "", errutil.Wrap("failed to extract file", err)
-		}
-	}
-
-	return installDir, nil
-}
-
-func (c *Client) fullSystemInfoString(grafanaVersion string) string {
+func SystemInfo(grafanaVersion string) string {
 	return fmt.Sprintf("Grafana v%s %s", grafanaVersion, osAndArchString())
 }
 
@@ -389,100 +261,4 @@ func osAndArchString() string {
 	osString := strings.ToLower(runtime.GOOS)
 	arch := runtime.GOARCH
 	return osString + "-" + arch
-}
-
-func isSymlink(file *zip.File) bool {
-	return file.Mode()&os.ModeSymlink == os.ModeSymlink
-}
-
-func extractSymlink(file *zip.File, filePath string) error {
-	// symlink target is the contents of the file
-	src, err := file.Open()
-	if err != nil {
-		return errutil.Wrap("failed to extract file", err)
-	}
-	buf := new(bytes.Buffer)
-	if _, err := io.Copy(buf, src); err != nil {
-		return errutil.Wrap("failed to copy symlink contents", err)
-	}
-	if err := os.Symlink(strings.TrimSpace(buf.String()), filePath); err != nil {
-		return errutil.Wrapf(err, "failed to make symbolic link for %v", filePath)
-	}
-	return nil
-}
-
-func extractFile(file *zip.File, filePath string) (err error) {
-	fileMode := file.Mode()
-	// This is entry point for backend plugins so we want to make them executable
-	if strings.HasSuffix(filePath, "_linux_amd64") || strings.HasSuffix(filePath, "_darwin_amd64") {
-		fileMode = os.FileMode(0755)
-	}
-
-	// We can ignore the gosec G304 warning on this one, since the variable part of the file path stems
-	// from command line flag "destPath", and the only possible damage would be writing to the wrong directory.
-	// If the user shouldn't be writing to this directory, they shouldn't have the permission in the file system.
-	// nolint:gosec
-	dst, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
-	if err != nil {
-		if os.IsPermission(err) {
-			return ErrPermissionDenied{Path: filePath}
-		}
-
-		unwrappedError := errors.Unwrap(err)
-		if unwrappedError != nil && strings.EqualFold(unwrappedError.Error(), "text file busy") {
-			return fmt.Errorf("file %q is in use - please stop Grafana, install the plugin and restart Grafana", filePath)
-		}
-
-		return errutil.Wrap("failed to open file", err)
-	}
-	defer func() {
-		err = dst.Close()
-	}()
-
-	src, err := file.Open()
-	if err != nil {
-		return errutil.Wrap("failed to extract file", err)
-	}
-	defer func() {
-		err = src.Close()
-	}()
-
-	_, err = io.Copy(dst, src)
-	return err
-}
-
-func removeGitBuildFromName(filename, pluginID string) string {
-	return reGitBuild.ReplaceAllString(filename, pluginID+"/")
-}
-
-func toPluginDTO(pluginID, pluginDir string) (*InstalledPlugin, error) {
-	distPluginDataPath := filepath.Join(pluginDir, "dist", "plugin.json")
-
-	// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
-	// nolint:gosec
-	data, err := ioutil.ReadFile(distPluginDataPath)
-	if err != nil {
-		pluginDataPath := filepath.Join(pluginDir, "plugin.json")
-		// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
-		// nolint:gosec
-		data, err = ioutil.ReadFile(pluginDataPath)
-		if err != nil {
-			return nil, fmt.Errorf("could not find dist/plugin.json or plugin.json for %s in %s", pluginID, pluginDir)
-		}
-	}
-
-	res := &InstalledPlugin{}
-	if err := json.Unmarshal(data, &res); err != nil {
-		return res, err
-	}
-
-	if res.ID == "" {
-		return nil, fmt.Errorf("could not find valid plugin %s in %s", pluginID, pluginDir)
-	}
-
-	if res.Info.Version == "" {
-		res.Info.Version = "0.0.0"
-	}
-
-	return res, nil
 }
