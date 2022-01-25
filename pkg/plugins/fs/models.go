@@ -13,11 +13,11 @@ func (e ErrPermissionDenied) Error() string {
 type ExtractedPluginArchive struct {
 	ID           string
 	Version      string
-	Dependencies []*Dep
+	Dependencies []*Dependency
 	Path         string
 }
 
-type Dep struct {
+type Dependency struct {
 	ID      string
 	Version string
 }

@@ -51,9 +51,9 @@ func (s *Service) Add(ctx context.Context, pluginArchive *zip.ReadCloser, plugin
 
 	s.log.Successf("Downloaded and extracted %s v%s zip successfully to %s", res.ID, res.Info.Version, pluginDir)
 
-	var deps []*Dep
+	var deps []*Dependency
 	for _, plugin := range res.Dependencies.Plugins {
-		deps = append(deps, &Dep{
+		deps = append(deps, &Dependency{
 			ID:      plugin.ID,
 			Version: plugin.Version,
 		})
