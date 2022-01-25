@@ -22,6 +22,10 @@ import { css } from '@emotion/css';
 import { Subscription } from 'rxjs';
 import { FocusScope } from '@react-aria/focus';
 
+function isHTMLElement(el: Element): el is HTMLElement {
+  return 'accessKey' in el;
+}
+
 interface UserInfo {
   id?: number;
   login?: string;
@@ -39,6 +43,7 @@ interface State {
 export class AnnoListPanel extends PureComponent<Props, State> {
   style = getStyles(config.theme);
   subs = new Subscription();
+  tagListRef = React.createRef<HTMLUListElement>();
 
   constructor(props: Props) {
     super(props);
@@ -192,8 +197,16 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     let nextTag: HTMLElement | undefined = undefined;
     if (remove) {
       const focusedTag = document.activeElement;
-      nextTag = (focusedTag!.parentElement?.nextElementSibling?.firstElementChild ??
-        focusedTag!.parentElement?.previousElementSibling?.firstElementChild) as HTMLElement;
+      const dataTagId = focusedTag?.getAttribute('data-tag-id');
+      if (this.tagListRef.current?.contains(focusedTag) && dataTagId) {
+        const parsedTagId = Number.parseInt(dataTagId, 10);
+        const possibleNextTag =
+          this.tagListRef.current.querySelector(`[data-tag-id="${parsedTagId + 1}"]`) ??
+          this.tagListRef.current.querySelector(`[data-tag-id="${parsedTagId - 1}"]`);
+        if (possibleNextTag && isHTMLElement(possibleNextTag)) {
+          nextTag = possibleNextTag;
+        }
+      }
     }
 
     this.setState({ queryTags }, () => nextTag?.focus());
@@ -266,6 +279,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
                   onClick={(tag) => this.onTagClick(tag, true)}
                   getAriaLabel={(name) => `Remove ${name} tag`}
                   className={this.style.tagList}
+                  ref={this.tagListRef}
                 />
               </FocusScope>
             )}
