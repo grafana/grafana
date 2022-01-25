@@ -205,7 +205,6 @@ export * from './Select/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
-export { ProBadge, Props as ProBadgeProps } from './Badge/ProBadge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input, getInputStyles } from './Input/Input';

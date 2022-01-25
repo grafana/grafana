@@ -1,6 +1,6 @@
 import React from 'react';
 import { Story } from '@storybook/react';
-import { Badge, BadgeProps, ProBadge, ProBadgeProps } from '@grafana/ui';
+import { Badge, BadgeProps } from '@grafana/ui';
 import { iconOptions } from '../../utils/storybook/knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Badge.mdx';
@@ -28,5 +28,3 @@ Basic.args = {
   color: 'blue',
   icon: 'rocket',
 };
-
-export const Pro: Story<ProBadgeProps> = (args) => <ProBadge {...args} />;

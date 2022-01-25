@@ -3,6 +3,7 @@ import { featureEnabled } from '@grafana/runtime';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
+import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDataSourcePlugin): NavModelItem {
@@ -64,7 +65,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     navModel.children!.push({
       ...dsPermissions,
       url: dsPermissions.url + '/upgrade',
-      highlightText: 'PRO',
+      tabSuffix: ProBadge,
     });
   }
 
@@ -82,7 +83,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     navModel.children!.push({
       ...analytics,
       url: analytics.url + '/upgrade',
-      highlightText: 'PRO',
+      tabSuffix: ProBadge,
     });
   }
 
@@ -101,7 +102,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     navModel.children!.push({
       ...caching,
       url: caching.url + '/upgrade',
-      highlightText: 'PRO',
+      tabSuffix: ProBadge,
     });
   }
 
