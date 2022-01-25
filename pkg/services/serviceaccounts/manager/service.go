@@ -7,11 +7,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -19,21 +19,21 @@ var (
 )
 
 type ServiceAccountsService struct {
-	store    serviceaccounts.Store
-	features *featuremgmt.FeatureToggles
-	log      log.Logger
+	store serviceaccounts.Store
+	cfg   *setting.Cfg
+	log   log.Logger
 }
 
 func ProvideServiceAccountsService(
-	features *featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
 	store *sqlstore.SQLStore,
 	ac accesscontrol.AccessControl,
 	routeRegister routing.RouteRegister,
 ) (*ServiceAccountsService, error) {
 	s := &ServiceAccountsService{
-		features: features,
-		store:    database.NewServiceAccountsStore(store),
-		log:      log.New("serviceaccounts"),
+		cfg:   cfg,
+		store: database.NewServiceAccountsStore(store),
+		log:   log.New("serviceaccounts"),
 	}
 
 	if err := RegisterRoles(ac); err != nil {
@@ -41,13 +41,13 @@ func ProvideServiceAccountsService(
 	}
 
 	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister, s.store)
-	serviceaccountsAPI.RegisterAPIEndpoints(features)
+	serviceaccountsAPI.RegisterAPIEndpoints(cfg)
 
 	return s, nil
 }
 
 func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
-	if !sa.features.IsServiceAccountsEnabled() {
+	if !sa.cfg.FeatureToggles["service-accounts"] {
 		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil, nil
 	}
@@ -55,7 +55,7 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saFo
 }
 
 func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
-	if !sa.features.IsServiceAccountsEnabled() {
+	if !sa.cfg.FeatureToggles["service-accounts"] {
 		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil
 	}

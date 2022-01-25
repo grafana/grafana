@@ -12,14 +12,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func setupTestEnv(t testing.TB) *OSSAccessControlService {
 	t.Helper()
 
+	cfg := setting.NewCfg()
+	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+
 	ac := &OSSAccessControlService{
-		features:      featuremgmt.WithToggles("accesscontrol"),
+		Cfg:           cfg,
 		UsageStats:    &usagestats.UsageStatsMock{T: t},
 		Log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
@@ -145,9 +148,12 @@ func TestUsageMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features := featuremgmt.WithToggles("accesscontrol", tt.enabled)
+			cfg := setting.NewCfg()
+			if tt.enabled {
+				cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			}
 
-			s := ProvideService(features, &usagestats.UsageStatsMock{T: t})
+			s := ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
 			report, err := s.UsageStats.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 
@@ -261,7 +267,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := &OSSAccessControlService{
-				features:   featuremgmt.WithToggles(),
+				Cfg:        setting.NewCfg(),
 				UsageStats: &usagestats.UsageStatsMock{T: t},
 				Log:        log.New("accesscontrol-test"),
 			}
@@ -380,11 +386,12 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ac := &OSSAccessControlService{
-				features:      featuremgmt.WithToggles("accesscontrol"),
+				Cfg:           setting.NewCfg(),
 				UsageStats:    &usagestats.UsageStatsMock{T: t},
 				Log:           log.New("accesscontrol-test"),
 				registrations: accesscontrol.RegistrationList{},
 			}
+			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
 			// Test
 			err := ac.DeclareFixedRoles(tt.registrations...)
@@ -452,6 +459,9 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		cfg := setting.NewCfg()
+		cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+
 		t.Run(tt.name, func(t *testing.T) {
 			// Remove any inserted role after the test case has been run
 			t.Cleanup(func() {
@@ -462,11 +472,12 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 
 			// Setup
 			ac := &OSSAccessControlService{
-				features:      featuremgmt.WithToggles("accesscontrol"),
+				Cfg:           setting.NewCfg(),
 				UsageStats:    &usagestats.UsageStatsMock{T: t},
 				Log:           log.New("accesscontrol-test"),
 				registrations: accesscontrol.RegistrationList{},
 			}
+			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 			ac.registrations.Append(tt.registrations...)
 
 			// Test
@@ -541,7 +552,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 			// Setup
 			ac := setupTestEnv(t)
-			ac.features = featuremgmt.WithToggles("accesscontrol")
+			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
 			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
 			err := ac.DeclareFixedRoles(registration)
@@ -627,6 +638,7 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 
 			// Setup
 			ac := setupTestEnv(t)
+			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 			ac.RegisterAttributeScopeResolver("users:login:", userLoginScopeSolver)
 
 			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}

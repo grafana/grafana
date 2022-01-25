@@ -8,16 +8,18 @@ import {
   SelectableValue,
   GrafanaTheme,
 } from '@grafana/data';
-import { colors } from '../../utils';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { Input } from '../Input/Input';
-import { ColorPicker } from '../ColorPicker/ColorPicker';
-import { stylesFactory } from '../../themes';
-import { Icon } from '../Icon/Icon';
-import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
-import { Button } from '../Button';
-import { Label } from '../Forms/Label';
 import { isNumber } from 'lodash';
+import {
+  Input,
+  colors,
+  ColorPicker,
+  Icon,
+  ThemeContext,
+  Button,
+  Label,
+  RadioButtonGroup,
+  stylesFactory,
+} from '@grafana/ui';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },

@@ -100,6 +100,7 @@ go.sum @grafana/backend-platform
 /public/app/features/live/ @grafana/grafana-edge-squad
 /public/app/features/explore/ @grafana/observability-squad
 /public/app/features/plugins @grafana/plugins-platform-frontend
+/public/app/core/components/TransformersUI/spatial @grafana/grafana-edge-squad
 /public/app/plugins/panel/alertlist @grafana/alerting-squad
 /public/app/plugins/panel/barchart @grafana/grafana-bi-squad
 /public/app/plugins/panel/heatmap @grafana/grafana-bi-squad
