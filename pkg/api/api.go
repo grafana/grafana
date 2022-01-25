@@ -465,7 +465,7 @@ func (hs *HTTPServer) registerRoutes() {
 			// starring of queries in query history
 			queryHistoryRoute.Post("/star/:uid", routing.Wrap(hs.starQueryInQueryHistory))
 			queryHistoryRoute.Delete("/star/:uid", routing.Wrap(hs.unstarQueryInQueryHistory))
-		})
+		}, ValidateQueryHistoryEnabled)
 	}, reqSignedIn)
 
 	// admin api

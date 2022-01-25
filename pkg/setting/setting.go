@@ -171,6 +171,10 @@ var (
 	// Explore UI
 	ExploreEnabled bool
 
+	// Query history
+	QueryHistoryEnabled bool
+	QueryHistoryMaxAge  time.Duration
+
 	// Grafana.NET URL
 	GrafanaComUrl string
 
@@ -973,6 +977,14 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
+
+	queryHistory := iniFile.Section("query_history")
+	QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
+	maxAgeqQueryHistory := valueAsString(queryHistory, "max_age", "7d")
+	QueryHistoryMaxAge, err = gtime.ParseDuration(maxAgeqQueryHistory)
+	if err != nil {
+		return err
+	}
 
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
