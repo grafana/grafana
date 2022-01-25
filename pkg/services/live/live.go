@@ -297,8 +297,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 					return
 				}
 				if leadershipID != "" {
-					logger.Debug("Setting epoch for stream", "lid", leadershipID)
-					reply.Options.Epoch = leadershipID
 					reply.Options.Position = true
 				}
 				cb(reply, err)

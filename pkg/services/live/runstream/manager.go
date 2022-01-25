@@ -44,9 +44,21 @@ type packetSender struct {
 	channelLocalPublisher ChannelLocalPublisher
 	channel               string
 	leadershipID          string
+	leaderManager         leader.Manager
 }
 
 func (p *packetSender) Send(packet *backend.StreamPacket) error {
+	if p.leaderManager != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+		defer cancel()
+		ok, err := p.leaderManager.RefreshLeader(ctx, p.channel, p.leadershipID)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return errors.New("leader changed")
+		}
+	}
 	return p.channelLocalPublisher.PublishLocal(p.channel, packet.Data, p.leadershipID)
 }
 
@@ -383,6 +395,7 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 				channelLocalPublisher: s.channelSender,
 				channel:               sr.Channel,
 				leadershipID:          sr.leadershipID,
+				leaderManager:         s.leaderManager,
 			}),
 		)
 		if err != nil {
