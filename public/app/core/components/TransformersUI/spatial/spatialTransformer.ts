@@ -49,6 +49,7 @@ async function doSetGeometry(frames: DataFrame[], options: SpatialTransformOptio
             }
             return {
               ...frame,
+              length: 1,
               fields: [
                 {
                   ...info.field,

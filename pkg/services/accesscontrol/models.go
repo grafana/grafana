@@ -237,6 +237,7 @@ type SetResourcePermissionCommand struct {
 	Actions    []string
 	Resource   string
 	ResourceID string
+	Permission string
 }
 
 type GetResourcesPermissionsQuery struct {
