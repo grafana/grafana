@@ -10,6 +10,6 @@ export interface ShareModalTabProps {
 export interface ShareModalTabModel {
   label: string;
   value: string;
-  labelSuffix?: string;
+  labelSuffixText?: string;
   component: React.ComponentType<ShareModalTabProps>;
 }
