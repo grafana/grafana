@@ -173,7 +173,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     },
     {
       key: 'child span count',
-      label: 'Child Span Count',
+      label: 'Child Span Count:',
       value: formatNumber(span.childSpanCount),
     },
   ];

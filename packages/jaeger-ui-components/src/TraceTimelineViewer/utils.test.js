@@ -158,12 +158,12 @@ describe('TraceTimelineViewer/utils', () => {
   describe('formatNumber', () => {
     it.each`
       value      | expected
-      ${-1}      | ${''}
+      ${-1}      | ${'-1'}
       ${20}      | ${'20'}
       ${1000}    | ${'1K'}
-      ${4578}    | ${'4K'}
-      ${10678}   | ${'10K'}
-      ${1100000} | ${'11M'}
+      ${4578}    | ${'5K'}
+      ${10678}   | ${'11K'}
+      ${1100000} | ${'1M'}
     `(' function should format $value to $expected', ({ value, expected }) => {
       const result = formatNumber(value);
       expect(result).toEqual(expected);
