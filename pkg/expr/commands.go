@@ -73,11 +73,11 @@ type ReduceCommand struct {
 	Reducer      string
 	VarToReduce  string
 	refID        string
-	seriesMapper mathexp.ValueMapper
+	seriesMapper mathexp.ReduceMapper
 }
 
 // NewReduceCommand creates a new ReduceCMD.
-func NewReduceCommand(refID, reducer, varToReduce string, mapper mathexp.ValueMapper) (*ReduceCommand, error) {
+func NewReduceCommand(refID, reducer, varToReduce string, mapper mathexp.ReduceMapper) (*ReduceCommand, error) {
 	_, err := mathexp.GetReduceFunc(reducer)
 	if err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func UnmarshalReduceCommand(rn *rawNode) (*ReduceCommand, error) {
 		return nil, fmt.Errorf("expected reducer to be a string, got %T for refId %v", rawReducer, rn.RefID)
 	}
 
-	var mapper mathexp.ValueMapper = nil
+	var mapper mathexp.ReduceMapper = nil
 	settings, ok := rn.Query["settings"]
 	if ok {
 		switch s := settings.(type) {

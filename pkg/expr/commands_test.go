@@ -10,12 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
-func Test_UnmarshalReduceCommand(t *testing.T) {
+func Test_UnmarshalReduceCommand_Settings(t *testing.T) {
 	var tests = []struct {
 		name           string
 		querySettings  string
 		isError        bool
-		expectedMapper mathexp.ValueMapper
+		expectedMapper mathexp.ReduceMapper
 	}{
 		{
 			name:           "no mapper function when settings is not specified",
