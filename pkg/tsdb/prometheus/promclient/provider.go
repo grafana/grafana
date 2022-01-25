@@ -56,23 +56,14 @@ func (p *Provider) GetClient(headers map[string]string) (apiv1.API, error) {
 
 	// Azure authentication
 	if _, ok := opts.CustomOptions["_azureCredentials"]; !ok {
-		azureAuthEnabled, err := maputil.GetBoolOptional(p.jsonData, "azureAuth")
-		if err != nil {
-			return nil, err
-		}
 		credentials, err := azcredentials.FromDatasourceData(p.jsonData, p.settings.DecryptedSecureJSONData)
 		if err != nil {
 			err = fmt.Errorf("invalid Azure credentials: %s", err)
 			return nil, err
 		}
-		if azureAuthEnabled && credentials == nil {
-			credentials = &azcredentials.AzureManagedIdentityCredentials{}
-		}
+
 		if credentials != nil {
-			opts.CustomOptions["_azureAuth"] = true
-			if credentials != nil {
-				opts.CustomOptions["_azureCredentials"] = credentials
-			}
+			opts.CustomOptions["_azureCredentials"] = credentials
 		}
 	}
 
@@ -81,6 +72,7 @@ func (p *Provider) GetClient(headers map[string]string) (apiv1.API, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if azureEndpointResourceId != "" {
 			opts.CustomOptions["azureEndpointResourceId"] = azureEndpointResourceId
 		}
