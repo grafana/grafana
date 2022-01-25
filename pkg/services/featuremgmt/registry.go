@@ -8,16 +8,9 @@ import (
 var (
 	FLAG_database_metrics = "database_metrics"
 	FLAG_live_config      = "live-config"
-	FLAG_recordedQueries  = "recordedQueries"
 
 	// Register each toggle here
 	standardFeatureFlags = []models.FeatureFlag{
-		{
-			Name:            FLAG_recordedQueries,
-			Description:     "Supports saving queries that can be scraped by prometheus",
-			State:           models.FeatureStateBeta,
-			RequiresLicense: true,
-		},
 		{
 			Name:            "teamsync",
 			Description:     "Team sync lets you set up synchronization between your auth providers teams and teams in Grafana",
@@ -44,19 +37,6 @@ var (
 			Description:     "Data source permissions",
 			State:           models.FeatureStateStable,
 			DocsURL:         "https://grafana.com/docs/grafana/latest/enterprise/datasource_permissions/",
-			RequiresLicense: true,
-		},
-		{
-			Name:            "analytics",
-			Description:     "Analytics",
-			State:           models.FeatureStateStable,
-			RequiresLicense: true,
-		},
-		{
-			Name:            "enterprise.plugins",
-			Description:     "Enterprise plugins",
-			State:           models.FeatureStateStable,
-			DocsURL:         "https://grafana.com/grafana/plugins/?enterprise=1",
 			RequiresLicense: true,
 		},
 		{

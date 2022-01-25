@@ -32,9 +32,6 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 	}
 
 	// Register the standard flags
-	if licensing != nil {
-		mgmt.registerFlags(licensing.ListFeatures()...)
-	}
 	mgmt.registerFlags(standardFeatureFlags...)
 
 	// Load the flags from `custom.ini` files

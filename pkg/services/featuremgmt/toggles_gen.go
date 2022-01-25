@@ -2,12 +2,6 @@
 
 package featuremgmt
 
-// IsRecordedQueriesEnabled checks for the flag: recordedQueries
-// Supports saving queries that can be scraped by prometheus
-func (ft *FeatureToggles) IsRecordedQueriesEnabled() bool {
-	return ft.manager.IsEnabled("recordedQueries")
-}
-
 // IsTeamsyncEnabled checks for the flag: teamsync
 // Team sync lets you set up synchronization between your auth providers teams and teams in Grafana
 func (ft *FeatureToggles) IsTeamsyncEnabled() bool {
@@ -30,18 +24,6 @@ func (ft *FeatureToggles) IsCachingEnabled() bool {
 // Data source permissions
 func (ft *FeatureToggles) IsDspermissionsEnabled() bool {
 	return ft.manager.IsEnabled("dspermissions")
-}
-
-// IsAnalyticsEnabled checks for the flag: analytics
-// Analytics
-func (ft *FeatureToggles) IsAnalyticsEnabled() bool {
-	return ft.manager.IsEnabled("analytics")
-}
-
-// IsEnterprisePluginsEnabled checks for the flag: enterprise.plugins
-// Enterprise plugins
-func (ft *FeatureToggles) IsEnterprisePluginsEnabled() bool {
-	return ft.manager.IsEnabled("enterprise.plugins")
 }
 
 // IsTrimDefaultsEnabled checks for the flag: trimDefaults

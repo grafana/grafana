@@ -1092,10 +1092,6 @@ type fakeLicensingService struct {
 	tokenRaw string
 }
 
-var (
-	_ models.Licensing = (*fakeLicensingService)(nil)
-)
-
 func (t *fakeLicensingService) Expiry() int64 {
 	return 0
 }
@@ -1120,8 +1116,8 @@ func (t *fakeLicensingService) Environment() map[string]string {
 	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
 }
 
-func (*fakeLicensingService) ListFeatures() []models.FeatureFlag {
-	return []models.FeatureFlag{}
+func (*fakeLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
 }
 
 func (*fakeLicensingService) FeatureEnabled(feature string) bool {

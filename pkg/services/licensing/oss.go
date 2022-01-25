@@ -16,10 +16,6 @@ type OSSLicensingService struct {
 	HooksService *hooks.HooksService
 }
 
-var (
-	_ models.Licensing = (*OSSLicensingService)(nil)
-)
-
 func (*OSSLicensingService) Expiry() int64 {
 	return 0
 }
@@ -44,8 +40,8 @@ func (l *OSSLicensingService) LicenseURL(showAdminLicensingPage bool) string {
 	return "https://grafana.com/oss/grafana?utm_source=grafana_footer"
 }
 
-func (*OSSLicensingService) ListFeatures() []models.FeatureFlag {
-	return []models.FeatureFlag{}
+func (*OSSLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
 }
 
 func (*OSSLicensingService) FeatureEnabled(feature string) bool {

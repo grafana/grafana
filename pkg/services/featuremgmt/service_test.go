@@ -41,7 +41,8 @@ func TestFeatureService(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, mgmt)
 
-	require.True(t, mgmt.IsEnabled("a.yes.default"))
+	// Enterprise features do not fall though automatically
+	require.False(t, mgmt.IsEnabled("a.yes.default"))
 	require.False(t, mgmt.IsEnabled("a.yes")) // licensed, but not enabled
 }
 
@@ -74,8 +75,8 @@ func (s stubLicenseServier) StateInfo() string {
 	return "ok"
 }
 
-func (s stubLicenseServier) ListFeatures() []models.FeatureFlag {
-	return s.flags
+func (s stubLicenseServier) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
 }
 
 func (s stubLicenseServier) FeatureEnabled(feature string) bool {
