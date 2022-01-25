@@ -305,7 +305,7 @@ func (ss *SQLStore) findDashboards(ctx context.Context, query *search.FindPersis
 	}
 
 	if len(query.FolderIds) > 0 {
-		filters = append(filters, searchstore.FolderFilter{Dialect: dialect, IDs: query.FolderIds})
+		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
 	}
 
 	var res []DashboardSearchProjection
