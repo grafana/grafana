@@ -439,6 +439,14 @@ func (cfg Cfg) IsDashboardPreviesEnabled() bool {
 	return cfg.FeatureToggles["dashboardPreviews"]
 }
 
+func (cfg Cfg) IsSchedulerServiceEnabled() bool {
+	return cfg.FeatureToggles["scheduler_service"]
+}
+
+func (cfg Cfg) IsDistributedSchedulerServiceEnabled() bool {
+	return cfg.FeatureToggles["distributed_scheduler"]
+}
+
 // IsTrimDefaultsEnabled returns whether the standalone trim dashboard default feature is enabled.
 func (cfg Cfg) IsTrimDefaultsEnabled() bool {
 	return cfg.FeatureToggles["trimDefaults"]
