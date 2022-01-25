@@ -15,7 +15,7 @@ replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/
 
 require (
 	cloud.google.com/go/storage v1.14.0
-	cuelang.org/go v0.4.0
+	cuelang.org/go v0.4.1
 	github.com/Azure/azure-sdk-for-go v57.1.0+incompatible
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.19.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.10.0
@@ -252,17 +252,24 @@ require (
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 )
 
-require cloud.google.com/go/kms v1.1.0
+require (
+	cloud.google.com/go/kms v1.1.0
+	github.com/grafana/thema v0.0.0-20220118115809-98989f6f04c6
+	k8s.io/apimachinery v0.22.1
+)
 
 require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.15 // indirect
 	github.com/containerd/containerd v1.5.9 // indirect
+	github.com/go-logr/logr v0.4.0 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.8 // indirect
 	github.com/segmentio/asm v1.1.1 // indirect
+	k8s.io/klog/v2 v2.10.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
