@@ -85,6 +85,7 @@ func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManage
 
 	t.Run("Given a plugin", func(t *testing.T) {
 		cfg := &setting.Cfg{
+			FeatureToggles: map[string]bool{},
 			PluginSettings: setting.PluginSettings{
 				"test-app": map[string]string{
 					"path": "testdata/test-app",
