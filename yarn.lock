@@ -4121,6 +4121,7 @@ __metadata:
     mock-raf: 1.0.1
     moment: 2.29.1
     monaco-editor: ^0.31.1
+    ol: 6.12.0
     postcss: 8.4.5
     postcss-loader: 6.2.1
     prismjs: 1.26.0
