@@ -166,7 +166,7 @@ describe('userReducer', () => {
               browserVersion: '90',
               osVersion: '95',
               clientIp: '192.168.1.1',
-              createdAt: 'December 31, 2020',
+              createdAt: '2021-01-01 04:00:00',
               device: 'Computer',
               os: 'Windows',
               isActive: false,

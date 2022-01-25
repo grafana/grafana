@@ -21,6 +21,7 @@ export const reducerTypes: Array<SelectableValue<string>> = [
   { value: ReducerID.mean, label: 'Mean', description: 'Get the average value' },
   { value: ReducerID.sum, label: 'Sum', description: 'Get the sum of all values' },
   { value: ReducerID.count, label: 'Count', description: 'Get the number of values' },
+  { value: ReducerID.last, label: 'Last', description: 'Get the last value' },
 ];
 
 export const downsamplingTypes: Array<SelectableValue<string>> = [

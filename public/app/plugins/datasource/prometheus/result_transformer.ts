@@ -44,8 +44,11 @@ interface TimeAndValue {
 }
 
 const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
-  // We want to process instant results in Explore as table
-  if ((options.app === CoreApp.Explore && dataFrame.meta?.custom?.resultType) === 'vector') {
+  // We want to process vector and scalar results in Explore as table
+  if (
+    options.app === CoreApp.Explore &&
+    (dataFrame.meta?.custom?.resultType === 'vector' || dataFrame.meta?.custom?.resultType === 'scalar')
+  ) {
     return true;
   }
 
@@ -286,7 +289,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
     const dsSettings = dataSourceSrv.getInstanceSettings(options.datasourceUid);
 
     dataLinks.push({
-      title: `Query with ${dsSettings?.name}`,
+      title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
       url: '',
       internal: {
         query: { query: '${__value.raw}', queryType: 'traceId' },
@@ -298,7 +301,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
 
   if (options.url) {
     dataLinks.push({
-      title: `Go to ${options.url}`,
+      title: options.urlDisplayLabel || `Go to ${options.url}`,
       url: options.url,
       targetBlank: true,
     });

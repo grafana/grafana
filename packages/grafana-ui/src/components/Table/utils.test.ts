@@ -186,7 +186,6 @@ describe('Table utils', () => {
             title: '1.0',
             text: '1.0',
           }),
-          parse: (value: any) => '1.0',
         };
         const rows: any[] = [];
 

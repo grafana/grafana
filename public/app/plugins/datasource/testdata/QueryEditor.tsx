@@ -82,6 +82,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       scenarioId: item.value!,
       refId: query.refId,
       alias: query.alias,
+      datasource: query.datasource,
     };
 
     if (scenario.stringInput) {

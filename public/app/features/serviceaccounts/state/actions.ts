@@ -1,28 +1,43 @@
 import { ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
-import { OrgServiceAccount as OrgServiceAccount } from 'app/types';
-import { serviceAccountsLoaded } from './reducers';
+import { ServiceAccountDTO } from 'app/types';
+import { serviceAccountLoaded, serviceAccountsLoaded } from './reducers';
 
-export function loadServiceAccounts(): ThunkResult<void> {
+const BASE_URL = `/api/org/serviceaccounts`;
+
+export function loadServiceAccount(id: number): ThunkResult<void> {
   return async (dispatch) => {
-    const serviceAccounts = await getBackendSrv().get('/api/serviceaccounts');
-    dispatch(serviceAccountsLoaded(serviceAccounts));
+    try {
+      const response = await getBackendSrv().get(`${BASE_URL}/${id}`);
+      dispatch(serviceAccountLoaded(response));
+    } catch (error) {
+      console.error(error);
+    }
   };
 }
 
-export function updateServiceAccount(serviceAccount: OrgServiceAccount): ThunkResult<void> {
+export function loadServiceAccounts(): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      const response = await getBackendSrv().get(BASE_URL);
+      dispatch(serviceAccountsLoaded(response));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+}
+
+export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkResult<void> {
   return async (dispatch) => {
     // TODO: implement on backend
-    await getBackendSrv().patch(`/api/serviceaccounts/${serviceAccount.serviceAccountId}`, {
-      role: serviceAccount.role,
-    });
+    await getBackendSrv().patch(`${BASE_URL}/${serviceAccount.userId}`, {});
     dispatch(loadServiceAccounts());
   };
 }
 
 export function removeServiceAccount(serviceAccountId: number): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().delete(`/api/serviceaccounts/${serviceAccountId}`);
+    await getBackendSrv().delete(`${BASE_URL}/${serviceAccountId}`);
     dispatch(loadServiceAccounts());
   };
 }
