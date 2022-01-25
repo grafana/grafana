@@ -1,7 +1,7 @@
 import React, { createRef, useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import SVG from 'react-inlinesvg';
-import { Button, Select, FilterInput, useTheme2, stylesFactory, Field, Label, Input, ButtonGroup } from '@grafana/ui';
+import { Button, Select, FilterInput, Field, Label, Input, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
@@ -42,6 +42,7 @@ const getFolderIfExists = (folders: Array<SelectableValue<string>>, path: string
 
 export const ResourcePickerPopover = (props: Props) => {
   const { value, onChange, mediaType, folderName } = props;
+  const styles = useStyles2(getStyles);
 
   const folders = getFolders(mediaType).map((v) => ({
     label: v,
@@ -118,9 +119,6 @@ export const ResourcePickerPopover = (props: Props) => {
   const getTabClassName = (tabName: PickerType) => {
     return `${styles.resourcePickerPopoverTab} ${activePicker === tabName && styles.resourcePickerPopoverActiveTab}`;
   };
-
-  const theme = useTheme2();
-  const styles = getStyles(theme);
 
   const renderFolderPicker = () => (
     <>
@@ -206,83 +204,81 @@ export const ResourcePickerPopover = (props: Props) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    cardsWrapper: css`
-      height: 30vh;
-      min-height: 50px;
-      margin-top: 5px;
-      max-width: 680px;
-    `,
-    iconPreview: css`
-      width: 238px;
-      height: 198px;
-      border: 1px solid ${theme.colors.border.medium};
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `,
-    iconContainer: css`
-      display: flex;
-      flex-direction: column;
-      width: 80%;
-      align-items: center;
-      align-self: center;
-    `,
-    img: css`
-      width: 147px;
-      height: 147px;
-      fill: ${theme.colors.text.primary};
-    `,
-    resourcePickerPopover: css`
-      border-radius: ${theme.shape.borderRadius()};
-      box-shadow: ${theme.shadows.z3};
-      background: ${theme.colors.background.primary};
-      border: 1px solid ${theme.colors.border.medium};
-    `,
-    resourcePickerPopoverTab: css`
-      width: 50%;
-      text-align: center;
-      padding: ${theme.spacing(1, 0)};
-      background: ${theme.colors.background.secondary};
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      cursor: pointer;
-      border: none;
+const getStyles = (theme: GrafanaTheme2) => ({
+  cardsWrapper: css`
+    height: 30vh;
+    min-height: 50px;
+    margin-top: 5px;
+    max-width: 680px;
+  `,
+  iconPreview: css`
+    width: 238px;
+    height: 198px;
+    border: 1px solid ${theme.colors.border.medium};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `,
+  iconContainer: css`
+    display: flex;
+    flex-direction: column;
+    width: 80%;
+    align-items: center;
+    align-self: center;
+  `,
+  img: css`
+    width: 147px;
+    height: 147px;
+    fill: ${theme.colors.text.primary};
+  `,
+  resourcePickerPopover: css`
+    border-radius: ${theme.shape.borderRadius()};
+    box-shadow: ${theme.shadows.z3};
+    background: ${theme.colors.background.primary};
+    border: 1px solid ${theme.colors.border.medium};
+  `,
+  resourcePickerPopoverTab: css`
+    width: 50%;
+    text-align: center;
+    padding: ${theme.spacing(1, 0)};
+    background: ${theme.colors.background.secondary};
+    color: ${theme.colors.text.secondary};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    cursor: pointer;
+    border: none;
 
-      &:focus:not(:focus-visible) {
-        outline: none;
-        box-shadow: none;
-      }
+    &:focus:not(:focus-visible) {
+      outline: none;
+      box-shadow: none;
+    }
 
-      :focus-visible {
-        position: relative;
-      }
-    `,
-    resourcePickerPopoverActiveTab: css`
-      color: ${theme.colors.text.primary};
-      font-weight: ${theme.typography.fontWeightMedium};
-      background: ${theme.colors.background.primary};
-    `,
-    resourcePickerPopoverContent: css`
-      width: 315px;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      min-height: 184px;
-      padding: ${theme.spacing(1)};
-      display: flex;
-      flex-direction: column;
-    `,
-    resourcePickerPopoverTabs: css`
-      display: flex;
-      width: 100%;
-      border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
-    `,
-    buttonGroup: css`
-      align-self: center;
-      flex-direction: row;
-    `,
-    button: css`
-      margin: 12px 20px 5px;
-    `,
-  };
+    :focus-visible {
+      position: relative;
+    }
+  `,
+  resourcePickerPopoverActiveTab: css`
+    color: ${theme.colors.text.primary};
+    font-weight: ${theme.typography.fontWeightMedium};
+    background: ${theme.colors.background.primary};
+  `,
+  resourcePickerPopoverContent: css`
+    width: 315px;
+    font-size: ${theme.typography.bodySmall.fontSize};
+    min-height: 184px;
+    padding: ${theme.spacing(1)};
+    display: flex;
+    flex-direction: column;
+  `,
+  resourcePickerPopoverTabs: css`
+    display: flex;
+    width: 100%;
+    border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
+  `,
+  buttonGroup: css`
+    align-self: center;
+    flex-direction: row;
+  `,
+  button: css`
+    margin: 12px 20px 5px;
+  `,
 });

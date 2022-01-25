@@ -1,15 +1,6 @@
 import React, { createRef } from 'react';
 import { css } from '@emotion/css';
-import {
-  Button,
-  InlineField,
-  InlineFieldRow,
-  Input,
-  Popover,
-  PopoverController,
-  stylesFactory,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Input, Popover, PopoverController, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import SVG from 'react-inlinesvg';
 
@@ -31,11 +22,12 @@ interface Props {
 export const ResourcePicker = (props: Props) => {
   const { value, src, name, placeholder, onChange, onClear, mediaType, folderName } = props;
 
+  const styles = useStyles2(getStyles);
+
   const pickerTriggerRef = createRef<any>();
   const popoverElement = (
     <ResourcePickerPopover onChange={onChange} value={value} mediaType={mediaType} folderName={folderName} />
   );
-  const styles = useStyles2(getStyles);
 
   return (
     <PopoverController content={popoverElement}>
@@ -73,19 +65,17 @@ export const ResourcePicker = (props: Props) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    pointer: css`
+const getStyles = (theme: GrafanaTheme2) => ({
+  pointer: css`
+    cursor: pointer;
+    input[readonly] {
       cursor: pointer;
-      input[readonly] {
-        cursor: pointer;
-      }
-    `,
-    icon: css`
-      vertical-align: middle;
-      display: inline-block;
-      fill: currentColor;
-      max-width: 25px;
-    `,
-  };
+    }
+  `,
+  icon: css`
+    vertical-align: middle;
+    display: inline-block;
+    fill: currentColor;
+    max-width: 25px;
+  `,
 });
