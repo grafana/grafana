@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -68,13 +69,13 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 
 	isTeamMember, err := hs.SQLStore.IsTeamMember(c.OrgId, cmd.TeamId, cmd.UserId)
 	if err != nil {
-		return response.Error(500, "Failed to update team member.", err)
+		return response.Error(500, "Failed to add team member.", err)
 	}
 	if isTeamMember {
 		return response.Error(400, "User is already added to this team", nil)
 	}
 
-	err = addOrUpdateTeamMember(hs.TeamPermissionsService, cmd.UserId, cmd.OrgId, cmd.TeamId, cmd.External, cmd.Permission)
+	err = addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, cmd.UserId, cmd.OrgId, cmd.TeamId, cmd.External, cmd.Permission)
 	if err != nil {
 		return response.Error(500, "Failed to add Member to Team", err)
 	}
@@ -114,7 +115,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 		return response.Error(404, "Team member not found.", nil)
 	}
 
-	err = addOrUpdateTeamMember(hs.TeamPermissionsService, userId, orgId, teamId, false, cmd.Permission)
+	err = addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, userId, orgId, teamId, false, cmd.Permission)
 	if err != nil {
 		return response.Error(500, "Failed to update team member.", err)
 	}
@@ -157,7 +158,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 // addOrUpdateTeamMember adds or updates a team member.
 //
 // Stubbable by tests.
-var addOrUpdateTeamMember = func(resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
+var addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
 	permission models.PermissionType) error {
 	permissionString := permission.String()
 	// Team member permission is 0, which maps to an empty string.
@@ -169,5 +170,5 @@ var addOrUpdateTeamMember = func(resourcePermissionService *resourcepermissions.
 	teamIDString := strconv.FormatInt(teamID, 10)
 	_, err := resourcePermissionService.SetUserPermission(context.TODO(), orgID, userID, teamIDString, actions)
 
-	return err
+	return fmt.Errorf("failed setting permissions for user %d in team %d: %w", userID, teamID, err)
 }

@@ -32,7 +32,7 @@ type TeamStore interface {
 	UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error
 	RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error
 	GetTeamMembers(ctx context.Context, cmd *models.GetTeamMembersQuery) error
-	SaveTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error
+	AddOrUpdateTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error
 }
 
 func getFilteredUsers(signedInUser *models.SignedInUser, hiddenUsers map[string]struct{}) []string {
@@ -291,10 +291,9 @@ func GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) erro
 // AddTeamMember adds a user to a team
 func (ss *SQLStore) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
 	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-		if res, err := sess.Query("SELECT 1 from team_member WHERE org_id=? and team_id=? and user_id=?",
-			orgID, teamID, userID); err != nil {
+		if isMember, err := isTeamMember(sess, orgID, teamID, userID); err != nil {
 			return err
-		} else if len(res) == 1 {
+		} else if isMember {
 			return models.ErrTeamMemberAlreadyAdded
 		}
 
@@ -346,8 +345,8 @@ func isTeamMember(sess *DBSession, orgId int64, teamId int64, userId int64) (boo
 	return true, nil
 }
 
-// SaveTeamMember adds user to a team or updates user permissions in a team
-func (ss *SQLStore) SaveTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
+// AddOrUpdateTeamMember adds user to a team or updates user permissions in a team
+func (ss *SQLStore) AddOrUpdateTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
 	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		isMember, err := isTeamMember(sess, orgID, teamID, userID)
 		if err != nil {

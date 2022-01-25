@@ -84,9 +84,9 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 			}
 			switch permission {
 			case "Member":
-				return sql.SaveTeamMember(userID, orgID, teamId, false, 0)
+				return sql.AddOrUpdateTeamMember(userID, orgID, teamId, false, 0)
 			case "Admin":
-				return sql.SaveTeamMember(userID, orgID, teamId, false, models.PERMISSION_ADMIN)
+				return sql.AddOrUpdateTeamMember(userID, orgID, teamId, false, models.PERMISSION_ADMIN)
 			case "":
 				return sql.RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{
 					OrgId:  orgID,
