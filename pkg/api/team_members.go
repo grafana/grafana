@@ -29,8 +29,7 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 
 	filteredMembers := make([]*models.TeamMemberDTO, 0, len(query.Result))
 	for _, member := range query.Result {
-		// TODO: when FGAC is enabled, use SQL filtering to filter out for users that the caller has permissions to see
-		if !hs.Cfg.FeatureToggles["accesscontrol"] && dtos.IsHiddenUser(member.Login, c.SignedInUser, hs.Cfg) {
+		if dtos.IsHiddenUser(member.Login, c.SignedInUser, hs.Cfg) {
 			continue
 		}
 
@@ -141,7 +140,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	}
 
 	teamIDString := strconv.FormatInt(teamId, 10)
-	if _, err := hs.TeamPermissionsService.SetUserPermission(context.TODO(), orgId, userId, teamIDString, []string{}); err != nil {
+	if _, err := hs.TeamPermissionsService.SetUserPermission(c.Req.Context(), orgId, userId, teamIDString, []string{}); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
 		}
