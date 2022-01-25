@@ -209,7 +209,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 
 				query := &models.GetTeamsByUserQuery{OrgId: testOrgID, UserId: userIds[0]}
-				err = GetTeamsByUser(context.Background(), query)
+				err = sqlStore.GetTeamsByUser(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 1)
 				require.Equal(t, query.Result[0].Name, "group2 name")

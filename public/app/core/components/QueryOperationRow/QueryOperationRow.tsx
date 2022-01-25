@@ -180,7 +180,8 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       text-overflow: ellipsis;
     `,
     content: css`
-      margin: ${theme.spacing.md};
+      margin-top: ${theme.spacing.inlineFormMargin};
+      margin-left: ${theme.spacing.lg};
     `,
     disabled: css`
       color: ${theme.colors.textWeak};

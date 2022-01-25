@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
@@ -26,7 +26,7 @@ const searchItem: NavModelItem = {
   icon: 'search',
 };
 
-export const NavBarNext: FC = React.memo(() => {
+export const NavBarNext = React.memo(() => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();

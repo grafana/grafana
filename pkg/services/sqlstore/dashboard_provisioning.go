@@ -8,9 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func init() {
+func (ss *SQLStore) addDashboardProvisioningQueryAndCommandHandlers() {
 	bus.AddHandler("sql", UnprovisionDashboard)
-	bus.AddHandler("sql", DeleteOrphanedProvisionedDashboards)
+	bus.AddHandler("sql", ss.DeleteOrphanedProvisionedDashboards)
 }
 
 type DashboardExtras struct {
@@ -111,7 +111,7 @@ func UnprovisionDashboard(ctx context.Context, cmd *models.UnprovisionDashboardC
 	return nil
 }
 
-func DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+func (ss *SQLStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
 	var result []*models.DashboardProvisioning
 
 	convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
@@ -125,7 +125,7 @@ func DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.Delete
 	}
 
 	for _, deleteDashCommand := range result {
-		err := DeleteDashboard(ctx, &models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
+		err := ss.DeleteDashboard(ctx, &models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
 		if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 			return err
 		}
