@@ -405,15 +405,9 @@ func updateTeamMember(sess *DBSession, orgID, teamID, userID int64, permission m
 }
 
 // RemoveTeamMember removes a member from a team
-//<<<<<<< HEAD
-//func (ss *SQLStore) RemoveTeamMember(orgID, teamID, userID int64) error {
-//	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-//		if _, err := teamExists(orgID, teamID, sess); err != nil {
-//=======
 func (ss *SQLStore) RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
-//>>>>>>> 2599/sync-team-permissions-with-fgac-permisssions
 			return err
 		}
 

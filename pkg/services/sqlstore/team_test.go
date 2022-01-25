@@ -131,16 +131,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.EqualValues(t, qBeforeUpdate.Result[0].Permission, 0)
 
-//<<<<<<< HEAD
 				err = sqlStore.SaveTeamMember(userId, testOrgID, team.Id, false, models.PERMISSION_ADMIN)
-//=======
-//				err = sqlStore.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-//					UserId:     userId,
-//					OrgId:      testOrgID,
-//					TeamId:     team.Id,
-//					Permission: models.PERMISSION_ADMIN,
-//				})
-//>>>>>>> 2599/sync-team-permissions-with-fgac-permisssions
 
 				require.NoError(t, err)
 
@@ -164,16 +155,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, qBeforeUpdate.Result[0].Permission, 0)
 
 				invalidPermissionLevel := models.PERMISSION_EDIT
-//<<<<<<< HEAD
 				err = sqlStore.SaveTeamMember(userID, testOrgID, team.Id, false, invalidPermissionLevel)
-//=======
-//				err = sqlStore.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-//					UserId:     userID,
-//					OrgId:      testOrgID,
-//					TeamId:     team.Id,
-//					Permission: invalidPermissionLevel,
-//				})
-//>>>>>>> 2599/sync-team-permissions-with-fgac-permisssions
 
 				require.NoError(t, err)
 
@@ -254,11 +236,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				})
 
 				t.Run("A user should not be able to remove the admin permission for the last admin", func(t *testing.T) {
-//<<<<<<< HEAD
 					err = sqlStore.SaveTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
-//=======
-//					err = sqlStore.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], Permission: 0, ProtectLastAdmin: true})
-//>>>>>>> 2599/sync-team-permissions-with-fgac-permisssions
 					require.Error(t, err, models.ErrLastTeamAdmin)
 				})
 
@@ -271,11 +249,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 					err = sqlStore.SaveTeamMember(userIds[1], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
 					require.NoError(t, err)
-//<<<<<<< HEAD
 					err = sqlStore.SaveTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
-//=======
-//					err = sqlStore.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], Permission: 0, ProtectLastAdmin: true})
-//>>>>>>> 2599/sync-team-permissions-with-fgac-permisssions
 					require.NoError(t, err)
 				})
 			})
