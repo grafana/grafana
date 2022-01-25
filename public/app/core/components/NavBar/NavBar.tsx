@@ -39,7 +39,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export interface Props extends ConnectedProps<typeof connector> {}
 
-export const Component = React.memo(({ navBarTree }: Props) => {
+export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
@@ -120,9 +120,9 @@ export const Component = React.memo(({ navBarTree }: Props) => {
   );
 });
 
-Component.displayName = 'NavBar';
+NavBarUnconnected.displayName = 'NavBar';
 
-export const NavBar = connector(Component);
+export const NavBar = connector(NavBarUnconnected);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   search: css`
