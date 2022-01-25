@@ -235,6 +235,7 @@
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/experimental": "0.0.2-canary.11",
+    "@grafana/google-sdk": "0.0.2",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/slate-react": "0.22.10-grafana",

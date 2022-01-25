@@ -3846,6 +3846,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/google-sdk@npm:0.0.2":
+  version: 0.0.2
+  resolution: "@grafana/google-sdk@npm:0.0.2"
+  checksum: a4dfe7a31a9fd8aabe8daf997d43a034226a2e366e23257080c6a2c5980f8e57e7bec74ba508ac2d860e247ea7734d91bcd6b71ca5a61fa6277344778640532f
+  languageName: node
+  linkType: hard
+
 "@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
@@ -19761,6 +19768,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 2.5.1
     "@grafana/experimental": 0.0.2-canary.11
+    "@grafana/google-sdk": 0.0.2
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
