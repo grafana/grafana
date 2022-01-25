@@ -366,6 +366,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		Icon:       "percona-dashboard",
 		Url:        setting.AppSubUrl + "/",
 		SortWeight: dtos.WeightDashboard,
+		Section:    dtos.NavSectionCore,
 		Children:   pmmChildNavs,
 	})
 
