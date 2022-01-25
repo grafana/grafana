@@ -345,7 +345,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
 				dashIdRoute.Get("/versions", routing.Wrap(GetDashboardVersions))
-				dashIdRoute.Get("/versions/:id", routing.Wrap(GetDashboardVersion))
+				dashIdRoute.Get("/versions/:id", routing.Wrap(hs.GetDashboardVersion))
 				dashIdRoute.Post("/restore", routing.Wrap(hs.RestoreDashboardVersion))
 
 				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {

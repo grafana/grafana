@@ -49,7 +49,7 @@ func (s *Service) CreateDashboardSnapshot(ctx context.Context, cmd *models.Creat
 }
 
 func (s *Service) GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
-	err := s.SQLStore.GetDashboardSnapshot(query)
+	err := s.SQLStore.GetDashboardSnapshot(ctx, query)
 	if err != nil {
 		return err
 	}
