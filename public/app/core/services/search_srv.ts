@@ -73,10 +73,6 @@ export class SearchSrv {
         .then((results) => (results.length ? [{ title: '', items: results }] : []));
     }
 
-    if (!filters) {
-      query.folderIds = [0];
-    }
-
     if (!options.skipRecent && !filters) {
       promises.push(this.getRecentDashboards(sections));
     }
