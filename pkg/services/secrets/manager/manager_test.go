@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -181,8 +180,8 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		providerID := secrets.ProviderID("fakeProvider.v1")
 		settings := &setting.OSSImpl{
 			Cfg: &setting.Cfg{
-				Raw:                    raw,
-				IsFeatureToggleEnabled: featuremgmt.WithToggles(secrets.EnvelopeEncryptionFeatureToggle).IsEnabled,
+				Raw:            raw,
+				FeatureToggles: map[string]bool{secrets.EnvelopeEncryptionFeatureToggle: true},
 			},
 		}
 		encr := ossencryption.ProvideService()
