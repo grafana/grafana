@@ -48,11 +48,23 @@ export const ResourcePickerPopover = (props: Props) => {
     value: v,
   }));
 
+  const onClose = () => {
+    onChange(value);
+  };
+
+  const ref = createRef<HTMLElement>();
+  const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: true }, ref);
+
+  const [newValue, setNewValue] = useState<string>(value ?? '');
+  const [searchQuery, setSearchQuery] = useState<string>();
+  const [activePicker, setActivePicker] = useState<PickerType>('folder');
+
   const [currentFolder, setCurrentFolder] = useState<SelectableValue<string>>(
     getFolderIfExists(folders, value?.length ? value : folderName)
   );
   const [directoryIndex, setDirectoryIndex] = useState<ResourceItem[]>([]);
   const [filteredIndex, setFilteredIndex] = useState<ResourceItem[]>([]);
+
   useEffect(() => {
     // we don't want to load everything before picking a folder
     const folder = currentFolder?.value;
@@ -87,7 +99,6 @@ export const ResourcePickerPopover = (props: Props) => {
     }
   }, [mediaType, currentFolder]);
 
-  const [searchQuery, setSearchQuery] = useState<string>();
   const onChangeSearch = (query: string) => {
     if (query) {
       query = query.toLowerCase();
@@ -97,8 +108,6 @@ export const ResourcePickerPopover = (props: Props) => {
     }
   };
 
-  const [newValue, setNewValue] = useState<string>(value ?? '');
-
   const imgSrc = getPublicOrAbsoluteUrl(newValue!);
 
   let shortName = newValue?.substring(newValue.lastIndexOf('/') + 1, newValue.lastIndexOf('.'));
@@ -106,7 +115,6 @@ export const ResourcePickerPopover = (props: Props) => {
     shortName = shortName.substring(0, 20) + '...';
   }
 
-  const [activePicker, setActivePicker] = useState<PickerType>('folder');
   const getTabClassName = (tabName: PickerType) => {
     return `${styles.resourcePickerPopoverTab} ${activePicker === tabName && styles.resourcePickerPopoverActiveTab}`;
   };
@@ -164,13 +172,6 @@ export const ResourcePickerPopover = (props: Props) => {
         return renderFolderPicker();
     }
   };
-
-  const onClose = () => {
-    onChange(value);
-  };
-
-  const ref = createRef<HTMLElement>();
-  const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: true }, ref);
 
   return (
     <FocusScope contain autoFocus restoreFocus>
