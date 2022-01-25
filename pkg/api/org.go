@@ -89,7 +89,7 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	acEnabled := hs.Features.Toggles().IsAccesscontrolEnabled()
+	acEnabled := hs.Cfg.FeatureToggles["accesscontrol"]
 	if !acEnabled && !(setting.AllowUserOrgCreate || c.IsGrafanaAdmin) {
 		return response.Error(403, "Access denied", nil)
 	}

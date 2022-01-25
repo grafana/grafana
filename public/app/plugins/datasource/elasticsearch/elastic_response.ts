@@ -711,21 +711,23 @@ const createEmptyDataFrame = (
   }
 
   if (logMessageField) {
-    series.addField({
+    const f = series.addField({
       name: logMessageField,
       type: FieldType.string,
-    }).parse = (v: any) => {
+    });
+    series.setParser(f, (v: any) => {
       return v || '';
-    };
+    });
   }
 
   if (logLevelField) {
-    series.addField({
+    const f = series.addField({
       name: 'level',
       type: FieldType.string,
-    }).parse = (v: any) => {
+    });
+    series.setParser(f, (v: any) => {
       return v || '';
-    };
+    });
   }
 
   const fieldNames = series.fields.map((field) => field.name);
@@ -740,15 +742,16 @@ const createEmptyDataFrame = (
       continue;
     }
 
-    series.addField({
+    const f = series.addField({
       config: {
         filterable: true,
       },
       name,
       type,
-    }).parse = (v: any) => {
+    });
+    series.setParser(f, (v: any) => {
       return v || '';
-    };
+    });
   }
 
   return series;
