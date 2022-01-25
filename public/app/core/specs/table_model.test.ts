@@ -55,6 +55,34 @@ describe('when sorting table asc', () => {
   });
 });
 
+describe('when sorting table with cols being undefined', () => {
+  let table: TableModel;
+  const panel = {
+    sort: { cols: undefined, desc: false },
+  };
+
+  beforeEach(() => {
+    table = new TableModel();
+    // @ts-ignore
+    table.columns = [{}, {}];
+    table.rows = [
+      [100, 11],
+      [105, 15],
+      [103, 10],
+    ];
+    // This is needed because after 8.3 cols can be undefined
+    // https://github.com/grafana/grafana/issues/44127
+    //@ts-ignore
+    table.sort(panel.sort);
+  });
+
+  it('should return the original table without sorting', () => {
+    expect(table.rows[0][1]).toBe(11);
+    expect(table.rows[1][1]).toBe(15);
+    expect(table.rows[2][1]).toBe(10);
+  });
+});
+
 describe('when sorting with nulls', () => {
   let table: TableModel;
   let values;
