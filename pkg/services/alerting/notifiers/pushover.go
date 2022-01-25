@@ -287,7 +287,7 @@ func (pn *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 		Body:       uploadBody.String(),
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
 		pn.log.Error("Failed to send pushover notification", "error", err, "webhook", pn.Name)
 		return err
 	}

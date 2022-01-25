@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -53,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -62,11 +64,12 @@ import (
 )
 
 type HTTPServer struct {
-	log         log.Logger
-	web         *web.Mux
-	context     context.Context
-	httpSrv     *http.Server
-	middlewares []web.Handler
+	log              log.Logger
+	web              *web.Mux
+	context          context.Context
+	httpSrv          *http.Server
+	middlewares      []web.Handler
+	namedMiddlewares []routing.RegisterNamedMiddleware
 
 	PluginContextProvider     *plugincontext.Provider
 	RouteRegister             routing.RouteRegister
@@ -109,10 +112,12 @@ type HTTPServer struct {
 	SecretsService            secrets.Service
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
-	tracingService            tracing.Tracer
+	tracer                    tracing.Tracer
 	updateChecker             *updatechecker.Service
 	searchUsersService        searchusers.Service
+	teamGuardian              teamguardian.TeamGuardian
 	queryDataService          *query.Service
+	serviceAccountsService    serviceaccounts.Service
 }
 
 type ServerOptions struct {
@@ -134,10 +139,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	contextHandler *contexthandler.ContextHandler,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	quotaService *quota.QuotaService, socialService social.Service, tracingService tracing.Tracer,
+	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
-	dataSourcesService *datasources.Service, secretsService secrets.Service,
-	queryDataService *query.Service) (*HTTPServer, error) {
+	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
+	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -179,7 +184,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		LibraryPanelService:       libraryPanelService,
 		LibraryElementService:     libraryElementService,
 		QuotaService:              quotaService,
-		tracingService:            tracingService,
+		tracer:                    tracer,
 		log:                       log.New("http.server"),
 		web:                       m,
 		Listener:                  opts.Listener,
@@ -188,7 +193,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SecretsService:            secretsService,
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
+		teamGuardian:              teamGuardian,
 		queryDataService:          queryDataService,
+		serviceAccountsService:    serviceaccountsService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -203,6 +210,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 
 func (hs *HTTPServer) AddMiddleware(middleware web.Handler) {
 	hs.middlewares = append(hs.middlewares, middleware)
+}
+
+func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddleware) {
+	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
 func (hs *HTTPServer) Run(ctx context.Context) error {
@@ -391,7 +402,7 @@ func (hs *HTTPServer) applyRoutes() {
 	// start with middlewares & static routes
 	hs.addMiddlewaresAndStaticRoutes()
 	// then add view routes & api routes
-	hs.RouteRegister.Register(hs.web)
+	hs.RouteRegister.Register(hs.web, hs.namedMiddlewares...)
 	// then custom app proxy routes
 	hs.initAppPluginRoutes(hs.web)
 	// lastly not found route
@@ -401,7 +412,7 @@ func (hs *HTTPServer) applyRoutes() {
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
-	m.Use(middleware.RequestTracing())
+	m.Use(middleware.RequestTracing(hs.tracer))
 
 	m.Use(middleware.Logger(hs.Cfg))
 

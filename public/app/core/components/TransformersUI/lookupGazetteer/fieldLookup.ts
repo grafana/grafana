@@ -6,10 +6,9 @@ import {
   FieldMatcher,
   FieldMatcherID,
   fieldMatchers,
-  FieldType,
   DataTransformerInfo,
 } from '@grafana/data';
-import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from 'app/plugins/panel/geomap/gazetteer/gazetteer';
+import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from 'app/features/geo/gazetteer/gazetteer';
 import { mergeMap, from } from 'rxjs';
 
 export interface FieldLookupOptions {
@@ -31,11 +30,21 @@ async function doGazetteerXform(frames: DataFrame[], options: FieldLookupOptions
 
   const gaz = await getGazetteer(options?.gazetteer ?? COUNTRIES_GAZETTEER_PATH);
 
+  if (!gaz.frame) {
+    return Promise.reject('missing frame in gazetteer');
+  }
+
   return addFieldsFromGazetteer(frames, gaz, fieldMatches);
 }
 
 export function addFieldsFromGazetteer(frames: DataFrame[], gaz: Gazetteer, matcher: FieldMatcher): DataFrame[] {
+  const src = gaz.frame!()?.fields;
+  if (!src) {
+    return frames;
+  }
+
   return frames.map((frame) => {
+    const length = frame.length;
     const fields: Field[] = [];
 
     for (const field of frame.fields) {
@@ -44,21 +53,22 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gaz: Gazetteer, matc
       //if the field matches
       if (matcher(field, frame, frames)) {
         const values = field.values.toArray();
-        const lat = new Array<Number>(values.length);
-        const lon = new Array<Number>(values.length);
+        const sub: any[][] = [];
+        for (const f of src) {
+          const buffer = new Array(length);
+          sub.push(buffer);
+          fields.push({ ...f, values: new ArrayVector(buffer) });
+        }
 
-        //for each value find the corresponding value in the gazetteer
-        for (let v = 0; v < values.length; v++) {
-          const foundMatchingValue = gaz.find(values[v]);
-
-          //for now start by adding lat and lon
-          if (foundMatchingValue && foundMatchingValue?.coords.length) {
-            lon[v] = foundMatchingValue.coords[0];
-            lat[v] = foundMatchingValue.coords[1];
+        // Add all values to the buffer
+        for (let v = 0; v < sub.length; v++) {
+          const found = gaz.find(values[v]);
+          if (found?.index != null) {
+            for (let i = 0; i < src.length; i++) {
+              sub[i][v] = src[i].values.get(found.index);
+            }
           }
         }
-        fields.push({ name: 'lon', type: FieldType.number, values: new ArrayVector(lon), config: {} });
-        fields.push({ name: 'lat', type: FieldType.number, values: new ArrayVector(lat), config: {} });
       }
     }
     return {

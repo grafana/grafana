@@ -34,7 +34,7 @@ func isDashboardStarredByUser(c *models.ReqContext, dashID int64) (bool, error) 
 	}
 
 	query := models.IsStarredByUserQuery{UserId: c.UserId, DashboardId: dashID}
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		return false, err
 	}
 
@@ -142,7 +142,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// lookup folder title
 	if dash.FolderId > 0 {
 		query := models.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
-		if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+		if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 			if errors.Is(err, models.ErrFolderNotFound) {
 				return response.Error(404, "Folder not found", err)
 			}
@@ -196,7 +196,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 
 func getUserLogin(ctx context.Context, userID int64) string {
 	query := models.GetUserByIdQuery{Id: userID}
-	err := bus.DispatchCtx(ctx, &query)
+	err := bus.Dispatch(ctx, &query)
 	if err != nil {
 		return anonString
 	}
@@ -212,7 +212,7 @@ func getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) 
 		query = models.GetDashboardQuery{Id: id, OrgId: orgID}
 	}
 
-	if err := bus.DispatchCtx(ctx, &query); err != nil {
+	if err := bus.Dispatch(ctx, &query); err != nil {
 		return nil, response.Error(404, "Dashboard not found", err)
 	}
 
@@ -222,7 +222,7 @@ func getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) 
 func (hs *HTTPServer) DeleteDashboardBySlug(c *models.ReqContext) response.Response {
 	query := models.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: web.Params(c.Req)[":slug"]}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to retrieve dashboards by slug", err)
 	}
 
@@ -323,13 +323,13 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	if dash.Id != 0 {
 		data, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 		if err != nil {
-			return response.Error(500, "Error while checking if dashboard is provisioned", err)
+			return response.Error(500, "Error while checking if dashboard is provisioned using ID", err)
 		}
 		provisioningData = data
 	} else if dash.Uid != "" {
 		data, err := svc.GetProvisionedDashboardDataByDashboardUID(dash.OrgId, dash.Uid)
-		if err != nil && !errors.Is(err, models.ErrProvisionedDashboardNotFound) {
-			return response.Error(500, "Error while checking if dashboard is provisioned", err)
+		if err != nil && (!errors.Is(err, models.ErrProvisionedDashboardNotFound) && !errors.Is(err, models.ErrDashboardNotFound)) {
+			return response.Error(500, "Error while checking if dashboard is provisioned using UID", err)
 		}
 		provisioningData = data
 	}
@@ -448,7 +448,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	homePage := hs.Cfg.HomePage
 
-	if err := hs.Bus.DispatchCtx(c.Req.Context(), &prefsQuery); err != nil {
+	if err := hs.Bus.Dispatch(c.Req.Context(), &prefsQuery); err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}
 
@@ -459,7 +459,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
 		slugQuery := models.GetDashboardRefByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
-		err := hs.Bus.DispatchCtx(c.Req.Context(), &slugQuery)
+		err := hs.Bus.Dispatch(c.Req.Context(), &slugQuery)
 		if err == nil {
 			url := models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
@@ -529,7 +529,10 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext
 
 // GetDashboardVersions returns all dashboard versions as JSON
 func GetDashboardVersions(c *models.ReqContext) response.Response {
-	dashID := c.ParamsInt64(":dashboardId")
+	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	}
 
 	guardian := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
@@ -543,7 +546,7 @@ func GetDashboardVersions(c *models.ReqContext) response.Response {
 		Start:       c.QueryInt("start"),
 	}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		return response.Error(404, fmt.Sprintf("No versions found for dashboardId %d", dashID), err)
 	}
 
@@ -568,7 +571,10 @@ func GetDashboardVersions(c *models.ReqContext) response.Response {
 
 // GetDashboardVersion returns the dashboard version with the given ID.
 func GetDashboardVersion(c *models.ReqContext) response.Response {
-	dashID := c.ParamsInt64(":dashboardId")
+	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	}
 
 	guardian := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
@@ -582,7 +588,7 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 		Version:     int(version),
 	}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 		return response.Error(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dashID), err)
 	}
 
@@ -660,7 +666,12 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, c.ParamsInt64(":dashboardId"), "")
+	dashboardId, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	}
+
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashboardId, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -671,7 +682,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 	}
 
 	versionQuery := models.GetDashboardVersionQuery{DashboardId: dash.Id, Version: apiCmd.Version, OrgId: c.OrgId}
-	if err := bus.DispatchCtx(c.Req.Context(), &versionQuery); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &versionQuery); err != nil {
 		return response.Error(404, "Dashboard version not found", nil)
 	}
 
@@ -692,7 +703,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 
 func GetDashboardTags(c *models.ReqContext) {
 	query := models.GetDashboardTagsQuery{OrgId: c.OrgId}
-	err := bus.DispatchCtx(c.Req.Context(), &query)
+	err := bus.Dispatch(c.Req.Context(), &query)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get tags from database", err)
 		return

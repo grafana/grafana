@@ -319,6 +319,7 @@ type Cfg struct {
 	JWTAuthCacheTTL      time.Duration
 	JWTAuthKeyFile       string
 	JWTAuthJWKSetFile    string
+	JWTAuthAutoSignUp    bool
 
 	// Dataproxy
 	SendUserHeader                 bool
@@ -457,6 +458,10 @@ func (cfg Cfg) IsHTTPRequestHistogramDisabled() bool {
 
 func (cfg Cfg) IsNewNavigationEnabled() bool {
 	return cfg.FeatureToggles["newNavigation"]
+}
+
+func (cfg Cfg) IsServiceAccountEnabled() bool {
+	return cfg.FeatureToggles["service-accounts"]
 }
 
 type CommandLineArgs struct {
@@ -1304,6 +1309,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthCacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
 	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
 	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
+	cfg.JWTAuthAutoSignUp = authJWT.Key("auto_sign_up").MustBool(false)
 
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)

@@ -34,6 +34,12 @@ side to be valid for a different number of users or a new duration,
 your Grafana instance will be updated with the new terms
 automatically. Defaults to `true`.
 
+### license_validation_type
+
+> **Note:** Available in Grafana Enterprise v8.3+.
+
+When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../enterprise/license/activate-aws-marketplace-license/" >}}).
+
 ## [white_labeling]
 
 ### app_title
@@ -265,7 +271,7 @@ List of comma- or space-separated organizations. Each user must be a member of a
 
 ### org_mapping
 
-List of comma- or space-separated Organization:OrgId mappings.
+List of comma- or space-separated Organization:OrgId:Role mappings. Organization can be `*` meaning "All users". Role is optional and can have the following values: `Viewer`, `Editor` or `Admin`.
 
 ### role_values_editor
 

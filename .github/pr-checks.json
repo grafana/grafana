@@ -5,5 +5,14 @@
     "targetUrl": "https://github.com/grafana/grafana/blob/main/contribute/merge-pull-request.md#assign-a-milestone",
     "success": "Milestone set",
     "failure": "Milestone not set"
+  },
+  {
+    "type": "check-backport",
+    "title": "Backport Check",
+    "backportEnabled": "Backport enabled",
+    "backportSkipped": "Backport skipped",
+    "failure": "Backport decision needed",
+    "targetUrl": "https://github.com/grafana/grafana/blob/main/contribute/merge-pull-request.md#should-the-pull-request-be-backported",
+    "skipLabels": [ "backport", "no-backport"]
   }
 ]

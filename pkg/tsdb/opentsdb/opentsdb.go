@@ -19,35 +19,20 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/net/context/ctxhttp"
 )
-
-const pluginID = "opentsdb"
 
 type Service struct {
 	logger log.Logger
 	im     instancemgmt.InstanceManager
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
-	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
-	s := &Service{
+func ProvideService(httpClientProvider httpclient.Provider) *Service {
+	return &Service{
 		logger: log.New("tsdb.opentsdb"),
-		im:     im,
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		return nil, err
-	}
-
-	return s, nil
 }
 
 type datasourceInfo struct {

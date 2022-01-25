@@ -82,9 +82,10 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
         isLoading={regionIsLoading}
       />
 
-      <InlineSelect value={queryMode} options={apiModes} onChange={onQueryModeChange} />
+      <InlineSelect aria-label="Query mode" value={queryMode} options={apiModes} onChange={onQueryModeChange} />
 
       <InlineSelect
+        aria-label="Metric editor mode"
         value={metricEditorModes.find((m) => m.value === metricQueryType)}
         options={metricEditorModes}
         onChange={({ value }) => {

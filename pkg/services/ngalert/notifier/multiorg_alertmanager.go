@@ -11,16 +11,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 
-	gokit_log "github.com/go-kit/kit/log"
+	"github.com/prometheus/alertmanager/cluster"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -62,7 +61,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 		metrics:       m,
 	}
 
-	clusterLogger := gokit_log.With(gokit_log.NewLogfmtLogger(logging.NewWrapper(l)), "component", "cluster")
+	clusterLogger := l.New("component", "cluster")
 	moa.peer = &NilPeer{}
 	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
 		peer, err := cluster.Create(
@@ -171,7 +170,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			// To export them, we need to translate the metrics from each individual registry and,
 			// then aggregate them on the main registry.
 			m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
-			am, err := newAlertmanager(orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, m)
+			am, err := newAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, m)
 			if err != nil {
 				moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "err", err)
 			}

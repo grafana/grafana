@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -21,6 +22,8 @@ import (
 
 func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	const disableOrgID int64 = 3
+	_, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:          true,
 		EnableUnifiedAlerting:          true,
@@ -64,7 +67,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusNotFound) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), "{\"message\": \"API error\",\"error\": \"no admin configuration available\"}")
+		require.JSONEq(t, string(b), "{\"message\": \"no admin configuration available\",\"error\": \"no admin configuration available\"}")
 	}
 
 	// Now, lets re-set external Alertmanagers for main organisation.

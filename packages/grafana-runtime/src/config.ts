@@ -61,16 +61,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: PreloadPlugin[] = [];
-  featureToggles: FeatureToggles = {
-    accesscontrol: false,
-    trimDefaults: false,
-    tempoServiceGraph: false,
-    tempoSearch: false,
-    recordedQueries: false,
-    newNavigation: false,
-    fullRangeLogsVolume: false,
-    dashboardPreviews: false,
-  };
+  featureToggles: FeatureToggles = {};
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   rendererVersion = '';
@@ -104,6 +95,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   recordedQueries = {
     enabled: false,
   };
+  featureHighlights = {
+    enabled: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
@@ -123,7 +117,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
         version: 'v1.0',
         commit: '1',
         env: 'production',
-        isEnterprise: false,
       },
       viewersCanEdit: false,
       editorsCanAdmin: false,

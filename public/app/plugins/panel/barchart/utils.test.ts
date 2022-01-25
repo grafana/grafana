@@ -5,6 +5,7 @@ import {
   VisibilityMode,
   GraphGradientMode,
   StackingMode,
+  SortOrder,
 } from '@grafana/schema';
 import {
   createTheme,
@@ -92,6 +93,7 @@ describe('BarChart utils', () => {
       stacking: StackingMode.None,
       tooltip: {
         mode: TooltipDisplayMode.None,
+        sort: SortOrder.None,
       },
       text: {
         valueSize: 10,
