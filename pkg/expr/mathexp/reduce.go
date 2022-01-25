@@ -83,8 +83,6 @@ func Last(fv *Float64Field) *float64 {
 	return &f
 }
 
-const ReduceModeDropNN = "dropNN"
-
 func GetReduceFunc(rFunc string) (ReducerFunc, error) {
 	switch strings.ToLower(rFunc) {
 	case "sum":
@@ -105,36 +103,43 @@ func GetReduceFunc(rFunc string) (ReducerFunc, error) {
 }
 
 // Reduce turns the Series into a Number based on the given reduction function
-// When mode is not set, generally reductions on empty series (or series with NaN/null values) (with the exception of count)
-// return NaN.
-// When mode is set to Drop Non-Number "dropNN" (eww.. make some constants) then all NaN/Inf/Null values are removed from the series
-// before the reduction is performed, and if the resulting series is empty then null is returned from the reduction.
-func (s Series) Reduce(refID, rFunc string, mode string) (Number, error) {
+// if ValueMapper is defined it applies it to the provided series and performs reduction of the resulting series.
+// Otherwise, the reduction operation is done against the original series.
+func (s Series) Reduce(refID, rFunc string, mapper ValueMapper) (Number, error) {
 	var l data.Labels
 	if s.GetLabels() != nil {
 		l = s.GetLabels().Copy()
 	}
 	number := NewNumber(refID, l)
 	var f *float64
-	fVec := s.Frame.Fields[seriesTypeValIdx]
-	if mode == ReduceModeDropNN {
-		fVec = s.filterNonNumber().Frame.Fields[seriesTypeValIdx]
+	series := s
+	if mapper != nil {
+		series = mapper.MapSeries(s)
 	}
+	fVec := series.Frame.Fields[seriesTypeValIdx]
 	floatField := Float64Field(*fVec)
 	reduceFunc, err := GetReduceFunc(rFunc)
 	if err != nil {
 		return number, err
 	}
 	f = reduceFunc(&floatField)
-	if mode == ReduceModeDropNN && f != nil && math.IsNaN(*f) {
-		f = nil
+	if f != nil && mapper != nil {
+		f = mapper.MapResult(f)
 	}
 	number.SetValue(f)
-
 	return number, nil
 }
 
-func (s Series) filterNonNumber() Series {
+type ValueMapper interface {
+	MapSeries(s Series) Series
+	MapResult(v *float64) *float64
+}
+
+type DropNonNumber struct {
+}
+
+// MapSeries creates a series that contains all points of the input series except non numbers (nil, NaN or Inf)
+func (d DropNonNumber) MapSeries(s Series) Series {
 	newSeries := NewSeries(s.Frame.RefID, s.GetLabels(), 0)
 	for i := 0; i < s.Len(); i++ {
 		f := s.GetValue(i)
@@ -145,4 +150,39 @@ func (s Series) filterNonNumber() Series {
 		newSeries.AppendPoint(s.GetTime(i), &newFloat)
 	}
 	return newSeries
+}
+
+func (d DropNonNumber) MapResult(v *float64) *float64 {
+	if v != nil && math.IsNaN(*v) {
+		return nil
+	}
+	return v
+}
+
+type ReplaceNonNumberWithValue struct {
+	Value float64
+}
+
+// MapSeries create a function that creates a series where all points that have non-number value replaced with constant value
+func (r ReplaceNonNumberWithValue) MapSeries(s Series) Series {
+	newSeries := NewSeries(s.Frame.RefID, s.GetLabels(), 0)
+	for i := 0; i < s.Len(); i++ {
+		f := s.GetValue(i)
+		var newFloat float64
+		if f == nil || math.IsNaN(*f) || math.IsInf(*f, 0) {
+			newFloat = r.Value
+		} else {
+			newFloat = *f
+		}
+		newSeries.AppendPoint(s.GetTime(i), &newFloat)
+	}
+	return newSeries
+}
+
+func (r ReplaceNonNumberWithValue) MapResult(v *float64) *float64 {
+	if v != nil && math.IsNaN(*v) {
+		result := r.Value
+		return &result
+	}
+	return v
 }
