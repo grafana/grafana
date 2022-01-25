@@ -32,15 +32,15 @@ func (s *ResourceServices) GetTeamService() *resourcepermissions.Service {
 
 var (
 	TeamMemberActions = []string{
-		"teams:read",
+		accesscontrol.ActionTeamsRead,
 	}
 
 	TeamAdminActions = []string{
-		"teams:read",
-		"teams:delete",
-		"teams:write",
-		"teams.permissions:read",
-		"teams.permissions:write",
+		accesscontrol.ActionTeamsRead,
+		accesscontrol.ActionTeamsDelete,
+		accesscontrol.ActionTeamsWrite,
+		accesscontrol.ActionTeamsPermissionsRead,
+		accesscontrol.ActionTeamsPermissionsWrite,
 	}
 )
 
@@ -54,7 +54,7 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 				return err
 			}
 
-			err = sqlstore.GetTeamById(context.Background(), &models.GetTeamByIdQuery{
+			err = sql.GetTeamById(context.Background(), &models.GetTeamByIdQuery{
 				OrgId: orgID,
 				Id:    id,
 			})
@@ -89,5 +89,5 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 		},
 	}
 
-	return resourcepermissions.New(options, router, ac, store)
+	return resourcepermissions.New(options, router, ac, store, sql)
 }
